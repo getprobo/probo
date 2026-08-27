@@ -345,6 +345,27 @@ func (d *Document) Save(options ...SaveOption) ([]byte, error) {
 	return data, nil
 }
 
+// Anonymize returns an independent document with identifying history data
+// replaced while preserving its causal graph and operation shape.
+//
+// The result still reveals editing patterns and is intended for sharing
+// performance reproductions with trusted parties, not as a security boundary.
+func (d *Document) Anonymize() (*Document, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	engine, err := d.engine.Anonymize()
+	if err != nil {
+		return nil, fmt.Errorf("cannot anonymize Automerge document: %w", err)
+	}
+
+	return &Document{engine: engine}, nil
+}
+
 // Isolate pins the document to the given heads so that subsequent reads reflect
 // that frontier plus writes made while isolated, and new changes branch from it.
 // Isolated changes still accumulate in the full history and become visible after

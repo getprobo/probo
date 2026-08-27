@@ -4,13 +4,15 @@ This package is Probo's owned, no-CGO boundary for Automerge documents.
 
 ## Implementation
 
-The public package uses a clean-room, pure-Go Automerge 0.10 implementation. It:
+The public package uses a clean-room, pure-Go Automerge 0.11 implementation. It:
 
 - decodes document, change, compressed-change, and v1/v2 sync formats;
 - validates checksums, actor ownership, causal frontiers, sequences, and limits;
 - preserves unknown columns and scalars for forward compatibility;
 - supports maps, text, UTF-16 splices, rich-text materialization, cursors,
   changes, heads, merges, and synchronization; and
+- can produce best-effort anonymized diagnostic copies and rescue the current
+  hydrated value from documents with historical invalid mark ordering; and
 - emits changes accepted by official Rust and JavaScript implementations.
 
 An internal test-support package retains a first-party WASI adapter around the

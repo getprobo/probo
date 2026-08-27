@@ -186,6 +186,10 @@ func decodeScalarWire(data []byte) (Scalar, error) {
 		return Scalar{}, err
 	}
 
+	return scalarFromWire(wire)
+}
+
+func scalarFromWire(wire scalarWire) (Scalar, error) {
 	if !validScalarType(wire.Type) {
 		return Scalar{}, fmt.Errorf("unknown scalar type %q", wire.Type)
 	}

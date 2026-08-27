@@ -199,10 +199,13 @@
       "file": "anonymize_test.ts",
       "line": 5,
       "name": "returns a loadable document with anonymized data and matching history shape",
-      "classification": "pending",
-      "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": ""
+      "classification": "covered",
+      "requirement": "interop-required",
+      "localTests": [
+        "TestEngineAnonymize_PreservesHistoryAndSource",
+        "TestConformance_AnonymizedDocumentLoadsAcrossEngines"
+      ],
+      "rationale": "Go anonymization preserves history shape while replacing identifying data, and the resulting document loads in both Rust and JavaScript."
     },
     {
       "id": "javascript:basic_test.ts:12:should init clone and free",
@@ -4266,10 +4269,12 @@
       "file": "src/anonymize/fuzz.rs",
       "line": 18,
       "name": "randomized_documents_retain_their_shape",
-      "classification": "pending",
-      "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "classification": "covered",
+      "requirement": "interop-required",
+      "localTests": [
+        "TestEngineAnonymize_PreservesHistoryAndSource"
+      ],
+      "rationale": "A branched, merged history with text and marks is anonymized and checked operation-by-operation for preserved causal and structural shape.",
       "runtimeName": "anonymize::fuzz::randomized_documents_retain_their_shape"
     },
     {
@@ -4278,10 +4283,13 @@
       "file": "src/anonymize.rs",
       "line": 440,
       "name": "anonymizes_data_while_preserving_history_and_shape",
-      "classification": "language-specific",
-      "requirement": "language-specific",
-      "localTests": [],
-      "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface.",
+      "classification": "covered",
+      "requirement": "interop-required",
+      "localTests": [
+        "TestEngineAnonymize_PreservesHistoryAndSource",
+        "TestConformance_AnonymizedDocumentLoadsAcrossEngines"
+      ],
+      "rationale": "The Go API rewrites identifying history data without mutating the source, preserves causal and operation shape, and produces documents accepted by Rust and JavaScript.",
       "runtimeName": "anonymize::tests::anonymizes_data_while_preserving_history_and_shape"
     },
     {
@@ -4290,10 +4298,12 @@
       "file": "src/anonymize.rs",
       "line": 395,
       "name": "repeated_numeric_values_receive_varied_replacements",
-      "classification": "language-specific",
-      "requirement": "language-specific",
-      "localTests": [],
-      "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface.",
+      "classification": "covered",
+      "requirement": "interop-required",
+      "localTests": [
+        "TestAnonymization_RepeatedNumbersReceiveVariedReplacements"
+      ],
+      "rationale": "Anonymization replaces every numeric scalar independently while preserving its Automerge scalar kind.",
       "runtimeName": "anonymize::tests::repeated_numeric_values_receive_varied_replacements"
     },
     {
@@ -4302,10 +4312,12 @@
       "file": "src/anonymize.rs",
       "line": 414,
       "name": "structural_strings_are_seeded_unique_and_preserve_encoded_lengths",
-      "classification": "language-specific",
-      "requirement": "language-specific",
-      "localTests": [],
-      "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface.",
+      "classification": "covered",
+      "requirement": "interop-required",
+      "localTests": [
+        "TestAnonymization_StructuralStringsPreserveShape"
+      ],
+      "rationale": "Structural keys and mark names are replaced through a per-run bijection that preserves UTF-8 and UTF-16 widths.",
       "runtimeName": "anonymize::tests::structural_strings_are_seeded_unique_and_preserve_encoded_lengths"
     },
     {
@@ -8350,10 +8362,12 @@
       "file": "tests/rich_text_fuzz_crash.rs",
       "line": 232,
       "name": "rescue_recovers_snapshot_from_historical_zero_width_mark_order",
-      "classification": "language-specific",
-      "requirement": "language-specific",
-      "localTests": [],
-      "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface.",
+      "classification": "covered",
+      "requirement": "interop-required",
+      "localTests": [
+        "TestRescue_RecoversInvalidMarkOrderSnapshot"
+      ],
+      "rationale": "The Go rescue API recovers the same hydrated root value from the upstream malformed-mark fixture while strict loading continues to reject it.",
       "runtimeName": "rescue_recovers_snapshot_from_historical_zero_width_mark_order"
     },
     {

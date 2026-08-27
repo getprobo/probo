@@ -21,9 +21,12 @@
 package automerge
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
 	"time"
+
+	"go.probo.inc/probo/pkg/automerge/internal/core"
 )
 
 type (
@@ -38,6 +41,14 @@ type (
 		List   []Value
 		Text   string
 	}
+
+	hydratedValueWire struct {
+		Type   ValueType                    `json:"type"`
+		Scalar scalarWire                   `json:"scalar"`
+		Map    map[string]hydratedValueWire `json:"map"`
+		List   []hydratedValueWire          `json:"list"`
+		Text   string                       `json:"text"`
+	}
 )
 
 const (
@@ -46,6 +57,91 @@ const (
 	ValueTypeList   ValueType = "list"
 	ValueTypeText   ValueType = "text"
 )
+
+// Hydrate returns the document's current root as one recursively typed value.
+func (d *Document) Hydrate() (Value, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return Value{}, ErrClosed
+	}
+
+	encoded, err := d.engine.Hydrate()
+	if err != nil {
+		return Value{}, fmt.Errorf("cannot hydrate Automerge document: %w", err)
+	}
+
+	return decodeHydratedValue(encoded)
+}
+
+// Rescue returns the current hydrated value of a document that may fail strict
+// mark-order validation. It does not preserve the document's change history.
+func Rescue(data []byte) (Value, error) {
+	encoded, err := core.Rescue(data)
+	if err != nil {
+		return Value{}, fmt.Errorf("cannot rescue Automerge document: %w", err)
+	}
+
+	return decodeHydratedValue(encoded)
+}
+
+func decodeHydratedValue(encoded []byte) (Value, error) {
+	var wire hydratedValueWire
+	if err := json.Unmarshal(encoded, &wire); err != nil {
+		return Value{}, fmt.Errorf("cannot decode hydrated value: %w", err)
+	}
+
+	return valueFromHydratedWire(wire)
+}
+
+func valueFromHydratedWire(wire hydratedValueWire) (Value, error) {
+	value := Value{Type: wire.Type}
+
+	switch wire.Type {
+	case ValueTypeScalar:
+		scalar, err := scalarFromWire(wire.Scalar)
+		if err != nil {
+			return Value{}, err
+		}
+
+		value.Scalar = scalar
+	case ValueTypeMap:
+		value.Map = make(map[string]Value, len(wire.Map))
+		for key, childWire := range wire.Map {
+			child, err := valueFromHydratedWire(childWire)
+			if err != nil {
+				return Value{}, fmt.Errorf(
+					"cannot decode hydrated property %q: %w",
+					key,
+					err,
+				)
+			}
+
+			value.Map[key] = child
+		}
+	case ValueTypeList:
+		value.List = make([]Value, len(wire.List))
+		for index, childWire := range wire.List {
+			child, err := valueFromHydratedWire(childWire)
+			if err != nil {
+				return Value{}, fmt.Errorf(
+					"cannot decode hydrated index %d: %w",
+					index,
+					err,
+				)
+			}
+
+			value.List[index] = child
+		}
+	case ValueTypeText:
+		value.Text = wire.Text
+	default:
+		return Value{}, fmt.Errorf("unknown hydrated value type %q", wire.Type)
+	}
+
+	return value, nil
+}
 
 // NewFrom creates and commits a document from a hydrated root map.
 func NewFrom(

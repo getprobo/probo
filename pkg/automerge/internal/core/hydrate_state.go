@@ -21,11 +21,185 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
-	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"sort"
 	"strings"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
+
+type hydratedValueWire struct {
+	Type   string                       `json:"type"`
+	Scalar json.RawMessage              `json:"scalar,omitempty"`
+	Map    map[string]hydratedValueWire `json:"map,omitempty"`
+	List   []hydratedValueWire          `json:"list,omitempty"`
+	Text   string                       `json:"text,omitempty"`
+}
+
+// Hydrate returns the current root value as a recursively typed value.
+func (b *Engine) Hydrate() ([]byte, error) {
+	return hydrateState(b.state)
+}
+
+// Rescue decodes a document and returns its current value while bypassing only
+// strict mark-order validation. The returned value does not preserve history.
+func Rescue(data []byte) ([]byte, error) {
+	document, err := storage.Decode(data)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode native rescue document: %w", err)
+	}
+
+	state, err := newRescueStateFromDocument(document)
+	if err != nil {
+		return nil, fmt.Errorf("cannot initialize native rescue state: %w", err)
+	}
+
+	return hydrateState(state)
+}
+
+func hydrateState(state *State) ([]byte, error) {
+	value, err := state.hydratedMapValue(
+		opset.RootObject(),
+		make(map[opset.OpID]struct{}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode hydrated value: %w", err)
+	}
+
+	return encoded, nil
+}
+
+func (s *State) hydratedMapValue(
+	object opset.ObjectID,
+	visited map[opset.OpID]struct{},
+) (hydratedValueWire, error) {
+	if !object.IsRoot {
+		if _, ok := visited[object.OpID]; ok {
+			return hydratedValueWire{}, fmt.Errorf("object cycle detected")
+		}
+
+		visited[object.OpID] = struct{}{}
+		defer delete(visited, object.OpID)
+	}
+
+	properties := make(map[string][]opset.Operation)
+	for _, operation := range s.operations {
+		if operation.Object != object ||
+			operation.Key.Property == nil ||
+			s.isSuperseded(operation.ID) {
+			continue
+		}
+
+		property := *operation.Key.Property
+		properties[property] = append(properties[property], operation)
+	}
+
+	result := hydratedValueWire{
+		Type: "map",
+		Map:  make(map[string]hydratedValueWire, len(properties)),
+	}
+
+	for property, operations := range properties {
+		sort.Slice(
+			operations,
+			func(i, j int) bool {
+				return operations[i].ID.Compare(operations[j].ID) > 0
+			},
+		)
+
+		value, err := s.hydratedOperationValue(operations[0], visited)
+		if err != nil {
+			return hydratedValueWire{}, err
+		}
+
+		result.Map[property] = value
+	}
+
+	return result, nil
+}
+
+func (s *State) hydratedListValue(
+	object opset.OpID,
+	visited map[opset.OpID]struct{},
+) (hydratedValueWire, error) {
+	if _, ok := visited[object]; ok {
+		return hydratedValueWire{}, fmt.Errorf("object cycle detected")
+	}
+
+	visited[object] = struct{}{}
+	defer delete(visited, object)
+
+	elements := s.sequenceElements(object)
+	result := hydratedValueWire{
+		Type: "list",
+		List: make([]hydratedValueWire, 0, len(elements)),
+	}
+
+	for _, element := range elements {
+		value, err := s.hydratedOperationValue(element, visited)
+		if err != nil {
+			return hydratedValueWire{}, err
+		}
+
+		result.List = append(result.List, value)
+	}
+
+	return result, nil
+}
+
+func (s *State) hydratedOperationValue(
+	operation opset.Operation,
+	visited map[opset.OpID]struct{},
+) (hydratedValueWire, error) {
+	switch operation.Action {
+	case opset.ActionMakeMap, opset.ActionMakeTable:
+		return s.hydratedMapValue(
+			opset.ObjectID{OpID: operation.ID},
+			visited,
+		)
+	case opset.ActionMakeList:
+		return s.hydratedListValue(operation.ID, visited)
+	case opset.ActionMakeText:
+		var value strings.Builder
+
+		for _, element := range s.sequence(operation.ID) {
+			if element.Value != nil && element.Value.Type == opset.ScalarString {
+				value.WriteString(element.Value.String)
+			}
+		}
+
+		return hydratedValueWire{Type: "text", Text: value.String()}, nil
+	case opset.ActionSet:
+		if operation.Value == nil {
+			return hydratedValueWire{}, fmt.Errorf(
+				"set operation %v has no value",
+				operation.ID,
+			)
+		}
+
+		encoded, err := encodeScalarWire(*operation.Value)
+		if err != nil {
+			return hydratedValueWire{}, err
+		}
+
+		return hydratedValueWire{
+			Type:   "scalar",
+			Scalar: json.RawMessage(encoded),
+		}, nil
+	default:
+		return hydratedValueWire{}, fmt.Errorf(
+			"operation %v does not carry a hydrated value",
+			operation.ID,
+		)
+	}
+}
 
 func (s *State) mapValue(
 	object opset.OpID,

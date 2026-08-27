@@ -102,6 +102,17 @@ func NewState() *State {
 }
 
 func NewStateFromDocument(document *opset.Document) (*State, error) {
+	return newStateFromDocument(document, true)
+}
+
+func newRescueStateFromDocument(document *opset.Document) (*State, error) {
+	return newStateFromDocument(document, false)
+}
+
+func newStateFromDocument(
+	document *opset.Document,
+	validateMarks bool,
+) (*State, error) {
 	state := NewState()
 
 	// Presize the operation and change maps so loading a large document does not
@@ -151,8 +162,10 @@ func NewStateFromDocument(document *opset.Document) (*State, error) {
 		}
 	}
 
-	if err := state.validateMarkOrder(); err != nil {
-		return nil, err
+	if validateMarks {
+		if err := state.validateMarkOrder(); err != nil {
+			return nil, err
+		}
 	}
 
 	consistent := true
