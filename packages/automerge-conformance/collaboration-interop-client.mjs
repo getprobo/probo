@@ -42,7 +42,7 @@ const repo = new Repo({
 
 try {
   const handle = await repo.find(documentURL, {
-    signal: AbortSignal.timeout(10_000),
+    signal: globalThis.AbortSignal.timeout(10_000),
   });
 
   const doc = handle.doc();

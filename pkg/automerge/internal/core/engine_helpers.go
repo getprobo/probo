@@ -456,15 +456,12 @@ func sequenceRange(
 	// splice stops once there are no more elements to delete. end is the first
 	// element boundary at or past the deletion target.
 	target := offsets[start] + deleteCount
-	end := start + sort.Search(
+	end := min(start+sort.Search(
 		len(sequence)-start+1,
 		func(i int) bool {
 			return offsets[start+i] >= target
 		},
-	)
-	if end > len(sequence) {
-		end = len(sequence)
-	}
+	), len(sequence))
 
 	return start, end, previous, nil
 }

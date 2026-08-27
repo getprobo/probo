@@ -110,7 +110,7 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 
 	// Pump until neither side has anything more to send. A generous bound stops a
 	// protocol bug from hanging the test.
-	for round := 0; round < 20; round++ {
+	for range 20 {
 		deliverToClient(toClient)
 		toClient = nil
 
