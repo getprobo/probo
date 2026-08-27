@@ -29,7 +29,8 @@ readonly REF="${AUTOMERGE_BATTERY_REF:-$DEFAULT_REF}"
 readonly TOOLCHAIN="${AUTOMERGE_BATTERY_RUST_TOOLCHAIN:-1.90.0}"
 readonly CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}/probo/automerge-battery"
 readonly CHECKOUT="$CACHE_ROOT/$REF"
-readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIRECTORY
 readonly LOCKFILE="$SCRIPT_DIRECTORY/automerge-battery.Cargo.lock"
 
 if [[ ! -d "$CHECKOUT/.git" ]]; then
@@ -39,7 +40,8 @@ if [[ ! -d "$CHECKOUT/.git" ]]; then
 fi
 
 git -C "$CHECKOUT" fetch --quiet --depth 1 origin "$REF"
-readonly COMMIT="$(git -C "$CHECKOUT" rev-parse --verify "FETCH_HEAD^{commit}")"
+COMMIT="$(git -C "$CHECKOUT" rev-parse --verify "FETCH_HEAD^{commit}")"
+readonly COMMIT
 
 git -C "$CHECKOUT" checkout --quiet --detach "$COMMIT"
 cp "$LOCKFILE" "$CHECKOUT/rust/Cargo.lock"
