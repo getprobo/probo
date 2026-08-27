@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 
 import type { ApprovalsPageQuery } from "#/__generated__/core/ApprovalsPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 
 import { ApprovalsPage, approvalsPageQuery } from "./ApprovalsPage";
 import { ApprovalsPageSkeleton } from "./ApprovalsPageSkeleton";
@@ -38,7 +39,7 @@ export default function ApprovalsPageLoader() {
     if (organizationId == null) {
       return;
     }
-    loadQuery({ organizationId });
+    loadQuery({ organizationId, first: DOCUMENT_LIST_PAGE_SIZE });
   }, [organizationId, loadQuery]);
 
   if (organizationId == null) {

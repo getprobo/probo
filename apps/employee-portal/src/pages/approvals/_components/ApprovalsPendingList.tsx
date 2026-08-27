@@ -19,13 +19,15 @@
 // SOFTWARE.
 
 import { StampIcon } from "@phosphor-icons/react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, usePaginationFragment } from "react-relay";
+import { graphql, useRefetchableFragment } from "react-relay";
 import { useParams } from "react-router";
 
 import type { ApprovalsPendingList_viewer$key } from "#/__generated__/core/ApprovalsPendingList_viewer.graphql";
-import type { ApprovalsPendingListPaginationQuery } from "#/__generated__/core/ApprovalsPendingListPaginationQuery.graphql";
+import type { ApprovalsPendingListRefetchQuery } from "#/__generated__/core/ApprovalsPendingListRefetchQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { type CursorPaginationVariables, useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentEmpty } from "#/pages/_components/DocumentEmpty";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
 import { DocumentQueueSummary } from "#/pages/_components/DocumentQueueSummary";
@@ -36,19 +38,29 @@ const approvalsPendingListFragment = graphql`
   fragment ApprovalsPendingList_viewer on Viewer
   @argumentDefinitions(
     organizationId: { type: "ID!" }
-    first: { type: "Int", defaultValue: 50 }
-    after: { type: "CursorKey", defaultValue: null }
+    first: { type: "Int" }
+    after: { type: "CursorKey" }
+    last: { type: "Int" }
+    before: { type: "CursorKey" }
   )
-  @refetchable(queryName: "ApprovalsPendingListPaginationQuery")
+  @refetchable(queryName: "ApprovalsPendingListRefetchQuery")
   @throwOnFieldError {
     pendingDocuments: approvableDocuments(
       organizationId: $organizationId
       first: $first
       after: $after
+      last: $last
+      before: $before
       filter: { approvalStates: [PENDING] }
       orderBy: { field: UPDATED_AT, direction: DESC }
-    ) @connection(key: "ApprovalsPendingList_pendingDocuments", filters: ["filter", "orderBy", "organizationId"]) {
+    ) {
       totalCount
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
       edges {
         node {
           id
@@ -71,17 +83,28 @@ export interface ApprovalsPendingListProps {
 
 export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
   const { t } = useTranslation("approvals");
+  const { t: tApp } = useTranslation();
   const { organizationId } = useParams();
-  const { data, hasNext, loadNext, isLoadingNext } = usePaginationFragment<
-    ApprovalsPendingListPaginationQuery,
+  const [data, refetch] = useRefetchableFragment<
+    ApprovalsPendingListRefetchQuery,
     ApprovalsPendingList_viewer$key
   >(approvalsPendingListFragment, viewerKey);
+
+  const refetchPage = useCallback((variables: CursorPaginationVariables) => {
+    refetch(variables, { fetchPolicy: "store-or-network" });
+  }, [refetch]);
+
+  const { pendingDocuments, historyCount } = data;
+  const { isPending, goPrevious, goNext } = useCursorPagination(
+    refetchPage,
+    pendingDocuments.pageInfo,
+    DOCUMENT_LIST_PAGE_SIZE,
+  );
 
   if (organizationId == null) {
     throw new NotFoundError("organizationId is required");
   }
 
-  const { pendingDocuments, historyCount } = data;
   const count = pendingDocuments.totalCount;
   const firstPendingId = pendingDocuments.edges[0]?.node.id ?? null;
   const emptyKey = historyCount.totalCount === 0 ? "none" : "allDone";
@@ -107,12 +130,13 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
               actionTo={`/${organizationId}/approvals/${firstPendingId}`}
             />
           )}
-      hasNext={hasNext}
-      isLoadingNext={isLoadingNext}
-      loadMoreLabel={t("loadMore")}
-      onLoadMore={() => {
-        loadNext(DOCUMENT_LIST_PAGE_SIZE);
-      }}
+      hasPrevious={pendingDocuments.pageInfo.hasPreviousPage}
+      hasNext={pendingDocuments.pageInfo.hasNextPage}
+      busy={isPending}
+      previousLabel={tApp("pagination.previous")}
+      nextLabel={tApp("pagination.next")}
+      onPrevious={goPrevious}
+      onNext={goNext}
     >
       {pendingDocuments.edges.map(({ node }) => (
         <EmployeeDocumentListItem

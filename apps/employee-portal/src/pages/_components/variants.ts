@@ -152,8 +152,20 @@ export const documentListSection = tv({
   slots: {
     root: "flex flex-col gap-9",
     heading: "flex items-center gap-1",
-    frame: "overflow-hidden rounded-5 border border-sand-a3 bg-sand-1",
+    body: "flex flex-col gap-3",
+    frame: "overflow-hidden rounded-5 border border-sand-a3 bg-sand-1 transition-opacity duration-150",
     list: "rounded-none border-0",
-    more: "flex justify-center pt-4",
+    pager: "flex justify-center",
+  },
+  variants: {
+    busy: {
+      true: {
+        frame: "opacity-60",
+      },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    busy: false,
   },
 });

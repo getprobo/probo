@@ -28,10 +28,10 @@ import { SignaturesHistoryList } from "./_components/SignaturesHistoryList";
 import { SignaturesPendingList } from "./_components/SignaturesPendingList";
 
 export const signaturesPageQuery = graphql`
-  query SignaturesPageQuery($organizationId: ID!) @throwOnFieldError {
+  query SignaturesPageQuery($organizationId: ID!, $first: Int) @throwOnFieldError {
     viewer @required(action: THROW) {
-      ...SignaturesPendingList_viewer @arguments(organizationId: $organizationId)
-      ...SignaturesHistoryList_viewer @arguments(organizationId: $organizationId)
+      ...SignaturesPendingList_viewer @arguments(organizationId: $organizationId, first: $first)
+      ...SignaturesHistoryList_viewer @arguments(organizationId: $organizationId, first: $first)
     }
   }
 `;

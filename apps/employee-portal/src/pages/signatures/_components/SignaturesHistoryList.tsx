@@ -18,13 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, usePaginationFragment } from "react-relay";
+import { graphql, useRefetchableFragment } from "react-relay";
 import { useParams } from "react-router";
 
 import type { SignaturesHistoryList_viewer$key } from "#/__generated__/core/SignaturesHistoryList_viewer.graphql";
-import type { SignaturesHistoryListPaginationQuery } from "#/__generated__/core/SignaturesHistoryListPaginationQuery.graphql";
+import type { SignaturesHistoryListRefetchQuery } from "#/__generated__/core/SignaturesHistoryListRefetchQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
+import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
@@ -33,19 +36,29 @@ const signaturesHistoryListFragment = graphql`
   fragment SignaturesHistoryList_viewer on Viewer
   @argumentDefinitions(
     organizationId: { type: "ID!" }
-    first: { type: "Int", defaultValue: 50 }
-    after: { type: "CursorKey", defaultValue: null }
+    first: { type: "Int" }
+    after: { type: "CursorKey" }
+    last: { type: "Int" }
+    before: { type: "CursorKey" }
   )
-  @refetchable(queryName: "SignaturesHistoryListPaginationQuery")
+  @refetchable(queryName: "SignaturesHistoryListRefetchQuery")
   @throwOnFieldError {
     historyDocuments: signableDocuments(
       organizationId: $organizationId
       first: $first
       after: $after
+      last: $last
+      before: $before
       filter: { signed: true }
       orderBy: { field: UPDATED_AT, direction: DESC }
-    ) @connection(key: "SignaturesHistoryList_historyDocuments", filters: ["filter", "orderBy", "organizationId"]) {
+    ) {
       totalCount
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
       edges {
         node {
           id
@@ -62,17 +75,28 @@ export interface SignaturesHistoryListProps {
 
 export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps) {
   const { t } = useTranslation("signatures");
+  const { t: tApp } = useTranslation();
   const { organizationId } = useParams();
-  const { data, hasNext, loadNext, isLoadingNext } = usePaginationFragment<
-    SignaturesHistoryListPaginationQuery,
+  const [data, refetch] = useRefetchableFragment<
+    SignaturesHistoryListRefetchQuery,
     SignaturesHistoryList_viewer$key
   >(signaturesHistoryListFragment, viewerKey);
+
+  const refetchPage = useCallback((variables: CursorPaginationVariables) => {
+    refetch(variables, { fetchPolicy: "store-or-network" });
+  }, [refetch]);
+
+  const { historyDocuments } = data;
+  const { isPending, goPrevious, goNext } = useCursorPagination(
+    refetchPage,
+    historyDocuments.pageInfo,
+    DOCUMENT_LIST_PAGE_SIZE,
+  );
 
   if (organizationId == null) {
     throw new NotFoundError("organizationId is required");
   }
 
-  const { historyDocuments } = data;
   const count = historyDocuments.totalCount;
 
   if (count === 0) {
@@ -83,12 +107,13 @@ export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps)
     <DocumentListSection
       heading={t("history.heading", { count })}
       count={count}
-      hasNext={hasNext}
-      isLoadingNext={isLoadingNext}
-      loadMoreLabel={t("loadMore")}
-      onLoadMore={() => {
-        loadNext(DOCUMENT_LIST_PAGE_SIZE);
-      }}
+      hasPrevious={historyDocuments.pageInfo.hasPreviousPage}
+      hasNext={historyDocuments.pageInfo.hasNextPage}
+      busy={isPending}
+      previousLabel={tApp("pagination.previous")}
+      nextLabel={tApp("pagination.next")}
+      onPrevious={goPrevious}
+      onNext={goNext}
     >
       {historyDocuments.edges.map(({ node }) => (
         <EmployeeDocumentListItem

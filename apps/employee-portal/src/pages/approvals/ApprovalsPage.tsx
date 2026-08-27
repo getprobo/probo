@@ -28,10 +28,10 @@ import { ApprovalsHistoryList } from "./_components/ApprovalsHistoryList";
 import { ApprovalsPendingList } from "./_components/ApprovalsPendingList";
 
 export const approvalsPageQuery = graphql`
-  query ApprovalsPageQuery($organizationId: ID!) @throwOnFieldError {
+  query ApprovalsPageQuery($organizationId: ID!, $first: Int) @throwOnFieldError {
     viewer @required(action: THROW) {
-      ...ApprovalsPendingList_viewer @arguments(organizationId: $organizationId)
-      ...ApprovalsHistoryList_viewer @arguments(organizationId: $organizationId)
+      ...ApprovalsPendingList_viewer @arguments(organizationId: $organizationId, first: $first)
+      ...ApprovalsHistoryList_viewer @arguments(organizationId: $organizationId, first: $first)
     }
   }
 `;

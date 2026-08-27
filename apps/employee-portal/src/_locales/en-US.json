@@ -70,6 +70,10 @@
   "common": {
     "error": "Something went wrong"
   },
+  "pagination": {
+    "previous": "Prev",
+    "next": "Next"
+  },
   "documents": {
     "lastUpdated": "Last updated",
     "types": {

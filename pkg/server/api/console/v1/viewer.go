@@ -108,8 +108,16 @@ func (r *viewerResolver) listEmployeeDocuments(
 		}
 	}
 
+	// ListByOrganizationID already ran NewPage (trim + HasNext/HasPrev).
+	// Rebuilding the page from the trimmed slice would drop those flags.
+	employeePage := &page.Page[*types.EmployeeDocument, coredata.DocumentOrderField]{
+		Data:   employeeDocuments,
+		Cursor: documentsPage.Cursor,
+		Info:   documentsPage.Info,
+	}
+
 	return types.NewEmployeeDocumentConnection(
-		page.NewPage(employeeDocuments, documentsPage.Cursor),
+		employeePage,
 		r,
 		organizationID,
 		documentFilter,

@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 
 import type { SignaturesPageQuery } from "#/__generated__/core/SignaturesPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 
 import { SignaturesPage, signaturesPageQuery } from "./SignaturesPage";
 import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
@@ -38,7 +39,7 @@ export default function SignaturesPageLoader() {
     if (organizationId == null) {
       return;
     }
-    loadQuery({ organizationId });
+    loadQuery({ organizationId, first: DOCUMENT_LIST_PAGE_SIZE });
   }, [organizationId, loadQuery]);
 
   if (organizationId == null) {

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { List } from "@probo/ui/src/v2/List/List";
+import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import type { ReactNode } from "react";
 
@@ -30,11 +30,17 @@ export interface DocumentListSectionProps {
   count: number;
   empty?: ReactNode;
   summary?: ReactNode;
-  hasNext?: boolean;
-  isLoadingNext?: boolean;
-  loadMoreLabel: string;
+  // True when a previous page exists; drives the prev arrow.
+  hasPrevious: boolean;
+  // True when a next page exists; drives the next arrow.
+  hasNext: boolean;
+  // Dims the list frame while a page change is pending.
+  busy?: boolean;
+  previousLabel: string;
+  nextLabel: string;
   children: ReactNode;
-  onLoadMore?: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
 }
 
 export function DocumentListSection({
@@ -42,13 +48,16 @@ export function DocumentListSection({
   count,
   empty,
   summary,
-  hasNext = false,
-  isLoadingNext = false,
-  loadMoreLabel,
+  hasPrevious,
+  hasNext,
+  busy = false,
+  previousLabel,
+  nextLabel,
   children,
-  onLoadMore,
+  onPrevious,
+  onNext,
 }: DocumentListSectionProps) {
-  const slots = documentListSection();
+  const slots = documentListSection({ busy });
 
   return (
     <section className={slots.root()}>
@@ -58,26 +67,25 @@ export function DocumentListSection({
       {count === 0
         ? empty
         : (
-            <>
-              <div className={slots.frame()}>
+            <div className={slots.body()}>
+              <div className={slots.frame()} aria-busy={busy || undefined}>
                 {summary}
                 <List className={slots.list()}>
                   {children}
                 </List>
               </div>
-              {hasNext && onLoadMore != null && (
-                <div className={slots.more()}>
-                  <Button
-                    variant="ghost"
-                    color="neutral"
-                    loading={isLoadingNext}
-                    onClick={onLoadMore}
-                  >
-                    {loadMoreLabel}
-                  </Button>
-                </div>
-              )}
-            </>
+              <Pagination
+                className={slots.pager()}
+                variant="surface"
+                showLabels
+                hasPrevious={hasPrevious}
+                hasNext={hasNext}
+                previousLabel={previousLabel}
+                nextLabel={nextLabel}
+                onPrevious={onPrevious}
+                onNext={onNext}
+              />
+            </div>
           )}
     </section>
   );
