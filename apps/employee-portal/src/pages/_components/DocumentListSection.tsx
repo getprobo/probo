@@ -82,6 +82,7 @@ export function DocumentListSection({
                 hasNext={hasNext}
                 previousLabel={previousLabel}
                 nextLabel={nextLabel}
+                disabled={busy}
                 onPrevious={onPrevious}
                 onNext={onNext}
               />

@@ -53,22 +53,22 @@ export function useCursorPagination(
   const [isPending, startTransition] = useTransition();
 
   const goNext = useCallback(() => {
-    if (!pageInfo.hasNextPage || pageInfo.endCursor == null) {
+    if (isPending || !pageInfo.hasNextPage || pageInfo.endCursor == null) {
       return;
     }
     startTransition(() => {
       refetch({ first: pageSize, after: pageInfo.endCursor, last: null, before: null });
     });
-  }, [refetch, pageSize, pageInfo.hasNextPage, pageInfo.endCursor]);
+  }, [isPending, refetch, pageSize, pageInfo.hasNextPage, pageInfo.endCursor]);
 
   const goPrevious = useCallback(() => {
-    if (!pageInfo.hasPreviousPage || pageInfo.startCursor == null) {
+    if (isPending || !pageInfo.hasPreviousPage || pageInfo.startCursor == null) {
       return;
     }
     startTransition(() => {
       refetch({ first: null, after: null, last: pageSize, before: pageInfo.startCursor });
     });
-  }, [refetch, pageSize, pageInfo.hasPreviousPage, pageInfo.startCursor]);
+  }, [isPending, refetch, pageSize, pageInfo.hasPreviousPage, pageInfo.startCursor]);
 
   return { isPending, goPrevious, goNext };
 }

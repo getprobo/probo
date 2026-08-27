@@ -38,6 +38,8 @@ export type PaginationProps = Omit<ComponentProps<"nav">, "onChange"> & {
   // Renders previousLabel / nextLabel as button text next to the carets.
   showLabels?: boolean;
   variant?: ButtonProps["variant"];
+  // Disables both controls, e.g. while a page change is in flight.
+  disabled?: boolean;
   onPrevious: () => void;
   onNext: () => void;
 };
@@ -53,7 +55,7 @@ export function Pagination(props: PaginationProps) {
   const {
     hasPrevious, hasNext, label,
     previousLabel = "Previous page", nextLabel = "Next page",
-    showLabels = false, variant = "ghost",
+    showLabels = false, variant = "ghost", disabled = false,
     onPrevious, onNext, className, ...rest
   } = props;
   const { root, label: labelSlot } = pagination();
@@ -71,6 +73,7 @@ export function Pagination(props: PaginationProps) {
         iconStart={<CaretLeftIcon />}
         aria-label={previousLabel}
         className={hasPrevious ? undefined : "invisible"}
+        disabled={disabled}
         onClick={onPrevious}
       >
         {showLabels ? previousLabel : undefined}
@@ -87,6 +90,7 @@ export function Pagination(props: PaginationProps) {
         iconEnd={<CaretRightIcon />}
         aria-label={nextLabel}
         className={hasNext ? undefined : "invisible"}
+        disabled={disabled}
         onClick={onNext}
       >
         {showLabels ? nextLabel : undefined}

@@ -26,6 +26,9 @@
       "continue": "Continue"
     }
   },
+  "breadcrumb": {
+    "nav": "Breadcrumb"
+  },
   "homePage": {
     "breadcrumb": "Home",
     "welcome": "Welcome {{name}}.",

@@ -22,6 +22,7 @@ import { CaretRightIcon } from "@phosphor-icons/react";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { NotFoundError } from "#/lib/relay/errors";
@@ -35,6 +36,7 @@ export interface PageHeaderProps {
 }
 
 export function PageHeader({ homeLabel, currentLabel, title }: PageHeaderProps) {
+  const { t } = useTranslation();
   const { organizationId } = useParams();
   const slots = pageHeader();
 
@@ -44,7 +46,7 @@ export function PageHeader({ homeLabel, currentLabel, title }: PageHeaderProps) 
 
   return (
     <div className={slots.root()}>
-      <nav className={slots.crumbs()}>
+      <nav className={slots.crumbs()} aria-label={t("breadcrumb.nav")}>
         <Link
           to={`/${organizationId}`}
           size={2}
@@ -54,7 +56,7 @@ export function PageHeader({ homeLabel, currentLabel, title }: PageHeaderProps) 
           {homeLabel}
         </Link>
         <CaretRightIcon className={slots.chevron()} />
-        <Text size={2} weight="medium" highContrast>
+        <Text size={2} weight="medium" highContrast aria-current="page">
           {currentLabel}
         </Text>
       </nav>
