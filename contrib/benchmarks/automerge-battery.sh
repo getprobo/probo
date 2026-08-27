@@ -29,6 +29,8 @@ readonly REF="${AUTOMERGE_BATTERY_REF:-$DEFAULT_REF}"
 readonly TOOLCHAIN="${AUTOMERGE_BATTERY_RUST_TOOLCHAIN:-1.90.0}"
 readonly CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}/probo/automerge-battery"
 readonly CHECKOUT="$CACHE_ROOT/$REF"
+readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly LOCKFILE="$SCRIPT_DIRECTORY/automerge-battery.Cargo.lock"
 
 if [[ ! -d "$CHECKOUT/.git" ]]; then
   mkdir -p "$CHECKOUT"
@@ -36,11 +38,11 @@ if [[ ! -d "$CHECKOUT/.git" ]]; then
   git -C "$CHECKOUT" remote add origin https://github.com/automerge/automerge.git
 fi
 
-if ! git -C "$CHECKOUT" cat-file -e "$REF^{commit}" 2>/dev/null; then
-  git -C "$CHECKOUT" fetch --quiet --depth 1 origin "$REF"
-fi
+git -C "$CHECKOUT" fetch --quiet --depth 1 origin "$REF"
+readonly COMMIT="$(git -C "$CHECKOUT" rev-parse --verify "FETCH_HEAD^{commit}")"
 
-git -C "$CHECKOUT" checkout --quiet --detach "$REF"
+git -C "$CHECKOUT" checkout --quiet --detach "$COMMIT"
+cp "$LOCKFILE" "$CHECKOUT/rust/Cargo.lock"
 
 if ! rustup run "$TOOLCHAIN" rustc --version >/dev/null 2>&1; then
   rustup toolchain install "$TOOLCHAIN" --profile minimal
@@ -48,6 +50,7 @@ fi
 
 exec cargo +"$TOOLCHAIN" run \
   --release \
+  --locked \
   --manifest-path "$CHECKOUT/rust/Cargo.toml" \
   -p benchmark-battery \
   -- "$@"

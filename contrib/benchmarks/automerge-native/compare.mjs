@@ -27,8 +27,11 @@ import { fileURLToPath } from "node:url";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const repository = path.resolve(directory, "../../..");
-const goBinary = path.join(os.tmpdir(), "probo-automerge-go-benchmark");
-const fixture = path.join(os.tmpdir(), "probo-automerge-benchmark-fixture");
+const temporaryDirectory = fs.mkdtempSync(
+  path.join(os.tmpdir(), "probo-automerge-benchmark-"),
+);
+const goBinary = path.join(temporaryDirectory, "go-benchmark");
+const fixture = path.join(temporaryDirectory, "fixture");
 const rustManifest = path.join(directory, "rust", "Cargo.toml");
 const rustTarget = path.join(directory, "rust", "target");
 const rustBinary = path.join(
@@ -47,47 +50,57 @@ const scenarios = [
   { workload: "save", size: 10_000, iterations: 1_000 },
 ];
 const samples = 3;
-const goVersion = execFileSync("go", ["version"], { encoding: "utf8" }).trim();
-const rustVersion = execFileSync("rustc", ["+1.90.0", "--version"], {
-  encoding: "utf8",
-}).trim();
 
-execFileSync(
-  "go",
-  ["build", "-trimpath", "-ldflags=-s -w", "-o", goBinary, "./contrib/benchmarks/automerge-native/go"],
-  { cwd: repository, stdio: "inherit" },
-);
-execFileSync(
-  "cargo",
-  [
-    "+1.90.0",
-    "build",
-    "--release",
-    "--locked",
-    "--manifest-path",
-    rustManifest,
-  ],
-  {
-    cwd: repository,
-    env: { ...process.env, CARGO_TARGET_DIR: rustTarget },
-    stdio: "inherit",
-  },
-);
-execFileSync(
-  goBinary,
-  [
-    "--workload",
-    "fixture",
-    "--size",
-    "10000",
-    "--fixture",
-    fixture,
-  ],
-  { stdio: "inherit" },
-);
-
-const rows = [];
 try {
+  const goVersion = execFileSync("go", ["version"], {
+    encoding: "utf8",
+  }).trim();
+  const rustVersion = execFileSync("rustc", ["+1.90.0", "--version"], {
+    encoding: "utf8",
+  }).trim();
+
+  execFileSync(
+    "go",
+    [
+      "build",
+      "-trimpath",
+      "-ldflags=-s -w",
+      "-o",
+      goBinary,
+      "./contrib/benchmarks/automerge-native/go",
+    ],
+    { cwd: repository, stdio: "inherit" },
+  );
+  execFileSync(
+    "cargo",
+    [
+      "+1.90.0",
+      "build",
+      "--release",
+      "--locked",
+      "--manifest-path",
+      rustManifest,
+    ],
+    {
+      cwd: repository,
+      env: { ...process.env, CARGO_TARGET_DIR: rustTarget },
+      stdio: "inherit",
+    },
+  );
+  execFileSync(
+    goBinary,
+    [
+      "--workload",
+      "fixture",
+      "--size",
+      "10000",
+      "--fixture",
+      fixture,
+    ],
+    { stdio: "inherit" },
+  );
+
+  const rows = [];
   for (const scenario of scenarios) {
     const go = measure(goBinary, scenario);
     const rust = measure(rustBinary, scenario);
@@ -105,21 +118,20 @@ try {
       ratio: rust.ns / go.ns,
     });
   }
-} finally {
-  fs.rmSync(goBinary, { force: true });
-  fs.rmSync(fixture, { force: true });
-}
 
-process.stdout.write(`Host: ${os.platform()}/${os.arch()} — ${os.cpus()[0]?.model ?? "unknown CPU"}\n`);
-process.stdout.write(`Go: ${goVersion}\n`);
-process.stdout.write(`Rust: ${rustVersion}\n`);
-process.stdout.write(`Samples: ${samples} (median reported)\n\n`);
-process.stdout.write("| Workload | Size | Native Go | Native Rust | Rust/Go |\n");
-process.stdout.write("|---|---:|---:|---:|---:|\n");
-for (const row of rows) {
-  process.stdout.write(
-    `| ${row.workload} | ${row.size || "—"} | ${duration(row.goNS)} | ${duration(row.rustNS)} | ${row.ratio.toFixed(2)}x |\n`,
-  );
+  process.stdout.write(`Host: ${os.platform()}/${os.arch()} — ${os.cpus()[0]?.model ?? "unknown CPU"}\n`);
+  process.stdout.write(`Go: ${goVersion}\n`);
+  process.stdout.write(`Rust: ${rustVersion}\n`);
+  process.stdout.write(`Samples: ${samples} (median reported)\n\n`);
+  process.stdout.write("| Workload | Size | Native Go | Native Rust | Rust/Go |\n");
+  process.stdout.write("|---|---:|---:|---:|---:|\n");
+  for (const row of rows) {
+    process.stdout.write(
+      `| ${row.workload} | ${row.size || "—"} | ${duration(row.goNS)} | ${duration(row.rustNS)} | ${row.ratio.toFixed(2)}x |\n`,
+    );
+  }
+} finally {
+  fs.rmSync(temporaryDirectory, { recursive: true, force: true });
 }
 
 function measure(binary, scenario) {

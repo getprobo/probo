@@ -383,6 +383,15 @@ function verifyGitCheckout(root, expectedCommit) {
       `source ${root} is at ${actualCommit}, expected ${expectedCommit}`,
     );
   }
+
+  const status = execFileSync(
+    "git",
+    ["-C", root, "status", "--porcelain", "--untracked-files=all"],
+    { encoding: "utf8" },
+  );
+  if (status !== "") {
+    throw new Error(`source ${root} has uncommitted or untracked files`);
+  }
 }
 
 function slashPath(value) {

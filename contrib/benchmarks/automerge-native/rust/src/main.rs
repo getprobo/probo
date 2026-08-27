@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::hint::black_box;
+use std::rc::Rc;
 use std::time::Instant;
 
 use automerge::transaction::{CommitOptions, Transactable};
@@ -127,14 +129,21 @@ fn workload_runner(
         "save" => {
             let data = fixture_bytes(size, fixture)?;
             let mut document = AutoCommit::load(&data).map_err(|error| error.to_string())?;
+            let latest_save = Rc::new(RefCell::new(None));
+            let run_save = Rc::clone(&latest_save);
+            let validation_save = Rc::clone(&latest_save);
             Ok(BenchmarkWorkload {
                 run: Box::new(move || {
-                    black_box(document.save());
+                    let data = black_box(document.save());
+                    *run_save.borrow_mut() = Some(data);
                     Ok(())
                 }),
                 validate: Box::new(move || {
-                    let mut document =
-                        AutoCommit::load(&data).map_err(|error| error.to_string())?;
+                    let data = validation_save.borrow();
+                    let data = data
+                        .as_deref()
+                        .ok_or_else(|| "save workload did not produce data".to_owned())?;
+                    let mut document = AutoCommit::load(data).map_err(|error| error.to_string())?;
                     text_checksum(&mut document)
                 }),
             })
