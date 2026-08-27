@@ -139,6 +139,16 @@ func probePOSTJSON(
 	return doProbeRequest(httpClient, req)
 }
 
+// CredentialRejectedError reports that the provider refused the credential,
+// carrying the status separately so callers can log it without the message.
+type CredentialRejectedError struct {
+	StatusCode int
+}
+
+func (e *CredentialRejectedError) Error() string {
+	return fmt.Sprintf("credential rejected: status %d", e.StatusCode)
+}
+
 // doProbeRequest executes a probe request and maps the status to a verdict:
 // 401/403 always mean the credential is rejected, any 2xx/other status means
 // connected. extraReject lets a provider add statuses that also mean a hard
@@ -158,7 +168,7 @@ func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...i
 	if resp.StatusCode == http.StatusUnauthorized ||
 		resp.StatusCode == http.StatusForbidden ||
 		slices.Contains(extraReject, resp.StatusCode) {
-		return fmt.Errorf("credential rejected: status %d", resp.StatusCode)
+		return &CredentialRejectedError{StatusCode: resp.StatusCode}
 	}
 
 	return nil
@@ -507,7 +517,7 @@ func probeRailway(
 	}()
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("credential rejected: status %d", resp.StatusCode)
+		return &CredentialRejectedError{StatusCode: resp.StatusCode}
 	}
 
 	var parsed struct {
@@ -522,8 +532,10 @@ func probeRailway(
 		return fmt.Errorf("cannot decode railway probe response: %w", err)
 	}
 
+	// Railway answers 200 with an errors array rather than a 401, so this is
+	// a rejection too and must classify the same way.
 	if len(parsed.Errors) > 0 || parsed.Data.Me == nil {
-		return fmt.Errorf("credential rejected: railway returned no authenticated account")
+		return &CredentialRejectedError{StatusCode: resp.StatusCode}
 	}
 
 	return nil

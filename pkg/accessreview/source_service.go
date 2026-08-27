@@ -556,6 +556,8 @@ func (s *Service) ProbeConnector(
 		return err
 	}
 
+	// Only a ProbeError means the credential or the provider is at fault;
+	// everything else returned here is Probo's own.
 	switch conn := dbConnector.Connection.(type) {
 	case *connector.WorkloadIdentityConnection:
 		session, err := s.buildCloudSession(ctx, dbConnector)
@@ -563,15 +565,37 @@ func (s *Service) ProbeConnector(
 			return err
 		}
 
-		return s.providerRegistry.ProbeCloudConnection(ctx, session, dbConnector)
+		if err := s.providerRegistry.ProbeCloudConnection(ctx, session, dbConnector); err != nil {
+			if !IsProviderVerdict(err) {
+				return err
+			}
 
-	case connector.HTTPConnection:
-		httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
-		if err != nil {
-			return err
+			return NewProbeError(dbConnector.Provider, err)
 		}
 
-		return s.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector)
+		return nil
+
+	case connector.HTTPConnection:
+		// The eager token refresh runs here, so a revoked grant fails the
+		// probe before any request is made.
+		httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
+		if err != nil {
+			if !IsProviderVerdict(err) {
+				return err
+			}
+
+			return NewProbeError(dbConnector.Provider, err)
+		}
+
+		if err := s.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector); err != nil {
+			if !IsProviderVerdict(err) {
+				return err
+			}
+
+			return NewProbeError(dbConnector.Provider, err)
+		}
+
+		return nil
 
 	default:
 		return fmt.Errorf(

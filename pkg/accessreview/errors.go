@@ -23,8 +23,14 @@ package accessreview
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
+	"github.com/aws/smithy-go"
+	"golang.org/x/oauth2"
+
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -65,6 +71,13 @@ type (
 
 	MissingOAuthScopesError struct {
 		Scopes []string
+	}
+
+	// ProbeError carries the provider a credential probe failed for, so
+	// callers log it as a field rather than parse it out of a message.
+	ProbeError struct {
+		Provider coredata.ConnectorProvider
+		Err      error
 	}
 )
 
@@ -164,4 +177,78 @@ func (e *MissingOAuthScopesError) Error() string {
 
 func (e *MissingOAuthScopesError) Is(target error) bool {
 	return target == ErrMissingOAuthScopes
+}
+
+func NewProbeError(prvdr coredata.ConnectorProvider, err error) error {
+	return &ProbeError{Provider: prvdr, Err: err}
+}
+
+func (e *ProbeError) Error() string {
+	return fmt.Sprintf("cannot probe %s connector: %v", e.Provider, e.Err)
+}
+
+func (e *ProbeError) Unwrap() error {
+	return e.Err
+}
+
+// ProbeFailureCode reduces a probe failure to a token safe to log. Probe
+// errors wrap text Probo does not control (an OAuth error_description, a
+// response body, a customer's self-hosted host), so anything unrecognised
+// degrades to its Go type rather than being quoted.
+// IsProviderVerdict reports whether err is the provider's answer rather than a
+// failure on Probo's side. Only a rejected credential, a transport failure that
+// reached the provider, and a refused token refresh qualify. Everything else a
+// probe can return (settings that will not decode, a request that could not be
+// built, a registry misconfiguration) is ours, so the default is to treat a
+// failure as Probo's and report it in full.
+func IsProviderVerdict(err error) bool {
+	if _, ok := errors.AsType[*provider.CredentialRejectedError](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*url.Error](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*oauth2.RetrieveError](err); ok {
+		return true
+	}
+
+	// A workload identity connector never makes an HTTP request of its own:
+	// STS answers through the AWS SDK, so its API errors are the verdict.
+	if _, ok := errors.AsType[smithy.APIError](err); ok {
+		return true
+	}
+
+	return false
+}
+
+func ProbeFailureCode(err error) string {
+	// Guarded against a typed nil: this runs on a logging path, where a panic
+	// would cost more than the lost detail.
+	if rejected, ok := errors.AsType[*provider.CredentialRejectedError](err); ok && rejected != nil {
+		return fmt.Sprintf("credential_rejected_%d", rejected.StatusCode)
+	}
+
+	if _, ok := errors.AsType[*url.Error](err); ok {
+		return "transport_error"
+	}
+
+	// An AWS error code is a fixed identifier such as AccessDenied, so it is
+	// safe to report where the surrounding message is not.
+	if apiErr, ok := errors.AsType[smithy.APIError](err); ok && apiErr != nil {
+		return fmt.Sprintf("aws_%s", apiErr.ErrorCode())
+	}
+
+	cause := err
+	for {
+		unwrapped := errors.Unwrap(cause)
+		if unwrapped == nil {
+			break
+		}
+
+		cause = unwrapped
+	}
+
+	return fmt.Sprintf("%T", cause)
 }

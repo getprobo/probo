@@ -494,6 +494,8 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list provider organizations",
 			log.String("provider", cnnctr.Provider.String()),
+			log.String("source_id", obj.ID.String()),
+			log.String("connector_id", obj.ConnectorID.String()),
 			log.Error(err),
 		)
 
@@ -576,6 +578,35 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
 		}
+
+		// A code, not the error: probe errors wrap provider-controlled text
+		// and customer-chosen hosts, which logging.md keeps out of the logs.
+		fields := []log.Attr{
+			log.String("source_id", obj.ID.String()),
+			log.String("connector_id", obj.ConnectorID.String()),
+		}
+
+		if probeErr, ok := errors.AsType[*accessreview.ProbeError](err); ok {
+			// Not Probo's failure, so not in the error budget.
+			r.logger.WarnCtx(
+				ctx,
+				"connector credential probe failed, reporting source disconnected",
+				append(fields,
+					log.String("provider", probeErr.Provider.String()),
+					log.String("probe_failure", accessreview.ProbeFailureCode(err)),
+				)...,
+			)
+
+			return types.AccessReviewSourceConnectionStatusDisconnected, nil
+		}
+
+		// A database read, a decrypt, a deployment without identity
+		// federation: ours, so it stays an error and keeps its message.
+		r.logger.ErrorCtx(
+			ctx,
+			"cannot probe connector, reporting source disconnected",
+			append(fields, log.Error(err))...,
+		)
 
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}
