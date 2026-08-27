@@ -10,6 +10,7 @@ GRYPE ?=	grype
 TRIVY ?=	trivy
 MKCERT ?=	mkcert
 MKDIR ?=	mkdir -p
+NODE ?=	node
 NPM ?=	npm
 NPX ?=	npx
 OPENSSL ?=	openssl
@@ -242,7 +243,7 @@ benchmark-automerge: ## Benchmark Go and Rust/WASM Automerge implementations
 
 .PHONY: benchmark-automerge-native
 benchmark-automerge-native: ## Compare optimized native Go and native Rust
-	node contrib/benchmarks/automerge-native/compare.mjs
+	$(NODE) contrib/benchmarks/automerge-native/compare.mjs
 
 .PHONY: benchmark-automerge-official
 benchmark-automerge-official: ## Run the pinned official Automerge fast benchmark battery
@@ -258,7 +259,7 @@ list-automerge-official-benchmarks: ## List the pinned official Automerge benchm
 .PHONY: test-automerge-official-fixtures
 test-automerge-official-fixtures: ## Replay official benchmark-battery documents through Rust and Go
 	rm -rf $(AUTOMERGE_BATTERY_FIXTURES)
-	cargo +1.90.0 run --release --locked \
+	$(CARGO) +$(RUST_TOOLCHAIN) run --release --locked \
 		--manifest-path contrib/benchmarks/automerge-native/official-fixtures/Cargo.toml \
 		-- $(AUTOMERGE_BATTERY_FIXTURES)
 	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \

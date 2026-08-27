@@ -62,7 +62,7 @@ func main() {
 
 	flag.Parse()
 
-	if *workload == "" || *iterations <= 0 || *warmups < 0 {
+	if *workload == "" || *size < 0 || *iterations <= 0 || *warmups < 0 {
 		fmt.Fprintln(os.Stderr, "invalid benchmark arguments")
 		os.Exit(2)
 	}
