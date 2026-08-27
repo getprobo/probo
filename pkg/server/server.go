@@ -28,6 +28,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/apps/console"
+	employeeportalstatics "go.probo.inc/probo/apps/employee-portal"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -57,6 +58,7 @@ import (
 	server_identityfederation "go.probo.inc/probo/pkg/server/identityfederation"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
+	employeeportal_web "go.probo.inc/probo/pkg/server/web/employeeportal"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
@@ -105,18 +107,20 @@ type Config struct {
 }
 
 type Server struct {
-	cfg                       Config
-	apiServer                 *api.Server
-	mailActionsHandler        http.Handler
-	identityFederationHandler http.Handler
-	consoleWebServer          *console_web.Server
-	consoleSecurityPolicy     string
-	router                    *chi.Mux
-	extraHeaderFields         map[string]string
-	baseURL                   string
-	proboService              *probo.Service
-	iamService                *iam.Service
-	logger                    *log.Logger
+	cfg                          Config
+	apiServer                    *api.Server
+	mailActionsHandler           http.Handler
+	identityFederationHandler    http.Handler
+	consoleWebServer             *console_web.Server
+	consoleSecurityPolicy        string
+	employeePortalWebServer      *employeeportal_web.Server
+	employeePortalSecurityPolicy string
+	router                       *chi.Mux
+	extraHeaderFields            map[string]string
+	baseURL                      string
+	proboService                 *probo.Service
+	iamService                   *iam.Service
+	logger                       *log.Logger
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -166,6 +170,11 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
+	employeePortalWebServer, err := employeeportal_web.NewServer()
+	if err != nil {
+		return nil, err
+	}
+
 	appOrigin := ""
 
 	if cfg.BaseURL != nil {
@@ -180,6 +189,11 @@ func NewServer(cfg Config) (*Server, error) {
 	consoleCSP, err := console.ContentSecurityPolicy(appOrigin, cfg.FileStorageOrigin)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build console content security policy: %w", err)
+	}
+
+	employeePortalCSP, err := employeeportalstatics.ContentSecurityPolicy(appOrigin, cfg.FileStorageOrigin)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build employee portal content security policy: %w", err)
 	}
 
 	router := chi.NewRouter()
@@ -199,18 +213,20 @@ func NewServer(cfg Config) (*Server, error) {
 	}
 
 	server := &Server{
-		cfg:                       cfg,
-		apiServer:                 apiServer,
-		mailActionsHandler:        mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
-		identityFederationHandler: identityFederationHandler,
-		consoleWebServer:          consoleWebServer,
-		consoleSecurityPolicy:     consoleCSP,
-		router:                    router,
-		extraHeaderFields:         cfg.ExtraHeaderFields,
-		baseURL:                   cfg.BaseURL.String(),
-		proboService:              cfg.Probo,
-		iamService:                cfg.IAM,
-		logger:                    cfg.Logger,
+		cfg:                          cfg,
+		apiServer:                    apiServer,
+		mailActionsHandler:           mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
+		identityFederationHandler:    identityFederationHandler,
+		consoleWebServer:             consoleWebServer,
+		consoleSecurityPolicy:        consoleCSP,
+		employeePortalWebServer:      employeePortalWebServer,
+		employeePortalSecurityPolicy: employeePortalCSP,
+		router:                       router,
+		extraHeaderFields:            cfg.ExtraHeaderFields,
+		baseURL:                      cfg.BaseURL.String(),
+		proboService:                 cfg.Probo,
+		iamService:                   cfg.IAM,
+		logger:                       cfg.Logger,
 	}
 
 	server.setupRoutes()
@@ -241,6 +257,16 @@ func (s *Server) setupRoutes() {
 			http.StripPrefix(identityfederation.PathPrefix, s.identityFederationHandler),
 		)
 	}
+
+	s.router.Mount(
+		employeeportal_web.PathPrefix,
+		NewSecurityHeadersMiddleware(
+			SecurityHeadersOptions{
+				ExtraHeaderFields:     s.extraHeaderFields,
+				ContentSecurityPolicy: s.employeePortalSecurityPolicy,
+			},
+		)(http.StripPrefix(employeeportal_web.PathPrefix, s.employeePortalWebServer)),
+	)
 
 	s.router.Mount(
 		"/",

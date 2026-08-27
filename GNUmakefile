@@ -104,6 +104,7 @@ GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 
 EMBEDDED= apps/console/dist/index.html \
 	apps/compliance-portal/dist/index.html \
+	apps/employee-portal/dist/index.html \
 	@probo/emails
 
 PROBOD_BIN_EXTRA_DEPS=
@@ -132,7 +133,8 @@ ifdef WITH_APPS
 GENERATED += relay
 EMBEDDED += \
 	@probo/console \
-	@probo/compliance-portal
+	@probo/compliance-portal \
+	@probo/employee-portal
 endif
 
 .PHONY: all
@@ -304,7 +306,7 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_IDENTITY_FEDE
 	PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
 	PROBOD_IDENTITY_FEDERATION_ENABLED=true; \
 	PROBOD_IDENTITY_FEDERATION_SIGNING_KEY="$$($(CAT) $(CFG_DEV_IDENTITY_FEDERATION_KEY))"; \
-	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
+	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174,http://localhost:5175"; \
 	PROBOD_PG_ADDR=localhost:5432; \
 	PROBOD_PG_USERNAME=postgres; \
 	PROBOD_PG_PASSWORD=postgres; \
@@ -432,6 +434,12 @@ pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceport
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
+.PHONY: @probo/employee-portal
+@probo/employee-portal: NODE_ENV=production
+@probo/employee-portal:
+	$(NPM) --workspace $@ run check
+	$(NPM) --workspace $@ run build
+
 .PHONY: generate
 generate: $(GENERATED)
 
@@ -500,7 +508,7 @@ fmt-shell: ## Format first-party shell scripts with shfmt
 clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf bin/*
 	$(RM) -rf node_modules
-	$(RM) -rf apps/{console,compliance-portal}/{dist,node_modules}
+	$(RM) -rf apps/{console,compliance-portal,employee-portal}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
 	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.txt coverage-e2e.html coverage-e2e-core.out coverage-e2e-core.txt coverage-e2e-core.html coverage-e2e-packages.txt coverage-combined.out coverage-combined.html
@@ -556,7 +564,7 @@ compose/keycloak/probo-realm.json: compose/keycloak/probo-realm.json.tmpl compos
 	-e "s|PRIVATE_KEY_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/private-key.pem)|g" \
 	$@.tmpl > $@
 
-apps/console/dist/index.html apps/compliance-portal/dist/index.html:
+apps/console/dist/index.html apps/compliance-portal/dist/index.html apps/employee-portal/dist/index.html:
 	$(MKDIR) $(dir $@)
 	$(ECHO) dev-server > $@
 

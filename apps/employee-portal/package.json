@@ -1,0 +1,34 @@
+{
+  "name": "@probo/employee-portal",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5175",
+    "build": "tsc -b && vite build",
+    "check": "tsc --noEmit -p tsconfig.app.json",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@probo/react-lazy": "1.0.0",
+    "@probo/routes": "1.0.0",
+    "@probo/ui": "1.0.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.8",
+    "react-router": "^8.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "tailwindcss": "^4.3.1",
+    "typescript": "~7.0.2",
+    "vite": "^8.2.0"
+  },
+  "volta": {
+    "node": "24.19.0"
+  }
+}
