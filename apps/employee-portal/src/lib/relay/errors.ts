@@ -18,18 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useParams } from "react-router";
-
-import { GlobalError } from "#/components/errors/GlobalError";
-import { NotFoundError } from "#/lib/relay/errors";
-
-export default function NotFoundPage() {
-  const { organizationId } = useParams();
-
-  return (
-    <GlobalError
-      error={new NotFoundError()}
-      fullPage={organizationId == null}
-    />
-  );
+// Thrown when a fetched `node(id:)` resolves to a type other than the one the
+// view expects (e.g. `node.__typename !== "Organization"`). Treated as a
+// not-found (404) by the error boundaries. Prefer this over a bare
+// `throw new Error(...)` so the boundary can render the dedicated 404 state.
+export class NotFoundError extends Error {
+  constructor(message?: string) {
+    super(message ?? "NOT_FOUND");
+    this.name = "NotFoundError";
+    Object.setPrototypeOf(this, NotFoundError.prototype);
+  }
 }

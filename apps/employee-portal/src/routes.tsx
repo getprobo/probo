@@ -22,6 +22,7 @@ import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { createBrowserRouter } from "react-router";
 
+import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
@@ -40,14 +41,24 @@ const routes = [
     ErrorBoundary: RootErrorBoundary,
     children: [
       {
-        index: true,
-        Component: lazy(() => import("#/pages/HomePage")),
+        ErrorBoundary: PageErrorBoundary,
+        children: [
+          {
+            index: true,
+            Component: lazy(() => import("#/pages/HomePage")),
+          },
+          {
+            path: "*",
+            Component: lazy(() => import("#/pages/NotFoundPage")),
+          },
+        ],
       },
     ],
   },
   {
     path: "*",
     Component: lazy(() => import("#/pages/NotFoundPage")),
+    ErrorBoundary: RootErrorBoundary,
   },
 ] satisfies AppRoute[];
 

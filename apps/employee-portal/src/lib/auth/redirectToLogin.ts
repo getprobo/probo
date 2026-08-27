@@ -18,18 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useParams } from "react-router";
+interface LoginRedirectOptions {
+  // Absolute URL returned to after login. Defaults to the current page.
+  continueUrl?: string;
+  // When set, login can resume an organization session (password / SSO).
+  organizationId?: string;
+}
 
-import { GlobalError } from "#/components/errors/GlobalError";
-import { NotFoundError } from "#/lib/relay/errors";
+// Query string for `/auth/login` (and SSO URLs that accept the same params).
+export function loginSearch(options: LoginRedirectOptions = {}): URLSearchParams {
+  const search = new URLSearchParams();
+  search.set("continue", options.continueUrl ?? window.location.href);
+  if (options.organizationId != null) {
+    search.set("organization-id", options.organizationId);
+  }
+  return search;
+}
 
-export default function NotFoundPage() {
-  const { organizationId } = useParams();
-
-  return (
-    <GlobalError
-      error={new NotFoundError()}
-      fullPage={organizationId == null}
-    />
-  );
+// Full navigation to the console login page. `replace` so Back does not return
+// to the failing employee-portal page. Never use React Router `Navigate` —
+// the router basename would prefix `/employee-portal`.
+export function redirectToLogin(options: LoginRedirectOptions = {}): void {
+  const url = new URL("/auth/login", window.location.origin);
+  for (const [key, value] of loginSearch(options)) {
+    url.searchParams.set(key, value);
+  }
+  window.location.replace(url);
 }

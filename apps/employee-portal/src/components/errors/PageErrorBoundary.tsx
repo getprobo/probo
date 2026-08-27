@@ -18,47 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { AssumptionRequiredError, UnAuthenticatedError } from "@probo/relay";
+import { Suspense } from "react";
+import { useParams, useRouteError } from "react-router";
 
-import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
+import { AssumeOrganizationSession } from "#/pages/iam/_components/errors/AssumeOrganizationSession";
+import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 
-import { MainLayout, mainLayoutQuery } from "./MainLayout";
-import { MainLayoutSkeleton } from "./MainLayoutSkeleton";
+import { GlobalError } from "./GlobalError";
 
-function MainLayoutQueryLoader() {
+// Child-route boundary: a page failure is contained to the layout's Outlet, so
+// the error renders inside the app chrome (TopBar survives).
+export function PageErrorBoundary() {
+  const error = useRouteError();
   const { organizationId } = useParams();
-  const [queryRef, loadQuery] = useQueryLoader<MainLayoutQuery>(mainLayoutQuery);
 
-  useEffect(() => {
-    if (organizationId == null) {
-      return;
-    }
-    loadQuery({ organizationId });
-  }, [organizationId, loadQuery]);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
+  if (error instanceof UnAuthenticatedError) {
+    redirectToLogin({ organizationId });
+    return null;
   }
 
-  if (!queryRef) {
-    return <MainLayoutSkeleton />;
+  if (error instanceof AssumptionRequiredError) {
+    return (
+      <IAMRelayProvider>
+        <Suspense fallback={<MainLayoutSkeleton />}>
+          <AssumeOrganizationSession />
+        </Suspense>
+      </IAMRelayProvider>
+    );
   }
 
   return (
-    <Suspense fallback={<MainLayoutSkeleton />}>
-      <MainLayout queryRef={queryRef} />
-    </Suspense>
-  );
-}
-
-export default function MainLayoutLoader() {
-  return (
-    <IAMRelayProvider>
-      <MainLayoutQueryLoader />
-    </IAMRelayProvider>
+    <GlobalError
+      error={error}
+      onRetry={() => window.location.reload()}
+    />
   );
 }

@@ -23,6 +23,7 @@ import { graphql, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
 import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
 
 export const mainLayoutQuery = graphql`
@@ -44,7 +45,7 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
   const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
 
   if (data.organization.__typename !== "Organization") {
-    throw new Error("invalid type for organization node");
+    throw new NotFoundError("invalid type for organization node");
   }
 
   return (

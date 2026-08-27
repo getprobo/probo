@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 
 import type { AssumeOrganizationSessionMutation } from "#/__generated__/iam/AssumeOrganizationSessionMutation.graphql";
 import type { AssumeOrganizationSessionQuery } from "#/__generated__/iam/AssumeOrganizationSessionQuery.graphql";
+import { loginSearch, redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { useMutation } from "#/lib/relay/useMutation";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 
@@ -53,20 +54,6 @@ const assumeMutation = graphql`
   }
 `;
 
-function authSearch(organizationId: string): URLSearchParams {
-  const search = new URLSearchParams();
-  search.set("organization-id", organizationId);
-  search.set("continue", window.location.href);
-  return search;
-}
-
-function redirectToLogin(organizationId?: string) {
-  const search = organizationId
-    ? authSearch(organizationId)
-    : new URLSearchParams({ continue: window.location.href });
-  window.location.href = `/auth/login?${search.toString()}`;
-}
-
 export function AssumeOrganizationSession() {
   const { organizationId } = useParams();
   const { viewer } = useLazyLoadQuery<AssumeOrganizationSessionQuery>(
@@ -92,24 +79,24 @@ export function AssumeOrganizationSession() {
     }).then((response) => {
       const result = response.assumeOrganizationSession?.result;
       if (result == null) {
-        redirectToLogin(organizationId);
+        redirectToLogin({ organizationId });
         return;
       }
 
       switch (result.__typename) {
         case "PasswordRequired":
-          redirectToLogin(organizationId);
+          redirectToLogin({ organizationId });
           return;
         case "SAMLAuthenticationRequired": {
           if (!viewer.ssoLoginURL) {
             throw new Error("missing SSO login URL for user email");
           }
           const samlURL = new URL(viewer.ssoLoginURL);
-          const search = authSearch(organizationId);
+          const search = loginSearch({ organizationId });
           for (const [key, value] of search) {
             samlURL.searchParams.set(key, value);
           }
-          window.location.href = samlURL.toString();
+          window.location.replace(samlURL);
           return;
         }
         default:

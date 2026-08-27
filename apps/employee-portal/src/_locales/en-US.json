@@ -30,12 +30,26 @@
     "error": "Something went wrong"
   },
   "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you're looking for doesn't exist or may have been moved."
+    },
+    "forbidden": {
+      "title": "Access denied",
+      "description": "You don't have permission to view this page. Go back to your organizations, or contact support if you think this is a mistake."
+    },
+    "serverError": {
+      "title": "Something went wrong",
+      "description": "Something went wrong on our side. Try again, or contact support if the issue continues."
+    },
     "generic": {
       "title": "Unable to load page",
       "description": "We couldn't load this page. Try again, or contact support if the issue continues."
     },
     "actions": {
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "backToOrganizations": "Back to organizations",
+      "contactSupport": "Contact support"
     }
   }
 }

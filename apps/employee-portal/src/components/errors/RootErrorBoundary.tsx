@@ -19,25 +19,25 @@
 // SOFTWARE.
 
 import { AssumptionRequiredError, UnAuthenticatedError } from "@probo/relay";
-import { Button } from "@probo/ui/src/v2/Button/Button";
-import { ErrorState } from "@probo/ui/src/v2/ErrorState/ErrorState";
 import { Suspense } from "react";
-import { useTranslation } from "react-i18next";
-import { useRouteError } from "react-router";
+import { useParams, useRouteError } from "react-router";
 
+import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
 import { AssumeOrganizationSession } from "#/pages/iam/_components/errors/AssumeOrganizationSession";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 
+import { GlobalError } from "./GlobalError";
+
+// Root route boundary: a failure in the layout (or anything above the page
+// boundaries) takes down the whole tree, so it renders a standalone full-page
+// error without the app chrome.
 export function RootErrorBoundary() {
   const error = useRouteError();
-  const { t } = useTranslation();
+  const { organizationId } = useParams();
 
   if (error instanceof UnAuthenticatedError) {
-    // Full navigation — React Router Navigate would prefix the basename
-    // and send the user to /employee-portal/auth/login.
-    const continueUrl = encodeURIComponent(window.location.href);
-    window.location.replace(`/auth/login?continue=${continueUrl}`);
+    redirectToLogin({ organizationId });
     return null;
   }
 
@@ -52,23 +52,10 @@ export function RootErrorBoundary() {
   }
 
   return (
-    <ErrorState
+    <GlobalError
+      error={error}
       fullPage
-      title={t("errors.generic.title")}
-      description={t("errors.generic.description")}
-      actions={(
-        <Button
-          variant="solid"
-          color="neutral"
-          highContrast
-          size={2}
-          onClick={() => {
-            window.location.reload();
-          }}
-        >
-          {t("errors.actions.tryAgain")}
-        </Button>
-      )}
+      onRetry={() => window.location.reload()}
     />
   );
 }
