@@ -272,6 +272,158 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 	}
 }
 
+func TestDocument_HydrateDeepGraphMatchesReference(t *testing.T) {
+	t.Parallel()
+
+	const depth = 64
+
+	value := hydratedInt(42)
+	for range depth {
+		value = automerge.Value{
+			Type: automerge.ValueTypeMap,
+			Map:  map[string]automerge.Value{"next": value},
+		}
+	}
+
+	documents := make(map[string]*automerge.Document)
+	for name, factory := range map[string]func(
+		automerge.ActorID,
+		map[string]automerge.Value,
+		string,
+		time.Time,
+	) (*automerge.Document, error){
+		"native":    automerge.NewFrom,
+		"reference": automerge.NewReferenceFrom,
+	} {
+		document, err := factory(
+			actor(167),
+			map[string]automerge.Value{"root": value},
+			"deep",
+			commitTime,
+		)
+		require.NoError(t, err)
+		closeDocument(t, document)
+		documents[name] = document
+
+		object, err := document.Root().Object("root")
+		require.NoError(t, err)
+		for range depth - 1 {
+			object, err = object.Object("next")
+			require.NoError(t, err)
+		}
+
+		leaf, err := object.Scalar("next")
+		require.NoError(t, err)
+		assert.Equal(t, int64(42), leaf.Int)
+	}
+
+	nativeHeads, err := documents["native"].Heads()
+	require.NoError(t, err)
+	referenceHeads, err := documents["reference"].Heads()
+	require.NoError(t, err)
+	assert.Equal(t, referenceHeads, nativeHeads)
+}
+
+func TestDocument_HydrateRejectsCyclesBeforeMutation(t *testing.T) {
+	t.Parallel()
+
+	mapCycle := make(map[string]automerge.Value)
+	mapCycle["self"] = automerge.Value{Type: automerge.ValueTypeMap, Map: mapCycle}
+
+	listCycle := make([]automerge.Value, 1)
+	listCycle[0] = automerge.Value{Type: automerge.ValueTypeList, List: listCycle}
+
+	values := map[string]automerge.Value{
+		"map":  {Type: automerge.ValueTypeMap, Map: mapCycle},
+		"list": {Type: automerge.ValueTypeList, List: listCycle},
+	}
+
+	for _, engine := range rustParityEngines() {
+		for name, value := range values {
+			t.Run(
+				engine.name+"/"+name,
+				func(t *testing.T) {
+					t.Parallel()
+
+					document, err := engine.open(actor(168))
+					require.NoError(t, err)
+					closeDocument(t, document)
+					require.NoError(t, document.PutString("keep", "value"))
+					_, err = document.Commit("keep", commitTime)
+					require.NoError(t, err)
+
+					err = document.Root().PutValue("invalid", value)
+					require.Error(t, err)
+
+					cancelled, err := document.Rollback()
+					require.NoError(t, err)
+					assert.Zero(t, cancelled)
+
+					keep, err := document.String("keep")
+					require.NoError(t, err)
+					assert.Equal(t, "value", keep)
+					_, err = document.Root().Object("invalid")
+					require.Error(t, err)
+				},
+			)
+		}
+	}
+}
+
+func TestDocument_HydrateAllowsSharedAcyclicContainers(t *testing.T) {
+	t.Parallel()
+
+	shared := map[string]automerge.Value{"value": hydratedInt(7)}
+	root := map[string]automerge.Value{
+		"left":  {Type: automerge.ValueTypeMap, Map: shared},
+		"right": {Type: automerge.ValueTypeMap, Map: shared},
+	}
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(actor(169))
+		require.NoError(t, err)
+		closeDocument(t, document)
+		require.NoError(t, document.Root().PutMap(root))
+
+		for _, key := range []string{"left", "right"} {
+			object, err := document.Root().Object(key)
+			require.NoError(t, err)
+			value, err := object.Scalar("value")
+			require.NoError(t, err)
+			assert.Equal(t, int64(7), value.Int)
+		}
+	}
+}
+
+func TestDocument_HydrateEmptyRootUsesEmptyCommit(t *testing.T) {
+	t.Parallel()
+
+	for name, factory := range map[string]func(
+		automerge.ActorID,
+		map[string]automerge.Value,
+		string,
+		time.Time,
+	) (*automerge.Document, error){
+		"native":    automerge.NewFrom,
+		"reference": automerge.NewReferenceFrom,
+	} {
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				document, err := factory(actor(170), nil, "empty", commitTime)
+				require.NoError(t, err)
+				closeDocument(t, document)
+
+				heads, err := document.Heads()
+				require.NoError(t, err)
+				assert.Len(t, heads, 1)
+			},
+		)
+	}
+}
+
 func hydratedInt(value int64) automerge.Value {
 	return automerge.Value{
 		Type: automerge.ValueTypeScalar,

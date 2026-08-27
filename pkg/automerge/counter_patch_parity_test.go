@@ -105,3 +105,44 @@ func TestRustAutomerge_ObserveCounterChangeApplication(t *testing.T) {
 
 	assert.Equal(t, reference, result["native"])
 }
+
+func TestRustAutomerge_IncrementPatchCarriesDelta(t *testing.T) {
+	t.Parallel()
+
+	result := make(map[string][]automerge.Patch)
+	values := make(map[string]int64)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(actor(0xc1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+		require.NoError(
+			t,
+			document.Root().PutScalar("counter", automerge.CounterScalar(10)),
+		)
+		_, err = document.Commit("counter", commitTime)
+		require.NoError(t, err)
+		before, err := document.Heads()
+		require.NoError(t, err)
+
+		require.NoError(t, document.Root().Increment("counter", -3))
+		_, err = document.Commit("increment", commitTime)
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(before, after)
+		require.NoError(t, err)
+		result[engine.name] = patches
+		value, err := document.Root().Scalar("counter")
+		require.NoError(t, err)
+		values[engine.name] = value.Int
+	}
+
+	reference := result["reference"]
+	require.Len(t, reference, 1)
+	assert.Equal(t, automerge.PatchIncrement, reference[0].Action)
+	assert.Equal(t, int64(-3), reference[0].Delta)
+	assert.Equal(t, int64(7), values["reference"])
+	assert.Equal(t, values["reference"], values["native"])
+}

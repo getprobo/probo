@@ -22,6 +22,7 @@ package testsupport
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"time"
 )
@@ -38,6 +39,28 @@ type (
 		List   []Value
 		Text   string
 	}
+
+	hydratedContainerID struct {
+		Type     ValueType
+		Pointer  uintptr
+		Length   int
+		Capacity int
+	}
+
+	hydratedValidationFrame struct {
+		Value   Value
+		Exiting bool
+	}
+
+	hydratedOperation uint8
+
+	hydratedTask struct {
+		Object    *Object
+		Operation hydratedOperation
+		Key       string
+		Index     uint64
+		Value     Value
+	}
 )
 
 const (
@@ -45,6 +68,10 @@ const (
 	ValueTypeMap    ValueType = "map"
 	ValueTypeList   ValueType = "list"
 	ValueTypeText   ValueType = "text"
+
+	hydratedOperationPut    hydratedOperation = 1
+	hydratedOperationInsert hydratedOperation = 2
+	hydratedOperationPutAt  hydratedOperation = 3
 )
 
 // NewFrom creates and commits a document from a hydrated root map.
@@ -90,7 +117,12 @@ func newFrom(
 		return nil, err
 	}
 
-	if _, err := document.Commit(message, timestamp); err != nil {
+	commit := document.Commit
+	if len(value) == 0 {
+		commit = document.EmptyCommit
+	}
+
+	if _, err := commit(message, timestamp); err != nil {
 		_ = document.Close()
 		return nil, err
 	}
@@ -100,53 +132,27 @@ func newFrom(
 
 // PutMap assigns a batch of recursively hydrated map properties.
 func (o *Object) PutMap(values map[string]Value) error {
-	keys := make([]string, 0, len(values))
-	for key := range values {
-		keys = append(keys, key)
+	if err := validateHydratedValue(Value{Type: ValueTypeMap, Map: values}); err != nil {
+		return err
 	}
 
-	slices.Sort(keys)
-
-	for _, key := range keys {
-		if err := o.PutValue(key, values[key]); err != nil {
-			return fmt.Errorf("cannot put hydrated property %q: %w", key, err)
-		}
-	}
-
-	return nil
+	return applyHydratedTasks(mapHydratedTasks(o, values))
 }
 
 // PutValue assigns one recursively hydrated value to a map property.
 func (o *Object) PutValue(key string, value Value) error {
-	switch value.Type {
-	case ValueTypeScalar:
-		return o.PutScalar(key, value.Scalar)
-	case ValueTypeMap:
-		child, err := o.CreateObject(key, ObjectTypeMap)
-		if err != nil {
-			return err
-		}
-
-		return child.PutMap(value.Map)
-	case ValueTypeList:
-		child, err := o.CreateObject(key, ObjectTypeList)
-		if err != nil {
-			return err
-		}
-
-		return child.InsertValues(0, value.List)
-	case ValueTypeText:
-		child, err := o.CreateObject(key, ObjectTypeText)
-		if err != nil {
-			return err
-		}
-
-		text := &Text{document: child.document, handle: child.handle}
-
-		return text.Splice(0, 0, value.Text)
-	default:
-		return fmt.Errorf("unknown hydrated value type %q", value.Type)
+	if err := validateHydratedValue(value); err != nil {
+		return err
 	}
+
+	return applyHydratedTasks(
+		[]hydratedTask{{
+			Object:    o,
+			Operation: hydratedOperationPut,
+			Key:       key,
+			Value:     value,
+		}},
+	)
 }
 
 // InsertValues inserts recursively hydrated values into a list.
@@ -154,13 +160,11 @@ func (o *Object) InsertValues(
 	index uint64,
 	values []Value,
 ) error {
-	for offset, value := range values {
-		if err := o.InsertValue(index+uint64(offset), value); err != nil {
-			return fmt.Errorf("cannot insert hydrated value %d: %w", offset, err)
-		}
+	if err := validateHydratedValue(Value{Type: ValueTypeList, List: values}); err != nil {
+		return err
 	}
 
-	return nil
+	return applyHydratedTasks(listHydratedTasks(o, index, values))
 }
 
 // InsertValue inserts one recursively hydrated value into a list.
@@ -168,35 +172,18 @@ func (o *Object) InsertValue(
 	index uint64,
 	value Value,
 ) error {
-	switch value.Type {
-	case ValueTypeScalar:
-		return o.InsertScalar(index, value.Scalar)
-	case ValueTypeMap:
-		child, err := o.InsertObject(index, ObjectTypeMap)
-		if err != nil {
-			return err
-		}
-
-		return child.PutMap(value.Map)
-	case ValueTypeList:
-		child, err := o.InsertObject(index, ObjectTypeList)
-		if err != nil {
-			return err
-		}
-
-		return child.InsertValues(0, value.List)
-	case ValueTypeText:
-		child, err := o.InsertObject(index, ObjectTypeText)
-		if err != nil {
-			return err
-		}
-
-		text := &Text{document: child.document, handle: child.handle}
-
-		return text.Splice(0, 0, value.Text)
-	default:
-		return fmt.Errorf("unknown hydrated value type %q", value.Type)
+	if err := validateHydratedValue(value); err != nil {
+		return err
 	}
+
+	return applyHydratedTasks(
+		[]hydratedTask{{
+			Object:    o,
+			Operation: hydratedOperationInsert,
+			Index:     index,
+			Value:     value,
+		}},
+	)
 }
 
 // PutValueAt replaces a list element with one recursively hydrated value.
@@ -204,35 +191,18 @@ func (o *Object) PutValueAt(
 	index uint64,
 	value Value,
 ) error {
-	switch value.Type {
-	case ValueTypeScalar:
-		return o.PutScalarAt(index, value.Scalar)
-	case ValueTypeMap:
-		child, err := o.putObjectAt(index, ObjectTypeMap)
-		if err != nil {
-			return err
-		}
-
-		return child.PutMap(value.Map)
-	case ValueTypeList:
-		child, err := o.putObjectAt(index, ObjectTypeList)
-		if err != nil {
-			return err
-		}
-
-		return child.InsertValues(0, value.List)
-	case ValueTypeText:
-		child, err := o.putObjectAt(index, ObjectTypeText)
-		if err != nil {
-			return err
-		}
-
-		text := &Text{document: child.document, handle: child.handle}
-
-		return text.Splice(0, 0, value.Text)
-	default:
-		return fmt.Errorf("unknown hydrated value type %q", value.Type)
+	if err := validateHydratedValue(value); err != nil {
+		return err
 	}
+
+	return applyHydratedTasks(
+		[]hydratedTask{{
+			Object:    o,
+			Operation: hydratedOperationPutAt,
+			Index:     index,
+			Value:     value,
+		}},
+	)
 }
 
 // SpliceValues deletes and inserts recursively hydrated list values.
@@ -241,13 +211,210 @@ func (o *Object) SpliceValues(
 	deleteCount uint64,
 	values []Value,
 ) error {
+	if err := validateHydratedValue(Value{Type: ValueTypeList, List: values}); err != nil {
+		return err
+	}
+
 	for range deleteCount {
 		if err := o.DeleteIndex(index); err != nil {
 			return err
 		}
 	}
 
-	return o.InsertValues(index, values)
+	return applyHydratedTasks(listHydratedTasks(o, index, values))
+}
+
+func validateHydratedValue(root Value) error {
+	const (
+		visiting = 1
+		visited  = 2
+	)
+
+	states := make(map[hydratedContainerID]uint8)
+	stack := []hydratedValidationFrame{{Value: root}}
+
+	for len(stack) > 0 {
+		frame := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		value := frame.Value
+
+		switch value.Type {
+		case ValueTypeScalar:
+			if !validScalarType(value.Scalar.Type) {
+				return fmt.Errorf("unknown scalar type %q", value.Scalar.Type)
+			}
+		case ValueTypeText:
+		case ValueTypeMap, ValueTypeList:
+			id := hydratedValueContainerID(value)
+			if id.Pointer == 0 {
+				continue
+			}
+
+			if frame.Exiting {
+				states[id] = visited
+				continue
+			}
+
+			switch states[id] {
+			case visiting:
+				return fmt.Errorf("hydrated value contains a container cycle")
+			case visited:
+				continue
+			}
+
+			states[id] = visiting
+			stack = append(stack, hydratedValidationFrame{Value: value, Exiting: true})
+
+			if value.Type == ValueTypeMap {
+				keys := sortedHydratedKeys(value.Map)
+				for index := len(keys) - 1; index >= 0; index-- {
+					stack = append(
+						stack,
+						hydratedValidationFrame{Value: value.Map[keys[index]]},
+					)
+				}
+			} else {
+				for index := len(value.List) - 1; index >= 0; index-- {
+					stack = append(
+						stack,
+						hydratedValidationFrame{Value: value.List[index]},
+					)
+				}
+			}
+		default:
+			return fmt.Errorf("unknown hydrated value type %q", value.Type)
+		}
+	}
+
+	return nil
+}
+
+func hydratedValueContainerID(value Value) hydratedContainerID {
+	if value.Type == ValueTypeMap {
+		return hydratedContainerID{
+			Type:    value.Type,
+			Pointer: reflect.ValueOf(value.Map).Pointer(),
+		}
+	}
+
+	return hydratedContainerID{
+		Type:     value.Type,
+		Pointer:  reflect.ValueOf(value.List).Pointer(),
+		Length:   len(value.List),
+		Capacity: cap(value.List),
+	}
+}
+
+func sortedHydratedKeys(values map[string]Value) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+
+	slices.Sort(keys)
+
+	return keys
+}
+
+func mapHydratedTasks(object *Object, values map[string]Value) []hydratedTask {
+	keys := sortedHydratedKeys(values)
+	tasks := make([]hydratedTask, 0, len(keys))
+	for _, key := range keys {
+		tasks = append(
+			tasks,
+			hydratedTask{
+				Object:    object,
+				Operation: hydratedOperationPut,
+				Key:       key,
+				Value:     values[key],
+			},
+		)
+	}
+
+	return tasks
+}
+
+func listHydratedTasks(object *Object, index uint64, values []Value) []hydratedTask {
+	tasks := make([]hydratedTask, 0, len(values))
+	for offset, value := range values {
+		tasks = append(
+			tasks,
+			hydratedTask{
+				Object:    object,
+				Operation: hydratedOperationInsert,
+				Index:     index + uint64(offset),
+				Value:     value,
+			},
+		)
+	}
+
+	return tasks
+}
+
+func applyHydratedTasks(tasks []hydratedTask) error {
+	for current := 0; current < len(tasks); current++ {
+		task := tasks[current]
+		child, err := applyHydratedTask(task)
+		if err != nil {
+			return err
+		}
+
+		if child == nil {
+			continue
+		}
+
+		switch task.Value.Type {
+		case ValueTypeMap:
+			tasks = append(tasks, mapHydratedTasks(child, task.Value.Map)...)
+		case ValueTypeList:
+			tasks = append(tasks, listHydratedTasks(child, 0, task.Value.List)...)
+		}
+	}
+
+	return nil
+}
+
+func applyHydratedTask(task hydratedTask) (*Object, error) {
+	switch task.Value.Type {
+	case ValueTypeScalar:
+		switch task.Operation {
+		case hydratedOperationPut:
+			return nil, task.Object.PutScalar(task.Key, task.Value.Scalar)
+		case hydratedOperationInsert:
+			return nil, task.Object.InsertScalar(task.Index, task.Value.Scalar)
+		case hydratedOperationPutAt:
+			return nil, task.Object.PutScalarAt(task.Index, task.Value.Scalar)
+		}
+	case ValueTypeMap, ValueTypeList, ValueTypeText:
+		objectType := ObjectType(task.Value.Type)
+		var (
+			child *Object
+			err   error
+		)
+
+		switch task.Operation {
+		case hydratedOperationPut:
+			child, err = task.Object.CreateObject(task.Key, objectType)
+		case hydratedOperationInsert:
+			child, err = task.Object.InsertObject(task.Index, objectType)
+		case hydratedOperationPutAt:
+			child, err = task.Object.putObjectAt(task.Index, objectType)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		if task.Value.Type == ValueTypeText {
+			text := &Text{document: child.document, handle: child.handle}
+			if err := text.Splice(0, 0, task.Value.Text); err != nil {
+				return nil, err
+			}
+		}
+
+		return child, nil
+	}
+
+	panic("validated hydrated task has invalid type or operation")
 }
 
 func (o *Object) putObjectAt(

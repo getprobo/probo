@@ -72,6 +72,7 @@ type (
 
 var (
 	ErrClosed          = errors.New("automerge document is closed")
+	ErrNilDocument     = errors.New("cannot merge a nil Automerge document")
 	ErrSameDocument    = errors.New("cannot merge an Automerge document into itself")
 	ErrSyncStateClosed = errors.New("automerge sync state is closed")
 )
@@ -749,6 +750,10 @@ func (d *Document) ApplyChanges(
 
 // Merge applies all changes from another document.
 func (d *Document) Merge(other *Document) ([]Hash, error) {
+	if other == nil {
+		return nil, ErrNilDocument
+	}
+
 	if d == other {
 		return nil, ErrSameDocument
 	}

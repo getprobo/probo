@@ -83,10 +83,9 @@ type (
 		Key      string                `json:"key"`
 		Index    uint64                `json:"index"`
 		Length   uint64                `json:"length"`
-		Value    *encodedPatchValue    `json:"value"`
+		Value    json.RawMessage       `json:"value"`
 		Values   []encodedInsertsValue `json:"values"`
 		Text     string                `json:"text,omitempty"`
-		Delta    int64                 `json:"delta"`
 		Conflict bool                  `json:"conflict"`
 		Prop     *encodedPatchProp     `json:"prop"`
 		Marks    []encodedMark         `json:"marks"`
@@ -200,17 +199,33 @@ func decodePatches(data []byte) ([]Patch, error) {
 			Index:    source.Action.Index,
 			Length:   source.Action.Length,
 			Text:     source.Action.Text,
-			Delta:    source.Action.Delta,
 			Conflict: source.Action.Conflict,
 		}
 
-		if source.Action.Value != nil {
-			value, err := decodePatchValue(*source.Action.Value)
+		switch patch.Action {
+		case PatchPutMap, PatchPutSeq:
+			var encodedValue encodedPatchValue
+			if len(source.Action.Value) == 0 {
+				return nil, fmt.Errorf("cannot decode %s patch: value is missing", patch.Action)
+			}
+
+			if err := json.Unmarshal(source.Action.Value, &encodedValue); err != nil {
+				return nil, fmt.Errorf("cannot decode %s patch value: %w", patch.Action, err)
+			}
+
+			value, err := decodePatchValue(encodedValue)
 			if err != nil {
 				return nil, err
 			}
 
 			patch.Value = value
+		case PatchIncrement:
+			delta, err := decodePatchDelta(source.Action.Value)
+			if err != nil {
+				return nil, err
+			}
+
+			patch.Delta = delta
 		}
 
 		for _, inserted := range source.Action.Values {
@@ -259,6 +274,22 @@ func decodePatches(data []byte) ([]Patch, error) {
 	}
 
 	return patches, nil
+}
+
+func decodePatchDelta(data json.RawMessage) (int64, error) {
+	if len(data) == 0 {
+		return 0, fmt.Errorf("cannot decode increment patch: value is missing")
+	}
+
+	var delta *int64
+	if err := json.Unmarshal(data, &delta); err != nil {
+		return 0, fmt.Errorf("cannot decode increment patch value: %w", err)
+	}
+	if delta == nil {
+		return 0, fmt.Errorf("cannot decode increment patch: value is missing")
+	}
+
+	return *delta, nil
 }
 
 func decodePatchValue(source encodedPatchValue) (PatchValue, error) {

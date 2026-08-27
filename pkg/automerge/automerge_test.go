@@ -342,3 +342,14 @@ func TestLoad_InvalidDocument(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, errors.Is(err, automerge.ErrClosed))
 }
+
+func TestDocument_MergeRejectsNilSource(t *testing.T) {
+	t.Parallel()
+
+	document, err := automerge.New(actor(15))
+	require.NoError(t, err)
+	closeDocument(t, document)
+
+	_, err = document.Merge(nil)
+	require.ErrorIs(t, err, automerge.ErrNilDocument)
+}
