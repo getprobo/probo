@@ -7,7 +7,9 @@
   "sources": {
     "apps/console/src/pages/iam": "iam",
     "apps/console/src": "core",
-    "apps/compliance-portal/src": "complianceportal"
+    "apps/compliance-portal/src": "complianceportal",
+    "apps/employee-portal/src/pages/iam": "employeeportaliam",
+    "apps/employee-portal/src": "employeeportal"
   },
   "projects": {
     "core": {
@@ -50,6 +52,38 @@
         "Datetime": "string",
         "CursorKey": "string",
         "EmailAddr": "string"
+      }
+    },
+    "employeeportal": {
+      "schema": "pkg/server/api/console/v1/schema.graphql",
+      "language": "typescript",
+      "noFutureProofEnums": true,
+      "output": "apps/employee-portal/src/__generated__/core",
+      "relativizeJsModulePaths": false,
+      "customScalarTypes": {
+        "Datetime": "string",
+        "GID": "string",
+        "CursorKey": "string",
+        "Duration": "string",
+        "BigInt": "number",
+        "EmailAddr": "string"
+      }
+    },
+    "employeeportaliam": {
+      "schema": "pkg/server/api/connect/v1/schema.graphql",
+      "language": "typescript",
+      "noFutureProofEnums": true,
+      "output": "apps/employee-portal/src/__generated__/iam",
+      "relativizeJsModulePaths": false,
+      "customScalarTypes": {
+        "Datetime": "string",
+        "GID": "string",
+        "CursorKey": "string",
+        "Duration": "string",
+        "BigInt": "number",
+        "EmailAddr": "string",
+        "OAuth2Scope": "string",
+        "Map": "Record<string, string>"
       }
     }
   }

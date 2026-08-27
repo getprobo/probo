@@ -18,21 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useParams } from "react-router";
+import { createInstance } from "i18next";
+import { initReactI18next } from "react-i18next";
 
-export default function HomePage() {
-  const { organizationId } = useParams();
+import { DEFAULT_NAMESPACE, globBackend } from "./backend";
+import { resolveLanguage, SUPPORTED_LANGUAGES } from "./resolveLanguage";
 
-  return (
-    <main className="flex flex-col items-start gap-2 p-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
-    </main>
-  );
-}
+// Build a dedicated instance rather than mutating i18next's global singleton.
+// Initializing it through initReactI18next still registers it as the instance
+// react-i18next's hooks read from, so no I18nextProvider is required.
+const i18n = createInstance();
+
+void i18n
+  .use(globBackend)
+  .use(initReactI18next)
+  .init({
+    lng: resolveLanguage(),
+    fallbackLng: "en-US",
+    supportedLngs: SUPPORTED_LANGUAGES,
+    load: "currentOnly",
+    defaultNS: DEFAULT_NAMESPACE,
+    fallbackNS: DEFAULT_NAMESPACE,
+    ns: [DEFAULT_NAMESPACE],
+    interpolation: { escapeValue: false },
+    react: { useSuspense: true },
+  });
+
+export { i18n };

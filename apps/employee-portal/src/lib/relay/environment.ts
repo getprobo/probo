@@ -18,21 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useParams } from "react-router";
+import { makeFetchQuery } from "@probo/relay";
+import { Environment, Network, RecordSource, Store } from "relay-runtime";
 
-export default function HomePage() {
-  const { organizationId } = useParams();
+export const coreEnvironment = new Environment({
+  configName: "employeeportal",
+  network: Network.create(makeFetchQuery("/api/console/v1/graphql")),
+  store: new Store(new RecordSource(), {
+    queryCacheExpirationTime: 1 * 60 * 1000,
+    gcReleaseBufferSize: 20,
+  }),
+});
 
-  return (
-    <main className="flex flex-col items-start gap-2 p-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
-    </main>
-  );
-}
+export const iamEnvironment = new Environment({
+  configName: "employeeportaliam",
+  network: Network.create(makeFetchQuery("/api/connect/v1/graphql")),
+  store: new Store(new RecordSource(), {
+    queryCacheExpirationTime: 1 * 60 * 1000,
+    gcReleaseBufferSize: 20,
+  }),
+});

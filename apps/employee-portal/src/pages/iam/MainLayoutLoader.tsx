@@ -18,21 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-export default function HomePage() {
+import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
+import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
+
+import { MainLayout, mainLayoutQuery } from "./MainLayout";
+import { MainLayoutSkeleton } from "./MainLayoutSkeleton";
+
+function MainLayoutQueryLoader() {
   const { organizationId } = useParams();
+  const [queryRef, loadQuery] = useQueryLoader<MainLayoutQuery>(mainLayoutQuery);
+
+  useEffect(() => {
+    if (organizationId == null) {
+      return;
+    }
+    loadQuery({ organizationId });
+  }, [organizationId, loadQuery]);
+
+  if (organizationId == null) {
+    throw new Error("organizationId is required");
+  }
+
+  if (!queryRef) {
+    return <MainLayoutSkeleton />;
+  }
 
   return (
-    <main className="flex flex-col items-start gap-2 p-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
-    </main>
+    <Suspense fallback={<MainLayoutSkeleton />}>
+      <MainLayout queryRef={queryRef} />
+    </Suspense>
+  );
+}
+
+export default function MainLayoutLoader() {
+  return (
+    <IAMRelayProvider>
+      <MainLayoutQueryLoader />
+    </IAMRelayProvider>
   );
 }

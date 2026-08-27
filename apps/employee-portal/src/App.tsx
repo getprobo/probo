@@ -18,10 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
+import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
 import { RouterProvider } from "react-router";
 
-import { router } from "./routes";
+import { RelayProvider } from "#/lib/relay/RelayProvider";
+import { router } from "#/routes";
 
 export function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <Toast.Provider>
+      <RelayProvider>
+        <RouterProvider router={router} />
+      </RelayProvider>
+      <Toaster />
+    </Toast.Provider>
+  );
 }

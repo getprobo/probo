@@ -18,21 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useParams } from "react-router";
+import { tv } from "tailwind-variants/lite";
 
-export default function HomePage() {
-  const { organizationId } = useParams();
+// Employee Portal top bar. Slots are shared by the live TopBar and its
+// skeleton so the loading placeholder is structurally identical. Below lg
+// (<1024px) the brand shows logo only — name + tagline return at lg+.
+// justify-between keeps the user menu right-aligned.
+export const topBar = tv({
+  slots: {
+    bar: "flex h-14 items-center bg-sand-1 px-8 max-md:px-4",
+    inner: "flex w-full items-center justify-between gap-6 max-md:gap-3",
+    brand: "flex min-w-0 items-center gap-2",
+    brandText: "flex min-w-0 flex-col max-lg:hidden",
+    brandName: "truncate",
+    tagline: "truncate",
+    logo: "shrink-0",
+  },
+});
 
-  return (
-    <main className="flex flex-col items-start gap-2 p-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
-    </main>
-  );
-}
+// User-menu trigger. Radius matches v2 Button size 2 and Avatar `small`.
+export const topBarUserMenuTrigger = tv({
+  base: [
+    "flex h-8 items-center gap-2 rounded-2 py-1 pr-2.5 pl-1",
+    "cursor-pointer outline-none transition-colors select-none",
+    "hover:bg-sand-3 data-popup-open:bg-sand-3",
+    "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+  ],
+});

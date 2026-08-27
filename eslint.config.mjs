@@ -50,11 +50,11 @@ export default defineConfig([
     extends: [configs.relay],
   },
   {
-    // compliance-portal mutates through the awaitable useMutation bound in
-    // #/lib/relay/useMutation (over @probo/relay's createUseMutation), never
-    // react-relay's useMutation directly. Scoped to this app only: console
-    // still uses react-relay's useMutation.
-    files: ["apps/compliance-portal/**"],
+    // compliance-portal and employee-portal mutate through the awaitable
+    // useMutation bound in #/lib/relay/useMutation (over @probo/relay's
+    // createUseMutation), never react-relay's useMutation directly. Scoped
+    // to these apps: console still uses react-relay's useMutation.
+    files: ["apps/compliance-portal/**", "apps/employee-portal/**"],
     rules: {
       "no-restricted-imports": [
         "error",

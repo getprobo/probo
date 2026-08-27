@@ -436,7 +436,7 @@ pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceport
 
 .PHONY: @probo/employee-portal
 @probo/employee-portal: NODE_ENV=production
-@probo/employee-portal:
+@probo/employee-portal: relay
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 

@@ -23,6 +23,7 @@ import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
@@ -177,6 +178,9 @@ function fileStorageOriginFromEnv(env: Record<string, string>): string {
   return `${parsed.protocol}//${bucket}.${parsed.host}`;
 }
 
+// iam pages compile against connect; everything else against console.
+const iamFiles = /src[/\\]pages[/\\]iam[/\\]/;
+
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
   const envDir = fileURLToPath(new URL(".", import.meta.url));
@@ -190,7 +194,38 @@ export default defineConfig(({ mode, command }) => {
     // relative base (`./`) makes nested routes request assets from the
     // current path instead of /employee-portal/assets/.
     base: "/employee-portal/",
-    plugins: [react(), tailwindcss()],
+    // @vitejs/plugin-react@6 (Vite 8) no longer runs Babel, so the Relay
+    // tagged template transform is applied via @rolldown/plugin-babel. The
+    // iam pages and the rest of the app compile against separate schemas
+    // (connect vs console) and artifact directories.
+    plugins: [
+      react(),
+      babel({
+        exclude: [/[/\\]node_modules[/\\]/, /\0rolldown[/\\]runtime\.js/, iamFiles],
+        plugins: [
+          [
+            "relay",
+            {
+              eagerEsModules: true,
+              artifactDirectory: "src/__generated__/core",
+            },
+          ],
+        ],
+      }),
+      babel({
+        include: /src[/\\]pages[/\\]iam[/\\].*\.[jt]sx?(?:$|\?)/,
+        plugins: [
+          [
+            "relay",
+            {
+              eagerEsModules: true,
+              artifactDirectory: "src/__generated__/iam",
+            },
+          ],
+        ],
+      }),
+      tailwindcss(),
+    ],
     // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,

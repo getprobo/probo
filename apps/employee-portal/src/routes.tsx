@@ -22,10 +22,21 @@ import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { createBrowserRouter } from "react-router";
 
+import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
+import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
+
 const routes = [
   {
     path: ":organizationId",
-    Component: lazy(() => import("#/pages/HomePage")),
+    Fallback: MainLayoutSkeleton,
+    Component: lazy(() => import("#/pages/iam/MainLayoutLoader")),
+    ErrorBoundary: RootErrorBoundary,
+    children: [
+      {
+        index: true,
+        Component: lazy(() => import("#/pages/HomePage")),
+      },
+    ],
   },
   {
     path: "*",

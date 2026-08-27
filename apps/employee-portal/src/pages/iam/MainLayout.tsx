@@ -18,21 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useParams } from "react-router";
+import type { PreloadedQuery } from "react-relay";
+import { graphql, usePreloadedQuery } from "react-relay";
+import { Outlet } from "react-router";
 
-export default function HomePage() {
-  const { organizationId } = useParams();
+import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
+import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
+
+export const mainLayoutQuery = graphql`
+  query MainLayoutQuery($organizationId: ID!) @throwOnFieldError {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...TopBar_organization
+      }
+    }
+  }
+`;
+
+interface MainLayoutProps {
+  queryRef: PreloadedQuery<MainLayoutQuery>;
+}
+
+export function MainLayout({ queryRef }: MainLayoutProps) {
+  const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
+
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
 
   return (
-    <main className="flex flex-col items-start gap-2 p-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
-    </main>
+    <div className="flex min-h-dvh flex-col bg-sand-2">
+      <TopBar organizationKey={data.organization} />
+      <div className="flex flex-1 flex-col">
+        <Outlet />
+      </div>
+    </div>
   );
 }

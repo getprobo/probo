@@ -1,0 +1,26 @@
+{
+  "topBar": {
+    "tagline": "Employee Portal"
+  },
+  "userMenu": {
+    "apiKeys": "API Keys",
+    "oauthTokens": "OAuth tokens",
+    "switchToDarkMode": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode",
+    "help": "Help",
+    "signOut": "Sign out",
+    "signOutFailed": "Cannot sign out"
+  },
+  "common": {
+    "error": "Something went wrong"
+  },
+  "errors": {
+    "generic": {
+      "title": "Unable to load page",
+      "description": "We couldn't load this page. Try again, or contact support if the issue continues."
+    },
+    "actions": {
+      "tryAgain": "Try again"
+    }
+  }
+}

@@ -18,21 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useParams } from "react-router";
+import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-export default function HomePage() {
-  const { organizationId } = useParams();
+import { topBar, topBarUserMenuTrigger } from "./variants";
+
+// Loading placeholder paired with TopBar: reuses the same layout slots with
+// skeleton primitives. Imports no Relay / Base UI, so it renders instantly.
+export function TopBarSkeleton() {
+  const slots = topBar();
 
   return (
-    <main className="flex flex-col items-start gap-2 p-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
-    </main>
+    <div className={slots.bar()}>
+      <div className={slots.inner()}>
+        <div className={slots.brand()}>
+          <AvatarSkeleton size={2} radius="small" />
+          <span className={slots.brandText()}>
+            <TextSkeleton size={2} className={`w-24 ${slots.brandName()}`} />
+            <TextSkeleton size={1} className={`w-28 ${slots.tagline()}`} />
+          </span>
+        </div>
+
+        <div className={topBarUserMenuTrigger()}>
+          <AvatarSkeleton size={1} radius="small" />
+          <TextSkeleton size={2} className="w-20" />
+        </div>
+      </div>
+    </div>
   );
 }

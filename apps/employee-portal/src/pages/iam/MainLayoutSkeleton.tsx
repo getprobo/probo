@@ -18,21 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useParams } from "react-router";
+import { TopBarSkeleton } from "#/pages/iam/_components/TopBar/TopBarSkeleton";
 
-export default function HomePage() {
-  const { organizationId } = useParams();
-
+export function MainLayoutSkeleton() {
   return (
-    <main className="flex flex-col items-start gap-2 p-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
-    </main>
+    <div className="flex min-h-dvh flex-col bg-sand-2">
+      <TopBarSkeleton />
+      <div className="flex flex-1 flex-col" />
+    </div>
   );
 }
