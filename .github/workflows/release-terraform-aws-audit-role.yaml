@@ -1,0 +1,104 @@
+name: "Release terraform-aws-audit-role"
+
+on:
+  push:
+    tags:
+      - "terraform-aws-audit-role/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  github-release:
+    name: "github-release"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "write"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+        with:
+          fetch-depth: 0
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - uses: "hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e" # v4.0.1
+        with:
+          terraform_wrapper: false
+      - name: "Validate module version"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          MODULE_VERSION="$(tr -d '[:space:]' < contrib/terraform/aws-audit-role/VERSION)"
+          if [ "${MODULE_VERSION}" != "${VERSION}" ]; then
+            echo "VERSION (${MODULE_VERSION}) does not match tag (${VERSION})"
+            exit 1
+          fi
+      - name: "Check terraform formatting"
+        run: terraform fmt -check -recursive contrib/terraform/aws-audit-role
+      - name: "Package module"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          STAGE="$(mktemp -d)"
+          cp -R contrib/terraform/aws-audit-role/. "${STAGE}/"
+          cp LICENSE "${STAGE}/"
+          rm -rf "${STAGE}/.terraform" "${STAGE}/.terraform.lock.hcl"
+          (cd "${STAGE}" && zip -r "${GITHUB_WORKSPACE}/terraform-aws-audit-role-${VERSION}.zip" .)
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' contrib/terraform/aws-audit-role/CHANGELOG.md > release-notes.md
+          cat >> release-notes.md << EOF
+
+          ## Install
+
+          \`\`\`hcl
+          module "probo_audit" {
+            source = "github.com/getprobo/terraform-aws-audit-role?ref=v${VERSION}"
+          }
+          \`\`\`
+          EOF
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            terraform-aws-audit-role-*.zip
+
+  publish-module:
+    name: "publish-module"
+    needs: [github-release]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - name: "Update getprobo/terraform-aws-audit-role"
+        env:
+          TERRAFORM_MODULE_GITHUB_TOKEN: ${{ secrets.TERRAFORM_MODULE_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          MODULE_REPO="https://x-access-token:${TERRAFORM_MODULE_GITHUB_TOKEN}@github.com/getprobo/terraform-aws-audit-role.git"
+
+          git clone "${MODULE_REPO}" module-repo
+          cd module-repo
+          git checkout -B main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R "${GITHUB_WORKSPACE}/contrib/terraform/aws-audit-role/." .
+          cp "${GITHUB_WORKSPACE}/LICENSE" .
+          rm -rf .terraform .terraform.lock.hcl
+
+          git add -A
+          git commit -m "Release v${VERSION} from getprobo/probo@${GITHUB_SHA}"
+          git tag -a "v${VERSION}" -m "v${VERSION}"
+
+          git push origin HEAD:main
+          git push origin "v${VERSION}"

@@ -1,9 +1,9 @@
 # Release
 
-The repository ships nine independently-versioned tracks. Each has its own
-version source, its own `CHANGELOG.md`, its own tag pattern, and its own
-release workflow. Cutting a release means: bump the version, write a
-changelog entry, commit, tag, push.
+The repository ships eleven independently-versioned tracks. Each has its own
+version source, its own `CHANGELOG.md`, and its own tag pattern. Most have a
+release workflow that creates a GitHub Release. Cutting a release means:
+bump the version, write a changelog entry, commit, tag, push.
 
 | Track                   | Tag pattern                    | Entrypoint                       |
 | ----------------------- | ------------------------------ | -------------------------------- |
@@ -16,6 +16,8 @@ changelog entry, commit, tag, push.
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
 | `@probo/skills`         | `@probo/skills/v*`             | [skills.md](./skills.md)           |
 | Helm chart (`probo`)    | `helm/v*`                      | [helm.md](./helm.md)                   |
+| CloudFormation (`aws-audit-role`) | `cloudformation-aws-audit-role/v*` | [cloudformation-aws-audit-role.md](./cloudformation-aws-audit-role.md) |
+| Terraform (`aws-audit-role`) | `terraform-aws-audit-role/v*` | [terraform-aws-audit-role.md](./terraform-aws-audit-role.md) |
 
 When the user asks for a release **without specifying a track**, follow
 [Step 1](#1-decide-which-tracks-to-release) below to detect which tracks
@@ -84,11 +86,20 @@ git log $(git describe --tags --abbrev=0 --match='@probo/skills/v*')..HEAD --one
 # helm chart
 git log $(git describe --tags --abbrev=0 --match='helm/v*')..HEAD --oneline \
   -- contrib/helm
+
+# cloudformation aws-audit-role
+git log $(git describe --tags --abbrev=0 --match='cloudformation-aws-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/cloudformation/aws-audit-role
+
+# terraform aws-audit-role
+git log $(git describe --tags --abbrev=0 --match='terraform-aws-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/terraform/aws-audit-role
 ```
 
-If a track returns no commits, skip it. If all commits for a track are
-non-user-facing, skip it (and tell the user). For each remaining track,
-proceed with its entrypoint.
+If `git describe` fails because the track has no tag yet, the empty range
+lists every commit on that path (the first release). If a track returns no
+commits, skip it. If all commits for a track are non-user-facing, skip it
+(and tell the user). For each remaining track, proceed with its entrypoint.
 
 ## 2. Writing a changelog entry
 
