@@ -19,12 +19,15 @@
 // SOFTWARE.
 
 import type { PreloadedQuery } from "react-relay";
-import { graphql, usePreloadedQuery } from "react-relay";
+import { graphql, useFragment, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
+import type { MainLayout_organization$key } from "#/__generated__/iam/MainLayout_organization.graphql";
 import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
+import { ViewerIdentityProvider } from "#/pages/iam/_lib/ViewerIdentityContext";
 
 export const mainLayoutQuery = graphql`
   query MainLayoutQuery($organizationId: ID!) @throwOnFieldError {
@@ -32,6 +35,17 @@ export const mainLayoutQuery = graphql`
       __typename
       ... on Organization {
         ...TopBar_organization
+        ...MainLayout_organization
+      }
+    }
+  }
+`;
+
+const mainLayoutFragment = graphql`
+  fragment MainLayout_organization on Organization {
+    viewer @required(action: THROW) {
+      identity @required(action: THROW) {
+        fullName
       }
     }
   }
@@ -48,12 +62,21 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
     throw new NotFoundError("invalid type for organization node");
   }
 
+  const organization = useFragment<MainLayout_organization$key>(
+    mainLayoutFragment,
+    data.organization,
+  );
+
   return (
-    <div className="flex min-h-dvh flex-col bg-sand-2">
-      <TopBar organizationKey={data.organization} />
-      <div className="flex flex-1 flex-col">
-        <Outlet />
+    <ViewerIdentityProvider fullName={organization.viewer.identity.fullName}>
+      <div className="flex min-h-dvh flex-col bg-sand-2">
+        <TopBar organizationKey={data.organization} />
+        <RelayProvider>
+          <div className="flex flex-1 flex-col">
+            <Outlet />
+          </div>
+        </RelayProvider>
       </div>
-    </div>
+    </ViewerIdentityProvider>
   );
 }

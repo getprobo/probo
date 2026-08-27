@@ -26,6 +26,47 @@
       "continue": "Continue"
     }
   },
+  "homePage": {
+    "breadcrumb": "Home",
+    "welcome": "Welcome {{name}}.",
+    "welcomeFallback": "Welcome.",
+    "getStarted": {
+      "title": "Get started",
+      "description": "Complete the required steps to finish setting up your employee portal.",
+      "signatures": {
+        "count_one": "{{count}} document to sign",
+        "count_other": "{{count}} documents to sign",
+        "description": "Review and sign the document assigned to you.",
+        "action": "Sign"
+      },
+      "approvals": {
+        "count_one": "{{count}} document to approve",
+        "count_other": "{{count}} documents to approve",
+        "description": "Review and approve the document assigned to you.",
+        "action": "Approve"
+      }
+    },
+    "dashboard": {
+      "view": "View",
+      "allDone": "You're all done",
+      "signatures": {
+        "title": "Signatures",
+        "description": "Sign assigned documents.",
+        "empty": "Nothing to sign yet",
+        "pendingCount_one": "{{count}} document to sign",
+        "pendingCount_other": "{{count}} documents to sign",
+        "action": "Start signing"
+      },
+      "approvals": {
+        "title": "Approvals",
+        "description": "Review documents awaiting approval.",
+        "empty": "Nothing to approve yet",
+        "pendingCount_one": "{{count}} document to approve",
+        "pendingCount_other": "{{count}} documents to approve",
+        "action": "Start approving"
+      }
+    }
+  },
   "common": {
     "error": "Something went wrong"
   },

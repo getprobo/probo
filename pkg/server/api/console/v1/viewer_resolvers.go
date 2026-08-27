@@ -24,51 +24,20 @@ import (
 )
 
 // SignableDocuments is the resolver for the signableDocuments field.
-func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	scope, err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
-		Field:     coredata.DocumentOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	identity := authn.IdentityFromContext(ctx)
-
-	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
-
-	documentsPage, err := r.probo.Documents.ListByOrganizationID(ctx, scope, organizationID, cursor, documentFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization signable documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	employeeDocuments := make([]*types.EmployeeDocument, len(documentsPage.Data))
-	for i, doc := range documentsPage.Data {
-		employeeDocuments[i] = &types.EmployeeDocument{
-			ID:           doc.ID,
-			Title:        doc.Title,
-			DocumentType: doc.DocumentType,
-			CreatedAt:    doc.CreatedAt,
-			UpdatedAt:    doc.UpdatedAt,
-			FilterMode:   types.EmployeeDocumentFilterModeSignature,
-		}
-	}
-
-	page := page.NewPage(employeeDocuments, documentsPage.Cursor)
-
-	return types.NewEmployeeDocumentConnection(page), nil
+func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.EmployeeDocumentFilter) (*types.EmployeeDocumentConnection, error) {
+	return r.listEmployeeDocuments(
+		ctx,
+		organizationID,
+		first,
+		after,
+		last,
+		before,
+		orderBy,
+		filter,
+		coredata.EmployeeFilterModeSignature,
+		types.EmployeeDocumentFilterModeSignature,
+		"cannot list organization signable documents",
+	)
 }
 
 // SignableDocument is the resolver for the signableDocument field.
@@ -104,51 +73,20 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 }
 
 // ApprovableDocuments is the resolver for the approvableDocuments field.
-func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	scope, err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
-		Field:     coredata.DocumentOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	identity := authn.IdentityFromContext(ctx)
-
-	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
-
-	documentsPage, err := r.probo.Documents.ListByOrganizationID(ctx, scope, organizationID, cursor, documentFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization approvable documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	employeeDocuments := make([]*types.EmployeeDocument, len(documentsPage.Data))
-	for i, doc := range documentsPage.Data {
-		employeeDocuments[i] = &types.EmployeeDocument{
-			ID:           doc.ID,
-			Title:        doc.Title,
-			DocumentType: doc.DocumentType,
-			CreatedAt:    doc.CreatedAt,
-			UpdatedAt:    doc.UpdatedAt,
-			FilterMode:   types.EmployeeDocumentFilterModeApproval,
-		}
-	}
-
-	page := page.NewPage(employeeDocuments, documentsPage.Cursor)
-
-	return types.NewEmployeeDocumentConnection(page), nil
+func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.EmployeeDocumentFilter) (*types.EmployeeDocumentConnection, error) {
+	return r.listEmployeeDocuments(
+		ctx,
+		organizationID,
+		first,
+		after,
+		last,
+		before,
+		orderBy,
+		filter,
+		coredata.EmployeeFilterModeApproval,
+		types.EmployeeDocumentFilterModeApproval,
+		"cannot list organization approvable documents",
+	)
 }
 
 // ApprovableDocument is the resolver for the approvableDocument field.

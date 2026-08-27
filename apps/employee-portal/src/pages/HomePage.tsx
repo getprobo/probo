@@ -20,19 +20,127 @@
 
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useParams } from "react-router";
 
-export default function HomePage() {
+import type { HomePageQuery } from "#/__generated__/core/HomePageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
+import { DashboardCard } from "#/pages/_components/DashboardCard";
+import { GetStartedCard } from "#/pages/_components/GetStartedCard";
+import { useViewerFirstName } from "#/pages/iam/_lib/ViewerIdentityContext";
+
+export const homePageQuery = graphql`
+  query HomePageQuery($organizationId: ID!) @throwOnFieldError {
+    viewer @required(action: THROW) {
+      pendingSignatures: signableDocuments(
+        organizationId: $organizationId
+        first: 1
+        filter: { signed: false }
+      ) @required(action: THROW) {
+        totalCount
+        edges @required(action: THROW) {
+          node @required(action: THROW) {
+            id
+          }
+        }
+      }
+      completedSignatures: signableDocuments(
+        organizationId: $organizationId
+        filter: { signed: true }
+      ) @required(action: THROW) {
+        totalCount
+      }
+      pendingApprovals: approvableDocuments(
+        organizationId: $organizationId
+        first: 1
+        filter: { approvalStates: [PENDING] }
+      ) @required(action: THROW) {
+        totalCount
+        edges @required(action: THROW) {
+          node @required(action: THROW) {
+            id
+          }
+        }
+      }
+      completedApprovals: approvableDocuments(
+        organizationId: $organizationId
+        filter: { approvalStates: [APPROVED, REJECTED] }
+      ) @required(action: THROW) {
+        totalCount
+      }
+    }
+  }
+`;
+
+interface HomePageProps {
+  queryRef: PreloadedQuery<HomePageQuery>;
+}
+
+export function HomePage({ queryRef }: HomePageProps) {
+  const { t } = useTranslation();
   const { organizationId } = useParams();
+  const firstName = useViewerFirstName();
+  const { viewer } = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
+
+  if (organizationId == null) {
+    throw new NotFoundError("organizationId is required");
+  }
+
+  const pendingSignatureCount = viewer.pendingSignatures.totalCount;
+  const completedSignatureCount = viewer.completedSignatures.totalCount;
+  const pendingApprovalCount = viewer.pendingApprovals.totalCount;
+  const completedApprovalCount = viewer.completedApprovals.totalCount;
+
+  const firstPendingSignatureId = viewer.pendingSignatures.edges[0]?.node.id ?? null;
+  const firstPendingApprovalId = viewer.pendingApprovals.edges[0]?.node.id ?? null;
+
+  const showGetStarted
+    = (pendingSignatureCount > 0 || pendingApprovalCount > 0)
+      && completedSignatureCount === 0
+      && completedApprovalCount === 0;
+
+  const welcome = firstName === ""
+    ? t("homePage.welcomeFallback")
+    : t("homePage.welcome", { name: firstName });
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col items-start gap-2 px-8 py-8">
-      <Heading level={1} size={7} weight="medium" highContrast>
-        Employee portal
-      </Heading>
-      <Text size={2} color="neutral">
-        {organizationId}
-      </Text>
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
+      <div className="flex flex-col gap-4">
+        <Text size={2} weight="medium" color="neutral">
+          {t("homePage.breadcrumb")}
+        </Text>
+        <Heading level={1} size={7} weight="medium" highContrast>
+          {welcome}
+        </Heading>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {showGetStarted && (
+          <div className="md:row-span-2">
+            <GetStartedCard
+              organizationId={organizationId}
+              pendingSignatureCount={pendingSignatureCount}
+              pendingApprovalCount={pendingApprovalCount}
+              firstPendingSignatureId={firstPendingSignatureId}
+              firstPendingApprovalId={firstPendingApprovalId}
+            />
+          </div>
+        )}
+        <DashboardCard
+          kind="signatures"
+          organizationId={organizationId}
+          pendingCount={pendingSignatureCount}
+          completedCount={completedSignatureCount}
+          firstPendingId={firstPendingSignatureId}
+        />
+        <DashboardCard
+          kind="approvals"
+          organizationId={organizationId}
+          pendingCount={pendingApprovalCount}
+          completedCount={completedApprovalCount}
+          firstPendingId={firstPendingApprovalId}
+        />
+      </div>
     </main>
   );
 }

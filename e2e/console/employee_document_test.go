@@ -1158,3 +1158,205 @@ func TestEmployeeDocument_ApprovableDocumentNestedFields(t *testing.T) {
 		require.NoError(t, err, "owner approver should use exportEmployeeDocumentVersionPDF")
 	})
 }
+
+func TestEmployeeDocument_SignableDocumentsFilter(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	orgID := employee.GetOrganizationID().String()
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	ownerProfileID := owner.GetProfileID().String()
+	_, err := owner.Do(`
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				approvalQuorum { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"minor":       false,
+			"documentId":  docID,
+			"approverIds": []string{ownerProfileID},
+			"changelog":   "Test changelog",
+		},
+	})
+	require.NoError(t, err)
+
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
+
+	_, err = owner.Do(`
+		mutation($input: RequestSignatureInput!) {
+			requestSignature(input: $input) {
+				documentVersionSignatureEdge {
+					node { id }
+				}
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": publishedVersionID,
+			"signatoryId":       employee.GetProfileID().String(),
+		},
+	})
+	require.NoError(t, err)
+
+	pending, pendingID := querySignableDocumentCounts(t, employee, orgID, false)
+	assert.Equal(t, 1, pending)
+	assert.Equal(t, docID, pendingID)
+
+	completed, _ := querySignableDocumentCounts(t, employee, orgID, true)
+	assert.Equal(t, 0, completed)
+
+	signDocumentVersion(t, employee, publishedVersionID)
+
+	pending, _ = querySignableDocumentCounts(t, employee, orgID, false)
+	assert.Equal(t, 0, pending)
+
+	completed, _ = querySignableDocumentCounts(t, employee, orgID, true)
+	assert.Equal(t, 1, completed)
+
+	var countOnly struct {
+		Viewer struct {
+			SignableDocuments struct {
+				TotalCount int `json:"totalCount"`
+			} `json:"signableDocuments"`
+		} `json:"viewer"`
+	}
+
+	err = employee.Execute(`
+		query($orgId: ID!) {
+			viewer {
+				signableDocuments(organizationId: $orgId, filter: { signed: true }) {
+					totalCount
+				}
+			}
+		}
+	`, map[string]any{"orgId": orgID}, &countOnly)
+	require.NoError(t, err)
+	assert.Equal(t, 1, countOnly.Viewer.SignableDocuments.TotalCount)
+}
+
+func TestEmployeeDocument_ApprovableDocumentsFilter(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	orgID := employee.GetOrganizationID().String()
+
+	docID, _ := createTestDocument(t, owner)
+	requestDocumentApproval(t, owner, docID, []string{employee.GetProfileID().String()})
+
+	pending, pendingID := queryApprovableDocumentCounts(t, employee, orgID, []string{"PENDING"})
+	assert.Equal(t, 1, pending)
+	assert.Equal(t, docID, pendingID)
+
+	completed, _ := queryApprovableDocumentCounts(t, employee, orgID, []string{"APPROVED", "REJECTED"})
+	assert.Equal(t, 0, completed)
+
+	_, err := employee.Do(`
+		mutation($input: ApproveDocumentVersionInput!) {
+			approveDocumentVersion(input: $input) {
+				approvalDecision { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": latestDocumentVersionID(t, owner, docID),
+		},
+	})
+	require.NoError(t, err)
+
+	pending, _ = queryApprovableDocumentCounts(t, employee, orgID, []string{"PENDING"})
+	assert.Equal(t, 0, pending)
+
+	completed, _ = queryApprovableDocumentCounts(t, employee, orgID, []string{"APPROVED", "REJECTED"})
+	assert.Equal(t, 1, completed)
+}
+
+func querySignableDocumentCounts(
+	t *testing.T,
+	client *testutil.Client,
+	orgID string,
+	signed bool,
+) (totalCount int, firstID string) {
+	t.Helper()
+
+	var result struct {
+		Viewer struct {
+			SignableDocuments struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"signableDocuments"`
+		} `json:"viewer"`
+	}
+
+	err := client.Execute(`
+		query($orgId: ID!, $signed: Boolean) {
+			viewer {
+				signableDocuments(organizationId: $orgId, first: 1, filter: { signed: $signed }) {
+					totalCount
+					edges { node { id } }
+				}
+			}
+		}
+	`, map[string]any{"orgId": orgID, "signed": signed}, &result)
+	require.NoError(t, err)
+
+	if len(result.Viewer.SignableDocuments.Edges) > 0 {
+		firstID = result.Viewer.SignableDocuments.Edges[0].Node.ID
+	}
+
+	return result.Viewer.SignableDocuments.TotalCount, firstID
+}
+
+func queryApprovableDocumentCounts(
+	t *testing.T,
+	client *testutil.Client,
+	orgID string,
+	states []string,
+) (totalCount int, firstID string) {
+	t.Helper()
+
+	var result struct {
+		Viewer struct {
+			ApprovableDocuments struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"approvableDocuments"`
+		} `json:"viewer"`
+	}
+
+	err := client.Execute(`
+		query($orgId: ID!, $states: [DocumentVersionApprovalDecisionState!]) {
+			viewer {
+				approvableDocuments(
+					organizationId: $orgId
+					first: 1
+					filter: { approvalStates: $states }
+				) {
+					totalCount
+					edges { node { id } }
+				}
+			}
+		}
+	`, map[string]any{"orgId": orgID, "states": states}, &result)
+	require.NoError(t, err)
+
+	if len(result.Viewer.ApprovableDocuments.Edges) > 0 {
+		firstID = result.Viewer.ApprovableDocuments.Edges[0].Node.ID
+	}
+
+	return result.Viewer.ApprovableDocuments.TotalCount, firstID
+}

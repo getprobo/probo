@@ -24,6 +24,7 @@ import { createBrowserRouter } from "react-router";
 
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
+import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
 
@@ -45,7 +46,8 @@ const routes = [
         children: [
           {
             index: true,
-            Component: lazy(() => import("#/pages/HomePage")),
+            Fallback: HomePageSkeleton,
+            Component: lazy(() => import("#/pages/HomePageLoader")),
           },
           {
             path: "*",

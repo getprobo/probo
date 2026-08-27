@@ -37,9 +37,19 @@ const (
 )
 
 type (
+	EmployeeDocumentFilter struct {
+		Signed         *bool
+		ApprovalStates []coredata.DocumentVersionApprovalDecisionState
+	}
+
 	EmployeeDocumentConnection struct {
-		Edges    []*EmployeeDocumentEdge
-		PageInfo *PageInfo
+		TotalCount int
+		Edges      []*EmployeeDocumentEdge
+		PageInfo   *PageInfo
+
+		Resolver any
+		ParentID gid.GID
+		Filters  *coredata.DocumentFilter
 	}
 
 	EmployeeDocumentEdge struct {
@@ -84,6 +94,9 @@ type (
 
 func NewEmployeeDocumentConnection(
 	p *page.Page[*EmployeeDocument, coredata.DocumentOrderField],
+	parentType any,
+	parentID gid.GID,
+	filters *coredata.DocumentFilter,
 ) *EmployeeDocumentConnection {
 	var edges = make([]*EmployeeDocumentEdge, len(p.Data))
 
@@ -94,6 +107,9 @@ func NewEmployeeDocumentConnection(
 	return &EmployeeDocumentConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
+		Resolver: parentType,
+		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

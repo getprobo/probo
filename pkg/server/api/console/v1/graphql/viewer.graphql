@@ -8,6 +8,7 @@ type Viewer {
         last: Int
         before: CursorKey
         orderBy: DocumentOrder
+        filter: EmployeeDocumentFilter
     ): EmployeeDocumentConnection! @goField(forceResolver: true)
 
     signableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
@@ -19,6 +20,7 @@ type Viewer {
         last: Int
         before: CursorKey
         orderBy: DocumentOrder
+        filter: EmployeeDocumentFilter
     ): EmployeeDocumentConnection! @goField(forceResolver: true)
 
     approvableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
