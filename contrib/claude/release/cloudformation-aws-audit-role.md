@@ -13,6 +13,7 @@ After confirming commits below, follow the
 - **Changelog**: `contrib/cloudformation/aws-audit-role/CHANGELOG.md`
 - **Files to stage**: `contrib/cloudformation/aws-audit-role/VERSION`,
   `contrib/cloudformation/aws-audit-role/CHANGELOG.md`
+- **Workflow**: `.github/workflows/release-cloudformation-aws-audit-role.yaml`
 - **Path filter**: `contrib/cloudformation/aws-audit-role`
 
 ## Detect commits
@@ -27,19 +28,10 @@ on the path. If empty or non-user-facing only, do not release this track.
 
 ## Notes
 
-This track has no GitHub Actions workflow. After the common tag push,
-extract the changelog entry and create the GitHub Release by hand. Do not
-upload the template to S3 as part of the release.
+CI checks that `VERSION` matches the tag, then creates a GitHub Release on
+this repository with `aws-audit-role-<version>.yaml`. It does not upload
+the template to S3 and does not push to another repository.
 
-```shell
-VERSION="$(cat contrib/cloudformation/aws-audit-role/VERSION)"
-awk -v ver="$VERSION" '
-  /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
-  found
-' contrib/cloudformation/aws-audit-role/CHANGELOG.md > release-notes.md
-
-gh release create "cloudformation-aws-audit-role/v${VERSION}" \
-  --title "cloudformation-aws-audit-role/v${VERSION}" \
-  --notes-file release-notes.md \
-  contrib/cloudformation/aws-audit-role/aws-audit-role.yaml
-```
+Download the template from the GitHub Release and create a stack from it
+(`--template-body`, or upload in the console). CloudFormation quick-create
+needs a public S3 `templateURL` and is a separate publishing step.
