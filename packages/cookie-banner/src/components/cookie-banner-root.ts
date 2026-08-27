@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { resolveBooleanAttribute } from "../attributes";
 import { CookieBannerClient } from "../client";
 import { resolveGcmEnabled } from "../integrations";
 import { resolveLayout } from "../layout";
@@ -146,12 +147,14 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
 
     const lang = this.getAttribute("lang") ?? undefined;
     const gcmEnabled = resolveGcmEnabled(this.getAttribute("gcm-enabled"));
+    const gpcRecord = resolveBooleanAttribute(this.getAttribute("gpc-record"), "gpc-record");
 
     this._client = new CookieBannerClient({
       bannerId,
       baseUrl,
       lang,
       integrations: [{ name: "gcm", enabled: gcmEnabled }],
+      gpcRecord,
     });
 
     try {
