@@ -29,7 +29,10 @@ on the path. If empty or non-user-facing only, do not release this track.
 
 CI checks that `VERSION` matches the tag, runs `terraform fmt -check`,
 creates a GitHub Release on this repository, then copies the module into
-`getprobo/terraform-aws-audit-role` and tags `v<version>` there.
+`getprobo/terraform-aws-audit-role` and tags `v<version>` there. The
+module-repo commit is created with GitHub's `createCommitOnBranch`
+mutation (same as the Homebrew tap) so it satisfies the org signed-commit
+rule; a local `git commit` plus `git push` would be rejected.
 
 Consumers can pin either source:
 
@@ -52,4 +55,5 @@ Registry is a separate step after the first `v*` tag exists there.
    fills it.
 2. Add the Actions secret `TERRAFORM_MODULE_GITHUB_TOKEN` on
    `getprobo/probo` with `contents:write` on the module repository (same
-   idea as `HOMEBREW_TAP_GITHUB_TOKEN` for the Homebrew tap).
+   idea as `HOMEBREW_TAP_GITHUB_TOKEN` for the Homebrew tap). The
+   workflow uses that token with `gh api`, not `git push`.

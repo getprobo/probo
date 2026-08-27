@@ -79,26 +79,96 @@ jobs:
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - name: "Update getprobo/terraform-aws-audit-role"
         env:
-          TERRAFORM_MODULE_GITHUB_TOKEN: ${{ secrets.TERRAFORM_MODULE_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TERRAFORM_MODULE_GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME##*/v}"
-          MODULE_REPO="https://x-access-token:${TERRAFORM_MODULE_GITHUB_TOKEN}@github.com/getprobo/terraform-aws-audit-role.git"
+          REPO="getprobo/terraform-aws-audit-role"
+          HEADLINE="Release v${VERSION} from getprobo/probo@${GITHUB_SHA}"
 
-          git clone "${MODULE_REPO}" module-repo
-          cd module-repo
-          git checkout -B main
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if gh api "repos/${REPO}/git/ref/tags/v${VERSION}" >/dev/null 2>&1; then
+            echo "tag v${VERSION} already exists; skipping"
+            exit 0
+          fi
 
-          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -R "${GITHUB_WORKSPACE}/contrib/terraform/aws-audit-role/." .
-          cp "${GITHUB_WORKSPACE}/LICENSE" .
-          rm -rf .terraform .terraform.lock.hcl
+          STAGE="$(mktemp -d)"
+          cp -R "${GITHUB_WORKSPACE}/contrib/terraform/aws-audit-role/." "${STAGE}/"
+          cp "${GITHUB_WORKSPACE}/LICENSE" "${STAGE}/"
+          rm -rf "${STAGE}/.terraform" "${STAGE}/.terraform.lock.hcl"
 
-          git add -A
-          git commit -m "Release v${VERSION} from getprobo/probo@${GITHUB_SHA}"
-          git tag -a "v${VERSION}" -m "v${VERSION}"
+          HEAD_OID=$(gh api "repos/${REPO}/git/ref/heads/main" --jq '.object.sha')
+          TREE_SHA=$(gh api "repos/${REPO}/git/commits/${HEAD_OID}" --jq '.tree.sha')
+          TREE_JSON=$(gh api "repos/${REPO}/git/trees/${TREE_SHA}?recursive=1")
+          if [ "$(jq -r '.truncated' <<<"${TREE_JSON}")" = "true" ]; then
+            echo "module repo tree is truncated; refusing to sync" >&2
+            exit 1
+          fi
+          EXISTING=$(jq -c '[.tree[] | select(.type=="blob") | .path]' <<<"${TREE_JSON}")
 
-          git push origin HEAD:main
-          git push origin "v${VERSION}"
+          ADDITIONS='[]'
+          while IFS= read -r -d '' file; do
+            rel="${file#./}"
+            contents=$(base64 -w0 "${STAGE}/${rel}")
+            ADDITIONS=$(jq -c --arg path "${rel}" --arg contents "${contents}" \
+              '. + [{path: $path, contents: $contents}]' <<<"${ADDITIONS}")
+          done < <(cd "${STAGE}" && find . -type f -print0)
+
+          DELETIONS=$(jq -c --argjson existing "${EXISTING}" --argjson additions "${ADDITIONS}" '
+            ($additions | map(.path)) as $keep
+            | ($existing - $keep)
+            | map({path: .})
+          ')
+
+          ERR="$(mktemp)"
+          set +e
+          RESPONSE=$(gh api graphql -f query='
+            mutation($headline: String!, $oid: GitObjectID!, $additions: [FileAddition!]!, $deletions: [FileDeletion!]!) {
+              createCommitOnBranch(input: {
+                branch: {
+                  repositoryNameWithOwner: "getprobo/terraform-aws-audit-role"
+                  branchName: "main"
+                }
+                message: { headline: $headline }
+                expectedHeadOid: $oid
+                fileChanges: {
+                  additions: $additions
+                  deletions: $deletions
+                }
+              }) {
+                commit { oid url }
+              }
+            }' \
+            -f headline="${HEADLINE}" \
+            -f oid="${HEAD_OID}" \
+            -F additions="${ADDITIONS}" \
+            -F deletions="${DELETIONS}" 2>"${ERR}")
+          STATUS=$?
+          set -e
+
+          if [ "${STATUS}" -ne 0 ]; then
+            MSG="$(jq -r '.errors[0].message // empty' <<<"${RESPONSE}" 2>/dev/null || true)"
+            if [[ "${MSG}" == *"empty commit"* ]] || grep -qi "empty commit" "${ERR}"; then
+              COMMIT_OID="${HEAD_OID}"
+            else
+              cat "${ERR}" >&2
+              printf '%s\n' "${RESPONSE}" >&2
+              exit 1
+            fi
+          else
+            COMMIT_OID=$(jq -r '.data.createCommitOnBranch.commit.oid' <<<"${RESPONSE}")
+            if [ -z "${COMMIT_OID}" ] || [ "${COMMIT_OID}" = "null" ]; then
+              printf '%s\n' "${RESPONSE}" >&2
+              exit 1
+            fi
+            echo "created ${COMMIT_OID}"
+          fi
+
+          TAG_SHA=$(gh api "repos/${REPO}/git/tags" \
+            -f tag="v${VERSION}" \
+            -f message="v${VERSION}" \
+            -f type="commit" \
+            -f object="${COMMIT_OID}" \
+            --jq '.sha')
+          gh api "repos/${REPO}/git/refs" \
+            -f ref="refs/tags/v${VERSION}" \
+            -f sha="${TAG_SHA}"
