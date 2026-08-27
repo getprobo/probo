@@ -1167,42 +1167,8 @@ func TestEmployeeDocument_SignableDocumentsFilter(t *testing.T) {
 	orgID := employee.GetOrganizationID().String()
 
 	docID, _ := createTestDocument(t, owner)
-	approveTestDocument(t, owner, docID)
-
-	ownerProfileID := owner.GetProfileID().String()
-	_, err := owner.Do(`
-		mutation($input: PublishDocumentInput!) {
-			publishDocument(input: $input) {
-				approvalQuorum { id }
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"minor":       false,
-			"documentId":  docID,
-			"approverIds": []string{ownerProfileID},
-			"changelog":   "Test changelog",
-		},
-	})
-	require.NoError(t, err)
-
-	publishedVersionID := latestDocumentVersionID(t, owner, docID)
-
-	_, err = owner.Do(`
-		mutation($input: RequestSignatureInput!) {
-			requestSignature(input: $input) {
-				documentVersionSignatureEdge {
-					node { id }
-				}
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"documentVersionId": publishedVersionID,
-			"signatoryId":       employee.GetProfileID().String(),
-		},
-	})
-	require.NoError(t, err)
+	publishedVersionID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, publishedVersionID, employee.GetProfileID().String())
 
 	pending, pendingID := querySignableDocumentCounts(t, employee, orgID, false)
 	assert.Equal(t, 1, pending)
@@ -1227,7 +1193,7 @@ func TestEmployeeDocument_SignableDocumentsFilter(t *testing.T) {
 		} `json:"viewer"`
 	}
 
-	err = employee.Execute(`
+	err := employee.Execute(`
 		query($orgId: ID!) {
 			viewer {
 				signableDocuments(organizationId: $orgId, filter: { signed: true }) {
