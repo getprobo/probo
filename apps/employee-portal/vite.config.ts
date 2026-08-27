@@ -77,6 +77,14 @@ function appOriginFromEnv(env: Record<string, string>): string {
 
 const defaultAWSRegion = "us-east-2";
 
+function proxyTo(target: string) {
+  return {
+    target,
+    changeOrigin: true,
+    ws: true,
+  };
+}
+
 function envBool(value: string | undefined, fallback: boolean): boolean {
   if (value == null || value.trim() === "") {
     return fallback;
@@ -247,6 +255,18 @@ export default defineConfig(({ mode, command }) => {
           target: "http://localhost:8080",
           changeOrigin: true,
         },
+        // Console Vite on 5173. /auth and /me HTML then load /src, /@vite,
+        // and prebundled deps from this same origin.
+        "/auth": proxyTo("http://localhost:5173"),
+        "/me": proxyTo("http://localhost:5173"),
+        "/src": proxyTo("http://localhost:5173"),
+        "/@vite": proxyTo("http://localhost:5173"),
+        "/@react-refresh": proxyTo("http://localhost:5173"),
+        "/@id": proxyTo("http://localhost:5173"),
+        "/@fs": proxyTo("http://localhost:5173"),
+        "/node_modules": proxyTo("http://localhost:5173"),
+        "/scripts": proxyTo("http://localhost:5173"),
+        "/favicons": proxyTo("http://localhost:5173"),
       },
     },
     resolve: {
