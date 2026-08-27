@@ -24,9 +24,11 @@ import { createBrowserRouter } from "react-router";
 
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
+import { approvalsRoutes } from "#/pages/approvals/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
+import { signaturesRoutes } from "#/pages/signatures/routes";
 
 const routes = [
   {
@@ -49,6 +51,8 @@ const routes = [
             Fallback: HomePageSkeleton,
             Component: lazy(() => import("#/pages/HomePageLoader")),
           },
+          ...signaturesRoutes,
+          ...approvalsRoutes,
           {
             path: "*",
             Component: lazy(() => import("#/pages/NotFoundPage")),

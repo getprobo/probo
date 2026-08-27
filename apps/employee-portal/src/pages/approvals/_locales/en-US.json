@@ -1,0 +1,26 @@
+{
+  "title": "Approvals",
+  "breadcrumb": "Approvals",
+  "pending": {
+    "heading": "Waiting for your approval ({{count}})",
+    "summaryTitle_one": "{{count}} document to approve",
+    "summaryTitle_other": "{{count}} documents to approve",
+    "summaryDescription": "Review and approve the documents required to complete your employee setup.",
+    "action": "Start approving",
+    "itemAction": "Approve"
+  },
+  "history": {
+    "heading": "Approved ({{count}})"
+  },
+  "empty": {
+    "none": {
+      "title": "No approval requests yet",
+      "description": "Documents that need your approval will appear here."
+    },
+    "allDone": {
+      "title": "You're all done",
+      "description": "You're up to date. Previously approved documents are listed below."
+    }
+  },
+  "loadMore": "Show more"
+}
