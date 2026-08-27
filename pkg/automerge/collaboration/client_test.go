@@ -79,7 +79,7 @@ func (h *clientServerHarness) pump() {
 	toClient := serverOut
 	var toServer [][]byte
 
-	for round := 0; round < 50; round++ {
+	for range 50 {
 		var nextToServer [][]byte
 
 		for _, frame := range toClient {

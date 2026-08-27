@@ -25,6 +25,7 @@
 
 import { cbor } from "@automerge/automerge-repo";
 import { Buffer } from "node:buffer";
+import process from "node:process";
 
 // The presence envelope marker key (PRESENCE_MESSAGE_MARKER in the upstream
 // source). It is a stable protocol constant; the package does not export the

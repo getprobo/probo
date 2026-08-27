@@ -20,6 +20,8 @@
 
 package collaboration
 
+import "slices"
+
 import "fmt"
 
 // ProtocolV1 is the only automerge-repo WebSocket protocol version this package
@@ -167,13 +169,7 @@ func DecodeJoinFrame(data []byte) (JoinFrame, error) {
 
 // SupportsV1 reports whether the join frame offers ProtocolV1.
 func (f JoinFrame) SupportsV1() bool {
-	for _, version := range f.SupportedProtocolVersions {
-		if version == ProtocolV1 {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(f.SupportedProtocolVersions, ProtocolV1)
 }
 
 // DecodePeerFrame decodes and validates a server peer frame.
