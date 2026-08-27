@@ -34,7 +34,7 @@ use automerge::{
 
 struct State {
     doc: AutoCommit,
-    objects: Vec<ObjId>,
+    objects: Vec<Option<ObjId>>,
     sync_states: Vec<Option<SyncState>>,
     output: Vec<u8>,
     error: String,
@@ -44,7 +44,7 @@ impl State {
     fn new() -> Self {
         Self {
             doc: AutoCommit::new(),
-            objects: vec![ROOT],
+            objects: vec![Some(ROOT)],
             sync_states: Vec::new(),
             output: Vec::new(),
             error: String::new(),
@@ -54,7 +54,7 @@ impl State {
     fn reset(&mut self, doc: AutoCommit) {
         self.doc = doc;
         self.objects.clear();
-        self.objects.push(ROOT);
+        self.objects.push(Some(ROOT));
         self.sync_states.clear();
         self.output.clear();
         self.error.clear();
@@ -63,6 +63,7 @@ impl State {
     fn object(&self, handle: u32) -> Result<ObjId, String> {
         self.objects
             .get(handle as usize)
+            .and_then(Option::as_ref)
             .cloned()
             .ok_or_else(|| format!("invalid object handle {handle}"))
     }
@@ -70,7 +71,7 @@ impl State {
     fn push_object(&mut self, object: ObjId) -> Result<u32, String> {
         let handle =
             u32::try_from(self.objects.len()).map_err(|_| "too many object handles".to_owned())?;
-        self.objects.push(object);
+        self.objects.push(Some(object));
         Ok(handle)
     }
 
@@ -1269,11 +1270,7 @@ pub extern "C" fn am_text_splice(
 }
 
 #[no_mangle]
-pub extern "C" fn am_text_update(
-    object_handle: u32,
-    value_pointer: u32,
-    value_length: u32,
-) -> i32 {
+pub extern "C" fn am_text_update(object_handle: u32, value_pointer: u32, value_length: u32) -> i32 {
     let value = match input_string(value_pointer, value_length) {
         Ok(value) => value,
         Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
@@ -1354,9 +1351,7 @@ fn spans_from_json(value: &serde_json::Value) -> Result<Vec<Span>, String> {
     Ok(spans)
 }
 
-fn hydrate_from_json(
-    value: &serde_json::Value,
-) -> Result<automerge::hydrate::Value, String> {
+fn hydrate_from_json(value: &serde_json::Value) -> Result<automerge::hydrate::Value, String> {
     use automerge::hydrate::Value as HydrateValue;
 
     match value {
@@ -1373,9 +1368,9 @@ fn hydrate_from_json(
                 Err("unsupported JSON number".to_owned())
             }
         }
-        serde_json::Value::String(value) => {
-            Ok(HydrateValue::Scalar(ScalarValue::Str(value.as_str().into())))
-        }
+        serde_json::Value::String(value) => Ok(HydrateValue::Scalar(ScalarValue::Str(
+            value.as_str().into(),
+        ))),
         serde_json::Value::Array(items) => {
             let mut values = Vec::with_capacity(items.len());
             for item in items {
@@ -1396,7 +1391,10 @@ fn hydrate_from_json(
 fn config_from_json(value: &serde_json::Value) -> Result<UpdateSpansConfig, String> {
     let mut config = UpdateSpansConfig::default();
 
-    if let Some(default) = value.get("defaultExpand").and_then(serde_json::Value::as_str) {
+    if let Some(default) = value
+        .get("defaultExpand")
+        .and_then(serde_json::Value::as_str)
+    {
         config.default_expand = expand_from_str(default)?;
     }
 
@@ -1986,8 +1984,15 @@ pub extern "C" fn am_rollback() -> i64 {
         let mut state = state.borrow_mut();
         match i64::try_from(state.doc.rollback()) {
             Ok(cancelled) => {
-                state.objects.clear();
-                state.objects.push(ROOT);
+                let State { doc, objects, .. } = &mut *state;
+                for object in objects.iter_mut().skip(1) {
+                    if object
+                        .as_ref()
+                        .is_some_and(|object| doc.object_type(object).is_err())
+                    {
+                        *object = None;
+                    }
+                }
                 state.error.clear();
                 cancelled
             }
@@ -2033,9 +2038,8 @@ pub extern "C" fn am_isolate(pointer: u32, length: u32) -> i32 {
         match ChangeHash::try_from(chunk) {
             Ok(hash) => heads.push(hash),
             Err(error) => {
-                return STATE.with(|state| {
-                    state.borrow_mut().fail(format!("invalid head: {error}"))
-                });
+                return STATE
+                    .with(|state| state.borrow_mut().fail(format!("invalid head: {error}")));
             }
         }
     }

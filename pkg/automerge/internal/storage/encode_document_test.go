@@ -21,6 +21,8 @@
 package storage
 
 import (
+	"encoding/binary"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,32 +36,33 @@ func storedOperationOrder(t *testing.T, data []byte) []opset.OpID {
 	t.Helper()
 
 	r := &reader{data: data}
+	budget := &decodeBudget{}
 
-	chunk, err := decodeChunk(r)
+	chunk, err := decodeChunk(r, budget, true)
 	require.NoError(t, err)
 	require.Equal(t, opset.ChunkDocument, chunk.kind)
 
 	content := &reader{data: chunk.content}
 
-	actors, err := decodeActorArray(content, true)
+	actors, err := decodeActorArray(content, true, budget)
 	require.NoError(t, err)
 
-	_, err = decodeHashArray(content, true)
+	_, err = decodeHashArray(content, true, budget)
 	require.NoError(t, err)
 
-	changeMetadata, err := parseColumnMetadata(content, true)
+	changeMetadata, err := parseColumnMetadata(content, true, budget)
 	require.NoError(t, err)
 
-	operationMetadata, err := parseColumnMetadata(content, true)
+	operationMetadata, err := parseColumnMetadata(content, true, budget)
 	require.NoError(t, err)
 
-	_, err = readColumns(content, changeMetadata)
+	_, err = readColumns(content, changeMetadata, budget)
 	require.NoError(t, err)
 
-	operationColumns, err := readColumns(content, operationMetadata)
+	operationColumns, err := readColumns(content, operationMetadata, budget)
 	require.NoError(t, err)
 
-	operations, _, err := decodeOperations(operationColumns, actors, false, nil)
+	operations, _, err := decodeOperations(operationColumns, actors, false, nil, &decodeBudget{})
 	require.NoError(t, err)
 
 	order := make([]opset.OpID, len(operations))
@@ -117,4 +120,106 @@ func TestEncodeDocument_RoundTripsThroughDecode(t *testing.T) {
 		assert.Equal(t, expected.Message, actual.Message, "change %d message", i)
 		assert.Equal(t, expected.Time, actual.Time, "change %d time", i)
 	}
+}
+
+func TestEncodeDocument_RejectsDependencyCycle(t *testing.T) {
+	t.Parallel()
+
+	first := opset.ChangeHash{1}
+	second := opset.ChangeHash{2}
+	document := &opset.Document{
+		Changes: []opset.Change{
+			{Hash: &first, Sequence: 1, Dependencies: []opset.ChangeHash{second}},
+			{Hash: &second, Sequence: 1, Dependencies: []opset.ChangeHash{first}},
+		},
+	}
+
+	_, err := EncodeDocument(document, nil, false)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cycle")
+}
+
+func TestEncodeDocument_RejectsValuesOutsideUint32Domain(t *testing.T) {
+	t.Parallel()
+
+	hash := opset.ChangeHash{1}
+	document := &opset.Document{
+		Changes: []opset.Change{
+			{
+				Hash:     &hash,
+				Sequence: uint64(math.MaxUint32) + 1,
+			},
+		},
+	}
+
+	_, err := EncodeDocument(document, nil, false)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "uint32")
+}
+
+func TestEncodeDocument_NonByteExtraReconstructsChangeHash(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	property := "value"
+	identifier := opset.OpID{Actor: actor, Counter: 1}
+	change := opset.Change{
+		Actor:      actor,
+		Sequence:   1,
+		StartOp:    1,
+		MaxOp:      1,
+		Extra:      &opset.Scalar{Type: opset.ScalarString, String: "extra"},
+		ExtraBytes: []byte("extra"),
+		Operations: []opset.Operation{
+			{
+				ID:     identifier,
+				Object: opset.RootObject(),
+				Key:    opset.Key{Property: &property},
+				Action: opset.ActionSet,
+				Value:  &opset.Scalar{Type: opset.ScalarString, String: "value"},
+			},
+		},
+	}
+
+	_, err = EncodeChange(&change)
+	require.NoError(t, err)
+
+	document := &opset.Document{
+		Heads:   []opset.ChangeHash{*change.Hash},
+		Changes: []opset.Change{change},
+	}
+	encoded, err := EncodeDocument(document, []opset.OpID{identifier}, false)
+	require.NoError(t, err)
+
+	decoded, err := Decode(encoded)
+	require.NoError(t, err)
+	require.Len(t, decoded.Changes, 1)
+	assert.Equal(t, change.Hash, decoded.Changes[0].Hash)
+	assert.Equal(t, []byte("extra"), decoded.Changes[0].ExtraBytes)
+	require.NotNil(t, decoded.Changes[0].Extra)
+	assert.Equal(t, opset.ScalarString, decoded.Changes[0].Extra.Type)
+}
+
+func TestDocumentChangeOrder_HandlesDeepGraphIteratively(t *testing.T) {
+	t.Parallel()
+
+	const count = 100_000
+
+	hashes := make([]opset.ChangeHash, count)
+	changes := make([]opset.Change, count)
+	for i := range changes {
+		binary.LittleEndian.PutUint64(hashes[i][:], uint64(i+1))
+		changes[i].Hash = &hashes[i]
+		if i > 0 {
+			changes[i].Dependencies = []opset.ChangeHash{hashes[i-1]}
+		}
+	}
+
+	ordered, err := documentChangeOrder(&opset.Document{Changes: changes})
+	require.NoError(t, err)
+	require.Len(t, ordered, count)
+	assert.Equal(t, hashes[0], *ordered[0].Hash)
+	assert.Equal(t, hashes[count-1], *ordered[count-1].Hash)
 }

@@ -24,8 +24,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"go.probo.inc/probo/pkg/automerge/internal/opset"
+	"math"
 	"slices"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 // assembleChunk frames a chunk body: the magic bytes, the first four bytes of
@@ -73,6 +75,10 @@ func assembleChunk(kind opset.ChunkType, body []byte) []byte {
 // because the decoder inflates any column whose specification carries the
 // compressed bit.
 func EncodeDocument(document *opset.Document, order []opset.OpID, compress bool) ([]byte, error) {
+	if err := validateSnapshotEncodeDomain(document); err != nil {
+		return nil, err
+	}
+
 	changes, err := documentChangeOrder(document)
 	if err != nil {
 		return nil, err
@@ -144,6 +150,67 @@ func EncodeDocument(document *opset.Document, order []opset.OpID, compress bool)
 	return assembleChunk(opset.ChunkDocument, body), nil
 }
 
+func validateSnapshotEncodeDomain(document *opset.Document) error {
+	checkCounter := func(name string, counter uint64) error {
+		if counter > math.MaxUint32 {
+			return fmt.Errorf("%s %d exceeds snapshot uint32 domain", name, counter)
+		}
+
+		return nil
+	}
+
+	for i := range document.Changes {
+		change := &document.Changes[i]
+		if change.Hash == nil {
+			return fmt.Errorf("change %d has no hash", i)
+		}
+		if change.Sequence == 0 {
+			return fmt.Errorf("change %d sequence is zero", i)
+		}
+		if err := checkCounter(fmt.Sprintf("change %d sequence", i), change.Sequence); err != nil {
+			return err
+		}
+		if err := checkCounter(fmt.Sprintf("change %d maxOp", i), change.MaxOp); err != nil {
+			return err
+		}
+
+		for j, operation := range change.Operations {
+			if operation.ID.Counter == 0 {
+				return fmt.Errorf("operation %d:%d counter is zero", i, j)
+			}
+			if err := checkCounter(fmt.Sprintf("operation %d:%d counter", i, j), operation.ID.Counter); err != nil {
+				return err
+			}
+			if !operation.Object.IsRoot {
+				if err := checkCounter(
+					fmt.Sprintf("operation %d:%d object counter", i, j),
+					operation.Object.OpID.Counter,
+				); err != nil {
+					return err
+				}
+			}
+			if operation.Key.Element != nil {
+				if err := checkCounter(
+					fmt.Sprintf("operation %d:%d key counter", i, j),
+					operation.Key.Element.Counter,
+				); err != nil {
+					return err
+				}
+			}
+			for k, predecessor := range operation.Predecessors {
+				if err := checkCounter(
+					fmt.Sprintf("operation %d:%d predecessor %d counter", i, j, k),
+					predecessor.Counter,
+				); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // documentChangeOrder returns the changes in dependency order. A snapshot may
 // legally store them in any order, but writing ancestors first keeps the index
 // references pointing backwards, which is what every other implementation emits
@@ -157,42 +224,62 @@ func documentChangeOrder(document *opset.Document) ([]*opset.Change, error) {
 	}
 
 	ordered := make([]*opset.Change, 0, len(document.Changes))
-	placed := make(map[opset.ChangeHash]struct{}, len(document.Changes))
+	const (
+		visiting uint8 = 1
+		visited  uint8 = 2
+	)
 
-	var place func(*opset.Change) error
+	states := make(map[opset.ChangeHash]uint8, len(document.Changes))
 
-	place = func(change *opset.Change) error {
-		if _, ok := placed[*change.Hash]; ok {
-			return nil
+	type traversalFrame struct {
+		change         *opset.Change
+		nextDependency int
+	}
+	stack := make([]traversalFrame, 0, len(document.Changes))
+
+	for i := range document.Changes {
+		root := &document.Changes[i]
+		if states[*root.Hash] == visited {
+			continue
 		}
 
-		// Claim the change before descending so a cycle is reported rather than
-		// followed forever.
-		placed[*change.Hash] = struct{}{}
+		states[*root.Hash] = visiting
+		stack = append(stack, traversalFrame{change: root})
 
-		for _, dependency := range change.Dependencies {
+		for len(stack) > 0 {
+			frame := &stack[len(stack)-1]
+			if frame.nextDependency >= len(frame.change.Dependencies) {
+				ordered = append(ordered, frame.change)
+				states[*frame.change.Hash] = visited
+				stack = stack[:len(stack)-1]
+
+				continue
+			}
+
+			dependency := frame.change.Dependencies[frame.nextDependency]
+			frame.nextDependency++
+
 			parent, ok := byHash[dependency]
 			if !ok {
-				return fmt.Errorf(
+				return nil, fmt.Errorf(
 					"change %s depends on %s which the history does not hold",
-					change.Hash,
+					frame.change.Hash,
 					dependency,
 				)
 			}
 
-			if err := place(parent); err != nil {
-				return err
+			switch states[dependency] {
+			case visiting:
+				return nil, fmt.Errorf(
+					"change dependency graph contains a cycle at %s",
+					parent.Hash,
+				)
+			case visited:
+				continue
+			default:
+				states[dependency] = visiting
+				stack = append(stack, traversalFrame{change: parent})
 			}
-		}
-
-		ordered = append(ordered, change)
-
-		return nil
-	}
-
-	for i := range document.Changes {
-		if err := place(&document.Changes[i]); err != nil {
-			return nil, err
 		}
 	}
 
@@ -429,12 +516,12 @@ func encodeDocumentChangeColumns(
 // stores. A change chunk keeps the payload as trailing bytes, so the two forms
 // have to be reconciled in whichever direction carries the value.
 func changeExtra(change *opset.Change) *opset.Scalar {
-	if len(change.ExtraBytes) > 0 {
-		return &opset.Scalar{Type: opset.ScalarBytes, Bytes: change.ExtraBytes}
-	}
-
 	if change.Extra != nil {
 		return change.Extra
+	}
+
+	if len(change.ExtraBytes) > 0 {
+		return &opset.Scalar{Type: opset.ScalarBytes, Bytes: change.ExtraBytes}
 	}
 
 	// The payload is a byte string even when a change carries none, so an absent
