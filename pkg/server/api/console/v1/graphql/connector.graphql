@@ -118,6 +118,8 @@ enum ConnectorProvider
     CAL_COM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalCom")
     CALENDLY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalendly")
+    RIPPLING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRippling")
 }
 
 enum ConnectorProtocol
