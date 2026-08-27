@@ -41,6 +41,7 @@ export interface DashboardCardProps {
   pendingCount: number;
   completedCount: number;
   firstPendingId: string | null;
+  wash?: boolean;
 }
 
 export function DashboardCard({
@@ -49,9 +50,10 @@ export function DashboardCard({
   pendingCount,
   completedCount,
   firstPendingId,
+  wash = false,
 }: DashboardCardProps) {
   const { t } = useTranslation();
-  const slots = dashboardCard();
+  const slots = dashboardCard({ wash });
 
   const listPath = kind === "signatures"
     ? `/${organizationId}/signatures`
@@ -68,6 +70,7 @@ export function DashboardCard({
 
   return (
     <Card variant="soft" padding="none" size={3} className={slots.frame()}>
+      <div className={slots.wash()} />
       <div className={slots.header()}>
         <Icon className={slots.icon()} />
         <div className={slots.copy()}>
@@ -123,7 +126,7 @@ function DashboardCardBody({
     return (
       <div className={slots.empty()}>
         <TrayIcon className={slots.emptyIcon()} />
-        <Text size={2} weight="medium" color="current" className={slots.description()}>
+        <Text size={2} weight="medium" color="current" className={slots.emptyLabel()}>
           {t(`homePage.dashboard.${kind}.empty`)}
         </Text>
       </div>
@@ -134,7 +137,7 @@ function DashboardCardBody({
     return (
       <div className={slots.empty()}>
         <CheckIcon className={slots.emptyIcon()} />
-        <Text size={2} weight="medium" color="current" className={slots.description()}>
+        <Text size={2} weight="medium" color="current" className={slots.emptyLabel()}>
           {t("homePage.dashboard.allDone")}
         </Text>
       </div>

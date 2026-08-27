@@ -81,19 +81,21 @@ export function GetStartedCard({
           </Text>
         </div>
       </div>
-      <div className={slots.steps()}>
-        {steps.map((step, index) => (
-          <GetStartedStep
-            key={step.key}
-            index={index + 1}
-            title={step.title}
-            description={step.description}
-            actionLabel={step.actionLabel}
-            to={step.to}
-            tone={index === 0 ? "current" : "upcoming"}
-          />
-        ))}
-      </div>
+      {steps.length > 0 && (
+        <div className={slots.steps()}>
+          {steps.map((step, index) => (
+            <GetStartedStep
+              key={step.key}
+              index={index + 1}
+              title={step.title}
+              description={step.description}
+              actionLabel={step.actionLabel}
+              to={step.to}
+              tone={index === 0 ? "current" : "upcoming"}
+            />
+          ))}
+        </div>
+      )}
     </Card>
   );
 }

@@ -66,7 +66,7 @@ export const dashboardCard = tv({
   slots: {
     frame: "relative flex h-[300px] flex-col gap-8 overflow-hidden p-8",
     wash: [
-      "pointer-events-none absolute inset-x-0 bottom-0 h-3/5",
+      "pointer-events-none absolute inset-x-0 bottom-0 z-0 h-3/5",
       "bg-[radial-gradient(ellipse_85%_55%_at_50%_100%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
       "mask-[linear-gradient(to_top,black_0%,black_40%,transparent_100%)]",
     ],
@@ -79,5 +79,16 @@ export const dashboardCard = tv({
     empty: "flex flex-col items-center gap-6",
     emptyIcon: "size-8 text-sand-a9",
     emptyLabel: "text-sand-9",
+  },
+  variants: {
+    wash: {
+      true: {},
+      false: {
+        wash: "hidden",
+      },
+    },
+  },
+  defaultVariants: {
+    wash: false,
   },
 });

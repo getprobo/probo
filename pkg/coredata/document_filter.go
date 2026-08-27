@@ -186,10 +186,11 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		"employee_signed":                         f.employeeSigned,
 		"employee_approval_states":                employeeApprovalStates,
 		"document_version_signature_state_signed": DocumentVersionSignatureStateSigned,
-		"document_types":                          documentTypes,
-		"classifications":                         classifications,
-		"write_modes":                             writeModes,
-		"document_status":                         status,
+		"document_version_approval_decision_state_pending": DocumentVersionApprovalDecisionStatePending,
+		"document_types":  documentTypes,
+		"classifications": classifications,
+		"write_modes":     writeModes,
+		"document_status": status,
 	}
 }
 
@@ -265,7 +266,17 @@ func (f *DocumentFilter) SQLFragment() string {
 	AND
 	CASE
 		WHEN @employee_signed::boolean IS NULL THEN TRUE
-		ELSE (
+		WHEN @employee_signed::boolean IS TRUE THEN
+			EXISTS (
+				SELECT 1
+				FROM document_versions dv
+				INNER JOIN document_version_signatures dvs ON dvs.document_version_id = dv.id
+				INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+				WHERE dv.document_id = documents.id
+					AND p.identity_id = @employee_identity_id::text
+					AND dvs.state::text = @document_version_signature_state_signed::text
+			)
+		ELSE NOT (
 			EXISTS (
 				WITH max_signable_major AS (
 					SELECT MAX(dv.major) AS major
@@ -284,12 +295,12 @@ func (f *DocumentFilter) SQLFragment() string {
 					AND p.identity_id = @employee_identity_id::text
 					AND dvs.state::text = @document_version_signature_state_signed::text
 			)
-		) = @employee_signed::boolean
+		)
 	END
 	AND
 	CASE
 		WHEN @employee_approval_states::text[] IS NULL THEN TRUE
-		ELSE (
+		WHEN @document_version_approval_decision_state_pending::text = ANY(@employee_approval_states::text[]) THEN (
 			SELECT dvad.state::text
 			FROM document_versions dv
 			INNER JOIN document_version_approval_quorums dvaq ON dvaq.version_id = dv.id
@@ -300,6 +311,16 @@ func (f *DocumentFilter) SQLFragment() string {
 			ORDER BY dv.major DESC, dvaq.created_at DESC
 			LIMIT 1
 		) = ANY(@employee_approval_states::text[])
+		ELSE EXISTS (
+			SELECT 1
+			FROM document_versions dv
+			INNER JOIN document_version_approval_quorums dvaq ON dvaq.version_id = dv.id
+			INNER JOIN document_version_approval_decisions dvad ON dvad.quorum_id = dvaq.id
+			INNER JOIN iam_membership_profiles p ON dvad.approver_id = p.id
+			WHERE dv.document_id = documents.id
+				AND p.identity_id = @employee_identity_id::text
+				AND dvad.state::text = ANY(@employee_approval_states::text[])
+		)
 	END
 	AND
 	CASE

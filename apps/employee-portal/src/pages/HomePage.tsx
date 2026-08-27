@@ -63,9 +63,9 @@ export const homePageQuery = graphql`
           }
         }
       }
-      completedApprovals: approvableDocuments(
+      approvedDocuments: approvableDocuments(
         organizationId: $organizationId
-        filter: { approvalStates: [APPROVED, REJECTED] }
+        filter: { approvalStates: [APPROVED] }
       ) @required(action: THROW) {
         totalCount
       }
@@ -88,17 +88,17 @@ export function HomePage({ queryRef }: HomePageProps) {
   }
 
   const pendingSignatureCount = viewer.pendingSignatures.totalCount;
-  const completedSignatureCount = viewer.completedSignatures.totalCount;
+  const signedCount = viewer.completedSignatures.totalCount;
   const pendingApprovalCount = viewer.pendingApprovals.totalCount;
-  const completedApprovalCount = viewer.completedApprovals.totalCount;
+  const approvedCount = viewer.approvedDocuments.totalCount;
 
   const firstPendingSignatureId = viewer.pendingSignatures.edges[0]?.node.id ?? null;
   const firstPendingApprovalId = viewer.pendingApprovals.edges[0]?.node.id ?? null;
 
   const showGetStarted
     = (pendingSignatureCount > 0 || pendingApprovalCount > 0)
-      && completedSignatureCount === 0
-      && completedApprovalCount === 0;
+      && signedCount === 0
+      && approvedCount === 0;
 
   const welcome = firstName === ""
     ? t("homePage.welcomeFallback")
@@ -130,15 +130,17 @@ export function HomePage({ queryRef }: HomePageProps) {
           kind="signatures"
           organizationId={organizationId}
           pendingCount={pendingSignatureCount}
-          completedCount={completedSignatureCount}
+          completedCount={signedCount}
           firstPendingId={firstPendingSignatureId}
+          wash={!showGetStarted && pendingSignatureCount > 0}
         />
         <DashboardCard
           kind="approvals"
           organizationId={organizationId}
           pendingCount={pendingApprovalCount}
-          completedCount={completedApprovalCount}
+          completedCount={approvedCount}
           firstPendingId={firstPendingApprovalId}
+          wash={!showGetStarted && pendingApprovalCount > 0}
         />
       </div>
     </main>
