@@ -56,6 +56,7 @@ func (r *viewerResolver) listEmployeeDocuments(
 	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, mode)
 	if filter != nil {
 		documentFilter.WithSigned(filter.Signed)
+
 		if len(filter.ApprovalStates) > 0 {
 			documentFilter.WithApprovalStates(filter.ApprovalStates)
 		}

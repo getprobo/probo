@@ -1277,6 +1277,72 @@ func TestEmployeeDocument_ApprovableDocumentsFilter(t *testing.T) {
 	assert.Equal(t, 1, completed)
 }
 
+func TestEmployeeDocument_SignableDocumentsFilter_LatestMajor(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	orgID := employee.GetOrganizationID().String()
+
+	docID, _ := createTestDocument(t, owner)
+	v1ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v1ID, employee.GetProfileID().String())
+	signDocumentVersion(t, employee, v1ID)
+
+	pending, _ := querySignableDocumentCounts(t, employee, orgID, false)
+	completed, _ := querySignableDocumentCounts(t, employee, orgID, true)
+	assert.Equal(t, 0, pending)
+	assert.Equal(t, 1, completed)
+
+	updateDocumentContent(t, owner, docID, "Updated content for v2")
+	v2ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v2ID, employee.GetProfileID().String())
+
+	pending, pendingID := querySignableDocumentCounts(t, employee, orgID, false)
+	completed, _ = querySignableDocumentCounts(t, employee, orgID, true)
+	assert.Equal(t, 1, pending)
+	assert.Equal(t, docID, pendingID)
+	assert.Equal(t, 0, completed)
+}
+
+func TestEmployeeDocument_ApprovableDocumentsFilter_LatestDecision(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	orgID := employee.GetOrganizationID().String()
+
+	docID, _ := createTestDocument(t, owner)
+	requestDocumentApproval(t, owner, docID, []string{employee.GetProfileID().String()})
+
+	_, err := employee.Do(`
+		mutation($input: ApproveDocumentVersionInput!) {
+			approveDocumentVersion(input: $input) {
+				approvalDecision { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": latestDocumentVersionID(t, owner, docID),
+		},
+	})
+	require.NoError(t, err)
+
+	pending, _ := queryApprovableDocumentCounts(t, employee, orgID, []string{"PENDING"})
+	completed, _ := queryApprovableDocumentCounts(t, employee, orgID, []string{"APPROVED"})
+	assert.Equal(t, 0, pending)
+	assert.Equal(t, 1, completed)
+
+	updateDocumentContent(t, owner, docID, "Updated content for v2")
+	requestDocumentApproval(t, owner, docID, []string{employee.GetProfileID().String()})
+
+	pending, pendingID := queryApprovableDocumentCounts(t, employee, orgID, []string{"PENDING"})
+	completed, _ = queryApprovableDocumentCounts(t, employee, orgID, []string{"APPROVED"})
+	assert.Equal(t, 1, pending)
+	assert.Equal(t, docID, pendingID)
+	assert.Equal(t, 0, completed)
+}
+
 func querySignableDocumentCounts(
 	t *testing.T,
 	client *testutil.Client,
