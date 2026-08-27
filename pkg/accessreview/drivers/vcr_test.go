@@ -39,7 +39,16 @@ var versionedClientHeaders = []string{"User-Agent", "X-Goog-Api-Client"}
 // the env var is non-empty the recorder runs in record mode, otherwise
 // it replays from the committed cassette. A BeforeSave hook strips the
 // Authorization header so tokens are never persisted.
-func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Recorder {
+//
+// Optional sanitizers run as further BeforeSave hooks, for a provider whose
+// live response carries real member identity. They must rewrite identity
+// only: status, headers and JSON shape are the contract under test.
+func newRecorder(
+	t *testing.T,
+	cassettePath string,
+	envVar string,
+	sanitizers ...func(*cassette.Interaction) error,
+) *recorder.Recorder {
 	t.Helper()
 
 	mode := recorder.ModeReplayOnly
@@ -47,8 +56,7 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		mode = recorder.ModeRecordOnly
 	}
 
-	rec, err := recorder.New(
-		cassettePath,
+	opts := []recorder.Option{
 		recorder.WithMode(mode),
 		recorder.WithSkipRequestLatency(true),
 		recorder.WithMatcher(cassette.NewDefaultMatcher(
@@ -72,7 +80,13 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 
 			return nil
 		}, recorder.BeforeSaveHook),
-	)
+	}
+
+	for _, sanitize := range sanitizers {
+		opts = append(opts, recorder.WithHook(sanitize, recorder.BeforeSaveHook))
+	}
+
+	rec, err := recorder.New(cassettePath, opts...)
 	if err != nil {
 		if mode == recorder.ModeReplayOnly {
 			t.Skipf("cassette not found (record with %s env var): %v", envVar, err)
