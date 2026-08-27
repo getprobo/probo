@@ -74,5 +74,6 @@ func (v *CompliancePortalAccessResourceKind) UnmarshalText(text []byte) error {
 	}
 
 	*v = val
+
 	return nil
 }

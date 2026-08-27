@@ -73,7 +73,7 @@ func (tcaof CompliancePortalAccessOrderField) Column() string {
 			SELECT COUNT(*)
 			FROM cp_document_accesses
 			WHERE compliance_portal_access_id = cp_accesses.id
-			AND status = 'REQUESTED'::compliance_portal_document_access_status
+			AND status = @status_requested::compliance_portal_document_access_status
 		)`
 	}
 

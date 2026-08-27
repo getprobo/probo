@@ -80,6 +80,7 @@
     },
     "sort": {
       "label": "Sort by",
+      "ariaLabel": "Sort by: {{value}}",
       "requests": "By request count",
       "joined": "By join date"
     },

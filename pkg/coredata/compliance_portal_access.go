@@ -387,7 +387,7 @@ SELECT
 		SELECT COUNT(*)
 		FROM cp_document_accesses
 		WHERE compliance_portal_access_id = cp_accesses.id
-		AND status = 'REQUESTED'::compliance_portal_document_access_status
+		AND status = @status_requested::compliance_portal_document_access_status
 	) AS pending_request_count
 FROM
 	cp_accesses
@@ -402,6 +402,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"compliance_portal_id": compliancePortalID,
+		"status_requested":     CompliancePortalDocumentAccessStatusRequested,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())

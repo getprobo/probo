@@ -51,7 +51,7 @@ export function CompliancePortalAccessListSort() {
               color="neutral"
               size={2}
               iconStart={<ArrowsDownUpIcon />}
-              aria-label={t("accessList.sort.label")}
+              aria-label={t("accessList.sort.ariaLabel", { value: t(`accessList.sort.${sort}`) })}
             >
               {t(`accessList.sort.${sort}`)}
             </Button>

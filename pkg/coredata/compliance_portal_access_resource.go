@@ -294,6 +294,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count compliance portal access resources: %w", err)

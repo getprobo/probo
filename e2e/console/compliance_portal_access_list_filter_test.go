@@ -132,6 +132,7 @@ func listFilteredAccessIDs(
 	t.Helper()
 
 	var result listAccessesResult
+
 	err := owner.Execute(
 		listCompliancePortalAccessesFilterQuery,
 		map[string]any{

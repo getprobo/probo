@@ -61,7 +61,7 @@ export default function CompliancePortalVisitorPageLoader() {
 
   return (
     <Suspense fallback={<CompliancePortalVisitorPageSkeleton />}>
-      <CompliancePortalVisitorPage queryRef={queryRef} />
+      <CompliancePortalVisitorPage key={accessId} queryRef={queryRef} />
     </Suspense>
   );
 }

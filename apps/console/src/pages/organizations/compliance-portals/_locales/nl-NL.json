@@ -58,6 +58,7 @@
     },
     "sort": {
       "label": "Sorteren op",
+      "ariaLabel": "Sorteren op: {{value}}",
       "requests": "Op aantal aanvragen",
       "joined": "Op aanmelddatum"
     },

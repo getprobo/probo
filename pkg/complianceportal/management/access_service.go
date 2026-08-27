@@ -207,8 +207,11 @@ func (s *Service) CountAccessResources(
 				return fmt.Errorf("cannot load compliance portal access: %w", err)
 			}
 
-			var resources coredata.CompliancePortalAccessResources
-			var err error
+			var (
+				resources coredata.CompliancePortalAccessResources
+				err       error
+			)
+
 			count, err = resources.CountByCompliancePortalAccessID(
 				ctx,
 				conn,
