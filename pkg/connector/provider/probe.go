@@ -520,6 +520,14 @@ func probeRailway(
 		return &CredentialRejectedError{StatusCode: resp.StatusCode}
 	}
 
+	// The errors-array rule below is Railway's documented rejection, and it
+	// only means that on a 2xx. Checked before the decode so an outage that
+	// answers with an HTML error page reports its status rather than a
+	// decode failure.
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("railway probe returned unexpected status %d", resp.StatusCode)
+	}
+
 	var parsed struct {
 		Data struct {
 			Me *struct {

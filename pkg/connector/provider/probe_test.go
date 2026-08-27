@@ -22,6 +22,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -393,11 +394,18 @@ func TestProbeRailway(t *testing.T) {
 		status     int
 		body       string
 		wantReject bool
+		// wantCredentialRejected separates a token Railway refused from an
+		// outage. Both are errors, but only the first may reach the caller as
+		// a credential rejection: reporting a 502 that way would tell a
+		// customer to reconnect a working token.
+		wantCredentialRejected bool
 	}{
-		{"valid token", http.StatusOK, `{"data":{"me":{"id":"u-1"}}}`, false},
-		{"rejected token (200 + errors)", http.StatusOK, `{"errors":[{"message":"Not Authorized"}],"data":null}`, true},
-		{"null me", http.StatusOK, `{"data":{"me":null}}`, true},
-		{"unauthorized status", http.StatusUnauthorized, ``, true},
+		{"valid token", http.StatusOK, `{"data":{"me":{"id":"u-1"}}}`, false, false},
+		{"rejected token (200 + errors)", http.StatusOK, `{"errors":[{"message":"Not Authorized"}],"data":null}`, true, true},
+		{"null me", http.StatusOK, `{"data":{"me":null}}`, true, true},
+		{"unauthorized status", http.StatusUnauthorized, ``, true, true},
+		{"upstream outage", http.StatusBadGateway, `<html>502 Bad Gateway</html>`, true, false},
+		{"rate limited", http.StatusTooManyRequests, `{"errors":[{"message":"rate limited"}]}`, true, false},
 	}
 
 	for _, tc := range cases {
@@ -422,11 +430,16 @@ func TestProbeRailway(t *testing.T) {
 			assert.Equal(t, "https://backboard.railway.com/graphql/v2", gotURL)
 			assert.Equal(t, "application/json", gotContentType)
 
-			if tc.wantReject {
-				require.Error(t, err)
-			} else {
+			if !tc.wantReject {
 				require.NoError(t, err)
+
+				return
 			}
+
+			require.Error(t, err)
+
+			_, isCredentialRejected := errors.AsType[*CredentialRejectedError](err)
+			assert.Equal(t, tc.wantCredentialRejected, isCredentialRejected)
 		})
 	}
 }

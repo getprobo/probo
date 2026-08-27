@@ -21,6 +21,7 @@
 package accessreview_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -97,6 +98,61 @@ func TestProbeFailureCodeIsSafeToLog(t *testing.T) {
 	assert.NotContains(t, awsCode, "123456789012")
 }
 
+func TestIsProviderVerdictSurvivesTypedNilURLError(t *testing.T) {
+	t.Parallel()
+
+	// errors.Is unwraps, and (*url.Error).Unwrap dereferences its receiver,
+	// so a typed nil must be caught before any sentinel comparison.
+	var urlErr *url.Error
+
+	assert.NotPanics(t, func() { accessreview.IsProviderVerdict(urlErr) })
+	assert.False(t, accessreview.IsProviderVerdict(urlErr))
+
+	// Also when it sits deeper in the chain, where the traversal would reach
+	// it rather than the screen catching it at the top.
+	wrapped := fmt.Errorf("cannot probe: %w", urlErr)
+
+	assert.NotPanics(t, func() { accessreview.IsProviderVerdict(wrapped) })
+	assert.False(t, accessreview.IsProviderVerdict(wrapped))
+	assert.NotPanics(t, func() { accessreview.ProbeFailureCode(wrapped) })
+
+	// A typed nil joined alongside a real error is still reachable by the
+	// traversal, so the screen follows multi-error children too.
+	joined := errors.Join(errors.New("other"), urlErr)
+
+	assert.NotPanics(t, func() { accessreview.IsProviderVerdict(joined) })
+	assert.NotPanics(t, func() { accessreview.ProbeFailureCode(joined) })
+}
+
+func TestIsProviderVerdictExcludesCancellationJoinedWithAVerdict(t *testing.T) {
+	t.Parallel()
+
+	// Our deadline expiring is never the provider's answer, so it wins over a
+	// rejection sharing the same chain rather than losing on check order.
+	joined := errors.Join(
+		&provider.CredentialRejectedError{StatusCode: 403},
+		context.Canceled,
+	)
+
+	assert.False(t, accessreview.IsProviderVerdict(joined))
+}
+
+func TestIsProviderVerdictStillClassifiesAnErrorWrappingNothing(t *testing.T) {
+	t.Parallel()
+
+	// A real error whose Unwrap returns nil must not be mistaken for a nil
+	// one, or the screen would suppress the classification it exists to guard.
+	verdict := accessreview.NewProbeError(coredata.ConnectorProviderLangfuse, nil)
+
+	assert.NotEqual(t, "none", accessreview.ProbeFailureCode(verdict))
+	assert.False(t, accessreview.IsProviderVerdict(verdict))
+
+	rejected := &provider.CredentialRejectedError{StatusCode: 403}
+
+	assert.True(t, accessreview.IsProviderVerdict(rejected))
+	assert.Equal(t, "credential_rejected_403", accessreview.ProbeFailureCode(rejected))
+}
+
 func TestProbeFailureCodeSurvivesTypedNil(t *testing.T) {
 	t.Parallel()
 
@@ -126,4 +182,18 @@ func TestIsProviderVerdict(t *testing.T) {
 	assert.False(t, accessreview.IsProviderVerdict(errors.New("cannot read crisp connector settings: unexpected end of JSON input")))
 	assert.False(t, accessreview.IsProviderVerdict(fmt.Errorf("cannot build probe URL: %w", errors.New("missing crisp website_id"))))
 	assert.False(t, accessreview.IsProviderVerdict(errors.New("cannot persist refreshed token: connection reset")))
+
+	// http.Client reports a cancelled or timed-out request as a *url.Error,
+	// but our deadline expiring is not the provider answering.
+	assert.False(t, accessreview.IsProviderVerdict(
+		&url.Error{Op: "Get", URL: "https://x.example", Err: context.Canceled},
+	))
+	assert.False(t, accessreview.IsProviderVerdict(
+		&url.Error{Op: "Get", URL: "https://x.example", Err: context.DeadlineExceeded},
+	))
+
+	// A URL we could not parse never left the process.
+	assert.False(t, accessreview.IsProviderVerdict(
+		&url.Error{Op: "parse", URL: "://bad", Err: errors.New("missing protocol scheme")},
+	))
 }
