@@ -33,7 +33,6 @@ const updateAccessMutation = graphql`
         id
         pendingRequestCount
         activeCount
-        ...CompliancePortalDocumentAccessList_access
       }
     }
   }

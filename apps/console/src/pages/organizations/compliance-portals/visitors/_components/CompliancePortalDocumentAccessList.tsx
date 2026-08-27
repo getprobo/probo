@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
 import { List } from "@probo/ui/src/v2/List/List";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
@@ -72,11 +73,16 @@ export function CompliancePortalDocumentAccessList({
   const { t } = useTranslation("organizations/compliance-portals");
   const { root, heading } = documentAccessList();
   const access = useFragment(accessFragment, accessKey);
-  const documentAccesses = access.resources.edges.map(edge =>
-    documentAccessInfoFromResource(edge.node),
-  );
   const [updateAccess, isUpdating] = useUpdateCompliancePortalAccess();
+  const [statusOverlay, setStatusOverlay] = useState(
+    () => new Map<string, CompliancePortalDocumentAccessStatus>(),
+  );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const documentAccesses = access.resources.edges.map((edge) => {
+    const item = documentAccessInfoFromResource(edge.node);
+    const status = statusOverlay.get(documentAccessKey(item));
+    return status === undefined ? item : { ...item, status };
+  });
   const selectedItems = documentAccesses.filter(item => selectedIds.has(documentAccessKey(item)));
 
   async function commit(updates: CompliancePortalDocumentAccessInfo[]) {
@@ -84,6 +90,15 @@ export function CompliancePortalDocumentAccessList({
       variables: {
         input: updateAccessInput(accessId, updates),
       },
+    });
+    setStatusOverlay((current) => {
+      const next = new Map(current);
+      for (const update of updates) {
+        if (update.status != null) {
+          next.set(documentAccessKey(update), update.status);
+        }
+      }
+      return next;
     });
   }
 
