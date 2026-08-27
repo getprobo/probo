@@ -25,27 +25,37 @@ import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useFragment } from "react-relay";
+import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalDocumentAccessList_access$key } from "#/__generated__/core/CompliancePortalDocumentAccessList_access.graphql";
+import type { CompliancePortalDocumentAccessListRefetchQuery } from "#/__generated__/core/CompliancePortalDocumentAccessListRefetchQuery.graphql";
 
 import {
   documentAccessInfoFromResource,
   documentAccessKey,
   updateAccessInput,
 } from "../_lib/documentAccessInfo";
+import {
+  documentAccessListGraphqlFilter,
+  useDocumentAccessListFilters,
+} from "../_lib/useDocumentAccessListFilters";
 import { useUpdateCompliancePortalAccess } from "../_lib/useUpdateCompliancePortalAccess";
 import { documentAccessList } from "../variants";
 
+import { CompliancePortalDocumentAccessListFilter } from "./CompliancePortalDocumentAccessListFilter";
 import { CompliancePortalDocumentAccessListItem } from "./CompliancePortalDocumentAccessListItem";
 import { CompliancePortalDocumentAccessSelectionBar } from "./CompliancePortalDocumentAccessSelectionBar";
 
 const accessFragment = graphql`
-  fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess {
-    resources(first: 100) {
+  fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess
+  @argumentDefinitions(
+    filter: { type: "CompliancePortalAccessResourceFilter", defaultValue: null }
+  )
+  @refetchable(queryName: "CompliancePortalDocumentAccessListRefetchQuery") {
+    resources(first: 100, filter: $filter) {
       edges {
         node {
           kind
@@ -71,8 +81,14 @@ export function CompliancePortalDocumentAccessList({
   canUpdate,
 }: CompliancePortalDocumentAccessListProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { root, heading } = documentAccessList();
-  const access = useFragment(accessFragment, accessKey);
+  const { status, hasActiveFilters } = useDocumentAccessListFilters();
+  const [isPending, startTransition] = useTransition();
+  const { root, heading, results } = documentAccessList({ pending: isPending });
+  const [access, refetch] = useRefetchableFragment<
+    CompliancePortalDocumentAccessListRefetchQuery,
+    CompliancePortalDocumentAccessList_access$key
+  >(accessFragment, accessKey);
+  const skipFirstRefetch = useRef(true);
   const [updateAccess, isUpdating] = useUpdateCompliancePortalAccess();
   const [statusOverlay, setStatusOverlay] = useState(
     () => new Map<string, CompliancePortalDocumentAccessStatus>(),
@@ -80,10 +96,26 @@ export function CompliancePortalDocumentAccessList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const documentAccesses = access.resources.edges.map((edge) => {
     const item = documentAccessInfoFromResource(edge.node);
-    const status = statusOverlay.get(documentAccessKey(item));
-    return status === undefined ? item : { ...item, status };
+    const overlayStatus = statusOverlay.get(documentAccessKey(item));
+    return overlayStatus === undefined ? item : { ...item, status: overlayStatus };
   });
   const selectedItems = documentAccesses.filter(item => selectedIds.has(documentAccessKey(item)));
+
+  useEffect(() => {
+    if (skipFirstRefetch.current) {
+      skipFirstRefetch.current = false;
+      return;
+    }
+
+    setStatusOverlay(new Map());
+    setSelectedIds(new Set());
+    startTransition(() => {
+      refetch(
+        { filter: documentAccessListGraphqlFilter(status) },
+        { fetchPolicy: "store-or-network" },
+      );
+    });
+  }, [status, refetch]);
 
   async function commit(updates: CompliancePortalDocumentAccessInfo[]) {
     await updateAccess({
@@ -125,41 +157,51 @@ export function CompliancePortalDocumentAccessList({
         <Heading level={3} size={3} weight="medium" highContrast>
           {t("documentAccessList.title")}
         </Heading>
+        <CompliancePortalDocumentAccessListFilter />
       </div>
-      <List>
-        {documentAccesses.length === 0
-          ? (
-              <ListItem>
-                <ListItemContent>
-                  <Text size={2} color="faint">{t("documentAccessList.empty")}</Text>
-                </ListItemContent>
-              </ListItem>
-            )
-          : documentAccesses.map((documentAccess) => {
-              const key = documentAccessKey(documentAccess);
-              return (
-                <CompliancePortalDocumentAccessListItem
-                  key={key}
-                  documentAccess={documentAccess}
-                  canUpdate={canUpdate}
-                  disabled={isUpdating}
-                  selected={canUpdate ? selectedIds.has(key) : undefined}
-                  onSelectedChange={canUpdate ? () => toggle(key) : undefined}
-                  onGrant={item => void commit([{ ...item, status: "GRANTED" }])}
-                  onRejectOrRevoke={item => void commit([item])}
-                />
-              );
-            })}
-      </List>
+      <div
+        aria-busy={isPending}
+        className={results()}
+      >
+        <List>
+          {documentAccesses.length === 0
+            ? (
+                <ListItem>
+                  <ListItemContent>
+                    <Text size={2} color="faint">
+                      {hasActiveFilters
+                        ? t("documentAccessList.emptyFilter")
+                        : t("documentAccessList.empty")}
+                    </Text>
+                  </ListItemContent>
+                </ListItem>
+              )
+            : documentAccesses.map((documentAccess) => {
+                const key = documentAccessKey(documentAccess);
+                return (
+                  <CompliancePortalDocumentAccessListItem
+                    key={key}
+                    documentAccess={documentAccess}
+                    canUpdate={canUpdate}
+                    disabled={isUpdating}
+                    selected={canUpdate ? selectedIds.has(key) : undefined}
+                    onSelectedChange={canUpdate ? () => toggle(key) : undefined}
+                    onGrant={item => void commit([{ ...item, status: "GRANTED" }])}
+                    onRejectOrRevoke={item => void commit([item])}
+                  />
+                );
+              })}
+        </List>
+      </div>
       {canUpdate && (
         <CompliancePortalDocumentAccessSelectionBar
           selectedItems={selectedItems}
           allSelected={selectedItems.length === documentAccesses.length && documentAccesses.length > 0}
           loading={isUpdating}
           onClear={() => setSelectedIds(new Set())}
-          onSelectAll={() => setSelectedIds(new Set(documentAccesses.map(documentAccessKey)))}
           onGrant={commitSelection}
           onRejectOrRevoke={commitSelection}
+          onSelectAll={() => setSelectedIds(new Set(documentAccesses.map(documentAccessKey)))}
         />
       )}
     </section>

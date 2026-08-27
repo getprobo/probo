@@ -104,6 +104,32 @@ enum CompliancePortalAccessResourceOrderField
         )
 }
 
+enum CompliancePortalAccessResourceStatusFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilter"
+    ) {
+    REQUESTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterRequested"
+        )
+    GRANTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterGranted"
+        )
+    REJECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterRejected"
+        )
+    REVOKED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterRevoked"
+        )
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterNone"
+        )
+}
+
 enum CompliancePortalAccessState
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessState"
@@ -320,6 +346,10 @@ input CompliancePortalAccessResourceOrder
     field: CompliancePortalAccessResourceOrderField!
 }
 
+input CompliancePortalAccessResourceFilter {
+    status: CompliancePortalAccessResourceStatusFilter
+}
+
 input CompliancePortalReferenceOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalReferenceOrderBy"
@@ -522,6 +552,7 @@ type CompliancePortalAccess implements Node {
         last: Int
         before: CursorKey
         orderBy: CompliancePortalAccessResourceOrder
+        filter: CompliancePortalAccessResourceFilter
     ): CompliancePortalAccessResourceConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)

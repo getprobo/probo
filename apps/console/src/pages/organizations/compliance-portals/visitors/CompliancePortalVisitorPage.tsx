@@ -34,7 +34,10 @@ import { ElectronicSignatureSection } from "./_components/ElectronicSignatureSec
 import { visitorPage } from "./variants";
 
 export const compliancePortalVisitorPageQuery = graphql`
-  query CompliancePortalVisitorPageQuery($accessId: ID!) {
+  query CompliancePortalVisitorPageQuery(
+    $accessId: ID!
+    $filter: CompliancePortalAccessResourceFilter
+  ) {
     access: node(id: $accessId) {
       __typename
       ... on CompliancePortalAccess {
@@ -49,7 +52,7 @@ export const compliancePortalVisitorPageQuery = graphql`
         ndaSignature {
           ...ElectronicSignatureSectionFragment
         }
-        ...CompliancePortalDocumentAccessList_access
+        ...CompliancePortalDocumentAccessList_access @arguments(filter: $filter)
       }
     }
   }

@@ -35,6 +35,7 @@ type (
 		PageInfo   *PageInfo
 
 		ParentID gid.GID
+		Filters  *coredata.CompliancePortalAccessResourceFilter
 	}
 )
 
@@ -53,6 +54,7 @@ func NewCompliancePortalAccessResource(
 func NewCompliancePortalAccessResourceConnection(
 	p *page.Page[*coredata.CompliancePortalAccessResource, coredata.CompliancePortalAccessResourceOrderField],
 	parentID gid.GID,
+	filters *coredata.CompliancePortalAccessResourceFilter,
 ) *CompliancePortalAccessResourceConnection {
 	edges := make([]*CompliancePortalAccessResourceEdge, len(p.Data))
 	for i, resource := range p.Data {
@@ -63,6 +65,7 @@ func NewCompliancePortalAccessResourceConnection(
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
 		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

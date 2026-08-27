@@ -126,7 +126,13 @@
       "description": "Granted documents will be revoked. Pending requests will be rejected.",
       "confirm": "Reject or revoke"
     },
-    "empty": "No documents available"
+    "empty": "No documents available",
+    "emptyFilter": "No documents with this status",
+    "filter": {
+      "label": "Status",
+      "all": "All statuses",
+      "none": "None"
+    }
   },
   "electronicSignature": {
     "title": "NDA",

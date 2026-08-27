@@ -99,7 +99,13 @@
       "description": "Toegestane documenten worden ingetrokken. Openstaande aanvragen worden geweigerd.",
       "confirm": "Weigeren of intrekken"
     },
-    "empty": "Geen documenten beschikbaar"
+    "empty": "Geen documenten beschikbaar",
+    "emptyFilter": "Geen documenten met deze status",
+    "filter": {
+      "label": "Status",
+      "all": "Alle statussen",
+      "none": "Geen"
+    }
   },
   "electronicSignature": {
     "title": "NDA",

@@ -18,12 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CompliancePortalVisitorPageQuery } from "#/__generated__/core/CompliancePortalVisitorPageQuery.graphql";
 
+import {
+  documentAccessListGraphqlFilter,
+  useDocumentAccessListFilters,
+} from "./_lib/useDocumentAccessListFilters";
 import {
   CompliancePortalVisitorPage,
   compliancePortalVisitorPageQuery,
@@ -37,12 +41,18 @@ export default function CompliancePortalVisitorPageLoader() {
   if (accessId == null) {
     throw new Error(":accessId missing in route params");
   }
+  const { status } = useDocumentAccessListFilters();
+  const filterRef = useRef(documentAccessListGraphqlFilter(status));
   const [queryRef, loadQuery] = useQueryLoader<CompliancePortalVisitorPageQuery>(
     compliancePortalVisitorPageQuery,
   );
 
   useEffect(() => {
-    loadQuery({ accessId });
+    filterRef.current = documentAccessListGraphqlFilter(status);
+  }, [status]);
+
+  useEffect(() => {
+    loadQuery({ accessId, filter: filterRef.current });
   }, [accessId, loadQuery]);
 
   if (queryRef == null) {

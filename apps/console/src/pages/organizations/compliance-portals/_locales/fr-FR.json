@@ -126,7 +126,13 @@
       "description": "Les documents accordés seront révoqués. Les demandes en attente seront rejetées.",
       "confirm": "Rejeter ou révoquer"
     },
-    "empty": "Aucun document disponible"
+    "empty": "Aucun document disponible",
+    "emptyFilter": "Aucun document avec ce statut",
+    "filter": {
+      "label": "Statut",
+      "all": "Tous les statuts",
+      "none": "Aucun"
+    }
   },
   "electronicSignature": {
     "title": "NDA",

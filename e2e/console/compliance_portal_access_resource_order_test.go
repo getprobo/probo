@@ -108,6 +108,106 @@ func TestCompliancePortalAccess_ResourcesOrder(t *testing.T) {
 	assert.Equal(t, "REJECTED", *result.Node.Resources.Edges[4].Node.Status)
 }
 
+func TestCompliancePortalAccess_ResourcesFilter(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	compliancePortalID := compliancePortalID(t, owner)
+	accessID := seedCompliancePortalAccessForIdentity(
+		t,
+		owner,
+		compliancePortalID,
+		owner.GetUserID(),
+		time.Now().UTC(),
+	)
+
+	requestedID := createRestrictedPortalDocument(t, owner, compliancePortalID, "Requested filter resource")
+	grantedID := createRestrictedPortalDocument(t, owner, compliancePortalID, "Granted filter resource")
+	noneID := createRestrictedPortalDocument(t, owner, compliancePortalID, "None filter resource")
+	revokedID := createRestrictedPortalDocument(t, owner, compliancePortalID, "Revoked filter resource")
+	rejectedID := createRestrictedPortalDocument(t, owner, compliancePortalID, "Rejected filter resource")
+
+	setDocumentAccessStatus(t, owner, accessID, requestedID, "REQUESTED")
+	setDocumentAccessStatus(t, owner, accessID, grantedID, "GRANTED")
+	setDocumentAccessStatus(t, owner, accessID, revokedID, "REVOKED")
+	setDocumentAccessStatus(t, owner, accessID, rejectedID, "REJECTED")
+
+	cases := []struct {
+		name   string
+		status string
+		want   []string
+	}{
+		{name: "granted", status: "GRANTED", want: []string{grantedID}},
+		{name: "none", status: "NONE", want: []string{noneID}},
+		{name: "requested", status: "REQUESTED", want: []string{requestedID}},
+		{name: "revoked", status: "REVOKED", want: []string{revokedID}},
+		{name: "rejected", status: "REJECTED", want: []string{rejectedID}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ids := listAccessResourceIDs(t, owner, accessID, map[string]any{
+				"status": tc.status,
+			})
+			require.Equal(t, tc.want, ids)
+		})
+	}
+}
+
+func listAccessResourceIDs(
+	t *testing.T,
+	owner *testutil.Client,
+	accessID string,
+	filter map[string]any,
+) []string {
+	t.Helper()
+
+	var result struct {
+		Node struct {
+			Resources struct {
+				Edges []struct {
+					Node struct {
+						ResourceID string `json:"resourceId"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"resources"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(
+		`
+		query($id: ID!, $filter: CompliancePortalAccessResourceFilter) {
+			node(id: $id) {
+				... on CompliancePortalAccess {
+					resources(first: 10, filter: $filter) {
+						edges {
+							node {
+								resourceId
+							}
+						}
+					}
+				}
+			}
+		}
+		`,
+		map[string]any{
+			"id":     accessID,
+			"filter": filter,
+		},
+		&result,
+	)
+	require.NoError(t, err)
+
+	ids := make([]string, 0, len(result.Node.Resources.Edges))
+	for _, edge := range result.Node.Resources.Edges {
+		ids = append(ids, edge.Node.ResourceID)
+	}
+
+	return ids
+}
+
 func createRestrictedPortalDocument(
 	t *testing.T,
 	owner *testutil.Client,

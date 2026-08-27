@@ -536,6 +536,7 @@ func (r *compliancePortalAccessResolver) Resources(
 	last *int,
 	before *page.CursorKey,
 	orderBy *types.CompliancePortalAccessResourceOrderBy,
+	filter *types.CompliancePortalAccessResourceFilter,
 ) (*types.CompliancePortalAccessResourceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
@@ -556,13 +557,18 @@ func (r *compliancePortalAccessResolver) Resources(
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.management.ListAccessResources(ctx, scope, obj.ID, cursor)
+	resourceFilter := coredata.NewCompliancePortalAccessResourceFilter(nil)
+	if filter != nil {
+		resourceFilter = coredata.NewCompliancePortalAccessResourceFilter(filter.Status)
+	}
+
+	result, err := r.management.ListAccessResources(ctx, scope, obj.ID, cursor, resourceFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal access resources", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewCompliancePortalAccessResourceConnection(result, obj.ID), nil
+	return types.NewCompliancePortalAccessResourceConnection(result, obj.ID, resourceFilter), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -571,16 +577,18 @@ func (r *compliancePortalAccessResolver) Permission(ctx context.Context, obj *ty
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *compliancePortalAccessResourceConnectionResolver) TotalCount(
-	ctx context.Context,
-	obj *types.CompliancePortalAccessResourceConnection,
-) (int, error) {
+func (r *compliancePortalAccessResourceConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalAccessResourceConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.management.CountAccessResources(ctx, scope, obj.ParentID)
+	filter := obj.Filters
+	if filter == nil {
+		filter = coredata.NewCompliancePortalAccessResourceFilter(nil)
+	}
+
+	count, err := r.management.CountAccessResources(ctx, scope, obj.ParentID, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal access resources", log.Error(err))
 		return 0, gqlutils.Internal(ctx)

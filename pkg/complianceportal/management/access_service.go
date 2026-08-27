@@ -160,6 +160,7 @@ func (s *Service) ListAccessResources(
 	scope coredata.Scoper,
 	accessID gid.GID,
 	cursor *page.Cursor[coredata.CompliancePortalAccessResourceOrderField],
+	filter *coredata.CompliancePortalAccessResourceFilter,
 ) (*page.Page[*coredata.CompliancePortalAccessResource, coredata.CompliancePortalAccessResourceOrderField], error) {
 	var resources coredata.CompliancePortalAccessResources
 
@@ -179,6 +180,7 @@ func (s *Service) ListAccessResources(
 				access.OrganizationID,
 				access.CompliancePortalID,
 				cursor,
+				filter,
 			)
 		},
 	)
@@ -193,6 +195,7 @@ func (s *Service) CountAccessResources(
 	ctx context.Context,
 	scope coredata.Scoper,
 	accessID gid.GID,
+	filter *coredata.CompliancePortalAccessResourceFilter,
 ) (int, error) {
 	var count int
 
@@ -213,6 +216,7 @@ func (s *Service) CountAccessResources(
 				access.ID,
 				access.OrganizationID,
 				access.CompliancePortalID,
+				filter,
 			)
 
 			return err

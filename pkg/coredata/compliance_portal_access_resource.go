@@ -207,6 +207,7 @@ func (r *CompliancePortalAccessResources) LoadByCompliancePortalAccessID(
 	organizationID gid.GID,
 	compliancePortalID gid.GID,
 	cursor *page.Cursor[CompliancePortalAccessResourceOrderField],
+	filter *CompliancePortalAccessResourceFilter,
 ) error {
 	q := `
 SELECT
@@ -220,6 +221,7 @@ FROM (
 ) resources
 WHERE
     %s
+    AND %s
 `
 
 	q = fmt.Sprintf(
@@ -227,6 +229,7 @@ WHERE
 		scope.SQLFragment(),
 		scope.SQLFragment(),
 		scope.SQLFragment(),
+		filter.SQLFragment(),
 		cursor.SQLFragment(),
 	)
 
@@ -237,6 +240,7 @@ WHERE
 		compliancePortalID,
 	)
 	maps.Copy(args, compliancePortalAccessResourceOrderArgs())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -261,6 +265,7 @@ func (r *CompliancePortalAccessResources) CountByCompliancePortalAccessID(
 	compliancePortalAccessID gid.GID,
 	organizationID gid.GID,
 	compliancePortalID gid.GID,
+	filter *CompliancePortalAccessResourceFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -268,6 +273,8 @@ SELECT
 FROM (
 ` + compliancePortalAccessResourcesUnionSQL() + `
 ) resources
+WHERE
+    %s
 `
 
 	q = fmt.Sprintf(
@@ -275,6 +282,7 @@ FROM (
 		scope.SQLFragment(),
 		scope.SQLFragment(),
 		scope.SQLFragment(),
+		filter.SQLFragment(),
 	)
 
 	args := compliancePortalAccessResourceUnionArgs(
@@ -283,6 +291,7 @@ FROM (
 		organizationID,
 		compliancePortalID,
 	)
+	maps.Copy(args, filter.SQLArguments())
 
 	var count int
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
