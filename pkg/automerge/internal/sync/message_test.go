@@ -55,3 +55,30 @@ func TestMessageEncodeDecodeEmptyV2(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, encoded, reencoded)
 }
+
+func TestMessageEncodeRejectsOversizedByteFields(t *testing.T) {
+	t.Parallel()
+
+	message := Message{
+		Version: MessageVersion2,
+		Have: []Have{
+			{Bloom: make([]byte, maxSyncBloomBytes+1)},
+		},
+	}
+	_, err := message.Encode()
+	assert.Error(t, err)
+
+	message = Message{
+		Version: MessageVersion2,
+		Changes: [][]byte{make([]byte, maxSyncChunkBytes+1)},
+	}
+	_, err = message.Encode()
+	assert.Error(t, err)
+
+	message = Message{
+		Version: MessageVersion2,
+		Flags:   make([]byte, maxSyncFlagsBytes+1),
+	}
+	_, err = message.Encode()
+	assert.Error(t, err)
+}

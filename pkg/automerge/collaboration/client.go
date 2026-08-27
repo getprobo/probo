@@ -146,6 +146,10 @@ func (c *ClientConn) Receive(frame []byte) (ClientInbound, error) {
 			return ClientInbound{}, err
 		}
 
+		if err := c.validateDocument(message); err != nil {
+			return ClientInbound{}, err
+		}
+
 		if err := c.sync.ReceiveMessage(message.Data); err != nil {
 			return ClientInbound{}, fmt.Errorf("cannot apply inbound sync message: %w", err)
 		}
@@ -162,16 +166,41 @@ func (c *ClientConn) Receive(frame []byte) (ClientInbound, error) {
 			return ClientInbound{}, err
 		}
 
+		if err := c.validateDocument(message); err != nil {
+			return ClientInbound{}, err
+		}
+
 		if c.seenEphemeral(message) {
 			return ClientInbound{}, nil
 		}
 
 		return ClientInbound{Ephemeral: &message}, nil
 	case MessageDocUnavailable:
+		message, err := DecodeMessage(frame)
+		if err != nil {
+			return ClientInbound{}, err
+		}
+
+		if err := c.validateDocument(message); err != nil {
+			return ClientInbound{}, err
+		}
+
 		return ClientInbound{Unavailable: true}, nil
 	default:
 		return ClientInbound{}, nil
 	}
+}
+
+func (c *ClientConn) validateDocument(message Message) error {
+	if message.DocumentID != c.config.DocumentID {
+		return fmt.Errorf(
+			"client scoped to document %q received a frame for document %q",
+			c.config.DocumentID,
+			message.DocumentID,
+		)
+	}
+
+	return nil
 }
 
 // SyncChanged drains sync frames after the local document changed, so local

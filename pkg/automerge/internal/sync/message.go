@@ -142,8 +142,40 @@ func (m Message) Encode() ([]byte, error) {
 		return nil, fmt.Errorf("unsupported sync message version 0x%02x", m.Version)
 	}
 
-	if len(m.Have) > maxHaveEntries || len(m.Changes) > maxSyncChanges {
-		return nil, fmt.Errorf("sync message exceeds collection limits")
+	if len(m.Heads) > maxSyncHashes {
+		return nil, fmt.Errorf("sync head count %d exceeds limit", len(m.Heads))
+	}
+
+	if len(m.Need) > maxSyncHashes {
+		return nil, fmt.Errorf("sync need count %d exceeds limit", len(m.Need))
+	}
+
+	if len(m.Have) > maxHaveEntries {
+		return nil, fmt.Errorf("sync have count %d exceeds limit", len(m.Have))
+	}
+
+	for i, have := range m.Have {
+		if len(have.LastSync) > maxSyncHashes {
+			return nil, fmt.Errorf("sync have %d head count %d exceeds limit", i, len(have.LastSync))
+		}
+
+		if len(have.Bloom) > maxSyncBloomBytes {
+			return nil, fmt.Errorf("sync have %d bloom length %d exceeds limit", i, len(have.Bloom))
+		}
+	}
+
+	if len(m.Changes) > maxSyncChanges {
+		return nil, fmt.Errorf("sync change count %d exceeds limit", len(m.Changes))
+	}
+
+	for i, change := range m.Changes {
+		if len(change) > maxSyncChunkBytes {
+			return nil, fmt.Errorf("sync change %d length %d exceeds limit", i, len(change))
+		}
+	}
+
+	if len(m.Flags) > maxSyncFlagsBytes {
+		return nil, fmt.Errorf("sync flags length %d exceeds limit", len(m.Flags))
 	}
 
 	data := []byte{byte(m.Version)}

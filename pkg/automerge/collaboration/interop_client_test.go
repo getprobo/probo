@@ -22,6 +22,7 @@ package collaboration_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -69,7 +70,9 @@ func TestInterop_RealRepoClientLoadsGoDocument(t *testing.T) {
 
 	text, err := server.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(0, 0, "hello world"))
+
+	largeBody := "hello world" + strings.Repeat("x", 128<<10)
+	require.NoError(t, text.Splice(0, 0, largeBody))
 
 	_, err = server.Commit("seed", commitTime())
 	require.NoError(t, err)
@@ -99,14 +102,9 @@ func TestInterop_RealRepoClientLoadsGoDocument(t *testing.T) {
 		t.Fatalf("cannot run interop client: %v", err)
 	}
 
-	document := string(output)
-	assert.Contains(
-		t,
-		document,
-		"hello world",
-		"the real repo client must materialize the server's document; got %s",
-		document,
-	)
+	var document map[string]any
+	require.NoError(t, json.Unmarshal(output, &document))
+	assert.Equal(t, largeBody, document["body"])
 }
 
 // serveGateway is a minimal repo gateway for the interop test: it accepts a

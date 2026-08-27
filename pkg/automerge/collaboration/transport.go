@@ -20,9 +20,10 @@
 
 package collaboration
 
-import "slices"
-
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // ProtocolV1 is the only automerge-repo WebSocket protocol version this package
 // speaks.
@@ -112,8 +113,11 @@ func EncodePeerFrame(frame PeerFrame) ([]byte, error) {
 		return nil, fmt.Errorf("peer frame is missing a sender or target id")
 	}
 
-	if frame.SelectedProtocolVersion == "" {
-		return nil, fmt.Errorf("peer frame selected no protocol version")
+	if frame.SelectedProtocolVersion != ProtocolV1 {
+		return nil, fmt.Errorf(
+			"peer frame selected unsupported protocol version %q",
+			frame.SelectedProtocolVersion,
+		)
 	}
 
 	return marshal(frame)
@@ -123,6 +127,14 @@ func EncodePeerFrame(frame PeerFrame) ([]byte, error) {
 func EncodeErrorFrame(frame ErrorFrame) ([]byte, error) {
 	if frame.Type != FrameError {
 		return nil, fmt.Errorf("error frame has type %q", frame.Type)
+	}
+
+	if frame.SenderID == "" || frame.TargetID == "" {
+		return nil, fmt.Errorf("error frame is missing a sender or target id")
+	}
+
+	if frame.Message == "" {
+		return nil, fmt.Errorf("error frame is missing a message")
 	}
 
 	return marshal(frame)
@@ -183,6 +195,17 @@ func DecodePeerFrame(data []byte) (PeerFrame, error) {
 		return PeerFrame{}, fmt.Errorf("expected a peer frame, got %q", frame.Type)
 	}
 
+	if frame.SenderID == "" || frame.TargetID == "" {
+		return PeerFrame{}, fmt.Errorf("peer frame is missing a sender or target id")
+	}
+
+	if frame.SelectedProtocolVersion != ProtocolV1 {
+		return PeerFrame{}, fmt.Errorf(
+			"peer frame selected unsupported protocol version %q",
+			frame.SelectedProtocolVersion,
+		)
+	}
+
 	return frame, nil
 }
 
@@ -195,6 +218,14 @@ func DecodeErrorFrame(data []byte) (ErrorFrame, error) {
 
 	if frame.Type != FrameError {
 		return ErrorFrame{}, fmt.Errorf("expected an error frame, got %q", frame.Type)
+	}
+
+	if frame.SenderID == "" || frame.TargetID == "" {
+		return ErrorFrame{}, fmt.Errorf("error frame is missing a sender or target id")
+	}
+
+	if frame.Message == "" {
+		return ErrorFrame{}, fmt.Errorf("error frame is missing a message")
 	}
 
 	return frame, nil

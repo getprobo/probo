@@ -139,17 +139,18 @@ func (c *ServerConn) Receive(frame []byte) (reply [][]byte, fanout []byte, err e
 		return nil, nil, fmt.Errorf("received a frame before the connection was started")
 	}
 
-	inbound, err := c.session.Receive(frame)
+	inbound, err := c.session.receive(
+		frame,
+		func(message Message) error {
+			return c.adoptDocumentID(message.DocumentID)
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	switch inbound.Kind {
 	case InboundSync:
-		if err := c.adoptDocumentID(inbound.Message.DocumentID); err != nil {
-			return nil, nil, err
-		}
-
 		if err := c.sync.ReceiveMessage(inbound.Message.Data); err != nil {
 			return nil, nil, fmt.Errorf("cannot apply inbound sync message: %w", err)
 		}

@@ -29,10 +29,25 @@ import { Repo } from "@automerge/automerge-repo";
 import { WebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket";
 import process from "node:process";
 
+function write(stream, data) {
+  return new Promise((resolve, reject) => {
+    stream.write(data, (error) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
 const [wsURL, documentURL] = process.argv.slice(2);
 
 if (!wsURL || !documentURL) {
-  process.stderr.write("usage: collaboration-interop-client.mjs <wsURL> <automergeUrl>\n");
+  await write(
+    process.stderr,
+    "usage: collaboration-interop-client.mjs <wsURL> <automergeUrl>\n",
+  );
   process.exit(2);
 }
 
@@ -46,9 +61,12 @@ try {
   });
 
   const doc = handle.doc();
-  process.stdout.write(JSON.stringify(doc ?? null));
+  await write(process.stdout, JSON.stringify(doc ?? null));
   process.exit(0);
 } catch (error) {
-  process.stderr.write(`interop client failed: ${error?.message ?? error}\n`);
+  await write(
+    process.stderr,
+    `interop client failed: ${error?.message ?? error}\n`,
+  );
   process.exit(1);
 }

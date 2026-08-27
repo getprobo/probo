@@ -21,7 +21,6 @@
 package collaboration
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
@@ -72,12 +71,6 @@ func (v TextSelectionValue) validate() error {
 	}
 
 	return nil
-}
-
-// Collapsed reports whether the selection is a single caret, that is its anchor
-// and head address the same position.
-func (v TextSelectionValue) Collapsed() bool {
-	return bytes.Equal(v.Anchor, v.Head)
 }
 
 // Encode marshals the selection into the raw CBOR carried by a presence update's

@@ -248,6 +248,37 @@ func TestAdoptingServerConn_LearnsDocumentIDFromClient(t *testing.T) {
 	)
 }
 
+func TestAdoptingServerConn_LearnsDocumentIDFromEphemeral(t *testing.T) {
+	t.Parallel()
+
+	conn, err := NewAdoptingServerConn(ServerConfig{ServerPeerID: "server"}, &scriptedSync{})
+	require.NoError(t, err)
+
+	_, _, err = conn.Start(joinFixture(t))
+	require.NoError(t, err)
+
+	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
+	require.NoError(t, err)
+
+	ephemeral, err := EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   "peer-a",
+			TargetID:   "server",
+			DocumentID: "ephemeral-doc",
+			SessionID:  "session",
+			Count:      0,
+			Data:       payload,
+		},
+	)
+	require.NoError(t, err)
+
+	_, fanout, err := conn.Receive(ephemeral)
+	require.NoError(t, err)
+	assert.Equal(t, "ephemeral-doc", conn.DocumentID())
+	assert.Equal(t, ephemeral, fanout)
+}
+
 // TestAdoptingServerConn_RejectsSecondDocument holds the connection to the first
 // document id it adopts.
 func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
@@ -302,6 +333,41 @@ func TestServerConn_RejectsForeignDocument(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestServerConn_RejectsForeignEphemeralBeforeDedup(t *testing.T) {
+	t.Parallel()
+
+	conn := newConn(t, &scriptedSync{})
+	_, _, err := conn.Start(joinFixture(t))
+	require.NoError(t, err)
+
+	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
+	require.NoError(t, err)
+
+	encode := func(documentID string) []byte {
+		frame, err := EncodeMessage(
+			Message{
+				Type:       MessageEphemeral,
+				SenderID:   "peer-a",
+				TargetID:   "server",
+				DocumentID: documentID,
+				SessionID:  "session",
+				Count:      1,
+				Data:       payload,
+			},
+		)
+		require.NoError(t, err)
+
+		return frame
+	}
+
+	_, _, err = conn.Receive(encode("other-doc"))
+	require.Error(t, err)
+
+	_, fanout, err := conn.Receive(encode("doc-1"))
+	require.NoError(t, err)
+	assert.NotNil(t, fanout, "the rejected frame must not poison deduplication")
+}
+
 // TestServerConn_RequiresStart refuses frames before the handshake.
 func TestServerConn_RequiresStart(t *testing.T) {
 	t.Parallel()
@@ -309,4 +375,113 @@ func TestServerConn_RequiresStart(t *testing.T) {
 	conn := newConn(t, &scriptedSync{})
 	_, _, err := conn.Receive([]byte{0xa0})
 	assert.Error(t, err)
+}
+
+func TestClientConn_RejectsForeignDocumentFrames(t *testing.T) {
+	t.Parallel()
+
+	sync := &scriptedSync{}
+	conn, err := NewClientConn(
+		ClientConfig{
+			ClientPeerID: "client",
+			DocumentID:   "doc-1",
+		},
+		sync,
+	)
+	require.NoError(t, err)
+
+	peer, err := EncodePeerFrame(
+		PeerFrame{
+			Type:                    FramePeer,
+			SenderID:                "server",
+			TargetID:                "client",
+			SelectedProtocolVersion: ProtocolV1,
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = conn.Receive(peer)
+	require.NoError(t, err)
+
+	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
+	require.NoError(t, err)
+
+	for _, message := range []Message{
+		{
+			Type:       MessageSync,
+			SenderID:   "server",
+			TargetID:   "client",
+			DocumentID: "other-doc",
+			Data:       []byte{1},
+		},
+		{
+			Type:       MessageRequest,
+			SenderID:   "server",
+			TargetID:   "client",
+			DocumentID: "other-doc",
+			Data:       []byte{1},
+		},
+		{
+			Type:       MessageEphemeral,
+			SenderID:   "server",
+			TargetID:   "client",
+			DocumentID: "other-doc",
+			SessionID:  "session",
+			Count:      1,
+			Data:       payload,
+		},
+		{
+			Type:       MessageDocUnavailable,
+			SenderID:   "server",
+			TargetID:   "client",
+			DocumentID: "other-doc",
+		},
+	} {
+		frame, err := EncodeMessage(message)
+		require.NoError(t, err)
+
+		_, err = conn.Receive(frame)
+		assert.Error(t, err)
+	}
+
+	assert.Empty(t, sync.received, "foreign sync data must not be applied")
+}
+
+func TestClientConn_RejectsMalformedDocUnavailable(t *testing.T) {
+	t.Parallel()
+
+	conn, err := NewClientConn(
+		ClientConfig{
+			ClientPeerID: "client",
+			DocumentID:   "doc-1",
+		},
+		&scriptedSync{},
+	)
+	require.NoError(t, err)
+
+	peer, err := EncodePeerFrame(
+		PeerFrame{
+			Type:                    FramePeer,
+			SenderID:                "server",
+			TargetID:                "client",
+			SelectedProtocolVersion: ProtocolV1,
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = conn.Receive(peer)
+	require.NoError(t, err)
+
+	malformed, err := marshal(
+		map[string]any{
+			"type":       MessageDocUnavailable,
+			"senderId":   "server",
+			"documentId": "doc-1",
+		},
+	)
+	require.NoError(t, err)
+
+	inbound, err := conn.Receive(malformed)
+	require.Error(t, err)
+	assert.False(t, inbound.Unavailable, "malformed frames must not report unavailability")
 }

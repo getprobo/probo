@@ -100,6 +100,9 @@ func TestDocumentID_RejectsCorruption(t *testing.T) {
 	_, err = DecodeDocumentID("0OIl") // characters outside the base58 alphabet
 	assert.Error(t, err)
 
+	_, err = DecodeDocumentID("11111111111111111111111111111")
+	assert.Error(t, err, "oversized ids must be rejected before base58 arithmetic")
+
 	assert.False(t, ValidDocumentID(""))
 }
 

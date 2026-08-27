@@ -46,19 +46,29 @@ const (
 // Sync bytes are intentionally left opaque here so this package never
 // re-implements the CRDT wire format.
 type Message struct {
+	Type       MessageType
+	SenderID   string
+	TargetID   string
+	DocumentID string
+
+	// Data is the Automerge sync message for sync and request messages, and the
+	// CBOR presence payload for ephemeral messages.
+	Data []byte
+
+	// SessionID and Count identify an ephemeral message for gossip
+	// de-duplication and are unset for other types.
+	SessionID string
+	Count     uint64
+}
+
+type messageWire struct {
 	Type       MessageType `cbor:"type"`
 	SenderID   string      `cbor:"senderId"`
 	TargetID   string      `cbor:"targetId"`
 	DocumentID string      `cbor:"documentId"`
-
-	// Data is the Automerge sync message for sync and request messages, and the
-	// CBOR presence payload for ephemeral messages.
-	Data []byte `cbor:"data,omitempty"`
-
-	// SessionID and Count identify an ephemeral message for gossip
-	// de-duplication and are unset for other types.
-	SessionID string `cbor:"sessionId,omitempty"`
-	Count     uint64 `cbor:"count,omitempty"`
+	Data       []byte      `cbor:"data,omitempty"`
+	SessionID  string      `cbor:"sessionId,omitempty"`
+	Count      *uint64     `cbor:"count,omitempty"`
 }
 
 // validate checks that a message carries exactly the fields its type requires,
@@ -66,6 +76,10 @@ type Message struct {
 func (m Message) validate() error {
 	if m.SenderID == "" {
 		return fmt.Errorf("repo message is missing a sender id")
+	}
+
+	if m.TargetID == "" {
+		return fmt.Errorf("repo message is missing a target id")
 	}
 
 	switch m.Type {
@@ -76,6 +90,10 @@ func (m Message) validate() error {
 
 		if len(m.Data) == 0 {
 			return fmt.Errorf("%s message is missing sync data", m.Type)
+		}
+
+		if m.SessionID != "" || m.Count != 0 {
+			return fmt.Errorf("%s message must not carry ephemeral fields", m.Type)
 		}
 	case MessageEphemeral:
 		if m.DocumentID == "" {
@@ -89,9 +107,17 @@ func (m Message) validate() error {
 		if len(m.Data) == 0 {
 			return fmt.Errorf("ephemeral message is missing a payload")
 		}
+
+		if err := validateApplicationSize(m.Data); err != nil {
+			return fmt.Errorf("invalid ephemeral payload: %w", err)
+		}
 	case MessageDocUnavailable:
 		if m.DocumentID == "" {
 			return fmt.Errorf("doc-unavailable message is missing a document id")
+		}
+
+		if len(m.Data) != 0 || m.SessionID != "" || m.Count != 0 {
+			return fmt.Errorf("doc-unavailable message carries unexpected fields")
 		}
 	default:
 		return fmt.Errorf("unknown repo message type %q", m.Type)
@@ -107,7 +133,19 @@ func EncodeMessage(message Message) ([]byte, error) {
 		return nil, err
 	}
 
-	data, err := marshal(message)
+	wire := messageWire{
+		Type:       message.Type,
+		SenderID:   message.SenderID,
+		TargetID:   message.TargetID,
+		DocumentID: message.DocumentID,
+		Data:       message.Data,
+		SessionID:  message.SessionID,
+	}
+	if message.Type == MessageEphemeral {
+		wire.Count = new(message.Count)
+	}
+
+	data, err := marshal(wire)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode repo message: %w", err)
 	}
@@ -117,9 +155,29 @@ func EncodeMessage(message Message) ([]byte, error) {
 
 // DecodeMessage decodes a CBOR repo message and validates it.
 func DecodeMessage(data []byte) (Message, error) {
-	var message Message
-	if err := unmarshal(data, &message); err != nil {
+	var wire messageWire
+	if err := unmarshal(data, &wire); err != nil {
 		return Message{}, fmt.Errorf("cannot decode repo message: %w", err)
+	}
+
+	if wire.Type == MessageEphemeral && wire.Count == nil {
+		return Message{}, fmt.Errorf("ephemeral message is missing a count")
+	}
+
+	if wire.Type != MessageEphemeral && wire.Count != nil {
+		return Message{}, fmt.Errorf("%s message must not carry a count", wire.Type)
+	}
+
+	message := Message{
+		Type:       wire.Type,
+		SenderID:   wire.SenderID,
+		TargetID:   wire.TargetID,
+		DocumentID: wire.DocumentID,
+		Data:       wire.Data,
+		SessionID:  wire.SessionID,
+	}
+	if wire.Count != nil {
+		message.Count = *wire.Count
 	}
 
 	if err := message.validate(); err != nil {

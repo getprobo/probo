@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -116,6 +117,96 @@ func TestMessage_RoundTrip(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestMessage_WireShapeIncludesOnlyTypeFields(t *testing.T) {
+	t.Parallel()
+
+	ephemeral, err := EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   "a",
+			TargetID:   "b",
+			DocumentID: "doc",
+			SessionID:  "session",
+			Count:      0,
+			Data:       []byte{1},
+		},
+	)
+	require.NoError(t, err)
+
+	var ephemeralFields map[string]cbor.RawMessage
+	require.NoError(t, unmarshal(ephemeral, &ephemeralFields))
+	assert.Contains(t, ephemeralFields, "count")
+	assert.Contains(t, ephemeralFields, "sessionId")
+
+	sync, err := EncodeMessage(
+		Message{
+			Type:       MessageSync,
+			SenderID:   "a",
+			TargetID:   "b",
+			DocumentID: "doc",
+			Data:       []byte{1},
+		},
+	)
+	require.NoError(t, err)
+
+	var syncFields map[string]cbor.RawMessage
+	require.NoError(t, unmarshal(sync, &syncFields))
+	assert.NotContains(t, syncFields, "count")
+	assert.NotContains(t, syncFields, "sessionId")
+}
+
+func TestDecodeMessage_RequiresEphemeralCount(t *testing.T) {
+	t.Parallel()
+
+	frame, err := marshal(
+		map[string]any{
+			"type":       MessageEphemeral,
+			"senderId":   "a",
+			"targetId":   "b",
+			"documentId": "doc",
+			"sessionId":  "session",
+			"data":       []byte{1},
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = DecodeMessage(frame)
+	assert.Error(t, err)
+}
+
+func TestMessage_AppliesPayloadLimitByType(t *testing.T) {
+	t.Parallel()
+
+	large := make([]byte, maxApplicationBytes+1)
+
+	sync, err := EncodeMessage(
+		Message{
+			Type:       MessageSync,
+			SenderID:   "a",
+			TargetID:   "b",
+			DocumentID: "doc",
+			Data:       large,
+		},
+	)
+	require.NoError(t, err)
+
+	decoded, err := DecodeMessage(sync)
+	require.NoError(t, err)
+	assert.Len(t, decoded.Data, len(large))
+
+	_, err = EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   "a",
+			TargetID:   "b",
+			DocumentID: "doc",
+			SessionID:  "session",
+			Data:       large,
+		},
+	)
+	assert.Error(t, err)
 }
 
 // TestMessage_Validation rejects messages missing type-required fields.

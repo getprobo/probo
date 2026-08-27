@@ -21,6 +21,7 @@
 package collaboration
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -175,6 +176,100 @@ func TestServerSession_DeduplicatesEphemeral(t *testing.T) {
 	other, err := session.Receive(otherSession)
 	require.NoError(t, err)
 	assert.False(t, other.Duplicate)
+}
+
+func TestServerSession_ValidatesRouteBeforeDeduplication(t *testing.T) {
+	t.Parallel()
+
+	session := acceptedSession(t)
+	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
+	require.NoError(t, err)
+
+	encode := func(senderID, targetID string) []byte {
+		frame, err := EncodeMessage(
+			Message{
+				Type:       MessageEphemeral,
+				SenderID:   senderID,
+				TargetID:   targetID,
+				DocumentID: "doc",
+				SessionID:  "session",
+				Count:      1,
+				Data:       payload,
+			},
+		)
+		require.NoError(t, err)
+
+		return frame
+	}
+
+	_, err = session.Receive(encode("attacker", "server"))
+	require.Error(t, err)
+
+	_, err = session.Receive(encode("peer-a", "other-server"))
+	require.Error(t, err)
+
+	inbound, err := session.Receive(encode("peer-a", "server"))
+	require.NoError(t, err)
+	assert.False(t, inbound.Duplicate)
+}
+
+func TestServerSession_CapsEphemeralSessions(t *testing.T) {
+	t.Parallel()
+
+	session := acceptedSession(t)
+	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
+	require.NoError(t, err)
+
+	for i := range maxEphemeralSessions {
+		frame, err := EncodeMessage(
+			Message{
+				Type:       MessageEphemeral,
+				SenderID:   "peer-a",
+				TargetID:   "server",
+				DocumentID: "doc",
+				SessionID:  fmt.Sprintf("session-%d", i),
+				Count:      1,
+				Data:       payload,
+			},
+		)
+		require.NoError(t, err)
+
+		_, err = session.Receive(frame)
+		require.NoError(t, err)
+	}
+
+	overflow, err := EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   "peer-a",
+			TargetID:   "server",
+			DocumentID: "doc",
+			SessionID:  "overflow",
+			Count:      1,
+			Data:       payload,
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = session.Receive(overflow)
+	assert.Error(t, err)
+
+	existing, err := EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   "peer-a",
+			TargetID:   "server",
+			DocumentID: "doc",
+			SessionID:  "session-0",
+			Count:      2,
+			Data:       payload,
+		},
+	)
+	require.NoError(t, err)
+
+	inbound, err := session.Receive(existing)
+	require.NoError(t, err)
+	assert.False(t, inbound.Duplicate, "existing sessions remain usable at the cap")
 }
 
 // TestServerSession_IgnoresRemoteHeads treats unrecognised control frames as
