@@ -44,6 +44,7 @@ func buildSnapshotHistory(
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "hello brave world"))
+
 	_, err = document.Commit("write", base)
 	require.NoError(t, err)
 
@@ -58,14 +59,17 @@ func buildSnapshotHistory(
 			automerge.MarkExpandBoth,
 		),
 	)
+
 	_, err = document.Commit("mark", base.Add(time.Second))
 	require.NoError(t, err)
 
 	require.NoError(t, text.Unmark(1, 3, "strong", automerge.MarkExpandNone))
+
 	_, err = document.Commit("unmark", base.Add(2*time.Second))
 	require.NoError(t, err)
 
 	require.NoError(t, text.Splice(5, 6, ""))
+
 	_, err = document.Commit("delete", base.Add(3*time.Second))
 	require.NoError(t, err)
 
@@ -177,6 +181,7 @@ func TestSnapshotMergeReportsIncrementalChanges(t *testing.T) {
 	peerText, err := peer.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, peerText.Splice(0, 0, "new "))
+
 	_, err = peer.Commit("peer edit", time.Unix(1786147300, 0).UTC())
 	require.NoError(t, err)
 

@@ -80,7 +80,6 @@ func (b *Engine) SpliceText(
 	deleteCount int32,
 	value string,
 ) error {
-
 	if deleteCount < 0 {
 		return fmt.Errorf("negative text deletion is unsupported")
 	}
@@ -182,7 +181,6 @@ func (b *Engine) UpdateSpans(
 	spans []byte,
 	config []byte,
 ) error {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return err
@@ -701,7 +699,6 @@ func (b *Engine) MarkText(
 	encoded []byte,
 	expand string,
 ) error {
-
 	if start > end {
 		return fmt.Errorf("mark range is inverted")
 	}
@@ -770,7 +767,6 @@ func (b *Engine) SplitBlock(
 	handle uint32,
 	index uint32,
 ) (uint32, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return 0, err
@@ -813,7 +809,6 @@ func (b *Engine) JoinBlock(
 	handle uint32,
 	index uint32,
 ) error {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return err
@@ -852,7 +847,6 @@ func (b *Engine) ReplaceBlock(
 }
 
 func (b *Engine) Text(handle uint32) (string, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return "", err
@@ -876,7 +870,6 @@ func (b *Engine) TextAt(
 	handle uint32,
 	heads [][32]byte,
 ) (string, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return "", err
@@ -901,7 +894,6 @@ func (b *Engine) TextAt(
 func (b *Engine) TextSpans(
 	handle uint32,
 ) ([]byte, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return nil, err
@@ -924,7 +916,6 @@ func (b *Engine) TextSpansAt(
 	handle uint32,
 	heads [][32]byte,
 ) ([]byte, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return nil, err
@@ -989,7 +980,6 @@ func encodeMarks(marks []MarkRange) ([]byte, error) {
 }
 
 func (b *Engine) Marks(handle uint32) ([]byte, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return nil, err
@@ -1002,7 +992,6 @@ func (b *Engine) MarksAt(
 	handle uint32,
 	heads [][32]byte,
 ) ([]byte, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return nil, err
@@ -1028,7 +1017,6 @@ func (b *Engine) TextCursorMoving(
 	index uint32,
 	moveBefore bool,
 ) ([]byte, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return nil, err
@@ -1066,7 +1054,6 @@ func (b *Engine) TextCursorMovingAt(
 	moveBefore bool,
 	heads [][32]byte,
 ) ([]byte, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return nil, err
@@ -1105,7 +1092,6 @@ func (b *Engine) TextCursorPosition(
 	handle uint32,
 	cursor []byte,
 ) (uint32, error) {
-
 	object, err := b.textObject(handle)
 	if err != nil {
 		return 0, err

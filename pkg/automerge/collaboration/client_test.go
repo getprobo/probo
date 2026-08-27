@@ -77,7 +77,6 @@ func (h *clientServerHarness) pump() {
 	require.True(h.t, accepted)
 
 	toClient := serverOut
-	var toServer [][]byte
 
 	for range 50 {
 		var nextToServer [][]byte
@@ -85,20 +84,18 @@ func (h *clientServerHarness) pump() {
 		for _, frame := range toClient {
 			inbound, err := h.client.Receive(frame)
 			require.NoError(h.t, err)
+
 			nextToServer = append(nextToServer, inbound.Outgoing...)
 		}
 
-		toClient = nil
-
 		var nextToClient [][]byte
 
-		for _, frame := range append(toServer, nextToServer...) {
+		for _, frame := range nextToServer {
 			reply, _, err := h.server.Receive(frame)
 			require.NoError(h.t, err)
+
 			nextToClient = append(nextToClient, reply...)
 		}
-
-		toServer = nil
 
 		if len(nextToServer) == 0 && len(nextToClient) == 0 {
 			return
@@ -153,16 +150,19 @@ func TestClientConn_LearnsServerDocument(t *testing.T) {
 
 	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
+
 	defer func() { _ = server.Close() }()
 
 	text, err := server.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "hello world"))
+
 	_, err = server.Commit("seed", commitTime())
 	require.NoError(t, err)
 
 	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
+
 	defer func() { _ = client.Close() }()
 
 	newHarness(t, client, true, server).pump()
@@ -187,15 +187,18 @@ func TestClientConn_PushesLocalEdits(t *testing.T) {
 
 	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
+
 	defer func() { _ = server.Close() }()
 
 	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
+
 	defer func() { _ = client.Close() }()
 
 	text, err := client.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "from the agent"))
+
 	_, err = client.Commit("edit", commitTime())
 	require.NoError(t, err)
 
@@ -215,10 +218,12 @@ func TestClientConn_FirstMessageIsRequestWhenEmpty(t *testing.T) {
 
 	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
+
 	defer func() { _ = client.Close() }()
 
 	sync, err := client.NewSyncState()
 	require.NoError(t, err)
+
 	defer func() { _ = sync.Close() }()
 
 	conn, err := collaboration.NewClientConn(
@@ -258,10 +263,12 @@ func TestClientConn_SurfacesServerError(t *testing.T) {
 
 	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
+
 	defer func() { _ = client.Close() }()
 
 	sync, err := client.NewSyncState()
 	require.NoError(t, err)
+
 	defer func() { _ = sync.Close() }()
 
 	conn, err := collaboration.NewClientConn(

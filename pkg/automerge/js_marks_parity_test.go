@@ -49,6 +49,7 @@ func TestJSMarks_MarksSeenInPatches(t *testing.T) {
 
 		require.NoError(t, document.UpdateDiffCursor())
 		require.NoError(t, text.Mark(5, 10, "font-weight", markStr("bold"), automerge.MarkExpandNone))
+
 		_, err := document.Commit("mark", commitTime.Add(time.Second))
 		require.NoError(t, err)
 		marked, err := document.DiffIncremental()
@@ -58,6 +59,7 @@ func TestJSMarks_MarksSeenInPatches(t *testing.T) {
 
 		require.NoError(t, document.UpdateDiffCursor())
 		require.NoError(t, text.Unmark(7, 9, "font-weight", automerge.MarkExpandNone))
+
 		_, err = document.Commit("unmark", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 		unmarked, err := document.DiffIncremental()

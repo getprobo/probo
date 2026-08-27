@@ -232,6 +232,7 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 						},
 					),
 				)
+
 				_, err = document.Commit(
 
 					"splice",

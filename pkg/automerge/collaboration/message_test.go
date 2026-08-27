@@ -177,9 +177,7 @@ func TestFixturesAreParseable(t *testing.T) {
 	t.Parallel()
 
 	for _, name := range []string{"presence-roundtrip.json"} {
-		var raw map[string]json.RawMessage
-		fixture := readFixture[map[string]json.RawMessage](t, name)
-		raw = fixture
+		raw := readFixture[map[string]json.RawMessage](t, name)
 		assert.Contains(t, raw, "cborBase64")
 	}
 }

@@ -48,6 +48,7 @@ func TestRustRichText_LoadRejectsMarkEndBeforeBegin(t *testing.T) {
 	for _, engine := range rustParityEngines() {
 		document, err := engine.load(data, actor(1))
 		assert.Error(t, err, engine.name)
+
 		if document != nil {
 			require.NoError(t, document.Close())
 		}
@@ -322,6 +323,7 @@ func TestRustRichText_GetMarksAtHeads(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, text.Splice(0, 0, "hello world"))
 		require.NoError(t, text.Mark(0, 10, "bold", markTrue(), automerge.MarkExpandAfter))
+
 		_, err = document.Commit("bold", commitTime)
 		require.NoError(t, err)
 
@@ -329,6 +331,7 @@ func TestRustRichText_GetMarksAtHeads(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, text.Unmark(0, 10, "bold", automerge.MarkExpandNone))
+
 		_, err = document.Commit("unbold", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -383,6 +386,7 @@ func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
+
 		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 		require.NoError(t, document.UpdateDiffCursor())
@@ -390,6 +394,7 @@ func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 		var patches []automerge.Patch
 
 		require.NoError(t, text.Splice(6, 0, "<"))
+
 		_, err = document.Commit("end", commitTime.Add(time.Second))
 		require.NoError(t, err)
 		endPatches, err := document.DiffIncremental()
@@ -398,6 +403,7 @@ func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 		patches = append(patches, endPatches...)
 
 		require.NoError(t, text.Splice(3, 0, ">"))
+
 		_, err = document.Commit("start", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 		startPatches, err := document.DiffIncremental()
@@ -457,6 +463,7 @@ func TestRustText_RemotePatchesForExpandAfter(t *testing.T) {
 				automerge.MarkExpandAfter,
 			),
 		)
+
 		_, err = documentA.Commit("seed", commitTime)
 		require.NoError(t, err)
 
@@ -467,6 +474,7 @@ func TestRustText_RemotePatchesForExpandAfter(t *testing.T) {
 		beforeA, err := documentA.Heads()
 		require.NoError(t, err)
 		require.NoError(t, textA.Splice(3, 0, "a"))
+
 		afterA, err := documentA.Commit("append", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -536,6 +544,7 @@ func TestRustMarks_ExpansionAndUnmark(t *testing.T) {
 			),
 		)
 		require.NoError(t, text.Splice(0, 0, "why "))
+
 		_, err = document.Commit("marks", commitTime)
 		require.NoError(t, err)
 
@@ -585,6 +594,7 @@ func TestRustText_CrossPageMarksNotDoubleCounted(t *testing.T) {
 						automerge.MarkExpandNone,
 					),
 				)
+
 				_, err = document.Commit("seed", commitTime)
 				require.NoError(t, err)
 
@@ -600,6 +610,7 @@ func TestRustText_CrossPageMarksNotDoubleCounted(t *testing.T) {
 					length, err = textObject.Len()
 					require.NoError(t, err)
 					require.NoError(t, text.Splice(uint32(length), 0, "a"))
+
 					_, err = document.Commit("append", commitTime.Add(time.Duration(iteration+101)*time.Second))
 					require.NoError(t, err)
 

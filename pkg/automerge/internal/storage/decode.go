@@ -342,6 +342,7 @@ func restoreChangeOperations(operations []opset.Operation) ([]opset.Operation, e
 	}
 
 	predecessors := make(map[opset.OpID][]opset.OpID)
+
 	for _, operation := range operations {
 		for _, successor := range operation.Successors {
 			predecessors[successor] = append(predecessors[successor], operation.ID)

@@ -50,6 +50,7 @@ func TestRustMarkPatches_AtEndOfText(t *testing.T) {
 		text, err := author.CreateText("text")
 		require.NoError(t, err)
 		require.NoError(t, text.Splice(0, 0, "sample"))
+
 		_, err = author.Commit("seed", commitTime)
 		require.NoError(t, err)
 
@@ -61,6 +62,7 @@ func TestRustMarkPatches_AtEndOfText(t *testing.T) {
 		closeDocument(t, follower)
 
 		require.NoError(t, text.Mark(5, 6, "bold", markBool(), automerge.MarkExpandAfter))
+
 		_, err = author.Commit("mark", commitTime.Add(time.Second))
 		require.NoError(t, err)
 

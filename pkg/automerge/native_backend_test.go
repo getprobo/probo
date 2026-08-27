@@ -38,6 +38,7 @@ func TestPureGoDocument_ReferenceLoadsNativeHistory(t *testing.T) {
 	text, err := nativeDocument.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "Hello 😀"))
+
 	_, err = nativeDocument.Commit("Create native document", commitTime)
 	require.NoError(t, err)
 	data, err := nativeDocument.Save()
@@ -62,6 +63,7 @@ func TestPureGoDocument_ExtendsReferenceSnapshot(t *testing.T) {
 	text, err := nativeDocument.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(5, 0, " native"))
+
 	_, err = nativeDocument.Commit("Extend in Go", commitTime)
 	require.NoError(t, err)
 	data, err := nativeDocument.Save()
@@ -86,6 +88,7 @@ func TestPureGoDocument_InsertsInsideReferenceText(t *testing.T) {
 	text, err := nativeDocument.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(2, 0, "X"))
+
 	_, err = nativeDocument.Commit("Insert in Go", commitTime)
 	require.NoError(t, err)
 	data, err := nativeDocument.Save()
@@ -110,6 +113,7 @@ func TestPureGoDocument_DeletesReferenceText(t *testing.T) {
 	text, err := nativeDocument.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(2, 2, ""))
+
 	_, err = nativeDocument.Commit("Delete in Go", commitTime)
 	require.NoError(t, err)
 	data, err := nativeDocument.Save()
@@ -152,6 +156,7 @@ func TestPureGoDocument_ReusesActorAfterLoad(t *testing.T) {
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "A"))
+
 	_, err = document.Commit("First change", commitTime)
 	require.NoError(t, err)
 	data, err := document.Save()
@@ -163,6 +168,7 @@ func TestPureGoDocument_ReusesActorAfterLoad(t *testing.T) {
 	loadedText, err := loaded.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, loadedText.Splice(1, 0, "B"))
+
 	_, err = loaded.Commit("Second change", commitTime)
 	require.NoError(t, err)
 	data, err = loaded.Save()
@@ -187,6 +193,7 @@ func TestPureGoDocument_ConcurrentChangesConverge(t *testing.T) {
 	baseText, err := base.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, baseText.Splice(0, 0, "A"))
+
 	_, err = base.Commit("Create body", commitTime)
 	require.NoError(t, err)
 	baseData, err := base.Save()
@@ -198,6 +205,7 @@ func TestPureGoDocument_ConcurrentChangesConverge(t *testing.T) {
 	leftText, err := left.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, leftText.Splice(1, 0, "L"))
+
 	_, err = left.Commit("Edit left", commitTime)
 	require.NoError(t, err)
 
@@ -207,6 +215,7 @@ func TestPureGoDocument_ConcurrentChangesConverge(t *testing.T) {
 	rightText, err := right.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, rightText.Splice(1, 0, "R"))
+
 	_, err = right.Commit("Edit right", commitTime)
 	require.NoError(t, err)
 
@@ -267,6 +276,7 @@ func TestPureGoDocument_DeletedCursorMatchesReference(t *testing.T) {
 	cursor, err := nativeText.Cursor(2)
 	require.NoError(t, err)
 	require.NoError(t, nativeText.Splice(2, 1, ""))
+
 	_, err = nativeDocument.Commit("Delete cursor target", commitTime)
 	require.NoError(t, err)
 	nativePosition, err := nativeText.CursorPosition(cursor)
@@ -293,6 +303,7 @@ func TestPureGoDocument_UTF16CursorBoundariesMatchReference(t *testing.T) {
 	baseText, err := base.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, baseText.Splice(0, 0, "A😀B"))
+
 	_, err = base.Commit("Create emoji text", commitTime)
 	require.NoError(t, err)
 	baseData, err := base.Save()
@@ -334,6 +345,7 @@ func TestPureGoDocument_UTF16CursorBoundariesMatchReference(t *testing.T) {
 
 		require.NoError(t, nativeText.Splice(0, 0, "X"))
 		require.NoError(t, referenceText.Splice(0, 0, "X"))
+
 		nativePosition, err := nativeText.CursorPosition(nativeCursor)
 		require.NoError(t, err)
 		referencePosition, err := referenceText.CursorPosition(
@@ -357,6 +369,7 @@ func TestPureGoDocument_CursorModesMatchReference(t *testing.T) {
 	baseText, err := base.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, baseText.Splice(0, 0, "A😀B"))
+
 	_, err = base.Commit("cursor base", commitTime)
 	require.NoError(t, err)
 	data, err := base.Save()
@@ -427,6 +440,7 @@ func TestPureGoDocument_CursorModesMatchReference(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, nativeText.SpliceCursor(nativeCursor, 2, "X"))
 	require.NoError(t, referenceText.SpliceCursor(referenceCursor, 2, "X"))
+
 	nativeValue, err := nativeText.String()
 	require.NoError(t, err)
 	referenceValue, err := referenceText.String()
@@ -463,6 +477,7 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, nativeText.Splice(0, 0, "ABCD"))
 	require.NoError(t, referenceText.Splice(0, 0, "ABCD"))
+
 	_, err = nativeDocument.Commit("create text", commitTime)
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit("create text", commitTime)
@@ -491,6 +506,7 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 			automerge.MarkExpandBoth,
 		),
 	)
+
 	_, err = nativeDocument.Commit("mark", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit("mark", commitTime.Add(time.Second))
@@ -521,6 +537,7 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 			automerge.MarkExpandNone,
 		),
 	)
+
 	_, err = nativeDocument.Commit("unmark", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit(
@@ -591,12 +608,14 @@ func TestPureGoDocument_BlockAuthoringMatchesReference(t *testing.T) {
 	require.NoError(t, err)
 	setBlockAttributes(t, nativeFirst, "paragraph")
 	setBlockAttributes(t, referenceFirst, "paragraph")
+
 	nativeSecond, err := nativeText.SplitBlock(2)
 	require.NoError(t, err)
 	referenceSecond, err := referenceText.SplitBlock(2)
 	require.NoError(t, err)
 	setBlockAttributes(t, nativeSecond, "heading")
 	setBlockAttributes(t, referenceSecond, "heading")
+
 	_, err = nativeDocument.Commit("blocks", commitTime)
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit("blocks", commitTime)
@@ -611,6 +630,7 @@ func TestPureGoDocument_BlockAuthoringMatchesReference(t *testing.T) {
 	setBlockAttributes(t, referenceReplacement, "blockquote")
 	require.NoError(t, nativeText.JoinBlock(0))
 	require.NoError(t, referenceText.JoinBlock(0))
+
 	_, err = nativeDocument.Commit(
 
 		"replace and join",
@@ -694,6 +714,7 @@ func TestPureGoDocument_SynchronizesWithNativePeer(t *testing.T) {
 	text, err := left.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "Native sync"))
+
 	_, err = left.Commit("Create sync body", commitTime)
 	require.NoError(t, err)
 
@@ -727,6 +748,7 @@ func TestPureGoDocument_SyncWaitsForPeerResponse(t *testing.T) {
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "Wait"))
+
 	_, err = document.Commit("Create body", commitTime)
 	require.NoError(t, err)
 
@@ -753,6 +775,7 @@ func TestPureGoDocument_SynchronizesWithReferencePeer(t *testing.T) {
 	text, err := left.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "Reference sync"))
+
 	_, err = left.Commit("Create sync body", commitTime)
 	require.NoError(t, err)
 
@@ -786,6 +809,7 @@ func TestPureGoDocument_ReceivesReferenceSync(t *testing.T) {
 	text, err := left.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "From reference"))
+
 	_, err = left.Commit("Create reference body", commitTime)
 	require.NoError(t, err)
 
@@ -851,6 +875,7 @@ func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 				"N",
 			),
 		)
+
 		_, err = nativeDocument.Commit("Native edit", commitTime)
 		require.NoError(t, err)
 
@@ -867,6 +892,7 @@ func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 				"R",
 			),
 		)
+
 		_, err = referenceDocument.Commit("Reference edit", commitTime)
 		require.NoError(t, err)
 
@@ -889,6 +915,7 @@ func TestPureGoDocument_ReferenceEditsWhileMessageInFlight(t *testing.T) {
 	clientText, err := client.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, clientText.Splice(0, 0, "A"))
+
 	_, err = client.Commit("initial", commitTime)
 	require.NoError(t, err)
 
@@ -906,6 +933,7 @@ func TestPureGoDocument_ReferenceEditsWhileMessageInFlight(t *testing.T) {
 	synchronize(t, clientSync, serverSync)
 
 	require.NoError(t, clientText.Splice(1, 0, "B"))
+
 	_, err = client.Commit("first edit", commitTime)
 	require.NoError(t, err)
 	first, ok, err := clientSync.GenerateMessage()
@@ -913,6 +941,7 @@ func TestPureGoDocument_ReferenceEditsWhileMessageInFlight(t *testing.T) {
 	require.True(t, ok)
 
 	require.NoError(t, clientText.Splice(2, 0, "C"))
+
 	_, err = client.Commit("second edit", commitTime)
 	require.NoError(t, err)
 
@@ -973,6 +1002,7 @@ func TestSyncState_ReadOnlyParity(t *testing.T) {
 				text, err := source.CreateText("body")
 				require.NoError(t, err)
 				require.NoError(t, text.Splice(0, 0, "Published"))
+
 				_, err = source.Commit("publish", commitTime)
 				require.NoError(t, err)
 
@@ -1033,6 +1063,7 @@ func TestSyncState_ReadOnlyModeOverridesInFlight(t *testing.T) {
 				text, err := document.CreateText("body")
 				require.NoError(t, err)
 				require.NoError(t, text.Splice(0, 0, "A"))
+
 				_, err = document.Commit("initial", commitTime)
 				require.NoError(t, err)
 				state, err := document.NewSyncState()
@@ -1064,6 +1095,7 @@ func TestSyncState_BothReadOnlyResumeConvergence(t *testing.T) {
 	leftText, err := left.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, leftText.Splice(0, 0, "L"))
+
 	_, err = left.Commit("left", commitTime)
 	require.NoError(t, err)
 
@@ -1073,6 +1105,7 @@ func TestSyncState_BothReadOnlyResumeConvergence(t *testing.T) {
 	rightText, err := right.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, rightText.Splice(0, 0, "R"))
+
 	_, err = right.Commit("right", commitTime)
 	require.NoError(t, err)
 

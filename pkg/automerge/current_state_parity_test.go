@@ -172,12 +172,14 @@ func TestRustCurrentState_ConcurrentInsertions(t *testing.T) {
 		closeDocument(t, other)
 
 		require.NoError(t, list.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1}))
+
 		_, err = document.Commit("one", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
 		otherList, err := other.Root().Object("list")
 		require.NoError(t, err)
 		require.NoError(t, otherList.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2}))
+
 		_, err = other.Commit("two", commitTime.Add(time.Second))
 		require.NoError(t, err)
 

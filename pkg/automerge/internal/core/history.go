@@ -30,7 +30,6 @@ import (
 )
 
 func (b *Engine) Heads() ([][32]byte, error) {
-
 	heads := b.state.Heads()
 
 	result := make([][32]byte, len(heads))
@@ -44,7 +43,6 @@ func (b *Engine) Heads() ([][32]byte, error) {
 func (b *Engine) HasHeads(
 	heads [][32]byte,
 ) (bool, error) {
-
 	for _, head := range heads {
 		if !b.state.hasChange(opset.ChangeHash(head)) {
 			return false, nil
@@ -57,7 +55,6 @@ func (b *Engine) HasHeads(
 func (b *Engine) MissingDependencies(
 	heads [][32]byte,
 ) ([][32]byte, error) {
-
 	missing := make(map[[32]byte]struct{})
 
 	for _, head := range heads {
@@ -93,7 +90,6 @@ func (b *Engine) MissingDependencies(
 func (b *Engine) ChangesSince(
 	heads [][32]byte,
 ) ([][]byte, [][32]byte, error) {
-
 	knownHeads := make([]opset.ChangeHash, len(heads))
 	for i, head := range heads {
 		knownHeads[i] = opset.ChangeHash(head)
@@ -131,7 +127,6 @@ func (b *Engine) ApplyChanges(
 }
 
 func (b *Engine) Merge(data []byte) ([][32]byte, error) {
-
 	// While isolated, merged changes belong to the full history rather than the
 	// pinned view, so operate on the full state and keep the pinned view intact.
 	if b.isolationActive && b.fullState != nil {

@@ -48,6 +48,7 @@ func TestConformance_AnonymizedDocumentLoadsAcrossEngines(t *testing.T) {
 	text, err := source.CreateText("confidential-policy")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "secret contents"))
+
 	_, err = source.Commit("private metadata", commitTime)
 	require.NoError(t, err)
 
@@ -79,6 +80,7 @@ func TestConformance_AnonymizedDocumentLoadsAcrossEngines(t *testing.T) {
 
 		encoded, err := json.Marshal(response.Data)
 		require.NoError(t, err)
+
 		materialized := string(encoded)
 		assert.False(t, strings.Contains(materialized, "owner-email"))
 		assert.False(t, strings.Contains(materialized, "alice@example.com"))

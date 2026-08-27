@@ -64,7 +64,6 @@ func containsHash(hashes []opset.ChangeHash, target opset.ChangeHash) bool {
 // isolation actor so they never collide with the base actor's later history. It
 // mirrors Rust's AutoCommit::isolate. Repeated calls re-pin to fresh heads.
 func (b *Engine) Isolate(heads [][32]byte) error {
-
 	if len(b.pending) > 0 {
 		if _, err := b.Commit("", time.Time{}); err != nil {
 			return err
@@ -118,7 +117,6 @@ func nativeToArrayHeads(heads []opset.ChangeHash) [][32]byte {
 // Integrate ends isolation, returning reads and writes to the full history that
 // accumulated every isolated and merged change. It mirrors AutoCommit::integrate.
 func (b *Engine) Integrate() error {
-
 	if !b.isolationActive {
 		return nil
 	}
@@ -156,7 +154,6 @@ func (b *Engine) Commit(
 	message string,
 	timestamp time.Time,
 ) ([32]byte, error) {
-
 	if len(b.pending) == 0 {
 		return [32]byte{}, fmt.Errorf("change contains no operations")
 	}
@@ -219,7 +216,6 @@ func (b *Engine) EmptyCommit(
 	message string,
 	timestamp time.Time,
 ) ([32]byte, error) {
-
 	if len(b.pending) != 0 {
 		return [32]byte{}, fmt.Errorf("cannot create empty change with pending operations")
 	}
@@ -253,7 +249,6 @@ func (b *Engine) EmptyCommit(
 }
 
 func (b *Engine) Rollback() (uint64, error) {
-
 	if len(b.pending) == 0 {
 		return 0, nil
 	}

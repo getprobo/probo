@@ -101,6 +101,7 @@ func runCanIsolate(t *testing.T, engine rustParityEngine) canIsolateObservations
 
 	putInt64(t, doc1, "size", 100)
 	require.NoError(t, text.Splice(0, 0, "aaabbbccc"))
+
 	_, err = doc1.Commit("seed", commitTime)
 	require.NoError(t, err)
 
@@ -121,6 +122,7 @@ func runCanIsolate(t *testing.T, engine rustParityEngine) canIsolateObservations
 	text2, err := doc2.Text("text")
 	require.NoError(t, err)
 	require.NoError(t, text2.Splice(9, 0, "111"))
+
 	_, err = doc2.Commit("doc2", commitTime)
 	require.NoError(t, err)
 
@@ -255,6 +257,7 @@ func TestRustText_UpdateTextChangeAt(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, text.Update("a\n"))
+
 		_, err = doc.Commit("a", commitTime)
 		require.NoError(t, err)
 
@@ -262,11 +265,13 @@ func TestRustText_UpdateTextChangeAt(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, text.Update("a\nb\n"))
+
 		_, err = doc.Commit("b", commitTime)
 		require.NoError(t, err)
 
 		require.NoError(t, doc.Isolate(heads))
 		require.NoError(t, text.Update("a\nc\n"))
+
 		_, err = doc.Commit("c", commitTime)
 		require.NoError(t, err)
 		require.NoError(t, doc.Integrate())
@@ -304,6 +309,7 @@ func TestRustTest_CanTransactionAt(t *testing.T) {
 
 		putInt64(t, doc, "size", 100)
 		require.NoError(t, text.Splice(0, 0, "aaabbbccc"))
+
 		_, err = doc.Commit("seed", commitTime)
 		require.NoError(t, err)
 

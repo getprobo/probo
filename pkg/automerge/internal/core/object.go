@@ -80,7 +80,6 @@ func (b *Engine) PutScalar(
 	key string,
 	encoded []byte,
 ) error {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return err
@@ -141,7 +140,6 @@ func (b *Engine) GetScalar(
 	object uint32,
 	key string,
 ) ([]byte, error) {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return nil, err
@@ -165,7 +163,6 @@ func (b *Engine) GetScalarAtHeads(
 	key string,
 	heads [][32]byte,
 ) ([]byte, error) {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return nil, err
@@ -193,7 +190,6 @@ func (b *Engine) GetAllScalars(
 	object uint32,
 	key string,
 ) ([]byte, error) {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return nil, err
@@ -235,7 +231,6 @@ func (b *Engine) GetAllScalarsAt(
 	object uint32,
 	index uint64,
 ) ([]byte, error) {
-
 	sequenceObject, err := b.sequenceObject(object)
 	if err != nil {
 		return nil, err
@@ -279,7 +274,6 @@ func (b *Engine) PutObject(
 	key string,
 	rawType string,
 ) (uint32, error) {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return 0, err
@@ -313,7 +307,6 @@ func (b *Engine) GetObject(
 	object uint32,
 	key string,
 ) (uint32, string, error) {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return 0, "", err
@@ -501,7 +494,6 @@ func (b *Engine) DeleteMap(
 	object uint32,
 	key string,
 ) error {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return err
@@ -555,7 +547,6 @@ func (b *Engine) Increment(
 	key string,
 	delta int64,
 ) error {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return err
@@ -627,7 +618,6 @@ func (b *Engine) IncrementAt(
 }
 
 func (b *Engine) Keys(object uint32) ([]string, error) {
-
 	objectID, err := b.mapObject(object)
 	if err != nil {
 		return nil, err
@@ -637,7 +627,6 @@ func (b *Engine) Keys(object uint32) ([]string, error) {
 }
 
 func (b *Engine) Length(object uint32) (uint64, error) {
-
 	objectID, err := b.object(object)
 	if err != nil {
 		return 0, err

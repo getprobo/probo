@@ -119,7 +119,6 @@ const (
 )
 
 func NewEngine() (*Engine, error) {
-
 	actor, err := randomActorID()
 	if err != nil {
 		return nil, err
@@ -151,7 +150,6 @@ func NewEngine() (*Engine, error) {
 }
 
 func LoadEngine(data []byte) (*Engine, error) {
-
 	document, err := storage.Decode(data)
 	if err != nil {
 		// A document may retain orphan changes (changes whose dependencies are
@@ -505,7 +503,6 @@ func (b *Engine) LoadIncremental(
 }
 
 func (b *Engine) SetActor(value []byte) error {
-
 	actor, err := opset.NewActorID(value)
 	if err != nil {
 		return err

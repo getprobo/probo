@@ -31,7 +31,6 @@ import (
 )
 
 func (b *Engine) NewSyncState() (uint32, error) {
-
 	handle := b.nextSyncState
 	b.nextSyncState++
 	b.syncStates[handle] = &syncSessionState{}
@@ -40,7 +39,6 @@ func (b *Engine) NewSyncState() (uint32, error) {
 }
 
 func (b *Engine) CloseSyncState(handle uint32) error {
-
 	if _, ok := b.syncStates[handle]; !ok {
 		return fmt.Errorf("invalid sync state %d", handle)
 	}
@@ -54,7 +52,6 @@ func (b *Engine) SetSyncReadOnly(
 	handle uint32,
 	readOnly bool,
 ) error {
-
 	state, err := b.syncState(handle)
 	if err != nil {
 		return err
@@ -83,7 +80,6 @@ func (b *Engine) SetSyncReadOnly(
 func (b *Engine) SyncPeerReadOnly(
 	handle uint32,
 ) (bool, error) {
-
 	state, err := b.syncState(handle)
 	if err != nil {
 		return false, err
@@ -95,7 +91,6 @@ func (b *Engine) SyncPeerReadOnly(
 func (b *Engine) GenerateSyncMessage(
 	handle uint32,
 ) ([]byte, bool, error) {
-
 	state, err := b.syncState(handle)
 	if err != nil {
 		return nil, false, err
@@ -332,7 +327,6 @@ func (b *Engine) ReceiveSyncMessage(
 func (b *Engine) SaveSyncState(
 	handle uint32,
 ) ([]byte, error) {
-
 	state, err := b.syncState(handle)
 	if err != nil {
 		return nil, err
@@ -349,7 +343,6 @@ func (b *Engine) SaveSyncState(
 func (b *Engine) LoadSyncState(
 	data []byte,
 ) (uint32, error) {
-
 	var state syncSessionState
 	if err := json.Unmarshal(data, &state); err != nil {
 		return 0, fmt.Errorf("cannot decode sync state: %w", err)

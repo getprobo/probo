@@ -24,13 +24,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"sort"
 	"strings"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 func (b *Engine) Stats() ([]byte, error) {
-
 	actors := make(map[opset.ActorID]struct{})
 	for id := range b.state.operations {
 		actors[id.Actor] = struct{}{}
@@ -129,7 +129,6 @@ func patchValueForOperation(state *State, operation opset.Operation) (patchValue
 // creation operation ID, with map keys in lexical order and sequence elements
 // in index order.
 func (b *Engine) CurrentState() ([]byte, error) {
-
 	patches := make([]patchOut, 0)
 
 	for _, object := range orderedObjectsInState(b.state) {
@@ -377,7 +376,6 @@ func (b *Engine) Diff(
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
 ) ([]byte, error) {
-
 	patches, err := b.diffPatches(beforeHeads, afterHeads)
 	if err != nil {
 		return nil, err
@@ -394,7 +392,6 @@ func (b *Engine) Diff(
 // UpdateDiffCursor records the current heads as the incremental diff cursor so a
 // following DiffIncremental reports only the changes committed since this call.
 func (b *Engine) UpdateDiffCursor() error {
-
 	heads, err := b.Heads()
 	if err != nil {
 		return err
@@ -410,7 +407,6 @@ func (b *Engine) UpdateDiffCursor() error {
 // cursor (or from an empty document when the cursor is unset) and advances the
 // cursor to the current heads, mirroring the reference diff_incremental helper.
 func (b *Engine) DiffIncremental() ([]byte, error) {
-
 	heads, err := b.Heads()
 	if err != nil {
 		return nil, err

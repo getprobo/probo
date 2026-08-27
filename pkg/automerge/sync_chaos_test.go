@@ -113,6 +113,7 @@ func newSyncChaos(t *testing.T) *syncChaos {
 	body, err := seed.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, body.Splice(0, 0, "seed"))
+
 	_, err = seed.Commit("seed", commitTime)
 	require.NoError(t, err)
 

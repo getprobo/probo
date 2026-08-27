@@ -139,16 +139,19 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 
 					if scenario.initial != nil {
 						require.NoError(t, text.UpdateSpans(scenario.initial, scenario.config))
+
 						_, err = document.Commit("initial", commitTime)
 						require.NoError(t, err)
 					}
 
 					require.NoError(t, text.UpdateSpans(scenario.target, scenario.config))
+
 					_, err = document.Commit("target", commitTime)
 					require.NoError(t, err)
 
 					if scenario.post != nil {
 						scenario.post(t, text)
+
 						_, err = document.Commit("post", commitTime)
 						require.NoError(t, err)
 					}
@@ -216,10 +219,12 @@ func TestJSBlock_ShowHistoricalMarks(t *testing.T) {
 	for _, engine := range rustParityEngines() {
 		document, _, text := seedText(t, engine, "hello world")
 		require.NoError(t, text.Mark(0, 5, "bold", markBool(), automerge.MarkExpandAfter))
+
 		heads, err := document.Commit("bold", commitTime)
 		require.NoError(t, err)
 
 		require.NoError(t, text.Mark(5, 11, "italic", markBool(), automerge.MarkExpandAfter))
+
 		_, err = document.Commit("italic", commitTime.Add(time.Second))
 		require.NoError(t, err)
 

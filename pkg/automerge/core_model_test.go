@@ -353,6 +353,7 @@ func TestDocument_LoadedObjectRemainsEditable(t *testing.T) {
 			automerge.Scalar{Type: automerge.ScalarTypeUint, Uint: 1},
 		),
 	)
+
 	_, err = loaded.Commit("insert item", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	data, err = loaded.Save()
@@ -418,6 +419,7 @@ func TestDocument_CountersMatchReference(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 10},
 			),
 		)
+
 		_, err = document.Commit("create counters", commitTime)
 		require.NoError(t, err)
 
@@ -426,6 +428,7 @@ func TestDocument_CountersMatchReference(t *testing.T) {
 		require.NoError(t, root.Increment("counter", 3))
 		require.NoError(t, root.Increment("counter", -2))
 		require.NoError(t, list.IncrementAt(0, -4))
+
 		_, err = document.Commit(
 
 			"increment counters",
@@ -525,6 +528,7 @@ func TestDocument_CounterDeletionMatchesReference(t *testing.T) {
 						automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
 					),
 				)
+
 				_, err = document.Commit("counters", commitTime)
 				require.NoError(t, err)
 
@@ -815,6 +819,7 @@ func TestDocument_RollbackMatchesReference(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 			),
 		)
+
 		cancelled, err := document.Rollback()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(3), cancelled)
@@ -1283,6 +1288,7 @@ func TestDocument_RandomConcurrentMapParity(t *testing.T) {
 		rightMap, err = right.Root().Object("map")
 		require.NoError(t, err)
 		assertMapParity(t, keys, leftMap, rightMap)
+
 		referenceLeftMap, err = referenceLeft.Root().Object("map")
 		require.NoError(t, err)
 		referenceRightMap, err = referenceRight.Root().Object("map")
@@ -1408,6 +1414,7 @@ func TestDocument_RandomConcurrentListParity(t *testing.T) {
 		rightList, err = right.Root().Object("list")
 		require.NoError(t, err)
 		assertListParity(t, leftList, rightList)
+
 		referenceLeftList, err = referenceLeft.Root().Object("list")
 		require.NoError(t, err)
 		referenceRightList, err = referenceRight.Root().Object("list")
@@ -1447,6 +1454,7 @@ func TestDocument_ConcurrentListOrderingMatchesReference(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "A"},
 			),
 		)
+
 		_, err = base.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -1466,6 +1474,7 @@ func TestDocument_ConcurrentListOrderingMatchesReference(t *testing.T) {
 				},
 			),
 		)
+
 		_, err = left.Commit("left", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -1485,6 +1494,7 @@ func TestDocument_ConcurrentListOrderingMatchesReference(t *testing.T) {
 				},
 			),
 		)
+
 		_, err = right.Commit("right", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -1533,6 +1543,7 @@ func TestDocument_InsertAfterConcurrentDeleteMatchesReference(t *testing.T) {
 				},
 			),
 		)
+
 		_, err = base.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -1542,6 +1553,7 @@ func TestDocument_InsertAfterConcurrentDeleteMatchesReference(t *testing.T) {
 		leftList, err := left.Root().Object("list")
 		require.NoError(t, err)
 		require.NoError(t, leftList.DeleteIndex(0))
+
 		_, err = left.Commit("delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -1558,6 +1570,7 @@ func TestDocument_InsertAfterConcurrentDeleteMatchesReference(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "X"},
 			),
 		)
+
 		_, err = right.Commit("insert", commitTime.Add(time.Second))
 		require.NoError(t, err)
 

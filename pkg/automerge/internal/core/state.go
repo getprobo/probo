@@ -209,6 +209,7 @@ func newStateFromDocument(
 
 func (s *State) validateMarkOrder() error {
 	objects := make(map[opset.OpID]struct{})
+
 	for _, operation := range s.operations {
 		if operation.Action == opset.ActionMark && !operation.Object.IsRoot {
 			objects[operation.Object.OpID] = struct{}{}
@@ -217,6 +218,7 @@ func (s *State) validateMarkOrder() error {
 
 	for object := range objects {
 		seen := make(map[opset.OpID]struct{})
+
 		for _, id := range s.insertOrder(object) {
 			operation, ok := s.operations[id]
 			if !ok || operation.Action != opset.ActionMark {
@@ -234,6 +236,7 @@ func (s *State) validateMarkOrder() error {
 			}
 
 			beginID := opset.OpID{Actor: id.Actor, Counter: id.Counter - 1}
+
 			begin, ok := s.operations[beginID]
 			if !ok ||
 				begin.Action != opset.ActionMark ||

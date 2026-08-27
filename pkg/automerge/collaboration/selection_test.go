@@ -38,11 +38,13 @@ func TestTextSelectionValue_SurvivesConcurrentInsert(t *testing.T) {
 
 	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
+
 	defer func() { _ = document.Close() }()
 
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "hello world"))
+
 	_, err = document.Commit("seed", commitTime())
 	require.NoError(t, err)
 
@@ -81,6 +83,7 @@ func TestTextSelectionValue_SurvivesConcurrentInsert(t *testing.T) {
 
 	// Someone types three characters at the very start of the document.
 	require.NoError(t, text.Splice(0, 0, "XX "))
+
 	_, err = document.Commit("insert", commitTime())
 	require.NoError(t, err)
 

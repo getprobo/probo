@@ -101,6 +101,7 @@ func TestEngineAnonymize_PreservesHistoryAndSource(t *testing.T) {
 	pairs := pairChangesByActorRank(sourceDocument.Changes, anonymizedDocument.Changes)
 	sourceByHash := changesByHash(sourceDocument.Changes)
 	anonymizedByHash := changesByHash(anonymizedDocument.Changes)
+
 	for _, pair := range pairs {
 		sourceChange := pair.source
 		anonymizedChange := pair.anonymized
@@ -112,6 +113,7 @@ func TestEngineAnonymize_PreservesHistoryAndSource(t *testing.T) {
 		assert.NotEqual(t, sourceChange.Time, anonymizedChange.Time)
 		assert.NotEqual(t, sourceChange.Message, anonymizedChange.Message)
 		require.Len(t, anonymizedChange.Dependencies, len(sourceChange.Dependencies))
+
 		for i := range sourceChange.Dependencies {
 			sourceDependency := sourceByHash[sourceChange.Dependencies[i]]
 			anonymizedDependency := anonymizedByHash[anonymizedChange.Dependencies[i]]
@@ -122,6 +124,7 @@ func TestEngineAnonymize_PreservesHistoryAndSource(t *testing.T) {
 				actorRank(anonymizedDocument.Changes, anonymizedDependency.Actor),
 			)
 		}
+
 		require.Len(t, anonymizedChange.Operations, len(sourceChange.Operations))
 
 		for j := range sourceChange.Operations {
@@ -131,16 +134,20 @@ func TestEngineAnonymize_PreservesHistoryAndSource(t *testing.T) {
 			assert.Equal(t, sourceOperation.Insert, anonymizedOperation.Insert)
 			assert.Equal(t, sourceOperation.ID.Counter, anonymizedOperation.ID.Counter)
 			assert.Equal(t, len(sourceOperation.Predecessors), len(anonymizedOperation.Predecessors))
+
 			if sourceOperation.Key.Property != nil {
 				require.NotNil(t, anonymizedOperation.Key.Property)
 				assert.NotEqual(t, *sourceOperation.Key.Property, *anonymizedOperation.Key.Property)
 				assert.Equal(t, len(*sourceOperation.Key.Property), len(*anonymizedOperation.Key.Property))
 			}
+
 			if sourceOperation.Value != nil && sourceOperation.Value.Type == opset.ScalarString {
 				require.NotNil(t, anonymizedOperation.Value)
+
 				if containsAnonymizedCharacter(sourceOperation.Value.String) {
 					assert.NotEqual(t, sourceOperation.Value.String, anonymizedOperation.Value.String)
 				}
+
 				assert.Equal(t, len(sourceOperation.Value.String), len(anonymizedOperation.Value.String))
 				assert.Equal(
 					t,
@@ -148,6 +155,7 @@ func TestEngineAnonymize_PreservesHistoryAndSource(t *testing.T) {
 					len(utf16.Encode([]rune(anonymizedOperation.Value.String))),
 				)
 			}
+
 			if sourceOperation.MarkName != nil {
 				require.NotNil(t, anonymizedOperation.MarkName)
 				assert.NotEqual(t, *sourceOperation.MarkName, *anonymizedOperation.MarkName)
@@ -163,6 +171,7 @@ func TestAnonymization_RewritesReferencesAndScalarKinds(t *testing.T) {
 	require.NoError(t, err)
 	actorTwo, err := opset.NewActorID(makeActor(2))
 	require.NoError(t, err)
+
 	object := opset.OpID{Actor: actorOne, Counter: 1}
 	element := opset.OpID{Actor: actorTwo, Counter: 2}
 	predecessor := opset.OpID{Actor: actorOne, Counter: 3}
@@ -192,6 +201,7 @@ func TestAnonymization_RewritesReferencesAndScalarKinds(t *testing.T) {
 	require.NoError(t, err)
 	anonymized, err := anonymizer.change(change)
 	require.NoError(t, err)
+
 	operation := anonymized.Operations[0]
 
 	assert.NotEqual(t, change.Actor, anonymized.Actor)
@@ -242,18 +252,21 @@ func TestAnonymization_RepeatedNumbersReceiveVariedReplacements(t *testing.T) {
 			&opset.Scalar{Type: opset.ScalarInt, Int: 42},
 		)
 		require.NoError(t, err)
+
 		signed[signedValue.Int] = struct{}{}
 
 		unsignedValue, err := anonymizer.scalar(
 			&opset.Scalar{Type: opset.ScalarUint, Uint: 42},
 		)
 		require.NoError(t, err)
+
 		unsigned[unsignedValue.Uint] = struct{}{}
 
 		floatValue, err := anonymizer.scalar(
 			&opset.Scalar{Type: opset.ScalarFloat64, Float: 42},
 		)
 		require.NoError(t, err)
+
 		floats[math.Float64bits(floatValue.Float)] = struct{}{}
 	}
 
@@ -321,6 +334,7 @@ func pairChangesByActorRank(source, anonymized []opset.Change) []changePair {
 			changePair{source: change, anonymized: anonymizedByRankSequence[key]},
 		)
 	}
+
 	return pairs
 }
 
@@ -331,12 +345,14 @@ func actorRank(changes []opset.Change, actor opset.ActorID) int {
 			actors = append(actors, changes[i].Actor)
 		}
 	}
+
 	slices.SortFunc(
 		actors,
 		func(left, right opset.ActorID) int {
 			return left.Compare(right)
 		},
 	)
+
 	return slices.Index(actors, actor)
 }
 
@@ -345,16 +361,18 @@ func changesByHash(changes []opset.Change) map[opset.ChangeHash]opset.Change {
 	for _, change := range changes {
 		result[*change.Hash] = change
 	}
+
 	return result
 }
 
 func containsAnonymizedCharacter(value string) bool {
 	for _, character := range value {
 		if !unicode.IsSpace(character) &&
-			!(character <= unicode.MaxASCII && unicode.IsControl(character)) {
+			(character > unicode.MaxASCII || !unicode.IsControl(character)) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -367,6 +385,7 @@ func assertScalarShape(t *testing.T, source, replacement *opset.Scalar) {
 	}
 
 	assert.Equal(t, source.Type, replacement.Type)
+
 	switch source.Type {
 	case opset.ScalarNull:
 	case opset.ScalarUint:

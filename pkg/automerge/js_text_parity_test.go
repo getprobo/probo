@@ -61,6 +61,7 @@ func TestJSText_ImplicitAndExplicitDeletion(t *testing.T) {
 		document, _, text := seedText(t, engine, "abc")
 		require.NoError(t, text.Splice(1, 1, ""))
 		require.NoError(t, text.Splice(1, 0, ""))
+
 		_, err := document.Commit("edit", commitTime)
 		require.NoError(t, err)
 
@@ -93,6 +94,7 @@ func TestJSText_TextAndOtherOpsSameChange(t *testing.T) {
 			),
 		)
 		require.NoError(t, text.Splice(0, 0, "a"))
+
 		_, err := document.Commit("mixed", commitTime)
 		require.NoError(t, err)
 
@@ -199,6 +201,7 @@ func TestJSText_SplicingIntoArrays(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, text.Splice(0, 0, "Hello "))
+
 		_, err = document.Commit("splice", commitTime)
 		require.NoError(t, err)
 

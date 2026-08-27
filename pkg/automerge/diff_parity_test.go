@@ -100,12 +100,14 @@ func TestRustDiff_ReverseDeletionOfObjectInList(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, textValue.Splice(0, 0, "b"))
 		require.NoError(t, list.InsertScalar(2, automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
+
 		_, err = document.Commit("build", commitTime)
 		require.NoError(t, err)
 
 		before, err := document.Heads()
 		require.NoError(t, err)
 		require.NoError(t, list.DeleteIndex(1))
+
 		_, err = document.Commit("delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 		after, err := document.Heads()
@@ -150,12 +152,14 @@ func TestRustDiff_ReverseDeletionOfObjectInMap(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, textBValue.Splice(0, 0, "b"))
 		require.NoError(t, mapObject.PutScalar("c", automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
+
 		_, err = document.Commit("build", commitTime)
 		require.NoError(t, err)
 
 		before, err := document.Heads()
 		require.NoError(t, err)
 		require.NoError(t, mapObject.DeleteKey("b"))
+
 		_, err = document.Commit("delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 		after, err := document.Heads()
@@ -195,12 +199,14 @@ func TestRustDiff_ReverseDeletionOfBlockInText(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, text.Splice(2, 0, "b"))
 		require.NoError(t, block.PutScalar("key", automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"}))
+
 		_, err = document.Commit("build", commitTime)
 		require.NoError(t, err)
 
 		before, err := document.Heads()
 		require.NoError(t, err)
 		require.NoError(t, text.JoinBlock(1))
+
 		_, err = document.Commit("delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 		after, err := document.Heads()

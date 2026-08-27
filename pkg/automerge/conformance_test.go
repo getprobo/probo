@@ -134,6 +134,7 @@ func TestConformance_DatesFlowBetweenDocuments(t *testing.T) {
 	targetList, err := target.Root().CreateObject("list", automerge.ObjectTypeList)
 	require.NoError(t, err)
 	require.NoError(t, targetList.InsertScalar(0, listWhen))
+
 	_, err = target.Commit("reuse dates", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	saved, err := target.Save()
@@ -165,6 +166,7 @@ func TestConformance_JavaScriptLoadsGoDocument(t *testing.T) {
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "Hello 😀"))
+
 	hash, err := document.Commit("Create in Go", commitTime)
 	require.NoError(t, err)
 	data, err := document.Save()
@@ -191,6 +193,7 @@ func TestConformance_JavaScriptPreservesGoChanges(t *testing.T) {
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "ABC"))
+
 	hash, err := document.Commit("Create in Go", commitTime)
 	require.NoError(t, err)
 	changes, err := document.ChangesSince(nil)

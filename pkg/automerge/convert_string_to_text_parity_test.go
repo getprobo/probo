@@ -138,6 +138,7 @@ func TestRustConvert_StringsInListsAreConvertedToText(t *testing.T) {
 	list, err := source.Root().CreateObject("list", automerge.ObjectTypeList)
 	require.NoError(t, err)
 	require.NoError(t, list.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"}))
+
 	_, err = source.Commit("seed", commitTime)
 	require.NoError(t, err)
 

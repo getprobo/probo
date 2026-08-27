@@ -64,11 +64,13 @@ func TestInterop_RealRepoClientLoadsGoDocument(t *testing.T) {
 
 	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
+
 	defer func() { _ = server.Close() }()
 
 	text, err := server.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "hello world"))
+
 	_, err = server.Commit("seed", commitTime())
 	require.NoError(t, err)
 

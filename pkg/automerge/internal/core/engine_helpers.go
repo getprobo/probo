@@ -55,7 +55,6 @@ func (b *Engine) nextOperationID() opset.OpID {
 }
 
 func (b *Engine) requireRoot(handle uint32) error {
-
 	object, err := b.object(handle)
 	if err != nil {
 		return err
@@ -178,7 +177,6 @@ func (b *Engine) insertSequenceOperation(
 	action opset.Action,
 	value *opset.Scalar,
 ) (opset.Operation, error) {
-
 	object, err := b.sequenceObject(handle)
 	if err != nil {
 		return opset.Operation{}, err
@@ -236,7 +234,6 @@ func (b *Engine) sequenceOperation(
 	handle uint32,
 	index uint64,
 ) (sequenceValue, error) {
-
 	object, err := b.sequenceObject(handle)
 	if err != nil {
 		return sequenceValue{}, err
@@ -440,12 +437,14 @@ func sequenceRange(
 	// caller addressing the middle of a surrogate pair), so advance to the
 	// boundary after it, matching the reference.
 	boundary := sort.Search(len(offsets), func(i int) bool { return offsets[i] > index })
+
 	start := boundary - 1
 	if offsets[start] < index {
 		start++
 	}
 
 	var previous *opset.OpID
+
 	if start > 0 {
 		previousValue := sequence[start-1].ID
 		previous = &previousValue

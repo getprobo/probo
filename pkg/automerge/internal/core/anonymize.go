@@ -71,6 +71,7 @@ func (b *Engine) Anonymize() (*Engine, error) {
 	}
 
 	changes = append([]*opset.Change(nil), changes...)
+
 	if len(b.pending) > 0 {
 		sequence := b.state.sequenceForActor(b.actor) + 1
 		changes = append(
@@ -138,6 +139,7 @@ func newAnonymization(changes []*opset.Change) (*anonymization, error) {
 		synthetic:           synthetic,
 		syntheticPosition:   int(position),
 	}
+
 	for _, alphabet := range []structuralAlphabet{
 		printableASCII,
 		asciiControl,
@@ -154,11 +156,13 @@ func newAnonymization(changes []*opset.Change) (*anonymization, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			rotations[alphabet] = uint32(random) + 1
 		}
 	}
 
 	actors := collectActors(changes)
+
 	for {
 		var prefix [8]byte
 		if _, err := rand.Read(prefix[:]); err != nil {
@@ -167,10 +171,12 @@ func newAnonymization(changes []*opset.Change) (*anonymization, error) {
 
 		mapped := make(map[opset.ActorID]opset.ActorID, len(actors))
 		collides := false
+
 		for rank, actor := range actors {
 			var replacement [16]byte
 			copy(replacement[:8], prefix[:])
 			binary.BigEndian.PutUint64(replacement[8:], uint64(rank))
+
 			mapped[actor] = opset.ActorID(string(replacement[:]))
 			if _, exists := slices.BinarySearchFunc(
 				actors,
@@ -203,17 +209,22 @@ func collectActors(changes []*opset.Change) []opset.ActorID {
 
 	for _, change := range changes {
 		add(change.Actor)
+
 		for _, operation := range change.Operations {
 			add(operation.ID.Actor)
+
 			if !operation.Object.IsRoot {
 				add(operation.Object.OpID.Actor)
 			}
+
 			if operation.Key.Element != nil {
 				add(operation.Key.Element.Actor)
 			}
+
 			for _, predecessor := range operation.Predecessors {
 				add(predecessor.Actor)
 			}
+
 			for _, successor := range operation.Successors {
 				add(successor.Actor)
 			}
@@ -224,6 +235,7 @@ func collectActors(changes []*opset.Change) []opset.ActorID {
 	for actor := range set {
 		actors = append(actors, actor)
 	}
+
 	slices.SortFunc(
 		actors,
 		func(left, right opset.ActorID) int {
@@ -255,6 +267,7 @@ func (a *anonymization) change(source *opset.Change) (*opset.Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot anonymize change time: %w", err)
 	}
+
 	change.Time = time
 
 	for i, dependency := range source.Dependencies {
@@ -262,6 +275,7 @@ func (a *anonymization) change(source *opset.Change) (*opset.Change, error) {
 		if !ok {
 			return nil, fmt.Errorf("dependency %s has not been anonymized", dependency)
 		}
+
 		change.Dependencies[i] = mapped
 	}
 
@@ -270,6 +284,7 @@ func (a *anonymization) change(source *opset.Change) (*opset.Change, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot anonymize operation %d: %w", i, err)
 		}
+
 		change.Operations[i] = operation
 	}
 
@@ -278,14 +293,17 @@ func (a *anonymization) change(source *opset.Change) (*opset.Change, error) {
 
 func (a *anonymization) operation(source opset.Operation) (opset.Operation, error) {
 	operation := source
+
 	operation.ID = a.opID(source.ID)
 	if !source.Object.IsRoot {
 		operation.Object.OpID = a.opID(source.Object.OpID)
 	}
+
 	if source.Key.Property != nil {
 		property := a.structuralString(*source.Key.Property, a.structuralRotations)
 		operation.Key.Property = new(property)
 	}
+
 	if source.Key.Element != nil {
 		operation.Key.Element = new(a.opID(*source.Key.Element))
 	}
@@ -297,6 +315,7 @@ func (a *anonymization) operation(source opset.Operation) (opset.Operation, erro
 	if err != nil {
 		return opset.Operation{}, fmt.Errorf("cannot anonymize scalar: %w", err)
 	}
+
 	operation.Value = value
 
 	if source.MarkName != nil {
@@ -320,6 +339,7 @@ func (a *anonymization) scalar(source *opset.Scalar) (*opset.Scalar, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		value.Bool = replacement
 		if replacement {
 			value.Type = opset.ScalarTrue
@@ -331,18 +351,21 @@ func (a *anonymization) scalar(source *opset.Scalar) (*opset.Scalar, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		value.Uint = replacement
 	case opset.ScalarInt, opset.ScalarCounter, opset.ScalarTimestamp:
 		replacement, err := randomInt64OtherThan(source.Int)
 		if err != nil {
 			return nil, err
 		}
+
 		value.Int = replacement
 	case opset.ScalarFloat64:
 		replacement, err := randomFloat64OtherThan(source.Float)
 		if err != nil {
 			return nil, err
 		}
+
 		value.Float = replacement
 	case opset.ScalarString:
 		value.String = a.contentString(source.String)
@@ -423,6 +446,7 @@ func (a *anonymization) syntheticByte(original byte) byte {
 	for {
 		replacement := a.synthetic[a.syntheticPosition]
 		a.syntheticPosition = (a.syntheticPosition + 1) % len(a.synthetic)
+
 		if replacement != original {
 			return replacement
 		}
@@ -436,9 +460,11 @@ func structuralRank(value rune) (structuralAlphabet, uint32, uint32) {
 		if codepoint >= 0x20 && codepoint <= 0x7e {
 			return printableASCII, codepoint - 0x20, 0x7e - 0x20 + 1
 		}
+
 		if codepoint < 0x20 {
 			return asciiControl, codepoint, 0x21
 		}
+
 		return asciiControl, 0x20, 0x21
 	case 2:
 		return twoByteUTF8, codepoint - 0x80, 0x800 - 0x80
@@ -446,6 +472,7 @@ func structuralRank(value rune) (structuralAlphabet, uint32, uint32) {
 		if codepoint < 0xd800 {
 			return threeByteUTF8, codepoint - 0x800, 0xd800 - 0x800 + 0x2000
 		}
+
 		return threeByteUTF8, 0xd800 - 0x800 + codepoint - 0xe000, 0xd800 - 0x800 + 0x2000
 	case 4:
 		return fourByteUTF8, codepoint - 0x10000, 0x110000 - 0x10000
@@ -473,6 +500,7 @@ func structuralRune(original rune, rank uint32) rune {
 		if rank < 0xd800-0x800 {
 			return rune(0x800 + rank)
 		}
+
 		return rune(0xe000 + rank - (0xd800 - 0x800))
 	case 4:
 		return rune(0x10000 + rank)
@@ -504,6 +532,7 @@ func shuffleBytes(value []byte) error {
 		if err != nil {
 			return err
 		}
+
 		value[i], value[index] = value[index], value[i]
 	}
 
@@ -525,6 +554,7 @@ func randomInt64OtherThan(original int64) (int64, error) {
 		if _, err := rand.Read(raw[:]); err != nil {
 			return 0, fmt.Errorf("cannot read cryptographic randomness: %w", err)
 		}
+
 		replacement := int64(int32(binary.LittleEndian.Uint32(raw[:])))
 		if replacement != original {
 			return replacement, nil
@@ -538,6 +568,7 @@ func randomUint64OtherThan(original uint64) (uint64, error) {
 		if _, err := rand.Read(raw[:]); err != nil {
 			return 0, fmt.Errorf("cannot read cryptographic randomness: %w", err)
 		}
+
 		replacement := binary.LittleEndian.Uint64(raw[:])
 		if replacement != original {
 			return replacement, nil
@@ -551,6 +582,7 @@ func randomFloat64OtherThan(original float64) (float64, error) {
 		if err != nil {
 			return 0, err
 		}
+
 		replacement := float64(value>>11) / (1 << 53)
 		if math.Float64bits(replacement) != math.Float64bits(original) {
 			return replacement, nil

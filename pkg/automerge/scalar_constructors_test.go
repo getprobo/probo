@@ -48,6 +48,7 @@ func TestActorIDString(t *testing.T) {
 	t.Parallel()
 
 	var actorID automerge.ActorID
+
 	actorID[0] = 0xab
 	actorID[15] = 0x01
 

@@ -119,6 +119,7 @@ func TestInteropScenario_CoreDataModel(t *testing.T) {
 	require.NoError(t, err)
 	closeDocument(t, nativeFromReference)
 	assertInteropScenarioResult(t, nativeFromReference)
+
 	referenceFromNative, err := automerge.LoadReference(
 
 		nativeData,
@@ -168,6 +169,7 @@ func TestInteropScenario_CoreDataModel(t *testing.T) {
 	require.NoError(t, err)
 	closeDocument(t, javaScriptDocument)
 	assertInteropScenarioResult(t, javaScriptDocument)
+
 	javaScriptReference, err := automerge.LoadReference(
 
 		javaScriptData,
@@ -176,6 +178,7 @@ func TestInteropScenario_CoreDataModel(t *testing.T) {
 	require.NoError(t, err)
 	closeDocument(t, javaScriptReference)
 	assertInteropScenarioResult(t, javaScriptReference)
+
 	javaScriptHeads, err := javaScriptDocument.Heads()
 	require.NoError(t, err)
 	require.Equal(t, response.Heads, []string{javaScriptHeads[0].String()})

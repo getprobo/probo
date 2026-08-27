@@ -247,9 +247,11 @@ func TestDocument_HistoricalReadsMatchReference(t *testing.T) {
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
 				)
+
 				text, err := document.CreateText("body")
 				require.NoError(t, err)
 				require.NoError(t, text.Splice(0, 0, "A"))
+
 				first, err := document.Commit("first", commitTime)
 				require.NoError(t, err)
 
@@ -262,6 +264,7 @@ func TestDocument_HistoricalReadsMatchReference(t *testing.T) {
 					),
 				)
 				require.NoError(t, text.Splice(1, 0, "B"))
+
 				second, err := document.Commit(
 
 					"second",
