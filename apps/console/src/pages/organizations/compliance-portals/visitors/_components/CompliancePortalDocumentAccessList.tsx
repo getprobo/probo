@@ -52,7 +52,7 @@ import { CompliancePortalDocumentAccessSelectionBar } from "./CompliancePortalDo
 const accessFragment = graphql`
   fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess
   @argumentDefinitions(
-    first: { type: Int, defaultValue: 25 }
+    first: { type: Int, defaultValue: 50 }
     after: { type: CursorKey, defaultValue: null }
     filter: { type: "CompliancePortalAccessResourceFilter", defaultValue: null }
   )
@@ -213,7 +213,7 @@ export function CompliancePortalDocumentAccessList({
               variant="ghost"
               color="neutral"
               loading={isLoadingNext}
-              onClick={() => loadNext(25)}
+              onClick={() => loadNext(50)}
             >
               {t("documentAccessList.actions.showMore")}
             </Button>

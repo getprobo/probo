@@ -53,7 +53,7 @@ const accessListQuery = graphql`
 const fragment = graphql`
   fragment CompliancePortalAccessListFragment on CompliancePortal
   @argumentDefinitions(
-    first: { type: Int, defaultValue: 25 }
+    first: { type: Int, defaultValue: 50 }
     after: { type: CursorKey, defaultValue: null }
     order: { type: CompliancePortalAccessOrder, defaultValue: { field: PENDING_REQUEST_COUNT, direction: DESC } }
     filter: { type: CompliancePortalAccessFilter, defaultValue: null }
@@ -154,7 +154,7 @@ export function CompliancePortalAccessList() {
                     variant="ghost"
                     color="neutral"
                     loading={isLoadingNext}
-                    onClick={() => loadNext(25)}
+                    onClick={() => loadNext(50)}
                   >
                     {t("accessList.actions.showMore")}
                   </Button>
