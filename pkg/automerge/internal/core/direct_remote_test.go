@@ -43,6 +43,7 @@ func TestDirectRemote_InvalidLateChangeIsAtomic(t *testing.T) {
 	require.NoError(t, err)
 	beforeHeads, err := target.Heads()
 	require.NoError(t, err)
+
 	beforeChanges := target.state.changeCount()
 	beforeColumns := target.columns
 
@@ -159,7 +160,9 @@ func directRemoteFixture(t *testing.T) ([]byte, []byte, []byte) {
 
 func mustHeads(t *testing.T, engine *Engine) [][32]byte {
 	t.Helper()
+
 	heads, err := engine.Heads()
 	require.NoError(t, err)
+
 	return heads
 }

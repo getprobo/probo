@@ -66,6 +66,7 @@ func TestColumnarAuthority_CommitAndPendingOverlay(t *testing.T) {
 	cancelled, err := engine.Rollback()
 	require.NoError(t, err)
 	assert.Equal(t, uint64(1), cancelled)
+
 	_, ok = engine.state.operation(pending.ID)
 	assert.False(t, ok)
 	assert.Equal(t, engine.columns.currentHeads(), engine.state.Heads())
@@ -85,12 +86,14 @@ func TestColumnarAuthority_CanonicalRowsWinOverOverlayRows(
 	require.NoError(t, err)
 
 	var retained opset.Operation
+
 	for _, operation := range engine.columns.operations {
 		if operation.Insert && operation.Value != nil {
 			retained = operation
 			break
 		}
 	}
+
 	require.NotEqual(t, opset.OpID{}, retained.ID)
 	require.NotContains(t, engine.state.operations, retained.ID)
 

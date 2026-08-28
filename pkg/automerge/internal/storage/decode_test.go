@@ -461,9 +461,11 @@ func TestAssignOperations_SingleActorManyChanges(t *testing.T) {
 	require.NoError(t, err)
 
 	changes := make([]opset.Change, count)
+
 	operations := make([]opset.Operation, count)
 	for i := range count {
 		counter := uint64(i + 1)
+
 		changes[i] = opset.Change{
 			Actor:    actor,
 			Sequence: counter,

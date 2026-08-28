@@ -39,6 +39,7 @@ func (b *Engine) compact(retainOrphans, deflate bool) ([]byte, bool, error) {
 	if b.isolationActive {
 		return nil, false, nil
 	}
+
 	if _, ok := b.state.allChanges(); !ok {
 		return nil, false, nil
 	}
@@ -95,6 +96,7 @@ func (s *State) documentObjects() []opset.ObjectID {
 		if isObjectAction(operation.Action) {
 			objects = append(objects, opset.ObjectID{OpID: operation.ID})
 		}
+
 		return true
 	})
 
@@ -120,6 +122,7 @@ func (s *State) mapObjectOrder(object opset.ObjectID) []opset.OpID {
 
 		property := *operation.Key.Property
 		byProperty[property] = append(byProperty[property], operation.ID)
+
 		return true
 	})
 
@@ -163,6 +166,7 @@ func (s *State) sequenceObjectOrder(object opset.ObjectID) []opset.OpID {
 
 		element := *operation.Key.Element
 		byElement[element] = append(byElement[element], operation.ID)
+
 		return true
 	})
 

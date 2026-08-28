@@ -178,6 +178,7 @@ func newStateFromDocument(
 			state.indexMapKeyOperation(operation)
 			state.indexSequenceElementOperation(operation)
 			state.indexSuccessors(operation)
+
 			for _, successor := range operation.Successors {
 				if successor.Counter == 0 {
 					return nil, fmt.Errorf("invalid zero successor for operation %v", operation.ID)
@@ -197,6 +198,7 @@ func newStateFromDocument(
 				state.superseded[operation.ID] = struct{}{}
 			}
 		}
+
 		if !operation.Object.IsRoot &&
 			operation.Insert &&
 			state.isSuperseded(operation.ID) {
@@ -211,6 +213,7 @@ func newStateFromDocument(
 			return nil, err
 		}
 	}
+
 	state.finalizeSequenceTails(document.OperationOrder)
 
 	consistent := true
@@ -259,6 +262,7 @@ func (s *State) validateMarkOrder() error {
 		if operation.Action == opset.ActionMark && !operation.Object.IsRoot {
 			objects[operation.Object.OpID] = struct{}{}
 		}
+
 		return true
 	})
 
@@ -304,6 +308,7 @@ func (s *State) ApplyChange(change *opset.Change) error {
 	if change.Hash == nil {
 		return fmt.Errorf("change hash is required")
 	}
+
 	if err := validateChangeSnapshotDomain(change); err != nil {
 		return err
 	}
@@ -335,6 +340,7 @@ func (s *State) ApplyChange(change *opset.Change) error {
 
 	for _, operation := range change.Operations {
 		s.operations[operation.ID] = operation
+
 		s.operationIDs[operation.ID] = struct{}{}
 		if !operation.Object.IsRoot {
 			delete(s.sequenceCache, operation.Object.OpID)
@@ -342,6 +348,7 @@ func (s *State) ApplyChange(change *opset.Change) error {
 			delete(s.sequenceElementsCache, operation.Object.OpID)
 			delete(s.sequenceOffsetCache, operation.Object.OpID)
 			delete(s.sequenceTailCache, operation.Object.OpID)
+
 			if operation.Insert {
 				delete(s.insertOrderCache, operation.Object.OpID)
 				delete(s.insertOrderPositionCache, operation.Object.OpID)
@@ -361,6 +368,7 @@ func (s *State) ApplyChange(change *opset.Change) error {
 	s.actorSequence[change.Actor] = change.Sequence
 	for _, dependency := range change.Dependencies {
 		delete(s.heads, dependency)
+
 		if s.columns != nil {
 			s.removedHeads[dependency] = struct{}{}
 		}
@@ -376,6 +384,7 @@ func validateChangeSnapshotDomain(change *opset.Change) error {
 	if change.Sequence > math.MaxUint32 || change.MaxOp > math.MaxUint32 {
 		return fmt.Errorf("change exceeds snapshot uint32 domain")
 	}
+
 	for i, operation := range change.Operations {
 		if operation.ID.Counter == 0 ||
 			operation.ID.Counter > math.MaxUint32 {
@@ -384,6 +393,7 @@ func validateChangeSnapshotDomain(change *opset.Change) error {
 				i,
 			)
 		}
+
 		if !operation.Object.IsRoot &&
 			operation.Object.OpID.Counter > math.MaxUint32 {
 			return fmt.Errorf(
@@ -391,6 +401,7 @@ func validateChangeSnapshotDomain(change *opset.Change) error {
 				i,
 			)
 		}
+
 		if operation.Key.Element != nil &&
 			operation.Key.Element.Counter > math.MaxUint32 {
 			return fmt.Errorf(
@@ -398,6 +409,7 @@ func validateChangeSnapshotDomain(change *opset.Change) error {
 				i,
 			)
 		}
+
 		for _, predecessor := range operation.Predecessors {
 			if predecessor.Counter > math.MaxUint32 {
 				return fmt.Errorf(
@@ -416,6 +428,7 @@ func (s *State) Heads() []opset.ChangeHash {
 	if s.columns != nil {
 		capacity += len(s.columns.heads)
 	}
+
 	heads := make([]opset.ChangeHash, 0, capacity)
 	if s.columns != nil {
 		for _, head := range s.columns.heads {
@@ -424,6 +437,7 @@ func (s *State) Heads() []opset.ChangeHash {
 			}
 		}
 	}
+
 	for head := range s.heads {
 		heads = append(heads, head)
 	}
@@ -484,6 +498,7 @@ func (s *State) visibleMapObjectOperation(
 			result = operation
 			found = true
 		}
+
 		return true
 	})
 
@@ -566,6 +581,7 @@ func (s *State) scalarValue(operation opset.Operation) (opset.Scalar, bool) {
 		if matches {
 			value.Int += increment.Value.Int
 		}
+
 		return true
 	})
 
@@ -658,6 +674,7 @@ func (s *State) mapKeys(object opset.ObjectID) []string {
 			!s.isSuperseded(operation.ID) {
 			properties[*operation.Key.Property] = struct{}{}
 		}
+
 		return true
 	})
 
@@ -729,6 +746,7 @@ func (s *State) applyPending(operations []opset.Operation) error {
 		}
 
 		s.operations[operation.ID] = operation
+
 		s.operationIDs[operation.ID] = struct{}{}
 		if !operation.Object.IsRoot {
 			delete(s.sequenceCache, operation.Object.OpID)
@@ -741,6 +759,7 @@ func (s *State) applyPending(operations []opset.Operation) error {
 		s.indexSuccessors(operation)
 		s.supersedePredecessors(operation)
 	}
+
 	s.updateSequenceIndexes(operations, true)
 
 	return nil
@@ -752,12 +771,14 @@ func (s *State) applyPending(operations []opset.Operation) error {
 // removed.
 func (s *State) undoPending(operations []opset.Operation) {
 	remainingSuperseders := make(map[opset.OpID]int)
+
 	s.eachOperation(func(operation opset.Operation) bool {
 		for _, predecessor := range operation.Predecessors {
 			if s.operationSupersedesPredecessor(operation, predecessor) {
 				remainingSuperseders[predecessor]++
 			}
 		}
+
 		return true
 	})
 
@@ -851,6 +872,7 @@ func (s *State) operationSupersedesPredecessor(
 func (s *State) recordAppliedChange(change *opset.Change) {
 	for _, dependency := range change.Dependencies {
 		delete(s.heads, dependency)
+
 		if s.columns != nil {
 			s.removedHeads[dependency] = struct{}{}
 		}
@@ -873,6 +895,7 @@ func (s *State) indexActorChange(
 		sequences = make(map[uint64]opset.ChangeHash)
 		s.actorChangeIndex[actor] = sequences
 	}
+
 	sequences[sequence] = hash
 }
 
@@ -894,6 +917,7 @@ func (s *State) removeSequenceElementOperation(operation opset.Operation) {
 	}
 
 	element := *operation.Key.Element
+
 	identifiers := s.sequenceElementIndex[element]
 	for i, identifier := range identifiers {
 		if identifier != operation.ID {
@@ -901,6 +925,7 @@ func (s *State) removeSequenceElementOperation(operation opset.Operation) {
 		}
 
 		identifiers = append(identifiers[:i], identifiers[i+1:]...)
+
 		break
 	}
 
@@ -927,9 +952,12 @@ func (s *State) removeSuccessors(operation opset.Operation) {
 			if successor != operation.ID {
 				continue
 			}
+
 			successors = append(successors[:i], successors[i+1:]...)
+
 			break
 		}
+
 		if len(successors) == 0 {
 			delete(s.successorIndex, predecessor)
 		} else {
@@ -1052,18 +1080,23 @@ func (s *State) allChanges() ([]*opset.Change, bool) {
 	changeCount := s.changeCount()
 	if s.columns != nil && len(s.columns.changes) == changeCount {
 		ordered := make([]*opset.Change, 0, changeCount)
+
 		for i := range s.columns.changes {
 			change := &s.columns.changes[i]
 			if change.Hash == nil {
 				return nil, false
 			}
+
 			if _, retained := s.changes[*change.Hash]; !retained {
 				return nil, false
 			}
+
 			ordered = append(ordered, change)
 		}
+
 		return ordered, true
 	}
+
 	ordered := make([]*opset.Change, 0, changeCount)
 	visited := make(map[opset.ChangeHash]struct{}, changeCount)
 

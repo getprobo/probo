@@ -42,6 +42,7 @@ func TestSequenceIndex_RangeMatchesFlatReference(t *testing.T) {
 	require.NoError(t, engine.SpliceText(text, 0, 0, "A😀BC👋D"))
 
 	object := engine.objects[text].OpID
+
 	for index := uint32(0); index <= 8; index++ {
 		for deleteCount := uint32(0); deleteCount <= 10; deleteCount++ {
 			elements := engine.state.sequenceElements(object)
@@ -64,6 +65,7 @@ func TestSequenceIndex_RangeMatchesFlatReference(t *testing.T) {
 			assert.Equal(t, wantEnd, got.end)
 			assert.Equal(t, wantPrevious, got.previous)
 			assert.Len(t, got.targets, wantEnd-wantStart)
+
 			if wantEnd > wantStart {
 				assert.Equal(t, elements[wantStart:wantEnd], got.targets)
 			}
@@ -111,15 +113,19 @@ func TestSequenceIndex_RandomEditsMatchReloadedState(t *testing.T) {
 	require.NoError(t, engine.SpliceText(text, 0, 0, "seed😀text"))
 
 	random := rand.New(rand.NewPCG(7, 11))
+
 	for range 100 {
 		current, err := engine.Text(text)
 		require.NoError(t, err)
+
 		width := utf16Width(current)
 		index := random.IntN(width + 1)
+
 		deleteCount := 0
 		if index < width {
 			deleteCount = random.IntN(3)
 		}
+
 		insertions := []string{"", "x", "😀", "yz"}
 		value := insertions[random.IntN(len(insertions))]
 
@@ -221,6 +227,7 @@ func TestSequenceIndex_ForkAndMergedUpdatesStayIndependent(t *testing.T) {
 	value, err := engine.Text(text)
 	require.NoError(t, err)
 	assert.Equal(t, "aXbcd", value)
+
 	appendValue, err := appendFork.Text(appendText)
 	require.NoError(t, err)
 	assert.Equal(t, "abcd", appendValue)
@@ -239,6 +246,7 @@ func TestSequenceIndex_RandomRichTextEditsAvoidFlatFallback(t *testing.T) {
 			text, err := engine.PutText(0, "body")
 			require.NoError(t, err)
 			require.NoError(t, engine.SpliceText(text, 0, 0, "A😀BC👋D"))
+
 			encoded, err := encodeScalarWire(opset.Scalar{Type: opset.ScalarTrue})
 			require.NoError(t, err)
 			require.NoError(t, engine.MarkText(text, 1, 7, "bold", encoded, expand))
@@ -249,16 +257,20 @@ func TestSequenceIndex_RandomRichTextEditsAvoidFlatFallback(t *testing.T) {
 			index := engine.state.sequenceIndex(object)
 			random := rand.New(rand.NewPCG(31, uint64(len(expand))))
 			insertions := []string{"", "x", "😀", "é", "👩‍💻"}
+
 			for range 75 {
 				current, textErr := engine.Text(text)
 				require.NoError(t, textErr)
+
 				runes := []rune(current)
 				runeIndex := random.IntN(len(runes) + 1)
 				position := utf16Width(string(runes[:runeIndex]))
+
 				deleteCount := 0
 				if runeIndex < len(runes) && random.IntN(2) == 1 {
 					deleteCount = utf16Width(string(runes[runeIndex]))
 				}
+
 				require.NoError(t, engine.SpliceText(
 					text,
 					uint32(position),
@@ -306,6 +318,7 @@ func TestSequenceIndex_MarkedConcurrentBranchesStayLocalized(t *testing.T) {
 	text, err := base.PutText(0, "body")
 	require.NoError(t, err)
 	require.NoError(t, base.SpliceText(text, 0, 0, "ab😀cd"))
+
 	encoded, err := encodeScalarWire(opset.Scalar{Type: opset.ScalarTrue})
 	require.NoError(t, err)
 	require.NoError(t, base.MarkText(text, 1, 5, "bold", encoded, "both"))
@@ -322,6 +335,7 @@ func TestSequenceIndex_MarkedConcurrentBranchesStayLocalized(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, left.SpliceText(leftText, 3, 0, "L"))
 	require.NoError(t, right.SpliceText(rightText, 3, 0, "R"))
+
 	_, err = left.Commit("left", time.Time{})
 	require.NoError(t, err)
 	_, err = right.Commit("right", time.Time{})
@@ -358,6 +372,7 @@ func TestDirectTextOverlay_EmitsLocalizedWireRuns(t *testing.T) {
 	for edit := range 40 {
 		require.NoError(t, engine.SpliceText(text, uint32(edit*10), 1, "😀"))
 	}
+
 	object := engine.objects[text]
 	hash := opset.ChangeHash{1}
 	change := &opset.Change{
@@ -413,6 +428,7 @@ func TestDirectTextOverlay_MovingMarkedTextMatchesCanonicalState(t *testing.T) {
 	text, err := engine.PutText(0, "body")
 	require.NoError(t, err)
 	require.NoError(t, engine.SpliceText(text, 0, 0, "bold text"))
+
 	encoded, err := encodeScalarWire(opset.Scalar{Type: opset.ScalarTrue})
 	require.NoError(t, err)
 	require.NoError(t, engine.MarkText(text, 0, 4, "bold", encoded, "after"))

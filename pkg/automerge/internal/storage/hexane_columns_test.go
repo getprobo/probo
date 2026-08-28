@@ -35,6 +35,7 @@ func TestBuildHexaneDocumentChangeColumns_RandomizedDifferential(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(0x484558414e45))
 	actors := testHexaneActors()
+
 	for iteration := range 200 {
 		count := 1 + rng.Intn(40)
 		actorIndexes := randomHexaneActorIndexes(rng, actors)
@@ -56,6 +57,7 @@ func TestBuildHexaneDocumentOperationColumns_RandomizedDifferential(t *testing.T
 
 	rng := rand.New(rand.NewSource(0x434f4c554d4e))
 	actors := testHexaneActors()
+
 	for iteration := range 200 {
 		count := 1 + rng.Intn(80)
 		actorIndexes := randomHexaneActorIndexes(rng, actors)
@@ -94,10 +96,12 @@ func BenchmarkHexaneOperationColumns_LocalizedEdit(b *testing.B) {
 				indexes,
 			)
 			require.NoError(b, err)
+
 			index := test.rows / 2
 
 			b.ReportAllocs()
 			b.ResetTimer()
+
 			for range b.N {
 				clone := base.Clone()
 				if err := clone.Splice(index, 1, inserted); err != nil {
@@ -123,6 +127,7 @@ func randomHexaneActorIndexes(
 	actors []opset.ActorID,
 ) map[opset.ActorID]uint64 {
 	permutation := rng.Perm(len(actors))
+
 	indexes := make(map[opset.ActorID]uint64, len(actors))
 	for i, actor := range actors {
 		indexes[actor] = uint64(permutation[i])
@@ -137,6 +142,7 @@ func randomHexaneChanges(
 	count int,
 ) []*opset.Change {
 	changes := make([]*opset.Change, count)
+
 	hashes := make([]opset.ChangeHash, count)
 	for i := range hashes {
 		_, _ = rng.Read(hashes[i][:])
@@ -147,6 +153,7 @@ func randomHexaneChanges(
 		if i > 0 {
 			dependencyCount = rng.Intn(min(i, 5) + 1)
 		}
+
 		dependencies := make([]opset.ChangeHash, dependencyCount)
 		for j := range dependencies {
 			dependencies[j] = hashes[rng.Intn(i)]
@@ -221,6 +228,7 @@ func randomHexaneOperations(
 		}
 
 		successorCount := rng.Intn(5)
+
 		operation.Successors = make([]opset.OpID, successorCount)
 		for j := range operation.Successors {
 			operation.Successors[j] = opset.OpID{

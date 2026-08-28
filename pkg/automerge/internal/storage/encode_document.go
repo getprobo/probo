@@ -117,6 +117,7 @@ func encodeDocument(
 		}
 	} else {
 		var err error
+
 		changes, err = documentChangeOrder(document)
 		if err != nil {
 			return nil, err
@@ -126,6 +127,7 @@ func encodeDocument(
 	operations := preparedOperations
 	if operations == nil {
 		var err error
+
 		operations, err = documentOperations(changes, order)
 		if err != nil {
 			return nil, err
@@ -375,6 +377,7 @@ func documentOperations(
 	}
 
 	successors := make(map[opset.OpID][]opset.OpID)
+
 	for _, change := range changes {
 		for _, operation := range change.Operations {
 			for _, predecessor := range operation.Predecessors {
@@ -739,9 +742,11 @@ func retainedColumns(document *opset.Document, known []uint32) []encodedColumn {
 		if slices.Contains(known, normalized) || len(column.Data) == 0 {
 			continue
 		}
+
 		if _, ok := seen[normalized]; ok {
 			continue
 		}
+
 		seen[normalized] = struct{}{}
 
 		retained = append(

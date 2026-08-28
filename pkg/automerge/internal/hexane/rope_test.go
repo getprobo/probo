@@ -46,6 +46,7 @@ func TestRope_RandomizedSpliceMaintainsBalance(t *testing.T) {
 
 	for step := range 2_000 {
 		index := random.IntN(len(model) + 1)
+
 		deleteCount := 0
 		if index < len(model) {
 			deleteCount = random.IntN(min(100, len(model)-index) + 1)
@@ -78,6 +79,7 @@ func TestRope_RandomizedSpliceMaintainsBalance(t *testing.T) {
 		}
 
 		var values []int
+
 		ropeEach(
 			root,
 			func(value int) bool {
@@ -85,6 +87,7 @@ func TestRope_RandomizedSpliceMaintainsBalance(t *testing.T) {
 				return true
 			},
 		)
+
 		if !reflect.DeepEqual(values, model) {
 			t.Fatalf("step %d: rope values differ", step)
 		}
@@ -106,6 +109,7 @@ func assertRopeNode[T any](
 	chunkSize int,
 ) (int, int, uint64, int64) {
 	t.Helper()
+
 	if root == nil {
 		return 0, 0, 0, 0
 	}
@@ -123,6 +127,7 @@ func assertRopeNode[T any](
 	}
 
 	leftLen, leftHeight, leftUint, leftInt := assertRopeNode(t, root.left, chunkSize)
+
 	rightLen, rightHeight, rightUint, rightInt := assertRopeNode(t, root.right, chunkSize)
 	if difference := leftHeight - rightHeight; difference < -1 || difference > 1 {
 		t.Fatalf("AVL height difference = %d", difference)
@@ -148,5 +153,6 @@ func testSpliceInts(model []int, index, deleteCount int, inserted []int) []int {
 	next = append(next, model[:index]...)
 	next = append(next, inserted...)
 	next = append(next, model[index+deleteCount:]...)
+
 	return next
 }

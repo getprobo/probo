@@ -89,6 +89,7 @@ func newDecodedSnapshotColumns(
 		operationColumns,
 		operationColumnSpecifications,
 	)
+
 	return &SnapshotColumns{
 		actors:            actors,
 		heads:             heads,
@@ -110,11 +111,13 @@ func encodedColumnsFromDecoded(
 		if !ok {
 			continue
 		}
+
 		encoded = append(encoded, encodedColumn{
 			specification: specification,
 			data:          decoded.data,
 		})
 	}
+
 	return encoded
 }
 
@@ -134,6 +137,7 @@ func NewSnapshotColumns(
 	}
 
 	actors := documentActorTable(changes, operations)
+
 	actorIndexes := make(map[opset.ActorID]uint64, len(actors))
 	for i, actor := range actors {
 		actorIndexes[actor] = uint64(i)
@@ -148,21 +152,26 @@ func NewSnapshotColumns(
 	if err != nil {
 		return nil, err
 	}
+
 	operationColumns, err := newHexaneOperationColumns(operations, actorIndexes)
 	if err != nil {
 		return nil, err
 	}
+
 	encodedChanges := rawEncodedColumns(document.ChangeColumns)
 	if len(encodedChanges) == 0 {
 		recordFullColumnEncoding()
+
 		encodedChanges, err = changeColumns.Encoded()
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	encodedOperations := rawEncodedColumns(document.OperationColumns)
 	if len(encodedOperations) == 0 {
 		recordFullColumnEncoding()
+
 		encodedOperations, err = operationColumns.Encoded()
 		if err != nil {
 			return nil, err
@@ -201,9 +210,11 @@ func (c *SnapshotColumns) Clone() *SnapshotColumns {
 	if c.changeColumns != nil {
 		cloned.changeColumns = c.changeColumns.Clone()
 	}
+
 	if c.operationColumns != nil {
 		cloned.operationColumns = c.operationColumns.Clone()
 	}
+
 	return cloned
 }
 
@@ -214,19 +225,24 @@ func (c *SnapshotColumns) PrepareMutation() error {
 	if c == nil {
 		return fmt.Errorf("snapshot columns are nil")
 	}
+
 	deferred := c.changeColumns == nil || c.operationColumns == nil
 	if err := c.ensureRoots(); err != nil {
 		return err
 	}
+
 	if !deferred {
 		return nil
 	}
+
 	if _, err := c.changeColumns.Encoded(); err != nil {
 		return fmt.Errorf("cannot prepare change encodings: %w", err)
 	}
+
 	if _, err := c.operationColumns.Encoded(); err != nil {
 		return fmt.Errorf("cannot prepare operation encodings: %w", err)
 	}
+
 	return nil
 }
 
@@ -252,9 +268,11 @@ func (c *SnapshotColumns) Splice(edit SnapshotSplice) error {
 	if c == nil {
 		return fmt.Errorf("snapshot columns are nil")
 	}
+
 	if err := c.ensureRoots(); err != nil {
 		return err
 	}
+
 	if edit.ChangeDeleteCount != len(edit.Changes) &&
 		edit.ChangeIndex+edit.ChangeDeleteCount != c.changeColumns.actors.Len() {
 		return fmt.Errorf("change splice shifts existing indexes; use Replace")
@@ -269,11 +287,13 @@ func (c *SnapshotColumns) Splice(edit SnapshotSplice) error {
 	operations := c.operationColumns.Clone()
 	actorsAppended := len(edit.Actors) >= len(c.actors) &&
 		slices.Equal(c.actors, edit.Actors[:len(c.actors)])
+
 	actorsRemapped := !slices.Equal(c.actors, edit.Actors) && !actorsAppended
 	if actorsRemapped {
 		if err := changes.RemapActors(c.actors, actorIndexes); err != nil {
 			return fmt.Errorf("cannot remap change columns: %w", err)
 		}
+
 		if err := operations.RemapActors(c.actors, actorIndexes); err != nil {
 			return fmt.Errorf("cannot remap operation columns: %w", err)
 		}
@@ -287,9 +307,11 @@ func (c *SnapshotColumns) Splice(edit SnapshotSplice) error {
 	if err != nil {
 		return fmt.Errorf("cannot build inserted change columns: %w", err)
 	}
+
 	if _, err := insertedChanges.Encoded(); err != nil {
 		return fmt.Errorf("cannot validate inserted change columns: %w", err)
 	}
+
 	changesEdited := edit.ChangeDeleteCount > 0 || len(edit.Changes) > 0
 	if changesEdited {
 		if err := changes.Splice(
@@ -300,6 +322,7 @@ func (c *SnapshotColumns) Splice(edit SnapshotSplice) error {
 			return err
 		}
 	}
+
 	operationSplices := edit.OperationSplices
 	if len(operationSplices) == 0 {
 		operationSplices = []SnapshotOperationSplice{{
@@ -308,6 +331,7 @@ func (c *SnapshotColumns) Splice(edit SnapshotSplice) error {
 			Operations:  edit.Operations,
 		}}
 	}
+
 	preparedOperationSplices := make(
 		[]hexaneOperationSplice,
 		len(operationSplices),
@@ -320,25 +344,30 @@ func (c *SnapshotColumns) Splice(edit SnapshotSplice) error {
 		if err != nil {
 			return fmt.Errorf("cannot build inserted operation columns: %w", err)
 		}
+
 		preparedOperationSplices[i] = hexaneOperationSplice{
 			index:       operationSplice.Index,
 			deleteCount: operationSplice.DeleteCount,
 			inserted:    insertedOperations,
 		}
 	}
+
 	if err := operations.BatchSplice(preparedOperationSplices); err != nil {
 		return fmt.Errorf("cannot splice operation column batch: %w", err)
 	}
+
 	encodedChanges := c.encodedChanges
 	if actorsRemapped || changesEdited {
 		encodedChanges = nil
 	}
+
 	operationsEdited := actorsRemapped
 	for _, splice := range operationSplices {
 		operationsEdited = operationsEdited ||
 			splice.DeleteCount > 0 ||
 			len(splice.Operations) > 0
 	}
+
 	encodedOperations := c.encodedOperations
 	if operationsEdited {
 		encodedOperations = nil
@@ -363,8 +392,10 @@ func (c *SnapshotColumns) ensureRoots() error {
 		if err != nil {
 			return fmt.Errorf("cannot decode retained change columns: %w", err)
 		}
+
 		c.changeColumns = columns
 	}
+
 	if c.operationColumns == nil {
 		columns, err := decodeHexaneOperationColumns(
 			c.encodedOperations,
@@ -373,8 +404,10 @@ func (c *SnapshotColumns) ensureRoots() error {
 		if err != nil {
 			return fmt.Errorf("cannot decode retained operation columns: %w", err)
 		}
+
 		c.operationColumns = columns
 	}
+
 	return nil
 }
 
@@ -392,13 +425,16 @@ func (c *SnapshotColumns) Encode(
 		if err != nil {
 			return nil, fmt.Errorf("cannot encode changed snapshot changes: %w", err)
 		}
+
 		c.encodedChanges = encoded
 	}
+
 	if c.encodedOperations == nil {
 		encoded, err := c.operationColumns.Encoded()
 		if err != nil {
 			return nil, fmt.Errorf("cannot encode changed snapshot operations: %w", err)
 		}
+
 		c.encodedOperations = encoded
 	}
 
@@ -429,17 +465,21 @@ func (c *SnapshotColumns) Encode(
 			operationColumns,
 		),
 	)
+
 	body = appendULEB(body, uint64(len(c.actors)))
 	for _, actor := range c.actors {
 		body = appendLengthPrefixedNative(body, actor.Bytes())
 	}
+
 	body = appendULEB(body, uint64(len(c.heads)))
 	for _, head := range c.heads {
 		body = append(body, head[:]...)
 	}
+
 	body = appendColumnMetadata(body, changeColumns)
 	body = appendColumnMetadata(body, operationColumns)
 	body = appendColumnData(body, changeColumns)
+
 	body = appendColumnData(body, operationColumns)
 	for _, index := range c.headIndexes {
 		body = appendULEB(body, index)
@@ -459,8 +499,10 @@ func snapshotBodyCapacity(
 	for _, actor := range actors {
 		size += ulebSize(uint64(len(actor.Bytes()))) + len(actor.Bytes())
 	}
+
 	size += ulebSize(uint64(len(heads))) + len(heads)*len(opset.ChangeHash{})
 	size += encodedColumnsSize(changeColumns)
+
 	size += encodedColumnsSize(operationColumns)
 	for _, index := range headIndexes {
 		size += ulebSize(index)
@@ -482,6 +524,7 @@ func encodedColumnsSize(columns []encodedColumn) int {
 
 func ulebSize(value uint64) int {
 	size := 1
+
 	for value >= 0x80 {
 		value >>= 7
 		size++

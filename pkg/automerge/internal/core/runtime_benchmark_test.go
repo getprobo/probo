@@ -39,25 +39,31 @@ var (
 
 func BenchmarkQueryHydration(b *testing.B) {
 	data := benchmarkRuntimeDocument(b, 10_000)
+
 	engine, err := LoadEngine(data)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	value, err := engine.Hydrate()
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	expected := sha256.Sum256(value)
 
 	b.ReportAllocs()
 	b.ResetTimer()
+
 	for b.Loop() {
 		value, err := engine.Hydrate()
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		benchmarkRuntimeBytes = value
 	}
+
 	b.StopTimer()
 
 	if actual := sha256.Sum256(benchmarkRuntimeBytes); actual != expected {
@@ -92,26 +98,36 @@ func BenchmarkConcurrentTailReconcile(b *testing.B) {
 					if err != nil {
 						b.Fatal(err)
 					}
+
 					targets[index] = left
 				}
+
 				runtime.GC()
+
 				previousGC := debug.SetGCPercent(-1)
 				before := ReadRuntimeMetrics()
+
 				var memoryBefore runtime.MemStats
 				runtime.ReadMemStats(&memoryBefore)
 				b.ResetTimer()
 				b.StartTimer()
+
 				for _, left := range targets {
 					_, err := left.Merge(rightData)
 					if err != nil {
 						b.Fatal(err)
 					}
 				}
+
 				b.StopTimer()
+
 				var memoryAfter runtime.MemStats
 				runtime.ReadMemStats(&memoryAfter)
+
 				after := ReadRuntimeMetrics()
+
 				debug.SetGCPercent(previousGC)
+
 				measured := RuntimeMetrics{
 					GeneralReconciles: after.GeneralReconciles -
 						before.GeneralReconciles,
@@ -130,6 +146,7 @@ func BenchmarkConcurrentTailReconcile(b *testing.B) {
 					DirectOperationCopies: after.DirectOperationCopies -
 						before.DirectOperationCopies,
 				}
+
 				b.ReportMetric(
 					float64(memoryAfter.TotalAlloc-memoryBefore.TotalAlloc)/
 						float64(b.N),
@@ -169,6 +186,7 @@ func BenchmarkConcurrentTailReconcile(b *testing.B) {
 					float64(measured.DirectOperationCopies)/float64(b.N),
 					"copied-row/op",
 				)
+
 				if measured.GeneralReconciles != 0 ||
 					measured.GlobalOrderFallbacks != 0 ||
 					measured.SnapshotReplacements != 0 ||
@@ -190,6 +208,7 @@ func BenchmarkConcurrentTailSyncReceive(b *testing.B) {
 			fmt.Sprintf("size=%d", size),
 			func(b *testing.B) {
 				leftData, rightData := benchmarkConcurrentTailDocuments(b, size)
+
 				message, err := (sync.Message{
 					Version: sync.MessageVersion2,
 					Changes: [][]byte{rightData},
@@ -197,27 +216,35 @@ func BenchmarkConcurrentTailSyncReceive(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
+
 				b.ReportMetric(float64(len(message)), "wire-B/op")
 				b.StopTimer()
 				targets := make([]*Engine, b.N)
+
 				handles := make([]uint32, b.N)
 				for index := range b.N {
 					target, err := LoadEngine(leftData)
 					if err != nil {
 						b.Fatal(err)
 					}
+
 					handle, err := target.NewSyncState()
 					if err != nil {
 						b.Fatal(err)
 					}
+
 					targets[index] = target
 					handles[index] = handle
 				}
+
 				runtime.GC()
+
 				previousGC := debug.SetGCPercent(-1)
 				before := ReadRuntimeMetrics()
+
 				b.ResetTimer()
 				b.StartTimer()
+
 				for index, target := range targets {
 					if err := target.ReceiveSyncMessage(
 						handles[index],
@@ -226,8 +253,11 @@ func BenchmarkConcurrentTailSyncReceive(b *testing.B) {
 						b.Fatal(err)
 					}
 				}
+
 				b.StopTimer()
+
 				after := ReadRuntimeMetrics()
+
 				debug.SetGCPercent(previousGC)
 				b.ReportMetric(
 					float64(after.DirectPlanningRows-before.DirectPlanningRows)/
@@ -239,6 +269,7 @@ func BenchmarkConcurrentTailSyncReceive(b *testing.B) {
 						float64(b.N),
 					"copied-row/op",
 				)
+
 				if after.GeneralReconciles != before.GeneralReconciles ||
 					after.GlobalOrderFallbacks != before.GlobalOrderFallbacks ||
 					after.SnapshotReplacements != before.SnapshotReplacements ||
@@ -265,31 +296,40 @@ func benchmarkCommitReconcile(b *testing.B, data []byte, fallback bool) {
 	b.StopTimer()
 
 	var measured RuntimeMetrics
+
 	for range b.N {
 		engine, err := LoadEngine(data)
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		text, err := engine.GetText(0, "body")
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		if fallback {
 			err = engine.SpliceText(text, 5_000, 1, "z")
 		} else {
 			err = engine.SpliceText(text, 10_000, 0, "z")
 		}
+
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		before := ReadRuntimeMetrics()
 
 		b.StartTimer()
+
 		hash, err := engine.Commit("benchmark reconcile", time.Unix(0, 0))
+
 		b.StopTimer()
+
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		after := ReadRuntimeMetrics()
 		measured.GeneralReconciles += after.GeneralReconciles -
 			before.GeneralReconciles
@@ -303,6 +343,7 @@ func benchmarkCommitReconcile(b *testing.B, data []byte, fallback bool) {
 			before.SnapshotReplacements
 		benchmarkRuntimeHash = hash
 	}
+
 	b.ReportMetric(
 		float64(measured.GeneralReconciles)/float64(b.N),
 		"general-reconcile/op",
@@ -323,6 +364,7 @@ func benchmarkCommitReconcile(b *testing.B, data []byte, fallback bool) {
 		float64(measured.SnapshotReplacements)/float64(b.N),
 		"snapshot-replace/op",
 	)
+
 	if measured.GeneralReconciles != 0 ||
 		measured.GlobalOrderFallbacks != 0 ||
 		measured.SnapshotReplacements != 0 ||
@@ -336,11 +378,14 @@ func BenchmarkSyncCodecAndApplication(b *testing.B) {
 
 	b.Run("generate", func(b *testing.B) {
 		b.StopTimer()
+
 		source, err := LoadEngine(data)
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		b.ReportAllocs()
+
 		for range b.N {
 			state, err := source.NewSyncState()
 			if err != nil {
@@ -348,15 +393,21 @@ func BenchmarkSyncCodecAndApplication(b *testing.B) {
 			}
 
 			b.StartTimer()
+
 			message, ok, err := source.GenerateSyncMessage(state)
+
 			b.StopTimer()
+
 			if err != nil {
 				b.Fatal(err)
 			}
+
 			if !ok {
 				b.Fatal("initial sync message was suppressed")
 			}
+
 			benchmarkRuntimeBytes = message
+
 			if err := source.CloseSyncState(state); err != nil {
 				b.Fatal(err)
 			}
@@ -367,14 +418,17 @@ func BenchmarkSyncCodecAndApplication(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	sourceState, err := source.NewSyncState()
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	message, ok, err := source.GenerateSyncMessage(sourceState)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	if !ok {
 		b.Fatal("initial sync message was suppressed")
 	}
@@ -382,19 +436,24 @@ func BenchmarkSyncCodecAndApplication(b *testing.B) {
 	b.Run("receive", func(b *testing.B) {
 		b.ReportAllocs()
 		b.StopTimer()
+
 		for range b.N {
 			target, err := NewEngine()
 			if err != nil {
 				b.Fatal(err)
 			}
+
 			state, err := target.NewSyncState()
 			if err != nil {
 				b.Fatal(err)
 			}
 
 			b.StartTimer()
+
 			err = target.ReceiveSyncMessage(state, message)
+
 			b.StopTimer()
+
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -404,6 +463,7 @@ func BenchmarkSyncCodecAndApplication(b *testing.B) {
 
 func BenchmarkTextEdits(b *testing.B) {
 	data := benchmarkRuntimeDocument(b, 10_000)
+
 	mark, err := encodeScalarWire(
 		opset.Scalar{Type: opset.ScalarTrue},
 	)
@@ -422,23 +482,28 @@ func BenchmarkTextEdits(b *testing.B) {
 func BenchmarkTextOverlayCommit(b *testing.B) {
 	b.ReportAllocs()
 	b.StopTimer()
+
 	for range b.N {
 		engine, err := NewEngine()
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		text, err := engine.PutText(0, "body")
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		if err := engine.SpliceText(text, 0, 0, string(make([]byte, 1_000))); err != nil {
 			b.Fatal(err)
 		}
+
 		if _, err := engine.Commit("fixture", time.Time{}); err != nil {
 			b.Fatal(err)
 		}
 
 		b.StartTimer()
+
 		for index := range 100 {
 			if err := engine.SpliceText(
 				text,
@@ -449,11 +514,15 @@ func BenchmarkTextOverlayCommit(b *testing.B) {
 				b.Fatal(err)
 			}
 		}
+
 		hash, err := engine.Commit("edits", time.Time{})
+
 		b.StopTimer()
+
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		benchmarkRuntimeHash = hash
 	}
 }
@@ -468,28 +537,35 @@ func benchmarkTextEdit(b *testing.B, data, mark []byte) {
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		text, err := engine.GetText(0, "body")
 		if err != nil {
 			b.Fatal(err)
 		}
 
 		b.StartTimer()
+
 		for index := range 100 {
 			position := uint32(index * 100)
 			if err := engine.SpliceText(text, position, 1, "z"); err != nil {
 				b.Fatal(err)
 			}
 		}
+
 		if mark != nil {
 			if err := engine.MarkText(text, 2_500, 7_500, "bold", mark, "both"); err != nil {
 				b.Fatal(err)
 			}
 		}
+
 		hash, err := engine.Commit("benchmark text edit", time.Unix(0, 0))
+
 		b.StopTimer()
+
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		benchmarkRuntimeHash = hash
 	}
 }
@@ -501,23 +577,29 @@ func benchmarkRuntimeDocument(b *testing.B, size int) []byte {
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	if err := engine.SetActor([]byte("base-benchmark")); err != nil {
 		b.Fatal(err)
 	}
+
 	text, err := engine.PutText(0, "body")
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	value := make([]byte, size)
 	for index := range value {
 		value[index] = byte('a' + index%26)
 	}
+
 	if err := engine.SpliceText(text, 0, 0, string(value)); err != nil {
 		b.Fatal(err)
 	}
+
 	if _, err := engine.Commit("benchmark fixture", time.Unix(0, 0)); err != nil {
 		b.Fatal(err)
 	}
+
 	data, err := engine.Save(true, false)
 	if err != nil {
 		b.Fatal(err)
@@ -530,60 +612,75 @@ func benchmarkConcurrentTailDocuments(b *testing.B, size int) ([]byte, []byte) {
 	b.Helper()
 
 	baseData := benchmarkRuntimeDocument(b, size)
+
 	base, err := LoadEngine(baseData)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	baseHeads, err := base.Heads()
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	left, err := LoadEngine(baseData)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	right, err := LoadEngine(baseData)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	if err := left.SetActor([]byte("left-benchmark")); err != nil {
 		b.Fatal(err)
 	}
+
 	if err := right.SetActor([]byte("right-benchmark")); err != nil {
 		b.Fatal(err)
 	}
+
 	leftText, err := left.GetText(0, "body")
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	rightText, err := right.GetText(0, "body")
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	for index := range min(size, 1) {
 		if err := left.SpliceText(leftText, uint32(size+index), 0, "L"); err != nil {
 			b.Fatal(err)
 		}
 	}
+
 	if _, err := left.Commit("left branch", time.Unix(0, 0)); err != nil {
 		b.Fatal(err)
 	}
+
 	for index := range min(size, 1) {
 		if err := right.SpliceText(rightText, uint32(size+index), 0, "R"); err != nil {
 			b.Fatal(err)
 		}
 	}
+
 	if _, err := right.Commit("right branch", time.Unix(0, 0)); err != nil {
 		b.Fatal(err)
 	}
+
 	leftData, err := left.Save(true, false)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	rightChanges, _, err := right.ChangesSince(baseHeads)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	rightData := make([]byte, 0)
 	for _, change := range rightChanges {
 		rightData = append(rightData, change...)

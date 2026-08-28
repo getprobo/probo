@@ -668,6 +668,7 @@ func assignOperations(
 	}
 
 	byActor := make(map[opset.ActorID][]int)
+
 	for i := range changes {
 		if changes[i].MaxOp < changes[i].StartOp {
 			continue
@@ -697,6 +698,7 @@ func assignOperations(
 
 		for i := 1; i < len(candidates); i++ {
 			previous := changes[candidates[i-1]]
+
 			current := changes[candidates[i]]
 			if current.StartOp <= previous.MaxOp {
 				return fmt.Errorf(
@@ -795,6 +797,7 @@ func assignOperations(
 func validateSnapshotMarkOrder(operations []opset.Operation) error {
 	byID := make(map[opset.OpID]opset.Operation, len(operations))
 	objects := make(map[opset.ObjectID]struct{})
+
 	for _, operation := range operations {
 		byID[operation.ID] = operation
 		if operation.Action == opset.ActionMark {
@@ -804,11 +807,14 @@ func validateSnapshotMarkOrder(operations []opset.Operation) error {
 
 	for object := range objects {
 		children := make(map[opset.OpID][]opset.Operation)
+
 		var head []opset.Operation
+
 		for _, operation := range operations {
 			if operation.Object != object || !operation.Insert {
 				continue
 			}
+
 			if operation.Key.IsHead {
 				head = append(head, operation)
 			} else if operation.Key.Element != nil {
@@ -821,15 +827,19 @@ func validateSnapshotMarkOrder(operations []opset.Operation) error {
 
 		seen := make(map[opset.OpID]struct{})
 		visited := make(map[opset.OpID]struct{})
+
 		var visit func([]opset.Operation) error
+
 		visit = func(rows []opset.Operation) error {
 			slices.SortFunc(rows, func(left, right opset.Operation) int {
 				return right.ID.Compare(left.ID)
 			})
+
 			for _, operation := range rows {
 				if _, ok := visited[operation.ID]; ok {
 					continue
 				}
+
 				visited[operation.ID] = struct{}{}
 				if operation.Action == opset.ActionMark {
 					if operation.MarkName != nil {
@@ -839,6 +849,7 @@ func validateSnapshotMarkOrder(operations []opset.Operation) error {
 							Actor:   operation.ID.Actor,
 							Counter: operation.ID.Counter - 1,
 						}
+
 						begin, ok := byID[beginID]
 						if ok &&
 							begin.Action == opset.ActionMark &&
@@ -854,10 +865,12 @@ func validateSnapshotMarkOrder(operations []opset.Operation) error {
 						}
 					}
 				}
+
 				if err := visit(children[operation.ID]); err != nil {
 					return err
 				}
 			}
+
 			return nil
 		}
 		if err := visit(head); err != nil {

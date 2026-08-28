@@ -38,16 +38,19 @@ func (s *State) observeLoadedSequenceOperation(operation opset.Operation) {
 	}
 
 	object := operation.Object.OpID
+
 	tail := s.sequenceTailCache[object]
 	if !tail.valid {
 		tail.valid = true
 		tail.safe = true
 	}
+
 	if operation.Action == opset.ActionMark || !operation.Insert {
 		tail.safe = false
 	} else {
 		tail.index += elementLength(operation)
 	}
+
 	s.sequenceTailCache[object] = tail
 }
 
@@ -55,26 +58,32 @@ func (s *State) observeLoadedSequenceOperation(operation opset.Operation) {
 // canonical order; widths and safety were accumulated during normal load.
 func (s *State) finalizeSequenceTails(order []opset.OpID) {
 	remaining := make(map[opset.OpID]struct{})
+
 	for object, tail := range s.sequenceTailCache {
 		if tail.safe {
 			remaining[object] = struct{}{}
 		}
 	}
+
 	for i := len(order) - 1; i >= 0 && len(remaining) > 0; i-- {
 		identifier := order[i]
+
 		operation, ok := s.operation(identifier)
 		if !ok || operation.Object.IsRoot || !operation.Insert {
 			continue
 		}
+
 		object := operation.Object.OpID
 		if _, needed := remaining[object]; !needed {
 			continue
 		}
+
 		tail := s.sequenceTailCache[object]
 		tail.last = operation.ID
 		s.sequenceTailCache[object] = tail
 		delete(remaining, object)
 	}
+
 	for object := range remaining {
 		tail := s.sequenceTailCache[object]
 		tail.safe = false
@@ -111,11 +120,13 @@ func (s *State) sequenceElements(object opset.OpID) []opset.Operation {
 	}
 
 	order := s.insertOrder(object)
+
 	operations := make([]opset.Operation, 0, len(order))
 	for _, identifier := range order {
 		if s.isSuperseded(identifier) {
 			continue
 		}
+
 		if operation, ok := s.operation(identifier); ok &&
 			operation.Action != opset.ActionMark {
 			operations = append(operations, operation)
@@ -159,12 +170,14 @@ func (s *State) insertOrder(object opset.OpID) []opset.OpID {
 	if cached, ok := s.insertOrderCache[object]; ok {
 		return cached
 	}
+
 	if index, ok := s.sequenceIndexes[object]; ok {
 		order := index.order()
 		s.insertOrderCache[object] = order
 
 		return order
 	}
+
 	children := make(map[opset.OpID][]opset.Operation)
 
 	var head []opset.Operation
@@ -186,6 +199,7 @@ func (s *State) insertOrder(object opset.OpID) []opset.OpID {
 				operation,
 			)
 		}
+
 		return true
 	})
 
@@ -262,6 +276,7 @@ func (s *State) spliceInsertOrder(operation opset.Operation) {
 		}
 
 		position := i + 1
+
 		updated := append(order, opset.OpID{})
 		copy(updated[position+1:], updated[position:])
 		updated[position] = operation.ID
@@ -281,9 +296,11 @@ func (s *State) sequenceValues(object opset.OpID) []sequenceValue {
 	if cached, ok := s.sequenceValuesCache[object]; ok {
 		return cached
 	}
+
 	if creator, ok := s.operation(object); ok &&
 		creator.Action != opset.ActionMakeText {
 		insertions := s.sequenceAll(object)
+
 		values := make([]sequenceValue, 0, len(insertions))
 		for _, insertion := range insertions {
 			if winner, visible := s.sequenceElementWinner(insertion); visible {
@@ -293,7 +310,9 @@ func (s *State) sequenceValues(object opset.OpID) []sequenceValue {
 				})
 			}
 		}
+
 		s.sequenceValuesCache[object] = values
+
 		return values
 	}
 

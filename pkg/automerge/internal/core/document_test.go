@@ -35,6 +35,7 @@ func TestEngineSave_RetainsUnknownColumnsAfterMutation(t *testing.T) {
 
 	actor, err := opset.NewActorID([]byte{1})
 	require.NoError(t, err)
+
 	property := "payload"
 	identifier := opset.OpID{Actor: actor, Counter: 1}
 	change := opset.Change{
@@ -52,6 +53,7 @@ func TestEngineSave_RetainsUnknownColumnsAfterMutation(t *testing.T) {
 	}
 	_, err = storage.EncodeChange(&change)
 	require.NoError(t, err)
+
 	document := &opset.Document{
 		Heads:   []opset.ChangeHash{*change.Hash},
 		Changes: []opset.Change{change},

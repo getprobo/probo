@@ -28,6 +28,7 @@ import (
 
 func BenchmarkValidateSnapshotEncodeDomain(b *testing.B) {
 	document, _ := benchmarkSnapshot(10_000)
+
 	b.ReportAllocs()
 
 	for b.Loop() {
@@ -64,6 +65,7 @@ func BenchmarkEncodePreparedDocument(b *testing.B) {
 
 func BenchmarkSnapshotColumnsEncode(b *testing.B) {
 	document, operations := benchmarkSnapshot(10_000)
+
 	columns, err := NewSnapshotColumns(document, operations)
 	if err != nil {
 		b.Fatal(err)
@@ -80,6 +82,7 @@ func BenchmarkSnapshotColumnsEncode(b *testing.B) {
 			if err != nil {
 				b.Fatal(err)
 			}
+
 			b.SetBytes(int64(len(result)))
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -98,21 +101,27 @@ func BenchmarkSnapshotColumnsEncode(b *testing.B) {
 
 func BenchmarkSnapshotColumnsLocalizedBatch(b *testing.B) {
 	document, operations := benchmarkSnapshot(10_000)
+
 	base, err := NewSnapshotColumns(document, operations)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	changes := make([]*opset.Change, len(document.Changes))
+
 	dependencyIndexes := make(map[opset.ChangeHash]uint64, len(changes))
 	for i := range document.Changes {
 		changes[i] = &document.Changes[i]
 		dependencyIndexes[*document.Changes[i].Hash] = uint64(i)
 	}
+
 	actors := documentActorTable(changes, operations)
+
 	heads, headIndexes, err := documentHeads(changes)
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	replacement := operations[len(operations)/2]
 	edit := SnapshotSplice{
 		Actors:            actors,
@@ -130,15 +139,18 @@ func BenchmarkSnapshotColumnsLocalizedBatch(b *testing.B) {
 	ResetRuntimeMetrics()
 	b.ReportAllocs()
 	b.ResetTimer()
+
 	for b.Loop() {
 		columns := base.Clone()
 		if err := columns.Splice(edit); err != nil {
 			b.Fatal(err)
 		}
+
 		if _, err := columns.Encode(nil, false); err != nil {
 			b.Fatal(err)
 		}
 	}
+
 	b.StopTimer()
 	b.ReportMetric(
 		float64(FullColumnEncodings())/float64(b.N),
@@ -164,11 +176,13 @@ func benchmarkSnapshot(size int) (*opset.Document, []opset.Operation) {
 
 	for i := range size {
 		identifier := opset.OpID{Actor: actor, Counter: uint64(i + 2)}
+
 		key := opset.Key{IsHead: i == 0}
 		if i > 0 {
 			previous := operations[len(operations)-1].ID
 			key.Element = &previous
 		}
+
 		operations = append(operations, opset.Operation{
 			ID:     identifier,
 			Object: opset.ObjectID{OpID: makeTextID},
@@ -183,6 +197,7 @@ func benchmarkSnapshot(size int) (*opset.Document, []opset.Operation) {
 	}
 
 	hash := opset.ChangeHash{1}
+
 	changeOperations := append([]opset.Operation(nil), operations...)
 	document := &opset.Document{
 		Heads: []opset.ChangeHash{hash},

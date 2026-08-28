@@ -697,6 +697,7 @@ func deflate(data []byte) ([]byte, error) {
 	var buffer bytes.Buffer
 
 	writer := deflateWriterPool.Get().(*flate.Writer)
+
 	writer.Reset(&buffer)
 	defer func() {
 		writer.Reset(io.Discard)

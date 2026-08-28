@@ -71,6 +71,7 @@ func TestColumnarState_TracksCommitRollbackForkAndMerge(t *testing.T) {
 	fork, err := engine.Fork([]byte{42})
 	require.NoError(t, err)
 	requireColumnarStateEquivalent(t, fork)
+
 	forkValue, err := encodeScalarWire(
 		opset.Scalar{Type: opset.ScalarString, String: "fork"},
 	)
@@ -114,6 +115,7 @@ func TestColumnarState_DivergedTextUsesObjectBatch(t *testing.T) {
 
 	changes, _, err := right.ChangesSince(baseHeads)
 	require.NoError(t, err)
+
 	fallbacks := left.columns.globalOrderFallbacks
 	require.NoError(t, left.ApplyChanges(changes))
 	assert.Equal(t, fallbacks, left.columns.globalOrderFallbacks)
@@ -131,6 +133,7 @@ func requireColumnarStateEquivalent(t *testing.T, engine *Engine) {
 	changes, ok := state.allChanges()
 	require.True(t, ok)
 	require.Len(t, engine.columns.changes, len(changes))
+
 	for i, change := range changes {
 		require.NotNil(t, change.Hash)
 		require.NotNil(t, engine.columns.changes[i].Hash)
@@ -139,12 +142,15 @@ func requireColumnarStateEquivalent(t *testing.T, engine *Engine) {
 
 	order := state.documentOperationOrder()
 	require.Len(t, engine.columns.operations, len(order))
+
 	operations := make([]opset.Operation, len(order))
 	for i, identifier := range order {
 		assert.Equal(t, identifier, engine.columns.operations[i].ID)
 		operation, exists := state.operation(identifier)
 		require.True(t, exists)
+
 		operation.Predecessors = nil
+
 		operation.Successors = append(
 			[]opset.OpID(nil),
 			state.successorIndex[identifier]...,
@@ -172,6 +178,7 @@ func requireColumnarStateEquivalent(t *testing.T, engine *Engine) {
 	for i, change := range changes {
 		document.Changes[i] = *change
 	}
+
 	expected, err := storage.EncodePreparedDocument(document, operations, false)
 	require.NoError(t, err)
 	actual, err := engine.columns.snapshot.Encode(

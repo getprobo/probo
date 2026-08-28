@@ -63,6 +63,7 @@ func TestColumn_BoundaryEditsAndWireEncoding(t *testing.T) {
 	}
 
 	var saved bytes.Buffer
+
 	written, err := column.SaveTo(&saved)
 	if err != nil {
 		t.Fatalf("SaveTo() error = %v", err)
@@ -101,12 +102,14 @@ func TestColumn_NullsStringsAndOwnedBytes(t *testing.T) {
 
 	invalid := hexane.NewColumn(hexane.StringCodec())
 	invalid.Insert(0, hexane.Some(string([]byte{0xff})))
+
 	if _, err := invalid.Bytes(); err == nil {
 		t.Error("invalid UTF-8 string encoded without error")
 	}
 
 	allNull := hexane.NewColumn(hexane.Uint64Codec())
 	allNull.Insert(0, hexane.Null[uint64](), hexane.Null[uint64]())
+
 	nullWire, err := allNull.Bytes()
 	if err != nil {
 		t.Fatalf("all-null Bytes() error = %v", err)
@@ -136,8 +139,10 @@ func TestColumn_CloneIsolation(t *testing.T) {
 	cloned := column.Clone()
 
 	column.Set(0, hexane.Some([]byte("original")))
+
 	clonedValue := cloned.Get(1)
 	clonedValue.Value[0] = 'x'
+
 	cloned.Insert(cloned.Len(), hexane.Some([]byte("clone")))
 
 	if got := string(cloned.Get(0).Value); got != "a" {
@@ -175,6 +180,7 @@ func TestColumn_InvalidBoundsPanic(t *testing.T) {
 	for name, operation := range cases {
 		name := name
 		operation := operation
+
 		t.Run(
 			name,
 			func(t *testing.T) {
@@ -185,6 +191,7 @@ func TestColumn_InvalidBoundsPanic(t *testing.T) {
 						t.Error("operation did not panic")
 					}
 				}()
+
 				operation()
 			},
 		)
@@ -195,6 +202,7 @@ func TestColumn_RandomizedDifferential(t *testing.T) {
 	t.Parallel()
 
 	random := rand.New(rand.NewPCG(10, 20))
+
 	model := make([]hexane.Value[int64], 1_024)
 	for i := range model {
 		if i%11 == 0 {
@@ -208,6 +216,7 @@ func TestColumn_RandomizedDifferential(t *testing.T) {
 
 	for step := range 5_000 {
 		index := random.IntN(len(model) + 1)
+
 		deleteCount := 0
 		if len(model) > index {
 			deleteCount = random.IntN(len(model) - index + 1)
@@ -276,6 +285,7 @@ func spliceValues[T any](
 	next = append(next, model[:index]...)
 	next = append(next, inserted...)
 	next = append(next, model[index+deleteCount:]...)
+
 	return next
 }
 
@@ -293,6 +303,7 @@ func canonicalRLE[T comparable](
 	}
 
 	var data []byte
+
 	for index := 0; index < len(values); {
 		if !values[index].Valid {
 			end := index + 1
@@ -303,6 +314,7 @@ func canonicalRLE[T comparable](
 			data = testAppendLEB(data, 0)
 			data = testAppendULEB(data, uint64(end-index))
 			index = end
+
 			continue
 		}
 
@@ -319,6 +331,7 @@ func canonicalRLE[T comparable](
 			data = testAppendLEB(data, int64(end-index))
 			data = appendValue(data, values[index].Value)
 			index = end
+
 			continue
 		}
 
@@ -347,6 +360,7 @@ func canonicalRLE[T comparable](
 func testAppendULEB(data []byte, value uint64) []byte {
 	for {
 		current := byte(value & 0x7f)
+
 		value >>= 7
 		if value != 0 {
 			current |= 0x80
@@ -363,6 +377,7 @@ func testAppendLEB(data []byte, value int64) []byte {
 	for {
 		current := byte(value & 0x7f)
 		value >>= 7
+
 		done := (value == 0 && current&0x40 == 0) ||
 			(value == -1 && current&0x40 != 0)
 		if !done {

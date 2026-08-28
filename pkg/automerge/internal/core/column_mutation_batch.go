@@ -67,22 +67,27 @@ func newColumnMutationBatch(
 	if columns == nil || columns.snapshot == nil || columns.columnsDirty {
 		return nil, errDirectColumnsUnsupported
 	}
+
 	batch := &columnMutationBatch{
 		appendedChanges: make([]opset.Change, 0, len(changes)),
 		dependencyRows:  make(map[opset.ChangeHash]uint64),
 		touchedObjects:  make(map[opset.ObjectID][]opset.Operation),
 	}
+
 	nextRows := make(map[opset.ChangeHash]int, len(columns.changeRows)+len(changes))
 	for hash, row := range columns.changeRows {
 		nextRows[hash] = row
 	}
+
 	for _, change := range changes {
 		if change.Hash == nil {
 			return nil, fmt.Errorf("direct column change has no hash")
 		}
+
 		if _, exists := nextRows[*change.Hash]; exists {
 			return nil, fmt.Errorf("direct column change already exists")
 		}
+
 		for _, dependency := range change.Dependencies {
 			row, ok := nextRows[dependency]
 			if !ok {
@@ -91,8 +96,10 @@ func newColumnMutationBatch(
 					dependency,
 				)
 			}
+
 			batch.dependencyRows[dependency] = uint64(row)
 		}
+
 		nextRows[*change.Hash] = len(columns.changes) + len(batch.appendedChanges)
 		batch.appendedChanges = append(
 			batch.appendedChanges,
@@ -101,21 +108,28 @@ func newColumnMutationBatch(
 	}
 
 	touched := make(map[opset.ObjectID]struct{})
+
 	for _, change := range changes {
 		for _, operation := range change.Operations {
 			touched[operation.Object] = struct{}{}
 		}
 	}
+
 	objects := make([]opset.ObjectID, 0, len(touched))
 	for object := range touched {
 		objects = append(objects, object)
 	}
+
 	slices.SortFunc(objects, compareDocumentObjects)
 
 	tailPlanned := false
+
 	if len(objects) == 1 {
-		var splice storage.SnapshotOperationSplice
-		var boundary []opset.Operation
+		var (
+			splice   storage.SnapshotOperationSplice
+			boundary []opset.Operation
+		)
+
 		splice, boundary, tailPlanned = directTailInsertion(
 			columns,
 			state,
@@ -129,6 +143,7 @@ func newColumnMutationBatch(
 			// unshared; apply still copies forked snapshots below.
 			batch.reuseOperations = true
 		}
+
 		if !tailPlanned && allowDivergedSequence {
 			splice, boundary, tailPlanned = directDivergedSequenceInsertion(
 				columns,
@@ -141,10 +156,15 @@ func newColumnMutationBatch(
 			}
 		}
 	}
+
 	textPlanned := false
+
 	if len(objects) == 1 && !tailPlanned {
-		var splices []storage.SnapshotOperationSplice
-		var boundary []opset.Operation
+		var (
+			splices  []storage.SnapshotOperationSplice
+			boundary []opset.Operation
+		)
+
 		splices, boundary, textPlanned = directTextOverlay(
 			columns,
 			state,
@@ -156,20 +176,24 @@ func newColumnMutationBatch(
 			batch.touchedObjects[objects[0]] = boundary
 		}
 	}
+
 	for _, object := range objects {
 		if textPlanned || tailPlanned {
 			break
 		}
+
 		order, ok := state.indexedObjectOrder(object)
 		if !ok {
 			return nil, fmt.Errorf("cannot order directly mutated object %v", object)
 		}
+
 		replacement := make([]opset.Operation, len(order))
 		for i, identifier := range order {
 			operation, ok := state.operation(identifier)
 			if !ok {
 				return nil, fmt.Errorf("direct operation %v is absent", identifier)
 			}
+
 			operation.Successors = append(
 				[]opset.OpID(nil),
 				state.successorIndex[identifier]...,
@@ -177,15 +201,19 @@ func newColumnMutationBatch(
 			slices.SortFunc(operation.Successors, compareOperationIDs)
 			replacement[i] = cloneOperation(operation)
 		}
+
 		batch.touchedObjects[object] = replacement
 
 		current := []opset.Operation(nil)
+
 		index := directObjectInsertionRow(columns, object)
 		if span, exists := columns.objectSpans[object]; exists {
 			index = span.start
 			current = columns.operations[span.start:span.end]
 		}
+
 		prefix, suffix := commonOperationEdges(current, replacement)
+
 		splice := storage.SnapshotOperationSplice{
 			Index:       index + prefix,
 			DeleteCount: len(current) - prefix - suffix,
@@ -194,6 +222,7 @@ func newColumnMutationBatch(
 		if splice.DeleteCount > 0 || len(splice.Operations) > 0 {
 			batch.operationSplices = append(batch.operationSplices, splice)
 		}
+
 		for i := prefix; i < len(current)-suffix; i++ {
 			if i < len(replacement) && current[i].ID == replacement[i].ID {
 				batch.successorPatches = append(
@@ -209,17 +238,20 @@ func newColumnMutationBatch(
 			}
 		}
 	}
+
 	slices.Reverse(batch.operationSplices)
 	batch.operationSplices = coalesceDirectInsertions(batch.operationSplices)
 
 	batch.actors = directActorTable(columns.actors, changes)
 	batch.heads = directBatchHeads(columns.heads, changes)
+
 	batch.headIndexes = make([]uint64, len(batch.heads))
 	for i, head := range batch.heads {
 		row, ok := nextRows[head]
 		if !ok {
 			return nil, fmt.Errorf("direct column head %s is absent", head)
 		}
+
 		batch.headIndexes[i] = uint64(row)
 	}
 
@@ -243,10 +275,12 @@ func directTextOverlay(
 	if object.IsRoot {
 		return nil, nil, false
 	}
+
 	creator, ok := state.operation(object.OpID)
 	if !ok || creator.Action != opset.ActionMakeText {
 		return nil, nil, false
 	}
+
 	span, ok := columns.objectSpans[object]
 	if !ok {
 		return nil, nil, false
@@ -254,23 +288,28 @@ func directTextOverlay(
 
 	inserted := make(map[opset.OpID]struct{})
 	changedSuccessors := make(map[opset.OpID]struct{})
+
 	for _, change := range changes {
 		for _, operation := range change.Operations {
 			if operation.Object != object {
 				return nil, nil, false
 			}
+
 			if operation.Insert {
 				inserted[operation.ID] = struct{}{}
 				continue
 			}
+
 			if operation.Action != opset.ActionDelete {
 				return nil, nil, false
 			}
+
 			for _, predecessor := range operation.Predecessors {
 				changedSuccessors[predecessor] = struct{}{}
 			}
 		}
 	}
+
 	if len(inserted) == 0 && len(changedSuccessors) == 0 {
 		return nil, nil, false
 	}
@@ -278,33 +317,40 @@ func directTextOverlay(
 	index := state.sequenceIndex(object.OpID)
 	mutations := make(map[int]*directTextRowMutation)
 	pending := make([]opset.Operation, 0)
+
 	var (
 		first    opset.Operation
 		last     opset.Operation
 		hasEntry bool
 	)
+
 	flush := func(row int) {
 		if len(pending) == 0 {
 			return
 		}
+
 		mutation := mutations[row]
 		if mutation == nil {
 			mutation = &directTextRowMutation{}
 			mutations[row] = mutation
 		}
+
 		mutation.insertions = append(mutation.insertions, pending...)
 		pending = nil
 	}
+
 	for _, chunk := range index.chunks {
 		for _, entry := range chunk.entries {
 			operation, exists := state.operation(entry.insertion)
 			if !exists {
 				return nil, nil, false
 			}
+
 			if !hasEntry {
 				first = operation
 				hasEntry = true
 			}
+
 			last = operation
 			if _, exists := inserted[entry.insertion]; exists {
 				operation.Successors = append(
@@ -313,6 +359,7 @@ func directTextOverlay(
 				)
 				slices.SortFunc(operation.Successors, compareOperationIDs)
 				pending = append(pending, cloneOperation(operation))
+
 				continue
 			}
 
@@ -320,7 +367,9 @@ func directTextOverlay(
 			if !exists || row < span.start || row >= span.end {
 				return nil, nil, false
 			}
+
 			flush(row)
+
 			if _, changed := changedSuccessors[entry.insertion]; changed {
 				operation.Successors = append(
 					[]opset.OpID(nil),
@@ -328,26 +377,33 @@ func directTextOverlay(
 				)
 				slices.SortFunc(operation.Successors, compareOperationIDs)
 				replacement := cloneOperation(operation)
+
 				mutation := mutations[row]
 				if mutation == nil {
 					mutation = &directTextRowMutation{}
 					mutations[row] = mutation
 				}
+
 				mutation.replacement = &replacement
 			}
 		}
 	}
+
 	flush(span.end)
+
 	if !hasEntry {
 		return nil, nil, false
 	}
+
 	boundary := []opset.Operation{first, last}
 
 	rows := make([]int, 0, len(mutations))
 	for row := range mutations {
 		rows = append(rows, row)
 	}
+
 	slices.Sort(rows)
+
 	splices := make([]storage.SnapshotOperationSplice, 0, len(rows))
 	for first := 0; first < len(rows); {
 		last := first
@@ -359,18 +415,22 @@ func directTextOverlay(
 		start := rows[first]
 		cursor := start
 		operations := make([]opset.Operation, 0)
+
 		for _, row := range rows[first : last+1] {
 			for cursor < row {
 				operations = append(operations, columns.operations[cursor])
 				cursor++
 			}
+
 			mutation := mutations[row]
+
 			operations = append(operations, mutation.insertions...)
 			if mutation.replacement != nil {
 				operations = append(operations, *mutation.replacement)
 				cursor++
 			}
 		}
+
 		splices = append(splices, storage.SnapshotOperationSplice{
 			Index:       start,
 			DeleteCount: cursor - start,
@@ -390,10 +450,12 @@ func directTailInsertion(
 	if len(columns.operations) == 0 {
 		return storage.SnapshotOperationSplice{}, nil, false
 	}
+
 	last := columns.operations[len(columns.operations)-1]
 	anchor := last.ID
 	object := last.Object
 	added := make([]opset.Operation, 0)
+
 	for _, change := range changes {
 		for _, changed := range change.Operations {
 			if changed.Action == opset.ActionDelete ||
@@ -404,10 +466,12 @@ func directTailInsertion(
 				len(changed.Predecessors) != 0 {
 				return storage.SnapshotOperationSplice{}, nil, false
 			}
+
 			operation, ok := state.operation(changed.ID)
 			if !ok {
 				operation = changed
 			}
+
 			operation.Successors = append(
 				[]opset.OpID(nil),
 				state.successorIndex[changed.ID]...,
@@ -417,17 +481,21 @@ func directTailInsertion(
 			anchor = changed.ID
 		}
 	}
+
 	if len(added) == 0 {
 		return storage.SnapshotOperationSplice{}, nil, false
 	}
+
 	span, ok := columns.objectSpans[object]
 	if !ok {
 		return storage.SnapshotOperationSplice{}, nil, false
 	}
+
 	boundary := []opset.Operation{
 		columns.operations[span.start],
 		added[len(added)-1],
 	}
+
 	return storage.SnapshotOperationSplice{
 		Index:      len(columns.operations),
 		Operations: added,
@@ -447,18 +515,21 @@ func directDivergedSequenceInsertion(
 		first  opset.Operation
 		object opset.ObjectID
 	)
+
 	for _, change := range changes {
 		for _, changed := range change.Operations {
 			if len(added) == 0 {
 				first = changed
 				object = changed.Object
 			}
+
 			if changed.Action == opset.ActionDelete ||
 				!changed.Insert ||
 				changed.Object != object ||
 				len(changed.Predecessors) != 0 {
 				return storage.SnapshotOperationSplice{}, nil, false
 			}
+
 			if len(added) == 0 {
 				if !changed.Key.IsHead && changed.Key.Element == nil {
 					return storage.SnapshotOperationSplice{}, nil, false
@@ -467,10 +538,12 @@ func directDivergedSequenceInsertion(
 				*changed.Key.Element != added[len(added)-1].ID {
 				return storage.SnapshotOperationSplice{}, nil, false
 			}
+
 			operation, ok := state.operation(changed.ID)
 			if !ok {
 				operation = changed
 			}
+
 			operation.Successors = append(
 				[]opset.OpID(nil),
 				state.successorIndex[changed.ID]...,
@@ -479,33 +552,41 @@ func directDivergedSequenceInsertion(
 			added = append(added, cloneOperation(operation))
 		}
 	}
+
 	if len(added) == 0 {
 		return storage.SnapshotOperationSplice{}, nil, false
 	}
+
 	span, ok := columns.objectSpans[object]
 	if !ok || span.start == span.end {
 		return storage.SnapshotOperationSplice{}, nil, false
 	}
 
 	index := span.start
+
 	if !first.Key.IsHead {
 		anchorRow, exists := columns.operationRows.lookup(*first.Key.Element)
 		if !exists || anchorRow < span.start || anchorRow >= span.end {
 			return storage.SnapshotOperationSplice{}, nil, false
 		}
+
 		index = anchorRow + 1
 	}
+
 	for index < span.end {
 		runtimeMetrics.directPlanningRows.Add(1)
+
 		candidate := columns.operations[index]
 		if !candidate.Insert {
 			index++
 			continue
 		}
+
 		root, descendant := directSequenceBranchRoot(state, candidate, first)
 		if !descendant || root.Compare(first.ID) < 0 {
 			break
 		}
+
 		index++
 	}
 
@@ -513,6 +594,7 @@ func directDivergedSequenceInsertion(
 	if index == span.end {
 		last = added[len(added)-1]
 	}
+
 	return storage.SnapshotOperationSplice{
 			Index:      index,
 			Operations: added,
@@ -537,13 +619,16 @@ func directSequenceBranchRoot(
 			*root.Key.Element == *incoming.Key.Element {
 			return root.ID, true
 		}
+
 		if root.Key.Element == nil {
 			return opset.OpID{}, false
 		}
+
 		parent, ok := state.operation(*root.Key.Element)
 		if !ok || !parent.Insert || parent.Object != incoming.Object {
 			return opset.OpID{}, false
 		}
+
 		root = parent
 	}
 }
@@ -554,6 +639,7 @@ func coalesceDirectInsertions(
 	if len(splices) < 2 {
 		return splices
 	}
+
 	coalesced := make([]storage.SnapshotOperationSplice, 0, len(splices))
 	for _, splice := range splices {
 		last := len(coalesced) - 1
@@ -569,10 +655,13 @@ func coalesceDirectInsertions(
 			operations = append(operations, splice.Operations...)
 			operations = append(operations, coalesced[last].Operations...)
 			coalesced[last].Operations = operations
+
 			continue
 		}
+
 		coalesced = append(coalesced, splice)
 	}
+
 	return coalesced
 }
 
@@ -581,11 +670,14 @@ func compareDocumentObjects(left, right opset.ObjectID) int {
 		if right.IsRoot {
 			return 0
 		}
+
 		return -1
 	}
+
 	if right.IsRoot {
 		return 1
 	}
+
 	return left.OpID.Compare(right.OpID)
 }
 
@@ -600,14 +692,17 @@ func directObjectInsertionRow(
 	if object.IsRoot {
 		return 0
 	}
+
 	for row, operation := range columns.operations {
 		if operation.Object.IsRoot {
 			continue
 		}
+
 		if operation.Object.OpID.Compare(object.OpID) > 0 {
 			return row
 		}
 	}
+
 	return len(columns.operations)
 }
 
@@ -621,6 +716,7 @@ func commonOperationEdges(
 		wireOperationsEqual(current[prefix], replacement[prefix]) {
 		prefix++
 	}
+
 	suffix := 0
 	for suffix < len(current)-prefix &&
 		suffix < len(replacement)-prefix &&
@@ -630,6 +726,7 @@ func commonOperationEdges(
 		) {
 		suffix++
 	}
+
 	return prefix, suffix
 }
 
@@ -641,6 +738,7 @@ func directActorTable(
 	for _, actor := range current {
 		seen[actor] = struct{}{}
 	}
+
 	add := func(actor opset.ActorID) {
 		if actor != "" {
 			seen[actor] = struct{}{}
@@ -648,29 +746,36 @@ func directActorTable(
 	}
 	for _, change := range changes {
 		add(change.Actor)
+
 		for _, operation := range change.Operations {
 			add(operation.ID.Actor)
+
 			if !operation.Object.IsRoot {
 				add(operation.Object.OpID.Actor)
 			}
+
 			if operation.Key.Element != nil {
 				add(operation.Key.Element.Actor)
 			}
+
 			for _, successor := range operation.Successors {
 				add(successor.Actor)
 			}
 		}
 	}
+
 	actors := make([]opset.ActorID, 0, len(seen))
 	for actor := range seen {
 		actors = append(actors, actor)
 	}
+
 	slices.SortFunc(
 		actors,
 		func(left, right opset.ActorID) int {
 			return left.Compare(right)
 		},
 	)
+
 	return actors
 }
 
@@ -682,32 +787,39 @@ func directBatchHeads(
 	for _, head := range current {
 		heads[head] = struct{}{}
 	}
+
 	for _, change := range changes {
 		for _, dependency := range change.Dependencies {
 			delete(heads, dependency)
 		}
+
 		heads[*change.Hash] = struct{}{}
 	}
+
 	ordered := make([]opset.ChangeHash, 0, len(heads))
 	for head := range heads {
 		ordered = append(ordered, head)
 	}
+
 	slices.SortFunc(
 		ordered,
 		func(left, right opset.ChangeHash) int {
 			return bytes.Compare(left[:], right[:])
 		},
 	)
+
 	return ordered
 }
 
 func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, error) {
 	next := columns.clone()
 	snapshot := columns.snapshot.Clone()
+
 	insertedChanges := make([]*opset.Change, len(b.appendedChanges))
 	for i := range b.appendedChanges {
 		insertedChanges[i] = &b.appendedChanges[i]
 	}
+
 	err := snapshot.Splice(
 		storage.SnapshotSplice{
 			Actors:            b.actors,
@@ -727,6 +839,7 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	for _, splice := range b.operationSplices {
 		operationDelta += len(splice.Operations) - splice.DeleteCount
 	}
+
 	operations := columns.operations
 	if !b.reuseOperations ||
 		columns.shared ||
@@ -734,12 +847,15 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 		runtimeMetrics.directOperationCopies.Add(uint64(len(operations)))
 		operations = append([]opset.Operation(nil), operations...)
 	}
+
 	rows := columns.operationRows
+
 	for _, splice := range b.operationSplices {
 		inserted := make([]opset.Operation, len(splice.Operations))
 		for i := range splice.Operations {
 			inserted[i] = cloneOperation(splice.Operations[i])
 		}
+
 		operations = slices.Replace(
 			operations,
 			splice.Index,
@@ -750,10 +866,12 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	}
 
 	changes := append([]opset.Change(nil), columns.changes...)
+
 	changeRows := make(map[opset.ChangeHash]int, len(columns.changeRows)+1)
 	for hash, row := range columns.changeRows {
 		changeRows[hash] = row
 	}
+
 	for i := range b.appendedChanges {
 		change := cloneChange(b.appendedChanges[i])
 		changeRows[*change.Hash] = len(changes)
@@ -763,6 +881,7 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	next.actors = append([]opset.ActorID(nil), b.actors...)
 	next.changes = changes
 	next.changeRows = changeRows
+
 	next.heads = append([]opset.ChangeHash(nil), b.heads...)
 	next.operations = operations
 	next.operationRows = rows
@@ -770,7 +889,9 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	next.columnsDirty = false
 	next.snapshot = snapshot
 	next.shared = false
+
 	runtimeMetrics.directColumnBatches.Add(1)
+
 	return next, nil
 }
 
@@ -784,22 +905,28 @@ func updateDirectObjectSpans(
 		if _, changed := touched[object]; changed || span.start == span.end {
 			continue
 		}
+
 		first, firstOK := rows.lookup(columns.operations[span.start].ID)
+
 		last, lastOK := rows.lookup(columns.operations[span.end-1].ID)
 		if firstOK && lastOK {
 			spans[object] = wireObjectSpan{start: first, end: last + 1}
 		}
 	}
+
 	for object, operations := range touched {
 		if len(operations) == 0 {
 			continue
 		}
+
 		first, firstOK := rows.lookup(operations[0].ID)
+
 		last, lastOK := rows.lookup(operations[len(operations)-1].ID)
 		if firstOK && lastOK {
 			spans[object] = wireObjectSpan{start: first, end: last + 1}
 		}
 	}
+
 	return spans
 }
 
@@ -810,6 +937,7 @@ func (s *State) promoteDirectCommit(
 	for _, operation := range change.Operations {
 		delete(s.operations, operation.ID)
 	}
+
 	metadata := *change
 	metadata.Operations = nil
 	metadata.Raw = nil

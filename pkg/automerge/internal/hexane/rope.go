@@ -60,6 +60,7 @@ func ropeFrom[T any](
 	leaves := make([]*ropeNode[T], 0, (len(items)+chunkSize-1)/chunkSize)
 	for len(items) > 0 {
 		count := min(len(items), chunkSize)
+
 		owned := make([]T, count)
 		for i, item := range items[:count] {
 			owned[i] = clone(item)
@@ -70,12 +71,14 @@ func ropeFrom[T any](
 	}
 
 	var build func(start, end int) *ropeNode[T]
+
 	build = func(start, end int) *ropeNode[T] {
 		if end-start == 1 {
 			return leaves[start]
 		}
 
 		middle := start + (end-start)/2
+
 		return ropeBranch(build(start, middle), build(middle, end))
 	}
 
@@ -140,6 +143,7 @@ func ropeConcat[T any](
 		items := make([]T, 0, len(left.items)+len(right.items))
 		items = append(items, left.items...)
 		items = append(items, right.items...)
+
 		return ropeLeaf(items, metrics)
 	}
 
@@ -167,6 +171,7 @@ func ropeBalance[T any](left, right *ropeNode[T]) *ropeNode[T] {
 		}
 
 		pivot := left.right
+
 		return ropeBranch(
 			ropeBranch(left.left, pivot.left),
 			ropeBranch(pivot.right, right),
@@ -179,6 +184,7 @@ func ropeBalance[T any](left, right *ropeNode[T]) *ropeNode[T] {
 		}
 
 		pivot := right.left
+
 		return ropeBranch(
 			ropeBranch(left, pivot.left),
 			ropeBranch(pivot.right, right.right),
@@ -217,6 +223,7 @@ func ropeSplit[T any](
 	if root.items != nil {
 		left := append([]T(nil), root.items[:index]...)
 		right := append([]T(nil), root.items[index:]...)
+
 		return ropeLeaf(left, metrics), ropeLeaf(right, metrics)
 	}
 
@@ -235,6 +242,7 @@ func ropeSplit[T any](
 		chunkSize,
 		metrics,
 	)
+
 	return ropeConcat(root.left, middle, chunkSize, metrics), right
 }
 
@@ -252,6 +260,7 @@ func ropeBatchSplice[T any](
 	if root != nil {
 		length = root.len
 	}
+
 	sorted := append([]ropeSplice[T](nil), splices...)
 	slices.SortStableFunc(
 		sorted,
@@ -259,7 +268,9 @@ func ropeBatchSplice[T any](
 			return left.index - right.index
 		},
 	)
+
 	previousEnd := 0
+
 	for i, splice := range sorted {
 		if splice.index < 0 ||
 			splice.deleteCount < 0 ||
@@ -267,17 +278,22 @@ func ropeBatchSplice[T any](
 			splice.deleteCount > length-splice.index {
 			return nil, fmt.Errorf("hexane: batch splice %d is out of bounds", i)
 		}
+
 		if i > 0 && splice.index < previousEnd {
 			return nil, fmt.Errorf("hexane: batch splice %d overlaps its predecessor", i)
 		}
+
 		previousEnd = splice.index + splice.deleteCount
 	}
 
 	var result *ropeNode[T]
+
 	remaining := root
 	cursor := 0
+
 	for _, splice := range sorted {
 		var retained *ropeNode[T]
+
 		retained, remaining = ropeSplit(
 			remaining,
 			splice.index-cursor,
@@ -360,6 +376,7 @@ func ropePrefix[T any](
 			uintValue uint64
 			intValue  int64
 		)
+
 		for _, item := range root.items[:index] {
 			itemUint, itemInt := metrics(item)
 			uintValue += itemUint
@@ -378,5 +395,6 @@ func ropePrefix[T any](
 		index-root.left.len,
 		metrics,
 	)
+
 	return root.left.uint + rightUint, root.left.sint + rightInt
 }

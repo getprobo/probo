@@ -84,6 +84,7 @@ func NewDeltaColumn() *DeltaColumn {
 // NewDeltaColumnFromValues constructs a DeltaColumn from absolute values.
 func NewDeltaColumnFromValues(values ...Value[int64]) *DeltaColumn {
 	deltas := absoluteToDeltas(values)
+
 	return &DeltaColumn{
 		deltas: newColumn(
 			Int64Codec(),
@@ -110,6 +111,7 @@ func (c *DeltaColumn) Get(index int) Value[int64] {
 	}
 
 	_, absolute := ropePrefix(c.deltas.root, index+1, c.deltas.metrics)
+
 	return Some(absolute)
 }
 
@@ -135,6 +137,7 @@ func (c *DeltaColumn) Splice(
 	values ...Value[int64],
 ) {
 	c.deltas.checkRange(index, deleteCount)
+
 	if deleteCount == 0 && len(values) == 0 {
 		return
 	}
@@ -153,6 +156,7 @@ func (c *DeltaColumn) Splice(
 	}
 
 	c.deltas.Splice(index, deleteCount, inserted...)
+
 	if !hasFollowing {
 		return
 	}
@@ -173,28 +177,34 @@ func (c *DeltaColumn) BatchSplice(splices []DeltaSplice) error {
 	for i, splice := range splices {
 		ranges[i] = batchRange{index: splice.Index, deleteCount: splice.DeleteCount}
 	}
+
 	if err := validateBatchRanges(c.Len(), ranges); err != nil {
 		return fmt.Errorf("cannot splice delta column batch: %w", err)
 	}
+
 	if len(splices) == 1 &&
 		splices[0].Index == c.Len() &&
 		splices[0].DeleteCount == 0 &&
 		splices[0].Inserted != nil {
 		values := splices[0].Inserted.Values()
 		_, previous := ropePrefix(c.deltas.root, c.Len(), c.deltas.metrics)
+
 		deltas := make([]Value[int64], len(values))
 		for i, value := range values {
 			if !value.Valid {
 				continue
 			}
+
 			deltas[i] = Some(value.Value - previous)
 			previous = value.Value
 		}
+
 		inserted := newColumn(
 			Int64Codec(),
 			deltas,
 			c.deltas.metrics,
 		)
+
 		next := c.deltas.Clone()
 		if err := next.BatchSplice([]ColumnSplice[int64]{{
 			Index:    c.Len(),
@@ -202,7 +212,9 @@ func (c *DeltaColumn) BatchSplice(splices []DeltaSplice) error {
 		}}); err != nil {
 			return fmt.Errorf("cannot append delta column batch: %w", err)
 		}
+
 		c.deltas = next
+
 		return nil
 	}
 
@@ -214,14 +226,18 @@ func (c *DeltaColumn) BatchSplice(splices []DeltaSplice) error {
 		},
 	)
 	slices.Reverse(sorted)
+
 	next := c.Clone()
+
 	for _, splice := range sorted {
 		var values []Value[int64]
 		if splice.Inserted != nil {
 			values = splice.Inserted.Values()
 		}
+
 		next.Splice(splice.Index, splice.DeleteCount, values...)
 	}
+
 	c.deltas = next.deltas
 
 	return nil
@@ -235,7 +251,9 @@ func (c *DeltaColumn) Clone() *DeltaColumn {
 // Values returns an independent flat snapshot of absolute values.
 func (c *DeltaColumn) Values() []Value[int64] {
 	values := make([]Value[int64], 0, c.Len())
+
 	var absolute int64
+
 	ropeEach(
 		c.deltas.root,
 		func(delta Value[int64]) bool {
@@ -249,6 +267,7 @@ func (c *DeltaColumn) Values() []Value[int64] {
 			return true
 		},
 	)
+
 	return values
 }
 
@@ -275,7 +294,9 @@ func (c *DeltaColumn) nextPresent(index int) (int64, bool) {
 
 func absoluteToDeltas(values []Value[int64]) []Value[int64] {
 	deltas := make([]Value[int64], len(values))
+
 	var previous int64
+
 	for i, value := range values {
 		if !value.Valid {
 			continue
@@ -296,6 +317,7 @@ func NewPrefixColumn() *PrefixColumn {
 // NewPrefixColumnFromValues constructs a PrefixColumn from values.
 func NewPrefixColumnFromValues(values ...uint64) *PrefixColumn {
 	present := presentValues(values)
+
 	return &PrefixColumn{
 		values: newColumn(
 			Uint64Codec(),
@@ -319,6 +341,7 @@ func (c *PrefixColumn) Get(index int) uint64 {
 func (c *PrefixColumn) Prefix(index int) uint64 {
 	c.values.checkRange(index, 0)
 	total, _ := ropePrefix(c.values.root, index, c.values.metrics)
+
 	return total
 }
 
@@ -350,6 +373,7 @@ func (c *PrefixColumn) BatchSplice(splices []PrefixSplice) error {
 		if splice.Inserted != nil {
 			inserted = splice.Inserted.values
 		}
+
 		columnSplices[i] = ColumnSplice[uint64]{
 			Index:       splice.Index,
 			DeleteCount: splice.DeleteCount,
@@ -368,6 +392,7 @@ func (c *PrefixColumn) Clone() *PrefixColumn {
 // Values returns an independent flat snapshot.
 func (c *PrefixColumn) Values() []uint64 {
 	items := c.values.Values()
+
 	values := make([]uint64, len(items))
 	for i, item := range items {
 		values[i] = item.Value
@@ -433,16 +458,19 @@ func (c *BooleanColumn) BatchSplice(splices []BooleanSplice) error {
 		splices[0].DeleteCount == 0 &&
 		splices[0].Inserted != nil &&
 		c.encodedOK
+
 	var appended []bool
 	if appendOnly {
 		appended = splices[0].Inserted.Values()
 	}
+
 	columnSplices := make([]ColumnSplice[bool], len(splices))
 	for i, splice := range splices {
 		var inserted *Column[bool]
 		if splice.Inserted != nil {
 			inserted = splice.Inserted.values
 		}
+
 		columnSplices[i] = ColumnSplice[bool]{
 			Index:       splice.Index,
 			DeleteCount: splice.DeleteCount,
@@ -453,6 +481,7 @@ func (c *BooleanColumn) BatchSplice(splices []BooleanSplice) error {
 	if err := c.values.BatchSplice(columnSplices); err != nil {
 		return err
 	}
+
 	if appendOnly {
 		for _, value := range appended {
 			if value == c.tailValue {
@@ -460,8 +489,10 @@ func (c *BooleanColumn) BatchSplice(splices []BooleanSplice) error {
 				data = appendULEB(data, c.tailCount+1)
 				c.encoded = data
 				c.tailCount++
+
 				continue
 			}
+
 			c.tailOffset = len(c.encoded)
 			c.encoded = appendULEB(append([]byte(nil), c.encoded...), 1)
 			c.tailValue = value
@@ -471,6 +502,7 @@ func (c *BooleanColumn) BatchSplice(splices []BooleanSplice) error {
 		c.encoded = nil
 		c.encodedOK = false
 	}
+
 	return nil
 }
 
@@ -489,6 +521,7 @@ func (c *BooleanColumn) Clone() *BooleanColumn {
 // Values returns an independent flat snapshot.
 func (c *BooleanColumn) Values() []bool {
 	items := c.values.Values()
+
 	values := make([]bool, len(items))
 	for i, item := range items {
 		values[i] = item.Value
@@ -509,6 +542,7 @@ func (c *BooleanColumn) SaveTo(w io.Writer) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return saveBytes(w, data)
 }
 
@@ -516,9 +550,11 @@ func (c *BooleanColumn) encodedBytes() ([]byte, error) {
 	if c.encodedOK {
 		return c.encoded, nil
 	}
+
 	if c.Len() == 0 {
 		c.encoded = []byte{}
 		c.encodedOK = true
+
 		return c.encoded, nil
 	}
 
@@ -527,12 +563,14 @@ func (c *BooleanColumn) encodedBytes() ([]byte, error) {
 		current bool
 		count   uint64
 	)
+
 	writeRun := func() {
 		c.tailOffset = len(data)
 		data = appendULEB(data, count)
 		c.tailValue = current
 		c.tailCount = count
 	}
+
 	ropeEach(
 		c.values.root,
 		func(value Value[bool]) bool {
@@ -540,15 +578,20 @@ func (c *BooleanColumn) encodedBytes() ([]byte, error) {
 				count++
 				return true
 			}
+
 			writeRun()
+
 			current = value.Value
 			count = 1
+
 			return true
 		},
 	)
 	writeRun()
+
 	c.encoded = data
 	c.encodedOK = true
+
 	return c.encoded, nil
 }
 
@@ -584,7 +627,9 @@ func validateBatchRanges(length int, ranges []batchRange) error {
 			return left.index - right.index
 		},
 	)
+
 	previousEnd := 0
+
 	for i, item := range sorted {
 		if item.index < 0 ||
 			item.deleteCount < 0 ||
@@ -592,9 +637,11 @@ func validateBatchRanges(length int, ranges []batchRange) error {
 			item.deleteCount > length-item.index {
 			return fmt.Errorf("splice %d is out of bounds", i)
 		}
+
 		if i > 0 && item.index < previousEnd {
 			return fmt.Errorf("splice %d overlaps its predecessor", i)
 		}
+
 		previousEnd = item.index + item.deleteCount
 	}
 

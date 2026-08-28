@@ -559,6 +559,7 @@ func (d *Document) Fork(
 	if native, ok := d.engine.(*core.Engine); ok {
 		engine, err := native.Fork(actorID[:])
 		d.mu.Unlock()
+
 		if err != nil {
 			return nil, fmt.Errorf("cannot fork native Automerge document: %w", err)
 		}
@@ -930,6 +931,7 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 	}
 
 	targetEngine, targetNative := d.engine.(*core.Engine)
+
 	sourceEngine, sourceNative := other.engine.(*core.Engine)
 	if targetNative &&
 		sourceNative &&
@@ -940,6 +942,7 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 			d.mu.Unlock()
 			return nil, ErrClosed
 		}
+
 		known := targetEngine.ChangeHashes()
 		d.mu.Unlock()
 
@@ -948,14 +951,17 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 			other.mu.Unlock()
 			return nil, ErrClosed
 		}
+
 		batch, err := sourceEngine.PrepareMerge(known)
 		other.mu.Unlock()
+
 		if err != nil {
 			return nil, fmt.Errorf("cannot prepare Automerge merge: %w", err)
 		}
 
 		d.mu.Lock()
 		defer d.mu.Unlock()
+
 		if d.closed {
 			return nil, ErrClosed
 		}

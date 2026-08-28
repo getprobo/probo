@@ -70,10 +70,12 @@ func (b *Engine) GetText(
 	if !ok {
 		return 0, fmt.Errorf("text property %q does not exist", key)
 	}
+
 	if b.columns != nil && b.columns.snapshot != nil {
 		if err := b.columns.snapshot.PrepareMutation(); err != nil {
 			return 0, fmt.Errorf("cannot prepare text columns: %w", err)
 		}
+
 		b.columns.prepareMutationCapacity()
 	}
 
@@ -94,11 +96,13 @@ func (b *Engine) SpliceText(
 	if err != nil {
 		return err
 	}
+
 	if deleteCount == 0 {
 		tail, ok := b.state.sequenceTailCache[object.OpID]
 		if ok && tail.valid && tail.safe && tail.index == index {
 			characters := []rune(value)
 			operations := make([]opset.Operation, 0, len(characters))
+
 			previous := tail.last
 			for _, character := range characters {
 				operation := opset.Operation{
@@ -115,15 +119,19 @@ func (b *Engine) SpliceText(
 				operations = append(operations, operation)
 				previous = operation.ID
 			}
+
 			if len(operations) == 0 {
 				return nil
 			}
+
 			if err := b.addPendingBatch(operations); err != nil {
 				return err
 			}
+
 			for _, operation := range operations {
 				tail.index += elementLength(operation)
 			}
+
 			tail.last = previous
 			b.state.sequenceTailCache[object.OpID] = tail
 
@@ -141,6 +149,7 @@ func (b *Engine) SpliceText(
 	if err != nil {
 		return err
 	}
+
 	targets := editRange.targets
 	previous := editRange.previous
 

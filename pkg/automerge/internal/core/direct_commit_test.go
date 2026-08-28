@@ -45,6 +45,7 @@ func TestDirectCommit_OrdinaryCommitsAvoidCompatibilityWork(t *testing.T) {
 	require.NoError(t, err)
 	_, err = engine.EmptyCommit("empty", time.Time{})
 	require.NoError(t, err)
+
 	after := ReadRuntimeMetrics()
 
 	assert.Equal(t, before.GeneralReconciles, after.GeneralReconciles)
@@ -122,6 +123,7 @@ func TestDirectCommit_IsolationPreservesHiddenCanonicalRows(t *testing.T) {
 
 	engine, first := isolationFixture(t)
 	require.NoError(t, engine.Isolate([][32]byte{first}))
+
 	value, err := encodeScalarWire(
 		opset.Scalar{Type: opset.ScalarString, String: "isolated"},
 	)
