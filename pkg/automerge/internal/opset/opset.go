@@ -125,6 +125,19 @@ type (
 		Changes        []Change
 		UnknownColumns []RawColumn
 		ChunkTypes     []ChunkType
+
+		// OperationOrder and the known columns retain the canonical snapshot
+		// representation for native engines. They are derived state and are
+		// never part of a change chunk.
+		OperationOrder   []OpID
+		ChangeColumns    []RawColumn
+		OperationColumns []RawColumn
+
+		// Canonical is storage-private decoded state carried across the opset
+		// package without introducing an import cycle. Consumers that do not
+		// understand it can continue to use the semantic fields above.
+		Canonical any
+		OwnedData []byte
 	}
 )
 

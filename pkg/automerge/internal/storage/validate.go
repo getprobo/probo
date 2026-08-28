@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"sort"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
@@ -42,6 +43,7 @@ func decodeActorArray(
 	if count > maxDecodedItems {
 		return nil, fmt.Errorf("actor count %d exceeds limit", count)
 	}
+
 	if err := chargeDecoded[opset.ActorID](budget, count); err != nil {
 		return nil, err
 	}
@@ -52,6 +54,7 @@ func decodeActorArray(
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode actor %d: %w", i, err)
 		}
+
 		if err := chargeDecodedBytes(budget, uint64(len(value))); err != nil {
 			return nil, err
 		}
@@ -95,6 +98,7 @@ func decodeHashArray(
 	if count > maxDecodedItems {
 		return nil, fmt.Errorf("hash count %d exceeds limit", count)
 	}
+
 	if err := chargeDecoded[opset.ChangeHash](budget, count); err != nil {
 		return nil, err
 	}
@@ -339,6 +343,7 @@ func decodeSnapshotExtras(
 	budget *decodeBudget,
 ) ([]optional[opset.Scalar], [][]byte, error) {
 	meta := optionalColumn(columns, 86)
+
 	raw := optionalColumn(columns, 87)
 	if meta == nil {
 		if raw != nil {
@@ -348,6 +353,7 @@ func decodeSnapshotExtras(
 		if err := chargeDecoded[optional[opset.Scalar]](budget, uint64(expected)); err != nil {
 			return nil, nil, err
 		}
+
 		if err := chargeDecoded[[]byte](budget, uint64(expected)); err != nil {
 			return nil, nil, err
 		}
@@ -539,6 +545,7 @@ func collectUnknown(
 	if err := chargeDecoded[uint32](budget, uint64(len(columns))); err != nil {
 		return nil, err
 	}
+
 	if err := chargeDecoded[opset.RawColumn](budget, uint64(len(columns))); err != nil {
 		return nil, err
 	}
@@ -584,6 +591,7 @@ func assignOperations(
 	if err := chargeDecoded[uint8](budget, uint64(len(changes))); err != nil {
 		return err
 	}
+
 	if err := chargeDecoded[traversalFrame](budget, uint64(len(changes))); err != nil {
 		return err
 	}
@@ -654,18 +662,59 @@ func assignOperations(
 	if err := chargeDecodedMap[opset.ActorID, []int](budget, uint64(len(changes))); err != nil {
 		return err
 	}
+
 	if err := chargeDecodedSliceGrowth[int](budget, uint64(len(changes))); err != nil {
 		return err
 	}
 
 	byActor := make(map[opset.ActorID][]int)
 	for i := range changes {
+		if changes[i].MaxOp < changes[i].StartOp {
+			continue
+		}
+
 		byActor[changes[i].Actor] = append(byActor[changes[i].Actor], i)
+	}
+
+	for actor, candidates := range byActor {
+		slices.SortFunc(
+			candidates,
+			func(left, right int) int {
+				switch {
+				case changes[left].StartOp < changes[right].StartOp:
+					return -1
+				case changes[left].StartOp > changes[right].StartOp:
+					return 1
+				case changes[left].MaxOp < changes[right].MaxOp:
+					return -1
+				case changes[left].MaxOp > changes[right].MaxOp:
+					return 1
+				default:
+					return left - right
+				}
+			},
+		)
+
+		for i := 1; i < len(candidates); i++ {
+			previous := changes[candidates[i-1]]
+			current := changes[candidates[i]]
+			if current.StartOp <= previous.MaxOp {
+				return fmt.Errorf(
+					"actor %s has overlapping operation ranges %d..%d and %d..%d",
+					actor,
+					previous.StartOp,
+					previous.MaxOp,
+					current.StartOp,
+					current.MaxOp,
+				)
+			}
+		}
 	}
 
 	if err := chargeDecoded[int](budget, uint64(len(operations))); err != nil {
 		return err
 	}
+
 	if err := chargeDecoded[int](budget, uint64(len(changes))); err != nil {
 		return err
 	}
@@ -675,21 +724,19 @@ func assignOperations(
 
 	for i, operation := range operations {
 		owner := -1
+		candidates := byActor[operation.ID.Actor]
+		position := sort.Search(
+			len(candidates),
+			func(index int) bool {
+				return changes[candidates[index]].StartOp > operation.ID.Counter
+			},
+		)
 
-		for _, candidate := range byActor[operation.ID.Actor] {
-			change := &changes[candidate]
-			if operation.ID.Counter < change.StartOp || operation.ID.Counter > change.MaxOp {
-				continue
+		if position > 0 {
+			candidate := candidates[position-1]
+			if operation.ID.Counter <= changes[candidate].MaxOp {
+				owner = candidate
 			}
-			if owner >= 0 {
-				return fmt.Errorf(
-					"operation %s@%d belongs to multiple changes",
-					operation.ID.Actor,
-					operation.ID.Counter,
-				)
-			}
-
-			owner = candidate
 		}
 
 		if owner < 0 {
@@ -711,6 +758,7 @@ func assignOperations(
 	for i := range changes {
 		changes[i].Operations = make([]opset.Operation, 0, counts[i])
 	}
+
 	for i, operation := range operations {
 		owner := owners[i]
 		changes[owner].Operations = append(changes[owner].Operations, operation)
@@ -728,6 +776,7 @@ func assignOperations(
 		if changes[i].MaxOp >= changes[i].StartOp {
 			expected = changes[i].MaxOp - changes[i].StartOp + 1
 		}
+
 		if uint64(len(changes[i].Operations)) != expected {
 			return fmt.Errorf(
 				"change %d holds %d operations, expected %d for range %d..%d",
@@ -737,6 +786,82 @@ func assignOperations(
 				changes[i].StartOp,
 				changes[i].MaxOp,
 			)
+		}
+	}
+
+	return nil
+}
+
+func validateSnapshotMarkOrder(operations []opset.Operation) error {
+	byID := make(map[opset.OpID]opset.Operation, len(operations))
+	objects := make(map[opset.ObjectID]struct{})
+	for _, operation := range operations {
+		byID[operation.ID] = operation
+		if operation.Action == opset.ActionMark {
+			objects[operation.Object] = struct{}{}
+		}
+	}
+
+	for object := range objects {
+		children := make(map[opset.OpID][]opset.Operation)
+		var head []opset.Operation
+		for _, operation := range operations {
+			if operation.Object != object || !operation.Insert {
+				continue
+			}
+			if operation.Key.IsHead {
+				head = append(head, operation)
+			} else if operation.Key.Element != nil {
+				children[*operation.Key.Element] = append(
+					children[*operation.Key.Element],
+					operation,
+				)
+			}
+		}
+
+		seen := make(map[opset.OpID]struct{})
+		visited := make(map[opset.OpID]struct{})
+		var visit func([]opset.Operation) error
+		visit = func(rows []opset.Operation) error {
+			slices.SortFunc(rows, func(left, right opset.Operation) int {
+				return right.ID.Compare(left.ID)
+			})
+			for _, operation := range rows {
+				if _, ok := visited[operation.ID]; ok {
+					continue
+				}
+				visited[operation.ID] = struct{}{}
+				if operation.Action == opset.ActionMark {
+					if operation.MarkName != nil {
+						seen[operation.ID] = struct{}{}
+					} else if operation.ID.Counter > 0 {
+						beginID := opset.OpID{
+							Actor:   operation.ID.Actor,
+							Counter: operation.ID.Counter - 1,
+						}
+						begin, ok := byID[beginID]
+						if ok &&
+							begin.Action == opset.ActionMark &&
+							begin.MarkName != nil &&
+							begin.Object == operation.Object {
+							if _, ok := seen[beginID]; !ok {
+								return fmt.Errorf(
+									"invalid mark operation order: end %v precedes begin %v",
+									operation.ID,
+									beginID,
+								)
+							}
+						}
+					}
+				}
+				if err := visit(children[operation.ID]); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+		if err := visit(head); err != nil {
+			return err
 		}
 	}
 
@@ -825,6 +950,7 @@ func detectIndexCycle(changes []opset.Change, budget *decodeBudget) error {
 	if err := chargeDecoded[uint8](budget, uint64(len(changes))); err != nil {
 		return err
 	}
+
 	if err := chargeDecoded[traversalFrame](budget, uint64(len(changes))); err != nil {
 		return err
 	}
@@ -893,6 +1019,7 @@ func validateActorSequences(
 	); err != nil {
 		return err
 	}
+
 	if err := chargeDecodedSliceGrowth[opset.Change](budget, uint64(len(changes))); err != nil {
 		return err
 	}
@@ -1033,6 +1160,7 @@ func validateChangeChunksAfterSnapshot(
 	); err != nil {
 		return err
 	}
+
 	if err := chargeDecodedMap[opset.ChangeHash, struct{}](
 		budget,
 		uint64(len(document.Changes)),
@@ -1066,6 +1194,7 @@ func validateChangeChunksAfterSnapshot(
 		if err := chargeDecoded[opset.ChangeHash](budget, uint64(len(known))); err != nil {
 			return err
 		}
+
 		document.Heads = make([]opset.ChangeHash, 0, len(known))
 	}
 
@@ -1095,6 +1224,7 @@ func validateChangeChunkGraph(
 	); err != nil {
 		return err
 	}
+
 	if err := chargeDecodedMap[opset.ChangeHash, struct{}](
 		budget,
 		uint64(len(document.Changes)),
@@ -1132,6 +1262,7 @@ func validateChangeChunkGraph(
 		if err := chargeDecoded[opset.ChangeHash](budget, uint64(len(changes))); err != nil {
 			return err
 		}
+
 		document.Heads = make([]opset.ChangeHash, 0, len(changes))
 	}
 

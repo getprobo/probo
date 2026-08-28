@@ -35,12 +35,11 @@ import (
 func assembleChunk(kind opset.ChunkType, body []byte) []byte {
 	length := appendULEB(nil, uint64(len(body)))
 
-	digestInput := make([]byte, 0, 1+len(length)+len(body))
-	digestInput = append(digestInput, byte(kind))
-	digestInput = append(digestInput, length...)
-	digestInput = append(digestInput, body...)
-
-	digest := sha256.Sum256(digestInput)
+	hasher := sha256.New()
+	_, _ = hasher.Write([]byte{byte(kind)})
+	_, _ = hasher.Write(length)
+	_, _ = hasher.Write(body)
+	digest := hasher.Sum(nil)
 
 	chunk := make([]byte, 0, 4+4+1+len(length)+len(body))
 	chunk = append(chunk, magic[:]...)
@@ -75,18 +74,62 @@ func assembleChunk(kind opset.ChunkType, body []byte) []byte {
 // because the decoder inflates any column whose specification carries the
 // compressed bit.
 func EncodeDocument(document *opset.Document, order []opset.OpID, compress bool) ([]byte, error) {
-	if err := validateSnapshotEncodeDomain(document); err != nil {
-		return nil, err
+	return encodeDocument(document, order, nil, compress, true)
+}
+
+func EncodePreparedDocument(
+	document *opset.Document,
+	operations []opset.Operation,
+	compress bool,
+) ([]byte, error) {
+	return encodeDocument(document, nil, operations, compress, true)
+}
+
+// EncodeTrustedPreparedDocument serializes state whose snapshot-domain
+// invariants were checked when changes entered the engine. It avoids rescanning
+// the complete operation set on every save.
+func EncodeTrustedPreparedDocument(
+	document *opset.Document,
+	operations []opset.Operation,
+	compress bool,
+) ([]byte, error) {
+	return encodeDocument(document, nil, operations, compress, false)
+}
+
+func encodeDocument(
+	document *opset.Document,
+	order []opset.OpID,
+	preparedOperations []opset.Operation,
+	compress bool,
+	validate bool,
+) ([]byte, error) {
+	if validate {
+		if err := validateSnapshotEncodeDomain(document); err != nil {
+			return nil, err
+		}
 	}
 
-	changes, err := documentChangeOrder(document)
-	if err != nil {
-		return nil, err
+	var changes []*opset.Change
+	if preparedOperations != nil {
+		changes = make([]*opset.Change, len(document.Changes))
+		for i := range document.Changes {
+			changes[i] = &document.Changes[i]
+		}
+	} else {
+		var err error
+		changes, err = documentChangeOrder(document)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	operations, err := documentOperations(changes, order)
-	if err != nil {
-		return nil, err
+	operations := preparedOperations
+	if operations == nil {
+		var err error
+		operations, err = documentOperations(changes, order)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	actors := documentActorTable(changes, operations)
@@ -151,58 +194,75 @@ func EncodeDocument(document *opset.Document, order []opset.OpID, compress bool)
 }
 
 func validateSnapshotEncodeDomain(document *opset.Document) error {
-	checkCounter := func(name string, counter uint64) error {
-		if counter > math.MaxUint32 {
-			return fmt.Errorf("%s %d exceeds snapshot uint32 domain", name, counter)
-		}
-
-		return nil
-	}
-
 	for i := range document.Changes {
 		change := &document.Changes[i]
 		if change.Hash == nil {
 			return fmt.Errorf("change %d has no hash", i)
 		}
+
 		if change.Sequence == 0 {
 			return fmt.Errorf("change %d sequence is zero", i)
 		}
-		if err := checkCounter(fmt.Sprintf("change %d sequence", i), change.Sequence); err != nil {
-			return err
+
+		if change.Sequence > math.MaxUint32 {
+			return fmt.Errorf(
+				"change %d sequence %d exceeds snapshot uint32 domain",
+				i,
+				change.Sequence,
+			)
 		}
-		if err := checkCounter(fmt.Sprintf("change %d maxOp", i), change.MaxOp); err != nil {
-			return err
+
+		if change.MaxOp > math.MaxUint32 {
+			return fmt.Errorf(
+				"change %d maxOp %d exceeds snapshot uint32 domain",
+				i,
+				change.MaxOp,
+			)
 		}
 
 		for j, operation := range change.Operations {
 			if operation.ID.Counter == 0 {
 				return fmt.Errorf("operation %d:%d counter is zero", i, j)
 			}
-			if err := checkCounter(fmt.Sprintf("operation %d:%d counter", i, j), operation.ID.Counter); err != nil {
-				return err
+
+			if operation.ID.Counter > math.MaxUint32 {
+				return fmt.Errorf(
+					"operation %d:%d counter %d exceeds snapshot uint32 domain",
+					i,
+					j,
+					operation.ID.Counter,
+				)
 			}
-			if !operation.Object.IsRoot {
-				if err := checkCounter(
-					fmt.Sprintf("operation %d:%d object counter", i, j),
+
+			if !operation.Object.IsRoot &&
+				operation.Object.OpID.Counter > math.MaxUint32 {
+				return fmt.Errorf(
+					"operation %d:%d object counter %d exceeds snapshot uint32 domain",
+					i,
+					j,
 					operation.Object.OpID.Counter,
-				); err != nil {
-					return err
-				}
+				)
 			}
-			if operation.Key.Element != nil {
-				if err := checkCounter(
-					fmt.Sprintf("operation %d:%d key counter", i, j),
+
+			if operation.Key.Element != nil &&
+				operation.Key.Element.Counter > math.MaxUint32 {
+				return fmt.Errorf(
+					"operation %d:%d key counter %d exceeds snapshot uint32 domain",
+					i,
+					j,
 					operation.Key.Element.Counter,
-				); err != nil {
-					return err
-				}
+				)
 			}
+
 			for k, predecessor := range operation.Predecessors {
-				if err := checkCounter(
-					fmt.Sprintf("operation %d:%d predecessor %d counter", i, j, k),
-					predecessor.Counter,
-				); err != nil {
-					return err
+				if predecessor.Counter > math.MaxUint32 {
+					return fmt.Errorf(
+						"operation %d:%d predecessor %d counter %d exceeds snapshot uint32 domain",
+						i,
+						j,
+						k,
+						predecessor.Counter,
+					)
 				}
 			}
 		}
@@ -224,6 +284,7 @@ func documentChangeOrder(document *opset.Document) ([]*opset.Change, error) {
 	}
 
 	ordered := make([]*opset.Change, 0, len(document.Changes))
+
 	const (
 		visiting uint8 = 1
 		visited  uint8 = 2
@@ -235,6 +296,7 @@ func documentChangeOrder(document *opset.Document) ([]*opset.Change, error) {
 		change         *opset.Change
 		nextDependency int
 	}
+
 	stack := make([]traversalFrame, 0, len(document.Changes))
 
 	for i := range document.Changes {
@@ -278,6 +340,7 @@ func documentChangeOrder(document *opset.Document) ([]*opset.Change, error) {
 				continue
 			default:
 				states[dependency] = visiting
+
 				stack = append(stack, traversalFrame{change: parent})
 			}
 		}
@@ -290,7 +353,10 @@ func documentChangeOrder(document *opset.Document) ([]*opset.Change, error) {
 // each one's successors derived from the predecessors recorded across the whole
 // history. Deletes are dropped: they exist in the result only as the successor
 // entries they contribute.
-func documentOperations(changes []*opset.Change, order []opset.OpID) ([]opset.Operation, error) {
+func documentOperations(
+	changes []*opset.Change,
+	order []opset.OpID,
+) ([]opset.Operation, error) {
 	sources := make(map[opset.OpID]*opset.Operation)
 
 	for _, change := range changes {
@@ -309,7 +375,6 @@ func documentOperations(changes []*opset.Change, order []opset.OpID) ([]opset.Op
 	}
 
 	successors := make(map[opset.OpID][]opset.OpID)
-
 	for _, change := range changes {
 		for _, operation := range change.Operations {
 			for _, predecessor := range operation.Predecessors {
@@ -667,12 +732,17 @@ var (
 // from by its specification.
 func retainedColumns(document *opset.Document, known []uint32) []encodedColumn {
 	retained := make([]encodedColumn, 0)
+	seen := make(map[uint32]struct{})
 
 	for _, column := range document.UnknownColumns {
 		normalized := column.Specification &^ 8
 		if slices.Contains(known, normalized) || len(column.Data) == 0 {
 			continue
 		}
+		if _, ok := seen[normalized]; ok {
+			continue
+		}
+		seen[normalized] = struct{}{}
 
 		retained = append(
 			retained,

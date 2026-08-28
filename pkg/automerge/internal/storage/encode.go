@@ -268,9 +268,11 @@ func encodeScalar(value *opset.Scalar) (optional[uint64], []byte, error) {
 	if value == nil {
 		return some(uint64(opset.ScalarNull)), nil, nil
 	}
+
 	if value.Type > 0x0f {
 		return optional[uint64]{}, nil, fmt.Errorf("scalar type %d exceeds 0x0f", value.Type)
 	}
+
 	if value.Type == opset.ScalarString && !utf8.ValidString(value.String) {
 		return optional[uint64]{}, nil, fmt.Errorf("string scalar is not valid UTF-8")
 	}

@@ -28,11 +28,23 @@ import (
 	"io"
 	"math"
 	"slices"
+	"sync"
 	"unicode/utf8"
 	"unsafe"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
+
+var deflateWriterPool = sync.Pool{
+	New: func() any {
+		writer, err := flate.NewWriter(io.Discard, flate.BestCompression)
+		if err != nil {
+			panic(err)
+		}
+
+		return writer
+	},
+}
 
 type (
 	reader struct {
@@ -239,6 +251,7 @@ func decodeRLE[T any](
 			if err := reserveItems(len(values), count); err != nil {
 				return nil, err
 			}
+
 			if err := chargeDecodedSliceGrowth[optional[T]](budget, count); err != nil {
 				return nil, err
 			}
@@ -268,6 +281,7 @@ func appendRepeated[T any](
 	if err := reserveItems(len(*values), count); err != nil {
 		return err
 	}
+
 	if err := chargeDecodedSliceGrowth[optional[T]](budget, count); err != nil {
 		return err
 	}
@@ -320,6 +334,7 @@ func chargeDecodedBytes(budget *decodeBudget, bytes uint64) error {
 	if budget == nil || bytes == 0 {
 		return nil
 	}
+
 	if budget.used > maxDecodedMemoryBytes ||
 		bytes > maxDecodedMemoryBytes-budget.used {
 		return fmt.Errorf("decoded columns exceed %d bytes", maxDecodedMemoryBytes)
@@ -334,6 +349,7 @@ func releaseDecodedBytes(budget *decodeBudget, bytes uint64) {
 	if budget == nil {
 		return
 	}
+
 	if bytes > budget.used {
 		panic("decoded memory budget underflow")
 	}
@@ -525,6 +541,7 @@ func decodeStringColumnWithBudget(
 			if !utf8.Valid(value) {
 				return "", fmt.Errorf("string is not valid UTF-8")
 			}
+
 			if err := chargeDecodedBytes(budget, uint64(len(value))); err != nil {
 				return "", err
 			}
@@ -545,9 +562,11 @@ func decodeBooleanColumnWithBudget(
 	budget *decodeBudget,
 ) ([]bool, error) {
 	r := &reader{data: data}
+
 	if err := chargeDecoded[bool](budget, uint64(expected)); err != nil {
 		return nil, err
 	}
+
 	values := make([]bool, 0, expected)
 	current := false
 
@@ -588,6 +607,7 @@ func parseColumnMetadata(
 	if count > maxDecodedItems {
 		return nil, fmt.Errorf("column count %d exceeds limit", count)
 	}
+
 	if err := chargeDecoded[columnMeta](budget, count); err != nil {
 		return nil, err
 	}
@@ -676,10 +696,12 @@ func readColumns(
 func deflate(data []byte) ([]byte, error) {
 	var buffer bytes.Buffer
 
-	writer, err := flate.NewWriter(&buffer, flate.BestCompression)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create DEFLATE writer: %w", err)
-	}
+	writer := deflateWriterPool.Get().(*flate.Writer)
+	writer.Reset(&buffer)
+	defer func() {
+		writer.Reset(io.Discard)
+		deflateWriterPool.Put(writer)
+	}()
 
 	if _, err := writer.Write(data); err != nil {
 		return nil, fmt.Errorf("cannot write DEFLATE stream: %w", err)
@@ -700,10 +722,12 @@ func inflate(data []byte, budget *decodeBudget) ([]byte, error) {
 	if err := chargeDecodedBytes(budget, readSize); err != nil {
 		return nil, err
 	}
+
 	buffer := make([]byte, readSize)
 	defer releaseDecodedBytes(budget, readSize)
 
 	var output []byte
+
 	for {
 		count, err := compressed.Read(buffer)
 		if count > 0 {
@@ -714,6 +738,7 @@ func inflate(data []byte, budget *decodeBudget) ([]byte, error) {
 			required := len(output) + count
 			if required > cap(output) {
 				capacity := max(required, max(readSize, cap(output)*2))
+
 				capacity = min(capacity, maxInflatedBytes)
 				if err := chargeDecodedBytes(budget, uint64(capacity)); err != nil {
 					return nil, err
@@ -731,6 +756,7 @@ func inflate(data []byte, budget *decodeBudget) ([]byte, error) {
 		if err == io.EOF {
 			return output, nil
 		}
+
 		if err != nil {
 			return nil, fmt.Errorf("cannot read DEFLATE stream: %w", err)
 		}
@@ -773,9 +799,11 @@ func decodeScalarsInternal(
 	}
 
 	raw := &reader{data: rawData}
+
 	if err := chargeDecoded[optional[opset.Scalar]](budget, uint64(expected)); err != nil {
 		return nil, nil, err
 	}
+
 	if retainRaw {
 		if err := chargeDecoded[[]byte](budget, uint64(expected)); err != nil {
 			return nil, nil, err
@@ -783,6 +811,7 @@ func decodeScalarsInternal(
 	}
 
 	values := make([]optional[opset.Scalar], expected)
+
 	var rawValues [][]byte
 	if retainRaw {
 		rawValues = make([][]byte, expected)
@@ -868,6 +897,7 @@ func decodeScalarWithBudget(
 		if !utf8.Valid(data) {
 			return opset.Scalar{}, fmt.Errorf("string scalar is not valid UTF-8")
 		}
+
 		if err := chargeDecodedBytes(budget, uint64(len(data))); err != nil {
 			return opset.Scalar{}, err
 		}
