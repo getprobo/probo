@@ -22,7 +22,6 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   DownloadSimpleIcon,
-  LinkSimpleIcon,
   MagnifyingGlassMinusIcon,
   MagnifyingGlassPlusIcon,
 } from "@phosphor-icons/react";
@@ -34,7 +33,6 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { downloadDataUri } from "#/pages/_lib/dataUri";
-import { useCopyDocumentLink } from "#/pages/_lib/useCopyDocumentLink";
 
 import { documentViewerToolbar } from "./variants";
 
@@ -105,7 +103,7 @@ interface DocumentViewerToolbarProps {
   onMovePage: (direction: 1 | -1) => void;
 }
 
-// Page navigation, zoom, share, and download chrome above the PDF stage.
+// Page navigation, zoom, and download chrome above the PDF stage.
 export function DocumentViewerToolbar({
   currentPage,
   numPages,
@@ -116,12 +114,7 @@ export function DocumentViewerToolbar({
   onMovePage,
 }: DocumentViewerToolbarProps) {
   const { t } = useTranslation();
-  const copyDocumentLink = useCopyDocumentLink();
   const slots = documentViewerToolbar();
-
-  const handleCopyLink = () => {
-    copyDocumentLink(window.location.href);
-  };
 
   const handleDownload = () => {
     if (dataUri) {
@@ -179,14 +172,6 @@ export function DocumentViewerToolbar({
         </div>
       </div>
       <div className={slots.actions()}>
-        <ViewerToolbarAction
-          label={t("viewer.share")}
-          icon={<LinkSimpleIcon />}
-          labeledClassName={slots.actionLabeled()}
-          iconClassName={slots.actionIcon()}
-          onClick={handleCopyLink}
-        />
-        <Separator orientation="vertical" className={slots.actionSeparator()} />
         <ViewerToolbarAction
           label={t("viewer.download")}
           icon={<DownloadSimpleIcon />}

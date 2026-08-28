@@ -222,7 +222,6 @@ export const documentViewerToolbar = tv({
     actionLabeled: "@max-xl:hidden",
     actionIcon: "hidden @max-xl:inline-flex",
     separator: "h-6",
-    actionSeparator: "h-6 @max-xl:hidden",
   },
 });
 
