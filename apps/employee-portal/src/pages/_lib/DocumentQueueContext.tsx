@@ -82,6 +82,8 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     page: DocumentQueuePage,
     openedDocumentId: string,
   ) => {
+    fetchGenerationRef.current += 1;
+    setAdvancing(false);
     const next = enterQueueSnapshot(kind, page, openedDocumentId);
     writeDocumentQueueSnapshot(next);
     setSnapshot(next);
