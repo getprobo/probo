@@ -12,7 +12,6 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -33,17 +32,11 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 	risk, err := r.probo.Risks.Create(
 		ctx, scope,
 		probo.CreateRiskRequest{
-			OrganizationID:     input.OrganizationID,
-			Name:               input.Name,
-			Description:        input.Description,
-			Category:           input.Category,
-			Treatment:          input.Treatment,
-			OwnerID:            input.OwnerID,
-			InherentLikelihood: input.InherentLikelihood,
-			InherentImpact:     input.InherentImpact,
-			ResidualLikelihood: input.ResidualLikelihood,
-			ResidualImpact:     input.ResidualImpact,
-			Note:               input.Note,
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Category:       input.Category,
+			Note:           input.Note,
 		},
 	)
 	if err != nil {
@@ -75,17 +68,11 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 	risk, err := r.probo.Risks.Update(
 		ctx, scope,
 		probo.UpdateRiskRequest{
-			ID:                 input.ID,
-			Name:               input.Name,
-			Description:        gqlutils.UnwrapOmittable(input.Description),
-			Category:           input.Category,
-			Treatment:          input.Treatment,
-			OwnerID:            gqlutils.UnwrapOmittable(input.OwnerID),
-			InherentLikelihood: input.InherentLikelihood,
-			InherentImpact:     input.InherentImpact,
-			ResidualLikelihood: input.ResidualLikelihood,
-			ResidualImpact:     input.ResidualImpact,
-			Note:               input.Note,
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: gqlutils.UnwrapOmittable(input.Description),
+			Category:    input.Category,
+			Note:        input.Note,
 		},
 	)
 	if err != nil {
@@ -261,32 +248,6 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
 		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
-	if obj.Owner == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, obj.Owner.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	loaders := dataloader.FromContext(ctx)
-
-	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewProfile(owner), nil
 }
 
 // Organization is the resolver for the organization field.

@@ -39,31 +39,19 @@ type (
 	}
 
 	CreateRiskRequest struct {
-		OrganizationID     gid.GID
-		Name               string
-		Description        *string
-		Category           string
-		Treatment          *coredata.RiskTreatment
-		OwnerID            *gid.GID
-		InherentLikelihood *int
-		InherentImpact     *int
-		ResidualLikelihood *int
-		ResidualImpact     *int
-		Note               *string
+		OrganizationID gid.GID
+		Name           string
+		Description    *string
+		Category       string
+		Note           *string
 	}
 
 	UpdateRiskRequest struct {
-		ID                 gid.GID
-		Name               *string
-		Description        **string
-		Category           *string
-		Treatment          *coredata.RiskTreatment
-		OwnerID            **gid.GID
-		InherentLikelihood *int
-		InherentImpact     *int
-		ResidualLikelihood *int
-		ResidualImpact     *int
-		Note               *string
+		ID          gid.GID
+		Name        *string
+		Description **string
+		Category    *string
+		Note        *string
 	}
 )
 
@@ -74,15 +62,7 @@ func (crr *CreateRiskRequest) Validate() error {
 	v.Check(crr.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(crr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(crr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
-	v.Check(crr.Treatment, "treatment", validator.OneOfSlice(coredata.RiskTreatments()))
-	v.Check(crr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(crr.InherentLikelihood, "inherent_likelihood", validator.Min(1), validator.Max(5))
-	v.Check(crr.InherentImpact, "inherent_impact", validator.Min(1), validator.Max(5))
-	v.Check(crr.ResidualLikelihood, "residual_likelihood", validator.Min(1), validator.Max(5))
-	v.Check(crr.ResidualImpact, "residual_impact", validator.Min(1), validator.Max(5))
 	v.Check(crr.Note, "note", validator.SafeText(TitleMaxLength))
-	requireScorePair(v, crr.InherentLikelihood, crr.InherentImpact, "inherent_likelihood", "inherent_impact")
-	requireScorePair(v, crr.ResidualLikelihood, crr.ResidualImpact, "residual_likelihood", "residual_impact")
 
 	return v.Error()
 }
@@ -94,40 +74,9 @@ func (urr *UpdateRiskRequest) Validate() error {
 	v.Check(urr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(urr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(urr.Category, "category", validator.SafeText(TitleMaxLength))
-	v.Check(urr.Treatment, "treatment", validator.OneOfSlice(coredata.RiskTreatments()))
-	v.Check(urr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(urr.InherentLikelihood, "inherent_likelihood", validator.Min(1), validator.Max(5))
-	v.Check(urr.InherentImpact, "inherent_impact", validator.Min(1), validator.Max(5))
-	v.Check(urr.ResidualLikelihood, "residual_likelihood", validator.Min(1), validator.Max(5))
-	v.Check(urr.ResidualImpact, "residual_impact", validator.Min(1), validator.Max(5))
 	v.Check(urr.Note, "note", validator.SafeText(TitleMaxLength))
 
 	return v.Error()
-}
-
-func requireScorePair(v *validator.Validator, likelihood, impact *int, likelihoodField, impactField string) {
-	if (likelihood == nil) == (impact == nil) {
-		return
-	}
-
-	missing := likelihoodField
-	other := impactField
-
-	if likelihood != nil {
-		missing = impactField
-		other = likelihoodField
-	}
-
-	v.Check(
-		missing,
-		missing,
-		func(any) *validator.ValidationError {
-			return &validator.ValidationError{
-				Code:    validator.ErrorCodeCustom,
-				Message: fmt.Sprintf("must be set together with %s", other),
-			}
-		},
-	)
 }
 
 func (s RiskService) CountForMeasureID(
@@ -451,35 +400,20 @@ func (s RiskService) Create(
 	}
 
 	now := time.Now()
-	owner := coredata.MembershipProfile{}
 	organization := coredata.Organization{}
 
 	risk := &coredata.Risk{
-		ID:                 gid.New(scope.GetTenantID(), coredata.RiskEntityType),
-		OrganizationID:     req.OrganizationID,
-		Name:               req.Name,
-		Description:        req.Description,
-		Category:           req.Category,
-		OwnerID:            req.OwnerID,
-		InherentLikelihood: req.InherentLikelihood,
-		InherentImpact:     req.InherentImpact,
-		Treatment:          req.Treatment,
-		ResidualLikelihood: req.InherentLikelihood,
-		ResidualImpact:     req.InherentImpact,
-		CreatedAt:          now,
-		UpdatedAt:          now,
+		ID:             gid.New(scope.GetTenantID(), coredata.RiskEntityType),
+		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
+		Description:    req.Description,
+		Category:       req.Category,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if req.Note != nil {
 		risk.Note = *req.Note
-	}
-
-	if req.ResidualLikelihood != nil {
-		risk.ResidualLikelihood = req.ResidualLikelihood
-	}
-
-	if req.ResidualImpact != nil {
-		risk.ResidualImpact = req.ResidualImpact
 	}
 
 	err := s.svc.pg.WithTx(
@@ -487,12 +421,6 @@ func (s RiskService) Create(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			if req.OwnerID != nil {
-				if err := owner.LoadByID(ctx, tx, scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner profile: %w", err)
-				}
 			}
 
 			return risk.Insert(ctx, tx, scope)
@@ -577,65 +505,12 @@ func (s RiskService) Update(
 				risk.Description = *req.Description
 			}
 
-			if req.InherentLikelihood != nil {
-				risk.InherentLikelihood = req.InherentLikelihood
-			}
-
-			if req.InherentImpact != nil {
-				risk.InherentImpact = req.InherentImpact
-			}
-
-			if req.ResidualLikelihood != nil {
-				risk.ResidualLikelihood = req.ResidualLikelihood
-			}
-
-			if req.ResidualImpact != nil {
-				risk.ResidualImpact = req.ResidualImpact
-			}
-
-			if req.Treatment != nil {
-				risk.Treatment = req.Treatment
-			}
-
-			if req.OwnerID != nil {
-				if *req.OwnerID != nil {
-					owner := coredata.MembershipProfile{}
-					if err := owner.LoadByID(ctx, conn, scope, **req.OwnerID); err != nil {
-						return fmt.Errorf("cannot load owner profile: %w", err)
-					}
-
-					risk.OwnerID = *req.OwnerID
-				} else {
-					risk.OwnerID = nil
-				}
-			}
-
 			if req.Category != nil {
 				risk.Category = *req.Category
 			}
 
 			if req.Note != nil {
 				risk.Note = *req.Note
-			}
-
-			v := validator.New()
-			requireScorePair(
-				v,
-				risk.InherentLikelihood,
-				risk.InherentImpact,
-				"inherent_likelihood",
-				"inherent_impact",
-			)
-			requireScorePair(
-				v,
-				risk.ResidualLikelihood,
-				risk.ResidualImpact,
-				"residual_likelihood",
-				"residual_impact",
-			)
-
-			if err := v.Error(); err != nil {
-				return fmt.Errorf("invalid request: %w", err)
 			}
 
 			risk.UpdatedAt = time.Now()
