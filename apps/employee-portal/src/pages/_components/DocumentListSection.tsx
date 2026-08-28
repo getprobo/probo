@@ -18,10 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { List } from "@probo/ui/src/v2/List/List";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
+import { Table } from "@probo/ui/src/v2/Table/Table";
+import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
+import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
+import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 import { documentListSection } from "./variants";
 
@@ -36,6 +41,8 @@ export interface DocumentListSectionProps {
   hasNext: boolean;
   // Dims the list frame while a page change is pending.
   busy?: boolean;
+  // Hidden Status column header; set when rows pass a badge.
+  statusColumn?: boolean;
   previousLabel: string;
   nextLabel: string;
   children: ReactNode;
@@ -51,12 +58,14 @@ export function DocumentListSection({
   hasPrevious,
   hasNext,
   busy = false,
+  statusColumn = false,
   previousLabel,
   nextLabel,
   children,
   onPrevious,
   onNext,
 }: DocumentListSectionProps) {
+  const { t } = useTranslation();
   const slots = documentListSection({ busy });
 
   return (
@@ -70,9 +79,37 @@ export function DocumentListSection({
             <div className={slots.body()}>
               <div className={slots.frame()} aria-busy={busy || undefined}>
                 {summary}
-                <List className={slots.list()}>
-                  {children}
-                </List>
+                <Table variant="ghost" className={slots.table()}>
+                  <TableHeader className={slots.header()}>
+                    <TableRow>
+                      <TableColumnHeaderCell>
+                        {t("documents.columns.title")}
+                      </TableColumnHeaderCell>
+                      <TableColumnHeaderCell>
+                        {t("documents.lastUpdated")}
+                      </TableColumnHeaderCell>
+                      <TableColumnHeaderCell>
+                        {t("documents.columns.classification")}
+                      </TableColumnHeaderCell>
+                      <TableColumnHeaderCell>
+                        {t("documents.columns.type")}
+                      </TableColumnHeaderCell>
+                      {statusColumn
+                        ? (
+                            <TableColumnHeaderCell>
+                              {t("documents.columns.status")}
+                            </TableColumnHeaderCell>
+                          )
+                        : null}
+                      <TableColumnHeaderCell>
+                        {t("documents.columns.action")}
+                      </TableColumnHeaderCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {children}
+                  </TableBody>
+                </Table>
               </div>
               <Pagination
                 className={slots.pager()}

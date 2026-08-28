@@ -117,24 +117,28 @@ export const documentQueueSummary = tv({
 
 export const employeeDocumentListItem = tv({
   slots: {
-    item: "h-12 gap-8 border-sand-a2 px-8 py-0 last:border-b-0",
-    title: "min-w-0 flex-1 truncate",
-    meta: "flex shrink-0 items-center gap-4",
+    row: "",
+    // Size 2 cells are h-11 px-3; Figma rows are h-12 with px-8 on the ends.
+    titleCell: "h-12 w-full max-w-0 py-0 pl-8",
+    title: "block min-w-0 truncate",
+    titleLink: [
+      "block min-w-0 truncate",
+      "after:absolute after:inset-0",
+      "outline-none focus-visible:after:bg-sand-2",
+    ],
+    metaCell: "h-12 whitespace-nowrap py-0",
     timestamp: "flex items-center gap-[3px]",
-    timestampLabel: "text-sand-a8 whitespace-nowrap",
-    timestampValue: "w-32 truncate text-sand-a11",
-    chip: "w-24 truncate text-sand-a11",
-    badge: "shrink-0",
-    chevron: "size-4 shrink-0 text-sand-11",
-    hit: "absolute inset-0 z-0 cursor-pointer outline-none focus-visible:bg-sand-2",
-    body: "relative z-1 flex min-w-0 flex-1 items-center gap-8",
+    timestampLabel: "text-sand-a8",
+    timestampValue: "text-sand-a11",
+    chip: "text-sand-a11",
+    trailingCell: "h-12 whitespace-nowrap py-0 pr-8",
+    chevron: "size-4 text-sand-11",
   },
   variants: {
     trailing: {
       action: {},
       chevron: {
-        item: "relative cursor-pointer",
-        body: "pointer-events-none",
+        row: "relative cursor-pointer",
       },
     },
   },
@@ -155,7 +159,8 @@ export const documentListSection = tv({
     heading: "flex items-center gap-1",
     body: "flex flex-col gap-3",
     frame: "overflow-hidden rounded-5 border border-sand-a3 bg-sand-1 transition-opacity duration-150",
-    list: "rounded-none border-0",
+    table: "rounded-none",
+    header: "sr-only",
     pager: "flex justify-center",
   },
   variants: {

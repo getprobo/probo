@@ -21,7 +21,9 @@
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { parseDate } from "@probo/helpers";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
-import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -73,57 +75,63 @@ export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
     </Text>
   );
 
-  const meta = (
-    <div className={slots.meta()}>
-      <div className={slots.timestamp()}>
-        <Text size={1} color="current" className={slots.timestampLabel()}>
-          {t("documents.lastUpdated")}
-        </Text>
-        <Text size={1} color="current" className={slots.timestampValue()}>
-          {updatedAt}
-        </Text>
-      </div>
-      {lastVersion != null && (
-        <>
-          <Text size={1} color="current" className={slots.chip()}>
-            {t(`documents.classifications.${lastVersion.classification.toLowerCase()}`)}
-          </Text>
-          <Text size={1} color="current" className={slots.chip()}>
-            {t(`documents.types.${lastVersion.documentType.toLowerCase()}`)}
-          </Text>
-        </>
-      )}
-    </div>
-  );
-
-  if (trailing === "action") {
-    return (
-      <ListItem className={slots.item()}>
-        {title}
-        {meta}
-        {badge != null && <div className={slots.badge()}>{badge}</div>}
-        <ButtonLink
-          to={to}
-          size={2}
-          variant="soft"
-          color="neutral"
-          highContrast
-        >
-          {props.actionLabel}
-        </ButtonLink>
-      </ListItem>
-    );
-  }
-
   return (
-    <ListItem className={slots.item()}>
-      <Link to={to} className={slots.hit()} aria-label={document.title} />
-      <div className={slots.body()}>
-        {title}
-        {meta}
-        {badge != null && <div className={slots.badge()}>{badge}</div>}
-        <CaretRightIcon className={slots.chevron()} />
-      </div>
-    </ListItem>
+    <TableRow align="center" className={slots.row()}>
+      <TableRowHeaderCell className={slots.titleCell()}>
+        {trailing === "chevron"
+          ? <Link to={to} className={slots.titleLink()}>{title}</Link>
+          : title}
+      </TableRowHeaderCell>
+      <TableCell className={slots.metaCell()}>
+        <span className={slots.timestamp()}>
+          <Text size={1} color="current" className={slots.timestampLabel()}>
+            {t("documents.lastUpdated")}
+          </Text>
+          <Text size={1} color="current" className={slots.timestampValue()}>
+            {updatedAt}
+          </Text>
+        </span>
+      </TableCell>
+      <TableCell className={slots.metaCell()}>
+        {lastVersion == null
+          ? null
+          : (
+              <Text size={1} color="current" className={slots.chip()}>
+                {t(`documents.classifications.${lastVersion.classification.toLowerCase()}`)}
+              </Text>
+            )}
+      </TableCell>
+      <TableCell className={slots.metaCell()}>
+        {lastVersion == null
+          ? null
+          : (
+              <Text size={1} color="current" className={slots.chip()}>
+                {t(`documents.types.${lastVersion.documentType.toLowerCase()}`)}
+              </Text>
+            )}
+      </TableCell>
+      {badge === undefined
+        ? null
+        : (
+            <TableCell className={slots.metaCell()}>
+              {badge}
+            </TableCell>
+          )}
+      <TableCell className={slots.trailingCell()}>
+        {trailing === "action"
+          ? (
+              <ButtonLink
+                to={to}
+                size={2}
+                variant="soft"
+                color="neutral"
+                highContrast
+              >
+                {props.actionLabel}
+              </ButtonLink>
+            )
+          : <CaretRightIcon className={slots.chevron()} />}
+      </TableCell>
+    </TableRow>
   );
 }

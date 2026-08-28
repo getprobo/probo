@@ -94,6 +94,13 @@
   },
   "documents": {
     "lastUpdated": "Last updated",
+    "columns": {
+      "title": "Title",
+      "classification": "Classification",
+      "type": "Type",
+      "status": "Status",
+      "action": "Action"
+    },
     "types": {
       "other": "Other",
       "governance": "Governance",
