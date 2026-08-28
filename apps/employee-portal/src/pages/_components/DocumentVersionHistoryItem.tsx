@@ -125,5 +125,8 @@ function versionStatusLabel(
   if (approvalState === "REJECTED") {
     return t("documents.versions.status.rejected");
   }
+  if (approvalState === "VOIDED") {
+    return t("documents.versions.status.voided");
+  }
   return t("documents.versions.status.inReview");
 }

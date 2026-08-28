@@ -228,23 +228,22 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
 
   const bindViewer = useCallback((viewerId: string) => {
     viewerIdRef.current = viewerId;
-    setSnapshot((current) => {
-      if (current == null) {
-        return current;
-      }
-      if (current.viewerId != null && current.viewerId !== viewerId) {
-        fetchGenerationRef.current += 1;
-        clearDocumentQueueSnapshot();
-        return null;
-      }
-      if (current.viewerId == null) {
-        const next = { ...current, viewerId };
-        writeDocumentQueueSnapshot(next);
-        return next;
-      }
-      return current;
-    });
-  }, []);
+    if (snapshot == null) {
+      return;
+    }
+    if (snapshot.viewerId != null && snapshot.viewerId !== viewerId) {
+      fetchGenerationRef.current += 1;
+      setAdvancing(false);
+      clearDocumentQueueSnapshot();
+      setSnapshot(null);
+      return;
+    }
+    if (snapshot.viewerId == null) {
+      const next = { ...snapshot, viewerId };
+      writeDocumentQueueSnapshot(next);
+      setSnapshot(next);
+    }
+  }, [snapshot]);
 
   const scopedSnapshot = snapshot != null
     && organizationId != null

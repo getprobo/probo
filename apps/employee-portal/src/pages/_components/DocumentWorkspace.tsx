@@ -74,7 +74,9 @@ export function DocumentWorkspace({
   return (
     <div className={slots.root()}>
       <aside className={slots.request()}>
-        {request}
+        <div className={slots.requestBody()}>
+          {request}
+        </div>
         {history == null
           ? null
           : (

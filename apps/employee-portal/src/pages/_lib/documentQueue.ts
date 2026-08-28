@@ -120,7 +120,6 @@ export function readDocumentQueueSnapshot(
     }
     const snapshot = parseSnapshot(JSON.parse(raw));
     if (snapshot == null || !snapshotMatchesScope(snapshot, scope)) {
-      clearDocumentQueueSnapshot();
       return null;
     }
     return snapshot;

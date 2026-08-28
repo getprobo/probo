@@ -131,6 +131,7 @@
         "inReview": "In review",
         "approved": "Approved",
         "rejected": "Rejected",
+        "voided": "Voided",
         "signed": "Signed"
       }
     }

@@ -129,6 +129,7 @@ export function SignatureDocumentPage({ queryRef }: SignatureDocumentPageProps) 
   });
 
   const [signDocument, isSigning] = useSignDocument(document.id);
+  const currentVersion = selectedVersionId === version.id;
   const dataUri = useExportEmployeeDocumentPdf(selectedVersionId);
 
   const index = snapshot?.ids.indexOf(documentId) ?? -1;
@@ -158,7 +159,11 @@ export function SignatureDocumentPage({ queryRef }: SignatureDocumentPageProps) 
           hasNext={hasNext}
           busy={isSigning}
           advancing={advancing}
+          isCurrentVersion={currentVersion}
           onSign={() => {
+            if (!currentVersion) {
+              return;
+            }
             void signDocument(version.id);
           }}
           onNext={goForward}

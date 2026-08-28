@@ -198,6 +198,7 @@ export const documentWorkspace = tv({
       "flex w-full shrink-0 flex-col overflow-hidden gap-8 bg-sand-1 px-8 py-8",
       "min-h-0 max-md:max-h-[50%] md:h-full md:w-96 xl:w-128",
     ],
+    requestBody: "min-h-0 overflow-y-auto",
     history: "flex min-h-0 flex-1 flex-col gap-8",
     stage: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-sand-3",
     loading: "grid min-h-0 flex-1 place-items-center",

@@ -135,6 +135,7 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
 
   const [approveDocumentVersion, isApproving] = useApproveDocumentVersion(document.id);
   const [rejectDocumentVersion, isRejecting] = useRejectDocumentVersion(document.id);
+  const currentVersion = selectedVersionId === version.id;
   const dataUri = useExportEmployeeDocumentPdf(selectedVersionId);
 
   const index = snapshot?.ids.indexOf(documentId) ?? -1;
@@ -165,10 +166,17 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
           isApproving={isApproving}
           isRejecting={isRejecting}
           advancing={advancing}
+          isCurrentVersion={currentVersion}
           onApprove={() => {
+            if (!currentVersion) {
+              return;
+            }
             void approveDocumentVersion(version.id);
           }}
           onReject={() => {
+            if (!currentVersion) {
+              return;
+            }
             void rejectDocumentVersion(version.id);
           }}
           onNext={goForward}

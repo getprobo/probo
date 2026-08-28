@@ -113,7 +113,11 @@ export function useQueuedDocumentQuery<TQuery extends OperationType>(
   >(null);
 
   useLayoutEffect(() => {
-    if (currentQueryRef == null || currentQueryRef === visibleQueryRef) {
+    if (currentQueryRef == null) {
+      clearQueueDirection();
+      return;
+    }
+    if (currentQueryRef === visibleQueryRef) {
       return;
     }
 
@@ -127,6 +131,14 @@ export function useQueuedDocumentQuery<TQuery extends OperationType>(
       }, visibleQueryRef != null, generation);
     });
   }, [currentQueryRef, query, visibleQueryRef]);
+
+  // The pending-ref effect above does not run a null pass on unmount, so a
+  // leftover direction would stick if this page goes away mid-load.
+  useLayoutEffect(() => {
+    return () => {
+      clearQueueDirection();
+    };
+  }, []);
 
   return visibleQueryRef;
 }

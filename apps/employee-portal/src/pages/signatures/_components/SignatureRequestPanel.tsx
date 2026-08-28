@@ -34,6 +34,7 @@ interface SignatureRequestPanelProps {
   hasNext: boolean;
   busy: boolean;
   advancing?: boolean;
+  isCurrentVersion?: boolean;
   onSign: () => void;
   onNext: () => void;
   onFinish: () => void;
@@ -49,6 +50,7 @@ export function SignatureRequestPanel({
   hasNext,
   busy,
   advancing = false,
+  isCurrentVersion = true,
   onSign,
   onNext,
   onFinish,
@@ -103,6 +105,7 @@ export function SignatureRequestPanel({
                 className="w-full"
                 iconStart={<CheckIcon />}
                 loading={busy}
+                disabled={!isCurrentVersion}
                 onClick={onSign}
               >
                 {t("document.reviewAndSign")}

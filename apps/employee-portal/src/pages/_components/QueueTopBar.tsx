@@ -37,7 +37,9 @@ export function QueueTopBar() {
   const { documentId, organizationId } = useParams();
   const { displayMode } = useDisplayMode();
   const queue = useOptionalDocumentQueue();
-  const snapshot = queue?.snapshot ?? readDocumentQueueSnapshot({ organizationId });
+  const snapshot = queue != null
+    ? queue.snapshot
+    : readDocumentQueueSnapshot({ organizationId });
   const advancing = queue?.advancing ?? false;
   const slots = queueTopBar();
   const island = displayMode === "dark" ? "light" : "dark";

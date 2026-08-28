@@ -55,6 +55,7 @@ interface ApprovalRequestPanelProps {
   isApproving: boolean;
   isRejecting: boolean;
   advancing?: boolean;
+  isCurrentVersion?: boolean;
   onApprove: () => void;
   onReject: () => void;
   onNext: () => void;
@@ -72,6 +73,7 @@ export function ApprovalRequestPanel({
   isApproving,
   isRejecting,
   advancing = false,
+  isCurrentVersion = true,
   onApprove,
   onReject,
   onNext,
@@ -132,7 +134,7 @@ export function ApprovalRequestPanel({
                   highContrast
                   iconStart={<ProhibitIcon />}
                   loading={isRejecting}
-                  disabled={busy}
+                  disabled={busy || !isCurrentVersion}
                   onClick={onReject}
                 >
                   {t("document.reject")}
@@ -144,7 +146,7 @@ export function ApprovalRequestPanel({
                   className="min-w-0 flex-1"
                   iconStart={<CheckIcon />}
                   loading={isApproving}
-                  disabled={busy}
+                  disabled={busy || !isCurrentVersion}
                   onClick={onApprove}
                 >
                   {t("document.reviewAndApprove")}
