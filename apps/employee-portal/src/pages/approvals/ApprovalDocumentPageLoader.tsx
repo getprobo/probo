@@ -18,70 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { Suspense } from "react";
 
 import type { ApprovalDocumentPageQuery } from "#/__generated__/core/ApprovalDocumentPageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
-import { DOCUMENT_QUEUE_ID_PAGE_SIZE } from "#/pages/_lib/documentQueue";
-import { DOCUMENT_VERSION_PAGE_SIZE } from "#/pages/_lib/documentVersion";
-import { useQueuedDocumentQuery } from "#/pages/_lib/useQueuedDocumentQuery";
+import { useQueuedDocumentPageQuery } from "#/pages/_lib/useQueuedDocumentPageQuery";
 
 import { ApprovalDocumentPage, approvalDocumentPageQuery } from "./ApprovalDocumentPage";
 import { ApprovalDocumentPageSkeleton } from "./ApprovalDocumentPageSkeleton";
 
 export default function ApprovalDocumentPageLoader() {
-  const { organizationId, documentId } = useParams();
-  const [queryRef, loadQuery] = useQueryLoader<ApprovalDocumentPageQuery>(
+  const queryRef = useQueuedDocumentPageQuery<ApprovalDocumentPageQuery>(
     approvalDocumentPageQuery,
   );
 
-  useEffect(() => {
-    if (organizationId == null || documentId == null) {
-      return;
-    }
-    loadQuery(
-      {
-        organizationId,
-        documentId,
-        first: DOCUMENT_QUEUE_ID_PAGE_SIZE,
-        versionsFirst: DOCUMENT_VERSION_PAGE_SIZE,
-      },
-      { fetchPolicy: "network-only" },
-    );
-  }, [organizationId, documentId, loadQuery]);
-
-  const currentQueryRef = queryRef != null
-    && organizationId != null
-    && documentId != null
-    && queryRef.variables.organizationId === organizationId
-    && queryRef.variables.documentId === documentId
-    ? queryRef
-    : null;
-  const visibleQueryRef = useQueuedDocumentQuery<ApprovalDocumentPageQuery>(
-    approvalDocumentPageQuery,
-    currentQueryRef,
-  );
-
-  if (organizationId == null || documentId == null) {
-    throw new NotFoundError("organizationId and documentId are required");
-  }
-
-  if (
-    visibleQueryRef == null
-    || visibleQueryRef.variables.organizationId !== organizationId
-    || visibleQueryRef.variables.documentId !== documentId
-  ) {
+  if (queryRef == null) {
     return <ApprovalDocumentPageSkeleton />;
   }
 
   return (
     <Suspense
-      key={visibleQueryRef.variables.documentId}
+      key={queryRef.variables.documentId}
       fallback={<ApprovalDocumentPageSkeleton />}
     >
-      <ApprovalDocumentPage queryRef={visibleQueryRef} />
+      <ApprovalDocumentPage queryRef={queryRef} />
     </Suspense>
   );
 }
