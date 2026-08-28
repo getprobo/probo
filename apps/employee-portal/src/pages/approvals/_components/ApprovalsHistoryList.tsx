@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CheckCircleIcon, ProhibitIcon } from "@phosphor-icons/react";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
@@ -62,6 +64,7 @@ const approvalsHistoryListFragment = graphql`
       edges {
         node {
           id
+          approvalState
           ...EmployeeDocumentListItem_document
         }
       }
@@ -121,6 +124,19 @@ export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
           documentKey={node}
           to={`/${organizationId}/approvals/${node.id}`}
           trailing="chevron"
+          badge={node.approvalState === "REJECTED"
+            ? (
+                <Badge color="red" variant="soft" iconStart={<ProhibitIcon />}>
+                  {t("history.statusRejected")}
+                </Badge>
+              )
+            : node.approvalState === "APPROVED"
+              ? (
+                  <Badge color="green" variant="soft" iconStart={<CheckCircleIcon />}>
+                    {t("history.statusApproved")}
+                  </Badge>
+                )
+              : null}
         />
       ))}
     </DocumentListSection>

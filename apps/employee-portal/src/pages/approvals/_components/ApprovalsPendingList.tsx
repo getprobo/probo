@@ -70,7 +70,7 @@ const approvalsPendingListFragment = graphql`
     }
     historyCount: approvableDocuments(
       organizationId: $organizationId
-      filter: { approvalStates: [APPROVED] }
+      filter: { approvalStates: [APPROVED, REJECTED] }
     ) {
       totalCount
     }

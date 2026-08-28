@@ -141,7 +141,7 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
               goTo(nextId, "forward");
             }
           }}
-          onFinish={close}
+          onFinish={() => close("approvals")}
         />
       )}
     />

@@ -45,7 +45,7 @@ type DocumentQueueContextValue = {
   enter: (kind: DocumentQueueKind, ids: readonly string[]) => void;
   leave: () => void;
   goTo: (documentId: string, direction: DocumentQueueDirection) => void;
-  close: () => void;
+  close: (kind?: DocumentQueueKind) => void;
 };
 
 const DocumentQueueContext = createContext<DocumentQueueContextValue | null>(null);
@@ -82,13 +82,13 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     void navigate(`/${organizationId}/${snapshot.kind}/${documentId}`);
   }, [navigate, organizationId, snapshot]);
 
-  const close = useCallback(() => {
-    const kind = snapshot?.kind;
+  const close = useCallback((kind?: DocumentQueueKind) => {
+    const dest = snapshot?.kind ?? kind;
     leave();
-    if (organizationId == null || kind == null) {
+    if (organizationId == null || dest == null) {
       return;
     }
-    void navigate(`/${organizationId}/${kind}`);
+    void navigate(`/${organizationId}/${dest}`);
   }, [leave, navigate, organizationId, snapshot?.kind]);
 
   const value = useMemo<DocumentQueueContextValue>(() => ({

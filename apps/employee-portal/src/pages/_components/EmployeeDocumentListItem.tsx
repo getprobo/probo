@@ -23,6 +23,7 @@ import { parseDate } from "@probo/helpers";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
@@ -49,13 +50,15 @@ const employeeDocumentListItemFragment = graphql`
 type EmployeeDocumentListItemProps = {
   documentKey: EmployeeDocumentListItem_document$key;
   to: string;
+  // Optional status chrome (e.g. approved / rejected on history rows).
+  badge?: ReactNode;
 } & (
   | { trailing: "action"; actionLabel: string }
   | { trailing: "chevron" }
 );
 
 export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
-  const { documentKey, to, trailing } = props;
+  const { documentKey, to, trailing, badge } = props;
   const { t, i18n } = useTranslation();
   const slots = employeeDocumentListItem({ trailing });
   const document = useFragment(employeeDocumentListItemFragment, documentKey);
@@ -98,6 +101,7 @@ export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
       <ListItem className={slots.item()}>
         {title}
         {meta}
+        {badge != null && <div className={slots.badge()}>{badge}</div>}
         <ButtonLink
           to={to}
           size={2}
@@ -117,6 +121,7 @@ export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
       <div className={slots.body()}>
         {title}
         {meta}
+        {badge != null && <div className={slots.badge()}>{badge}</div>}
         <CaretRightIcon className={slots.chevron()} />
       </div>
     </ListItem>

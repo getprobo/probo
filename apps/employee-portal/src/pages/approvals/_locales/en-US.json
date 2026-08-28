@@ -10,7 +10,9 @@
     "itemAction": "Approve"
   },
   "history": {
-    "heading": "Approved ({{count}})"
+    "heading": "Reviewed ({{count}})",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected"
   },
   "empty": {
     "none": {
@@ -19,7 +21,7 @@
     },
     "allDone": {
       "title": "You're all done",
-      "description": "You're up to date. Previously approved documents are listed below."
+      "description": "You're up to date. Documents you've already reviewed are listed below."
     }
   },
   "document": {
@@ -30,6 +32,7 @@
     "approved": "You approved this document.",
     "rejected": "You rejected this document.",
     "goToNext": "Go to next document",
-    "finish": "Finish approvals"
+    "finish": "Finish approvals",
+    "backToList": "Back to approvals"
   }
 }

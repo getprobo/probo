@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretRightIcon, CheckCircleIcon, CheckIcon, ProhibitIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, CaretRightIcon, CheckCircleIcon, CheckIcon, ProhibitIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -41,8 +41,8 @@ interface ApprovalRequestPanelProps {
   onFinish: () => void;
 }
 
-// Left-column approval chrome: approve / reject, or the decided status plus
-// Finish / Go to next when the employee is still in the queue.
+// Left-column approval chrome: approve / reject, queue Finish / Go to next,
+// or back to the list when viewing a decided document outside the queue.
 export function ApprovalRequestPanel({
   title,
   state,
@@ -80,23 +80,24 @@ export function ApprovalRequestPanel({
   return (
     <DocumentRequestPanel eyebrow={t("document.eyebrow")} title={title} detail={detail}>
       {decided
-        ? queueActive
-          ? (
-              <div className={slots.actions()}>
-                <Button
-                  variant="soft"
-                  color="neutral"
-                  size={3}
-                  highContrast
-                  className="w-full"
-                  iconEnd={hasNext ? <CaretRightIcon /> : undefined}
-                  onClick={hasNext ? onNext : onFinish}
-                >
-                  {hasNext ? t("document.goToNext") : t("document.finish")}
-                </Button>
-              </div>
-            )
-          : null
+        ? (
+            <div className={slots.actions()}>
+              <Button
+                variant="soft"
+                color="neutral"
+                size={3}
+                highContrast
+                className="w-full"
+                iconStart={!queueActive ? <CaretLeftIcon /> : undefined}
+                iconEnd={queueActive && hasNext ? <CaretRightIcon /> : undefined}
+                onClick={queueActive && hasNext ? onNext : onFinish}
+              >
+                {queueActive
+                  ? (hasNext ? t("document.goToNext") : t("document.finish"))
+                  : t("document.backToList")}
+              </Button>
+            </div>
+          )
         : (
             <div className={slots.actions()}>
               <div className={slots.actionRow()}>

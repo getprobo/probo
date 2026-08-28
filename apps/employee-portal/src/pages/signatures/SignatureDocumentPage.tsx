@@ -132,7 +132,7 @@ export function SignatureDocumentPage({ queryRef }: SignatureDocumentPageProps) 
               goTo(nextId, "forward");
             }
           }}
-          onFinish={close}
+          onFinish={() => close("signatures")}
         />
       )}
     />

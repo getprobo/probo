@@ -28,6 +28,7 @@
     "reviewAndSign": "Review and sign",
     "signed": "You signed this document.",
     "goToNext": "Go to next document",
-    "finish": "Finish signing"
+    "finish": "Finish signing",
+    "backToList": "Back to signatures"
   }
 }

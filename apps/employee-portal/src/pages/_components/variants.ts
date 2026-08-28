@@ -124,6 +124,7 @@ export const employeeDocumentListItem = tv({
     timestampLabel: "text-sand-a8 whitespace-nowrap",
     timestampValue: "w-32 truncate text-sand-a11",
     chip: "w-24 truncate text-sand-a11",
+    badge: "shrink-0",
     chevron: "size-4 shrink-0 text-sand-11",
     hit: "absolute inset-0 z-0 cursor-pointer outline-none focus-visible:bg-sand-2",
     body: "relative z-1 flex min-w-0 flex-1 items-center gap-8",

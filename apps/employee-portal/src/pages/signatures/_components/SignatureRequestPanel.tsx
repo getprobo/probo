@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretRightIcon, CheckIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, CaretRightIcon, CheckIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -38,8 +38,8 @@ interface SignatureRequestPanelProps {
   onFinish: () => void;
 }
 
-// Left-column signing chrome: pending CTA, or the signed status plus Finish /
-// Go to next when the employee is still in the queue.
+// Left-column signing chrome: pending CTA, queue Finish / Go to next, or
+// back to the list when viewing a signed document outside the queue.
 export function SignatureRequestPanel({
   title,
   signed,
@@ -72,23 +72,24 @@ export function SignatureRequestPanel({
   return (
     <DocumentRequestPanel eyebrow={t("document.eyebrow")} title={title} detail={detail}>
       {signed
-        ? queueActive
-          ? (
-              <div className={slots.actions()}>
-                <Button
-                  variant="soft"
-                  color="neutral"
-                  size={3}
-                  highContrast
-                  className="w-full"
-                  iconEnd={hasNext ? <CaretRightIcon /> : undefined}
-                  onClick={hasNext ? onNext : onFinish}
-                >
-                  {hasNext ? t("document.goToNext") : t("document.finish")}
-                </Button>
-              </div>
-            )
-          : null
+        ? (
+            <div className={slots.actions()}>
+              <Button
+                variant="soft"
+                color="neutral"
+                size={3}
+                highContrast
+                className="w-full"
+                iconStart={!queueActive ? <CaretLeftIcon /> : undefined}
+                iconEnd={queueActive && hasNext ? <CaretRightIcon /> : undefined}
+                onClick={queueActive && hasNext ? onNext : onFinish}
+              >
+                {queueActive
+                  ? (hasNext ? t("document.goToNext") : t("document.finish"))
+                  : t("document.backToList")}
+              </Button>
+            </div>
+          )
         : (
             <div className={slots.actions()}>
               <Button
