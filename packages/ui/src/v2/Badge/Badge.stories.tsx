@@ -26,7 +26,7 @@ import { BadgeSkeleton } from "./BadgeSkeleton";
 
 const sizes = [1, 2, 3] as const;
 const variants = ["solid", "soft", "surface", "outline"] as const;
-const colors = ["neutral", "gold", "red", "green", "amber", "sky"] as const;
+const colors = ["neutral", "gold", "red", "green", "amber", "sky", "indigo"] as const;
 
 export default {
   title: "v2/Badge",

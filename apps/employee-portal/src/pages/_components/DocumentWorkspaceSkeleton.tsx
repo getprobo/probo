@@ -30,11 +30,13 @@ export function DocumentWorkspaceSkeleton() {
   return (
     <div className={slots.root()}>
       <aside className={slots.request()}>
-        <div className="flex flex-col gap-4">
-          <TextSkeleton size={1} className="w-28" />
-          <HeadingSkeleton size={7} className="w-64" />
-          <TextSkeleton size={2} className="w-48" />
-          <CardSkeleton size={2} className="h-10 w-full" />
+        <div className="flex flex-col gap-16">
+          <div className="flex flex-col gap-4">
+            <TextSkeleton size={1} className="w-28" />
+            <HeadingSkeleton size={6} className="w-64" />
+            <TextSkeleton size={2} className="w-48" />
+          </div>
+          <CardSkeleton size={3} className="h-10 w-full" />
         </div>
       </aside>
       <section className={slots.stage()}>

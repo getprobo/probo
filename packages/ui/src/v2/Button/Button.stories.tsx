@@ -26,7 +26,7 @@ import { ButtonSkeleton } from "./ButtonSkeleton";
 
 const sizes = [1, 2, 3, 4] as const;
 const variants = ["classic", "solid", "soft", "surface", "outline", "ghost"] as const;
-const colors = ["neutral", "gold", "red", "green", "amber", "sky"] as const;
+const colors = ["neutral", "gold", "red", "green", "amber", "sky", "indigo"] as const;
 
 export default {
   title: "v2/Button",

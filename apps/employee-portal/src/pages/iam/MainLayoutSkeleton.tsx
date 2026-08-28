@@ -22,9 +22,9 @@ import { TopBarSkeleton } from "#/pages/iam/_components/TopBar/TopBarSkeleton";
 
 export function MainLayoutSkeleton() {
   return (
-    <div className="flex min-h-dvh flex-col bg-sand-2">
+    <div className="flex h-dvh flex-col overflow-hidden bg-sand-2">
       <TopBarSkeleton />
-      <div className="flex flex-1 flex-col" />
+      <div className="flex min-h-0 flex-1 flex-col" />
     </div>
   );
 }

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CheckCircleIcon, CheckIcon, ProhibitIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, CheckCircleIcon, CheckIcon, ProhibitIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -60,73 +60,75 @@ export function ApprovalRequestPanel({
   const tone = state === "REJECTED" ? "rejected" : "approved";
   const slots = documentRequestPanel({ tone });
 
+  const detail = decided
+    ? (
+        <div className={slots.status()}>
+          {state === "REJECTED"
+            ? <ProhibitIcon className={slots.statusIcon()} />
+            : <CheckCircleIcon className={slots.statusIcon()} />}
+          <Text size={2} color="current">
+            {state === "REJECTED" ? t("document.rejected") : t("document.approved")}
+          </Text>
+        </div>
+      )
+    : (
+        <Text size={2} color="neutral">
+          {t("document.instruction")}
+        </Text>
+      );
+
   return (
-    <DocumentRequestPanel eyebrow={t("document.eyebrow")} title={title}>
+    <DocumentRequestPanel eyebrow={t("document.eyebrow")} title={title} detail={detail}>
       {decided
-        ? (
-            <>
-              <div className={slots.status()}>
-                {state === "REJECTED"
-                  ? <ProhibitIcon className={slots.statusIcon()} />
-                  : <CheckCircleIcon className={slots.statusIcon()} />}
-                <Text size={2} weight="medium" className="text-current">
-                  {state === "REJECTED" ? t("document.rejected") : t("document.approved")}
-                </Text>
-              </div>
-              {queueActive
-                ? (
-                    <div className={slots.actions()}>
-                      <Button
-                        variant="surface"
-                        color="neutral"
-                        size={2}
-                        className="w-full"
-                        onClick={hasNext ? onNext : onFinish}
-                      >
-                        {hasNext ? t("document.goToNext") : t("document.finish")}
-                      </Button>
-                    </div>
-                  )
-                : null}
-            </>
-          )
-        : (
-            <>
-              <Text size={2} color="neutral">
-                {t("document.instruction")}
-              </Text>
+        ? queueActive
+          ? (
               <div className={slots.actions()}>
-                <div className={slots.actionRow()}>
-                  <Button
-                    variant="surface"
-                    color="neutral"
-                    size={2}
-                    className="flex-1"
-                    iconStart={<ProhibitIcon />}
-                    disabled={busy}
-                    onClick={onReject}
-                  >
-                    {t("document.reject")}
-                  </Button>
-                  <Button
-                    variant="solid"
-                    color="sky"
-                    size={2}
-                    className="flex-1"
-                    iconStart={<CheckIcon />}
-                    loading={busy}
-                    onClick={onApprove}
-                  >
-                    {t("document.reviewAndApprove")}
-                  </Button>
-                </div>
-                {consentText !== "" && (
-                  <Text size={1} className={slots.consent()}>
-                    {consentText}
-                  </Text>
-                )}
+                <Button
+                  variant="soft"
+                  color="neutral"
+                  size={3}
+                  highContrast
+                  className="w-full"
+                  iconEnd={hasNext ? <CaretRightIcon /> : undefined}
+                  onClick={hasNext ? onNext : onFinish}
+                >
+                  {hasNext ? t("document.goToNext") : t("document.finish")}
+                </Button>
               </div>
-            </>
+            )
+          : null
+        : (
+            <div className={slots.actions()}>
+              <div className={slots.actionRow()}>
+                <Button
+                  variant="soft"
+                  color="neutral"
+                  size={3}
+                  highContrast
+                  iconStart={<ProhibitIcon />}
+                  disabled={busy}
+                  onClick={onReject}
+                >
+                  {t("document.reject")}
+                </Button>
+                <Button
+                  variant="solid"
+                  color="indigo"
+                  size={3}
+                  className="min-w-0 flex-1"
+                  iconStart={<CheckIcon />}
+                  loading={busy}
+                  onClick={onApprove}
+                >
+                  {t("document.reviewAndApprove")}
+                </Button>
+              </div>
+              {consentText !== "" && (
+                <Text size={1} className={slots.consent()}>
+                  {consentText}
+                </Text>
+              )}
+            </div>
           )}
     </DocumentRequestPanel>
   );

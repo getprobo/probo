@@ -35,10 +35,12 @@ import { pdfPreview } from "./variants";
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
+// Figma document page at 100% (2093:1856) is 672px in the 928px stage.
+const PAGE_MAX_WIDTH_PX = 672;
 const PAGE_GUTTER_PX = 64;
 
 function pageWidthForWrapper(clientWidth: number): number {
-  return Math.max(clientWidth - PAGE_GUTTER_PX, 1);
+  return Math.min(PAGE_MAX_WIDTH_PX, Math.max(clientWidth - PAGE_GUTTER_PX, 1));
 }
 
 function findCenteredPage(

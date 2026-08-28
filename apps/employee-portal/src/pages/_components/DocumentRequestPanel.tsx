@@ -27,23 +27,30 @@ import { documentRequestPanel } from "./variants";
 interface DocumentRequestPanelProps {
   eyebrow: string;
   title: string;
-  children: ReactNode;
+  // Instruction or signed/approved/rejected status, stacked with the title.
+  detail?: ReactNode;
+  children?: ReactNode;
 }
 
-// Shared request-column chrome: eyebrow, document title, then flow-specific
-// status / actions / consent.
-export function DocumentRequestPanel({ eyebrow, title, children }: DocumentRequestPanelProps) {
+// Shared request-column chrome: eyebrow, title, optional detail, then actions.
+export function DocumentRequestPanel({
+  eyebrow,
+  title,
+  detail,
+  children,
+}: DocumentRequestPanelProps) {
   const slots = documentRequestPanel();
 
   return (
     <div className={slots.root()}>
       <div className={slots.copy()}>
-        <Text size={1} color="neutral">
+        <Text size={1} color="current" className={slots.eyebrow()}>
           {eyebrow}
         </Text>
-        <Heading level={1} size={7} weight="medium" highContrast>
+        <Heading level={1} size={6} weight="medium" highContrast>
           {title}
         </Heading>
+        {detail}
       </div>
       {children}
     </div>

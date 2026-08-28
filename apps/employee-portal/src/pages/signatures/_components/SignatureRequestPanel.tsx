@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CheckCircleIcon, CheckIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, CheckIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -54,58 +54,60 @@ export function SignatureRequestPanel({
   const { t } = useTranslation("signatures");
   const slots = documentRequestPanel({ tone: "signed" });
 
+  const detail = signed
+    ? (
+        <div className={slots.status()}>
+          <CheckIcon className={slots.statusIcon()} />
+          <Text size={2} color="current">
+            {t("document.signed")}
+          </Text>
+        </div>
+      )
+    : (
+        <Text size={2} color="neutral">
+          {t("document.instruction")}
+        </Text>
+      );
+
   return (
-    <DocumentRequestPanel eyebrow={t("document.eyebrow")} title={title}>
+    <DocumentRequestPanel eyebrow={t("document.eyebrow")} title={title} detail={detail}>
       {signed
-        ? (
-            <>
-              <div className={slots.status()}>
-                <CheckCircleIcon className={slots.statusIcon()} />
-                <Text size={2} weight="medium" className="text-current">
-                  {t("document.signed")}
-                </Text>
-              </div>
-              {queueActive
-                ? (
-                    <div className={slots.actions()}>
-                      <Button
-                        variant="surface"
-                        color="neutral"
-                        size={2}
-                        className="w-full"
-                        onClick={hasNext ? onNext : onFinish}
-                      >
-                        {hasNext ? t("document.goToNext") : t("document.finish")}
-                      </Button>
-                    </div>
-                  )
-                : null}
-            </>
-          )
-        : (
-            <>
-              <Text size={2} color="neutral">
-                {t("document.instruction")}
-              </Text>
+        ? queueActive
+          ? (
               <div className={slots.actions()}>
                 <Button
-                  variant="solid"
-                  color="sky"
-                  size={2}
+                  variant="soft"
+                  color="neutral"
+                  size={3}
+                  highContrast
                   className="w-full"
-                  iconStart={<CheckIcon />}
-                  loading={busy}
-                  onClick={onSign}
+                  iconEnd={hasNext ? <CaretRightIcon /> : undefined}
+                  onClick={hasNext ? onNext : onFinish}
                 >
-                  {t("document.reviewAndSign")}
+                  {hasNext ? t("document.goToNext") : t("document.finish")}
                 </Button>
-                {consentText !== "" && (
-                  <Text size={1} className={slots.consent()}>
-                    {consentText}
-                  </Text>
-                )}
               </div>
-            </>
+            )
+          : null
+        : (
+            <div className={slots.actions()}>
+              <Button
+                variant="solid"
+                color="indigo"
+                size={3}
+                className="w-full"
+                iconStart={<CheckIcon />}
+                loading={busy}
+                onClick={onSign}
+              >
+                {t("document.reviewAndSign")}
+              </Button>
+              {consentText !== "" && (
+                <Text size={1} className={slots.consent()}>
+                  {consentText}
+                </Text>
+              )}
+            </div>
           )}
     </DocumentRequestPanel>
   );

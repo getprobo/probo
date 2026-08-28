@@ -92,12 +92,12 @@ function MainLayoutChrome({
   const queueActive = useDocumentQueueActive();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-sand-2">
+    <div className="flex h-dvh flex-col overflow-hidden bg-sand-2">
       {queueActive
         ? <QueueTopBar />
         : <TopBar organizationKey={organizationKey} />}
       <RelayProvider>
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto">
           <Outlet />
         </div>
       </RelayProvider>

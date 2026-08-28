@@ -20,6 +20,7 @@
 
 import { CaretLeftIcon, CaretRightIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -29,12 +30,14 @@ import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
 
 import { queueTopBar } from "./variants";
 
-// Dark queue chrome: prev/next through the frozen snapshot, plus Close.
+// Inverse-theme queue chrome: prev/next through the frozen snapshot, plus Close.
 export function QueueTopBar() {
   const { t } = useTranslation();
   const { documentId } = useParams();
+  const { displayMode } = useDisplayMode();
   const { snapshot, goTo, close } = useDocumentQueue();
   const slots = queueTopBar();
+  const island = displayMode === "dark" ? "light" : "dark";
 
   if (snapshot == null || documentId == null) {
     return null;
@@ -52,11 +55,15 @@ export function QueueTopBar() {
     : "queue.progressApprovals";
 
   return (
-    <header className={slots.bar()}>
+    <header
+      className={slots.bar({
+        className: island === "dark" ? "dark scheme-dark" : "light scheme-light",
+      })}
+    >
       <div className={slots.start()}>
         <div className={slots.controls()}>
           <IconButton
-            variant="soft"
+            variant="outline"
             color="neutral"
             aria-label={t("queue.previous")}
             disabled={previousId == null}
@@ -69,7 +76,7 @@ export function QueueTopBar() {
             <CaretLeftIcon />
           </IconButton>
           <IconButton
-            variant="soft"
+            variant="outline"
             color="neutral"
             aria-label={t("queue.next")}
             disabled={nextId == null}
@@ -82,16 +89,15 @@ export function QueueTopBar() {
             <CaretRightIcon />
           </IconButton>
         </div>
-        <Text size={2} weight="medium" className={slots.progress()}>
+        <Text size={2} weight="medium" highContrast className={slots.progress()}>
           {t(progressKey, { current, total })}
         </Text>
       </div>
       <Button
-        variant="ghost"
+        variant="outline"
         color="neutral"
         size={2}
         iconStart={<XIcon />}
-        className={slots.close()}
         onClick={close}
       >
         {t("queue.close")}
