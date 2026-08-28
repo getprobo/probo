@@ -1841,10 +1841,6 @@ components:
         - UPDATED_AT
         - NAME
         - CATEGORY
-        - TREATMENT
-        - INHERENT_RISK_SCORE
-        - RESIDUAL_RISK_SCORE
-        - OWNER_FULL_NAME
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskOrderField
 
     RiskOrderBy:
@@ -1897,50 +1893,9 @@ components:
         category:
           type: string
           description: Risk category
-        treatment:
-          anyOf:
-            - $ref: "#/components/schemas/RiskTreatment"
-            - type: "null"
-          description: Risk treatment
-        inherent_likelihood:
-          type:
-            - integer
-            - "null"
-          description: Initial likelihood
-        inherent_impact:
-          type:
-            - integer
-            - "null"
-          description: Initial impact
-        inherent_risk_score:
-          type:
-            - integer
-            - "null"
-          description: Initial risk score
-        residual_likelihood:
-          type:
-            - integer
-            - "null"
-          description: Residual likelihood
-        residual_impact:
-          type:
-            - integer
-            - "null"
-          description: Residual impact
-        residual_risk_score:
-          type:
-            - integer
-            - "null"
-          description: Residual risk score
         note:
           type: string
           description: Risk note
-        owner_id:
-          anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
-            - type: "null"
-              description: No owner
         created_at:
           type: string
           format: date-time
@@ -2013,9 +1968,6 @@ components:
         - organization_id
         - name
         - category
-        - treatment
-        - inherent_likelihood
-        - inherent_impact
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -2029,24 +1981,6 @@ components:
         category:
           type: string
           description: Risk category
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
-        treatment:
-          $ref: "#/components/schemas/RiskTreatment"
-          description: Risk treatment
-        inherent_likelihood:
-          type: integer
-          description: Initial likelihood
-        inherent_impact:
-          type: integer
-          description: Initial impact
-        residual_likelihood:
-          type: integer
-          description: Residual likelihood
-        residual_impact:
-          type: integer
-          description: Residual impact
         note:
           type: string
           description: Risk note
@@ -2077,28 +2011,6 @@ components:
         category:
           type: string
           description: Risk category
-        owner_id:
-          anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Owner ID
-          go.probo.inc/mcpgen/omittable: true
-        treatment:
-          $ref: "#/components/schemas/RiskTreatment"
-          description: Risk treatment
-        inherent_likelihood:
-          type: integer
-          description: Initial likelihood
-        inherent_impact:
-          type: integer
-          description: Initial impact
-        residual_likelihood:
-          type: integer
-          description: Residual likelihood
-        residual_impact:
-          type: integer
-          description: Residual impact
         note:
           type: string
           description: Risk note

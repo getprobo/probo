@@ -23,7 +23,6 @@ package list
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -42,9 +41,6 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
             id
             name
             category
-            treatment
-            inherentRiskScore
-            residualRiskScore
           }
         }
         pageInfo {
@@ -69,9 +65,6 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
             id
             name
             category
-            treatment
-            inherentRiskScore
-            residualRiskScore
           }
         }
         pageInfo {
@@ -85,12 +78,9 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
 `
 
 type risk struct {
-	ID                string  `json:"id"`
-	Name              string  `json:"name"`
-	Category          string  `json:"category"`
-	Treatment         *string `json:"treatment"`
-	InherentRiskScore *int    `json:"inherentRiskScore"`
-	ResidualRiskScore *int    `json:"residualRiskScore"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Category string `json:"category"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -117,8 +107,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   # List unplanned scenario-linked risks on an analysis
   prb risk ls --risk-analysis <id>
 
-  # List risks sorted by inherent score
-  prb risk ls --order-by INHERENT_RISK_SCORE --json`,
+  # List risks sorted by name
+  prb risk ls --order-by NAME --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -166,7 +156,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrderBy != "" {
-				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "NAME", "CATEGORY", "TREATMENT", "INHERENT_RISK_SCORE", "RESIDUAL_RISK_SCORE"}); err != nil {
+				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "NAME", "CATEGORY"}); err != nil {
 					return err
 				}
 
@@ -229,13 +219,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					r.ID,
 					r.Name,
 					r.Category,
-					formatOptionalString(r.Treatment),
-					formatOptionalInt(r.InherentRiskScore),
-					formatOptionalInt(r.ResidualRiskScore),
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "CATEGORY", "TREATMENT", "INHERENT", "RESIDUAL").Rows(rows...)
+			t := cmdutil.NewTable("ID", "NAME", "CATEGORY").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
@@ -255,26 +242,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagRiskAnalysis, "risk-analysis", "", "List unplanned scenario-linked risks on a risk analysis")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of risks to list")
-	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME, CATEGORY, TREATMENT, INHERENT_RISK_SCORE, RESIDUAL_RISK_SCORE)")
+	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME, CATEGORY)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter risks by search query")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
-}
-
-func formatOptionalString(v *string) string {
-	if v == nil || *v == "" {
-		return "-"
-	}
-
-	return *v
-}
-
-func formatOptionalInt(v *int) string {
-	if v == nil {
-		return "-"
-	}
-
-	return strconv.Itoa(*v)
 }

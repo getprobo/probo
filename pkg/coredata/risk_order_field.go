@@ -32,14 +32,10 @@ type (
 )
 
 const (
-	RiskOrderFieldCreatedAt         RiskOrderField = "CREATED_AT"
-	RiskOrderFieldUpdatedAt         RiskOrderField = "UPDATED_AT"
-	RiskOrderFieldName              RiskOrderField = "NAME"
-	RiskOrderFieldCategory          RiskOrderField = "CATEGORY"
-	RiskOrderFieldTreatment         RiskOrderField = "TREATMENT"
-	RiskOrderFieldInherentRiskScore RiskOrderField = "INHERENT_RISK_SCORE"
-	RiskOrderFieldResidualRiskScore RiskOrderField = "RESIDUAL_RISK_SCORE"
-	RiskOrderFieldOwnerFullName     RiskOrderField = "OWNER_FULL_NAME"
+	RiskOrderFieldCreatedAt RiskOrderField = "CREATED_AT"
+	RiskOrderFieldUpdatedAt RiskOrderField = "UPDATED_AT"
+	RiskOrderFieldName      RiskOrderField = "NAME"
+	RiskOrderFieldCategory  RiskOrderField = "CATEGORY"
 )
 
 var (
@@ -55,10 +51,6 @@ func RiskOrderFields() []RiskOrderField {
 		RiskOrderFieldUpdatedAt,
 		RiskOrderFieldName,
 		RiskOrderFieldCategory,
-		RiskOrderFieldTreatment,
-		RiskOrderFieldInherentRiskScore,
-		RiskOrderFieldResidualRiskScore,
-		RiskOrderFieldOwnerFullName,
 	}
 }
 

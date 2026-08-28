@@ -26,13 +26,6 @@ const riskNodeFields = `
 	name
 	description
 	category
-	treatment
-	inherentLikelihood
-	inherentImpact
-	inherentRiskScore
-	residualLikelihood
-	residualImpact
-	residualRiskScore
 	note
 	createdAt
 	updatedAt
@@ -122,11 +115,8 @@ export const description: INodeProperties[] = [
 		options: [
 			{ name: 'Category', value: 'CATEGORY' },
 			{ name: 'Created At', value: 'CREATED_AT' },
-			{ name: 'Inherent Risk Score', value: 'INHERENT_RISK_SCORE' },
 			{ name: 'Name', value: 'NAME' },
 			{ name: 'None', value: '' },
-			{ name: 'Residual Risk Score', value: 'RESIDUAL_RISK_SCORE' },
-			{ name: 'Treatment', value: 'TREATMENT' },
 		],
 		default: '',
 		description: 'Field to order risks by',

@@ -25,7 +25,6 @@ import {
   IconPlusLarge,
   IconUpload,
   PageHeader,
-  RisksChart,
   Tbody,
   Th,
   Thead,
@@ -92,10 +91,6 @@ const risksFragment = graphql`
         node {
           id
           name
-          inherentLikelihood
-          inherentImpact
-          residualLikelihood
-          residualImpact
           canUpdate: permission(action: "risk-management:risk:update")
           canDelete: permission(action: "risk-management:risk:delete")
           ...RiskRow_risk
@@ -128,33 +123,6 @@ export default function RisksPage(props: RisksPageProps) {
   const risks = fragmentData.risks?.edges.map(edge => edge.node) ?? [];
   const connectionId = fragmentData.risks.__id;
 
-  const chartRisks = risks.flatMap(({
-    id,
-    name,
-    inherentLikelihood,
-    inherentImpact,
-    residualLikelihood,
-    residualImpact,
-  }) => {
-    if (
-      inherentLikelihood == null
-      || inherentImpact == null
-      || residualLikelihood == null
-      || residualImpact == null
-    ) {
-      return [];
-    }
-
-    return [{
-      id,
-      name,
-      inherentLikelihood,
-      inherentImpact,
-      residualLikelihood,
-      residualImpact,
-    }];
-  });
-
   const refetch = ({
     order,
   }: {
@@ -167,10 +135,6 @@ export default function RisksPage(props: RisksPageProps) {
           field: order.field as
           | "NAME"
           | "CATEGORY"
-          | "TREATMENT"
-          | "INHERENT_RISK_SCORE"
-          | "RESIDUAL_RISK_SCORE"
-          | "OWNER_FULL_NAME"
           | "CREATED_AT",
         },
       },
@@ -230,31 +194,11 @@ export default function RisksPage(props: RisksPageProps) {
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-2 gap-4">
-        <RisksChart
-          organizationId={organizationId}
-          type="inherent"
-          risks={chartRisks}
-        />
-        <RisksChart
-          organizationId={organizationId}
-          type="residual"
-          risks={chartRisks}
-        />
-      </div>
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
             <SortableTh field="NAME">{t("risksPage.columns.name")}</SortableTh>
             <SortableTh field="CATEGORY">{t("risksPage.columns.category")}</SortableTh>
-            <SortableTh field="TREATMENT">{t("risksPage.columns.treatment")}</SortableTh>
-            <SortableTh field="INHERENT_RISK_SCORE">
-              {t("risksPage.columns.initialRisk")}
-            </SortableTh>
-            <SortableTh field="RESIDUAL_RISK_SCORE">
-              {t("risksPage.columns.residualRisk")}
-            </SortableTh>
-            <SortableTh field="OWNER_FULL_NAME">{t("risksPage.columns.owner")}</SortableTh>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
