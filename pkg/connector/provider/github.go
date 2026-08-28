@@ -32,8 +32,9 @@ import (
 
 func githubRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderGitHub,
-		DisplayName: "GitHub",
+		Provider:         coredata.ConnectorProviderGitHub,
+		DisplayName:      "GitHub",
+		DocumentationURL: accessReviewDocsURL("github"),
 		Endpoints: Endpoints{
 			Auth:  "https://github.com/login/oauth/authorize",
 			Token: "https://github.com/login/oauth/access_token",
