@@ -129,7 +129,23 @@ func TestAccessReviewDrivers(t *testing.T) {
 		assert.Equal(t, "https://www.probo.com/docs/product/access-review/anthropic", *url)
 	}
 
-	assert.Nil(t, docURLByProvider["BREX"], "BREX has no doc page, documentationUrl must be null")
+	// A slug that is not the lowercased enum is the case worth pinning: Cal.com
+	// publishes at /calcom, so deriving the URL from CAL_COM would 404.
+	if url := docURLByProvider["CAL_COM"]; assert.NotNil(t, url) {
+		assert.Equal(t, "https://www.probo.com/docs/product/access-review/calcom", *url)
+	}
+
+	// AWS carries the null case because it is the one provider that cannot
+	// acquire a doc page by being written: access review for it is not
+	// implemented, and the console still renders it as coming soon. Any
+	// provider picked here purely for being undocumented today gets documented
+	// eventually and breaks this assertion, as BREX did.
+	//
+	// Contains first: a bare Nil on a missing key passes whether or not the
+	// field is really null, which would let the null path rot unnoticed. AWS is
+	// a workload identity provider, so the catalog never skips it.
+	require.Contains(t, docURLByProvider, "AWS")
+	assert.Nil(t, docURLByProvider["AWS"], "AWS has no doc page, documentationUrl must be null")
 
 	t.Run("viewer can list access review drivers", func(t *testing.T) {
 		t.Parallel()
