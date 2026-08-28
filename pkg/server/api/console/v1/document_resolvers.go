@@ -841,7 +841,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 
 	p := page.NewPage(employeeVersions, versionsPage.Cursor)
 
-	return types.NewEmployeeDocumentVersionConnection(p), nil
+	return types.NewEmployeeDocumentVersionConnection(p, r, obj.ID, versionFilter), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -904,6 +904,27 @@ func (r *employeeDocumentVersionResolver) ApprovalDecision(ctx context.Context, 
 	}
 
 	return types.NewDocumentVersionApprovalDecision(decision), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *employeeDocumentVersionConnectionResolver) TotalCount(ctx context.Context, obj *types.EmployeeDocumentVersionConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionEmployeeDocumentGet)
+	if err != nil {
+		return 0, err
+	}
+
+	filter := &coredata.DocumentVersionFilter{}
+	if obj.Filters != nil {
+		filter = obj.Filters
+	}
+
+	count, err := r.probo.Documents.CountVersionsForDocumentID(ctx, scope, obj.ParentID, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count employee document versions", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // CreateDocument is the resolver for the createDocument field.
@@ -1773,6 +1794,11 @@ func (r *Resolver) EmployeeDocumentVersion() schema.EmployeeDocumentVersionResol
 	return &employeeDocumentVersionResolver{r}
 }
 
+// EmployeeDocumentVersionConnection returns schema.EmployeeDocumentVersionConnectionResolver implementation.
+func (r *Resolver) EmployeeDocumentVersionConnection() schema.EmployeeDocumentVersionConnectionResolver {
+	return &employeeDocumentVersionConnectionResolver{r}
+}
+
 type (
 	documentResolver                                  struct{ *Resolver }
 	documentConnectionResolver                        struct{ *Resolver }
@@ -1787,4 +1813,5 @@ type (
 	employeeDocumentResolver                          struct{ *Resolver }
 	employeeDocumentConnectionResolver                struct{ *Resolver }
 	employeeDocumentVersionResolver                   struct{ *Resolver }
+	employeeDocumentVersionConnectionResolver         struct{ *Resolver }
 )

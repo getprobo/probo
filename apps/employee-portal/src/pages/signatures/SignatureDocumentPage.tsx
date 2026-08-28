@@ -18,12 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useParams } from "react-router";
 
 import type { SignatureDocumentPageQuery } from "#/__generated__/core/SignatureDocumentPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { DocumentVersionHistory } from "#/pages/_components/DocumentVersionHistory";
 import { DocumentWorkspace } from "#/pages/_components/DocumentWorkspace";
 import {
   useDocumentQueue,
@@ -46,7 +47,7 @@ export const signatureDocumentPageQuery = graphql`
         id
         title
         signed
-        versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+        latestVersion: versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
           edges {
             node {
               id
@@ -56,6 +57,7 @@ export const signatureDocumentPageQuery = graphql`
           }
         }
       }
+      ...DocumentVersionHistory_signatures @arguments(documentId: $documentId)
       pendingQueue: signableDocuments(
         organizationId: $organizationId
         first: $first
@@ -95,10 +97,21 @@ export function SignatureDocumentPage({ queryRef }: SignatureDocumentPageProps) 
     throw new NotFoundError("signable document not found");
   }
 
-  const version = document.versions.edges[0]?.node;
+  const version = document.latestVersion.edges[0]?.node;
   if (version == null) {
     throw new NotFoundError("document version not found");
   }
+
+  const [selected, setSelected] = useState({
+    documentId: document.id,
+    versionId: version.id,
+  });
+  if (selected.documentId !== document.id) {
+    setSelected({ documentId: document.id, versionId: version.id });
+  }
+  const selectedVersionId = selected.documentId === document.id
+    ? selected.versionId
+    : version.id;
 
   const pendingPage = useMemo(() => ({
     ids: data.viewer.pendingQueue.edges.map(({ node }) => node.id),
@@ -115,7 +128,7 @@ export function SignatureDocumentPage({ queryRef }: SignatureDocumentPageProps) 
   });
 
   const [signDocument, isSigning] = useSignDocument(document.id);
-  const dataUri = useExportEmployeeDocumentPdf(version.id);
+  const dataUri = useExportEmployeeDocumentPdf(selectedVersionId);
 
   const index = snapshot?.ids.indexOf(documentId) ?? -1;
   const hasNext = snapshot != null
@@ -125,6 +138,16 @@ export function SignatureDocumentPage({ queryRef }: SignatureDocumentPageProps) 
     <DocumentWorkspace
       title={document.title}
       dataUri={dataUri}
+      history={(
+        <DocumentVersionHistory
+          viewerKey={data.viewer}
+          kind="signatures"
+          selectedVersionId={selectedVersionId}
+          onSelect={(versionId) => {
+            setSelected({ documentId: document.id, versionId });
+          }}
+        />
+      )}
       request={(
         <SignatureRequestPanel
           title={document.title}

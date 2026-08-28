@@ -119,6 +119,20 @@
       "internal": "Internal",
       "confidential": "Confidential",
       "secret": "Secret"
+    },
+    "versions": {
+      "heading": "Version history",
+      "count_one": "{{count}} version",
+      "count_other": "{{count}} versions",
+      "label": "v{{major}}.{{minor}}",
+      "current": "Current",
+      "select": "View version {{major}}.{{minor}}",
+      "status": {
+        "inReview": "In review",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "signed": "Signed"
+      }
     }
   },
   "errors": {

@@ -195,7 +195,7 @@ export const documentWorkspace = tv({
       "[view-transition-name:document-workspace]",
     ],
     request: [
-      "flex w-full shrink-0 flex-col overflow-y-auto bg-sand-1 px-8 py-8",
+      "flex w-full shrink-0 flex-col overflow-y-auto gap-8 bg-sand-1 px-8 py-8",
       "min-h-0 max-md:max-h-[50%] md:h-full md:w-96 xl:w-128",
     ],
     stage: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-sand-3",
@@ -261,5 +261,39 @@ export const documentRequestPanel = tv({
         statusIcon: "text-sand-11",
       },
     },
+  },
+});
+
+export const documentVersionHistory = tv({
+  slots: {
+    root: "flex w-full flex-col gap-2",
+    header: "flex items-center justify-between",
+    frame: "overflow-clip rounded-5 border border-sand-3 bg-sand-1",
+    viewport: "overflow-y-auto overscroll-y-contain snap-y snap-mandatory",
+    list: "flex flex-col",
+    ghost: "h-[72px] shrink-0 opacity-40",
+  },
+  variants: {
+    peek: {
+      true: {
+        viewport: [
+          "mask-[linear-gradient(to_bottom,transparent,black_16px,black_calc(100%-16px),transparent)]",
+        ],
+      },
+    },
+  },
+});
+
+export const documentVersionHistoryItem = tv({
+  slots: {
+    row: [
+      "flex h-[72px] w-full shrink-0 snap-start items-center gap-4",
+      "border-b border-sand-3 px-8 py-4 text-left last:border-b-0",
+    ],
+    radio: "flex size-5 shrink-0 items-center justify-center rounded-full bg-sand-a5",
+    radioDot: "size-2.5 rounded-full bg-sand-12",
+    copy: "flex min-w-0 flex-1 flex-col gap-1",
+    meta: "flex min-w-0 items-center gap-1",
+    current: "shrink-0",
   },
 });

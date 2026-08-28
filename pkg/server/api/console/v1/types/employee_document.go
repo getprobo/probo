@@ -68,8 +68,13 @@ type (
 	}
 
 	EmployeeDocumentVersionConnection struct {
-		Edges    []*EmployeeDocumentVersionEdge
-		PageInfo *PageInfo
+		TotalCount int
+		Edges      []*EmployeeDocumentVersionEdge
+		PageInfo   *PageInfo
+
+		Resolver any
+		ParentID gid.GID
+		Filters  *coredata.DocumentVersionFilter
 	}
 
 	EmployeeDocumentVersionEdge struct {
@@ -137,6 +142,9 @@ func (d EmployeeDocument) CursorKey(orderBy coredata.DocumentOrderField) page.Cu
 
 func NewEmployeeDocumentVersionConnection(
 	p *page.Page[*EmployeeDocumentVersion, coredata.DocumentVersionOrderField],
+	parentType any,
+	parentID gid.GID,
+	filters *coredata.DocumentVersionFilter,
 ) *EmployeeDocumentVersionConnection {
 	var edges = make([]*EmployeeDocumentVersionEdge, len(p.Data))
 
@@ -147,6 +155,9 @@ func NewEmployeeDocumentVersionConnection(
 	return &EmployeeDocumentVersionConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
+		Resolver: parentType,
+		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

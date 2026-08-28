@@ -536,6 +536,7 @@ type EmployeeDocumentVersionConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentVersionConnection"
     ) {
+    totalCount: Int! @goField(forceResolver: true)
     edges: [EmployeeDocumentVersionEdge!]!
     pageInfo: PageInfo!
 }

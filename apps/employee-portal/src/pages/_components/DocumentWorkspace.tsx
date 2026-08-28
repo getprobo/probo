@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { SpinnerGapIcon } from "@phosphor-icons/react";
+import { Separator } from "@probo/ui/src/v2/Separator/Separator";
 import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 
@@ -34,6 +35,8 @@ function clamp(value: number, min: number, max: number): number {
 interface DocumentWorkspaceProps {
   // Request-panel slot (signature / approval chrome).
   request: ReactNode;
+  // Version history under the request panel.
+  history?: ReactNode;
   // Document title used as the PDF download name.
   title: string;
   // Exported PDF data URI, or null while it is still loading.
@@ -43,7 +46,12 @@ interface DocumentWorkspaceProps {
 // Split document view: request column on the left, PDF stage on the right.
 // Named for view transitions so the queue top bar stays put while the pane
 // swipes between documents.
-export function DocumentWorkspace({ request, title, dataUri }: DocumentWorkspaceProps) {
+export function DocumentWorkspace({
+  request,
+  history,
+  title,
+  dataUri,
+}: DocumentWorkspaceProps) {
   const pdfRef = useRef<PdfPreviewHandle>(null);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,6 +68,14 @@ export function DocumentWorkspace({ request, title, dataUri }: DocumentWorkspace
     <div className={slots.root()}>
       <aside className={slots.request()}>
         {request}
+        {history == null
+          ? null
+          : (
+              <>
+                <Separator />
+                {history}
+              </>
+            )}
       </aside>
       <section className={slots.stage()}>
         <DocumentViewerToolbar

@@ -18,12 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useParams } from "react-router";
 
 import type { ApprovalDocumentPageQuery } from "#/__generated__/core/ApprovalDocumentPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { DocumentVersionHistory } from "#/pages/_components/DocumentVersionHistory";
 import { DocumentWorkspace } from "#/pages/_components/DocumentWorkspace";
 import {
   useDocumentQueue,
@@ -47,7 +48,7 @@ export const approvalDocumentPageQuery = graphql`
         id
         title
         approvalState
-        versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+        latestVersion: versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
           edges {
             node {
               id
@@ -60,6 +61,7 @@ export const approvalDocumentPageQuery = graphql`
           }
         }
       }
+      ...DocumentVersionHistory_approvals @arguments(documentId: $documentId)
       pendingQueue: approvableDocuments(
         organizationId: $organizationId
         first: $first
@@ -99,10 +101,21 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
     throw new NotFoundError("approvable document not found");
   }
 
-  const version = document.versions.edges[0]?.node;
+  const version = document.latestVersion.edges[0]?.node;
   if (version == null) {
     throw new NotFoundError("document version not found");
   }
+
+  const [selected, setSelected] = useState({
+    documentId: document.id,
+    versionId: version.id,
+  });
+  if (selected.documentId !== document.id) {
+    setSelected({ documentId: document.id, versionId: version.id });
+  }
+  const selectedVersionId = selected.documentId === document.id
+    ? selected.versionId
+    : version.id;
 
   const pendingPage = useMemo(() => ({
     ids: data.viewer.pendingQueue.edges.map(({ node }) => node.id),
@@ -121,7 +134,7 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
 
   const [approveDocumentVersion, isApproving] = useApproveDocumentVersion(document.id);
   const [rejectDocumentVersion, isRejecting] = useRejectDocumentVersion(document.id);
-  const dataUri = useExportEmployeeDocumentPdf(version.id);
+  const dataUri = useExportEmployeeDocumentPdf(selectedVersionId);
 
   const index = snapshot?.ids.indexOf(documentId) ?? -1;
   const hasNext = snapshot != null
@@ -131,6 +144,16 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
     <DocumentWorkspace
       title={document.title}
       dataUri={dataUri}
+      history={(
+        <DocumentVersionHistory
+          viewerKey={data.viewer}
+          kind="approvals"
+          selectedVersionId={selectedVersionId}
+          onSelect={(versionId) => {
+            setSelected({ documentId: document.id, versionId });
+          }}
+        />
+      )}
       request={(
         <ApprovalRequestPanel
           title={document.title}
