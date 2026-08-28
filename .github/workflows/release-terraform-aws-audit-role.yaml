@@ -116,8 +116,11 @@ jobs:
             mv "${ADDITIONS_FILE}.new" "${ADDITIONS_FILE}"
           done < <(cd "${STAGE}" && find . -type f -print0)
 
+          # -n is required: the filter reads --argjson/--slurpfile only.
+          # Without it jq waits on stdin, writes an empty file, and
+          # --slurpfile then makes $deletions[0] null.
           DELETIONS_FILE="$(mktemp)"
-          jq -c --argjson existing "${EXISTING}" --slurpfile additions "${ADDITIONS_FILE}" '
+          jq -n -c --argjson existing "${EXISTING}" --slurpfile additions "${ADDITIONS_FILE}" '
             ($additions[0] | map(.path)) as $keep
             | ($existing - $keep)
             | map({path: .})
@@ -155,7 +158,7 @@ jobs:
                 headline: $headline,
                 oid: $oid,
                 additions: $additions[0],
-                deletions: $deletions[0]
+                deletions: ($deletions[0] // [])
               }
             }' > "${PAYLOAD}"
 
