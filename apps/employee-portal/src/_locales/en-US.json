@@ -67,6 +67,12 @@
         "pendingCount_one": "{{count}} document to approve",
         "pendingCount_other": "{{count}} documents to approve",
         "action": "Start approving"
+      },
+      "devices": {
+        "title": "Devices",
+        "description": "Manage your work devices.",
+        "connected": "Device connected",
+        "action": "Register a device"
       }
     }
   },

@@ -23,27 +23,64 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
+import { useParams } from "react-router";
+
+import type { GetStartedCard_viewer$key } from "#/__generated__/core/GetStartedCard_viewer.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { GetStartedStep } from "./GetStartedStep";
 import { getStartedCard } from "./variants";
 
+const getStartedCardFragment = graphql`
+  fragment GetStartedCard_viewer on Viewer
+  @argumentDefinitions(organizationId: { type: "ID!" })
+  @throwOnFieldError {
+    pendingSignatures: signableDocuments(
+      organizationId: $organizationId
+      first: 1
+      filter: { signed: false }
+    ) {
+      totalCount
+      edges {
+        node {
+          id
+        }
+      }
+    }
+    pendingApprovals: approvableDocuments(
+      organizationId: $organizationId
+      first: 1
+      filter: { approvalStates: [PENDING] }
+    ) {
+      totalCount
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }
+`;
+
 export interface GetStartedCardProps {
-  organizationId: string;
-  pendingSignatureCount: number;
-  pendingApprovalCount: number;
-  firstPendingSignatureId: string | null;
-  firstPendingApprovalId: string | null;
+  viewerKey: GetStartedCard_viewer$key;
 }
 
-export function GetStartedCard({
-  organizationId,
-  pendingSignatureCount,
-  pendingApprovalCount,
-  firstPendingSignatureId,
-  firstPendingApprovalId,
-}: GetStartedCardProps) {
+export function GetStartedCard({ viewerKey }: GetStartedCardProps) {
   const { t } = useTranslation();
+  const { organizationId } = useParams();
   const slots = getStartedCard();
+  const viewer = useFragment(getStartedCardFragment, viewerKey);
+
+  if (organizationId == null) {
+    throw new NotFoundError("organizationId is required");
+  }
+
+  const pendingSignatureCount = viewer.pendingSignatures.totalCount;
+  const pendingApprovalCount = viewer.pendingApprovals.totalCount;
+  const firstPendingSignatureId = viewer.pendingSignatures.edges[0]?.node.id ?? null;
+  const firstPendingApprovalId = viewer.pendingApprovals.edges[0]?.node.id ?? null;
 
   const steps = [];
 

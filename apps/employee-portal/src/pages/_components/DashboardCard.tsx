@@ -32,12 +32,14 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useParams } from "react-router";
+
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { dashboardCard } from "./variants";
 
 export interface DashboardCardProps {
   kind: "signatures" | "approvals";
-  organizationId: string;
   pendingCount: number;
   completedCount: number;
   firstPendingId: string | null;
@@ -46,14 +48,18 @@ export interface DashboardCardProps {
 
 export function DashboardCard({
   kind,
-  organizationId,
   pendingCount,
   completedCount,
   firstPendingId,
   wash = false,
 }: DashboardCardProps) {
   const { t } = useTranslation();
+  const { organizationId } = useParams();
   const slots = dashboardCard({ wash });
+
+  if (organizationId == null) {
+    throw new NotFoundError("organizationId is required");
+  }
 
   const listPath = kind === "signatures"
     ? `/${organizationId}/signatures`

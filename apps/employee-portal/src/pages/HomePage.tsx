@@ -22,12 +22,13 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useParams } from "react-router";
 
 import type { HomePageQuery } from "#/__generated__/core/HomePageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
-import { DashboardCard } from "#/pages/_components/DashboardCard";
+import { ApprovalDashboardCard } from "#/pages/_components/ApprovalDashboardCard";
+import { DeviceCard } from "#/pages/_components/DeviceCard";
 import { GetStartedCard } from "#/pages/_components/GetStartedCard";
+import { SignatureDashboardCard } from "#/pages/_components/SignatureDashboardCard";
 import { useViewerFirstName } from "#/pages/iam/_lib/ViewerIdentityContext";
 
 export const homePageQuery = graphql`
@@ -37,37 +38,37 @@ export const homePageQuery = graphql`
         organizationId: $organizationId
         first: 1
         filter: { signed: false }
-      ) @required(action: THROW) {
+      ) {
         totalCount
-        edges @required(action: THROW) {
-          node @required(action: THROW) {
-            id
-          }
-        }
       }
       completedSignatures: signableDocuments(
         organizationId: $organizationId
         filter: { signed: true }
-      ) @required(action: THROW) {
+      ) {
         totalCount
       }
       pendingApprovals: approvableDocuments(
         organizationId: $organizationId
         first: 1
         filter: { approvalStates: [PENDING] }
-      ) @required(action: THROW) {
+      ) {
         totalCount
-        edges @required(action: THROW) {
-          node @required(action: THROW) {
-            id
-          }
-        }
       }
       approvedDocuments: approvableDocuments(
         organizationId: $organizationId
         filter: { approvalStates: [APPROVED] }
-      ) @required(action: THROW) {
+      ) {
         totalCount
+      }
+      ...GetStartedCard_viewer @arguments(organizationId: $organizationId)
+      ...SignatureDashboardCard_viewer @arguments(organizationId: $organizationId)
+      ...ApprovalDashboardCard_viewer @arguments(organizationId: $organizationId)
+      ...DeviceCard_viewer @arguments(organizationId: $organizationId)
+    }
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        ...DeviceCard_organization
       }
     }
   }
@@ -79,26 +80,20 @@ interface HomePageProps {
 
 export function HomePage({ queryRef }: HomePageProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
   const firstName = useViewerFirstName();
-  const { viewer } = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
+  const { viewer, organization } = usePreloadedQuery<HomePageQuery>(
+    homePageQuery,
+    queryRef,
+  );
 
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
+  if (organization == null || organization.__typename !== "Organization") {
+    throw new NotFoundError("invalid type for organization node");
   }
 
-  const pendingSignatureCount = viewer.pendingSignatures.totalCount;
-  const signedCount = viewer.completedSignatures.totalCount;
-  const pendingApprovalCount = viewer.pendingApprovals.totalCount;
-  const approvedCount = viewer.approvedDocuments.totalCount;
-
-  const firstPendingSignatureId = viewer.pendingSignatures.edges[0]?.node.id ?? null;
-  const firstPendingApprovalId = viewer.pendingApprovals.edges[0]?.node.id ?? null;
-
   const showGetStarted
-    = (pendingSignatureCount > 0 || pendingApprovalCount > 0)
-      && signedCount === 0
-      && approvedCount === 0;
+    = (viewer.pendingSignatures.totalCount > 0 || viewer.pendingApprovals.totalCount > 0)
+      && viewer.completedSignatures.totalCount === 0
+      && viewer.approvedDocuments.totalCount === 0;
 
   const welcome = firstName === ""
     ? t("homePage.welcomeFallback")
@@ -117,30 +112,20 @@ export function HomePage({ queryRef }: HomePageProps) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {showGetStarted && (
           <div className="md:row-span-2">
-            <GetStartedCard
-              organizationId={organizationId}
-              pendingSignatureCount={pendingSignatureCount}
-              pendingApprovalCount={pendingApprovalCount}
-              firstPendingSignatureId={firstPendingSignatureId}
-              firstPendingApprovalId={firstPendingApprovalId}
-            />
+            <GetStartedCard viewerKey={viewer} />
           </div>
         )}
-        <DashboardCard
-          kind="signatures"
-          organizationId={organizationId}
-          pendingCount={pendingSignatureCount}
-          completedCount={signedCount}
-          firstPendingId={firstPendingSignatureId}
-          wash={!showGetStarted && pendingSignatureCount > 0}
+        <SignatureDashboardCard
+          viewerKey={viewer}
+          wash={!showGetStarted && viewer.pendingSignatures.totalCount > 0}
         />
-        <DashboardCard
-          kind="approvals"
-          organizationId={organizationId}
-          pendingCount={pendingApprovalCount}
-          completedCount={approvedCount}
-          firstPendingId={firstPendingApprovalId}
-          wash={!showGetStarted && pendingApprovalCount > 0}
+        <ApprovalDashboardCard
+          viewerKey={viewer}
+          wash={!showGetStarted && viewer.pendingApprovals.totalCount > 0}
+        />
+        <DeviceCard
+          viewerKey={viewer}
+          organizationKey={organization}
         />
       </div>
     </main>
