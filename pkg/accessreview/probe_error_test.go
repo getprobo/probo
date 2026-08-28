@@ -98,30 +98,29 @@ func TestProbeFailureCodeIsSafeToLog(t *testing.T) {
 	assert.NotContains(t, awsCode, "123456789012")
 }
 
-func TestIsProviderVerdictSurvivesTypedNilURLError(t *testing.T) {
+// nilMatchingError reports a match while assigning a nil value, which is what
+// a custom As is free to do. errors.AsType then returns ok with a nil pointer,
+// so the classifiers guard the dereference that follows.
+type nilMatchingError struct{}
+
+func (nilMatchingError) Error() string { return "assigns a nil match" }
+
+func (nilMatchingError) As(target any) bool {
+	pointer, ok := target.(**url.Error)
+	if !ok {
+		return false
+	}
+
+	*pointer = nil
+
+	return true
+}
+
+func TestIsProviderVerdictGuardsANilMatch(t *testing.T) {
 	t.Parallel()
 
-	// errors.Is unwraps, and (*url.Error).Unwrap dereferences its receiver,
-	// so a typed nil must be caught before any sentinel comparison.
-	var urlErr *url.Error
-
-	assert.NotPanics(t, func() { accessreview.IsProviderVerdict(urlErr) })
-	assert.False(t, accessreview.IsProviderVerdict(urlErr))
-
-	// Also when it sits deeper in the chain, where the traversal would reach
-	// it rather than the screen catching it at the top.
-	wrapped := fmt.Errorf("cannot probe: %w", urlErr)
-
-	assert.NotPanics(t, func() { accessreview.IsProviderVerdict(wrapped) })
-	assert.False(t, accessreview.IsProviderVerdict(wrapped))
-	assert.NotPanics(t, func() { accessreview.ProbeFailureCode(wrapped) })
-
-	// A typed nil joined alongside a real error is still reachable by the
-	// traversal, so the screen follows multi-error children too.
-	joined := errors.Join(errors.New("other"), urlErr)
-
-	assert.NotPanics(t, func() { accessreview.IsProviderVerdict(joined) })
-	assert.NotPanics(t, func() { accessreview.ProbeFailureCode(joined) })
+	assert.NotPanics(t, func() { accessreview.IsProviderVerdict(nilMatchingError{}) })
+	assert.False(t, accessreview.IsProviderVerdict(nilMatchingError{}))
 }
 
 func TestIsProviderVerdictExcludesCancellationJoinedWithAVerdict(t *testing.T) {

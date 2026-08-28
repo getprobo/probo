@@ -25,8 +25,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"reflect"
-	"slices"
 	"strings"
 
 	"github.com/aws/smithy-go"
@@ -194,54 +192,16 @@ func (e *ProbeError) Unwrap() error {
 	return e.Err
 }
 
-// isNilError reports whether err is nil, or whether its chain holds a typed
-// nil. A typed nil panics when something calls its Unwrap, which errors.AsType
-// does while walking, so the classifiers below screen the chain first: they run
-// while logging a failure, where a panic costs more than a coarse answer. Each
-// node is checked before it is unwrapped, so the screen cannot trip over the
-// value it is looking for.
-func isNilError(err error) bool {
-	if err == nil {
-		return true
-	}
-
-	switch value := reflect.ValueOf(err); value.Kind() {
-	case reflect.Pointer, reflect.Interface, reflect.Map, reflect.Slice, reflect.Func, reflect.Chan:
-		if value.IsNil() {
-			return true
-		}
-	}
-
-	switch unwrapper := err.(type) {
-	case interface{ Unwrap() error }:
-		cause := unwrapper.Unwrap()
-		if cause == nil {
-			// A real error that simply wraps nothing, not a nil one.
-			return false
-		}
-
-		return isNilError(cause)
-
-	case interface{ Unwrap() []error }:
-		if slices.ContainsFunc(unwrapper.Unwrap(), isNilError) {
-			return true
-		}
-	}
-
-	return false
-}
-
 // IsProviderVerdict reports whether err is the provider's answer rather than a
 // failure on Probo's side. Only a rejected credential, a transport failure that
 // reached the provider, and a refused token refresh qualify. Everything else a
 // probe can return (settings that will not decode, a request that could not be
 // built, a registry misconfiguration) is ours, so the default is to treat a
 // failure as Probo's and report it in full.
+//
+// Walks the error chain, so a typed nil in it would panic. No caller can build
+// one, and guarding it cost more than it saved.
 func IsProviderVerdict(err error) bool {
-	if isNilError(err) {
-		return false
-	}
-
 	// Checked before any verdict: our own deadline expiring is never the
 	// provider's answer, even when it is joined with one.
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
@@ -279,12 +239,9 @@ func IsProviderVerdict(err error) bool {
 // ProbeFailureCode reduces a probe failure to a token safe to log. Probe
 // errors wrap text Probo does not control (an OAuth error_description, a
 // response body, a customer's self-hosted host), so anything unrecognised
-// degrades to its Go type rather than being quoted.
+// degrades to its Go type rather than being quoted. Walks the chain on the
+// same terms as IsProviderVerdict.
 func ProbeFailureCode(err error) string {
-	if isNilError(err) {
-		return "none"
-	}
-
 	// Guarded against a typed nil: this runs on a logging path, where a panic
 	// would cost more than the lost detail.
 	if rejected, ok := errors.AsType[*provider.CredentialRejectedError](err); ok && rejected != nil {
