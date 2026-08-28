@@ -97,6 +97,10 @@ function whenQueryPaintReady(
   };
 }
 
+type DocumentWithViewTransition = Document & {
+  startViewTransition?: (update: () => void) => { finished: Promise<unknown> };
+};
+
 function revealQueryRef(apply: () => void, animate: boolean): void {
   if (!animate) {
     apply();
@@ -107,13 +111,14 @@ function revealQueryRef(apply: () => void, animate: boolean): void {
     flushSync(apply);
   };
 
-  if (typeof document.startViewTransition !== "function") {
+  const viewDocument = document as DocumentWithViewTransition;
+  if (typeof viewDocument.startViewTransition !== "function") {
     commit();
     clearQueueDirection();
     return;
   }
 
-  const transition = document.startViewTransition(commit);
+  const transition = viewDocument.startViewTransition(commit);
   void transition.finished.finally(clearQueueDirection);
 }
 
