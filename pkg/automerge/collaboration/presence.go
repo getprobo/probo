@@ -35,6 +35,7 @@ const PresenceMarker = "__presence"
 const (
 	DefaultHeartbeatInterval = 15 * time.Second
 	DefaultPeerTTL           = 3 * DefaultHeartbeatInterval
+	maxPresenceValueBytes    = maxApplicationBytes - 64
 )
 
 // PresenceType is the discriminator of a presence message.
@@ -171,14 +172,21 @@ func (m PresenceMessage) validate() error {
 
 // MarshalPresenceValue encodes an application value into the raw CBOR carried by
 // an update's Value or a snapshot's State, using the shared deterministic mode.
+// The value limit reserves space for the presence envelope. Long channel names
+// consume additional envelope space and remain subject to EncodePresence's exact
+// application-payload limit.
 func MarshalPresenceValue(value any) (cbor.RawMessage, error) {
 	data, err := marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode presence value: %w", err)
 	}
 
-	if err := validateApplicationSize(data); err != nil {
-		return nil, fmt.Errorf("invalid presence value: %w", err)
+	if len(data) > maxPresenceValueBytes {
+		return nil, fmt.Errorf(
+			"presence value of %d bytes exceeds the %d byte limit",
+			len(data),
+			maxPresenceValueBytes,
+		)
 	}
 
 	return data, nil

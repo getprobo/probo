@@ -127,7 +127,7 @@ func serveGateway(t *testing.T, w http.ResponseWriter, r *http.Request, document
 
 	defer func() { _ = connection.Close(websocket.StatusNormalClosure, "") }()
 
-	connection.SetReadLimit(1 << 20)
+	connection.SetReadLimit(collaboration.MaxWireFrameBytes)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()

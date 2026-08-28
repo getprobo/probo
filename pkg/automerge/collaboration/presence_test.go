@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/fxamacker/cbor/v2"
@@ -178,6 +179,35 @@ func TestEncodePresence_BuildsUpdate(t *testing.T) {
 	var decoded map[string]string
 	require.NoError(t, message.UnmarshalValue(&decoded))
 	assert.Equal(t, map[string]string{"anchor": "x", "head": "y"}, decoded)
+}
+
+func TestMarshalPresenceValue_ReservesEnvelopeSpace(t *testing.T) {
+	t.Parallel()
+
+	value := strings.Repeat("x", maxPresenceValueBytes-5)
+	raw, err := MarshalPresenceValue(value)
+	require.NoError(t, err)
+	assert.Len(t, raw, maxPresenceValueBytes)
+
+	encoded, err := EncodePresence(
+		PresenceMessage{
+			Type:    PresenceUpdate,
+			Channel: TextSelectionChannel,
+			Value:   raw,
+		},
+	)
+	require.NoError(t, err)
+	assert.LessOrEqual(t, len(encoded), maxApplicationBytes)
+
+	decoded, err := DecodePresence(encoded)
+	require.NoError(t, err)
+
+	var roundTripped string
+	require.NoError(t, decoded.UnmarshalValue(&roundTripped))
+	assert.Equal(t, value, roundTripped)
+
+	_, err = MarshalPresenceValue(strings.Repeat("x", maxPresenceValueBytes-4))
+	assert.ErrorContains(t, err, "presence value")
 }
 
 // TestEncodePresence_RejectsCrossTypeFields guards the type/field invariants.

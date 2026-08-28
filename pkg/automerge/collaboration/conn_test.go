@@ -481,7 +481,46 @@ func TestClientConn_RejectsMalformedDocUnavailable(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	inbound, err := conn.Receive(malformed)
+	_, err = conn.Receive(malformed)
 	require.Error(t, err)
-	assert.False(t, inbound.Unavailable, "malformed frames must not report unavailability")
+}
+
+func TestClientConn_SurfacesDocUnavailable(t *testing.T) {
+	t.Parallel()
+
+	conn, err := NewClientConn(
+		ClientConfig{
+			ClientPeerID: "client",
+			DocumentID:   "doc-1",
+		},
+		&scriptedSync{},
+	)
+	require.NoError(t, err)
+
+	peer, err := EncodePeerFrame(
+		PeerFrame{
+			Type:                    FramePeer,
+			SenderID:                "server",
+			TargetID:                "client",
+			SelectedProtocolVersion: ProtocolV1,
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = conn.Receive(peer)
+	require.NoError(t, err)
+
+	frame, err := EncodeMessage(
+		Message{
+			Type:       MessageDocUnavailable,
+			SenderID:   "server",
+			TargetID:   "client",
+			DocumentID: "doc-1",
+		},
+	)
+	require.NoError(t, err)
+
+	inbound, err := conn.Receive(frame)
+	require.NoError(t, err)
+	assert.True(t, inbound.Unavailable)
 }
