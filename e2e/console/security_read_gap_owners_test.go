@@ -25,11 +25,11 @@
 // authorization shape (authorizing the parent obj.ID with the child's
 // ActionMembershipProfileGet, then loading the child through the scope-by-key
 // Profile dataloader) also existed on asset.owner, datum.owner, finding.owner,
-// obligation.owner, risk.owner, task.assignedTo, and
-// thirdParty.administrators. Each of those write paths validates the owner FK
-// today, so these tests plant a foreign profile id directly -- proving the
-// read resolver refuses cross-tenant PII independently of the write check
-// (a future write regression, migration bug, or direct DB access).
+// obligation.owner, task.assignedTo, and thirdParty.administrators. Each of
+// those write paths validates the owner FK today, so these tests plant a
+// foreign profile id directly -- proving the read resolver refuses
+// cross-tenant PII independently of the write check (a future write
+// regression, migration bug, or direct DB access).
 package console_test
 
 import (
@@ -262,40 +262,6 @@ func TestSecurity_ReadGap_ObligationOwner(t *testing.T) {
 	`, map[string]any{"id": obligationID}, &readResult)
 
 	testutil.AssertNodeNotAccessible(t, err, readResult.Node.Owner == nil, "cross-tenant profile PII via obligation.owner")
-}
-
-func TestSecurity_ReadGap_RiskOwner(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Secret Risk Owner (read-gap probe)"})
-
-	riskID := factory.CreateRisk(org1Owner, factory.Attrs{"name": "Org1 Risk for read-gap probe"})
-
-	injectCrossTenantFK(t, "risks", "owner_profile_id", riskID, org2ProfileID)
-
-	var readResult struct {
-		Node struct {
-			Owner *struct {
-				ID       string `json:"id"`
-				FullName string `json:"fullName"`
-			} `json:"owner"`
-		} `json:"node"`
-	}
-
-	err := org1Owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Risk {
-					owner { id fullName }
-				}
-			}
-		}
-	`, map[string]any{"id": riskID}, &readResult)
-
-	testutil.AssertNodeNotAccessible(t, err, readResult.Node.Owner == nil, "cross-tenant profile PII via risk.owner")
 }
 
 func TestSecurity_ReadGap_TaskAssignedTo(t *testing.T) {

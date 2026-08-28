@@ -4490,7 +4490,7 @@
     }
   },
   "riskOverviewPage": {
-    "emptyScores": "Scores worden ingesteld op een behandelplan in een risicoanalyse.",
+    "emptyNote": "Dit risico heeft geen opmerking.",
     "fields": {
       "owner": "Eigenaar",
       "treatment": "Behandeling",

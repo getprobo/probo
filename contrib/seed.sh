@@ -459,127 +459,121 @@ echo "  Creating risks..."
 create_risk() {
   local name="$1"
   local category="$2"
-  local treatment="$3"
-  local likelihood="$4"
-  local impact="$5"
 
   $PRB risk create \
     --org "$ORG_ID" \
     --name "$name" \
-    --category "$category" \
-    --treatment "$treatment" \
-    --inherent-likelihood "$likelihood" \
-    --inherent-impact "$impact" >/dev/null
+    --category "$category" >/dev/null
 }
 
 create_risk \
   "Unauthorized access to production systems" \
-  SECURITY MITIGATED 4 5
+  SECURITY
 create_risk \
   "Sensitive data exfiltration by insider threat" \
-  SECURITY MITIGATED 2 5
+  SECURITY
 create_risk \
   "Phishing campaign targeting employees" \
-  SECURITY MITIGATED 4 3
+  SECURITY
 create_risk \
   "Ransomware via supply chain compromise" \
-  SECURITY MITIGATED 2 5
+  SECURITY
 create_risk \
   "Credential stuffing on customer login portal" \
-  SECURITY MITIGATED 3 4
+  SECURITY
 create_risk \
   "Stolen developer laptop with source code" \
-  SECURITY MITIGATED 3 3
+  SECURITY
 create_risk \
   "API key leaked in public repository" \
-  SECURITY MITIGATED 3 4
+  SECURITY
 create_risk \
   "Social engineering of support staff" \
-  SECURITY MITIGATED 3 3
+  SECURITY
 create_risk \
   "Brute force attack on admin panel" \
-  SECURITY MITIGATED 2 4
+  SECURITY
 create_risk \
   "Man-in-the-middle attack on internal network" \
-  SECURITY MITIGATED 1 4
+  SECURITY
 create_risk \
   "Malicious browser extension on corporate devices" \
-  SECURITY MITIGATED 2 3
+  SECURITY
 create_risk \
   "Unauthorized physical access to server room" \
-  SECURITY MITIGATED 1 5
+  SECURITY
 
 create_risk \
   "Third-party SaaS data breach" \
-  OPERATIONAL TRANSFERRED 3 4
+  OPERATIONAL
 create_risk \
   "Cloud region outage causing service disruption" \
-  OPERATIONAL ACCEPTED 2 4
+  OPERATIONAL
 create_risk \
   "Database corruption from failed migration" \
-  OPERATIONAL MITIGATED 2 5
+  OPERATIONAL
 create_risk \
   "Loss of key personnel with critical knowledge" \
-  OPERATIONAL MITIGATED 3 3
+  OPERATIONAL
 create_risk \
   "Backup restoration failure during disaster recovery" \
-  OPERATIONAL MITIGATED 2 5
+  OPERATIONAL
 create_risk \
   "DNS hijacking of company domain" \
-  OPERATIONAL MITIGATED 1 5
+  OPERATIONAL
 create_risk \
   "CDN provider outage affecting content delivery" \
-  OPERATIONAL ACCEPTED 2 3
+  OPERATIONAL
 create_risk \
   "Email service compromise leaking internal comms" \
-  OPERATIONAL MITIGATED 2 4
+  OPERATIONAL
 
 create_risk \
   "Non-compliance with GDPR data subject rights" \
-  COMPLIANCE MITIGATED 2 4
+  COMPLIANCE
 create_risk \
   "Failure to meet SOC 2 audit requirements" \
-  COMPLIANCE MITIGATED 2 4
+  COMPLIANCE
 create_risk \
   "Breach notification deadline missed" \
-  COMPLIANCE MITIGATED 1 5
+  COMPLIANCE
 create_risk \
   "Inadequate data processing agreements with third parties" \
-  COMPLIANCE MITIGATED 3 3
+  COMPLIANCE
 create_risk \
   "Employee data retained beyond legal period" \
-  COMPLIANCE MITIGATED 2 3
+  COMPLIANCE
 create_risk \
   "Cross-border data transfer without safeguards" \
-  COMPLIANCE MITIGATED 2 4
+  COMPLIANCE
 create_risk \
   "Cookie consent mechanism non-compliant" \
-  COMPLIANCE MITIGATED 3 2
+  COMPLIANCE
 create_risk \
   "Incomplete records of processing activities" \
-  COMPLIANCE MITIGATED 3 3
+  COMPLIANCE
 
 create_risk \
   "Cloud infrastructure misconfiguration exposing data" \
-  TECHNICAL MITIGATED 3 4
+  TECHNICAL
 create_risk \
   "Loss of encryption keys for production database" \
-  TECHNICAL MITIGATED 1 5
+  TECHNICAL
 create_risk \
   "Denial of service attack on customer-facing APIs" \
-  TECHNICAL MITIGATED 3 3
+  TECHNICAL
 create_risk \
   "TLS certificate expiration causing service outage" \
-  TECHNICAL MITIGATED 2 3
+  TECHNICAL
 create_risk \
   "Container escape vulnerability in production cluster" \
-  TECHNICAL MITIGATED 1 5
+  TECHNICAL
 create_risk \
   "Dependency with known CVE deployed to production" \
-  TECHNICAL MITIGATED 3 4
+  TECHNICAL
 create_risk \
   "Logging pipeline failure hiding security incidents" \
-  TECHNICAL MITIGATED 2 4
+  TECHNICAL
 
 echo "    35 risks created"
 

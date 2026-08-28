@@ -8,7 +8,7 @@
     },
     {
       "type": "paragraph",
-      "content": [{ "type": "text", "text": "This document provides a comprehensive register of all risks identified within the organization. It captures each risk's classification, treatment, ownership, initial and residual scoring (likelihood × impact), the related controls, measures, documents and obligations, plus any relevant notes." }]
+      "content": [{ "type": "text", "text": "This document provides a comprehensive register of all risks identified within the organization. It captures each risk's classification and any relevant notes." }]
     },
     { "type": "horizontalRule" },
     {
@@ -41,75 +41,9 @@
       ]
     },
     {
-      "type": "paragraph",
-      "content": [
-        { "type": "text", "text": "Owner: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.Owner}} }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "content": [
-        { "type": "text", "text": "Treatment: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.Treatment}} }
-      ]
-    },
-    {
       "type": "heading",
       "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": {{json (printf "2.%d.2 Initial Risk" (add $i 1))}} }]
-    },
-    {
-      "type": "table",
-      "content": [
-        {
-          "type": "tableRow",
-          "content": [
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Likelihood", "marks": [{ "type": "bold" }] }] }] },
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Impact", "marks": [{ "type": "bold" }] }] }] },
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Score", "marks": [{ "type": "bold" }] }] }] }
-          ]
-        },
-        {
-          "type": "tableRow",
-          "content": [
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.InherentLikelihood}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.InherentImpact}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.InherentRiskScore}} }] }] }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": {{json (printf "2.%d.3 Residual Risk" (add $i 1))}} }]
-    },
-    {
-      "type": "table",
-      "content": [
-        {
-          "type": "tableRow",
-          "content": [
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Likelihood", "marks": [{ "type": "bold" }] }] }] },
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Impact", "marks": [{ "type": "bold" }] }] }] },
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Score", "marks": [{ "type": "bold" }] }] }] }
-          ]
-        },
-        {
-          "type": "tableRow",
-          "content": [
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.ResidualLikelihood}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.ResidualImpact}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.ResidualRiskScore}} }] }] }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": {{json (printf "2.%d.4 Notes" (add $i 1))}} }]
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.2 Notes" (add $i 1))}} }]
     },
     {
       "type": "paragraph",
@@ -124,55 +58,11 @@
     {
       "type": "heading",
       "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": "Treatment" }]
-    },
-    {
-      "type": "bulletList",
-      "content": [
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Mitigated: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Controls are in place to reduce the likelihood and/or impact of the risk." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Accepted: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The risk is acknowledged and accepted without further action." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Avoided: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Activities giving rise to the risk are avoided altogether." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Transferred: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The risk is shifted to a third party (e.g., insurance, vendor contract)." }] }] }
-      ]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": "Likelihood" }]
-    },
-    {
-      "type": "bulletList",
-      "content": [
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "1 — Improbable: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Highly unlikely to occur under normal circumstances." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "2 — Remote: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Unlikely but possible." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "3 — Occasional: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Could occur from time to time." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "4 — Probable: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Likely to occur in most circumstances." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "5 — Frequent: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Expected to occur regularly." }] }] }
-      ]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": "Impact" }]
-    },
-    {
-      "type": "bulletList",
-      "content": [
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "1 — Negligible: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Minimal disruption; absorbed by routine operations." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "2 — Low: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Limited disruption; localized impact." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "3 — Moderate: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Notable disruption to operations or finances." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "4 — Significant: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Major disruption; prolonged recovery effort needed." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "5 — Catastrophic: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Severe organization-wide impact threatening continuity." }] }] }
-      ]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": "Risk Score" }]
+      "content": [{ "type": "text", "text": "Category" }]
     },
     {
       "type": "paragraph",
-      "content": [{ "type": "text", "text": "Risk Score is the product of Likelihood × Impact (range 1–25). Initial values represent the risk before controls; residual values represent the risk after controls have been applied. Severity bands: Low (≤4), High (5–14), Critical (≥15)." }]
+      "content": [{ "type": "text", "text": "Each catalog risk is classified by a category such as Security, Operational, or Compliance. Treatment strategy and scoring live on the treatment plan for a specific risk analysis." }]
     }
   ]
 }

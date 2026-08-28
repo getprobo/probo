@@ -22,7 +22,6 @@ import { useToggle } from "@probo/hooks";
 import {
   Breadcrumb,
   Button,
-  Card,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -43,8 +42,7 @@ import { graphql } from "relay-runtime";
 import type { FormRiskDialog_risk$key } from "#/__generated__/core/FormRiskDialog_risk.graphql";
 import type { FormRiskDialogMutation } from "#/__generated__/core/FormRiskDialogMutation.graphql";
 import type { FormRiskDialogUpdateRiskMutation } from "#/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
-import { ControlledField, ControlledSelect } from "#/components/form/ControlledField";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { ControlledSelect } from "#/components/form/ControlledField";
 import {
   type RiskData,
   type RiskForm,
@@ -74,17 +72,7 @@ const formRiskFragment = graphql`
     name
     category
     description
-    treatment
-    inherentLikelihood
-    inherentImpact
-    residualLikelihood
-    residualImpact
-    inherentRiskScore
-    residualRiskScore
     note
-    owner {
-      id
-    }
   }
 `;
 
@@ -132,15 +120,7 @@ export function FormRiskDialog({
         name: risk.name,
         category: risk.category,
         description: risk.description,
-        treatment: risk.treatment,
-        inherentLikelihood: risk.inherentLikelihood,
-        inherentImpact: risk.inherentImpact,
-        residualLikelihood: risk.residualLikelihood,
-        residualImpact: risk.residualImpact,
-        inherentRiskScore: risk.inherentRiskScore,
-        residualRiskScore: risk.residualRiskScore,
         note: risk.note,
-        owner: risk.owner,
       }
     : undefined;
   const { control, handleSubmit, setValue, register, watch, formState, reset }
@@ -231,55 +211,10 @@ export function FormRiskDialog({
               placeholder={t("formRiskDialog.placeholders.description")}
               type="textarea"
             />
-
-            <div className="grid grid-cols-2 gap-6">
-              <ImpactAndLikelihood
-                errors={errors}
-                control={control}
-                label={t("formRiskDialog.fields.initialRisk")}
-                prefix="inherent"
-              />
-              <ImpactAndLikelihood
-                errors={errors}
-                control={control}
-                label={t("formRiskDialog.fields.residualRisk")}
-                prefix="residual"
-              />
-            </div>
           </div>
 
           <div className="py-5 px-6 bg-subtle">
             <Label>{t("formRiskDialog.properties")}</Label>
-
-            <PropertyRow
-              id="ownerId"
-              label={t("formRiskDialog.fields.owner")}
-              error={errors.ownerId?.message}
-            >
-              <PeopleSelectField
-                name="ownerId"
-                control={control}
-                organizationId={organizationId}
-              />
-            </PropertyRow>
-
-            <PropertyRow
-              id="treatment"
-              label={t("formRiskDialog.fields.treatment")}
-              error={errors.treatment?.message}
-            >
-              <ControlledSelect
-                control={control}
-                name="treatment"
-                variant="editor"
-                placeholder={t("formRiskDialog.placeholders.treatment")}
-              >
-                <Option value="AVOIDED">{t("formRiskDialog.treatments.avoided")}</Option>
-                <Option value="MITIGATED">{t("formRiskDialog.treatments.mitigated")}</Option>
-                <Option value="TRANSFERRED">{t("formRiskDialog.treatments.transferred")}</Option>
-                <Option value="ACCEPTED">{t("formRiskDialog.treatments.accepted")}</Option>
-              </ControlledSelect>
-            </PropertyRow>
 
             <PropertyRow
               id="note"
@@ -309,61 +244,6 @@ export function FormRiskDialog({
         </DialogFooter>
       </form>
     </Dialog>
-  );
-}
-
-function ImpactAndLikelihood({
-  label,
-  prefix,
-  control,
-  errors,
-}: {
-  label: string;
-  prefix: "inherent" | "residual";
-  control: RiskForm["control"];
-  errors: RiskForm["formState"]["errors"];
-}) {
-  const { t } = useTranslation();
-  return (
-    <div>
-      <Label>{label}</Label>
-      <Card padded className="space-y-4 p-4">
-        <ControlledField
-          control={control}
-          name={`${prefix}Impact`}
-          type="select"
-          label={t("formRiskDialog.fields.impact")}
-          placeholder={t("formRiskDialog.placeholders.impact")}
-          error={errors?.[`${prefix}Impact`]?.message}
-        >
-          {[1, 2, 3, 4, 5].map(value => (
-            <Option key={value} value={value.toString()}>
-              {t("formRiskDialog.scoreOption", {
-                value,
-                label: t(`formRiskDialog.impacts.${value}`),
-              })}
-            </Option>
-          ))}
-        </ControlledField>
-        <ControlledField
-          control={control}
-          name={`${prefix}Likelihood`}
-          type="select"
-          label={t("formRiskDialog.fields.likelihood")}
-          placeholder={t("formRiskDialog.placeholders.likelihood")}
-          error={errors?.[`${prefix}Likelihood`]?.message}
-        >
-          {[1, 2, 3, 4, 5].map(value => (
-            <Option key={value} value={value.toString()}>
-              {t("formRiskDialog.scoreOption", {
-                value,
-                label: t(`formRiskDialog.likelihoods.${value}`),
-              })}
-            </Option>
-          ))}
-        </ControlledField>
-      </Card>
-    </div>
   );
 }
 

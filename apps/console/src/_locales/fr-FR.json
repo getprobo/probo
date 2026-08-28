@@ -4500,7 +4500,7 @@
     }
   },
   "riskOverviewPage": {
-    "emptyScores": "Les scores sont définis sur un plan de traitement dans une analyse de risques.",
+    "emptyNote": "Ce risque n'a pas de note.",
     "fields": {
       "owner": "Propriétaire",
       "treatment": "Traitement",

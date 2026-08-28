@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Avatar, Badge, Card, RiskOverview, SeverityBadge } from "@probo/ui";
+import { Card } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
@@ -29,17 +29,7 @@ export const riskOverviewPageQuery = graphql`
     node(id: $riskId) {
       __typename
       ... on Risk {
-        treatment
         note
-        inherentRiskScore
-        residualRiskScore
-        inherentLikelihood
-        inherentImpact
-        residualLikelihood
-        residualImpact
-        owner {
-          fullName
-        }
       }
     }
   }
@@ -49,121 +39,32 @@ interface RiskOverviewPageProps {
   queryRef: PreloadedQuery<RiskOverviewPageQuery>;
 }
 
-function emptyValue() {
-  return <div className="text-sm text-txt-primary">—</div>;
-}
-
-function scoreValue(score: number | null | undefined) {
-  if (score == null) {
-    return emptyValue();
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-txt-primary tabular-nums">{score}</span>
-      <SeverityBadge score={score} />
-    </div>
-  );
-}
-
 export default function RiskOverviewPage({ queryRef }: RiskOverviewPageProps) {
   const { t } = useTranslation();
   const data = usePreloadedQuery<RiskOverviewPageQuery>(riskOverviewPageQuery, queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }
-  const risk = data.node;
-  const {
-    inherentLikelihood,
-    inherentImpact,
-    residualLikelihood,
-    residualImpact,
-  } = risk;
-  const hasScores = inherentLikelihood != null
-    && inherentImpact != null
-    && residualLikelihood != null
-    && residualImpact != null;
-  const note = risk.note?.trim();
+  const note = data.node.note?.trim();
 
   return (
     <div className="space-y-6">
       <Card className="space-y-4" padded>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskOverviewPage.fields.owner")}
-            </div>
-            {risk.owner?.fullName
-              ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar name={risk.owner.fullName} />
-                    <span className="text-sm text-txt-primary">{risk.owner.fullName}</span>
-                  </div>
-                )
-              : emptyValue()}
-          </div>
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskOverviewPage.fields.treatment")}
-            </div>
-            {risk.treatment
-              ? (
-                  <Badge variant="highlight">
-                    {t(`riskOverviewPage.treatments.${risk.treatment.toLowerCase()}`)}
-                  </Badge>
-                )
-              : emptyValue()}
-          </div>
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskOverviewPage.fields.initialRiskScore")}
-            </div>
-            {scoreValue(risk.inherentRiskScore)}
-          </div>
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskOverviewPage.fields.residualRiskScore")}
-            </div>
-            {scoreValue(risk.residualRiskScore)}
-          </div>
-        </div>
-        {note && (
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskOverviewPage.fields.note")}
-            </div>
-            <div className="text-sm text-txt-secondary whitespace-pre-wrap">{note}</div>
-          </div>
-        )}
+        {note
+          ? (
+              <div>
+                <div className="text-xs text-txt-tertiary font-semibold mb-1">
+                  {t("riskOverviewPage.fields.note")}
+                </div>
+                <div className="text-sm text-txt-secondary whitespace-pre-wrap">{note}</div>
+              </div>
+            )
+          : (
+              <p className="text-sm text-txt-secondary">
+                {t("riskOverviewPage.emptyNote")}
+              </p>
+            )}
       </Card>
-      {hasScores
-        ? (
-            <div className="grid grid-cols-2 gap-4">
-              <RiskOverview
-                type="inherent"
-                risk={{
-                  inherentLikelihood,
-                  inherentImpact,
-                  residualLikelihood,
-                  residualImpact,
-                }}
-              />
-              <RiskOverview
-                type="residual"
-                risk={{
-                  inherentLikelihood,
-                  inherentImpact,
-                  residualLikelihood,
-                  residualImpact,
-                }}
-              />
-            </div>
-          )
-        : (
-            <p className="text-sm text-txt-secondary">
-              {t("riskOverviewPage.emptyScores")}
-            </p>
-          )}
     </div>
   );
 }

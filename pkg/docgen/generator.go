@@ -281,18 +281,10 @@ type (
 	}
 
 	RiskListRow struct {
-		Name               string
-		Description        string
-		Category           string
-		Treatment          string
-		Owner              string
-		InherentLikelihood string
-		InherentImpact     string
-		InherentRiskScore  string
-		ResidualLikelihood string
-		ResidualImpact     string
-		ResidualRiskScore  string
-		Note               string
+		Name        string
+		Description string
+		Category    string
+		Note        string
 	}
 
 	FindingListData struct {

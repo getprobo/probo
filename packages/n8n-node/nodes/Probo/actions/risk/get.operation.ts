@@ -52,13 +52,6 @@ export async function execute(
 					name
 					description
 					category
-					treatment
-					inherentLikelihood
-					inherentImpact
-					inherentRiskScore
-					residualLikelihood
-					residualImpact
-					residualRiskScore
 					note
 					createdAt
 					updatedAt

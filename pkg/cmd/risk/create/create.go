@@ -38,13 +38,6 @@ mutation($input: CreateRiskInput!) {
         id
         name
         category
-        treatment
-        inherentLikelihood
-        inherentImpact
-        inherentRiskScore
-        residualLikelihood
-        residualImpact
-        residualRiskScore
       }
     }
   }
@@ -55,16 +48,9 @@ type createResponse struct {
 	CreateRisk struct {
 		RiskEdge struct {
 			Node struct {
-				ID                 string `json:"id"`
-				Name               string `json:"name"`
-				Category           string `json:"category"`
-				Treatment          string `json:"treatment"`
-				InherentLikelihood int    `json:"inherentLikelihood"`
-				InherentImpact     int    `json:"inherentImpact"`
-				InherentRiskScore  int    `json:"inherentRiskScore"`
-				ResidualLikelihood int    `json:"residualLikelihood"`
-				ResidualImpact     int    `json:"residualImpact"`
-				ResidualRiskScore  int    `json:"residualRiskScore"`
+				ID       string `json:"id"`
+				Name     string `json:"name"`
+				Category string `json:"category"`
 			} `json:"node"`
 		} `json:"riskEdge"`
 	} `json:"createRisk"`
@@ -72,27 +58,21 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg                string
-		flagName               string
-		flagCategory           string
-		flagTreatment          string
-		flagInherentLikelihood int
-		flagInherentImpact     int
-		flagResidualLikelihood int
-		flagResidualImpact     int
-		flagDescription        string
-		flagNote               string
-		flagOwner              string
+		flagOrg         string
+		flagName        string
+		flagCategory    string
+		flagDescription string
+		flagNote        string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new risk",
 		Example: `  # Create a risk interactively
-  prb risk create --inherent-likelihood 3 --inherent-impact 4
+  prb risk create
 
   # Create a risk non-interactively
-  prb risk create --name "Data breach" --category "Security" --treatment MITIGATED --inherent-likelihood 3 --inherent-impact 4`,
+  prb risk create --name "Data breach" --category "Security"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -140,22 +120,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
-
-				if flagTreatment == "" {
-					err := huh.NewSelect[string]().
-						Title("Risk treatment").
-						Options(
-							huh.NewOption("Mitigated", "MITIGATED"),
-							huh.NewOption("Accepted", "ACCEPTED"),
-							huh.NewOption("Avoided", "AVOIDED"),
-							huh.NewOption("Transferred", "TRANSFERRED"),
-						).
-						Value(&flagTreatment).
-						Run()
-					if err != nil {
-						return err
-					}
-				}
 			}
 
 			if flagName == "" {
@@ -166,17 +130,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("category is required; pass --category or run interactively")
 			}
 
-			if flagTreatment == "" {
-				return fmt.Errorf("treatment is required; pass --treatment or run interactively")
-			}
-
 			input := map[string]any{
-				"organizationId":     flagOrg,
-				"name":               flagName,
-				"category":           flagCategory,
-				"treatment":          flagTreatment,
-				"inherentLikelihood": flagInherentLikelihood,
-				"inherentImpact":     flagInherentImpact,
+				"organizationId": flagOrg,
+				"name":           flagName,
+				"category":       flagCategory,
 			}
 
 			if flagDescription != "" {
@@ -185,18 +142,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			if flagNote != "" {
 				input["note"] = flagNote
-			}
-
-			if flagOwner != "" {
-				input["ownerId"] = flagOwner
-			}
-
-			if cmd.Flags().Changed("residual-likelihood") {
-				input["residualLikelihood"] = flagResidualLikelihood
-			}
-
-			if cmd.Flags().Changed("residual-impact") {
-				input["residualImpact"] = flagResidualImpact
 			}
 
 			data, err := client.Do(
@@ -227,17 +172,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Risk name (required)")
 	cmd.Flags().StringVar(&flagCategory, "category", "", "Risk category (required)")
-	cmd.Flags().StringVar(&flagTreatment, "treatment", "", "Risk treatment: MITIGATED, ACCEPTED, AVOIDED, TRANSFERRED (required)")
-	cmd.Flags().IntVar(&flagInherentLikelihood, "inherent-likelihood", 0, "Initial likelihood 1-5 (required)")
-	cmd.Flags().IntVar(&flagInherentImpact, "inherent-impact", 0, "Initial impact 1-5 (required)")
-	cmd.Flags().IntVar(&flagResidualLikelihood, "residual-likelihood", 0, "Residual likelihood 1-5")
-	cmd.Flags().IntVar(&flagResidualImpact, "residual-impact", 0, "Residual impact 1-5")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk description")
 	cmd.Flags().StringVar(&flagNote, "note", "", "Risk note")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
-
-	_ = cmd.MarkFlagRequired("inherent-likelihood")
-	_ = cmd.MarkFlagRequired("inherent-impact")
 
 	return cmd
 }

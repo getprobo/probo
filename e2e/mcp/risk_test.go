@@ -43,12 +43,9 @@ func TestMCP_Risk_CRUD(t *testing.T) {
 		} `json:"risk"`
 	}
 	mc.CallToolInto("addRisk", map[string]any{
-		"organization_id":     orgID,
-		"name":                factory.SafeName("Risk"),
-		"category":            "SECURITY",
-		"treatment":           "MITIGATED",
-		"inherent_likelihood": 2,
-		"inherent_impact":     2,
+		"organization_id": orgID,
+		"name":            factory.SafeName("Risk"),
+		"category":        "SECURITY",
 	}, &addResult)
 	require.NotEmpty(t, addResult.Risk.ID)
 
@@ -112,12 +109,9 @@ func TestMCP_Risk_PermissionDenied(t *testing.T) {
 	viewerMC := testutil.NewMCPClient(t, viewer)
 
 	msg := viewerMC.CallToolExpectToolError("addRisk", map[string]any{
-		"organization_id":     orgID,
-		"name":                factory.SafeName("Risk"),
-		"category":            "SECURITY",
-		"treatment":           "MITIGATED",
-		"inherent_likelihood": 2,
-		"inherent_impact":     2,
+		"organization_id": orgID,
+		"name":            factory.SafeName("Risk"),
+		"category":        "SECURITY",
 	})
 	assert.Contains(t, msg, "permission denied")
 }
@@ -134,12 +128,9 @@ func TestMCP_Risk_ListMeasures(t *testing.T) {
 		} `json:"risk"`
 	}
 	mc.CallToolInto("addRisk", map[string]any{
-		"organization_id":     orgID,
-		"name":                factory.SafeName("Risk"),
-		"category":            "SECURITY",
-		"treatment":           "MITIGATED",
-		"inherent_likelihood": 2,
-		"inherent_impact":     2,
+		"organization_id": orgID,
+		"name":            factory.SafeName("Risk"),
+		"category":        "SECURITY",
 	}, &riskResult)
 	require.NotEmpty(t, riskResult.Risk.ID)
 
