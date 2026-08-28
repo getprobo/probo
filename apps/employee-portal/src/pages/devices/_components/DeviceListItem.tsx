@@ -58,7 +58,7 @@ export function DeviceListItem({ deviceKey }: DeviceListItemProps) {
   const os = formatDeviceOs(platformLabel, device.osVersion);
   const lastActive = device.lastSeenAt === undefined || device.lastSeenAt === null
     ? t("list.never")
-    : relativeDateFormat(i18n.language, device.lastSeenAt);
+    : relativeDateFormat(i18n.language, device.lastSeenAt) || t("list.justNow");
   const hostname = device.hostname === undefined
     || device.hostname === null
     || device.hostname === ""

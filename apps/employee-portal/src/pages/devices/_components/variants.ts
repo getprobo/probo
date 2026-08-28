@@ -84,8 +84,11 @@ export const reviewGrid = tv({
 
 export const downloadList = tv({
   slots: {
-    item: "h-12 gap-8 px-8",
-    meta: "w-24 shrink-0",
+    item: [
+      "h-auto min-h-12 flex-wrap gap-3 px-4",
+      "sm:h-12 sm:flex-nowrap sm:gap-8 sm:px-8",
+    ],
+    meta: "w-full sm:w-24 sm:shrink-0",
   },
 });
 

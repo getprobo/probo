@@ -9,6 +9,7 @@
     "addManually": "Add manually",
     "lastActive": "Last active",
     "never": "Never",
+    "justNow": "Just now",
     "pendingHostname": "Pending",
     "connected": "Connected",
     "disconnected": "Disconnected",
@@ -83,6 +84,7 @@
     "featured": "Probo Agent for macOS",
     "continue": "Continue",
     "download": "Download",
+    "downloadNamed": "Download {{title}}",
     "macosIntel": {
       "title": "macOS Intel",
       "meta": "macOS 13.0+"
@@ -99,6 +101,7 @@
     "preparing": "Preparing…",
     "waiting": "Waiting for the agent's first check-in…",
     "timedOut": "We haven't heard from the agent yet. Make sure the desktop agent is installed and running, then try again.",
+    "failed": "We couldn't start enrollment. Try again.",
     "tryAgain": "Try again",
     "enrolled": "This device is enrolled.",
     "enrolledWithHostname": "{{hostname}} is enrolled.",

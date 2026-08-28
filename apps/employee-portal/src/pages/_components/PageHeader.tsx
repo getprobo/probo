@@ -85,12 +85,12 @@ export function PageHeader({
                 <CaretRightIcon className={slots.chevron()} />
               </>
             )}
-        <Text size={2} weight="medium" color="current" className={slots.crumb()} aria-current="page">
+        <Text size={2} weight="medium" color="current" className={slots.crumbCurrent()} aria-current="page">
           {currentLabel}
         </Text>
       </nav>
       <div className={slots.titleRow()}>
-        <Heading level={1} size={7} weight="medium" highContrast>
+        <Heading level={1} size={7} weight="medium" highContrast className="min-w-0">
           {title}
         </Heading>
         {actions != null && (

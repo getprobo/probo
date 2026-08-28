@@ -38,7 +38,11 @@ const deviceCardViewerFragment = graphql`
   fragment DeviceCard_viewer on Viewer
   @argumentDefinitions(organizationId: { type: "ID!" })
   @throwOnFieldError {
-    enrolledDevices(organizationId: $organizationId, first: 20) {
+    enrolledDevices(
+      organizationId: $organizationId
+      first: 20
+      orderBy: { field: LAST_SEEN_AT, direction: DESC }
+    ) {
       edges {
         node {
           state

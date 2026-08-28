@@ -45,7 +45,7 @@ export function RegisterDeviceCard({
   return (
     <Card variant="soft" size={3} padding="none" className={slots.frame()}>
       <div className={slots.header()}>
-        <span className={slots.icon()}>{icon}</span>
+        <span aria-hidden className={slots.icon()}>{icon}</span>
         <Heading level={2} size={6} weight="medium" highContrast>
           {title}
         </Heading>

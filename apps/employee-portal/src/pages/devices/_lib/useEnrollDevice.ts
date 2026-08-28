@@ -65,9 +65,10 @@ export function useEnrollDevice() {
   const [isComplete, setIsComplete] = useState(false);
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const [hostname, setHostname] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!isWaiting || deviceId == null) {
+    if (!isWaiting || deviceId === null) {
       return;
     }
 
@@ -92,6 +93,10 @@ export function useEnrollDevice() {
       }
 
       if (document.hidden) {
+        if (Date.now() > deadline) {
+          finishTimeout();
+          return;
+        }
         scheduleNext();
         return;
       }
@@ -114,7 +119,7 @@ export function useEnrollDevice() {
         }
 
         const device = data?.viewer.enrolledDevice;
-        if (device == null) {
+        if (device === undefined || device === null) {
           scheduleNext();
           return;
         }
@@ -151,7 +156,7 @@ export function useEnrollDevice() {
     };
   }, [deviceId, environment, isWaiting]);
 
-  if (organizationId == null) {
+  if (organizationId === undefined) {
     throw new NotFoundError("organizationId is required");
   }
 
@@ -159,23 +164,28 @@ export function useEnrollDevice() {
 
   async function openAgent() {
     setHasTimedOut(false);
+    setFailed(false);
 
-    if (deepLink != null) {
+    try {
+      if (deepLink !== null) {
+        setIsWaiting(true);
+        window.location.assign(deepLink);
+        return;
+      }
+
+      const response = await enrollDevice({
+        variables: {
+          input: { organizationId: enrolledOrganizationId },
+        },
+      });
+      const payload = response.enrollDevice;
+      setDeviceId(payload.device.id);
+      setDeepLink(payload.enrollmentUrl);
       setIsWaiting(true);
-      window.location.assign(deepLink);
-      return;
+      window.location.assign(payload.enrollmentUrl);
+    } catch {
+      setFailed(true);
     }
-
-    const response = await enrollDevice({
-      variables: {
-        input: { organizationId: enrolledOrganizationId },
-      },
-    });
-    const payload = response.enrollDevice;
-    setDeviceId(payload.device.id);
-    setDeepLink(payload.enrollmentUrl);
-    setIsWaiting(true);
-    window.location.assign(payload.enrollmentUrl);
   }
 
   return {
@@ -184,6 +194,7 @@ export function useEnrollDevice() {
     isWaiting,
     isComplete,
     hasTimedOut,
+    failed,
     hostname,
   };
 }

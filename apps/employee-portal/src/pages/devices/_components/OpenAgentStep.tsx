@@ -31,7 +31,11 @@ import { useEnrollDevice } from "#/pages/devices/_lib/useEnrollDevice";
 
 import { RegisterDeviceCard } from "./RegisterDeviceCard";
 
-export function OpenAgentStep() {
+export interface OpenAgentStepProps {
+  enrollment: ReturnType<typeof useEnrollDevice>;
+}
+
+export function OpenAgentStep({ enrollment }: OpenAgentStepProps) {
   const { t } = useTranslation("devices");
   const { organizationId } = useParams();
   const {
@@ -40,10 +44,11 @@ export function OpenAgentStep() {
     isWaiting,
     isComplete,
     hasTimedOut,
+    failed,
     hostname,
-  } = useEnrollDevice();
+  } = enrollment;
 
-  if (organizationId == null) {
+  if (organizationId === undefined) {
     throw new NotFoundError("organizationId is required");
   }
 
@@ -51,7 +56,7 @@ export function OpenAgentStep() {
     return (
       <RegisterDeviceCard
         icon={<CheckCircleIcon />}
-        title={hostname == null
+        title={hostname === null
           ? t("enroll.enrolled")
           : t("enroll.enrolledWithHostname", { hostname })}
         description={t("enroll.description")}
@@ -105,17 +110,25 @@ export function OpenAgentStep() {
         >
           {isCreating
             ? t("enroll.preparing")
-            : hasTimedOut
+            : hasTimedOut || failed
               ? t("enroll.tryAgain")
               : t("enroll.open")}
         </Button>
       )}
     >
-      {hasTimedOut && (
-        <Text size={2} color="neutral">
-          {t("enroll.timedOut")}
-        </Text>
-      )}
+      {hasTimedOut
+        ? (
+            <Text size={2} color="neutral">
+              {t("enroll.timedOut")}
+            </Text>
+          )
+        : failed
+          ? (
+              <Text size={2} color="neutral">
+                {t("enroll.failed")}
+              </Text>
+            )
+          : null}
     </RegisterDeviceCard>
   );
 }

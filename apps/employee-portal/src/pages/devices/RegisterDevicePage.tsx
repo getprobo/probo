@@ -40,6 +40,7 @@ import {
   type RegisterDeviceStep,
   registerDeviceStepIndex,
 } from "#/pages/devices/_lib/registerDeviceSteps";
+import { useEnrollDevice } from "#/pages/devices/_lib/useEnrollDevice";
 
 export const registerDevicePageQuery = graphql`
   query RegisterDevicePageQuery($organizationId: ID!) @throwOnFieldError {
@@ -68,6 +69,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
   );
   const requested = parseRegisterDeviceStep(searchParams.get("step"));
   const [reached, setReached] = useState(requested);
+  const enrollment = useEnrollDevice();
   const step = registerDeviceStepIndex(requested) <= registerDeviceStepIndex(reached)
     ? requested
     : reached;
@@ -188,7 +190,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
           {step === "download" && (
             <DownloadStep onContinue={() => advanceTo("enroll")} />
           )}
-          {step === "enroll" && <OpenAgentStep />}
+          {step === "enroll" && <OpenAgentStep enrollment={enrollment} />}
         </div>
       </div>
     </main>

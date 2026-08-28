@@ -61,6 +61,8 @@ export function ProgressStep({
     </>
   );
 
+  const current = state === "current" ? "step" as const : undefined;
+
   if (selectable) {
     return (
       <button type="button" className={slots.root()} onClick={onSelect}>
@@ -70,7 +72,7 @@ export function ProgressStep({
   }
 
   return (
-    <div className={slots.root()}>
+    <div aria-current={current} className={slots.root()}>
       {body}
     </div>
   );

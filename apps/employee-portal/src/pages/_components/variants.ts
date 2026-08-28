@@ -104,9 +104,10 @@ export const pageHeader = tv({
   slots: {
     root: "flex flex-col gap-4",
     crumbs: "flex items-center gap-3",
-    crumb: "font-medium text-sand-a11",
+    crumb: "font-medium",
+    crumbCurrent: "font-medium text-sand-a11",
     chevron: "size-3 shrink-0 text-sand-11",
-    titleRow: "flex items-center justify-between gap-3",
+    titleRow: "flex flex-wrap items-center justify-between gap-3",
     actions: "flex shrink-0 items-center gap-3",
   },
 });

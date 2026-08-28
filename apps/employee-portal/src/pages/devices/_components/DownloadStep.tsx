@@ -114,6 +114,7 @@ function DownloadRow({
         variant="soft"
         color="neutral"
         iconStart={icon}
+        aria-label={t("download.downloadNamed", { title })}
       >
         {t("download.download")}
       </ButtonAnchor>
