@@ -151,6 +151,13 @@ func TestDecode_CompressedOfficialChangeFixture(t *testing.T) {
 	require.Len(t, document.Changes, 1)
 	assert.Equal(t, opset.ChunkCompressedChange, document.ChunkTypes[0])
 	assert.Equal(t, "99c38e85f3aae8af5fc91b50329124c399d11a23eb834fe148b237280e4ba8a7", document.Heads[0].String())
+
+	withCorruptTail := append(append([]byte(nil), data...), magic[:]...)
+	incremental, consumed, err := DecodeIncremental(withCorruptTail)
+	require.NoError(t, err)
+	assert.Equal(t, len(data), consumed)
+	require.Len(t, incremental.Changes, 1)
+	assert.Equal(t, opset.ChunkCompressedChange, incremental.ChunkTypes[0])
 }
 
 func TestDecode_OfficialStorageCorpus(t *testing.T) {
@@ -445,6 +452,74 @@ func TestAssignOperations_UsesDependencyClock(t *testing.T) {
 	assert.Equal(t, uint64(3), changes[2].Operations[0].ID.Counter)
 }
 
+func TestAssignOperations_SingleActorManyChanges(t *testing.T) {
+	t.Parallel()
+
+	const count = 10_000
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	changes := make([]opset.Change, count)
+	operations := make([]opset.Operation, count)
+	for i := range count {
+		counter := uint64(i + 1)
+		changes[i] = opset.Change{
+			Actor:    actor,
+			Sequence: counter,
+			MaxOp:    counter,
+		}
+		if i > 0 {
+			changes[i].DependencyIndexes = []uint64{uint64(i - 1)}
+		}
+
+		operations[i].ID = opset.OpID{Actor: actor, Counter: counter}
+	}
+
+	err = assignOperations(changes, operations, &decodeBudget{})
+	require.NoError(t, err)
+
+	for i := range changes {
+		require.Len(t, changes[i].Operations, 1)
+		assert.Equal(t, uint64(i+1), changes[i].Operations[0].ID.Counter)
+	}
+}
+
+func TestAssignOperations_RejectsOverlappingActorRanges(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	changes := []opset.Change{
+		{Actor: actor, Sequence: 1, MaxOp: 1},
+		{Actor: actor, Sequence: 2, MaxOp: 1},
+	}
+	operations := []opset.Operation{
+		{ID: opset.OpID{Actor: actor, Counter: 1}},
+	}
+
+	err = assignOperations(changes, operations, &decodeBudget{})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "overlapping operation ranges")
+}
+
+func TestAssignOperations_RejectsOrphanOperation(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	changes := []opset.Change{{Actor: actor, Sequence: 1, MaxOp: 1}}
+	operations := []opset.Operation{
+		{ID: opset.OpID{Actor: actor, Counter: 2}},
+	}
+
+	err = assignOperations(changes, operations, &decodeBudget{})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "has no containing change")
+}
+
 func TestAssignOperations_DoesNotAllocateFromEncodedRange(t *testing.T) {
 	t.Parallel()
 
@@ -614,6 +689,7 @@ func TestDecode_OwnsRetainedPayloads(t *testing.T) {
 
 	changeData, err := EncodeChange(&change)
 	require.NoError(t, err)
+
 	expectedRaw := append([]byte(nil), changeData...)
 
 	decodedChange, err := Decode(changeData)
@@ -648,10 +724,12 @@ func TestDecode_OwnsRetainedPayloads(t *testing.T) {
 	assert.Equal(t, []byte{4, 5}, decodedSnapshot.Changes[0].ExtraBytes)
 
 	foundUnknown := false
+
 	for _, column := range decodedSnapshot.UnknownColumns {
 		if bytes.Equal(column.Data, []byte{6, 7}) {
 			foundUnknown = true
 		}
 	}
+
 	assert.True(t, foundUnknown)
 }

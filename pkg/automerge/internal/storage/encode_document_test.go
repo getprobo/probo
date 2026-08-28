@@ -208,9 +208,11 @@ func TestDocumentChangeOrder_HandlesDeepGraphIteratively(t *testing.T) {
 	const count = 100_000
 
 	hashes := make([]opset.ChangeHash, count)
+
 	changes := make([]opset.Change, count)
 	for i := range changes {
 		binary.LittleEndian.PutUint64(hashes[i][:], uint64(i+1))
+
 		changes[i].Hash = &hashes[i]
 		if i > 0 {
 			changes[i].Dependencies = []opset.ChangeHash{hashes[i-1]}
