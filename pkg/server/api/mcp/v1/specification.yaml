@@ -2023,9 +2023,6 @@ components:
         - organization_id
         - name
         - category
-        - treatment
-        - inherent_likelihood
-        - inherent_impact
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -2039,24 +2036,6 @@ components:
         category:
           type: string
           description: Risk category
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
-        treatment:
-          $ref: "#/components/schemas/RiskTreatment"
-          description: Risk treatment
-        inherent_likelihood:
-          type: integer
-          description: Initial likelihood
-        inherent_impact:
-          type: integer
-          description: Initial impact
-        residual_likelihood:
-          type: integer
-          description: Residual likelihood
-        residual_impact:
-          type: integer
-          description: Residual impact
         note:
           type: string
           description: Risk note
@@ -2087,28 +2066,6 @@ components:
         category:
           type: string
           description: Risk category
-        owner_id:
-          anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Owner ID
-          go.probo.inc/mcpgen/omittable: true
-        treatment:
-          $ref: "#/components/schemas/RiskTreatment"
-          description: Risk treatment
-        inherent_likelihood:
-          type: integer
-          description: Initial likelihood
-        inherent_impact:
-          type: integer
-          description: Initial impact
-        residual_likelihood:
-          type: integer
-          description: Residual likelihood
-        residual_impact:
-          type: integer
-          description: Residual impact
         note:
           type: string
           description: Risk note

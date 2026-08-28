@@ -200,7 +200,10 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
         description={risk.description}
       />
       <Tabs>
-        <TabLink to={`${baseTabUrl}/overview`}>{t("riskDetailLayout.tabs.overview")}</TabLink>
+        <TabLink to={`${baseTabUrl}/treatment-plans`}>
+          {t("riskDetailLayout.tabs.treatmentPlans")}
+          <TabBadge>{treatmentPlansCount}</TabBadge>
+        </TabLink>
         <TabLink to={`${baseTabUrl}/internal-controls`}>
           {t("riskDetailLayout.tabs.internalControls")}
           <TabBadge>{internalControlsCount}</TabBadge>
@@ -221,10 +224,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
           {t("riskDetailLayout.tabs.scenarios")}
           <TabBadge>{scenariosCount}</TabBadge>
         </TabLink>
-        <TabLink to={`${baseTabUrl}/treatment-plans`}>
-          {t("riskDetailLayout.tabs.treatmentPlans")}
-          <TabBadge>{treatmentPlansCount}</TabBadge>
-        </TabLink>
+        <TabLink to={`${baseTabUrl}/overview`}>{t("riskDetailLayout.tabs.overview")}</TabLink>
       </Tabs>
 
       <Outlet />

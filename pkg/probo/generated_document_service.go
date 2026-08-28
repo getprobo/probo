@@ -3874,46 +3874,13 @@ func (s *GeneratedDocumentService) buildRiskListDocumentData(
 		}, nil
 	}
 
-	ownerIDs := make([]gid.GID, 0, len(risks))
-	ownerIDSet := make(map[gid.GID]struct{})
-
-	for _, r := range risks {
-		if r.OwnerID != nil {
-			if _, ok := ownerIDSet[*r.OwnerID]; !ok {
-				ownerIDs = append(ownerIDs, *r.OwnerID)
-				ownerIDSet[*r.OwnerID] = struct{}{}
-			}
-		}
-	}
-
-	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
-
-	if len(ownerIDs) > 0 {
-		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return docgen.RiskListData{}, fmt.Errorf("cannot load profiles: %w", err)
-		}
-
-		for _, p := range profiles {
-			profileMap[p.ID] = p
-		}
-	}
-
 	rows := make([]docgen.RiskListRow, 0, len(risks))
 	for _, r := range risks {
 		rows = append(rows, docgen.RiskListRow{
-			Name:               r.Name,
-			Description:        derefStringOrNotSpecified(r.Description),
-			Category:           stringOrNotSpecified(r.Category),
-			Treatment:          formatRiskTreatment(r.Treatment),
-			Owner:              lookupProfileName(profileMap, r.OwnerID),
-			InherentLikelihood: formatScoreCell(r.InherentLikelihood, riskLikelihoodLabelPtr(r.InherentLikelihood)),
-			InherentImpact:     formatScoreCell(r.InherentImpact, riskImpactLabelPtr(r.InherentImpact)),
-			InherentRiskScore:  formatScoreCell(r.InherentRiskScore, riskSeverityLabelPtr(r.InherentRiskScore)),
-			ResidualLikelihood: formatScoreCell(r.ResidualLikelihood, riskLikelihoodLabelPtr(r.ResidualLikelihood)),
-			ResidualImpact:     formatScoreCell(r.ResidualImpact, riskImpactLabelPtr(r.ResidualImpact)),
-			ResidualRiskScore:  formatScoreCell(r.ResidualRiskScore, riskSeverityLabelPtr(r.ResidualRiskScore)),
-			Note:               stringOrNotSpecified(r.Note),
+			Name:        r.Name,
+			Description: derefStringOrNotSpecified(r.Description),
+			Category:    stringOrNotSpecified(r.Category),
+			Note:        stringOrNotSpecified(r.Note),
 		})
 	}
 
@@ -3932,30 +3899,6 @@ func formatScoreCell(value *int, label string) string {
 	}
 
 	return fmt.Sprintf("%d — %s", *value, label)
-}
-
-func riskLikelihoodLabelPtr(v *int) string {
-	if v == nil {
-		return "Not specified"
-	}
-
-	return riskLikelihoodLabel(*v)
-}
-
-func riskImpactLabelPtr(v *int) string {
-	if v == nil {
-		return "Not specified"
-	}
-
-	return riskImpactLabel(*v)
-}
-
-func riskSeverityLabelPtr(v *int) string {
-	if v == nil {
-		return "Not specified"
-	}
-
-	return riskSeverityLabel(*v)
 }
 
 func riskLikelihoodLabel(v int) string {

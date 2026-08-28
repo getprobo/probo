@@ -33,17 +33,11 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 	risk, err := r.probo.Risks.Create(
 		ctx, scope,
 		probo.CreateRiskRequest{
-			OrganizationID:     input.OrganizationID,
-			Name:               input.Name,
-			Description:        input.Description,
-			Category:           input.Category,
-			Treatment:          input.Treatment,
-			OwnerID:            input.OwnerID,
-			InherentLikelihood: input.InherentLikelihood,
-			InherentImpact:     input.InherentImpact,
-			ResidualLikelihood: input.ResidualLikelihood,
-			ResidualImpact:     input.ResidualImpact,
-			Note:               input.Note,
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Category:       input.Category,
+			Note:           input.Note,
 		},
 	)
 	if err != nil {
@@ -75,17 +69,11 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 	risk, err := r.probo.Risks.Update(
 		ctx, scope,
 		probo.UpdateRiskRequest{
-			ID:                 input.ID,
-			Name:               input.Name,
-			Description:        gqlutils.UnwrapOmittable(input.Description),
-			Category:           input.Category,
-			Treatment:          input.Treatment,
-			OwnerID:            gqlutils.UnwrapOmittable(input.OwnerID),
-			InherentLikelihood: input.InherentLikelihood,
-			InherentImpact:     input.InherentImpact,
-			ResidualLikelihood: input.ResidualLikelihood,
-			ResidualImpact:     input.ResidualImpact,
-			Note:               input.Note,
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: gqlutils.UnwrapOmittable(input.Description),
+			Category:    input.Category,
+			Note:        input.Note,
 		},
 	)
 	if err != nil {

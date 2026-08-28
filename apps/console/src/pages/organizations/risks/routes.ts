@@ -58,14 +58,16 @@ export const riskRoutes = [
         path: "",
         loader: () => {
           // eslint-disable-next-line
-          throw redirect("overview");
+          throw redirect("treatment-plans");
         },
         Component: Fragment,
       },
       {
-        path: "overview",
+        path: "treatment-plans",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./overview/RiskOverviewPageLoader")),
+        Component: lazy(
+          () => import("./treatment-plans/RiskTreatmentPlansPageLoader"),
+        ),
       },
       {
         path: "internal-controls",
@@ -93,11 +95,9 @@ export const riskRoutes = [
         Component: lazy(() => import("./scenarios/RiskScenariosPageLoader")),
       },
       {
-        path: "treatment-plans",
+        path: "overview",
         Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("./treatment-plans/RiskTreatmentPlansPageLoader"),
-        ),
+        Component: lazy(() => import("./overview/RiskOverviewPageLoader")),
       },
     ],
   },

@@ -721,13 +721,7 @@ INSERT INTO risks (
 	name,
 	description,
 	category,
-	owner_profile_id,
-	treatment,
 	note,
-	inherent_likelihood,
-	inherent_impact,
-	residual_likelihood,
-	residual_impact,
 	created_at,
 	updated_at
 )
@@ -739,13 +733,7 @@ SELECT
 	@name,
 	@description,
 	@category,
-	@owner_profile_id,
-	@treatment,
 	@note,
-	@inherent_likelihood,
-	@inherent_impact,
-	@residual_likelihood,
-	@residual_impact,
 	@created_at,
 	@updated_at
 FROM next_ref
@@ -753,21 +741,15 @@ RETURNING reference_id
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                  r.ID,
-		"tenant_id":           scope.GetTenantID(),
-		"organization_id":     r.OrganizationID,
-		"name":                r.Name,
-		"description":         r.Description,
-		"category":            r.Category,
-		"owner_profile_id":    r.OwnerID,
-		"treatment":           r.Treatment,
-		"note":                r.Note,
-		"inherent_likelihood": r.InherentLikelihood,
-		"inherent_impact":     r.InherentImpact,
-		"residual_likelihood": r.ResidualLikelihood,
-		"residual_impact":     r.ResidualImpact,
-		"created_at":          r.CreatedAt,
-		"updated_at":          r.UpdatedAt,
+		"id":              r.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": r.OrganizationID,
+		"name":            r.Name,
+		"description":     r.Description,
+		"category":        r.Category,
+		"note":            r.Note,
+		"created_at":      r.CreatedAt,
+		"updated_at":      r.UpdatedAt,
 	}
 
 	err := conn.QueryRow(ctx, q, args).Scan(&r.ReferenceID)
@@ -794,43 +776,31 @@ UPDATE risks
 SET
 	name = @name,
 	description = @description,
-	owner_profile_id = @owner_profile_id,
-	treatment = @treatment,
-	inherent_likelihood = @inherent_likelihood,
-	inherent_impact = @inherent_impact,
-	residual_likelihood = @residual_likelihood,
-	residual_impact = @residual_impact,
 	category = @category,
 	note = @note,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @risk_id
-RETURNING inherent_risk_score, residual_risk_score
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"risk_id":             r.ID,
-		"name":                r.Name,
-		"description":         r.Description,
-		"category":            r.Category,
-		"owner_profile_id":    r.OwnerID,
-		"treatment":           r.Treatment,
-		"note":                r.Note,
-		"inherent_likelihood": r.InherentLikelihood,
-		"inherent_impact":     r.InherentImpact,
-		"residual_likelihood": r.ResidualLikelihood,
-		"residual_impact":     r.ResidualImpact,
-		"updated_at":          r.UpdatedAt,
+		"risk_id":     r.ID,
+		"name":        r.Name,
+		"description": r.Description,
+		"category":    r.Category,
+		"note":        r.Note,
+		"updated_at":  r.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	err := conn.QueryRow(ctx, q, args).Scan(
-		&r.InherentRiskScore,
-		&r.ResidualRiskScore,
-	)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update risk: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil

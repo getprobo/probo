@@ -194,12 +194,6 @@ input CreateRiskInput {
     name: String!
     description: String
     category: String!
-    ownerId: ID
-    treatment: RiskTreatment
-    inherentLikelihood: Int
-    inherentImpact: Int
-    residualLikelihood: Int
-    residualImpact: Int
     note: String
 }
 
@@ -208,12 +202,6 @@ input UpdateRiskInput {
     name: String
     description: String @goField(omittable: true)
     category: String
-    ownerId: ID @goField(omittable: true)
-    treatment: RiskTreatment
-    inherentLikelihood: Int
-    inherentImpact: Int
-    residualLikelihood: Int
-    residualImpact: Int
     note: String
 }
 
