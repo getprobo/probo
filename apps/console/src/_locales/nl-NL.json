@@ -1297,7 +1297,10 @@
     "states": {
       "todo": "Te doen",
       "inProgress": "In uitvoering",
-      "done": "Voltooid"
+      "done": "Voltooid",
+      "backlog": "Backlog",
+      "canceled": "Geannuleerd",
+      "duplicate": "Duplicaat"
     },
     "priorities": {
       "urgent": "Urgent",
@@ -1323,7 +1326,10 @@
       "all": "Alle",
       "todo": "Te doen",
       "inProgress": "In uitvoering",
-      "done": "Voltooid"
+      "done": "Voltooid",
+      "backlog": "Backlog",
+      "canceled": "Geannuleerd",
+      "duplicate": "Duplicaat"
     },
     "empty": "Geen taken",
     "error": {
@@ -1336,6 +1342,7 @@
     },
     "deleteConfirmation": "Weet u zeker dat u deze taak wilt verwijderen?",
     "actions": {
+      "moveToTodo": "Verplaatsen naar Te doen",
       "moveToInProgress": "Verplaatsen naar In uitvoering",
       "moveToDone": "Verplaatsen naar Voltooid",
       "edit": "Bewerken",

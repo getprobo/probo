@@ -27,6 +27,7 @@ import {
   IconCircleCheck,
   IconCircleProgress,
   IconPencil,
+  IconRadioUnchecked,
   IconTrashCan,
   PriorityLevel,
   TabBadge,
@@ -64,10 +65,13 @@ import type {
 import type { TasksCardOrganizationQuery } from "#/__generated__/core/TasksCardOrganizationQuery.graphql";
 import TaskFormDialog, {
   taskPriorities,
+  taskStates,
   taskUpdateMutation,
 } from "#/components/tasks/TaskFormDialog";
 import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+type TaskState = (typeof taskStates)[number];
 
 function resolveDropPriority(
   dragged: TaskPriority,
@@ -206,9 +210,12 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
   };
 
   const stateHashes = [
+    { hash: "backlog", label: t("tasksCard.states.backlog"), state: "BACKLOG" },
     { hash: "todo", label: t("tasksCard.states.todo"), state: "TODO" },
     { hash: "in-progress", label: t("tasksCard.states.inProgress"), state: "IN_PROGRESS" },
     { hash: "done", label: t("tasksCard.states.done"), state: "DONE" },
+    { hash: "canceled", label: t("tasksCard.states.canceled"), state: "CANCELED" },
+    { hash: "duplicate", label: t("tasksCard.states.duplicate"), state: "DUPLICATE" },
   ] as const;
 
   const hashes = [
@@ -319,7 +326,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
 
     // Determine if state changed (All tab cross-section drop).
     const newState = targetState && targetState !== draggedTask.state
-      ? targetState as "TODO" | "IN_PROGRESS" | "DONE"
+      ? targetState as TaskState
       : undefined;
 
     // Only change priority for same-state reorder, never for cross-section drops.
@@ -390,7 +397,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
 
   const displayTasks = applyPreviewOrder(filteredTasks);
 
-  const renderTaskRow = (node: (typeof tasks)[number]["node"], sectionState?: "TODO" | "IN_PROGRESS" | "DONE") => {
+  const renderTaskRow = (node: (typeof tasks)[number]["node"], sectionState?: TaskState) => {
     const task = readTask(node);
     return (
       <TaskRow
@@ -475,7 +482,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
 type TaskRowProps = {
   fKey: TasksCard_TaskRowFragment$key | TaskFormDialogFragment$key;
   connectionId: string;
-  sectionState?: "TODO" | "IN_PROGRESS" | "DONE";
+  sectionState?: TaskState;
   canDrag?: boolean;
   isDragging?: boolean;
   isGhost?: boolean;
@@ -538,11 +545,12 @@ function TaskRow(props: TaskRowProps) {
   const displayState = props.sectionState ?? task.state;
 
   const nextStepConfig: Record<string, {
-    state: "IN_PROGRESS" | "DONE";
+    state: TaskState;
     label: string;
     icon: typeof IconCircleProgress;
     className: string;
   }> = {
+    BACKLOG: { state: "TODO", label: t("tasksCard.actions.moveToTodo"), icon: IconRadioUnchecked, className: "text-txt-quaternary" },
     TODO: { state: "IN_PROGRESS", label: t("tasksCard.actions.moveToInProgress"), icon: IconCircleProgress, className: "text-txt-warning" },
     IN_PROGRESS: { state: "DONE", label: t("tasksCard.actions.moveToDone"), icon: IconCircleCheck, className: "text-txt-accent" },
   };

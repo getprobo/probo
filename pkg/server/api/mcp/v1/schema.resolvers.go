@@ -2133,6 +2133,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 			MeasureID:      input.MeasureID,
 			Name:           input.Name,
 			Description:    input.Description,
+			State:          input.State,
 			Priority:       priority,
 			TimeEstimate:   input.TimeEstimate,
 			Deadline:       input.Deadline,

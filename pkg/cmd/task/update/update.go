@@ -101,6 +101,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("state") {
+				if err := cmdutil.ValidateEnum("state", flagState, cmdutil.TaskStates()); err != nil {
+					return err
+				}
+
 				input["state"] = flagState
 			}
 
@@ -163,7 +167,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Task description")
-	cmd.Flags().StringVar(&flagState, "state", "", "Task state: TODO, IN_PROGRESS, DONE")
+	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")

@@ -36,6 +36,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
 			Description:    input.Description,
+			State:          input.State,
 			Priority:       input.Priority,
 			TimeEstimate:   input.TimeEstimate,
 			AssignedToID:   input.AssignedToID,

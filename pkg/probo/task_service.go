@@ -44,6 +44,7 @@ type (
 		MeasureID      *gid.GID
 		Name           string
 		Description    *string
+		State          *coredata.TaskState
 		Priority       coredata.TaskPriority
 		TimeEstimate   *time.Duration
 		AssignedToID   *gid.GID
@@ -71,6 +72,7 @@ func (ctr *CreateTaskRequest) Validate() error {
 	v.Check(ctr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
 	v.Check(ctr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(ctr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
 	v.Check(ctr.Priority, "priority", validator.Required(), validator.OneOfSlice(coredata.TaskPriorities()))
 	v.Check(ctr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
@@ -110,6 +112,11 @@ func (s TaskService) Create(
 		return nil, fmt.Errorf("cannot generate reference id: %w", err)
 	}
 
+	state := coredata.TaskStateTodo
+	if req.State != nil {
+		state = *req.State
+	}
+
 	task := &coredata.Task{
 		ID:             taskID,
 		OrganizationID: req.OrganizationID,
@@ -120,7 +127,7 @@ func (s TaskService) Create(
 		TimeEstimate:   req.TimeEstimate,
 		AssignedToID:   req.AssignedToID,
 		Deadline:       req.Deadline,
-		State:          coredata.TaskStateTodo,
+		State:          state,
 		ReferenceID:    "custom-task-" + referenceID.String(),
 		CreatedAt:      now,
 		UpdatedAt:      now,

@@ -6871,9 +6871,12 @@ components:
     TaskState:
       type: string
       enum:
+        - BACKLOG
         - TODO
         - IN_PROGRESS
         - DONE
+        - CANCELED
+        - DUPLICATE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskState
 
     TaskOrderField:
@@ -7069,6 +7072,10 @@ components:
             - type: "null"
               description: Not assigned
           description: Assigned to person ID
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Task state (defaults to TODO if not specified)
+          default: TODO
         priority:
           $ref: "#/components/schemas/TaskPriority"
           description: Task priority level (defaults to MEDIUM if not specified)

@@ -67,6 +67,7 @@ export { ControlItem } from "./Atoms/ControlItem/ControlItem";
 export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScrollTrigger";
 export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel";
 export { TaskStateIcon } from "./Atoms/Icons/TaskStateIcon";
+export type { TaskState } from "./Atoms/Icons/TaskStateIcon";
 export { Checkbox } from "./Atoms/Checkbox/Checkbox";
 export { Toggle } from "./Atoms/Toggle/Toggle";
 export {

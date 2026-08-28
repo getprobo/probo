@@ -1,7 +1,10 @@
 enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
+    BACKLOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateBacklog")
     TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateTodo")
     IN_PROGRESS @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateInProgress")
     DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDone")
+    CANCELED @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateCanceled")
+    DUPLICATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDuplicate")
 }
 
 enum TaskPriority
@@ -91,6 +94,7 @@ input CreateTaskInput {
     measureId: ID
     name: String!
     description: String
+    state: TaskState
     priority: TaskPriority!
     timeEstimate: Duration
     assignedToId: ID

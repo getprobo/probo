@@ -1297,7 +1297,10 @@
     "states": {
       "todo": "À faire",
       "inProgress": "En cours",
-      "done": "Terminé"
+      "done": "Terminé",
+      "backlog": "Backlog",
+      "canceled": "Annulé",
+      "duplicate": "Doublon"
     },
     "priorities": {
       "urgent": "Urgente",
@@ -1323,7 +1326,10 @@
       "all": "Toutes",
       "todo": "À faire",
       "inProgress": "En cours",
-      "done": "Terminé"
+      "done": "Terminé",
+      "backlog": "Backlog",
+      "canceled": "Annulé",
+      "duplicate": "Doublon"
     },
     "empty": "Aucune tâche",
     "error": {
@@ -1336,6 +1342,7 @@
     },
     "deleteConfirmation": "Voulez-vous vraiment supprimer cette tâche ?",
     "actions": {
+      "moveToTodo": "Déplacer vers À faire",
       "moveToInProgress": "Déplacer vers En cours",
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",

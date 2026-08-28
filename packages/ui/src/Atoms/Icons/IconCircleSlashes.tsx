@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,50 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Meta, StoryObj } from "@storybook/react";
+import type { IconProps } from "./type";
 
-import { TaskStateIcon } from "./TaskStateIcon";
-
-export default {
-  title: "Atoms/TaskStateIcon",
-  component: TaskStateIcon,
-  argTypes: {},
-} satisfies Meta<typeof TaskStateIcon>;
-
-type Story = StoryObj<typeof TaskStateIcon>;
-
-export const Backlog: Story = {
-  args: {
-    state: "BACKLOG",
-  },
-};
-
-export const Default: Story = {
-  args: {
-    state: "TODO",
-  },
-};
-
-export const InProgress: Story = {
-  args: {
-    state: "IN_PROGRESS",
-  },
-};
-
-export const Done: Story = {
-  args: {
-    state: "DONE",
-  },
-};
-
-export const Canceled: Story = {
-  args: {
-    state: "CANCELED",
-  },
-};
-
-export const Duplicate: Story = {
-  args: {
-    state: "DUPLICATE",
-  },
-};
+export function IconCircleSlashes({ size = 24, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM6.343 13.98L7.687 15.323L15.323 7.687L13.98 6.343L6.343 13.98ZM8.677 16.313L10.02 17.657L17.657 10.02L16.313 8.677L8.677 16.313Z"
+      />
+    </svg>
+  );
+}

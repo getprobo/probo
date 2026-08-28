@@ -99,12 +99,13 @@ export const taskUpdateMutation = graphql`
   }
 `;
 
-export const taskStates = ["TODO", "IN_PROGRESS", "DONE"] as const;
+export const taskStates = ["BACKLOG", "TODO", "IN_PROGRESS", "DONE", "CANCELED", "DUPLICATE"] as const;
 export const taskPriorities = ["URGENT", "HIGH", "MEDIUM", "LOW"] as const;
 
 const createTaskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
+  state: z.enum(taskStates),
   priority: z.enum(taskPriorities),
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
@@ -217,6 +218,7 @@ export default function TaskFormDialog(props: Props) {
             organizationId,
             name: data.name,
             description: data.description || null,
+            state: "state" in data ? data.state : undefined,
             priority: data.priority,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
@@ -271,42 +273,58 @@ export default function TaskFormDialog(props: Props) {
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
             <Label>{t("taskFormDialog.properties")}</Label>
-            {isUpdating && (
-              <PropertyRow
-                label={t("taskFormDialog.fields.state.label")}
-                error={"state" in formState.errors ? formState.errors.state?.message : undefined}
-              >
-                <Controller
-                  name="state"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <Option value="TODO">
-                        <span className="flex items-center gap-2">
-                          <TaskStateIcon state="TODO" />
-                          {t("taskFormDialog.states.todo")}
-                        </span>
-                      </Option>
-                      <Option value="IN_PROGRESS">
-                        <span className="flex items-center gap-2">
-                          <TaskStateIcon state="IN_PROGRESS" />
-                          {t("taskFormDialog.states.inProgress")}
-                        </span>
-                      </Option>
-                      <Option value="DONE">
-                        <span className="flex items-center gap-2">
-                          <TaskStateIcon state="DONE" />
-                          {t("taskFormDialog.states.done")}
-                        </span>
-                      </Option>
-                    </Select>
-                  )}
-                />
-              </PropertyRow>
-            )}
+            <PropertyRow
+              label={t("taskFormDialog.fields.state.label")}
+              error={"state" in formState.errors ? formState.errors.state?.message : undefined}
+            >
+              <Controller
+                name="state"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <Option value="BACKLOG">
+                      <span className="flex items-center gap-2">
+                        <TaskStateIcon state="BACKLOG" />
+                        {t("taskFormDialog.states.backlog")}
+                      </span>
+                    </Option>
+                    <Option value="TODO">
+                      <span className="flex items-center gap-2">
+                        <TaskStateIcon state="TODO" />
+                        {t("taskFormDialog.states.todo")}
+                      </span>
+                    </Option>
+                    <Option value="IN_PROGRESS">
+                      <span className="flex items-center gap-2">
+                        <TaskStateIcon state="IN_PROGRESS" />
+                        {t("taskFormDialog.states.inProgress")}
+                      </span>
+                    </Option>
+                    <Option value="DONE">
+                      <span className="flex items-center gap-2">
+                        <TaskStateIcon state="DONE" />
+                        {t("taskFormDialog.states.done")}
+                      </span>
+                    </Option>
+                    <Option value="CANCELED">
+                      <span className="flex items-center gap-2">
+                        <TaskStateIcon state="CANCELED" />
+                        {t("taskFormDialog.states.canceled")}
+                      </span>
+                    </Option>
+                    <Option value="DUPLICATE">
+                      <span className="flex items-center gap-2">
+                        <TaskStateIcon state="DUPLICATE" />
+                        {t("taskFormDialog.states.duplicate")}
+                      </span>
+                    </Option>
+                  </Select>
+                )}
+              />
+            </PropertyRow>
             <PropertyRow
               label={t("taskFormDialog.fields.priority.label")}
               error={formState.errors.priority?.message}
