@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type ReactNode, useLayoutEffect } from "react";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
@@ -29,10 +28,7 @@ import type { TopBar_organization$key } from "#/__generated__/iam/TopBar_organiz
 import { NotFoundError } from "#/lib/relay/errors";
 import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { QueueTopBar } from "#/pages/_components/QueueTopBar";
-import {
-  useDocumentQueue,
-  useDocumentQueueActive,
-} from "#/pages/_lib/DocumentQueueContext";
+import { useDocumentQueueActive } from "#/pages/_lib/DocumentQueueContext";
 import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
 import { ViewerIdentityProvider } from "#/pages/iam/_lib/ViewerIdentityContext";
 
@@ -52,7 +48,6 @@ const mainLayoutFragment = graphql`
   fragment MainLayout_organization on Organization {
     viewer @required(action: THROW) {
       identity @required(action: THROW) {
-        id
         fullName
       }
     }
@@ -77,27 +72,9 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
 
   return (
     <ViewerIdentityProvider fullName={organization.viewer.identity.fullName}>
-      <MainLayoutQueueScope viewerId={organization.viewer.identity.id}>
-        <MainLayoutChrome organizationKey={data.organization} />
-      </MainLayoutQueueScope>
+      <MainLayoutChrome organizationKey={data.organization} />
     </ViewerIdentityProvider>
   );
-}
-
-function MainLayoutQueueScope({
-  viewerId,
-  children,
-}: {
-  viewerId: string;
-  children: ReactNode;
-}) {
-  const { bindViewer } = useDocumentQueue();
-
-  useLayoutEffect(() => {
-    bindViewer(viewerId);
-  }, [bindViewer, viewerId]);
-
-  return children;
 }
 
 // Swaps the org top bar for the queue chrome when the current document is in

@@ -36,14 +36,11 @@ import { useNavigate, useParams } from "react-router";
 
 import {
   appendQueuePage,
-  clearDocumentQueueSnapshot,
   type DocumentQueueDirection,
   type DocumentQueueKind,
   type DocumentQueuePage,
   type DocumentQueueSnapshot,
   enterQueueSnapshot,
-  readDocumentQueueSnapshot,
-  writeDocumentQueueSnapshot,
 } from "./documentQueue";
 import { fetchDocumentQueuePage } from "./fetchDocumentQueuePage";
 
@@ -56,7 +53,6 @@ type DocumentQueueContextValue = {
   goForward: () => void;
   startQueue: (kind: DocumentQueueKind) => void;
   close: (kind?: DocumentQueueKind) => void;
-  bindViewer: (viewerId: string) => void;
 };
 
 const DocumentQueueContext = createContext<DocumentQueueContextValue | null>(null);
@@ -65,19 +61,24 @@ function setQueueDirection(direction: DocumentQueueDirection): void {
   document.documentElement.dataset.queueDirection = direction;
 }
 
-// Holds the frozen pending-document snapshot for the signing / approval flow
-// so MainLayout can swap chrome without a first-paint flash on refresh.
+// Holds the frozen pending-document snapshot for the signing / approval flow.
 export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { organizationId, documentId } = useParams();
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
-  const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(() =>
-    readDocumentQueueSnapshot({ organizationId }),
-  );
+  const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const fetchGenerationRef = useRef(0);
-  const viewerIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    try {
+      // Drop a snapshot left by the previous sessionStorage-backed queue.
+      sessionStorage.removeItem("employee-portal:document-queue");
+    } catch {
+      // Ignore: private mode / quota.
+    }
+  }, []);
 
   const enter = useCallback((
     kind: DocumentQueueKind,
@@ -89,20 +90,16 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     }
     fetchGenerationRef.current += 1;
     setAdvancing(false);
-    const next = enterQueueSnapshot(
+    setSnapshot(enterQueueSnapshot(
       kind,
       page,
       openedDocumentId,
       organizationId,
-      viewerIdRef.current ?? undefined,
-    );
-    writeDocumentQueueSnapshot(next);
-    setSnapshot(next);
+    ));
   }, [organizationId]);
 
   const leave = useCallback(() => {
     fetchGenerationRef.current += 1;
-    clearDocumentQueueSnapshot();
     setSnapshot(null);
     setAdvancing(false);
   }, []);
@@ -152,7 +149,6 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
         return;
       }
       const next = appendQueuePage(snapshot, page);
-      writeDocumentQueueSnapshot(next);
       setSnapshot(next);
       const firstNew = next.ids.find(id => !snapshot.ids.includes(id));
       if (firstNew != null) {
@@ -226,25 +222,6 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     void navigate(`/${organizationId}/${dest}`);
   }, [leave, navigate, organizationId, snapshot?.kind]);
 
-  const bindViewer = useCallback((viewerId: string) => {
-    viewerIdRef.current = viewerId;
-    if (snapshot == null) {
-      return;
-    }
-    if (snapshot.viewerId != null && snapshot.viewerId !== viewerId) {
-      fetchGenerationRef.current += 1;
-      setAdvancing(false);
-      clearDocumentQueueSnapshot();
-      setSnapshot(null);
-      return;
-    }
-    if (snapshot.viewerId == null) {
-      const next = { ...snapshot, viewerId };
-      writeDocumentQueueSnapshot(next);
-      setSnapshot(next);
-    }
-  }, [snapshot]);
-
   const scopedSnapshot = snapshot != null
     && organizationId != null
     && snapshot.organizationId === organizationId
@@ -260,8 +237,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     goForward,
     startQueue,
     close,
-    bindViewer,
-  }), [advancing, bindViewer, close, enter, goForward, goTo, leave, scopedSnapshot, startQueue]);
+  }), [advancing, close, enter, goForward, goTo, leave, scopedSnapshot, startQueue]);
 
   return (
     <DocumentQueueContext.Provider value={value}>
@@ -284,20 +260,9 @@ export function useDocumentQueue(): DocumentQueueContextValue {
   return value;
 }
 
-function useScopedQueueSnapshot(): DocumentQueueSnapshot | null {
-  const value = useContext(DocumentQueueContext);
-  const { organizationId } = useParams();
-  if (value != null) {
-    return value.snapshot;
-  }
-  return readDocumentQueueSnapshot({ organizationId });
-}
-
 // True when the current document belongs to the frozen snapshot (queue chrome).
-// Safe outside DocumentQueueProvider so route fallbacks can pick chrome
-// from sessionStorage before the loader mounts.
 export function useDocumentQueueActive(): boolean {
-  const snapshot = useScopedQueueSnapshot();
+  const { snapshot } = useDocumentQueue();
   const { documentId } = useParams();
   return snapshot != null
     && documentId != null

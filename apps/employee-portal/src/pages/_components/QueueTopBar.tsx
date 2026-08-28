@@ -26,21 +26,16 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
-import { readDocumentQueueSnapshot } from "#/pages/_lib/documentQueue";
-import { useOptionalDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
+import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
 
 import { queueTopBar } from "./variants";
 
 // Inverse-theme queue chrome: prev/next through the frozen snapshot, plus Close.
 export function QueueTopBar() {
   const { t } = useTranslation();
-  const { documentId, organizationId } = useParams();
+  const { documentId } = useParams();
   const { displayMode } = useDisplayMode();
-  const queue = useOptionalDocumentQueue();
-  const snapshot = queue != null
-    ? queue.snapshot
-    : readDocumentQueueSnapshot({ organizationId });
-  const advancing = queue?.advancing ?? false;
+  const { snapshot, advancing, goTo, goForward, close } = useDocumentQueue();
   const slots = queueTopBar();
   const island = displayMode === "dark" ? "light" : "dark";
 
@@ -72,10 +67,10 @@ export function QueueTopBar() {
             variant="outline"
             color="neutral"
             aria-label={t("queue.previous")}
-            disabled={previousId == null || advancing || queue == null}
+            disabled={previousId == null || advancing}
             onClick={() => {
               if (previousId != null) {
-                queue?.goTo(previousId, "back");
+                goTo(previousId, "back");
               }
             }}
           >
@@ -85,10 +80,10 @@ export function QueueTopBar() {
             variant="outline"
             color="neutral"
             aria-label={t("queue.next")}
-            disabled={!canGoForward || advancing || queue == null}
+            disabled={!canGoForward || advancing}
             loading={advancing}
             onClick={() => {
-              queue?.goForward();
+              goForward();
             }}
           >
             <CaretRightIcon />
@@ -103,9 +98,8 @@ export function QueueTopBar() {
         color="neutral"
         size={2}
         iconStart={<XIcon />}
-        disabled={queue == null}
         onClick={() => {
-          queue?.close();
+          close();
         }}
       >
         {t("queue.close")}
