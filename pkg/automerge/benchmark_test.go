@@ -107,6 +107,69 @@ func BenchmarkMapMutations(b *testing.B) {
 	}
 }
 
+func BenchmarkMapUpdates(b *testing.B) {
+	const size = 1_000
+
+	benchmarkEngines(
+		b,
+		func(b *testing.B, factory benchmarkFactory) {
+			b.ReportAllocs()
+			b.StopTimer()
+
+			for range b.N {
+				document, err := factory(actor(209))
+				if err != nil {
+					b.Fatal(err)
+				}
+
+				values, err := document.Root().CreateObject(
+					"values",
+					automerge.ObjectTypeMap,
+				)
+				if err != nil {
+					b.Fatal(err)
+				}
+
+				for index := range size {
+					if err := values.PutScalar(
+						strconv.Itoa(index),
+						automerge.Scalar{
+							Type: automerge.ScalarTypeInt,
+							Int:  int64(index),
+						},
+					); err != nil {
+						b.Fatal(err)
+					}
+				}
+				if _, err := document.Commit("map fixture", commitTime); err != nil {
+					b.Fatal(err)
+				}
+
+				b.StartTimer()
+				for index := range size {
+					if err := values.PutScalar(
+						strconv.Itoa(index),
+						automerge.Scalar{
+							Type: automerge.ScalarTypeInt,
+							Int:  int64(size - index),
+						},
+					); err != nil {
+						b.Fatal(err)
+					}
+				}
+				if _, err := document.Commit("map updates", commitTime); err != nil {
+					b.Fatal(err)
+				}
+				b.StopTimer()
+
+				if err := document.Close(); err != nil {
+					b.Fatal(err)
+				}
+			}
+		},
+	)
+}
+
 func BenchmarkTextTyping(b *testing.B) {
 	for _, size := range []int{100, 1_000} {
 		b.Run(
@@ -156,6 +219,55 @@ func BenchmarkTextTyping(b *testing.B) {
 			},
 		)
 	}
+}
+
+func BenchmarkTextEdits(b *testing.B) {
+	const (
+		size  = 1_000
+		edits = 100
+	)
+
+	benchmarkEngines(
+		b,
+		func(b *testing.B, factory benchmarkFactory) {
+			b.ReportAllocs()
+			b.StopTimer()
+
+			for range b.N {
+				document, err := factory(actor(210))
+				if err != nil {
+					b.Fatal(err)
+				}
+
+				text, err := document.CreateText("body")
+				if err != nil {
+					b.Fatal(err)
+				}
+				if err := text.Splice(0, 0, benchmarkText(size)); err != nil {
+					b.Fatal(err)
+				}
+				if _, err := document.Commit("text fixture", commitTime); err != nil {
+					b.Fatal(err)
+				}
+
+				b.StartTimer()
+				for index := range edits {
+					position := uint32(index * size / edits)
+					if err := text.Splice(position, 1, "z"); err != nil {
+						b.Fatal(err)
+					}
+				}
+				if _, err := document.Commit("text edits", commitTime); err != nil {
+					b.Fatal(err)
+				}
+				b.StopTimer()
+
+				if err := document.Close(); err != nil {
+					b.Fatal(err)
+				}
+			}
+		},
+	)
 }
 
 func BenchmarkLoad(b *testing.B) {
@@ -245,6 +357,165 @@ func BenchmarkSave(b *testing.B) {
 	)
 }
 
+func BenchmarkSaveAfterChange(b *testing.B) {
+	data := benchmarkDocument(b, 10_000)
+	engines := []struct {
+		name string
+		load func(
+			[]byte,
+			automerge.ActorID,
+			...automerge.LoadOption,
+		) (*automerge.Document, error)
+	}{
+		{name: "native", load: automerge.Load},
+		{name: "reference", load: automerge.LoadReference},
+	}
+
+	for _, engine := range engines {
+		b.Run(
+			engine.name,
+			func(b *testing.B) {
+				if engine.name == "reference" {
+					warmReference(b)
+				}
+				b.ReportAllocs()
+				b.StopTimer()
+
+				for range b.N {
+					b.StartTimer()
+					document, err := engine.load(data, actor(211))
+					if err != nil {
+						b.Fatal(err)
+					}
+
+					text, err := document.Text("body")
+					if err != nil {
+						b.Fatal(err)
+					}
+					if err := text.Splice(10_000, 0, "x"); err != nil {
+						b.Fatal(err)
+					}
+					if _, err := document.Commit("save change", commitTime); err != nil {
+						b.Fatal(err)
+					}
+					if _, err := document.Save(); err != nil {
+						b.Fatal(err)
+					}
+					b.StopTimer()
+
+					if err := document.Close(); err != nil {
+						b.Fatal(err)
+					}
+				}
+			},
+		)
+	}
+}
+
+func BenchmarkNativeSaveAfterLoadedChange(b *testing.B) {
+	data := benchmarkDocument(b, 10_000)
+	b.ReportAllocs()
+	b.StopTimer()
+
+	for range b.N {
+		document, err := automerge.Load(data, actor(219))
+		if err != nil {
+			b.Fatal(err)
+		}
+		text, err := document.Text("body")
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		b.StartTimer()
+		if err := text.Splice(10_000, 0, "x"); err != nil {
+			b.Fatal(err)
+		}
+		if _, err := document.Commit("save change", commitTime); err != nil {
+			b.Fatal(err)
+		}
+		if _, err := document.Save(); err != nil {
+			b.Fatal(err)
+		}
+		b.StopTimer()
+
+		if err := document.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkMerge(b *testing.B) {
+	const size = 1_000
+
+	benchmarkEngines(
+		b,
+		func(b *testing.B, factory benchmarkFactory) {
+			base, err := factory(actor(212))
+			if err != nil {
+				b.Fatal(err)
+			}
+			defer func() { _ = base.Close() }()
+
+			text, err := base.CreateText("body")
+			if err != nil {
+				b.Fatal(err)
+			}
+			if err := text.Splice(0, 0, benchmarkText(size)); err != nil {
+				b.Fatal(err)
+			}
+			if _, err := base.Commit("merge fixture", commitTime); err != nil {
+				b.Fatal(err)
+			}
+
+			b.ReportAllocs()
+			b.StopTimer()
+
+			for range b.N {
+				left, err := base.Fork(actor(213))
+				if err != nil {
+					b.Fatal(err)
+				}
+				right, err := base.Fork(actor(214))
+				if err != nil {
+					b.Fatal(err)
+				}
+
+				leftText, err := left.Text("body")
+				if err != nil {
+					b.Fatal(err)
+				}
+				if err := leftText.Splice(size, 0, "L"); err != nil {
+					b.Fatal(err)
+				}
+				if _, err := left.Commit("left branch", commitTime); err != nil {
+					b.Fatal(err)
+				}
+
+				rightText, err := right.Text("body")
+				if err != nil {
+					b.Fatal(err)
+				}
+				if err := rightText.Splice(size, 0, "R"); err != nil {
+					b.Fatal(err)
+				}
+				if _, err := right.Commit("right branch", commitTime); err != nil {
+					b.Fatal(err)
+				}
+
+				b.StartTimer()
+				if _, err := left.Merge(right); err != nil {
+					b.Fatal(err)
+				}
+				b.StopTimer()
+
+				_ = left.Close()
+				_ = right.Close()
+			}
+		},
+	)
+}
+
 func BenchmarkInitialSync(b *testing.B) {
 	combinations := []struct {
 		name   string
@@ -274,8 +545,9 @@ func BenchmarkInitialSync(b *testing.B) {
 			func(b *testing.B) {
 				warmReference(b)
 				b.ReportAllocs()
+				b.StopTimer()
 
-				for b.Loop() {
+				for range b.N {
 					source, err := combination.source(actor(205))
 					if err != nil {
 						b.Fatal(err)
@@ -309,12 +581,117 @@ func BenchmarkInitialSync(b *testing.B) {
 						b.Fatal(err)
 					}
 
+					b.StartTimer()
 					if err := benchmarkSynchronize(
 						sourceState,
 						targetState,
 					); err != nil {
 						b.Fatal(err)
 					}
+					b.StopTimer()
+
+					_ = sourceState.Close()
+					_ = targetState.Close()
+					_ = source.Close()
+					_ = target.Close()
+				}
+			},
+		)
+	}
+}
+
+func BenchmarkDivergedSync(b *testing.B) {
+	const size = 1_000
+
+	combinations := []struct {
+		name   string
+		source benchmarkFactory
+		target benchmarkFactory
+	}{
+		{
+			name:   "native-to-native",
+			source: automerge.New,
+			target: automerge.New,
+		},
+		{
+			name:   "native-to-reference",
+			source: automerge.New,
+			target: automerge.NewReference,
+		},
+		{
+			name:   "reference-to-native",
+			source: automerge.NewReference,
+			target: automerge.New,
+		},
+	}
+
+	for _, combination := range combinations {
+		b.Run(
+			combination.name,
+			func(b *testing.B) {
+				warmReference(b)
+				b.ReportAllocs()
+				b.StopTimer()
+
+				for range b.N {
+					source, err := combination.source(actor(215))
+					if err != nil {
+						b.Fatal(err)
+					}
+					target, err := combination.target(actor(216))
+					if err != nil {
+						b.Fatal(err)
+					}
+
+					sourceText, err := source.CreateText("body")
+					if err != nil {
+						b.Fatal(err)
+					}
+					if err := sourceText.Splice(0, 0, benchmarkText(size)); err != nil {
+						b.Fatal(err)
+					}
+					if _, err := source.Commit("sync fixture", commitTime); err != nil {
+						b.Fatal(err)
+					}
+
+					sourceState, err := source.NewSyncState()
+					if err != nil {
+						b.Fatal(err)
+					}
+					targetState, err := target.NewSyncState()
+					if err != nil {
+						b.Fatal(err)
+					}
+					if err := benchmarkSynchronize(sourceState, targetState); err != nil {
+						b.Fatal(err)
+					}
+
+					sourceText, err = source.Text("body")
+					if err != nil {
+						b.Fatal(err)
+					}
+					targetText, err := target.Text("body")
+					if err != nil {
+						b.Fatal(err)
+					}
+					if err := sourceText.Splice(size, 0, "L"); err != nil {
+						b.Fatal(err)
+					}
+					if _, err := source.Commit("source branch", commitTime); err != nil {
+						b.Fatal(err)
+					}
+					if err := targetText.Splice(size, 0, "R"); err != nil {
+						b.Fatal(err)
+					}
+					if _, err := target.Commit("target branch", commitTime); err != nil {
+						b.Fatal(err)
+					}
+
+					b.StartTimer()
+					if err := benchmarkSynchronize(sourceState, targetState); err != nil {
+						b.Fatal(err)
+					}
+					b.StopTimer()
 
 					_ = sourceState.Close()
 					_ = targetState.Close()
