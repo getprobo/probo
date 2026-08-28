@@ -25,6 +25,63 @@ import (
 	"sort"
 )
 
+type sequenceTail struct {
+	index uint32
+	last  opset.OpID
+	valid bool
+	safe  bool
+}
+
+func (s *State) observeLoadedSequenceOperation(operation opset.Operation) {
+	if operation.Object.IsRoot {
+		return
+	}
+
+	object := operation.Object.OpID
+	tail := s.sequenceTailCache[object]
+	if !tail.valid {
+		tail.valid = true
+		tail.safe = true
+	}
+	if operation.Action == opset.ActionMark || !operation.Insert {
+		tail.safe = false
+	} else {
+		tail.index += elementLength(operation)
+	}
+	s.sequenceTailCache[object] = tail
+}
+
+// finalizeSequenceTails takes only the final insertion identifier from the
+// canonical order; widths and safety were accumulated during normal load.
+func (s *State) finalizeSequenceTails(order []opset.OpID) {
+	remaining := make(map[opset.OpID]struct{})
+	for object, tail := range s.sequenceTailCache {
+		if tail.safe {
+			remaining[object] = struct{}{}
+		}
+	}
+	for i := len(order) - 1; i >= 0 && len(remaining) > 0; i-- {
+		identifier := order[i]
+		operation, ok := s.operation(identifier)
+		if !ok || operation.Object.IsRoot || !operation.Insert {
+			continue
+		}
+		object := operation.Object.OpID
+		if _, needed := remaining[object]; !needed {
+			continue
+		}
+		tail := s.sequenceTailCache[object]
+		tail.last = operation.ID
+		s.sequenceTailCache[object] = tail
+		delete(remaining, object)
+	}
+	for object := range remaining {
+		tail := s.sequenceTailCache[object]
+		tail.safe = false
+		s.sequenceTailCache[object] = tail
+	}
+}
+
 func (s *State) sequence(object opset.OpID) []opset.Operation {
 	if cached, ok := s.sequenceCache[object]; ok {
 		return cached
@@ -54,15 +111,13 @@ func (s *State) sequenceElements(object opset.OpID) []opset.Operation {
 	}
 
 	order := s.insertOrder(object)
-
 	operations := make([]opset.Operation, 0, len(order))
-
-	for _, id := range order {
-		if s.isSuperseded(id) {
+	for _, identifier := range order {
+		if s.isSuperseded(identifier) {
 			continue
 		}
-
-		if operation, ok := s.operations[id]; ok && operation.Action != opset.ActionMark {
+		if operation, ok := s.operation(identifier); ok &&
+			operation.Action != opset.ActionMark {
 			operations = append(operations, operation)
 		}
 	}
@@ -72,13 +127,24 @@ func (s *State) sequenceElements(object opset.OpID) []opset.Operation {
 	return operations
 }
 
+func (s *State) sequenceIndex(object opset.OpID) *sequenceIndex {
+	if index, ok := s.sequenceIndexes[object]; ok {
+		return index
+	}
+
+	index := s.buildSequenceIndex(object)
+	s.sequenceIndexes[object] = index
+
+	return index
+}
+
 func (s *State) sequenceAll(object opset.OpID) []opset.Operation {
 	order := s.insertOrder(object)
 
 	operations := make([]opset.Operation, 0, len(order))
 
 	for _, id := range order {
-		if operation, ok := s.operations[id]; ok && operation.Action != opset.ActionMark {
+		if operation, ok := s.operation(id); ok && operation.Action != opset.ActionMark {
 			operations = append(operations, operation)
 		}
 	}
@@ -87,24 +153,29 @@ func (s *State) sequenceAll(object opset.OpID) []opset.Operation {
 }
 
 // insertOrder returns the RGA-ordered insertion operation IDs for a sequence
-// object (including tombstones, excluding marks), using the incremental cache
+// object (including tombstones and marks), using the incremental cache
 // when present and rebuilding from the operation set otherwise.
 func (s *State) insertOrder(object opset.OpID) []opset.OpID {
 	if cached, ok := s.insertOrderCache[object]; ok {
 		return cached
 	}
+	if index, ok := s.sequenceIndexes[object]; ok {
+		order := index.order()
+		s.insertOrderCache[object] = order
 
+		return order
+	}
 	children := make(map[opset.OpID][]opset.Operation)
 
 	var head []opset.Operation
 
-	for _, operation := range s.operations {
+	s.eachOperation(func(operation opset.Operation) bool {
 		// Mark begin and end operations occupy positions in the sequence so
 		// insertions can anchor relative to them; element views filter them out.
 		if operation.Object.IsRoot ||
 			operation.Object.OpID != object ||
 			!operation.Insert {
-			continue
+			return true
 		}
 
 		if operation.Key.IsHead {
@@ -115,7 +186,8 @@ func (s *State) insertOrder(object opset.OpID) []opset.OpID {
 				operation,
 			)
 		}
-	}
+		return true
+	})
 
 	operations := make([]opset.Operation, 0)
 	s.appendSequence(
@@ -190,10 +262,9 @@ func (s *State) spliceInsertOrder(operation opset.Operation) {
 		}
 
 		position := i + 1
-		updated := make([]opset.OpID, 0, len(order)+1)
-		updated = append(updated, order[:position]...)
-		updated = append(updated, operation.ID)
-		updated = append(updated, order[position:]...)
+		updated := append(order, opset.OpID{})
+		copy(updated[position+1:], updated[position:])
+		updated[position] = operation.ID
 		s.insertOrderCache[object] = updated
 		// An insertion in the middle shifts later positions; rebuild on demand.
 		delete(s.insertOrderPositionCache, object)
@@ -210,100 +281,27 @@ func (s *State) sequenceValues(object opset.OpID) []sequenceValue {
 	if cached, ok := s.sequenceValuesCache[object]; ok {
 		return cached
 	}
-
-	insertions := s.sequenceAll(object)
-	values := make([]sequenceValue, 0, len(insertions))
-
-	// Collect the winning replacement value per element in a single pass. Doing
-	// this per insertion would rescan every operation for every element, which
-	// is quadratic in the size of the document.
-	winners := s.elementValueWinners()
-
-	for _, insertion := range insertions {
-		var (
-			value opset.Operation
-			found bool
-		)
-
-		if !s.isSuperseded(insertion.ID) {
-			value = insertion
-			found = true
-		}
-
-		if replacement, ok := winners[insertion.ID]; ok {
-			if !found || replacement.ID.Compare(value.ID) > 0 {
-				value = replacement
-				found = true
+	if creator, ok := s.operation(object); ok &&
+		creator.Action != opset.ActionMakeText {
+		insertions := s.sequenceAll(object)
+		values := make([]sequenceValue, 0, len(insertions))
+		for _, insertion := range insertions {
+			if winner, visible := s.sequenceElementWinner(insertion); visible {
+				values = append(values, sequenceValue{
+					Element:   insertion.ID,
+					Operation: winner,
+				})
 			}
 		}
-
-		if found {
-			values = append(
-				values,
-				sequenceValue{
-					Element:   insertion.ID,
-					Operation: value,
-				},
-			)
-		}
+		s.sequenceValuesCache[object] = values
+		return values
 	}
+
+	values := s.sequenceIndex(object).values()
 
 	s.sequenceValuesCache[object] = values
 
 	return values
-}
-
-// updateSequenceValues keeps the materialized sequence values coherent after an
-// operation is applied. Appending a brand new element at the end of the
-// sequence extends the cached slice, which keeps sequential editing linear;
-// anything else (a replacement, a deletion, an insertion in the middle) can
-// change which values win, so the entry is dropped and rebuilt on demand.
-func (s *State) updateSequenceValues(operation opset.Operation) {
-	if operation.Object.IsRoot || operation.Action == opset.ActionMark {
-		return
-	}
-
-	object := operation.Object.OpID
-
-	order := s.insertOrderCache[object]
-	appended := operation.Insert &&
-		len(operation.Predecessors) == 0 &&
-		len(order) > 0 &&
-		order[len(order)-1] == operation.ID
-
-	if !appended {
-		delete(s.sequenceValuesCache, object)
-		delete(s.sequenceElementsCache, object)
-		delete(s.sequenceOffsetCache, object)
-
-		return
-	}
-
-	if cached, ok := s.sequenceValuesCache[object]; ok {
-		s.sequenceValuesCache[object] = append(
-			cached,
-			sequenceValue{
-				Element:   operation.ID,
-				Operation: operation,
-			},
-		)
-	}
-
-	if cached, ok := s.sequenceElementsCache[object]; ok {
-		s.sequenceElementsCache[object] = append(cached, operation)
-
-		// Extend the offset index in step so appending stays constant time. A
-		// valid offset slice for N elements holds N+1 entries, so it lines up
-		// with the pre-append element count; the new element starts at the
-		// previous total width.
-		if offsets, ok := s.sequenceOffsetCache[object]; ok &&
-			len(offsets) == len(cached)+1 {
-			s.sequenceOffsetCache[object] = append(
-				offsets,
-				offsets[len(offsets)-1]+elementLength(operation),
-			)
-		}
-	}
 }
 
 // sequenceOffsets returns the cumulative UTF-16 width before each element of the
@@ -344,30 +342,6 @@ func (s *State) insertOrderPositions(object opset.OpID) map[opset.OpID]int {
 	return positions
 }
 
-// elementValueWinners returns, for every list element that has been assigned a
-// replacement value, the visible operation with the highest ID. Element IDs are
-// globally unique, so a single map covers every object.
-func (s *State) elementValueWinners() map[opset.OpID]opset.Operation {
-	winners := make(map[opset.OpID]opset.Operation)
-
-	for _, operation := range s.operations {
-		if operation.Insert ||
-			operation.Action == opset.ActionDelete ||
-			operation.Action == opset.ActionIncrement ||
-			operation.Key.Element == nil ||
-			s.isSuperseded(operation.ID) {
-			continue
-		}
-
-		element := *operation.Key.Element
-		if current, ok := winners[element]; !ok || operation.ID.Compare(current.ID) > 0 {
-			winners[element] = operation
-		}
-	}
-
-	return winners
-}
-
 // visibleSequenceElementOperations returns every visible value operation whose
 // list element is the given insertion, in ascending operation-ID order. This is
 // the conflict set that a subsequent put, delete, or increment must reference as
@@ -375,16 +349,16 @@ func (s *State) elementValueWinners() map[opset.OpID]opset.Operation {
 func (s *State) visibleSequenceElementOperations(element opset.OpID) []opset.Operation {
 	var result []opset.Operation
 
-	if insertion, ok := s.operations[element]; ok && !s.isSuperseded(insertion.ID) {
+	insertion, insertionExists := s.operation(element)
+	if insertionExists && !s.isSuperseded(insertion.ID) {
 		result = append(result, insertion)
 	}
 
-	for _, operation := range s.operations {
-		if operation.Insert ||
+	for _, identifier := range s.sequenceElementIndex[element] {
+		operation, ok := s.operation(identifier)
+		if !ok ||
 			operation.Action == opset.ActionDelete ||
 			operation.Action == opset.ActionIncrement ||
-			operation.Key.Element == nil ||
-			*operation.Key.Element != element ||
 			s.isSuperseded(operation.ID) {
 			continue
 		}

@@ -89,3 +89,169 @@ func TestEngineRollback_PreservesIsolationStates(t *testing.T) {
 	assert.Same(t, full, engine.fullState)
 	assert.True(t, engine.isolationActive)
 }
+
+func TestEngineEmptyCommit_UpdatesCanonicalColumnsWhileIsolated(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	value, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "seed"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, engine.PutScalar(0, "value", value))
+	hash, err := engine.Commit("seed", time.Time{})
+	require.NoError(t, err)
+
+	require.NoError(t, engine.Isolate([][32]byte{hash}))
+	emptyHash, err := engine.EmptyCommit("isolated", time.Time{})
+	require.NoError(t, err)
+	assert.True(t, engine.fullState.hasChange(opset.ChangeHash(emptyHash)))
+	assert.Len(t, engine.columns.changes, 2)
+
+	require.NoError(t, engine.Integrate())
+	data, err := engine.Save(true, false)
+	require.NoError(t, err)
+	loaded, err := LoadEngine(data)
+	require.NoError(t, err)
+	assert.True(t, loaded.state.hasChange(opset.ChangeHash(emptyHash)))
+}
+
+func TestEngineRollback_InvalidatesCreatedSequenceCaches(t *testing.T) {
+	t.Parallel()
+
+	for _, objectType := range []string{"list", "text"} {
+		t.Run(
+			objectType,
+			func(t *testing.T) {
+				t.Parallel()
+
+				engine, err := NewEngine()
+				require.NoError(t, err)
+
+				handle, err := engine.PutObject(0, "sequence", objectType)
+				require.NoError(t, err)
+
+				object := engine.objects[handle].OpID
+				engine.state.sequence(object)
+				engine.state.insertOrder(object)
+				engine.state.sequenceValues(object)
+				elements := engine.state.sequenceElements(object)
+				engine.state.sequenceOffsets(object, elements)
+				engine.state.insertOrderPositions(object)
+
+				assert.Contains(t, engine.state.sequenceCache, object)
+				assert.Contains(t, engine.state.insertOrderCache, object)
+				assert.Contains(t, engine.state.insertOrderPositionCache, object)
+				assert.Contains(t, engine.state.sequenceValuesCache, object)
+				assert.Contains(t, engine.state.sequenceElementsCache, object)
+				assert.Contains(t, engine.state.sequenceOffsetCache, object)
+
+				cancelled, err := engine.Rollback()
+				require.NoError(t, err)
+				assert.Equal(t, uint64(1), cancelled)
+
+				assert.NotContains(t, engine.state.sequenceCache, object)
+				assert.NotContains(t, engine.state.insertOrderCache, object)
+				assert.NotContains(t, engine.state.insertOrderPositionCache, object)
+				assert.NotContains(t, engine.state.sequenceValuesCache, object)
+				assert.NotContains(t, engine.state.sequenceElementsCache, object)
+				assert.NotContains(t, engine.state.sequenceOffsetCache, object)
+			},
+		)
+	}
+}
+
+func TestStateUndoPending_PreservesRemainingSuperseder(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	predecessor := opset.Operation{
+		ID:     opset.OpID{Actor: actor, Counter: 1},
+		Action: opset.ActionSet,
+	}
+	first := opset.Operation{
+		ID:           opset.OpID{Actor: actor, Counter: 2},
+		Action:       opset.ActionSet,
+		Predecessors: []opset.OpID{predecessor.ID},
+	}
+	second := opset.Operation{
+		ID:           opset.OpID{Actor: actor, Counter: 3},
+		Action:       opset.ActionSet,
+		Predecessors: []opset.OpID{predecessor.ID},
+	}
+
+	state := NewState()
+	state.operations[predecessor.ID] = predecessor
+	require.NoError(t, state.applyPending([]opset.Operation{first, second}))
+	require.True(t, state.isSuperseded(predecessor.ID))
+
+	state.undoPending([]opset.Operation{second})
+	assert.True(t, state.isSuperseded(predecessor.ID))
+
+	state.undoPending([]opset.Operation{first})
+	assert.False(t, state.isSuperseded(predecessor.ID))
+}
+
+func TestStateUndoPending_ClearsPendingSupersessionChain(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	base := opset.Operation{
+		ID:     opset.OpID{Actor: actor, Counter: 1},
+		Action: opset.ActionSet,
+	}
+	first := opset.Operation{
+		ID:           opset.OpID{Actor: actor, Counter: 2},
+		Action:       opset.ActionSet,
+		Predecessors: []opset.OpID{base.ID},
+	}
+	second := opset.Operation{
+		ID:           opset.OpID{Actor: actor, Counter: 3},
+		Action:       opset.ActionSet,
+		Predecessors: []opset.OpID{first.ID},
+	}
+
+	state := NewState()
+	state.operations[base.ID] = base
+	require.NoError(t, state.applyPending([]opset.Operation{first, second}))
+
+	state.undoPending([]opset.Operation{first, second})
+
+	assert.False(t, state.isSuperseded(base.ID))
+	assert.False(t, state.isSuperseded(first.ID))
+	assert.Contains(t, state.operations, base.ID)
+	assert.NotContains(t, state.operations, first.ID)
+	assert.NotContains(t, state.operations, second.ID)
+}
+
+func TestStateUndoPending_DoesNotSupersedeCounterOnIncrement(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	counter := opset.Operation{
+		ID:     opset.OpID{Actor: actor, Counter: 1},
+		Action: opset.ActionSet,
+		Value:  &opset.Scalar{Type: opset.ScalarCounter},
+	}
+	increment := opset.Operation{
+		ID:           opset.OpID{Actor: actor, Counter: 2},
+		Action:       opset.ActionIncrement,
+		Predecessors: []opset.OpID{counter.ID},
+	}
+
+	state := NewState()
+	state.operations[counter.ID] = counter
+	require.NoError(t, state.applyPending([]opset.Operation{increment}))
+	assert.False(t, state.isSuperseded(counter.ID))
+
+	state.undoPending([]opset.Operation{increment})
+	assert.False(t, state.isSuperseded(counter.ID))
+	assert.Contains(t, state.operations, counter.ID)
+}

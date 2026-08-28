@@ -22,7 +22,9 @@ package core
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"sort"
 	"time"
@@ -37,7 +39,7 @@ import (
 // hash when it is not already a head (so that direct causal succession from the
 // author's prior change is always recorded explicitly).
 func (b *Engine) changeDependencies(sequence uint64) []opset.ChangeHash {
-	dependencies := b.state.Heads()
+	dependencies := b.currentHeads()
 
 	if sequence > 1 {
 		last, ok := b.state.hashForActorSequence(b.actor, sequence-1)
@@ -77,7 +79,7 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 
 	nativeHeads := nativeHashes(heads)
 
-	pinned, ok := full.at(nativeHeads)
+	pinned, ok := newIsolationView(full, b.columns, nativeHeads)
 	if !ok {
 		return fmt.Errorf("isolation heads are unknown")
 	}
@@ -159,6 +161,12 @@ func (b *Engine) Commit(
 	}
 
 	sequence := b.state.sequenceForActor(b.actor) + 1
+	if sequence > math.MaxUint32 ||
+		b.pending[len(b.pending)-1].ID.Counter > math.MaxUint32 {
+		return [32]byte{}, fmt.Errorf(
+			"change exceeds snapshot uint32 domain",
+		)
+	}
 	dependencies := b.changeDependencies(sequence)
 
 	change := &opset.Change{
@@ -180,28 +188,46 @@ func (b *Engine) Commit(
 		return [32]byte{}, fmt.Errorf("cannot encode native change: %w", err)
 	}
 
-	b.state.recordAppliedChange(change)
+	nextColumns, nextFullState, direct, err := b.applyDirectColumnCommit(change)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"cannot update canonical document columns: %w",
+			err,
+		)
+	}
 
 	// While isolated, the pinned view holds the change for subsequent reads, but
 	// the full history must also record it so integration sees every isolated
-	// change alongside merges. Decode a fresh copy from the encoded bytes so the
-	// two states never share mutable operation state.
+	// change alongside merges. Changes and raw bytes are immutable after encode,
+	// while State copies operation values into its own mutable query indexes.
 	if b.isolationActive && b.fullState != nil {
-		document, err := storage.DecodePartial(raw)
-		if err != nil || len(document.Changes) == 0 {
-			return [32]byte{}, fmt.Errorf("cannot decode isolated change for full history: %w", err)
-		}
-
-		fullChange := document.Changes[0]
-
-		fullChange.Raw = append([]byte(nil), raw...)
-
-		if err := b.fullState.ApplyChange(&fullChange); err != nil {
-			return [32]byte{}, err
+		if direct {
+			b.fullState = nextFullState
+		} else if err := b.fullState.ApplyChange(change); err != nil {
+			return [32]byte{}, fmt.Errorf(
+				"cannot apply isolated change to full history: %w",
+				err,
+			)
 		}
 
 		if next := b.fullState.maxOpGlobal() + 1; next > b.nextOp {
 			b.nextOp = next
+		}
+	}
+	b.state.recordAppliedChange(change)
+	if direct {
+		b.columns = nextColumns
+		if b.isolationActive && b.fullState != nil {
+			b.fullState.promoteDirectCommit(change, nextColumns)
+		} else {
+			b.state.promoteDirectCommit(change, nextColumns)
+		}
+	} else {
+		if err := b.reconcileColumns(); err != nil {
+			return [32]byte{}, fmt.Errorf(
+				"cannot update canonical document columns: %w",
+				err,
+			)
 		}
 	}
 
@@ -221,6 +247,11 @@ func (b *Engine) EmptyCommit(
 	}
 
 	sequence := b.state.sequenceForActor(b.actor) + 1
+	if sequence > math.MaxUint32 || b.nextOp-1 > math.MaxUint32 {
+		return [32]byte{}, fmt.Errorf(
+			"change exceeds snapshot uint32 domain",
+		)
+	}
 
 	change := &opset.Change{
 		Actor:        b.actor,
@@ -240,12 +271,141 @@ func (b *Engine) EmptyCommit(
 		return [32]byte{}, fmt.Errorf("cannot encode native empty change: %w", err)
 	}
 
+	nextColumns, nextFullState, direct, err := b.applyDirectColumnCommit(change)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf(
+			"cannot update canonical document columns: %w",
+			err,
+		)
+	}
+	if b.isolationActive && b.fullState != nil {
+		if direct {
+			b.fullState = nextFullState
+		} else if err := b.fullState.ApplyChange(change); err != nil {
+			return [32]byte{}, fmt.Errorf(
+				"cannot apply isolated empty change to full history: %w",
+				err,
+			)
+		}
+	}
 	b.state.recordAppliedChange(change)
+	if direct {
+		b.columns = nextColumns
+		if b.isolationActive && b.fullState != nil {
+			b.fullState.promoteDirectCommit(change, nextColumns)
+		} else {
+			b.state.promoteDirectCommit(change, nextColumns)
+		}
+	} else {
+		if err := b.reconcileColumns(); err != nil {
+			return [32]byte{}, fmt.Errorf(
+				"cannot update canonical document columns: %w",
+				err,
+			)
+		}
+	}
 
 	b.appended = append(b.appended, raw)
 	b.revision++
 
 	return [32]byte(*change.Hash), nil
+}
+
+func (b *Engine) applyDirectColumnCommit(
+	change *opset.Change,
+) (*columnarState, *State, bool, error) {
+	planningState := b.state
+	var nextFullState *State
+	changes := []*opset.Change{change}
+	if b.isolationActive && b.fullState != nil {
+		var err error
+		nextFullState, changes, err = directIsolationState(
+			b.columns,
+			b.fullState,
+			change,
+		)
+		if err != nil {
+			return nil, nil, false, fmt.Errorf(
+				"cannot prepare isolated direct state: %w",
+				err,
+			)
+		}
+		planningState = nextFullState
+	}
+	batch, err := newColumnMutationBatch(
+		b.columns,
+		planningState,
+		changes,
+		false,
+	)
+	if errors.Is(err, errDirectColumnsUnsupported) {
+		return nil, nil, false, nil
+	}
+	if err != nil {
+		return nil, nil, false, err
+	}
+	if b.directColumnFailure != nil {
+		if err := b.directColumnFailure(); err != nil {
+			return nil, nil, false, fmt.Errorf(
+				"cannot pass direct column failpoint: %w",
+				err,
+			)
+		}
+	}
+	columns, err := batch.apply(b.columns)
+	if err != nil {
+		return nil, nil, false, err
+	}
+	return columns, nextFullState, true, nil
+}
+
+func directIsolationState(
+	columns *columnarState,
+	full *State,
+	change *opset.Change,
+) (*State, []*opset.Change, error) {
+	state, err := stateFromSharedColumns(columns)
+	if err != nil {
+		return nil, nil, err
+	}
+	remaining := make(map[opset.ChangeHash]*opset.Change)
+	full.eachChange(func(hash opset.ChangeHash, source *opset.Change) bool {
+		if _, canonical := columns.changeRows[hash]; canonical {
+			return true
+		}
+		cloned := cloneChange(*source)
+		remaining[hash] = &cloned
+		return true
+	})
+	applied := make([]*opset.Change, 0, len(remaining)+1)
+	for len(remaining) > 0 {
+		progressed := false
+		for hash, source := range remaining {
+			if !state.hasDependencies(source) {
+				continue
+			}
+			if err := state.ApplyChange(source); err != nil {
+				return nil, nil, fmt.Errorf(
+					"cannot replay isolated overlay change: %w",
+					err,
+				)
+			}
+			applied = append(applied, source)
+			delete(remaining, hash)
+			progressed = true
+		}
+		if !progressed {
+			return nil, nil, fmt.Errorf("cannot order isolated overlay changes")
+		}
+	}
+	if err := state.ApplyChange(change); err != nil {
+		return nil, nil, fmt.Errorf(
+			"cannot apply isolated direct change: %w",
+			err,
+		)
+	}
+	applied = append(applied, change)
+	return state, applied, nil
 }
 
 func (b *Engine) Rollback() (uint64, error) {
@@ -254,6 +414,7 @@ func (b *Engine) Rollback() (uint64, error) {
 	}
 
 	cancelled := uint64(len(b.pending))
+
 	rolledBack := make(map[opset.OpID]struct{}, len(b.pending))
 	for _, operation := range b.pending {
 		rolledBack[operation.ID] = struct{}{}

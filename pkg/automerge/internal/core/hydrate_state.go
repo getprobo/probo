@@ -40,13 +40,14 @@ type hydratedValueWire struct {
 
 // Hydrate returns the current root value as a recursively typed value.
 func (b *Engine) Hydrate() ([]byte, error) {
+	b.bindColumnarState()
 	return hydrateState(b.state)
 }
 
 // Rescue decodes a document and returns its current value while bypassing only
 // strict mark-order validation. The returned value does not preserve history.
 func Rescue(data []byte) ([]byte, error) {
-	document, err := storage.Decode(data)
+	document, err := storage.DecodeRescue(data)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode native rescue document: %w", err)
 	}
@@ -91,16 +92,17 @@ func (s *State) hydratedMapValue(
 
 	properties := make(map[string][]opset.Operation)
 
-	for _, operation := range s.operations {
+	s.eachOperation(func(operation opset.Operation) bool {
 		if operation.Object != object ||
 			operation.Key.Property == nil ||
 			s.isSuperseded(operation.ID) {
-			continue
+			return true
 		}
 
 		property := *operation.Key.Property
 		properties[property] = append(properties[property], operation)
-	}
+		return true
+	})
 
 	result := hydratedValueWire{
 		Type: "map",
@@ -215,17 +217,18 @@ func (s *State) mapValue(
 
 	properties := make(map[string][]opset.Operation)
 
-	for _, operation := range s.operations {
+	s.eachOperation(func(operation opset.Operation) bool {
 		if operation.Object.IsRoot ||
 			operation.Object.OpID != object ||
 			operation.Key.Property == nil ||
 			s.isSuperseded(operation.ID) {
-			continue
+			return true
 		}
 
 		property := *operation.Key.Property
 		properties[property] = append(properties[property], operation)
-	}
+		return true
+	})
 
 	result := make(map[string]any, len(properties))
 	for property, operations := range properties {

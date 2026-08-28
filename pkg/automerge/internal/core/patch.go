@@ -31,18 +31,20 @@ import (
 )
 
 func (b *Engine) Stats() ([]byte, error) {
+	b.bindColumnarState()
 	actors := make(map[opset.ActorID]struct{})
-	for id := range b.state.operations {
-		actors[id.Actor] = struct{}{}
-	}
+	b.state.eachOperation(func(operation opset.Operation) bool {
+		actors[operation.ID.Actor] = struct{}{}
+		return true
+	})
 
 	stats := struct {
 		NumChanges uint64 `json:"numChanges"`
 		NumOps     uint64 `json:"numOps"`
 		NumActors  uint64 `json:"numActors"`
 	}{
-		NumChanges: uint64(len(b.state.changes)),
-		NumOps:     uint64(len(b.state.operations)),
+		NumChanges: uint64(b.state.changeCount()),
+		NumOps:     uint64(b.state.operationCount()),
 		NumActors:  uint64(len(actors)),
 	}
 
@@ -129,6 +131,7 @@ func patchValueForOperation(state *State, operation opset.Operation) (patchValue
 // creation operation ID, with map keys in lexical order and sequence elements
 // in index order.
 func (b *Engine) CurrentState() ([]byte, error) {
+	b.bindColumnarState()
 	patches := make([]patchOut, 0)
 
 	for _, object := range orderedObjectsInState(b.state) {
@@ -155,13 +158,13 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 
 	makers := make([]opset.Operation, 0)
 
-	for _, operation := range state.operations {
+	state.eachOperation(func(operation opset.Operation) bool {
 		if _, err := actionObjectType(operation.Action); err != nil {
-			continue
+			return true
 		}
 
 		if state.isSuperseded(operation.ID) {
-			continue
+			return true
 		}
 
 		// A composite object concurrently assigned to the same map key as another
@@ -171,12 +174,13 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 		if !operation.Insert && operation.Key.Property != nil {
 			if winner, ok := state.visibleMapObjectValue(operation.Object, *operation.Key.Property); ok &&
 				winner.ID != operation.ID {
-				continue
+				return true
 			}
 		}
 
 		makers = append(makers, operation)
-	}
+		return true
+	})
 
 	sort.Slice(
 		makers,
@@ -197,7 +201,7 @@ func objectTypeInState(state *State, object opset.ObjectID) (string, error) {
 		return "map", nil
 	}
 
-	operation, ok := state.operations[object.OpID]
+	operation, ok := state.operation(object.OpID)
 	if !ok {
 		return "", fmt.Errorf("object %v does not exist", object.OpID)
 	}
@@ -210,7 +214,7 @@ func objectVisibleInState(state *State, object opset.ObjectID) bool {
 		return true
 	}
 
-	if _, ok := state.operations[object.OpID]; !ok {
+	if _, ok := state.operation(object.OpID); !ok {
 		return false
 	}
 
@@ -593,19 +597,20 @@ func mergeTextMarkPatches(
 func diffMarkPatches(source, target *State, object opset.ObjectID) ([]markPatchOut, error) {
 	begins := make([]opset.Operation, 0)
 
-	for id, operation := range target.operations {
+	target.eachOperation(func(operation opset.Operation) bool {
 		if operation.Action != opset.ActionMark ||
 			operation.Object != object ||
 			operation.MarkName == nil {
-			continue
+			return true
 		}
 
-		if _, ok := source.operations[id]; ok {
-			continue
+		if _, ok := source.operation(operation.ID); ok {
+			return true
 		}
 
 		begins = append(begins, operation)
-	}
+		return true
+	})
 
 	sort.Slice(
 		begins,
@@ -617,7 +622,9 @@ func diffMarkPatches(source, target *State, object opset.ObjectID) ([]markPatchO
 	out := make([]markPatchOut, 0, len(begins))
 
 	for _, begin := range begins {
-		end, ok := target.operations[opset.OpID{Actor: begin.ID.Actor, Counter: begin.ID.Counter + 1}]
+		end, ok := target.operation(
+			opset.OpID{Actor: begin.ID.Actor, Counter: begin.ID.Counter + 1},
+		)
 		if !ok {
 			continue
 		}

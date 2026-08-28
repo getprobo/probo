@@ -33,20 +33,26 @@ import (
 )
 
 type Engine struct {
-	state         *State
-	actor         opset.ActorID
-	nextOp        uint64
-	base          []byte
-	appended      [][]byte
-	saveCursor    int
-	pending       []opset.Operation
-	objects       map[uint32]opset.ObjectID
-	nextHandle    uint32
-	syncStates    map[uint32]*syncSessionState
-	nextSyncState uint32
-	queuedChanges map[opset.ChangeHash]*opset.Change
-	queuedBytes   int
-	diffCursor    [][32]byte
+	state          *State
+	columns        *columnarState
+	actor          opset.ActorID
+	nextOp         uint64
+	base           []byte
+	appended       [][]byte
+	saveCursor     int
+	pending        []opset.Operation
+	objects        map[uint32]opset.ObjectID
+	nextHandle     uint32
+	syncStates     map[uint32]*syncSessionState
+	nextSyncState  uint32
+	queuedChanges  map[opset.ChangeHash]*opset.Change
+	queuedBytes    int
+	unknownColumns []opset.RawColumn
+	diffCursor     [][32]byte
+
+	// directColumnFailure is a package-test failpoint. Production engines leave
+	// it nil; tests use it to verify that a failed batch publishes no state.
+	directColumnFailure func() error
 
 	// isolation pins reads and writes to a historical frontier. While active,
 	// state points at a view built from the isolation heads and fullState keeps
@@ -135,9 +141,15 @@ func NewEngine() (*Engine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize native empty state: %w", err)
 	}
+	columns, err := newColumnarState(document)
+	if err != nil {
+		return nil, fmt.Errorf("cannot initialize native empty columns: %w", err)
+	}
+	state.attachCanonical(columns)
 
 	return &Engine{
 		state:         state,
+		columns:       columns,
 		actor:         actor,
 		nextOp:        state.maxOpGlobal() + 1,
 		base:          base,
@@ -164,26 +176,47 @@ func LoadEngine(data []byte) (*Engine, error) {
 		return nil, fmt.Errorf("cannot decode native document: %w", err)
 	}
 
-	state, err := NewStateFromDocument(document)
-	if err != nil {
-		return nil, fmt.Errorf("cannot initialize native document state: %w", err)
-	}
-
 	actor, err := randomActorID()
 	if err != nil {
 		return nil, err
 	}
+	columns, err := newColumnarState(document)
+	if err != nil {
+		return nil, fmt.Errorf("cannot initialize native document columns: %w", err)
+	}
+	var state *State
+	if columns.snapshot == nil {
+		state, err = NewStateFromDocument(document)
+		if err != nil {
+			return nil, fmt.Errorf("cannot initialize native document state: %w", err)
+		}
+		columns, err = newColumnarStateFromState(state)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot rebuild native document columns: %w",
+				err,
+			)
+		}
+		state.attachCanonical(columns)
+	} else {
+		state, err = stateFromCanonicalColumns(columns)
+		if err != nil {
+			return nil, fmt.Errorf("cannot initialize columnar query state: %w", err)
+		}
+	}
 
 	return &Engine{
-		state:         state,
-		actor:         actor,
-		nextOp:        state.maxOpGlobal() + 1,
-		base:          append([]byte(nil), data...),
-		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
-		nextHandle:    1,
-		syncStates:    make(map[uint32]*syncSessionState),
-		nextSyncState: 1,
-		queuedChanges: make(map[opset.ChangeHash]*opset.Change),
+		state:          state,
+		columns:        columns,
+		actor:          actor,
+		nextOp:         state.maxOpGlobal() + 1,
+		base:           document.OwnedData,
+		unknownColumns: document.UnknownColumns,
+		objects:        map[uint32]opset.ObjectID{0: opset.RootObject()},
+		nextHandle:     1,
+		syncStates:     make(map[uint32]*syncSessionState),
+		nextSyncState:  1,
+		queuedChanges:  make(map[opset.ChangeHash]*opset.Change),
 	}, nil
 }
 
@@ -265,19 +298,53 @@ func loadEngineRetainingOrphans(
 		queuedClone[hash] = &clone
 		queuedBytes += len(clone.Raw)
 	}
+	columns, err := newColumnarStateFromState(state)
+	if err != nil {
+		return nil, true, fmt.Errorf(
+			"cannot initialize tolerant document columns: %w",
+			err,
+		)
+	}
+	state.attachCanonical(columns)
 
 	return &Engine{
-		state:         state,
-		actor:         actor,
-		nextOp:        state.maxOpGlobal() + 1,
-		base:          base,
-		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
-		nextHandle:    1,
-		syncStates:    make(map[uint32]*syncSessionState),
-		nextSyncState: 1,
-		queuedChanges: queuedClone,
-		queuedBytes:   queuedBytes,
+		state:          state,
+		columns:        columns,
+		actor:          actor,
+		nextOp:         state.maxOpGlobal() + 1,
+		base:           base,
+		objects:        map[uint32]opset.ObjectID{0: opset.RootObject()},
+		nextHandle:     1,
+		syncStates:     make(map[uint32]*syncSessionState),
+		nextSyncState:  1,
+		queuedChanges:  queuedClone,
+		queuedBytes:    queuedBytes,
+		unknownColumns: cloneRawColumns(document.UnknownColumns),
 	}, true, nil
+}
+
+func cloneRawColumns(columns []opset.RawColumn) []opset.RawColumn {
+	cloned := make([]opset.RawColumn, 0, len(columns))
+	for _, column := range columns {
+		duplicate := false
+		for _, retained := range cloned {
+			if retained.Specification == column.Specification &&
+				bytes.Equal(retained.Data, column.Data) {
+				duplicate = true
+				break
+			}
+		}
+		if duplicate {
+			continue
+		}
+
+		cloned = append(cloned, opset.RawColumn{
+			Specification: column.Specification,
+			Data:          append([]byte(nil), column.Data...),
+		})
+	}
+
+	return cloned
 }
 
 // orderedQueuedChanges returns queued changes in a deterministic order (by hash)
@@ -489,12 +556,12 @@ func (b *Engine) LoadIncremental(
 		return 0, err
 	}
 
-	before := len(b.state.changes)
+	before := b.state.changeCount()
 	if _, err := b.Merge(data[:consumed]); err != nil {
 		return 0, err
 	}
 
-	after := len(b.state.changes)
+	after := b.state.changeCount()
 	if after < before {
 		return 0, fmt.Errorf("incremental load reduced the change count")
 	}
@@ -515,4 +582,55 @@ func (b *Engine) SetActor(value []byte) error {
 	b.actor = actor
 
 	return nil
+}
+
+// Fork creates an independent engine and shares its immutable columnar
+// snapshot until either side mutates.
+func (b *Engine) Fork(actor []byte) (*Engine, error) {
+	if b.isolationActive {
+		data, err := b.Save(true, true)
+		if err != nil {
+			return nil, err
+		}
+		fork, err := LoadEngine(data)
+		if err != nil {
+			return nil, err
+		}
+		if err := fork.SetActor(actor); err != nil {
+			return nil, err
+		}
+		return fork, nil
+	}
+
+	forkActor, err := opset.NewActorID(actor)
+	if err != nil {
+		return nil, err
+	}
+	columns := b.columns.clone()
+	columns.shared = true
+	state, err := stateFromSharedColumns(columns)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fork native state: %w", err)
+	}
+	b.columns.shared = true
+	fork := &Engine{
+		state:          state,
+		columns:        columns,
+		actor:          forkActor,
+		nextOp:         state.maxOpGlobal() + 1,
+		objects:        map[uint32]opset.ObjectID{0: opset.RootObject()},
+		nextHandle:     1,
+		syncStates:     make(map[uint32]*syncSessionState),
+		nextSyncState:  1,
+		queuedChanges:  make(map[opset.ChangeHash]*opset.Change),
+		unknownColumns: cloneRawColumns(b.unknownColumns),
+		revision:       b.revision,
+	}
+	for hash, change := range b.queuedChanges {
+		cloned := cloneChange(*change)
+		fork.queuedChanges[hash] = &cloned
+		fork.queuedBytes += len(cloned.Raw)
+	}
+
+	return fork, nil
 }
