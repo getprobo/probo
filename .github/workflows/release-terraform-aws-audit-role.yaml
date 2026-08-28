@@ -105,43 +105,63 @@ jobs:
           fi
           EXISTING=$(jq -c '[.tree[] | select(.type=="blob") | .path]' <<<"${TREE_JSON}")
 
-          ADDITIONS='[]'
+          ADDITIONS_FILE="$(mktemp)"
+          printf '%s\n' '[]' > "${ADDITIONS_FILE}"
           while IFS= read -r -d '' file; do
             rel="${file#./}"
             contents=$(base64 -w0 "${STAGE}/${rel}")
-            ADDITIONS=$(jq -c --arg path "${rel}" --arg contents "${contents}" \
-              '. + [{path: $path, contents: $contents}]' <<<"${ADDITIONS}")
+            jq -c --arg path "${rel}" --arg contents "${contents}" \
+              '. + [{path: $path, contents: $contents}]' \
+              "${ADDITIONS_FILE}" > "${ADDITIONS_FILE}.new"
+            mv "${ADDITIONS_FILE}.new" "${ADDITIONS_FILE}"
           done < <(cd "${STAGE}" && find . -type f -print0)
 
-          DELETIONS=$(jq -c --argjson existing "${EXISTING}" --argjson additions "${ADDITIONS}" '
-            ($additions | map(.path)) as $keep
+          DELETIONS_FILE="$(mktemp)"
+          jq -c --argjson existing "${EXISTING}" --slurpfile additions "${ADDITIONS_FILE}" '
+            ($additions[0] | map(.path)) as $keep
             | ($existing - $keep)
             | map({path: .})
-          ')
+          ' > "${DELETIONS_FILE}"
+
+          # gh -F splits JSON arrays on commas, so [] becomes [""] and
+          # FileAddition objects are passed as strings. Send variables in
+          # the request body instead.
+          QUERY='mutation($headline: String!, $oid: GitObjectID!, $additions: [FileAddition!]!, $deletions: [FileDeletion!]!) {
+            createCommitOnBranch(input: {
+              branch: {
+                repositoryNameWithOwner: "getprobo/terraform-aws-audit-role"
+                branchName: "main"
+              }
+              message: { headline: $headline }
+              expectedHeadOid: $oid
+              fileChanges: {
+                additions: $additions
+                deletions: $deletions
+              }
+            }) {
+              commit { oid url }
+            }
+          }'
+          PAYLOAD="$(mktemp)"
+          jq -n \
+            --arg query "${QUERY}" \
+            --arg headline "${HEADLINE}" \
+            --arg oid "${HEAD_OID}" \
+            --slurpfile additions "${ADDITIONS_FILE}" \
+            --slurpfile deletions "${DELETIONS_FILE}" \
+            '{
+              query: $query,
+              variables: {
+                headline: $headline,
+                oid: $oid,
+                additions: $additions[0],
+                deletions: $deletions[0]
+              }
+            }' > "${PAYLOAD}"
 
           ERR="$(mktemp)"
           set +e
-          RESPONSE=$(gh api graphql -f query='
-            mutation($headline: String!, $oid: GitObjectID!, $additions: [FileAddition!]!, $deletions: [FileDeletion!]!) {
-              createCommitOnBranch(input: {
-                branch: {
-                  repositoryNameWithOwner: "getprobo/terraform-aws-audit-role"
-                  branchName: "main"
-                }
-                message: { headline: $headline }
-                expectedHeadOid: $oid
-                fileChanges: {
-                  additions: $additions
-                  deletions: $deletions
-                }
-              }) {
-                commit { oid url }
-              }
-            }' \
-            -f headline="${HEADLINE}" \
-            -f oid="${HEAD_OID}" \
-            -F additions="${ADDITIONS}" \
-            -F deletions="${DELETIONS}" 2>"${ERR}")
+          RESPONSE=$(gh api graphql --input "${PAYLOAD}" 2>"${ERR}")
           STATUS=$?
           set -e
 
