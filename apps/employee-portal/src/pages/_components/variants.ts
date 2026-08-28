@@ -195,9 +195,10 @@ export const documentWorkspace = tv({
       "[view-transition-name:document-workspace]",
     ],
     request: [
-      "flex w-full shrink-0 flex-col overflow-y-auto gap-8 bg-sand-1 px-8 py-8",
+      "flex w-full shrink-0 flex-col overflow-hidden gap-8 bg-sand-1 px-8 py-8",
       "min-h-0 max-md:max-h-[50%] md:h-full md:w-96 xl:w-128",
     ],
+    history: "flex min-h-0 flex-1 flex-col gap-8",
     stage: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-sand-3",
     loading: "grid min-h-0 flex-1 place-items-center",
     spinner: "size-6 animate-spin text-sand-a10",
@@ -233,7 +234,7 @@ export const documentViewerToolbar = tv({
 
 export const documentRequestPanel = tv({
   slots: {
-    root: "flex flex-col gap-16",
+    root: "flex shrink-0 flex-col gap-16",
     copy: "flex flex-col gap-4",
     eyebrow: "text-sand-9",
     status: "flex items-center gap-3",
@@ -266,21 +267,23 @@ export const documentRequestPanel = tv({
 
 export const documentVersionHistory = tv({
   slots: {
-    root: "flex w-full flex-col gap-2",
-    header: "flex items-center justify-between",
-    frame: "overflow-clip rounded-5 border border-sand-3 bg-sand-1",
-    viewport: "overflow-y-auto overscroll-y-contain snap-y snap-mandatory",
+    root: "flex min-h-0 w-full flex-1 flex-col gap-2",
+    header: "flex shrink-0 items-center justify-between",
+    frame: "relative min-h-0 flex-1 overflow-clip border-x border-sand-3 bg-sand-1",
+    viewport: [
+      "h-full overscroll-y-contain snap-y snap-mandatory outline-none",
+      "mask-no-repeat",
+      "mask-[linear-gradient(to_bottom,transparent,black_min(16px,var(--scroll-area-overflow-y-start)),black_calc(100%-min(16px,var(--scroll-area-overflow-y-end,16px))),transparent)]",
+    ],
     list: "flex flex-col",
+    scrollbar: [
+      "flex w-4 flex-col items-center py-1",
+      "opacity-0 transition-opacity pointer-events-none",
+      "data-hovering:pointer-events-auto data-hovering:opacity-100",
+      "data-scrolling:pointer-events-auto data-scrolling:opacity-100 data-scrolling:duration-0",
+    ],
+    thumb: "w-1 rounded-full bg-sand-a8",
     ghost: "h-[72px] shrink-0 opacity-40",
-  },
-  variants: {
-    peek: {
-      true: {
-        viewport: [
-          "mask-[linear-gradient(to_bottom,transparent,black_16px,black_calc(100%-16px),transparent)]",
-        ],
-      },
-    },
   },
 });
 
@@ -289,6 +292,7 @@ export const documentVersionHistoryItem = tv({
     row: [
       "flex h-[72px] w-full shrink-0 snap-start items-center gap-4",
       "border-b border-sand-3 px-8 py-4 text-left last:border-b-0",
+      "hover:bg-sand-3",
     ],
     radio: "flex size-5 shrink-0 items-center justify-center rounded-full bg-sand-a5",
     radioDot: "size-2.5 rounded-full bg-sand-12",

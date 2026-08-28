@@ -42,6 +42,7 @@ export const approvalDocumentPageQuery = graphql`
     $organizationId: ID!
     $documentId: ID!
     $first: Int!
+    $versionsFirst: Int!
   ) @throwOnFieldError {
     viewer @required(action: THROW) {
       approvableDocument(id: $documentId) {
@@ -61,7 +62,7 @@ export const approvalDocumentPageQuery = graphql`
           }
         }
       }
-      ...DocumentVersionHistory_approvals @arguments(documentId: $documentId)
+      ...DocumentVersionHistory_approvals @arguments(documentId: $documentId, first: $versionsFirst)
       pendingQueue: approvableDocuments(
         organizationId: $organizationId
         first: $first

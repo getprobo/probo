@@ -20,10 +20,6 @@
 
 export const DOCUMENT_VERSION_PAGE_SIZE = 25;
 
-export const DOCUMENT_VERSION_VISIBLE_COUNT = 3;
-
 export const DOCUMENT_VERSION_ROW_HEIGHT_PX = 72;
-
-export const DOCUMENT_VERSION_PEEK_PX = 16;
 
 export type DocumentVersionHistoryKind = "signatures" | "approvals";

@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ScrollArea } from "@base-ui/react/scroll-area";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { UIEvent } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePaginationFragment } from "react-relay";
 
@@ -30,9 +31,7 @@ import type { DocumentVersionHistoryItem_version$key } from "#/__generated__/cor
 import type { DocumentVersionHistorySignaturesPaginationQuery } from "#/__generated__/core/DocumentVersionHistorySignaturesPaginationQuery.graphql";
 import {
   DOCUMENT_VERSION_PAGE_SIZE,
-  DOCUMENT_VERSION_PEEK_PX,
   DOCUMENT_VERSION_ROW_HEIGHT_PX,
-  DOCUMENT_VERSION_VISIBLE_COUNT,
   type DocumentVersionHistoryKind,
 } from "#/pages/_lib/documentVersion";
 
@@ -157,6 +156,10 @@ function SignaturesVersionHistory({
     DocumentVersionHistory_signatures$key
   >(documentVersionHistorySignaturesFragment, viewerKey);
 
+  const onLoadNext = useCallback(() => {
+    loadNext(DOCUMENT_VERSION_PAGE_SIZE);
+  }, [loadNext]);
+
   return (
     <VersionHistoryList
       kind="signatures"
@@ -165,9 +168,7 @@ function SignaturesVersionHistory({
       isLoadingNext={isLoadingNext}
       selectedVersionId={selectedVersionId}
       onSelect={onSelect}
-      onLoadNext={() => {
-        loadNext(DOCUMENT_VERSION_PAGE_SIZE);
-      }}
+      onLoadNext={onLoadNext}
     />
   );
 }
@@ -186,6 +187,10 @@ function ApprovalsVersionHistory({
     DocumentVersionHistory_approvals$key
   >(documentVersionHistoryApprovalsFragment, viewerKey);
 
+  const onLoadNext = useCallback(() => {
+    loadNext(DOCUMENT_VERSION_PAGE_SIZE);
+  }, [loadNext]);
+
   return (
     <VersionHistoryList
       kind="approvals"
@@ -194,9 +199,7 @@ function ApprovalsVersionHistory({
       isLoadingNext={isLoadingNext}
       selectedVersionId={selectedVersionId}
       onSelect={onSelect}
-      onLoadNext={() => {
-        loadNext(DOCUMENT_VERSION_PAGE_SIZE);
-      }}
+      onLoadNext={onLoadNext}
     />
   );
 }
@@ -221,23 +224,33 @@ function VersionHistoryList({
   const { t } = useTranslation();
   const count = versions?.totalCount ?? 0;
   const edges = versions?.edges ?? [];
-  const peek = count > DOCUMENT_VERSION_VISIBLE_COUNT;
-  const slots = documentVersionHistory({ peek });
-  const showGhost = peek && (hasNext || edges.length < count);
-  const viewportHeight = peek
-    ? DOCUMENT_VERSION_VISIBLE_COUNT * DOCUMENT_VERSION_ROW_HEIGHT_PX
-    + DOCUMENT_VERSION_PEEK_PX
-    : edges.length * DOCUMENT_VERSION_ROW_HEIGHT_PX;
+  const slots = documentVersionHistory();
+  const showGhost = hasNext || edges.length < count;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const onScroll = (event: UIEvent<HTMLDivElement>) => {
+  useEffect(() => {
     if (!hasNext || isLoadingNext) {
       return;
     }
-    const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
-    if (scrollTop + clientHeight >= scrollHeight - DOCUMENT_VERSION_ROW_HEIGHT_PX) {
-      onLoadNext();
+    const sentinel = sentinelRef.current;
+    const root = viewportRef.current;
+    if (sentinel == null || root == null) {
+      return;
     }
-  };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          onLoadNext();
+        }
+      },
+      { root, rootMargin: `0px 0px ${DOCUMENT_VERSION_ROW_HEIGHT_PX}px` },
+    );
+    observer.observe(sentinel);
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasNext, isLoadingNext, edges.length, onLoadNext]);
 
   return (
     <div className={slots.root()}>
@@ -249,13 +262,9 @@ function VersionHistoryList({
           {t("documents.versions.count", { count })}
         </Text>
       </div>
-      <div className={slots.frame()}>
-        <div
-          className={slots.viewport()}
-          style={{ height: viewportHeight }}
-          onScroll={onScroll}
-        >
-          <div className={slots.list()}>
+      <ScrollArea.Root className={slots.frame()}>
+        <ScrollArea.Viewport ref={viewportRef} className={slots.viewport()}>
+          <ScrollArea.Content className={slots.list()}>
             {edges.map(({ node }, index) => (
               <DocumentVersionHistoryItem
                 key={node.id}
@@ -268,10 +277,13 @@ function VersionHistoryList({
                 }}
               />
             ))}
-            {showGhost ? <div className={slots.ghost()} aria-hidden /> : null}
-          </div>
-        </div>
-      </div>
+            {showGhost ? <div ref={sentinelRef} className={slots.ghost()} aria-hidden /> : null}
+          </ScrollArea.Content>
+        </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar className={slots.scrollbar()} orientation="vertical">
+          <ScrollArea.Thumb className={slots.thumb()} />
+        </ScrollArea.Scrollbar>
+      </ScrollArea.Root>
     </div>
   );
 }

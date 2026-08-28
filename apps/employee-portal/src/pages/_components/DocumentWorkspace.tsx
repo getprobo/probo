@@ -71,10 +71,10 @@ export function DocumentWorkspace({
         {history == null
           ? null
           : (
-              <>
+              <div className={slots.history()}>
                 <Separator />
                 {history}
-              </>
+              </div>
             )}
       </aside>
       <section className={slots.stage()}>

@@ -41,6 +41,7 @@ export const signatureDocumentPageQuery = graphql`
     $organizationId: ID!
     $documentId: ID!
     $first: Int!
+    $versionsFirst: Int!
   ) @throwOnFieldError {
     viewer @required(action: THROW) {
       signableDocument(id: $documentId) {
@@ -57,7 +58,7 @@ export const signatureDocumentPageQuery = graphql`
           }
         }
       }
-      ...DocumentVersionHistory_signatures @arguments(documentId: $documentId)
+      ...DocumentVersionHistory_signatures @arguments(documentId: $documentId, first: $versionsFirst)
       pendingQueue: signableDocuments(
         organizationId: $organizationId
         first: $first

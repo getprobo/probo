@@ -839,7 +839,11 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 		}
 	}
 
-	p := page.NewPage(employeeVersions, versionsPage.Cursor)
+	p := &page.Page[*types.EmployeeDocumentVersion, coredata.DocumentVersionOrderField]{
+		Info:   versionsPage.Info,
+		Cursor: versionsPage.Cursor,
+		Data:   employeeVersions,
+	}
 
 	return types.NewEmployeeDocumentVersionConnection(p, r, obj.ID, versionFilter), nil
 }
