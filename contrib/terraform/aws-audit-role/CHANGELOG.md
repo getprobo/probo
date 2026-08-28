@@ -5,6 +5,12 @@ documented in this file.
 
 ## Unreleased
 
+## [0.1.3] - 2026-08-28
+
+### Changed
+
+- Maintenance release, no functional changes.
+
 ## [0.1.2] - 2026-08-28
 
 ### Changed
