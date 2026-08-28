@@ -18,21 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { DocumentListPageSkeleton } from "#/pages/_components/DocumentListPageSkeleton";
 
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
-
-export const devicesRoutes = [
-  {
-    path: "devices/register",
-    Fallback: RegisterDevicePageSkeleton,
-    Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-  },
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-  },
-] satisfies AppRoute[];
+export function DevicesPageSkeleton() {
+  return <DocumentListPageSkeleton />;
+}

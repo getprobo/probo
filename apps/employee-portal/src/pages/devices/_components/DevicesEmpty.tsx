@@ -18,21 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { LaptopIcon } from "@phosphor-icons/react";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
+import { devicesEmpty } from "./variants";
 
-export const devicesRoutes = [
-  {
-    path: "devices/register",
-    Fallback: RegisterDevicePageSkeleton,
-    Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-  },
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-  },
-] satisfies AppRoute[];
+export interface DevicesEmptyProps {
+  action?: ReactNode;
+}
+
+export function DevicesEmpty({ action }: DevicesEmptyProps) {
+  const { t } = useTranslation("devices");
+  const slots = devicesEmpty();
+
+  return (
+    <div className={slots.frame()}>
+      <div className={slots.wash()} />
+      <div className={slots.content()}>
+        <div className={slots.copy()}>
+          <span className={slots.icon()}>
+            <LaptopIcon />
+          </span>
+          <Heading level={2} size={6} weight="medium" highContrast align="center">
+            {t("empty.title")}
+          </Heading>
+          <Text size={2} color="current" align="center" className={slots.description()}>
+            {t("empty.description")}
+          </Text>
+        </div>
+        {action}
+      </div>
+    </div>
+  );
+}

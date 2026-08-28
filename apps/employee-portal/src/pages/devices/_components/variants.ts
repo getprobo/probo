@@ -88,3 +88,77 @@ export const downloadList = tv({
     meta: "w-24 shrink-0",
   },
 });
+
+export const devicesPage = tv({
+  slots: {
+    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32",
+  },
+});
+
+export const devicesEmpty = tv({
+  slots: {
+    frame: [
+      "relative flex min-h-128 flex-col items-center justify-center gap-6",
+      "overflow-hidden rounded-5 border border-sand-3 bg-sand-1 px-8 py-12",
+    ],
+    wash: [
+      "pointer-events-none absolute inset-x-0 top-0 z-0 h-full",
+      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
+      "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
+    ],
+    content: "relative z-1 flex w-full flex-col items-center gap-6",
+    copy: "flex w-full flex-col items-center gap-4",
+    icon: "size-8 shrink-0 text-sand-a9 [&_svg]:size-8",
+    description: "text-sand-a11",
+  },
+});
+
+export const devicesList = tv({
+  slots: {
+    body: "flex flex-col gap-3",
+    frame: "overflow-hidden rounded-5 border border-sand-3 bg-sand-1 transition-opacity duration-150",
+    table: "rounded-none",
+    header: "sr-only",
+    pager: "flex justify-center",
+  },
+  variants: {
+    busy: {
+      true: {
+        frame: "opacity-60",
+      },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    busy: false,
+  },
+});
+
+export const deviceListItem = tv({
+  slots: {
+    // Size 2 cells are h-11 px-3 py-3; Figma is a 48px row with px-8, a 32px
+    // gap between the title and the metadata cluster, and gap-4 inside it.
+    cell: "h-12 p-0",
+    row: "flex h-full items-center gap-8 px-8",
+    title: "min-w-0 flex-1 truncate",
+    meta: "flex shrink-0 items-center gap-4",
+    timestamp: "flex items-center gap-[3px]",
+    timestampLabel: "text-sand-a8",
+    timestampValue: "w-32 text-sand-a11",
+    os: "w-24 text-sand-a11",
+    status: "flex w-32 items-center gap-1",
+    pipWrap: "flex size-4 shrink-0 items-center justify-center",
+    pip: "size-1.5 rounded-full",
+    statusLabel: "text-sand-a11",
+  },
+  variants: {
+    connected: {
+      true: {
+        pip: "bg-green-8 ring-4 ring-green-3",
+      },
+      false: {
+        pip: "bg-sand-8 ring-4 ring-sand-3",
+      },
+    },
+  },
+});

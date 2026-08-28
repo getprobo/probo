@@ -22,6 +22,7 @@ import { CaretRightIcon } from "@phosphor-icons/react";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
@@ -33,14 +34,20 @@ export interface PageHeaderProps {
   homeLabel: string;
   currentLabel: string;
   title: string;
+  actions?: ReactNode;
 }
 
-export function PageHeader({ homeLabel, currentLabel, title }: PageHeaderProps) {
+export function PageHeader({
+  homeLabel,
+  currentLabel,
+  title,
+  actions,
+}: PageHeaderProps) {
   const { t } = useTranslation();
   const { organizationId } = useParams();
   const slots = pageHeader();
 
-  if (organizationId == null) {
+  if (organizationId === undefined) {
     throw new NotFoundError("organizationId is required");
   }
 
@@ -52,17 +59,25 @@ export function PageHeader({ homeLabel, currentLabel, title }: PageHeaderProps) 
           size={2}
           color="neutral"
           underline={false}
+          className={slots.crumb()}
         >
           {homeLabel}
         </Link>
         <CaretRightIcon className={slots.chevron()} />
-        <Text size={2} weight="medium" highContrast aria-current="page">
+        <Text size={2} weight="medium" color="current" className={slots.crumb()} aria-current="page">
           {currentLabel}
         </Text>
       </nav>
-      <Heading level={1} size={7} weight="medium" highContrast>
-        {title}
-      </Heading>
+      <div className={slots.titleRow()}>
+        <Heading level={1} size={7} weight="medium" highContrast>
+          {title}
+        </Heading>
+        {actions != null && (
+          <div className={slots.actions()}>
+            {actions}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

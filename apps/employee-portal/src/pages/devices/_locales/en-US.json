@@ -1,6 +1,30 @@
 {
   "title": "Register this device",
   "breadcrumb": "Devices",
+  "list": {
+    "title": "Devices",
+    "register": "Register new device",
+    "lastActive": "Last active",
+    "never": "Never",
+    "pendingHostname": "Pending",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "columns": {
+      "hostname": "Device",
+      "details": "Details"
+    },
+    "platforms": {
+      "DARWIN": "macOS",
+      "WINDOWS": "Windows",
+      "LINUX": "Linux",
+      "FREEBSD": "FreeBSD"
+    }
+  },
+  "empty": {
+    "title": "No devices yet",
+    "description": "Register a device to connect it to your organization and monitor its security status.",
+    "register": "Register device"
+  },
   "unavailable": {
     "title": "Enrollment unavailable",
     "description": "You do not have permission to enroll devices in this organization.",

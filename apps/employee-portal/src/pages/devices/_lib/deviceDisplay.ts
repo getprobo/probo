@@ -18,21 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+export function isDeviceConnected(state: string): boolean {
+  return state === "ACTIVE";
+}
 
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
+export function formatDeviceOs(
+  platformLabel: string | null | undefined,
+  osVersion: string | null | undefined,
+): string | null {
+  const hasPlatform = platformLabel !== undefined
+    && platformLabel !== null
+    && platformLabel !== "";
+  const hasVersion = osVersion !== undefined
+    && osVersion !== null
+    && osVersion !== "";
 
-export const devicesRoutes = [
-  {
-    path: "devices/register",
-    Fallback: RegisterDevicePageSkeleton,
-    Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-  },
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-  },
-] satisfies AppRoute[];
+  if (hasPlatform && hasVersion) {
+    return `${platformLabel} ${osVersion}`;
+  }
+  if (hasPlatform) {
+    return platformLabel;
+  }
+  if (hasVersion) {
+    return osVersion;
+  }
+  return null;
+}
