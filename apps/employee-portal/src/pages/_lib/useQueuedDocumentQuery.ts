@@ -40,6 +40,8 @@ function clearQueueDirection(): void {
   delete document.documentElement.dataset.queueDirection;
 }
 
+let queueTransitionGeneration = 0;
+
 function isQueryPaintReady(
   query: GraphQLTaggedNode,
   queryRef: QueryRefSnapshot,
@@ -118,8 +120,13 @@ function revealQueryRef(apply: () => void, animate: boolean): void {
     return;
   }
 
+  const generation = ++queueTransitionGeneration;
   const transition = viewDocument.startViewTransition(commit);
-  void transition.finished.finally(clearQueueDirection);
+  void transition.finished.finally(() => {
+    if (generation === queueTransitionGeneration) {
+      clearQueueDirection();
+    }
+  });
 }
 
 // Holds the last ready document query so queue navigation does not flash a

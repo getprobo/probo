@@ -245,15 +245,15 @@ export default defineConfig(({ mode, command }) => {
             groups: [
               {
                 name: "react",
-                test: /node_modules\/(?:react-dom|react)\//,
+                test: /[\\/]node_modules[\\/](?:react-dom|react)[\\/]/,
               },
               {
                 name: "relay",
-                test: /node_modules\/(?:react-relay|relay-runtime)\//,
+                test: /[\\/]node_modules[\\/](?:react-relay|relay-runtime)[\\/]/,
               },
               {
                 name: "react-router",
-                test: /node_modules\/react-router\//,
+                test: /[\\/]node_modules[\\/]react-router[\\/]/,
               },
             ],
           },

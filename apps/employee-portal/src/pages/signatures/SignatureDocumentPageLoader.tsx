@@ -40,7 +40,10 @@ export default function SignatureDocumentPageLoader() {
     if (organizationId == null || documentId == null) {
       return;
     }
-    loadQuery({ organizationId, documentId, first: DOCUMENT_QUEUE_ID_PAGE_SIZE });
+    loadQuery(
+      { organizationId, documentId, first: DOCUMENT_QUEUE_ID_PAGE_SIZE },
+      { fetchPolicy: "network-only" },
+    );
   }, [organizationId, documentId, loadQuery]);
 
   const currentQueryRef = queryRef != null
@@ -59,7 +62,11 @@ export default function SignatureDocumentPageLoader() {
     throw new NotFoundError("organizationId and documentId are required");
   }
 
-  if (visibleQueryRef == null) {
+  if (
+    visibleQueryRef == null
+    || visibleQueryRef.variables.organizationId !== organizationId
+    || visibleQueryRef.variables.documentId !== documentId
+  ) {
     return <SignatureDocumentPageSkeleton />;
   }
 

@@ -91,14 +91,23 @@ export function readDocumentQueueSnapshot(): DocumentQueueSnapshot | null {
 }
 
 // Persists the enter-time pending ID list so the counter stays frozen after
-// sign / approve / reject.
+// sign / approve / reject. Storage failures are ignored so the in-memory
+// snapshot still drives the current session.
 export function writeDocumentQueueSnapshot(snapshot: DocumentQueueSnapshot): void {
-  sessionStorage.setItem(DOCUMENT_QUEUE_STORAGE_KEY, JSON.stringify(snapshot));
+  try {
+    sessionStorage.setItem(DOCUMENT_QUEUE_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Ignore: private mode / quota; in-memory snapshot still applies.
+  }
 }
 
 // Drops the snapshot when the employee leaves the flow.
 export function clearDocumentQueueSnapshot(): void {
-  sessionStorage.removeItem(DOCUMENT_QUEUE_STORAGE_KEY);
+  try {
+    sessionStorage.removeItem(DOCUMENT_QUEUE_STORAGE_KEY);
+  } catch {
+    // Ignore: private mode / quota; in-memory snapshot still applies.
+  }
 }
 
 // Builds the snapshot ID list from the live pending connection, ensuring the

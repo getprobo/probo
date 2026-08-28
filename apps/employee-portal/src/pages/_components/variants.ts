@@ -120,25 +120,25 @@ export const employeeDocumentListItem = tv({
     row: "",
     // Size 2 cells are h-11 px-3; Figma rows are h-12 with px-8 on the ends.
     titleCell: "h-12 w-full max-w-0 py-0 pl-8",
-    title: "block min-w-0 truncate",
+    title: "relative z-1 block min-w-0 truncate",
     titleLink: [
       "block min-w-0 truncate",
-      "after:absolute after:inset-0",
+      "after:absolute after:inset-0 after:z-0",
       "outline-none focus-visible:after:bg-sand-2",
     ],
-    metaCell: "h-12 whitespace-nowrap py-0",
+    metaCell: "relative z-1 h-12 whitespace-nowrap py-0",
     timestamp: "flex items-center gap-[3px]",
     timestampLabel: "text-sand-a8",
     timestampValue: "text-sand-a11",
     chip: "text-sand-a11",
-    trailingCell: "h-12 whitespace-nowrap py-0 pr-8",
+    trailingCell: "relative z-1 h-12 whitespace-nowrap py-0 pr-8",
     chevron: "size-4 text-sand-11",
   },
   variants: {
     trailing: {
       action: {},
       chevron: {
-        row: "relative cursor-pointer",
+        row: "relative isolate cursor-pointer",
       },
     },
   },
@@ -195,8 +195,8 @@ export const documentWorkspace = tv({
       "[view-transition-name:document-workspace]",
     ],
     request: [
-      "flex w-full shrink-0 flex-col bg-sand-1 px-8 py-8",
-      "min-h-0 md:h-full md:w-96 md:overflow-y-auto xl:w-128",
+      "flex w-full shrink-0 flex-col overflow-y-auto bg-sand-1 px-8 py-8",
+      "min-h-0 max-md:max-h-[50%] md:h-full md:w-96 xl:w-128",
     ],
     stage: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-sand-3",
     loading: "grid min-h-0 flex-1 place-items-center",
@@ -255,6 +255,10 @@ export const documentRequestPanel = tv({
       rejected: {
         status: "text-red-11",
         statusIcon: "text-red-11",
+      },
+      voided: {
+        status: "text-sand-11",
+        statusIcon: "text-sand-11",
       },
     },
   },

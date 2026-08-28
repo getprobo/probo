@@ -31,6 +31,7 @@
     "reject": "Reject",
     "approved": "You approved this document.",
     "rejected": "You rejected this document.",
+    "voided": "This approval is no longer required.",
     "goToNext": "Go to next document",
     "finish": "Finish approvals",
     "backToList": "Back to approvals"

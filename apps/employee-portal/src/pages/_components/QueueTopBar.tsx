@@ -67,7 +67,7 @@ export function QueueTopBar() {
             variant="outline"
             color="neutral"
             aria-label={t("queue.previous")}
-            disabled={previousId == null}
+            disabled={previousId == null || advancing}
             onClick={() => {
               if (previousId != null) {
                 goTo(previousId, "back");

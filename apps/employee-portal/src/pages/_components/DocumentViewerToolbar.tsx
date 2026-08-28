@@ -122,54 +122,62 @@ export function DocumentViewerToolbar({
     }
   };
 
+  const pagesReady = numPages > 0;
+
   return (
     <div className={slots.root()}>
       <div className={slots.start()}>
-        <div className={slots.controls()}>
-          <IconButton
-            variant="ghost"
-            color="neutral"
-            aria-label={t("viewer.previousPage")}
-            disabled={currentPage <= 1}
-            onClick={() => onMovePage(-1)}
-          >
-            <CaretLeftIcon />
-          </IconButton>
-          <Text size={2} color="neutral">
-            {t("viewer.pageOf", { current: currentPage, total: numPages })}
-          </Text>
-          <IconButton
-            variant="ghost"
-            color="neutral"
-            aria-label={t("viewer.nextPage")}
-            disabled={currentPage >= numPages || numPages === 0}
-            onClick={() => onMovePage(1)}
-          >
-            <CaretRightIcon />
-          </IconButton>
-        </div>
-        <Separator orientation="vertical" className={slots.separator()} />
-        <div className={slots.controls()}>
-          <IconButton
-            variant="ghost"
-            color="neutral"
-            aria-label={t("viewer.zoomOut")}
-            onClick={() => onScaleChange(clamp(scale * 0.8, MIN_SCALE, MAX_SCALE))}
-          >
-            <MagnifyingGlassMinusIcon />
-          </IconButton>
-          <Text size={2} color="neutral">
-            {`${Math.round(scale * 100)}%`}
-          </Text>
-          <IconButton
-            variant="ghost"
-            color="neutral"
-            aria-label={t("viewer.zoomIn")}
-            onClick={() => onScaleChange(clamp(scale * 1.25, MIN_SCALE, MAX_SCALE))}
-          >
-            <MagnifyingGlassPlusIcon />
-          </IconButton>
-        </div>
+        {pagesReady
+          ? (
+              <>
+                <div className={slots.controls()}>
+                  <IconButton
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("viewer.previousPage")}
+                    disabled={currentPage <= 1}
+                    onClick={() => onMovePage(-1)}
+                  >
+                    <CaretLeftIcon />
+                  </IconButton>
+                  <Text size={2} color="neutral">
+                    {t("viewer.pageOf", { current: currentPage, total: numPages })}
+                  </Text>
+                  <IconButton
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("viewer.nextPage")}
+                    disabled={currentPage >= numPages}
+                    onClick={() => onMovePage(1)}
+                  >
+                    <CaretRightIcon />
+                  </IconButton>
+                </div>
+                <Separator orientation="vertical" className={slots.separator()} />
+                <div className={slots.controls()}>
+                  <IconButton
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("viewer.zoomOut")}
+                    onClick={() => onScaleChange(clamp(scale * 0.8, MIN_SCALE, MAX_SCALE))}
+                  >
+                    <MagnifyingGlassMinusIcon />
+                  </IconButton>
+                  <Text size={2} color="neutral">
+                    {`${Math.round(scale * 100)}%`}
+                  </Text>
+                  <IconButton
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("viewer.zoomIn")}
+                    onClick={() => onScaleChange(clamp(scale * 1.25, MIN_SCALE, MAX_SCALE))}
+                  >
+                    <MagnifyingGlassPlusIcon />
+                  </IconButton>
+                </div>
+              </>
+            )
+          : null}
       </div>
       <div className={slots.actions()}>
         <ViewerToolbarAction

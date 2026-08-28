@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretLeftIcon, CaretRightIcon, CheckCircleIcon, CheckIcon, ProhibitIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, CaretRightIcon, CheckCircleIcon, CheckIcon, MinusCircleIcon, ProhibitIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -28,13 +28,32 @@ import { documentRequestPanel } from "#/pages/_components/variants";
 
 type ApprovalState = "PENDING" | "APPROVED" | "REJECTED" | "VOIDED";
 
+const approvalStatus = {
+  APPROVED: {
+    tone: "approved",
+    Icon: CheckCircleIcon,
+    labelKey: "document.approved",
+  },
+  REJECTED: {
+    tone: "rejected",
+    Icon: ProhibitIcon,
+    labelKey: "document.rejected",
+  },
+  VOIDED: {
+    tone: "voided",
+    Icon: MinusCircleIcon,
+    labelKey: "document.voided",
+  },
+} as const;
+
 interface ApprovalRequestPanelProps {
   title: string;
   state: ApprovalState | null;
   consentText: string;
   queueActive: boolean;
   hasNext: boolean;
-  busy: boolean;
+  isApproving: boolean;
+  isRejecting: boolean;
   advancing?: boolean;
   onApprove: () => void;
   onReject: () => void;
@@ -50,7 +69,8 @@ export function ApprovalRequestPanel({
   consentText,
   queueActive,
   hasNext,
-  busy,
+  isApproving,
+  isRejecting,
   advancing = false,
   onApprove,
   onReject,
@@ -58,18 +78,18 @@ export function ApprovalRequestPanel({
   onFinish,
 }: ApprovalRequestPanelProps) {
   const { t } = useTranslation("approvals");
-  const decided = state === "APPROVED" || state === "REJECTED";
-  const tone = state === "REJECTED" ? "rejected" : "approved";
-  const slots = documentRequestPanel({ tone });
+  const decided = state === "APPROVED" || state === "REJECTED" || state === "VOIDED";
+  const status = approvalStatus[state === "REJECTED" || state === "VOIDED" ? state : "APPROVED"];
+  const slots = documentRequestPanel({ tone: status.tone });
+  const StatusIcon = status.Icon;
+  const busy = isApproving || isRejecting;
 
   const detail = decided
     ? (
         <div className={slots.status()}>
-          {state === "REJECTED"
-            ? <ProhibitIcon className={slots.statusIcon()} />
-            : <CheckCircleIcon className={slots.statusIcon()} />}
+          <StatusIcon className={slots.statusIcon()} />
           <Text size={2} color="current">
-            {state === "REJECTED" ? t("document.rejected") : t("document.approved")}
+            {t(status.labelKey)}
           </Text>
         </div>
       )
@@ -111,6 +131,7 @@ export function ApprovalRequestPanel({
                   size={3}
                   highContrast
                   iconStart={<ProhibitIcon />}
+                  loading={isRejecting}
                   disabled={busy}
                   onClick={onReject}
                 >
@@ -122,7 +143,8 @@ export function ApprovalRequestPanel({
                   size={3}
                   className="min-w-0 flex-1"
                   iconStart={<CheckIcon />}
-                  loading={busy}
+                  loading={isApproving}
+                  disabled={busy}
                   onClick={onApprove}
                 >
                   {t("document.reviewAndApprove")}

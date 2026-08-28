@@ -138,7 +138,8 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
           consentText={version.consentText}
           queueActive={queueActive}
           hasNext={hasNext}
-          busy={isApproving || isRejecting}
+          isApproving={isApproving}
+          isRejecting={isRejecting}
           advancing={advancing}
           onApprove={() => {
             void approveDocumentVersion(version.id);

@@ -28,6 +28,7 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
@@ -74,6 +75,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     readDocumentQueueSnapshot,
   );
   const [advancing, setAdvancing] = useState(false);
+  const fetchGenerationRef = useRef(0);
 
   const enter = useCallback((
     kind: DocumentQueueKind,
@@ -86,6 +88,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const leave = useCallback(() => {
+    fetchGenerationRef.current += 1;
     clearDocumentQueueSnapshot();
     setSnapshot(null);
     setAdvancing(false);
@@ -115,12 +118,16 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const generation = fetchGenerationRef.current;
     setAdvancing(true);
     void fetchDocumentQueuePage({
       kind: snapshot.kind,
       organizationId,
       after: snapshot.endCursor,
     }).then((page) => {
+      if (generation !== fetchGenerationRef.current) {
+        return;
+      }
       const next = appendQueuePage(snapshot, page);
       writeDocumentQueueSnapshot(next);
       setSnapshot(next);
@@ -130,12 +137,18 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
         void navigate(`/${organizationId}/${snapshot.kind}/${firstNew}`);
       }
     }).catch((error: unknown) => {
+      if (generation !== fetchGenerationRef.current) {
+        return;
+      }
       toast.add({
         title: t("common.error"),
         description: formatError(t("common.error"), error as GraphQLError),
         type: "error",
       });
     }).finally(() => {
+      if (generation !== fetchGenerationRef.current) {
+        return;
+      }
       setAdvancing(false);
     });
   }, [advancing, documentId, goTo, navigate, organizationId, snapshot, t, toast]);
@@ -145,11 +158,15 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const generation = fetchGenerationRef.current;
     setAdvancing(true);
     void fetchDocumentQueuePage({
       kind,
       organizationId,
     }).then((page) => {
+      if (generation !== fetchGenerationRef.current) {
+        return;
+      }
       const firstId = page.ids[0];
       if (firstId == null) {
         toast.add({
@@ -161,12 +178,18 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       enter(kind, page, firstId);
       void navigate(`/${organizationId}/${kind}/${firstId}`);
     }).catch((error: unknown) => {
+      if (generation !== fetchGenerationRef.current) {
+        return;
+      }
       toast.add({
         title: t("common.error"),
         description: formatError(t("common.error"), error as GraphQLError),
         type: "error",
       });
     }).finally(() => {
+      if (generation !== fetchGenerationRef.current) {
+        return;
+      }
       setAdvancing(false);
     });
   }, [advancing, enter, navigate, organizationId, t, toast]);
