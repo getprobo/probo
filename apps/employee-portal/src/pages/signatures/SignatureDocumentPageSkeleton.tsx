@@ -18,21 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { DocumentWorkspaceSkeleton } from "#/pages/_components/DocumentWorkspaceSkeleton";
 
-import { SignatureDocumentPageSkeleton } from "./SignatureDocumentPageSkeleton";
-import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
-
-export const signaturesRoutes = [
-  {
-    path: "signatures",
-    Fallback: SignaturesPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignaturesPageLoader")),
-  },
-  {
-    path: "signatures/:documentId",
-    Fallback: SignatureDocumentPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignatureDocumentPageLoader")),
-  },
-] satisfies AppRoute[];
+export function SignatureDocumentPageSkeleton() {
+  return <DocumentWorkspaceSkeleton />;
+}

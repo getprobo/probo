@@ -237,6 +237,29 @@ export default defineConfig(({ mode, command }) => {
     // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
+    build: {
+      assetsDir: "assets",
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            groups: [
+              {
+                name: "react",
+                test: /node_modules\/(?:react-dom|react)\//,
+              },
+              {
+                name: "relay",
+                test: /node_modules\/(?:react-relay|relay-runtime)\//,
+              },
+              {
+                name: "react-router",
+                test: /node_modules\/react-router\//,
+              },
+            ],
+          },
+        },
+      },
+    },
     server: {
       port: 5175,
       headers: {
@@ -269,10 +292,19 @@ export default defineConfig(({ mode, command }) => {
         "/favicons": proxyTo("http://localhost:5173"),
       },
     },
+    // Prebundle the PDF viewer so first open of a document page does not
+    // re-optimize deps and load a second copy of React.
+    optimizeDeps: {
+      include: [
+        "react-pdf",
+        "pdfjs-dist",
+      ],
+    },
     resolve: {
       alias: {
         "#": fileURLToPath(new URL("./src", import.meta.url)),
       },
+      dedupe: ["react", "react-dom"],
     },
   };
 });

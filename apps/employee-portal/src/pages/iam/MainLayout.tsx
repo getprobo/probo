@@ -24,8 +24,14 @@ import { Outlet } from "react-router";
 
 import type { MainLayout_organization$key } from "#/__generated__/iam/MainLayout_organization.graphql";
 import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
+import type { TopBar_organization$key } from "#/__generated__/iam/TopBar_organization.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 import { RelayProvider } from "#/lib/relay/RelayProvider";
+import { QueueTopBar } from "#/pages/_components/QueueTopBar";
+import {
+  DocumentQueueProvider,
+  useDocumentQueueActive,
+} from "#/pages/_lib/DocumentQueueContext";
 import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
 import { ViewerIdentityProvider } from "#/pages/iam/_lib/ViewerIdentityContext";
 
@@ -69,14 +75,32 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
 
   return (
     <ViewerIdentityProvider fullName={organization.viewer.identity.fullName}>
-      <div className="flex min-h-dvh flex-col bg-sand-2">
-        <TopBar organizationKey={data.organization} />
-        <RelayProvider>
-          <div className="flex flex-1 flex-col">
-            <Outlet />
-          </div>
-        </RelayProvider>
-      </div>
+      <DocumentQueueProvider>
+        <MainLayoutChrome organizationKey={data.organization} />
+      </DocumentQueueProvider>
     </ViewerIdentityProvider>
+  );
+}
+
+// Swaps the org top bar for the queue chrome when the current document is in
+// the frozen signing / approval snapshot.
+function MainLayoutChrome({
+  organizationKey,
+}: {
+  organizationKey: TopBar_organization$key;
+}) {
+  const queueActive = useDocumentQueueActive();
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-sand-2">
+      {queueActive
+        ? <QueueTopBar />
+        : <TopBar organizationKey={organizationKey} />}
+      <RelayProvider>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <Outlet />
+        </div>
+      </RelayProvider>
+    </div>
   );
 }

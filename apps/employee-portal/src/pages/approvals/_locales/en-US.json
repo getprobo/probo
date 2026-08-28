@@ -21,5 +21,15 @@
       "title": "You're all done",
       "description": "You're up to date. Previously approved documents are listed below."
     }
+  },
+  "document": {
+    "eyebrow": "Approval request",
+    "instruction": "Review this document, then approve or reject it.",
+    "reviewAndApprove": "Review and approve",
+    "reject": "Reject",
+    "approved": "You approved this document.",
+    "rejected": "You rejected this document.",
+    "goToNext": "Go to next document",
+    "finish": "Finish approvals"
   }
 }

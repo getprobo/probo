@@ -18,21 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+// The MIME type declared in a `data:<mime>;base64,...` URI (the shape the
+// export mutations return), or null when the string isn't a recognizable
+// data URI.
+export function dataUriMimeType(dataUri: string): string | null {
+  return dataUri.match(/^data:([^;,]+)[;,]/)?.[1] ?? null;
+}
 
-import { SignatureDocumentPageSkeleton } from "./SignatureDocumentPageSkeleton";
-import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
-
-export const signaturesRoutes = [
-  {
-    path: "signatures",
-    Fallback: SignaturesPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignaturesPageLoader")),
-  },
-  {
-    path: "signatures/:documentId",
-    Fallback: SignatureDocumentPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignatureDocumentPageLoader")),
-  },
-] satisfies AppRoute[];
+// Triggers a browser download of a data URI under the given file name.
+export function downloadDataUri(dataUri: string, filename: string): void {
+  const link = document.createElement("a");
+  link.href = dataUri;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+}

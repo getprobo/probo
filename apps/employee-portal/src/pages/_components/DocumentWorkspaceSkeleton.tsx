@@ -18,43 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import type { HomePageQuery } from "#/__generated__/core/HomePageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import { documentWorkspace } from "./variants";
 
-import { HomePage, homePageQuery } from "./HomePage";
-import { HomePageSkeleton } from "./HomePageSkeleton";
-
-export default function HomePageLoader() {
-  const { organizationId } = useParams();
-  const [queryRef, loadQuery] = useQueryLoader<HomePageQuery>(homePageQuery);
-
-  useEffect(() => {
-    if (organizationId == null) {
-      return;
-    }
-    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
-  }, [organizationId, loadQuery]);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
-
-  const currentQueryRef = queryRef != null
-    && queryRef.variables.organizationId === organizationId
-    ? queryRef
-    : null;
-
-  if (currentQueryRef == null) {
-    return <HomePageSkeleton />;
-  }
+export function DocumentWorkspaceSkeleton() {
+  const slots = documentWorkspace();
 
   return (
-    <Suspense key={organizationId} fallback={<HomePageSkeleton />}>
-      <HomePage queryRef={currentQueryRef} />
-    </Suspense>
+    <div className={slots.root()}>
+      <aside className={slots.request()}>
+        <div className="flex flex-col gap-4">
+          <TextSkeleton size={1} className="w-28" />
+          <HeadingSkeleton size={7} className="w-64" />
+          <TextSkeleton size={2} className="w-48" />
+          <CardSkeleton size={2} className="h-10 w-full" />
+        </div>
+      </aside>
+      <section className={slots.stage()}>
+        <div className={slots.loading()}>
+          <CardSkeleton size={3} className="h-full w-2/3 max-w-xl" />
+        </div>
+      </section>
+    </div>
   );
 }

@@ -22,3 +22,54 @@
 @import "tailwindcss";
 @import "@probo/ui/src/v2/theme.css";
 @source "../../../packages/ui/src/v2";
+
+@keyframes queue-slide-out-left {
+  to {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}
+
+@keyframes queue-slide-in-right {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+
+@keyframes queue-slide-out-right {
+  to {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+
+@keyframes queue-slide-in-left {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}
+
+::view-transition-old(document-workspace) {
+  animation: 200ms ease-out both queue-slide-out-left;
+}
+
+::view-transition-new(document-workspace) {
+  animation: 200ms ease-out both queue-slide-in-right;
+}
+
+html[data-queue-direction="back"]::view-transition-old(document-workspace) {
+  animation-name: queue-slide-out-right;
+}
+
+html[data-queue-direction="back"]::view-transition-new(document-workspace) {
+  animation-name: queue-slide-in-left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(document-workspace),
+  ::view-transition-new(document-workspace) {
+    animation: none;
+  }
+}

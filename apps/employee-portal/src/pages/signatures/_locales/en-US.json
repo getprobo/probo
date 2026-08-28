@@ -21,5 +21,13 @@
       "title": "You're all done",
       "description": "You're up to date. Previously signed documents are listed below."
     }
+  },
+  "document": {
+    "eyebrow": "Signature request",
+    "instruction": "Review this document before signing.",
+    "reviewAndSign": "Review and sign",
+    "signed": "You signed this document.",
+    "goToNext": "Go to next document",
+    "finish": "Finish signing"
   }
 }

@@ -169,3 +169,76 @@ export const documentListSection = tv({
     busy: false,
   },
 });
+
+export const queueTopBar = tv({
+  slots: {
+    bar: "flex h-14 shrink-0 items-center justify-between bg-sand-12 px-8",
+    start: "flex min-w-0 items-center gap-6",
+    controls: "flex items-center gap-2",
+    progress: "truncate text-sand-1",
+    close: "text-sand-1 hover:bg-white/10 hover:text-sand-1",
+  },
+});
+
+export const documentWorkspace = tv({
+  slots: {
+    root: [
+      "flex min-h-0 flex-1",
+      "max-md:flex-col",
+      "[view-transition-name:document-workspace]",
+    ],
+    request: "flex w-full shrink-0 flex-col gap-6 bg-sand-1 px-8 py-8 md:w-128 md:overflow-y-auto",
+    stage: "flex min-h-0 min-w-0 flex-1 flex-col bg-sand-3",
+    loading: "grid min-h-0 flex-1 place-items-center",
+    spinner: "size-6 animate-spin text-sand-a10",
+  },
+});
+
+export const pdfPreview = tv({
+  slots: {
+    viewport: "min-h-0 flex-1 overflow-auto bg-sand-3",
+    list: "flex flex-col items-center gap-4 py-8",
+    loading: "grid place-items-center py-16 text-sand-a10",
+    spinner: "size-6 animate-spin",
+    page: "shadow-3",
+  },
+});
+
+export const documentViewerToolbar = tv({
+  slots: {
+    root: "flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-sand-2 px-6",
+    start: "flex min-w-0 flex-wrap items-center gap-2",
+    controls: "flex items-center gap-1",
+    actions: "flex shrink-0 items-center gap-2",
+    actionLabel: "max-sm:hidden",
+    separator: "h-6 max-sm:hidden",
+  },
+});
+
+export const documentRequestPanel = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    copy: "flex flex-col gap-4",
+    status: "flex items-center gap-2",
+    statusIcon: "size-5 shrink-0",
+    actions: "flex flex-col gap-3",
+    actionRow: "flex flex-col gap-3 sm:flex-row",
+    consent: "text-sand-a9",
+  },
+  variants: {
+    tone: {
+      signed: {
+        status: "text-sky-11",
+        statusIcon: "text-sky-11",
+      },
+      approved: {
+        status: "text-green-11",
+        statusIcon: "text-green-11",
+      },
+      rejected: {
+        status: "text-red-11",
+        statusIcon: "text-red-11",
+      },
+    },
+  },
+});

@@ -21,6 +21,7 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
+import { ApprovalDocumentPageSkeleton } from "./ApprovalDocumentPageSkeleton";
 import { ApprovalsPageSkeleton } from "./ApprovalsPageSkeleton";
 
 export const approvalsRoutes = [
@@ -28,5 +29,10 @@ export const approvalsRoutes = [
     path: "approvals",
     Fallback: ApprovalsPageSkeleton,
     Component: lazy(() => import("#/pages/approvals/ApprovalsPageLoader")),
+  },
+  {
+    path: "approvals/:documentId",
+    Fallback: ApprovalDocumentPageSkeleton,
+    Component: lazy(() => import("#/pages/approvals/ApprovalDocumentPageLoader")),
   },
 ] satisfies AppRoute[];

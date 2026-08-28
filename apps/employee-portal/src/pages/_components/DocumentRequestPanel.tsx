@@ -18,21 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 
-import { SignatureDocumentPageSkeleton } from "./SignatureDocumentPageSkeleton";
-import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
+import { documentRequestPanel } from "./variants";
 
-export const signaturesRoutes = [
-  {
-    path: "signatures",
-    Fallback: SignaturesPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignaturesPageLoader")),
-  },
-  {
-    path: "signatures/:documentId",
-    Fallback: SignatureDocumentPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignatureDocumentPageLoader")),
-  },
-] satisfies AppRoute[];
+interface DocumentRequestPanelProps {
+  eyebrow: string;
+  title: string;
+  children: ReactNode;
+}
+
+// Shared request-column chrome: eyebrow, document title, then flow-specific
+// status / actions / consent.
+export function DocumentRequestPanel({ eyebrow, title, children }: DocumentRequestPanelProps) {
+  const slots = documentRequestPanel();
+
+  return (
+    <div className={slots.root()}>
+      <div className={slots.copy()}>
+        <Text size={1} color="neutral">
+          {eyebrow}
+        </Text>
+        <Heading level={1} size={7} weight="medium" highContrast>
+          {title}
+        </Heading>
+      </div>
+      {children}
+    </div>
+  );
+}

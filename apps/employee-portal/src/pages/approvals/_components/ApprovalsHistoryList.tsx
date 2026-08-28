@@ -49,7 +49,7 @@ const approvalsHistoryListFragment = graphql`
       after: $after
       last: $last
       before: $before
-      filter: { approvalStates: [APPROVED] }
+      filter: { approvalStates: [APPROVED, REJECTED] }
       orderBy: { field: UPDATED_AT, direction: DESC }
     ) {
       totalCount

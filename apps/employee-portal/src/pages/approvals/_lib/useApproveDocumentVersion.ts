@@ -18,21 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { graphql } from "react-relay";
 
-import { SignatureDocumentPageSkeleton } from "./SignatureDocumentPageSkeleton";
-import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
+import type { useApproveDocumentVersionMutation } from "#/__generated__/core/useApproveDocumentVersionMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
-export const signaturesRoutes = [
-  {
-    path: "signatures",
-    Fallback: SignaturesPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignaturesPageLoader")),
-  },
-  {
-    path: "signatures/:documentId",
-    Fallback: SignatureDocumentPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignatureDocumentPageLoader")),
-  },
-] satisfies AppRoute[];
+const approveDocumentVersionMutation = graphql`
+  mutation useApproveDocumentVersionMutation($input: ApproveDocumentVersionInput!) {
+    approveDocumentVersion(input: $input) {
+      approvalDecision {
+        id
+        state
+      }
+    }
+  }
+`;
+
+// Approves the given document version and updates the Relay store so the
+// request panel switches to the approved state in place.
+export function useApproveDocumentVersion(documentId: string) {
+  const [approveDocumentVersion, isApproving]
+    = useMutation<useApproveDocumentVersionMutation>(approveDocumentVersionMutation);
+
+  return [
+    (documentVersionId: string) => approveDocumentVersion({
+      variables: { input: { documentVersionId } },
+      updater: (store) => {
+        store.get(documentId)?.setValue("APPROVED", "approvalState");
+      },
+    }),
+    isApproving,
+  ] as const;
+}

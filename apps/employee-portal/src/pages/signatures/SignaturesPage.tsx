@@ -23,6 +23,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { SignaturesPageQuery } from "#/__generated__/core/SignaturesPageQuery.graphql";
 import { PageHeader } from "#/pages/_components/PageHeader";
+import { useClearDocumentQueueOnMount } from "#/pages/_lib/DocumentQueueContext";
 
 import { SignaturesHistoryList } from "./_components/SignaturesHistoryList";
 import { SignaturesPendingList } from "./_components/SignaturesPendingList";
@@ -43,6 +44,7 @@ interface SignaturesPageProps {
 export function SignaturesPage({ queryRef }: SignaturesPageProps) {
   const { t } = useTranslation("signatures");
   const { t: tApp } = useTranslation();
+  useClearDocumentQueueOnMount();
   const { viewer } = usePreloadedQuery<SignaturesPageQuery>(
     signaturesPageQuery,
     queryRef,

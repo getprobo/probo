@@ -23,6 +23,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { ApprovalsPageQuery } from "#/__generated__/core/ApprovalsPageQuery.graphql";
 import { PageHeader } from "#/pages/_components/PageHeader";
+import { useClearDocumentQueueOnMount } from "#/pages/_lib/DocumentQueueContext";
 
 import { ApprovalsHistoryList } from "./_components/ApprovalsHistoryList";
 import { ApprovalsPendingList } from "./_components/ApprovalsPendingList";
@@ -43,6 +44,7 @@ interface ApprovalsPageProps {
 export function ApprovalsPage({ queryRef }: ApprovalsPageProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
+  useClearDocumentQueueOnMount();
   const { viewer } = usePreloadedQuery<ApprovalsPageQuery>(
     approvalsPageQuery,
     queryRef,

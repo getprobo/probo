@@ -18,21 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { Toast } from "@base-ui/react/toast";
+import { useTranslation } from "react-i18next";
 
-import { SignatureDocumentPageSkeleton } from "./SignatureDocumentPageSkeleton";
-import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
+// Copies a document URL to the clipboard and toasts on success.
+export function useCopyDocumentLink() {
+  const { t } = useTranslation();
+  const toast = Toast.useToastManager();
 
-export const signaturesRoutes = [
-  {
-    path: "signatures",
-    Fallback: SignaturesPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignaturesPageLoader")),
-  },
-  {
-    path: "signatures/:documentId",
-    Fallback: SignatureDocumentPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignatureDocumentPageLoader")),
-  },
-] satisfies AppRoute[];
+  return (url: string) => {
+    void navigator.clipboard.writeText(url).then(
+      () => {
+        toast.add({ title: t("viewer.linkCopied"), type: "success" });
+      },
+      () => {},
+    );
+  };
+}

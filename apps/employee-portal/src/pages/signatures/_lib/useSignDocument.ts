@@ -18,21 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { graphql } from "react-relay";
 
-import { SignatureDocumentPageSkeleton } from "./SignatureDocumentPageSkeleton";
-import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
+import type { useSignDocumentMutation } from "#/__generated__/core/useSignDocumentMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
-export const signaturesRoutes = [
-  {
-    path: "signatures",
-    Fallback: SignaturesPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignaturesPageLoader")),
-  },
-  {
-    path: "signatures/:documentId",
-    Fallback: SignatureDocumentPageSkeleton,
-    Component: lazy(() => import("#/pages/signatures/SignatureDocumentPageLoader")),
-  },
-] satisfies AppRoute[];
+const signDocumentMutation = graphql`
+  mutation useSignDocumentMutation($input: SignDocumentInput!) {
+    signDocument(input: $input) {
+      documentVersionSignature {
+        id
+        state
+      }
+    }
+  }
+`;
+
+// Signs the given document version and marks the employee document signed in
+// the Relay store so the request panel updates in place.
+export function useSignDocument(documentId: string) {
+  const [signDocument, isSigning] = useMutation<useSignDocumentMutation>(
+    signDocumentMutation,
+  );
+
+  return [
+    (documentVersionId: string) => signDocument({
+      variables: { input: { documentVersionId } },
+      updater: (store) => {
+        store.get(documentId)?.setValue(true, "signed");
+        store.get(documentVersionId)?.setValue(true, "signed");
+      },
+    }),
+    isSigning,
+  ] as const;
+}

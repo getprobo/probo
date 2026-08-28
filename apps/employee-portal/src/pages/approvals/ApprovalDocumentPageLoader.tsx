@@ -22,39 +22,42 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { HomePageQuery } from "#/__generated__/core/HomePageQuery.graphql";
+import type { ApprovalDocumentPageQuery } from "#/__generated__/core/ApprovalDocumentPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 
-import { HomePage, homePageQuery } from "./HomePage";
-import { HomePageSkeleton } from "./HomePageSkeleton";
+import { ApprovalDocumentPage, approvalDocumentPageQuery } from "./ApprovalDocumentPage";
+import { ApprovalDocumentPageSkeleton } from "./ApprovalDocumentPageSkeleton";
 
-export default function HomePageLoader() {
-  const { organizationId } = useParams();
-  const [queryRef, loadQuery] = useQueryLoader<HomePageQuery>(homePageQuery);
+export default function ApprovalDocumentPageLoader() {
+  const { organizationId, documentId } = useParams();
+  const [queryRef, loadQuery] = useQueryLoader<ApprovalDocumentPageQuery>(
+    approvalDocumentPageQuery,
+  );
 
   useEffect(() => {
-    if (organizationId == null) {
+    if (organizationId == null || documentId == null) {
       return;
     }
-    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
-  }, [organizationId, loadQuery]);
+    loadQuery({ organizationId, documentId });
+  }, [organizationId, documentId, loadQuery]);
 
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
+  if (organizationId == null || documentId == null) {
+    throw new NotFoundError("organizationId and documentId are required");
   }
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
+    && queryRef.variables.documentId === documentId
     ? queryRef
     : null;
 
   if (currentQueryRef == null) {
-    return <HomePageSkeleton />;
+    return <ApprovalDocumentPageSkeleton />;
   }
 
   return (
-    <Suspense key={organizationId} fallback={<HomePageSkeleton />}>
-      <HomePage queryRef={currentQueryRef} />
+    <Suspense key={documentId} fallback={<ApprovalDocumentPageSkeleton />}>
+      <ApprovalDocumentPage queryRef={currentQueryRef} />
     </Suspense>
   );
 }

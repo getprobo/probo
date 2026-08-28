@@ -39,7 +39,10 @@ export default function SignaturesPageLoader() {
     if (organizationId == null) {
       return;
     }
-    loadQuery({ organizationId, first: DOCUMENT_LIST_PAGE_SIZE });
+    loadQuery(
+      { organizationId, first: DOCUMENT_LIST_PAGE_SIZE },
+      { fetchPolicy: "network-only" },
+    );
   }, [organizationId, loadQuery]);
 
   if (organizationId == null) {
