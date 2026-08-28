@@ -49,9 +49,11 @@ func benchmarkLocalizedColumn(b *testing.B, name string, rows int) {
 			}
 
 			base := hexane.NewColumnFromValues(hexane.Uint64Codec(), values...)
+
 			b.ReportAllocs()
 			b.ReportMetric(float64(rows), "rows")
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				cloned := base.Clone()
 				cloned.Set(rows/2, hexane.Some(uint64(i)))
@@ -82,9 +84,11 @@ func benchmarkLocalizedSplice(b *testing.B, name string, rows int) {
 				hexane.Some(uint64(8)),
 				hexane.Some(uint64(9)),
 			}
+
 			b.ReportAllocs()
 			b.ReportMetric(float64(rows), "rows")
 			b.ResetTimer()
+
 			for b.Loop() {
 				cloned := base.Clone()
 				cloned.Splice(rows/2, len(replacement), replacement...)
@@ -101,12 +105,14 @@ func BenchmarkColumn_MultiSplice(b *testing.B) {
 	for i := range values {
 		values[i] = hexane.Some(uint64(i))
 	}
+
 	base := hexane.NewColumnFromValues(hexane.Uint64Codec(), values...)
 	inserted := hexane.NewColumnFromValues(
 		hexane.Uint64Codec(),
 		hexane.Some(uint64(7)),
 		hexane.Some(uint64(8)),
 	)
+
 	splices := make([]hexane.ColumnSplice[uint64], 64)
 	for i := range splices {
 		splices[i] = hexane.ColumnSplice[uint64]{
@@ -118,8 +124,10 @@ func BenchmarkColumn_MultiSplice(b *testing.B) {
 
 	b.Run("Sequential", func(b *testing.B) {
 		b.ReportAllocs()
+
 		for b.Loop() {
 			column := base.Clone()
+
 			for i := len(splices) - 1; i >= 0; i-- {
 				splice := splices[i]
 				column.Splice(
@@ -128,16 +136,19 @@ func BenchmarkColumn_MultiSplice(b *testing.B) {
 					splice.Inserted.Values()...,
 				)
 			}
+
 			benchmarkColumn = column
 		}
 	})
 	b.Run("Batch", func(b *testing.B) {
 		b.ReportAllocs()
+
 		for b.Loop() {
 			column := base.Clone()
 			if err := column.BatchSplice(splices); err != nil {
 				b.Fatal(err)
 			}
+
 			benchmarkColumn = column
 		}
 	})
@@ -159,9 +170,11 @@ func benchmarkLocalizedDelta(b *testing.B, name string, rows int) {
 			}
 
 			base := hexane.NewDeltaColumnFromValues(values...)
+
 			b.ReportAllocs()
 			b.ReportMetric(float64(rows), "rows")
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				cloned := base.Clone()
 				cloned.Set(rows/2, hexane.Some(int64(i)))
@@ -178,9 +191,11 @@ func BenchmarkPrefixColumn_Query(b *testing.B) {
 	}
 
 	column := hexane.NewPrefixColumnFromValues(values...)
+
 	b.ReportAllocs()
 	b.ReportMetric(float64(len(values)), "rows")
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		benchmarkPrefix = column.Prefix((i % (len(values) - 1)) + 1)
 	}
@@ -197,9 +212,11 @@ func benchmarkLocalizedRaw(b *testing.B, name string, size int) {
 		name,
 		func(b *testing.B) {
 			base := hexane.NewRawColumnFromBytes(make([]byte, size))
+
 			b.ReportAllocs()
 			b.ReportMetric(float64(size), "bytes")
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				cloned := base.Clone()
 				cloned.Set(size/2, byte(i))

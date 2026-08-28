@@ -132,6 +132,7 @@ func TestIsolationView_PreservesIntegrateAndMergedHistory(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, engine.Isolate([][32]byte{first}))
+
 	isolatedValue, err := encodeScalarWire(
 		opset.Scalar{Type: opset.ScalarString, String: "isolated"},
 	)

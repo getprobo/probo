@@ -101,6 +101,7 @@ func (s *State) hydratedMapValue(
 
 		property := *operation.Key.Property
 		properties[property] = append(properties[property], operation)
+
 		return true
 	})
 
@@ -227,6 +228,7 @@ func (s *State) mapValue(
 
 		property := *operation.Key.Property
 		properties[property] = append(properties[property], operation)
+
 		return true
 	})
 

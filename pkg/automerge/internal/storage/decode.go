@@ -144,6 +144,7 @@ func decode(
 			// A trailing change extends the document beyond the snapshot roots.
 			// The combined stream must use the explicit replay/rebuild path.
 			document.Canonical = nil
+
 			change, actors, unknown, err := decodeChangeChunk(
 				chunk.content,
 				chunk.hash,
@@ -336,6 +337,7 @@ func decodeDocumentChunk(
 	if err != nil {
 		return fmt.Errorf("cannot decode operation columns: %w", err)
 	}
+
 	canonicalChangeColumns := maps.Clone(changeColumns)
 	canonicalOperationColumns := maps.Clone(operationColumns)
 
@@ -359,12 +361,14 @@ func decodeDocumentChunk(
 	for i := range operations {
 		operationOrder[i] = operations[i].ID
 	}
+
 	canonicalOperations := operations
 
 	operations, err = restoreChangeOperations(operations, budget)
 	if err != nil {
 		return fmt.Errorf("cannot restore change operations: %w", err)
 	}
+
 	if validateMarks {
 		if err := validateSnapshotMarkOrder(operations); err != nil {
 			return err

@@ -30,6 +30,7 @@ func TestUnmarshal_RejectsOversizedWireFrame(t *testing.T) {
 	t.Parallel()
 
 	var value any
+
 	err := unmarshal(make([]byte, MaxWireFrameBytes+1), &value)
 	assert.ErrorContains(t, err, "collaboration frame")
 }

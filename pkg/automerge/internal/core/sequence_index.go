@@ -77,6 +77,7 @@ type (
 // element in sequenceElementIndex, so winner selection is local to each entry.
 func (s *State) buildSequenceIndex(object opset.OpID) *sequenceIndex {
 	children := make(map[opset.OpID][]opset.OpID)
+
 	var head []opset.OpID
 
 	s.eachOperation(func(operation opset.Operation) bool {
@@ -94,20 +95,25 @@ func (s *State) buildSequenceIndex(object opset.OpID) *sequenceIndex {
 				operation.ID,
 			)
 		}
+
 		return true
 	})
 
 	ordered := make([]opset.OpID, 0)
 	visited := make(map[opset.OpID]struct{})
+
 	var appendBranch func([]opset.OpID)
+
 	appendBranch = func(identifiers []opset.OpID) {
 		sort.Slice(identifiers, func(i, j int) bool {
 			return identifiers[i].Compare(identifiers[j]) > 0
 		})
+
 		for _, identifier := range identifiers {
 			if _, ok := visited[identifier]; ok {
 				continue
 			}
+
 			visited[identifier] = struct{}{}
 			ordered = append(ordered, identifier)
 			appendBranch(children[identifier])
@@ -128,6 +134,7 @@ func (s *State) buildSequenceIndex(object opset.OpID) *sequenceIndex {
 			if !ok {
 				continue
 			}
+
 			entries = append(
 				entries,
 				s.newSequenceIndexEntry(operation),
@@ -150,6 +157,7 @@ func newSequenceIndexChunk(entries []sequenceIndexEntry) *sequenceIndexChunk {
 		if entry.mark {
 			chunk.markCount++
 		}
+
 		if entry.visible {
 			chunk.visibleCount++
 			chunk.utf16Width += entry.width
@@ -275,6 +283,7 @@ func (i *sequenceIndex) values() []sequenceValue {
 				if !ok {
 					continue
 				}
+
 				values = append(values, sequenceValue{
 					Element:   entry.insertion,
 					Operation: operation,
@@ -302,6 +311,7 @@ func (i *sequenceIndex) rangeAt(index, deleteCount uint32) (sequenceIndexRange, 
 		previous := i.visibleInsertion(start - 1)
 		result.previous = new(previous.ID)
 	}
+
 	if end > start {
 		result.targets = make([]opset.Operation, 0, end-start)
 		i.eachVisible(start, end, func(entry sequenceIndexEntry) {
@@ -333,15 +343,18 @@ func (i *sequenceIndex) richPosition(
 	}
 
 	var previous *opset.OpID
+
 	if visible > 0 {
 		operation := i.visibleInsertion(visible - 1)
 		previous = new(operation.ID)
 	}
+
 	if visible == i.visibleCount {
 		return nil, previous, nil
 	}
 
 	operation := i.visibleInsertion(visible)
+
 	return &operation, previous, nil
 }
 
@@ -358,6 +371,7 @@ func (i *sequenceIndex) visibleBoundary(target uint32) (int, uint32) {
 		if position+chunk.utf16Width < target {
 			position += chunk.utf16Width
 			visible += chunk.visibleCount
+
 			continue
 		}
 
@@ -383,14 +397,17 @@ func (i *sequenceIndex) visibleInsertion(target int) opset.Operation {
 			visible += chunk.visibleCount
 			continue
 		}
+
 		for _, entry := range chunk.entries {
 			if !entry.visible {
 				continue
 			}
+
 			if visible == target {
 				operation, _ := i.state.operation(entry.insertion)
 				return operation
 			}
+
 			visible++
 		}
 	}
@@ -408,10 +425,12 @@ func (i *sequenceIndex) rawPosition(target opset.OpID) (int, bool) {
 	}
 
 	offset := 0
+
 	for _, chunk := range i.chunks {
 		if chunk == position.chunk {
 			return offset + position.offset, true
 		}
+
 		offset += len(chunk.entries)
 	}
 
@@ -428,11 +447,13 @@ func (i *sequenceIndex) eachRaw(start int, yield func(sequenceIndexEntry) bool) 
 			position += len(chunk.entries)
 			continue
 		}
+
 		for offset := max(start-position, 0); offset < len(chunk.entries); offset++ {
 			if !yield(chunk.entries[offset]) {
 				return
 			}
 		}
+
 		position += len(chunk.entries)
 	}
 }
@@ -448,16 +469,20 @@ func (i *sequenceIndex) eachVisible(
 			visible += chunk.visibleCount
 			continue
 		}
+
 		for _, entry := range chunk.entries {
 			if !entry.visible {
 				continue
 			}
+
 			if visible >= end {
 				return
 			}
+
 			if visible >= start {
 				yield(entry)
 			}
+
 			visible++
 		}
 	}
@@ -496,6 +521,7 @@ func (i *sequenceIndex) insertEntry(
 		}
 
 		offset := position - seen
+
 		if len(chunk.entries)+1 <= sequenceIndexChunkMaximum {
 			i.removeChunkSummary(chunk)
 			chunk.entries = append(chunk.entries, sequenceIndexEntry{})
@@ -504,6 +530,7 @@ func (i *sequenceIndex) insertEntry(
 			refreshSequenceIndexChunk(chunk)
 			i.addChunkSummary(chunk)
 			i.indexChunk(chunk)
+
 			return true
 		}
 
@@ -514,6 +541,7 @@ func (i *sequenceIndex) insertEntry(
 		middle := len(entries) / 2
 		left := newSequenceIndexChunk(append([]sequenceIndexEntry(nil), entries[:middle]...))
 		right := newSequenceIndexChunk(append([]sequenceIndexEntry(nil), entries[middle:]...))
+
 		i.removeChunkSummary(chunk)
 		i.chunks = append(i.chunks, nil)
 		copy(i.chunks[chunkIndex+2:], i.chunks[chunkIndex+1:])
@@ -540,6 +568,7 @@ func (i *sequenceIndex) insertEntryDeferred(
 		i.chunks = append(i.chunks, chunk)
 		i.indexChunk(chunk)
 		dirty[chunk] = struct{}{}
+
 		return true
 	}
 
@@ -551,12 +580,15 @@ func (i *sequenceIndex) insertEntryDeferred(
 		}
 
 		offset := position - seen
+
 		chunk.entries = append(chunk.entries, sequenceIndexEntry{})
 		copy(chunk.entries[offset+1:], chunk.entries[offset:])
+
 		chunk.entries[offset] = entry
 		if len(chunk.entries) <= sequenceIndexChunkMaximum {
 			i.indexChunkFrom(chunk, offset)
 			dirty[chunk] = struct{}{}
+
 			return true
 		}
 
@@ -571,11 +603,14 @@ func (i *sequenceIndex) insertEntryDeferred(
 		copy(i.chunks[chunkIndex+2:], i.chunks[chunkIndex+1:])
 		i.chunks[chunkIndex] = left
 		i.chunks[chunkIndex+1] = right
+
 		delete(dirty, chunk)
 		dirty[left] = struct{}{}
 		dirty[right] = struct{}{}
+
 		i.indexChunk(left)
 		i.indexChunk(right)
+
 		return true
 	}
 
@@ -588,8 +623,10 @@ func (i *sequenceIndex) finishDeferredMutations(
 	for chunk := range dirty {
 		refreshSequenceIndexChunk(chunk)
 	}
+
 	i.visibleCount = 0
 	i.utf16Width = 0
+
 	i.markCount = 0
 	for _, chunk := range i.chunks {
 		i.addChunkSummary(chunk)
@@ -604,23 +641,28 @@ func refreshSequenceIndexChunk(chunk *sequenceIndexChunk) {
 	} else {
 		chunk.prefixWidths = make([]uint32, required)
 	}
+
 	if cap(chunk.prefixValues) >= required {
 		chunk.prefixValues = chunk.prefixValues[:required]
 		clear(chunk.prefixValues)
 	} else {
 		chunk.prefixValues = make([]uint16, required)
 	}
+
 	chunk.visibleCount = 0
 	chunk.utf16Width = 0
+
 	chunk.markCount = 0
 	for index, entry := range chunk.entries {
 		if entry.mark {
 			chunk.markCount++
 		}
+
 		if entry.visible {
 			chunk.visibleCount++
 			chunk.utf16Width += entry.width
 		}
+
 		chunk.prefixWidths[index+1] = chunk.utf16Width
 		chunk.prefixValues[index+1] = uint16(chunk.visibleCount)
 	}
@@ -662,6 +704,7 @@ func (i *sequenceIndex) insertionPosition(operation opset.Operation, local bool)
 	}
 
 	position := 0
+
 	if operation.Key.IsHead {
 		if local {
 			return 0, true
@@ -670,11 +713,14 @@ func (i *sequenceIndex) insertionPosition(operation opset.Operation, local bool)
 		if operation.Key.Element == nil {
 			return 0, false
 		}
+
 		var ok bool
+
 		position, ok = i.rawPosition(*operation.Key.Element)
 		if !ok {
 			return 0, false
 		}
+
 		position++
 	}
 
@@ -690,11 +736,14 @@ func (i *sequenceIndex) insertionPosition(operation opset.Operation, local bool)
 		if !exists {
 			return true
 		}
+
 		root, descendant := directSequenceBranchRoot(i.state, candidate, operation)
 		if !descendant || root.Compare(operation.ID) < 0 {
 			return false
 		}
+
 		position++
+
 		return true
 	})
 
@@ -716,11 +765,13 @@ func (s *State) updateSequenceIndex(operation opset.Operation, local bool) {
 	if !ok {
 		return
 	}
+
 	creator, ok := s.operation(object)
 	if !ok || creator.Action != opset.ActionMakeText {
 		s.invalidateSequenceIndex(object)
 		return
 	}
+
 	if operation.Insert {
 		position, safe := index.insertionPosition(operation, local)
 		if !safe {
@@ -739,6 +790,7 @@ func (s *State) updateSequenceIndex(operation opset.Operation, local bool) {
 	if operation.Key.Element == nil {
 		return
 	}
+
 	position, ok := index.positions[*operation.Key.Element]
 	if !ok {
 		s.invalidateSequenceIndex(object)
@@ -746,11 +798,13 @@ func (s *State) updateSequenceIndex(operation opset.Operation, local bool) {
 	}
 
 	entry := position.chunk.entries[position.offset]
+
 	insertion, ok := s.operation(entry.insertion)
 	if !ok {
 		s.invalidateSequenceIndex(object)
 		return
 	}
+
 	entry = s.newSequenceIndexEntry(insertion)
 	index.replaceEntry(position, entry)
 }
@@ -764,10 +818,12 @@ func (s *State) updateSequenceIndexes(
 	local bool,
 ) {
 	dirtyByObject := make(map[opset.OpID]map[*sequenceIndexChunk]struct{})
+
 	for _, operation := range operations {
 		if operation.Object.IsRoot {
 			continue
 		}
+
 		object := operation.Object.OpID
 		delete(s.sequenceCache, object)
 		delete(s.sequenceValuesCache, object)
@@ -778,12 +834,15 @@ func (s *State) updateSequenceIndexes(
 		if !ok {
 			continue
 		}
+
 		creator, ok := s.operation(object)
 		if !ok || creator.Action != opset.ActionMakeText {
 			s.invalidateSequenceIndex(object)
 			delete(dirtyByObject, object)
+
 			continue
 		}
+
 		dirty := dirtyByObject[object]
 		if dirty == nil {
 			dirty = make(map[*sequenceIndexChunk]struct{})
@@ -800,26 +859,34 @@ func (s *State) updateSequenceIndexes(
 				s.invalidateSequenceIndex(object)
 				delete(dirtyByObject, object)
 			}
+
 			continue
 		}
+
 		if operation.Key.Element == nil {
 			continue
 		}
+
 		position, ok := index.positions[*operation.Key.Element]
 		if !ok {
 			s.invalidateSequenceIndex(object)
 			delete(dirtyByObject, object)
+
 			continue
 		}
+
 		insertion, ok := s.operation(position.chunk.entries[position.offset].insertion)
 		if !ok {
 			s.invalidateSequenceIndex(object)
 			delete(dirtyByObject, object)
+
 			continue
 		}
+
 		position.chunk.entries[position.offset] = s.newSequenceIndexEntry(insertion)
 		dirty[position.chunk] = struct{}{}
 	}
+
 	for object, dirty := range dirtyByObject {
 		if index, ok := s.sequenceIndexes[object]; ok {
 			index.finishDeferredMutations(dirty)

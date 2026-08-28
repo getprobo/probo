@@ -75,6 +75,7 @@ func TestDeltaColumn_RandomizedDifferential(t *testing.T) {
 	t.Parallel()
 
 	random := rand.New(rand.NewPCG(30, 40))
+
 	model := make([]hexane.Value[int64], 1_024)
 	for i := range model {
 		if i%13 == 0 {
@@ -88,6 +89,7 @@ func TestDeltaColumn_RandomizedDifferential(t *testing.T) {
 
 	for step := range 2_000 {
 		index := random.IntN(len(model) + 1)
+
 		deleteCount := 0
 		if index < len(model) {
 			deleteCount = random.IntN(len(model) - index + 1)
@@ -103,6 +105,7 @@ func TestDeltaColumn_RandomizedDifferential(t *testing.T) {
 		}
 
 		column.Splice(index, deleteCount, inserted...)
+
 		model = spliceValues(model, index, deleteCount, inserted)
 		if got := column.Values(); !reflect.DeepEqual(got, model) {
 			t.Fatalf("step %d: Values() = %#v, want %#v", step, got, model)
@@ -150,6 +153,7 @@ func TestPrefixColumn_PrefixEditingAndClone(t *testing.T) {
 	cloned := column.Clone()
 	column.Set(0, 100)
 	cloned.Insert(0, 7)
+
 	if got := cloned.Values(); !reflect.DeepEqual(got, []uint64{7, 1, 2, 4, 8}) {
 		t.Errorf("clone Values() = %v", got)
 	}
@@ -163,6 +167,7 @@ func TestPrefixColumn_RandomizedDifferential(t *testing.T) {
 	t.Parallel()
 
 	random := rand.New(rand.NewPCG(50, 60))
+
 	model := make([]uint64, 1_024)
 	for i := range model {
 		model[i] = uint64(i % 10)
@@ -172,6 +177,7 @@ func TestPrefixColumn_RandomizedDifferential(t *testing.T) {
 
 	for step := range 2_000 {
 		index := random.IntN(len(model) + 1)
+
 		deleteCount := 0
 		if index < len(model) {
 			deleteCount = random.IntN(len(model) - index + 1)
@@ -183,6 +189,7 @@ func TestPrefixColumn_RandomizedDifferential(t *testing.T) {
 		}
 
 		column.Splice(index, deleteCount, inserted...)
+
 		model = spliceSlice(model, index, deleteCount, inserted)
 		if got := column.Values(); !reflect.DeepEqual(got, model) {
 			t.Fatalf("step %d: Values() = %v, want %v", step, got, model)
@@ -204,6 +211,7 @@ func TestPrefixColumn_RandomizedDifferential(t *testing.T) {
 		}
 
 		prefixIndex := random.IntN(len(model) + 1)
+
 		var expected uint64
 		for _, value := range model[:prefixIndex] {
 			expected += value
@@ -250,6 +258,7 @@ func TestBooleanColumn_RandomizedDifferential(t *testing.T) {
 	t.Parallel()
 
 	random := rand.New(rand.NewPCG(70, 80))
+
 	model := make([]bool, 1_024)
 	for i := range model {
 		model[i] = i%3 == 0
@@ -259,6 +268,7 @@ func TestBooleanColumn_RandomizedDifferential(t *testing.T) {
 
 	for step := range 2_000 {
 		index := random.IntN(len(model) + 1)
+
 		deleteCount := 0
 		if index < len(model) {
 			deleteCount = random.IntN(len(model) - index + 1)
@@ -270,6 +280,7 @@ func TestBooleanColumn_RandomizedDifferential(t *testing.T) {
 		}
 
 		column.Splice(index, deleteCount, inserted...)
+
 		model = spliceSlice(model, index, deleteCount, inserted)
 		if got := column.Values(); !reflect.DeepEqual(got, model) {
 			t.Fatalf("step %d: Values() = %v, want %v", step, got, model)
@@ -299,6 +310,7 @@ func TestColumns_ConstructFromLogicalValues(t *testing.T) {
 		hexane.Null[int64](),
 		hexane.Some(int64(9)),
 	}
+
 	delta := hexane.NewDeltaColumnFromValues(deltaValues...)
 	if got := delta.Values(); !reflect.DeepEqual(got, deltaValues) {
 		t.Errorf("delta constructor = %#v, want %#v", got, deltaValues)
@@ -317,6 +329,7 @@ func TestColumns_ConstructFromLogicalValues(t *testing.T) {
 	rawInput := []byte{1, 2, 3}
 	raw := hexane.NewRawColumnFromBytes(rawInput)
 	rawInput[0] = 9
+
 	if got := raw.Bytes(); !bytes.Equal(got, []byte{1, 2, 3}) {
 		t.Errorf("raw constructor = %v", got)
 	}
@@ -354,6 +367,7 @@ func TestRawColumn_ChunkBoundariesEditingAndClone(t *testing.T) {
 	cloned := column.Clone()
 	column.Set(4_096, 0xff)
 	cloned.Insert(0, 0xee)
+
 	if cloned.Get(4_097) == 0xff {
 		t.Error("original mutation leaked into clone")
 	}
@@ -363,6 +377,7 @@ func TestRawColumn_ChunkBoundariesEditingAndClone(t *testing.T) {
 	}
 
 	var saved bytes.Buffer
+
 	written, err := cloned.SaveTo(&saved)
 	if err != nil {
 		t.Fatalf("SaveTo() error = %v", err)
@@ -377,6 +392,7 @@ func TestRawColumn_RandomizedDifferential(t *testing.T) {
 	t.Parallel()
 
 	random := rand.New(rand.NewPCG(90, 100))
+
 	model := make([]byte, 10_000)
 	for i := range model {
 		model[i] = byte(i)
@@ -386,6 +402,7 @@ func TestRawColumn_RandomizedDifferential(t *testing.T) {
 
 	for step := range 3_000 {
 		index := random.IntN(len(model) + 1)
+
 		deleteCount := 0
 		if index < len(model) {
 			deleteCount = random.IntN(min(20, len(model)-index) + 1)
@@ -397,6 +414,7 @@ func TestRawColumn_RandomizedDifferential(t *testing.T) {
 		}
 
 		column.Splice(index, deleteCount, inserted)
+
 		model = spliceSlice(model, index, deleteCount, inserted)
 		if column.Len() != len(model) {
 			t.Fatalf("step %d: Len() = %d, want %d", step, column.Len(), len(model))
@@ -420,12 +438,15 @@ func spliceSlice[T any](model []T, index, deleteCount int, inserted []T) []T {
 	next = append(next, model[:index]...)
 	next = append(next, inserted...)
 	next = append(next, model[index+deleteCount:]...)
+
 	return next
 }
 
 func testAbsoluteToDeltas(values []hexane.Value[int64]) []hexane.Value[int64] {
 	deltas := make([]hexane.Value[int64], len(values))
+
 	var previous int64
+
 	for i, value := range values {
 		if value.Valid {
 			deltas[i] = hexane.Some(value.Value - previous)

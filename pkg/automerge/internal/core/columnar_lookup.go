@@ -26,19 +26,24 @@ func (i *operationRowIndex) lookup(identifier opset.OpID) (int, bool) {
 	if i == nil {
 		return 0, false
 	}
+
 	if row, ok := i.rows[identifier]; ok {
 		return row, true
 	}
+
 	row, ok := i.parent.lookup(identifier)
 	if !ok || !i.hasSplice {
 		return row, ok
 	}
+
 	if row < i.spliceStart {
 		return row, true
 	}
+
 	if row < i.spliceEnd {
 		return 0, false
 	}
+
 	return row + i.spliceDelta, true
 }
 
@@ -48,6 +53,7 @@ func (c *columnarState) operation(
 	if c == nil || c.operationRows == nil {
 		return opset.Operation{}, false
 	}
+
 	row, ok := c.operationRows.lookup(identifier)
 	if !ok || row < 0 || row >= len(c.operations) {
 		for _, operation := range c.operations {
@@ -55,8 +61,10 @@ func (c *columnarState) operation(
 				return operation, true
 			}
 		}
+
 		return opset.Operation{}, false
 	}
+
 	operation := c.operations[row]
 	if operation.ID != identifier {
 		for _, candidate := range c.operations {
@@ -64,8 +72,10 @@ func (c *columnarState) operation(
 				return candidate, true
 			}
 		}
+
 		return opset.Operation{}, false
 	}
+
 	return operation, true
 }
 
@@ -75,10 +85,12 @@ func (c *columnarState) change(
 	if c == nil {
 		return nil, false
 	}
+
 	row, ok := c.changeRows[hash]
 	if !ok || row < 0 || row >= len(c.changes) {
 		return nil, false
 	}
+
 	return &c.changes[row], true
 }
 
@@ -86,6 +98,7 @@ func (c *columnarState) currentHeads() []opset.ChangeHash {
 	if c == nil {
 		return nil
 	}
+
 	return append([]opset.ChangeHash(nil), c.heads...)
 }
 
@@ -101,20 +114,24 @@ func (s *State) attachCanonical(columns *columnarState) {
 	}
 
 	retainedOperationIDs := make(map[opset.OpID]struct{})
+
 	for hash, change := range s.changes {
 		if _, canonical := columns.change(hash); canonical {
 			continue
 		}
+
 		for _, operation := range change.Operations {
 			retainedOperationIDs[operation.ID] = struct{}{}
 		}
 	}
+
 	operations := make(map[opset.OpID]opset.Operation, len(retainedOperationIDs))
 	for identifier := range retainedOperationIDs {
 		if operation, ok := s.operations[identifier]; ok {
 			operations[identifier] = operation
 		}
 	}
+
 	changes := make(map[opset.ChangeHash]*opset.Change)
 	for hash, change := range s.changes {
 		if _, canonical := columns.change(hash); canonical {
@@ -138,9 +155,11 @@ func (s *State) operation(identifier opset.OpID) (opset.Operation, bool) {
 	if operation, ok := s.columns.operation(identifier); ok {
 		return operation, true
 	}
+
 	if operation, ok := s.operations[identifier]; ok {
 		return operation, true
 	}
+
 	return opset.Operation{}, false
 }
 
@@ -157,10 +176,12 @@ func (s *State) eachOperation(yield func(opset.Operation) bool) {
 			}
 		}
 	}
+
 	for _, operation := range s.operations {
 		if _, canonical := s.columns.operation(operation.ID); canonical {
 			continue
 		}
+
 		if !yield(operation) {
 			return
 		}
@@ -172,11 +193,14 @@ func (s *State) change(hash opset.ChangeHash) (*opset.Change, bool) {
 		if _, retained := s.changes[hash]; !retained {
 			return nil, false
 		}
+
 		return change, true
 	}
+
 	if change, ok := s.changes[hash]; ok {
 		return change, true
 	}
+
 	return nil, false
 }
 
@@ -187,18 +211,22 @@ func (s *State) eachChange(yield func(opset.ChangeHash, *opset.Change) bool) {
 			if change.Hash == nil {
 				continue
 			}
+
 			if _, retained := s.changes[*change.Hash]; !retained {
 				continue
 			}
+
 			if !yield(*change.Hash, change) {
 				return
 			}
 		}
 	}
+
 	for hash, change := range s.changes {
 		if _, canonical := s.columns.change(hash); canonical {
 			continue
 		}
+
 		if !yield(hash, change) {
 			return
 		}
@@ -211,6 +239,7 @@ func (s *State) operationCount() int {
 
 func (s *State) changeCount() int {
 	count := 0
+
 	if s.columns != nil {
 		for i := range s.columns.changes {
 			hash := s.columns.changes[i].Hash
@@ -221,11 +250,13 @@ func (s *State) changeCount() int {
 			}
 		}
 	}
+
 	for hash := range s.changes {
 		if _, canonical := s.columns.change(hash); !canonical {
 			count++
 		}
 	}
+
 	return count
 }
 
@@ -237,6 +268,7 @@ func (b *Engine) bindColumnarState() {
 		b.columns.columnsDirty {
 		return
 	}
+
 	b.state.attachCanonical(b.columns)
 }
 
@@ -247,20 +279,25 @@ func (b *Engine) lookupOperation(
 	identifier opset.OpID,
 ) (opset.Operation, bool) {
 	b.bindColumnarState()
+
 	if operation, ok := b.state.operations[identifier]; ok {
 		return operation, true
 	}
+
 	if b.isolationActive {
 		operation, ok := b.state.operation(identifier)
 		return operation, ok
 	}
+
 	if operation, ok := b.columns.operation(identifier); ok {
 		return operation, true
 	}
+
 	// Partial/orphan streams can retain semantic rows that have no canonical
 	// operation row. Keep them readable until the columnar load view represents
 	// retained orphan operations directly.
 	operation, ok := b.state.operation(identifier)
+
 	return operation, ok
 }
 
@@ -268,21 +305,27 @@ func (b *Engine) lookupChange(
 	hash opset.ChangeHash,
 ) (*opset.Change, bool) {
 	b.bindColumnarState()
+
 	if b.isolationActive {
 		change, ok := b.state.change(hash)
 		return change, ok
 	}
+
 	if change, ok := b.columns.change(hash); ok {
 		return change, true
 	}
+
 	change, ok := b.state.change(hash)
+
 	return change, ok
 }
 
 func (b *Engine) currentHeads() []opset.ChangeHash {
 	b.bindColumnarState()
+
 	if b.isolationActive {
 		return b.state.Heads()
 	}
+
 	return b.columns.currentHeads()
 }

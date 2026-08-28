@@ -144,17 +144,21 @@ func (b *Engine) ApplyChanges(
 		if err != nil {
 			return fmt.Errorf("cannot decode native change %d: %w", i, err)
 		}
+
 		decoded = append(decoded, document.Changes...)
 	}
 
 	beforeChanges := b.state.changeCount()
+
 	beforeQueued := len(b.queuedChanges)
 	if err := b.applyMergedChanges(decoded); err != nil {
 		return err
 	}
+
 	if b.state.changeCount() != beforeChanges || len(b.queuedChanges) != beforeQueued {
 		b.revision++
 	}
+
 	if next := b.state.maxOpGlobal() + 1; next > b.nextOp {
 		b.nextOp = next
 	}
@@ -176,6 +180,7 @@ func (b *Engine) PrepareMerge(known [][32]byte) (*MergeBatch, error) {
 	if !b.CanDirectMerge() {
 		return nil, fmt.Errorf("cannot prepare direct merge while isolated")
 	}
+
 	if len(b.pending) > 0 {
 		if _, err := b.Commit("", time.Time{}); err != nil {
 			return nil, fmt.Errorf("cannot commit merge source: %w", err)
@@ -197,18 +202,22 @@ func (b *Engine) PrepareMerge(known [][32]byte) (*MergeBatch, error) {
 		if source.Hash == nil {
 			return nil, fmt.Errorf("cannot merge change without hash")
 		}
+
 		if _, ok := knownSet[*source.Hash]; ok {
 			continue
 		}
 
 		change := *source
+
 		change.Raw = append([]byte(nil), source.Raw...)
 		if len(change.Raw) == 0 {
 			expected := *change.Hash
+
 			raw, err := storage.EncodeChange(&change)
 			if err != nil {
 				return nil, fmt.Errorf("cannot encode merge change: %w", err)
 			}
+
 			if change.Hash == nil || *change.Hash != expected {
 				return nil, fmt.Errorf("cannot reproduce merge change hash")
 			}
@@ -217,20 +226,25 @@ func (b *Engine) PrepareMerge(known [][32]byte) (*MergeBatch, error) {
 			if err != nil {
 				return nil, fmt.Errorf("cannot normalize merge change: %w", err)
 			}
+
 			if len(document.Changes) != 1 {
 				return nil, fmt.Errorf(
 					"cannot normalize merge change: decoded %d changes",
 					len(document.Changes),
 				)
 			}
+
 			change = document.Changes[0]
 		}
+
 		batch.changes = append(batch.changes, append([]byte(nil), change.Raw...))
 	}
+
 	for _, source := range orderedQueuedChanges(b.queuedChanges) {
 		if source.Hash == nil {
 			continue
 		}
+
 		if _, ok := knownSet[*source.Hash]; ok {
 			continue
 		}
@@ -286,6 +300,7 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 
 		b.state = state
 		b.nextOp = state.maxOpGlobal() + 1
+
 		columns, err := newColumnarState(document)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -293,6 +308,7 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 				err,
 			)
 		}
+
 		b.columns = columns
 		b.unknownColumns = cloneRawColumns(document.UnknownColumns)
 
@@ -313,10 +329,12 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 	_ = b.restoreDocumentChangeFrames(document)
 	if b.requiresSnapshotMerge(document) {
 		beforeChanges := b.state.changeCount()
+
 		beforeQueued := len(b.queuedChanges)
 		if err := b.mergeDocumentSnapshot(data, document); err != nil {
 			return nil, err
 		}
+
 		if b.state.changeCount() != beforeChanges || len(b.queuedChanges) != beforeQueued {
 			b.revision++
 		}
@@ -325,10 +343,12 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 	}
 
 	beforeChanges := b.state.changeCount()
+
 	beforeQueued := len(b.queuedChanges)
 	if err := b.applyMergedChanges(document.Changes); err != nil {
 		return nil, err
 	}
+
 	if b.state.changeCount() != beforeChanges || len(b.queuedChanges) != beforeQueued {
 		b.revision++
 	}
@@ -348,26 +368,33 @@ func (b *Engine) restoreDocumentChangeFrames(document *opset.Document) error {
 			len(change.Raw) > 0 {
 			continue
 		}
+
 		expected := *change.Hash
+
 		raw, err := storage.EncodeChange(change)
 		if err != nil {
 			return fmt.Errorf("cannot encode snapshot change: %w", err)
 		}
+
 		if change.Hash == nil || *change.Hash != expected {
 			return fmt.Errorf("cannot reproduce snapshot change hash")
 		}
+
 		decoded, err := storage.DecodePartial(raw)
 		if err != nil {
 			return fmt.Errorf("cannot decode reproduced snapshot change: %w", err)
 		}
+
 		if len(decoded.Changes) != 1 {
 			return fmt.Errorf(
 				"cannot reproduce snapshot change: decoded %d changes",
 				len(decoded.Changes),
 			)
 		}
+
 		document.Changes[i] = decoded.Changes[0]
 	}
+
 	return nil
 }
 
@@ -453,10 +480,12 @@ func (b *Engine) mergeDocumentSnapshot(
 	b.queuedChanges = make(map[opset.ChangeHash]*opset.Change)
 	b.queuedBytes = 0
 	b.nextOp = state.maxOpGlobal() + 1
+
 	columns, err := newColumnarStateFromState(state)
 	if err != nil {
 		return fmt.Errorf("cannot rebuild merged document columns: %w", err)
 	}
+
 	b.columns = columns
 
 	return nil
@@ -482,6 +511,7 @@ func (b *Engine) applyMergedChanges(changes []opset.Change) error {
 	if err != nil {
 		return err
 	}
+
 	if direct {
 		return nil
 	}
@@ -540,6 +570,7 @@ func (b *Engine) applyMergedChanges(changes []opset.Change) error {
 			break
 		}
 	}
+
 	if err := b.reconcileColumns(); err != nil {
 		return fmt.Errorf("cannot update canonical document columns: %w", err)
 	}
@@ -563,6 +594,7 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 	if b.isolationActive && b.fullState != nil {
 		current = b.fullState
 	}
+
 	if current.changeCount() != len(b.columns.changes) {
 		return false, nil
 	}
@@ -572,29 +604,35 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 		len(b.queuedChanges)+len(changes),
 	)
 	nextQueuedBytes := 0
+
 	for hash, change := range b.queuedChanges {
 		cloned := cloneChange(*change)
 		nextQueue[hash] = &cloned
 		nextQueuedBytes += len(cloned.Raw)
 	}
+
 	for i := range changes {
 		change := &changes[i]
 		if change.Hash == nil || current.hasChange(*change.Hash) {
 			continue
 		}
+
 		if _, queued := nextQueue[*change.Hash]; queued {
 			continue
 		}
+
 		if len(change.Raw) == 0 {
 			return true, fmt.Errorf(
 				"cannot preserve merged change %s: original bytes are unavailable",
 				change.Hash,
 			)
 		}
+
 		if len(nextQueue) >= maxQueuedChanges ||
 			nextQueuedBytes+len(change.Raw) > maxQueuedChangeBytes {
 			return true, fmt.Errorf("merged change queue exceeds its resource limit")
 		}
+
 		cloned := cloneChange(*change)
 		nextQueue[*change.Hash] = &cloned
 		nextQueuedBytes += len(cloned.Raw)
@@ -604,6 +642,7 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 	if err != nil {
 		return true, err
 	}
+
 	for _, change := range applied {
 		nextQueuedBytes -= len(change.Raw)
 		delete(nextQueue, *change.Hash)
@@ -613,12 +652,14 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 		len(b.queuedChanges) == 0 &&
 		len(nextQueue) == 0 &&
 		isDirectSequenceRemoteBatch(applied)
+
 	planning := current
 	if len(applied) > 0 && !directSequence {
 		planning, err = stateFromSharedColumns(b.columns)
 		if err != nil {
 			return true, fmt.Errorf("cannot clone remote query state: %w", err)
 		}
+
 		for _, change := range applied {
 			if err := planning.ApplyChange(change); err != nil {
 				return true, fmt.Errorf(
@@ -628,18 +669,22 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 			}
 		}
 	}
+
 	preApplied := false
+
 	if len(applied) > 0 && directSequence {
 		current.directRemoteSequence = true
 		for _, change := range applied {
 			if err := current.ApplyChange(change); err != nil {
 				current.directRemoteSequence = false
+
 				return true, fmt.Errorf(
 					"cannot stage direct sequence change: %w",
 					err,
 				)
 			}
 		}
+
 		current.directRemoteSequence = false
 		preApplied = true
 	}
@@ -656,33 +701,42 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 			if preApplied {
 				b.restoreDirectRemoteState()
 			}
+
 			return false, nil
 		}
+
 		if err != nil {
 			if preApplied {
 				b.restoreDirectRemoteState()
 			}
+
 			return true, fmt.Errorf("cannot plan direct remote columns: %w", err)
 		}
+
 		batch.reuseOperations = directSequence
+
 		if b.directColumnFailure != nil {
 			if err := b.directColumnFailure(); err != nil {
 				if preApplied {
 					b.restoreDirectRemoteState()
 				}
+
 				return true, fmt.Errorf(
 					"cannot pass direct column failpoint: %w",
 					err,
 				)
 			}
 		}
+
 		nextColumns, err = batch.apply(b.columns)
 		if err != nil {
 			if preApplied {
 				b.restoreDirectRemoteState()
 			}
+
 			return false, nil
 		}
+
 		if !preApplied {
 			current.directRemoteSequence = directSequence
 			for _, change := range applied {
@@ -693,20 +747,24 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 					))
 				}
 			}
+
 			current.directRemoteSequence = false
 		}
+
 		current.attachCanonical(nextColumns)
 	}
 
 	for _, change := range applied {
 		b.appended = append(b.appended, append([]byte(nil), change.Raw...))
 	}
+
 	b.columns = nextColumns
 	if b.isolationActive && b.fullState != nil {
 		b.fullState = current
 	} else {
 		b.state = current
 	}
+
 	b.queuedChanges = nextQueue
 	b.queuedBytes = nextQueuedBytes
 
@@ -718,10 +776,12 @@ func (b *Engine) restoreDirectRemoteState() {
 	if err != nil {
 		panic(fmt.Sprintf("cannot restore failed direct remote state: %v", err))
 	}
+
 	if b.isolationActive && b.fullState != nil {
 		b.fullState = restored
 		return
 	}
+
 	b.state = restored
 }
 
@@ -733,36 +793,45 @@ func validateDirectRemoteQueue(
 	for hash, change := range queue {
 		remaining[hash] = change
 	}
+
 	known := make(map[opset.ChangeHash]struct{}, len(queue))
 	sequences := make(map[opset.ActorID]uint64)
 	operationIDs := make(map[opset.OpID]struct{})
 	applied := make([]*opset.Change, 0, len(queue))
+
 	for {
 		progressed := false
+
 		for _, change := range orderedQueuedChanges(remaining) {
 			dependenciesPresent := true
+
 			for _, dependency := range change.Dependencies {
 				if current.hasChange(dependency) {
 					continue
 				}
+
 				if _, ok := known[dependency]; !ok {
 					dependenciesPresent = false
 					break
 				}
 			}
+
 			if !dependenciesPresent {
 				continue
 			}
+
 			if err := validateChangeSnapshotDomain(change); err != nil {
 				return nil, fmt.Errorf(
 					"cannot validate merged snapshot domain: %w",
 					err,
 				)
 			}
+
 			sequence, ok := sequences[change.Actor]
 			if !ok {
 				sequence = current.sequenceForActor(change.Actor)
 			}
+
 			if change.Sequence != sequence+1 {
 				return nil, fmt.Errorf(
 					"cannot validate merged actor sequence: actor sequence is %d, expected %d",
@@ -770,6 +839,7 @@ func validateDirectRemoteQueue(
 					sequence+1,
 				)
 			}
+
 			for _, operation := range change.Operations {
 				if current.hasOperationID(operation.ID) {
 					return nil, fmt.Errorf(
@@ -777,20 +847,25 @@ func validateDirectRemoteQueue(
 						operation.ID,
 					)
 				}
+
 				if _, exists := operationIDs[operation.ID]; exists {
 					return nil, fmt.Errorf(
 						"cannot validate merged operation set: duplicate operation ID %v",
 						operation.ID,
 					)
 				}
+
 				operationIDs[operation.ID] = struct{}{}
 			}
+
 			sequences[change.Actor] = change.Sequence
 			known[*change.Hash] = struct{}{}
 			applied = append(applied, change)
 			delete(remaining, *change.Hash)
+
 			progressed = true
 		}
+
 		if !progressed {
 			return applied, nil
 		}
@@ -804,12 +879,14 @@ func isDirectSequenceRemoteBatch(changes []*opset.Change) bool {
 		seen     bool
 		count    int
 	)
+
 	for _, change := range changes {
 		for _, operation := range change.Operations {
 			count++
 			if count > 1 {
 				return false
 			}
+
 			if operation.Action == opset.ActionDelete ||
 				operation.Action == opset.ActionMark ||
 				isObjectAction(operation.Action) ||
@@ -818,10 +895,12 @@ func isDirectSequenceRemoteBatch(changes []*opset.Change) bool {
 				len(operation.Predecessors) != 0 {
 				return false
 			}
+
 			if !seen {
 				if !operation.Key.IsHead && operation.Key.Element == nil {
 					return false
 				}
+
 				object = operation.Object
 				seen = true
 			} else if operation.Object != object ||
@@ -829,8 +908,10 @@ func isDirectSequenceRemoteBatch(changes []*opset.Change) bool {
 				*operation.Key.Element != previous {
 				return false
 			}
+
 			previous = operation.ID
 		}
 	}
+
 	return seen && count == 1
 }

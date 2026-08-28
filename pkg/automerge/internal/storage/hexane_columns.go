@@ -76,6 +76,7 @@ func buildHexaneDocumentChangeColumns(
 	actorIndexes map[opset.ActorID]uint64,
 ) ([]encodedColumn, error) {
 	count := len(changes)
+
 	indexes := make(map[opset.ChangeHash]uint64, count)
 	for i, change := range changes {
 		indexes[*change.Hash] = uint64(i)
@@ -102,6 +103,7 @@ func buildHexaneDocumentChangeColumns(
 		actors[i] = hexane.Some(actorIndex)
 		sequences[i] = hexane.Some(int64(change.Sequence))
 		maxOps[i] = hexane.Some(int64(change.MaxOp))
+
 		times[i] = hexane.Some(change.Time)
 		if change.Message != "" {
 			messages[i] = hexane.Some(change.Message)
@@ -123,6 +125,7 @@ func buildHexaneDocumentChangeColumns(
 		}
 
 		extraMetadata[i] = hexaneValue(metadata)
+
 		extraData.Insert(extraData.Len(), data...)
 	}
 
@@ -133,18 +136,22 @@ func buildHexaneDocumentChangeColumns(
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode change actors: %w", err)
 	}
+
 	sequenceData, err := hexane.NewDeltaColumnFromValues(sequences...).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode change sequences: %w", err)
 	}
+
 	maxOpData, err := hexane.NewDeltaColumnFromValues(maxOps...).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode change maximum operations: %w", err)
 	}
+
 	timeData, err := hexane.NewDeltaColumnFromValues(times...).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode change times: %w", err)
 	}
+
 	messageData, err := hexane.NewColumnFromValues(
 		hexane.StringCodec(),
 		messages...,
@@ -152,6 +159,7 @@ func buildHexaneDocumentChangeColumns(
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode change messages: %w", err)
 	}
+
 	dependencySizeData, err := hexane.NewColumnFromValues(
 		hexane.Uint64Codec(),
 		dependencySize...,
@@ -159,10 +167,12 @@ func buildHexaneDocumentChangeColumns(
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode change dependency sizes: %w", err)
 	}
+
 	dependencyData, err := hexane.NewDeltaColumnFromValues(dependencies...).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode change dependencies: %w", err)
 	}
+
 	extraMetadataData, err := hexane.NewColumnFromValues(
 		hexane.Uint64Codec(),
 		extraMetadata...,
@@ -191,6 +201,7 @@ func buildHexaneDocumentOperationColumns(
 	actorIndexes map[opset.ActorID]uint64,
 ) ([]encodedColumn, error) {
 	count := len(operations)
+
 	var (
 		objectActors      = make([]hexane.Value[uint64], count)
 		objectCounters    = make([]hexane.Value[uint64], count)
@@ -215,20 +226,24 @@ func buildHexaneDocumentOperationColumns(
 		if operation.Key.Property != nil && !utf8.ValidString(*operation.Key.Property) {
 			return nil, fmt.Errorf("operation %d key is not valid UTF-8", i)
 		}
+
 		if operation.MarkName != nil && !utf8.ValidString(*operation.MarkName) {
 			return nil, fmt.Errorf("operation %d mark name is not valid UTF-8", i)
 		}
+
 		if operation.Value != nil &&
 			operation.Value.Type == opset.ScalarString &&
 			!utf8.ValidString(operation.Value.String) {
 			return nil, fmt.Errorf("operation %d value is not valid UTF-8", i)
 		}
+
 		index, ok := actorIndexes[operation.ID.Actor]
 		if !ok {
 			return nil, fmt.Errorf("operation %d actor is not in the actor table", i)
 		}
 
 		idActors[i] = hexane.Some(index)
+
 		idCounters[i] = hexane.Some(int64(operation.ID.Counter))
 		if !operation.Object.IsRoot {
 			index, ok := actorIndexes[operation.Object.OpID.Actor]
@@ -266,7 +281,9 @@ func buildHexaneDocumentOperationColumns(
 		}
 
 		valueMetadata[i] = hexaneValue(metadata)
+
 		valueData.Insert(valueData.Len(), data...)
+
 		successorSize[i] = hexane.Some(uint64(len(operation.Successors)))
 		for _, successor := range operation.Successors {
 			index, ok := actorIndexes[successor.Actor]
@@ -285,6 +302,7 @@ func buildHexaneDocumentOperationColumns(
 			markExpands[i] = true
 			hasMarkExpand = true
 		}
+
 		if operation.MarkName != nil {
 			markNames[i] = hexane.Some(*operation.MarkName)
 		}
@@ -294,52 +312,64 @@ func buildHexaneDocumentOperationColumns(
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation object actors: %w", err)
 	}
+
 	objectCounterData, err := hexaneBytes(objectCounters, hexane.Uint64Codec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation object counters: %w", err)
 	}
+
 	keyActorData, err := hexaneBytes(keyActors, hexane.Uint64Codec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation key actors: %w", err)
 	}
+
 	keyCounterData, err := hexane.NewDeltaColumnFromValues(keyCounters...).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation key counters: %w", err)
 	}
+
 	keyStringData, err := hexaneBytes(keyStrings, hexane.StringCodec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation key strings: %w", err)
 	}
+
 	idActorData, err := hexaneBytes(idActors, hexane.Uint64Codec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation identifier actors: %w", err)
 	}
+
 	idCounterData, err := hexane.NewDeltaColumnFromValues(idCounters...).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation identifier counters: %w", err)
 	}
+
 	actionData, err := hexaneBytes(actions, hexane.Uint64Codec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation actions: %w", err)
 	}
+
 	valueMetadataData, err := hexaneBytes(valueMetadata, hexane.Uint64Codec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation value metadata: %w", err)
 	}
+
 	successorSizeData, err := hexaneBytes(successorSize, hexane.Uint64Codec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation successor sizes: %w", err)
 	}
+
 	successorActorData, err := hexaneBytes(successorActors, hexane.Uint64Codec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation successor actors: %w", err)
 	}
+
 	successorCounterData, err := hexane.NewDeltaColumnFromValues(
 		successorCounters...,
 	).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation successor counters: %w", err)
 	}
+
 	markNameData, err := hexaneBytes(markNames, hexane.StringCodec())
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode operation mark names: %w", err)
@@ -402,6 +432,7 @@ func newHexaneChangeColumns(
 		if change.Hash == nil {
 			return nil, fmt.Errorf("change %d has no hash", i)
 		}
+
 		dependencyIndexes[*change.Hash] = uint64(i)
 	}
 
@@ -435,9 +466,11 @@ func newHexaneChangeColumnsForSplice(
 		if !ok {
 			return nil, fmt.Errorf("change %d actor is not in the actor table", i)
 		}
+
 		actors[i] = hexane.Some(actorIndex)
 		sequences[i] = hexane.Some(int64(change.Sequence))
 		maxOps[i] = hexane.Some(int64(change.MaxOp))
+
 		times[i] = hexane.Some(change.Time)
 		if change.Message != "" {
 			messages[i] = hexane.Some(change.Message)
@@ -449,6 +482,7 @@ func newHexaneChangeColumnsForSplice(
 			if !ok {
 				return nil, fmt.Errorf("change %d depends on an absent change", i)
 			}
+
 			dependencies = append(dependencies, hexane.Some(int64(index)))
 		}
 
@@ -456,6 +490,7 @@ func newHexaneChangeColumnsForSplice(
 		if err != nil {
 			return nil, fmt.Errorf("cannot encode change %d extra: %w", i, err)
 		}
+
 		extraMetadata[i] = hexaneValue(metadata)
 		extraLengths[i] = uint64(len(data))
 		extraData = append(extraData, data...)
@@ -486,30 +521,37 @@ func decodeHexaneChangeColumns(
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change actors: %w", err)
 	}
+
 	sequences, err := decodeSignedDeltaColumn(encodedColumnData(columns, 3))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change sequences: %w", err)
 	}
+
 	maxOps, err := decodeSignedDeltaColumn(encodedColumnData(columns, 19))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change maximum operations: %w", err)
 	}
+
 	times, err := decodeSignedDeltaColumn(encodedColumnData(columns, 35))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change times: %w", err)
 	}
+
 	messages, err := decodeStringColumn(encodedColumnData(columns, 53))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change messages: %w", err)
 	}
+
 	dependencySizes, err := decodeULEBColumn(encodedColumnData(columns, 64))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change dependency sizes: %w", err)
 	}
+
 	dependencies, err := decodeSignedDeltaColumn(encodedColumnData(columns, 67))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change dependencies: %w", err)
 	}
+
 	extraMetadata, err := decodeULEBColumn(encodedColumnData(columns, 86))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode change extra metadata: %w", err)
@@ -537,6 +579,7 @@ func newHexaneOperationColumns(
 	actorIndexes map[opset.ActorID]uint64,
 ) (*hexaneOperationColumns, error) {
 	count := len(operations)
+
 	var (
 		objectActors      = make([]hexane.Value[uint64], count)
 		objectCounters    = make([]hexane.Value[uint64], count)
@@ -562,14 +605,17 @@ func newHexaneOperationColumns(
 		if operation.Key.Property != nil && !utf8.ValidString(*operation.Key.Property) {
 			return nil, fmt.Errorf("operation %d key is not valid UTF-8", i)
 		}
+
 		if operation.MarkName != nil && !utf8.ValidString(*operation.MarkName) {
 			return nil, fmt.Errorf("operation %d mark name is not valid UTF-8", i)
 		}
+
 		if operation.Value != nil &&
 			operation.Value.Type == opset.ScalarString &&
 			!utf8.ValidString(operation.Value.String) {
 			return nil, fmt.Errorf("operation %d value is not valid UTF-8", i)
 		}
+
 		index, ok := actorIndexes[operation.ID.Actor]
 		if !ok {
 			return nil, fmt.Errorf(
@@ -577,6 +623,7 @@ func newHexaneOperationColumns(
 				i,
 			)
 		}
+
 		idActors[i] = hexane.Some(index)
 		idCounters[i] = hexane.Some(int64(operation.ID.Counter))
 
@@ -588,6 +635,7 @@ func newHexaneOperationColumns(
 					i,
 				)
 			}
+
 			objectActors[i] = hexane.Some(index)
 			objectCounters[i] = hexane.Some(
 				operation.Object.OpID.Counter,
@@ -607,6 +655,7 @@ func newHexaneOperationColumns(
 					i,
 				)
 			}
+
 			keyActors[i] = hexane.Some(index)
 			keyCounters[i] = hexane.Some(
 				int64(operation.Key.Element.Counter),
@@ -617,6 +666,7 @@ func newHexaneOperationColumns(
 
 		inserts[i] = operation.Insert
 		actions[i] = hexane.Some(uint64(operation.Action))
+
 		metadata, data, err := encodeScalar(operation.Value)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -625,6 +675,7 @@ func newHexaneOperationColumns(
 				err,
 			)
 		}
+
 		valueMetadata[i] = hexaneValue(metadata)
 		valueLengths[i] = uint64(len(data))
 		valueData = append(valueData, data...)
@@ -638,6 +689,7 @@ func newHexaneOperationColumns(
 					i,
 				)
 			}
+
 			successorActors = append(
 				successorActors,
 				hexane.Some(index),
@@ -647,10 +699,12 @@ func newHexaneOperationColumns(
 				hexane.Some(int64(successor.Counter)),
 			)
 		}
+
 		if operation.MarkExpand != nil && *operation.MarkExpand {
 			markExpands[i] = true
 			markExpandTrue++
 		}
+
 		if operation.MarkName != nil {
 			markNames[i] = hexane.Some(*operation.MarkName)
 		}
@@ -724,50 +778,62 @@ func decodeHexaneOperationColumns(
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation object actors: %w", err)
 	}
+
 	objectCounters, err := decodeULEB(2)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation object counters: %w", err)
 	}
+
 	keyActors, err := decodeULEB(17)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation key actors: %w", err)
 	}
+
 	keyCounters, err := decodeDelta(19)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation key counters: %w", err)
 	}
+
 	keyStrings, err := decodeStringColumn(encodedColumnData(columns, 21))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation key strings: %w", err)
 	}
+
 	idActors, err := decodeULEB(33)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation identifier actors: %w", err)
 	}
+
 	idCounters, err := decodeDelta(35)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation identifier counters: %w", err)
 	}
+
 	actions, err := decodeULEB(66)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation actions: %w", err)
 	}
+
 	valueMetadata, err := decodeULEB(86)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation value metadata: %w", err)
 	}
+
 	successorSizes, err := decodeULEB(128)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation successor sizes: %w", err)
 	}
+
 	successorActors, err := decodeULEB(129)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation successor actors: %w", err)
 	}
+
 	successorCounters, err := decodeDelta(131)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation successor counters: %w", err)
 	}
+
 	markNames, err := decodeStringColumn(encodedColumnData(columns, 165))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation mark names: %w", err)
@@ -777,6 +843,7 @@ func decodeHexaneOperationColumns(
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation inserts: %w", err)
 	}
+
 	markExpands, err := decodeBooleanOrZero(encodedColumnData(columns, 148), count)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode operation mark expansion: %w", err)
@@ -886,31 +953,37 @@ func (c *hexaneChangeColumns) Splice(
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change actors: %w", err)
 	}
+
 	if err := c.sequences.BatchSplice([]hexane.DeltaSplice{{
 		Index: index, DeleteCount: deleteCount, Inserted: inserted.sequences,
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change sequences: %w", err)
 	}
+
 	if err := c.maxOps.BatchSplice([]hexane.DeltaSplice{{
 		Index: index, DeleteCount: deleteCount, Inserted: inserted.maxOps,
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change maximum operations: %w", err)
 	}
+
 	if err := c.times.BatchSplice([]hexane.DeltaSplice{{
 		Index: index, DeleteCount: deleteCount, Inserted: inserted.times,
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change times: %w", err)
 	}
+
 	if err := c.messages.BatchSplice([]hexane.ColumnSplice[string]{{
 		Index: index, DeleteCount: deleteCount, Inserted: inserted.messages,
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change messages: %w", err)
 	}
+
 	if err := c.dependencySizes.BatchSplice([]hexane.PrefixSplice{{
 		Index: index, DeleteCount: deleteCount, Inserted: inserted.dependencySizes,
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change dependency sizes: %w", err)
 	}
+
 	if err := c.dependencies.BatchSplice([]hexane.DeltaSplice{{
 		Index:       dependencyStart,
 		DeleteCount: dependencyEnd - dependencyStart,
@@ -918,16 +991,19 @@ func (c *hexaneChangeColumns) Splice(
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change dependencies: %w", err)
 	}
+
 	if err := c.extraMetadata.BatchSplice([]hexane.ColumnSplice[uint64]{{
 		Index: index, DeleteCount: deleteCount, Inserted: inserted.extraMetadata,
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change extra metadata: %w", err)
 	}
+
 	if err := c.extraLengths.BatchSplice([]hexane.PrefixSplice{{
 		Index: index, DeleteCount: deleteCount, Inserted: inserted.extraLengths,
 	}}); err != nil {
 		return fmt.Errorf("cannot splice change extra lengths: %w", err)
 	}
+
 	if err := c.extraData.BatchSplice([]hexane.RawSplice{{
 		Index:       extraStart,
 		DeleteCount: extraEnd - extraStart,
@@ -959,20 +1035,25 @@ func (c *hexaneOperationColumns) BatchSplice(
 			return left.index - right.index
 		},
 	)
+
 	previousEnd := 0
+
 	for i, splice := range sorted {
 		if splice.inserted == nil {
 			return fmt.Errorf("operation splice %d has nil inserted columns", i)
 		}
+
 		if splice.index < 0 ||
 			splice.deleteCount < 0 ||
 			splice.index > c.idActors.Len() ||
 			splice.deleteCount > c.idActors.Len()-splice.index {
 			return fmt.Errorf("operation splice %d range is out of bounds", i)
 		}
+
 		if i > 0 && splice.index < previousEnd {
 			return fmt.Errorf("operation splice %d overlaps its predecessor", i)
 		}
+
 		previousEnd = splice.index + splice.deleteCount
 	}
 
@@ -984,6 +1065,7 @@ func (c *hexaneOperationColumns) BatchSplice(
 				Inserted: column(splice.inserted),
 			}
 		}
+
 		return result
 	}
 	deltaColumns := func(column func(*hexaneOperationColumns) *hexane.DeltaColumn) []hexane.DeltaSplice {
@@ -994,6 +1076,7 @@ func (c *hexaneOperationColumns) BatchSplice(
 				Inserted: column(splice.inserted),
 			}
 		}
+
 		return result
 	}
 	stringColumns := func(column func(*hexaneOperationColumns) *hexane.Column[string]) []hexane.ColumnSplice[string] {
@@ -1004,6 +1087,7 @@ func (c *hexaneOperationColumns) BatchSplice(
 				Inserted: column(splice.inserted),
 			}
 		}
+
 		return result
 	}
 	prefixColumns := func(column func(*hexaneOperationColumns) *hexane.PrefixColumn) []hexane.PrefixSplice {
@@ -1014,6 +1098,7 @@ func (c *hexaneOperationColumns) BatchSplice(
 				Inserted: column(splice.inserted),
 			}
 		}
+
 		return result
 	}
 	booleanColumns := func(column func(*hexaneOperationColumns) *hexane.BooleanColumn) []hexane.BooleanSplice {
@@ -1024,11 +1109,13 @@ func (c *hexaneOperationColumns) BatchSplice(
 				Inserted: column(splice.inserted),
 			}
 		}
+
 		return result
 	}
 
 	successors := make([]hexane.ColumnSplice[uint64], len(sorted))
 	successorCounters := make([]hexane.DeltaSplice, len(sorted))
+
 	values := make([]hexane.RawSplice, len(sorted))
 	for i, splice := range sorted {
 		successorStart := int(c.successorSizes.Prefix(splice.index))
@@ -1043,6 +1130,7 @@ func (c *hexaneOperationColumns) BatchSplice(
 		}
 		valueStart := int(c.valueLengths.Prefix(splice.index))
 		valueEnd := int(c.valueLengths.Prefix(splice.index + splice.deleteCount))
+
 		values[i] = hexane.RawSplice{
 			Index: valueStart, DeleteCount: valueEnd - valueStart,
 			Inserted: splice.inserted.valueData,
@@ -1052,57 +1140,74 @@ func (c *hexaneOperationColumns) BatchSplice(
 				c.markExpandTrue--
 			}
 		}
+
 		c.markExpandTrue += splice.inserted.markExpandTrue
 	}
 
 	if err := c.objectActors.BatchSplice(rowColumns(func(item *hexaneOperationColumns) *hexane.Column[uint64] { return item.objectActors })); err != nil {
 		return err
 	}
+
 	if err := c.objectCounters.BatchSplice(rowColumns(func(item *hexaneOperationColumns) *hexane.Column[uint64] { return item.objectCounters })); err != nil {
 		return err
 	}
+
 	if err := c.keyActors.BatchSplice(rowColumns(func(item *hexaneOperationColumns) *hexane.Column[uint64] { return item.keyActors })); err != nil {
 		return err
 	}
+
 	if err := c.keyCounters.BatchSplice(deltaColumns(func(item *hexaneOperationColumns) *hexane.DeltaColumn { return item.keyCounters })); err != nil {
 		return err
 	}
+
 	if err := c.keyStrings.BatchSplice(stringColumns(func(item *hexaneOperationColumns) *hexane.Column[string] { return item.keyStrings })); err != nil {
 		return err
 	}
+
 	if err := c.idActors.BatchSplice(rowColumns(func(item *hexaneOperationColumns) *hexane.Column[uint64] { return item.idActors })); err != nil {
 		return err
 	}
+
 	if err := c.idCounters.BatchSplice(deltaColumns(func(item *hexaneOperationColumns) *hexane.DeltaColumn { return item.idCounters })); err != nil {
 		return err
 	}
+
 	if err := c.inserts.BatchSplice(booleanColumns(func(item *hexaneOperationColumns) *hexane.BooleanColumn { return item.inserts })); err != nil {
 		return err
 	}
+
 	if err := c.actions.BatchSplice(rowColumns(func(item *hexaneOperationColumns) *hexane.Column[uint64] { return item.actions })); err != nil {
 		return err
 	}
+
 	if err := c.valueMetadata.BatchSplice(rowColumns(func(item *hexaneOperationColumns) *hexane.Column[uint64] { return item.valueMetadata })); err != nil {
 		return err
 	}
+
 	if err := c.valueLengths.BatchSplice(prefixColumns(func(item *hexaneOperationColumns) *hexane.PrefixColumn { return item.valueLengths })); err != nil {
 		return err
 	}
+
 	if err := c.valueData.BatchSplice(values); err != nil {
 		return err
 	}
+
 	if err := c.successorSizes.BatchSplice(prefixColumns(func(item *hexaneOperationColumns) *hexane.PrefixColumn { return item.successorSizes })); err != nil {
 		return err
 	}
+
 	if err := c.successorActors.BatchSplice(successors); err != nil {
 		return err
 	}
+
 	if err := c.successorCounters.BatchSplice(successorCounters); err != nil {
 		return err
 	}
+
 	if err := c.markExpands.BatchSplice(booleanColumns(func(item *hexaneOperationColumns) *hexane.BooleanColumn { return item.markExpands })); err != nil {
 		return err
 	}
+
 	if err := c.markNames.BatchSplice(stringColumns(func(item *hexaneOperationColumns) *hexane.Column[string] { return item.markNames })); err != nil {
 		return err
 	}
@@ -1118,6 +1223,7 @@ func (c *hexaneChangeColumns) RemapActors(
 	if err != nil {
 		return fmt.Errorf("cannot remap change actors: %w", err)
 	}
+
 	c.actors = remapped
 
 	return nil
@@ -1128,18 +1234,22 @@ func (c *hexaneOperationColumns) RemapActors(
 	newIndexes map[opset.ActorID]uint64,
 ) error {
 	var err error
+
 	c.objectActors, err = remapActorColumn(c.objectActors, oldActors, newIndexes)
 	if err != nil {
 		return fmt.Errorf("cannot remap operation object actors: %w", err)
 	}
+
 	c.keyActors, err = remapActorColumn(c.keyActors, oldActors, newIndexes)
 	if err != nil {
 		return fmt.Errorf("cannot remap operation key actors: %w", err)
 	}
+
 	c.idActors, err = remapActorColumn(c.idActors, oldActors, newIndexes)
 	if err != nil {
 		return fmt.Errorf("cannot remap operation identifier actors: %w", err)
 	}
+
 	c.successorActors, err = remapActorColumn(
 		c.successorActors,
 		oldActors,
@@ -1249,6 +1359,7 @@ func encodeHexaneColumns(encoders []hexaneColumnEncoder) ([]encodedColumn, error
 				err,
 			)
 		}
+
 		if len(data) > 0 {
 			columns = append(
 				columns,
@@ -1273,13 +1384,16 @@ func remapActorColumn(
 		if !value.Valid {
 			continue
 		}
+
 		if value.Value >= uint64(len(oldActors)) {
 			return nil, fmt.Errorf("actor index %d is out of bounds", value.Value)
 		}
+
 		index, ok := newIndexes[oldActors[value.Value]]
 		if !ok {
 			return nil, fmt.Errorf("actor is absent from new actor table")
 		}
+
 		values[i] = hexane.Some(index)
 	}
 
@@ -1347,6 +1461,7 @@ func decodeBooleanOrZero(data []byte, count int) ([]bool, error) {
 
 func countTrue(values []bool) int {
 	count := 0
+
 	for _, value := range values {
 		if value {
 			count++

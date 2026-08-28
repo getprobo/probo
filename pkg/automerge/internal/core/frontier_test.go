@@ -64,6 +64,7 @@ func snapshotFromBackend(backend *Engine) *opset.Document {
 		clone := *change
 		clone.Hash = new(hash)
 		document.Changes = append(document.Changes, clone)
+
 		return true
 	})
 

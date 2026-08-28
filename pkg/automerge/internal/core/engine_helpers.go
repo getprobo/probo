@@ -60,6 +60,7 @@ func (b *Engine) nextOperationID() opset.OpID {
 
 func (b *Engine) requireRoot(handle uint32) error {
 	b.bindColumnarState()
+
 	object, err := b.object(handle)
 	if err != nil {
 		return err
@@ -74,6 +75,7 @@ func (b *Engine) requireRoot(handle uint32) error {
 
 func (b *Engine) object(handle uint32) (opset.ObjectID, error) {
 	b.bindColumnarState()
+
 	object, ok := b.objects[handle]
 	if !ok {
 		return opset.ObjectID{}, fmt.Errorf("invalid object handle %d", handle)
@@ -172,6 +174,7 @@ func (b *Engine) rootTextObjects() map[string]opset.Operation {
 				objects[property] = operation
 			}
 		}
+
 		return true
 	})
 

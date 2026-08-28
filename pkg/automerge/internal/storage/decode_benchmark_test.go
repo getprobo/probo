@@ -35,11 +35,14 @@ func BenchmarkDecodeDocument(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+
 	document.Heads = []opset.ChangeHash{*document.Changes[0].Hash}
+
 	document.OperationOrder = make([]opset.OpID, len(operations))
 	for index := range operations {
 		document.OperationOrder[index] = operations[index].ID
 	}
+
 	data, err := EncodePreparedDocument(document, operations, true)
 	if err != nil {
 		b.Fatal(err)
@@ -49,6 +52,7 @@ func BenchmarkDecodeDocument(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	if len(decoded.OperationOrder) != len(operations) {
 		b.Fatalf(
 			"decoded %d operations, want %d",
@@ -66,6 +70,7 @@ func BenchmarkDecodeDocument(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		benchmarkDecodedDocument = decoded
 	}
 }

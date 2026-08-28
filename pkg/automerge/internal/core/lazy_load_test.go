@@ -31,6 +31,7 @@ import (
 
 func TestLazyLoad_LoadSaveAndForkDoNotHydrateQueries(t *testing.T) {
 	data := lazyLoadFixture(t)
+
 	ResetRuntimeMetrics()
 
 	engine, err := LoadEngine(data)
@@ -42,6 +43,7 @@ func TestLazyLoad_LoadSaveAndForkDoNotHydrateQueries(t *testing.T) {
 
 	assert.Equal(t, data, saved)
 	assert.NotNil(t, fork)
+
 	metrics := ReadRuntimeMetrics()
 	assert.Zero(t, metrics.SemanticChangeRows)
 	assert.Zero(t, metrics.SemanticOperationRows)
@@ -53,6 +55,7 @@ func lazyLoadFixture(t *testing.T) []byte {
 	engine, err := NewEngine()
 	require.NoError(t, err)
 	require.NoError(t, engine.SetActor([]byte("lazy-load")))
+
 	value, err := encodeScalarWire(
 		opset.Scalar{Type: opset.ScalarString, String: "value"},
 	)

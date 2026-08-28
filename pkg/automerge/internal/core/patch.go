@@ -32,7 +32,9 @@ import (
 
 func (b *Engine) Stats() ([]byte, error) {
 	b.bindColumnarState()
+
 	actors := make(map[opset.ActorID]struct{})
+
 	b.state.eachOperation(func(operation opset.Operation) bool {
 		actors[operation.ID.Actor] = struct{}{}
 		return true
@@ -132,6 +134,7 @@ func patchValueForOperation(state *State, operation opset.Operation) (patchValue
 // in index order.
 func (b *Engine) CurrentState() ([]byte, error) {
 	b.bindColumnarState()
+
 	patches := make([]patchOut, 0)
 
 	for _, object := range orderedObjectsInState(b.state) {
@@ -179,6 +182,7 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 		}
 
 		makers = append(makers, operation)
+
 		return true
 	})
 
@@ -609,6 +613,7 @@ func diffMarkPatches(source, target *State, object opset.ObjectID) ([]markPatchO
 		}
 
 		begins = append(begins, operation)
+
 		return true
 	})
 

@@ -34,15 +34,18 @@ func stateChangesFromColumns(columns *columnarState) []opset.Change {
 	for i := range changes {
 		for j := range changes[i].Operations {
 			operation := &changes[i].Operations[j]
+
 			canonical, ok := columns.operation(operation.ID)
 			if !ok {
 				continue
 			}
+
 			predecessors := operation.Predecessors
 			*operation = cloneOperation(canonical)
 			operation.Predecessors = predecessors
 		}
 	}
+
 	return changes
 }
 
@@ -59,6 +62,7 @@ func newIsolationView(
 	visited := make(map[opset.ChangeHash]struct{})
 
 	var visit func(opset.ChangeHash) bool
+
 	visit = func(hash opset.ChangeHash) bool {
 		if _, ok := visited[hash]; ok {
 			return true
@@ -68,6 +72,7 @@ func newIsolationView(
 		if !ok {
 			return false
 		}
+
 		for _, dependency := range change.Dependencies {
 			if !visit(dependency) {
 				return false
@@ -75,6 +80,7 @@ func newIsolationView(
 		}
 
 		cloned := *change
+
 		cloned.Operations = make([]opset.Operation, len(change.Operations))
 		for i, operation := range change.Operations {
 			cloned.Operations[i] = cloneOperation(operation)
@@ -83,6 +89,7 @@ func newIsolationView(
 			// prevent future operations from leaking into the historical view.
 			cloned.Operations[i].Successors = nil
 		}
+
 		ordered = append(ordered, cloned)
 		visited[hash] = struct{}{}
 

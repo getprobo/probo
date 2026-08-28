@@ -81,6 +81,7 @@ func (c *RawColumn) Slice(start, end int) []byte {
 	c.checkRange(start, end-start)
 	data := make([]byte, 0, end-start)
 	appendRawRange(c.root, start, end, &data)
+
 	return data
 }
 
@@ -102,6 +103,7 @@ func (c *RawColumn) Delete(index, count int) {
 // Splice removes deleteCount bytes and inserts values at index.
 func (c *RawColumn) Splice(index, deleteCount int, values []byte) {
 	c.checkRange(index, deleteCount)
+
 	if deleteCount == 0 && len(values) == 0 {
 		return
 	}
@@ -131,6 +133,7 @@ func (c *RawColumn) BatchSplice(splices []RawSplice) error {
 		if splice.Inserted != nil {
 			inserted = splice.Inserted.root
 		}
+
 		ropeSplices[i] = ropeSplice[byte]{
 			index:       splice.Index,
 			deleteCount: splice.DeleteCount,
@@ -142,6 +145,7 @@ func (c *RawColumn) BatchSplice(splices []RawSplice) error {
 	if err != nil {
 		return fmt.Errorf("cannot splice raw column batch: %w", err)
 	}
+
 	c.root = root
 
 	return nil
@@ -162,6 +166,7 @@ func (c *RawColumn) Bytes() []byte {
 			return true
 		},
 	)
+
 	return data
 }
 
@@ -171,11 +176,13 @@ func (c *RawColumn) SaveTo(w io.Writer) (int64, error) {
 		written int64
 		saveErr error
 	)
+
 	ropeEachLeaf(
 		c.root,
 		func(chunk []byte) bool {
 			count, err := saveBytes(w, chunk)
 			written += count
+
 			if err != nil {
 				saveErr = err
 				return false
@@ -184,6 +191,7 @@ func (c *RawColumn) SaveTo(w io.Writer) (int64, error) {
 			return true
 		},
 	)
+
 	return written, saveErr
 }
 

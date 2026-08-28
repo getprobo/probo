@@ -178,6 +178,7 @@ func (s *State) insertAnchorKey(object opset.OpID, base opset.Key) opset.Key {
 		if !s.isSuperseded(operation.ID) && len(candidates) > 0 {
 			return false
 		}
+
 		return true
 	})
 

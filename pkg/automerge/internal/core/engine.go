@@ -141,10 +141,12 @@ func NewEngine() (*Engine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize native empty state: %w", err)
 	}
+
 	columns, err := newColumnarState(document)
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize native empty columns: %w", err)
 	}
+
 	state.attachCanonical(columns)
 
 	return &Engine{
@@ -180,16 +182,19 @@ func LoadEngine(data []byte) (*Engine, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	columns, err := newColumnarState(document)
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize native document columns: %w", err)
 	}
+
 	var state *State
 	if columns.snapshot == nil {
 		state, err = NewStateFromDocument(document)
 		if err != nil {
 			return nil, fmt.Errorf("cannot initialize native document state: %w", err)
 		}
+
 		columns, err = newColumnarStateFromState(state)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -197,6 +202,7 @@ func LoadEngine(data []byte) (*Engine, error) {
 				err,
 			)
 		}
+
 		state.attachCanonical(columns)
 	} else {
 		state, err = stateFromCanonicalColumns(columns)
@@ -298,6 +304,7 @@ func loadEngineRetainingOrphans(
 		queuedClone[hash] = &clone
 		queuedBytes += len(clone.Raw)
 	}
+
 	columns, err := newColumnarStateFromState(state)
 	if err != nil {
 		return nil, true, fmt.Errorf(
@@ -305,6 +312,7 @@ func loadEngineRetainingOrphans(
 			err,
 		)
 	}
+
 	state.attachCanonical(columns)
 
 	return &Engine{
@@ -327,6 +335,7 @@ func cloneRawColumns(columns []opset.RawColumn) []opset.RawColumn {
 	cloned := make([]opset.RawColumn, 0, len(columns))
 	for _, column := range columns {
 		duplicate := false
+
 		for _, retained := range cloned {
 			if retained.Specification == column.Specification &&
 				bytes.Equal(retained.Data, column.Data) {
@@ -334,6 +343,7 @@ func cloneRawColumns(columns []opset.RawColumn) []opset.RawColumn {
 				break
 			}
 		}
+
 		if duplicate {
 			continue
 		}
@@ -592,13 +602,16 @@ func (b *Engine) Fork(actor []byte) (*Engine, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		fork, err := LoadEngine(data)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := fork.SetActor(actor); err != nil {
 			return nil, err
 		}
+
 		return fork, nil
 	}
 
@@ -606,13 +619,17 @@ func (b *Engine) Fork(actor []byte) (*Engine, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	columns := b.columns.clone()
 	columns.shared = true
+
 	state, err := stateFromSharedColumns(columns)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fork native state: %w", err)
 	}
+
 	b.columns.shared = true
+
 	fork := &Engine{
 		state:          state,
 		columns:        columns,

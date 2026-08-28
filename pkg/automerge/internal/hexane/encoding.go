@@ -107,6 +107,7 @@ func (stringCodec) Append(dst []byte, value string) ([]byte, error) {
 	}
 
 	dst = appendULEB(dst, uint64(len(value)))
+
 	return append(dst, value...), nil
 }
 
@@ -120,6 +121,7 @@ func (bytesCodec) Append(dst []byte, value []byte) ([]byte, error) {
 func appendULEB(dst []byte, value uint64) []byte {
 	for {
 		current := byte(value & 0x7f)
+
 		value >>= 7
 		if value != 0 {
 			current |= 0x80
@@ -154,6 +156,7 @@ func saveBytes(w io.Writer, data []byte) (int64, error) {
 	written := 0
 	for written < len(data) {
 		count, err := w.Write(data[written:])
+
 		written += count
 		if err != nil {
 			return int64(written), fmt.Errorf("cannot write column: %w", err)

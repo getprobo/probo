@@ -34,6 +34,7 @@ func TestOperationSpliceRuns_MatchesFlatReplacement(t *testing.T) {
 
 	current := make([]opset.Operation, 200)
 	next := make([]opset.Operation, 0, 216)
+
 	for i := range current {
 		current[i].ID = opset.OpID{
 			Actor:   opset.ActorID("existing"),
@@ -45,6 +46,7 @@ func TestOperationSpliceRuns_MatchesFlatReplacement(t *testing.T) {
 				Counter: uint64(1_000 + i),
 			}})
 		}
+
 		operation := current[i]
 		if i%17 == 0 {
 			operation.Successors = []opset.OpID{{
@@ -52,6 +54,7 @@ func TestOperationSpliceRuns_MatchesFlatReplacement(t *testing.T) {
 				Counter: uint64(2_000 + i),
 			}}
 		}
+
 		next = append(next, operation)
 	}
 
@@ -68,5 +71,6 @@ func TestOperationSpliceRuns_MatchesFlatReplacement(t *testing.T) {
 			run.Operations...,
 		)
 	}
+
 	assert.Equal(t, next, actual)
 }

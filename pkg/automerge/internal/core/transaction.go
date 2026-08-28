@@ -167,6 +167,7 @@ func (b *Engine) Commit(
 			"change exceeds snapshot uint32 domain",
 		)
 	}
+
 	dependencies := b.changeDependencies(sequence)
 
 	change := &opset.Change{
@@ -214,7 +215,9 @@ func (b *Engine) Commit(
 			b.nextOp = next
 		}
 	}
+
 	b.state.recordAppliedChange(change)
+
 	if direct {
 		b.columns = nextColumns
 		if b.isolationActive && b.fullState != nil {
@@ -278,6 +281,7 @@ func (b *Engine) EmptyCommit(
 			err,
 		)
 	}
+
 	if b.isolationActive && b.fullState != nil {
 		if direct {
 			b.fullState = nextFullState
@@ -288,7 +292,9 @@ func (b *Engine) EmptyCommit(
 			)
 		}
 	}
+
 	b.state.recordAppliedChange(change)
+
 	if direct {
 		b.columns = nextColumns
 		if b.isolationActive && b.fullState != nil {
@@ -315,10 +321,14 @@ func (b *Engine) applyDirectColumnCommit(
 	change *opset.Change,
 ) (*columnarState, *State, bool, error) {
 	planningState := b.state
+
 	var nextFullState *State
+
 	changes := []*opset.Change{change}
+
 	if b.isolationActive && b.fullState != nil {
 		var err error
+
 		nextFullState, changes, err = directIsolationState(
 			b.columns,
 			b.fullState,
@@ -330,8 +340,10 @@ func (b *Engine) applyDirectColumnCommit(
 				err,
 			)
 		}
+
 		planningState = nextFullState
 	}
+
 	batch, err := newColumnMutationBatch(
 		b.columns,
 		planningState,
@@ -341,9 +353,11 @@ func (b *Engine) applyDirectColumnCommit(
 	if errors.Is(err, errDirectColumnsUnsupported) {
 		return nil, nil, false, nil
 	}
+
 	if err != nil {
 		return nil, nil, false, err
 	}
+
 	if b.directColumnFailure != nil {
 		if err := b.directColumnFailure(); err != nil {
 			return nil, nil, false, fmt.Errorf(
@@ -352,10 +366,12 @@ func (b *Engine) applyDirectColumnCommit(
 			)
 		}
 	}
+
 	columns, err := batch.apply(b.columns)
 	if err != nil {
 		return nil, nil, false, err
 	}
+
 	return columns, nextFullState, true, nil
 }
 
@@ -368,43 +384,57 @@ func directIsolationState(
 	if err != nil {
 		return nil, nil, err
 	}
+
 	remaining := make(map[opset.ChangeHash]*opset.Change)
+
 	full.eachChange(func(hash opset.ChangeHash, source *opset.Change) bool {
 		if _, canonical := columns.changeRows[hash]; canonical {
 			return true
 		}
+
 		cloned := cloneChange(*source)
 		remaining[hash] = &cloned
+
 		return true
 	})
+
 	applied := make([]*opset.Change, 0, len(remaining)+1)
 	for len(remaining) > 0 {
 		progressed := false
+
 		for hash, source := range remaining {
 			if !state.hasDependencies(source) {
 				continue
 			}
+
 			if err := state.ApplyChange(source); err != nil {
 				return nil, nil, fmt.Errorf(
 					"cannot replay isolated overlay change: %w",
 					err,
 				)
 			}
+
 			applied = append(applied, source)
+
 			delete(remaining, hash)
+
 			progressed = true
 		}
+
 		if !progressed {
 			return nil, nil, fmt.Errorf("cannot order isolated overlay changes")
 		}
 	}
+
 	if err := state.ApplyChange(change); err != nil {
 		return nil, nil, fmt.Errorf(
 			"cannot apply isolated direct change: %w",
 			err,
 		)
 	}
+
 	applied = append(applied, change)
+
 	return state, applied, nil
 }
 

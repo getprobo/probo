@@ -111,6 +111,7 @@ func newColumn[T any](
 		chunkSize: columnChunkSize,
 	}
 	column.root = ropeFrom(values, column.chunkSize, column.prepareValue, metrics)
+
 	return column
 }
 
@@ -147,6 +148,7 @@ func (c *Column[T]) Delete(index, count int) {
 // Splice removes deleteCount values and inserts values at index.
 func (c *Column[T]) Splice(index, deleteCount int, values ...Value[T]) {
 	c.checkRange(index, deleteCount)
+
 	if deleteCount == 0 && len(values) == 0 {
 		return
 	}
@@ -172,16 +174,19 @@ func (c *Column[T]) BatchSplice(splices []ColumnSplice[T]) error {
 		splices[0].DeleteCount == 0 &&
 		splices[0].Inserted != nil &&
 		c.tail.valid
+
 	var appended []Value[T]
 	if appendOnly {
 		appended = splices[0].Inserted.Values()
 	}
+
 	ropeSplices := make([]ropeSplice[Value[T]], len(splices))
 	for i, splice := range splices {
 		var inserted *ropeNode[Value[T]]
 		if splice.Inserted != nil {
 			inserted = splice.Inserted.root
 		}
+
 		ropeSplices[i] = ropeSplice[Value[T]]{
 			index:       splice.Index,
 			deleteCount: splice.DeleteCount,
@@ -198,12 +203,15 @@ func (c *Column[T]) BatchSplice(splices []ColumnSplice[T]) error {
 	if err != nil {
 		return fmt.Errorf("cannot splice column batch: %w", err)
 	}
+
 	c.root = root
+
 	if appendOnly {
 		for _, value := range appended {
 			if err := c.appendEncodedValue(c.prepareValue(value)); err != nil {
 				c.encoded = nil
 				c.tail = encodedColumnTail[T]{}
+
 				break
 			}
 		}
@@ -237,6 +245,7 @@ func (c *Column[T]) Values() []Value[T] {
 			return true
 		},
 	)
+
 	return values
 }
 
@@ -246,6 +255,7 @@ func (c *Column[T]) Bytes() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return append([]byte(nil), data...), nil
 }
 
@@ -255,6 +265,7 @@ func (c *Column[T]) SaveTo(w io.Writer) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return saveBytes(w, data)
 }
 
@@ -262,7 +273,9 @@ func (c *Column[T]) encodedBytes() ([]byte, error) {
 	if c.encoded != nil || c.tail.valid {
 		return c.encoded, nil
 	}
+
 	leaves := make([][]Value[T], 0)
+
 	ropeEachLeaf(
 		c.root,
 		func(values []Value[T]) bool {
@@ -270,21 +283,27 @@ func (c *Column[T]) encodedBytes() ([]byte, error) {
 			return true
 		},
 	)
+
 	cursor := columnValueCursor[T]{leaves: leaves}
 	hasPresent := false
+
 	for check := cursor; ; {
 		value, ok := check.next()
 		if !ok {
 			break
 		}
+
 		if !value.Valid {
 			continue
 		}
+
 		hasPresent = true
+
 		if value.encoded.err != nil {
 			return nil, value.encoded.err
 		}
 	}
+
 	if !hasPresent {
 		c.encoded = []byte{}
 		c.tail = encodedColumnTail[T]{
@@ -293,27 +312,33 @@ func (c *Column[T]) encodedBytes() ([]byte, error) {
 			kind:       encodedTailNull,
 			count:      c.Len(),
 		}
+
 		return c.encoded, nil
 	}
 
 	data := make([]byte, 0)
+
 	for {
 		value, ok := cursor.peek()
 		if !ok {
 			c.encoded = data
 			return c.encoded, nil
 		}
+
 		if !value.Valid {
 			end := cursor
 			count := 0
+
 			for {
 				value, ok := end.peek()
 				if !ok || value.Valid {
 					break
 				}
+
 				_, _ = end.next()
 				count++
 			}
+
 			offset := len(data)
 			data = appendULEB(appendLEB(data, 0), uint64(count))
 			c.tail = encodedColumnTail[T]{
@@ -325,22 +350,27 @@ func (c *Column[T]) encodedBytes() ([]byte, error) {
 				payloadOffset: len(data),
 			}
 			cursor = end
+
 			continue
 		}
 
 		next := cursor
 		first, _ := next.next()
+
 		second, hasSecond := next.peek()
 		if hasSecond && second.Valid && c.codec.Equal(first.Value, second.Value) {
 			count := 1
+
 			for {
 				value, ok := next.peek()
 				if !ok || !value.Valid || !c.codec.Equal(first.Value, value.Value) {
 					break
 				}
+
 				_, _ = next.next()
 				count++
 			}
+
 			offset := len(data)
 			data = appendLEB(data, int64(count))
 			payloadOffset := len(data)
@@ -356,40 +386,50 @@ func (c *Column[T]) encodedBytes() ([]byte, error) {
 				last:          first,
 			}
 			cursor = next
+
 			continue
 		}
 
 		end := cursor
 		count := 0
+
 		for {
 			value, ok := end.peek()
 			if !ok || !value.Valid {
 				break
 			}
+
 			_, _ = end.next()
 			count++
+
 			following, ok := end.peek()
 			if !ok || !following.Valid {
 				break
 			}
+
 			lookahead := end
 			current, _ := lookahead.next()
+
 			after, ok := lookahead.peek()
 			if ok && after.Valid && c.codec.Equal(current.Value, after.Value) {
 				break
 			}
 		}
+
 		offset := len(data)
 		data = appendLEB(data, -int64(count))
 		payloadOffset := len(data)
 		lastOffset := payloadOffset
+
 		var last Value[T]
+
 		for range count {
 			value, _ := cursor.next()
 			lastOffset = len(data)
 			data = append(data, value.encoded.data...)
 			last = value
 		}
+
 		c.tail = encodedColumnTail[T]{
 			valid:         true,
 			hasPresent:    true,
@@ -408,19 +448,24 @@ func (c *Column[T]) appendEncodedValue(value Value[T]) error {
 	if !tail.valid {
 		return fmt.Errorf("hexane: encoded tail is unavailable")
 	}
+
 	if value.Valid && value.encoded.err != nil {
 		return value.encoded.err
 	}
+
 	if !tail.hasPresent {
 		if !value.Valid {
 			tail.count++
 			c.tail = tail
+
 			return nil
 		}
+
 		data := make([]byte, 0, len(value.encoded.data)+8)
 		if tail.count > 0 {
 			data = appendULEB(appendLEB(data, 0), uint64(tail.count))
 		}
+
 		offset := len(data)
 		data = appendLEB(data, -1)
 		payloadOffset := len(data)
@@ -436,6 +481,7 @@ func (c *Column[T]) appendEncodedValue(value Value[T]) error {
 			lastOffset:    payloadOffset,
 			last:          value,
 		}
+
 		return nil
 	}
 
@@ -447,8 +493,10 @@ func (c *Column[T]) appendEncodedValue(value Value[T]) error {
 			c.encoded = data
 			tail.count++
 			c.tail = tail
+
 			return nil
 		}
+
 		data := append([]byte(nil), c.encoded...)
 		offset := len(data)
 		data = appendLEB(data, -1)
@@ -476,8 +524,10 @@ func (c *Column[T]) appendEncodedValue(value Value[T]) error {
 			tail.payloadOffset = payloadOffset
 			tail.lastOffset = payloadOffset
 			c.tail = tail
+
 			return nil
 		}
+
 		data := append([]byte(nil), c.encoded...)
 		if !value.Valid {
 			offset := len(data)
@@ -491,8 +541,10 @@ func (c *Column[T]) appendEncodedValue(value Value[T]) error {
 				offset:        offset,
 				payloadOffset: len(data),
 			}
+
 			return nil
 		}
+
 		offset := len(data)
 		data = appendLEB(data, -1)
 		payloadOffset := len(data)
@@ -522,14 +574,17 @@ func (c *Column[T]) appendEncodedValue(value Value[T]) error {
 				offset:        offset,
 				payloadOffset: len(data),
 			}
+
 			return nil
 		}
+
 		if c.codec.Equal(tail.last.Value, value.Value) {
 			data := append([]byte(nil), c.encoded[:tail.offset]...)
 			if tail.count > 1 {
 				data = appendLEB(data, -int64(tail.count-1))
 				data = append(data, c.encoded[tail.payloadOffset:tail.lastOffset]...)
 			}
+
 			offset := len(data)
 			data = appendLEB(data, 2)
 			payloadOffset := len(data)
@@ -545,8 +600,10 @@ func (c *Column[T]) appendEncodedValue(value Value[T]) error {
 				lastOffset:    payloadOffset,
 				last:          value,
 			}
+
 			return nil
 		}
+
 		data := append([]byte(nil), c.encoded[:tail.offset]...)
 		data = appendLEB(data, -int64(tail.count+1))
 		payloadOffset := len(data)
@@ -570,6 +627,7 @@ func (c *Column[T]) cloneValue(value Value[T]) Value[T] {
 	if value.Valid {
 		value.Value = c.codec.Clone(value.Value)
 	}
+
 	value.encoded = nil
 
 	return value
@@ -583,6 +641,7 @@ func (c *Column[T]) prepareValue(value Value[T]) Value[T] {
 
 	data, err := c.codec.Append(nil, value.Value)
 	value.encoded = &encodedValue{data: data, err: err}
+
 	return value
 }
 
@@ -610,6 +669,7 @@ func (c *columnValueCursor[T]) peek() (Value[T], bool) {
 		c.leaf++
 		c.index = 0
 	}
+
 	if c.leaf == len(c.leaves) {
 		return Value[T]{}, false
 	}

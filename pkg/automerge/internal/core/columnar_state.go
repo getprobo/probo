@@ -85,6 +85,7 @@ func (i *operationRowIndex) withSplice(
 	for offset, operation := range operations {
 		rows[operation.ID] = index + offset
 	}
+
 	return &operationRowIndex{
 		parent:      i,
 		rows:        rows,
@@ -104,6 +105,7 @@ func (c *columnarState) prepareMutationCapacity() {
 	if c == nil || c.shared || cap(c.operations)-len(c.operations) >= 64 {
 		return
 	}
+
 	operations := make([]opset.Operation, len(c.operations), len(c.operations)+64)
 	copy(operations, c.operations)
 	c.operations = operations
@@ -128,14 +130,18 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 				columns.changeRows[*columns.changes[i].Hash] = i
 			}
 		}
+
 		for i := range columns.operations {
 			identifier := columns.operations[i].ID
 			if _, exists := columns.operationRows.rows[identifier]; exists {
 				return nil, fmt.Errorf("duplicate snapshot operation ID %v", identifier)
 			}
+
 			columns.operationRows.rows[identifier] = i
 		}
+
 		columns.rebuildWireObjectSpans()
+
 		return columns, nil
 	}
 
@@ -150,11 +156,13 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 	}
 
 	byID := make(map[opset.OpID]opset.Operation)
+
 	for i := range document.Changes {
 		change := &document.Changes[i]
 		if change.Hash != nil {
 			columns.changeRows[*change.Hash] = i
 		}
+
 		for _, operation := range change.Operations {
 			if operation.Action != opset.ActionDelete {
 				byID[operation.ID] = operation
@@ -171,7 +179,9 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 	if operationCapacity > 0 {
 		operationCapacity += 64
 	}
+
 	columns.operations = make([]opset.Operation, 0, operationCapacity)
+
 	for _, identifier := range document.OperationOrder {
 		operation, ok := byID[identifier]
 		if !ok {
@@ -180,16 +190,19 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 				identifier,
 			)
 		}
+
 		columns.operationRows.rows[identifier] = len(columns.operations)
 		columns.operations = append(
 			columns.operations,
 			cloneOperation(operation),
 		)
 	}
+
 	snapshot, err := storage.NewSnapshotColumns(document, columns.operations)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build canonical snapshot columns: %w", err)
 	}
+
 	columns.snapshot = snapshot
 	columns.rebuildWireObjectSpans()
 
@@ -219,10 +232,12 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 		map[opset.ChangeHash]*opset.Change,
 		len(columns.changes),
 	)
+
 	operationCount := 0
 	for i := range columns.changes {
 		operationCount += len(columns.changes[i].Operations)
 	}
+
 	state.operationIDs = make(map[opset.OpID]struct{}, operationCount)
 
 	for i := range columns.changes {
@@ -230,6 +245,7 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 		if change.Sequence > state.actorSequence[change.Actor] {
 			state.actorSequence[change.Actor] = change.Sequence
 		}
+
 		if change.Hash != nil {
 			metadata := *change
 			metadata.Operations = nil
@@ -237,6 +253,7 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 			state.changes[*change.Hash] = &metadata
 			state.indexActorChange(change.Actor, change.Sequence, *change.Hash)
 		}
+
 		for _, changeOperation := range change.Operations {
 			if _, exists := state.operationIDs[changeOperation.ID]; exists {
 				return nil, fmt.Errorf(
@@ -244,6 +261,7 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 					changeOperation.ID,
 				)
 			}
+
 			operation := changeOperation
 			if canonical, ok := columns.operation(operation.ID); ok {
 				predecessors := operation.Predecessors
@@ -252,11 +270,13 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 			} else {
 				state.operations[operation.ID] = operation
 			}
+
 			state.operationIDs[operation.ID] = struct{}{}
 			state.observeLoadedSequenceOperation(operation)
 			state.indexMapKeyOperation(operation)
 			state.indexSequenceElementOperation(operation)
 			state.indexSuccessors(operation)
+
 			for _, successor := range operation.Successors {
 				if successor.Counter == 0 {
 					return nil, fmt.Errorf(
@@ -267,13 +287,16 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 			}
 		}
 	}
+
 	for i := range columns.changes {
 		for _, identifier := range columns.changes[i].Operations {
 			operation, ok := state.operation(identifier.ID)
 			if !ok {
 				continue
 			}
+
 			state.supersedePredecessors(operation)
+
 			for _, successor := range operation.Successors {
 				successorOperation, ok := state.operation(successor)
 				if !ok ||
@@ -284,13 +307,16 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 			}
 		}
 	}
+
 	if err := state.validateMarkOrder(); err != nil {
 		return nil, err
 	}
+
 	order := make([]opset.OpID, len(columns.operations))
 	for i, operation := range columns.operations {
 		order[i] = operation.ID
 	}
+
 	state.finalizeSequenceTails(order)
 
 	return state, nil
@@ -301,10 +327,12 @@ func (b *Engine) reconcileColumns() error {
 	if b.isolationActive && b.fullState != nil {
 		state = b.fullState
 	}
+
 	next := b.columns.clone()
 	if err := next.reconcile(state); err != nil {
 		return err
 	}
+
 	b.columns = next
 	state.attachCanonical(next)
 
@@ -316,20 +344,24 @@ func (b *Engine) reconcileColumns() error {
 // previous view unchanged if the state cannot be exported.
 func (c *columnarState) reconcile(state *State) error {
 	runtimeMetrics.generalReconciles.Add(1)
+
 	changes, ok := state.allChanges()
 	if !ok {
 		return fmt.Errorf("cannot enumerate canonical changes")
 	}
 
 	missing := make([]*opset.Change, 0)
+
 	for _, change := range changes {
 		if change.Hash == nil {
 			return fmt.Errorf("canonical change has no hash")
 		}
+
 		if _, exists := c.changeRows[*change.Hash]; !exists {
 			missing = append(missing, change)
 		}
 	}
+
 	if len(missing) == 0 {
 		return nil
 	}
@@ -339,14 +371,18 @@ func (c *columnarState) reconcile(state *State) error {
 	if err != nil {
 		return err
 	}
+
 	if !operationsAppended {
 		var planned bool
+
 		operations, operationRows, planned = c.planObjectBatch(state, missing)
 		if !planned {
 			c.globalOrderFallbacks++
 			runtimeMetrics.globalOrderFallbacks.Add(1)
+
 			order := state.documentOperationOrder()
 			operations = make([]opset.Operation, 0, len(order)+64)
+
 			operationRows = newOperationRowIndex(len(order))
 			for _, identifier := range order {
 				operation, ok := state.operation(identifier)
@@ -356,6 +392,7 @@ func (c *columnarState) reconcile(state *State) error {
 						identifier,
 					)
 				}
+
 				operation.Successors = append(
 					[]opset.OpID(nil),
 					state.successorIndex[identifier]...,
@@ -363,6 +400,7 @@ func (c *columnarState) reconcile(state *State) error {
 				sort.Slice(operation.Successors, func(i, j int) bool {
 					return operation.Successors[i].Compare(operation.Successors[j]) < 0
 				})
+
 				operationRows.rows[identifier] = len(operations)
 				operations = append(operations, cloneOperation(operation))
 			}
@@ -370,6 +408,7 @@ func (c *columnarState) reconcile(state *State) error {
 	}
 
 	nextChanges := make([]opset.Change, len(changes))
+
 	nextRows := make(map[opset.ChangeHash]int, len(changes))
 	for i, change := range changes {
 		if row, exists := c.changeRows[*change.Hash]; exists {
@@ -377,37 +416,46 @@ func (c *columnarState) reconcile(state *State) error {
 		} else {
 			nextChanges[i] = cloneChange(*change)
 		}
+
 		nextRows[*change.Hash] = i
 	}
+
 	actorSet := make(map[opset.ActorID]struct{}, len(c.actors)+len(missing))
 	for _, actor := range c.actors {
 		actorSet[actor] = struct{}{}
 	}
+
 	for i := range nextChanges {
 		actorSet[nextChanges[i].Actor] = struct{}{}
 	}
+
 	for _, change := range missing {
 		for _, operation := range change.Operations {
 			actorSet[operation.ID.Actor] = struct{}{}
 		}
 	}
+
 	actors := make([]opset.ActorID, 0, len(actorSet))
 	for actor := range actorSet {
 		actors = append(actors, actor)
 	}
+
 	sort.Slice(actors, func(i, j int) bool {
 		return actors[i].Compare(actors[j]) < 0
 	})
 
 	heads := state.Heads()
+
 	headIndexes := make([]uint64, len(heads))
 	for i, head := range heads {
 		row, exists := nextRows[head]
 		if !exists {
 			return fmt.Errorf("canonical head %s is absent", head)
 		}
+
 		headIndexes[i] = uint64(row)
 	}
+
 	dependencyIndexes := make(map[opset.ChangeHash]uint64, len(nextRows))
 	for hash, row := range nextRows {
 		dependencyIndexes[hash] = uint64(row)
@@ -419,18 +467,22 @@ func (c *columnarState) reconcile(state *State) error {
 	)
 	operationIndex := len(c.operations)
 	operationDeleteCount := 0
+
 	var operationSplices []storage.SnapshotOperationSplice
+
 	if !operationsAppended {
 		batchOperations := 0
 		for _, change := range missing {
 			batchOperations += len(change.Operations)
 		}
+
 		if batchOperations <= 8 {
 			splices, ok := operationSpliceRuns(c.operations, operations)
 			if ok && len(splices) <= 8 {
 				operationSplices = splices
 			}
 		}
+
 		if len(operationSplices) == 0 {
 			operationIndex, operationDeleteCount = operationSpliceBounds(
 				c.operations,
@@ -438,6 +490,7 @@ func (c *columnarState) reconcile(state *State) error {
 			)
 		}
 	}
+
 	insertedChanges := make(
 		[]*opset.Change,
 		len(nextChanges)-changeIndex-changeSuffixLength(
@@ -449,6 +502,7 @@ func (c *columnarState) reconcile(state *State) error {
 	for i := range insertedChanges {
 		insertedChanges[i] = &nextChanges[changeIndex+i]
 	}
+
 	operationSuffix := 0
 	if !operationsAppended {
 		operationSuffix = operationSuffixLength(
@@ -457,9 +511,12 @@ func (c *columnarState) reconcile(state *State) error {
 			operationIndex,
 		)
 	}
+
 	insertedOperations := operations[operationIndex : len(operations)-operationSuffix]
+
 	if operationRows == nil {
 		operationRows = c.operationRows
+
 		if len(operationSplices) > 0 {
 			for _, splice := range operationSplices {
 				operationRows = operationRows.withSplice(
@@ -479,12 +536,15 @@ func (c *columnarState) reconcile(state *State) error {
 
 	document := &opset.Document{Heads: heads, Changes: nextChanges}
 	snapshot := c.snapshot.Clone()
+
 	changeAppendOnly := changeIndex == len(c.changes) &&
 		changeDeleteCount == 0
 	if snapshot == nil || !changeAppendOnly {
 		c.snapshotReplacements++
 		runtimeMetrics.snapshotReplacements.Add(1)
+
 		var err error
+
 		snapshot, err = storage.NewSnapshotColumns(document, operations)
 		if err != nil {
 			return fmt.Errorf("cannot replace canonical snapshot columns: %w", err)
@@ -504,6 +564,7 @@ func (c *columnarState) reconcile(state *State) error {
 	}); err != nil {
 		c.snapshotReplacements++
 		runtimeMetrics.snapshotReplacements.Add(1)
+
 		if replaceErr := snapshot.Replace(document, operations); replaceErr != nil {
 			return fmt.Errorf(
 				"cannot splice canonical snapshot columns: %w",
@@ -514,6 +575,7 @@ func (c *columnarState) reconcile(state *State) error {
 
 	c.changes = nextChanges
 	c.changeRows = nextRows
+
 	c.heads = append([]opset.ChangeHash(nil), heads...)
 	c.operations = operations
 	c.operationRows = operationRows
@@ -535,11 +597,14 @@ func (c *columnarState) rebuildWireObjectSpans() {
 				start: row,
 				end:   row + 1,
 			}
+
 			continue
 		}
+
 		span.end = row + 1
 		spans[operation.Object] = span
 	}
+
 	c.objectSpans = spans
 }
 
@@ -554,11 +619,13 @@ func (c *columnarState) appendSequenceOperations(
 	added := make([]opset.Operation, 0)
 	anchor := c.operations[len(c.operations)-1].ID
 	object := c.operations[len(c.operations)-1].Object
+
 	for _, change := range changes {
 		for _, changed := range change.Operations {
 			if changed.Action == opset.ActionDelete {
 				return nil, nil, false, nil
 			}
+
 			if !changed.Insert ||
 				changed.Key.Element == nil ||
 				*changed.Key.Element != anchor ||
@@ -574,6 +641,7 @@ func (c *columnarState) appendSequenceOperations(
 					changed.ID,
 				)
 			}
+
 			operation.Successors = append(
 				operation.Successors[:0],
 				state.successorIndex[changed.ID]...,
@@ -585,6 +653,7 @@ func (c *columnarState) appendSequenceOperations(
 			anchor = changed.ID
 		}
 	}
+
 	if len(added) == 0 {
 		return c.operations, c.operationRows, true, nil
 	}
@@ -598,6 +667,7 @@ func (c *columnarState) appendSequenceOperations(
 		)
 		copy(operations, c.operations)
 	}
+
 	operations = append(operations, added...)
 	rows := c.operationRows.with(added, len(c.operations))
 
@@ -616,6 +686,7 @@ func changeSpliceBounds(
 	}
 
 	suffix := changeSuffixLength(current, next, prefix)
+
 	return prefix, len(current) - prefix - suffix
 }
 
@@ -656,6 +727,7 @@ func operationSpliceBounds(
 	}
 
 	suffix := operationSuffixLength(current, next, prefix)
+
 	return prefix, len(current) - prefix - suffix
 }
 
@@ -680,6 +752,7 @@ func operationSuffixLength(
 func wireOperationsEqual(left, right opset.Operation) bool {
 	left.Predecessors = nil
 	right.Predecessors = nil
+
 	return reflect.DeepEqual(left, right)
 }
 
@@ -712,10 +785,12 @@ func cloneChange(change opset.Change) opset.Change {
 	change.Dependencies = append([]opset.ChangeHash(nil), change.Dependencies...)
 	change.DependencyIndexes = append([]uint64(nil), change.DependencyIndexes...)
 	operations := change.Operations
+
 	change.Operations = make([]opset.Operation, len(operations))
 	for i := range operations {
 		change.Operations[i] = cloneOperation(operations[i])
 	}
+
 	change.ExtraBytes = append([]byte(nil), change.ExtraBytes...)
 	change.Raw = append([]byte(nil), change.Raw...)
 
@@ -724,6 +799,7 @@ func cloneChange(change opset.Change) opset.Change {
 
 func cloneOperation(operation opset.Operation) opset.Operation {
 	operation.Predecessors = append([]opset.OpID(nil), operation.Predecessors...)
+
 	operation.Successors = append([]opset.OpID(nil), operation.Successors...)
 	if operation.Value != nil {
 		value := *operation.Value

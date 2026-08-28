@@ -61,6 +61,7 @@ func TestSnapshotColumns_ReusesDecodedKnownColumns(t *testing.T) {
 	document, operations := benchmarkSnapshot(100)
 	_, err := EncodeChange(&document.Changes[0])
 	require.NoError(t, err)
+
 	document.Heads = []opset.ChangeHash{*document.Changes[0].Hash}
 	encoded, err := EncodePreparedDocument(document, operations, false)
 	require.NoError(t, err)
@@ -69,11 +70,13 @@ func TestSnapshotColumns_ReusesDecodedKnownColumns(t *testing.T) {
 
 	decodedOperations := make([]opset.Operation, 0, len(decoded.OperationOrder))
 	operationsByID := make(map[opset.OpID]opset.Operation)
+
 	for i := range decoded.Changes {
 		for _, operation := range decoded.Changes[i].Operations {
 			operationsByID[operation.ID] = operation
 		}
 	}
+
 	for _, identifier := range decoded.OperationOrder {
 		decodedOperations = append(decodedOperations, operationsByID[identifier])
 	}
@@ -113,6 +116,7 @@ func TestSnapshotColumns_SpliceRandomizedDifferentialAndClone(t *testing.T) {
 		)
 
 		var insertedChanges []*opset.Change
+
 		if iteration%4 == 0 {
 			hash := opset.ChangeHash{}
 			_, _ = rng.Read(hash[:])
@@ -135,6 +139,7 @@ func TestSnapshotColumns_SpliceRandomizedDifferentialAndClone(t *testing.T) {
 		actors := documentActorTable(finalChanges, operations)
 		heads, headIndexes, err := documentHeads(finalChanges)
 		require.NoError(t, err)
+
 		dependencyIndexes := make(map[opset.ChangeHash]uint64, len(finalChanges))
 		for i, change := range finalChanges {
 			dependencyIndexes[*change.Hash] = uint64(i)
@@ -176,6 +181,7 @@ func TestSnapshotColumns_BatchedOperationSplicesMatchPreparedEncoder(t *testing.
 
 	next := append([]opset.Operation(nil), operations...)
 	splices := make([]SnapshotOperationSplice, 0, 10)
+
 	for index := 900; index >= 0; index -= 100 {
 		inserted := next[index]
 		inserted.ID = opset.OpID{
@@ -198,10 +204,12 @@ func TestSnapshotColumns_BatchedOperationSplicesMatchPreparedEncoder(t *testing.
 	actors := documentActorTable(changes, next)
 	heads, headIndexes, err := documentHeads(changes)
 	require.NoError(t, err)
+
 	dependencyIndexes := make(map[opset.ChangeHash]uint64, len(changes))
 	for i, change := range changes {
 		dependencyIndexes[*change.Hash] = uint64(i)
 	}
+
 	err = columns.Splice(SnapshotSplice{
 		Actors:            actors,
 		Heads:             heads,
@@ -228,6 +236,7 @@ func TestSnapshotColumns_LocalizedSpliceAvoidsFullEncoding(t *testing.T) {
 	actors := documentActorTable(changes, operations)
 	heads, headIndexes, err := documentHeads(changes)
 	require.NoError(t, err)
+
 	dependencyIndexes := make(map[opset.ChangeHash]uint64, len(changes))
 	for i, change := range changes {
 		dependencyIndexes[*change.Hash] = uint64(i)
@@ -243,7 +252,9 @@ func TestSnapshotColumns_LocalizedSpliceAvoidsFullEncoding(t *testing.T) {
 		[]opset.OpID(nil),
 		secondReplacement.Successors...,
 	)
+
 	ResetRuntimeMetrics()
+
 	err = columns.Splice(SnapshotSplice{
 		Actors:            actors,
 		Heads:             heads,

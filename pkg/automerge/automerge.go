@@ -763,6 +763,7 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 		d.mu.Unlock()
 		return nil, ErrClosed
 	}
+
 	direct := d.engine.CanDirectMerge()
 	known := d.engine.ChangeHashes()
 	d.mu.Unlock()
@@ -772,6 +773,7 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 		other.mu.Unlock()
 		return nil, ErrClosed
 	}
+
 	direct = direct && other.engine.CanDirectMerge()
 	other.mu.Unlock()
 
@@ -783,6 +785,7 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 
 		d.mu.Lock()
 		defer d.mu.Unlock()
+
 		if d.closed {
 			return nil, ErrClosed
 		}
@@ -803,12 +806,14 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 	other.mu.Lock()
 	batch, err := other.engine.PrepareMerge(known)
 	other.mu.Unlock()
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare Automerge merge: %w", err)
 	}
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
 	if d.closed {
 		return nil, ErrClosed
 	}

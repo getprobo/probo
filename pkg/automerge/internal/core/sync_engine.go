@@ -277,6 +277,7 @@ func (b *Engine) ReceiveSyncMessage(
 				incremental = false
 				break
 			}
+
 			kind := opset.ChunkType(change[8])
 			if kind != opset.ChunkChange && kind != opset.ChunkCompressedChange {
 				incremental = false
