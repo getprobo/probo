@@ -74,8 +74,9 @@ reduced to a deterministic regression seed before its fix is merged.
 make fuzz-automerge AUTOMERGE_FUZZ_TIME=30s
 ```
 
-Go and Rust/WASM benchmarks cover warm document creation, map mutation,
-character-by-character text editing, 10,000-character save/load, and initial
+Go and Rust/WASM benchmarks cover warm document creation, map creation and
+updates, character-by-character typing and replacement edits, cached and
+post-change save/load, divergent merge, and initial and divergent
 native/reference synchronization:
 
 ```sh
@@ -83,9 +84,14 @@ make benchmark-automerge
 ```
 
 For a direct optimized native-Go versus native-Rust comparison, use the shared
-worker harness. It executes identical actors, operations, commit metadata,
-warmups, and sample counts, and rejects results unless both engines produce the
-same document checksum:
+worker harness. It covers creation, map creation and updates, text typing and
+replacement edits, cached and loaded post-change save, load, byte-oriented and
+already-loaded divergent merge, concurrent-tail reconciliation, and a 1k/10k
+diverged merge/sync matrix. Stateful cases build their fixtures outside the
+timed region. Seven fresh-process samples produce a trimmed aggregate. The gate
+also checks document checksums, Go allocations and allocated bytes, scaling,
+wire/save bytes and hashes, self-regression on applicable hosts, and internal
+column fallback counters:
 
 ```sh
 make benchmark-automerge-native

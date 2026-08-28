@@ -44,7 +44,15 @@ COMMIT="$(git -C "$CHECKOUT" rev-parse --verify "FETCH_HEAD^{commit}")"
 readonly COMMIT
 
 git -C "$CHECKOUT" checkout --quiet --detach "$COMMIT"
-cp "$LOCKFILE" "$CHECKOUT/rust/Cargo.lock"
+
+CARGO_LOCK_ARGS=()
+if [[ "$COMMIT" == "$DEFAULT_REF" ]]; then
+  cp "$LOCKFILE" "$CHECKOUT/rust/Cargo.lock"
+  CARGO_LOCK_ARGS=(--locked)
+elif ! git -C "$CHECKOUT" ls-files --error-unmatch rust/Cargo.lock >/dev/null 2>&1; then
+  rm -f "$CHECKOUT/rust/Cargo.lock"
+fi
+readonly CARGO_LOCK_ARGS
 
 if ! rustup run "$TOOLCHAIN" rustc --version >/dev/null 2>&1; then
   rustup toolchain install "$TOOLCHAIN" --profile minimal
@@ -52,7 +60,7 @@ fi
 
 exec cargo +"$TOOLCHAIN" run \
   --release \
-  --locked \
+  "${CARGO_LOCK_ARGS[@]}" \
   --manifest-path "$CHECKOUT/rust/Cargo.toml" \
   -p benchmark-battery \
   -- "$@"

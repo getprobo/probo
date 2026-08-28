@@ -245,6 +245,11 @@ benchmark-automerge: ## Benchmark Go and Rust/WASM Automerge implementations
 benchmark-automerge-native: ## Compare optimized native Go and native Rust
 	$(NODE) contrib/benchmarks/automerge-native/compare.mjs
 
+.PHONY: benchmark-automerge-gate
+benchmark-automerge-gate: ## Enforce portable Automerge Go/Rust ratio gates
+	$(NODE) contrib/benchmarks/automerge-native/compare.mjs \
+		--baseline pkg/automerge/testdata/benchmark-baseline.json
+
 .PHONY: benchmark-automerge-official
 benchmark-automerge-official: ## Run the pinned official Automerge fast benchmark battery
 	@mkdir -p $(dir $(AUTOMERGE_BATTERY_OUTPUT))
