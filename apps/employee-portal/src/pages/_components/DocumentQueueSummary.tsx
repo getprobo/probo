@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { ArrowRightIcon } from "@phosphor-icons/react";
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
@@ -31,7 +31,8 @@ export interface DocumentQueueSummaryProps {
   title: string;
   description: string;
   actionLabel: string;
-  actionTo: string;
+  actionBusy?: boolean;
+  onAction: () => void;
 }
 
 export function DocumentQueueSummary({
@@ -39,7 +40,8 @@ export function DocumentQueueSummary({
   title,
   description,
   actionLabel,
-  actionTo,
+  actionBusy = false,
+  onAction,
 }: DocumentQueueSummaryProps) {
   const slots = documentQueueSummary();
 
@@ -56,16 +58,17 @@ export function DocumentQueueSummary({
             {description}
           </Text>
         </div>
-        <ButtonLink
-          to={actionTo}
+        <Button
           size={2}
           variant="solid"
           color="neutral"
           highContrast
+          loading={actionBusy}
           iconEnd={<ArrowRightIcon />}
+          onClick={onAction}
         >
           {actionLabel}
-        </ButtonLink>
+        </Button>
       </div>
     </div>
   );

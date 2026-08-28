@@ -82,7 +82,8 @@
     "next": "Next document",
     "close": "Close",
     "progressSignatures": "Document {{current}} of {{total}} to sign",
-    "progressApprovals": "Document {{current}} of {{total}} to approve"
+    "progressApprovals": "Document {{current}} of {{total}} to approve",
+    "empty": "There are no documents left in this queue"
   },
   "viewer": {
     "pageOf": "Page {{current}} of {{total}}",

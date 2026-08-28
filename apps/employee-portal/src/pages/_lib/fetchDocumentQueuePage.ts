@@ -91,7 +91,7 @@ const fetchDocumentQueuePageApprovalsQuery = graphql`
 type FetchDocumentQueuePageOptions = {
   kind: DocumentQueueKind;
   organizationId: string;
-  after: string;
+  after?: string;
 };
 
 function toPage(connection: {
@@ -107,8 +107,9 @@ function toPage(connection: {
   };
 }
 
-// Loads the next pending-ID page for the frozen queue. Uses the core
-// environment because DocumentQueueProvider sits above RelayProvider.
+// Loads a pending-ID page for the frozen queue (first page when after is
+// omitted). Uses the core environment because DocumentQueueProvider sits
+// above RelayProvider.
 export async function fetchDocumentQueuePage(
   options: FetchDocumentQueuePageOptions,
 ): Promise<DocumentQueuePage> {

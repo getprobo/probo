@@ -33,6 +33,7 @@ import { DocumentListSection } from "#/pages/_components/DocumentListSection";
 import { DocumentQueueSummary } from "#/pages/_components/DocumentQueueSummary";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
 
 const approvalsPendingListFragment = graphql`
   fragment ApprovalsPendingList_viewer on Viewer
@@ -85,6 +86,7 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
   const { organizationId } = useParams();
+  const { advancing, startQueue } = useDocumentQueue();
   const [data, refetch] = useRefetchableFragment<
     ApprovalsPendingListRefetchQuery,
     ApprovalsPendingList_viewer$key
@@ -106,7 +108,6 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
   }
 
   const count = pendingDocuments.totalCount;
-  const firstPendingId = pendingDocuments.edges[0]?.node.id ?? null;
   const emptyKey = historyCount.totalCount === 0 ? "none" : "allDone";
 
   return (
@@ -119,7 +120,7 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
           description={t(`empty.${emptyKey}.description`)}
         />
       )}
-      summary={firstPendingId == null
+      summary={count === 0
         ? undefined
         : (
             <DocumentQueueSummary
@@ -127,7 +128,10 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
               title={t("pending.summaryTitle", { count })}
               description={t("pending.summaryDescription")}
               actionLabel={t("pending.action")}
-              actionTo={`/${organizationId}/approvals/${firstPendingId}`}
+              actionBusy={advancing}
+              onAction={() => {
+                startQueue("approvals");
+              }}
             />
           )}
       hasPrevious={pendingDocuments.pageInfo.hasPreviousPage}

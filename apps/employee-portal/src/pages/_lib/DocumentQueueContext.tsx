@@ -53,6 +53,7 @@ type DocumentQueueContextValue = {
   leave: () => void;
   goTo: (documentId: string, direction: DocumentQueueDirection) => void;
   goForward: () => void;
+  startQueue: (kind: DocumentQueueKind) => void;
   close: (kind?: DocumentQueueKind) => void;
 };
 
@@ -139,6 +140,37 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     });
   }, [advancing, documentId, goTo, navigate, organizationId, snapshot, t, toast]);
 
+  const startQueue = useCallback((kind: DocumentQueueKind) => {
+    if (organizationId == null || advancing) {
+      return;
+    }
+
+    setAdvancing(true);
+    void fetchDocumentQueuePage({
+      kind,
+      organizationId,
+    }).then((page) => {
+      const firstId = page.ids[0];
+      if (firstId == null) {
+        toast.add({
+          title: t("queue.empty"),
+          type: "error",
+        });
+        return;
+      }
+      enter(kind, page, firstId);
+      void navigate(`/${organizationId}/${kind}/${firstId}`);
+    }).catch((error: unknown) => {
+      toast.add({
+        title: t("common.error"),
+        description: formatError(t("common.error"), error as GraphQLError),
+        type: "error",
+      });
+    }).finally(() => {
+      setAdvancing(false);
+    });
+  }, [advancing, enter, navigate, organizationId, t, toast]);
+
   const close = useCallback((kind?: DocumentQueueKind) => {
     const dest = snapshot?.kind ?? kind;
     leave();
@@ -155,8 +187,9 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     leave,
     goTo,
     goForward,
+    startQueue,
     close,
-  }), [advancing, close, enter, goForward, goTo, leave, snapshot]);
+  }), [advancing, close, enter, goForward, goTo, leave, snapshot, startQueue]);
 
   return (
     <DocumentQueueContext.Provider value={value}>
