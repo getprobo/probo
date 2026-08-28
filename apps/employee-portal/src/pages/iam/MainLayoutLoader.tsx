@@ -25,6 +25,7 @@ import { useParams } from "react-router";
 import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
+import { DocumentQueueProvider } from "#/pages/_lib/DocumentQueueContext";
 
 import { MainLayout, mainLayoutQuery } from "./MainLayout";
 import { MainLayoutSkeleton } from "./MainLayoutSkeleton";
@@ -63,7 +64,9 @@ function MainLayoutQueryLoader() {
 export default function MainLayoutLoader() {
   return (
     <IAMRelayProvider>
-      <MainLayoutQueryLoader />
+      <DocumentQueueProvider>
+        <MainLayoutQueryLoader />
+      </DocumentQueueProvider>
     </IAMRelayProvider>
   );
 }

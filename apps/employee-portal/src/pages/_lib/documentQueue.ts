@@ -35,7 +35,14 @@ export type DocumentQueuePage = {
 
 export type DocumentQueueSnapshot = {
   kind: DocumentQueueKind;
+  organizationId: string;
+  viewerId?: string;
 } & DocumentQueuePage;
+
+export type DocumentQueueSnapshotScope = {
+  organizationId?: string;
+  viewerId?: string;
+};
 
 function isQueueKind(value: unknown): value is DocumentQueueKind {
   return value === "signatures" || value === "approvals";
@@ -45,19 +52,24 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(id => typeof id === "string");
 }
 
-// Accepts today's snapshot and older { kind, ids } payloads from sessionStorage.
 function parseSnapshot(value: unknown): DocumentQueueSnapshot | null {
   if (value == null || typeof value !== "object") {
     return null;
   }
   const candidate = value as {
     kind?: unknown;
+    organizationId?: unknown;
+    viewerId?: unknown;
     ids?: unknown;
     totalCount?: unknown;
     endCursor?: unknown;
     hasNextPage?: unknown;
   };
-  if (!isQueueKind(candidate.kind) || !isStringArray(candidate.ids)) {
+  if (
+    !isQueueKind(candidate.kind)
+    || typeof candidate.organizationId !== "string"
+    || !isStringArray(candidate.ids)
+  ) {
     return null;
   }
   const ids = candidate.ids;
@@ -66,9 +78,12 @@ function parseSnapshot(value: unknown): DocumentQueueSnapshot | null {
     : ids.length;
   const endCursor = typeof candidate.endCursor === "string" ? candidate.endCursor : null;
   const hasNextPage = candidate.hasNextPage === true;
+  const viewerId = typeof candidate.viewerId === "string" ? candidate.viewerId : undefined;
 
   return {
     kind: candidate.kind,
+    organizationId: candidate.organizationId,
+    viewerId,
     ids,
     totalCount,
     endCursor,
@@ -76,15 +91,39 @@ function parseSnapshot(value: unknown): DocumentQueueSnapshot | null {
   };
 }
 
+function snapshotMatchesScope(
+  snapshot: DocumentQueueSnapshot,
+  scope?: DocumentQueueSnapshotScope,
+): boolean {
+  if (scope?.organizationId != null && snapshot.organizationId !== scope.organizationId) {
+    return false;
+  }
+  if (
+    scope?.viewerId != null
+    && snapshot.viewerId != null
+    && snapshot.viewerId !== scope.viewerId
+  ) {
+    return false;
+  }
+  return true;
+}
+
 // Reads the frozen queue snapshot written when the employee entered a pending
-// flow. Returns null when storage is empty or the payload is malformed.
-export function readDocumentQueueSnapshot(): DocumentQueueSnapshot | null {
+// flow. Returns null when storage is empty, malformed, or outside `scope`.
+export function readDocumentQueueSnapshot(
+  scope?: DocumentQueueSnapshotScope,
+): DocumentQueueSnapshot | null {
   try {
     const raw = sessionStorage.getItem(DOCUMENT_QUEUE_STORAGE_KEY);
     if (raw == null) {
       return null;
     }
-    return parseSnapshot(JSON.parse(raw));
+    const snapshot = parseSnapshot(JSON.parse(raw));
+    if (snapshot == null || !snapshotMatchesScope(snapshot, scope)) {
+      clearDocumentQueueSnapshot();
+      return null;
+    }
+    return snapshot;
   } catch {
     return null;
   }
@@ -125,10 +164,14 @@ export function enterQueueSnapshot(
   kind: DocumentQueueKind,
   page: DocumentQueuePage,
   documentId: string,
+  organizationId: string,
+  viewerId?: string,
 ): DocumentQueueSnapshot {
   const ids = snapshotQueueIds(page.ids, documentId);
   return {
     kind,
+    organizationId,
+    viewerId,
     ids,
     totalCount: Math.max(page.totalCount, ids.length),
     endCursor: page.endCursor,
@@ -152,6 +195,8 @@ export function appendQueuePage(
   }
   return {
     kind: snapshot.kind,
+    organizationId: snapshot.organizationId,
+    viewerId: snapshot.viewerId,
     ids,
     totalCount: Math.max(snapshot.totalCount, ids.length),
     endCursor: page.endCursor,

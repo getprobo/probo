@@ -84,6 +84,9 @@ const documentVersionHistoryApprovalsFragment = graphql`
         edges {
           node {
             id
+            approvalDecision {
+              state
+            }
             ...DocumentVersionHistoryItem_version
           }
         }
@@ -94,6 +97,9 @@ const documentVersionHistoryApprovalsFragment = graphql`
 
 type VersionRow = {
   id: string;
+  approvalDecision?: {
+    readonly state: string;
+  } | null;
 } & DocumentVersionHistoryItem_version$key;
 
 type VersionConnection = {
@@ -272,6 +278,7 @@ function VersionHistoryList({
                 kind={kind}
                 selected={node.id === selectedVersionId}
                 current={index === 0}
+                approvalState={node.approvalDecision?.state}
                 onSelect={() => {
                   onSelect(node.id);
                 }}

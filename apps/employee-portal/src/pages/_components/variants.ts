@@ -123,7 +123,7 @@ export const employeeDocumentListItem = tv({
     title: "relative z-1 block min-w-0 truncate",
     titleLink: [
       "block min-w-0 truncate",
-      "after:absolute after:inset-0 after:z-0",
+      "after:absolute after:inset-0 after:-z-1",
       "outline-none focus-visible:after:bg-sand-2",
     ],
     metaCell: "relative z-1 h-12 whitespace-nowrap py-0",

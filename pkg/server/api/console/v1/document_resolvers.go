@@ -785,20 +785,6 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
-		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
 	identity := authn.IdentityFromContext(ctx)
 
 	var filterMode coredata.EmployeeFilterMode
@@ -815,6 +801,28 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 
 	versionFilter := coredata.NewDocumentVersionFilter().
 		WithEmployeeIdentityID(&identity.ID, filterMode)
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.EmployeeDocumentVersionConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+			Filters:  versionFilter,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
+		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
 	versionsPage, err := r.probo.Documents.ListVersions(ctx, scope, obj.ID, cursor, versionFilter)
 	if err != nil {

@@ -55,8 +55,15 @@ export function DocumentWorkspace({
   const pdfRef = useRef<PdfPreviewHandle>(null);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loadedUri, setLoadedUri] = useState(dataUri);
   const [scale, setScale] = useState(1);
   const slots = documentWorkspace();
+
+  if (loadedUri !== dataUri) {
+    setLoadedUri(dataUri);
+    setCurrentPage(1);
+    setNumPages(0);
+  }
 
   const movePage = (direction: 1 | -1) => {
     const next = clamp(currentPage + direction, 1, numPages);

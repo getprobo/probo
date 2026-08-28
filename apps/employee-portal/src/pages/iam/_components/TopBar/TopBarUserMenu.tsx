@@ -42,6 +42,7 @@ import { graphql, useFragment } from "react-relay";
 import type { TopBarUserMenu_identity$key } from "#/__generated__/iam/TopBarUserMenu_identity.graphql";
 import type { TopBarUserMenuSignOutMutation } from "#/__generated__/iam/TopBarUserMenuSignOutMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { clearDocumentQueueSnapshot } from "#/pages/_lib/documentQueue";
 
 import { topBarUserMenuTrigger } from "./variants";
 
@@ -83,6 +84,7 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
 
   function handleSignOut() {
     void signOut({ variables: {} }).then(() => {
+      clearDocumentQueueSnapshot();
       // Full reload rather than a client navigation, so no Relay store
       // survives the session it belonged to. Site-root path — basename
       // would prefix /employee-portal.

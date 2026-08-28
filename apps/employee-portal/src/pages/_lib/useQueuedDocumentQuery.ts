@@ -21,19 +21,10 @@
 import { useLayoutEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import type { PreloadedQuery } from "react-relay";
-import {
-  createOperationDescriptor,
-  getRequest,
-  type GraphQLTaggedNode,
-  type IEnvironment,
-  type OperationType,
-  type Subscribable,
-} from "relay-runtime";
+import type { GraphQLTaggedNode, OperationType, Subscribable } from "relay-runtime";
 
 type QueryRefSnapshot = {
-  environment: IEnvironment;
   source?: Subscribable<unknown> | null;
-  variables: Record<string, unknown>;
 };
 
 function clearQueueDirection(): void {
@@ -42,18 +33,11 @@ function clearQueueDirection(): void {
 
 let queueTransitionGeneration = 0;
 
-function isQueryPaintReady(
-  query: GraphQLTaggedNode,
-  queryRef: QueryRefSnapshot,
-): boolean {
-  const request = getRequest(query);
-  const operation = createOperationDescriptor(request, queryRef.variables);
-  const { status } = queryRef.environment.check(operation);
-  return status === "available" || status === "stale";
-}
-
+// Store `available`/`stale` is not paint-ready: a previous visit can populate
+// the store while a network-only ref is still in flight, and revealing then
+// lets usePreloadedQuery suspend. Wait for the network source (or treat a
+// missing source as already settled).
 function whenQueryPaintReady(
-  query: GraphQLTaggedNode,
   queryRef: QueryRefSnapshot,
   onReady: () => void,
 ): () => void {
@@ -66,36 +50,22 @@ function whenQueryPaintReady(
     onReady();
   };
 
-  if (isQueryPaintReady(query, queryRef)) {
+  if (queryRef.source == null) {
     ready();
     return () => {
       settled = true;
     };
   }
 
-  const request = getRequest(query);
-  const operation = createOperationDescriptor(request, queryRef.variables);
-  const snapshot = queryRef.environment.lookup(operation.fragment);
-  const storeSubscription = queryRef.environment.subscribe(snapshot, () => {
-    if (isQueryPaintReady(query, queryRef)) {
-      ready();
-    }
-  });
-
-  const sourceSubscription = queryRef.source?.subscribe({
-    next: () => {
-      if (isQueryPaintReady(query, queryRef)) {
-        ready();
-      }
-    },
+  const sourceSubscription = queryRef.source.subscribe({
+    next: ready,
     complete: ready,
     error: ready,
   });
 
   return () => {
     settled = true;
-    storeSubscription.dispose();
-    sourceSubscription?.unsubscribe();
+    sourceSubscription.unsubscribe();
   };
 }
 
@@ -103,7 +73,11 @@ type DocumentWithViewTransition = Document & {
   startViewTransition?: (update: () => void) => { finished: Promise<unknown> };
 };
 
-function revealQueryRef(apply: () => void, animate: boolean): void {
+function revealQueryRef(
+  apply: () => void,
+  animate: boolean,
+  generation: number,
+): void {
   if (!animate) {
     apply();
     return;
@@ -120,7 +94,6 @@ function revealQueryRef(apply: () => void, animate: boolean): void {
     return;
   }
 
-  const generation = ++queueTransitionGeneration;
   const transition = viewDocument.startViewTransition(commit);
   void transition.finished.finally(() => {
     if (generation === queueTransitionGeneration) {
@@ -144,10 +117,14 @@ export function useQueuedDocumentQuery<TQuery extends OperationType>(
       return;
     }
 
-    return whenQueryPaintReady(query, currentQueryRef, () => {
+    // Invalidate an in-flight transition so its cleanup cannot wipe the
+    // direction already set for this pending document.
+    const generation = ++queueTransitionGeneration;
+
+    return whenQueryPaintReady(currentQueryRef, () => {
       revealQueryRef(() => {
         setVisibleQueryRef(currentQueryRef);
-      }, visibleQueryRef != null);
+      }, visibleQueryRef != null, generation);
     });
   }, [currentQueryRef, query, visibleQueryRef]);
 

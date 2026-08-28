@@ -18,12 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { QueueTopBar } from "#/pages/_components/QueueTopBar";
+import { useDocumentQueueActive } from "#/pages/_lib/DocumentQueueContext";
 import { TopBarSkeleton } from "#/pages/iam/_components/TopBar/TopBarSkeleton";
 
 export function MainLayoutSkeleton() {
+  const queueActive = useDocumentQueueActive();
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-sand-2">
-      <TopBarSkeleton />
+      {queueActive ? <QueueTopBar /> : <TopBarSkeleton />}
       <div className="flex min-h-0 flex-1 flex-col" />
     </div>
   );

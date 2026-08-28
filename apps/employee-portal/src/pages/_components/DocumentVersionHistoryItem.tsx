@@ -35,9 +35,6 @@ const documentVersionHistoryItemFragment = graphql`
     signed
     publishedAt
     createdAt
-    approvalDecision {
-      state
-    }
   }
 `;
 
@@ -47,6 +44,8 @@ export interface DocumentVersionHistoryItemProps {
   selected: boolean;
   current: boolean;
   onSelect: () => void;
+  // Viewer approval state; only fetched on the approvals history connection.
+  approvalState?: string | null;
 }
 
 export function DocumentVersionHistoryItem({
@@ -55,6 +54,7 @@ export function DocumentVersionHistoryItem({
   selected,
   current,
   onSelect,
+  approvalState,
 }: DocumentVersionHistoryItemProps) {
   const { t, i18n } = useTranslation();
   const slots = documentVersionHistoryItem();
@@ -93,7 +93,7 @@ export function DocumentVersionHistoryItem({
             ·
           </Text>
           <Text size={1} color="faint">
-            {versionStatusLabel(kind, version.signed, version.approvalDecision?.state, t)}
+            {versionStatusLabel(kind, version.signed, approvalState, t)}
           </Text>
         </span>
       </span>

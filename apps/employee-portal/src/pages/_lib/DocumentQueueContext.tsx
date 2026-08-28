@@ -56,6 +56,7 @@ type DocumentQueueContextValue = {
   goForward: () => void;
   startQueue: (kind: DocumentQueueKind) => void;
   close: (kind?: DocumentQueueKind) => void;
+  bindViewer: (viewerId: string) => void;
 };
 
 const DocumentQueueContext = createContext<DocumentQueueContextValue | null>(null);
@@ -71,23 +72,33 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const { organizationId, documentId } = useParams();
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
-  const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(
-    readDocumentQueueSnapshot,
+  const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(() =>
+    readDocumentQueueSnapshot({ organizationId }),
   );
   const [advancing, setAdvancing] = useState(false);
   const fetchGenerationRef = useRef(0);
+  const viewerIdRef = useRef<string | null>(null);
 
   const enter = useCallback((
     kind: DocumentQueueKind,
     page: DocumentQueuePage,
     openedDocumentId: string,
   ) => {
+    if (organizationId == null) {
+      return;
+    }
     fetchGenerationRef.current += 1;
     setAdvancing(false);
-    const next = enterQueueSnapshot(kind, page, openedDocumentId);
+    const next = enterQueueSnapshot(
+      kind,
+      page,
+      openedDocumentId,
+      organizationId,
+      viewerIdRef.current ?? undefined,
+    );
     writeDocumentQueueSnapshot(next);
     setSnapshot(next);
-  }, []);
+  }, [organizationId]);
 
   const leave = useCallback(() => {
     fetchGenerationRef.current += 1;
@@ -97,7 +108,11 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const goTo = useCallback((targetId: string, direction: DocumentQueueDirection) => {
-    if (organizationId == null || snapshot == null) {
+    if (
+      organizationId == null
+      || snapshot == null
+      || snapshot.organizationId !== organizationId
+    ) {
       return;
     }
     setQueueDirection(direction);
@@ -105,7 +120,13 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   }, [navigate, organizationId, snapshot]);
 
   const goForward = useCallback(() => {
-    if (organizationId == null || snapshot == null || documentId == null || advancing) {
+    if (
+      organizationId == null
+      || snapshot == null
+      || snapshot.organizationId !== organizationId
+      || documentId == null
+      || advancing
+    ) {
       return;
     }
     const index = snapshot.ids.indexOf(documentId);
@@ -205,8 +226,34 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     void navigate(`/${organizationId}/${dest}`);
   }, [leave, navigate, organizationId, snapshot?.kind]);
 
+  const bindViewer = useCallback((viewerId: string) => {
+    viewerIdRef.current = viewerId;
+    setSnapshot((current) => {
+      if (current == null) {
+        return current;
+      }
+      if (current.viewerId != null && current.viewerId !== viewerId) {
+        fetchGenerationRef.current += 1;
+        clearDocumentQueueSnapshot();
+        return null;
+      }
+      if (current.viewerId == null) {
+        const next = { ...current, viewerId };
+        writeDocumentQueueSnapshot(next);
+        return next;
+      }
+      return current;
+    });
+  }, []);
+
+  const scopedSnapshot = snapshot != null
+    && organizationId != null
+    && snapshot.organizationId === organizationId
+    ? snapshot
+    : null;
+
   const value = useMemo<DocumentQueueContextValue>(() => ({
-    snapshot,
+    snapshot: scopedSnapshot,
     advancing,
     enter,
     leave,
@@ -214,7 +261,8 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     goForward,
     startQueue,
     close,
-  }), [advancing, close, enter, goForward, goTo, leave, snapshot, startQueue]);
+    bindViewer,
+  }), [advancing, bindViewer, close, enter, goForward, goTo, leave, scopedSnapshot, startQueue]);
 
   return (
     <DocumentQueueContext.Provider value={value}>
@@ -223,19 +271,34 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   );
 }
 
+export function useOptionalDocumentQueue(): DocumentQueueContextValue | null {
+  return useContext(DocumentQueueContext);
+}
+
 // Reads the queue snapshot and navigation helpers. Must be used under
 // DocumentQueueProvider.
 export function useDocumentQueue(): DocumentQueueContextValue {
-  const value = useContext(DocumentQueueContext);
+  const value = useOptionalDocumentQueue();
   if (value == null) {
     throw new Error("useDocumentQueue must be used within DocumentQueueProvider");
   }
   return value;
 }
 
+function useScopedQueueSnapshot(): DocumentQueueSnapshot | null {
+  const value = useContext(DocumentQueueContext);
+  const { organizationId } = useParams();
+  if (value != null) {
+    return value.snapshot;
+  }
+  return readDocumentQueueSnapshot({ organizationId });
+}
+
 // True when the current document belongs to the frozen snapshot (queue chrome).
+// Safe outside DocumentQueueProvider so route fallbacks can pick chrome
+// from sessionStorage before the loader mounts.
 export function useDocumentQueueActive(): boolean {
-  const { snapshot } = useDocumentQueue();
+  const snapshot = useScopedQueueSnapshot();
   const { documentId } = useParams();
   return snapshot != null
     && documentId != null
