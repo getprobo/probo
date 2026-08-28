@@ -1256,13 +1256,36 @@ func (impl *Implm) Run(
 		proboService,
 		l.Named("document-pdf-worker"),
 		worker.WithInterval(30*time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
 	)
-	documentPDFWorkerCtx, stopDocumentPDFWorker := context.WithCancel(context.Background())
+	documentPDFWorkerCtx, stopDocumentPDFWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
 
 	wg.Go(
 		func() {
 			if err := documentPDFWorker.Run(documentPDFWorkerCtx); err != nil {
 				cancel(fmt.Errorf("document pdf worker crashed: %w", err))
+			}
+		},
+	)
+
+	documentApprovalQuorumPDFWorker := probo.NewDocumentApprovalQuorumPDFWorker(
+		proboService,
+		l.Named("document-approval-quorum-pdf-worker"),
+		worker.WithInterval(30*time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	documentApprovalQuorumPDFWorkerCtx, stopDocumentApprovalQuorumPDFWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := documentApprovalQuorumPDFWorker.Run(documentApprovalQuorumPDFWorkerCtx); err != nil {
+				cancel(fmt.Errorf("document approval quorum pdf worker crashed: %w", err))
 			}
 		},
 	)
@@ -1552,6 +1575,7 @@ func (impl *Implm) Run(
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
+	stopDocumentApprovalQuorumPDFWorker()
 	stopDocumentNotification()
 	stopExportJobExporter()
 	stopAccessReviewWorker()

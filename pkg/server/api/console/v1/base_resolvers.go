@@ -267,6 +267,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewDocumentVersionSignature(documentVersionSignature), nil
 		}
+	case coredata.DocumentVersionApprovalQuorumEntityType:
+		action = probo.ActionDocumentVersionApprovalList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			quorum, err := r.probo.DocumentApprovals.GetQuorum(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewDocumentVersionApprovalQuorum(quorum), nil
+		}
 	case coredata.AssetEntityType:
 		action = probo.ActionAssetList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
