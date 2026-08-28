@@ -275,7 +275,7 @@ func (s *Server) setupRoutes() {
 				ExtraHeaderFields:     s.extraHeaderFields,
 				ContentSecurityPolicy: s.consoleSecurityPolicy,
 			},
-		)(s.consoleWebServer),
+		)(employeeportal_web.LegacyRedirectMiddleware(s.consoleWebServer)),
 	)
 }
 

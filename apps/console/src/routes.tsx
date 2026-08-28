@@ -23,11 +23,7 @@ import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { Fragment, use } from "react";
-import {
-  createBrowserRouter,
-  Navigate,
-  redirect,
-} from "react-router";
+import { createBrowserRouter, Navigate, redirect } from "react-router";
 
 import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
@@ -43,6 +39,7 @@ import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/
 import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
+import { RedirectToEmployeePortal } from "./pages/organizations/employee/RedirectToEmployeePortal";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
@@ -290,7 +287,7 @@ const routes = [
               const { role } = use(CurrentUser);
               switch (role) {
                 case Role.EMPLOYEE:
-                  return <Navigate to="employee" />;
+                  return <RedirectToEmployeePortal />;
                 case Role.AUDITOR:
                   return <Navigate to="governance/measures" />;
                 case Role.COMPLIANCE_PORTAL_MANAGER:

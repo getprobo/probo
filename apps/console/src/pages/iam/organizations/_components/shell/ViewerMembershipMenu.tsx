@@ -47,6 +47,7 @@ import { Link } from "react-router";
 import type { ViewerMembershipMenu_organization$key } from "#/__generated__/iam/ViewerMembershipMenu_organization.graphql";
 import type { ViewerMembershipMenuSignOutMutation } from "#/__generated__/iam/ViewerMembershipMenuSignOutMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { employeePortalHref } from "#/lib/employeePortalHref";
 
 import { navRail, viewerMembershipMenuTrigger } from "./variants";
 
@@ -182,7 +183,7 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
         )}
         <DropdownItem
           iconStart={<FileTextIcon />}
-          render={<Link to={`/organizations/${organizationId}/employee`} />}
+          render={<a href={employeePortalHref(organizationId)} />}
         >
           {t("viewerMembershipDropdown.actions.employeePortal")}
         </DropdownItem>

@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"sort"
 	"time"
 
@@ -36,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/server/web/employeeportal"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
@@ -530,7 +530,7 @@ func (s *DocumentService) recipientURL(destinationPath string, token string) (st
 }
 
 func mainDestinationPath(kind notificationKind, organizationID gid.GID) (string, error) {
-	path, err := url.JoinPath("/organizations", organizationID.String(), "employee", notificationSection(kind))
+	path, err := employeeportal.OrganizationPath(organizationID.String(), notificationSection(kind))
 	if err != nil {
 		return "", fmt.Errorf("cannot build notification path: %w", err)
 	}
@@ -539,7 +539,11 @@ func mainDestinationPath(kind notificationKind, organizationID gid.GID) (string,
 }
 
 func documentDestinationPath(kind notificationKind, organizationID gid.GID, documentID gid.GID) (string, error) {
-	path, err := url.JoinPath("/organizations", organizationID.String(), "employee", notificationSection(kind), documentID.String())
+	path, err := employeeportal.OrganizationPath(
+		organizationID.String(),
+		notificationSection(kind),
+		documentID.String(),
+	)
 	if err != nil {
 		return "", fmt.Errorf("cannot build document notification path: %w", err)
 	}
