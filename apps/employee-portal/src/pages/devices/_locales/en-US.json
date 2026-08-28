@@ -34,7 +34,7 @@
       "title": "Device identity",
       "hardwareUuid": "Hardware UUID",
       "hostname": "Hostname",
-      "serialNumber": "Serial number"
+      "serialNumber": "Serial number, when available"
     },
     "system": {
       "title": "System details",

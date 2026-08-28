@@ -118,7 +118,7 @@ function ReviewCell({
         {items.map(item => (
           <li key={item} className={slots.item()}>
             <CheckIcon className={slots.itemIcon()} />
-            <Text size={2} highContrast>
+            <Text size={2} color="neutral">
               {item}
             </Text>
           </li>

@@ -23,9 +23,9 @@ import { tv } from "tailwind-variants/lite";
 export const registerDevicePage = tv({
   slots: {
     main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32",
-    body: "grid grid-cols-1 gap-4 md:grid-cols-4",
-    stepper: "flex list-none flex-col gap-2 md:col-span-1",
-    stage: "min-w-0 md:col-span-3",
+    body: "grid grid-cols-1 gap-4 md:grid-cols-[15.25rem_minmax(0,1fr)]",
+    stepper: "flex w-full list-none flex-col gap-2",
+    stage: "min-w-0",
   },
 });
 
@@ -37,7 +37,7 @@ export const progressStep = tv({
     ],
     badge: "flex size-5 shrink-0 items-center justify-center rounded-full text-1 font-bold",
     icon: "size-3.5",
-    copy: "flex min-w-0 flex-1 flex-col gap-1",
+    copy: "flex min-w-0 flex-1 flex-col justify-center gap-1",
     description: "text-sand-a9",
   },
   variants: {
@@ -59,26 +59,26 @@ export const progressStep = tv({
 
 export const registerDeviceCard = tv({
   slots: {
-    frame: "flex flex-col items-center gap-8",
+    frame: "flex flex-col items-center gap-8 p-16",
     header: "flex w-full flex-col items-center gap-4 text-center",
     icon: "size-8 shrink-0 text-sand-12 [&_svg]:size-8",
-    body: "flex w-full flex-col items-center gap-6",
+    body: "flex w-full flex-col items-center gap-8",
   },
 });
 
 export const reviewGrid = tv({
   slots: {
-    root: "grid w-full grid-cols-1 overflow-hidden rounded-5 border border-sand-3 sm:grid-cols-2",
+    root: "grid w-full grid-cols-1 overflow-hidden rounded-5 border border-sand-4 sm:grid-cols-2",
     cell: [
-      "flex flex-col gap-8 border-sand-3 p-8",
+      "flex flex-col gap-8 border-sand-4 p-8",
       "max-sm:not-last:border-b",
       "sm:odd:border-r sm:[&:nth-child(-n+2)]:border-b",
     ],
     heading: "flex items-center gap-3",
     headingIcon: "size-4 shrink-0 text-sand-12 [&_svg]:size-4",
-    items: "flex flex-col gap-3",
+    items: "flex flex-col gap-2",
     item: "flex items-center gap-3",
-    itemIcon: "size-4 shrink-0 text-sand-12",
+    itemIcon: "size-4 shrink-0 text-sand-11",
   },
 });
 
