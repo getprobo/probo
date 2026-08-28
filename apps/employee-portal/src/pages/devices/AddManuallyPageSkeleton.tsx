@@ -18,27 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
+import { addManuallyPage } from "./_components/variants";
 
-export const devicesRoutes = [
-  {
-    path: "devices/add-manually",
-    Fallback: AddManuallyPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
-  },
-  {
-    path: "devices/register",
-    Fallback: RegisterDevicePageSkeleton,
-    Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-  },
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-  },
-] satisfies AppRoute[];
+export function AddManuallyPageSkeleton() {
+  const slots = addManuallyPage();
+
+  return (
+    <main className={slots.main()}>
+      <div className="flex flex-col gap-4">
+        <TextSkeleton size={2} className="w-48" />
+        <HeadingSkeleton size={7} className="w-64" />
+      </div>
+      <CardSkeleton size={5} className="h-80" />
+    </main>
+  );
+}

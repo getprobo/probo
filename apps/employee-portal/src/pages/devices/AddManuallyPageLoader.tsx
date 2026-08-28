@@ -18,27 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+import { useParams } from "react-router";
 
+import type { AddManuallyPageQuery } from "#/__generated__/core/AddManuallyPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
+
+import { AddManuallyPage, addManuallyPageQuery } from "./AddManuallyPage";
 import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
 
-export const devicesRoutes = [
-  {
-    path: "devices/add-manually",
-    Fallback: AddManuallyPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
-  },
-  {
-    path: "devices/register",
-    Fallback: RegisterDevicePageSkeleton,
-    Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-  },
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-  },
-] satisfies AppRoute[];
+export default function AddManuallyPageLoader() {
+  const { organizationId } = useParams();
+  const [queryRef, loadQuery] = useQueryLoader<AddManuallyPageQuery>(
+    addManuallyPageQuery,
+  );
+
+  useEffect(() => {
+    if (organizationId == null) {
+      return;
+    }
+    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
+  }, [organizationId, loadQuery]);
+
+  if (organizationId == null) {
+    throw new NotFoundError("organizationId is required");
+  }
+
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <AddManuallyPageSkeleton />;
+  }
+
+  return (
+    <Suspense key={organizationId} fallback={<AddManuallyPageSkeleton />}>
+      <AddManuallyPage queryRef={currentQueryRef} />
+    </Suspense>
+  );
+}

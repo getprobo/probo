@@ -123,6 +123,17 @@ export function DevicesList({
     && !enrolledDevices.pageInfo.hasPreviousPage;
   const canEnroll = organization.canEnrollDevice;
   const registerTo = `/${organizationId}/devices/register`;
+  const addManuallyTo = `/${organizationId}/devices/add-manually`;
+  const addManuallyLink = (
+    <ButtonLink
+      to={addManuallyTo}
+      size={2}
+      variant="outline"
+      color="neutral"
+    >
+      {empty ? t("empty.addManually") : t("list.addManually")}
+    </ButtonLink>
+  );
 
   return (
     <>
@@ -132,16 +143,19 @@ export function DevicesList({
         title={t("list.title")}
         actions={!empty && canEnroll
           ? (
-              <ButtonLink
-                to={registerTo}
-                size={2}
-                variant="solid"
-                color="neutral"
-                highContrast
-                iconStart={<PlusIcon />}
-              >
-                {t("list.register")}
-              </ButtonLink>
+              <>
+                <ButtonLink
+                  to={registerTo}
+                  size={2}
+                  variant="solid"
+                  color="neutral"
+                  highContrast
+                  iconStart={<PlusIcon />}
+                >
+                  {t("list.register")}
+                </ButtonLink>
+                {addManuallyLink}
+              </>
             )
           : undefined}
       />
@@ -150,16 +164,19 @@ export function DevicesList({
             <DevicesEmpty
               action={canEnroll
                 ? (
-                    <ButtonLink
-                      to={registerTo}
-                      size={2}
-                      variant="solid"
-                      color="neutral"
-                      highContrast
-                      iconStart={<PlusIcon />}
-                    >
-                      {t("empty.register")}
-                    </ButtonLink>
+                    <>
+                      <ButtonLink
+                        to={registerTo}
+                        size={2}
+                        variant="solid"
+                        color="neutral"
+                        highContrast
+                        iconStart={<PlusIcon />}
+                      >
+                        {t("empty.register")}
+                      </ButtonLink>
+                      {addManuallyLink}
+                    </>
                   )
                 : undefined}
             />

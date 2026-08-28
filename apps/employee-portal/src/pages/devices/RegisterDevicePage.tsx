@@ -121,14 +121,22 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
     }, { replace: true });
   }
 
+  const header = (
+    <PageHeader
+      homeLabel={tApp("homePage.breadcrumb")}
+      parent={{
+        label: t("breadcrumb"),
+        to: `/${organizationId}/devices`,
+      }}
+      currentLabel={t("registerBreadcrumb")}
+      title={t("title")}
+    />
+  );
+
   if (!organization.canEnrollDevice) {
     return (
       <main className={slots.main()}>
-        <PageHeader
-          homeLabel={tApp("homePage.breadcrumb")}
-          currentLabel={t("breadcrumb")}
-          title={t("title")}
-        />
+        {header}
         <ErrorState
           title={t("unavailable.title")}
           description={t("unavailable.description")}
@@ -150,11 +158,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
 
   return (
     <main className={slots.main()}>
-      <PageHeader
-        homeLabel={tApp("homePage.breadcrumb")}
-        currentLabel={t("breadcrumb")}
-        title={t("title")}
-      />
+      {header}
       <div className={slots.body()}>
         <ol className={slots.stepper()}>
           {REGISTER_DEVICE_STEPS.map((key, index) => {

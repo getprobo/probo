@@ -110,6 +110,7 @@ export const devicesEmpty = tv({
     copy: "flex w-full flex-col items-center gap-4",
     icon: "size-8 shrink-0 text-sand-a9 [&_svg]:size-8",
     description: "text-sand-a11",
+    actions: "flex items-center gap-3",
   },
 });
 
@@ -160,5 +161,30 @@ export const deviceListItem = tv({
         pip: "bg-sand-8 ring-4 ring-sand-3",
       },
     },
+  },
+});
+
+export const addManuallyPage = tv({
+  slots: {
+    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32",
+    creating: "flex items-center gap-2",
+    errorActions: "flex items-center gap-3",
+  },
+});
+
+export const enrollmentInstructions = tv({
+  slots: {
+    root: "flex flex-col gap-10",
+    token: "flex flex-col gap-3",
+    install: "flex flex-col gap-4",
+    group: "flex flex-col gap-3",
+  },
+});
+
+export const copyableCodeBlock = tv({
+  slots: {
+    root: "overflow-hidden",
+    toolbar: "flex items-center justify-end border-b border-sand-a3 px-2 py-1",
+    pre: "overflow-x-auto whitespace-pre bg-sand-3 p-4 font-mono text-2 text-sand-12",
   },
 });

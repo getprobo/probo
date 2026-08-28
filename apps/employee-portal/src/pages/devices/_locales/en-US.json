@@ -1,9 +1,12 @@
 {
   "title": "Register this device",
   "breadcrumb": "Devices",
+  "registerBreadcrumb": "Register",
+  "addManuallyBreadcrumb": "Add manually",
   "list": {
     "title": "Devices",
     "register": "Register new device",
+    "addManually": "Add manually",
     "lastActive": "Last active",
     "never": "Never",
     "pendingHostname": "Pending",
@@ -23,7 +26,8 @@
   "empty": {
     "title": "No devices yet",
     "description": "Register a device to connect it to your organization and monitor its security status.",
-    "register": "Register device"
+    "register": "Register device",
+    "addManually": "Add manually"
   },
   "unavailable": {
     "title": "Enrollment unavailable",
@@ -99,5 +103,29 @@
     "enrolled": "This device is enrolled.",
     "enrolledWithHostname": "{{hostname}} is enrolled.",
     "home": "Back to home"
+  },
+  "addManually": {
+    "title": "Manual enrollment",
+    "creating": "Creating device…",
+    "failed": "We couldn't create an enrollment token. Try again.",
+    "created": "Device created. Copy the enrollment token now — it will not be shown again.",
+    "done": "Done",
+    "retry": "Try again",
+    "back": "Back to devices",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Failed to copy to clipboard",
+    "token": {
+      "title": "Enrollment token generated",
+      "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.",
+      "releaseListHint": "Browse <link>probo-agent releases on GitHub</link> (tags probo-agent/v*), then pick the archive for your OS and architecture (for example probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz, or probo-agent_Windows_x86_64.zip). Replace vX.Y.Z, OS, and ARCH in the download command with the values from the asset you chose.",
+      "tabUnix": "macOS / Linux",
+      "tabWindows": "Windows",
+      "installUnix": "Install on macOS or Linux (run from a shell with sudo access)",
+      "installWindows": "Install on Windows (run from an elevated PowerShell session)",
+      "downloadStep": "Download and place the binary",
+      "enrollStep": "Configure the device and start the agent",
+      "securityNotice": "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification."
+    }
   }
 }

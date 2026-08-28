@@ -32,6 +32,10 @@ import { pageHeader } from "./variants";
 
 export interface PageHeaderProps {
   homeLabel: string;
+  parent?: {
+    label: string;
+    to: string;
+  };
   currentLabel: string;
   title: string;
   actions?: ReactNode;
@@ -39,6 +43,7 @@ export interface PageHeaderProps {
 
 export function PageHeader({
   homeLabel,
+  parent,
   currentLabel,
   title,
   actions,
@@ -64,6 +69,22 @@ export function PageHeader({
           {homeLabel}
         </Link>
         <CaretRightIcon className={slots.chevron()} />
+        {parent === undefined
+          ? null
+          : (
+              <>
+                <Link
+                  to={parent.to}
+                  size={2}
+                  color="neutral"
+                  underline={false}
+                  className={slots.crumb()}
+                >
+                  {parent.label}
+                </Link>
+                <CaretRightIcon className={slots.chevron()} />
+              </>
+            )}
         <Text size={2} weight="medium" color="current" className={slots.crumb()} aria-current="page">
           {currentLabel}
         </Text>

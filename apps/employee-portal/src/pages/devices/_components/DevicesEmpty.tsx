@@ -49,7 +49,11 @@ export function DevicesEmpty({ action }: DevicesEmptyProps) {
             {t("empty.description")}
           </Text>
         </div>
-        {action}
+        {action !== undefined && (
+          <div className={slots.actions()}>
+            {action}
+          </div>
+        )}
       </div>
     </div>
   );
