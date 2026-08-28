@@ -37,18 +37,29 @@ export function CopyableCodeBlock({ code }: CopyableCodeBlockProps) {
   const slots = copyableCodeBlock();
 
   function handleCopy() {
-    navigator.clipboard.writeText(code).then(
-      () => {
-        toast.add({ title: t("addManually.copied"), type: "success" });
-      },
-      () => {
-        toast.add({
-          title: tApp("common.error"),
-          description: t("addManually.copyFailed"),
-          type: "error",
-        });
-      },
-    );
+    const onFailure = () => {
+      toast.add({
+        title: tApp("common.error"),
+        description: t("addManually.copyFailed"),
+        type: "error",
+      });
+    };
+
+    if (!navigator.clipboard?.writeText) {
+      onFailure();
+      return;
+    }
+
+    try {
+      navigator.clipboard.writeText(code).then(
+        () => {
+          toast.add({ title: t("addManually.copied"), type: "success" });
+        },
+        onFailure,
+      );
+    } catch {
+      onFailure();
+    }
   }
 
   return (

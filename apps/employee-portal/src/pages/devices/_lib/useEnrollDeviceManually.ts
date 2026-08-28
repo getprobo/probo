@@ -49,7 +49,7 @@ export function useEnrollDeviceManually() {
   const { organizationId } = useParams();
   const [enrollDevice, isCreating] = useMutation<useEnrollDeviceManuallyMutation>(
     enrollDeviceMutation,
-    { successMessage: t("addManually.created") },
+    { successMessage: t("addManually.created"), errorToast: false },
   );
   const [enrollment, setEnrollment] = useState<ManualEnrollment | null>(null);
   const [failed, setFailed] = useState(false);

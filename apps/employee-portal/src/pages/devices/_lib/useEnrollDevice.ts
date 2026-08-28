@@ -58,6 +58,7 @@ export function useEnrollDevice() {
   const environment = useRelayEnvironment();
   const [enrollDevice, isCreating] = useMutation<useEnrollDeviceMutation>(
     enrollDeviceMutation,
+    { errorToast: false },
   );
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [deepLink, setDeepLink] = useState<string | null>(null);
