@@ -42,6 +42,9 @@ const (
 	maxMapPairs         = 4096
 	maxArrayElements    = 65536
 	maxApplicationBytes = 1 << 20
+	// MaxWireFrameBytes is the maximum encoded collaboration frame. It permits
+	// one maximum-size Automerge sync chunk plus its sync and CBOR envelopes.
+	MaxWireFrameBytes = 64<<20 + 64<<10
 )
 
 var (
@@ -79,8 +82,25 @@ func init() {
 	encMode = encoder
 }
 
-// unmarshal decodes CBOR into value using the strict shared decode mode.
+func validateWireSize(data []byte) error {
+	if len(data) > MaxWireFrameBytes {
+		return fmt.Errorf(
+			"collaboration frame of %d bytes exceeds the %d byte limit",
+			len(data),
+			MaxWireFrameBytes,
+		)
+	}
+
+	return nil
+}
+
+// unmarshal decodes a bounded CBOR frame into value using the strict shared
+// decode mode.
 func unmarshal(data []byte, value any) error {
+	if err := validateWireSize(data); err != nil {
+		return err
+	}
+
 	return decMode.Unmarshal(data, value)
 }
 
@@ -98,5 +118,14 @@ func validateApplicationSize(data []byte) error {
 
 // marshal encodes value as deterministic CBOR using the shared encode mode.
 func marshal(value any) ([]byte, error) {
-	return encMode.Marshal(value)
+	data, err := encMode.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateWireSize(data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
