@@ -1,0 +1,79 @@
+{
+  "title": "Register this device",
+  "breadcrumb": "Devices",
+  "unavailable": {
+    "title": "Enrollment unavailable",
+    "description": "You do not have permission to enroll devices in this organization.",
+    "home": "Back to home"
+  },
+  "steps": {
+    "review": {
+      "title": "Review device information",
+      "description": "See what Probo Agent will save."
+    },
+    "download": {
+      "title": "Download the agent",
+      "description": "Install the desktop agent"
+    },
+    "enroll": {
+      "title": "Open Probo Agent",
+      "description": "Finish registering this device."
+    }
+  },
+  "review": {
+    "title": "Review collected data",
+    "description": "Probo collects the following device metadata for inventory and posture reporting.",
+    "understand": "I understand",
+    "thisDevice": {
+      "title": "This device",
+      "hostname": "Hostname",
+      "platform": "Platform",
+      "osVersion": "OS version"
+    },
+    "identity": {
+      "title": "Device identity",
+      "hardwareUuid": "Hardware UUID",
+      "hostname": "Hostname",
+      "serialNumber": "Serial number"
+    },
+    "system": {
+      "title": "System details",
+      "platform": "Platform",
+      "osVersion": "OS version",
+      "agentVersion": "Probo Agent version"
+    },
+    "activity": {
+      "title": "Activity signals",
+      "enrollmentTime": "Enrollment time",
+      "heartbeats": "Agent heartbeats",
+      "posture": "Posture check results"
+    }
+  },
+  "download": {
+    "title": "Download Probo Agent",
+    "description": "Install the app to secure this device and connect it to your organization.",
+    "featured": "Probo Agent for macOS",
+    "continue": "Continue",
+    "download": "Download",
+    "macosIntel": {
+      "title": "macOS Intel",
+      "meta": "macOS 13.0+"
+    },
+    "windows": {
+      "title": "Windows",
+      "meta": "Windows 11+"
+    }
+  },
+  "enroll": {
+    "title": "Continue in the app",
+    "description": "Open Probo Agent to finish registering this device.",
+    "open": "Open Probo Agent",
+    "preparing": "Preparing…",
+    "waiting": "Waiting for the agent's first check-in…",
+    "timedOut": "We haven't heard from the agent yet. Make sure the desktop agent is installed and running, then try again.",
+    "tryAgain": "Try again",
+    "enrolled": "This device is enrolled.",
+    "enrolledWithHostname": "{{hostname}} is enrolled.",
+    "home": "Back to home"
+  }
+}
