@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 
 import type { ApprovalDocumentPageQuery } from "#/__generated__/core/ApprovalDocumentPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { useQueuedDocumentQuery } from "#/pages/_lib/useQueuedDocumentQuery";
 
 import { ApprovalDocumentPage, approvalDocumentPageQuery } from "./ApprovalDocumentPage";
 import { ApprovalDocumentPageSkeleton } from "./ApprovalDocumentPageSkeleton";
@@ -41,23 +42,32 @@ export default function ApprovalDocumentPageLoader() {
     loadQuery({ organizationId, documentId });
   }, [organizationId, documentId, loadQuery]);
 
-  if (organizationId == null || documentId == null) {
-    throw new NotFoundError("organizationId and documentId are required");
-  }
-
   const currentQueryRef = queryRef != null
+    && organizationId != null
+    && documentId != null
     && queryRef.variables.organizationId === organizationId
     && queryRef.variables.documentId === documentId
     ? queryRef
     : null;
+  const visibleQueryRef = useQueuedDocumentQuery<ApprovalDocumentPageQuery>(
+    approvalDocumentPageQuery,
+    currentQueryRef,
+  );
 
-  if (currentQueryRef == null) {
+  if (organizationId == null || documentId == null) {
+    throw new NotFoundError("organizationId and documentId are required");
+  }
+
+  if (visibleQueryRef == null) {
     return <ApprovalDocumentPageSkeleton />;
   }
 
   return (
-    <Suspense key={documentId} fallback={<ApprovalDocumentPageSkeleton />}>
-      <ApprovalDocumentPage queryRef={currentQueryRef} />
+    <Suspense
+      key={visibleQueryRef.variables.documentId}
+      fallback={<ApprovalDocumentPageSkeleton />}
+    >
+      <ApprovalDocumentPage queryRef={visibleQueryRef} />
     </Suspense>
   );
 }

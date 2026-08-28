@@ -79,9 +79,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       return;
     }
     setQueueDirection(direction);
-    void navigate(`/${organizationId}/${snapshot.kind}/${documentId}`, {
-      viewTransition: true,
-    });
+    void navigate(`/${organizationId}/${snapshot.kind}/${documentId}`);
   }, [navigate, organizationId, snapshot]);
 
   const close = useCallback(() => {

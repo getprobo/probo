@@ -23,40 +23,45 @@
 @import "@probo/ui/src/v2/theme.css";
 @source "../../../packages/ui/src/v2";
 
+/* Only the workspace pane participates; the queue bar stays live. */
+:root {
+  view-transition-name: none;
+}
+
 @keyframes queue-slide-out-left {
   to {
-    transform: translateX(-40px);
-    opacity: 0;
+    transform: translateX(-100%);
   }
 }
 
 @keyframes queue-slide-in-right {
   from {
-    transform: translateX(40px);
-    opacity: 0;
+    transform: translateX(100%);
   }
 }
 
 @keyframes queue-slide-out-right {
   to {
-    transform: translateX(40px);
-    opacity: 0;
+    transform: translateX(100%);
   }
 }
 
 @keyframes queue-slide-in-left {
   from {
-    transform: translateX(-40px);
-    opacity: 0;
+    transform: translateX(-100%);
   }
 }
 
+::view-transition-group(document-workspace) {
+  overflow: clip;
+}
+
 ::view-transition-old(document-workspace) {
-  animation: 200ms ease-out both queue-slide-out-left;
+  animation: 280ms ease-out both queue-slide-out-left;
 }
 
 ::view-transition-new(document-workspace) {
-  animation: 200ms ease-out both queue-slide-in-right;
+  animation: 280ms ease-out both queue-slide-in-right;
 }
 
 html[data-queue-direction="back"]::view-transition-old(document-workspace) {

@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 
 import type { SignatureDocumentPageQuery } from "#/__generated__/core/SignatureDocumentPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { useQueuedDocumentQuery } from "#/pages/_lib/useQueuedDocumentQuery";
 
 import { SignatureDocumentPage, signatureDocumentPageQuery } from "./SignatureDocumentPage";
 import { SignatureDocumentPageSkeleton } from "./SignatureDocumentPageSkeleton";
@@ -41,23 +42,32 @@ export default function SignatureDocumentPageLoader() {
     loadQuery({ organizationId, documentId });
   }, [organizationId, documentId, loadQuery]);
 
-  if (organizationId == null || documentId == null) {
-    throw new NotFoundError("organizationId and documentId are required");
-  }
-
   const currentQueryRef = queryRef != null
+    && organizationId != null
+    && documentId != null
     && queryRef.variables.organizationId === organizationId
     && queryRef.variables.documentId === documentId
     ? queryRef
     : null;
+  const visibleQueryRef = useQueuedDocumentQuery<SignatureDocumentPageQuery>(
+    signatureDocumentPageQuery,
+    currentQueryRef,
+  );
 
-  if (currentQueryRef == null) {
+  if (organizationId == null || documentId == null) {
+    throw new NotFoundError("organizationId and documentId are required");
+  }
+
+  if (visibleQueryRef == null) {
     return <SignatureDocumentPageSkeleton />;
   }
 
   return (
-    <Suspense key={documentId} fallback={<SignatureDocumentPageSkeleton />}>
-      <SignatureDocumentPage queryRef={currentQueryRef} />
+    <Suspense
+      key={visibleQueryRef.variables.documentId}
+      fallback={<SignatureDocumentPageSkeleton />}
+    >
+      <SignatureDocumentPage queryRef={visibleQueryRef} />
     </Suspense>
   );
 }
