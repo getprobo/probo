@@ -1,8 +1,38 @@
 # Changelog
 
-All notable changes to `probod` (the server, including the bundled `@probo/console`, `@probo/compliance-portal`, and `@probo/ui` frontends) will be documented in this file.
+All notable changes to `probod` (the server, including the bundled `@probo/console`, `@probo/compliance-portal`, `@probo/employee-portal`, and `@probo/ui` frontends) will be documented in this file.
 
 ## Unreleased
+
+## [0.271.0] - 2026-08-28
+
+### Added
+
+- Employee portal, a dedicated app at `/employee-portal` replacing the console's employee pages: organization list, home dashboard with a Get Started panel while the viewer still has first pending work, and typed 404, 403, and 500 recovery states
+- Signature and approval queues in the employee portal, each splitting pending work from history with independent pagination, table layouts that keep columns aligned across locales, and a frozen queue so the counter does not shrink while signing
+- Document viewers in the employee portal for signing and approving, with version history that swaps the displayed PDF for inspection while sign and approve still target the latest version
+- Employee device pages in the employee portal: a device list with empty state, a three-step registration wizard covering agent download and enrollment, and manual enrollment issuing a one-time token with CLI instructions
+- French and Dutch employee portal catalogs; both locales were listed as supported but every string fell back to English
+- AWS audit role CloudFormation template and Terraform module creating the OIDC provider and a ProboAudit role, with organization-wide coverage as a service-managed StackSet; the trust policy is read back before a connector relies on it and refused when its `sub` condition is absent, wildcarded, `StringLike`, or pinned to another organization
+- Documentation links on the authentik, Brex, Cal.com, Calendly, and GitHub access-review connectors, so the connect dialog and connections list can reach each setup guide
+
+### Changed
+
+- An organization can hold several connectors of one provider — two GitHub organizations, two Slack workspaces — each backing its own access review source, and the console keeps every provider available for another connection
+- Reconnecting a connector is now explicit: a bare initiate always creates a new connector, and reconnect happens only through an explicit connector id
+- Each connector credential is owned by exactly one feature, an access review source or a SCIM provisioning bridge, enforced by schema; deleting a connector still held by a live bridge is refused instead of silently disabling sync
+- Source creation is idempotent per connector, so replaying an OAuth callback in two tabs cannot double-create, and relinking a source to a new connector deletes the abandoned one instead of stranding it
+- SCIM configuration and its bridge are created in one transaction, so a bridge refusal can no longer leave a bridgeless configuration blocking every retry of the connect flow
+- Old console employee URLs now redirect to the employee portal, so existing inbox links keep working; emails, the organization switcher, and the employee landing point there directly
+- Connector probe failures are logged with a classification code, provider, source id, and connector id, so a permanently broken source is attributable to a tenant instead of leaving no diagnostics
+
+### Fixed
+
+- Employee document filters matched any historical signature or past approval decision, so a newer pending major version appeared as both pending and completed; both filters are now restricted to the latest version
+- Probe verdicts treated cancelled requests, timeouts, and URL parse failures as the provider rejecting a credential, and the Railway probe reported a 5xx or rate limit as a dead credential
+- The signing queue started mid-queue when launched from page 2 or later, and overlapping pager clicks could land on the wrong page
+- Copying an enrollment token threw in insecure contexts before the failure toast could show, and enrollment errors stacked a global toast on top of the inline failed state
+- Dropped the unused `reports` table and leftover `report_id` foreign keys, superseded by audit PDFs stored in `files`
 
 ## [0.270.0] - 2026-08-27
 
