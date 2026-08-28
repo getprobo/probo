@@ -1,0 +1,168 @@
+{
+  "topBar": {
+    "tagline": "Medewerkersportaal"
+  },
+  "userMenu": {
+    "apiKeys": "API-sleutels",
+    "oauthTokens": "OAuth-tokens",
+    "switchToDarkMode": "Overschakelen naar donkere modus",
+    "switchToLightMode": "Overschakelen naar lichte modus",
+    "help": "Help",
+    "signOut": "Uitloggen",
+    "signOutFailed": "Uitloggen mislukt"
+  },
+  "organizationsPage": {
+    "title": "Uw organisaties",
+    "searchPlaceholder": "Organisaties zoeken",
+    "empty": "U heeft nog geen toegang tot medewerkersportalen.",
+    "emptySearch": "Geen organisaties komen overeen met deze zoekopdracht.",
+    "status": {
+      "authenticated": "Geverifieerd",
+      "sessionExpired": "Sessie verlopen",
+      "authenticationRequired": "Authenticatie vereist"
+    },
+    "actions": {
+      "open": "Openen",
+      "continue": "Doorgaan"
+    }
+  },
+  "breadcrumb": {
+    "nav": "Kruimelpad"
+  },
+  "homePage": {
+    "breadcrumb": "Home",
+    "welcome": "Welkom {{name}}.",
+    "welcomeFallback": "Welkom.",
+    "getStarted": {
+      "title": "Aan de slag",
+      "description": "Voltooi de vereiste stappen om uw medewerkersportaal in te stellen.",
+      "signatures": {
+        "count_one": "{{count}} document om te ondertekenen",
+        "count_other": "{{count}} documenten om te ondertekenen",
+        "description": "Bekijk en onderteken het document dat aan u is toegewezen.",
+        "action": "Ondertekenen"
+      },
+      "approvals": {
+        "count_one": "{{count}} document om goed te keuren",
+        "count_other": "{{count}} documenten om goed te keuren",
+        "description": "Bekijk en keur het document goed dat aan u is toegewezen.",
+        "action": "Goedkeuren"
+      }
+    },
+    "dashboard": {
+      "view": "Bekijken",
+      "allDone": "U bent klaar",
+      "signatures": {
+        "title": "Handtekeningen",
+        "description": "Onderteken toegewezen documenten.",
+        "empty": "Nog niets om te ondertekenen",
+        "pendingCount_one": "{{count}} document om te ondertekenen",
+        "pendingCount_other": "{{count}} documenten om te ondertekenen",
+        "action": "Beginnen met ondertekenen"
+      },
+      "approvals": {
+        "title": "Goedkeuringen",
+        "description": "Bekijk documenten die wachten op goedkeuring.",
+        "empty": "Nog niets om goed te keuren",
+        "pendingCount_one": "{{count}} document om goed te keuren",
+        "pendingCount_other": "{{count}} documenten om goed te keuren",
+        "action": "Beginnen met goedkeuren"
+      },
+      "devices": {
+        "title": "Apparaten",
+        "description": "Beheer uw werkapparaten.",
+        "connected": "Apparaat verbonden",
+        "action": "Apparaat registreren"
+      }
+    }
+  },
+  "common": {
+    "error": "Er is iets misgegaan"
+  },
+  "pagination": {
+    "previous": "Vorige",
+    "next": "Volgende"
+  },
+  "queue": {
+    "previous": "Vorig document",
+    "next": "Volgend document",
+    "close": "Sluiten",
+    "progressSignatures": "Document {{current}} van {{total}} om te ondertekenen",
+    "progressApprovals": "Document {{current}} van {{total}} om goed te keuren",
+    "empty": "Er staan geen documenten meer in deze wachtrij"
+  },
+  "viewer": {
+    "pageOf": "Pagina {{current}} van {{total}}",
+    "previousPage": "Vorige pagina",
+    "nextPage": "Volgende pagina",
+    "zoomIn": "Inzoomen",
+    "zoomOut": "Uitzoomen",
+    "download": "PDF downloaden"
+  },
+  "documents": {
+    "lastUpdated": "Laatst bijgewerkt",
+    "columns": {
+      "title": "Titel",
+      "classification": "Classificatie",
+      "type": "Type",
+      "status": "Status",
+      "action": "Actie"
+    },
+    "types": {
+      "other": "Overig",
+      "governance": "Governance",
+      "policy": "Beleid",
+      "procedure": "Procedure",
+      "plan": "Plan",
+      "register": "Register",
+      "record": "Registratie",
+      "report": "Rapport",
+      "template": "Sjabloon",
+      "statement_of_applicability": "Verklaring van toepasselijkheid"
+    },
+    "classifications": {
+      "public": "Openbaar",
+      "internal": "Intern",
+      "confidential": "Vertrouwelijk",
+      "secret": "Geheim"
+    },
+    "versions": {
+      "heading": "Versiegeschiedenis",
+      "count_one": "{{count}} versie",
+      "count_other": "{{count}} versies",
+      "label": "v{{major}}.{{minor}}",
+      "current": "Huidig",
+      "select": "Versie {{major}}.{{minor}} bekijken",
+      "status": {
+        "inReview": "In beoordeling",
+        "approved": "Goedgekeurd",
+        "rejected": "Afgewezen",
+        "voided": "Nietig verklaard",
+        "signed": "Ondertekend"
+      }
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Pagina niet gevonden",
+      "description": "De pagina die u zoekt bestaat niet of is verplaatst."
+    },
+    "forbidden": {
+      "title": "Toegang geweigerd",
+      "description": "U heeft geen rechten om deze pagina te bekijken. Ga terug naar uw organisaties, of neem contact op met support als u denkt dat dit een vergissing is."
+    },
+    "serverError": {
+      "title": "Er is iets misgegaan",
+      "description": "Er is iets misgegaan aan onze kant. Probeer het opnieuw, of neem contact op met support als het probleem aanhoudt."
+    },
+    "generic": {
+      "title": "Pagina kan niet worden geladen",
+      "description": "We konden deze pagina niet laden. Probeer het opnieuw, of neem contact op met support als het probleem aanhoudt."
+    },
+    "actions": {
+      "tryAgain": "Opnieuw proberen",
+      "backToOrganizations": "Terug naar organisaties",
+      "contactSupport": "Contact opnemen met support"
+    }
+  }
+}

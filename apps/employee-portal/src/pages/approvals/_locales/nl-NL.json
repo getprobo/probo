@@ -1,0 +1,39 @@
+{
+  "title": "Goedkeuringen",
+  "breadcrumb": "Goedkeuringen",
+  "pending": {
+    "heading": "Wachtend op uw goedkeuring ({{count}})",
+    "summaryTitle_one": "{{count}} document om goed te keuren",
+    "summaryTitle_other": "{{count}} documenten om goed te keuren",
+    "summaryDescription": "Bekijk en keur de documenten goed die nodig zijn om uw medewerkerinstelling te voltooien.",
+    "action": "Beginnen met goedkeuren",
+    "itemAction": "Goedkeuren"
+  },
+  "history": {
+    "heading": "Beoordeeld ({{count}})",
+    "statusApproved": "Goedgekeurd",
+    "statusRejected": "Afgewezen"
+  },
+  "empty": {
+    "none": {
+      "title": "Nog geen goedkeuringsverzoeken",
+      "description": "Documenten die uw goedkeuring nodig hebben, verschijnen hier."
+    },
+    "allDone": {
+      "title": "U bent klaar",
+      "description": "U bent up-to-date. Documenten die u al heeft beoordeeld, staan hieronder."
+    }
+  },
+  "document": {
+    "eyebrow": "Goedkeuringsverzoek",
+    "instruction": "Bekijk dit document en keur het vervolgens goed of af.",
+    "reviewAndApprove": "Bekijken en goedkeuren",
+    "reject": "Afwijzen",
+    "approved": "U heeft dit document goedgekeurd.",
+    "rejected": "U heeft dit document afgewezen.",
+    "voided": "Deze goedkeuring is niet langer vereist.",
+    "goToNext": "Naar het volgende document",
+    "finish": "Goedkeuringen afronden",
+    "backToList": "Terug naar goedkeuringen"
+  }
+}

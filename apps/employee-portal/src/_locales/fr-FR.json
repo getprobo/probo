@@ -1,0 +1,168 @@
+{
+  "topBar": {
+    "tagline": "Portail employé"
+  },
+  "userMenu": {
+    "apiKeys": "Clés API",
+    "oauthTokens": "Jetons OAuth",
+    "switchToDarkMode": "Passer en mode sombre",
+    "switchToLightMode": "Passer en mode clair",
+    "help": "Aide",
+    "signOut": "Se déconnecter",
+    "signOutFailed": "Impossible de se déconnecter"
+  },
+  "organizationsPage": {
+    "title": "Vos organisations",
+    "searchPlaceholder": "Rechercher des organisations",
+    "empty": "Vous n’avez encore accès à aucun portail employé.",
+    "emptySearch": "Aucune organisation ne correspond à cette recherche.",
+    "status": {
+      "authenticated": "Authentifié",
+      "sessionExpired": "Session expirée",
+      "authenticationRequired": "Authentification requise"
+    },
+    "actions": {
+      "open": "Ouvrir",
+      "continue": "Continuer"
+    }
+  },
+  "breadcrumb": {
+    "nav": "Fil d’Ariane"
+  },
+  "homePage": {
+    "breadcrumb": "Accueil",
+    "welcome": "Bienvenue {{name}}.",
+    "welcomeFallback": "Bienvenue.",
+    "getStarted": {
+      "title": "Pour commencer",
+      "description": "Effectuez les étapes requises pour terminer la configuration de votre portail employé.",
+      "signatures": {
+        "count_one": "{{count}} document à signer",
+        "count_other": "{{count}} documents à signer",
+        "description": "Examinez et signez le document qui vous a été attribué.",
+        "action": "Signer"
+      },
+      "approvals": {
+        "count_one": "{{count}} document à approuver",
+        "count_other": "{{count}} documents à approuver",
+        "description": "Examinez et approuvez le document qui vous a été attribué.",
+        "action": "Approuver"
+      }
+    },
+    "dashboard": {
+      "view": "Voir",
+      "allDone": "Vous avez tout terminé",
+      "signatures": {
+        "title": "Signatures",
+        "description": "Signez les documents attribués.",
+        "empty": "Rien à signer pour le moment",
+        "pendingCount_one": "{{count}} document à signer",
+        "pendingCount_other": "{{count}} documents à signer",
+        "action": "Commencer à signer"
+      },
+      "approvals": {
+        "title": "Approbations",
+        "description": "Examinez les documents en attente d’approbation.",
+        "empty": "Rien à approuver pour le moment",
+        "pendingCount_one": "{{count}} document à approuver",
+        "pendingCount_other": "{{count}} documents à approuver",
+        "action": "Commencer à approuver"
+      },
+      "devices": {
+        "title": "Appareils",
+        "description": "Gérez vos appareils professionnels.",
+        "connected": "Appareil connecté",
+        "action": "Inscrire un appareil"
+      }
+    }
+  },
+  "common": {
+    "error": "Une erreur est survenue"
+  },
+  "pagination": {
+    "previous": "Préc.",
+    "next": "Suiv."
+  },
+  "queue": {
+    "previous": "Document précédent",
+    "next": "Document suivant",
+    "close": "Fermer",
+    "progressSignatures": "Document {{current}} sur {{total}} à signer",
+    "progressApprovals": "Document {{current}} sur {{total}} à approuver",
+    "empty": "Il n’y a plus de documents dans cette file"
+  },
+  "viewer": {
+    "pageOf": "Page {{current}} sur {{total}}",
+    "previousPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "download": "Télécharger le PDF"
+  },
+  "documents": {
+    "lastUpdated": "Dernière mise à jour",
+    "columns": {
+      "title": "Titre",
+      "classification": "Classification",
+      "type": "Type",
+      "status": "Statut",
+      "action": "Action"
+    },
+    "types": {
+      "other": "Autre",
+      "governance": "Gouvernance",
+      "policy": "Politique",
+      "procedure": "Procédure",
+      "plan": "Plan",
+      "register": "Registre",
+      "record": "Enregistrement",
+      "report": "Rapport",
+      "template": "Modèle",
+      "statement_of_applicability": "Déclaration d’applicabilité"
+    },
+    "classifications": {
+      "public": "Public",
+      "internal": "Interne",
+      "confidential": "Confidentiel",
+      "secret": "Secret"
+    },
+    "versions": {
+      "heading": "Historique des versions",
+      "count_one": "{{count}} version",
+      "count_other": "{{count}} versions",
+      "label": "v{{major}}.{{minor}}",
+      "current": "Actuelle",
+      "select": "Voir la version {{major}}.{{minor}}",
+      "status": {
+        "inReview": "En cours d’examen",
+        "approved": "Approuvé",
+        "rejected": "Rejeté",
+        "voided": "Annulé",
+        "signed": "Signé"
+      }
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page introuvable",
+      "description": "La page que vous recherchez n’existe pas ou a été déplacée."
+    },
+    "forbidden": {
+      "title": "Accès refusé",
+      "description": "Vous n’avez pas l’autorisation de consulter cette page. Retournez à vos organisations, ou contactez le support si vous pensez qu’il s’agit d’une erreur."
+    },
+    "serverError": {
+      "title": "Une erreur est survenue",
+      "description": "Une erreur s’est produite de notre côté. Réessayez, ou contactez le support si le problème persiste."
+    },
+    "generic": {
+      "title": "Impossible de charger la page",
+      "description": "Nous n’avons pas pu charger cette page. Réessayez, ou contactez le support si le problème persiste."
+    },
+    "actions": {
+      "tryAgain": "Réessayer",
+      "backToOrganizations": "Retour aux organisations",
+      "contactSupport": "Contacter le support"
+    }
+  }
+}

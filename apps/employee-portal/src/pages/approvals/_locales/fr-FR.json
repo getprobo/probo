@@ -1,0 +1,39 @@
+{
+  "title": "Approbations",
+  "breadcrumb": "Approbations",
+  "pending": {
+    "heading": "En attente de votre approbation ({{count}})",
+    "summaryTitle_one": "{{count}} document à approuver",
+    "summaryTitle_other": "{{count}} documents à approuver",
+    "summaryDescription": "Examinez et approuvez les documents requis pour terminer la configuration de votre espace employé.",
+    "action": "Commencer à approuver",
+    "itemAction": "Approuver"
+  },
+  "history": {
+    "heading": "Examinés ({{count}})",
+    "statusApproved": "Approuvé",
+    "statusRejected": "Rejeté"
+  },
+  "empty": {
+    "none": {
+      "title": "Aucune demande d’approbation pour le moment",
+      "description": "Les documents qui nécessitent votre approbation apparaîtront ici."
+    },
+    "allDone": {
+      "title": "Vous avez tout terminé",
+      "description": "Vous êtes à jour. Les documents que vous avez déjà examinés figurent ci-dessous."
+    }
+  },
+  "document": {
+    "eyebrow": "Demande d’approbation",
+    "instruction": "Examinez ce document, puis approuvez-le ou rejetez-le.",
+    "reviewAndApprove": "Examiner et approuver",
+    "reject": "Rejeter",
+    "approved": "Vous avez approuvé ce document.",
+    "rejected": "Vous avez rejeté ce document.",
+    "voided": "Cette approbation n’est plus requise.",
+    "goToNext": "Aller au document suivant",
+    "finish": "Terminer les approbations",
+    "backToList": "Retour aux approbations"
+  }
+}
