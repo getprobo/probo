@@ -182,7 +182,7 @@ func (b *Engine) GenerateSyncMessage(
 		switch {
 		case len(state.Requested) > 0:
 			for _, requested := range state.Requested {
-				change, ok := b.state.changes[opset.ChangeHash(requested)]
+				change, ok := b.lookupChange(opset.ChangeHash(requested))
 				if !ok || len(change.Raw) == 0 {
 					continue
 				}
@@ -271,9 +271,28 @@ func (b *Engine) ReceiveSyncMessage(
 	}
 
 	if !state.ReadOnly {
+		incremental := len(message.Changes) > 0
 		for _, change := range message.Changes {
-			if _, err := b.Merge(change); err != nil {
-				return fmt.Errorf("cannot merge sync payload: %w", err)
+			if len(change) <= 8 {
+				incremental = false
+				break
+			}
+			kind := opset.ChunkType(change[8])
+			if kind != opset.ChunkChange && kind != opset.ChunkCompressedChange {
+				incremental = false
+				break
+			}
+		}
+
+		if incremental {
+			if err := b.ApplyChanges(message.Changes); err != nil {
+				return fmt.Errorf("cannot apply sync changes: %w", err)
+			}
+		} else {
+			for _, change := range message.Changes {
+				if _, err := b.Merge(change); err != nil {
+					return fmt.Errorf("cannot merge sync payload: %w", err)
+				}
 			}
 		}
 	}
@@ -293,7 +312,7 @@ func (b *Engine) ReceiveSyncMessage(
 
 	if !state.ReadOnly {
 		for _, head := range message.Heads {
-			if _, ok := b.state.changes[opset.ChangeHash(head)]; !ok {
+			if _, ok := b.lookupChange(opset.ChangeHash(head)); !ok {
 				needed[head] = struct{}{}
 			}
 		}

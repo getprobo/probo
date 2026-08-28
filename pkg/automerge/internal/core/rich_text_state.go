@@ -111,7 +111,10 @@ type MarkRange struct {
 // visible content between them must not capture the insertion. The scan stops at
 // the first visible element; tombstones are stepped over.
 func (s *State) insertAnchorKey(object opset.OpID, base opset.Key) opset.Key {
-	order := s.insertOrder(object)
+	index := s.sequenceIndex(object)
+	if index.markCount == 0 {
+		return base
+	}
 
 	start := 0
 
@@ -120,7 +123,7 @@ func (s *State) insertAnchorKey(object opset.OpID, base opset.Key) opset.Key {
 			return base
 		}
 
-		position, ok := s.insertOrderPositions(object)[*base.Element]
+		position, ok := index.rawPosition(*base.Element)
 		if !ok {
 			return base
 		}
@@ -135,10 +138,10 @@ func (s *State) insertAnchorKey(object opset.OpID, base opset.Key) opset.Key {
 
 	candidates := []candidate{{key: base}}
 
-	for i := start; i < len(order); i++ {
-		operation, ok := s.operations[order[i]]
+	index.eachRaw(start, func(entry sequenceIndexEntry) bool {
+		operation, ok := s.operation(entry.insertion)
 		if !ok {
-			continue
+			return true
 		}
 
 		if operation.Action == opset.ActionMark {
@@ -169,13 +172,14 @@ func (s *State) insertAnchorKey(object opset.OpID, base opset.Key) opset.Key {
 				)
 			}
 
-			continue
+			return true
 		}
 
 		if !s.isSuperseded(operation.ID) && len(candidates) > 0 {
-			break
+			return false
 		}
-	}
+		return true
+	})
 
 	if len(candidates) == 0 {
 		return base
@@ -222,7 +226,7 @@ func (s *State) richTextMarks(object opset.OpID, elements []opset.Operation) []r
 	}
 
 	for _, id := range order {
-		operation, ok := s.operations[id]
+		operation, ok := s.operation(id)
 		if !ok || s.isSuperseded(id) {
 			continue
 		}
@@ -262,7 +266,7 @@ func (s *State) richTextMarks(object opset.OpID, elements []opset.Operation) []r
 		// a mark end. A begin whose end insert failed leaves that counter free
 		// for a later operation (a delete, say), so checking the action avoids
 		// mistaking such an operation for the missing end.
-		if end, ok := s.operations[endID]; ok &&
+		if end, ok := s.operation(endID); ok &&
 			end.Action == opset.ActionMark && end.MarkName == nil {
 			continue
 		}
@@ -542,7 +546,7 @@ func (s *State) markAnchorPosition(
 
 	visited[*key.Element] = struct{}{}
 
-	operation, ok := s.operations[*key.Element]
+	operation, ok := s.operation(*key.Element)
 	if !ok {
 		return 0, false
 	}
@@ -647,7 +651,7 @@ func (s *State) boundaryChild(
 			return opset.OpID{}, false
 		}
 
-		parent, ok := s.operations[*current.Key.Element]
+		parent, ok := s.operation(*current.Key.Element)
 		if !ok || parent.Action == opset.ActionMark {
 			return opset.OpID{}, false
 		}

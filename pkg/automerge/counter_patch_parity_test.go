@@ -133,9 +133,12 @@ func TestRustAutomerge_IncrementPatchCarriesDelta(t *testing.T) {
 
 		patches, err := document.Diff(before, after)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
+
 		value, err := document.Root().Scalar("counter")
 		require.NoError(t, err)
+
 		values[engine.name] = value.Int
 	}
 

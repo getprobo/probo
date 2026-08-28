@@ -636,7 +636,7 @@ func (b *Engine) Length(object uint32) (uint64, error) {
 		return b.state.mapLength(objectID), nil
 	}
 
-	operation, ok := b.state.operations[objectID.OpID]
+	operation, ok := b.state.operation(objectID.OpID)
 	if !ok {
 		return 0, fmt.Errorf("object does not exist")
 	}

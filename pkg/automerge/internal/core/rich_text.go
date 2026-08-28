@@ -70,6 +70,12 @@ func (b *Engine) GetText(
 	if !ok {
 		return 0, fmt.Errorf("text property %q does not exist", key)
 	}
+	if b.columns != nil && b.columns.snapshot != nil {
+		if err := b.columns.snapshot.PrepareMutation(); err != nil {
+			return 0, fmt.Errorf("cannot prepare text columns: %w", err)
+		}
+		b.columns.prepareMutationCapacity()
+	}
 
 	return b.pushObject(opset.ObjectID{OpID: operation.ID}), nil
 }
@@ -88,26 +94,64 @@ func (b *Engine) SpliceText(
 	if err != nil {
 		return err
 	}
+	if deleteCount == 0 {
+		tail, ok := b.state.sequenceTailCache[object.OpID]
+		if ok && tail.valid && tail.safe && tail.index == index {
+			characters := []rune(value)
+			operations := make([]opset.Operation, 0, len(characters))
+			previous := tail.last
+			for _, character := range characters {
+				operation := opset.Operation{
+					ID:     b.nextOperationID(),
+					Object: object,
+					Key:    opset.Key{Element: new(previous)},
+					Insert: true,
+					Action: opset.ActionSet,
+					Value: &opset.Scalar{
+						Type:   opset.ScalarString,
+						String: string(character),
+					},
+				}
+				operations = append(operations, operation)
+				previous = operation.ID
+			}
+			if len(operations) == 0 {
+				return nil
+			}
+			if err := b.addPendingBatch(operations); err != nil {
+				return err
+			}
+			for _, operation := range operations {
+				tail.index += elementLength(operation)
+			}
+			tail.last = previous
+			b.state.sequenceTailCache[object.OpID] = tail
 
-	// Splice positions share the unified rich-text index space with marks and
-	// blocks, so walk the full visible element sequence (text and block markers)
-	// rather than the text-only view.
-	sequence := b.state.sequenceElements(object.OpID)
-	offsets := b.state.sequenceOffsets(object.OpID, sequence)
+			return nil
+		}
+	}
 
-	start, end, previous, err := sequenceRange(sequence, offsets, index, uint32(deleteCount))
+	// Resolve every local text edit through the chunked overlay. Mark boundaries
+	// and concurrent branches are represented in raw RGA order by the same
+	// index, while visible UTF-16 summaries skip their zero-width entries.
+	editRange, err := b.state.sequenceIndex(object.OpID).rangeAt(
+		index,
+		uint32(deleteCount),
+	)
 	if err != nil {
 		return err
 	}
+	targets := editRange.targets
+	previous := editRange.previous
 
 	// The reference resolves the insertion anchor and inserts before deleting,
 	// so replacement text is positioned against the pre-deletion sequence. That
 	// ordering decides whether text replacing a marked run sits inside or
 	// outside an expanding mark, so it must be preserved here.
-	targets := make([]opset.Operation, end-start)
-	copy(targets, sequence[start:end])
+	characters := []rune(value)
+	operations := make([]opset.Operation, 0, len(characters)+len(targets))
 
-	for offset, character := range []rune(value) {
+	for offset, character := range characters {
 		key := opset.Key{IsHead: previous == nil}
 		if previous != nil {
 			key.Element = new(*previous)
@@ -127,9 +171,7 @@ func (b *Engine) SpliceText(
 			Action: opset.ActionSet,
 			Value:  &opset.Scalar{Type: opset.ScalarString, String: string(character)},
 		}
-		if err := b.addPending(operation); err != nil {
-			return err
-		}
+		operations = append(operations, operation)
 
 		previous = new(operation.ID)
 	}
@@ -142,9 +184,11 @@ func (b *Engine) SpliceText(
 			Action:       opset.ActionDelete,
 			Predecessors: []opset.OpID{target.ID},
 		}
-		if err := b.addPending(operation); err != nil {
-			return err
-		}
+		operations = append(operations, operation)
+	}
+
+	if err := b.addPendingBatch(operations); err != nil {
+		return err
 	}
 
 	return nil
@@ -772,9 +816,7 @@ func (b *Engine) SplitBlock(
 		return 0, err
 	}
 
-	sequence := b.state.sequenceElements(object.OpID)
-
-	_, previous, err := richTextPosition(sequence, index)
+	_, previous, err := b.state.sequenceIndex(object.OpID).richPosition(index)
 	if err != nil {
 		return 0, err
 	}
@@ -814,9 +856,7 @@ func (b *Engine) JoinBlock(
 		return err
 	}
 
-	sequence := b.state.sequenceElements(object.OpID)
-
-	target, _, err := richTextPosition(sequence, index)
+	target, _, err := b.state.sequenceIndex(object.OpID).richPosition(index)
 	if err != nil {
 		return err
 	}
@@ -1165,7 +1205,7 @@ func (b *Engine) cursorMoveBeforePosition(
 			position += uint32(utf16Length(operation))
 		}
 
-		predecessor, ok := b.state.operations[*target.Key.Element]
+		predecessor, ok := b.state.operation(*target.Key.Element)
 		if !ok {
 			return 0, fmt.Errorf("text cursor predecessor does not exist")
 		}

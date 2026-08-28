@@ -442,15 +442,15 @@ func (d *Document) Fork(
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.Save(true, true)
+	engine, err := d.engine.Fork(actorID[:])
 	if err != nil {
 		d.mu.Unlock()
-		return nil, fmt.Errorf("cannot save Automerge fork source: %w", err)
+		return nil, fmt.Errorf("cannot fork Automerge document: %w", err)
 	}
 
 	d.mu.Unlock()
 
-	return Load(data, actorID)
+	return &Document{engine: engine}, nil
 }
 
 // SaveIncremental serializes changes since the previous save operation.
@@ -758,19 +758,62 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 		return nil, ErrSameDocument
 	}
 
-	otherData, err := other.Save()
+	d.mu.Lock()
+	if d.closed {
+		d.mu.Unlock()
+		return nil, ErrClosed
+	}
+	direct := d.engine.CanDirectMerge()
+	known := d.engine.ChangeHashes()
+	d.mu.Unlock()
+
+	other.mu.Lock()
+	if other.closed {
+		other.mu.Unlock()
+		return nil, ErrClosed
+	}
+	direct = direct && other.engine.CanDirectMerge()
+	other.mu.Unlock()
+
+	if !direct {
+		otherData, err := other.Save()
+		if err != nil {
+			return nil, fmt.Errorf("cannot save Automerge merge source: %w", err)
+		}
+
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		if d.closed {
+			return nil, ErrClosed
+		}
+
+		engineHeads, err := d.engine.Merge(otherData)
+		if err != nil {
+			return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
+		}
+
+		heads := make([]Hash, len(engineHeads))
+		for i := range engineHeads {
+			heads[i] = Hash(engineHeads[i])
+		}
+
+		return heads, nil
+	}
+
+	other.mu.Lock()
+	batch, err := other.engine.PrepareMerge(known)
+	other.mu.Unlock()
 	if err != nil {
-		return nil, fmt.Errorf("cannot save Automerge merge source: %w", err)
+		return nil, fmt.Errorf("cannot prepare Automerge merge: %w", err)
 	}
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
-
 	if d.closed {
 		return nil, ErrClosed
 	}
 
-	engineHeads, err := d.engine.Merge(otherData)
+	engineHeads, err := d.engine.ApplyMerge(batch)
 	if err != nil {
 		return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
 	}

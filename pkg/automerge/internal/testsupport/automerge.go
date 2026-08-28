@@ -556,6 +556,16 @@ func (d *Document) Fork(
 		return nil, ErrClosed
 	}
 
+	if native, ok := d.engine.(*core.Engine); ok {
+		engine, err := native.Fork(actorID[:])
+		d.mu.Unlock()
+		if err != nil {
+			return nil, fmt.Errorf("cannot fork native Automerge document: %w", err)
+		}
+
+		return &Document{engine: engine}, nil
+	}
+
 	data, err := d.engine.Save(true, true)
 	if err != nil {
 		d.mu.Unlock()
@@ -917,6 +927,50 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 
 	if d == other {
 		return nil, ErrSameDocument
+	}
+
+	targetEngine, targetNative := d.engine.(*core.Engine)
+	sourceEngine, sourceNative := other.engine.(*core.Engine)
+	if targetNative &&
+		sourceNative &&
+		targetEngine.CanDirectMerge() &&
+		sourceEngine.CanDirectMerge() {
+		d.mu.Lock()
+		if d.closed {
+			d.mu.Unlock()
+			return nil, ErrClosed
+		}
+		known := targetEngine.ChangeHashes()
+		d.mu.Unlock()
+
+		other.mu.Lock()
+		if other.closed {
+			other.mu.Unlock()
+			return nil, ErrClosed
+		}
+		batch, err := sourceEngine.PrepareMerge(known)
+		other.mu.Unlock()
+		if err != nil {
+			return nil, fmt.Errorf("cannot prepare Automerge merge: %w", err)
+		}
+
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		if d.closed {
+			return nil, ErrClosed
+		}
+
+		engineHeads, err := targetEngine.ApplyMerge(batch)
+		if err != nil {
+			return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
+		}
+
+		heads := make([]Hash, len(engineHeads))
+		for i := range engineHeads {
+			heads[i] = Hash(engineHeads[i])
+		}
+
+		return heads, nil
 	}
 
 	otherData, err := other.Save()

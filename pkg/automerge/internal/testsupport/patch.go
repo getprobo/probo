@@ -205,6 +205,7 @@ func decodePatches(data []byte) ([]Patch, error) {
 		switch patch.Action {
 		case PatchPutMap, PatchPutSeq:
 			var encodedValue encodedPatchValue
+
 			if len(source.Action.Value) == 0 {
 				return nil, fmt.Errorf("cannot decode %s patch: value is missing", patch.Action)
 			}
@@ -285,6 +286,7 @@ func decodePatchDelta(data json.RawMessage) (int64, error) {
 	if err := json.Unmarshal(data, &delta); err != nil {
 		return 0, fmt.Errorf("cannot decode increment patch value: %w", err)
 	}
+
 	if delta == nil {
 		return 0, fmt.Errorf("cannot decode increment patch: value is missing")
 	}

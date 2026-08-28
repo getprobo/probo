@@ -333,6 +333,7 @@ func validateHydratedValue(root Value) error {
 			}
 
 			states[id] = visiting
+
 			stack = append(stack, hydratedValidationFrame{Value: value, Exiting: true})
 
 			if value.Type == ValueTypeMap {
@@ -388,6 +389,7 @@ func sortedHydratedKeys(values map[string]Value) []string {
 
 func mapHydratedTasks(object *Object, values map[string]Value) []hydratedTask {
 	keys := sortedHydratedKeys(values)
+
 	tasks := make([]hydratedTask, 0, len(keys))
 	for _, key := range keys {
 		tasks = append(
@@ -424,6 +426,7 @@ func listHydratedTasks(object *Object, index uint64, values []Value) []hydratedT
 func applyHydratedTasks(tasks []hydratedTask) error {
 	for current := 0; current < len(tasks); current++ {
 		task := tasks[current]
+
 		child, err := applyHydratedTask(task)
 		if err != nil {
 			return err
@@ -457,6 +460,7 @@ func applyHydratedTask(task hydratedTask) (*Object, error) {
 		}
 	case ValueTypeMap, ValueTypeList, ValueTypeText:
 		objectType := ObjectType(task.Value.Type)
+
 		var (
 			child *Object
 			err   error
@@ -470,6 +474,7 @@ func applyHydratedTask(task hydratedTask) (*Object, error) {
 		case hydratedOperationPutAt:
 			child, err = task.Object.putObjectAt(task.Index, objectType)
 		}
+
 		if err != nil {
 			return nil, err
 		}

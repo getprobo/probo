@@ -24,7 +24,6 @@ import (
 	"slices"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
-	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
 // compact serializes the whole history as one document chunk, the form save()
@@ -40,21 +39,18 @@ func (b *Engine) compact(retainOrphans, deflate bool) ([]byte, bool, error) {
 	if b.isolationActive {
 		return nil, false, nil
 	}
-
-	changes, ok := b.state.allChanges()
-	if !ok {
+	if _, ok := b.state.allChanges(); !ok {
 		return nil, false, nil
 	}
 
-	document := &opset.Document{
-		Changes: make([]opset.Change, 0, len(changes)),
-		Heads:   b.state.Heads(),
-	}
-	for _, change := range changes {
-		document.Changes = append(document.Changes, *change)
+	if b.columns == nil {
+		return nil, false, nil
 	}
 
-	data, err := storage.EncodeDocument(document, b.state.documentOperationOrder(), deflate)
+	data, err := b.columns.snapshot.Encode(
+		b.unknownColumns,
+		deflate,
+	)
 	if err != nil {
 		return nil, false, err
 	}
@@ -74,10 +70,11 @@ func (b *Engine) compact(retainOrphans, deflate bool) ([]byte, bool, error) {
 // reader sees. Deletes are left out because a snapshot records them only as
 // successors of what they removed.
 func (s *State) documentOperationOrder() []opset.OpID {
-	order := make([]opset.OpID, 0, len(s.operations))
+	order := make([]opset.OpID, 0, s.operationCount())
 
 	for _, object := range s.documentObjects() {
-		if object.IsRoot || isMapObject(s.operations[object.OpID].Action) {
+		operation, _ := s.operation(object.OpID)
+		if object.IsRoot || isMapObject(operation.Action) {
 			order = append(order, s.mapObjectOrder(object)...)
 
 			continue
@@ -94,11 +91,12 @@ func (s *State) documentOperationOrder() []opset.OpID {
 func (s *State) documentObjects() []opset.ObjectID {
 	objects := make([]opset.ObjectID, 0)
 
-	for id, operation := range s.operations {
+	s.eachOperation(func(operation opset.Operation) bool {
 		if isObjectAction(operation.Action) {
-			objects = append(objects, opset.ObjectID{OpID: id})
+			objects = append(objects, opset.ObjectID{OpID: operation.ID})
 		}
-	}
+		return true
+	})
 
 	slices.SortFunc(
 		objects,
@@ -113,16 +111,17 @@ func (s *State) documentObjects() []opset.ObjectID {
 func (s *State) mapObjectOrder(object opset.ObjectID) []opset.OpID {
 	byProperty := make(map[string][]opset.OpID)
 
-	for id, operation := range s.operations {
+	s.eachOperation(func(operation opset.Operation) bool {
 		if operation.Object != object ||
 			operation.Key.Property == nil ||
 			operation.Action == opset.ActionDelete {
-			continue
+			return true
 		}
 
 		property := *operation.Key.Property
-		byProperty[property] = append(byProperty[property], id)
-	}
+		byProperty[property] = append(byProperty[property], operation.ID)
+		return true
+	})
 
 	properties := make([]string, 0, len(byProperty))
 	for property := range byProperty {
@@ -131,7 +130,7 @@ func (s *State) mapObjectOrder(object opset.ObjectID) []opset.OpID {
 
 	slices.Sort(properties)
 
-	order := make([]opset.OpID, 0, len(s.operations))
+	order := make([]opset.OpID, 0, s.operationCount())
 
 	for _, property := range properties {
 		identifiers := byProperty[property]
@@ -154,17 +153,18 @@ func (s *State) sequenceObjectOrder(object opset.ObjectID) []opset.OpID {
 	// overwrite, follow the element they target.
 	byElement := make(map[opset.OpID][]opset.OpID)
 
-	for id, operation := range s.operations {
+	s.eachOperation(func(operation opset.Operation) bool {
 		if operation.Object != object ||
 			operation.Insert ||
 			operation.Key.Element == nil ||
 			operation.Action == opset.ActionDelete {
-			continue
+			return true
 		}
 
 		element := *operation.Key.Element
-		byElement[element] = append(byElement[element], id)
-	}
+		byElement[element] = append(byElement[element], operation.ID)
+		return true
+	})
 
 	for element := range byElement {
 		slices.SortFunc(
@@ -179,7 +179,7 @@ func (s *State) sequenceObjectOrder(object opset.ObjectID) []opset.OpID {
 	order := make([]opset.OpID, 0, len(elements))
 
 	for _, element := range elements {
-		if operation, ok := s.operations[element]; ok && operation.Action != opset.ActionDelete {
+		if operation, ok := s.operation(element); ok && operation.Action != opset.ActionDelete {
 			order = append(order, element)
 		}
 

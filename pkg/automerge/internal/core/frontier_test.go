@@ -60,15 +60,14 @@ func committedTextBackend(t *testing.T, id byte, edits int) *Engine {
 func snapshotFromBackend(backend *Engine) *opset.Document {
 	document := &opset.Document{}
 
-	for hash, change := range backend.state.changes {
+	backend.state.eachChange(func(hash opset.ChangeHash, change *opset.Change) bool {
 		clone := *change
 		clone.Hash = new(hash)
 		document.Changes = append(document.Changes, clone)
-	}
+		return true
+	})
 
-	for head := range backend.state.heads {
-		document.Heads = append(document.Heads, head)
-	}
+	document.Heads = backend.state.Heads()
 
 	return document
 }

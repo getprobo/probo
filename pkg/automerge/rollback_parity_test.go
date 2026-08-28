@@ -181,6 +181,7 @@ func TestRustTransaction_RollbackPreservesValidObjectHandles(t *testing.T) {
 				stable, err := document.Root().CreateObject("stable", automerge.ObjectTypeMap)
 				require.NoError(t, err)
 				require.NoError(t, stable.PutScalar("before", automerge.StringScalar("yes")))
+
 				_, err = document.Commit("stable", commitTime)
 				require.NoError(t, err)
 

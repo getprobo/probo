@@ -35,11 +35,15 @@ import (
 )
 
 func (b *Engine) addPending(operation opset.Operation) error {
-	if err := b.state.applyPending([]opset.Operation{operation}); err != nil {
+	return b.addPendingBatch([]opset.Operation{operation})
+}
+
+func (b *Engine) addPendingBatch(operations []opset.Operation) error {
+	if err := b.state.applyPending(operations); err != nil {
 		return err
 	}
 
-	b.pending = append(b.pending, operation)
+	b.pending = append(b.pending, operations...)
 
 	return nil
 }
@@ -55,6 +59,7 @@ func (b *Engine) nextOperationID() opset.OpID {
 }
 
 func (b *Engine) requireRoot(handle uint32) error {
+	b.bindColumnarState()
 	object, err := b.object(handle)
 	if err != nil {
 		return err
@@ -68,6 +73,7 @@ func (b *Engine) requireRoot(handle uint32) error {
 }
 
 func (b *Engine) object(handle uint32) (opset.ObjectID, error) {
+	b.bindColumnarState()
 	object, ok := b.objects[handle]
 	if !ok {
 		return opset.ObjectID{}, fmt.Errorf("invalid object handle %d", handle)
@@ -86,7 +92,7 @@ func (b *Engine) mapObject(handle uint32) (opset.ObjectID, error) {
 		return object, nil
 	}
 
-	operation, ok := b.state.operations[object.OpID]
+	operation, ok := b.lookupOperation(object.OpID)
 	if !ok ||
 		(operation.Action != opset.ActionMakeMap &&
 			operation.Action != opset.ActionMakeTable) {
@@ -106,7 +112,7 @@ func (b *Engine) sequenceObject(handle uint32) (opset.ObjectID, error) {
 		return opset.ObjectID{}, fmt.Errorf("root map is not a sequence")
 	}
 
-	operation, ok := b.state.operations[object.OpID]
+	operation, ok := b.lookupOperation(object.OpID)
 	if !ok ||
 		(operation.Action != opset.ActionMakeList &&
 			operation.Action != opset.ActionMakeText) {
@@ -126,7 +132,7 @@ func (b *Engine) textObject(handle uint32) (opset.ObjectID, error) {
 		return opset.ObjectID{}, fmt.Errorf("root map is not text")
 	}
 
-	operation, ok := b.state.operations[object.OpID]
+	operation, ok := b.lookupOperation(object.OpID)
 	if !ok || operation.Action != opset.ActionMakeText {
 		return opset.ObjectID{}, fmt.Errorf("object is not text")
 	}
@@ -154,7 +160,7 @@ func (b *Engine) syncState(handle uint32) (*syncSessionState, error) {
 func (b *Engine) rootTextObjects() map[string]opset.Operation {
 	objects := make(map[string]opset.Operation)
 
-	for _, operation := range b.state.operations {
+	b.state.eachOperation(func(operation opset.Operation) bool {
 		if operation.Object.IsRoot &&
 			operation.Key.Property != nil &&
 			operation.Action == opset.ActionMakeText &&
@@ -166,7 +172,8 @@ func (b *Engine) rootTextObjects() map[string]opset.Operation {
 				objects[property] = operation
 			}
 		}
-	}
+		return true
+	})
 
 	return objects
 }
@@ -294,7 +301,7 @@ func (b *Engine) isTextObject(object opset.ObjectID) bool {
 		return false
 	}
 
-	operation, ok := b.state.operations[object.OpID]
+	operation, ok := b.lookupOperation(object.OpID)
 
 	return ok && operation.Action == opset.ActionMakeText
 }
@@ -342,16 +349,11 @@ func (b *Engine) textMarkKey(
 	object opset.ObjectID,
 	index uint32,
 ) (opset.Key, error) {
-	// Mark positions share the unified rich-text index space with splice and
-	// block operations, so block markers occupy a position (length 1) just like
-	// a character. Walk the full element sequence, not the text-only view.
-	sequence := b.state.sequenceElements(object.OpID)
-
 	// A mark boundary past the end of the text is rejected, matching the
 	// reference. The reference applies the begin boundary before failing on the
 	// out-of-range end, leaving a begin operation with no matching end; span
 	// computation extends such an unmatched begin to the end of the text.
-	_, previous, err := richTextPosition(sequence, index)
+	_, previous, err := b.state.sequenceIndex(object.OpID).richPosition(index)
 	if err != nil {
 		return opset.Key{}, err
 	}

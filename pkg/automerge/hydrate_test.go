@@ -286,6 +286,7 @@ func TestDocument_HydrateDeepGraphMatchesReference(t *testing.T) {
 	}
 
 	documents := make(map[string]*automerge.Document)
+
 	for name, factory := range map[string]func(
 		automerge.ActorID,
 		map[string]automerge.Value,
@@ -307,6 +308,7 @@ func TestDocument_HydrateDeepGraphMatchesReference(t *testing.T) {
 
 		object, err := document.Root().Object("root")
 		require.NoError(t, err)
+
 		for range depth - 1 {
 			object, err = object.Object("next")
 			require.NoError(t, err)
@@ -362,6 +364,7 @@ func TestDocument_HydrateRejectsCyclesBeforeMutation(t *testing.T) {
 					keep, err := document.String("keep")
 					require.NoError(t, err)
 					assert.Equal(t, "value", keep)
+
 					_, err = document.Root().Object("invalid")
 					require.Error(t, err)
 				},
