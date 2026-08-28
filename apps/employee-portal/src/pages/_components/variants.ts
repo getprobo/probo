@@ -190,7 +190,7 @@ export const documentWorkspace = tv({
     ],
     request: [
       "flex w-full shrink-0 flex-col bg-sand-1 px-8 py-8",
-      "min-h-0 md:h-full md:w-128 md:overflow-y-auto",
+      "min-h-0 md:h-full md:w-96 md:overflow-y-auto xl:w-128",
     ],
     stage: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-sand-3",
     loading: "grid min-h-0 flex-1 place-items-center",
@@ -210,12 +210,19 @@ export const pdfPreview = tv({
 
 export const documentViewerToolbar = tv({
   slots: {
-    root: "flex h-12 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-sand-1 px-6",
-    start: "flex min-w-0 flex-wrap items-center gap-2",
+    // Container query: the stage is often narrower than the viewport (request
+    // panel beside it), so viewport sm is too late to drop action labels.
+    root: [
+      "@container flex h-12 shrink-0 items-center justify-between gap-x-4",
+      "bg-sand-1 px-6",
+    ],
+    start: "flex min-w-0 items-center gap-2",
     controls: "flex items-center gap-1",
     actions: "flex shrink-0 items-center gap-2",
-    actionLabel: "max-sm:hidden",
-    separator: "h-6 max-sm:hidden",
+    actionLabeled: "@max-xl:hidden",
+    actionIcon: "hidden @max-xl:inline-flex",
+    separator: "h-6",
+    actionSeparator: "h-6 @max-xl:hidden",
   },
 });
 

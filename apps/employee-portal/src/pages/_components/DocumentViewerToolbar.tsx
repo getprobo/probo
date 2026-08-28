@@ -30,6 +30,7 @@ import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Separator } from "@probo/ui/src/v2/Separator/Separator";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { downloadDataUri } from "#/pages/_lib/dataUri";
@@ -42,6 +43,53 @@ const MAX_SCALE = 3;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+interface ViewerToolbarActionProps {
+  label: string;
+  icon: ReactNode;
+  disabled?: boolean;
+  labeledClassName: string;
+  iconClassName: string;
+  onClick: () => void;
+}
+
+// Labeled ghost button when the toolbar is wide; IconButton when the stage
+// container is narrower than xl so the row does not wrap under h-12.
+function ViewerToolbarAction({
+  label,
+  icon,
+  disabled,
+  labeledClassName,
+  iconClassName,
+  onClick,
+}: ViewerToolbarActionProps) {
+  return (
+    <>
+      <span className={labeledClassName}>
+        <Button
+          variant="ghost"
+          color="neutral"
+          iconStart={icon}
+          disabled={disabled}
+          onClick={onClick}
+        >
+          {label}
+        </Button>
+      </span>
+      <span className={iconClassName}>
+        <IconButton
+          variant="ghost"
+          color="neutral"
+          aria-label={label}
+          disabled={disabled}
+          onClick={onClick}
+        >
+          {icon}
+        </IconButton>
+      </span>
+    </>
+  );
 }
 
 interface DocumentViewerToolbarProps {
@@ -131,26 +179,22 @@ export function DocumentViewerToolbar({
         </div>
       </div>
       <div className={slots.actions()}>
-        <Button
-          variant="ghost"
-          color="neutral"
-          iconStart={<LinkSimpleIcon />}
+        <ViewerToolbarAction
+          label={t("viewer.share")}
+          icon={<LinkSimpleIcon />}
+          labeledClassName={slots.actionLabeled()}
+          iconClassName={slots.actionIcon()}
           onClick={handleCopyLink}
-          aria-label={t("viewer.share")}
-        >
-          <span className={slots.actionLabel()}>{t("viewer.share")}</span>
-        </Button>
-        <Separator orientation="vertical" className={slots.separator()} />
-        <Button
-          variant="ghost"
-          color="neutral"
-          iconStart={<DownloadSimpleIcon />}
+        />
+        <Separator orientation="vertical" className={slots.actionSeparator()} />
+        <ViewerToolbarAction
+          label={t("viewer.download")}
+          icon={<DownloadSimpleIcon />}
           disabled={dataUri == null}
+          labeledClassName={slots.actionLabeled()}
+          iconClassName={slots.actionIcon()}
           onClick={handleDownload}
-          aria-label={t("viewer.download")}
-        >
-          <span className={slots.actionLabel()}>{t("viewer.download")}</span>
-        </Button>
+        />
       </div>
     </div>
   );
