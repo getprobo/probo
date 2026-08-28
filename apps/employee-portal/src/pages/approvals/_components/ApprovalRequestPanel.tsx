@@ -35,6 +35,7 @@ interface ApprovalRequestPanelProps {
   queueActive: boolean;
   hasNext: boolean;
   busy: boolean;
+  advancing?: boolean;
   onApprove: () => void;
   onReject: () => void;
   onNext: () => void;
@@ -50,6 +51,7 @@ export function ApprovalRequestPanel({
   queueActive,
   hasNext,
   busy,
+  advancing = false,
   onApprove,
   onReject,
   onNext,
@@ -90,6 +92,8 @@ export function ApprovalRequestPanel({
                 className="w-full"
                 iconStart={!queueActive ? <CaretLeftIcon /> : undefined}
                 iconEnd={queueActive && hasNext ? <CaretRightIcon /> : undefined}
+                loading={advancing}
+                disabled={advancing}
                 onClick={queueActive && hasNext ? onNext : onFinish}
               >
                 {queueActive

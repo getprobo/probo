@@ -37,8 +37,11 @@ import { useApproveDocumentVersion } from "./_lib/useApproveDocumentVersion";
 import { useRejectDocumentVersion } from "./_lib/useRejectDocumentVersion";
 
 export const approvalDocumentPageQuery = graphql`
-  query ApprovalDocumentPageQuery($organizationId: ID!, $documentId: ID!)
-  @throwOnFieldError {
+  query ApprovalDocumentPageQuery(
+    $organizationId: ID!
+    $documentId: ID!
+    $first: Int!
+  ) @throwOnFieldError {
     viewer @required(action: THROW) {
       approvableDocument(id: $documentId) {
         id
@@ -59,10 +62,15 @@ export const approvalDocumentPageQuery = graphql`
       }
       pendingQueue: approvableDocuments(
         organizationId: $organizationId
-        first: 200
+        first: $first
         filter: { approvalStates: [PENDING] }
         orderBy: { field: UPDATED_AT, direction: DESC }
       ) {
+        totalCount
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
         edges {
           node {
             id
@@ -79,7 +87,7 @@ interface ApprovalDocumentPageProps {
 
 export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
   const { documentId } = useParams();
-  const { snapshot, goTo, close } = useDocumentQueue();
+  const { snapshot, advancing, goForward, close } = useDocumentQueue();
   const queueActive = useDocumentQueueActive();
   const data = usePreloadedQuery<ApprovalDocumentPageQuery>(
     approvalDocumentPageQuery,
@@ -96,17 +104,19 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
     throw new NotFoundError("document version not found");
   }
 
-  const pendingIds = useMemo(
-    () => data.viewer.pendingQueue.edges.map(({ node }) => node.id),
-    [data.viewer.pendingQueue.edges],
-  );
+  const pendingPage = useMemo(() => ({
+    ids: data.viewer.pendingQueue.edges.map(({ node }) => node.id),
+    totalCount: data.viewer.pendingQueue.totalCount,
+    endCursor: data.viewer.pendingQueue.pageInfo.endCursor ?? null,
+    hasNextPage: data.viewer.pendingQueue.pageInfo.hasNextPage,
+  }), [data.viewer.pendingQueue]);
   const state = document.approvalState ?? version.approvalDecision?.state ?? null;
 
   useSyncDocumentQueue({
     kind: "approvals",
     documentId,
     isPending: state === "PENDING" || state == null,
-    pendingIds,
+    pendingPage,
   });
 
   const [approveDocumentVersion, isApproving] = useApproveDocumentVersion(document.id);
@@ -114,9 +124,8 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
   const dataUri = useExportEmployeeDocumentPdf(version.id);
 
   const index = snapshot?.ids.indexOf(documentId) ?? -1;
-  const nextId = index >= 0 && snapshot != null && index < snapshot.ids.length - 1
-    ? snapshot.ids[index + 1]
-    : null;
+  const hasNext = snapshot != null
+    && ((index >= 0 && index < snapshot.ids.length - 1) || snapshot.hasNextPage);
 
   return (
     <DocumentWorkspace
@@ -128,19 +137,16 @@ export function ApprovalDocumentPage({ queryRef }: ApprovalDocumentPageProps) {
           state={state}
           consentText={version.consentText}
           queueActive={queueActive}
-          hasNext={nextId != null}
+          hasNext={hasNext}
           busy={isApproving || isRejecting}
+          advancing={advancing}
           onApprove={() => {
             void approveDocumentVersion(version.id);
           }}
           onReject={() => {
             void rejectDocumentVersion(version.id);
           }}
-          onNext={() => {
-            if (nextId != null) {
-              goTo(nextId, "forward");
-            }
-          }}
+          onNext={goForward}
           onFinish={() => close("approvals")}
         />
       )}

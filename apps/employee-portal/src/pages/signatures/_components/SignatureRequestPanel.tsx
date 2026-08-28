@@ -33,6 +33,7 @@ interface SignatureRequestPanelProps {
   queueActive: boolean;
   hasNext: boolean;
   busy: boolean;
+  advancing?: boolean;
   onSign: () => void;
   onNext: () => void;
   onFinish: () => void;
@@ -47,6 +48,7 @@ export function SignatureRequestPanel({
   queueActive,
   hasNext,
   busy,
+  advancing = false,
   onSign,
   onNext,
   onFinish,
@@ -82,6 +84,8 @@ export function SignatureRequestPanel({
                 className="w-full"
                 iconStart={!queueActive ? <CaretLeftIcon /> : undefined}
                 iconEnd={queueActive && hasNext ? <CaretRightIcon /> : undefined}
+                loading={advancing}
+                disabled={advancing}
                 onClick={queueActive && hasNext ? onNext : onFinish}
               >
                 {queueActive

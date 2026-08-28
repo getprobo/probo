@@ -35,7 +35,7 @@ export function QueueTopBar() {
   const { t } = useTranslation();
   const { documentId } = useParams();
   const { displayMode } = useDisplayMode();
-  const { snapshot, goTo, close } = useDocumentQueue();
+  const { snapshot, advancing, goTo, goForward, close } = useDocumentQueue();
   const slots = queueTopBar();
   const island = displayMode === "dark" ? "light" : "dark";
 
@@ -45,11 +45,12 @@ export function QueueTopBar() {
 
   const index = snapshot.ids.indexOf(documentId);
   const current = index >= 0 ? index + 1 : 1;
-  const total = snapshot.ids.length;
+  const total = snapshot.totalCount;
   const previousId = index > 0 ? snapshot.ids[index - 1] : null;
   const nextId = index >= 0 && index < snapshot.ids.length - 1
     ? snapshot.ids[index + 1]
     : null;
+  const canGoForward = nextId != null || snapshot.hasNextPage;
   const progressKey = snapshot.kind === "signatures"
     ? "queue.progressSignatures"
     : "queue.progressApprovals";
@@ -79,12 +80,9 @@ export function QueueTopBar() {
             variant="outline"
             color="neutral"
             aria-label={t("queue.next")}
-            disabled={nextId == null}
-            onClick={() => {
-              if (nextId != null) {
-                goTo(nextId, "forward");
-              }
-            }}
+            disabled={!canGoForward || advancing}
+            loading={advancing}
+            onClick={goForward}
           >
             <CaretRightIcon />
           </IconButton>
@@ -98,7 +96,7 @@ export function QueueTopBar() {
         color="neutral"
         size={2}
         iconStart={<XIcon />}
-        onClick={close}
+        onClick={() => close()}
       >
         {t("queue.close")}
       </Button>

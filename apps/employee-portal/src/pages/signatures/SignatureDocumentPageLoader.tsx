@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 
 import type { SignatureDocumentPageQuery } from "#/__generated__/core/SignatureDocumentPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { DOCUMENT_QUEUE_ID_PAGE_SIZE } from "#/pages/_lib/documentQueue";
 import { useQueuedDocumentQuery } from "#/pages/_lib/useQueuedDocumentQuery";
 
 import { SignatureDocumentPage, signatureDocumentPageQuery } from "./SignatureDocumentPage";
@@ -39,7 +40,7 @@ export default function SignatureDocumentPageLoader() {
     if (organizationId == null || documentId == null) {
       return;
     }
-    loadQuery({ organizationId, documentId });
+    loadQuery({ organizationId, documentId, first: DOCUMENT_QUEUE_ID_PAGE_SIZE });
   }, [organizationId, documentId, loadQuery]);
 
   const currentQueryRef = queryRef != null

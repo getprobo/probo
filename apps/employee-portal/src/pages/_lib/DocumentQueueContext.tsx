@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import {
   createContext,
   type ReactNode,
@@ -28,23 +30,29 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 
 import {
+  appendQueuePage,
   clearDocumentQueueSnapshot,
   type DocumentQueueDirection,
   type DocumentQueueKind,
+  type DocumentQueuePage,
   type DocumentQueueSnapshot,
+  enterQueueSnapshot,
   readDocumentQueueSnapshot,
-  snapshotQueueIds,
   writeDocumentQueueSnapshot,
 } from "./documentQueue";
+import { fetchDocumentQueuePage } from "./fetchDocumentQueuePage";
 
 type DocumentQueueContextValue = {
   snapshot: DocumentQueueSnapshot | null;
-  enter: (kind: DocumentQueueKind, ids: readonly string[]) => void;
+  advancing: boolean;
+  enter: (kind: DocumentQueueKind, page: DocumentQueuePage, documentId: string) => void;
   leave: () => void;
   goTo: (documentId: string, direction: DocumentQueueDirection) => void;
+  goForward: () => void;
   close: (kind?: DocumentQueueKind) => void;
 };
 
@@ -58,13 +66,20 @@ function setQueueDirection(direction: DocumentQueueDirection): void {
 // so MainLayout can swap chrome without a first-paint flash on refresh.
 export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { organizationId } = useParams();
+  const { organizationId, documentId } = useParams();
+  const toast = Toast.useToastManager();
+  const { t } = useTranslation();
   const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(
     readDocumentQueueSnapshot,
   );
+  const [advancing, setAdvancing] = useState(false);
 
-  const enter = useCallback((kind: DocumentQueueKind, ids: readonly string[]) => {
-    const next: DocumentQueueSnapshot = { kind, ids: [...ids] };
+  const enter = useCallback((
+    kind: DocumentQueueKind,
+    page: DocumentQueuePage,
+    openedDocumentId: string,
+  ) => {
+    const next = enterQueueSnapshot(kind, page, openedDocumentId);
     writeDocumentQueueSnapshot(next);
     setSnapshot(next);
   }, []);
@@ -72,15 +87,57 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const leave = useCallback(() => {
     clearDocumentQueueSnapshot();
     setSnapshot(null);
+    setAdvancing(false);
   }, []);
 
-  const goTo = useCallback((documentId: string, direction: DocumentQueueDirection) => {
+  const goTo = useCallback((targetId: string, direction: DocumentQueueDirection) => {
     if (organizationId == null || snapshot == null) {
       return;
     }
     setQueueDirection(direction);
-    void navigate(`/${organizationId}/${snapshot.kind}/${documentId}`);
+    void navigate(`/${organizationId}/${snapshot.kind}/${targetId}`);
   }, [navigate, organizationId, snapshot]);
+
+  const goForward = useCallback(() => {
+    if (organizationId == null || snapshot == null || documentId == null || advancing) {
+      return;
+    }
+    const index = snapshot.ids.indexOf(documentId);
+    const nextId = index >= 0 && index < snapshot.ids.length - 1
+      ? snapshot.ids[index + 1]
+      : null;
+    if (nextId != null) {
+      goTo(nextId, "forward");
+      return;
+    }
+    if (!snapshot.hasNextPage || snapshot.endCursor == null) {
+      return;
+    }
+
+    setAdvancing(true);
+    void fetchDocumentQueuePage({
+      kind: snapshot.kind,
+      organizationId,
+      after: snapshot.endCursor,
+    }).then((page) => {
+      const next = appendQueuePage(snapshot, page);
+      writeDocumentQueueSnapshot(next);
+      setSnapshot(next);
+      const firstNew = next.ids.find(id => !snapshot.ids.includes(id));
+      if (firstNew != null) {
+        setQueueDirection("forward");
+        void navigate(`/${organizationId}/${snapshot.kind}/${firstNew}`);
+      }
+    }).catch((error: unknown) => {
+      toast.add({
+        title: t("common.error"),
+        description: formatError(t("common.error"), error as GraphQLError),
+        type: "error",
+      });
+    }).finally(() => {
+      setAdvancing(false);
+    });
+  }, [advancing, documentId, goTo, navigate, organizationId, snapshot, t, toast]);
 
   const close = useCallback((kind?: DocumentQueueKind) => {
     const dest = snapshot?.kind ?? kind;
@@ -93,11 +150,13 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DocumentQueueContextValue>(() => ({
     snapshot,
+    advancing,
     enter,
     leave,
     goTo,
+    goForward,
     close,
-  }), [close, enter, goTo, leave, snapshot]);
+  }), [advancing, close, enter, goForward, goTo, leave, snapshot]);
 
   return (
     <DocumentQueueContext.Provider value={value}>
@@ -129,7 +188,7 @@ type SyncDocumentQueueOptions = {
   kind: DocumentQueueKind;
   documentId: string;
   isPending: boolean;
-  pendingIds: readonly string[];
+  pendingPage: DocumentQueuePage;
 };
 
 // Enters queue mode when the opened document is pending (or already in the
@@ -138,7 +197,7 @@ export function useSyncDocumentQueue({
   kind,
   documentId,
   isPending,
-  pendingIds,
+  pendingPage,
 }: SyncDocumentQueueOptions): void {
   const { snapshot, enter, leave } = useDocumentQueue();
 
@@ -147,13 +206,13 @@ export function useSyncDocumentQueue({
       return;
     }
     if (isPending) {
-      enter(kind, snapshotQueueIds(pendingIds, documentId));
+      enter(kind, pendingPage, documentId);
       return;
     }
     if (snapshot != null) {
       leave();
     }
-  }, [documentId, enter, isPending, kind, leave, pendingIds, snapshot]);
+  }, [documentId, enter, isPending, kind, leave, pendingPage, snapshot]);
 }
 
 // List pages drop the snapshot so a later visit captures a fresh pending count.

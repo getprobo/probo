@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export const DOCUMENT_QUEUE_ID_PAGE_SIZE = 200;
+export const DOCUMENT_QUEUE_ID_PAGE_SIZE = 50;
 
 export const DOCUMENT_QUEUE_STORAGE_KEY = "employee-portal:document-queue";
 
@@ -26,23 +26,54 @@ export type DocumentQueueKind = "signatures" | "approvals";
 
 export type DocumentQueueDirection = "forward" | "back";
 
+export type DocumentQueuePage = {
+  ids: string[];
+  totalCount: number;
+  endCursor: string | null;
+  hasNextPage: boolean;
+};
+
 export type DocumentQueueSnapshot = {
   kind: DocumentQueueKind;
-  ids: string[];
-};
+} & DocumentQueuePage;
 
 function isQueueKind(value: unknown): value is DocumentQueueKind {
   return value === "signatures" || value === "approvals";
 }
 
-function isSnapshot(value: unknown): value is DocumentQueueSnapshot {
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(id => typeof id === "string");
+}
+
+// Accepts today's snapshot and older { kind, ids } payloads from sessionStorage.
+function parseSnapshot(value: unknown): DocumentQueueSnapshot | null {
   if (value == null || typeof value !== "object") {
-    return false;
+    return null;
   }
-  const candidate = value as { kind?: unknown; ids?: unknown };
-  return isQueueKind(candidate.kind)
-    && Array.isArray(candidate.ids)
-    && candidate.ids.every(id => typeof id === "string");
+  const candidate = value as {
+    kind?: unknown;
+    ids?: unknown;
+    totalCount?: unknown;
+    endCursor?: unknown;
+    hasNextPage?: unknown;
+  };
+  if (!isQueueKind(candidate.kind) || !isStringArray(candidate.ids)) {
+    return null;
+  }
+  const ids = candidate.ids;
+  const totalCount = typeof candidate.totalCount === "number"
+    ? candidate.totalCount
+    : ids.length;
+  const endCursor = typeof candidate.endCursor === "string" ? candidate.endCursor : null;
+  const hasNextPage = candidate.hasNextPage === true;
+
+  return {
+    kind: candidate.kind,
+    ids,
+    totalCount,
+    endCursor,
+    hasNextPage,
+  };
 }
 
 // Reads the frozen queue snapshot written when the employee entered a pending
@@ -53,8 +84,7 @@ export function readDocumentQueueSnapshot(): DocumentQueueSnapshot | null {
     if (raw == null) {
       return null;
     }
-    const parsed: unknown = JSON.parse(raw);
-    return isSnapshot(parsed) ? parsed : null;
+    return parseSnapshot(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -78,4 +108,44 @@ export function snapshotQueueIds(pendingIds: readonly string[], documentId: stri
     return [...pendingIds];
   }
   return [documentId, ...pendingIds];
+}
+
+// First-page snapshot: freeze totalCount, keep the page cursor, prepend the
+// opened document when it is not in the first page.
+export function enterQueueSnapshot(
+  kind: DocumentQueueKind,
+  page: DocumentQueuePage,
+  documentId: string,
+): DocumentQueueSnapshot {
+  const ids = snapshotQueueIds(page.ids, documentId);
+  return {
+    kind,
+    ids,
+    totalCount: Math.max(page.totalCount, ids.length),
+    endCursor: page.endCursor,
+    hasNextPage: page.hasNextPage,
+  };
+}
+
+// Appends a later page. Skips ids already in the snapshot. totalCount only
+// rises (older doc assigned mid-queue); signing never lowers it.
+export function appendQueuePage(
+  snapshot: DocumentQueueSnapshot,
+  page: DocumentQueuePage,
+): DocumentQueueSnapshot {
+  const seen = new Set(snapshot.ids);
+  const ids = [...snapshot.ids];
+  for (const id of page.ids) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return {
+    kind: snapshot.kind,
+    ids,
+    totalCount: Math.max(snapshot.totalCount, ids.length),
+    endCursor: page.endCursor,
+    hasNextPage: page.hasNextPage,
+  };
 }
