@@ -189,6 +189,22 @@ func TestValidate(t *testing.T) {
 			shouldError: false,
 		},
 		{
+			name:        "Log file with browser text/plain MIME",
+			validator:   NewValidator(WithCategories(CategoryText)),
+			filename:    "auth.log",
+			contentType: "text/plain",
+			fileSize:    1024,
+			shouldError: false,
+		},
+		{
+			name:        "Log file with text/x-log MIME",
+			validator:   NewValidator(WithCategories(CategoryText)),
+			filename:    "auth.log",
+			contentType: "text/x-log",
+			fileSize:    1024,
+			shouldError: false,
+		},
+		{
 			name:        "Valid with multiple categories",
 			validator:   NewValidator(WithCategories(CategoryImage, CategoryDocument)),
 			filename:    "test.jpg",

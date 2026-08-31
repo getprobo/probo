@@ -39,7 +39,7 @@ export const acceptPresentation = {
 
 export const acceptText = {
   "text/markdown": [".md"],
-  "text/plain": [".txt"],
+  "text/plain": [".txt", ".log"],
   "text/x-log": [".log"],
   "text/uri-list": [".uri"],
   "text/uri-list; charset=utf-8": [".uri"],
