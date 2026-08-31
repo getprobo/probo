@@ -41,6 +41,7 @@ import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes"
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { RedirectToEmployeePortal } from "./pages/organizations/employee/RedirectToEmployeePortal";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { taskRoutes } from "./pages/organizations/tasks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { assetRoutes } from "./routes/assetRoutes";
@@ -55,7 +56,6 @@ import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
-import { taskRoutes } from "./routes/taskRoutes";
 
 const routes = [
   {

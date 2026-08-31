@@ -74,6 +74,10 @@ export const selectItem = tv({
   },
 });
 
+export const selectLabel = tv({
+  base: "text-2 font-medium text-sand-12",
+});
+
 export const selectSkeleton = tv({
   base: "inline-block animate-pulse rounded-2 bg-sand-3 align-middle",
   variants: {

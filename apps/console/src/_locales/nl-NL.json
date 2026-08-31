@@ -23,6 +23,8 @@
     "years_other": "jaren",
     "session": "sessie",
     "persistent": "permanent",
+    "sec_one": "{{count}} Seconde",
+    "sec_other": "{{count}} Seconden",
     "min_one": "{{count}} Minuut",
     "min_other": "{{count}} Minuten",
     "hour_one": "{{count}} Uur",
@@ -1259,66 +1261,6 @@
   "sortableDataTable": {
     "actions": {
       "showMore": "Meer tonen"
-    }
-  },
-  "taskFormDialog": {
-    "breadcrumb": {
-      "tasks": "Taken",
-      "edit": "Taak bewerken",
-      "new": "Nieuwe taak"
-    },
-    "properties": "Eigenschappen",
-    "fields": {
-      "title": {
-        "placeholder": "Taaktitel"
-      },
-      "description": {
-        "placeholder": "Beschrijving toevoegen"
-      },
-      "state": {
-        "label": "Status"
-      },
-      "priority": {
-        "label": "Prioriteit"
-      },
-      "assignedTo": {
-        "label": "Toegewezen aan"
-      },
-      "measure": {
-        "label": "Maatregel"
-      },
-      "timeEstimate": {
-        "label": "Tijdsinschatting"
-      },
-      "deadline": {
-        "label": "Deadline"
-      }
-    },
-    "states": {
-      "todo": "Te doen",
-      "inProgress": "In uitvoering",
-      "done": "Voltooid",
-      "backlog": "Backlog",
-      "canceled": "Geannuleerd",
-      "duplicate": "Duplicaat"
-    },
-    "priorities": {
-      "urgent": "Urgent",
-      "high": "Hoog",
-      "medium": "Gemiddeld",
-      "low": "Laag"
-    },
-    "messages": {
-      "created": "Taak succesvol aangemaakt.",
-      "updated": "Taak succesvol bijgewerkt."
-    },
-    "errors": {
-      "create": "Aanmaken van taak mislukt",
-      "update": "Bijwerken van taak mislukt"
-    },
-    "actions": {
-      "create": "Taak aanmaken",
-      "update": "Taak bijwerken"
     }
   },
   "tasksCard": {

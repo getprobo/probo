@@ -1,0 +1,80 @@
+{
+  "detailsPage": {
+    "notFound": "Tâche introuvable",
+    "empty": "—",
+    "none": "Aucun",
+    "noDescription": "Aucune description",
+    "descriptionPlaceholder": "Ajouter une description",
+    "unassigned": "Non assigné",
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "state": "État",
+      "priority": "Priorité",
+      "assignedTo": "Assigné à",
+      "measure": "Mesure",
+      "timeEstimate": "Estimation de temps",
+      "timeEstimateUnit": "Unité d'estimation",
+      "deadline": "Échéance",
+      "createdAt": "Créé le",
+      "updatedAt": "Mis à jour le"
+    },
+    "duration": {
+      "S": "Secondes",
+      "M": "Minutes",
+      "H": "Heures",
+      "D": "Jours",
+      "W": "Semaines"
+    },
+    "states": {
+      "backlog": "Backlog",
+      "todo": "À faire",
+      "inProgress": "En cours",
+      "done": "Terminé",
+      "canceled": "Annulé",
+      "duplicate": "Doublon"
+    },
+    "priorities": {
+      "urgent": "Urgente",
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Basse"
+    },
+    "actions": {
+      "addEstimate": "Ajouter une estimation",
+      "clearEstimate": "Effacer l'estimation",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "more": "Plus d'actions"
+    },
+    "delete": {
+      "title": "Supprimer la tâche",
+      "description": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
+      "confirm": "Supprimer"
+    },
+    "messages": {
+      "updated": "Tâche mise à jour avec succès.",
+      "deleted": "Tâche supprimée avec succès."
+    },
+    "errors": {
+      "delete": "Échec de la suppression de la tâche",
+      "update": "Échec de la mise à jour de la tâche"
+    }
+  },
+  "createDialog": {
+    "title": "Nouvelle tâche",
+    "fields": {
+      "namePlaceholder": "Nom de la tâche"
+    },
+    "actions": {
+      "create": "Créer la tâche"
+    },
+    "messages": {
+      "created": "Tâche créée avec succès."
+    },
+    "errors": {
+      "create": "Échec de la création de la tâche",
+      "nameRequired": "Saisissez un nom de tâche"
+    }
+  }
+}

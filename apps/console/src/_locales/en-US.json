@@ -23,6 +23,8 @@
     "years_other": "years",
     "session": "session",
     "persistent": "persistent",
+    "sec_one": "{{count}} Second",
+    "sec_other": "{{count}} Seconds",
     "min_one": "{{count}} Minute",
     "min_other": "{{count}} Minutes",
     "hour_one": "{{count}} Hour",
@@ -752,25 +754,6 @@
   "graphQLCell": { "searchPlaceholder": "Search" },
   "sortableDataTable": {
     "actions": { "showMore": "Show more" }
-  },
-  "taskFormDialog": {
-    "breadcrumb": { "tasks": "Tasks", "edit": "Edit Task", "new": "New Task" },
-    "properties": "Properties",
-    "fields": {
-      "title": { "placeholder": "Task title" },
-      "description": { "placeholder": "Add description" },
-      "state": { "label": "State" },
-      "priority": { "label": "Priority" },
-      "assignedTo": { "label": "Assigned to" },
-      "measure": { "label": "Measure" },
-      "timeEstimate": { "label": "Time estimate" },
-      "deadline": { "label": "Deadline" }
-    },
-    "states": { "backlog": "Backlog", "todo": "To do", "inProgress": "In progress", "done": "Done", "canceled": "Canceled", "duplicate": "Duplicate" },
-    "priorities": { "urgent": "Urgent", "high": "High", "medium": "Medium", "low": "Low" },
-    "messages": { "created": "Task created successfully.", "updated": "Task updated successfully." },
-    "errors": { "create": "Failed to create task", "update": "Failed to update task" },
-    "actions": { "create": "Create task", "update": "Update task" }
   },
   "tasksCard": {
     "states": { "all": "All", "backlog": "Backlog", "todo": "To do", "inProgress": "In progress", "done": "Done", "canceled": "Canceled", "duplicate": "Duplicate" },

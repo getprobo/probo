@@ -23,6 +23,8 @@
     "years_other": "ans",
     "session": "session",
     "persistent": "persistant",
+    "sec_one": "{{count}} seconde",
+    "sec_other": "{{count}} secondes",
     "min_one": "{{count}} minute",
     "min_other": "{{count}} minutes",
     "hour_one": "{{count}} heure",
@@ -1259,66 +1261,6 @@
   "sortableDataTable": {
     "actions": {
       "showMore": "Afficher plus"
-    }
-  },
-  "taskFormDialog": {
-    "breadcrumb": {
-      "tasks": "Tâches",
-      "edit": "Modifier la tâche",
-      "new": "Nouvelle tâche"
-    },
-    "properties": "Propriétés",
-    "fields": {
-      "title": {
-        "placeholder": "Titre de la tâche"
-      },
-      "description": {
-        "placeholder": "Ajouter une description"
-      },
-      "state": {
-        "label": "État"
-      },
-      "priority": {
-        "label": "Priorité"
-      },
-      "assignedTo": {
-        "label": "Assigné à"
-      },
-      "measure": {
-        "label": "Mesure"
-      },
-      "timeEstimate": {
-        "label": "Estimation de temps"
-      },
-      "deadline": {
-        "label": "Échéance"
-      }
-    },
-    "states": {
-      "todo": "À faire",
-      "inProgress": "En cours",
-      "done": "Terminé",
-      "backlog": "Backlog",
-      "canceled": "Annulé",
-      "duplicate": "Doublon"
-    },
-    "priorities": {
-      "urgent": "Urgente",
-      "high": "Haute",
-      "medium": "Moyenne",
-      "low": "Basse"
-    },
-    "messages": {
-      "created": "Tâche créée avec succès.",
-      "updated": "Tâche mise à jour avec succès."
-    },
-    "errors": {
-      "create": "Échec de la création de la tâche",
-      "update": "Échec de la mise à jour de la tâche"
-    },
-    "actions": {
-      "create": "Créer la tâche",
-      "update": "Mettre à jour la tâche"
     }
   },
   "tasksCard": {
