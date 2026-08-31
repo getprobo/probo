@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Fixed
+
+- User `List` no longer sends empty or unknown `States` / `Role` / `Type`
+  values. n8n 2.x can yield `[""]` from an untouched multi-select, which the
+  API rejects with HTTP 422 and blocked workflows that list users to send
+  policies to new employees
+
 ## [0.223.0] - 2026-08-27
 
 ### Added

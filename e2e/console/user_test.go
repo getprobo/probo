@@ -1031,3 +1031,151 @@ func TestUser_List(t *testing.T) {
 
 	assert.GreaterOrEqual(t, result.Node.Profiles.TotalCount, 3, "Should have at least 3 members")
 }
+
+// n8nListUsersQuery is the GraphQL document sent by the n8n User → List
+// operation. Keep it in lockstep with
+// packages/n8n-node/nodes/Probo/actions/user/listUsers.operation.ts.
+const n8nListUsersQuery = `
+	query ListUsers($organizationId: ID!, $first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFilter) {
+		node(id: $organizationId) {
+			... on Organization {
+				profiles(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+					edges {
+						node {
+							id
+							fullName
+							emailAddress
+							source
+							state
+							additionalEmailAddresses
+							kind
+							position
+							contract {
+								start
+								end
+							}
+							createdAt
+							updatedAt
+							organization { id name }
+							membership { id role createdAt }
+						}
+					}
+					pageInfo {
+						hasNextPage
+						endCursor
+					}
+				}
+			}
+		}
+	}
+`
+
+type n8nListUsersResult struct {
+	Node struct {
+		Profiles struct {
+			Edges []struct {
+				Node struct {
+					ID           string  `json:"id"`
+					FullName     string  `json:"fullName"`
+					EmailAddress string  `json:"emailAddress"`
+					Source       string  `json:"source"`
+					State        string  `json:"state"`
+					Kind         *string `json:"kind"`
+					Organization struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+					} `json:"organization"`
+					Membership struct {
+						ID   string `json:"id"`
+						Role string `json:"role"`
+					} `json:"membership"`
+				} `json:"node"`
+			} `json:"edges"`
+			PageInfo struct {
+				HasNextPage bool    `json:"hasNextPage"`
+				EndCursor   *string `json:"endCursor"`
+			} `json:"pageInfo"`
+		} `json:"profiles"`
+	} `json:"node"`
+}
+
+// TestUser_List_N8nNodeQuery is a non-regression test for ENG-798: the n8n
+// User → List operation failed with HTTP 422 after ProfileFilter.states became
+// a multi-value enum. An empty States control in n8n 2.x can yield [""], which
+// GraphQL rejects. The node must omit that filter; the query itself must stay
+// valid against the Connect schema, including Period contract fields.
+func TestUser_List_N8nNodeQuery(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+
+	t.Run("lists users with the n8n selection set", func(t *testing.T) {
+		t.Parallel()
+
+		var result n8nListUsersResult
+		err := owner.ExecuteConnect(
+			n8nListUsersQuery,
+			map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"first":          100,
+			},
+			&result,
+		)
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(result.Node.Profiles.Edges), 2)
+
+		foundOwner := false
+		for _, edge := range result.Node.Profiles.Edges {
+			assert.NotEmpty(t, edge.Node.ID)
+			assert.NotEmpty(t, edge.Node.FullName)
+			assert.NotEmpty(t, edge.Node.EmailAddress)
+			assert.NotEmpty(t, edge.Node.Source)
+			assert.NotEmpty(t, edge.Node.State)
+			assert.Equal(t, owner.GetOrganizationID().String(), edge.Node.Organization.ID)
+			assert.NotEmpty(t, edge.Node.Membership.Role)
+			if edge.Node.Membership.Role == "OWNER" {
+				foundOwner = true
+			}
+		}
+		assert.True(t, foundOwner, "expected the creating owner in the n8n list payload")
+	})
+
+	t.Run("rejects an empty string in states", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.DoConnect(
+			n8nListUsersQuery,
+			map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"first":          100,
+				"filter": map[string]any{
+					"states": []string{""},
+				},
+			},
+		)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "ProfileState")
+	})
+
+	t.Run("filters by a valid state", func(t *testing.T) {
+		t.Parallel()
+
+		var result n8nListUsersResult
+		err := owner.ExecuteConnect(
+			n8nListUsersQuery,
+			map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"first":          100,
+				"filter": map[string]any{
+					"states": []string{"ACTIVE"},
+				},
+			},
+			&result,
+		)
+		require.NoError(t, err)
+		require.NotEmpty(t, result.Node.Profiles.Edges)
+		for _, edge := range result.Node.Profiles.Edges {
+			assert.Equal(t, "ACTIVE", edge.Node.State)
+		}
+	})
+}

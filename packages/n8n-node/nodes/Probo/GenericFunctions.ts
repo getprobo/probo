@@ -30,6 +30,72 @@ import { NodeApiError } from 'n8n-workflow';
 
 import { version } from '../../package.json';
 
+function graphqlErrorMessages(errors: IDataObject[]): string {
+	return errors
+		.map((err) => (typeof err.message === 'string' && err.message) || JSON.stringify(err))
+		.join('; ');
+}
+
+function graphqlErrorsFromUnknown(
+	value: unknown,
+	seen: Set<unknown> = new Set(),
+): IDataObject[] | undefined {
+	if (!value || typeof value !== 'object' || seen.has(value)) {
+		return undefined;
+	}
+
+	seen.add(value);
+
+	const record = value as IDataObject;
+	if (Array.isArray(record.errors)) {
+		return record.errors as IDataObject[];
+	}
+
+	for (const key of ['data', 'body', 'response', 'error', 'cause'] as const) {
+		const nested = graphqlErrorsFromUnknown(record[key], seen);
+		if (nested) {
+			return nested;
+		}
+	}
+
+	return undefined;
+}
+
+function graphqlErrorMessagesFromHttpError(error: unknown): string | undefined {
+	const errors = graphqlErrorsFromUnknown(error);
+	if (!errors || errors.length === 0) {
+		return undefined;
+	}
+
+	return graphqlErrorMessages(errors);
+}
+
+function httpCodeFromError(error: unknown): string | undefined {
+	if (!error || typeof error !== 'object') {
+		return undefined;
+	}
+
+	const record = error as IDataObject;
+	if (typeof record.httpCode === 'string' || typeof record.httpCode === 'number') {
+		return String(record.httpCode);
+	}
+
+	if (typeof record.status === 'number' || typeof record.status === 'string') {
+		return String(record.status);
+	}
+
+	const response = record.response as IDataObject | undefined;
+	if (typeof response?.status === 'number' || typeof response?.status === 'string') {
+		return String(response.status);
+	}
+
+	if (typeof response?.statusCode === 'number' || typeof response?.statusCode === 'string') {
+		return String(response.statusCode);
+	}
+
+	return undefined;
+}
+
 type ApiRequestFn = (
 	this: IExecuteFunctions | IHookFunctions,
 	query: string,
@@ -69,17 +135,22 @@ async function proboGraphqlRequest(
 		);
 
 		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
-			const errorMessages = response.errors.map((err: IDataObject) =>
-				err.message || JSON.stringify(err)
-			).join('; ');
 			throw new NodeApiError(this.getNode(), {
-				message: `GraphQL errors: ${errorMessages}`,
+				message: `GraphQL errors: ${graphqlErrorMessages(response.errors)}`,
 				httpCode: '200',
 			} as JsonObject);
 		}
 
 		return response;
 	} catch (error) {
+		const graphqlMessage = graphqlErrorMessagesFromHttpError(error);
+		if (graphqlMessage) {
+			throw new NodeApiError(this.getNode(), {
+				message: `GraphQL errors: ${graphqlMessage}`,
+				httpCode: httpCodeFromError(error) ?? '422',
+			} as JsonObject);
+		}
+
 		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }
@@ -250,17 +321,22 @@ export async function proboApiMultipartRequest(
 		);
 
 		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
-			const errorMessages = response.errors.map((err: IDataObject) =>
-				err.message || JSON.stringify(err)
-			).join('; ');
 			throw new NodeApiError(this.getNode(), {
-				message: `GraphQL errors: ${errorMessages}`,
+				message: `GraphQL errors: ${graphqlErrorMessages(response.errors)}`,
 				httpCode: '200',
 			} as JsonObject);
 		}
 
 		return response;
 	} catch (error) {
+		const graphqlMessage = graphqlErrorMessagesFromHttpError(error);
+		if (graphqlMessage) {
+			throw new NodeApiError(this.getNode(), {
+				message: `GraphQL errors: ${graphqlMessage}`,
+				httpCode: httpCodeFromError(error) ?? '422',
+			} as JsonObject);
+		}
+
 		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }

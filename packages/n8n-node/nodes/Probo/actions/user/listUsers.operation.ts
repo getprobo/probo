@@ -26,6 +26,34 @@ import type {
 } from 'n8n-workflow';
 import { proboConnectApiRequestAllItems } from '../../GenericFunctions';
 
+const profileStates = new Set(['ACTIVE', 'DEACTIVATED', 'PENDING']);
+const membershipRoles = new Set([
+	'ADMIN',
+	'AUDITOR',
+	'COMPLIANCE_PORTAL_ACCESS_MANAGER',
+	'COMPLIANCE_PORTAL_MANAGER',
+	'EMPLOYEE',
+	'OWNER',
+	'VIEWER',
+]);
+const profileKinds = new Set(['CONTRACTOR', 'EMPLOYEE', 'SERVICE_ACCOUNT']);
+
+function stringList(value: unknown): string[] {
+	if (Array.isArray(value)) {
+		return value.filter((item): item is string => typeof item === 'string');
+	}
+
+	if (typeof value === 'string' && value !== '') {
+		return [value];
+	}
+
+	return [];
+}
+
+function allowedValues(value: unknown, allowed: Set<string>): string[] {
+	return stringList(value).filter((item) => allowed.has(item));
+}
+
 export const description: INodeProperties[] = [
 	{
 		displayName: 'Organization ID',
@@ -154,9 +182,9 @@ export async function execute(
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const query = this.getNodeParameter('query', itemIndex, '') as string;
-	const state = this.getNodeParameter('state', itemIndex, []) as string[];
-	const role = this.getNodeParameter('role', itemIndex, '') as string;
-	const kind = this.getNodeParameter('kind', itemIndex, '') as string;
+	const states = allowedValues(this.getNodeParameter('state', itemIndex, []), profileStates);
+	const [role] = allowedValues(this.getNodeParameter('role', itemIndex, ''), membershipRoles);
+	const [kind] = allowedValues(this.getNodeParameter('kind', itemIndex, ''), profileKinds);
 
 	const gqlQuery = `
 		query ListUsers($organizationId: ID!, $first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFilter) {
@@ -197,8 +225,8 @@ export async function execute(
 	if (query) {
 		filter.query = query;
 	}
-	if (state.length > 0) {
-		filter.states = state;
+	if (states.length > 0) {
+		filter.states = states;
 	}
 	if (role) {
 		filter.role = role;
