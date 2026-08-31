@@ -4,6 +4,16 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.221.0] - 2026-08-31
+
+### Added
+
+- `risk-analysis fork <id>` copies a risk analysis's diagrams, treatment plans, and their relations into a new analysis for a later period
+
+### Changed
+
+- `access-review source create` reports when the source already exists for the connector instead of always claiming a fresh creation
+
 ## [0.220.0] - 2026-08-26
 
 ### Added
