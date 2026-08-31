@@ -38,6 +38,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/esign"
@@ -3165,6 +3166,7 @@ func (s *DocumentService) GenerateDocumentExportDownloadURL(
 			ResponseContentType:        new(file.MimeType),
 			ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
 		},
+		awsconfig.UnsignedChecksumMode,
 		func(opts *s3.PresignOptions) {
 			opts.Expires = documentExportEmailExpiresIn
 		},
