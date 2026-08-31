@@ -1113,6 +1113,7 @@ func TestUser_List_N8nNodeQuery(t *testing.T) {
 		t.Parallel()
 
 		var result n8nListUsersResult
+
 		err := owner.ExecuteConnect(
 			n8nListUsersQuery,
 			map[string]any{
@@ -1125,6 +1126,7 @@ func TestUser_List_N8nNodeQuery(t *testing.T) {
 		require.GreaterOrEqual(t, len(result.Node.Profiles.Edges), 2)
 
 		foundOwner := false
+
 		for _, edge := range result.Node.Profiles.Edges {
 			assert.NotEmpty(t, edge.Node.ID)
 			assert.NotEmpty(t, edge.Node.FullName)
@@ -1133,10 +1135,12 @@ func TestUser_List_N8nNodeQuery(t *testing.T) {
 			assert.NotEmpty(t, edge.Node.State)
 			assert.Equal(t, owner.GetOrganizationID().String(), edge.Node.Organization.ID)
 			assert.NotEmpty(t, edge.Node.Membership.Role)
+
 			if edge.Node.Membership.Role == "OWNER" {
 				foundOwner = true
 			}
 		}
+
 		assert.True(t, foundOwner, "expected the creating owner in the n8n list payload")
 	})
 
@@ -1161,6 +1165,7 @@ func TestUser_List_N8nNodeQuery(t *testing.T) {
 		t.Parallel()
 
 		var result n8nListUsersResult
+
 		err := owner.ExecuteConnect(
 			n8nListUsersQuery,
 			map[string]any{
@@ -1174,6 +1179,7 @@ func TestUser_List_N8nNodeQuery(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.NotEmpty(t, result.Node.Profiles.Edges)
+
 		for _, edge := range result.Node.Profiles.Edges {
 			assert.Equal(t, "ACTIVE", edge.Node.State)
 		}

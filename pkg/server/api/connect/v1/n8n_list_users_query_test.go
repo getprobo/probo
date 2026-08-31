@@ -97,6 +97,6 @@ func TestN8nListUsersQuery_ValidatesAgainstConnectSchema(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	errs := validator.Validate(schema, query)
+	errs := validator.ValidateWithRules(schema, query, nil)
 	assert.Empty(t, errs, errs.Error())
 }
