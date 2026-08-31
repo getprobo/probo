@@ -22,6 +22,7 @@ package connect_v1_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,16 +73,24 @@ const n8nListUsersQuery = `
 func TestN8nListUsersQuery_ValidatesAgainstConnectSchema(t *testing.T) {
 	t.Parallel()
 
-	sources := []string{
-		"schema.graphql",
+	// schema.graphql is a generated merge (gitignored). Load the same
+	// committed sources gqlgen.yaml uses so CI can run this without Relay.
+	sources, err := filepath.Glob("graphql/*.graphql")
+	require.NoError(t, err)
+	require.NotEmpty(t, sources)
+
+	sources = append(
+		sources,
 		"../../../gqlutils/directives/authentication/schema.graphql",
 		"../../../gqlutils/directives/session/schema.graphql",
-	}
+	)
 
 	astSources := make([]*ast.Source, 0, len(sources))
+
 	for _, path := range sources {
 		schemaSource, err := os.ReadFile(path)
 		require.NoError(t, err, "read %s", path)
+
 		astSources = append(astSources, &ast.Source{
 			Name:  path,
 			Input: string(schemaSource),
