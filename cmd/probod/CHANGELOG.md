@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.271.1] - 2026-08-31
+
+### Fixed
+
+- Presigned S3 download URLs (documents, framework exports, third-party agreements) no longer fail with a signature mismatch, caused by a checksum-validation header the SDK signed into the URL but that downloading clients never send back
+
 ## [0.271.0] - 2026-08-28
 
 ### Added
