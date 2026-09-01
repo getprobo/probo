@@ -43,7 +43,7 @@ import (
 func awsRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderAWS,
-		DisplayName: "AWS",
+		DisplayName: "Amazon Web Services",
 		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{

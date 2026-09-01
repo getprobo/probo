@@ -94,7 +94,7 @@ func TestAWSRegistration(t *testing.T) {
 	reg, ok := r.Get(coredata.ConnectorProviderAWS)
 	require.True(t, ok)
 
-	assert.Equal(t, "AWS", reg.DisplayName)
+	assert.Equal(t, "Amazon Web Services", reg.DisplayName)
 	assert.True(t, reg.SupportsWorkloadIdentity())
 	assert.False(t, reg.SupportsAPIKey())
 	assert.False(t, reg.IsManagedAPIKey())
