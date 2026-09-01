@@ -41,6 +41,8 @@ export interface DocumentListSectionProps {
   hasNext: boolean;
   // Dims the list frame while a page change is pending.
   busy?: boolean;
+  // Hidden Status column header; set when rows pass a badge.
+  statusColumn?: boolean;
   previousLabel: string;
   nextLabel: string;
   children: ReactNode;
@@ -56,6 +58,7 @@ export function DocumentListSection({
   hasPrevious,
   hasNext,
   busy = false,
+  statusColumn = false,
   previousLabel,
   nextLabel,
   children,
@@ -81,6 +84,25 @@ export function DocumentListSection({
                     <TableRow>
                       <TableColumnHeaderCell>
                         {t("documents.columns.title")}
+                      </TableColumnHeaderCell>
+                      <TableColumnHeaderCell>
+                        {t("documents.lastUpdated")}
+                      </TableColumnHeaderCell>
+                      <TableColumnHeaderCell>
+                        {t("documents.columns.classification")}
+                      </TableColumnHeaderCell>
+                      <TableColumnHeaderCell>
+                        {t("documents.columns.type")}
+                      </TableColumnHeaderCell>
+                      {statusColumn
+                        ? (
+                            <TableColumnHeaderCell>
+                              {t("documents.columns.status")}
+                            </TableColumnHeaderCell>
+                          )
+                        : null}
+                      <TableColumnHeaderCell>
+                        {t("documents.columns.action")}
                       </TableColumnHeaderCell>
                     </TableRow>
                   </TableHeader>

@@ -20,14 +20,15 @@
 
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { parseDate } from "@probo/helpers";
-import { button } from "@probo/ui/src/v2/Button/variants";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableLink } from "@probo/ui/src/v2/Table/TableLink";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { Link } from "react-router";
 
 import type { EmployeeDocumentListItem_document$key } from "#/__generated__/core/EmployeeDocumentListItem_document.graphql";
 
@@ -67,54 +68,66 @@ export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
   const updatedAt = new Intl.DateTimeFormat(i18n.language, {
     dateStyle: "medium",
   }).format(parseDate(document.updatedAt));
+  const title = (
+    <Text size={2} weight="medium" highContrast className={slots.title()}>
+      {document.title}
+    </Text>
+  );
 
   return (
-    <TableRow align="center">
-      <TableCell className={slots.cell()} style={{ padding: 0 }}>
-        <Link to={to} className={slots.link()}>
-          <Text size={2} weight="medium" highContrast className={slots.title()}>
-            {document.title}
+    <TableRow align="center" interactive={trailing === "chevron"}>
+      <TableRowHeaderCell className={slots.titleCell()}>
+        {trailing === "chevron" ? <TableLink to={to}>{title}</TableLink> : title}
+      </TableRowHeaderCell>
+      <TableCell className={slots.metaCell()}>
+        <span className={slots.timestamp()}>
+          <Text size={1} color="current" className={slots.timestampLabel()}>
+            {t("documents.lastUpdated")}
           </Text>
-          <div className={slots.meta()}>
-            <span className={slots.timestamp()}>
-              <Text size={1} color="current" className={slots.timestampLabel()}>
-                {t("documents.lastUpdated")}
+          <Text size={1} color="current" className={slots.timestampValue()}>
+            {updatedAt}
+          </Text>
+        </span>
+      </TableCell>
+      <TableCell className={slots.metaCell()}>
+        {lastVersion == null
+          ? null
+          : (
+              <Text size={1} color="current" className={slots.chip()}>
+                {t(`documents.classifications.${lastVersion.classification.toLowerCase()}`)}
               </Text>
-              <Text size={1} color="current" className={slots.timestampValue()}>
-                {updatedAt}
+            )}
+      </TableCell>
+      <TableCell className={slots.metaCell()}>
+        {lastVersion == null
+          ? null
+          : (
+              <Text size={1} color="current" className={slots.chip()}>
+                {t(`documents.types.${lastVersion.documentType.toLowerCase()}`)}
               </Text>
-            </span>
-            {lastVersion == null
-              ? null
-              : (
-                  <Text size={1} color="current" className={slots.chip()}>
-                    {t(`documents.classifications.${lastVersion.classification.toLowerCase()}`)}
-                  </Text>
-                )}
-            {lastVersion == null
-              ? null
-              : (
-                  <Text size={1} color="current" className={slots.chip()}>
-                    {t(`documents.types.${lastVersion.documentType.toLowerCase()}`)}
-                  </Text>
-                )}
-            {badge === undefined ? null : badge}
-            {trailing === "action"
-              ? (
-                  <span
-                    className={button({
-                      size: 2,
-                      variant: "soft",
-                      color: "neutral",
-                      highContrast: true,
-                    })}
-                  >
-                    {props.actionLabel}
-                  </span>
-                )
-              : <CaretRightIcon className={slots.chevron()} />}
-          </div>
-        </Link>
+            )}
+      </TableCell>
+      {badge === undefined
+        ? null
+        : (
+            <TableCell className={slots.metaCell()}>
+              {badge}
+            </TableCell>
+          )}
+      <TableCell className={slots.trailingCell()}>
+        {trailing === "action"
+          ? (
+              <ButtonLink
+                to={to}
+                size={2}
+                variant="soft"
+                color="neutral"
+                highContrast
+              >
+                {props.actionLabel}
+              </ButtonLink>
+            )
+          : <CaretRightIcon className={slots.chevron()} />}
       </TableCell>
     </TableRow>
   );

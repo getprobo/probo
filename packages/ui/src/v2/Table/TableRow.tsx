@@ -23,12 +23,14 @@ import type { VariantProps } from "tailwind-variants/lite";
 
 import { table } from "./variants";
 
-export type TableRowProps = ComponentProps<"tr"> & Pick<VariantProps<typeof table>, "align">;
+export type TableRowProps = ComponentProps<"tr">
+  & Pick<VariantProps<typeof table>, "align" | "interactive">;
 
-// One row of cells (Radix "Table.Row"). Renders a <tr>.
+// One row of cells (Radix "Table.Row"). Renders a <tr>. Set `interactive`
+// when a TableLink in the row should stretch across padding and sibling cells.
 export function TableRow(props: TableRowProps) {
-  const { align, className, ...rest } = props;
-  const { row } = table({ align });
+  const { align, interactive, className, ...rest } = props;
+  const { row } = table({ align, interactive });
 
   return <tr className={row({ className })} {...rest} />;
 }

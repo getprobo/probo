@@ -19,33 +19,18 @@
 // SOFTWARE.
 
 import type { ComponentProps } from "react";
-import type { VariantProps } from "tailwind-variants/lite";
+import { Link as RouterLink } from "react-router";
 
-import { cellStyle } from "./cellStyle";
-import { useTableContext } from "./context";
-import { table } from "./variants";
+import { tableLink } from "./variants";
 
-export type TableRowHeaderCellProps
-  = Omit<ComponentProps<"th">, "width">
-    & Pick<VariantProps<typeof table>, "justify" | "interactive">
-    & {
-      width?: string;
-      minWidth?: string;
-      maxWidth?: string;
-    };
+export type TableLinkProps = ComponentProps<typeof RouterLink>;
 
-// Row heading cell (Radix "Table.RowHeaderCell"). Renders a <th scope="row">.
-export function TableRowHeaderCell(props: TableRowHeaderCellProps) {
-  const { justify, width, minWidth, maxWidth, interactive, className, style, ...rest } = props;
-  const size = useTableContext();
-  const { cell, rowHeader } = table({ size, justify, interactive });
+// In-app navigation that stretches across an interactive TableRow. Renders a
+// react-router Link whose ::after covers the row (padding and sibling cells).
+// Pair with TableRow interactive. For underlined text use Link; for
+// button-looking navigation use ButtonLink. See contrib/claude/ui.md.
+export function TableLink(props: TableLinkProps) {
+  const { className, ...rest } = props;
 
-  return (
-    <th
-      scope="row"
-      className={rowHeader({ className: cell({ className }) })}
-      style={cellStyle(width, minWidth, maxWidth, style)}
-      {...rest}
-    />
-  );
+  return <RouterLink className={tableLink({ className })} {...rest} />;
 }

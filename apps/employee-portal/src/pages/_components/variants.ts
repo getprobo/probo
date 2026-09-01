@@ -130,15 +130,14 @@ export const documentQueueSummary = tv({
 export const employeeDocumentListItem = tv({
   slots: {
     // Size 2 cells are h-11 px-3; Figma rows are h-12 with px-8 on the ends.
-    // One cell + an inner Link so padding and meta are the same hit target.
-    cell: "h-12 p-0",
-    link: "flex h-full min-w-0 items-center gap-8 px-8 outline-none focus-visible:bg-sand-2",
-    title: "min-w-0 flex-1 truncate",
-    meta: "flex shrink-0 items-center gap-4",
+    titleCell: "h-12 w-full max-w-0 py-0 pl-8",
+    title: "relative z-1 block min-w-0 truncate",
+    metaCell: "h-12 whitespace-nowrap py-0",
     timestamp: "flex items-center gap-0.75",
     timestampLabel: "text-sand-a8",
     timestampValue: "text-sand-a11",
     chip: "text-sand-a11",
+    trailingCell: "h-12 whitespace-nowrap py-0 pr-8",
     chevron: "size-4 text-sand-11",
   },
 });
