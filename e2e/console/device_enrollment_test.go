@@ -315,6 +315,7 @@ func connectEnrollPermission(t *testing.T, client *testutil.Client, organization
 			} `json:"profiles"`
 		} `json:"viewer"`
 	}
+
 	err := client.ExecuteConnect(connectEnrollPermissionQuery, nil, &result)
 	require.NoError(t, err)
 
@@ -325,6 +326,7 @@ func connectEnrollPermission(t *testing.T, client *testutil.Client, organization
 	}
 
 	require.Fail(t, "organization not in unassumed connect profiles")
+
 	return false
 }
 
