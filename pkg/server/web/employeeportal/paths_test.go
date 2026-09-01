@@ -73,8 +73,8 @@ func TestLegacyRedirectPath(t *testing.T) {
 		{name: "approval document", path: "/organizations/org_123/employee/approvals/doc_456", want: "/employee-portal/org_123/approvals/doc_456", wantOK: true},
 		{name: "devices", path: "/organizations/org_123/employee/devices", want: "/employee-portal/org_123/devices", wantOK: true},
 		{name: "legacy document alias", path: "/organizations/org_123/employee/doc_456", want: "/employee-portal/org_123/signatures/doc_456", wantOK: true},
-		{name: "bind stays on console", path: "/organizations/org_123/employee/bind", wantOK: false},
-		{name: "bindings stays on console", path: "/organizations/org_123/employee/bindings", wantOK: false},
+		{name: "bind", path: "/organizations/org_123/employee/bind", want: "/employee-portal/org_123/bind", wantOK: true},
+		{name: "bindings", path: "/organizations/org_123/employee/bindings", want: "/employee-portal/org_123/bindings", wantOK: true},
 		{name: "unrelated path", path: "/organizations/org_123/governance/tasks", wantOK: false},
 	}
 
@@ -134,7 +134,7 @@ func TestLegacyRedirectMiddleware(t *testing.T) {
 	)
 
 	t.Run(
-		"falls through for bind",
+		"preserves token query on bind",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -147,8 +147,8 @@ func TestLegacyRedirectMiddleware(t *testing.T) {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
 
-			assert.Equal(t, http.StatusNoContent, rec.Code)
-			assert.Empty(t, rec.Header().Get("Location"))
+			assert.Equal(t, http.StatusFound, rec.Code)
+			assert.Equal(t, "/employee-portal/org_123/bind?token=abc", rec.Header().Get("Location"))
 		},
 	)
 }

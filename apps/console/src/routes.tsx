@@ -21,7 +21,7 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
-import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
+import { CenteredLayout } from "@probo/ui";
 import { Fragment, use } from "react";
 import { createBrowserRouter, Navigate, redirect } from "react-router";
 
@@ -187,14 +187,6 @@ const routes = [
         Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
       },
       {
-        path: "employee/bind",
-        ErrorBoundary: OrganizationErrorBoundary,
-        Fallback: CenteredLayoutSkeleton,
-        Component: lazy(
-          () => import("./pages/organizations/employee/EmployeeBindPageLoader"),
-        ),
-      },
-      {
         path: "employee",
         ErrorBoundary: OrganizationErrorBoundary,
         Component: lazy(
@@ -234,13 +226,6 @@ const routes = [
                 Component: lazy(
                   () =>
                     import("./pages/organizations/employee/EmployeeDevicesPageLoader"),
-                ),
-              },
-              {
-                path: "bindings",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeBindingsPageLoader"),
                 ),
               },
             ],

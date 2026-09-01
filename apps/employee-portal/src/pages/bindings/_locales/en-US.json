@@ -1,0 +1,57 @@
+{
+  "bind": {
+    "title": "Connect Slack to Probo",
+    "description": "Link this Slack account to your Probo identity so Probot can help you.",
+    "breadcrumb": "Connect",
+    "fields": {
+      "tenant": "Workspace",
+      "account": "Account"
+    },
+    "actions": {
+      "confirm": "Link Slack account"
+    },
+    "messages": {
+      "linked": "Your Slack account is now linked to Probo."
+    },
+    "missingToken": {
+      "title": "No confirmation link",
+      "description": "Run /probot login in Slack to get a private confirmation link."
+    },
+    "errors": {
+      "linkFailed": "Link failed",
+      "invalidOrExpiredTokenTitle": "This link has expired",
+      "invalidOrExpiredToken": "Ask the bot for a new private confirmation link."
+    }
+  },
+  "list": {
+    "title": "Slack",
+    "breadcrumb": "Slack",
+    "description": "Link your Slack account so Probot can help you from this organization.",
+    "connectedDescription": "{{account}} · {{workspace}}",
+    "providers": {
+      "slack": "Slack"
+    },
+    "columns": {
+      "account": "Account",
+      "action": "Action"
+    },
+    "actions": {
+      "unlink": "Unlink",
+      "cancel": "Cancel"
+    },
+    "empty": {
+      "title": "No Slack account linked",
+      "description": "Run <cmd>/probot login</cmd> in Slack to get a private confirmation link."
+    },
+    "messages": {
+      "unlinked": "Slack account unlinked."
+    },
+    "errors": {
+      "unlinkFailed": "Could not unlink this account."
+    },
+    "confirmations": {
+      "unlinkTitle": "Unlink Slack account",
+      "unlink": "Unlink this Slack account? Probot will not be able to help you until you link again."
+    }
+  }
+}

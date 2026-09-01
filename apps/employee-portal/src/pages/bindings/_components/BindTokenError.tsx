@@ -18,37 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { ErrorState } from "@probo/ui/src/v2/ErrorState/ErrorState";
+import { useTranslation } from "react-i18next";
 
-import type { EmployeeBindingsPageQuery } from "#/__generated__/core/EmployeeBindingsPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-
-import {
-  EmployeeBindingsPage,
-  employeeBindingsPageQuery,
-} from "./EmployeeBindingsPage";
-
-function EmployeeBindingsPageQueryLoader() {
-  const [queryRef, loadQuery] = useQueryLoader<EmployeeBindingsPageQuery>(
-    employeeBindingsPageQuery,
-  );
-
-  useEffect(() => {
-    loadQuery({});
-  }, [loadQuery]);
-
-  if (!queryRef) {
-    return <PageSkeleton />;
-  }
-
-  return <EmployeeBindingsPage queryRef={queryRef} />;
+export interface BindTokenErrorProps {
+  reason: "missing" | "invalid";
 }
 
-export default function EmployeeBindingsPageLoader() {
+export function BindTokenError({ reason }: BindTokenErrorProps) {
+  const { t } = useTranslation("bindings");
+
+  if (reason === "missing") {
+    return (
+      <ErrorState
+        title={t("bind.missingToken.title")}
+        description={t("bind.missingToken.description")}
+      />
+    );
+  }
+
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <EmployeeBindingsPageQueryLoader />
-    </Suspense>
+    <ErrorState
+      title={t("bind.errors.invalidOrExpiredTokenTitle")}
+      description={t("bind.errors.invalidOrExpiredToken")}
+    />
   );
 }

@@ -47,7 +47,7 @@ func OrganizationPath(organizationID string, segments ...string) (string, error)
 
 // LegacyRedirectPath maps a console employee request path to the
 // employee-portal destination. ok is false when the request should stay on
-// console: Slack bind/bindings.
+// console.
 func LegacyRedirectPath(requestPath string) (string, bool) {
 	path := strings.TrimSuffix(requestPath, "/")
 
@@ -73,10 +73,8 @@ func LegacyRedirectPath(requestPath string) (string, bool) {
 		return organizationPathOK(organizationID)
 	case len(rest) == 1:
 		switch rest[0] {
-		case "signatures", "approvals", "devices":
+		case "signatures", "approvals", "devices", "bind", "bindings":
 			return organizationPathOK(organizationID, rest[0])
-		case "bind", "bindings":
-			return "", false
 		default:
 			return organizationPathOK(organizationID, "signatures", rest[0])
 		}

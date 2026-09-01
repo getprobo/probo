@@ -73,6 +73,12 @@
         "description": "Beheer uw werkapparaten.",
         "connected": "Apparaat verbonden",
         "action": "Apparaat registreren"
+      },
+      "slack": {
+        "title": "Slack",
+        "description": "Koppel uw Slack-account zodat Probot u kan helpen.",
+        "connected": "Slack gekoppeld",
+        "hint": "Voer <cmd>/probot login</cmd> uit in Slack"
       }
     }
   },

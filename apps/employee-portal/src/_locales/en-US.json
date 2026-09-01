@@ -73,6 +73,12 @@
         "description": "Manage your work devices.",
         "connected": "Device connected",
         "action": "Register a device"
+      },
+      "slack": {
+        "title": "Slack",
+        "description": "Link your Slack account so Probot can help you.",
+        "connected": "Slack connected",
+        "hint": "Run <cmd>/probot login</cmd> in Slack"
       }
     }
   },

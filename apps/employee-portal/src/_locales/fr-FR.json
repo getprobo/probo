@@ -73,6 +73,12 @@
         "description": "Gérez vos appareils professionnels.",
         "connected": "Appareil connecté",
         "action": "Inscrire un appareil"
+      },
+      "slack": {
+        "title": "Slack",
+        "description": "Liez votre compte Slack pour que Probot puisse vous aider.",
+        "connected": "Slack connecté",
+        "hint": "Exécutez <cmd>/probot login</cmd> dans Slack"
       }
     }
   },

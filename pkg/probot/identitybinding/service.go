@@ -193,9 +193,8 @@ func (s *Service) BindURL(
 	}
 
 	bindPath, err := url.JoinPath(
-		"/organizations",
+		"/employee-portal",
 		url.PathEscape(organizationID.String()),
-		"employee",
 		"bind",
 	)
 	if err != nil {

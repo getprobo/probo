@@ -29,6 +29,7 @@ import { ApprovalDashboardCard } from "#/pages/_components/ApprovalDashboardCard
 import { DeviceCard } from "#/pages/_components/DeviceCard";
 import { GetStartedCard } from "#/pages/_components/GetStartedCard";
 import { SignatureDashboardCard } from "#/pages/_components/SignatureDashboardCard";
+import { SlackCard } from "#/pages/_components/SlackCard";
 import { useViewerFirstName } from "#/pages/iam/_lib/ViewerIdentityContext";
 
 export const homePageQuery = graphql`
@@ -64,11 +65,13 @@ export const homePageQuery = graphql`
       ...SignatureDashboardCard_viewer @arguments(organizationId: $organizationId)
       ...ApprovalDashboardCard_viewer @arguments(organizationId: $organizationId)
       ...DeviceCard_viewer @arguments(organizationId: $organizationId)
+      ...SlackCard_viewer
     }
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
         ...DeviceCard_organization
+        ...SlackCard_organization
       }
     }
   }
@@ -124,6 +127,10 @@ export function HomePage({ queryRef }: HomePageProps) {
           wash={!showGetStarted && viewer.pendingApprovals.totalCount > 0}
         />
         <DeviceCard
+          viewerKey={viewer}
+          organizationKey={organization}
+        />
+        <SlackCard
           viewerKey={viewer}
           organizationKey={organization}
         />

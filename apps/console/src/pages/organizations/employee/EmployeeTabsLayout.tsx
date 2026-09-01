@@ -34,9 +34,7 @@ export const employeeTabsLayoutQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        slackbotInstallation {
-          active
-        }
+        id
       }
     }
   }
@@ -57,8 +55,6 @@ export function EmployeeTabsLayout({ queryRef }: EmployeeTabsLayoutProps) {
     throw new Error("Relay node is not an organization");
   }
 
-  const showSlackTab = data.organization.slackbotInstallation?.active === true;
-
   return (
     <div className="space-y-6">
       <PageHeader title={t("employeeTabsLayout.title")} />
@@ -72,11 +68,6 @@ export function EmployeeTabsLayout({ queryRef }: EmployeeTabsLayoutProps) {
         <TabLink to="devices" end>
           {t("devices.title")}
         </TabLink>
-        {showSlackTab && (
-          <TabLink to="bindings" end>
-            {t("employeeTabsLayout.tabs.bindings", { defaultValue: "Slack" })}
-          </TabLink>
-        )}
       </Tabs>
       <Outlet />
     </div>

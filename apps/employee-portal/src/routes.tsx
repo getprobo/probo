@@ -25,6 +25,7 @@ import { createBrowserRouter } from "react-router";
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { approvalsRoutes } from "#/pages/approvals/routes";
+import { bindingsRoutes } from "#/pages/bindings/routes";
 import { devicesRoutes } from "#/pages/devices/routes";
 import { enrollRoutes } from "#/pages/enroll/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
@@ -57,6 +58,7 @@ const routes = [
           ...signaturesRoutes,
           ...approvalsRoutes,
           ...devicesRoutes,
+          ...bindingsRoutes,
           {
             path: "*",
             Component: lazy(() => import("#/pages/NotFoundPage")),
