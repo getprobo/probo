@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.273.0] - 2026-09-01
+
+### Added
+
+- AWS access-review connector setup, create, and verify: a console dialog and `awsConnectorSetup` query return the issuer, audience, subject, suggested role name, and matching Terraform/CloudFormation snippet so operators can create a workload-identity AWS connector without inventing values
+- Task details page holding name, description, and properties, so the tasks list can stay to the title instead of showing the full description on every row
+
 ## [0.272.0] - 2026-09-01
 
 ### Added
