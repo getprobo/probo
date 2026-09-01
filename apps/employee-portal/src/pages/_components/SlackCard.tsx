@@ -38,7 +38,7 @@ import { dashboardCard, deviceCard } from "./variants";
 const slackCardViewerFragment = graphql`
   fragment SlackCard_viewer on Viewer @throwOnFieldError {
     probotIdentityBindings {
-      id
+      __typename
     }
   }
 `;
