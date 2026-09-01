@@ -47,9 +47,18 @@ func OrganizationPath(organizationID string, segments ...string) (string, error)
 
 // LegacyRedirectPath maps a console employee request path to the
 // employee-portal destination. ok is false when the request should stay on
-// console: Slack bind/bindings and the org-picker /enroll flow.
+// console: Slack bind/bindings.
 func LegacyRedirectPath(requestPath string) (string, bool) {
 	path := strings.TrimSuffix(requestPath, "/")
+
+	if path == "/enroll" {
+		location, err := url.JoinPath(PathPrefix, "enroll")
+		if err != nil {
+			return "", false
+		}
+
+		return location, true
+	}
 
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 	if len(parts) < 3 || parts[0] != "organizations" || parts[2] != "employee" {

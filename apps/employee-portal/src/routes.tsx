@@ -26,6 +26,7 @@ import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { approvalsRoutes } from "#/pages/approvals/routes";
 import { devicesRoutes } from "#/pages/devices/routes";
+import { enrollRoutes } from "#/pages/enroll/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
@@ -38,6 +39,7 @@ const routes = [
     Component: lazy(() => import("#/pages/iam/OrganizationsPageLoader")),
     ErrorBoundary: RootErrorBoundary,
   },
+  ...enrollRoutes,
   {
     path: ":organizationId",
     Fallback: MainLayoutSkeleton,

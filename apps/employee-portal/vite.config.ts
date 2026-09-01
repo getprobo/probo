@@ -186,8 +186,8 @@ function fileStorageOriginFromEnv(env: Record<string, string>): string {
   return `${parsed.protocol}//${bucket}.${parsed.host}`;
 }
 
-// iam pages compile against connect; everything else against console.
-const iamFiles = /src[/\\]pages[/\\]iam[/\\]/;
+// IAM pages compile against connect; everything else against console.
+const iamFiles = /src[/\\]pages[/\\](?:iam|enroll)[/\\]/;
 
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
@@ -221,7 +221,7 @@ export default defineConfig(({ mode, command }) => {
         ],
       }),
       babel({
-        include: /src[/\\]pages[/\\]iam[/\\].*\.[jt]sx?(?:$|\?)/,
+        include: /src[/\\]pages[/\\](?:iam|enroll)[/\\].*\.[jt]sx?(?:$|\?)/,
         plugins: [
           [
             "relay",

@@ -24,20 +24,18 @@ import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
 
-import { NotFoundError } from "#/lib/relay/errors";
 import { useEnrollDevice } from "#/pages/devices/_lib/useEnrollDevice";
 
 import { RegisterDeviceCard } from "./RegisterDeviceCard";
 
 export interface OpenAgentStepProps {
   enrollment: ReturnType<typeof useEnrollDevice>;
+  organizationId: string;
 }
 
-export function OpenAgentStep({ enrollment }: OpenAgentStepProps) {
+export function OpenAgentStep({ enrollment, organizationId }: OpenAgentStepProps) {
   const { t } = useTranslation("devices");
-  const { organizationId } = useParams();
   const {
     openAgent,
     isCreating,
@@ -47,10 +45,6 @@ export function OpenAgentStep({ enrollment }: OpenAgentStepProps) {
     failed,
     hostname,
   } = enrollment;
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   if (isComplete) {
     return (

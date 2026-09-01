@@ -18,40 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import type { EnrollDevicePageQuery } from "#/__generated__/iam/EnrollDevicePageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+import { registerDevicePage } from "#/pages/devices/_components/variants";
+import { TopBarSkeleton } from "#/pages/iam/_components/TopBar/TopBarSkeleton";
 
-import {
-  EnrollDevicePage,
-  enrollDevicePageQuery,
-} from "./EnrollDevicePage";
+export function EnrollPageSkeleton() {
+  const slots = registerDevicePage();
 
-function EnrollDevicePageQueryLoader() {
-  const [queryRef, loadQuery] = useQueryLoader<EnrollDevicePageQuery>(
-    enrollDevicePageQuery,
-  );
-
-  useEffect(() => {
-    loadQuery({});
-  }, [loadQuery]);
-
-  if (!queryRef) {
-    return <PageSkeleton />;
-  }
-
-  return <EnrollDevicePage queryRef={queryRef} />;
-}
-
-export default function EnrollDevicePageLoader() {
   return (
-    <IAMRelayProvider>
-      <Suspense fallback={<PageSkeleton />}>
-        <EnrollDevicePageQueryLoader />
-      </Suspense>
-    </IAMRelayProvider>
+    <div className="flex min-h-dvh flex-col bg-sand-2">
+      <TopBarSkeleton />
+      <main className={slots.main()}>
+        <HeadingSkeleton size={7} className="w-56" />
+        <div className={slots.body()}>
+          <div className={slots.stepper()}>
+            <TextSkeleton size={2} className="h-16 w-full" />
+            <TextSkeleton size={2} className="h-16 w-full" />
+            <TextSkeleton size={2} className="h-16 w-full" />
+            <TextSkeleton size={2} className="h-16 w-full" />
+          </div>
+          <div className={slots.stage()}>
+            <CardSkeleton size={5} className="h-125" />
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

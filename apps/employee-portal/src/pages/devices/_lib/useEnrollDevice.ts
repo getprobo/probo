@@ -20,11 +20,9 @@
 
 import { useEffect, useState } from "react";
 import { fetchQuery, graphql, useRelayEnvironment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { useEnrollDeviceMutation } from "#/__generated__/core/useEnrollDeviceMutation.graphql";
 import type { useEnrollDeviceStatusQuery } from "#/__generated__/core/useEnrollDeviceStatusQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
 
 const POLL_INTERVAL_MS = 3000;
@@ -53,8 +51,7 @@ const enrollDeviceStatusQuery = graphql`
   }
 `;
 
-export function useEnrollDevice() {
-  const { organizationId } = useParams();
+export function useEnrollDevice(organizationId: string) {
   const environment = useRelayEnvironment();
   const [enrollDevice, isCreating] = useMutation<useEnrollDeviceMutation>(
     enrollDeviceMutation,
@@ -157,12 +154,6 @@ export function useEnrollDevice() {
     };
   }, [deviceId, environment, isWaiting]);
 
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
-
-  const enrolledOrganizationId = organizationId;
-
   async function openAgent() {
     setHasTimedOut(false);
     setFailed(false);
@@ -176,7 +167,7 @@ export function useEnrollDevice() {
 
       const response = await enrollDevice({
         variables: {
-          input: { organizationId: enrolledOrganizationId },
+          input: { organizationId },
         },
       });
       const payload = response.enrollDevice;

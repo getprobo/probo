@@ -65,7 +65,7 @@ func TestLegacyRedirectPath(t *testing.T) {
 		want   string
 		wantOK bool
 	}{
-		{name: "enroll stays on console", path: "/enroll", wantOK: false},
+		{name: "enroll", path: "/enroll", want: "/employee-portal/enroll", wantOK: true},
 		{name: "employee home", path: "/organizations/org_123/employee", want: "/employee-portal/org_123", wantOK: true},
 		{name: "signatures", path: "/organizations/org_123/employee/signatures", want: "/employee-portal/org_123/signatures", wantOK: true},
 		{name: "signature document", path: "/organizations/org_123/employee/signatures/doc_456", want: "/employee-portal/org_123/signatures/doc_456", wantOK: true},
@@ -96,7 +96,7 @@ func TestLegacyRedirectMiddleware(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
-		"falls through for enroll",
+		"redirects enroll",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -105,12 +105,12 @@ func TestLegacyRedirectMiddleware(t *testing.T) {
 			})
 			handler := employeeportal.LegacyRedirectMiddleware(next)
 
-			req := httptest.NewRequest(http.MethodGet, "/enroll", nil)
+			req := httptest.NewRequest(http.MethodGet, "/enroll?foo=bar", nil)
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
 
-			assert.Equal(t, http.StatusNoContent, rec.Code)
-			assert.Empty(t, rec.Header().Get("Location"))
+			assert.Equal(t, http.StatusFound, rec.Code)
+			assert.Equal(t, "/employee-portal/enroll?foo=bar", rec.Header().Get("Location"))
 		},
 	)
 

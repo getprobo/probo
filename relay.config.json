@@ -9,6 +9,7 @@
     "apps/console/src": "core",
     "apps/compliance-portal/src": "complianceportal",
     "apps/employee-portal/src/pages/iam": "employeeportaliam",
+    "apps/employee-portal/src/pages/enroll": "employeeportaliam",
     "apps/employee-portal/src": "employeeportal"
   },
   "projects": {

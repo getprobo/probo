@@ -69,7 +69,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
   );
   const requested = parseRegisterDeviceStep(searchParams.get("step"));
   const [reached, setReached] = useState(requested);
-  const enrollment = useEnrollDevice();
+  const enrollment = useEnrollDevice(organizationId ?? "");
   const step = registerDeviceStepIndex(requested) <= registerDeviceStepIndex(reached)
     ? requested
     : reached;
@@ -190,7 +190,12 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
           {step === "download" && (
             <DownloadStep onContinue={() => advanceTo("enroll")} />
           )}
-          {step === "enroll" && <OpenAgentStep enrollment={enrollment} />}
+          {step === "enroll" && (
+            <OpenAgentStep
+              enrollment={enrollment}
+              organizationId={organizationId}
+            />
+          )}
         </div>
       </div>
     </main>
