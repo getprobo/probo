@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.225.0] - 2026-09-01
+
+### Added
+
+- Access Review Source `Create`, to create an AWS workload-identity access source
+- Access Review Source `Setup AWS`, to get the AWS connector setup values (issuer, audience, subject, suggested role name, Terraform snippet, CloudFormation quick-create URL)
+
 ## [0.224.0] - 2026-09-01
 
 ### Added
