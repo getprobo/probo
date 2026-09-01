@@ -70,6 +70,9 @@ export const homePageQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
+        slackbotInstallation {
+          active
+        }
         ...DeviceCard_organization
         ...SlackCard_organization
       }
@@ -130,10 +133,12 @@ export function HomePage({ queryRef }: HomePageProps) {
           viewerKey={viewer}
           organizationKey={organization}
         />
-        <SlackCard
-          viewerKey={viewer}
-          organizationKey={organization}
-        />
+        {organization.slackbotInstallation?.active === true && (
+          <SlackCard
+            viewerKey={viewer}
+            organizationKey={organization}
+          />
+        )}
       </div>
     </main>
   );
