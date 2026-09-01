@@ -101,6 +101,7 @@ export function SlackCard({ viewerKey, organizationKey }: SlackCardProps) {
           ? (
               <div className={slots.empty()}>
                 <span className={status.status()}>
+                  <span className={status.ring()} aria-hidden />
                   <span className={status.pip()} />
                 </span>
                 <Text size={2} weight="medium" color="current" className={slots.emptyLabel()}>

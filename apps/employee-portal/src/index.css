@@ -23,6 +23,21 @@
 @import "@probo/ui/src/v2/theme.css";
 @source "../../../packages/ui/src/v2";
 
+.status-pip-ring {
+  animation: status-pip-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes status-pip-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
+}
+
 /* Only the workspace pane participates; the queue bar stays live. */
 :root {
   view-transition-name: none;
@@ -75,6 +90,10 @@ html[data-queue-direction="back"]::view-transition-new(document-workspace) {
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(document-workspace),
   ::view-transition-new(document-workspace) {
+    animation: none;
+  }
+
+  .status-pip-ring {
     animation: none;
   }
 }

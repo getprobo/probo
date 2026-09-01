@@ -95,8 +95,9 @@ export const dashboardCard = tv({
 
 export const deviceCard = tv({
   slots: {
-    status: "flex size-8 items-center justify-center",
-    pip: "size-3 rounded-full bg-green-8 ring-8 ring-green-3",
+    status: "relative flex size-8 items-center justify-center",
+    ring: "absolute inset-0 m-auto size-7 rounded-full bg-green-3 status-pip-ring",
+    pip: "relative size-3 rounded-full bg-green-8",
   },
 });
 
