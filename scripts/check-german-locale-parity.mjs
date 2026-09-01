@@ -18,54 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { readFile } from "node:fs/promises";
+import { glob, readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-const localePairs = [
-  ["apps/console/src/_locales/en-US.json", "apps/console/src/_locales/de-DE.json"],
-  [
-    "apps/console/src/pages/organizations/tasks/_locales/en-US.json",
-    "apps/console/src/pages/organizations/tasks/_locales/de-DE.json",
-  ],
-  [
-    "apps/console/src/pages/organizations/compliance-portals/_locales/en-US.json",
-    "apps/console/src/pages/organizations/compliance-portals/_locales/de-DE.json",
-  ],
-  [
-    "apps/console/src/pages/organizations/cookie-banners/_locales/en-US.json",
-    "apps/console/src/pages/organizations/cookie-banners/_locales/de-DE.json",
-  ],
-  ["apps/employee-portal/src/_locales/en-US.json", "apps/employee-portal/src/_locales/de-DE.json"],
-  [
-    "apps/employee-portal/src/pages/enroll/_locales/en-US.json",
-    "apps/employee-portal/src/pages/enroll/_locales/de-DE.json",
-  ],
-  [
-    "apps/employee-portal/src/pages/devices/_locales/en-US.json",
-    "apps/employee-portal/src/pages/devices/_locales/de-DE.json",
-  ],
-  [
-    "apps/employee-portal/src/pages/bindings/_locales/en-US.json",
-    "apps/employee-portal/src/pages/bindings/_locales/de-DE.json",
-  ],
-  [
-    "apps/employee-portal/src/pages/approvals/_locales/en-US.json",
-    "apps/employee-portal/src/pages/approvals/_locales/de-DE.json",
-  ],
-  [
-    "apps/employee-portal/src/pages/signatures/_locales/en-US.json",
-    "apps/employee-portal/src/pages/signatures/_locales/de-DE.json",
-  ],
-  ["apps/compliance-portal/src/_locales/en-US.json", "apps/compliance-portal/src/_locales/de-DE.json"],
-  ["apps/compliance-portal/src/pages/nda/_locales/en-US.json", "apps/compliance-portal/src/pages/nda/_locales/de-DE.json"],
-  ["apps/compliance-portal/src/pages/updates/_locales/en-US.json", "apps/compliance-portal/src/pages/updates/_locales/de-DE.json"],
-  ["apps/compliance-portal/src/pages/requests/_locales/en-US.json", "apps/compliance-portal/src/pages/requests/_locales/de-DE.json"],
-  ["apps/compliance-portal/src/pages/documents/_locales/en-US.json", "apps/compliance-portal/src/pages/documents/_locales/de-DE.json"],
-  ["apps/compliance-portal/src/pages/subprocessors/_locales/en-US.json", "apps/compliance-portal/src/pages/subprocessors/_locales/de-DE.json"],
-];
+async function discoverLocalePairs() {
+  const englishPaths = [];
+  const germanPaths = new Set();
+
+  for await (const path of glob("apps/**/_locales/en-US.json", { cwd: repoRoot })) {
+    englishPaths.push(path);
+  }
+  for await (const path of glob("apps/**/_locales/de-DE.json", { cwd: repoRoot })) {
+    germanPaths.add(path);
+  }
+
+  englishPaths.sort();
+
+  const localePairs = englishPaths.map((englishPath) => [
+    englishPath,
+    englishPath.replace(/en-US\.json$/, "de-DE.json"),
+  ]);
+  const expectedGermanPaths = new Set(localePairs.map(([, germanPath]) => germanPath));
+  const orphanGermanPaths = [...germanPaths]
+    .filter((germanPath) => !expectedGermanPaths.has(germanPath))
+    .sort();
+
+  return { localePairs, orphanGermanPaths };
+}
 
 function flatten(value, prefix = "", result = new Map()) {
   if (typeof value === "string") {
@@ -89,8 +71,8 @@ function sortedTokens(value) {
   for (const match of value.matchAll(/{{\s*([^{}]+?)\s*}}/g)) {
     tokens.push(`{{${match[1].trim()}}}`);
   }
-  for (const match of value.matchAll(/<\/?([A-Za-z][A-Za-z0-9_-]*)>/g)) {
-    tokens.push(`<${match[1]}>`);
+  for (const match of value.matchAll(/<\/?[A-Za-z][A-Za-z0-9_-]*>/g)) {
+    tokens.push(match[0]);
   }
   return tokens.sort();
 }
@@ -113,7 +95,20 @@ async function loadLocale(path) {
   return JSON.parse(source);
 }
 
+const { localePairs, orphanGermanPaths } = await discoverLocalePairs();
 let failed = false;
+
+if (localePairs.length === 0) {
+  failed = true;
+  console.error("No en-US locale catalogs found under apps/**/_locales/.");
+}
+
+if (orphanGermanPaths.length) {
+  failed = true;
+  console.error(
+    `German catalogs without an en-US sibling (${orphanGermanPaths.length}):\n  ${orphanGermanPaths.join("\n  ")}`,
+  );
+}
 
 for (const [englishPath, germanPath] of localePairs) {
   let english;
@@ -169,5 +164,5 @@ for (const [englishPath, germanPath] of localePairs) {
 if (failed) {
   process.exitCode = 1;
 } else {
-  console.log("German locale parity checks passed.");
+  console.log(`German locale parity checks passed for ${localePairs.length} namespaces.`);
 }
