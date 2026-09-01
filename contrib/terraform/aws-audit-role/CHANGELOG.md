@@ -5,6 +5,8 @@ be documented in this file.
 
 ## Unreleased
 
+## [0.1.4] - 2026-09-01
+
 ### Changed
 
 - Document the public registry address `getprobo/audit-role/aws` as the
