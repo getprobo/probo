@@ -18,45 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
+import type { CreateAwsAccessReviewSourcePageQuery } from "#/__generated__/core/CreateAwsAccessReviewSourcePageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export const accessReviewRoutes = [
-  {
-    path: "campaigns",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./campaigns/AccessReviewCampaignsPageLoader"),
-    ),
-  },
-  {
-    path: "campaigns/:campaignId",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./campaigns/CampaignDetailPageLoader"),
-    ),
-  },
-  {
-    path: "connections",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/AccessReviewConnectionsPageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/csv",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateCsvAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/aws-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateAwsAccessReviewSourcePageLoader"),
-    ),
-  },
-] satisfies AppRoute[];
+import {
+  CreateAwsAccessReviewSourcePage,
+  createAwsAccessReviewSourcePageQuery,
+} from "./CreateAwsAccessReviewSourcePage";
+
+export default function CreateAwsAccessReviewSourcePageLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<CreateAwsAccessReviewSourcePageQuery>(
+      createAwsAccessReviewSourcePageQuery,
+    );
+
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <PageSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <CreateAwsAccessReviewSourcePage queryRef={currentQueryRef} />
+    </Suspense>
+  );
+}

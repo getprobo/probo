@@ -18,31 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package source
+package types
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/create"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/delete"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/list"
-	setupaws "go.probo.inc/probo/pkg/cmd/access-review/source/setup-aws"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/update"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/view"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "source <command>",
-		Short: "Manage access sources",
+func NewConnector(c *coredata.Connector, status ConnectorConnectionStatus) *Connector {
+	return &Connector{
+		ID:               c.ID,
+		Provider:         string(c.Provider),
+		Protocol:         string(c.Protocol),
+		ConnectionStatus: new(status),
+		CreatedAt:        c.CreatedAt,
 	}
+}
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(setupaws.NewCmdSetupAWS(f))
-
-	return cmd
+func NewAWSConnectorSetup(setup cloudaws.ConnectorSetup) *AWSConnectorSetup {
+	return &AWSConnectorSetup{
+		Issuer:                       setup.Issuer,
+		Audience:                     setup.Audience,
+		Subject:                      setup.Subject,
+		SuggestedRoleName:            setup.SuggestedRoleName,
+		TerraformSnippet:             setup.TerraformSnippet,
+		CloudFormationQuickCreateURL: setup.CloudFormationQuickCreateURL,
+	}
 }

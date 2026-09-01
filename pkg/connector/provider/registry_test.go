@@ -141,6 +141,15 @@ func TestEveryProviderSettingsReachADialog(t *testing.T) {
 					reg.Provider,
 				)
 			}
+
+			if len(reg.WorkloadIdentityExtraSettings()) > 0 {
+				assert.Truef(
+					t,
+					reg.SupportsWorkloadIdentity(),
+					"provider %q declares WorkloadIdentityExtraSettings but offers no workload-identity path",
+					reg.Provider,
+				)
+			}
 		})
 	}
 }
@@ -292,9 +301,9 @@ func TestRegistry_Register(t *testing.T) {
 		assert.Contains(t, err.Error(), `APIKey.ExtraSettings declares duplicate setting key "region"`)
 	})
 
-	// One setting both dialogs need is declared in both lists; that is not a
-	// duplicate, because each list keys a separate form.
-	t.Run("setting key repeated across the two lists", func(t *testing.T) {
+	// One setting more than one dialog needs is declared in each of those
+	// lists; that is not a duplicate, because each list keys a separate form.
+	t.Run("setting key repeated across lists", func(t *testing.T) {
 		t.Parallel()
 
 		r := provider.NewRegistry()
@@ -324,6 +333,25 @@ func TestRegistry_Register(t *testing.T) {
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "APIKey.ExtraSettings declares a setting with an empty Key or Label")
+	})
+
+	t.Run("setting with an empty Key on WorkloadIdentity", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			WorkloadIdentity: &provider.WorkloadIdentityConfig{
+				NewSession: stubNewCloudSession,
+				NewDriver:  stubNewCloudDriver,
+				ExtraSettings: []provider.ExtraSetting{
+					{Label: "Account ID"},
+				},
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "WorkloadIdentity.ExtraSettings declares a setting with an empty Key or Label")
 	})
 
 	t.Run("setting with an empty Label", func(t *testing.T) {

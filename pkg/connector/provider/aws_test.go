@@ -103,9 +103,9 @@ func TestAWSRegistration(t *testing.T) {
 	assert.NotEmpty(t, reg.EndpointOverrideUnsupported)
 	assert.Equal(t, provider.Endpoints{}, reg.Endpoints)
 
-	// Isolation is the per-organization issuer, so there is no grant to read
-	// back beyond a successful assume.
-	assert.Nil(t, reg.WorkloadIdentity.InspectGrant)
+	require.Len(t, reg.WorkloadIdentityExtraSettings(), 1)
+	assert.Equal(t, "roleArn", reg.WorkloadIdentityExtraSettings()[0].Key)
+	assert.True(t, reg.WorkloadIdentityExtraSettings()[0].Required)
 }
 
 func TestAWSNewSession(t *testing.T) {

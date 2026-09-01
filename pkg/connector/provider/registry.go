@@ -217,15 +217,16 @@ func (r *Registry) Register(reg *Registration) error {
 	// The console keys both its form state and its submitted values by setting
 	// key within one dialog, so a duplicate key silently collapses two fields
 	// into one and an empty key produces an unlabelled field bound to nothing.
-	// Reject both at startup. A key repeated across the two lists is fine and
-	// intended: that is how a dual-path provider declares one setting both
-	// dialogs need.
+	// Reject both at startup. A key repeated across lists is fine and
+	// intended: that is how a multi-path provider declares one setting
+	// each dialog that needs it.
 	for _, list := range []struct {
 		field    string
 		settings []ExtraSetting
 	}{
 		{"APIKey.ExtraSettings", reg.APIKeyExtraSettings()},
 		{"ClientCredentials.ExtraSettings", reg.ClientCredentialsExtraSettings()},
+		{"WorkloadIdentity.ExtraSettings", reg.WorkloadIdentityExtraSettings()},
 	} {
 		seen := make(map[string]bool, len(list.settings))
 

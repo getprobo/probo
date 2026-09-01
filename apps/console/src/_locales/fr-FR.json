@@ -3227,7 +3227,6 @@
       "chooseAnotherMethod": "Choisir une autre méthode de connexion",
       "open": "Ouvrir"
     },
-    "comingSoon": "Bientôt disponible !",
     "csv": {
       "title": "CSV",
       "description": "Téléversez des données CSV directement comme source d’accès."
@@ -3342,6 +3341,46 @@
     "actions": {
       "connect": "Connecter",
       "connecting": "Connexion..."
+    }
+  },
+  "createAwsAccessReviewSourcePage": {
+    "pageTitle": "Connecter AWS",
+    "title": "Connecter AWS",
+    "description": "Déployez le rôle d’audit. Saisissez ensuite son ARN.",
+    "permissionDenied": "Vous n’avez pas la permission de créer des sources d’accès.",
+    "fields": {
+      "roleArn": "ARN du rôle",
+      "issuer": "Émetteur",
+      "audience": "Audience",
+      "subject": "Sujet",
+      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+    },
+    "messages": {
+      "copyFailed": "Échec de la copie",
+      "copied": "Copié dans le presse-papiers",
+      "copiedIssuer": "Émetteur copié.",
+      "copiedAudience": "Audience copiée.",
+      "copiedSubject": "Sujet copié.",
+      "copiedTerraform": "Extrait Terraform copié.",
+      "error": "Erreur",
+      "success": "Succès",
+      "created": "Source d’accès créée avec succès."
+    },
+    "errors": {
+      "roleArn": "Saisissez un ARN de rôle IAM valide.",
+      "create": "Échec de la création du connecteur. Vérifiez l’ARN du rôle et réessayez.",
+      "disconnected": "Probo n’a pas pu endosser le rôle d’audit. Vérifiez que la stack est déployée dans ce compte et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration.",
+      "delete": "Impossible de supprimer le connecteur. Réessayez.",
+      "source": "Échec de la création de la source d’accès",
+      "copy": "Copiez la valeur manuellement."
+    },
+    "actions": {
+      "copy": "Copier",
+      "connect": "Connecter",
+      "back": "Retour",
+      "installViaCloudFormation": "Installer via CloudFormation",
+      "installViaTerraform": "Installer via Terraform",
+      "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
     }
   },
   "oauthExtraDialog": {

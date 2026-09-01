@@ -22,6 +22,7 @@ package create
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -30,7 +31,10 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const createMutation = `
+const connectionStatusConnected = "CONNECTED"
+
+const (
+	createMutation = `
 mutation($input: CreateAccessReviewSourceInput!) {
   createAccessReviewSource(input: $input) {
     created
@@ -44,17 +48,48 @@ mutation($input: CreateAccessReviewSourceInput!) {
 }
 `
 
-type createResponse struct {
-	CreateAccessReviewSource struct {
-		Created                bool `json:"created"`
-		AccessReviewSourceEdge struct {
-			Node struct {
-				ID   string `json:"id"`
-				Name string `json:"name"`
-			} `json:"node"`
-		} `json:"accessReviewSourceEdge"`
-	} `json:"createAccessReviewSource"`
+	createAWSConnectorMutation = `
+mutation($input: CreateWorkloadIdentityConnectorInput!) {
+  createWorkloadIdentityConnector(input: $input) {
+    connector {
+      id
+      connectionStatus
+    }
+  }
 }
+`
+
+	deleteConnectorMutation = `
+mutation($input: DeleteConnectorInput!) {
+  deleteConnector(input: $input) {
+    deletedConnectorId
+  }
+}
+`
+)
+
+type (
+	createResponse struct {
+		CreateAccessReviewSource struct {
+			Created                bool `json:"created"`
+			AccessReviewSourceEdge struct {
+				Node struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"node"`
+			} `json:"accessReviewSourceEdge"`
+		} `json:"createAccessReviewSource"`
+	}
+
+	createAWSConnectorResponse struct {
+		CreateWorkloadIdentityConnector struct {
+			Connector struct {
+				ID               string `json:"id"`
+				ConnectionStatus string `json:"connectionStatus"`
+			} `json:"connector"`
+		} `json:"createWorkloadIdentityConnector"`
+	}
+)
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
@@ -62,6 +97,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagName        string
 		flagCSVFile     string
 		flagConnectorID string
+		flagRoleARN     string
 	)
 
 	cmd := &cobra.Command{
@@ -71,7 +107,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb access-review source create --name "Okta Users" --csv-file users.csv
 
   # Create an access source with a connector
-  prb access-review source create --name "GitHub" --connector-id <connector-id>`,
+  prb access-review source create --name "GitHub" --connector-id <connector-id>
+
+  # Create an AWS workload-identity access source
+  prb access-review source create --name "AWS prod" --aws-role-arn arn:aws:iam::123456789012:role/ProboAudit`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -100,8 +139,24 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot determine organization, use --org or 'prb auth login'")
 			}
 
-			if flagCSVFile != "" && flagConnectorID != "" {
-				return fmt.Errorf("cannot specify both --csv-file and --connector-id")
+			var createdConnectorID string
+
+			if flagRoleARN != "" {
+				connectorID, status, err := createAWSConnector(client, flagOrg, flagRoleARN)
+				if err != nil {
+					return err
+				}
+
+				createdConnectorID = connectorID
+				flagConnectorID = connectorID
+
+				if status != connectionStatusConnected {
+					return abandonCreatedConnector(
+						client,
+						createdConnectorID,
+						fmt.Errorf("connector is %s", status),
+					)
+				}
 			}
 
 			input := map[string]any{
@@ -127,12 +182,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				map[string]any{"input": input},
 			)
 			if err != nil {
-				return err
+				return abandonCreatedConnector(client, createdConnectorID, err)
 			}
 
 			var resp createResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
+				return abandonCreatedConnector(
+					client,
+					createdConnectorID,
+					fmt.Errorf("cannot parse response: %w", err),
+				)
 			}
 
 			s := resp.CreateAccessReviewSource.AccessReviewSourceEdge.Node
@@ -154,8 +213,59 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Access source name (required)")
 	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data")
 	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID to use as data source")
+	cmd.Flags().StringVar(&flagRoleARN, "aws-role-arn", "", "IAM role ARN")
 
 	_ = cmd.MarkFlagRequired("name")
+	cmd.MarkFlagsMutuallyExclusive("csv-file", "connector-id", "aws-role-arn")
 
 	return cmd
+}
+
+func createAWSConnector(
+	client *api.Client,
+	orgID string,
+	roleARN string,
+) (string, string, error) {
+	input := map[string]any{
+		"organizationId": orgID,
+		"provider":       "AWS",
+		"awsRoleArn":     roleARN,
+	}
+
+	data, err := client.Do(createAWSConnectorMutation, map[string]any{"input": input})
+	if err != nil {
+		return "", "", err
+	}
+
+	var resp createAWSConnectorResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return "", "", fmt.Errorf("cannot parse response: %w", err)
+	}
+
+	cnnctr := resp.CreateWorkloadIdentityConnector.Connector
+
+	return cnnctr.ID, cnnctr.ConnectionStatus, nil
+}
+
+func abandonCreatedConnector(client *api.Client, connectorID string, cause error) error {
+	if connectorID == "" {
+		return cause
+	}
+
+	_, err := client.Do(
+		deleteConnectorMutation,
+		map[string]any{
+			"input": map[string]any{
+				"connectorId": connectorID,
+			},
+		},
+	)
+	if err != nil {
+		return errors.Join(
+			cause,
+			fmt.Errorf("cannot delete leftover connector %s: %w", connectorID, err),
+		)
+	}
+
+	return cause
 }

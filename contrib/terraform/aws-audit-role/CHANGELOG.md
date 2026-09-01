@@ -1,9 +1,15 @@
 # Changelog
 
-All notable changes to the Terraform `aws-audit-role` module will be
-documented in this file.
+All notable changes to the Terraform `getprobo/audit-role/aws` module will
+be documented in this file.
 
 ## Unreleased
+
+### Changed
+
+- Document the public registry address `getprobo/audit-role/aws` as the
+  module source. The connector now records a role ARN, not an account id
+  and a role name.
 
 ## [0.1.3] - 2026-08-28
 

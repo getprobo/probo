@@ -29,6 +29,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/pem"
@@ -1063,6 +1064,22 @@ func TestBuilder_Build_IdentityFederationDisabledByDefault(t *testing.T) {
 	assert.False(t, cfg.Probod.IdentityFederation.Enabled)
 	assert.Empty(t, cfg.Probod.IdentityFederation.IssuerBaseURL)
 	assert.Empty(t, cfg.Probod.IdentityFederation.SigningKeys)
+	assert.Equal(t, cloudaws.DefaultCloudFormationTemplateURL, cfg.Probod.IdentityFederation.CloudFormationTemplateURL)
+	assert.Equal(t, cloudaws.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.TerraformModuleSource)
+}
+
+func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_CLOUDFORMATION_TEMPLATE_URL"] = "https://example.com/audit-role.yaml"
+	env["PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE"] = "example/terraform-aws-audit-role"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.Equal(t, "https://example.com/audit-role.yaml", cfg.Probod.IdentityFederation.CloudFormationTemplateURL)
+	assert.Equal(t, "example/terraform-aws-audit-role", cfg.Probod.IdentityFederation.TerraformModuleSource)
 }
 
 func TestBuilder_Build_IdentityFederationDisabledSkipsSigningKey(t *testing.T) {

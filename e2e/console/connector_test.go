@@ -53,6 +53,12 @@ func TestAccessReviewDrivers(t *testing.T) {
 					label
 					required
 				}
+				workloadIdentitySupported
+				workloadIdentityExtraSettings {
+					key
+					label
+					required
+				}
 			}
 		}
 	`
@@ -74,6 +80,8 @@ func TestAccessReviewDrivers(t *testing.T) {
 			ClientCredentialsSupported     bool          `json:"clientCredentialsSupported"`
 			APIKeyExtraSettings            []settingInfo `json:"apiKeyExtraSettings"`
 			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
+			WorkloadIdentitySupported      bool          `json:"workloadIdentitySupported"`
+			WorkloadIdentityExtraSettings  []settingInfo `json:"workloadIdentityExtraSettings"`
 		} `json:"accessReviewDrivers"`
 	}
 
@@ -86,15 +94,19 @@ func TestAccessReviewDrivers(t *testing.T) {
 	protocolsByProvider := make(map[string][]string)
 	apiKeySettingKeys := make(map[string][]string)
 	clientCredentialsSettingKeys := make(map[string][]string)
+	workloadIdentitySettingKeys := make(map[string][]string)
+	workloadIdentitySupported := make(map[string]bool)
 
 	for _, info := range result.AccessReviewDrivers {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
 		assert.NotNil(t, info.APIKeyExtraSettings)
 		assert.NotNil(t, info.ClientCredentialsExtraSettings)
+		assert.NotNil(t, info.WorkloadIdentityExtraSettings)
 		providerNames[info.Provider] = true
 		docURLByProvider[info.Provider] = info.DocumentationURL
 		protocolsByProvider[info.Provider] = info.ConfiguredProtocols
+		workloadIdentitySupported[info.Provider] = info.WorkloadIdentitySupported
 		assert.Equal(t, slices.Contains(info.ConfiguredProtocols, "OAUTH2"), info.OAuthConfigured)
 
 		for _, s := range info.APIKeyExtraSettings {
@@ -104,11 +116,20 @@ func TestAccessReviewDrivers(t *testing.T) {
 		for _, s := range info.ClientCredentialsExtraSettings {
 			clientCredentialsSettingKeys[info.Provider] = append(clientCredentialsSettingKeys[info.Provider], s.Key)
 		}
+
+		for _, s := range info.WorkloadIdentityExtraSettings {
+			workloadIdentitySettingKeys[info.Provider] = append(workloadIdentitySettingKeys[info.Provider], s.Key)
+		}
 	}
 
 	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
+	assert.True(t, providerNames["AWS"], "expected AWS provider to be present when identity federation is enabled")
 	assert.Equal(t, []string{"OAUTH2"}, protocolsByProvider["GITHUB"])
+	assert.True(t, workloadIdentitySupported["AWS"])
+	assert.Equal(t, []string{"roleArn"}, workloadIdentitySettingKeys["AWS"])
+	assert.False(t, workloadIdentitySupported["BREX"])
+	assert.Empty(t, workloadIdentitySettingKeys["BREX"])
 
 	// 1Password is the only provider offering both connect paths, and each path
 	// needs different settings: the SCIM-bridge driver behind the API key, the
@@ -136,14 +157,13 @@ func TestAccessReviewDrivers(t *testing.T) {
 	}
 
 	// AWS carries the null case because it is the one provider that cannot
-	// acquire a doc page by being written: access review for it is not
-	// implemented, and the console still renders it as coming soon. Any
-	// provider picked here purely for being undocumented today gets documented
-	// eventually and breaks this assertion, as BREX did.
+	// acquire a doc page by being written. Any provider picked here purely for
+	// being undocumented today gets documented eventually and breaks this
+	// assertion, as BREX did.
 	//
 	// Contains first: a bare Nil on a missing key passes whether or not the
-	// field is really null, which would let the null path rot unnoticed. AWS is
-	// a workload identity provider, so the catalog never skips it.
+	// field is really null, which would let the null path rot unnoticed. E2E
+	// enables identity federation, so AWS is in the catalog.
 	require.Contains(t, docURLByProvider, "AWS")
 	assert.Nil(t, docURLByProvider["AWS"], "AWS has no doc page, documentationUrl must be null")
 

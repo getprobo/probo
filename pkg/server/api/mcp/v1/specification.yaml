@@ -9874,6 +9874,121 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted access source ID
 
+    ConnectorConnectionStatus:
+      type: string
+      enum:
+        - CONNECTED
+        - DISCONNECTED
+        - RECONNECT_REQUIRED
+      description: >-
+        Whether the connector credential is usable right now. DISCONNECTED
+        covers every reason it did not work, because the underlying failure
+        wraps provider-controlled text and stays server-side.
+
+    Connector:
+      type: object
+      required:
+        - id
+        - provider
+        - protocol
+        - connection_status
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+        provider:
+          type: string
+          description: Connector provider
+        protocol:
+          type: string
+          description: Connector protocol
+        connection_status:
+          $ref: "#/components/schemas/ConnectorConnectionStatus"
+          description: Whether the connector credential is usable right now
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    AWSConnectorSetup:
+      type: object
+      required:
+        - issuer
+        - audience
+        - subject
+        - suggested_role_name
+        - terraform_snippet
+        - cloud_formation_quick_create_url
+      properties:
+        issuer:
+          type: string
+          description: Organization issuer URL
+        audience:
+          type: string
+          description: Token audience
+        subject:
+          type: string
+          description: Token subject
+        suggested_role_name:
+          type: string
+          description: Default IAM role name
+        terraform_snippet:
+          type: string
+          description: Terraform module block with issuer, subject and role name filled
+        cloud_formation_quick_create_url:
+          type: string
+          description: AWS console quick-create URL with issuer, subject and role name prefilled
+
+    AWSConnectorSetupMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    AWSConnectorSetupMCPOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AWSConnectorSetup"
+
+    WorkloadIdentityConnectorProvider:
+      type: string
+      enum:
+        - AWS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConnectorProvider
+      description: Connector provider that supports workload identity
+
+    CreateWorkloadIdentityConnectorMCPInput:
+      type: object
+      required:
+        - organization_id
+        - provider
+        - aws_role_arn
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        provider:
+          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
+          description: Connector provider (AWS)
+        aws_role_arn:
+          type: string
+          description: IAM role ARN, including partition, account, and role name
+
+    CreateWorkloadIdentityConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+
     CreateAccessReviewCampaignMCPInput:
       type: object
       required:
@@ -17391,6 +17506,30 @@ tools:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPOutput"
+  - name: awsConnectorSetup
+    title: AWS Connector Setup
+    description: Return issuer, subject, audience and deploy artifacts for connecting an AWS account
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AWSConnectorSetupMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/AWSConnectorSetupMCPOutput"
+  - name: createWorkloadIdentityConnector
+    title: Create Workload Identity Connector
+    description: Create a workload-identity connector (AWS) and report whether the audit role can be assumed
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPOutput"
   - name: createAccessReviewCampaign
     title: Create Access Review Campaign
     description: Create a new access review campaign for an organization

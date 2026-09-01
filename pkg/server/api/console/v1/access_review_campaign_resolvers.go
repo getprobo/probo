@@ -556,10 +556,9 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 
 // ConnectionStatus is the resolver for the connectionStatus field.
 //
-// Returns RECONNECT_REQUIRED when the connector's stored OAuth grant is
-// missing scopes required by the current provider registration (e.g. a newly
-// added Graph permission), DISCONNECTED when the credential probe fails, and
-// CONNECTED when the grant is usable as-is.
+// The state belongs to the connector, so this is Connector.connectionStatus
+// plus the one case a connector cannot express: a manual CSV source, which has
+// no connector to be connected to.
 func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *types.AccessReviewSource) (types.AccessReviewSourceConnectionStatus, error) {
 	if obj.ConnectorID == nil {
 		return types.AccessReviewSourceConnectionStatusNotApplicable, nil
@@ -570,63 +569,23 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 		return types.AccessReviewSourceConnectionStatusNotApplicable, err
 	}
 
-	// Obtaining a credential may succeed even when it is expired or invalid
-	// (e.g. no refresh token available, or a dead API key). When the provider
-	// registers a probe, make a lightweight request to verify the credential is
-	// actually accepted.
-	if err := r.accessReview.ProbeConnector(ctx, scope, *obj.ConnectorID); err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
-		}
-
-		// A code, not the error: probe errors wrap provider-controlled text
-		// and customer-chosen hosts, which logging.md keeps out of the logs.
-		fields := []log.Attr{
-			log.String("source_id", obj.ID.String()),
-			log.String("connector_id", obj.ConnectorID.String()),
-		}
-
-		if probeErr, ok := errors.AsType[*accessreview.ProbeError](err); ok {
-			// Not Probo's failure, so not in the error budget.
-			r.logger.WarnCtx(
-				ctx,
-				"connector credential probe failed, reporting source disconnected",
-				append(fields,
-					log.String("provider", probeErr.Provider.String()),
-					log.String("probe_failure", accessreview.ProbeFailureCode(err)),
-				)...,
-			)
-
-			return types.AccessReviewSourceConnectionStatusDisconnected, nil
-		}
-
-		// A database read, a decrypt, a deployment without identity
-		// federation: ours, so it stays an error and keeps its message.
-		r.logger.ErrorCtx(
-			ctx,
-			"cannot probe connector, reporting source disconnected",
-			append(fields, log.Error(err))...,
-		)
-
-		return types.AccessReviewSourceConnectionStatusDisconnected, nil
-	}
-
-	needsReconnect, err := r.accessReview.SourceNeedsReconnect(ctx, scope, *obj.ConnectorID)
+	status, err := r.connectorConnectionStatus(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot determine access source reconnect requirement", log.Error(err))
-
-		return types.AccessReviewSourceConnectionStatusNotApplicable, gqlutils.Internal(ctx)
+		return types.AccessReviewSourceConnectionStatusNotApplicable, err
 	}
 
-	if needsReconnect {
+	switch status {
+	case types.ConnectorConnectionStatusConnected:
+		return types.AccessReviewSourceConnectionStatusConnected, nil
+	case types.ConnectorConnectionStatusReconnectRequired:
 		return types.AccessReviewSourceConnectionStatusReconnectRequired, nil
+	default:
+		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}
-
-	return types.AccessReviewSourceConnectionStatusConnected, nil
 }
 
 // SelectedOrganization is the resolver for the selectedOrganization field.

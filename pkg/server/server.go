@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -104,6 +105,7 @@ type Config struct {
 	// IdentityFederationIssuer serves the outbound OIDC documents. It is nil when the
 	// identity federation issuer is disabled, in which case no /federation route exists.
 	IdentityFederationIssuer *identityfederation.Issuer
+	AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 }
 
 type Server struct {
@@ -125,39 +127,41 @@ type Server struct {
 
 func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
-		BaseURL:                 cfg.BaseURL,
-		AllowedOrigins:          cfg.AllowedOrigins,
-		Probo:                   cfg.Probo,
-		ResourceAlias:           cfg.ResourceAlias,
-		File:                    cfg.File,
-		IAM:                     cfg.IAM,
-		Visitor:                 cfg.Visitor,
-		ESign:                   cfg.ESign,
-		Management:              cfg.Management,
-		CertManager:             cfg.CertManager,
-		AccessReview:            cfg.AccessReview,
-		AgentExecution:          cfg.AgentExecution,
-		Slack:                   cfg.Slack,
-		BotDeliveryDestinations: cfg.BotDeliveryDestinations,
-		ComplianceMessages:      cfg.ComplianceMessages,
-		Slackbot:                cfg.Slackbot,
-		SlackInteractiveInbox:   cfg.SlackInteractiveInbox,
-		ProbotIdentityBindings:  cfg.ProbotIdentityBindings,
-		SlackbotInstallations:   cfg.SlackbotInstallations,
-		ProbotCapabilities:      cfg.ProbotCapabilities,
-		Mailman:                 cfg.Mailman,
-		CookieBanner:            cfg.CookieBanner,
-		Geoloc:                  cfg.Geoloc,
-		ThirdParty:              cfg.ThirdParty,
-		RiskManagement:          cfg.RiskManagement,
-		ITAM:                    cfg.ITAM,
-		Cookie:                  cfg.Cookie,
-		TokenSecret:             cfg.TokenSecret,
-		ConnectorRegistry:       cfg.ConnectorRegistry,
-		ProviderRegistry:        cfg.ProviderRegistry,
-		CustomDomainCname:       cfg.CustomDomainCname,
-		GraphQLLimits:           cfg.GraphQLLimits,
-		Logger:                  cfg.Logger.Named("api"),
+		BaseURL:                  cfg.BaseURL,
+		AllowedOrigins:           cfg.AllowedOrigins,
+		Probo:                    cfg.Probo,
+		ResourceAlias:            cfg.ResourceAlias,
+		File:                     cfg.File,
+		IAM:                      cfg.IAM,
+		Visitor:                  cfg.Visitor,
+		ESign:                    cfg.ESign,
+		Management:               cfg.Management,
+		CertManager:              cfg.CertManager,
+		AccessReview:             cfg.AccessReview,
+		AgentExecution:           cfg.AgentExecution,
+		Slack:                    cfg.Slack,
+		BotDeliveryDestinations:  cfg.BotDeliveryDestinations,
+		ComplianceMessages:       cfg.ComplianceMessages,
+		Slackbot:                 cfg.Slackbot,
+		SlackInteractiveInbox:    cfg.SlackInteractiveInbox,
+		ProbotIdentityBindings:   cfg.ProbotIdentityBindings,
+		SlackbotInstallations:    cfg.SlackbotInstallations,
+		ProbotCapabilities:       cfg.ProbotCapabilities,
+		Mailman:                  cfg.Mailman,
+		CookieBanner:             cfg.CookieBanner,
+		Geoloc:                   cfg.Geoloc,
+		ThirdParty:               cfg.ThirdParty,
+		RiskManagement:           cfg.RiskManagement,
+		ITAM:                     cfg.ITAM,
+		Cookie:                   cfg.Cookie,
+		TokenSecret:              cfg.TokenSecret,
+		ConnectorRegistry:        cfg.ConnectorRegistry,
+		ProviderRegistry:         cfg.ProviderRegistry,
+		CustomDomainCname:        cfg.CustomDomainCname,
+		GraphQLLimits:            cfg.GraphQLLimits,
+		Logger:                   cfg.Logger.Named("api"),
+		IdentityFederationIssuer: cfg.IdentityFederationIssuer,
+		AWSConnectorInstall:      cfg.AWSConnectorInstall,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

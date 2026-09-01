@@ -78,7 +78,6 @@ func TestConnectorSettings_RoundTrip(t *testing.T) {
 
 		want := coredata.AWSConnectorSettings{
 			RoleARN: "arn:aws:iam::123456789012:role/" + coredata.DefaultAWSRoleName,
-			Issuer:  "https://proboidentity.com/e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg",
 		}
 		c := &coredata.Connector{}
 		require.NoError(t, c.SetSettings(&want))

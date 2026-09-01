@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
 
-# `aws-audit-role`
+# `getprobo/audit-role/aws`
 
 Grants Probo read-only audit access to one AWS account through OIDC web
 identity federation. Probo holds no credential for the account: it presents a
@@ -33,16 +33,17 @@ for teams that would rather not run a stack they did not write.
 
 ## Usage
 
-Copy the two Probo values out of the connector setup screen. AWS compares the
-issuer URL case-sensitively and its last path segment is a mixed-case
-identifier, so paste it rather than retyping it.
+Copy the issuer URL and the subject out of the connector setup screen. AWS
+compares the issuer URL case-sensitively and its last path segment is a
+mixed-case identifier, so paste it rather than retyping it.
 
 ```hcl
 module "probo_audit" {
-  source = "github.com/getprobo/probo//contrib/terraform/aws-audit-role"
+  source = "getprobo/audit-role/aws"
 
-  probo_issuer_url = "https://proboidentity.com/org/e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg"
+  probo_issuer_url = "https://proboidentity.com/e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg"
   probo_subject    = "e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg"
+  role_name        = "ProboAudit"
 }
 
 output "probo_role_arn" {
@@ -50,8 +51,14 @@ output "probo_role_arn" {
 }
 ```
 
-Give Probo the `account_id` and `role_name` outputs when you create the
-connector.
+Give Probo the `role_arn` output when you create the connector.
+
+## Verifying an install
+
+Probo probes the install by assuming the role. Isolation is the
+per-organization issuer: a foreign token fails at the provider-match step
+before STS evaluates any trust-policy condition. The `sub` and `aud`
+conditions in this module are IAM hygiene; Probo does not read them back.
 
 ## Covering a whole organization
 
@@ -67,12 +74,13 @@ Use one provider alias per account with a role you already have there:
 ```hcl
 module "probo_audit_member" {
   for_each = toset(var.member_account_ids)
-  source   = "github.com/getprobo/probo//contrib/terraform/aws-audit-role"
+  source   = "getprobo/audit-role/aws"
 
   providers = { aws = aws.member[each.key] }
 
   probo_issuer_url = var.probo_issuer_url
   probo_subject    = var.probo_subject
+  role_name        = "ProboAudit"
 
   grant_organizations_read = false
 }
@@ -107,7 +115,8 @@ are the source of truth.
 ## Notes
 
 - **The role must have the same name in every account.** Probo stores one role
-  name per connector and assumes it everywhere.
+  ARN per connector and reviews only that account today. Use the same name so
+  the roles stay ready when org-wide coverage ships.
 - **`thumbprint_list` is deliberately unset**, unlike the CloudFormation
   template which must supply a placeholder. AWS ignores it for publicly trusted
   certificates, so pinning one only produces a perpetual diff.

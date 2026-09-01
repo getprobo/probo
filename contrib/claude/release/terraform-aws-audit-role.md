@@ -34,18 +34,28 @@ module-repo commit is created with GitHub's `createCommitOnBranch`
 mutation (same as the Homebrew tap) so it satisfies the org signed-commit
 rule; a local `git commit` plus `git push` would be rejected.
 
-Consumers can pin either source:
+The primary consumer address is the Terraform Registry module:
+
+```hcl
+module "probo_audit" {
+  source  = "getprobo/audit-role/aws"
+  version = "0.1.3"
+}
+```
+
+Consumers can also pin a Git source:
 
 ```hcl
 # Dedicated module repo (filled by the release workflow)
-source = "github.com/getprobo/terraform-aws-audit-role?ref=v0.1.0"
+source = "github.com/getprobo/terraform-aws-audit-role?ref=v0.1.3"
 
 # Monorepo subdirectory
-source = "github.com/getprobo/probo//contrib/terraform/aws-audit-role?ref=terraform-aws-audit-role/v0.1.0"
+source = "github.com/getprobo/probo//contrib/terraform/aws-audit-role?ref=terraform-aws-audit-role/v0.1.3"
 ```
 
 Connecting `getprobo/terraform-aws-audit-role` to the public Terraform
-Registry is a separate step after the first `v*` tag exists there.
+Registry is a separate step after the first `v*` tag exists there. The
+registry address is `getprobo/audit-role/aws`.
 
 ### One-time setup (before the first release)
 

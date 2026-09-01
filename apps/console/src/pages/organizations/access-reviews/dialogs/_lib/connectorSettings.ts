@@ -96,6 +96,17 @@ export function mapAPIKeyExtraSettingToField(
   return null;
 }
 
+// Same grammar as pkg/awsx/arn.RoleARNPattern, with the three supported
+// partitions inlined so the field rejects other partitions immediately.
+export const AWS_IAM_ROLE_ARN_PATTERN
+  = "arn:(aws-us-gov|aws-cn|aws):iam::[0-9]{12}:role(?:/[\\w+=,.@\\-]+)*/[\\w+=,.@\\-]{1,64}";
+
+const awsIAMRoleARN = new RegExp(`^${AWS_IAM_ROLE_ARN_PATTERN}$`);
+
+export function isAWSRoleARN(value: string): boolean {
+  return awsIAMRoleARN.test(value.trim());
+}
+
 export function mapClientCredentialsExtraSettingToField(
   provider: string,
   settingKey: string,

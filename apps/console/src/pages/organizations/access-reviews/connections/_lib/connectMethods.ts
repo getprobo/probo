@@ -27,6 +27,7 @@ interface ConnectMethodSupport {
   apiKeySupported: boolean;
   apiKeyManaged: boolean;
   clientCredentialsSupported: boolean;
+  workloadIdentitySupported: boolean;
 }
 
 const connectMethodPreference: ReadonlyArray<ConnectMethod> = [
@@ -42,13 +43,11 @@ export function connectMethods({
   apiKeySupported,
   apiKeyManaged,
   clientCredentialsSupported,
+  workloadIdentitySupported,
 }: ConnectMethodSupport): ReadonlyArray<ConnectMethod> {
   const supportedMethods = new Set<ConnectMethod>(
     configuredProtocols.filter(
-      protocol =>
-        protocol === "WORKLOAD_IDENTITY"
-        || protocol === "GITHUB_APP"
-        || protocol === "OAUTH2",
+      protocol => protocol === "GITHUB_APP" || protocol === "OAUTH2",
     ),
   );
 
@@ -57,6 +56,9 @@ export function connectMethods({
   }
   if (clientCredentialsSupported) {
     supportedMethods.add("CLIENT_CREDENTIALS");
+  }
+  if (workloadIdentitySupported) {
+    supportedMethods.add("WORKLOAD_IDENTITY");
   }
 
   return connectMethodPreference.filter(method => supportedMethods.has(method));

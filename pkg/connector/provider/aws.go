@@ -11,7 +11,7 @@
 // all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING WITHOUT LIMITATION THE WARRANTIES OF MERCHANTABILITY,
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -36,18 +36,23 @@ import (
 // AWS credential and mints an assertion the customer's STS exchanges for
 // temporary ones. It therefore declares no OAuth2, API-key or
 // client-credentials path — there is no credential for a customer to paste or
-// an operator to configure. It also registers no InspectGrant: each
-// organization has its own issuer, so STS rejects a foreign token before any
-// trust-policy condition runs.
+// an operator to configure.
+//
+// Isolation is the per-organization issuer; a successful assume is the whole
+// check, so there is no grant readback beside Probe.
 func awsRegistration() *Registration {
 	return &Registration{
-		Provider:                    coredata.ConnectorProviderAWS,
-		DisplayName:                 "Amazon Web Services",
+		Provider:    coredata.ConnectorProviderAWS,
+		DisplayName: "Amazon Web Services",
+		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
 			NewSession: newAWSSession,
 			NewDriver:  newAWSDriver,
 			Probe:      probeAWS,
+			ExtraSettings: []ExtraSetting{
+				{Key: "roleArn", Label: "Role ARN", Required: true},
+			},
 		},
 	}
 }

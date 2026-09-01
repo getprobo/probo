@@ -53,7 +53,8 @@ jobs:
 
           \`\`\`hcl
           module "probo_audit" {
-            source = "github.com/getprobo/terraform-aws-audit-role?ref=v${VERSION}"
+            source  = "getprobo/audit-role/aws"
+            version = "${VERSION}"
           }
           \`\`\`
           EOF

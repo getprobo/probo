@@ -154,14 +154,6 @@ func decodeTokenHeader(t testing.TB, token string) jose.JWTHeader {
 	return header
 }
 
-func TestSubject(t *testing.T) {
-	t.Parallel()
-
-	organizationID := fixtureOrganizationGID(t)
-
-	assert.Equal(t, fixtureOrganizationID, organizationID.String())
-}
-
 // Key material is validated by jose.NewKeyRing, which has its own tests; what
 // remains here is what the issuer itself requires.
 func TestNewIssuer_Errors(t *testing.T) {

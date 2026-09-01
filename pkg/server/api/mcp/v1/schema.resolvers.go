@@ -14,7 +14,9 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -9321,4 +9323,76 @@ func mapTreatmentPlanError(ctx context.Context, logger *log.Logger, op string, e
 	logger.ErrorCtx(ctx, "cannot "+op+" treatment plan", log.Error(err))
 
 	return fmt.Errorf("internal server error")
+}
+
+func (r *Resolver) AwsConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AwsConnectorSetupInput) (*mcp.CallToolResult, types.AwsConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.AwsConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.AwsConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudaws.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.awsConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build aws connector setup", log.Error(err))
+
+		return nil, types.AwsConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.AwsConnectorSetupOutput{
+		Setup: types.NewAWSConnectorSetup(setup),
+	}, nil
+}
+
+func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateWorkloadIdentityConnectorInput) (*mcp.CallToolResult, types.CreateWorkloadIdentityConnectorOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	if input.Provider != coredata.ConnectorProviderAWS {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("provider does not support workload identity")
+	}
+
+	settings, err := cloudaws.NewConnectorSettings(input.AwsRoleArn)
+	if err != nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
+	}
+
+	raw, err := json.Marshal(settings)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot marshal aws connector settings", log.Error(err))
+
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       input.Provider,
+		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+		Connection:     &connector.WorkloadIdentityConnection{},
+		RawSettings:    raw,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create workload identity connector", log.Error(err))
+
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.CreateWorkloadIdentityConnectorOutput{
+		Connector: types.NewConnector(
+			cnnctr,
+			r.connectorConnectionStatus(ctx, scope, cnnctr.ID),
+		),
+	}, nil
 }

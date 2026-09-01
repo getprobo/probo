@@ -18,27 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package provider
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
-import (
-	"context"
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['setupAws'],
+			},
+		},
+		default: '',
+		description: 'The ID of the organization',
+		required: true,
+	},
+];
 
-	"go.probo.inc/probo/pkg/cloud"
-	"go.probo.inc/probo/pkg/coredata"
-)
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 
-// InspectCloudGrant runs WorkloadIdentityConfig.InspectGrant when the
-// provider registers one. A nil InspectGrant is a no-op: a successful assume
-// is the whole check.
-func (r *Registry) InspectCloudGrant(
-	ctx context.Context,
-	session cloud.Session,
-	conn *coredata.Connector,
-) error {
-	reg, ok := r.Get(conn.Provider)
-	if !ok || reg.WorkloadIdentity == nil || reg.WorkloadIdentity.InspectGrant == nil {
-		return nil
-	}
+	const query = `
+		query AwsConnectorSetup($organizationId: ID!) {
+			awsConnectorSetup(organizationId: $organizationId) {
+				issuer
+				audience
+				subject
+				suggestedRoleName
+				terraformSnippet
+				cloudFormationQuickCreateURL
+			}
+		}
+	`;
 
-	return reg.WorkloadIdentity.InspectGrant(ctx, session, conn)
+	const responseData = await proboApiRequest.call(this, query, { organizationId });
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
 }

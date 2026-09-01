@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -35,6 +36,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -75,6 +77,8 @@ func NewGraphQLHandler(
 	slackbotInstallations *slackchannel.InstallationService,
 	botDeliveryDestinations BotDeliveryDestinations,
 	complianceMessages ComplianceMessages,
+	identityFederation *identityfederation.Issuer,
+	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -100,6 +104,8 @@ func NewGraphQLHandler(
 			baseURL:                 baseURL,
 			itam:                    itamSvc,
 			logger:                  logger,
+			identityFederation:      identityFederation,
+			awsConnectorInstall:     awsConnectorInstall,
 			probotIdentityBindings:  probotIdentityBindings,
 			slackbotInstallations:   slackbotInstallations,
 			botDeliveryDestinations: botDeliveryDestinations,

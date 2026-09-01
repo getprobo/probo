@@ -26,6 +26,7 @@ import (
 	"slices"
 	"strings"
 
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/probodconfig"
@@ -198,6 +199,14 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Enabled:       identityFederationEnabled,
 				IssuerBaseURL: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL"),
 				SigningKeys:   identityFederationSigningKeys,
+				CloudFormationTemplateURL: b.resolver.getEnvOrDefault(
+					"PROBOD_IDENTITY_FEDERATION_CLOUDFORMATION_TEMPLATE_URL",
+					cloudaws.DefaultCloudFormationTemplateURL,
+				),
+				TerraformModuleSource: b.resolver.getEnvOrDefault(
+					"PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE",
+					cloudaws.DefaultTerraformModuleSource,
+				),
 			},
 			ITAM: probodconfig.ITAMConfig{
 				DeviceEnrollmentTokenValidity: b.resolver.getEnvIntOrDefault(

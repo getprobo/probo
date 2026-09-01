@@ -23,48 +23,56 @@ SOFTWARE.
 # CloudFormation setup artifacts
 
 [`aws-audit-role.yaml`](aws-audit-role.yaml) is the source of truth for the AWS
-connector's customer-side install. It creates an IAM OIDC provider for a Probo
-organization's issuer, a read-only `ProboAudit` role trusting exactly that
-issuer and subject, and — optionally — a service-managed StackSet that repeats
-both in every member account of the organization.
+connector's customer-side install. The template creates an IAM OIDC provider
+for the issuer of a Probo organization. It also creates a read-only
+`ProboAudit` role that trusts that issuer and subject. Optionally, a
+service-managed StackSet repeats both in every member account of the
+organization.
 
 Terraform parity lives in [`../../terraform/aws-audit-role`](../../terraform/aws-audit-role).
 
 ## What the customer runs
 
-Deploy one stack in the AWS account that you connect to Probo.
+Open the AWS connect screen in Probo. The screen gives a CloudFormation link
+with the issuer, subject, and role name already filled. Click that link.
 
-Leave `DeployToOrganization` set to No. The stack creates the OIDC provider
-and the `ProboAudit` role in that account only.
+Leave `DeployToOrganization` set to No. Create the stack in the AWS account
+that you connect to Probo. Copy the `RoleARN` output. Paste that ARN into
+Probo.
+
+The stack creates the OIDC provider and the `ProboAudit` role in that account
+only.
 
 ### Optional: cover the organization later
 
 The template can create a service-managed StackSet. That StackSet creates the
-same provider and role in every member account, including accounts added later.
+same provider and role in every member account. Accounts that join later get
+the same resources.
 
-Probo does not use those member roles yet. Set `DeployToOrganization` to Yes
-only if you will cover the organization later. Then set
-`OrganizationalUnitIds` to at least the organization root (`r-xxxx`). Run
-that stack from the management account or from a CloudFormation delegated
-administrator.
+Probo does not use those member roles yet. If you will cover the organization
+later, set `DeployToOrganization` to Yes. Then set `OrganizationalUnitIds` to
+at least the organization root (`r-xxxx`). Run that stack from the management
+account or from a CloudFormation delegated administrator.
 
 A service-managed StackSet needs CloudFormation trusted access in the
 organization. Without trusted access, the stack fails on the StackSet resource.
 
 ## Publishing for one-click install
 
-CloudFormation's quick-create console accepts a `templateURL` **on S3 only** —
-not a GitHub raw URL, not an arbitrary HTTPS host, not a GitHub Release
-asset.
+Probo publishes the template at
+`https://probo-cloudformation-template.s3.us-east-2.amazonaws.com/aws-audit-role.yaml`.
+The CloudFormation quick-create console accepts a `templateURL` **on S3
+only**. A GitHub raw URL, an arbitrary HTTPS host, and a GitHub Release asset
+do not work.
 
-The customer's CloudFormation fetches that object. A bucket that only Probo
-IAM can read does **not** work: the customer has no credentials there, and
-you cannot list every customer account in a bucket policy.
+CloudFormation in the customer account fetches that object. A bucket that
+only Probo IAM can read does **not** work. The customer has no credentials
+there, and you cannot list every customer account in a bucket policy.
 
 The object (or its prefix) must allow anonymous `s3:GetObject`. The rest of
 the bucket can stay private. Block Public Access must allow that GetObject.
 The object is still public. A presigned URL can point at a private object,
-but it expires and is a poor fit for runbooks and change tickets.
+but it expires. Runbooks and change tickets need a URL that does not expire.
 
 One-click therefore requires the template in a Probo-owned bucket with
 anonymous read on that key:
@@ -75,56 +83,66 @@ aws s3 cp contrib/cloudformation/aws-audit-role/aws-audit-role.yaml \
   --cache-control "max-age=300"
 ```
 
-Publish under a stable key. The URL ends up in customer runbooks and change
-tickets, and a moved object breaks a stack update they attempt months later.
+Publish under a stable key. The URL is recorded in customer runbooks and
+change tickets. A moved object breaks a stack update that they attempt months
+later.
 
-Self-hosted deployments that cannot publish to S3 give their customers the
-upload-a-template path or the Terraform module instead. Serving the YAML from
-probod is fine for download but **cannot** drive one-click.
+If a self-hosted deployment cannot publish to S3, give the customers the
+upload-a-template path or the Terraform module instead. You can serve the
+YAML from probod for download. That URL cannot drive one-click.
 
 ## The quick-create link
 
+Probo builds this URL. The customer must not assemble it by hand. The link
+opens the console in `us-east-1` with `stackName=probo-audit` and with
+`ProboIssuerURL`, `ProboSubject`, and `RoleName` already filled. IAM is
+global, so that console region is not the home region of the account.
+
 ```
-https://<region>.console.aws.amazon.com/cloudformation/home
-  ?region=<region>
+https://us-east-1.console.aws.amazon.com/cloudformation/home
+  ?region=us-east-1
   #/stacks/quickcreate
   ?templateURL=<url-encoded https S3 URL>
   &stackName=probo-audit
   &param_ProboIssuerURL=<url-encoded issuer>
   &param_ProboSubject=<url-encoded subject>
+  &param_RoleName=ProboAudit
 ```
 
 Every Probo-derived parameter must be prefilled. AWS compares the issuer URL
-case-sensitively, and the issuer's last path segment is a mixed-case identifier,
-so **the customer must never have to retype it** — a single flipped character
-produces an `AccessDenied` with nothing in it that names the cause.
+with case sensitivity. The last path segment of the issuer is a mixed-case
+identifier. The customer must never retype it. One flipped character produces
+an `AccessDenied` with nothing in it that names the cause.
 
-`RoleName` is left to its default unless the customer has a reason to change
-it; if they do, the same name must be recorded on the connector. The audience
-is not a parameter: Probo always mints `sts.amazonaws.com` and the connector
-cannot be told another value.
+If the customer changes `RoleName`, the ARN that they paste into Probo
+changes with it. The audience is not a parameter. Probo always mints
+`sts.amazonaws.com`. The connector cannot use another value.
 
-## Verifying an install
+## Probing an install
 
-Probo probes the install by assuming the role. Isolation is the
-per-organization issuer: a foreign token fails at the provider-match step
-before STS evaluates any trust-policy condition. The `sub` and `aud`
-conditions in this template are IAM hygiene; Probo does not read them back.
+When the customer pastes the ARN, Probo probes the install by assuming the
+role. Isolation is the per-organization issuer. A foreign token fails at the
+provider-match step before STS evaluates any trust-policy condition. The
+`sub` and `aud` conditions in this template are IAM hygiene. Probo does not
+read them back.
+
+If the probe fails, make sure that the stack exists in that account. Make
+sure that the issuer and subject match the values on the connect screen.
 
 ## Editing the template
 
 Two things are easy to break and produce opaque failures:
 
 - **The trust policy is a JSON string, not a YAML mapping.** Its condition keys
-  embed the issuer, and CloudFormation cannot use an intrinsic function as a
-  mapping key. Converting it back to a mapping compiles and silently stops
-  templating the keys.
+  embed the issuer. CloudFormation cannot use an intrinsic function as a
+  mapping key. If you convert it back to a mapping, the template compiles and
+  the keys no longer get substitutions.
 - **The member-account template is embedded in the StackSet's `TemplateBody`.**
   Inside that `Fn::Sub`, `${!Foo}` renders as the literal `${Foo}` for the inner
   template to resolve per account, while `${Foo}` is substituted once here.
-  Dropping an escape bakes the management account's ID into every member
-  account's trust policy.
+  If you drop an escape, every member-account trust policy gets the management
+  account ID.
 
 The read-only additions policy is duplicated between the stack's own role and
-the embedded template; CloudFormation offers no way to share a fragment between
-the two. Change both.
+the embedded template. CloudFormation offers no way to share a fragment
+between the two. Change both.

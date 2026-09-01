@@ -110,8 +110,8 @@ Parameters:
     AllowedPattern: '^[\w+=,.@-]+$'
     ConstraintDescription: must be a valid IAM role name
     Description: >-
-      Name of the role Probo assumes. The same name is used in every account,
-      so changing it here means changing it in Probo too.
+      Name of the role Probo assumes. The same name is used in every account.
+      If you change it, the RoleARN output changes. Paste that ARN into Probo.
 
   CreateOIDCProvider:
     Type: String
@@ -408,7 +408,7 @@ Resources:
 
 Outputs:
   RoleARN:
-    Description: "ARN of the role Probo assumes in this account"
+    Description: "ARN of the role Probo assumes. Paste this value into Probo."
     Value: !GetAtt ProboAuditRole.Arn
 
   RoleName:

@@ -7,10 +7,12 @@ package console_v1
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/log"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
@@ -44,6 +46,25 @@ func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connect
 	}
 
 	return scopes, nil
+}
+
+// ConnectionStatus is the resolver for the connectionStatus field.
+func (r *connectorResolver) ConnectionStatus(ctx context.Context, obj *types.Connector) (types.ConnectorConnectionStatus, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return "", err
+	}
+
+	status, err := r.connectorConnectionStatus(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return "", gqlutils.NotFound(ctx, err)
+		}
+
+		return "", err
+	}
+
+	return status, nil
 }
 
 // CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
@@ -145,6 +166,51 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 	}
 
 	return &types.CreateClientCredentialsConnectorPayload{
+		Connector: types.NewConnector(cnnctr),
+	}, nil
+}
+
+// CreateWorkloadIdentityConnector is the resolver for the createWorkloadIdentityConnector field.
+func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, input types.CreateWorkloadIdentityConnectorInput) (*types.CreateWorkloadIdentityConnectorPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+	}
+
+	if input.Provider != coredata.ConnectorProviderAWS {
+		return nil, gqlutils.Invalidf(ctx, "provider does not support workload identity")
+	}
+
+	settings, err := cloudaws.NewConnectorSettings(input.AWSRoleArn)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	raw, err := json.Marshal(settings)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot marshal aws connector settings", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       input.Provider,
+		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+		Connection:     &connector.WorkloadIdentityConnection{},
+		RawSettings:    raw,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create workload identity connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateWorkloadIdentityConnectorPayload{
 		Connector: types.NewConnector(cnnctr),
 	}, nil
 }

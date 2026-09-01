@@ -5,6 +5,13 @@ documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Document the connect-screen flow: Probo builds the quick-create URL, and
+  the customer pastes the `RoleARN` output back.
+- Restore the self-hosted fallbacks: upload-a-template or Terraform, and
+  that a YAML file served by probod cannot drive one-click.
+
 ## [0.1.1] - 2026-08-28
 
 ### Changed

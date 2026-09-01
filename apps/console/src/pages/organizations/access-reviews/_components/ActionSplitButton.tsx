@@ -25,45 +25,64 @@ import {
   IconChevronDown,
 } from "@probo/ui";
 
-import type { ConnectMethod } from "../_lib/connectMethods";
-
-export interface ConnectMethodAction {
-  id: ConnectMethod;
+export interface ActionSplitButtonAction {
+  id: string;
   label: string;
-  onSelect: () => void;
+  href?: string;
+  onSelect?: () => void;
 }
 
-interface ConnectMethodSplitButtonProps {
-  actions: ReadonlyArray<ConnectMethodAction>;
+interface ActionSplitButtonProps {
+  actions: ReadonlyArray<ActionSplitButtonAction>;
   chooseAnotherMethodLabel: string;
 }
 
-export function ConnectMethodSplitButton({
+export function ActionSplitButton({
   actions,
   chooseAnotherMethodLabel,
-}: ConnectMethodSplitButtonProps) {
+}: ActionSplitButtonProps) {
   const [preferredAction, ...alternativeActions] = actions;
   if (!preferredAction) {
     return null;
   }
+
+  const splitClassName
+    = alternativeActions.length > 0 ? "rounded-r-none" : undefined;
+  const preferredButton = preferredAction.href
+    ? (
+        <Button
+          type="button"
+          variant="primary"
+          className={splitClassName}
+          asChild
+        >
+          <a
+            href={preferredAction.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {preferredAction.label}
+          </a>
+        </Button>
+      )
+    : (
+        <Button
+          type="button"
+          variant="primary"
+          className={splitClassName}
+          onClick={preferredAction.onSelect}
+        >
+          {preferredAction.label}
+        </Button>
+      );
+
   if (alternativeActions.length === 0) {
-    return (
-      <Button type="button" variant="primary" onClick={preferredAction.onSelect}>
-        {preferredAction.label}
-      </Button>
-    );
+    return preferredButton;
   }
 
   return (
     <div className="flex items-center">
-      <Button
-        type="button"
-        variant="primary"
-        className="rounded-r-none"
-        onClick={preferredAction.onSelect}
-      >
-        {preferredAction.label}
-      </Button>
+      {preferredButton}
       <Dropdown
         className="min-w-40"
         toggle={(
@@ -77,9 +96,23 @@ export function ConnectMethodSplitButton({
         )}
       >
         {alternativeActions.map(action => (
-          <DropdownItem key={action.id} onSelect={action.onSelect}>
-            {action.label}
-          </DropdownItem>
+          action.href
+            ? (
+                <DropdownItem key={action.id} asChild>
+                  <a
+                    href={action.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {action.label}
+                  </a>
+                </DropdownItem>
+              )
+            : (
+                <DropdownItem key={action.id} onSelect={action.onSelect}>
+                  {action.label}
+                </DropdownItem>
+              )
         ))}
       </Dropdown>
     </div>

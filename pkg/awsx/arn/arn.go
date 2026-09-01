@@ -24,6 +24,10 @@
 package arn
 
 import (
+	"errors"
+	"regexp"
+	"strings"
+
 	awsarn "github.com/aws/aws-sdk-go-v2/aws/arn"
 )
 
@@ -32,7 +36,40 @@ const (
 	// different deployments with their own account namespaces.
 	Partition = "aws"
 
+	// PartitionGov is AWS GovCloud (US).
+	PartitionGov = "aws-us-gov"
+
+	// PartitionChina is AWS China.
+	PartitionChina = "aws-cn"
+
 	iamService = "iam"
+
+	// RoleARNPattern is the IAM role ARN grammar. Partition is group 1,
+	// account is group 2, role name is group 3. The console field uses
+	// the same expression with the three supported partitions inlined.
+	RoleARNPattern = `arn:([^:]+):iam::([0-9]{12}):role(?:/[\w+=,.@-]+)*/([\w+=,.@-]{1,64})`
+)
+
+var (
+	// ErrNotRole is returned when the value is not an IAM role ARN. The
+	// error never echoes the input.
+	ErrNotRole = errors.New("not an IAM role ARN")
+
+	// ErrUnsupportedPartition is returned when the role ARN names a
+	// partition other than commercial, GovCloud, or China.
+	ErrUnsupportedPartition = errors.New("AWS partition is not supported")
+
+	roleARNPattern = regexp.MustCompile("^" + RoleARNPattern + "$")
+)
+
+type (
+	// Role is the fields an IAM role ARN must carry. IAM is global, so
+	// there is no region.
+	Role struct {
+		Partition string
+		AccountID string
+		Name      string
+	}
 )
 
 // Format renders an ARN the way the AWS SDK does.
@@ -55,4 +92,32 @@ func IAM(partition, accountID, resource string) string {
 // RoleARN builds the ARN of a role in one account of the given partition.
 func RoleARN(partition, accountID, roleName string) string {
 	return IAM(partition, accountID, "role/"+roleName)
+}
+
+// ParseRole reads an IAM role ARN. The error never echoes the input.
+func ParseRole(raw string) (Role, error) {
+	matches := roleARNPattern.FindStringSubmatch(strings.TrimSpace(raw))
+	if matches == nil {
+		return Role{}, ErrNotRole
+	}
+
+	partition := matches[1]
+	if !supportedPartition(partition) {
+		return Role{}, ErrUnsupportedPartition
+	}
+
+	return Role{
+		Partition: partition,
+		AccountID: matches[2],
+		Name:      matches[3],
+	}, nil
+}
+
+func supportedPartition(partition string) bool {
+	switch partition {
+	case Partition, PartitionGov, PartitionChina:
+		return true
+	default:
+		return false
+	}
 }

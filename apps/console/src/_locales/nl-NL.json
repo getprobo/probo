@@ -3231,7 +3231,6 @@
       "chooseAnotherMethod": "Kies een andere verbindingsmethode",
       "open": "Open"
     },
-    "comingSoon": "Binnenkort beschikbaar!",
     "csv": {
       "title": "CSV",
       "description": "Upload CSV-gegevens direct als toegangsbron."
@@ -3346,6 +3345,46 @@
     "actions": {
       "connect": "Verbinden",
       "connecting": "Verbinden..."
+    }
+  },
+  "createAwsAccessReviewSourcePage": {
+    "pageTitle": "AWS verbinden",
+    "title": "AWS verbinden",
+    "description": "Implementeer de auditrol. Voer daarna de ARN in.",
+    "permissionDenied": "U heeft geen rechten om toegangsbronnen aan te maken.",
+    "fields": {
+      "roleArn": "Rol-ARN",
+      "issuer": "Uitgever",
+      "audience": "Audience",
+      "subject": "Subject",
+      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+    },
+    "messages": {
+      "copyFailed": "Kopiëren mislukt",
+      "copied": "Gekopieerd naar klembord",
+      "copiedIssuer": "Uitgever gekopieerd.",
+      "copiedAudience": "Audience gekopieerd.",
+      "copiedSubject": "Subject gekopieerd.",
+      "copiedTerraform": "Terraform-fragment gekopieerd.",
+      "error": "Fout",
+      "success": "Succes",
+      "created": "Toegangsbron succesvol aangemaakt."
+    },
+    "errors": {
+      "roleArn": "Voer een geldige IAM-rol-ARN in.",
+      "create": "Aanmaken van de connector mislukt. Controleer de rol-ARN en probeer het opnieuw.",
+      "disconnected": "Probo kon de auditrol niet aannemen. Controleer of de stack in dit account is uitgerold en of de issuer en het subject overeenkomen met de waarden die tijdens de installatie zijn getoond.",
+      "delete": "Kan de connector niet verwijderen. Probeer het opnieuw.",
+      "source": "Aanmaken van toegangsbron mislukt",
+      "copy": "Kopieer de waarde handmatig."
+    },
+    "actions": {
+      "copy": "Kopiëren",
+      "connect": "Verbinden",
+      "back": "Terug",
+      "installViaCloudFormation": "Installeren via CloudFormation",
+      "installViaTerraform": "Installeren via Terraform",
+      "chooseAnotherInstallMethod": "Kies een andere installatiemethode"
     }
   },
   "oauthExtraDialog": {

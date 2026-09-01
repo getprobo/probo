@@ -34,6 +34,12 @@ type (
 		// infrastructure they own.
 		IssuerBaseURL string                               `json:"issuer-base-url,omitempty"`
 		SigningKeys   []IdentityFederationSigningKeyConfig `json:"signing-keys,omitempty"`
+		// CloudFormationTemplateURL is the public S3 HTTPS URL used to build the
+		// AWS console quick-create link for the audit role.
+		CloudFormationTemplateURL string `json:"cloudformation-template-url,omitempty"`
+		// TerraformModuleSource is the module address copied into the Terraform
+		// install snippet.
+		TerraformModuleSource string `json:"terraform-module-source,omitempty"`
 	}
 
 	// IdentityFederationSigningKeyConfig is one RSA key published in the identity federation

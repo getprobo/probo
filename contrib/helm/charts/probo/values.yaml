@@ -233,6 +233,10 @@ probo:
     # REQUIRED when previousSigningKey is set, and it must differ from
     # signingKeyKid.
     previousSigningKeyKid: ""
+    # Public S3 HTTPS URL used to build the AWS console quick-create link.
+    cloudformationTemplateUrl: "https://probo-cloudformation-template.s3.us-east-2.amazonaws.com/aws-audit-role.yaml"
+    # Terraform module address copied into the AWS connector install snippet.
+    terraformModuleSource: "getprobo/audit-role/aws"
 
   # CORS configuration
   cors:

@@ -54,6 +54,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
@@ -155,6 +156,10 @@ func New() *Implm {
 					DomainVerificationIntervalSeconds: 60,
 					DomainVerificationResolverAddr:    "8.8.8.8:53",
 				},
+			},
+			IdentityFederation: IdentityFederationConfig{
+				CloudFormationTemplateURL: cloudaws.DefaultCloudFormationTemplateURL,
+				TerraformModuleSource:     cloudaws.DefaultTerraformModuleSource,
 			},
 			ITAM: ITAMConfig{
 				DeviceEnrollmentTokenValidity: 604800,
@@ -963,6 +968,10 @@ func (impl *Implm) Run(
 			Logger:                   l.Named("http.server"),
 			Cookie:                   authCookie,
 			IdentityFederationIssuer: identityFederationIssuer,
+			AWSConnectorInstall: cloudaws.ConnectorInstallConfig{
+				CloudFormationTemplateURL: impl.cfg.IdentityFederation.CloudFormationTemplateURL,
+				TerraformModuleSource:     impl.cfg.IdentityFederation.TerraformModuleSource,
+			},
 		},
 	)
 	if err != nil {

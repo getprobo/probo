@@ -181,6 +181,14 @@ spec:
               value: {{ required "probo.identityFederation.previousSigningKeyKid is required when probo.identityFederation.previousSigningKey is set" .Values.probo.identityFederation.previousSigningKeyKid | quote }}
             {{- end }}
             {{- end }}
+            {{- if .Values.probo.identityFederation.cloudformationTemplateUrl }}
+            - name: PROBOD_IDENTITY_FEDERATION_CLOUDFORMATION_TEMPLATE_URL
+              value: {{ .Values.probo.identityFederation.cloudformationTemplateUrl | quote }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.terraformModuleSource }}
+            - name: PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE
+              value: {{ .Values.probo.identityFederation.terraformModuleSource | quote }}
+            {{- end }}
             - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             - name: PROBOD_ITAM_DEVICE_ENROLLMENT_TOKEN_VALIDITY

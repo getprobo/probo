@@ -210,7 +210,8 @@ func NewSessionFromConfig(accountID, partition string, cfg awssdk.Config) *Sessi
 func (s *Session) CheckAccess(ctx context.Context) error {
 	client := sts.NewFromConfig(s.cfg)
 
-	if _, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{}); err != nil {
+	_, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
+	if err != nil {
 		return fmt.Errorf("cannot reach aws account: %w", err)
 	}
 
