@@ -30,7 +30,7 @@ export function HomePageSkeleton() {
         <HeadingSkeleton size={7} className="w-64" />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <CardSkeleton size={5} className="h-75 md:row-span-2 md:h-full" />
+        <CardSkeleton size={5} className="h-75" />
         <CardSkeleton size={5} className="h-75" />
         <CardSkeleton size={5} className="h-75" />
         <CardSkeleton size={5} className="h-75" />

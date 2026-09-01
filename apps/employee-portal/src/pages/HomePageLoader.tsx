@@ -43,18 +43,13 @@ export default function HomePageLoader() {
     throw new NotFoundError("organizationId is required");
   }
 
-  const currentQueryRef = queryRef != null
-    && queryRef.variables.organizationId === organizationId
-    ? queryRef
-    : null;
-
-  if (currentQueryRef == null) {
+  if (queryRef == null || queryRef.variables.organizationId !== organizationId) {
     return <HomePageSkeleton />;
   }
 
   return (
     <Suspense key={organizationId} fallback={<HomePageSkeleton />}>
-      <HomePage queryRef={currentQueryRef} />
+      <HomePage queryRef={queryRef} />
     </Suspense>
   );
 }
