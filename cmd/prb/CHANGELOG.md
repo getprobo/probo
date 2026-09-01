@@ -4,6 +4,17 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.222.0] - 2026-09-01
+
+### Added
+
+- `--as-of` on `risk-analysis view` and `treatment-plan list` reconstructs matrix cells and plans as of an RFC3339 instant; on `treatment-plan list` it requires `--risk-analysis`, and omitting it keeps reading live tables
+- `--state` on `task create`, and `task create` / `task update` now validate the state against the server enum, which gained `BACKLOG`, `CANCELED`, and `DUPLICATE`
+
+### Changed
+
+- `treatment-plan list` and `treatment-plan view` report the plan's own category, falling back to the risk category when the plan has none
+
 ## [0.221.0] - 2026-08-31
 
 ### Added
