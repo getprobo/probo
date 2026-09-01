@@ -4,10 +4,29 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.274.0] - 2026-09-01
+
 ### Added
 
 - AWS access review now lists Identity Center users assigned to the connected account (directly or through a group) when an instance is visible in the session region; the walk degrades to IAM-only when the account has no instance, the role cannot read SSO Admin (including after ListInstances succeeds), or the instance lives in another region. There is still no Organizations walk and no cross-account assignment listing
 - AWS access-review sources are named with the connected account name (`AWS acme-prod`) when Account Management returns one, then the sign-in alias, then the account ID, so two accounts in one organization stay distinguishable; the source-name worker assumes the audit role to resolve those. The console still shows the account ID until the worker runs
+
+### Changed
+
+- Document list rows are fully clickable: the whole row navigates to the viewer instead of only the title or action button, rendered as a single data cell instead of a spanning row header
+- Queue navigation swipes to the next document immediately instead of waiting for the query and showing a skeleton first
+- Document tabs show the open document's title instead of the static "Probo Console" title, so multiple open documents are distinguishable in the browser tab strip
+
+### Removed
+
+- Leftover console employee-portal pages (signatures, approvals, devices, enroll, Slack bind), now fully owned by the dedicated employee-portal app; the old pages never rendered in production
+
+### Fixed
+
+- Long document lists no longer show empty space below the table from an unwanted vertical scrollbar
+- Document loading skeleton matches the live request panel layout instead of missing the back-link row
+- TableLink focus ring no longer shows an opaque wash covering row text
+- A refused quorum's reviewed document is no longer lost when a later quorum is accepted; the PDF is now generated in a dedicated worker and kept with the quorum
 
 ## [0.273.0] - 2026-09-01
 
