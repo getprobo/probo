@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.272.0] - 2026-09-01
+
+### Added
+
+- Risk analysis treatment plans can be reconstructed as of a past date: the heatmap, plan table, and measures show the state they had at that instant, with each event storing the full plan so an as-of read returns the latest row; today keeps reading live data
+- AWS access review driver listing the IAM users of the connected account, with groups, attached and inline policies as grants and activity read from the credential report; the connector names one account, so there is no Organizations walk and no Identity Center listing
+- `BACKLOG`, `CANCELED`, and `DUPLICATE` task states, selectable when creating or updating a task
+- A back link on employee portal document, approval, and signature viewers, so leaving a viewer no longer depends on a decision being made first
+
+### Changed
+
+- Device enrollment moved to the employee portal at `/employee-portal/enroll`, adding an organization picker first step since `/enroll` carried no organization in the URL; the legacy path 302s so agents and bookmarks keep working
+- Slack bind and bindings pages moved to the employee portal, with a Slack card on the portal home rendered only when the organization has Slack installed; the old console URLs 302s so links in existing Slack DMs keep working
+- The document viewer top bar stretches to the full-bleed viewer width instead of staying inset at 1024px
+- Risk analysis list rows wrap long names and periods instead of pushing the description column out, and clamp very long descriptions to two lines
+
+### Fixed
+
+- `.log` evidence uploads on measures are accepted; browsers report them as `text/plain` while only `text/x-log` was allowed
+- SOC 2 framework wording
+
 ## [0.271.1] - 2026-08-31
 
 ### Fixed
