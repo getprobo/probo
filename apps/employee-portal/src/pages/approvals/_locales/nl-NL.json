@@ -25,7 +25,6 @@
     }
   },
   "document": {
-    "eyebrow": "Goedkeuringsverzoek",
     "instruction": "Bekijk dit document en keur het vervolgens goed of af.",
     "reviewAndApprove": "Bekijken en goedkeuren",
     "reject": "Afwijzen",

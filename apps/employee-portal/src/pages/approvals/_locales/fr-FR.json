@@ -25,7 +25,6 @@
     }
   },
   "document": {
-    "eyebrow": "Demande d’approbation",
     "instruction": "Examinez ce document, puis approuvez-le ou rejetez-le.",
     "reviewAndApprove": "Examiner et approuver",
     "reject": "Rejeter",

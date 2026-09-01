@@ -22,7 +22,9 @@ import { CaretLeftIcon, CaretRightIcon, CheckCircleIcon, CheckIcon, MinusCircleI
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
+import { useParams } from "react-router";
 
+import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentRequestPanel } from "#/pages/_components/DocumentRequestPanel";
 import { documentRequestPanel } from "#/pages/_components/variants";
 
@@ -80,11 +82,16 @@ export function ApprovalRequestPanel({
   onFinish,
 }: ApprovalRequestPanelProps) {
   const { t } = useTranslation("approvals");
+  const { organizationId } = useParams();
   const decided = state === "APPROVED" || state === "REJECTED" || state === "VOIDED";
   const status = approvalStatus[state === "REJECTED" || state === "VOIDED" ? state : "APPROVED"];
   const slots = documentRequestPanel({ tone: status.tone });
   const StatusIcon = status.Icon;
   const busy = isApproving || isRejecting;
+
+  if (organizationId == null) {
+    throw new NotFoundError("organizationId is required");
+  }
 
   const detail = decided
     ? (
@@ -102,7 +109,12 @@ export function ApprovalRequestPanel({
       );
 
   return (
-    <DocumentRequestPanel eyebrow={t("document.eyebrow")} title={title} detail={detail}>
+    <DocumentRequestPanel
+      backLabel={t("title")}
+      backTo={`/${organizationId}/approvals`}
+      title={title}
+      detail={detail}
+    >
       {decided
         ? (
             <div className={slots.actions()}>

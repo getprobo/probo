@@ -23,7 +23,6 @@
     }
   },
   "document": {
-    "eyebrow": "Signature request",
     "instruction": "Review this document before signing.",
     "reviewAndSign": "Review and sign",
     "signed": "You signed this document.",

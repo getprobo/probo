@@ -25,7 +25,6 @@
     }
   },
   "document": {
-    "eyebrow": "Approval request",
     "instruction": "Review this document, then approve or reject it.",
     "reviewAndApprove": "Review and approve",
     "reject": "Reject",

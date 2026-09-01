@@ -25,7 +25,7 @@ export const getStartedCard = tv({
     frame: "relative flex h-full w-full flex-col overflow-hidden",
     wash: [
       "pointer-events-none absolute inset-x-0 top-0 h-3/5",
-      "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
+      "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
       "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
     ],
     header: "relative z-1 flex flex-col items-center gap-4 px-8 py-12 text-center",
@@ -64,10 +64,10 @@ export const getStartedStep = tv({
 
 export const dashboardCard = tv({
   slots: {
-    frame: "relative flex h-[300px] flex-col gap-8 overflow-hidden p-8",
+    frame: "relative flex h-75 flex-col gap-8 overflow-hidden p-8",
     wash: [
       "pointer-events-none absolute inset-x-0 bottom-0 z-0 h-3/5",
-      "bg-[radial-gradient(ellipse_85%_55%_at_50%_100%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
+      "bg-[radial-gradient(ellipse_85%_55%_at_50%_100%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
       "mask-[linear-gradient(to_top,black_0%,black_40%,transparent_100%)]",
     ],
     header: "relative z-1 flex items-start gap-4",
@@ -118,7 +118,7 @@ export const documentQueueSummary = tv({
     frame: "relative flex flex-col items-center justify-center gap-6 overflow-hidden border-b border-sand-a2 px-8 py-12",
     wash: [
       "pointer-events-none absolute inset-x-0 top-0 z-0 h-full",
-      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
+      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
       "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
     ],
     content: "relative z-1 flex w-full flex-col items-center gap-6",
@@ -139,7 +139,7 @@ export const employeeDocumentListItem = tv({
       "outline-none focus-visible:after:bg-sand-2",
     ],
     metaCell: "relative z-1 h-12 whitespace-nowrap py-0",
-    timestamp: "flex items-center gap-[3px]",
+    timestamp: "flex items-center gap-0.75",
     timestampLabel: "text-sand-a8",
     timestampValue: "text-sand-a11",
     chip: "text-sand-a11",
@@ -158,7 +158,7 @@ export const employeeDocumentListItem = tv({
 
 export const documentEmpty = tv({
   slots: {
-    frame: "flex h-[200px] flex-col items-center justify-center gap-6",
+    frame: "flex h-50 flex-col items-center justify-center gap-6",
     icon: "size-8 text-sand-a9 [&_svg]:size-8",
     copy: "flex flex-col items-center gap-2 text-center",
     label: "text-sand-9",
@@ -207,8 +207,8 @@ export const documentWorkspace = tv({
       "[view-transition-name:document-workspace]",
     ],
     request: [
-      "flex w-full shrink-0 flex-col overflow-hidden gap-8 bg-sand-1 px-8 py-8",
-      "min-h-0 max-md:max-h-[50%] md:h-full md:w-96 xl:w-128",
+      "flex w-full shrink-0 flex-col overflow-hidden gap-8 bg-sand-1 px-8 pb-8",
+      "min-h-0 max-md:max-h-[50%] md:h-full md:w-96 xl:w-lg",
     ],
     requestBody: "min-h-0 overflow-y-auto",
     history: "flex min-h-0 flex-1 flex-col gap-8",
@@ -248,8 +248,8 @@ export const documentViewerToolbar = tv({
 export const documentRequestPanel = tv({
   slots: {
     root: "flex shrink-0 flex-col gap-16",
+    back: "flex h-12 shrink-0 items-center",
     copy: "flex flex-col gap-4",
-    eyebrow: "text-sand-9",
     status: "flex items-center gap-3",
     statusIcon: "size-4 shrink-0",
     actions: "flex w-full flex-col gap-6",
@@ -296,14 +296,14 @@ export const documentVersionHistory = tv({
       "data-scrolling:pointer-events-auto data-scrolling:opacity-100 data-scrolling:duration-0",
     ],
     thumb: "w-1 rounded-full bg-sand-a8",
-    ghost: "h-[72px] shrink-0 opacity-40",
+    ghost: "h-18 shrink-0 opacity-40",
   },
 });
 
 export const documentVersionHistoryItem = tv({
   slots: {
     row: [
-      "flex h-[72px] w-full shrink-0 snap-start items-center gap-4",
+      "flex h-18 w-full shrink-0 snap-start items-center gap-4",
       "border-b border-sand-3 px-8 py-4 text-left last:border-b-0",
       "hover:bg-sand-3",
     ],

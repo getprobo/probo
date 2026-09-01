@@ -23,7 +23,6 @@
     }
   },
   "document": {
-    "eyebrow": "Demande de signature",
     "instruction": "Examinez ce document avant de le signer.",
     "reviewAndSign": "Examiner et signer",
     "signed": "Vous avez signé ce document.",

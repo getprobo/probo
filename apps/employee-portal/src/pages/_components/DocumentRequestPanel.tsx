@@ -18,23 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretLeftIcon } from "@phosphor-icons/react";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 
 import { documentRequestPanel } from "./variants";
 
 interface DocumentRequestPanelProps {
-  eyebrow: string;
+  backLabel: string;
+  backTo: string;
   title: string;
   // Instruction or signed/approved/rejected status, stacked with the title.
   detail?: ReactNode;
   children?: ReactNode;
 }
 
-// Shared request-column chrome: eyebrow, title, optional detail, then actions.
+// Shared request-column chrome: back to the list, title, optional detail,
+// then actions.
 export function DocumentRequestPanel({
-  eyebrow,
+  backLabel,
+  backTo,
   title,
   detail,
   children,
@@ -44,9 +48,17 @@ export function DocumentRequestPanel({
   return (
     <div className={slots.root()}>
       <div className={slots.copy()}>
-        <Text size={1} color="current" className={slots.eyebrow()}>
-          {eyebrow}
-        </Text>
+        <div className={slots.back()}>
+          <Link
+            to={backTo}
+            size={2}
+            color="neutral"
+            underline={false}
+            iconStart={<CaretLeftIcon />}
+          >
+            {backLabel}
+          </Link>
+        </div>
         <Heading level={1} size={6} weight="medium" highContrast>
           {title}
         </Heading>
