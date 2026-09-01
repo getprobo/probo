@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router";
 
 import { ButtonLink } from "../Button/ButtonLink";
 
@@ -71,6 +72,13 @@ export default {
     size: 2,
     variant: "ghost",
   },
+  decorators: [
+    Story => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
   render: args => (
     <div className="w-xl">
       <SampleTable size={args.size} variant={args.variant} />
