@@ -29,21 +29,16 @@ import { CurrentUser } from "#/providers/CurrentUser";
 
 import { NavPanel } from "./_components/shell/NavPanel";
 import { NavRail } from "./_components/shell/NavRail";
-import { TopBar } from "./_components/shell/TopBar";
 import { organizationLayout } from "./_components/shell/variants";
 
 export const organizationLayoutQuery = graphql`
-  query OrganizationLayoutQuery(
-    $organizationId: ID!
-    $hideNavigation: Boolean!
-  ) {
+  query OrganizationLayoutQuery($organizationId: ID!) {
     slackbotAvailable
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...TopBar_organization @include(if: $hideNavigation)
-        ...NavRail_organization @skip(if: $hideNavigation)
-        ...NavPanel_organization @skip(if: $hideNavigation)
+        ...NavRail_organization
+        ...NavPanel_organization
         viewer @required(action: THROW) {
           fullName
           membership @required(action: THROW) {
@@ -59,11 +54,10 @@ export const organizationLayoutQuery = graphql`
 `;
 
 export interface OrganizationLayoutProps {
-  hideNavigation?: boolean;
   queryRef: PreloadedQuery<OrganizationLayoutQuery>;
 }
 
-export function OrganizationLayout({ hideNavigation = false, queryRef }: OrganizationLayoutProps) {
+export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
   const { organization, viewer, slackbotAvailable } = usePreloadedQuery<OrganizationLayoutQuery>(
     organizationLayoutQuery,
     queryRef,
@@ -81,20 +75,15 @@ export function OrganizationLayout({ hideNavigation = false, queryRef }: Organiz
   return (
     <LayoutContext value={drawerContext}>
       <div className={slots.root()}>
-        {hideNavigation && <TopBar organizationKey={organization} />}
         <div className={slots.body()}>
-          {!hideNavigation && (
-            <NavRail
-              organizationKey={organization}
-              slackbotAvailable={slackbotAvailable}
-            />
-          )}
-          {!hideNavigation && (
-            <NavPanel
-              organizationKey={organization}
-              slackbotAvailable={slackbotAvailable}
-            />
-          )}
+          <NavRail
+            organizationKey={organization}
+            slackbotAvailable={slackbotAvailable}
+          />
+          <NavPanel
+            organizationKey={organization}
+            slackbotAvailable={slackbotAvailable}
+          />
           <main className={slots.content()}>
             <div className={slots.contentInner()}>
               <CoreRelayProvider>

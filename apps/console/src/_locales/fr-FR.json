@@ -497,44 +497,6 @@
       "review": "Examiner"
     }
   },
-  "documentApprovePage": {
-    "pageTitle": "Examiner et approuver le document",
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": {
-      "approved": "Approuvé",
-      "rejected": "Rejeté",
-      "voided": "Annulé",
-      "inReview": "En cours d’examen",
-      "pending": "En attente"
-    },
-    "messages": {
-      "noLongerRequired": "Votre approbation n’est plus requise pour cette version.",
-      "approved": "Vous avez approuvé ce document.",
-      "rejected": "Vous avez rejeté ce document.",
-      "successTitle": "Succès",
-      "approvalSuccess": "Document approuvé avec succès",
-      "rejectionSuccess": "Document rejeté"
-    },
-    "errors": {
-      "title": "Erreur",
-      "approve": "Échec de l’approbation du document",
-      "reject": "Échec du rejet du document",
-      "loadPdf": "Échec du chargement du PDF"
-    },
-    "actions": {
-      "back": "Retour aux documents",
-      "approve": "Approuver",
-      "reject": "Rejeter"
-    },
-    "rejectDialog": {
-      "title": "Rejeter le document",
-      "description": "Veuillez indiquer un motif de rejet de ce document. Le document repassera au statut de brouillon.",
-      "placeholder": "Motif du rejet…",
-      "submit": "Rejeter le document"
-    },
-    "reviewHint": "Veuillez examiner attentivement le document avant de prendre votre décision."
-  },
   "documentDescriptionPage": {
     "messages": {
       "successTitle": "Succès",
@@ -581,120 +543,6 @@
     },
     "actions": {
       "request": "Demander une signature"
-    }
-  },
-  "employeeApprovalsPage": {
-    "pageTitle": "Documents",
-    "columns": {
-      "name": "Nom",
-      "type": "Type",
-      "classification": "Classification",
-      "lastUpdate": "Dernière mise à jour",
-      "approved": "Approuvé"
-    },
-    "empty": {
-      "title": "Aucun document pour le moment",
-      "description": "Aucun document n’a été soumis à votre approbation."
-    }
-  },
-  "employeeDocumentSignaturePage": {
-    "pageTitle": "Signer le document",
-    "messages": {
-      "successTitle": "Succès",
-      "signed": "Document signé avec succès"
-    },
-    "errors": {
-      "title": "Erreur",
-      "sign": "Échec de la signature du document",
-      "loadPdf": "Échec du chargement du PDF"
-    },
-    "reviewHint": "Veuillez examiner attentivement le document avant de le signer."
-  },
-  "employeeDocumentsPage": {
-    "pageTitle": "Documents",
-    "columns": {
-      "name": "Nom",
-      "type": "Type",
-      "classification": "Classification",
-      "lastUpdate": "Dernière mise à jour",
-      "signed": "Signé"
-    },
-    "empty": {
-      "title": "Aucun document pour le moment",
-      "description": "Aucun document n’a été demandé pour votre signature."
-    }
-  },
-  "employeeTabsLayout": {
-    "title": "Documents",
-    "tabs": {
-      "signatures": "Signatures",
-      "approvals": "Approbations",
-      "bindings": "Slack"
-    }
-  },
-  "approvableDocumentRow": {
-    "states": {
-      "approved": "Approuvé",
-      "rejected": "Rejeté",
-      "noLongerRequired": "Plus nécessaire",
-      "pending": "En attente"
-    },
-    "documentTypes": {
-      "other": "Autre",
-      "governance": "Gouvernance",
-      "policy": "Politique",
-      "procedure": "Procédure",
-      "plan": "Plan",
-      "register": "Registre",
-      "record": "Enregistrement",
-      "report": "Rapport",
-      "template": "Modèle",
-      "statement_of_applicability": "Déclaration d’applicabilité"
-    },
-    "classifications": {
-      "public": "Public",
-      "internal": "Interne",
-      "confidential": "Confidentiel",
-      "secret": "Secret"
-    }
-  },
-  "employeeDocumentRow": {
-    "documentTypes": {
-      "other": "Autre",
-      "governance": "Gouvernance",
-      "policy": "Politique",
-      "procedure": "Procédure",
-      "plan": "Plan",
-      "register": "Registre",
-      "record": "Enregistrement",
-      "report": "Rapport",
-      "template": "Modèle",
-      "statement_of_applicability": "Déclaration d’applicabilité"
-    },
-    "classifications": {
-      "public": "Public",
-      "internal": "Interne",
-      "confidential": "Confidentiel",
-      "secret": "Secret"
-    },
-    "signed": {
-      "yes": "Oui",
-      "no": "Non"
-    }
-  },
-  "versionActions": {
-    "actions": {
-      "back": "Retour aux documents",
-      "reviewAndSign": "Examiner et signer"
-    }
-  },
-  "versionRow": {
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": {
-      "signed": "Signé",
-      "inReview": "En revue",
-      "waitingSignature": "En attente de signature"
     }
   },
   "findingDetails": {
@@ -6328,76 +6176,7 @@
       }
     }
   },
-  "employeeDevices": {
-    "title": "Vos appareils"
-  },
   "deviceEnrollment": {
-    "pageTitle": "Inscrire un appareil",
-    "title": "Enrôlement de l’appareil",
-    "setup": "Configuration",
-    "stepProgress": "Étape {{current}} sur {{total}}",
-    "steps": {
-      "privacy": {
-        "title": "Confidentialité",
-        "description": "Vérifier les données collectées"
-      },
-      "download": {
-        "title": "Télécharger",
-        "description": "Installer l’agent de bureau"
-      },
-      "organization": {
-        "description": "Choisir l’espace de travail de destination"
-      },
-      "enroll": {
-        "title": "Ouvrir et attendre",
-        "description": "Terminer la configuration dans l’agent de bureau"
-      }
-    },
-    "unavailable": {
-      "title": "Enrôlement indisponible",
-      "description": "Vous n’avez pas l’autorisation d’enrôler des appareils dans aucune organisation."
-    },
-    "intro": {
-      "title": "Avant de commencer",
-      "description": "Probo collecte les métadonnées d’appareil suivantes à des fins d’inventaire et de rapport de posture :"
-    },
-    "download": {
-      "title": "Télécharger l’agent Probo",
-      "description": "Téléchargez l’agent Probo depuis <a>pro.bo/install</a>.",
-      "alreadyInstalled": "Cette étape n’est pas nécessaire si l’agent est déjà installé sur cet appareil."
-    },
-    "privacy": {
-      "identity": "Identité de l’appareil : UUID matériel, nom d’hôte et numéro de série (si disponible).",
-      "systemDetails": "Détails système : plateforme, version du système d’exploitation et version de l’agent Probo.",
-      "activitySignals": "Signaux d’activité : heure d’enrôlement, signaux de vie et résultats des vérifications de posture."
-    },
-    "organization": {
-      "title": "Choisir une organisation",
-      "description": "Choisissez l’organisation qui possédera et gérera cet appareil."
-    },
-    "openAgent": {
-      "title": "Ouvrir l’agent Probo",
-      "description": "Cliquez sur « {{action}} » pour terminer la configuration, puis laissez cette page ouverte jusqu’à confirmation de l’enrôlement."
-    },
-    "actions": {
-      "backToOrganizations": "Retour aux organisations",
-      "enrollNew": "Enrôler un nouvel appareil",
-      "openAgent": "Ouvrir l’agent Probo",
-      "preparing": "Préparation…"
-    },
-    "status": {
-      "enrolledWithHostname": "{{hostname}} est enrôlé.",
-      "enrolled": "Cet appareil est enrôlé.",
-      "closeWindow": "Vous pouvez fermer cette fenêtre.",
-      "waitingForCheckIn": "En attente de la première connexion de l’agent…",
-      "timedOut": "Nous n’avons toujours pas de nouvelles de l’agent. Assurez-vous que l’agent de bureau est installé et en cours d’exécution, puis réessayez."
-    },
-    "manual": {
-      "cannotEnroll": "Impossible d’enrôler un nouvel appareil ?",
-      "tryCreating": "Essayez de le créer manuellement",
-      "title": "Enrôlement manuel",
-      "creating": "Création de l’appareil…"
-    },
     "token": {
       "title": "Jeton d’enrôlement généré",
       "description": "Ne partagez ce jeton d’enrôlement qu’avec le propriétaire de l’appareil, via un canal sécurisé. Il ne peut être utilisé qu’une seule fois et expire après sept jours.",
@@ -6419,39 +6198,6 @@
   "thirdPartyRiskAssessmentRow": {
     "expired": "Expiré",
     "notes": "Notes"
-  },
-  "employeeBindPage": {
-    "title": "Connectez Slack à Probo",
-    "description": "Liez ce compte Slack à votre identité Probo pour que Probot puisse vous aider.",
-    "loading": "Chargement…",
-    "fields": { "tenant": "Espace de travail", "account": "Compte" },
-    "actions": { "confirm": "Lier le compte Slack", "linking": "Liaison…" },
-    "messages": { "linked": "Votre compte Slack est maintenant lié à Probo." },
-    "missingToken": {
-      "title": "Aucun lien de confirmation",
-      "description": "Dans Slack, exécutez /probot login pour recevoir un lien de confirmation privé."
-    },
-    "errors": {
-      "linkFailed": "Échec de la liaison",
-      "invalidOrExpiredTokenTitle": "Ce lien a expiré",
-      "invalidOrExpiredToken": "Demandez un nouveau lien de confirmation privé au bot."
-    }
-  },
-  "employeeBindingsPage": {
-    "title": "Slack",
-    "description": "Liez votre compte Slack pour que Probot puisse vous aider depuis cette organisation.",
-    "connectedDescription": "{{account}} · {{workspace}}",
-    "providers": { "slack": "Slack" },
-    "actions": { "unlink": "Délier" },
-    "empty": {
-      "title": "Aucun compte Slack lié",
-      "description": "Dans Slack, exécutez /probot login pour recevoir un lien de confirmation privé."
-    },
-    "messages": { "unlinked": "Compte Slack délié." },
-    "errors": { "unlinkFailed": "Impossible de délier ce compte." },
-    "confirmations": {
-      "unlink": "Délier ce compte Slack ? Probot ne pourra plus vous aider tant que vous ne le lierez pas à nouveau."
-    }
   },
   "country": {
     "GLOBAL": "Mondial",

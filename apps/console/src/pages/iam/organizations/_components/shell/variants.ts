@@ -25,7 +25,7 @@ export const organizationLayout = tv({
     root: "flex h-dvh flex-col bg-sand-2",
     body: "flex min-h-0 flex-1",
     content: "min-w-0 flex-1 overflow-y-auto transition-[padding] duration-300",
-    contentInner: "mx-auto w-full max-w-[1200px] px-8 py-12",
+    contentInner: "mx-auto w-full max-w-300 px-8 py-12",
   },
   variants: {
     hasDrawer: {
@@ -34,37 +34,12 @@ export const organizationLayout = tv({
   },
 });
 
-export const topBar = tv({
-  slots: {
-    bar: "flex h-14 shrink-0 items-center gap-3 border-b border-sand-a3 bg-sand-1 px-4",
-    brand: "flex shrink-0 items-center",
-    logo: "h-5 w-12 text-sand-12",
-    separator: "text-sand-8",
-    trailing: "ml-auto flex items-center gap-2",
-  },
-});
-
 export const organizationSwitcher = tv({
   slots: {
-    trigger: [
-      "flex h-8 min-w-0 items-center gap-1 rounded-3 px-2",
-      "cursor-pointer outline-none transition-colors select-none",
-      "hover:bg-sand-3 data-popup-open:bg-sand-3",
-      "focus-visible:ring-2 focus-visible:ring-sand-8",
-    ],
     popup: "w-72 p-0",
     search: "p-2",
     list: "max-h-96 overflow-y-auto px-1 pb-1",
   },
-});
-
-export const viewerMembershipMenuTrigger = tv({
-  base: [
-    "flex h-8 items-center gap-2 rounded-full py-1 pr-2.5 pl-1",
-    "cursor-pointer outline-none transition-colors select-none",
-    "hover:bg-sand-3 data-popup-open:bg-sand-3",
-    "focus-visible:ring-2 focus-visible:ring-sand-8",
-  ],
 });
 
 export const navRail = tv({

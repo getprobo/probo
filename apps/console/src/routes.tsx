@@ -27,6 +27,7 @@ import { createBrowserRouter, Navigate, redirect } from "react-router";
 
 import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
+import { RedirectToEmployeePortal } from "./components/RedirectToEmployeePortal";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
@@ -39,7 +40,6 @@ import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/
 import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
-import { RedirectToEmployeePortal } from "./pages/organizations/employee/RedirectToEmployeePortal";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { taskRoutes } from "./pages/organizations/tasks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
@@ -185,74 +185,6 @@ const routes = [
       {
         path: "assume",
         Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
-      },
-      {
-        path: "employee",
-        ErrorBoundary: OrganizationErrorBoundary,
-        Component: lazy(
-          () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
-        ),
-        children: [
-          {
-            index: true,
-            loader: ({ params: { organizationId } }) => {
-              // eslint-disable-next-line
-              throw redirect(`/organizations/${organizationId}/employee/signatures`);
-            },
-            Component: () => null,
-          },
-          {
-            Component: lazy(
-              () =>
-                import("./pages/organizations/employee/EmployeeTabsLayoutLoader"),
-            ),
-            children: [
-              {
-                path: "signatures",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
-                ),
-              },
-              {
-                path: "approvals",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeApprovalsPageLoader"),
-                ),
-              },
-              {
-                path: "devices",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeDevicesPageLoader"),
-                ),
-              },
-            ],
-          },
-          {
-            path: ":documentId",
-            loader: ({ params: { organizationId, documentId } }) => {
-              // eslint-disable-next-line
-              throw redirect(`/organizations/${organizationId}/employee/signatures/${documentId}`);
-            },
-            Component: () => null,
-          },
-          {
-            path: "signatures/:documentId",
-            Component: lazy(
-              () =>
-                import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
-            ),
-          },
-          {
-            path: "approvals/:documentId",
-            Component: lazy(
-              () =>
-                import("./pages/organizations/documents/approve/DocumentApprovePageLoader"),
-            ),
-          },
-        ],
       },
       {
         Component: lazy(

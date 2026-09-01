@@ -271,7 +271,7 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
   return (
     <div className={slots.root()}>
       <nav className={slots.rail()} aria-label={t("nav.products")}>
-        <OrganizationSwitcher variant="rail" organizationKey={organization} />
+        <OrganizationSwitcher organizationKey={organization} />
 
         <div className={slots.items()}>
           {isGovernanceVisible(permissions) && (
@@ -364,7 +364,7 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
           href="mailto:support@probo.com"
           weight="regular"
         />
-        <ViewerMembershipMenu variant="rail" organizationKey={organization} />
+        <ViewerMembershipMenu organizationKey={organization} />
       </nav>
     </div>
   );

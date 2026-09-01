@@ -497,44 +497,6 @@
       "review": "Beoordelen"
     }
   },
-  "documentApprovePage": {
-    "pageTitle": "Document beoordelen en goedkeuren",
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": {
-      "approved": "Goedgekeurd",
-      "rejected": "Afgewezen",
-      "voided": "Nietig verklaard",
-      "inReview": "In beoordeling",
-      "pending": "In behandeling"
-    },
-    "messages": {
-      "noLongerRequired": "Uw goedkeuring is niet langer vereist voor deze versie.",
-      "approved": "U heeft dit document goedgekeurd.",
-      "rejected": "U heeft dit document afgewezen.",
-      "successTitle": "Succes",
-      "approvalSuccess": "Document succesvol goedgekeurd",
-      "rejectionSuccess": "Document afgewezen"
-    },
-    "errors": {
-      "title": "Fout",
-      "approve": "Goedkeuren van document mislukt",
-      "reject": "Afwijzen van document mislukt",
-      "loadPdf": "Laden van PDF mislukt"
-    },
-    "actions": {
-      "back": "Terug naar documenten",
-      "approve": "Goedkeuren",
-      "reject": "Afwijzen"
-    },
-    "rejectDialog": {
-      "title": "Document afwijzen",
-      "description": "Geef een reden op voor het afwijzen van dit document. Het document wordt teruggezet naar de status Concept.",
-      "placeholder": "Reden voor afwijzing...",
-      "submit": "Document afwijzen"
-    },
-    "reviewHint": "Bekijk het document zorgvuldig voordat u uw beslissing neemt."
-  },
   "documentDescriptionPage": {
     "messages": {
       "successTitle": "Succes",
@@ -581,120 +543,6 @@
     },
     "actions": {
       "request": "Handtekening aanvragen"
-    }
-  },
-  "employeeApprovalsPage": {
-    "pageTitle": "Documenten",
-    "columns": {
-      "name": "Naam",
-      "type": "Type",
-      "classification": "Classificatie",
-      "lastUpdate": "Laatste update",
-      "approved": "Goedgekeurd"
-    },
-    "empty": {
-      "title": "Nog geen documenten",
-      "description": "Er zijn geen documenten ter goedkeuring aan u voorgelegd."
-    }
-  },
-  "employeeDocumentSignaturePage": {
-    "pageTitle": "Document ondertekenen",
-    "messages": {
-      "successTitle": "Succes",
-      "signed": "Document succesvol ondertekend"
-    },
-    "errors": {
-      "title": "Fout",
-      "sign": "Ondertekenen van document mislukt",
-      "loadPdf": "Laden van PDF mislukt"
-    },
-    "reviewHint": "Bekijk het document zorgvuldig voordat u het ondertekent."
-  },
-  "employeeDocumentsPage": {
-    "pageTitle": "Documenten",
-    "columns": {
-      "name": "Naam",
-      "type": "Type",
-      "classification": "Classificatie",
-      "lastUpdate": "Laatste update",
-      "signed": "Ondertekend"
-    },
-    "empty": {
-      "title": "Nog geen documenten",
-      "description": "Er zijn geen documenten ter ondertekening aan u voorgelegd."
-    }
-  },
-  "employeeTabsLayout": {
-    "title": "Documenten",
-    "tabs": {
-      "signatures": "Handtekeningen",
-      "approvals": "Goedkeuringen",
-      "bindings": "Slack"
-    }
-  },
-  "approvableDocumentRow": {
-    "states": {
-      "approved": "Goedgekeurd",
-      "rejected": "Afgewezen",
-      "noLongerRequired": "Niet langer vereist",
-      "pending": "In behandeling"
-    },
-    "documentTypes": {
-      "other": "Overig",
-      "governance": "Governance",
-      "policy": "Beleid",
-      "procedure": "Procedure",
-      "plan": "Plan",
-      "register": "Register",
-      "record": "Registratie",
-      "report": "Rapport",
-      "template": "Sjabloon",
-      "statement_of_applicability": "Verklaring van toepasselijkheid"
-    },
-    "classifications": {
-      "public": "Openbaar",
-      "internal": "Intern",
-      "confidential": "Vertrouwelijk",
-      "secret": "Geheim"
-    }
-  },
-  "employeeDocumentRow": {
-    "documentTypes": {
-      "other": "Overig",
-      "governance": "Governance",
-      "policy": "Beleid",
-      "procedure": "Procedure",
-      "plan": "Plan",
-      "register": "Register",
-      "record": "Registratie",
-      "report": "Rapport",
-      "template": "Sjabloon",
-      "statement_of_applicability": "Verklaring van toepasselijkheid"
-    },
-    "classifications": {
-      "public": "Openbaar",
-      "internal": "Intern",
-      "confidential": "Vertrouwelijk",
-      "secret": "Geheim"
-    },
-    "signed": {
-      "yes": "Ja",
-      "no": "Nee"
-    }
-  },
-  "versionActions": {
-    "actions": {
-      "back": "Terug naar documenten",
-      "reviewAndSign": "Beoordelen en ondertekenen"
-    }
-  },
-  "versionRow": {
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": {
-      "signed": "Ondertekend",
-      "inReview": "In beoordeling",
-      "waitingSignature": "Wacht op handtekening"
     }
   },
   "findingDetails": {
@@ -6321,76 +6169,7 @@
       }
     }
   },
-  "employeeDevices": {
-    "title": "Uw apparaten"
-  },
   "deviceEnrollment": {
-    "pageTitle": "Apparaat registreren",
-    "title": "Apparaatregistratie",
-    "setup": "Installatie",
-    "stepProgress": "Stap {{current}} van {{total}}",
-    "steps": {
-      "privacy": {
-        "title": "Privacy",
-        "description": "Verzamelde gegevens bekijken"
-      },
-      "download": {
-        "title": "Downloaden",
-        "description": "Installeer de desktopagent"
-      },
-      "organization": {
-        "description": "Kies bestemmingswerkruimte"
-      },
-      "enroll": {
-        "title": "Openen en wachten",
-        "description": "Rond de installatie af in de desktopagent"
-      }
-    },
-    "unavailable": {
-      "title": "Registratie niet beschikbaar",
-      "description": "U heeft geen rechten om apparaten te registreren in enige organisatie."
-    },
-    "intro": {
-      "title": "Voordat u begint",
-      "description": "Probo verzamelt de volgende apparaatmetadata voor inventarisatie- en postuurrapportage:"
-    },
-    "download": {
-      "title": "Download de Probo-agent",
-      "description": "Download de Probo-agent van <a>pro.bo/install</a>.",
-      "alreadyInstalled": "Deze stap is niet nodig als de agent al op dit apparaat is geïnstalleerd."
-    },
-    "privacy": {
-      "identity": "Apparaatidentiteit: hardware-UUID, hostnaam en serienummer (indien beschikbaar).",
-      "systemDetails": "Systeemdetails: platform, OS-versie en versie van de Probo agent.",
-      "activitySignals": "Activiteitssignalen: registratietijd, heartbeats en resultaten van postuurcontroles."
-    },
-    "organization": {
-      "title": "Organisatie kiezen",
-      "description": "Kies welke organisatie dit apparaat zal beheren."
-    },
-    "openAgent": {
-      "title": "Open de Probo agent",
-      "description": "Klik op '{{action}}' om de installatie af te ronden en houd deze pagina open totdat de registratie is bevestigd."
-    },
-    "actions": {
-      "backToOrganizations": "Terug naar organisaties",
-      "enrollNew": "Nieuw apparaat registreren",
-      "openAgent": "Probo agent openen",
-      "preparing": "Voorbereiden…"
-    },
-    "status": {
-      "enrolledWithHostname": "{{hostname}} is geregistreerd.",
-      "enrolled": "Dit apparaat is geregistreerd.",
-      "closeWindow": "U kunt dit venster sluiten.",
-      "waitingForCheckIn": "Wachten op de eerste check-in van de agent…",
-      "timedOut": "We hebben nog niets van de agent gehoord. Zorg ervoor dat de desktopagent is geïnstalleerd en actief, en probeer het opnieuw."
-    },
-    "manual": {
-      "cannotEnroll": "Kunt u geen nieuw apparaat registreren?",
-      "tryCreating": "Probeer het handmatig aan te maken",
-      "title": "Handmatige registratie",
-      "creating": "Apparaat aanmaken…"
-    },
     "token": {
       "title": "Registratietoken gegenereerd",
       "description": "Deel deze registratietoken alleen met de apparaateigenaar via een beveiligd kanaal. Deze kan één keer worden gebruikt en verloopt na zeven dagen.",
@@ -6412,39 +6191,6 @@
   "thirdPartyRiskAssessmentRow": {
     "expired": "Verlopen",
     "notes": "Opmerkingen"
-  },
-  "employeeBindPage": {
-    "title": "Koppel Slack aan Probo",
-    "description": "Koppel dit Slack-account aan uw Probo-identiteit zodat Probot u kan helpen.",
-    "loading": "Laden…",
-    "fields": { "tenant": "Werkruimte", "account": "Account" },
-    "actions": { "confirm": "Slack-account koppelen", "linking": "Koppelen…" },
-    "messages": { "linked": "Uw Slack-account is nu gekoppeld aan Probo." },
-    "missingToken": {
-      "title": "Geen bevestigingslink",
-      "description": "Voer in Slack /probot login uit om een privé bevestigingslink te ontvangen."
-    },
-    "errors": {
-      "linkFailed": "Koppelen mislukt",
-      "invalidOrExpiredTokenTitle": "Deze link is verlopen",
-      "invalidOrExpiredToken": "Vraag de bot om een nieuwe privé bevestigingslink."
-    }
-  },
-  "employeeBindingsPage": {
-    "title": "Slack",
-    "description": "Koppel uw Slack-account zodat Probot u vanuit deze organisatie kan helpen.",
-    "connectedDescription": "{{account}} · {{workspace}}",
-    "providers": { "slack": "Slack" },
-    "actions": { "unlink": "Ontkoppelen" },
-    "empty": {
-      "title": "Geen Slack-account gekoppeld",
-      "description": "Voer in Slack /probot login uit om een privé bevestigingslink te ontvangen."
-    },
-    "messages": { "unlinked": "Slack-account ontkoppeld." },
-    "errors": { "unlinkFailed": "Dit account kon niet worden ontkoppeld." },
-    "confirmations": {
-      "unlink": "Dit Slack-account ontkoppelen? Probot kan u niet helpen tot u opnieuw koppelt."
-    }
   },
   "country": {
     "GLOBAL": "Wereldwijd",
