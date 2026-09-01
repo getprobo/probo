@@ -1151,18 +1151,6 @@ func TestDeviceDelete(t *testing.T) {
 		})
 		testutil.RequireForbiddenError(t, err, "employee should not delete devices")
 	})
-
-	t.Run("unassumed session can query enroll permission via connect", func(t *testing.T) {
-		t.Parallel()
-
-		_, _, employee, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
-
-		unassumedEmployee := testutil.NewClientWithNewSession(t, employee)
-		unassumedViewer := testutil.NewClientWithNewSession(t, viewer)
-
-		require.True(t, connectEnrollPermission(t, unassumedEmployee, orgID))
-		require.False(t, connectEnrollPermission(t, unassumedViewer, orgID))
-	})
 }
 
 func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
@@ -1194,6 +1182,18 @@ func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
 			require.True(t, result.Node.CanEnrollDevice)
 		})
 	}
+
+	t.Run("unassumed session can query enroll permission via connect", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, employee, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		unassumedEmployee := testutil.NewClientWithNewSession(t, employee)
+		unassumedViewer := testutil.NewClientWithNewSession(t, viewer)
+
+		require.True(t, connectEnrollPermission(t, unassumedEmployee, orgID))
+		require.False(t, connectEnrollPermission(t, unassumedViewer, orgID))
+	})
 }
 
 func TestDevicePostureReports(t *testing.T) {
