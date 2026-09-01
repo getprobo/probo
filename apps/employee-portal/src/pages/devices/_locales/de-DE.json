@@ -128,7 +128,7 @@
       "installWindows": "Unter Windows installieren (in einer PowerShell-Sitzung mit erhöhten Rechten ausführen)",
       "downloadStep": "Binärdatei herunterladen und ablegen",
       "enrollStep": "Gerät konfigurieren und Agent starten",
-      "securityNotice": "Das Token wird als CLI-Flag übergeben (nicht über per curl in die Shell geleitete Befehle oder sudo-Umgebungsvariablen). Nach der Installation aktualisiert sich der Agent selbst aus GitHub Releases und verifiziert die Signatur mit cosign."
+      "securityNotice": "Das Token wird als CLI-Flag übergeben (nicht über Befehle, die per curl direkt an die Shell weitergeleitet werden, oder über sudo-Umgebungsvariablen). Nach der Installation aktualisiert sich der Agent selbst aus GitHub Releases und verifiziert die Signatur mit cosign."
     }
   }
 }
