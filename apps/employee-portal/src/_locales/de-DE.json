@@ -1,0 +1,174 @@
+{
+  "topBar": {
+    "tagline": "Mitarbeiterportal"
+  },
+  "userMenu": {
+    "apiKeys": "API-Schlüssel",
+    "oauthTokens": "OAuth-Token",
+    "switchToDarkMode": "Zum dunklen Modus wechseln",
+    "switchToLightMode": "Zum hellen Modus wechseln",
+    "help": "Hilfe",
+    "signOut": "Abmelden",
+    "signOutFailed": "Abmeldung nicht möglich"
+  },
+  "organizationsPage": {
+    "title": "Ihre Organisationen",
+    "searchPlaceholder": "Organisationen durchsuchen",
+    "empty": "Sie haben noch keinen Zugriff auf ein Mitarbeiterportal.",
+    "emptySearch": "Keine Organisation entspricht dieser Suche.",
+    "status": {
+      "authenticated": "Authentifiziert",
+      "sessionExpired": "Sitzung abgelaufen",
+      "authenticationRequired": "Authentifizierung erforderlich"
+    },
+    "actions": {
+      "open": "Öffnen",
+      "continue": "Weiter"
+    }
+  },
+  "breadcrumb": {
+    "nav": "Navigationspfad"
+  },
+  "homePage": {
+    "breadcrumb": "Startseite",
+    "welcome": "Willkommen, {{name}}.",
+    "welcomeFallback": "Willkommen.",
+    "getStarted": {
+      "title": "Erste Schritte",
+      "description": "Führen Sie die erforderlichen Schritte aus, um die Einrichtung Ihres Mitarbeiterportals abzuschließen.",
+      "signatures": {
+        "count_one": "{{count}} Dokument zu unterschreiben",
+        "count_other": "{{count}} Dokumente zu unterschreiben",
+        "description": "Prüfen und unterschreiben Sie das Ihnen zugewiesene Dokument.",
+        "action": "Unterschreiben"
+      },
+      "approvals": {
+        "count_one": "{{count}} Dokument zu genehmigen",
+        "count_other": "{{count}} Dokumente zu genehmigen",
+        "description": "Prüfen und genehmigen Sie das Ihnen zugewiesene Dokument.",
+        "action": "Genehmigen"
+      }
+    },
+    "dashboard": {
+      "view": "Anzeigen",
+      "allDone": "Alles erledigt",
+      "signatures": {
+        "title": "Unterschriften",
+        "description": "Zugewiesene Dokumente unterschreiben.",
+        "empty": "Derzeit nichts zu unterschreiben",
+        "pendingCount_one": "{{count}} Dokument zu unterschreiben",
+        "pendingCount_other": "{{count}} Dokumente zu unterschreiben",
+        "action": "Unterschreiben starten"
+      },
+      "approvals": {
+        "title": "Genehmigungen",
+        "description": "Dokumente prüfen, die auf Genehmigung warten.",
+        "empty": "Derzeit nichts zu genehmigen",
+        "pendingCount_one": "{{count}} Dokument zu genehmigen",
+        "pendingCount_other": "{{count}} Dokumente zu genehmigen",
+        "action": "Genehmigen starten"
+      },
+      "devices": {
+        "title": "Geräte",
+        "description": "Ihre Arbeitsgeräte verwalten.",
+        "connected": "Gerät verbunden",
+        "action": "Gerät registrieren"
+      },
+      "slack": {
+        "title": "Slack",
+        "description": "Verknüpfen Sie Ihr Slack-Konto, damit Probot Sie unterstützen kann.",
+        "connected": "Slack verbunden",
+        "hint": "Führen Sie <cmd>/probot login</cmd> in Slack aus"
+      }
+    }
+  },
+  "common": {
+    "error": "Etwas ist schiefgelaufen"
+  },
+  "pagination": {
+    "previous": "Zurück",
+    "next": "Weiter"
+  },
+  "queue": {
+    "previous": "Vorheriges Dokument",
+    "next": "Nächstes Dokument",
+    "close": "Schließen",
+    "progressSignatures": "Dokument {{current}} von {{total}} zu unterschreiben",
+    "progressApprovals": "Dokument {{current}} von {{total}} zu genehmigen",
+    "empty": "In dieser Warteschlange sind keine Dokumente mehr vorhanden"
+  },
+  "viewer": {
+    "pageOf": "Seite {{current}} von {{total}}",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "download": "PDF herunterladen"
+  },
+  "documents": {
+    "lastUpdated": "Zuletzt aktualisiert",
+    "columns": {
+      "title": "Titel",
+      "classification": "Klassifizierung",
+      "type": "Typ",
+      "status": "Status",
+      "action": "Aktion"
+    },
+    "types": {
+      "other": "Sonstiges",
+      "governance": "Governance",
+      "policy": "Richtlinie",
+      "procedure": "Verfahren",
+      "plan": "Plan",
+      "register": "Verzeichnis",
+      "record": "Aufzeichnung",
+      "report": "Bericht",
+      "template": "Vorlage",
+      "statement_of_applicability": "Erklärung zur Anwendbarkeit"
+    },
+    "classifications": {
+      "public": "Öffentlich",
+      "internal": "Intern",
+      "confidential": "Vertraulich",
+      "secret": "Geheim"
+    },
+    "versions": {
+      "heading": "Versionsverlauf",
+      "count_one": "{{count}} Version",
+      "count_other": "{{count}} Versionen",
+      "label": "v{{major}}.{{minor}}",
+      "current": "Aktuell",
+      "select": "Version {{major}}.{{minor}} anzeigen",
+      "status": {
+        "inReview": "In Prüfung",
+        "approved": "Genehmigt",
+        "rejected": "Abgelehnt",
+        "voided": "Ungültig gemacht",
+        "signed": "Unterschrieben"
+      }
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Seite nicht gefunden",
+      "description": "Die gesuchte Seite existiert nicht oder wurde möglicherweise verschoben."
+    },
+    "forbidden": {
+      "title": "Zugriff verweigert",
+      "description": "Sie haben keine Berechtigung, diese Seite anzuzeigen. Kehren Sie zu Ihren Organisationen zurück oder wenden Sie sich an den Support, wenn Sie dies für einen Fehler halten."
+    },
+    "serverError": {
+      "title": "Etwas ist schiefgelaufen",
+      "description": "Auf unserer Seite ist ein Fehler aufgetreten. Versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht."
+    },
+    "generic": {
+      "title": "Seite kann nicht geladen werden",
+      "description": "Diese Seite konnte nicht geladen werden. Versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht."
+    },
+    "actions": {
+      "tryAgain": "Erneut versuchen",
+      "backToOrganizations": "Zurück zu den Organisationen",
+      "contactSupport": "Support kontaktieren"
+    }
+  }
+}

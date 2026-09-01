@@ -1,0 +1,134 @@
+{
+  "title": "Dieses Gerät registrieren",
+  "breadcrumb": "Geräte",
+  "registerBreadcrumb": "Registrieren",
+  "addManuallyBreadcrumb": "Manuell hinzufügen",
+  "list": {
+    "title": "Geräte",
+    "register": "Neues Gerät registrieren",
+    "addManually": "Manuell hinzufügen",
+    "lastActive": "Zuletzt aktiv",
+    "never": "Nie",
+    "justNow": "Gerade eben",
+    "pendingHostname": "Ausstehend",
+    "connected": "Verbunden",
+    "disconnected": "Getrennt",
+    "columns": {
+      "hostname": "Gerät",
+      "details": "Details"
+    },
+    "platforms": {
+      "DARWIN": "macOS",
+      "WINDOWS": "Windows",
+      "LINUX": "Linux",
+      "FREEBSD": "FreeBSD"
+    }
+  },
+  "empty": {
+    "title": "Noch keine Geräte",
+    "description": "Registrieren Sie ein Gerät, um es mit Ihrer Organisation zu verbinden und seinen Sicherheitsstatus zu überwachen.",
+    "register": "Gerät registrieren",
+    "addManually": "Manuell hinzufügen"
+  },
+  "unavailable": {
+    "title": "Registrierung nicht verfügbar",
+    "description": "Sie haben keine Berechtigung, Geräte in dieser Organisation zu registrieren.",
+    "home": "Zurück zur Startseite"
+  },
+  "steps": {
+    "review": {
+      "title": "Geräteinformationen prüfen",
+      "description": "Sehen Sie, welche Daten der Probo Agent speichert."
+    },
+    "download": {
+      "title": "Agent herunterladen",
+      "description": "Desktop-Agent installieren"
+    },
+    "enroll": {
+      "title": "Probo Agent öffnen",
+      "description": "Schließen Sie die Registrierung dieses Geräts ab."
+    }
+  },
+  "review": {
+    "title": "Erfasste Daten prüfen",
+    "description": "Probo erfasst die folgenden Gerätemetadaten für Inventarisierung und Sicherheitsstatusberichte.",
+    "understand": "Ich habe verstanden",
+    "thisDevice": {
+      "title": "Dieses Gerät",
+      "hostname": "Hostname",
+      "platform": "Plattform",
+      "osVersion": "Betriebssystemversion"
+    },
+    "identity": {
+      "title": "Geräteidentität",
+      "hardwareUuid": "Hardware-UUID",
+      "hostname": "Hostname",
+      "serialNumber": "Seriennummer, sofern verfügbar"
+    },
+    "system": {
+      "title": "Systemdetails",
+      "platform": "Plattform",
+      "osVersion": "Betriebssystemversion",
+      "agentVersion": "Version des Probo Agent"
+    },
+    "activity": {
+      "title": "Aktivitätssignale",
+      "enrollmentTime": "Registrierungszeitpunkt",
+      "heartbeats": "Agent-Heartbeats",
+      "posture": "Ergebnisse der Sicherheitsstatusprüfungen"
+    }
+  },
+  "download": {
+    "title": "Probo Agent herunterladen",
+    "description": "Installieren Sie die App, um dieses Gerät abzusichern und mit Ihrer Organisation zu verbinden.",
+    "featured": "Probo Agent für macOS",
+    "continue": "Weiter",
+    "download": "Herunterladen",
+    "downloadNamed": "{{title}} herunterladen",
+    "macosIntel": {
+      "title": "macOS Intel",
+      "meta": "macOS 13.0+"
+    },
+    "windows": {
+      "title": "Windows",
+      "meta": "Windows 11+"
+    }
+  },
+  "enroll": {
+    "title": "In der App fortfahren",
+    "description": "Öffnen Sie den Probo Agent, um die Registrierung dieses Geräts abzuschließen.",
+    "open": "Probo Agent öffnen",
+    "preparing": "Wird vorbereitet…",
+    "waiting": "Warten auf die erste Rückmeldung des Agents…",
+    "timedOut": "Der Agent hat sich noch nicht gemeldet. Stellen Sie sicher, dass der Desktop-Agent installiert ist und ausgeführt wird, und versuchen Sie es erneut.",
+    "failed": "Die Registrierung konnte nicht gestartet werden. Versuchen Sie es erneut.",
+    "tryAgain": "Erneut versuchen",
+    "enrolled": "Dieses Gerät ist registriert.",
+    "enrolledWithHostname": "{{hostname}} ist registriert.",
+    "home": "Zurück zur Startseite"
+  },
+  "addManually": {
+    "title": "Manuelle Registrierung",
+    "creating": "Gerät wird erstellt…",
+    "failed": "Es konnte kein Registrierungstoken erstellt werden. Versuchen Sie es erneut.",
+    "created": "Gerät erstellt. Kopieren Sie das Registrierungstoken jetzt – es wird nicht erneut angezeigt.",
+    "done": "Fertig",
+    "retry": "Erneut versuchen",
+    "back": "Zurück zu den Geräten",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
+    "token": {
+      "title": "Registrierungstoken erstellt",
+      "description": "Geben Sie dieses Registrierungstoken ausschließlich über einen sicheren Kanal an den Gerätebesitzer weiter. Es kann einmal verwendet werden und läuft nach sieben Tagen ab.",
+      "releaseListHint": "Öffnen Sie <link>die probo-agent-Releases auf GitHub</link> (Tags probo-agent/v*) und wählen Sie anschließend das Archiv für Ihr Betriebssystem und Ihre Architektur aus (zum Beispiel probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz oder probo-agent_Windows_x86_64.zip). Ersetzen Sie vX.Y.Z, OS und ARCH im Download-Befehl durch die Werte des ausgewählten Assets.",
+      "tabUnix": "macOS / Linux",
+      "tabWindows": "Windows",
+      "installUnix": "Auf macOS oder Linux installieren (in einer Shell mit sudo-Zugriff ausführen)",
+      "installWindows": "Unter Windows installieren (in einer PowerShell-Sitzung mit erhöhten Rechten ausführen)",
+      "downloadStep": "Binärdatei herunterladen und ablegen",
+      "enrollStep": "Gerät konfigurieren und Agent starten",
+      "securityNotice": "Das Token wird als CLI-Flag übergeben (nicht über per curl in die Shell geleitete Befehle oder sudo-Umgebungsvariablen). Nach der Installation aktualisiert sich der Agent selbst aus GitHub Releases und verifiziert die Signatur mit cosign."
+    }
+  }
+}

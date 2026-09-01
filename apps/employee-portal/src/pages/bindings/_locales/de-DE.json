@@ -1,0 +1,57 @@
+{
+  "bind": {
+    "title": "Slack mit Probo verbinden",
+    "description": "Verknüpfen Sie dieses Slack-Konto mit Ihrer Probo-Identität, damit Probot Sie unterstützen kann.",
+    "breadcrumb": "Verbinden",
+    "fields": {
+      "tenant": "Workspace",
+      "account": "Konto"
+    },
+    "actions": {
+      "confirm": "Slack-Konto verknüpfen"
+    },
+    "messages": {
+      "linked": "Ihr Slack-Konto ist jetzt mit Probo verknüpft."
+    },
+    "missingToken": {
+      "title": "Kein Bestätigungslink",
+      "description": "Führen Sie /probot login in Slack aus, um einen privaten Bestätigungslink zu erhalten."
+    },
+    "errors": {
+      "linkFailed": "Verknüpfung fehlgeschlagen",
+      "invalidOrExpiredTokenTitle": "Dieser Link ist abgelaufen",
+      "invalidOrExpiredToken": "Fordern Sie beim Bot einen neuen privaten Bestätigungslink an."
+    }
+  },
+  "list": {
+    "title": "Slack",
+    "breadcrumb": "Slack",
+    "description": "Verknüpfen Sie Ihr Slack-Konto, damit Probot Sie in dieser Organisation unterstützen kann.",
+    "connectedDescription": "{{account}} · {{workspace}}",
+    "providers": {
+      "slack": "Slack"
+    },
+    "columns": {
+      "account": "Konto",
+      "action": "Aktion"
+    },
+    "actions": {
+      "unlink": "Verknüpfung aufheben",
+      "cancel": "Abbrechen"
+    },
+    "empty": {
+      "title": "Kein Slack-Konto verknüpft",
+      "description": "Führen Sie <cmd>/probot login</cmd> in Slack aus, um einen privaten Bestätigungslink zu erhalten."
+    },
+    "messages": {
+      "unlinked": "Verknüpfung mit dem Slack-Konto aufgehoben."
+    },
+    "errors": {
+      "unlinkFailed": "Die Verknüpfung mit diesem Konto konnte nicht aufgehoben werden."
+    },
+    "confirmations": {
+      "unlinkTitle": "Verknüpfung mit Slack-Konto aufheben",
+      "unlink": "Verknüpfung mit diesem Slack-Konto aufheben? Probot kann Sie erst wieder unterstützen, nachdem Sie das Konto erneut verknüpft haben."
+    }
+  }
+}

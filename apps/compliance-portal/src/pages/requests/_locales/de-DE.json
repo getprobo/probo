@@ -1,5 +1,5 @@
 {
-  "title": "Datenanfragen",
+  "title": "Betroffenenanfragen",
   "newRequest": "Neue Anfrage",
   "loadMore": "Mehr laden",
   "empty": {
@@ -59,7 +59,7 @@
         "placeholder": "Die folgenden Angaben sind unrichtig…"
       },
       "OBJECTION": {
-        "label": "Wogegen widersprechen Sie?",
+        "label": "Welcher Verarbeitung widersprechen Sie?",
         "placeholder": "Ich widerspreche der Verarbeitung meiner Daten für…"
       },
       "COMPLAINT": {

@@ -3,7 +3,7 @@
   "filters": {
     "allCategories": "Alle Kategorien",
     "allRegions": "Alle Regionen",
-    "searchPlaceholder": "Suchen..."
+    "searchPlaceholder": "Suchen…"
   },
   "empty": {
     "title": "Keine Unterauftragsverarbeiter aufgeführt.",
@@ -44,7 +44,7 @@
     },
     "DOCUMENT_MANAGEMENT": {
       "label": "Dokumentenmanagement",
-      "description": "Dokumentenspeicherung, Signatur und elektronische Unterschrift."
+      "description": "Dokumentenspeicherung, Unterzeichnung und elektronische Signaturen."
     },
     "EMPLOYEE_MANAGEMENT": {
       "label": "Personalmanagement",
@@ -88,7 +88,7 @@
     },
     "PROFESSIONAL_SERVICES": {
       "label": "Professionelle Dienstleistungen",
-      "description": "Beratung und professionelle Dienstleistungen."
+      "description": "Beratungs- und sonstige professionelle Dienstleistungen."
     },
     "RECRUITING": {
       "label": "Recruiting",

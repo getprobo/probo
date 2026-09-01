@@ -1,0 +1,80 @@
+{
+  "detailsPage": {
+    "notFound": "Aufgabe nicht gefunden",
+    "empty": "—",
+    "none": "Keine",
+    "noDescription": "Keine Beschreibung",
+    "descriptionPlaceholder": "Beschreibung hinzufügen",
+    "unassigned": "Nicht zugewiesen",
+    "fields": {
+      "name": "Name",
+      "description": "Beschreibung",
+      "state": "Status",
+      "priority": "Priorität",
+      "assignedTo": "Zugewiesen an",
+      "measure": "Maßnahme",
+      "timeEstimate": "Zeitschätzung",
+      "timeEstimateUnit": "Einheit der Zeitschätzung",
+      "deadline": "Frist",
+      "createdAt": "Erstellt",
+      "updatedAt": "Aktualisiert"
+    },
+    "duration": {
+      "S": "Sekunden",
+      "M": "Minuten",
+      "H": "Stunden",
+      "D": "Tage",
+      "W": "Wochen"
+    },
+    "states": {
+      "backlog": "Backlog",
+      "todo": "Zu erledigen",
+      "inProgress": "In Bearbeitung",
+      "done": "Erledigt",
+      "canceled": "Abgebrochen",
+      "duplicate": "Duplikat"
+    },
+    "priorities": {
+      "urgent": "Dringend",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig"
+    },
+    "actions": {
+      "addEstimate": "Schätzung hinzufügen",
+      "clearEstimate": "Schätzung entfernen",
+      "delete": "Löschen",
+      "cancel": "Abbrechen",
+      "more": "Weitere Aktionen"
+    },
+    "delete": {
+      "title": "Aufgabe löschen",
+      "description": "Möchten Sie diese Aufgabe wirklich löschen?",
+      "confirm": "Löschen"
+    },
+    "messages": {
+      "updated": "Aufgabe erfolgreich aktualisiert.",
+      "deleted": "Aufgabe erfolgreich gelöscht."
+    },
+    "errors": {
+      "delete": "Aufgabe konnte nicht gelöscht werden",
+      "update": "Aufgabe konnte nicht aktualisiert werden"
+    }
+  },
+  "createDialog": {
+    "title": "Neue Aufgabe",
+    "fields": {
+      "namePlaceholder": "Name der Aufgabe"
+    },
+    "actions": {
+      "create": "Aufgabe erstellen"
+    },
+    "messages": {
+      "created": "Aufgabe erfolgreich erstellt."
+    },
+    "errors": {
+      "create": "Aufgabe konnte nicht erstellt werden",
+      "nameRequired": "Geben Sie einen Namen für die Aufgabe ein"
+    }
+  }
+}

@@ -7,9 +7,9 @@
     "menuTitle": "Menü",
     "nav": {
       "documents": "Dokumente",
-      "subprocessors": "Subprozessoren",
+      "subprocessors": "Unterauftragsverarbeiter",
       "updates": "Updates",
-      "requests": "Anfragen"
+      "requests": "Betroffenenanfragen"
     }
   },
   "userMenu": {
@@ -51,7 +51,7 @@
     "sections": {
       "compliance": "Compliance",
       "securityCommitments": "Sicherheitsverpflichtungen",
-      "trustedBy": "Vertraut von",
+      "trustedBy": "Uns vertrauen",
       "recentUpdates": "Neueste Aktualisierungen"
     },
     "recentUpdates": {
@@ -70,15 +70,15 @@
     },
     "forbidden": {
       "title": "Zugriff verweigert",
-      "description": "Sie haben keine Berechtigung, diese Seite anzuzeigen."
+      "description": "Sie haben keine Berechtigung, diese Seite anzuzeigen. Fordern Sie Zugang an oder kehren Sie zum Compliance-Portal zurück."
     },
     "serverError": {
       "title": "Etwas ist schiefgelaufen",
-      "description": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut."
+      "description": "Auf unserer Seite ist ein Fehler aufgetreten. Versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht."
     },
     "generic": {
-      "title": "Etwas ist schiefgelaufen",
-      "description": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut."
+      "title": "Seite kann nicht geladen werden",
+      "description": "Diese Seite konnte nicht geladen werden. Versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht."
     },
     "actions": {
       "backToCompliancePortal": "Zurück zum Compliance-Portal",

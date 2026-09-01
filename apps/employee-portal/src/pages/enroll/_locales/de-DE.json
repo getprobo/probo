@@ -1,0 +1,20 @@
+{
+  "title": "Gerät registrieren",
+  "unavailable": {
+    "title": "Registrierung nicht verfügbar",
+    "description": "Sie haben in keiner Organisation die Berechtigung, Geräte zu registrieren.",
+    "home": "Zurück zu den Organisationen"
+  },
+  "steps": {
+    "organization": {
+      "title": "Organisation auswählen",
+      "description": "Wählen Sie aus, welcher Organisation dieses Gerät gehören soll."
+    }
+  },
+  "organization": {
+    "title": "Organisation auswählen",
+    "description": "Wählen Sie aus, welche Organisation dieses Gerät besitzen und verwalten soll.",
+    "placeholder": "Organisation auswählen",
+    "continue": "Weiter"
+  }
+}

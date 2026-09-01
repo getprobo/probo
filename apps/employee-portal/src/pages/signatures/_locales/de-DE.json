@@ -1,0 +1,33 @@
+{
+  "title": "Unterschriften",
+  "breadcrumb": "Unterschriften",
+  "pending": {
+    "heading": "Warten auf Ihre Unterschrift ({{count}})",
+    "summaryTitle_one": "{{count}} Dokument zu unterschreiben",
+    "summaryTitle_other": "{{count}} Dokumente zu unterschreiben",
+    "summaryDescription": "Prüfen und unterschreiben Sie die Dokumente, die zum Abschluss der Mitarbeitereinrichtung erforderlich sind.",
+    "action": "Unterschreiben starten",
+    "itemAction": "Unterschreiben"
+  },
+  "history": {
+    "heading": "Unterschrieben ({{count}})"
+  },
+  "empty": {
+    "none": {
+      "title": "Noch keine Unterschriftsanfragen",
+      "description": "Dokumente, die Ihre Unterschrift benötigen, werden hier angezeigt."
+    },
+    "allDone": {
+      "title": "Alles erledigt",
+      "description": "Sie sind auf dem aktuellen Stand. Bereits unterschriebene Dokumente werden unten aufgeführt."
+    }
+  },
+  "document": {
+    "instruction": "Prüfen Sie dieses Dokument, bevor Sie es unterschreiben.",
+    "reviewAndSign": "Prüfen und unterschreiben",
+    "signed": "Sie haben dieses Dokument unterschrieben.",
+    "goToNext": "Zum nächsten Dokument",
+    "finish": "Unterschriften abschließen",
+    "backToList": "Zurück zu den Unterschriften"
+  }
+}

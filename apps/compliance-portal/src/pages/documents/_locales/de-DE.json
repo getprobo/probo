@@ -18,7 +18,7 @@
     "RECORD": "Aufzeichnungen",
     "REPORT": "Berichte",
     "TEMPLATE": "Vorlagen",
-    "STATEMENT_OF_APPLICABILITY": "Anwendbarkeitserklärung"
+    "STATEMENT_OF_APPLICABILITY": "Erklärung zur Anwendbarkeit"
   },
   "actions": {
     "view": "Anzeigen",
@@ -48,7 +48,7 @@
     "locked": {
       "title": "Zugang erforderlich",
       "description": "Sie haben noch keinen Zugang zu diesem Dokument.",
-      "signNda": "NDA prüfen und unterschreiben"
+      "signNda": "Geheimhaltungsvereinbarung prüfen und unterschreiben"
     }
   }
 }

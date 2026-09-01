@@ -1,0 +1,911 @@
+{
+  "newPortalPage": {
+    "pageTitle": "Neues Compliance-Portal",
+    "title": "Compliance-Portal erstellen",
+    "description": "Richten Sie ein neues öffentliches Compliance-Portal ein. Der URL-Slug wird beim Erstellen der Seite automatisch vergeben.",
+    "fields": {
+      "entityName": {
+        "label": "Name der Organisation",
+        "placeholder": "Acme GmbH"
+      }
+    },
+    "actions": {
+      "create": "Compliance-Portal erstellen",
+      "creating": "Wird erstellt..."
+    },
+    "messages": {
+      "created": "Compliance-Portal erfolgreich erstellt",
+      "successTitle": "Erfolg"
+    },
+    "errors": {
+      "create": "Compliance-Portal konnte nicht erstellt werden",
+      "title": "Fehler"
+    }
+  },
+  "aliasField": {
+    "messages": {
+      "updated": "Alias erfolgreich aktualisiert.",
+      "removed": "Alias erfolgreich entfernt."
+    },
+    "errors": {
+      "update": "Alias konnte nicht aktualisiert werden",
+      "remove": "Alias konnte nicht entfernt werden"
+    },
+    "placeholder": "z. B. datenschutzerklaerung"
+  },
+  "hostingPage": {
+    "title": "Hosting",
+    "description": "Veröffentlichen Sie Ihr Portal und stellen Sie es unter einer eigenen Domain bereit."
+  },
+  "visitorsPage": {
+    "title": "Besucher",
+    "description": "Steuern Sie, wer private Dokumente lesen darf, und verlangen Sie bei Bedarf eine Geheimhaltungsvereinbarung."
+  },
+  "integrationsPage": {
+    "title": "Integrationen",
+    "description": "Verbinden Sie Slack, damit Ihr Team über Zugriffsanfragen benachrichtigt wird."
+  },
+  "brandingPage": {
+    "title": "Erscheinungsbild",
+    "description": "Legen Sie Erscheinungsbild, Profil und benutzerdefinierte Links fest, die Besucher zuerst sehen."
+  },
+  "contentPage": {
+    "title": "Inhalte",
+    "description": "Wählen Sie Frameworks, Verpflichtungen und Referenzen aus, die auf der Startseite angezeigt werden."
+  },
+  "rightRequestsPage": {
+    "title": "Betroffenenanfragen",
+    "description": "Ermöglichen Sie Besuchern, Anfragen zur Ausübung ihrer Betroffenenrechte über das Portal einzureichen."
+  },
+  "accessPage": {
+    "description": "Ihr Portal ist öffentlich. Personen, die sich anmelden, um Dokumente anzufordern oder eine Geheimhaltungsvereinbarung zu akzeptieren, werden hier angezeigt."
+  },
+  "visitorPage": {
+    "back": "Besucher",
+    "joinedOn": "Beigetreten am {{date}}",
+    "messages": {
+      "updated": "Zugriff aktualisiert"
+    },
+    "errors": {
+      "update": "Zugriff konnte nicht aktualisiert werden"
+    }
+  },
+  "accessList": {
+    "empty": "Noch keine Besucher",
+    "emptyDescription": "Personen, die sich in Ihrem Portal anmelden, werden hier angezeigt.",
+    "emptyFiltered": "Keine passenden Besucher",
+    "emptyFilteredDescription": "Versuchen Sie einen anderen Namen oder eine andere E-Mail-Adresse oder löschen Sie die Suche.",
+    "search": {
+      "placeholder": "Nach Name oder E-Mail-Adresse suchen"
+    },
+    "sort": {
+      "label": "Sortieren nach",
+      "ariaLabel": "Sortieren nach: {{value}}",
+      "requests": "Nach Anzahl der Anfragen",
+      "joined": "Nach Beitrittsdatum"
+    },
+    "actions": {
+      "showMore": "Mehr anzeigen",
+      "clearSearch": "Suche löschen"
+    }
+  },
+  "accessListItem": {
+    "requested_one": "{{count}} Anfrage prüfen",
+    "requested_other": "{{count}} Anfragen prüfen",
+    "nda": {
+      "signed": "Geheimhaltungsvereinbarung unterschrieben",
+      "processing": "Geheimhaltungsvereinbarung wird verarbeitet",
+      "pending": "Geheimhaltungsvereinbarung ausstehend",
+      "failed": "Geheimhaltungsvereinbarung fehlgeschlagen"
+    },
+    "actions": {
+      "open": "Besucher öffnen"
+    }
+  },
+  "documentAccessList": {
+    "title": "Zugriffe auf eingeschränkte Dokumente",
+    "actions": {
+      "grant": "Gewähren",
+      "reject": "Ablehnen",
+      "revoke": "Entziehen",
+      "rejectOrRevoke": "Ablehnen oder entziehen",
+      "cancel": "Abbrechen",
+      "showMore": "Mehr anzeigen"
+    },
+    "selection": {
+      "count": "{{count}} ausgewählt",
+      "clear": "Auswahl aufheben",
+      "selectAll": "Alle auswählen",
+      "selectRow": "{{title}} auswählen"
+    },
+    "grantConfirm": {
+      "title": "Zugriff auf {{count}} Dokumente gewähren?",
+      "description": "Dieser Besucher kann die ausgewählten Dokumente anschließend lesen.",
+      "confirm": "Gewähren"
+    },
+    "rejectOrRevokeConfirm": {
+      "title": "{{count}} Dokumente ablehnen oder Zugriff entziehen?",
+      "description": "Bereits gewährte Zugriffe werden entzogen. Ausstehende Anfragen werden abgelehnt.",
+      "confirm": "Ablehnen oder entziehen"
+    },
+    "empty": "Keine Dokumente verfügbar",
+    "emptyFilter": "Keine Dokumente mit diesem Status",
+    "filter": {
+      "label": "Status",
+      "all": "Alle Status",
+      "none": "Keine"
+    }
+  },
+  "electronicSignature": {
+    "title": "Geheimhaltungsvereinbarung",
+    "certificateTitle": "Abschlusszertifikat",
+    "status": {
+      "signed": "Elektronisch unterschrieben",
+      "processing": "Unterschrift wird verarbeitet",
+      "pending": "Unterschrift ausstehend",
+      "failed": "Unterschrift fehlgeschlagen"
+    },
+    "descriptions": {
+      "signedAt": "Dieser Besucher hat am {{date}} elektronisch unterschrieben.",
+      "pending": "Dieser Besucher hat noch nicht unterschrieben.",
+      "processing": "Diese Unterschrift wird noch verarbeitet.",
+      "failed": "Diese Unterschrift konnte nicht abgeschlossen werden.",
+      "completed": "Dieser Besucher hat elektronisch unterschrieben."
+    },
+    "actions": {
+      "download": "Herunterladen"
+    },
+    "activity": "Aktivität"
+  },
+  "eventTypeLabel": {
+    "documentViewed": "Dokument angesehen",
+    "consentGiven": "Elektronischer Unterschrift zugestimmt",
+    "fullNameTyped": "Namen eingegeben",
+    "signatureAccepted": "Unterschrift bestätigt",
+    "signatureCompleted": "Unterschrift erfasst",
+    "sealComputed": "Dokument versiegelt",
+    "timestampRequested": "Zeitstempel angewendet",
+    "certificateGenerated": "Zertifikat erstellt",
+    "processingError": "Verarbeitung fehlgeschlagen"
+  },
+  "auditsPage": {
+    "title": "Audits",
+    "description": "Auditberichte und Compliance-Zertifizierungen verwalten"
+  },
+  "auditList": {
+    "columns": {
+      "displayed": "Angezeigt",
+      "framework": "Framework",
+      "name": "Name",
+      "validUntil": "Gültig bis",
+      "state": "Status",
+      "visibility": "Sichtbarkeit"
+    },
+    "empty": "Keine Audits verfügbar"
+  },
+  "auditListItem": {
+    "messages": {
+      "visibilityUpdated": "Portal-Einstellungen des Audits erfolgreich aktualisiert.",
+      "removed": "Audit aus dem Portal entfernt."
+    },
+    "errors": {
+      "updateVisibility": "Sichtbarkeit des Audits konnte nicht aktualisiert werden",
+      "remove": "Audit konnte nicht aus dem Portal entfernt werden"
+    },
+    "actions": {
+      "toggle": "{{title}} im Compliance-Portal umschalten"
+    },
+    "noExpiry": "Kein Ablaufdatum",
+    "untitled": "Ohne Titel",
+    "states": {
+      "not_started": "Nicht begonnen",
+      "in_progress": "In Bearbeitung",
+      "completed": "Abgeschlossen",
+      "rejected": "Abgelehnt",
+      "outdated": "Veraltet"
+    }
+  },
+  "brandPage": {
+    "messages": {
+      "updated": "Erscheinungsbild des Compliance-Portals erfolgreich aktualisiert"
+    },
+    "errors": {
+      "update": "Erscheinungsbild des Compliance-Portals konnte nicht aktualisiert werden",
+      "fileTooLarge": {
+        "title": "Datei ist zu groß",
+        "description": "Die Datei ist zu groß. Bitte laden Sie eine Datei mit weniger als 5 MB hoch."
+      }
+    },
+    "actions": {
+      "uploading": "Wird hochgeladen...",
+      "noLogo": "Kein Logo",
+      "uploadLogo": "Logo hochladen",
+      "uploadDarkLogo": "Logo für dunklen Modus hochladen",
+      "changeLogo": "Logo ändern",
+      "removeLogo": "Logo entfernen",
+      "changeDarkLogo": "Logo für dunklen Modus ändern",
+      "removeDarkLogo": "Logo für dunklen Modus entfernen"
+    },
+    "logo": {
+      "label": "Logo",
+      "description": "Dieses Logo wird in Ihrem öffentlichen Compliance-Portal angezeigt.",
+      "alt": "Logo des Compliance-Portals",
+      "uploadDescription": "Logo hochladen (PNG, JPG, SVG, WEBP bis 5 MB)"
+    },
+    "darkLogo": {
+      "label": "Logo für dunklen Modus",
+      "description": "Dieses Logo wird verwendet, wenn der dunkle Modus aktiviert ist.",
+      "alt": "Logo des Compliance-Portals für den dunklen Modus",
+      "uploadDescription": "Logo für den dunklen Modus hochladen (PNG, JPG, SVG, WEBP bis 5 MB)"
+    },
+    "profile": {
+      "title": "Allgemeine Informationen",
+      "description": "Beschreibung und Kontaktdaten, die Besuchern angezeigt werden.",
+      "errors": {
+        "update": "Informationen des Compliance-Portals konnten nicht aktualisiert werden"
+      },
+      "validation": {
+        "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein"
+      },
+      "fields": {
+        "entityName": "Name der Organisation",
+        "entityNamePlaceholder": "Acme",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Kurze Beschreibung für Besucher",
+        "websiteUrl": "Website-URL",
+        "email": "E-Mail",
+        "emailPlaceholder": "kontakt@example.com",
+        "address": "Adresse des Hauptsitzes",
+        "addressPlaceholder": "Musterstraße 1, Stadt, Land"
+      }
+    }
+  },
+  "commitmentDialog": {
+    "title": {
+      "create": "Verpflichtung hinzufügen",
+      "edit": "Verpflichtung bearbeiten"
+    },
+    "validation": {
+      "iconRequired": "Symbol ist erforderlich",
+      "titleRequired": "Titel ist erforderlich",
+      "descriptionRequired": "Beschreibung ist erforderlich"
+    },
+    "messages": {
+      "created": "Verpflichtung erfolgreich erstellt",
+      "updated": "Verpflichtung erfolgreich aktualisiert"
+    },
+    "errors": {
+      "create": "Verpflichtung konnte nicht erstellt werden",
+      "update": "Verpflichtung konnte nicht aktualisiert werden"
+    },
+    "fields": {
+      "icon": "Symbol",
+      "iconPlaceholder": "Symbol auswählen",
+      "eyebrow": "Akzentzeile",
+      "eyebrowPlaceholder": "Kurze Akzentzeile oberhalb des Titels",
+      "title": "Titel",
+      "titlePlaceholder": "Überschrift der Verpflichtung",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Ergänzender Beschreibungstext"
+    },
+    "actions": {
+      "add": "Verpflichtung hinzufügen",
+      "update": "Verpflichtung aktualisieren"
+    },
+    "icons": {
+      "lock_key": "Schloss und Schlüssel",
+      "eye_slash": "Durchgestrichenes Auge",
+      "fingerprint": "Fingerabdruck",
+      "shield_warning": "Schild mit Warnung",
+      "shield_check": "Schild mit Häkchen",
+      "siren": "Sirene",
+      "key": "Schlüssel",
+      "lock": "Schloss",
+      "cloud": "Cloud",
+      "database": "Datenbank",
+      "globe": "Globus",
+      "eye": "Auge",
+      "users": "Benutzer",
+      "certificate": "Zertifikat",
+      "gavel": "Richterhammer",
+      "heartbeat": "Herzschlag",
+      "bell": "Glocke",
+      "bug": "Fehler",
+      "code": "Code",
+      "server": "Server"
+    }
+  },
+  "commitmentGroupDialog": {
+    "title": {
+      "create": "Gruppe hinzufügen",
+      "edit": "Gruppe bearbeiten"
+    },
+    "validation": {
+      "titleRequired": "Titel ist erforderlich",
+      "descriptionRequired": "Beschreibung ist erforderlich"
+    },
+    "messages": {
+      "created": "Gruppe erfolgreich erstellt",
+      "updated": "Gruppe erfolgreich aktualisiert"
+    },
+    "errors": {
+      "create": "Gruppe konnte nicht erstellt werden",
+      "update": "Gruppe konnte nicht aktualisiert werden"
+    },
+    "fields": {
+      "title": "Titel",
+      "titlePlaceholder": "z. B. Datenschutz",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Beschreiben Sie, was diese Gruppe von Verpflichtungen umfasst"
+    },
+    "actions": {
+      "add": "Gruppe hinzufügen",
+      "update": "Gruppe aktualisieren"
+    }
+  },
+  "commitmentGroupList": {
+    "title": "Sicherheitsverpflichtungen",
+    "description": "Gruppieren Sie Verpflichtungen in Abschnitte, die in Ihrem Compliance-Portal angezeigt werden",
+    "messages": {
+      "orderUpdated": "Reihenfolge erfolgreich aktualisiert"
+    },
+    "errors": {
+      "updateOrder": "Reihenfolge konnte nicht aktualisiert werden"
+    },
+    "actions": {
+      "addGroup": "Gruppe hinzufügen"
+    },
+    "empty": "Noch keine Verpflichtungsgruppen"
+  },
+  "commitmentGroupListItem": {
+    "messages": {
+      "deleted": "Gruppe erfolgreich gelöscht",
+      "orderUpdated": "Reihenfolge erfolgreich aktualisiert"
+    },
+    "errors": {
+      "delete": "Gruppe konnte nicht gelöscht werden",
+      "updateOrder": "Reihenfolge konnte nicht aktualisiert werden"
+    },
+    "delete": {
+      "title": "Gruppe löschen",
+      "description": "Möchten Sie die Gruppe \"{{title}}\" wirklich löschen?",
+      "warning": "Alle Verpflichtungen in dieser Gruppe werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
+    },
+    "columns": {
+      "icon": "Symbol",
+      "title": "Titel",
+      "description": "Beschreibung"
+    },
+    "actions": {
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen",
+      "addCommitment": "Verpflichtung hinzufügen"
+    },
+    "empty": "Noch keine Verpflichtungen"
+  },
+  "commitmentListItem": {
+    "messages": {
+      "deleted": "Verpflichtung erfolgreich gelöscht"
+    },
+    "errors": {
+      "delete": "Verpflichtung konnte nicht gelöscht werden"
+    }
+  },
+  "documentsPage": {
+    "title": "Dokumente",
+    "description": "Richtlinien, Verfahren und Compliance-Dokumente verwalten"
+  },
+  "documentList": {
+    "columns": {
+      "displayed": "Angezeigt",
+      "name": "Name",
+      "type": "Typ",
+      "alias": "Alias",
+      "visibility": "Sichtbarkeit"
+    },
+    "empty": "Keine aktiven veröffentlichten Dokumente verfügbar"
+  },
+  "documentListItem": {
+    "messages": {
+      "visibilityUpdated": "Portal-Einstellungen des Dokuments erfolgreich aktualisiert.",
+      "removed": "Dokument aus dem Portal entfernt."
+    },
+    "errors": {
+      "updateVisibility": "Sichtbarkeit des Dokuments konnte nicht aktualisiert werden",
+      "remove": "Dokument konnte nicht aus dem Portal entfernt werden"
+    },
+    "actions": {
+      "toggle": "{{title}} im Compliance-Portal umschalten"
+    }
+  },
+  "thirdPartyListItem": {
+    "messages": {
+      "linked": "Unterauftragsverarbeiter zum Portal hinzugefügt.",
+      "removed": "Unterauftragsverarbeiter aus dem Portal entfernt."
+    },
+    "errors": {
+      "link": "Unterauftragsverarbeiter konnte nicht zum Portal hinzugefügt werden",
+      "remove": "Unterauftragsverarbeiter konnte nicht aus dem Portal entfernt werden"
+    },
+    "actions": {
+      "toggle": "{{title}} im Compliance-Portal umschalten"
+    }
+  },
+  "thirdPartyList": {
+    "columns": {
+      "displayed": "Angezeigt",
+      "name": "Name",
+      "category": "Kategorie"
+    },
+    "empty": "Keine Unterauftragsverarbeiter verfügbar"
+  },
+  "referenceList": {
+    "columns": {
+      "name": "Name",
+      "description": "Beschreibung"
+    },
+    "empty": "Keine Referenzen verfügbar",
+    "dragHint": "Ziehen Sie Referenzen per Drag-and-drop, um ihre Anzeigereihenfolge zu ändern"
+  },
+  "referencesPage": {
+    "title": "Referenzen",
+    "description": "Präsentieren Sie Kunden und Partner in Ihrem Compliance-Portal",
+    "actions": {
+      "add": "Referenz hinzufügen"
+    }
+  },
+  "statusSection": {
+    "title": "Sichtbarkeit",
+    "description": "Veröffentlichen Sie Ihr Compliance-Portal und wählen Sie, ob Suchmaschinen es finden dürfen.",
+    "activation": {
+      "titleActive": "Compliance-Portal ist aktiv",
+      "titleInactive": "Compliance-Portal ist inaktiv",
+      "description": "Machen Sie Ihr Compliance-Portal öffentlich zugänglich, um das Vertrauen Ihrer Kunden zu stärken"
+    },
+    "indexing": {
+      "title": "Suchmaschinenindexierung",
+      "description": "Erlauben Sie Suchmaschinen, Ihr Compliance-Portal zu indexieren und auffindbar zu machen",
+      "disabledHint": "Aktivieren Sie zuerst Ihr Compliance-Portal, um die Suchmaschinenindexierung einzuschalten"
+    },
+    "rightsRequests": {
+      "title": "Betroffenenanfragen",
+      "description": "Ermöglichen Sie Besuchern, Betroffenenanfragen über Ihr Compliance-Portal einzureichen"
+    }
+  },
+  "domainsSection": {
+    "title": "Domains",
+    "description": "Ihr Compliance-Portal ist immer über seine standardmäßige probopage.com-Subdomain erreichbar. Zusätzlich können Sie es unter einer eigenen Domain bereitstellen."
+  },
+  "slackSection": {
+    "title": "Slack-Benachrichtigungen",
+    "connectionTitle": "Benachrichtigungskanal",
+    "notInstalledTitle": "Slack-Bot nicht installiert",
+    "description": "Wählen Sie aus, wohin Zugriffsanfragen für dieses Compliance-Portal gesendet werden.",
+    "notInstalled": "Installieren Sie die Probo-Slack-App in den Organisationseinstellungen, bevor Sie einen Kanal auswählen.",
+    "channel": {
+      "label": "Kanal",
+      "placeholder": "Kanal auswählen",
+      "help": "Laden Sie @Probo in einen Kanal ein, bevor Sie ihn auswählen.",
+      "emptyTitle": "Noch kein Slack-Kanal",
+      "emptyDescription": "Laden Sie in Slack @Probo in einen Kanal ein und öffnen Sie diese Liste anschließend erneut."
+    },
+    "actions": {
+      "clear": "Löschen",
+      "install": "Installieren",
+      "refresh": "Aktualisieren",
+      "loadingMore": "Wird geladen…"
+    }
+  },
+  "externalUrls": {
+    "title": "Benutzerdefinierte Links",
+    "description": "Fügen Sie externe URLs hinzu, die in Ihrem Compliance-Portal angezeigt werden",
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "urlInvalid": "Bitte geben Sie eine gültige URL ein"
+    },
+    "messages": {
+      "created": "Link erfolgreich hinzugefügt.",
+      "updated": "Link erfolgreich aktualisiert.",
+      "deleted": "Link entfernt.",
+      "orderUpdated": "Reihenfolge aktualisiert."
+    },
+    "errors": {
+      "create": "Link konnte nicht hinzugefügt werden.",
+      "update": "Link konnte nicht aktualisiert werden.",
+      "delete": "Link konnte nicht entfernt werden.",
+      "orderUpdate": "Reihenfolge konnte nicht aktualisiert werden."
+    },
+    "dialog": {
+      "titleCreate": "Link hinzufügen",
+      "titleEdit": "Link bearbeiten"
+    },
+    "fields": {
+      "url": "URL",
+      "urlPlaceholder": "https://example.com",
+      "name": "Name",
+      "namePlaceholder": "zum Beispiel Twitter oder LinkedIn"
+    },
+    "actions": {
+      "add": "Link hinzufügen",
+      "save": "Änderungen speichern",
+      "open": "Link öffnen",
+      "remove": "Link entfernen"
+    },
+    "dragHint": "Per Drag-and-drop die Anzeigereihenfolge ändern"
+  },
+  "sendUpdateDialog": {
+    "title": "Aktualisierung an Abonnenten senden",
+    "description": "Diese Aktualisierung wird an alle aktuellen Abonnenten dieser Mailingliste gesendet. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "messages": {
+      "enqueued": "Aktualisierung zur Zustellung eingereiht"
+    },
+    "errors": {
+      "enqueue": "Aktualisierung konnte nicht zur Zustellung eingereiht werden"
+    },
+    "actions": {
+      "send": "Senden"
+    }
+  },
+  "newSubscriberDialog": {
+    "title": "Abonnenten hinzufügen",
+    "description": "Fügen Sie eine Person hinzu, die Sicherheits- und Compliance-Aktualisierungen erhalten soll",
+    "validation": {
+      "fullNameRequired": "Vollständiger Name ist erforderlich",
+      "emailRequired": "E-Mail-Adresse ist erforderlich",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein"
+    },
+    "messages": {
+      "created": "Abonnent erfolgreich hinzugefügt"
+    },
+    "errors": {
+      "create": "Abonnent konnte nicht hinzugefügt werden"
+    },
+    "fields": {
+      "fullName": "Vollständiger Name",
+      "fullNamePlaceholder": "Max Mustermann",
+      "email": "E-Mail-Adresse",
+      "emailPlaceholder": "max@example.com",
+      "skipConfirmation": "Bestätigungs-E-Mail überspringen"
+    },
+    "consentNotice": "Durch Aktivieren dieses Kontrollkästchens bestätigen Sie, dass Sie von dieser Person eine nachweisbare vorherige Einwilligung zum Erhalt dieser Mitteilungen eingeholt haben und dabei die geltenden Datenschutzvorschriften (zum Beispiel DSGVO und CAN-SPAM) einhalten. Sie übernehmen die volle Verantwortung dafür, den Nachweis der Einwilligung bei Bedarf erbringen zu können.",
+    "actions": {
+      "create": "Abonnenten hinzufügen"
+    }
+  },
+  "updateFormDialog": {
+    "title": {
+      "view": "Aktualisierung anzeigen",
+      "edit": "Aktualisierung bearbeiten",
+      "create": "Aktualisierung hinzufügen"
+    },
+    "validation": {
+      "titleRequired": "Titel ist erforderlich",
+      "bodyRequired": "Inhalt ist erforderlich"
+    },
+    "messages": {
+      "created": "Aktualisierung erfolgreich erstellt",
+      "updated": "Aktualisierung erfolgreich gespeichert"
+    },
+    "errors": {
+      "create": "Aktualisierung konnte nicht erstellt werden",
+      "update": "Aktualisierung konnte nicht gespeichert werden"
+    },
+    "confidentialityNotice": "Nehmen Sie keine vertraulichen oder sensiblen Informationen in diese Aktualisierung auf. Schutzbedürftige Inhalte sollten stattdessen in Dokumenten hinterlegt werden, deren Zugriff durch eine Geheimhaltungsvereinbarung geschützt ist.",
+    "fields": {
+      "title": "Titel",
+      "body": "Inhalt"
+    },
+    "sentNotice": "Diese Aktualisierung wurde bereits gesendet und kann nicht mehr bearbeitet werden.",
+    "actions": {
+      "save": "Speichern",
+      "create": "Erstellen"
+    }
+  },
+  "updatesList": {
+    "messages": {
+      "deleted": "Aktualisierung erfolgreich gelöscht"
+    },
+    "errors": {
+      "delete": "Aktualisierung konnte nicht gelöscht werden"
+    },
+    "empty": "Noch keine Aktualisierungen",
+    "columns": {
+      "title": "Titel",
+      "status": "Status",
+      "created": "Erstellt"
+    },
+    "status": {
+      "sent": "Gesendet",
+      "enqueued": "Eingereiht",
+      "processing": "Wird verarbeitet…",
+      "draft": "Entwurf"
+    },
+    "actions": {
+      "send": "Senden",
+      "edit": "Aktualisierung bearbeiten",
+      "view": "Aktualisierung anzeigen",
+      "delete": "Aktualisierung löschen",
+      "showMore": "Mehr anzeigen"
+    }
+  },
+  "mailingList": {
+    "messages": {
+      "deleted": "Abonnent erfolgreich entfernt"
+    },
+    "errors": {
+      "delete": "Abonnent konnte nicht gelöscht werden"
+    },
+    "empty": "Noch keine Abonnenten in der Mailingliste",
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "status": "Status",
+      "subscribedOn": "Abonniert am"
+    },
+    "status": {
+      "confirmed": "Bestätigt",
+      "pending": "Ausstehend"
+    },
+    "actions": {
+      "delete": "Abonnenten löschen",
+      "showMore": "Mehr anzeigen"
+    }
+  },
+  "newFileDialog": {
+    "title": "Datei hinzufügen",
+    "uploadDescription": "Datei hochladen (max. 10 MB)",
+    "selectedFile": "Ausgewählte Datei: {{name}}",
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "categoryRequired": "Kategorie ist erforderlich",
+      "fileTypeNotAllowed": "Dateityp ist nicht zulässig"
+    },
+    "messages": {
+      "created": "Datei erfolgreich hochgeladen"
+    },
+    "errors": {
+      "create": "Datei konnte nicht hochgeladen werden"
+    },
+    "fields": {
+      "name": "Name",
+      "category": "Kategorie",
+      "visibility": "Sichtbarkeit"
+    },
+    "actions": {
+      "add": "Datei hinzufügen"
+    }
+  },
+  "editFileDialog": {
+    "title": "Datei bearbeiten",
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "categoryRequired": "Kategorie ist erforderlich"
+    },
+    "messages": {
+      "updated": "Datei erfolgreich aktualisiert"
+    },
+    "errors": {
+      "update": "Datei konnte nicht aktualisiert werden"
+    },
+    "fields": {
+      "name": "Name",
+      "category": "Kategorie"
+    },
+    "actions": {
+      "save": "Speichern"
+    }
+  },
+  "deleteFileDialog": {
+    "title": "Datei löschen",
+    "description": "Möchten Sie diese Datei wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "messages": {
+      "deleted": "Datei erfolgreich gelöscht"
+    },
+    "errors": {
+      "delete": "Datei konnte nicht gelöscht werden"
+    },
+    "actions": {
+      "delete": "Löschen"
+    }
+  },
+  "fileListItem": {
+    "messages": {
+      "updated": "Datei erfolgreich aktualisiert"
+    },
+    "errors": {
+      "update": "Datei konnte nicht aktualisiert werden"
+    },
+    "actions": {
+      "download": "Herunterladen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
+    }
+  },
+  "fileList": {
+    "columns": {
+      "name": "Name",
+      "category": "Kategorie",
+      "uploadDate": "Upload-Datum",
+      "alias": "Alias",
+      "visibility": "Sichtbarkeit"
+    },
+    "empty": "Keine Dateien verfügbar"
+  },
+  "filesPage": {
+    "title": "Dateien",
+    "description": "Dateien für Ihr Compliance-Portal hochladen und verwalten",
+    "actions": {
+      "add": "Datei hinzufügen"
+    }
+  },
+  "customDomainForm": {
+    "title": "Benutzerdefinierte Domain hinzufügen",
+    "messages": {
+      "created": "Domain erfolgreich hinzugefügt. Konfigurieren Sie die DNS-Einträge, um Ihre Domain zu verifizieren und zu aktivieren."
+    },
+    "errors": {
+      "create": "Domain konnte nicht hinzugefügt werden"
+    },
+    "fields": {
+      "domain": "Domain",
+      "domainPlaceholder": "compliance.example.com",
+      "domainInvalid": "Bitte geben Sie eine gültige Domain ein (z. B. compliance.example.com)"
+    },
+    "examples": "Beispiele: compliance.example.com, trust.example.com",
+    "actions": {
+      "add": "Domain hinzufügen"
+    }
+  },
+  "deleteDomainDialog": {
+    "title": "Benutzerdefinierte Domain löschen",
+    "description": "Dadurch werden die benutzerdefinierte Domain {{domain}} und ihre gesamte Konfiguration dauerhaft gelöscht.",
+    "warning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmationLabel": "Geben Sie zur Bestätigung \"{{domain}}\" ein:",
+    "confirmationMismatch": "Der Wert stimmt nicht mit der Domain überein.",
+    "messages": {
+      "deleted": "Domain erfolgreich gelöscht"
+    },
+    "errors": {
+      "delete": "Domain konnte nicht gelöscht werden"
+    },
+    "actions": {
+      "delete": "Domain löschen",
+      "cancel": "Abbrechen"
+    }
+  },
+  "domainCard": {
+    "managed": "Verwaltet",
+    "active": {
+      "title": "Domain ist aktiv",
+      "description": "Ihre benutzerdefinierte Domain ist verifiziert und das SSL-Zertifikat ist aktiv",
+      "dns": "Belassen Sie diese Einträge unverändert. Sie sorgen dafür, dass diese Domain weiterhin hierher verweist."
+    },
+    "pending": {
+      "title": "Warten auf DNS",
+      "description": "Nach dem Hinzufügen der DNS-Einträge erfolgt die Verifizierung automatisch. Die DNS-Übernahme kann einige Minuten dauern.",
+      "dns": "Fügen Sie diese Einträge bei Ihrem DNS-Anbieter hinzu, um die Verifizierung abzuschließen."
+    },
+    "provisioning": {
+      "title": "Zertifikat wird ausgestellt",
+      "description": "Wir stellen ein SSL-Zertifikat für diese Domain bereit.",
+      "dns": "Diese Einträge müssen bestehen bleiben, solange diese Domain verwendet wird."
+    },
+    "renewing": {
+      "title": "Zertifikat wird erneuert",
+      "description": "Ein neues SSL-Zertifikat wird ausgestellt. Das aktuelle Zertifikat bleibt aktiv, bis die Erneuerung abgeschlossen ist.",
+      "dns": "Diese Einträge müssen während und nach der Erneuerung bestehen bleiben."
+    },
+    "expired": {
+      "title": "Zertifikat ist abgelaufen",
+      "description": "Das SSL-Zertifikat dieser Domain ist abgelaufen und muss neu ausgestellt werden.",
+      "dns": "Diese Einträge müssen weiterhin hierher verweisen, damit wir das Zertifikat neu ausstellen können."
+    },
+    "failed": {
+      "title": "Zertifikatsbereitstellung fehlgeschlagen",
+      "description": "Für diese Domain konnte kein SSL-Zertifikat ausgestellt werden.",
+      "dns": "Prüfen Sie, ob diese Einträge mit den Angaben bei Ihrem DNS-Anbieter übereinstimmen. Abweichungen sind eine häufige Fehlerursache."
+    },
+    "error": {
+      "title": "Bereitstellungsfehler"
+    },
+    "sslExpires": "SSL läuft am {{date}} ab",
+    "dns": {
+      "name": "Name",
+      "value": "Wert",
+      "ttl": "TTL: {{ttl}}",
+      "copy": "Kopieren",
+      "purposePointToServers": "Domain auf Probo-Server verweisen"
+    },
+    "messages": {
+      "copied": "Kopiert",
+      "valueCopied": "Wert in die Zwischenablage kopiert",
+      "copyFailed": "Kopieren fehlgeschlagen",
+      "valueCopyFailed": "Der Wert konnte nicht in die Zwischenablage kopiert werden"
+    },
+    "actions": {
+      "delete": "Löschen"
+    }
+  },
+  "frameworkList": {
+    "title": "Compliance-Frameworks",
+    "description": "Wählen Sie aus, welche Frameworks in Ihrem öffentlichen Compliance-Portal angezeigt werden sollen.",
+    "empty": "Keine Frameworks verfügbar",
+    "messages": {
+      "visibilityUpdated": "Sichtbarkeit des Frameworks erfolgreich aktualisiert."
+    },
+    "errors": {
+      "visibilityUpdate": "Sichtbarkeit des Frameworks konnte nicht aktualisiert werden"
+    }
+  },
+  "ndaSection": {
+    "title": "Geheimhaltungsvereinbarung",
+    "empty": "Keine Geheimhaltungsvereinbarung hochgeladen",
+    "description": "Besucher müssen diese Vereinbarung unterschreiben, bevor sie private Dokumente lesen können.",
+    "dropHint": "PDF hier ablegen",
+    "dropReplace": "PDF zum Ersetzen hier ablegen",
+    "dropActive": "PDF ablegen",
+    "actions": {
+      "download": "Herunterladen",
+      "upload": "Geheimhaltungsvereinbarung hochladen",
+      "replace": "Ersetzen",
+      "delete": "Löschen",
+      "uploading": "Wird hochgeladen..."
+    },
+    "delete": {
+      "title": "Geheimhaltungsvereinbarung löschen",
+      "description": "Möchten Sie die Datei der Geheimhaltungsvereinbarung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "actions": {
+        "delete": "Löschen",
+        "cancel": "Abbrechen"
+      }
+    },
+    "errors": {
+      "invalidFileType": {
+        "title": "Nicht unterstützter Dateityp",
+        "description": "Bitte laden Sie eine PDF-Datei hoch."
+      },
+      "fileTooLarge": {
+        "title": "Datei ist zu groß",
+        "description": "Bitte laden Sie eine Datei mit weniger als 10 MB hoch."
+      }
+    }
+  },
+  "subprocessorsPage": {
+    "title": "Unterauftragsverarbeiter",
+    "description": "Bewertungen von Unterauftragsverarbeitern und Risikoinformationen zu Drittanbietern verwalten"
+  },
+  "updatesPage": {
+    "title": "Aktualisierungen",
+    "description": "Senden Sie Sicherheits- und Compliance-Aktualisierungen an Abonnenten.",
+    "errors": {
+      "update": "Mailingliste konnte nicht aktualisiert werden"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "description": "Konfigurieren Sie das Verhalten Ihrer Mailingliste",
+      "replyTo": "Antwortadresse",
+      "replyToPlaceholder": "security@example.com"
+    },
+    "tabs": {
+      "updates": "Aktualisierungen",
+      "subscribers": "Abonnenten"
+    },
+    "actions": {
+      "addUpdate": "Aktualisierung hinzufügen",
+      "addSubscriber": "Abonnenten hinzufügen"
+    }
+  },
+  "documentsLayout": {
+    "tabs": {
+      "audits": "Audits",
+      "documents": "Dokumente",
+      "files": "Dateien"
+    }
+  },
+  "landingLayout": {
+    "tabs": {
+      "branding": "Erscheinungsbild",
+      "content": "Inhalte"
+    }
+  }
+}

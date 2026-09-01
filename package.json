@@ -13,8 +13,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "eslint . --concurrency auto && npm -w @probo/n8n-nodes-probo run lint",
-    "check": "turbo run check",
+    "lint": "node scripts/check-german-locale-parity.mjs && eslint . --concurrency auto && npm -w @probo/n8n-nodes-probo run lint",
+    "check": "node scripts/check-german-locale-parity.mjs && turbo run check",
     "relay": "relay-compiler"
   },
   "devDependencies": {

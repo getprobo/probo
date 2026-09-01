@@ -1,0 +1,38 @@
+{
+  "title": "Genehmigungen",
+  "breadcrumb": "Genehmigungen",
+  "pending": {
+    "heading": "Warten auf Ihre Genehmigung ({{count}})",
+    "summaryTitle_one": "{{count}} Dokument zu genehmigen",
+    "summaryTitle_other": "{{count}} Dokumente zu genehmigen",
+    "summaryDescription": "Prüfen und genehmigen Sie die Dokumente, die zum Abschluss der Mitarbeitereinrichtung erforderlich sind.",
+    "action": "Genehmigen starten",
+    "itemAction": "Genehmigen"
+  },
+  "history": {
+    "heading": "Geprüft ({{count}})",
+    "statusApproved": "Genehmigt",
+    "statusRejected": "Abgelehnt"
+  },
+  "empty": {
+    "none": {
+      "title": "Noch keine Genehmigungsanfragen",
+      "description": "Dokumente, die Ihre Genehmigung benötigen, werden hier angezeigt."
+    },
+    "allDone": {
+      "title": "Alles erledigt",
+      "description": "Sie sind auf dem aktuellen Stand. Bereits geprüfte Dokumente werden unten aufgeführt."
+    }
+  },
+  "document": {
+    "instruction": "Prüfen Sie dieses Dokument und genehmigen Sie es anschließend oder lehnen Sie es ab.",
+    "reviewAndApprove": "Prüfen und genehmigen",
+    "reject": "Ablehnen",
+    "approved": "Sie haben dieses Dokument genehmigt.",
+    "rejected": "Sie haben dieses Dokument abgelehnt.",
+    "voided": "Diese Genehmigung ist nicht mehr erforderlich.",
+    "goToNext": "Zum nächsten Dokument",
+    "finish": "Genehmigungen abschließen",
+    "backToList": "Zurück zu den Genehmigungen"
+  }
+}
