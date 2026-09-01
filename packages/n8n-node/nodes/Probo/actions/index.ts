@@ -52,6 +52,7 @@ import * as risk from './risk';
 import * as statementOfApplicability from './statementOfApplicability';
 import * as treatmentPlan from './treatmentPlan';
 import * as task from './task';
+import * as taskComment from './taskComment';
 import * as tia from './tia';
 import * as compliancePortal from './compliancePortal';
 import * as thirdParty from './thirdParty';
@@ -100,6 +101,7 @@ export const resources: Record<string, ResourceModule> = {
 	risk: risk as ResourceModule,
 	statementOfApplicability: statementOfApplicability as ResourceModule,
 	task: task as ResourceModule,
+	taskComment: taskComment as ResourceModule,
 	treatmentPlan: treatmentPlan as ResourceModule,
 	tia: tia as ResourceModule,
 	compliancePortal: compliancePortal as ResourceModule,

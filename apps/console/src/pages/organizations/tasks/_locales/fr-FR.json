@@ -59,6 +59,33 @@
     "errors": {
       "delete": "Échec de la suppression de la tâche",
       "update": "Échec de la mise à jour de la tâche"
+    },
+    "comments": {
+      "title": "Commentaires",
+      "empty": "Aucun commentaire pour le moment",
+      "placeholder": "Ajouter un commentaire",
+      "fields": {
+        "description": "Commentaire"
+      },
+      "actions": {
+        "submit": "Ajouter un commentaire",
+        "delete": "Supprimer le commentaire",
+        "showMore": "Afficher plus"
+      },
+      "delete": {
+        "title": "Supprimer le commentaire",
+        "description": "Voulez-vous vraiment supprimer ce commentaire ?",
+        "confirm": "Supprimer"
+      },
+      "messages": {
+        "created": "Commentaire ajouté avec succès.",
+        "deleted": "Commentaire supprimé avec succès."
+      },
+      "errors": {
+        "create": "Échec de l'ajout du commentaire",
+        "delete": "Échec de la suppression du commentaire",
+        "descriptionRequired": "Saisissez un commentaire"
+      }
     }
   },
   "createDialog": {

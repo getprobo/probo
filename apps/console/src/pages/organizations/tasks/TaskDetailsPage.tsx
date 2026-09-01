@@ -42,6 +42,7 @@ import type { TaskDetailsPageQuery } from "#/__generated__/core/TaskDetailsPageQ
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
+import { TaskCommentsSection } from "./_components/TaskCommentsSection";
 import { TaskDeleteDialog } from "./_components/TaskDeleteDialog";
 import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
 import { TaskNameField } from "./_components/TaskNameField";
@@ -57,6 +58,7 @@ export const taskDetailsPageFragment = graphql`
     }
     ...TaskNameField_task
     ...TaskDescriptionSection_task
+    ...TaskCommentsSection_task
     ...TaskPropertiesSection_task
     ...TaskDeleteDialog_task
   }
@@ -96,7 +98,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
     throw new NotFoundError(t("detailsPage.notFound"));
   }
 
-  const { root, header, titleRow, title, actions, body } = taskDetailsPage();
+  const { root, header, titleRow, title, actions, body, main } = taskDetailsPage();
 
   return (
     <div className={root()}>
@@ -134,7 +136,10 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
         </div>
       </div>
       <div className={body()}>
-        <TaskDescriptionSection taskKey={task} />
+        <div className={main()}>
+          <TaskDescriptionSection taskKey={task} />
+          <TaskCommentsSection taskKey={task} />
+        </div>
         <TaskPropertiesSection taskKey={task} />
       </div>
       {task.canDelete && (

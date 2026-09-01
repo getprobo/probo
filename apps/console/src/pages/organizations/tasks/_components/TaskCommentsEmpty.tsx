@@ -18,31 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+import { ChatTextIcon } from "@phosphor-icons/react";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 
-import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/task/comment"
-	"go.probo.inc/probo/pkg/cmd/task/create"
-	"go.probo.inc/probo/pkg/cmd/task/delete"
-	"go.probo.inc/probo/pkg/cmd/task/list"
-	"go.probo.inc/probo/pkg/cmd/task/update"
-	"go.probo.inc/probo/pkg/cmd/task/view"
-)
+import { taskCommentsEmpty } from "../variants";
 
-func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "task <command>",
-		Short: "Manage tasks",
-	}
+export function TaskCommentsEmpty() {
+  const { t } = useTranslation("organizations/tasks");
+  const { root, icon } = taskCommentsEmpty();
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(comment.NewCmdComment(f))
-
-	return cmd
+  return (
+    <div className={root()}>
+      <span className={icon()}>
+        <ChatTextIcon weight="light" />
+      </span>
+      <Text size={1} color="faint">
+        {t("detailsPage.comments.empty")}
+      </Text>
+    </div>
+  );
 }

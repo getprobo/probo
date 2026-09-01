@@ -18,31 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
-import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/task/comment"
-	"go.probo.inc/probo/pkg/cmd/task/create"
-	"go.probo.inc/probo/pkg/cmd/task/delete"
-	"go.probo.inc/probo/pkg/cmd/task/list"
-	"go.probo.inc/probo/pkg/cmd/task/update"
-	"go.probo.inc/probo/pkg/cmd/task/view"
-)
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Comment ID',
+		name: 'commentId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['taskComment'],
+				operation: ['delete'],
+			},
+		},
+		default: '',
+		description: 'The ID of the task comment to delete',
+		required: true,
+	},
+];
 
-func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "task <command>",
-		Short: "Manage tasks",
-	}
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const commentId = this.getNodeParameter('commentId', itemIndex) as string;
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(comment.NewCmdComment(f))
+	const query = `
+		mutation DeleteTaskComment($input: DeleteTaskCommentInput!) {
+			deleteTaskComment(input: $input) {
+				deletedTaskCommentId
+			}
+		}
+	`;
 
-	return cmd
+	const responseData = await proboApiRequest.call(this, query, {
+		input: { taskCommentId: commentId },
+	});
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
 }

@@ -18,23 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+package comment
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/task/comment"
-	"go.probo.inc/probo/pkg/cmd/task/create"
-	"go.probo.inc/probo/pkg/cmd/task/delete"
-	"go.probo.inc/probo/pkg/cmd/task/list"
-	"go.probo.inc/probo/pkg/cmd/task/update"
-	"go.probo.inc/probo/pkg/cmd/task/view"
+	"go.probo.inc/probo/pkg/cmd/task/comment/create"
+	"go.probo.inc/probo/pkg/cmd/task/comment/delete"
+	"go.probo.inc/probo/pkg/cmd/task/comment/list"
+	"go.probo.inc/probo/pkg/cmd/task/comment/update"
+	"go.probo.inc/probo/pkg/cmd/task/comment/view"
 )
 
-func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
+func NewCmdComment(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "task <command>",
-		Short: "Manage tasks",
+		Use:   "comment <command>",
+		Short: "Manage task comments",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))
@@ -42,7 +41,6 @@ func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(comment.NewCmdComment(f))
 
 	return cmd
 }

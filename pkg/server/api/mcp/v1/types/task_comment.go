@@ -18,31 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+package types
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/task/comment"
-	"go.probo.inc/probo/pkg/cmd/task/create"
-	"go.probo.inc/probo/pkg/cmd/task/delete"
-	"go.probo.inc/probo/pkg/cmd/task/list"
-	"go.probo.inc/probo/pkg/cmd/task/update"
-	"go.probo.inc/probo/pkg/cmd/task/view"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 )
 
-func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "task <command>",
-		Short: "Manage tasks",
+func NewTaskComment(c *coredata.TaskComment) *TaskComment {
+	return &TaskComment{
+		ID:             c.ID,
+		OrganizationID: c.OrganizationID,
+		TaskID:         c.TaskID,
+		OwnerID:        c.OwnerID,
+		Description:    c.Description,
+		CreatedAt:      c.CreatedAt,
+		UpdatedAt:      c.UpdatedAt,
+	}
+}
+
+func NewListTaskCommentsOutput(
+	commentPage *page.Page[*coredata.TaskComment, coredata.TaskCommentOrderField],
+) ListTaskCommentsOutput {
+	comments := make([]*TaskComment, 0, len(commentPage.Data))
+	for _, v := range commentPage.Data {
+		comments = append(comments, NewTaskComment(v))
 	}
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(comment.NewCmdComment(f))
+	var nextCursor *page.CursorKey
 
-	return cmd
+	if commentPage.Info.HasNext && len(commentPage.Data) > 0 {
+		cursorKey := commentPage.Data[len(commentPage.Data)-1].CursorKey(commentPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListTaskCommentsOutput{
+		NextCursor:   nextCursor,
+		TaskComments: comments,
+	}
 }

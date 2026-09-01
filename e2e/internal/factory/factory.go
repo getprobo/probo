@@ -694,6 +694,73 @@ func (b *TaskBuilder) Create() string {
 	return CreateTask(b.client, b.measureID, b.attrs)
 }
 
+func CreateTaskComment(c *testutil.Client, taskID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateTaskCommentInput!) {
+			createTaskComment(input: $input) {
+				taskCommentEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"taskId":      taskID,
+		"description": a.getString("description", SafeName("Comment")),
+	}
+
+	if ownerID, ok := a["ownerId"]; ok {
+		input["ownerId"] = ownerID
+	}
+
+	var result struct {
+		CreateTaskComment struct {
+			TaskCommentEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"taskCommentEdge"`
+		} `json:"createTaskComment"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createTaskComment mutation failed")
+
+	return result.CreateTaskComment.TaskCommentEdge.Node.ID
+}
+
+type TaskCommentBuilder struct {
+	client *testutil.Client
+	taskID string
+	attrs  Attrs
+}
+
+func NewTaskComment(c *testutil.Client, taskID string) *TaskCommentBuilder {
+	return &TaskCommentBuilder{client: c, taskID: taskID, attrs: Attrs{}}
+}
+
+func (b *TaskCommentBuilder) WithDescription(description string) *TaskCommentBuilder {
+	b.attrs["description"] = description
+	return b
+}
+
+func (b *TaskCommentBuilder) WithOwnerID(ownerID string) *TaskCommentBuilder {
+	b.attrs["ownerId"] = ownerID
+	return b
+}
+
+func (b *TaskCommentBuilder) Create() string {
+	return CreateTaskComment(b.client, b.taskID, b.attrs)
+}
+
 type RiskBuilder struct {
 	client *testutil.Client
 	attrs  Attrs

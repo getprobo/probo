@@ -228,6 +228,36 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
 }
 
+// Comments is the resolver for the comments field.
+func (r *taskResolver) Comments(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskCommentOrderBy) (*types.TaskCommentConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskCommentList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskCommentOrderField]{
+		Field:     coredata.TaskCommentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskCommentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.probo.TaskComments.ListForTaskID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task comments", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskCommentConnection(page, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)

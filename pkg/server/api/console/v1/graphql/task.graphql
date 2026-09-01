@@ -63,6 +63,14 @@ type Task implements Node {
         orderBy: EvidenceOrder
     ): EvidenceConnection! @goField(forceResolver: true)
 
+    comments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskCommentOrder
+    ): TaskCommentConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 

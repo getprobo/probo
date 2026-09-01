@@ -9396,3 +9396,144 @@ func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req 
 		),
 	}, nil
 }
+
+func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTaskCommentsInput) (*mcp.CallToolResult, types.ListTaskCommentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskCommentList)
+	if err != nil {
+		return nil, types.ListTaskCommentsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskCommentOrderField]{
+		Field:     coredata.TaskCommentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskCommentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	commentPage, err := r.proboSvc.TaskComments.ListForTaskID(ctx, scope, input.TaskID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task comments", log.Error(err))
+		return nil, types.ListTaskCommentsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListTaskCommentsOutput(commentPage), nil
+}
+
+func (r *Resolver) GetTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskCommentInput) (*mcp.CallToolResult, types.GetTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskCommentGet)
+	if err != nil {
+		return nil, types.GetTaskCommentOutput{}, err
+	}
+
+	taskComment, err := r.proboSvc.TaskComments.Get(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get task comment", log.Error(err))
+
+		return nil, types.GetTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetTaskCommentOutput{
+		TaskComment: types.NewTaskComment(taskComment),
+	}, nil
+}
+
+func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskCommentInput) (*mcp.CallToolResult, types.AddTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskCommentCreate)
+	if err != nil {
+		return nil, types.AddTaskCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	taskComment, err := r.proboSvc.TaskComments.Create(
+		ctx, scope,
+		probo.CreateTaskCommentRequest{
+			TaskID:      input.TaskID,
+			OwnerID:     input.OwnerID,
+			IdentityID:  identity.ID,
+			Description: input.Description,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.AddTaskCommentOutput{}, validationErrors
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create task comment", log.Error(err))
+
+		return nil, types.AddTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.AddTaskCommentOutput{
+		TaskComment: types.NewTaskComment(taskComment),
+	}, nil
+}
+
+func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskCommentInput) (*mcp.CallToolResult, types.UpdateTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskCommentUpdate)
+	if err != nil {
+		return nil, types.UpdateTaskCommentOutput{}, err
+	}
+
+	taskComment, err := r.proboSvc.TaskComments.Update(
+		ctx, scope,
+		probo.UpdateTaskCommentRequest{
+			ID:          input.ID,
+			OwnerID:     optionalPtr(input.OwnerID),
+			Description: optionalPtr(input.Description),
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.UpdateTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.UpdateTaskCommentOutput{}, validationErrors
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update task comment", log.Error(err))
+
+		return nil, types.UpdateTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.UpdateTaskCommentOutput{
+		TaskComment: types.NewTaskComment(taskComment),
+	}, nil
+}
+
+func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskCommentInput) (*mcp.CallToolResult, types.DeleteTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskCommentDelete)
+	if err != nil {
+		return nil, types.DeleteTaskCommentOutput{}, err
+	}
+
+	if err := r.proboSvc.TaskComments.Delete(ctx, scope, input.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.DeleteTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete task comment", log.Error(err))
+
+		return nil, types.DeleteTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.DeleteTaskCommentOutput{
+		DeletedTaskCommentID: input.ID,
+	}, nil
+}

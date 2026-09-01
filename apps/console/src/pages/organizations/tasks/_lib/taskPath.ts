@@ -42,3 +42,17 @@ export function taskConnectionId(parentId: string, connectionKey: string) {
     taskListConnectionFilters,
   );
 }
+
+export const taskCommentsConnectionKey = "TaskCommentsSection_comments";
+
+const taskCommentsConnectionFilters = {
+  orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
+};
+
+export function taskCommentsConnectionId(taskId: string) {
+  return ConnectionHandler.getConnectionID(
+    taskId,
+    taskCommentsConnectionKey,
+    taskCommentsConnectionFilters,
+  );
+}

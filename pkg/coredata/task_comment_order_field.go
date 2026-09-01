@@ -18,31 +18,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+package coredata
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/task/comment"
-	"go.probo.inc/probo/pkg/cmd/task/create"
-	"go.probo.inc/probo/pkg/cmd/task/delete"
-	"go.probo.inc/probo/pkg/cmd/task/list"
-	"go.probo.inc/probo/pkg/cmd/task/update"
-	"go.probo.inc/probo/pkg/cmd/task/view"
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
-func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "task <command>",
-		Short: "Manage tasks",
+type (
+	TaskCommentOrderField string
+)
+
+const (
+	TaskCommentOrderFieldCreatedAt TaskCommentOrderField = "CREATED_AT"
+)
+
+var (
+	_ page.OrderField          = TaskCommentOrderField("")
+	_ fmt.Stringer             = TaskCommentOrderField("")
+	_ encoding.TextMarshaler   = TaskCommentOrderField("")
+	_ encoding.TextUnmarshaler = (*TaskCommentOrderField)(nil)
+)
+
+func TaskCommentOrderFields() []TaskCommentOrderField {
+	return []TaskCommentOrderField{
+		TaskCommentOrderFieldCreatedAt,
+	}
+}
+
+func (v TaskCommentOrderField) IsValid() bool {
+	return isValidOrderField(v, TaskCommentOrderFields())
+}
+
+func (v TaskCommentOrderField) String() string {
+	return string(v)
+}
+
+func (v TaskCommentOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TaskCommentOrderField) UnmarshalText(text []byte) error {
+	return unmarshalOrderField(v, text, TaskCommentOrderFields())
+}
+
+func (p TaskCommentOrderField) Column() string {
+	switch p {
+	case TaskCommentOrderFieldCreatedAt:
+		return "created_at"
 	}
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(comment.NewCmdComment(f))
-
-	return cmd
+	panic(fmt.Sprintf("unsupported order by: %s", p))
 }

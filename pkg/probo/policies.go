@@ -66,6 +66,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionControlGet, ActionControlList,
 		ActionMeasureGet, ActionMeasureList,
 		ActionTaskGet, ActionTaskList,
+		ActionTaskCommentGet, ActionTaskCommentList,
 		ActionEvidenceList,
 		ActionDocumentGet, ActionDocumentList,
 		ActionDocumentVersionGet, ActionDocumentVersionList,

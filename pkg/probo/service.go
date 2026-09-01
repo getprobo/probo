@@ -89,6 +89,7 @@ type (
 		Frameworks                            *FrameworkService
 		Measures                              *MeasureService
 		Tasks                                 *TaskService
+		TaskComments                          *TaskCommentService
 		Evidences                             *EvidenceService
 		Organizations                         *OrganizationService
 		ThirdParties                          *ThirdPartyService
@@ -168,6 +169,7 @@ func NewService(
 	}
 	svc.Measures = &MeasureService{svc: svc}
 	svc.Tasks = &TaskService{svc: svc}
+	svc.TaskComments = &TaskCommentService{svc: svc}
 	svc.Evidences = &EvidenceService{
 		svc: svc,
 		fileValidator: filevalidation.NewValidator(

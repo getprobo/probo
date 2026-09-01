@@ -128,6 +128,13 @@ const (
 	ActionTaskAssign   = "core:task:assign"
 	ActionTaskUnassign = "core:task:unassign"
 
+	// TaskComment actions
+	ActionTaskCommentGet    = "core:task-comment:get"
+	ActionTaskCommentList   = "core:task-comment:list"
+	ActionTaskCommentCreate = "core:task-comment:create"
+	ActionTaskCommentUpdate = "core:task-comment:update"
+	ActionTaskCommentDelete = "core:task-comment:delete"
+
 	// Evidence actions
 	ActionEvidenceList   = "core:evidence:list"
 	ActionEvidenceDelete = "core:evidence:delete"

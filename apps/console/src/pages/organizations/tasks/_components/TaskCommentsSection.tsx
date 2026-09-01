@@ -18,40 +18,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { Suspense } from "react";
+import { graphql, useFragment } from "react-relay";
 
-import { taskDetailsPageSkeleton } from "./variants";
+import type { TaskCommentsSection_task$key } from "#/__generated__/core/TaskCommentsSection_task.graphql";
 
-export function TaskDetailsPageSkeleton() {
-  const { root, header, titleRow, title, body, main, description, comments }
-    = taskDetailsPageSkeleton();
+import { taskCommentsSection } from "../variants";
+
+import { TaskCommentsList } from "./TaskCommentsList";
+
+const taskCommentsSectionFragment = graphql`
+  fragment TaskCommentsSection_task on Task {
+    canListComments: permission(action: "core:task-comment:list")
+  }
+`;
+
+interface TaskCommentsSectionProps {
+  taskKey: TaskCommentsSection_task$key;
+}
+
+function TaskCommentsSectionFallback() {
+  const { root, header } = taskCommentsSection();
 
   return (
     <div className={root()}>
       <div className={header()}>
-        <div className={titleRow()}>
-          <div className={title()}>
-            <HeadingSkeleton size={6} className="w-64" />
-          </div>
-        </div>
+        <HeadingSkeleton size={4} className="w-32" />
       </div>
-      <div className={body()}>
-        <div className={main()}>
-          <div className={description()}>
-            <TextSkeleton size={2} className="w-full" />
-            <TextSkeleton size={2} className="w-5/6" />
-            <TextSkeleton size={2} className="w-2/3" />
-          </div>
-          <div className={comments()}>
-            <HeadingSkeleton size={4} className="w-32" />
-            <ListSkeleton count={2} />
-          </div>
-        </div>
-        <CardSkeleton size={2} />
-      </div>
+      <ListSkeleton count={2} />
     </div>
+  );
+}
+
+export function TaskCommentsSection({ taskKey }: TaskCommentsSectionProps) {
+  const task = useFragment(taskCommentsSectionFragment, taskKey);
+
+  if (!task.canListComments) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={<TaskCommentsSectionFallback />}>
+      <TaskCommentsList />
+    </Suspense>
   );
 }

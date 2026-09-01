@@ -128,3 +128,11 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 
 	return &value
 }
+
+func optionalPtr[T any](value *T) **T {
+	if value == nil {
+		return nil
+	}
+
+	return &value
+}

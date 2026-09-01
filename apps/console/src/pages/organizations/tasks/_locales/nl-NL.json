@@ -59,6 +59,33 @@
     "errors": {
       "delete": "Verwijderen van taak mislukt",
       "update": "Bijwerken van taak mislukt"
+    },
+    "comments": {
+      "title": "Opmerkingen",
+      "empty": "Nog geen opmerkingen",
+      "placeholder": "Voeg een opmerking toe",
+      "fields": {
+        "description": "Opmerking"
+      },
+      "actions": {
+        "submit": "Opmerking toevoegen",
+        "delete": "Opmerking verwijderen",
+        "showMore": "Meer tonen"
+      },
+      "delete": {
+        "title": "Opmerking verwijderen",
+        "description": "Weet u zeker dat u deze opmerking wilt verwijderen?",
+        "confirm": "Verwijderen"
+      },
+      "messages": {
+        "created": "Opmerking succesvol toegevoegd.",
+        "deleted": "Opmerking succesvol verwijderd."
+      },
+      "errors": {
+        "create": "Toevoegen van opmerking mislukt",
+        "delete": "Verwijderen van opmerking mislukt",
+        "descriptionRequired": "Voer een opmerking in"
+      }
     }
   },
   "createDialog": {

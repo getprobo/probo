@@ -7218,6 +7218,176 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted task ID
 
+    TaskCommentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskCommentOrderField
+
+    TaskCommentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TaskCommentOrderField"
+          description: Task comment order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Task comment order direction
+
+    TaskComment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - task_id
+        - owner_id
+        - description
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner membership profile ID
+        description:
+          type: string
+          description: Task comment description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListTaskCommentsInput:
+      type: object
+      required:
+        - task_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        order_by:
+          $ref: "#/components/schemas/TaskCommentOrderBy"
+          description: Task comment order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTaskCommentsOutput:
+      type: object
+      required:
+        - task_comments
+      properties:
+        task_comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskComment"
+          description: List of task comments
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetTaskCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+
+    GetTaskCommentOutput:
+      type: object
+      required:
+        - task_comment
+      properties:
+        task_comment:
+          $ref: "#/components/schemas/TaskComment"
+
+    AddTaskCommentInput:
+      type: object
+      required:
+        - task_id
+        - description
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner membership profile ID. Defaults to the caller's profile in the task organization when omitted.
+        description:
+          type: string
+          description: Task comment description
+
+    AddTaskCommentOutput:
+      type: object
+      required:
+        - task_comment
+      properties:
+        task_comment:
+          $ref: "#/components/schemas/TaskComment"
+
+    UpdateTaskCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner membership profile ID
+        description:
+          type: string
+          description: Task comment description
+
+    UpdateTaskCommentOutput:
+      type: object
+      required:
+        - task_comment
+      properties:
+        task_comment:
+          $ref: "#/components/schemas/TaskComment"
+
+    DeleteTaskCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+
+    DeleteTaskCommentOutput:
+      type: object
+      required:
+        - deleted_task_comment_id
+      properties:
+        deleted_task_comment_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted task comment ID
+
     DocumentType:
       type: string
       enum:
@@ -16882,6 +17052,66 @@ tools:
       $ref: "#/components/schemas/DeleteTaskInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTaskOutput"
+  - name: listTaskComments
+    title: List Task Comments
+    description: List comments for a task, oldest first
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTaskCommentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTaskCommentsOutput"
+  - name: getTaskComment
+    title: Get Task Comment
+    description: Get a task comment by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTaskCommentOutput"
+  - name: addTaskComment
+    title: Add Task Comment
+    description: Add a comment to a task
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTaskCommentOutput"
+  - name: updateTaskComment
+    title: Update Task Comment
+    description: Update an existing task comment
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTaskCommentOutput"
+  - name: deleteTaskComment
+    title: Delete Task Comment
+    description: Delete a task comment
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTaskCommentOutput"
   - name: listDocuments
     title: List Documents
     description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.

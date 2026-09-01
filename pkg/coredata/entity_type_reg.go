@@ -161,6 +161,7 @@ const (
 	TreatmentPlanEntityType                          uint16 = 129
 	CommonGVLSnapshotEntityType                      uint16 = 130
 	CommonGVLVendorEntityType                        uint16 = 131
+	TaskCommentEntityType                            uint16 = 132
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -409,6 +410,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CommonGVLSnapshot{ID: id}, true
 	case CommonGVLVendorEntityType:
 		return &CommonGVLVendor{ID: id}, true
+	case TaskCommentEntityType:
+		return &TaskComment{ID: id}, true
 	default:
 		return nil, false
 	}

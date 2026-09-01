@@ -28,6 +28,7 @@ export const taskDetailsPage = tv({
     title: "flex min-w-0 flex-1 items-center gap-2",
     actions: "flex shrink-0 flex-wrap items-center gap-2",
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]",
+    main: "flex min-w-0 flex-col gap-6",
   },
 });
 
@@ -38,7 +39,9 @@ export const taskDetailsPageSkeleton = tv({
     titleRow: "flex flex-wrap items-start justify-between gap-3",
     title: "flex min-w-0 items-center gap-2",
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]",
+    main: "flex min-w-0 flex-col gap-6",
     description: "flex flex-col gap-2",
+    comments: "flex flex-col gap-3",
   },
 });
 
@@ -73,6 +76,35 @@ export const taskDescriptionSection = tv({
 export const taskDurationField = tv({
   slots: {
     root: "grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-2",
+  },
+});
+
+export const taskCommentsSection = tv({
+  slots: {
+    root: "flex min-w-0 flex-col gap-3",
+    header: "flex items-center justify-between gap-3",
+    actions: "flex justify-end",
+  },
+});
+
+export const taskCommentsEmpty = tv({
+  slots: {
+    root: "flex items-center gap-2 py-2",
+    icon: "text-sand-a8 [&_svg]:size-4",
+  },
+});
+
+export const taskCommentForm = tv({
+  slots: {
+    root: "flex flex-col gap-3",
+    actions: "flex justify-end",
+  },
+});
+
+export const taskCommentListItem = tv({
+  slots: {
+    header: "flex flex-wrap items-baseline gap-x-2 gap-y-0.5",
+    description: "whitespace-pre-wrap wrap-break-word",
   },
 });
 
