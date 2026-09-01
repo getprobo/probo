@@ -24,7 +24,7 @@ import { tv } from "tailwind-variants/lite";
 // `soft`. Size steps follow Themes (cell padding + type); ghost has no frame.
 export const table = tv({
   slots: {
-    root: "w-full overflow-x-auto",
+    root: "w-full overflow-x-auto overflow-y-hidden",
     table: "w-full border-collapse text-left align-top",
     header: "",
     body: "[&_tr:last-child_td]:border-b-0 [&_tr:last-child_th]:border-b-0",
