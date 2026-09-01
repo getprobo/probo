@@ -26,11 +26,13 @@ import { useQueryLoader } from "react-relay";
 import { useParams, useSearchParams } from "react-router";
 
 import type { BindPageQuery } from "#/__generated__/core/BindPageQuery.graphql";
+import { GlobalError } from "#/components/errors/GlobalError";
 import { NotFoundError } from "#/lib/relay/errors";
 import { PageHeader } from "#/pages/_components/PageHeader";
 
 import { BindTokenError } from "./_components/BindTokenError";
 import { bindingsPage } from "./_components/variants";
+import { isInvalidBindPreviewError } from "./_lib/isInvalidBindPreviewError";
 import { BindPage, bindPageQuery } from "./BindPage";
 import { BindPageSkeleton } from "./BindPageSkeleton";
 
@@ -97,9 +99,16 @@ export default function BindPageLoader() {
   return (
     <ErrorBoundary
       key={token}
-      fallback={(
+      fallback={error => (
         <BindPageShell>
-          <BindTokenError reason="invalid" />
+          {isInvalidBindPreviewError(error)
+            ? <BindTokenError reason="invalid" />
+            : (
+                <GlobalError
+                  error={error}
+                  onRetry={() => window.location.reload()}
+                />
+              )}
         </BindPageShell>
       )}
     >

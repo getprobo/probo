@@ -23,12 +23,10 @@ import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
 import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
 import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
-import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useRefetchableFragment } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 
 import type { BindingsList_viewer$key } from "#/__generated__/core/BindingsList_viewer.graphql";
-import type { BindingsListRefetchQuery } from "#/__generated__/core/BindingsListRefetchQuery.graphql";
 import { PageHeader } from "#/pages/_components/PageHeader";
 
 import { BindingListItem } from "./BindingListItem";
@@ -36,9 +34,7 @@ import { BindingsEmpty } from "./BindingsEmpty";
 import { bindingsList } from "./variants";
 
 const bindingsListViewerFragment = graphql`
-  fragment BindingsList_viewer on Viewer
-  @refetchable(queryName: "BindingsListRefetchQuery")
-  @throwOnFieldError {
+  fragment BindingsList_viewer on Viewer @throwOnFieldError {
     probotIdentityBindings {
       id
       ...BindingListItem_binding
@@ -54,18 +50,8 @@ export function BindingsList({ viewerKey }: BindingsListProps) {
   const { t } = useTranslation("bindings");
   const { t: tApp } = useTranslation();
   const slots = bindingsList();
-  const [viewer, refetchBindings] = useRefetchableFragment<
-    BindingsListRefetchQuery,
-    BindingsList_viewer$key
-  >(bindingsListViewerFragment, viewerKey);
-  const [, startTransition] = useTransition();
+  const viewer = useFragment(bindingsListViewerFragment, viewerKey);
   const bindings = viewer.probotIdentityBindings;
-
-  function handleBindingDeleted() {
-    startTransition(() => {
-      refetchBindings({}, { fetchPolicy: "store-and-network" });
-    });
-  }
 
   return (
     <>
@@ -95,7 +81,6 @@ export function BindingsList({ viewerKey }: BindingsListProps) {
                       <BindingListItem
                         key={binding.id}
                         bindingKey={binding}
-                        onDeleted={handleBindingDeleted}
                       />
                     ))}
                   </TableBody>

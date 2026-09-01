@@ -46,10 +46,9 @@ const bindingListItemFragment = graphql`
 
 export interface BindingListItemProps {
   bindingKey: BindingListItem_binding$key;
-  onDeleted: () => void;
 }
 
-export function BindingListItem({ bindingKey, onDeleted }: BindingListItemProps) {
+export function BindingListItem({ bindingKey }: BindingListItemProps) {
   const { t } = useTranslation("bindings");
   const binding = useFragment(bindingListItemFragment, bindingKey);
   const slots = bindingListItem();
@@ -77,7 +76,7 @@ export function BindingListItem({ bindingKey, onDeleted }: BindingListItemProps)
         </div>
       </TableRowHeaderCell>
       <TableCell className={slots.actionCell()} justify="end">
-        <UnlinkBindingDialog bindingId={binding.id} onDeleted={onDeleted}>
+        <UnlinkBindingDialog bindingId={binding.id}>
           <Button size={2} variant="soft" color="red">
             {t("list.actions.unlink")}
           </Button>

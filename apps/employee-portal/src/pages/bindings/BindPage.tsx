@@ -82,7 +82,9 @@ export function BindPage({ queryRef, token }: BindPageProps) {
         externalUserName={preview.externalUserName}
         isConfirming={isConfirming}
         onConfirm={() => {
-          void handleConfirm();
+          void handleConfirm().catch(() => {
+            // Error toast is already shown by useMutation.
+          });
         }}
       />
     </main>

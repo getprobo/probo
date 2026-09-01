@@ -50,13 +50,11 @@ const unlinkBindingDialogMutation = graphql`
 
 export interface UnlinkBindingDialogProps {
   bindingId: string;
-  onDeleted: () => void;
   children: ReactElement;
 }
 
 export function UnlinkBindingDialog({
   bindingId,
-  onDeleted,
   children,
 }: UnlinkBindingDialogProps) {
   const { t } = useTranslation("bindings");
@@ -76,7 +74,6 @@ export function UnlinkBindingDialog({
     }).then(
       () => {
         setOpen(false);
-        onDeleted();
       },
       () => {
         // Error toast is already shown by useMutation.

@@ -18,33 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { useMatch } from "react-router";
 
-import { useTopBarWide } from "./useTopBarWide";
-import { topBar, topBarUserMenuTrigger } from "./variants";
-
-// Loading placeholder paired with TopBar: reuses the same layout slots with
-// skeleton primitives. Imports no Relay / Base UI, so it renders instantly.
-export function TopBarSkeleton() {
-  const slots = topBar({ wide: useTopBarWide() });
-
-  return (
-    <div className={slots.bar()}>
-      <div className={slots.inner()}>
-        <div className={slots.brand()}>
-          <AvatarSkeleton size={2} radius="small" />
-          <span className={slots.brandText()}>
-            <TextSkeleton size={2} className={`w-24 ${slots.brandName()}`} />
-            <TextSkeleton size={1} className={`w-28 ${slots.tagline()}`} />
-          </span>
-        </div>
-
-        <div className={topBarUserMenuTrigger()}>
-          <AvatarSkeleton size={1} radius="small" />
-          <TextSkeleton size={2} className="w-20" />
-        </div>
-      </div>
-    </div>
-  );
+export function useTopBarWide(): boolean {
+  const signatureDocument = useMatch("/:organizationId/signatures/:documentId");
+  const approvalDocument = useMatch("/:organizationId/approvals/:documentId");
+  return signatureDocument != null || approvalDocument != null;
 }

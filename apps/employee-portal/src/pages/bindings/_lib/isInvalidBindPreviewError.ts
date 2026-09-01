@@ -18,33 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import type { GraphQLError } from "@probo/helpers";
 
-import { useTopBarWide } from "./useTopBarWide";
-import { topBar, topBarUserMenuTrigger } from "./variants";
+function graphqlCodes(error: unknown): string[] {
+  if (typeof error !== "object" || error == null) {
+    return [];
+  }
 
-// Loading placeholder paired with TopBar: reuses the same layout slots with
-// skeleton primitives. Imports no Relay / Base UI, so it renders instantly.
-export function TopBarSkeleton() {
-  const slots = topBar({ wide: useTopBarWide() });
+  const gqlError = error as GraphQLError;
+  const codes: string[] = [];
+  if (gqlError.extensions?.code != null) {
+    codes.push(gqlError.extensions.code);
+  }
+  for (const nested of gqlError.source?.errors ?? []) {
+    if (nested.extensions?.code != null) {
+      codes.push(nested.extensions.code);
+    }
+  }
+  return codes;
+}
 
-  return (
-    <div className={slots.bar()}>
-      <div className={slots.inner()}>
-        <div className={slots.brand()}>
-          <AvatarSkeleton size={2} radius="small" />
-          <span className={slots.brandText()}>
-            <TextSkeleton size={2} className={`w-24 ${slots.brandName()}`} />
-            <TextSkeleton size={1} className={`w-28 ${slots.tagline()}`} />
-          </span>
-        </div>
-
-        <div className={topBarUserMenuTrigger()}>
-          <AvatarSkeleton size={1} radius="small" />
-          <TextSkeleton size={2} className="w-20" />
-        </div>
-      </div>
-    </div>
-  );
+// Bind preview maps used/expired/missing tokens to GraphQL INVALID. Other
+// failures (INTERNAL, network) must not reuse the invalid-token copy.
+export function isInvalidBindPreviewError(error: unknown): boolean {
+  return graphqlCodes(error).includes("INVALID");
 }

@@ -62,6 +62,7 @@ export const enrollPageQuery = graphql`
           node {
             organization @required(action: THROW) {
               id
+              canEnrollDevice: permission(action: "itam:device:enroll")
             }
             ...OrganizationStep_profile
           }
@@ -84,7 +85,9 @@ export function EnrollPage({ queryRef }: EnrollPageProps) {
   const bar = topBar();
   const tagline = tApp("topBar.tagline");
   const { viewer } = usePreloadedQuery<EnrollPageQuery>(enrollPageQuery, queryRef);
-  const profiles = viewer.profiles.edges.map(({ node }) => node);
+  const profiles = viewer.profiles.edges
+    .map(({ node }) => node)
+    .filter(profile => profile.organization.canEnrollDevice);
   const organizationIds = useMemo(
     () => new Set(profiles.map(profile => profile.organization.id)),
     [profiles],
