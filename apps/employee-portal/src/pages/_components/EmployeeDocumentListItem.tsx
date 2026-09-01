@@ -20,8 +20,7 @@
 
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { parseDate } from "@probo/helpers";
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
-import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { button } from "@probo/ui/src/v2/Button/variants";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -62,76 +61,65 @@ type EmployeeDocumentListItemProps = {
 export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
   const { documentKey, to, trailing, badge } = props;
   const { t, i18n } = useTranslation();
-  const slots = employeeDocumentListItem({ trailing });
+  const slots = employeeDocumentListItem();
   const document = useFragment(employeeDocumentListItemFragment, documentKey);
   const lastVersion = document.lastVersion.edges[0]?.node;
   const updatedAt = new Intl.DateTimeFormat(i18n.language, {
     dateStyle: "medium",
   }).format(parseDate(document.updatedAt));
 
-  const title = (
-    <Text size={2} weight="medium" highContrast className={slots.title()}>
-      {document.title}
-    </Text>
-  );
-
   return (
-    <TableRow align="center" className={slots.row()}>
-      <TableRowHeaderCell className={slots.titleCell()}>
-        {trailing === "chevron"
-          ? <Link to={to} className={slots.titleLink()}>{title}</Link>
-          : title}
+    <TableRow align="center">
+      <TableRowHeaderCell
+        className={slots.cell()}
+        colSpan={badge === undefined ? 5 : 6}
+        style={{ padding: 0 }}
+      >
+        <Link to={to} className={slots.link()}>
+          <Text size={2} weight="medium" highContrast className={slots.title()}>
+            {document.title}
+          </Text>
+          <div className={slots.meta()}>
+            <span className={slots.timestamp()}>
+              <Text size={1} color="current" className={slots.timestampLabel()}>
+                {t("documents.lastUpdated")}
+              </Text>
+              <Text size={1} color="current" className={slots.timestampValue()}>
+                {updatedAt}
+              </Text>
+            </span>
+            {lastVersion == null
+              ? null
+              : (
+                  <Text size={1} color="current" className={slots.chip()}>
+                    {t(`documents.classifications.${lastVersion.classification.toLowerCase()}`)}
+                  </Text>
+                )}
+            {lastVersion == null
+              ? null
+              : (
+                  <Text size={1} color="current" className={slots.chip()}>
+                    {t(`documents.types.${lastVersion.documentType.toLowerCase()}`)}
+                  </Text>
+                )}
+            {badge === undefined ? null : badge}
+            {trailing === "action"
+              ? (
+                  <span
+                    className={button({
+                      size: 2,
+                      variant: "soft",
+                      color: "neutral",
+                      highContrast: true,
+                    })}
+                  >
+                    {props.actionLabel}
+                  </span>
+                )
+              : <CaretRightIcon className={slots.chevron()} />}
+          </div>
+        </Link>
       </TableRowHeaderCell>
-      <TableCell className={slots.metaCell()}>
-        <span className={slots.timestamp()}>
-          <Text size={1} color="current" className={slots.timestampLabel()}>
-            {t("documents.lastUpdated")}
-          </Text>
-          <Text size={1} color="current" className={slots.timestampValue()}>
-            {updatedAt}
-          </Text>
-        </span>
-      </TableCell>
-      <TableCell className={slots.metaCell()}>
-        {lastVersion == null
-          ? null
-          : (
-              <Text size={1} color="current" className={slots.chip()}>
-                {t(`documents.classifications.${lastVersion.classification.toLowerCase()}`)}
-              </Text>
-            )}
-      </TableCell>
-      <TableCell className={slots.metaCell()}>
-        {lastVersion == null
-          ? null
-          : (
-              <Text size={1} color="current" className={slots.chip()}>
-                {t(`documents.types.${lastVersion.documentType.toLowerCase()}`)}
-              </Text>
-            )}
-      </TableCell>
-      {badge === undefined
-        ? null
-        : (
-            <TableCell className={slots.metaCell()}>
-              {badge}
-            </TableCell>
-          )}
-      <TableCell className={slots.trailingCell()}>
-        {trailing === "action"
-          ? (
-              <ButtonLink
-                to={to}
-                size={2}
-                variant="soft"
-                color="neutral"
-                highContrast
-              >
-                {props.actionLabel}
-              </ButtonLink>
-            )
-          : <CaretRightIcon className={slots.chevron()} />}
-      </TableCell>
     </TableRow>
   );
 }
