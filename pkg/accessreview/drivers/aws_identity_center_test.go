@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -29,8 +30,90 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+func TestIdentityCenterRegions_PutsPreferredFirst(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"commercial preferred is first and unique",
+		func(t *testing.T) {
+			t.Parallel()
+
+			regions := identityCenterRegions(cloudaws.CommercialPartition, "eu-west-1")
+			require.NotEmpty(t, regions)
+			assert.Equal(t, "eu-west-1", regions[0])
+
+			sorted := slices.Clone(regions)
+			slices.Sort(sorted)
+			assert.Equal(t, sorted, slices.Compact(slices.Clone(sorted)))
+			assert.Contains(t, regions, "us-east-1")
+			assert.Contains(t, regions, "eu-central-1")
+		},
+	)
+
+	t.Run(
+		"govcloud preferred is first",
+		func(t *testing.T) {
+			t.Parallel()
+
+			regions := identityCenterRegions(cloudaws.GovPartition, cloudaws.DefaultGovRegion)
+			require.Equal(t, []string{cloudaws.DefaultGovRegion, "us-gov-east-1"}, regions)
+		},
+	)
+
+	t.Run(
+		"china is preferred only",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(
+				t,
+				[]string{cloudaws.DefaultChinaRegion},
+				identityCenterRegions(cloudaws.ChinaPartition, cloudaws.DefaultChinaRegion),
+			)
+			assert.Empty(t, identityCenterRegions(cloudaws.ChinaPartition, ""))
+		},
+	)
+}
+
+func TestListIdentityCenterUsers_FindsInstanceOutsideSessionRegion(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_identity_center_eu_west_1")
+	session := newAWSTestSession(t, rec)
+
+	users, err := listIdentityCenterUsersInRegions(
+		context.Background(),
+		session,
+		log.NewLogger(log.WithName("test")),
+		[]string{cloudaws.DefaultCommercialRegion, "eu-west-1"},
+	)
+	require.NoError(t, err)
+	require.Len(t, users, 2)
+
+	records := make([]AccountRecord, 0, len(users))
+	for _, user := range users {
+		records = append(records, identityCenterUserRecord(user))
+	}
+
+	byID := make(map[string]AccountRecord, len(records))
+	for _, record := range records {
+		byID[record.ExternalID] = record
+	}
+
+	bob := byID["arn:aws:identitystore::123456789012:user/11111111-1111-1111-1111-111111111111"]
+	assert.Equal(t, "Bob Admin", bob.FullName)
+	assert.Equal(t, []string{"AdministratorAccess"}, bob.Roles)
+	require.NotNil(t, bob.IsAdmin)
+	assert.True(t, *bob.IsAdmin)
+
+	carol := byID["arn:aws:identitystore::123456789012:user/22222222-2222-2222-2222-222222222222"]
+	assert.Equal(t, "Carol Engineer", carol.FullName)
+	assert.ElementsMatch(t, []string{"Engineers", "ReadOnlyAccess"}, carol.Roles)
+}
 
 func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 	t.Parallel()

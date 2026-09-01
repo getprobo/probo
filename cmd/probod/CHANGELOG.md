@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+- AWS Identity Center discovery now walks Identity Center regions until `ListInstances` returns an instance, instead of only the session region (`us-east-1` on commercial AWS). IAM-only degrade remains when no instance exists, `ListInstances` is AccessDenied, or the role cannot finish the SSO Admin walk.
+
 ## [0.274.2] - 2026-09-02
 
 ### Fixed

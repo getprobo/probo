@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -32,6 +33,7 @@ import (
 	istypes "github.com/aws/aws-sdk-go-v2/service/identitystore/types"
 	"github.com/aws/aws-sdk-go-v2/service/ssoadmin"
 	ssotypes "github.com/aws/aws-sdk-go-v2/service/ssoadmin/types"
+	"github.com/aws/smithy-go"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/awsx/arn"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -66,6 +68,7 @@ type (
 	identityCenterInstance struct {
 		arn     string
 		storeID string
+		region  string
 	}
 
 	identityCenterPermissionSet struct {
@@ -80,22 +83,129 @@ type (
 	}
 )
 
+// identityCenterCommercialRegions is every commercial Region where an
+// organization can host IAM Identity Center, default-enabled homes first.
+// https://docs.aws.amazon.com/singlesignon/latest/userguide/regions.html
+var (
+	identityCenterCommercialRegions = []string{
+		"us-east-1",
+		"us-east-2",
+		"us-west-2",
+		"eu-west-1",
+		"eu-central-1",
+		"us-west-1",
+		"eu-west-2",
+		"eu-west-3",
+		"eu-north-1",
+		"ap-northeast-1",
+		"ap-northeast-2",
+		"ap-northeast-3",
+		"ap-southeast-1",
+		"ap-southeast-2",
+		"ap-south-1",
+		"sa-east-1",
+		"ca-central-1",
+		"af-south-1",
+		"ap-east-1",
+		"ap-east-2",
+		"ap-south-2",
+		"ap-southeast-3",
+		"ap-southeast-4",
+		"ap-southeast-5",
+		"ap-southeast-6",
+		"ap-southeast-7",
+		"ca-west-1",
+		"eu-south-1",
+		"eu-south-2",
+		"eu-central-2",
+		"il-central-1",
+		"me-south-1",
+		"me-central-1",
+		"mx-central-1",
+	}
+
+	identityCenterGovRegions = []string{
+		"us-gov-west-1",
+		"us-gov-east-1",
+	}
+)
+
+// identityCenterRegions is the ListInstances search order: the session
+// region first, then the rest of the partition's Identity Center regions.
+func identityCenterRegions(partition, preferred string) []string {
+	var rest []string
+
+	switch partition {
+	case cloudaws.GovPartition:
+		rest = identityCenterGovRegions
+	case cloudaws.ChinaPartition:
+		if preferred == "" {
+			return nil
+		}
+
+		return []string{preferred}
+	default:
+		rest = identityCenterCommercialRegions
+	}
+
+	regions := make([]string, 0, len(rest)+1)
+	if preferred != "" {
+		regions = append(regions, preferred)
+	}
+
+	for _, region := range rest {
+		if region == preferred {
+			continue
+		}
+
+		regions = append(regions, region)
+	}
+
+	return regions
+}
+
+func identityCenterAccessDenied(err error) bool {
+	apiErr, ok := errors.AsType[smithy.APIError](err)
+	if !ok || apiErr == nil {
+		return false
+	}
+
+	switch apiErr.ErrorCode() {
+	case "AccessDenied", "AccessDeniedException", "UnauthorizedException":
+		return true
+	default:
+		return false
+	}
+}
+
 // listIdentityCenterUsers returns Identity Center users assigned to this
 // session's account.
 //
-// SSO Admin degrades: an empty ListInstances, or any non-cancel error talking
-// to SSO Admin (discovery or a later read), means this account does not
-// expose a usable instance in the session region (a member account, a custom
-// role without the needed sso:*, or an instance hosted elsewhere). The IAM
-// walk still stands. Identity-store failures fail the fetch.
+// Discovery walks Identity Center regions until ListInstances returns an
+// instance. AccessDenied on ListInstances, or any non-cancel error talking
+// to SSO Admin after discovery, degrades to IAM-only (a member account, a
+// custom role without the needed sso:*, or no instance at all). Identity
+// store failures fail the fetch.
 func listIdentityCenterUsers(
 	ctx context.Context,
 	session *cloudaws.Session,
 	logger *log.Logger,
 ) ([]identityCenterUser, error) {
-	sso := ssoadmin.NewFromConfig(session.Config())
+	return listIdentityCenterUsersInRegions(
+		ctx,
+		session,
+		logger,
+		identityCenterRegions(session.Partition(), session.Config().Region),
+	)
+}
 
-	instance, err := discoverIdentityCenter(ctx, sso)
+func listIdentityCenterUsersInRegions(
+	ctx context.Context,
+	session *cloudaws.Session,
+	logger *log.Logger,
+	regions []string,
+) ([]identityCenterUser, error) {
+	instance, err := discoverIdentityCenter(ctx, session, logger, regions)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, err
@@ -113,6 +223,10 @@ func listIdentityCenterUsers(
 	if instance.arn == "" {
 		return nil, nil
 	}
+
+	cfg := session.Config()
+	cfg.Region = instance.region
+	sso := ssoadmin.NewFromConfig(cfg)
 
 	sets, err := listIdentityCenterPermissionSets(ctx, sso, instance.arn)
 	if err != nil {
@@ -169,7 +283,7 @@ func listIdentityCenterUsers(
 		}
 	}
 
-	store := identitystore.NewFromConfig(session.Config())
+	store := identitystore.NewFromConfig(cfg)
 
 	if err := expandIdentityCenterGroupAssignments(ctx, store, instance.storeID, groups, grants); err != nil {
 		return nil, err
@@ -192,6 +306,51 @@ func listIdentityCenterUsers(
 }
 
 func discoverIdentityCenter(
+	ctx context.Context,
+	session *cloudaws.Session,
+	logger *log.Logger,
+	regions []string,
+) (identityCenterInstance, error) {
+	sessionRegion := session.Config().Region
+
+	for _, region := range regions {
+		cfg := session.Config()
+		cfg.Region = region
+		client := ssoadmin.NewFromConfig(cfg)
+
+		instance, err := listIdentityCenterInstances(ctx, client)
+		if err != nil {
+			if ctx.Err() != nil {
+				return identityCenterInstance{}, err
+			}
+
+			if identityCenterAccessDenied(err) {
+				return identityCenterInstance{}, err
+			}
+
+			continue
+		}
+
+		if instance.arn == "" {
+			continue
+		}
+
+		instance.region = region
+		if region != sessionRegion {
+			logger.InfoCtx(
+				ctx,
+				"discovered iam identity center in a non-session region",
+				log.String("region", region),
+			)
+		}
+
+		return instance, nil
+	}
+
+	return identityCenterInstance{}, nil
+}
+
+func listIdentityCenterInstances(
 	ctx context.Context,
 	client *ssoadmin.Client,
 ) (identityCenterInstance, error) {

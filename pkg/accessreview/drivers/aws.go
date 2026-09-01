@@ -40,14 +40,14 @@ const (
 
 // AWSDriver lists the identities of the one AWS account the connector
 // names: IAM users, plus Identity Center users assigned to that account
-// when an instance is visible in the session region. One connector
+// when an instance is visible in an Identity Center region. One connector
 // produces one source, the same as GitHub, so roles need no account
-// qualification. Member-account connectors, instances hosted in another
-// region, and a role that cannot finish the SSO Admin walk degrade to
-// IAM only.
+// qualification. Member-account connectors and a role that cannot finish
+// the SSO Admin walk degrade to IAM only.
 type AWSDriver struct {
-	session *cloudaws.Session
-	logger  *log.Logger
+	session   *cloudaws.Session
+	logger    *log.Logger
+	icRegions []string
 }
 
 var _ Driver = (*AWSDriver)(nil)
@@ -56,6 +56,14 @@ var _ Driver = (*AWSDriver)(nil)
 // connected account.
 func NewAWSDriver(session *cloudaws.Session, logger *log.Logger) *AWSDriver {
 	return &AWSDriver{session: session, logger: logger}
+}
+
+func (d *AWSDriver) identityCenterSearchRegions() []string {
+	if len(d.icRegions) > 0 {
+		return d.icRegions
+	}
+
+	return identityCenterRegions(d.session.Partition(), d.session.Config().Region)
 }
 
 func (d *AWSDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -69,7 +77,12 @@ func (d *AWSDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 		records = append(records, iamUserRecord(user))
 	}
 
-	icUsers, err := listIdentityCenterUsers(ctx, d.session, d.logger)
+	icUsers, err := listIdentityCenterUsersInRegions(
+		ctx,
+		d.session,
+		d.logger,
+		d.identityCenterSearchRegions(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list identity center identities of the aws account: %w", err)
 	}

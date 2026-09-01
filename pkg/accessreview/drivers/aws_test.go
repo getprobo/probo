@@ -69,7 +69,10 @@ func TestAWSDriver(t *testing.T) {
 	rec := newAWSRecorder(t, "testdata/aws")
 	session := newAWSTestSession(t, rec)
 
-	records, err := NewAWSDriver(session, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
+	driver := NewAWSDriver(session, log.NewLogger(log.WithName("test")))
+	driver.icRegions = []string{cloudaws.DefaultCommercialRegion}
+
+	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
 
