@@ -21,8 +21,8 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { BindPageSkeleton } from "./BindPageSkeleton";
 import { BindingsPageSkeleton } from "./BindingsPageSkeleton";
+import { BindPageSkeleton } from "./BindPageSkeleton";
 
 export const bindingsRoutes = [
   {
