@@ -81,6 +81,44 @@ func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 	assert.False(t, unused)
 }
 
+func TestListIdentityCenterUsers_DegradesWhenLaterSSOAdminDenied(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_identity_center_permission_sets_denied")
+	session := newAWSTestSession(t, rec)
+
+	users, err := listIdentityCenterUsers(context.Background(), session, log.NewLogger(log.WithName("test")))
+	require.NoError(t, err)
+	assert.Empty(t, users)
+}
+
+func TestListIdentityCenterUsers_FailsOnIdentityStoreDenied(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_identity_center_users_denied")
+	session := newAWSTestSession(t, rec)
+
+	users, err := listIdentityCenterUsers(context.Background(), session, log.NewLogger(log.WithName("test")))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot list iam identity store users")
+	assert.Empty(t, users)
+}
+
+func TestListIdentityCenterUsers_FailsOnCancel(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	rec := newAWSRecorder(t, "testdata/aws_identity_center")
+	session := newAWSTestSession(t, rec)
+
+	users, err := listIdentityCenterUsers(ctx, session, log.NewLogger(log.WithName("test")))
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.Empty(t, users)
+}
+
 func TestIdentityCenterUserRecord_MapsPrimaryEmailAndAdminName(t *testing.T) {
 	t.Parallel()
 

@@ -99,12 +99,35 @@ export function mapAPIKeyExtraSettingToField(
 // Same grammar as pkg/awsx/arn.RoleARNPattern, with the three supported
 // partitions inlined so the field rejects other partitions immediately.
 export const AWS_IAM_ROLE_ARN_PATTERN
-  = "arn:(aws-us-gov|aws-cn|aws):iam::[0-9]{12}:role(?:/[\\w+=,.@\\-]+)*/[\\w+=,.@\\-]{1,64}";
+  = "arn:(aws-us-gov|aws-cn|aws):iam::([0-9]{12}):role(?:/[\\w+=,.@\\-]+)*/[\\w+=,.@\\-]{1,64}";
 
 const awsIAMRoleARN = new RegExp(`^${AWS_IAM_ROLE_ARN_PATTERN}$`);
 
 export function isAWSRoleARN(value: string): boolean {
   return awsIAMRoleARN.test(value.trim());
+}
+
+export function awsAccountIDFromRoleARN(value: string): string | null {
+  const match = value.trim().match(awsIAMRoleARN);
+  if (!match) {
+    return null;
+  }
+
+  return match[2] ?? null;
+}
+
+// Immediate name while the worker assumes the role and replaces the
+// account ID with the official account name (or the sign-in alias).
+export function awsAccessReviewSourceName(
+  displayName: string,
+  roleArn: string,
+): string {
+  const accountID = awsAccountIDFromRoleARN(roleArn);
+  if (!accountID) {
+    return displayName;
+  }
+
+  return `${displayName} ${accountID}`;
 }
 
 export function mapClientCredentialsExtraSettingToField(

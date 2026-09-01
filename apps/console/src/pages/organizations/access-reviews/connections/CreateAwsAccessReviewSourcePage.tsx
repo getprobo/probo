@@ -47,6 +47,7 @@ import {
 } from "../_components/ActionSplitButton";
 import {
   AWS_IAM_ROLE_ARN_PATTERN,
+  awsAccessReviewSourceName,
   isAWSRoleARN,
 } from "../dialogs/_lib/connectorSettings";
 import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
@@ -234,7 +235,7 @@ export function CreateAwsAccessReviewSourcePage({
               input: {
                 organizationId,
                 connectorId,
-                name: awsDriver.displayName,
+                name: awsAccessReviewSourceName(awsDriver.displayName, roleArn),
                 csvData: null,
               },
             },

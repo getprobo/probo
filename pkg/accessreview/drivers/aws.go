@@ -42,8 +42,9 @@ const (
 // names: IAM users, plus Identity Center users assigned to that account
 // when an instance is visible in the session region. One connector
 // produces one source, the same as GitHub, so roles need no account
-// qualification. Member-account connectors and instances hosted in
-// another region degrade to IAM only.
+// qualification. Member-account connectors, instances hosted in another
+// region, and a role that cannot finish the SSO Admin walk degrade to
+// IAM only.
 type AWSDriver struct {
 	session *cloudaws.Session
 	logger  *log.Logger

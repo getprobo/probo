@@ -94,6 +94,7 @@ func TestAWSRegistration(t *testing.T) {
 	reg, ok := r.Get(coredata.ConnectorProviderAWS)
 	require.True(t, ok)
 
+	assert.Equal(t, "AWS", reg.DisplayName)
 	assert.True(t, reg.SupportsWorkloadIdentity())
 	assert.False(t, reg.SupportsAPIKey())
 	assert.False(t, reg.IsManagedAPIKey())
@@ -106,6 +107,57 @@ func TestAWSRegistration(t *testing.T) {
 	require.Len(t, reg.WorkloadIdentityExtraSettings(), 1)
 	assert.Equal(t, "roleArn", reg.WorkloadIdentityExtraSettings()[0].Key)
 	assert.True(t, reg.WorkloadIdentityExtraSettings()[0].Required)
+	assert.Nil(t, reg.NewNameResolver)
+	require.NotNil(t, reg.WorkloadIdentity.NewNameResolver)
+}
+
+func TestAWSNewNameResolver(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderAWS)
+	require.True(t, ok)
+	require.NotNil(t, reg.WorkloadIdentity.NewNameResolver)
+
+	conn := awsTestConnector(t, coredata.AWSConnectorSettings{
+		RoleARN: "arn:aws:iam::123456789012:role/ProboAudit",
+	})
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+
+	t.Run(
+		"refuses a session on another cloud",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Nil(
+				t,
+				reg.WorkloadIdentity.NewNameResolver(
+					context.Background(),
+					foreignSession{},
+					conn,
+					logger,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"returns a resolver for an aws session",
+		func(t *testing.T) {
+			t.Parallel()
+
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			require.NoError(t, err)
+
+			resolver := reg.WorkloadIdentity.NewNameResolver(
+				context.Background(),
+				session,
+				conn,
+				logger,
+			)
+			require.NotNil(t, resolver)
+		},
+	)
 }
 
 func TestAWSNewSession(t *testing.T) {

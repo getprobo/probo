@@ -83,11 +83,11 @@ type (
 // listIdentityCenterUsers returns Identity Center users assigned to this
 // session's account.
 //
-// Discovery degrades: an empty ListInstances, or any non-cancel error talking
-// to SSO Admin, means this account does not expose an instance in the session
-// region (a member account, a custom role without sso:List*, or an instance
-// hosted elsewhere). The IAM walk still stands. Once an instance is found,
-// assignment and identity-store failures fail the fetch.
+// SSO Admin degrades: an empty ListInstances, or any non-cancel error talking
+// to SSO Admin (discovery or a later read), means this account does not
+// expose a usable instance in the session region (a member account, a custom
+// role without the needed sso:*, or an instance hosted elsewhere). The IAM
+// walk still stands. Identity-store failures fail the fetch.
 func listIdentityCenterUsers(
 	ctx context.Context,
 	session *cloudaws.Session,
@@ -116,7 +116,17 @@ func listIdentityCenterUsers(
 
 	sets, err := listIdentityCenterPermissionSets(ctx, sso, instance.arn)
 	if err != nil {
-		return nil, err
+		if ctx.Err() != nil {
+			return nil, err
+		}
+
+		logger.WarnCtx(
+			ctx,
+			"cannot read iam identity center after discovery, listing iam identities only",
+			log.Error(err),
+		)
+
+		return nil, nil
 	}
 
 	grants := make(map[string]*identityCenterGrants)
@@ -131,7 +141,17 @@ func listIdentityCenterUsers(
 			set.arn,
 		)
 		if err != nil {
-			return nil, err
+			if ctx.Err() != nil {
+				return nil, err
+			}
+
+			logger.WarnCtx(
+				ctx,
+				"cannot read iam identity center after discovery, listing iam identities only",
+				log.Error(err),
+			)
+
+			return nil, nil
 		}
 
 		for _, assignment := range assignments {

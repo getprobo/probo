@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.37
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.36
 	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.3.13
+	github.com/aws/aws-sdk-go-v2/service/account v1.39.0
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.57.3
 	github.com/aws/aws-sdk-go-v2/service/iam v1.59.2
 	github.com/aws/aws-sdk-go-v2/service/identitystore v1.42.0

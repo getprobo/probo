@@ -43,18 +43,34 @@ import (
 func awsRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderAWS,
-		DisplayName: "Amazon Web Services",
+		DisplayName: "AWS",
 		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession: newAWSSession,
-			NewDriver:  newAWSDriver,
-			Probe:      probeAWS,
+			NewSession:      newAWSSession,
+			NewDriver:       newAWSDriver,
+			Probe:           probeAWS,
+			NewNameResolver: newAWSNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "roleArn", Label: "Role ARN", Required: true},
 			},
 		},
 	}
+}
+
+func newAWSNameResolver(
+	ctx context.Context,
+	session cloud.Session,
+	_ *coredata.Connector,
+	logger *log.Logger,
+) drivers.NameResolver {
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		logger.ErrorCtx(ctx, "cannot create aws name resolver", log.String("cloud", session.Cloud()))
+		return nil
+	}
+
+	return drivers.NewAWSNameResolver(awsSession, logger)
 }
 
 // newAWSSession opens a session on the account the connector names, by

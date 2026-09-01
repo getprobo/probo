@@ -118,6 +118,32 @@ func TestAWSDriver(t *testing.T) {
 	assert.True(t, root.LastLogin.Equal(time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)))
 }
 
+func TestAWSDriver_KeepsIAMWhenLaterSSOAdminDenied(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_sso_admin_denied")
+	session := newAWSTestSession(t, rec)
+
+	records, err := NewAWSDriver(session, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 3)
+
+	ids := make([]string, 0, len(records))
+	for _, record := range records {
+		ids = append(ids, record.ExternalID)
+	}
+
+	assert.ElementsMatch(
+		t,
+		[]string{
+			"arn:aws:iam::123456789012:user/alice",
+			"arn:aws:iam::123456789012:user/ci-deploy",
+			"arn:aws:iam::123456789012:root",
+		},
+		ids,
+	)
+}
+
 func TestIAMUserRecord_MapsAdminConsoleUser(t *testing.T) {
 	t.Parallel()
 
@@ -282,4 +308,82 @@ func TestIAMUserRecord_LeavesUnknownSignalsNil(t *testing.T) {
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, record.AuthMethod)
 	assert.Nil(t, record.Active)
 	assert.Nil(t, record.IsAdmin)
+}
+
+func TestPickAWSInstanceName(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		accountName string
+		alias       string
+		accountID   string
+		want        string
+	}{
+		{
+			name:        "prefers the official account name",
+			accountName: "acme-prod",
+			alias:       "acme-alias",
+			accountID:   "123456789012",
+			want:        "acme-prod",
+		},
+		{
+			name:        "falls back to the sign-in alias",
+			accountName: "  ",
+			alias:       "acme-alias",
+			accountID:   "123456789012",
+			want:        "acme-alias",
+		},
+		{
+			name:        "falls back to the account id",
+			accountName: "",
+			alias:       "",
+			accountID:   "123456789012",
+			want:        "123456789012",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tc.want, pickAWSInstanceName(tc.accountName, tc.alias, tc.accountID))
+			},
+		)
+	}
+}
+
+func TestAWSNameResolver_UsesAccountName(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_account_name")
+	session := newAWSTestSession(t, rec)
+
+	name, err := NewAWSNameResolver(session, log.NewLogger(log.WithName("test"))).ResolveInstanceName(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "acme-prod", name)
+}
+
+func TestAWSNameResolver_FallsBackToAlias(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_account_alias")
+	session := newAWSTestSession(t, rec)
+
+	name, err := NewAWSNameResolver(session, log.NewLogger(log.WithName("test"))).ResolveInstanceName(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "acme-alias", name)
+}
+
+func TestAWSNameResolver_FallsBackToAccountID(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_account_id")
+	session := newAWSTestSession(t, rec)
+
+	name, err := NewAWSNameResolver(session, log.NewLogger(log.WithName("test"))).ResolveInstanceName(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, vcrAWSAccountID, name)
 }

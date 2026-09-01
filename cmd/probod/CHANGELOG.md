@@ -6,7 +6,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Added
 
-- AWS access review now lists Identity Center users assigned to the connected account (directly or through a group) when an instance is visible in the session region; discovery degrades to IAM-only when the account has no instance, the role cannot read SSO Admin, or the instance lives in another region. There is still no Organizations walk and no cross-account assignment listing
+- AWS access review now lists Identity Center users assigned to the connected account (directly or through a group) when an instance is visible in the session region; the walk degrades to IAM-only when the account has no instance, the role cannot read SSO Admin (including after ListInstances succeeds), or the instance lives in another region. There is still no Organizations walk and no cross-account assignment listing
+- AWS access-review sources are named with the connected account name (`AWS acme-prod`) when Account Management returns one, then the sign-in alias, then the account ID, so two accounts in one organization stay distinguishable; the source-name worker assumes the audit role to resolve those. The console still shows the account ID until the worker runs
 
 ## [0.273.0] - 2026-09-01
 

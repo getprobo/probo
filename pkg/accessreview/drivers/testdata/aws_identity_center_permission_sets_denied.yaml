@@ -1,0 +1,56 @@
+---
+# ListInstances succeeds, ListPermissionSets is denied. A role that can
+# discover an instance but cannot finish the SSO Admin walk must degrade
+# to IAM only instead of failing the fetch.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.ListInstances
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"Instances":[{"InstanceArn":"arn:aws:sso:::instance/ssoins-example","IdentityStoreId":"d-1234567890"}]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.ListPermissionSets
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"__type":"AccessDeniedException","Message":"not authorized to perform sso:ListPermissionSets"}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+            X-Amzn-Errortype:
+                - AccessDeniedException
+        status: 400 Bad Request
+        code: 400
+        duration: 1ms
