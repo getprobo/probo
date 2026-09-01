@@ -90,7 +90,7 @@ jobs:
             packages/emails/dist/
           retention-days: 1
 
-  # ── Snapshot: build the Linux/amd64 probod group binaries ─────────
+  # ── Snapshot: Linux/amd64 (Docker) and FreeBSD/arm64 (staging) ──
   build-snapshot-binary:
     name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
@@ -103,6 +103,7 @@ jobs:
       matrix:
         include:
           - { goos: linux, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
