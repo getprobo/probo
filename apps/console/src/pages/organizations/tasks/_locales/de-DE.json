@@ -13,8 +13,8 @@
       "priority": "Priorität",
       "assignedTo": "Zugewiesen an",
       "measure": "Maßnahme",
-      "timeEstimate": "Zeitschätzung",
-      "timeEstimateUnit": "Einheit der Zeitschätzung",
+      "timeEstimate": "Geschätzter Zeitaufwand",
+      "timeEstimateUnit": "Einheit für den geschätzten Zeitaufwand",
       "deadline": "Frist",
       "createdAt": "Erstellt",
       "updatedAt": "Aktualisiert"
@@ -41,8 +41,8 @@
       "low": "Niedrig"
     },
     "actions": {
-      "addEstimate": "Schätzung hinzufügen",
-      "clearEstimate": "Schätzung entfernen",
+      "addEstimate": "Zeitaufwand hinzufügen",
+      "clearEstimate": "Zeitaufwand entfernen",
       "delete": "Löschen",
       "cancel": "Abbrechen",
       "more": "Weitere Aktionen"
