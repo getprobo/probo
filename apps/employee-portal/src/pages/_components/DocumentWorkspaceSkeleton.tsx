@@ -22,21 +22,26 @@ import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { documentWorkspace } from "./variants";
+import { documentRequestPanel, documentWorkspace } from "./variants";
 
 export function DocumentWorkspaceSkeleton() {
   const slots = documentWorkspace();
+  const panel = documentRequestPanel();
 
   return (
     <div className={slots.root()}>
       <aside className={slots.request()}>
-        <div className="flex flex-col gap-16">
-          <div className="flex flex-col gap-4">
-            <TextSkeleton size={1} className="w-28" />
-            <HeadingSkeleton size={6} className="w-64" />
-            <TextSkeleton size={2} className="w-48" />
+        <div className={slots.requestBody()}>
+          <div className={panel.root()}>
+            <div className={panel.copy()}>
+              <div className={panel.back()}>
+                <TextSkeleton size={2} className="w-28" />
+              </div>
+              <HeadingSkeleton size={6} className="w-64" />
+              <TextSkeleton size={2} className="w-48" />
+            </div>
+            <CardSkeleton size={3} className="h-10 w-full" />
           </div>
-          <CardSkeleton size={3} className="h-10 w-full" />
         </div>
       </aside>
       <section className={slots.stage()}>
