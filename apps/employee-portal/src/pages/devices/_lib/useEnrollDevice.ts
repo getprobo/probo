@@ -23,7 +23,6 @@ import { fetchQuery, graphql, useRelayEnvironment } from "react-relay";
 
 import type { useEnrollDeviceMutation } from "#/__generated__/core/useEnrollDeviceMutation.graphql";
 import type { useEnrollDeviceStatusQuery } from "#/__generated__/core/useEnrollDeviceStatusQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
 
 const POLL_INTERVAL_MS = 3000;
@@ -157,7 +156,8 @@ export function useEnrollDevice(organizationId: string) {
 
   async function openAgent() {
     if (organizationId === "") {
-      throw new NotFoundError("organizationId is required");
+      setFailed(true);
+      return;
     }
 
     setHasTimedOut(false);

@@ -180,8 +180,15 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	return r.permission(ctx, obj, action, nil)
 }
 
-func (r *Resolver) permission(ctx context.Context, obj types.Node, action string, attributes map[string]any) (bool, error) {
+func (r *Resolver) permission(
+	ctx context.Context,
+	obj types.Node,
+	action string,
+	attributes map[string]any,
+	extra ...authz.AuthorizeFuncOption,
+) (bool, error) {
 	opts := []authz.AuthorizeFuncOption{authz.WithDryRun()}
+	opts = append(opts, extra...)
 
 	for key, value := range attributes {
 		if s, ok := value.(string); ok {

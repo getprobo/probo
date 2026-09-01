@@ -16,6 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/microsoft365"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -418,8 +419,10 @@ func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organizati
 }
 
 // Permission is the resolver for the permission field.
+// SkipAssumptionCheck: /enroll lists organizations before the viewer assumes
+// one. enrollDevice uses the same skip so the picker matches the mutation.
 func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string, attributes map[string]any) (bool, error) {
-	return r.permission(ctx, obj, action, attributes)
+	return r.permission(ctx, obj, action, attributes, authz.WithSkipAssumptionCheck())
 }
 
 // Organization returns schema.OrganizationResolver implementation.
