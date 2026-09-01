@@ -4,6 +4,17 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.223.0] - 2026-09-01
+
+### Added
+
+- `access-review source setup-aws` returns the AWS connector setup values (issuer, audience, subject, suggested role name, Terraform snippet, and CloudFormation quick-create URL) needed to create the audit role
+- `--aws-role-arn` on `access-review source create` creates an AWS workload-identity connector and the access source in one call, deleting the connector again if source creation fails
+
+### Changed
+
+- `access-review source view` shows the connector's connection status
+
 ## [0.222.0] - 2026-09-01
 
 ### Added
