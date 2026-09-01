@@ -22,7 +22,7 @@ import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { Link } from "react-router";
+import { Link, useMatch } from "react-router";
 
 import type { TopBar_organization$key } from "#/__generated__/iam/TopBar_organization.graphql";
 
@@ -54,7 +54,10 @@ export function TopBar({ organizationKey }: TopBarProps) {
     topBarFragment,
     organizationKey,
   );
-  const slots = topBar();
+  const signatureDocument = useMatch("/:organizationId/signatures/:documentId");
+  const approvalDocument = useMatch("/:organizationId/approvals/:documentId");
+  const wide = signatureDocument != null || approvalDocument != null;
+  const slots = topBar({ wide });
   const tagline = t("topBar.tagline");
 
   return (

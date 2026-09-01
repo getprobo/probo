@@ -22,17 +22,34 @@ import { tv } from "tailwind-variants/lite";
 
 // Employee Portal top bar. Slots are shared by the live TopBar and its
 // skeleton so the loading placeholder is structurally identical. Inner
-// width matches the page content column (1024px / max-w-5xl). No
-// breakpoint hides brand or menu — there is no competing nav.
+// width matches the page content column (1024px / max-w-5xl) unless the
+// document viewer is open, then it stretches to the full-bleed pane.
+// No breakpoint hides brand or menu — there is no competing nav.
 export const topBar = tv({
   slots: {
     bar: "flex h-14 items-center bg-sand-1",
-    inner: "mx-auto flex w-full max-w-5xl items-center justify-between gap-6 px-8",
+    inner: [
+      "mx-auto flex w-full items-center justify-between gap-6 px-8",
+      "transition-[max-width] duration-[280ms] ease-out motion-reduce:transition-none",
+    ],
     brand: "flex min-w-0 items-center gap-2",
     brandText: "flex min-w-0 flex-col",
     brandName: "truncate",
     tagline: "truncate",
     logo: "shrink-0",
+  },
+  variants: {
+    wide: {
+      true: {
+        inner: "max-w-full",
+      },
+      false: {
+        inner: "max-w-5xl",
+      },
+    },
+  },
+  defaultVariants: {
+    wide: false,
   },
 });
 
