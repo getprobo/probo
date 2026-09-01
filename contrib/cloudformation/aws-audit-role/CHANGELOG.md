@@ -5,6 +5,8 @@ documented in this file.
 
 ## Unreleased
 
+## [0.1.2] - 2026-09-01
+
 ### Changed
 
 - Document the connect-screen flow: Probo builds the quick-create URL, and
