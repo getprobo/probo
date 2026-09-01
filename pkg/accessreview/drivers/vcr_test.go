@@ -152,7 +152,7 @@ func sanitizeAWSSigningHeaders(i *cassette.Interaction) error {
 	return nil
 }
 
-// newAWSRecorder replays a hand-authored IAM Query cassette. It never records:
+// newAWSRecorder replays a hand-authored AWS cassette. It never records:
 // recording would require live AWS credentials, which these tests refuse to
 // read from the environment.
 func newAWSRecorder(t *testing.T, cassettePath string) *recorder.Recorder {
@@ -162,15 +162,15 @@ func newAWSRecorder(t *testing.T, cassettePath string) *recorder.Recorder {
 		t,
 		cassettePath,
 		"",
-		awsIAMQueryMatcher,
+		awsAPIMatcher,
 		sanitizeAWSSigningHeaders,
 	)
 }
 
-// awsIAMQueryMatcher matches IAM Query POSTs by host and Action. SigV4
-// headers, SDK invocation IDs, and form-field order are not stable across
-// SDK versions, so the default byte-for-byte matcher cannot replay them.
-func awsIAMQueryMatcher(r *http.Request, i cassette.Request) bool {
+// awsAPIMatcher matches AWS SDK POSTs without relying on SigV4 headers or
+// byte-for-byte bodies. IAM Query is identified by form Action; SSO Admin
+// and Identity Store use AWS JSON and are identified by X-Amz-Target.
+func awsAPIMatcher(r *http.Request, i cassette.Request) bool {
 	if r.Method != i.Method {
 		return false
 	}
@@ -189,8 +189,19 @@ func awsIAMQueryMatcher(r *http.Request, i cassette.Request) bool {
 		return false
 	}
 
+	target := r.Header.Get("X-Amz-Target")
+	if target != "" {
+		return target == i.Headers.Get("X-Amz-Target")
+	}
+
+	return awsIAMQueryAction(r, i)
+}
+
+func awsIAMQueryAction(r *http.Request, i cassette.Request) bool {
 	var body []byte
 	if r.Body != nil {
+		var err error
+
 		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			return false

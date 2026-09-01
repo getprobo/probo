@@ -7,15 +7,17 @@ require (
 	fyne.io/systray v1.12.2
 	github.com/99designs/gqlgen v0.17.94
 	github.com/anthropics/anthropic-sdk-go v1.63.1
-	github.com/aws/aws-sdk-go-v2 v1.43.7
+	github.com/aws/aws-sdk-go-v2 v1.45.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.37
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.36
 	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.3.13
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.57.3
 	github.com/aws/aws-sdk-go-v2/service/iam v1.59.2
+	github.com/aws/aws-sdk-go-v2/service/identitystore v1.42.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.107.2
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.44.6
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.73.6
+	github.com/aws/aws-sdk-go-v2/service/ssoadmin v1.46.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6
 	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/charmbracelet/huh v1.0.0
@@ -170,14 +172,14 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.18 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.38 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.38 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.1 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.38 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.30 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.37 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.38 // indirect
-	github.com/aws/smithy-go v1.27.8
+	github.com/aws/smithy-go v1.28.1
 	github.com/beevik/etree v1.7.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect

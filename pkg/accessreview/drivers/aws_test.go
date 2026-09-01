@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/log"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/coredata"
+	"gopkg.in/dnaeon/go-vcr.v4/pkg/recorder"
 )
 
 const (
@@ -45,11 +46,10 @@ const (
 	vcrAWSSecretKey = "testing-secret-not-a-credential"
 )
 
-func TestAWSDriver(t *testing.T) {
-	t.Parallel()
+func newAWSTestSession(t *testing.T, rec *recorder.Recorder) *cloudaws.Session {
+	t.Helper()
 
-	rec := newAWSRecorder(t, "testdata/aws")
-	session := cloudaws.NewSessionFromConfig(
+	return cloudaws.NewSessionFromConfig(
 		vcrAWSAccountID,
 		cloudaws.CommercialPartition,
 		awssdk.Config{
@@ -61,6 +61,13 @@ func TestAWSDriver(t *testing.T) {
 			RetryMaxAttempts: 1,
 		},
 	)
+}
+
+func TestAWSDriver(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws")
+	session := newAWSTestSession(t, rec)
 
 	records, err := NewAWSDriver(session, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
 	require.NoError(t, err)

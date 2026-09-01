@@ -38,9 +38,12 @@ const (
 	awsAdministratorAccess = "AdministratorAccess"
 )
 
-// AWSDriver lists the IAM users of the one AWS account the connector
-// names. One connector produces one source, the same as GitHub, so roles
-// need no account qualification and the external ID is the full user ARN.
+// AWSDriver lists the identities of the one AWS account the connector
+// names: IAM users, plus Identity Center users assigned to that account
+// when an instance is visible in the session region. One connector
+// produces one source, the same as GitHub, so roles need no account
+// qualification. Member-account connectors and instances hosted in
+// another region degrade to IAM only.
 type AWSDriver struct {
 	session *cloudaws.Session
 	logger  *log.Logger
@@ -63,6 +66,15 @@ func (d *AWSDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	records := make([]AccountRecord, 0, len(users))
 	for _, user := range users {
 		records = append(records, iamUserRecord(user))
+	}
+
+	icUsers, err := listIdentityCenterUsers(ctx, d.session, d.logger)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list identity center identities of the aws account: %w", err)
+	}
+
+	for _, user := range icUsers {
+		records = append(records, identityCenterUserRecord(user))
 	}
 
 	return records, nil

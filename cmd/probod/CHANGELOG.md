@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- AWS access review now lists Identity Center users assigned to the connected account (directly or through a group) when an instance is visible in the session region; discovery degrades to IAM-only when the account has no instance, the role cannot read SSO Admin, or the instance lives in another region. There is still no Organizations walk and no cross-account assignment listing
+
 ## [0.273.0] - 2026-09-01
 
 ### Added

@@ -1,9 +1,10 @@
 ---
-# Hand-authored IAM Query cassette. Never recorded against a live account:
-# SigV4 headers and credentials are not present. Interactions are matched by
-# host and Action (see awsIAMQueryMatcher). Synthetic users: alice (console
-# admin with MFA), ci-deploy (access-key service account), and the account
-# root from the credential report.
+# Hand-authored AWS cassette. Never recorded against a live account: SigV4
+# headers and credentials are not present. IAM Query interactions are matched
+# by host and Action; Identity Center by host and X-Amz-Target (see
+# awsAPIMatcher). Synthetic IAM users: alice (console admin with MFA),
+# ci-deploy (access-key service account), and the account root. ListInstances
+# is empty so this account degrades to IAM only.
 version: 2
 interactions:
     - id: 0
@@ -75,6 +76,30 @@ interactions:
         headers:
             Content-Type:
                 - text/xml
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.ListInstances
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"Instances":[]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
         status: 200 OK
         code: 200
         duration: 1ms
