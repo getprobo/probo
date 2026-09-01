@@ -21,8 +21,8 @@
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { parseDate } from "@probo/helpers";
 import { button } from "@probo/ui/src/v2/Button/variants";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
-import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -70,11 +70,7 @@ export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
 
   return (
     <TableRow align="center">
-      <TableRowHeaderCell
-        className={slots.cell()}
-        colSpan={badge === undefined ? 5 : 6}
-        style={{ padding: 0 }}
-      >
+      <TableCell className={slots.cell()} style={{ padding: 0 }}>
         <Link to={to} className={slots.link()}>
           <Text size={2} weight="medium" highContrast className={slots.title()}>
             {document.title}
@@ -119,7 +115,7 @@ export function EmployeeDocumentListItem(props: EmployeeDocumentListItemProps) {
               : <CaretRightIcon className={slots.chevron()} />}
           </div>
         </Link>
-      </TableRowHeaderCell>
+      </TableCell>
     </TableRow>
   );
 }

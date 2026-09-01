@@ -110,7 +110,6 @@ export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
     <DocumentListSection
       heading={t("history.heading", { count })}
       count={count}
-      statusColumn
       hasPrevious={historyDocuments.pageInfo.hasPreviousPage}
       hasNext={historyDocuments.pageInfo.hasNextPage}
       busy={isPending}
