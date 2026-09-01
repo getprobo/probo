@@ -26,7 +26,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - uses: "runs-on/action@46910bf61b41721b0579f237e186afb35477007a" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -82,7 +82,7 @@ jobs:
           - { goarch: amd64, arch_label: x86_64, wix_arch: amd64 }
           - { goarch: arm64, arch_label: arm64, wix_arch: arm64 }
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
       - uses: "./.github/actions/setup"
@@ -114,7 +114,7 @@ jobs:
           go build -ldflags $ldflags -gcflags="-e" -o dist/probo-agent.exe ./cmd/probo-agent
           if ($LASTEXITCODE -ne 0) { throw "go build failed" }
       - name: "Azure login"
-        uses: "azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43" # v3.0.0
+        uses: "azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c" # v3.0.2
         with:
           client-id: "${{ secrets.AZURE_CLIENT_ID }}"
           tenant-id: "${{ secrets.AZURE_TENANT_ID }}"
@@ -289,7 +289,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - uses: "runs-on/action@46910bf61b41721b0579f237e186afb35477007a" # v2
       - uses: "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6" # v4.1.2
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
@@ -329,13 +329,13 @@ jobs:
           ' archives/install.sh > archives/install.sh.tmp
           mv archives/install.sh.tmp archives/install.sh
       - name: "Generate SBOM"
-        uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
+        uses: "anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26" # v0.24.2
         with:
           path: ./cmd/probo-agent
           format: cyclonedx-json
           output-file: sbom.json
       - name: "Run vulnerability scan"
-        uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
+        uses: "anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439" # v7.4.2
         with:
           sbom: "sbom.json"
           fail-build: true
@@ -346,7 +346,7 @@ jobs:
           subject-path: "archives/*.tar.gz, archives/*.zip, archives/*.pkg, archives/*.msi"
           sbom-path: "sbom.json"
       - name: "Attest build provenance for archives"
-        uses: "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373" # v4
+        uses: "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4
         with:
           subject-path: "archives/*.tar.gz, archives/*.zip, archives/*.pkg, archives/*.msi"
       - name: "Extract release notes"

@@ -38,12 +38,12 @@ jobs:
             exit 1
           fi
       - run: "npm --workspace @probo/n8n-nodes-probo run build"
-      - uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
+      - uses: "anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26" # v0.24.2
         with:
           path: ./packages/n8n-node
           format: cyclonedx-json
           output-file: packages/n8n-node/sbom.json
-      - uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
+      - uses: "anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439" # v7.4.2
         with:
           path: ./packages/n8n-node
           fail-build: true
@@ -69,7 +69,7 @@ jobs:
         with:
           subject-path: "packages/n8n-node/${{ env.PACKFILE }}"
           sbom-path: "packages/n8n-node/sbom.json"
-      - uses: "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373" # v4
+      - uses: "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4
         with:
           subject-path: "packages/n8n-node/${{ env.PACKFILE }}"
       - name: "Publish to npm"
