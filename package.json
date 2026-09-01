@@ -19,9 +19,9 @@
   },
   "devDependencies": {
     "@probo/eslint-config": "1.0.0",
-    "eslint": "^10.8.0",
+    "eslint": "^10.9.1",
     "relay-compiler": "^21.0.1",
-    "turbo": "^2.10.8"
+    "turbo": "^2.10.12"
   },
   "overrides": {
     "@langchain/classic": "1.0.41",

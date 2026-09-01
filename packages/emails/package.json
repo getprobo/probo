@@ -11,12 +11,12 @@
   "dependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.8",
-    "react-email": "^6.9.1"
+    "react-email": "^6.9.3"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.4.0",
     "@types/react": "^19.2.18",
-    "tsx": "^4.23.1",
+    "tsx": "^4.23.12",
     "typescript": "~7.0.2"
   }
 }
