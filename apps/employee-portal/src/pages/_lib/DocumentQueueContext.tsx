@@ -61,6 +61,18 @@ function setQueueDirection(direction: DocumentQueueDirection): void {
   document.documentElement.dataset.queueDirection = direction;
 }
 
+function clearQueueDirection(): void {
+  delete document.documentElement.dataset.queueDirection;
+}
+
+// Router wraps the location commit in startViewTransition. Calling
+// document.startViewTransition around navigate() ourselves captures no
+// DOM change — navigate is async.
+const queueNavigateOpts = {
+  viewTransition: true,
+  flushSync: true,
+} as const;
+
 // Holds the frozen pending-document snapshot for the signing / approval flow.
 export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -100,6 +112,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
 
   const leave = useCallback(() => {
     fetchGenerationRef.current += 1;
+    clearQueueDirection();
     setSnapshot(null);
     setAdvancing(false);
   }, []);
@@ -113,7 +126,10 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       return;
     }
     setQueueDirection(direction);
-    void navigate(`/${organizationId}/${snapshot.kind}/${targetId}`);
+    void navigate(
+      `/${organizationId}/${snapshot.kind}/${targetId}`,
+      queueNavigateOpts,
+    );
   }, [navigate, organizationId, snapshot]);
 
   const goForward = useCallback(() => {
@@ -149,12 +165,17 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
         return;
       }
       const next = appendQueuePage(snapshot, page);
-      setSnapshot(next);
       const firstNew = next.ids.find(id => !snapshot.ids.includes(id));
       if (firstNew != null) {
+        setSnapshot(next);
         setQueueDirection("forward");
-        void navigate(`/${organizationId}/${snapshot.kind}/${firstNew}`);
+        void navigate(
+          `/${organizationId}/${snapshot.kind}/${firstNew}`,
+          queueNavigateOpts,
+        );
+        return;
       }
+      setSnapshot(next);
     }).catch((error: unknown) => {
       if (generation !== fetchGenerationRef.current) {
         return;
@@ -238,6 +259,12 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     startQueue,
     close,
   }), [advancing, close, enter, goForward, goTo, leave, scopedSnapshot, startQueue]);
+
+  useLayoutEffect(() => {
+    return () => {
+      clearQueueDirection();
+    };
+  }, []);
 
   return (
     <DocumentQueueContext.Provider value={value}>

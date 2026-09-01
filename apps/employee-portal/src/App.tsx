@@ -20,7 +20,7 @@
 
 import { Toast } from "@base-ui/react/toast";
 import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+import { RouterProvider } from "react-router/dom";
 
 import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { router } from "#/routes";

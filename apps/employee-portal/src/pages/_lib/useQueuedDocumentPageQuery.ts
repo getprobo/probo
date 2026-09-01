@@ -27,7 +27,6 @@ import { NotFoundError } from "#/lib/relay/errors";
 
 import { DOCUMENT_QUEUE_ID_PAGE_SIZE } from "./documentQueue";
 import { DOCUMENT_VERSION_PAGE_SIZE } from "./documentVersion";
-import { useQueuedDocumentQuery } from "./useQueuedDocumentQuery";
 
 type QueuedDocumentPageVariables = {
   organizationId: string;
@@ -48,10 +47,10 @@ function matchesRoute<TQuery extends OperationType>(
     && queryRef.variables.documentId === documentId;
 }
 
-// Loads a queue document page query for the current route and returns the ref
-// only once it can paint. Returns null while the route has no paint-ready ref,
-// so the caller renders its skeleton. Shared by the signature and approval
-// loaders so route and query-ref handling cannot diverge.
+// Loads a queue document page query for the current route. Returns null when
+// the loader still holds a leftover ref for the previous document so the
+// caller can show its skeleton as the incoming swipe pane. Shared by the
+// signature and approval loaders.
 export function useQueuedDocumentPageQuery<TQuery extends OperationType>(
   query: GraphQLTaggedNode,
 ): PreloadedQuery<TQuery> | null {
@@ -73,18 +72,9 @@ export function useQueuedDocumentPageQuery<TQuery extends OperationType>(
     );
   }, [organizationId, documentId, loadQuery]);
 
-  // Drop a ref left over from the previous document so the queue never paints
-  // the outgoing page under the incoming route.
-  const currentQueryRef = matchesRoute(queryRef, organizationId, documentId)
-    ? queryRef
-    : null;
-  const visibleQueryRef = useQueuedDocumentQuery<TQuery>(query, currentQueryRef);
-
   if (organizationId == null || documentId == null) {
     throw new NotFoundError("organizationId and documentId are required");
   }
 
-  return matchesRoute(visibleQueryRef, organizationId, documentId)
-    ? visibleQueryRef
-    : null;
+  return matchesRoute(queryRef, organizationId, documentId) ? queryRef : null;
 }
