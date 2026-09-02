@@ -31,7 +31,7 @@ export function CookieBannerTCFPageSkeleton() {
   return (
     <div className={root()}>
       <div className={intro()}>
-        <HeadingSkeleton size={4} className={title()} />
+        <HeadingSkeleton size={6} className={title()} />
         <TextSkeleton size={2} className={description()} />
         <TextSkeleton size={2} className={count()} />
         <div className={tools()}>

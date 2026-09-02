@@ -79,12 +79,12 @@ export const cookieBannerRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
       },
-      {
-        path: "tcf",
-        Fallback: CookieBannerTCFPageSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/tcf/CookieBannerTCFPageLoader")),
-      },
     ],
+  },
+  {
+    path: "cookie-banners/:cookieBannerId/tcf",
+    Fallback: CookieBannerTCFPageSkeleton,
+    Component: lazy(() => import("#/pages/organizations/cookie-banners/tcf/CookieBannerTCFPageLoader")),
   },
   {
     path: "cookie-banners/:cookieBannerId/consent-records/:consentRecordId",
