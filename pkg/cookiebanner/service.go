@@ -893,6 +893,7 @@ func (s *Service) CountCommonGVLVendors(
 			var vendors coredata.CommonGVLVendors
 
 			var err error
+
 			count, err = vendors.Count(ctx, conn, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count common gvl vendors: %w", err)
@@ -1014,6 +1015,7 @@ func (s *Service) CountCookieBannerGVLVendors(
 			var vendors coredata.CommonGVLVendors
 
 			var err error
+
 			count, err = vendors.CountByCookieBannerID(ctx, conn, scope, bannerID)
 			if err != nil {
 				return fmt.Errorf("cannot count cookie banner gvl vendors: %w", err)

@@ -78,12 +78,15 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		require.GreaterOrEqual(t, catalog.CommonGVLVendors.TotalCount, 1)
 
 		found := false
+
 		for _, edge := range catalog.CommonGVLVendors.Edges {
 			if edge.Node.IabVendorID == iabVendorID {
 				found = true
+
 				assert.Equal(t, "Example Ad Vendor", edge.Node.Name)
 			}
 		}
+
 		require.True(t, found, "seeded catalog vendor must appear in commonGVLVendors")
 
 		const addMutation = `
@@ -177,6 +180,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 		onBannerID := uniqueIABVendorID()
 		offBannerID := uniqueIABVendorID()
+
 		factory.SeedCommonGVLVendor(t, onBannerID, "On Banner Vendor", false)
 		factory.SeedCommonGVLVendor(t, offBannerID, "Off Banner Vendor", false)
 
@@ -187,6 +191,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				}
 			}
 		`
+
 		err := owner.Execute(addMutation, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId": bannerID,
@@ -214,6 +219,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				} `json:"edges"`
 			} `json:"commonGVLVendors"`
 		}
+
 		err = owner.Execute(catalogQuery, map[string]any{
 			"filter": map[string]any{
 				"query":          "On Banner Vendor",
@@ -234,6 +240,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				} `json:"edges"`
 			} `json:"commonGVLVendors"`
 		}
+
 		err = owner.Execute(catalogQuery, map[string]any{
 			"filter": map[string]any{
 				"query":          "Off Banner Vendor",
@@ -274,6 +281,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				TcfPolicyVersion  *int `json:"tcfPolicyVersion"`
 			} `json:"commonGVLCatalog"`
 		}
+
 		err := owner.Execute(query, nil, &result)
 		require.NoError(t, err)
 		require.NotNil(t, result.CommonGVLCatalog.VendorListVersion)
@@ -291,6 +299,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 		firstID := uniqueIABVendorID()
 		secondID := uniqueIABVendorID()
+
 		factory.SeedCommonGVLVendor(t, firstID, "Draft Count Vendor", false)
 		factory.SeedCommonGVLVendor(t, secondID, "Published Count Vendor", false)
 
@@ -301,6 +310,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				}
 			}
 		`
+
 		err := owner.Execute(addMutation, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId": bannerID,
@@ -330,6 +340,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				} `json:"publishedVersion"`
 			} `json:"node"`
 		}
+
 		err = owner.Execute(statsQuery, map[string]any{"id": bannerID}, &beforePublish)
 		require.NoError(t, err)
 		assert.Equal(t, 1, beforePublish.Node.GVLVendors.TotalCount)
@@ -356,6 +367,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				} `json:"publishedVersion"`
 			} `json:"node"`
 		}
+
 		err = owner.Execute(statsQuery, map[string]any{"id": bannerID}, &afterDraft)
 		require.NoError(t, err)
 		assert.Equal(t, 2, afterDraft.Node.GVLVendors.TotalCount)
