@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.274.2] - 2026-09-02
+
+### Fixed
+
+- Bumped gRPC-Go to 1.83.1, addressing an HTTP/2 receive-buffer memory exhaustion issue (CVE-2026-84304)
+
 ## [0.274.1] - 2026-09-02
 
 ### Fixed
