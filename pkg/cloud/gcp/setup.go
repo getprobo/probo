@@ -31,8 +31,7 @@ import (
 
 const (
 	// DefaultTerraformModuleSource is the public registry address of the GCP
-	// audit-role module. Phase 3 owns the module; this package only formats
-	// the snippet.
+	// audit-role module.
 	DefaultTerraformModuleSource = "getprobo/audit-role/gcp"
 
 	// DefaultServiceAccountName is the service account the customer setup

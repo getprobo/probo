@@ -237,6 +237,8 @@ probo:
     cloudformationTemplateUrl: "https://probo-cloudformation-template.s3.us-east-2.amazonaws.com/aws-audit-role.yaml"
     # Terraform module address copied into the AWS connector install snippet.
     terraformModuleSource: "getprobo/audit-role/aws"
+    # Terraform module address copied into the GCP connector install snippet.
+    gcpTerraformModuleSource: "getprobo/audit-role/gcp"
 
   # CORS configuration
   cors:

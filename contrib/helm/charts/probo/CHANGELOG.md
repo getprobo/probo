@@ -4,6 +4,11 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `probo.identityFederation.gcpTerraformModuleSource` Helm value, used to
+  build the GCP connector install snippet
+
 ## [0.20.0] - 2026-09-01
 
 ### Added
