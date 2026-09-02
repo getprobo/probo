@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package latestversion
+package getgvlcatalog
 
 import (
 	"encoding/json"
@@ -30,39 +30,27 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const versionsQuery = `
-query($id: ID!) {
-  node(id: $id) {
-    ... on CookieBanner {
-      latestVersion {
-        id
-        version
-        state
-        gvlVendorCount
-        createdAt
-        updatedAt
-      }
-    }
+const catalogQuery = `
+query {
+  commonGVLCatalog {
+    vendorListVersion
+    tcfPolicyVersion
   }
 }
 `
 
-type versionInfo struct {
-	ID             string `json:"id"`
-	Version        int    `json:"version"`
-	State          string `json:"state"`
-	GvlVendorCount int    `json:"gvlVendorCount"`
-	CreatedAt      string `json:"createdAt"`
-	UpdatedAt      string `json:"updatedAt"`
+type catalog struct {
+	VendorListVersion *int `json:"vendorListVersion"`
+	TcfPolicyVersion  *int `json:"tcfPolicyVersion"`
 }
 
-func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
+func NewCmdGetGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 	var flagOutput *string
 
 	cmd := &cobra.Command{
-		Use:   "latest-version <id>",
-		Short: "Show the latest version of a cookie banner",
-		Args:  cobra.ExactArgs(1),
+		Use:   "get-gvl-catalog",
+		Short: "Show the current IAB GVL catalog versions",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
@@ -86,41 +74,27 @@ func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(versionsQuery, map[string]any{"id": args[0]})
+			data, err := client.Do(catalogQuery, nil)
 			if err != nil {
 				return err
 			}
 
 			var resp struct {
-				Node *struct {
-					LatestVersion *versionInfo `json:"latestVersion"`
-				} `json:"node"`
+				CommonGVLCatalog catalog `json:"commonGVLCatalog"`
 			}
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return err
 			}
 
-			if resp.Node == nil || resp.Node.LatestVersion == nil {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No versions found.")
-				return nil
-			}
-
-			v := resp.Node.LatestVersion
-
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, v)
+				return cmdutil.PrintJSON(f.IOStreams.Out, resp.CommonGVLCatalog)
 			}
 
-			rows := [][]string{
-				{
-					v.ID,
-					strconv.Itoa(v.Version),
-					v.State,
-					strconv.Itoa(v.GvlVendorCount),
-					cmdutil.FormatTime(v.CreatedAt),
-				},
-			}
-			t := cmdutil.NewTable("ID", "VERSION", "STATE", "GVL VENDORS", "CREATED").Rows(rows...)
+			rows := [][]string{{
+				formatOptionalInt(resp.CommonGVLCatalog.VendorListVersion),
+				formatOptionalInt(resp.CommonGVLCatalog.TcfPolicyVersion),
+			}}
+			t := cmdutil.NewTable("GVL", "TCF POLICY").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			return nil
@@ -130,4 +104,12 @@ func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func formatOptionalInt(value *int) string {
+	if value == nil {
+		return "—"
+	}
+
+	return strconv.Itoa(*value)
 }

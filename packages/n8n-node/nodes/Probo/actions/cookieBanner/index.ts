@@ -29,6 +29,7 @@ import * as deactivateOp from './deactivate.operation';
 import * as publishOp from './publish.operation';
 import * as regeneratePolicyOp from './regeneratePolicy.operation';
 import * as translateOp from './translate.operation';
+import * as getGVLCatalogOp from './getGVLCatalog.operation';
 import * as listGVLCatalogOp from './listGVLCatalog.operation';
 import * as listGVLVendorsOp from './listGVLVendors.operation';
 import * as addGVLVendorOp from './addGVLVendor.operation';
@@ -51,6 +52,12 @@ export const description: INodeProperties[] = [
 				value: 'activate',
 				description: 'Activate a cookie banner',
 				action: 'Activate a cookie banner',
+			},
+			{
+				name: 'Add GVL Vendor',
+				value: 'addGVLVendor',
+				description: 'Add an IAB GVL vendor to a cookie banner',
+				action: 'Add a GVL vendor',
 			},
 			{
 				name: 'Create',
@@ -77,34 +84,16 @@ export const description: INodeProperties[] = [
 				action: 'Get a cookie banner',
 			},
 			{
+				name: 'Get GVL Catalog',
+				value: 'getGVLCatalog',
+				description: 'Get the current IAB GVL catalog versions',
+				action: 'Get GVL catalog versions',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many cookie banners',
 				action: 'Get many cookie banners',
-			},
-			{
-				name: 'Publish',
-				value: 'publish',
-				description: 'Publish a new cookie banner version',
-				action: 'Publish a cookie banner version',
-			},
-			{
-				name: 'Regenerate Policy',
-				value: 'regeneratePolicy',
-				description: 'Re-arm tracker policy generation for a published cookie banner',
-				action: 'Regenerate a cookie banner tracker policy',
-			},
-			{
-				name: 'Translate',
-				value: 'translate',
-				description: 'Upsert a cookie banner translation',
-				action: 'Translate a cookie banner',
-			},
-			{
-				name: 'Update',
-				value: 'update',
-				description: 'Update an existing cookie banner',
-				action: 'Update a cookie banner',
 			},
 			{
 				name: 'List GVL Catalog',
@@ -119,16 +108,34 @@ export const description: INodeProperties[] = [
 				action: 'List cookie banner GVL vendors',
 			},
 			{
-				name: 'Add GVL Vendor',
-				value: 'addGVLVendor',
-				description: 'Add an IAB GVL vendor to a cookie banner',
-				action: 'Add a GVL vendor',
+				name: 'Publish',
+				value: 'publish',
+				description: 'Publish a new cookie banner version',
+				action: 'Publish a cookie banner version',
+			},
+			{
+				name: 'Regenerate Policy',
+				value: 'regeneratePolicy',
+				description: 'Re-arm tracker policy generation for a published cookie banner',
+				action: 'Regenerate a cookie banner tracker policy',
 			},
 			{
 				name: 'Remove GVL Vendor',
 				value: 'removeGVLVendor',
 				description: 'Remove an IAB GVL vendor from a cookie banner',
 				action: 'Remove a GVL vendor',
+			},
+			{
+				name: 'Translate',
+				value: 'translate',
+				description: 'Upsert a cookie banner translation',
+				action: 'Translate a cookie banner',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update an existing cookie banner',
+				action: 'Update a cookie banner',
 			},
 		],
 		default: 'create',
@@ -143,6 +150,7 @@ export const description: INodeProperties[] = [
 	...publishOp.description,
 	...regeneratePolicyOp.description,
 	...translateOp.description,
+	...getGVLCatalogOp.description,
 	...listGVLCatalogOp.description,
 	...listGVLVendorsOp.description,
 	...addGVLVendorOp.description,
@@ -160,6 +168,7 @@ export {
 	publishOp as publish,
 	regeneratePolicyOp as regeneratePolicy,
 	translateOp as translate,
+	getGVLCatalogOp as getGVLCatalog,
 	listGVLCatalogOp as listGVLCatalog,
 	listGVLVendorsOp as listGVLVendors,
 	addGVLVendorOp as addGVLVendor,

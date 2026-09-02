@@ -21,41 +21,88 @@
 import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
+export const gvlVendorMembershipOptions = ["on", "off"] as const;
+
+export type GVLVendorMembershipOption = (typeof gvlVendorMembershipOptions)[number];
+export type GVLVendorMembership = "all" | GVLVendorMembershipOption;
+
+const graphqlMemberships = {
+  on: "ON_BANNER",
+  off: "NOT_ON_BANNER",
+} as const;
+
+export function isGVLVendorMembershipOption(value: string): value is GVLVendorMembershipOption {
+  return (gvlVendorMembershipOptions as readonly string[]).includes(value);
+}
+
+export function gvlVendorGraphqlFilter(
+  query: string,
+  membership: GVLVendorMembership,
+  cookieBannerId: string,
+) {
+  const trimmedQuery = query || null;
+  const graphqlMembership = membership === "all" ? null : graphqlMemberships[membership];
+  if (trimmedQuery == null && graphqlMembership == null) {
+    return null;
+  }
+
+  return {
+    query: trimmedQuery,
+    cookieBannerId: graphqlMembership == null ? null : cookieBannerId,
+    membership: graphqlMembership,
+  };
+}
+
 export interface GVLVendorFilters {
   query: string;
+  membership: GVLVendorMembership;
   hasActiveFilters: boolean;
   setQuery: (value: string) => void;
+  setMembership: (value: GVLVendorMembership) => void;
   clear: () => void;
 }
 
 export function useGVLVendorFilters(): GVLVendorFilters {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
+  const rawMembership = searchParams.get("membership") ?? "";
+  const membership: GVLVendorMembership = isGVLVendorMembershipOption(rawMembership)
+    ? rawMembership
+    : "all";
 
-  const setQuery = useCallback((value: string) => {
+  const setParam = useCallback((key: string, value: string) => {
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous);
       if (value) {
-        next.set("q", value);
+        next.set(key, value);
       } else {
-        next.delete("q");
+        next.delete(key);
       }
       return next;
     }, { replace: true });
   }, [setSearchParams]);
 
+  const setQuery = useCallback((value: string) => setParam("q", value), [setParam]);
+
+  const setMembership = useCallback((value: GVLVendorMembership) => {
+    setParam("membership", value === "all" ? "" : value);
+  }, [setParam]);
+
   const clear = useCallback(() => {
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous);
       next.delete("q");
+      next.delete("membership");
       return next;
     }, { replace: true });
   }, [setSearchParams]);
 
   return {
     query,
-    hasActiveFilters: query !== "",
+    membership,
+    hasActiveFilters: query !== "" || membership !== "all",
     setQuery,
+    setMembership,
     clear,
   };
 }
