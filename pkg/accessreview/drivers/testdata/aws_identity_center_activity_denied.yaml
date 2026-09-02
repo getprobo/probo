@@ -1,6 +1,6 @@
 ---
 # Same Identity Center listing as testdata/aws_identity_center.yaml, then
-# LookupEvents and ListMfaDevicesForUser are denied. Assigned users must
+# LookupEvents and ListMfaDevicesForUser are denied. Store users must
 # still be returned with MFA and last login unknown.
 version: 2
 interactions:

@@ -130,7 +130,7 @@ func enrichIdentityCenterActivity(
 		ctx,
 		identitystore.NewFromConfig(cfg),
 		instance.storeID,
-		users,
+		identityCenterAssignedUsers(users),
 	)
 	if errors.Is(deviceErr, context.Canceled) {
 		return deviceErr

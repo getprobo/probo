@@ -3,8 +3,9 @@
 # account. Interactions are matched by host and X-Amz-Target (see
 # awsAPIMatcher) and consumed in call order when the target repeats.
 # Call order: ListInstances empty in us-east-1, then the usual walk in
-# eu-west-1, then LookupEvents and ListMfaDevicesForUser in eu-west-1.
-# Same principals and activity as testdata/aws_identity_center.yaml.
+# eu-west-1, then LookupEvents and ListMfaDevicesForUser in eu-west-1
+# for assigned users. Same principals and activity as
+# testdata/aws_identity_center.yaml, including Dave with no assignment.
 version: 2
 interactions:
     - id: 0

@@ -49,9 +49,9 @@ const (
 )
 
 type (
-	// identityCenterUser is one Identity Center principal assigned to the
-	// connected AWS account, joined from permission-set assignments and the
-	// identity store.
+	// identityCenterUser is one Identity Center principal from the identity
+	// store. Grants are the permission sets and groups assigned to this
+	// session's account; they are empty when the user has no assignment here.
 	identityCenterUser struct {
 		ID          string
 		ARN         string
@@ -183,8 +183,8 @@ func identityCenterAccessDenied(err error) bool {
 	}
 }
 
-// listIdentityCenterUsers returns Identity Center users assigned to this
-// session's account.
+// listIdentityCenterUsers returns Identity Center users in the identity
+// store, with grants for assignments on this session's account.
 //
 // Discovery walks Identity Center regions until ListInstances returns an
 // instance. AccessDenied on ListInstances, or any non-cancel error talking
@@ -294,11 +294,7 @@ func listIdentityCenterUsersInRegions(
 		return nil, err
 	}
 
-	if len(grants) == 0 {
-		return nil, nil
-	}
-
-	users, err := listAssignedIdentityStoreUsers(ctx, store, instance.storeID, grants)
+	users, err := listIdentityStoreUsers(ctx, store, instance.storeID, grants)
 	if err != nil {
 		return nil, err
 	}
@@ -657,7 +653,7 @@ func listIdentityCenterGroupMembers(
 	return nil, fmt.Errorf("cannot list all iam identity center group memberships: %w", ErrPaginationLimitReached)
 }
 
-func listAssignedIdentityStoreUsers(
+func listIdentityStoreUsers(
 	ctx context.Context,
 	client *identitystore.Client,
 	storeID string,
@@ -668,7 +664,7 @@ func listAssignedIdentityStoreUsers(
 		&identitystore.ListUsersInput{IdentityStoreId: aws.String(storeID)},
 	)
 
-	users := make([]identityCenterUser, 0, len(grants))
+	var users []identityCenterUser
 
 	for range maxPaginationPages {
 		if !paginator.HasMorePages() {
@@ -682,30 +678,42 @@ func listAssignedIdentityStoreUsers(
 
 		for _, user := range page.Users {
 			userID := aws.ToString(user.UserId)
-
-			grant, ok := grants[userID]
-			if !ok {
+			if userID == "" {
 				continue
 			}
 
-			users = append(
-				users,
-				identityCenterUser{
-					ID:          userID,
-					UserName:    aws.ToString(user.UserName),
-					DisplayName: aws.ToString(user.DisplayName),
-					Email:       identityCenterEmail(user.Emails, aws.ToString(user.UserName)),
-					Title:       aws.ToString(user.Title),
-					Grants:      slices.Compact(slices.Sorted(slices.Values(grant.names))),
-					Admin:       grant.admin,
-					Status:      user.UserStatus,
-					CreatedAt:   user.CreatedAt,
-				},
-			)
+			listed := identityCenterUser{
+				ID:          userID,
+				UserName:    aws.ToString(user.UserName),
+				DisplayName: aws.ToString(user.DisplayName),
+				Email:       identityCenterEmail(user.Emails, aws.ToString(user.UserName)),
+				Title:       aws.ToString(user.Title),
+				Status:      user.UserStatus,
+				CreatedAt:   user.CreatedAt,
+			}
+
+			if grant, ok := grants[userID]; ok {
+				listed.Grants = slices.Compact(slices.Sorted(slices.Values(grant.names)))
+				listed.Admin = grant.admin
+			}
+
+			users = append(users, listed)
 		}
 	}
 
 	return nil, fmt.Errorf("cannot list all iam identity store users: %w", ErrPaginationLimitReached)
+}
+
+func identityCenterAssignedUsers(users []identityCenterUser) []identityCenterUser {
+	assigned := make([]identityCenterUser, 0, len(users))
+
+	for _, user := range users {
+		if len(user.Grants) > 0 {
+			assigned = append(assigned, user)
+		}
+	}
+
+	return assigned
 }
 
 func addIdentityCenterGrant(
@@ -802,10 +810,10 @@ func identityCenterActive(status istypes.UserStatus) *bool {
 	}
 }
 
-// identityCenterUserRecord maps one Identity Center user assigned to the
-// connected account. MFA and last login come from registered devices and
-// CloudTrail UserAuthentication when those calls succeed. Active follows
-// UserStatus when the store reports it.
+// identityCenterUserRecord maps one Identity Center user. MFA and last
+// login come from registered devices and CloudTrail UserAuthentication
+// when those calls succeed. Active follows UserStatus when the store
+// reports it.
 func identityCenterUserRecord(user identityCenterUser) AccountRecord {
 	return AccountRecord{
 		Email:       user.Email,

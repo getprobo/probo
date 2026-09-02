@@ -92,7 +92,7 @@ func TestListIdentityCenterUsers_FindsInstanceOutsideSessionRegion(t *testing.T)
 		[]string{cloudaws.DefaultCommercialRegion, "eu-west-1"},
 	)
 	require.NoError(t, err)
-	require.Len(t, users, 2)
+	require.Len(t, users, 3)
 
 	records := make([]AccountRecord, 0, len(users))
 	for _, user := range users {
@@ -120,6 +120,11 @@ func TestListIdentityCenterUsers_FindsInstanceOutsideSessionRegion(t *testing.T)
 	assert.Equal(t, coredata.MFAStatusEnabled, bob.MFAStatus)
 	require.NotNil(t, bob.LastLogin)
 	assert.True(t, bob.LastLogin.Equal(time.Unix(1786752000, 0).UTC()))
+
+	dave := byID["arn:aws:identitystore::123456789012:user/33333333-3333-3333-3333-333333333333"]
+	assert.Equal(t, "Dave Unused", dave.FullName)
+	assert.Empty(t, dave.Roles)
+	assert.Nil(t, dave.IsAdmin)
 }
 
 func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
@@ -130,7 +135,7 @@ func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 
 	users, err := listIdentityCenterUsers(context.Background(), session, log.NewLogger(log.WithName("test")))
 	require.NoError(t, err)
-	require.Len(t, users, 2)
+	require.Len(t, users, 3)
 
 	records := make([]AccountRecord, 0, len(users))
 	for _, user := range users {
@@ -171,8 +176,16 @@ func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 	require.NotNil(t, carol.LastLogin)
 	assert.True(t, carol.LastLogin.Equal(time.Unix(1782864000, 0).UTC()))
 
-	_, unused := byID["arn:aws:identitystore::123456789012:user/33333333-3333-3333-3333-333333333333"]
-	assert.False(t, unused)
+	dave := byID["arn:aws:identitystore::123456789012:user/33333333-3333-3333-3333-333333333333"]
+	assert.Equal(t, "Dave Unused", dave.FullName)
+	assert.Equal(t, "dave@example.com", dave.Email)
+	assert.Empty(t, dave.Roles)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, dave.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, dave.AccountType)
+	assert.Equal(t, coredata.MFAStatusUnknown, dave.MFAStatus)
+	assert.Nil(t, dave.IsAdmin)
+	assert.Nil(t, dave.Active)
+	assert.Nil(t, dave.LastLogin)
 }
 
 func TestListIdentityCenterUsers_DegradesWhenActivityDenied(t *testing.T) {
@@ -183,7 +196,7 @@ func TestListIdentityCenterUsers_DegradesWhenActivityDenied(t *testing.T) {
 
 	users, err := listIdentityCenterUsers(context.Background(), session, log.NewLogger(log.WithName("test")))
 	require.NoError(t, err)
-	require.Len(t, users, 2)
+	require.Len(t, users, 3)
 
 	records := make([]AccountRecord, 0, len(users))
 	for _, user := range users {
@@ -323,6 +336,22 @@ func TestIdentityCenterUserRecord_LeavesUnknownSignalsNil(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusUnknown, record.MFAStatus)
 	assert.Nil(t, record.Active)
 	assert.Nil(t, record.IsAdmin)
+}
+
+func TestIdentityCenterAssignedUsers_DropsEmptyGrants(t *testing.T) {
+	t.Parallel()
+
+	assigned := identityCenterAssignedUsers(
+		[]identityCenterUser{
+			{ID: "bob", Grants: []string{"AdministratorAccess"}},
+			{ID: "dave"},
+			{ID: "carol", Grants: []string{"ReadOnlyAccess"}},
+		},
+	)
+
+	require.Len(t, assigned, 2)
+	assert.Equal(t, "bob", assigned[0].ID)
+	assert.Equal(t, "carol", assigned[1].ID)
 }
 
 func TestIdentityCenterIsAdmin_TreatsSSOAdministratorAccessAsAdmin(t *testing.T) {

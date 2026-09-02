@@ -6,9 +6,10 @@
 # (AdministratorAccess, then ReadOnlyAccess), ListManagedPolicies for
 # ReadOnlyAccess only (the admin name short-circuits), ListAccountAssignments
 # for each set, DescribeGroup, ListGroupMemberships, ListUsers,
-# LookupEvents, ListMfaDevicesForUser for Bob then Carol.
+# LookupEvents, ListMfaDevicesForUser for Bob then Carol (assigned users).
 # Bob is assigned AdministratorAccess directly. Carol reaches ReadOnlyAccess
-# through the Engineers group. Dave is in the store with no assignment.
+# through the Engineers group. Dave is in the store with no assignment and
+# is listed with empty grants; MFA devices are not looked up for him.
 # Bob last logged in with TOTP and has a virtual MFA device. Carol's last
 # login is password-only and she has no registered device.
 version: 2

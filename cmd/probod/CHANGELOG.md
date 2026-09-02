@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- AWS access review now includes Identity Center users with no permission-set assignment on the connected account (empty roles). Still no Organizations walk and no cross-account assignment listing
+
 ## [0.275.0] - 2026-09-02
 
 ### Changed
