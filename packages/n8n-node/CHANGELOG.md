@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.226.0] - 2026-09-02
+
+### Added
+
+- `Task Comment` resource (`Create`, `Get`, `Get Many`, `Update`, `Delete`) for description-only comments on a task, owned by a membership profile (the author by default)
+
 ## [0.225.0] - 2026-09-01
 
 ### Added
