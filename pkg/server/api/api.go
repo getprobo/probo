@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -43,6 +44,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -103,6 +105,10 @@ type (
 		CustomDomainCname       string
 		GraphQLLimits           gqlutils.Limits
 		Logger                  *log.Logger
+
+		// IdentityFederationIssuer is nil when identity federation is disabled.
+		IdentityFederationIssuer *identityfederation.Issuer
+		AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 	}
 
 	MCPConfig struct {
@@ -264,6 +270,8 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ComplianceMessages,
 			cfg.GraphQLLimits,
 			cfg.ITAM,
+			cfg.IdentityFederationIssuer,
+			cfg.AWSConnectorInstall,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -295,6 +303,8 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.TokenSecret,
 			cfg.File,
 			cfg.BaseURL,
+			cfg.IdentityFederationIssuer,
+			cfg.AWSConnectorInstall,
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),

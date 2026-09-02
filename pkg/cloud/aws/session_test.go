@@ -25,6 +25,7 @@ import (
 	"crypto/rsa"
 	"testing"
 
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -68,12 +69,60 @@ func testOrganizationID() gid.GID {
 func TestNewSession(t *testing.T) {
 	t.Parallel()
 
-	session, err := cloudaws.NewSession(testIssuer(t), testOrganizationID(), testRoleARN)
-	require.NoError(t, err)
+	tests := []struct {
+		name      string
+		roleARN   string
+		region    string
+		partition string
+	}{
+		{
+			name:      "commercial",
+			roleARN:   testRoleARN,
+			region:    cloudaws.DefaultCommercialRegion,
+			partition: cloudaws.CommercialPartition,
+		},
+		{
+			name:      "govcloud",
+			roleARN:   "arn:aws-us-gov:iam::123456789012:role/ProboAudit",
+			region:    cloudaws.DefaultGovRegion,
+			partition: cloudaws.GovPartition,
+		},
+		{
+			name:      "china",
+			roleARN:   "arn:aws-cn:iam::123456789012:role/ProboAudit",
+			region:    cloudaws.DefaultChinaRegion,
+			partition: cloudaws.ChinaPartition,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			session, err := cloudaws.NewSession(testIssuer(t), testOrganizationID(), tt.roleARN)
+			require.NoError(t, err)
+
+			assert.Equal(t, cloud.AWS, session.Cloud())
+			assert.Equal(t, "123456789012", session.AccountID(), "account comes from the role ARN")
+			assert.Equal(t, tt.partition, session.Partition(), "partition comes from the role ARN")
+			assert.Equal(t, tt.region, session.Config().Region)
+		})
+	}
+}
+
+func TestNewSessionFromConfig(t *testing.T) {
+	t.Parallel()
+
+	session := cloudaws.NewSessionFromConfig(
+		"123456789012",
+		cloudaws.CommercialPartition,
+		awssdk.Config{Region: cloudaws.DefaultCommercialRegion},
+	)
 
 	assert.Equal(t, cloud.AWS, session.Cloud())
-	assert.Equal(t, "123456789012", session.AccountID(), "account comes from the role ARN")
-	assert.Equal(t, cloudaws.DefaultRegion, session.Config().Region)
+	assert.Equal(t, "123456789012", session.AccountID())
+	assert.Equal(t, cloudaws.CommercialPartition, session.Partition())
+	assert.Equal(t, cloudaws.DefaultCommercialRegion, session.Config().Region)
 }
 
 func TestNewSession_Validation(t *testing.T) {

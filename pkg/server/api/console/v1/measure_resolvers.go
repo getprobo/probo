@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -219,7 +220,11 @@ func (r *measureResolver) ThirdParties(ctx context.Context, obj *types.Measure, 
 }
 
 // TreatmentPlans is the resolver for the treatmentPlans field.
-func (r *measureResolver) TreatmentPlans(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter) (*types.TreatmentPlanConnection, error) {
+func (r *measureResolver) TreatmentPlans(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter, asOf *time.Time) (*types.TreatmentPlanConnection, error) {
+	if asOf == nil {
+		asOf = obj.AsOf
+	}
+
 	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
 	if err != nil {
 		return nil, err
@@ -244,6 +249,36 @@ func (r *measureResolver) TreatmentPlans(ctx context.Context, obj *types.Measure
 		planFilter = coredata.NewTreatmentPlanFilter(filter.ScoreType, filter.Likelihood, filter.Impact)
 	}
 
+	if asOf != nil {
+		asOfPage, err := r.riskManagement.ListTreatmentPlansForMeasureIDAsOf(
+			ctx,
+			scope,
+			obj.ID,
+			*asOf,
+			cursor,
+			planFilter,
+		)
+		if err != nil {
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot list measure treatment plans as of", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return types.NewTreatmentPlanConnectionAsOf(
+			asOfPage.Page,
+			r,
+			obj.ID,
+			planFilter,
+			*asOf,
+			asOfPage.TotalCount,
+			asOfPage.ProgressByID,
+		), nil
+	}
+
 	page, err := r.riskManagement.ListTreatmentPlansForMeasureID(ctx, scope, obj.ID, cursor, planFilter)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -260,11 +295,19 @@ func (r *measureResolver) TreatmentPlans(ctx context.Context, obj *types.Measure
 
 // Permission is the resolver for the permission field.
 func (r *measureResolver) Permission(ctx context.Context, obj *types.Measure, action string) (bool, error) {
+	if obj.AsOf != nil {
+		return false, nil
+	}
+
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error) {
+	if obj.AsOf != nil {
+		return obj.TotalCount, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionMeasureList)
 	if err != nil {
 		return 0, err
@@ -423,6 +466,7 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 
 	if err := r.probo.Measures.Delete(ctx, scope, input.MeasureID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete measure", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

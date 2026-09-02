@@ -23,6 +23,7 @@ package list
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -40,6 +41,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $f
           node {
             id
             treatment
+            category
             inherentRiskScore
             residualRiskScore
             netRiskScore
@@ -69,6 +71,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $f
           node {
             id
             treatment
+            category
             inherentRiskScore
             residualRiskScore
             netRiskScore
@@ -88,16 +91,17 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $f
 `
 
 const listByAnalysisQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter, $asOf: Datetime) {
   node(id: $id) {
     __typename
     ... on RiskAnalysis {
-      treatmentPlans(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+      treatmentPlans(first: $first, after: $after, orderBy: $orderBy, filter: $filter, asOf: $asOf) {
         totalCount
         edges {
           node {
             id
             treatment
+            category
             inherentRiskScore
             residualRiskScore
             netRiskScore
@@ -119,12 +123,21 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $f
 type treatmentPlan struct {
 	ID                string `json:"id"`
 	Treatment         string `json:"treatment"`
+	Category          string `json:"category"`
 	InherentRiskScore int    `json:"inherentRiskScore"`
 	ResidualRiskScore int    `json:"residualRiskScore"`
 	NetRiskScore      int    `json:"netRiskScore"`
 	Risk              struct {
 		Category string `json:"category"`
 	} `json:"risk"`
+}
+
+func (p treatmentPlan) tableCategory() string {
+	if p.Category != "" {
+		return p.Category
+	}
+
+	return p.Risk.Category
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -138,6 +151,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagScoreType    string
 		flagLikelihood   int
 		flagImpact       int
+		flagAsOf         string
 		flagOutput       *string
 	)
 
@@ -162,6 +176,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			if flagRisk != "" && flagRiskAnalysis != "" {
 				return fmt.Errorf("pass only one of --risk and --risk-analysis")
+			}
+
+			if flagAsOf != "" && flagRiskAnalysis == "" {
+				return fmt.Errorf("--as-of requires --risk-analysis")
 			}
 
 			cfg, err := f.Config()
@@ -207,6 +225,17 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{
 				"id": parentID,
+			}
+
+			if flagAsOf != "" {
+				if _, err := time.Parse(time.RFC3339, flagAsOf); err != nil {
+					return fmt.Errorf(
+						"--as-of must be RFC3339 (e.g. 2026-01-15T23:59:59Z): %w",
+						err,
+					)
+				}
+
+				variables["asOf"] = flagAsOf
 			}
 
 			if flagOrderBy != "" {
@@ -294,7 +323,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				rows = append(rows, []string{
 					p.ID,
 					p.Treatment,
-					p.Risk.Category,
+					p.tableCategory(),
 					fmt.Sprintf("%d", p.InherentRiskScore),
 					fmt.Sprintf("%d", p.ResidualRiskScore),
 					fmt.Sprintf("%d", p.NetRiskScore),
@@ -327,6 +356,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagScoreType, "score-type", "", "Filter by matrix score type (INHERENT, NET, RESIDUAL)")
 	cmd.Flags().IntVar(&flagLikelihood, "likelihood", 0, "Filter by likelihood (with --score-type and --impact)")
 	cmd.Flags().IntVar(&flagImpact, "impact", 0, "Filter by impact (with --score-type and --likelihood)")
+	cmd.Flags().StringVar(
+		&flagAsOf,
+		"as-of",
+		"",
+		"Reconstruct plans as of this RFC3339 instant (requires --risk-analysis; omit for live tables)",
+	)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

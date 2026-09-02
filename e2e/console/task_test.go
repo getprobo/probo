@@ -41,6 +41,7 @@ func TestTask_Create(t *testing.T) {
 					node {
 						id
 						name
+						state
 					}
 				}
 			}
@@ -51,8 +52,9 @@ func TestTask_Create(t *testing.T) {
 		CreateTask struct {
 			TaskEdge struct {
 				Node struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
+					ID    string `json:"id"`
+					Name  string `json:"name"`
+					State string `json:"state"`
 				} `json:"node"`
 			} `json:"taskEdge"`
 		} `json:"createTask"`
@@ -72,6 +74,7 @@ func TestTask_Create(t *testing.T) {
 	task := result.CreateTask.TaskEdge.Node
 	assert.NotEmpty(t, task.ID)
 	assert.Equal(t, "Owner Task", task.Name)
+	assert.Equal(t, "TODO", task.State)
 }
 
 func TestTask_CreateWithoutMeasure(t *testing.T) {
@@ -327,12 +330,53 @@ func TestTask_StateEnum(t *testing.T) {
 		Create()
 
 	states := []string{
+		"BACKLOG",
 		"TODO",
 		"IN_PROGRESS",
 		"DONE",
+		"CANCELED",
+		"DUPLICATE",
 	}
 
 	for _, state := range states {
+		t.Run("create with state "+state, func(t *testing.T) {
+			query := `
+				mutation CreateTask($input: CreateTaskInput!) {
+					createTask(input: $input) {
+						taskEdge {
+							node {
+								id
+								state
+							}
+						}
+					}
+				}
+			`
+
+			var result struct {
+				CreateTask struct {
+					TaskEdge struct {
+						Node struct {
+							ID    string `json:"id"`
+							State string `json:"state"`
+						} `json:"node"`
+					} `json:"taskEdge"`
+				} `json:"createTask"`
+			}
+
+			err := owner.Execute(query, map[string]any{
+				"input": map[string]any{
+					"organizationId": owner.GetOrganizationID().String(),
+					"measureId":      measureID,
+					"name":           "Create State " + state,
+					"priority":       "MEDIUM",
+					"state":          state,
+				},
+			}, &result)
+			require.NoError(t, err, "State %s should be valid on create", state)
+			assert.Equal(t, state, result.CreateTask.TaskEdge.Node.State)
+		})
+
 		t.Run("update to state "+state, func(t *testing.T) {
 			taskID := factory.NewTask(owner, measureID).
 				WithName("State Test " + state).

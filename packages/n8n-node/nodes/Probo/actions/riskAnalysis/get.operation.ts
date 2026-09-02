@@ -36,6 +36,20 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the risk analysis',
 		required: true,
 	},
+	{
+		displayName: 'As Of',
+		name: 'asOf',
+		type: 'dateTime',
+		displayOptions: {
+			show: {
+				resource: ['riskAnalysis'],
+				operation: ['get'],
+			},
+		},
+		default: '',
+		description:
+			'Reconstruct matrix cells as of this instant. Leave empty to use live tables.',
+	},
 ];
 
 export async function execute(
@@ -43,9 +57,10 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex) as string;
+	const asOf = this.getNodeParameter('asOf', itemIndex, '') as string;
 
 	const query = `
-		query GetRiskAnalysis($id: ID!) {
+		query GetRiskAnalysis($id: ID!, $asOf: Datetime) {
 			node(id: $id) {
 				... on RiskAnalysis {
 					id
@@ -59,7 +74,7 @@ export async function execute(
 						rows
 						cols
 					}
-					matrixCells {
+					matrixCells(asOf: $asOf) {
 						type
 						likelihood
 						impact
@@ -72,9 +87,12 @@ export async function execute(
 		}
 	`;
 
-	const variables = {
+	const variables: { id: string; asOf?: string } = {
 		id: riskAnalysisId,
 	};
+	if (asOf) {
+		variables.asOf = asOf;
+	}
 
 	const responseData = await proboApiRequest.call(this, query, variables);
 

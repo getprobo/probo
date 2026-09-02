@@ -76,7 +76,7 @@ func seedAccessReviewEntryFixture(t *testing.T, ctx context.Context, client *pg.
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		if err := source.Insert(ctx, tx, scope); err != nil {
+		if _, err := source.Insert(ctx, tx, scope); err != nil {
 			return err
 		}
 

@@ -30,6 +30,12 @@ export default {
 
 type Story = StoryObj<typeof TaskStateIcon>;
 
+export const Backlog: Story = {
+  args: {
+    state: "BACKLOG",
+  },
+};
+
 export const Default: Story = {
   args: {
     state: "TODO",
@@ -45,5 +51,17 @@ export const InProgress: Story = {
 export const Done: Story = {
   args: {
     state: "DONE",
+  },
+};
+
+export const Canceled: Story = {
+  args: {
+    state: "CANCELED",
+  },
+};
+
+export const Duplicate: Story = {
+  args: {
+    state: "DUPLICATE",
   },
 };

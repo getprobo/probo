@@ -21,6 +21,7 @@
 package console_v1
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -291,6 +292,30 @@ func oauthConnectorRawSettings(
 	return rawSettings, true
 }
 
+// continueRedirectURL parses the OAuth state's continue URL, falling
+// back to the organization page when it is absent or unparsable.
+func continueRedirectURL(
+	ctx context.Context,
+	logger *log.Logger,
+	baseURL *baseurl.BaseURL,
+	continueURL string,
+	organizationID gid.GID,
+) *url.URL {
+	redirectURL := continueURL
+	if redirectURL == "" {
+		redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
+	}
+
+	parsedURL, err := url.Parse(redirectURL)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot parse redirect URL", log.Error(err))
+
+		parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
+	}
+
+	return parsedURL
+}
+
 func finishConnectorCompletion(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -350,6 +375,9 @@ func finishConnectorCompletion(
 			logger.WarnCtx(r.Context(), "cannot reset access source name sync after reconnect", log.Error(err))
 		}
 	} else {
+		// The source referencing this connector is created by the
+		// console after the redirect; a flow abandoned in between
+		// strands the connector row.
 		createReq := probo.CreateConnectorRequest{
 			OrganizationID: organizationID,
 			Provider:       connectorProvider,
@@ -397,17 +425,7 @@ func finishConnectorCompletion(
 		}
 	}
 
-	redirectURL := completion.ContinueURL
-	if redirectURL == "" {
-		redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
-	}
-
-	parsedURL, err := url.Parse(redirectURL)
-	if err != nil {
-		logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
-
-		parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
-	}
+	parsedURL := continueRedirectURL(r.Context(), logger, baseURL, completion.ContinueURL, organizationID)
 
 	q := parsedURL.Query()
 	q.Set("connector_id", cnnctr.ID.String())

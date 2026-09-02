@@ -21,9 +21,12 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/riskmanagement"
 )
 
 type (
@@ -36,6 +39,7 @@ type (
 		Resolver   any
 		ParentID   gid.GID
 		Filters    *coredata.TreatmentPlanFilter
+		AsOf       *time.Time
 	}
 )
 
@@ -76,6 +80,7 @@ func NewTreatmentPlan(tp *coredata.TreatmentPlan) *TreatmentPlan {
 		ResidualLikelihood: tp.ResidualLikelihood,
 		ResidualImpact:     tp.ResidualImpact,
 		ResidualRiskScore:  tp.ResidualRiskScore,
+		Category:           tp.Category,
 		Risk: &Risk{
 			ID: tp.RiskID,
 		},
@@ -93,4 +98,47 @@ func NewTreatmentPlan(tp *coredata.TreatmentPlan) *TreatmentPlan {
 	}
 
 	return plan
+}
+
+func NewTreatmentPlanAsOf(
+	tp *coredata.TreatmentPlan,
+	asOf time.Time,
+	progress riskmanagement.TreatmentProgress,
+) *TreatmentPlan {
+	plan := NewTreatmentPlan(tp)
+	plan.AsOf = &asOf
+	plan.NetLikelihood, plan.NetImpact, plan.NetRiskScore = riskmanagement.NetScores(tp, progress)
+	plan.Progress = &progress
+
+	return plan
+}
+
+func NewTreatmentPlanConnectionAsOf(
+	p *page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField],
+	parentType any,
+	parentID gid.GID,
+	filters *coredata.TreatmentPlanFilter,
+	asOf time.Time,
+	totalCount int,
+	progressByID map[gid.GID]riskmanagement.TreatmentProgress,
+) *TreatmentPlanConnection {
+	edges := make([]*TreatmentPlanEdge, len(p.Data))
+	for i := range edges {
+		edges[i] = &TreatmentPlanEdge{
+			Cursor: p.Data[i].CursorKey(p.Cursor.OrderBy.Field),
+			Node:   NewTreatmentPlanAsOf(p.Data[i], asOf, progressByID[p.Data[i].ID]),
+		}
+	}
+
+	asOfCopy := asOf
+
+	return &TreatmentPlanConnection{
+		Edges:      edges,
+		PageInfo:   *NewPageInfo(p),
+		Resolver:   parentType,
+		ParentID:   parentID,
+		Filters:    filters,
+		AsOf:       &asOfCopy,
+		TotalCount: totalCount,
+	}
 }

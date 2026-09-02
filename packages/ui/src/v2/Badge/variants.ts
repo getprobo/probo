@@ -52,6 +52,7 @@ export const badge = tv({
       green: "",
       amber: "",
       sky: "",
+      indigo: "",
     },
     highContrast: {
       true: "",
@@ -69,12 +70,14 @@ export const badge = tv({
     { variant: "solid", color: "green", highContrast: false, class: "bg-green-9 text-white" },
     { variant: "solid", color: "amber", highContrast: false, class: "bg-amber-9 text-amber-12" },
     { variant: "solid", color: "sky", highContrast: false, class: "bg-sky-9 text-sky-12" },
+    { variant: "solid", color: "indigo", highContrast: false, class: "bg-indigo-9 text-white" },
     { variant: "solid", color: "neutral", highContrast: true, class: "bg-sand-12 text-sand-1" },
     { variant: "solid", color: "gold", highContrast: true, class: "bg-gold-12 text-gold-1" },
     { variant: "solid", color: "red", highContrast: true, class: "bg-red-12 text-red-1" },
     { variant: "solid", color: "green", highContrast: true, class: "bg-green-12 text-green-1" },
     { variant: "solid", color: "amber", highContrast: true, class: "bg-amber-12 text-amber-1" },
     { variant: "solid", color: "sky", highContrast: true, class: "bg-sky-12 text-sky-1" },
+    { variant: "solid", color: "indigo", highContrast: true, class: "bg-indigo-12 text-indigo-1" },
 
     // soft: tinted step-3 background
     { variant: "soft", color: "neutral", class: "bg-sand-3 text-sand-11" },
@@ -83,6 +86,7 @@ export const badge = tv({
     { variant: "soft", color: "green", class: "bg-green-3 text-green-11" },
     { variant: "soft", color: "amber", class: "bg-amber-3 text-amber-11" },
     { variant: "soft", color: "sky", class: "bg-sky-3 text-sky-11" },
+    { variant: "soft", color: "indigo", class: "bg-indigo-3 text-indigo-11" },
 
     // surface: subtle background + border
     { variant: "surface", color: "neutral", class: "bg-sand-2 border-sand-6 text-sand-11" },
@@ -91,6 +95,7 @@ export const badge = tv({
     { variant: "surface", color: "green", class: "bg-green-2 border-green-6 text-green-11" },
     { variant: "surface", color: "amber", class: "bg-amber-2 border-amber-6 text-amber-11" },
     { variant: "surface", color: "sky", class: "bg-sky-2 border-sky-6 text-sky-11" },
+    { variant: "surface", color: "indigo", class: "bg-indigo-2 border-indigo-6 text-indigo-11" },
 
     // outline: border only
     { variant: "outline", color: "neutral", class: "border-sand-6 text-sand-11" },
@@ -99,6 +104,7 @@ export const badge = tv({
     { variant: "outline", color: "green", class: "border-green-6 text-green-11" },
     { variant: "outline", color: "amber", class: "border-amber-6 text-amber-11" },
     { variant: "outline", color: "sky", class: "border-sky-6 text-sky-11" },
+    { variant: "outline", color: "indigo", class: "border-indigo-6 text-indigo-11" },
 
     // high-contrast text for the tinted variants
     { variant: ["soft", "surface", "outline"], color: "neutral", highContrast: true, class: "text-sand-12" },
@@ -107,6 +113,7 @@ export const badge = tv({
     { variant: ["soft", "surface", "outline"], color: "green", highContrast: true, class: "text-green-12" },
     { variant: ["soft", "surface", "outline"], color: "amber", highContrast: true, class: "text-amber-12" },
     { variant: ["soft", "surface", "outline"], color: "sky", highContrast: true, class: "text-sky-12" },
+    { variant: ["soft", "surface", "outline"], color: "indigo", highContrast: true, class: "text-indigo-12" },
   ],
   defaultVariants: {
     size: 1,

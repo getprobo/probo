@@ -1,0 +1,33 @@
+{
+  "title": "Signatures",
+  "breadcrumb": "Signatures",
+  "pending": {
+    "heading": "En attente de votre signature ({{count}})",
+    "summaryTitle_one": "{{count}} document à signer",
+    "summaryTitle_other": "{{count}} documents à signer",
+    "summaryDescription": "Examinez et signez les documents requis pour terminer la configuration de votre espace employé.",
+    "action": "Commencer à signer",
+    "itemAction": "Signer"
+  },
+  "history": {
+    "heading": "Signés ({{count}})"
+  },
+  "empty": {
+    "none": {
+      "title": "Aucune demande de signature pour le moment",
+      "description": "Les documents qui nécessitent votre signature apparaîtront ici."
+    },
+    "allDone": {
+      "title": "Vous avez tout terminé",
+      "description": "Vous êtes à jour. Les documents déjà signés figurent ci-dessous."
+    }
+  },
+  "document": {
+    "instruction": "Examinez ce document avant de le signer.",
+    "reviewAndSign": "Examiner et signer",
+    "signed": "Vous avez signé ce document.",
+    "goToNext": "Aller au document suivant",
+    "finish": "Terminer les signatures",
+    "backToList": "Retour aux signatures"
+  }
+}

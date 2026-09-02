@@ -18,13 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, ThirdPartyLogo } from "@probo/ui";
+import { ThirdPartyLogo } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
+import { useNavigate } from "react-router";
 
 import type { AccessReviewSourceProviderListItem_provider$key } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
 
+import { ActionSplitButton } from "../../_components/ActionSplitButton";
 import { APIKeyConnectorDialog } from "../../dialogs/_components/APIKeyConnectorDialog";
 import { ClientCredentialsConnectorDialog } from "../../dialogs/_components/ClientCredentialsConnectorDialog";
 import { ConnectorDocumentationLink } from "../../dialogs/_components/ConnectorDocumentationLink";
@@ -38,7 +40,6 @@ import {
 } from "../../dialogs/_lib/connectorSettings";
 import { type ConnectMethod, connectMethods } from "../_lib/connectMethods";
 
-import { ConnectMethodSplitButton } from "./ConnectMethodSplitButton";
 import { accessReviewSourceSection } from "./variants";
 
 const connectMethodActionLabelKey: Record<ConnectMethod, string> = {
@@ -60,6 +61,7 @@ export const accessReviewSourceProviderListItemFragment = graphql`
     apiKeySupported
     apiKeyManaged
     clientCredentialsSupported
+    workloadIdentitySupported
     oauth2Scopes
     ...APIKeyConnectorDialog_provider
     ...ClientCredentialsConnectorDialog_provider
@@ -79,17 +81,19 @@ export function AccessReviewSourceProviderListItem({
   connectionId,
 }: AccessReviewSourceProviderListItemProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const provider = useFragment(
     accessReviewSourceProviderListItemFragment,
     providerKey,
   );
   const { item, content, trailing } = accessReviewSourceSection();
   const [activeDialog, setActiveDialog] = useState<
-    "apiKey" | "clientCredentials" | "datadog" | "zendesk" | null
+    | "apiKey"
+    | "clientCredentials"
+    | "datadog"
+    | "zendesk"
+    | null
   >(null);
-
-  // AWS access review is not implemented yet.
-  const isComingSoon = provider.provider === "AWS";
 
   // Every row renders the dialogs its provider can actually reach, so a list of
   // providers does not mount three unusable dialogs per row.
@@ -127,11 +131,15 @@ export function AccessReviewSourceProviderListItem({
         setActiveDialog("clientCredentials");
         break;
       case "GITHUB_APP":
-      case "WORKLOAD_IDENTITY":
         connectProviderProtocol(
           organizationId,
           provider.provider,
           method,
+        );
+        break;
+      case "WORKLOAD_IDENTITY":
+        void navigate(
+          `/organizations/${organizationId}/access-reviews/connections/new/aws-workload-identity`,
         );
         break;
     }
@@ -155,20 +163,12 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        {isComingSoon
-          ? (
-              <Badge variant="info">
-                {t("addAccessReviewSourceDialog.comingSoon")}
-              </Badge>
-            )
-          : (
-              <ConnectMethodSplitButton
-                actions={actions}
-                chooseAnotherMethodLabel={t(
-                  "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
-                )}
-              />
-            )}
+        <ActionSplitButton
+          actions={actions}
+          chooseAnotherMethodLabel={t(
+            "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
+          )}
+        />
       </div>
       {supportsAPIKey && (
         <APIKeyConnectorDialog

@@ -21,16 +21,13 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
-import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
+import { CenteredLayout } from "@probo/ui";
 import { Fragment, use } from "react";
-import {
-  createBrowserRouter,
-  Navigate,
-  redirect,
-} from "react-router";
+import { createBrowserRouter, Navigate, redirect } from "react-router";
 
 import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
+import { RedirectToEmployeePortal } from "./components/RedirectToEmployeePortal";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
@@ -44,6 +41,7 @@ import { compliancePortalRoutes } from "./pages/organizations/compliance-portals
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { taskRoutes } from "./pages/organizations/tasks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { assetRoutes } from "./routes/assetRoutes";
@@ -58,7 +56,6 @@ import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
-import { taskRoutes } from "./routes/taskRoutes";
 
 const routes = [
   {
@@ -168,12 +165,6 @@ const routes = [
             ),
           },
           {
-            path: "enroll",
-            Component: lazy(
-              () => import("./pages/iam/enroll/EnrollDevicePageLoader"),
-            ),
-          },
-          {
             Component: CenteredLayout,
             children: [
               {
@@ -196,89 +187,6 @@ const routes = [
         Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
       },
       {
-        path: "employee/bind",
-        ErrorBoundary: OrganizationErrorBoundary,
-        Fallback: CenteredLayoutSkeleton,
-        Component: lazy(
-          () => import("./pages/organizations/employee/EmployeeBindPageLoader"),
-        ),
-      },
-      {
-        path: "employee",
-        ErrorBoundary: OrganizationErrorBoundary,
-        Component: lazy(
-          () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
-        ),
-        children: [
-          {
-            index: true,
-            loader: ({ params: { organizationId } }) => {
-              // eslint-disable-next-line
-              throw redirect(`/organizations/${organizationId}/employee/signatures`);
-            },
-            Component: () => null,
-          },
-          {
-            Component: lazy(
-              () =>
-                import("./pages/organizations/employee/EmployeeTabsLayoutLoader"),
-            ),
-            children: [
-              {
-                path: "signatures",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
-                ),
-              },
-              {
-                path: "approvals",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeApprovalsPageLoader"),
-                ),
-              },
-              {
-                path: "devices",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeDevicesPageLoader"),
-                ),
-              },
-              {
-                path: "bindings",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeBindingsPageLoader"),
-                ),
-              },
-            ],
-          },
-          {
-            path: ":documentId",
-            loader: ({ params: { organizationId, documentId } }) => {
-              // eslint-disable-next-line
-              throw redirect(`/organizations/${organizationId}/employee/signatures/${documentId}`);
-            },
-            Component: () => null,
-          },
-          {
-            path: "signatures/:documentId",
-            Component: lazy(
-              () =>
-                import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
-            ),
-          },
-          {
-            path: "approvals/:documentId",
-            Component: lazy(
-              () =>
-                import("./pages/organizations/documents/approve/DocumentApprovePageLoader"),
-            ),
-          },
-        ],
-      },
-      {
         Component: lazy(
           () => import("./pages/iam/organizations/OrganizationLayoutLoader"),
         ),
@@ -290,7 +198,7 @@ const routes = [
               const { role } = use(CurrentUser);
               switch (role) {
                 case Role.EMPLOYEE:
-                  return <Navigate to="employee" />;
+                  return <RedirectToEmployeePortal />;
                 case Role.AUDITOR:
                   return <Navigate to="governance/measures" />;
                 case Role.COMPLIANCE_PORTAL_MANAGER:

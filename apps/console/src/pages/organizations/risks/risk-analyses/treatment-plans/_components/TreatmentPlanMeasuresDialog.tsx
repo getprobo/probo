@@ -40,6 +40,7 @@ const treatmentPlanMeasuresDialogQuery = graphql`
         netLikelihood
         netImpact
         netRiskScore
+        ...TreatmentPlanMeasureList_meta
         ...TreatmentPlanMeasureList_treatmentPlan
       }
     }

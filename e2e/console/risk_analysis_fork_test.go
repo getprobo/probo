@@ -22,6 +22,7 @@ package console_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,6 +66,15 @@ type forkRiskAnalysisResult struct {
 	} `json:"forkRiskAnalysis"`
 }
 
+func parseDatetime(t *testing.T, value string) time.Time {
+	t.Helper()
+
+	parsed, err := time.Parse(time.RFC3339Nano, value)
+	require.NoError(t, err)
+
+	return parsed
+}
+
 func TestRiskAnalysis_Fork(t *testing.T) {
 	t.Parallel()
 
@@ -89,9 +99,24 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 		)
 		factory.LinkTreatmentPlanMeasure(owner, tpID, measureID)
 
-		var result forkRiskAnalysisResult
+		var sourcePlan struct {
+			Node struct {
+				CreatedAt string `json:"createdAt"`
+			} `json:"node"`
+		}
 
 		err := owner.Execute(
+			`query($id: ID!) { node(id: $id) { ... on TreatmentPlan { createdAt } } }`,
+			map[string]any{"id": tpID},
+			&sourcePlan,
+		)
+		require.NoError(t, err)
+
+		sourceCreatedAt := parseDatetime(t, sourcePlan.Node.CreatedAt)
+
+		var result forkRiskAnalysisResult
+
+		err = owner.Execute(
 			forkRiskAnalysisMutation,
 			map[string]any{
 				"input": map[string]any{
@@ -187,6 +212,7 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 					Edges []struct {
 						Node struct {
 							ID                 string `json:"id"`
+							CreatedAt          string `json:"createdAt"`
 							InherentLikelihood int    `json:"inherentLikelihood"`
 							InherentImpact     int    `json:"inherentImpact"`
 							Risk               struct {
@@ -202,11 +228,26 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"treatmentPlans"`
+				AsOfPlans struct {
+					Edges []struct {
+						Node struct {
+							ID        string `json:"id"`
+							CreatedAt string `json:"createdAt"`
+							Measures  struct {
+								Edges []struct {
+									Node struct {
+										ID string `json:"id"`
+									} `json:"node"`
+								} `json:"edges"`
+							} `json:"measures"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"asOfPlans"`
 			} `json:"node"`
 		}
 
 		err = owner.Execute(`
-			query($id: ID!) {
+			query($id: ID!, $asOf: Datetime) {
 				node(id: $id) {
 					... on RiskAnalysis {
 						diagrams(first: 10) {
@@ -243,6 +284,7 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 							edges {
 								node {
 									id
+									createdAt
 									inherentLikelihood
 									inherentImpact
 									risk { id }
@@ -250,10 +292,22 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 								}
 							}
 						}
+						asOfPlans: treatmentPlans(first: 10, asOf: $asOf) {
+							edges {
+								node {
+									id
+									createdAt
+									measures(first: 10) { edges { node { id } } }
+								}
+							}
+						}
 					}
 				}
 			}
-		`, map[string]any{"id": forkedID}, &copied)
+		`, map[string]any{
+			"id":   forkedID,
+			"asOf": time.Now().UTC().Format(time.RFC3339Nano),
+		}, &copied)
 		require.NoError(t, err)
 
 		require.Len(t, copied.Node.Diagrams.Edges, 1)
@@ -335,8 +389,44 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 		assert.Equal(t, graph.riskID, copiedTP.Risk.ID)
 		assert.Equal(t, 3, copiedTP.InherentLikelihood)
 		assert.Equal(t, 4, copiedTP.InherentImpact)
+
+		copiedCreatedAt := parseDatetime(t, copiedTP.CreatedAt)
+		assert.False(t, copiedCreatedAt.Before(sourceCreatedAt))
 		require.Len(t, copiedTP.Measures.Edges, 1)
 		assert.Equal(t, measureID, copiedTP.Measures.Edges[0].Node.ID)
+		require.Len(t, copied.Node.AsOfPlans.Edges, 1)
+		assert.Equal(t, copiedTP.CreatedAt, copied.Node.AsOfPlans.Edges[0].Node.CreatedAt)
+		require.Len(t, copied.Node.AsOfPlans.Edges[0].Node.Measures.Edges, 1)
+		assert.Equal(t, measureID, copied.Node.AsOfPlans.Edges[0].Node.Measures.Edges[0].Node.ID)
+
+		var beforeFork struct {
+			Node struct {
+				TreatmentPlans struct {
+					Edges []struct {
+						Node struct {
+							ID string `json:"id"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"treatmentPlans"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(`
+			query($id: ID!, $asOf: Datetime) {
+				node(id: $id) {
+					... on RiskAnalysis {
+						treatmentPlans(first: 10, asOf: $asOf) {
+							edges { node { id } }
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"id":   forkedID,
+			"asOf": sourceCreatedAt.Add(-time.Second).UTC().Format(time.RFC3339Nano),
+		}, &beforeFork)
+		require.NoError(t, err)
+		assert.Empty(t, beforeFork.Node.TreatmentPlans.Edges)
 	})
 
 	t.Run("copies scenario threats linked across diagrams", func(t *testing.T) {

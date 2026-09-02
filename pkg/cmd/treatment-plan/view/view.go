@@ -37,6 +37,7 @@ query($id: ID!) {
     ... on TreatmentPlan {
       id
       treatment
+      category
       inherentLikelihood
       inherentImpact
       inherentRiskScore
@@ -80,6 +81,7 @@ type viewResponse struct {
 		Typename           string `json:"__typename"`
 		ID                 string `json:"id"`
 		Treatment          string `json:"treatment"`
+		Category           string `json:"category"`
 		InherentLikelihood int    `json:"inherentLikelihood"`
 		InherentImpact     int    `json:"inherentImpact"`
 		InherentRiskScore  int    `json:"inherentRiskScore"`
@@ -183,6 +185,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Risk:"), p.Risk.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Risk Analysis:"), p.RiskAnalysis.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Treatment:"), p.Treatment)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), p.Category)
 			_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("Owner:"), p.Owner.FullName, p.Owner.ID)
 
 			_, _ = fmt.Fprintln(out)

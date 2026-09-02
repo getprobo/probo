@@ -24,10 +24,12 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cloud"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -75,6 +77,13 @@ func awsTestConnector(t *testing.T, settings coredata.AWSConnectorSettings) *cor
 	return conn
 }
 
+type foreignSession struct{}
+
+var _ cloud.Session = foreignSession{}
+
+func (foreignSession) Cloud() string     { return cloud.GCP }
+func (foreignSession) AccountID() string { return "foreign-account" }
+
 // TestAWSRegistration pins the shape Register validates: a workload identity
 // provider declares no credential-bearing connect path, so nothing in the
 // console can ask a customer for an AWS key that the driver could not use.
@@ -85,6 +94,7 @@ func TestAWSRegistration(t *testing.T) {
 	reg, ok := r.Get(coredata.ConnectorProviderAWS)
 	require.True(t, ok)
 
+	assert.Equal(t, "AWS", reg.DisplayName)
 	assert.True(t, reg.SupportsWorkloadIdentity())
 	assert.False(t, reg.SupportsAPIKey())
 	assert.False(t, reg.IsManagedAPIKey())
@@ -93,6 +103,61 @@ func TestAWSRegistration(t *testing.T) {
 	assert.Nil(t, reg.NewDriver)
 	assert.NotEmpty(t, reg.EndpointOverrideUnsupported)
 	assert.Equal(t, provider.Endpoints{}, reg.Endpoints)
+
+	require.Len(t, reg.WorkloadIdentityExtraSettings(), 1)
+	assert.Equal(t, "roleArn", reg.WorkloadIdentityExtraSettings()[0].Key)
+	assert.True(t, reg.WorkloadIdentityExtraSettings()[0].Required)
+	assert.Nil(t, reg.NewNameResolver)
+	require.NotNil(t, reg.WorkloadIdentity.NewNameResolver)
+}
+
+func TestAWSNewNameResolver(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderAWS)
+	require.True(t, ok)
+	require.NotNil(t, reg.WorkloadIdentity.NewNameResolver)
+
+	conn := awsTestConnector(t, coredata.AWSConnectorSettings{
+		RoleARN: "arn:aws:iam::123456789012:role/ProboAudit",
+	})
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+
+	t.Run(
+		"refuses a session on another cloud",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Nil(
+				t,
+				reg.WorkloadIdentity.NewNameResolver(
+					context.Background(),
+					foreignSession{},
+					conn,
+					logger,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"returns a resolver for an aws session",
+		func(t *testing.T) {
+			t.Parallel()
+
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			require.NoError(t, err)
+
+			resolver := reg.WorkloadIdentity.NewNameResolver(
+				context.Background(),
+				session,
+				conn,
+				logger,
+			)
+			require.NotNil(t, resolver)
+		},
+	)
 }
 
 func TestAWSNewSession(t *testing.T) {
@@ -114,5 +179,50 @@ func TestAWSNewSession(t *testing.T) {
 
 	awsSession, ok := session.(*cloudaws.Session)
 	require.True(t, ok)
-	assert.Equal(t, cloudaws.DefaultRegion, awsSession.Config().Region)
+	assert.Equal(t, cloudaws.DefaultCommercialRegion, awsSession.Config().Region)
+}
+
+func TestAWSNewDriver(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderAWS)
+	require.True(t, ok)
+
+	t.Run("refuses a session on another cloud", func(t *testing.T) {
+		t.Parallel()
+
+		conn := awsTestConnector(t, coredata.AWSConnectorSettings{
+			RoleARN: "arn:aws:iam::123456789012:role/ProboAudit",
+		})
+
+		_, err := reg.WorkloadIdentity.NewDriver(
+			context.Background(),
+			foreignSession{},
+			conn,
+			log.NewLogger(log.WithOutput(io.Discard)),
+		)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "session is for GCP")
+	})
+
+	t.Run("returns a driver for an aws session", func(t *testing.T) {
+		t.Parallel()
+
+		conn := awsTestConnector(t, coredata.AWSConnectorSettings{
+			RoleARN: "arn:aws:iam::123456789012:role/ProboAudit",
+		})
+
+		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+		require.NoError(t, err)
+
+		driver, err := reg.WorkloadIdentity.NewDriver(
+			context.Background(),
+			session,
+			conn,
+			log.NewLogger(log.WithOutput(io.Discard)),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, driver)
+	})
 }

@@ -18,21 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CircleDashedIcon } from "@phosphor-icons/react";
+
 import { IconCircleCheck } from "./IconCircleCheck";
 import { IconCircleProgress } from "./IconCircleProgress";
+import { IconCircleSlashes } from "./IconCircleSlashes";
+import { IconCircleX } from "./IconCircleX";
 import { IconRadioUnchecked } from "./IconRadioUnchecked";
 
+export type TaskState = "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
+
 type Props = {
-  state: "TODO" | "IN_PROGRESS" | "DONE";
+  state: TaskState;
 };
 
 export function TaskStateIcon({ state }: Props) {
   switch (state) {
+    case "BACKLOG":
+      return <CircleDashedIcon size={16} className="text-txt-quaternary" />;
     case "TODO":
       return <IconRadioUnchecked size={16} className="text-txt-quaternary" />;
     case "IN_PROGRESS":
       return <IconCircleProgress size={16} className="text-txt-warning" />;
     case "DONE":
       return <IconCircleCheck size={16} className="text-txt-accent" />;
+    case "CANCELED":
+      return <IconCircleX size={16} className="text-txt-danger" />;
+    case "DUPLICATE":
+      return <IconCircleSlashes size={16} className="text-txt-tertiary" />;
   }
 }

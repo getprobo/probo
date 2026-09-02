@@ -1,0 +1,105 @@
+---
+# Hand-authored AWS cassette. Never recorded against a live account: SigV4
+# headers and credentials are not present. IAM Query interactions are matched
+# by host and Action; Identity Center by host and X-Amz-Target (see
+# awsAPIMatcher). Synthetic IAM users: alice (console admin with MFA),
+# ci-deploy (access-key service account), and the account root. ListInstances
+# is empty so this account degrades to IAM only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.amazonaws.com
+        form:
+            Action:
+                - GetAccountAuthorizationDetails
+        url: https://iam.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '<GetAccountAuthorizationDetailsResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/"><GetAccountAuthorizationDetailsResult><UserDetailList><member><Path>/</Path><UserName>alice</UserName><UserId>AIDAEXAMPLEALICE</UserId><Arn>arn:aws:iam::123456789012:user/alice</Arn><CreateDate>2026-01-02T03:04:05Z</CreateDate><GroupList><member>Admins</member></GroupList><AttachedManagedPolicies><member><PolicyName>AdministratorAccess</PolicyName><PolicyArn>arn:aws:iam::aws:policy/AdministratorAccess</PolicyArn></member></AttachedManagedPolicies></member><member><Path>/</Path><UserName>ci-deploy</UserName><UserId>AIDAEXAMPLECICD</UserId><Arn>arn:aws:iam::123456789012:user/ci-deploy</Arn><CreateDate>2026-02-01T00:00:00Z</CreateDate><UserPolicyList><member><PolicyName>deploy</PolicyName></member></UserPolicyList></member></UserDetailList><GroupDetailList><member><Path>/</Path><GroupName>Admins</GroupName><GroupId>AGPAEXAMPLEADMIN</GroupId><Arn>arn:aws:iam::123456789012:group/Admins</Arn><CreateDate>2026-01-01T00:00:00Z</CreateDate><AttachedManagedPolicies><member><PolicyName>AdministratorAccess</PolicyName><PolicyArn>arn:aws:iam::aws:policy/AdministratorAccess</PolicyArn></member></AttachedManagedPolicies></member></GroupDetailList><IsTruncated>false</IsTruncated></GetAccountAuthorizationDetailsResult></GetAccountAuthorizationDetailsResponse>'
+        headers:
+            Content-Type:
+                - text/xml
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.amazonaws.com
+        form:
+            Action:
+                - GenerateCredentialReport
+        url: https://iam.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '<GenerateCredentialReportResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/"><GenerateCredentialReportResult><State>COMPLETE</State></GenerateCredentialReportResult></GenerateCredentialReportResponse>'
+        headers:
+            Content-Type:
+                - text/xml
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.amazonaws.com
+        form:
+            Action:
+                - GetCredentialReport
+        url: https://iam.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '<GetCredentialReportResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/"><GetCredentialReportResult><Content>dXNlcixhcm4sdXNlcl9jcmVhdGlvbl90aW1lLHBhc3N3b3JkX2VuYWJsZWQscGFzc3dvcmRfbGFzdF91c2VkLG1mYV9hY3RpdmUsYWNjZXNzX2tleV8xX2FjdGl2ZSxhY2Nlc3Nfa2V5XzJfYWN0aXZlLGFjY2Vzc19rZXlfMV9sYXN0X3VzZWRfZGF0ZSxhY2Nlc3Nfa2V5XzJfbGFzdF91c2VkX2RhdGUKPHJvb3RfYWNjb3VudD4sYXJuOmF3czppYW06OjEyMzQ1Njc4OTAxMjpyb290LDIwMjAtMDEtMDFUMDA6MDA6MDBaLHRydWUsMjAyNi0wMy0wNFQwNTowNjowN1osZmFsc2UsdHJ1ZSxmYWxzZSxOL0EsTi9BCmFsaWNlLGFybjphd3M6aWFtOjoxMjM0NTY3ODkwMTI6dXNlci9hbGljZSwyMDI2LTAxLTAyVDAzOjA0OjA1Wix0cnVlLDIwMjYtMDYtMDFUMDA6MDA6MDBaLHRydWUsZmFsc2UsZmFsc2UsTi9BLE4vQQpjaS1kZXBsb3ksYXJuOmF3czppYW06OjEyMzQ1Njc4OTAxMjp1c2VyL2NpLWRlcGxveSwyMDI2LTAyLTAxVDAwOjAwOjAwWixmYWxzZSxOL0EsZmFsc2UsdHJ1ZSxmYWxzZSwyMDI2LTA1LTAxVDEyOjAwOjAwWixOL0EK</Content><ReportFormat>text/csv</ReportFormat><GeneratedTime>2026-06-01T00:00:00Z</GeneratedTime></GetCredentialReportResult></GetCredentialReportResponse>'
+        headers:
+            Content-Type:
+                - text/xml
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.ListInstances
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"Instances":[]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms

@@ -1583,13 +1583,18 @@ func (s OrganizationService) GetSCIMConfiguration(
 	return config, nil
 }
 
+// CreateSCIMConfiguration creates the configuration and, when
+// connectorID is set, its bridge in one transaction: configurations
+// are unique per organization, so a bridge refusal must not commit a
+// bridgeless configuration that would block every retry.
 func (s OrganizationService) CreateSCIMConfiguration(
 	ctx context.Context,
 	organizationID gid.GID,
-) (*coredata.SCIMConfiguration, string, error) {
+	connectorID *gid.GID,
+) (*coredata.SCIMConfiguration, *coredata.SCIMBridge, string, error) {
 	token, err := scim.GenerateToken()
 	if err != nil {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 
 	hashedToken := scim.HashToken(token)
@@ -1603,7 +1608,10 @@ func (s OrganizationService) CreateSCIMConfiguration(
 		UpdatedAt:      now,
 	}
 
-	scope := coredata.NewScopeFromObjectID(organizationID)
+	var (
+		scope  = coredata.NewScopeFromObjectID(organizationID)
+		bridge *coredata.SCIMBridge
+	)
 
 	err = s.pg.WithTx(
 		ctx,
@@ -1617,14 +1625,67 @@ func (s OrganizationService) CreateSCIMConfiguration(
 				return fmt.Errorf("cannot insert SCIM configuration: %w", err)
 			}
 
+			if connectorID == nil {
+				return nil
+			}
+
+			existingConnector := &coredata.Connector{}
+
+			err = existingConnector.LoadMetadataByID(ctx, tx, scope, *connectorID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewConnectorNotFoundError(*connectorID)
+				}
+
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			sources := &coredata.AccessReviewSources{}
+
+			sourceCount, err := sources.CountByConnectorID(ctx, tx, scope, *connectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count access sources for connector: %w", err)
+			}
+
+			if sourceCount > 0 {
+				return fmt.Errorf("cannot create SCIM bridge: connector is used by an access review source: %w", coredata.ErrResourceInUse)
+			}
+
+			var bridgeType coredata.SCIMBridgeType
+
+			switch existingConnector.Provider {
+			case coredata.ConnectorProviderGoogleWorkspace:
+				bridgeType = coredata.SCIMBridgeTypeGoogleWorkspace
+			case coredata.ConnectorProviderMicrosoft365:
+				bridgeType = coredata.SCIMBridgeTypeMicrosoft365
+			default:
+				return fmt.Errorf("connector provider %s is not supported for SCIM bridge", existingConnector.Provider)
+			}
+
+			bridge = &coredata.SCIMBridge{
+				ID:                  gid.New(organizationID.TenantID(), coredata.SCIMBridgeEntityType),
+				OrganizationID:      organizationID,
+				ScimConfigurationID: config.ID,
+				ConnectorID:         connectorID,
+				Type:                bridgeType,
+				State:               coredata.SCIMBridgeStateActive,
+				ExcludedUserNames:   []string{},
+				CreatedAt:           now,
+				UpdatedAt:           now,
+			}
+
+			if err := bridge.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert SCIM bridge: %w", err)
+			}
+
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 
-	return config, token, nil
+	return config, bridge, token, nil
 }
 
 func (s OrganizationService) DeleteSCIMConfiguration(
@@ -1639,7 +1700,10 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SCIMConfiguration{}
 
-			err := config.LoadByID(ctx, tx, scope, configID)
+			// A concurrent bridge insert FK-blocks on this row lock, so
+			// no bridge can appear after the lookup below and die via
+			// the cascade with its connector stranded.
+			err := config.LoadByIDForUpdate(ctx, tx, scope, configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return scim.NewSCIMConfigurationNotFoundError(configID)
@@ -1659,7 +1723,6 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 				return fmt.Errorf("cannot reset user sources: %w", err)
 			}
 
-			// Delete SCIM bridge and its connector if they exist
 			bridge := &coredata.SCIMBridge{}
 
 			err = bridge.LoadBySCIMConfigurationID(ctx, tx, scope, configID)
@@ -1668,32 +1731,18 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			}
 
 			if err == nil {
-				// Bridge exists. Only delete the underlying connector if nothing
-				// else references it (e.g. access_review_sources). Otherwise leave it in
-				// place — the bridge's FK is ON DELETE SET NULL, so deleting the
-				// bridge alone is sufficient to unbind SCIM from the connector.
-				if bridge.ConnectorID != nil {
-					accessSources := &coredata.AccessReviewSources{}
-
-					count, err := accessSources.CountByConnectorID(ctx, tx, scope, *bridge.ConnectorID)
-					if err != nil {
-						return fmt.Errorf("cannot count access sources for connector: %w", err)
-					}
-
-					if count == 0 {
-						connector := &coredata.Connector{ID: *bridge.ConnectorID}
-
-						err = connector.Delete(ctx, tx, scope)
-						if err != nil {
-							return fmt.Errorf("cannot delete connector: %w", err)
-						}
-					}
-				}
-
-				// Delete the bridge
+				// The bridge FK restricts the connector delete: bridge
+				// first, then its connector, in the same transaction.
 				err = bridge.Delete(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot delete SCIM bridge: %w", err)
+				}
+
+				if bridge.ConnectorID != nil {
+					connector := &coredata.Connector{ID: *bridge.ConnectorID}
+					if err := connector.Delete(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot delete connector: %w", err)
+					}
 				}
 			}
 
@@ -2127,140 +2176,6 @@ func (s OrganizationService) GetSCIMBridgeByOrganizationID(ctx context.Context, 
 	}
 
 	return bridge, nil
-}
-
-func (s OrganizationService) CreateSCIMBridge(
-	ctx context.Context,
-	organizationID gid.GID,
-	scimConfigurationID gid.GID,
-	connectorID gid.GID,
-) (*coredata.SCIMBridge, error) {
-	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
-		now    = time.Now()
-		bridge *coredata.SCIMBridge
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			organization := &coredata.Organization{}
-
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewOrganizationNotFoundError(organizationID)
-				}
-
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			config := &coredata.SCIMConfiguration{}
-
-			err = config.LoadByID(ctx, tx, scope, scimConfigurationID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return scim.NewSCIMConfigurationNotFoundError(scimConfigurationID)
-				}
-
-				return fmt.Errorf("cannot load SCIM configuration: %w", err)
-			}
-
-			if config.OrganizationID != organizationID {
-				return scim.NewSCIMConfigurationNotFoundError(scimConfigurationID)
-			}
-
-			// Load and validate the connector (metadata only, no decryption needed)
-			existingConnector := &coredata.Connector{}
-
-			err = existingConnector.LoadMetadataByID(ctx, tx, scope, connectorID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewConnectorNotFoundError(connectorID)
-				}
-
-				return fmt.Errorf("cannot load connector: %w", err)
-			}
-
-			// Verify connector belongs to the same organization
-			if existingConnector.OrganizationID != organizationID {
-				return NewConnectorNotFoundError(connectorID)
-			}
-
-			// Map connector provider to bridge type
-			var bridgeType coredata.SCIMBridgeType
-
-			switch existingConnector.Provider {
-			case coredata.ConnectorProviderGoogleWorkspace:
-				bridgeType = coredata.SCIMBridgeTypeGoogleWorkspace
-			case coredata.ConnectorProviderMicrosoft365:
-				bridgeType = coredata.SCIMBridgeTypeMicrosoft365
-			default:
-				return fmt.Errorf("connector provider %s is not supported for SCIM bridge", existingConnector.Provider)
-			}
-
-			bridge = &coredata.SCIMBridge{
-				ID:                  gid.New(organizationID.TenantID(), coredata.SCIMBridgeEntityType),
-				OrganizationID:      organizationID,
-				ScimConfigurationID: scimConfigurationID,
-				ConnectorID:         &connectorID,
-				Type:                bridgeType,
-				State:               coredata.SCIMBridgeStateActive, // Active immediately since connector already exists
-				ExcludedUserNames:   []string{},
-				CreatedAt:           now,
-				UpdatedAt:           now,
-			}
-
-			if err := bridge.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert SCIM bridge: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return bridge, nil
-}
-
-func (s OrganizationService) DeleteSCIMBridge(ctx context.Context, organizationID gid.GID, bridgeID gid.GID) error {
-	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
-		bridge = &coredata.SCIMBridge{}
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			organization := &coredata.Organization{}
-
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
-			if err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			if err := bridge.LoadByID(ctx, tx, scope, bridgeID); err != nil {
-				return fmt.Errorf("cannot load SCIM bridge: %w", err)
-			}
-
-			if bridge.OrganizationID != organizationID {
-				return NewSCIMBridgeNotFoundError(bridgeID)
-			}
-
-			if err := bridge.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete SCIM bridge: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (s *OrganizationService) GetAuditLogEntry(

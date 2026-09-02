@@ -63,6 +63,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagOrg          string
 		flagName         string
 		flagDescription  string
+		flagState        string
 		flagPriority     string
 		flagMeasure      string
 		flagTimeEstimate string
@@ -146,6 +147,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["description"] = flagDescription
 			}
 
+			if flagState != "" {
+				if err := cmdutil.ValidateEnum("state", flagState, cmdutil.TaskStates()); err != nil {
+					return err
+				}
+
+				input["state"] = flagState
+			}
+
 			if flagPriority != "" {
 				input["priority"] = flagPriority
 			}
@@ -194,6 +203,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Task description")
+	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
 	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")

@@ -25,7 +25,7 @@ import { useMutation } from "react-relay";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 
-import { createAccessReviewSourceMutation } from "../accessReviewSourceMutations";
+import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../accessReviewSourceMutations";
 
 type UseCreateAccessReviewSourceParams = {
   organizationId: string;
@@ -64,8 +64,8 @@ export function useCreateAccessReviewSource({
           name: displayName,
           csvData: null,
         },
-        connections: [connectionId],
       },
+      updater: store => prependCreatedSourceEdge(store, connectionId),
       onCompleted(_, errors) {
         onDone();
         if (errors?.length) {

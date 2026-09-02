@@ -26,12 +26,28 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
 	OutputJSON  = "json"
 	OutputTable = "table"
 )
+
+func TaskStates() []string {
+	states := coredata.TaskStates()
+
+	out := make([]string, len(states))
+	for i, state := range states {
+		out[i] = state.String()
+	}
+
+	return out
+}
+
+func TaskStateFlagUsage() string {
+	return "Task state: " + strings.Join(TaskStates(), ", ")
+}
 
 // AddOutputFlag registers --output / -o on cmd and returns a pointer to the
 // value. The default is "table". Callers should call ValidateOutputFlag early

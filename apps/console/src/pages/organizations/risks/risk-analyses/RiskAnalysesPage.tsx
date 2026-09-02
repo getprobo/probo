@@ -142,10 +142,10 @@ export default function RiskAnalysesPage({ queryRef }: RiskAnalysesPageProps) {
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
-            <SortableTh field="NAME">
+            <SortableTh field="NAME" className="w-72 min-w-48">
               {t("riskAnalysesPage.columns.name")}
             </SortableTh>
-            <Th>{t("riskAnalysesPage.columns.description")}</Th>
+            <Th className="w-full">{t("riskAnalysesPage.columns.description")}</Th>
             <Th>{t("riskAnalysesPage.columns.period")}</Th>
             <Th>{t("riskAnalysesPage.columns.matrixSize")}</Th>
             <SortableTh field="CREATED_AT">

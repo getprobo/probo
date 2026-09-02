@@ -14,6 +14,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -265,6 +266,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewDocumentVersionSignature(documentVersionSignature), nil
+		}
+	case coredata.DocumentVersionApprovalQuorumEntityType:
+		action = probo.ActionDocumentVersionApprovalList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			quorum, err := r.probo.DocumentApprovals.GetQuorum(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewDocumentVersionApprovalQuorum(quorum), nil
 		}
 	case coredata.AssetEntityType:
 		action = probo.ActionAssetList
@@ -681,17 +692,15 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		// and failing at connect time.
 		apiKeyManaged := r.providerRegistry.ManagedConnectorReady(provider)
 
-		// Skip providers that cannot be connected in this deployment: no
-		// connector protocol configured and no key-based fallback (API key,
-		// managed API key, or client credentials) supported. A workload
-		// identity provider needs no operator configuration at all — the
-		// customer grants access in their own cloud account — so it is
-		// connectable everywhere and never skipped here.
+		// WIF is a connect path only when this deployment can mint federation
+		// tokens. AWS has no other path, so it stays hidden until then.
+		workloadIdentityReady := reg.SupportsWorkloadIdentity() && r.identityFederation != nil
+
 		if len(configuredProtocols) == 0 &&
 			!apiKeySupported &&
 			!clientCredentialsSupported &&
 			!apiKeyManaged &&
-			!reg.SupportsWorkloadIdentity() {
+			!workloadIdentityReady {
 			continue
 		}
 
@@ -721,6 +730,8 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			Oauth2Scopes:                   scopes,
 			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings()),
 			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings()),
+			WorkloadIdentitySupported:      workloadIdentityReady,
+			WorkloadIdentityExtraSettings:  connectorProviderSettingInfos(reg.WorkloadIdentityExtraSettings()),
 		})
 	}
 
@@ -732,6 +743,30 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 	)
 
 	return infos, nil
+}
+
+// AWSConnectorSetup is the resolver for the awsConnectorSetup field.
+func (r *queryResolver) AWSConnectorSetup(ctx context.Context, organizationID gid.GID) (*types.AWSConnectorSetup, error) {
+	if _, err := r.authorize(ctx, organizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudaws.ConnectorSetupFor(
+		r.identityFederation,
+		organizationID,
+		r.awsConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build aws connector setup", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return newAWSConnectorSetup(setup), nil
 }
 
 // CrispVerificationCode is the resolver for the crispVerificationCode field. It

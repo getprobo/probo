@@ -4,6 +4,12 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.20.0] - 2026-09-01
+
+### Added
+
+- `probo.identityFederation.cloudformationTemplateUrl` and `probo.identityFederation.terraformModuleSource` Helm values, used to build the AWS connector's quick-create link and install snippet
+
 ## [0.19.0] - 2026-08-24
 
 ### Added

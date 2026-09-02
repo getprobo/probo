@@ -54,6 +54,7 @@ export const iconButton = tv({
       green: "",
       amber: "",
       sky: "",
+      indigo: "",
     },
     highContrast: {
       true: "",
@@ -71,6 +72,7 @@ export const iconButton = tv({
     { variant: ["solid", "classic"], color: "green", highContrast: false, class: "bg-green-9 text-white hover:bg-green-10" },
     { variant: ["solid", "classic"], color: "amber", highContrast: false, class: "bg-amber-9 text-amber-12 hover:bg-amber-10" },
     { variant: ["solid", "classic"], color: "sky", highContrast: false, class: "bg-sky-9 text-sky-12 hover:bg-sky-10" },
+    { variant: ["solid", "classic"], color: "indigo", highContrast: false, class: "bg-indigo-9 text-white hover:bg-indigo-10" },
     { variant: ["solid", "classic", "soft", "ghost"], class: "border-transparent" },
     { variant: "classic", class: "shadow-2" },
     { variant: ["solid", "classic"], color: "neutral", highContrast: true, class: "bg-sand-12 text-sand-1 hover:bg-sand-12" },
@@ -79,6 +81,7 @@ export const iconButton = tv({
     { variant: ["solid", "classic"], color: "green", highContrast: true, class: "bg-green-12 text-green-1 hover:bg-green-12" },
     { variant: ["solid", "classic"], color: "amber", highContrast: true, class: "bg-amber-12 text-amber-1 hover:bg-amber-12" },
     { variant: ["solid", "classic"], color: "sky", highContrast: true, class: "bg-sky-12 text-sky-1 hover:bg-sky-12" },
+    { variant: ["solid", "classic"], color: "indigo", highContrast: true, class: "bg-indigo-12 text-indigo-1 hover:bg-indigo-12" },
 
     // soft
     { variant: "soft", color: "neutral", class: "bg-sand-3 text-sand-11 hover:bg-sand-4" },
@@ -87,6 +90,7 @@ export const iconButton = tv({
     { variant: "soft", color: "green", class: "bg-green-3 text-green-11 hover:bg-green-4" },
     { variant: "soft", color: "amber", class: "bg-amber-3 text-amber-11 hover:bg-amber-4" },
     { variant: "soft", color: "sky", class: "bg-sky-3 text-sky-11 hover:bg-sky-4" },
+    { variant: "soft", color: "indigo", class: "bg-indigo-3 text-indigo-11 hover:bg-indigo-4" },
 
     // surface
     { variant: "surface", color: "neutral", class: "bg-sand-2 text-sand-11 border-sand-6 hover:bg-sand-3" },
@@ -95,6 +99,7 @@ export const iconButton = tv({
     { variant: "surface", color: "green", class: "bg-green-2 text-green-11 border-green-6 hover:bg-green-3" },
     { variant: "surface", color: "amber", class: "bg-amber-2 text-amber-11 border-amber-6 hover:bg-amber-3" },
     { variant: "surface", color: "sky", class: "bg-sky-2 text-sky-11 border-sky-6 hover:bg-sky-3" },
+    { variant: "surface", color: "indigo", class: "bg-indigo-2 text-indigo-11 border-indigo-6 hover:bg-indigo-3" },
 
     // outline
     { variant: "outline", color: "neutral", class: "text-sand-11 border-sand-7 hover:bg-sand-3" },
@@ -103,6 +108,7 @@ export const iconButton = tv({
     { variant: "outline", color: "green", class: "text-green-11 border-green-7 hover:bg-green-3" },
     { variant: "outline", color: "amber", class: "text-amber-11 border-amber-7 hover:bg-amber-3" },
     { variant: "outline", color: "sky", class: "text-sky-11 border-sky-7 hover:bg-sky-3" },
+    { variant: "outline", color: "indigo", class: "text-indigo-11 border-indigo-7 hover:bg-indigo-3" },
 
     // ghost
     { variant: "ghost", color: "neutral", class: "text-sand-11 hover:bg-sand-3" },
@@ -111,6 +117,7 @@ export const iconButton = tv({
     { variant: "ghost", color: "green", class: "text-green-11 hover:bg-green-3" },
     { variant: "ghost", color: "amber", class: "text-amber-11 hover:bg-amber-3" },
     { variant: "ghost", color: "sky", class: "text-sky-11 hover:bg-sky-3" },
+    { variant: "ghost", color: "indigo", class: "text-indigo-11 hover:bg-indigo-3" },
 
     // high-contrast text for the tinted variants
     { variant: ["soft", "surface", "outline", "ghost"], color: "neutral", highContrast: true, class: "text-sand-12" },
@@ -119,6 +126,7 @@ export const iconButton = tv({
     { variant: ["soft", "surface", "outline", "ghost"], color: "green", highContrast: true, class: "text-green-12" },
     { variant: ["soft", "surface", "outline", "ghost"], color: "amber", highContrast: true, class: "text-amber-12" },
     { variant: ["soft", "surface", "outline", "ghost"], color: "sky", highContrast: true, class: "text-sky-12" },
+    { variant: ["soft", "surface", "outline", "ghost"], color: "indigo", highContrast: true, class: "text-indigo-12" },
   ],
   defaultVariants: {
     size: 2,

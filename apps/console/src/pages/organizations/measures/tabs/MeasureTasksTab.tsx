@@ -25,8 +25,8 @@ import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { MeasureTasksTabQuery } from "#/__generated__/core/MeasureTasksTabQuery.graphql";
-import TaskFormDialog from "#/components/tasks/TaskFormDialog";
 import { TasksCard } from "#/components/tasks/TasksCard";
+import { CreateTaskDialog } from "#/pages/organizations/tasks/_components/CreateTaskDialog";
 
 const tasksQuery = graphql`
   query MeasureTasksTabQuery($measureId: ID!) {
@@ -41,7 +41,6 @@ const tasksQuery = graphql`
           edges @required(action: THROW) {
             node {
               ...TasksCard_task
-              ...TaskFormDialogFragment
               ...TasksCard_TaskRowFragment
             }
           }
@@ -67,7 +66,7 @@ export default function MeasureTasksTab() {
     <div className="relative">
       <TasksCard connectionId={connectionId} tasks={node.tasks.edges} />
       {node.canCreateTask && (
-        <TaskFormDialog connection={connectionId} measureId={measureId}>
+        <CreateTaskDialog connectionId={connectionId} measureId={measureId}>
           <Button
             variant="secondary"
             icon={IconPlusLarge}
@@ -75,7 +74,7 @@ export default function MeasureTasksTab() {
           >
             {t("measureTasksTab.actions.newTask")}
           </Button>
-        </TaskFormDialog>
+        </CreateTaskDialog>
       )}
     </div>
   );

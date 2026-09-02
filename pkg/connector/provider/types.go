@@ -351,9 +351,9 @@ type WorkloadIdentityConfig struct {
 	// knowledge read from the connector's settings, which is why it lives here
 	// rather than in a cross-cloud switch the access-review service would own.
 	//
-	// The framework calls it once and hands the session to both NewDriver and
-	// Probe, mirroring how it hands one *http.Client to Registration.NewDriver
-	// and Registration.Probe. Required.
+	// The framework calls it once and hands the session to NewDriver, Probe,
+	// and NewNameResolver, mirroring how it hands one *http.Client to
+	// Registration.NewDriver and Registration.Probe. Required.
 	NewSession func(context.Context, *identityfederation.Issuer, *coredata.Connector) (cloud.Session, error)
 
 	// NewDriver builds the access-review driver from a cloud session rather
@@ -370,6 +370,17 @@ type WorkloadIdentityConfig struct {
 	// Probe is the connection check, replacing the HTTP Probe/BuildProbeURL
 	// path. Nil means the check is skipped, matching an empty Endpoints.Probe.
 	Probe func(context.Context, cloud.Session, *coredata.Connector) error
+
+	// NewNameResolver builds the source-name resolver from a cloud session
+	// rather than an *http.Client. Nil means the worker keeps the generic
+	// provider display name, matching a nil Registration.NewNameResolver.
+	NewNameResolver func(context.Context, cloud.Session, *coredata.Connector, *log.Logger) drivers.NameResolver
+
+	// ExtraSettings declares the per-provider settings fields the console's
+	// workload-identity connect dialog renders and submits, in render order.
+	// Empty when the provider needs none beyond the grant in the customer's
+	// own cloud account.
+	ExtraSettings []ExtraSetting
 }
 
 // The three Supports* predicates below are derived from the presence of a
@@ -421,6 +432,16 @@ func (r *Registration) ClientCredentialsExtraSettings() []ExtraSetting {
 	}
 
 	return r.ClientCredentials.ExtraSettings
+}
+
+// WorkloadIdentityExtraSettings returns the workload-identity dialog's
+// settings fields, or nil when the provider has no such path.
+func (r *Registration) WorkloadIdentityExtraSettings() []ExtraSetting {
+	if r.WorkloadIdentity == nil {
+		return nil
+	}
+
+	return r.WorkloadIdentity.ExtraSettings
 }
 
 // ExtraSetting describes one extra per-provider settings field

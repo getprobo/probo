@@ -31,21 +31,19 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 		return nil, err
 	}
 
-	config, token, err := r.iam.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID)
+	config, scimBridge, token, err := r.iam.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID, input.ConnectorID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create scim configuration", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	var bridge *types.SCIMBridge
-
-	if input.ConnectorID != nil {
-		scimBridge, err := r.iam.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot create scim bridge", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
+	if scimBridge != nil {
 		bridge = types.NewSCIMBridge(scimBridge)
 	}
 

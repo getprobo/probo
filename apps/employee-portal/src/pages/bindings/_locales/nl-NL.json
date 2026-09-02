@@ -1,0 +1,57 @@
+{
+  "bind": {
+    "title": "Koppel Slack aan Probo",
+    "description": "Koppel dit Slack-account aan uw Probo-identiteit zodat Probot u kan helpen.",
+    "breadcrumb": "Koppelen",
+    "fields": {
+      "tenant": "Werkruimte",
+      "account": "Account"
+    },
+    "actions": {
+      "confirm": "Slack-account koppelen"
+    },
+    "messages": {
+      "linked": "Uw Slack-account is nu gekoppeld aan Probo."
+    },
+    "missingToken": {
+      "title": "Geen bevestigingslink",
+      "description": "Voer in Slack /probot login uit om een privé bevestigingslink te ontvangen."
+    },
+    "errors": {
+      "linkFailed": "Koppelen mislukt",
+      "invalidOrExpiredTokenTitle": "Deze link is verlopen",
+      "invalidOrExpiredToken": "Vraag de bot om een nieuwe privé bevestigingslink."
+    }
+  },
+  "list": {
+    "title": "Slack",
+    "breadcrumb": "Slack",
+    "description": "Koppel uw Slack-account zodat Probot u vanuit deze organisatie kan helpen.",
+    "connectedDescription": "{{account}} · {{workspace}}",
+    "providers": {
+      "slack": "Slack"
+    },
+    "columns": {
+      "account": "Account",
+      "action": "Actie"
+    },
+    "actions": {
+      "unlink": "Ontkoppelen",
+      "cancel": "Annuleren"
+    },
+    "empty": {
+      "title": "Geen Slack-account gekoppeld",
+      "description": "Voer in Slack <cmd>/probot login</cmd> uit om een privé bevestigingslink te ontvangen."
+    },
+    "messages": {
+      "unlinked": "Slack-account ontkoppeld."
+    },
+    "errors": {
+      "unlinkFailed": "Dit account kon niet worden ontkoppeld."
+    },
+    "confirmations": {
+      "unlinkTitle": "Slack-account ontkoppelen",
+      "unlink": "Dit Slack-account ontkoppelen? Probot kan u niet helpen tot u opnieuw koppelt."
+    }
+  }
+}

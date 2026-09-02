@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -40,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -93,6 +95,8 @@ type (
 		baseURL                 *baseurl.BaseURL
 		customDomainCname       string
 		tokenSecret             string
+		identityFederation      *identityfederation.Issuer
+		awsConnectorInstall     cloudaws.ConnectorInstallConfig
 		probotIdentityBindings  *identitybinding.Service
 		slackbotInstallations   *slackchannel.InstallationService
 		botDeliveryDestinations BotDeliveryDestinations
@@ -127,6 +131,8 @@ func NewMux(
 	complianceMessages ComplianceMessages,
 	graphqlLimits gqlutils.Limits,
 	itamSvc *itam.Service,
+	identityFederation *identityfederation.Issuer,
+	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -158,6 +164,8 @@ func NewMux(
 		slackbotInstallations,
 		botDeliveryDestinations,
 		complianceMessages,
+		identityFederation,
+		awsConnectorInstall,
 	)
 
 	r.Group(func(r chi.Router) {
@@ -250,6 +258,14 @@ func (r *Resolver) treatmentPlanNetScores(
 	ctx context.Context,
 	obj *types.TreatmentPlan,
 ) (int, int, int, error) {
+	if obj.AsOf != nil {
+		if _, err := r.authorize(ctx, obj.RiskAnalysis.ID, riskmanagement.ActionTreatmentPlanList); err != nil {
+			return 0, 0, 0, err
+		}
+
+		return obj.NetLikelihood, obj.NetImpact, obj.NetRiskScore, nil
+	}
+
 	if _, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanGet); err != nil {
 		return 0, 0, 0, err
 	}

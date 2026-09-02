@@ -8,6 +8,7 @@ package console_v1
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -900,7 +901,7 @@ func (r *riskAnalysisResolver) Organization(ctx context.Context, obj *types.Risk
 }
 
 // TreatmentPlans is the resolver for the treatmentPlans field.
-func (r *riskAnalysisResolver) TreatmentPlans(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter) (*types.TreatmentPlanConnection, error) {
+func (r *riskAnalysisResolver) TreatmentPlans(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter, asOf *time.Time) (*types.TreatmentPlanConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
 	if err != nil {
 		return nil, err
@@ -924,6 +925,41 @@ func (r *riskAnalysisResolver) TreatmentPlans(ctx context.Context, obj *types.Ri
 		planFilter = coredata.NewTreatmentPlanFilter(filter.ScoreType, filter.Likelihood, filter.Impact)
 	}
 
+	if asOf != nil {
+		asOfPage, err := r.riskManagement.ListTreatmentPlansAsOf(
+			ctx,
+			scope,
+			obj.ID,
+			*asOf,
+			cursor,
+			planFilter,
+			false,
+		)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFound(ctx, err)
+			}
+
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot list treatment plans as of", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return types.NewTreatmentPlanConnectionAsOf(
+			asOfPage.Page,
+			r,
+			obj.ID,
+			planFilter,
+			*asOf,
+			asOfPage.TotalCount,
+			asOfPage.ProgressByID,
+		), nil
+	}
+
 	p, err := r.riskManagement.ListTreatmentPlansForRiskAnalysisID(ctx, scope, obj.ID, cursor, planFilter)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -939,15 +975,20 @@ func (r *riskAnalysisResolver) TreatmentPlans(ctx context.Context, obj *types.Ri
 }
 
 // MatrixCells is the resolver for the matrixCells field.
-func (r *riskAnalysisResolver) MatrixCells(ctx context.Context, obj *types.RiskAnalysis) ([]*coredata.RiskAnalysisMatrixCell, error) {
+func (r *riskAnalysisResolver) MatrixCells(ctx context.Context, obj *types.RiskAnalysis, asOf *time.Time) ([]*coredata.RiskAnalysisMatrixCell, error) {
 	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
 	if err != nil {
 		return nil, err
 	}
 
-	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, scope, obj.ID)
+	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, scope, obj.ID, asOf)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get treatment plan matrix cells", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

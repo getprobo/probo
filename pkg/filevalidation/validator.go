@@ -70,7 +70,7 @@ var FileTypes = []FileType{
 
 	// Text types
 	{MimeType: "text/markdown", Extensions: []string{".md"}, Category: CategoryText},
-	{MimeType: "text/plain", Extensions: []string{".txt"}, Category: CategoryText},
+	{MimeType: "text/plain", Extensions: []string{".txt", ".log"}, Category: CategoryText},
 	{MimeType: "text/x-log", Extensions: []string{".log"}, Category: CategoryText},
 	{MimeType: "text/uri-list", Extensions: []string{".uri"}, Category: CategoryText},
 	{MimeType: "text/uri-list; charset=utf-8", Extensions: []string{".uri"}, Category: CategoryText},

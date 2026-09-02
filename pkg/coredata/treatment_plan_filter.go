@@ -117,7 +117,23 @@ func (f *TreatmentPlanFilter) SQLFragment() string {
 			AND residual_impact = @filter_impact
 		WHEN @filter_score_type::text = @filter_score_type_net::text THEN
 			CASE
-				WHEN ` + treatmentPlanAllMeasuresImplementedSQL() + ` THEN
+				WHEN EXISTS (
+					SELECT 1
+					FROM treatment_plans_measures tpm
+					WHERE tpm.treatment_plan_id = id
+				)
+				AND NOT EXISTS (
+					SELECT 1
+					FROM treatment_plans_measures tpm
+					WHERE tpm.treatment_plan_id = id
+						AND EXISTS (
+							SELECT 1
+							FROM measures m
+							WHERE m.id = tpm.measure_id
+								AND m.state::text IS DISTINCT FROM @filter_net_implemented::text
+						)
+				)
+				THEN
 					residual_likelihood = @filter_likelihood
 					AND residual_impact = @filter_impact
 				ELSE
@@ -126,22 +142,5 @@ func (f *TreatmentPlanFilter) SQLFragment() string {
 			END
 		ELSE TRUE
 	END
-)`
-}
-
-func treatmentPlanAllMeasuresImplementedSQL() string {
-	return `(
-EXISTS (
-	SELECT 1
-	FROM treatment_plans_measures tpm
-	WHERE tpm.treatment_plan_id = id
-)
-AND NOT EXISTS (
-	SELECT 1
-	FROM treatment_plans_measures tpm
-	INNER JOIN measures m ON m.id = tpm.measure_id
-	WHERE tpm.treatment_plan_id = id
-		AND m.state IS DISTINCT FROM @filter_net_implemented
-)
 )`
 }

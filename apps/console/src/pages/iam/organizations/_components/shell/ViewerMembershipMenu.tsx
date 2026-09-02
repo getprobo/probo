@@ -19,20 +19,15 @@
 // SOFTWARE.
 
 import {
-  CaretDownIcon,
   CaretRightIcon,
   FileTextIcon,
   KeyIcon,
-  MoonIcon,
-  QuestionIcon,
   SignOutIcon,
-  SunIcon,
   UserIcon,
 } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
 import { useToast } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -47,8 +42,9 @@ import { Link } from "react-router";
 import type { ViewerMembershipMenu_organization$key } from "#/__generated__/iam/ViewerMembershipMenu_organization.graphql";
 import type { ViewerMembershipMenuSignOutMutation } from "#/__generated__/iam/ViewerMembershipMenuSignOutMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { employeePortalHref } from "#/lib/employeePortalHref";
 
-import { navRail, viewerMembershipMenuTrigger } from "./variants";
+import { navRail } from "./variants";
 
 const viewerMembershipMenuFragment = graphql`
   fragment ViewerMembershipMenu_organization on Organization {
@@ -74,15 +70,13 @@ const signOutMutation = graphql`
 `;
 
 export interface ViewerMembershipMenuProps {
-  variant?: "bar" | "rail";
   organizationKey: ViewerMembershipMenu_organization$key;
 }
 
-export function ViewerMembershipMenu({ variant = "bar", organizationKey }: ViewerMembershipMenuProps) {
+export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { toast } = useToast();
-  const { displayMode, toggleDisplayMode } = useDisplayMode();
 
   const {
     viewer: {
@@ -121,44 +115,29 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
   };
 
   const railSlots = navRail();
-  const isRail = variant === "rail";
 
-  const trigger = isRail
-    ? (
-        <button type="button" className={railSlots.item()}>
-          <span className={railSlots.icon()}>
-            <Avatar
-              size={2}
-              variant="soft"
-              color="gold"
-              radius="full"
-              fallback={displayName.charAt(0).toUpperCase() || <UserIcon />}
-            />
-          </span>
-          <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
-            {displayName}
-          </Text>
-          <CaretRightIcon className={railSlots.caret()} />
-        </button>
-      )
-    : (
-        <button type="button" className={viewerMembershipMenuTrigger()} aria-label={displayName}>
-          <Avatar size={1} variant="soft" color="gold" radius="small" fallback={<UserIcon />} />
-          <Text size={2} weight="medium" color="neutral" highContrast className="max-w-36 truncate">
-            {displayName}
-          </Text>
-          <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
-        </button>
-      );
+  const trigger = (
+    <button type="button" className={railSlots.item()}>
+      <span className={railSlots.icon()}>
+        <Avatar
+          size={2}
+          variant="soft"
+          color="gold"
+          radius="full"
+          fallback={displayName.charAt(0).toUpperCase() || <UserIcon />}
+        />
+      </span>
+      <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
+        {displayName}
+      </Text>
+      <CaretRightIcon className={railSlots.caret()} />
+    </button>
+  );
 
   return (
     <Dropdown>
       <DropdownTrigger render={trigger} />
-      <DropdownPopup
-        side={isRail ? "right" : "bottom"}
-        sideOffset={isRail ? 12 : 4}
-        align="end"
-      >
+      <DropdownPopup side="right" sideOffset={12} align="end">
         <DropdownGroup>
           <div className="flex w-full flex-col gap-1 px-3 py-3">
             <Text size={2} weight="medium" color="neutral" highContrast>
@@ -182,25 +161,10 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
         )}
         <DropdownItem
           iconStart={<FileTextIcon />}
-          render={<Link to={`/organizations/${organizationId}/employee`} />}
+          render={<a href={employeePortalHref(organizationId)} />}
         >
           {t("viewerMembershipDropdown.actions.employeePortal")}
         </DropdownItem>
-        {!isRail && (
-          <>
-            <DropdownItem
-              iconStart={displayMode === "dark" ? <SunIcon /> : <MoonIcon />}
-              onClick={toggleDisplayMode}
-            >
-              {displayMode === "dark"
-                ? t("viewerMembershipDropdown.actions.switchToLightMode")
-                : t("viewerMembershipDropdown.actions.switchToDarkMode")}
-            </DropdownItem>
-            <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
-              {t("viewerMembershipDropdown.actions.help")}
-            </DropdownItem>
-          </>
-        )}
         <DropdownSeparator />
         <DropdownItem
           color="error"

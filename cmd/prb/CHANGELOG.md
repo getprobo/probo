@@ -4,6 +4,38 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.223.0] - 2026-09-01
+
+### Added
+
+- `access-review source setup-aws` returns the AWS connector setup values (issuer, audience, subject, suggested role name, Terraform snippet, and CloudFormation quick-create URL) needed to create the audit role
+- `--aws-role-arn` on `access-review source create` creates an AWS workload-identity connector and the access source in one call, deleting the connector again if source creation fails
+
+### Changed
+
+- `access-review source view` shows the connector's connection status
+
+## [0.222.0] - 2026-09-01
+
+### Added
+
+- `--as-of` on `risk-analysis view` and `treatment-plan list` reconstructs matrix cells and plans as of an RFC3339 instant; on `treatment-plan list` it requires `--risk-analysis`, and omitting it keeps reading live tables
+- `--state` on `task create`, and `task create` / `task update` now validate the state against the server enum, which gained `BACKLOG`, `CANCELED`, and `DUPLICATE`
+
+### Changed
+
+- `treatment-plan list` and `treatment-plan view` report the plan's own category, falling back to the risk category when the plan has none
+
+## [0.221.0] - 2026-08-31
+
+### Added
+
+- `risk-analysis fork <id>` copies a risk analysis's diagrams, treatment plans, and their relations into a new analysis for a later period
+
+### Changed
+
+- `access-review source create` reports when the source already exists for the connector instead of always claiming a fresh creation
+
 ## [0.220.0] - 2026-08-26
 
 ### Added

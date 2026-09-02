@@ -80,6 +80,22 @@ const (
 			}
 		}`
 
+	connectEnrollPermissionQuery = `
+		query ConnectEnrollPermission {
+			viewer {
+				profiles(first: 100, filter: { states: [ACTIVE] }) {
+					edges {
+						node {
+							organization {
+								id
+								canEnrollDevice: permission(action: "itam:device:enroll")
+							}
+						}
+					}
+				}
+			}
+		}`
+
 	getDeviceQuery = `
 		query GetDevice($id: ID!) {
 			node(id: $id) {
@@ -280,6 +296,38 @@ func enrollDevice(t *testing.T, client *testutil.Client, organizationID string) 
 	)
 
 	return result
+}
+
+func connectEnrollPermission(t *testing.T, client *testutil.Client, organizationID string) bool {
+	t.Helper()
+
+	var result struct {
+		Viewer struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						Organization struct {
+							ID              string `json:"id"`
+							CanEnrollDevice bool   `json:"canEnrollDevice"`
+						} `json:"organization"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"viewer"`
+	}
+
+	err := client.ExecuteConnect(connectEnrollPermissionQuery, nil, &result)
+	require.NoError(t, err)
+
+	for _, edge := range result.Viewer.Profiles.Edges {
+		if edge.Node.Organization.ID == organizationID {
+			return edge.Node.Organization.CanEnrollDevice
+		}
+	}
+
+	require.Fail(t, "organization not in unassumed connect profiles")
+
+	return false
 }
 
 func activateEnrolledDevice(t *testing.T, enrollmentToken, hardwareUUID string) {
@@ -1134,6 +1182,18 @@ func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
 			require.True(t, result.Node.CanEnrollDevice)
 		})
 	}
+
+	t.Run("unassumed session can query enroll permission via connect", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, employee, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		unassumedEmployee := testutil.NewClientWithNewSession(t, employee)
+		unassumedViewer := testutil.NewClientWithNewSession(t, viewer)
+
+		require.True(t, connectEnrollPermission(t, unassumedEmployee, orgID))
+		require.False(t, connectEnrollPermission(t, unassumedViewer, orgID))
+	})
 }
 
 func TestDevicePostureReports(t *testing.T) {

@@ -115,6 +115,7 @@ func NewService(
 		encryptionKey,
 		connectorRegistry,
 		providerRegistry,
+		s.federation,
 		logger.Named("source-name"),
 	)
 

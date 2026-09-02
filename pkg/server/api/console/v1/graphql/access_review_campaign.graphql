@@ -605,6 +605,12 @@ input CreateAccessReviewSourceInput {
 
 type CreateAccessReviewSourcePayload {
     accessReviewSourceEdge: AccessReviewSourceEdge!
+    """
+    created is false when a source already existed for the requested
+    connector: creation is idempotent per connector, and the existing
+    source is returned instead of a duplicate.
+    """
+    created: Boolean!
 }
 
 input UpdateAccessReviewSourceInput {

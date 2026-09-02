@@ -2199,6 +2199,7 @@ components:
         - risk_id
         - risk_analysis_id
         - treatment
+        - category
         - inherent_likelihood
         - inherent_impact
         - inherent_risk_score
@@ -2231,6 +2232,9 @@ components:
         treatment:
           $ref: "#/components/schemas/RiskTreatment"
           description: Risk treatment
+        category:
+          type: string
+          description: Risk category stored on the treatment plan
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner profile ID
@@ -2273,6 +2277,11 @@ components:
         measures_not_implemented:
           type: integer
           description: Number of not-implemented linked measures
+        measures:
+          type: array
+          description: Linked measures as of the requested instant. Present when listing with as_of.
+          items:
+            $ref: "#/components/schemas/TreatmentPlanMeasure"
         created_at:
           type: string
           format: date-time
@@ -2308,6 +2317,11 @@ components:
         filter:
           $ref: "#/components/schemas/TreatmentPlanFilter"
           description: Filter treatment plans by matrix cell. All three fields are required when set.
+        as_of:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Reconstruct plans as of this instant. Only valid with risk_analysis_id. Omit to use live tables.
 
     ListTreatmentPlansOutput:
       type: object
@@ -2438,6 +2452,22 @@ components:
         deleted_treatment_plan_id:
           $ref: "#/components/schemas/GID"
           description: Deleted treatment plan ID
+
+    TreatmentPlanMeasure:
+      type: object
+      required:
+        - id
+        - state
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        name:
+          type: string
+          description: Measure name. Absent when the measure has been deleted.
+        state:
+          $ref: "#/components/schemas/MeasureState"
+          description: Measure state as of the requested instant
 
     MeasureState:
       type: string
@@ -6841,9 +6871,12 @@ components:
     TaskState:
       type: string
       enum:
+        - BACKLOG
         - TODO
         - IN_PROGRESS
         - DONE
+        - CANCELED
+        - DUPLICATE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskState
 
     TaskOrderField:
@@ -7039,6 +7072,10 @@ components:
             - type: "null"
               description: Not assigned
           description: Assigned to person ID
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Task state (defaults to TODO if not specified)
+          default: TODO
         priority:
           $ref: "#/components/schemas/TaskPriority"
           description: Task priority level (defaults to MEDIUM if not specified)
@@ -9775,10 +9812,17 @@ components:
     CreateAccessReviewSourceMCPOutput:
       type: object
       required:
-        - access_source
+        - access_review_source
+        - created
       properties:
         access_review_source:
           $ref: "#/components/schemas/AccessReviewSource"
+        created:
+          type: boolean
+          description: >-
+            False when a source already existed for the requested connector:
+            creation is idempotent per connector and the existing source is
+            returned instead of a duplicate.
 
     UpdateAccessReviewSourceMCPInput:
       type: object
@@ -9829,6 +9873,121 @@ components:
         deleted_access_review_source_id:
           $ref: "#/components/schemas/GID"
           description: Deleted access source ID
+
+    ConnectorConnectionStatus:
+      type: string
+      enum:
+        - CONNECTED
+        - DISCONNECTED
+        - RECONNECT_REQUIRED
+      description: >-
+        Whether the connector credential is usable right now. DISCONNECTED
+        covers every reason it did not work, because the underlying failure
+        wraps provider-controlled text and stays server-side.
+
+    Connector:
+      type: object
+      required:
+        - id
+        - provider
+        - protocol
+        - connection_status
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+        provider:
+          type: string
+          description: Connector provider
+        protocol:
+          type: string
+          description: Connector protocol
+        connection_status:
+          $ref: "#/components/schemas/ConnectorConnectionStatus"
+          description: Whether the connector credential is usable right now
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    AWSConnectorSetup:
+      type: object
+      required:
+        - issuer
+        - audience
+        - subject
+        - suggested_role_name
+        - terraform_snippet
+        - cloud_formation_quick_create_url
+      properties:
+        issuer:
+          type: string
+          description: Organization issuer URL
+        audience:
+          type: string
+          description: Token audience
+        subject:
+          type: string
+          description: Token subject
+        suggested_role_name:
+          type: string
+          description: Default IAM role name
+        terraform_snippet:
+          type: string
+          description: Terraform module block with issuer, subject and role name filled
+        cloud_formation_quick_create_url:
+          type: string
+          description: AWS console quick-create URL with issuer, subject and role name prefilled
+
+    AWSConnectorSetupMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    AWSConnectorSetupMCPOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AWSConnectorSetup"
+
+    WorkloadIdentityConnectorProvider:
+      type: string
+      enum:
+        - AWS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConnectorProvider
+      description: Connector provider that supports workload identity
+
+    CreateWorkloadIdentityConnectorMCPInput:
+      type: object
+      required:
+        - organization_id
+        - provider
+        - aws_role_arn
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        provider:
+          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
+          description: Connector provider (AWS)
+        aws_role_arn:
+          type: string
+          description: IAM role ARN, including partition, account, and role name
+
+    CreateWorkloadIdentityConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
 
     CreateAccessReviewCampaignMCPInput:
       type: object
@@ -13782,6 +13941,11 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Risk analysis ID
+        as_of:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Reconstruct matrix cells as of this instant. Omit to use live tables.
 
     GetRiskAnalysisOutput:
       type: object
@@ -17342,6 +17506,30 @@ tools:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPOutput"
+  - name: awsConnectorSetup
+    title: AWS Connector Setup
+    description: Return issuer, subject, audience and deploy artifacts for connecting an AWS account
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AWSConnectorSetupMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/AWSConnectorSetupMCPOutput"
+  - name: createWorkloadIdentityConnector
+    title: Create Workload Identity Connector
+    description: Create a workload-identity connector (AWS) and report whether the audit role can be assumed
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPOutput"
   - name: createAccessReviewCampaign
     title: Create Access Review Campaign
     description: Create a new access review campaign for an organization
@@ -18580,7 +18768,7 @@ tools:
       $ref: "#/components/schemas/ListRiskAnalysesOutput"
   - name: getRiskAnalysis
     title: Get Risk Analysis
-    description: Get a risk assessment by ID
+    description: Get a risk assessment by ID. Optionally reconstruct matrix cells as of a given instant.
     hints:
       readonly: true
       destructive: false

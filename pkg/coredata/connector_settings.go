@@ -244,16 +244,6 @@ type (
 		// RoleARN is the IAM role the customer created for Probo. The account
 		// is the one that ARN names; it is not stored separately.
 		RoleARN string `json:"role_arn"`
-
-		// Issuer is the issuer URL this connector's tokens were registered
-		// under, recorded when the customer created it.
-		//
-		// It exists so that changing the deployment's issuer is not a
-		// fleet-wide flag day: every customer's OIDC provider and trust
-		// policy pin the URL they registered, and they can only redeploy on
-		// their own schedule. Recording it per connector is what lets old and
-		// new coexist while they do.
-		Issuer string `json:"issuer"`
 	}
 )
 

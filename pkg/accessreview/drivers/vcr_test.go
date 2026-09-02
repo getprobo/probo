@@ -21,8 +21,11 @@
 package drivers
 
 import (
+	"bytes"
 	"encoding/base64"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"testing"
 
@@ -35,11 +38,53 @@ import (
 // dependency bumps.
 var versionedClientHeaders = []string{"User-Agent", "X-Goog-Api-Client"}
 
+// awsSigningHeaders are written by SigV4 and the AWS SDK on every request.
+// They must not be persisted, and they cannot be replayed: dates, signatures
+// and invocation IDs change each call.
+var awsSigningHeaders = []string{
+	"X-Amz-Date",
+	"X-Amz-Security-Token",
+	"X-Amz-Content-Sha256",
+	"Amz-Sdk-Invocation-Id",
+	"Amz-Sdk-Request",
+}
+
 // newRecorder creates a go-vcr recorder for the given cassette path. When
 // the env var is non-empty the recorder runs in record mode, otherwise
 // it replays from the committed cassette. A BeforeSave hook strips the
 // Authorization header so tokens are never persisted.
-func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Recorder {
+//
+// Optional sanitizers run as further BeforeSave hooks. A provider whose
+// live response carries real member identity must rewrite identity only:
+// status, headers and JSON shape are the contract under test. A provider
+// may also strip request headers the shared secret hook does not know.
+func newRecorder(
+	t *testing.T,
+	cassettePath string,
+	envVar string,
+	sanitizers ...func(*cassette.Interaction) error,
+) *recorder.Recorder {
+	t.Helper()
+
+	return newRecorderWithMatcher(
+		t,
+		cassettePath,
+		envVar,
+		cassette.NewDefaultMatcher(
+			cassette.WithIgnoreAuthorization(),
+			cassette.WithIgnoreHeaders(versionedClientHeaders...),
+		),
+		sanitizers...,
+	)
+}
+
+func newRecorderWithMatcher(
+	t *testing.T,
+	cassettePath string,
+	envVar string,
+	matcher cassette.MatcherFunc,
+	sanitizers ...func(*cassette.Interaction) error,
+) *recorder.Recorder {
 	t.Helper()
 
 	mode := recorder.ModeReplayOnly
@@ -47,35 +92,25 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		mode = recorder.ModeRecordOnly
 	}
 
-	rec, err := recorder.New(
-		cassettePath,
+	opts := []recorder.Option{
 		recorder.WithMode(mode),
 		recorder.WithSkipRequestLatency(true),
-		recorder.WithMatcher(cassette.NewDefaultMatcher(
-			cassette.WithIgnoreAuthorization(),
-			cassette.WithIgnoreHeaders(versionedClientHeaders...),
-		)),
-		recorder.WithHook(func(i *cassette.Interaction) error {
-			i.Request.Headers.Del("Authorization")
-			// Providers like Anthropic (x-api-key), SigNoz
-			// (SIGNOZ-API-KEY) and Brevo (api-key) authenticate via a
-			// custom header rather than Authorization; strip those too so a
-			// re-record never persists a raw key.
-			i.Request.Headers.Del("X-Api-Key")
-			i.Request.Headers.Del("Signoz-Api-Key")
-			i.Request.Headers.Del("Api-Key")
-			// Scaleway authenticates with the secret key in X-Auth-Token.
-			i.Request.Headers.Del("X-Auth-Token")
-			// Dotfile authenticates with the key in X-DOTFILE-API-KEY
-			// (canonicalized to X-Dotfile-Api-Key).
-			i.Request.Headers.Del("X-Dotfile-Api-Key")
+		recorder.WithMatcher(matcher),
+		recorder.WithHook(stripCassetteSecrets, recorder.BeforeSaveHook),
+	}
 
-			return nil
-		}, recorder.BeforeSaveHook),
-	)
+	for _, sanitize := range sanitizers {
+		opts = append(opts, recorder.WithHook(sanitize, recorder.BeforeSaveHook))
+	}
+
+	rec, err := recorder.New(cassettePath, opts...)
 	if err != nil {
 		if mode == recorder.ModeReplayOnly {
-			t.Skipf("cassette not found (record with %s env var): %v", envVar, err)
+			if envVar == "" {
+				t.Skipf("cassette not found: %v", err)
+			} else {
+				t.Skipf("cassette not found (record with %s env var): %v", envVar, err)
+			}
 		}
 
 		t.Fatalf("cannot create vcr recorder: %v", err)
@@ -88,6 +123,107 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 	})
 
 	return rec
+}
+
+// stripCassetteSecrets removes request headers that carry credentials so a
+// cassette can never be committed with a live secret.
+func stripCassetteSecrets(i *cassette.Interaction) error {
+	i.Request.Headers.Del("Authorization")
+	// Providers like Anthropic (x-api-key), SigNoz (SIGNOZ-API-KEY) and
+	// Brevo (api-key) authenticate via a custom header rather than
+	// Authorization; strip those too so a re-record never persists a raw key.
+	i.Request.Headers.Del("X-Api-Key")
+	i.Request.Headers.Del("Signoz-Api-Key")
+	i.Request.Headers.Del("Api-Key")
+	// Scaleway authenticates with the secret key in X-Auth-Token.
+	i.Request.Headers.Del("X-Auth-Token")
+	// Dotfile authenticates with the key in X-DOTFILE-API-KEY
+	// (canonicalized to X-Dotfile-Api-Key).
+	i.Request.Headers.Del("X-Dotfile-Api-Key")
+
+	return nil
+}
+
+func sanitizeAWSSigningHeaders(i *cassette.Interaction) error {
+	for _, header := range awsSigningHeaders {
+		i.Request.Headers.Del(header)
+	}
+
+	return nil
+}
+
+// newAWSRecorder replays a hand-authored AWS cassette. It never records:
+// recording would require live AWS credentials, which these tests refuse to
+// read from the environment.
+func newAWSRecorder(t *testing.T, cassettePath string) *recorder.Recorder {
+	t.Helper()
+
+	return newRecorderWithMatcher(
+		t,
+		cassettePath,
+		"",
+		awsAPIMatcher,
+		sanitizeAWSSigningHeaders,
+	)
+}
+
+// awsAPIMatcher matches AWS SDK POSTs without relying on SigV4 headers or
+// byte-for-byte bodies. IAM Query is identified by form Action; SSO Admin
+// and Identity Store use AWS JSON and are identified by X-Amz-Target;
+// Account Management is REST-JSON and is identified by path.
+func awsAPIMatcher(r *http.Request, i cassette.Request) bool {
+	if r.Method != i.Method {
+		return false
+	}
+
+	host := r.URL.Host
+	if host == "" {
+		host = r.Host
+	}
+
+	cassetteURL, err := url.Parse(i.URL)
+	if err != nil {
+		return false
+	}
+
+	if host != cassetteURL.Host {
+		return false
+	}
+
+	target := r.Header.Get("X-Amz-Target")
+	if target != "" {
+		return target == i.Headers.Get("X-Amz-Target")
+	}
+
+	if awsIAMQueryAction(r, i) {
+		return true
+	}
+
+	return r.URL.Path == cassetteURL.Path && r.URL.Path != "/" && r.URL.Path != ""
+}
+
+func awsIAMQueryAction(r *http.Request, i cassette.Request) bool {
+	var body []byte
+
+	if r.Body != nil {
+		var err error
+
+		body, err = io.ReadAll(r.Body)
+		if err != nil {
+			return false
+		}
+
+		r.Body = io.NopCloser(bytes.NewReader(body))
+	}
+
+	values, err := url.ParseQuery(string(body))
+	if err != nil {
+		return false
+	}
+
+	action := values.Get("Action")
+
+	return action != "" && action == i.Form.Get("Action")
 }
 
 // authRoundTripper wraps a transport and injects an Authorization header

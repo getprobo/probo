@@ -19,12 +19,16 @@
 // SOFTWARE.
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router";
+
+import { ButtonLink } from "../Button/ButtonLink";
 
 import { Table, type TableProps } from "./Table";
 import { TableBody } from "./TableBody";
 import { TableCell } from "./TableCell";
 import { TableColumnHeaderCell } from "./TableColumnHeaderCell";
 import { TableHeader } from "./TableHeader";
+import { TableLink } from "./TableLink";
 import { TableRow } from "./TableRow";
 import { TableRowHeaderCell } from "./TableRowHeaderCell";
 import { TableSkeleton } from "./TableSkeleton";
@@ -68,6 +72,13 @@ export default {
     size: 2,
     variant: "ghost",
   },
+  decorators: [
+    Story => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
   render: args => (
     <div className="w-xl">
       <SampleTable size={args.size} variant={args.variant} />
@@ -103,6 +114,47 @@ export const Skeleton: Story = {
   render: () => (
     <div className="w-xl">
       <TableSkeleton variant="surface" count={3} columns={3} />
+    </div>
+  ),
+};
+
+// Title TableLink stretches across the row; the trailing ButtonLink sits
+// above the overlay via TableCell interactive.
+export const InteractiveRows: Story = {
+  render: () => (
+    <div className="w-xl">
+      <Table variant="surface">
+        <TableHeader>
+          <TableRow>
+            <TableColumnHeaderCell>Full name</TableColumnHeaderCell>
+            <TableColumnHeaderCell>Email</TableColumnHeaderCell>
+            <TableColumnHeaderCell>Group</TableColumnHeaderCell>
+            <TableColumnHeaderCell />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map(entry => (
+            <TableRow key={entry.email} align="center" interactive>
+              <TableRowHeaderCell>
+                <TableLink to={`/${entry.email}`}>{entry.name}</TableLink>
+              </TableRowHeaderCell>
+              <TableCell>{entry.email}</TableCell>
+              <TableCell>{entry.group}</TableCell>
+              <TableCell interactive justify="end">
+                <ButtonLink
+                  to={`/${entry.email}`}
+                  size={2}
+                  variant="soft"
+                  color="neutral"
+                  highContrast
+                >
+                  Open
+                </ButtonLink>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   ),
 };

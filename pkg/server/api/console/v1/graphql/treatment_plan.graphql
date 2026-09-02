@@ -71,12 +71,19 @@ enum TreatmentPlanScoreType
 }
 
 input TreatmentPlanFilter {
-    "Score type of the matrix cell. Must be set together with likelihood and impact."
     scoreType: TreatmentPlanScoreType
-    "Likelihood axis of the cell. Must be set together with scoreType and impact."
     likelihood: Int
-    "Impact axis of the cell. Must be set together with scoreType and likelihood."
     impact: Int
+}
+
+type TreatmentPlanProgress
+    @goModel(
+        model: "go.probo.inc/probo/pkg/riskmanagement.TreatmentProgress"
+    ) {
+    done: Int!
+    inProgress: Int!
+    notImplemented: Int!
+    total: Int!
 }
 
 type TreatmentPlan implements Node {
@@ -88,9 +95,12 @@ type TreatmentPlan implements Node {
     residualLikelihood: Int!
     residualImpact: Int!
     residualRiskScore: Int!
+    category: String!
     netLikelihood: Int! @goField(forceResolver: true)
     netImpact: Int! @goField(forceResolver: true)
     netRiskScore: Int! @goField(forceResolver: true)
+    progress: TreatmentPlanProgress! @goField(forceResolver: true)
+    asOf: Datetime
 
     owner: Profile! @goField(forceResolver: true)
     risk: Risk! @goField(forceResolver: true)
@@ -104,6 +114,7 @@ type TreatmentPlan implements Node {
         before: CursorKey
         orderBy: MeasureOrder
         filter: MeasureFilter
+        asOf: Datetime
     ): MeasureConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!

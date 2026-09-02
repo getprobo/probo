@@ -1,0 +1,99 @@
+/* Copyright (c) 2026 Probo Inc <hello@probo.com>.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+@import "tailwindcss";
+@import "@probo/ui/src/v2/theme.css";
+@source "../../../packages/ui/src/v2";
+
+.status-pip-ring {
+  animation: status-pip-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes status-pip-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
+}
+
+/* Only the workspace pane participates; the queue bar stays live. */
+:root {
+  view-transition-name: none;
+}
+
+@keyframes queue-slide-out-left {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes queue-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes queue-slide-out-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes queue-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+::view-transition-group(document-workspace) {
+  overflow: clip;
+}
+
+::view-transition-old(document-workspace) {
+  animation: 280ms ease-out both queue-slide-out-left;
+}
+
+::view-transition-new(document-workspace) {
+  animation: 280ms ease-out both queue-slide-in-right;
+}
+
+html[data-queue-direction="back"]::view-transition-old(document-workspace) {
+  animation-name: queue-slide-out-right;
+}
+
+html[data-queue-direction="back"]::view-transition-new(document-workspace) {
+  animation-name: queue-slide-in-left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(document-workspace),
+  ::view-transition-new(document-workspace) {
+    animation: none;
+  }
+
+  .status-pip-ring {
+    animation: none;
+  }
+}

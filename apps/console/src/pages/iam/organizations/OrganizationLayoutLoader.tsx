@@ -36,7 +36,7 @@ function OrganizationLayoutQueryLoader() {
   );
 
   useEffect(() => {
-    loadQuery({ organizationId, hideNavigation: false });
+    loadQuery({ organizationId });
   }, [organizationId, loadQuery]);
 
   if (!queryRef) {

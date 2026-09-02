@@ -160,6 +160,7 @@ The clearest case is navigation vs action: a clickable action, button-looking na
 | `ButtonAnchor` | `<a>` | button |
 | `Link` | react-router | underlined text |
 | `Anchor` | `<a>` | underlined text |
+| `TableLink` | react-router | unstyled; `::after` stretches across an interactive `TableRow` |
 
 ### Do / don't: separate components over polymorphic props
 
@@ -208,6 +209,42 @@ export function Anchor(props: ComponentProps<"a">) {
 ```
 
 Size/tone differences (`size="sm"`, `tone="danger"`) are legitimate `tv` variants — they don't change the element or props.
+
+## Clickable table rows
+
+A whole row that navigates keeps a **real multi-column table** (column headers, `TableRowHeaderCell` for the title only) and one real `<a>`. Do **not** put `to` on `TableRow` — the row stays a `<tr>`. Do **not** wrap the row in a single spanning cell, `navigate()` click routers, or a link in every cell.
+
+Use the look variants and `TableLink`:
+
+- `TableRow interactive` — containing block + cursor; sibling cells are `pointer-events-none` so they do not steal hits from the overlay.
+- `TableLink` inside the title `TableRowHeaderCell` — unstyled react-router link whose `::after` covers the row (padding and meta columns). Cmd/ctrl/middle-click stay native. One tab stop.
+- `TableCell interactive` (or `TableRowHeaderCell interactive`) — `relative z-1` and `pointer-events-auto!` so a trailing `Button` / `ButtonLink` sits above the overlay and can hover. The `!` is required: the row’s `[&_td]:pointer-events-none` is a descendant selector and otherwise wins, so the overlay steals `:hover`.
+
+```tsx
+// Good — one TableLink; the row is still a table
+<TableRow align="center" interactive>
+  <TableRowHeaderCell>
+    <TableLink to={to}>{title}</TableLink>
+  </TableRowHeaderCell>
+  <TableCell>{updatedAt}</TableCell>
+  <TableCell interactive>
+    <ButtonLink to={to}>Sign</ButtonLink>
+  </TableCell>
+</TableRow>
+```
+
+```tsx
+// Bad — TableRow is not a navigator
+<TableRow to={to}>…</TableRow>
+
+// Bad — one spanning cell drops column alignment and header mapping
+<TableCell colSpan={5}><Link to={to}>{/* title + meta */}</Link></TableCell>
+
+// Bad — JS click on the row is not a link (no status bar, no “Open in new tab”)
+<TableRow onClick={() => navigate(to)}>…</TableRow>
+```
+
+Put `interactive` only on body rows that contain a `TableLink`. Header rows stay inert. Do not set `position: relative` on `TableLink` — the overlay must use the row as its containing block.
 
 ## Props typing
 
@@ -559,4 +596,4 @@ Base UI primitives ship correct roles, focus management, and keyboard interactio
 - Keep accessible labels: every control has a visible label or an `aria-label`; icon-only buttons (`Button icon={…}`) require an `aria-label`.
 - Don't strip `aria-*` / `role` that primitives set, and don't trap or override focus the primitive manages.
 - Convey state with more than color (e.g. an icon + text alongside a `red-*` tone), so meaning survives for color-blind users — the [token contrast guarantees](v2-tokens.md#contrast-guarantees) cover text legibility, not state encoding.
-- Use semantic elements (`<button>`, `<a>`, `<nav>`, headings) — see the [Button / ButtonLink / ButtonAnchor / Link / Anchor](#no-structure-changing-variants) split.
+- Use semantic elements (`<button>`, `<a>`, `<nav>`, headings) — see the [Button / ButtonLink / ButtonAnchor / Link / Anchor / TableLink](#no-structure-changing-variants) split. Whole-row table navigation uses `TableRow interactive` + `TableLink` — see [Clickable table rows](#clickable-table-rows).

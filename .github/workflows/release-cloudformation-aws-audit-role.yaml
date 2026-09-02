@@ -1,0 +1,71 @@
+name: "Release cloudformation-aws-audit-role"
+
+on:
+  push:
+    tags:
+      - "cloudformation-aws-audit-role/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  github-release:
+    name: "github-release"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "write"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+        with:
+          fetch-depth: 0
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - name: "Validate template version"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          TEMPLATE_VERSION="$(tr -d '[:space:]' < contrib/cloudformation/aws-audit-role/VERSION)"
+          if [ "${TEMPLATE_VERSION}" != "${VERSION}" ]; then
+            echo "VERSION (${TEMPLATE_VERSION}) does not match tag (${VERSION})"
+            exit 1
+          fi
+      - name: "Package template"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          cp contrib/cloudformation/aws-audit-role/aws-audit-role.yaml \
+            "${GITHUB_WORKSPACE}/aws-audit-role-${VERSION}.yaml"
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' contrib/cloudformation/aws-audit-role/CHANGELOG.md > release-notes.md
+          cat >> release-notes.md << EOF
+
+          ## Install
+
+          Download \`aws-audit-role-${VERSION}.yaml\` from this release and
+          create a CloudFormation stack from it:
+
+          \`\`\`bash
+          aws cloudformation create-stack \\
+            --stack-name probo-audit \\
+            --template-body file://aws-audit-role-${VERSION}.yaml \\
+            --capabilities CAPABILITY_NAMED_IAM \\
+            --parameters \\
+              ParameterKey=ProboIssuerURL,ParameterValue=<issuer> \\
+              ParameterKey=ProboSubject,ParameterValue=<subject>
+          \`\`\`
+
+          CloudFormation quick-create needs a public S3 \`templateURL\`. This
+          release does not publish the template to S3.
+          EOF
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            aws-audit-role-*.yaml

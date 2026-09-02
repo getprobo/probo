@@ -77,6 +77,45 @@ export const description: INodeProperties[] = [
 		description: 'The description of the task',
 	},
 	{
+		displayName: 'State',
+		name: 'state',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		options: [
+			{
+				name: 'Backlog',
+				value: 'BACKLOG',
+			},
+			{
+				name: 'Canceled',
+				value: 'CANCELED',
+			},
+			{
+				name: 'Done',
+				value: 'DONE',
+			},
+			{
+				name: 'Duplicate',
+				value: 'DUPLICATE',
+			},
+			{
+				name: 'In Progress',
+				value: 'IN_PROGRESS',
+			},
+			{
+				name: 'Todo',
+				value: 'TODO',
+			},
+		],
+		default: 'TODO',
+		description: 'The state of the task',
+	},
+	{
 		displayName: 'Priority',
 		name: 'priority',
 		type: 'options',
@@ -156,6 +195,7 @@ export async function execute(
 	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
+	const state = this.getNodeParameter('state', itemIndex, '') as string;
 	const priority = this.getNodeParameter('priority', itemIndex, '') as string;
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
@@ -187,6 +227,7 @@ export async function execute(
 			name,
 			...(measureId && { measureId }),
 			...(description && { description }),
+			...(state && { state }),
 			...(priority && { priority }),
 			...(timeEstimate && { timeEstimate }),
 			...(assignedToId && { assignedToId }),

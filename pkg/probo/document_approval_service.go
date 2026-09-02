@@ -75,6 +75,8 @@ func (e ErrApprovalDecisionAlreadyMade) Error() string {
 	return "approval decision has already been made"
 }
 
+var errQuorumPDFClaimLost = errors.New("approval quorum pdf claim lost")
+
 func (s *DocumentApprovalService) RequestApproval(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -1009,6 +1011,148 @@ func (s *DocumentApprovalService) generateApprovalPDF(
 	)
 
 	return pdfData, err
+}
+
+func (s *DocumentApprovalService) generateAndUploadQuorumPDF(
+	ctx context.Context,
+	scope coredata.Scoper,
+	quorum *coredata.DocumentVersionApprovalQuorum,
+) error {
+	if quorum == nil || quorum.FileID != nil || quorum.PdfClaimedAt == nil {
+		return nil
+	}
+
+	var (
+		pdfInput *documentPDFInput
+		skip     bool
+	)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			holdsClaim, err := quorum.HasPDFClaim(ctx, conn, scope)
+			if err != nil {
+				return err
+			}
+
+			if !holdsClaim {
+				skip = true
+
+				return nil
+			}
+
+			version := &coredata.DocumentVersion{}
+			if err := version.LoadByID(ctx, conn, scope, quorum.VersionID); err != nil {
+				return fmt.Errorf("cannot load document version: %w", err)
+			}
+
+			pdfInput, err = loadDocumentPDFInput(ctx, conn, scope, version)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot load quorum document PDF data: %w", err)
+	}
+
+	if skip {
+		return nil
+	}
+
+	pdfData, err := renderDocumentPDF(
+		ctx,
+		s.svc,
+		s.html2pdfConverter,
+		pdfInput,
+		ExportPDFOptions{},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot generate quorum document PDF: %w", err)
+	}
+
+	err = s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			holdsClaim, err := quorum.HasPDFClaim(ctx, conn, scope)
+			if err != nil {
+				return err
+			}
+
+			if !holdsClaim {
+				skip = true
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot load approval quorum: %w", err)
+	}
+
+	if skip {
+		return nil
+	}
+
+	now := time.Now()
+
+	fileRecord := &coredata.File{
+		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
+		OrganizationID: quorum.OrganizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       "application/pdf",
+		FileName:       fmt.Sprintf("approval-quorum-%s.pdf", quorum.ID),
+		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	fileSize, err := s.svc.fileManager.PutFile(
+		ctx,
+		fileRecord,
+		bytes.NewReader(pdfData),
+		map[string]string{
+			"type":      "approval-quorum-document",
+			"quorum-id": quorum.ID.String(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upload quorum document PDF: %w", err)
+	}
+
+	fileRecord.FileSize = fileSize
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := fileRecord.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert quorum document file: %w", err)
+			}
+
+			attached, err := quorum.AttachPDFFile(ctx, tx, scope, fileRecord.ID, now)
+			if err != nil {
+				return fmt.Errorf("cannot attach quorum document file: %w", err)
+			}
+
+			if !attached {
+				return errQuorumPDFClaimLost
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		if errors.Is(err, errQuorumPDFClaimLost) {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (s *DocumentApprovalService) countDecisions(

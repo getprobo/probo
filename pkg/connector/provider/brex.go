@@ -31,8 +31,9 @@ import (
 
 func brexRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderBrex,
-		DisplayName: "Brex",
+		Provider:         coredata.ConnectorProviderBrex,
+		DisplayName:      "Brex",
+		DocumentationURL: accessReviewDocsURL("brex"),
 		Endpoints: Endpoints{
 			Auth:  "https://accounts-api.brex.com/oauth2/default/v1/authorize",
 			Token: "https://accounts-api.brex.com/oauth2/default/v1/token",

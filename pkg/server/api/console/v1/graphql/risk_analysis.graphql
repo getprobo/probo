@@ -221,9 +221,10 @@ type RiskAnalysis implements Node {
         before: CursorKey
         orderBy: TreatmentPlanOrder
         filter: TreatmentPlanFilter
+        asOf: Datetime
     ): TreatmentPlanConnection! @goField(forceResolver: true)
 
-    matrixCells: [RiskAnalysisMatrixCell!]!
+    matrixCells(asOf: Datetime): [RiskAnalysisMatrixCell!]!
         @goField(forceResolver: true)
 
     scenarioRisks(

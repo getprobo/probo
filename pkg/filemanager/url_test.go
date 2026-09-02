@@ -110,3 +110,35 @@ func TestGeneratePresignedURL_EscapesContentDispositionFilename(t *testing.T) {
 		parsedURL.Query().Get("response-content-disposition"),
 	)
 }
+
+// A presigned URL is followed by a browser, an email client or curl, none of
+// which send x-amz-checksum-mode. Signing that header — which the SDK adds on
+// every GetObject when ResponseChecksumValidation resolves to WHEN_SUPPORTED,
+// the default of config.LoadDefaultConfig — makes S3 reject the download with
+// 403 SignatureDoesNotMatch.
+func TestGeneratePresignedURL_DoesNotSignChecksumMode(t *testing.T) {
+	t.Parallel()
+
+	s3Client := awss3.NewFromConfig(
+		aws.Config{
+			Region:                     "us-east-1",
+			Credentials:                credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
+			ResponseChecksumValidation: aws.ResponseChecksumValidationWhenSupported,
+		},
+	)
+	svc := filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		FileName:   "report.pdf",
+		MimeType:   "application/pdf",
+	}
+
+	rawURL, err := svc.GeneratePresignedURL(context.Background(), file, time.Hour)
+	require.NoError(t, err)
+
+	parsedURL, err := url.Parse(rawURL)
+	require.NoError(t, err)
+
+	assert.Equal(t, "host", parsedURL.Query().Get("X-Amz-SignedHeaders"))
+}

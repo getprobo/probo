@@ -1,8 +1,109 @@
 # Changelog
 
-All notable changes to `probod` (the server, including the bundled `@probo/console`, `@probo/compliance-portal`, and `@probo/ui` frontends) will be documented in this file.
+All notable changes to `probod` (the server, including the bundled `@probo/console`, `@probo/compliance-portal`, `@probo/employee-portal`, and `@probo/ui` frontends) will be documented in this file.
 
 ## Unreleased
+
+## [0.274.2] - 2026-09-02
+
+### Fixed
+
+- Bumped gRPC-Go to 1.83.1, addressing an HTTP/2 receive-buffer memory exhaustion issue (CVE-2026-84304)
+
+## [0.274.1] - 2026-09-02
+
+### Fixed
+
+- Employee-portal document queue no longer dead-ends at the last document when items are skipped or the queue is entered mid-list; Next and Finish now wrap back to the documents left over, including ones signed while the next page was still loading
+- Start-to-sign and start-to-approve from the employee-portal home now open the first document of the queue instead of dropping into the middle of the list
+
+## [0.274.0] - 2026-09-01
+
+### Added
+
+- AWS access review now lists Identity Center users assigned to the connected account (directly or through a group) when an instance is visible in the session region; the walk degrades to IAM-only when the account has no instance, the role cannot read SSO Admin (including after ListInstances succeeds), or the instance lives in another region. There is still no Organizations walk and no cross-account assignment listing
+- AWS access-review sources are named with the connected account name (`AWS acme-prod`) when Account Management returns one, then the sign-in alias, then the account ID, so two accounts in one organization stay distinguishable; the source-name worker assumes the audit role to resolve those. The console still shows the account ID until the worker runs
+
+### Changed
+
+- Document list rows are fully clickable: the whole row navigates to the viewer instead of only the title or action button, rendered as a single data cell instead of a spanning row header
+- Queue navigation swipes to the next document immediately instead of waiting for the query and showing a skeleton first
+- Document tabs show the open document's title instead of the static "Probo Console" title, so multiple open documents are distinguishable in the browser tab strip
+
+### Removed
+
+- Leftover console employee-portal pages (signatures, approvals, devices, enroll, Slack bind), now fully owned by the dedicated employee-portal app; the old pages never rendered in production
+
+### Fixed
+
+- Long document lists no longer show empty space below the table from an unwanted vertical scrollbar
+- Document loading skeleton matches the live request panel layout instead of missing the back-link row
+- TableLink focus ring no longer shows an opaque wash covering row text
+- A refused quorum's reviewed document is no longer lost when a later quorum is accepted; the PDF is now generated in a dedicated worker and kept with the quorum
+
+## [0.273.0] - 2026-09-01
+
+### Added
+
+- AWS access-review connector setup, create, and verify: a console dialog and `awsConnectorSetup` query return the issuer, audience, subject, suggested role name, and matching Terraform/CloudFormation snippet so operators can create a workload-identity AWS connector without inventing values
+- Task details page holding name, description, and properties, so the tasks list can stay to the title instead of showing the full description on every row
+
+## [0.272.0] - 2026-09-01
+
+### Added
+
+- Risk analysis treatment plans can be reconstructed as of a past date: the heatmap, plan table, and measures show the state they had at that instant, with each event storing the full plan so an as-of read returns the latest row; today keeps reading live data
+- AWS access review driver listing the IAM users of the connected account, with groups, attached and inline policies as grants and activity read from the credential report; the connector names one account, so there is no Organizations walk and no Identity Center listing
+- `BACKLOG`, `CANCELED`, and `DUPLICATE` task states, selectable when creating or updating a task
+- A back link on employee portal document, approval, and signature viewers, so leaving a viewer no longer depends on a decision being made first
+
+### Changed
+
+- Device enrollment moved to the employee portal at `/employee-portal/enroll`, adding an organization picker first step since `/enroll` carried no organization in the URL; the legacy path 302s so agents and bookmarks keep working
+- Slack bind and bindings pages moved to the employee portal, with a Slack card on the portal home rendered only when the organization has Slack installed; the old console URLs 302s so links in existing Slack DMs keep working
+- The document viewer top bar stretches to the full-bleed viewer width instead of staying inset at 1024px
+- Risk analysis list rows wrap long names and periods instead of pushing the description column out, and clamp very long descriptions to two lines
+
+### Fixed
+
+- `.log` evidence uploads on measures are accepted; browsers report them as `text/plain` while only `text/x-log` was allowed
+- SOC 2 framework wording
+
+## [0.271.1] - 2026-08-31
+
+### Fixed
+
+- Presigned S3 download URLs (documents, framework exports, third-party agreements) no longer fail with a signature mismatch, caused by a checksum-validation header the SDK signed into the URL but that downloading clients never send back
+
+## [0.271.0] - 2026-08-28
+
+### Added
+
+- Employee portal, a dedicated app at `/employee-portal` replacing the console's employee pages: organization list, home dashboard with a Get Started panel while the viewer still has first pending work, and typed 404, 403, and 500 recovery states
+- Signature and approval queues in the employee portal, each splitting pending work from history with independent pagination, table layouts that keep columns aligned across locales, and a frozen queue so the counter does not shrink while signing
+- Document viewers in the employee portal for signing and approving, with version history that swaps the displayed PDF for inspection while sign and approve still target the latest version
+- Employee device pages in the employee portal: a device list with empty state, a three-step registration wizard covering agent download and enrollment, and manual enrollment issuing a one-time token with CLI instructions
+- French and Dutch employee portal catalogs; both locales were listed as supported but every string fell back to English
+- AWS audit role CloudFormation template and Terraform module creating the OIDC provider and a ProboAudit role, with organization-wide coverage as a service-managed StackSet; the trust policy is read back before a connector relies on it and refused when its `sub` condition is absent, wildcarded, `StringLike`, or pinned to another organization
+- Documentation links on the authentik, Brex, Cal.com, Calendly, and GitHub access-review connectors, so the connect dialog and connections list can reach each setup guide
+
+### Changed
+
+- An organization can hold several connectors of one provider — two GitHub organizations, two Slack workspaces — each backing its own access review source, and the console keeps every provider available for another connection
+- Reconnecting a connector is now explicit: a bare initiate always creates a new connector, and reconnect happens only through an explicit connector id
+- Each connector credential is owned by exactly one feature, an access review source or a SCIM provisioning bridge, enforced by schema; deleting a connector still held by a live bridge is refused instead of silently disabling sync
+- Source creation is idempotent per connector, so replaying an OAuth callback in two tabs cannot double-create, and relinking a source to a new connector deletes the abandoned one instead of stranding it
+- SCIM configuration and its bridge are created in one transaction, so a bridge refusal can no longer leave a bridgeless configuration blocking every retry of the connect flow
+- Old console employee URLs now redirect to the employee portal, so existing inbox links keep working; emails, the organization switcher, and the employee landing point there directly
+- Connector probe failures are logged with a classification code, provider, source id, and connector id, so a permanently broken source is attributable to a tenant instead of leaving no diagnostics
+
+### Fixed
+
+- Employee document filters matched any historical signature or past approval decision, so a newer pending major version appeared as both pending and completed; both filters are now restricted to the latest version
+- Probe verdicts treated cancelled requests, timeouts, and URL parse failures as the provider rejecting a credential, and the Railway probe reported a 5xx or rate limit as a dead credential
+- The signing queue started mid-queue when launched from page 2 or later, and overlapping pager clicks could land on the wrong page
+- Copying an enrollment token threw in insecure contexts before the failure toast could show, and enrollment errors stacked a global toast on top of the inline failed state
+- Dropped the unused `reports` table and leftover `report_id` foreign keys, superseded by audit PDFs stored in `files`
 
 ## [0.270.0] - 2026-08-27
 

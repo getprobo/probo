@@ -46,6 +46,7 @@
  *   green  — success / positive
  *   amber  — warning
  *   sky    — informational
+ *   indigo — action / brand accent
  *
  * Dark mode: toggle .dark on <html>. Radix dark imports handle the rest.
  * P3 wide gamut: included automatically via @radix-ui/colors @supports blocks.
@@ -71,6 +72,8 @@
 @import "@radix-ui/colors/amber-dark.css";
 @import "@radix-ui/colors/sky.css";
 @import "@radix-ui/colors/sky-dark.css";
+@import "@radix-ui/colors/indigo.css";
+@import "@radix-ui/colors/indigo-dark.css";
 
 /* Alpha scales + black alpha — power the sand-a* utilities and the shadows. */
 @import "@radix-ui/colors/sand-alpha.css";
@@ -196,6 +199,20 @@
     --color-sky-10: var(--sky-10);
     --color-sky-11: var(--sky-11);
     --color-sky-12: var(--sky-12);
+
+    /* indigo */
+    --color-indigo-1: var(--indigo-1);
+    --color-indigo-2: var(--indigo-2);
+    --color-indigo-3: var(--indigo-3);
+    --color-indigo-4: var(--indigo-4);
+    --color-indigo-5: var(--indigo-5);
+    --color-indigo-6: var(--indigo-6);
+    --color-indigo-7: var(--indigo-7);
+    --color-indigo-8: var(--indigo-8);
+    --color-indigo-9: var(--indigo-9);
+    --color-indigo-10: var(--indigo-10);
+    --color-indigo-11: var(--indigo-11);
+    --color-indigo-12: var(--indigo-12);
 }
 
 @layer base {

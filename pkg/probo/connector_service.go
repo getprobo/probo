@@ -158,33 +158,6 @@ func (s *ConnectorService) ListAllForOrganizationID(
 	return connectors, nil
 }
 
-func (s *ConnectorService) GetByOrganizationIDAndProvider(
-	ctx context.Context, scope coredata.Scoper,
-	organizationID gid.GID,
-	provider coredata.ConnectorProvider,
-) (*coredata.Connector, error) {
-	cnnctr := &coredata.Connector{}
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return cnnctr.LoadOneByOrganizationIDAndProvider(
-				ctx,
-				conn,
-				scope,
-				s.svc.encryptionKey,
-				organizationID,
-				provider,
-			)
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get connector: %w", err)
-	}
-
-	return cnnctr, nil
-}
-
 // GetWithConnection loads a specific connector by ID and returns the
 // full *coredata.Connector with Connection populated. Used by the
 // initiate handler's explicit reconnect path (?connector_id=<id>),

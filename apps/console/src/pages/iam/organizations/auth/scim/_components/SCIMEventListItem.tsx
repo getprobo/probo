@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { dateFormat } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import { Badge, IconChevronDown, IconChevronRight, Td, Tr } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,6 +26,16 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { SCIMEventListItemFragment$key } from "#/__generated__/iam/SCIMEventListItemFragment.graphql";
+
+const scimEventDateFormat = {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  weekday: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+} as const;
 
 const SCIMEventListItemFragment = graphql`
   fragment SCIMEventListItemFragment on SCIMEvent {
@@ -95,7 +105,11 @@ export function SCIMEventListItem(props: {
               : (
                   <IconChevronRight size={16} className="text-txt-secondary" />
                 )}
-            {dateFormat(i18n.language, event.createdAt)}
+            {dateTimeFormat(
+              i18n.language,
+              event.createdAt,
+              scimEventDateFormat,
+            )}
           </div>
         </Td>
         <Td>{getMethodBadge(event.method)}</Td>

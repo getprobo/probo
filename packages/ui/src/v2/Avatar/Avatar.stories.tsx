@@ -27,7 +27,7 @@ import { AvatarSkeleton } from "./AvatarSkeleton";
 const image = "https://i.pravatar.cc/240?img=12";
 
 const sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-const colors = ["neutral", "gold", "red", "green", "amber", "sky"] as const;
+const colors = ["neutral", "gold", "red", "green", "amber", "sky", "indigo"] as const;
 const radii = ["none", "small", "medium", "large", "full"] as const;
 
 export default {

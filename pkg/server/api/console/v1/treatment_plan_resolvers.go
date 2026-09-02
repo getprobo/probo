@@ -8,6 +8,7 @@ package console_v1
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -199,8 +200,44 @@ func (r *treatmentPlanResolver) NetRiskScore(ctx context.Context, obj *types.Tre
 	return score, err
 }
 
+// Progress is the resolver for the progress field.
+func (r *treatmentPlanResolver) Progress(ctx context.Context, obj *types.TreatmentPlan) (*riskmanagement.TreatmentProgress, error) {
+	if obj.AsOf != nil {
+		if _, err := r.authorize(ctx, obj.RiskAnalysis.ID, riskmanagement.ActionTreatmentPlanList); err != nil {
+			return nil, err
+		}
+
+		if obj.Progress == nil {
+			return &riskmanagement.TreatmentProgress{}, nil
+		}
+
+		return obj.Progress, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	progress, err := loaders.TreatmentProgress.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get treatment plan progress", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &progress, nil
+}
+
 // Owner is the resolver for the owner field.
 func (r *treatmentPlanResolver) Owner(ctx context.Context, obj *types.TreatmentPlan) (*types.Profile, error) {
+	if obj.AsOf != nil {
+		if _, err := r.authorize(ctx, obj.RiskAnalysis.ID, riskmanagement.ActionTreatmentPlanList); err != nil {
+			return nil, err
+		}
+	}
+
 	if _, err := r.authorize(ctx, obj.Owner.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
@@ -223,7 +260,15 @@ func (r *treatmentPlanResolver) Owner(ctx context.Context, obj *types.TreatmentP
 
 // Risk is the resolver for the risk field.
 func (r *treatmentPlanResolver) Risk(ctx context.Context, obj *types.TreatmentPlan) (*types.Risk, error) {
-	scope, err := r.authorize(ctx, obj.Risk.ID, probo.ActionRiskGet)
+	resourceID := obj.Risk.ID
+	action := probo.ActionRiskGet
+
+	if obj.AsOf != nil {
+		resourceID = obj.RiskAnalysis.ID
+		action = riskmanagement.ActionTreatmentPlanList
+	}
+
+	scope, err := r.authorize(ctx, resourceID, action)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +289,12 @@ func (r *treatmentPlanResolver) Risk(ctx context.Context, obj *types.TreatmentPl
 
 // RiskAnalysis is the resolver for the riskAnalysis field.
 func (r *treatmentPlanResolver) RiskAnalysis(ctx context.Context, obj *types.TreatmentPlan) (*types.RiskAnalysis, error) {
-	scope, err := r.authorize(ctx, obj.RiskAnalysis.ID, riskmanagement.ActionRiskAnalysisGet)
+	action := riskmanagement.ActionRiskAnalysisGet
+	if obj.AsOf != nil {
+		action = riskmanagement.ActionTreatmentPlanList
+	}
+
+	scope, err := r.authorize(ctx, obj.RiskAnalysis.ID, action)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +315,11 @@ func (r *treatmentPlanResolver) RiskAnalysis(ctx context.Context, obj *types.Tre
 
 // Organization is the resolver for the organization field.
 func (r *treatmentPlanResolver) Organization(ctx context.Context, obj *types.TreatmentPlan) (*types.Organization, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if obj.AsOf != nil {
+		if _, err := r.authorize(ctx, obj.RiskAnalysis.ID, riskmanagement.ActionTreatmentPlanList); err != nil {
+			return nil, err
+		}
+	} else if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -286,8 +340,20 @@ func (r *treatmentPlanResolver) Organization(ctx context.Context, obj *types.Tre
 }
 
 // Measures is the resolver for the measures field.
-func (r *treatmentPlanResolver) Measures(ctx context.Context, obj *types.TreatmentPlan, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+func (r *treatmentPlanResolver) Measures(ctx context.Context, obj *types.TreatmentPlan, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter, asOf *time.Time) (*types.MeasureConnection, error) {
+	if asOf == nil {
+		asOf = obj.AsOf
+	}
+
+	resourceID := obj.ID
+	action := probo.ActionMeasureList
+
+	if asOf != nil {
+		resourceID = obj.RiskAnalysis.ID
+		action = riskmanagement.ActionTreatmentPlanList
+	}
+
+	scope, err := r.authorize(ctx, resourceID, action)
 	if err != nil {
 		return nil, err
 	}
@@ -311,6 +377,31 @@ func (r *treatmentPlanResolver) Measures(ctx context.Context, obj *types.Treatme
 		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
+	if asOf != nil {
+		page, total, err := r.riskManagement.ListMeasuresAsOf(
+			ctx,
+			scope,
+			obj.RiskAnalysis.ID,
+			obj.ID,
+			*asOf,
+			cursor,
+			measureFilter,
+		)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFound(ctx, err)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot list treatment plan measures as of", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		connection := types.NewMeasureConnectionAsOf(page, r, obj.ID, measureFilter, *asOf, total)
+
+		return connection, nil
+	}
+
 	page, err := r.probo.Measures.ListForTreatmentPlanID(ctx, scope, obj.ID, cursor, measureFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list treatment plan measures", log.Error(err))
@@ -322,11 +413,19 @@ func (r *treatmentPlanResolver) Measures(ctx context.Context, obj *types.Treatme
 
 // Permission is the resolver for the permission field.
 func (r *treatmentPlanResolver) Permission(ctx context.Context, obj *types.TreatmentPlan, action string) (bool, error) {
+	if obj.AsOf != nil {
+		return false, nil
+	}
+
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *types.TreatmentPlanConnection) (int, error) {
+	if obj.AsOf != nil {
+		return obj.TotalCount, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionTreatmentPlanList)
 	if err != nil {
 		return 0, err

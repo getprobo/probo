@@ -1,0 +1,50 @@
+---
+# Hand-authored name-resolution cassette. Neither Account Management nor
+# IAM aliases return a name, so the resolver keeps the account ID.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: account.us-east-1.amazonaws.com
+        url: https://account.us-east-1.amazonaws.com/getAccountInformation
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"AccountId":"123456789012","AccountState":"ACTIVE"}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.amazonaws.com
+        form:
+            Action:
+                - ListAccountAliases
+        url: https://iam.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '<ListAccountAliasesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/"><ListAccountAliasesResult><AccountAliases/><IsTruncated>false</IsTruncated></ListAccountAliasesResult></ListAccountAliasesResponse>'
+        headers:
+            Content-Type:
+                - text/xml
+        status: 200 OK
+        code: 200
+        duration: 1ms

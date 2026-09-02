@@ -25,8 +25,9 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
-import TaskFormDialog from "#/components/tasks/TaskFormDialog";
 import { OrganizationTasksCard } from "#/components/tasks/TasksCard";
+
+import { CreateTaskDialog } from "./_components/CreateTaskDialog";
 
 export const tasksPageQuery = graphql`
   query TasksPageQuery($organizationId: ID!) {
@@ -38,11 +39,11 @@ export const tasksPageQuery = graphql`
   }
 `;
 
-interface Props {
+interface TasksPageProps {
   queryRef: PreloadedQuery<TasksPageQuery>;
 }
 
-export default function TasksPage({ queryRef }: Props) {
+export function TasksPage({ queryRef }: TasksPageProps) {
   const { t } = useTranslation();
   const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
   usePageTitle(t("tasks.title"));
@@ -57,9 +58,9 @@ export default function TasksPage({ queryRef }: Props) {
             description={t("tasks.description")}
           >
             {canCreateTask && (
-              <TaskFormDialog connection={connectionId} onCompleted={refetch}>
+              <CreateTaskDialog connectionId={connectionId} onCompleted={refetch}>
                 <Button icon={IconPlusLarge}>{t("tasks.actions.create")}</Button>
-              </TaskFormDialog>
+              </CreateTaskDialog>
             )}
           </PageHeader>
         )}

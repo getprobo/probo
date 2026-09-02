@@ -19,13 +19,14 @@
 // SOFTWARE.
 
 import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
-import { Card, RisksChart } from "@probo/ui";
+import { Card, IconClock, Input, RisksChart } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { RiskAnalysisMatrices_analysis$key } from "#/__generated__/core/RiskAnalysisMatrices_analysis.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { asOfDateBounds, clampDateInput, matrixAsOf } from "../_lib/matrixAsOf";
 import {
   graphqlScoreTypes,
   type MatrixCell,
@@ -36,12 +37,16 @@ import { useMatrixCellFilter } from "../_lib/useMatrixCellFilter";
 const severityColors = ["bg-txt-success", "bg-txt-warning", "bg-txt-danger"] as const;
 
 export const riskAnalysisMatricesFragment = graphql`
-  fragment RiskAnalysisMatrices_analysis on RiskAnalysis {
+  fragment RiskAnalysisMatrices_analysis on RiskAnalysis
+  @argumentDefinitions(
+    asOf: { type: "Datetime", defaultValue: null }
+  ) {
+    createdAt
     matrixSize {
       rows
       cols
     }
-    matrixCells {
+    matrixCells(asOf: $asOf) {
       type
       likelihood
       impact
@@ -52,6 +57,9 @@ export const riskAnalysisMatricesFragment = graphql`
 
 interface RiskAnalysisMatricesProps {
   analysisKey: RiskAnalysisMatrices_analysis$key;
+  asOfDate: string;
+  isPending: boolean;
+  onAsOfDateChange: (date: string) => void;
 }
 
 function selectedChartCell(
@@ -65,8 +73,8 @@ function selectedChartCell(
   return { likelihood: cell.likelihood, impact: cell.impact };
 }
 
-function cellCountsForScoreType(
-  counts: ReadonlyArray<{
+function cellCountsForType(
+  cells: ReadonlyArray<{
     type: string;
     likelihood: number;
     impact: number;
@@ -74,9 +82,9 @@ function cellCountsForScoreType(
   }>,
   type: MatrixScoreType,
 ) {
-  const graphqlType = graphqlScoreTypes[type];
-  return counts
-    .filter(cell => cell.type === graphqlType)
+  const scoreType = graphqlScoreTypes[type];
+  return cells
+    .filter(cell => cell.type === scoreType)
     .map(cell => ({
       likelihood: cell.likelihood,
       impact: cell.impact,
@@ -84,7 +92,12 @@ function cellCountsForScoreType(
     }));
 }
 
-export function RiskAnalysisMatrices({ analysisKey }: RiskAnalysisMatricesProps) {
+export function RiskAnalysisMatrices({
+  analysisKey,
+  asOfDate,
+  isPending,
+  onAsOfDateChange,
+}: RiskAnalysisMatricesProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { cell, toggleCell } = useMatrixCellFilter();
@@ -94,7 +107,14 @@ export function RiskAnalysisMatrices({ analysisKey }: RiskAnalysisMatricesProps)
   }
 
   const matrixSize = { rows: analysis.matrixSize.rows, cols: analysis.matrixSize.cols };
-  const counts = analysis.matrixCells ?? [];
+  const { minDate, maxDate } = asOfDateBounds(analysis.createdAt);
+  const cells = analysis.matrixCells;
+  const hasAsOf = matrixAsOf(asOfDate) != null;
+
+  const handleAsOfDateChange = (value: string) => {
+    onAsOfDateChange(clampDateInput(value, minDate, maxDate));
+  };
+
   const impacts = getRiskImpacts(t, matrixSize.cols);
   const likelihoods = getRiskLikelihoods(t, matrixSize.rows);
   const formatScale = (items: ReadonlyArray<{ value: number; label: string }>) =>
@@ -112,11 +132,30 @@ export function RiskAnalysisMatrices({ analysisKey }: RiskAnalysisMatricesProps)
 
   return (
     <Card padded className="space-y-6 overflow-visible">
-      <div className="grid grid-cols-3 gap-6">
+      <div className="flex items-center justify-end gap-2">
+        <IconClock size={16} className="text-txt-secondary" />
+        <label htmlFor="asOf" className="text-sm font-medium text-txt-primary whitespace-nowrap">
+          {t("riskAnalysisTreatmentPlansPage.asOf")}
+        </label>
+        <Input
+          type="date"
+          name="asOf"
+          id="asOf"
+          className={hasAsOf ? "w-40" : "w-40 text-txt-secondary"}
+          value={hasAsOf ? asOfDate : ""}
+          min={minDate}
+          max={maxDate}
+          onChange={event => handleAsOfDateChange(event.target.value)}
+        />
+      </div>
+      <div
+        aria-busy={isPending}
+        className={`grid grid-cols-3 gap-6 transition-opacity ${isPending ? "opacity-60" : ""}`}
+      >
         <RisksChart
           organizationId={organizationId}
           type="inherent"
-          cellCounts={cellCountsForScoreType(counts, "inherent")}
+          cellCounts={cellCountsForType(cells, "inherent")}
           matrixSize={matrixSize}
           variant="bare"
           selectedCell={selectedChartCell(cell, "inherent")}
@@ -125,7 +164,7 @@ export function RiskAnalysisMatrices({ analysisKey }: RiskAnalysisMatricesProps)
         <RisksChart
           organizationId={organizationId}
           type="net"
-          cellCounts={cellCountsForScoreType(counts, "net")}
+          cellCounts={cellCountsForType(cells, "net")}
           matrixSize={matrixSize}
           variant="bare"
           selectedCell={selectedChartCell(cell, "net")}
@@ -134,7 +173,7 @@ export function RiskAnalysisMatrices({ analysisKey }: RiskAnalysisMatricesProps)
         <RisksChart
           organizationId={organizationId}
           type="residual"
-          cellCounts={cellCountsForScoreType(counts, "residual")}
+          cellCounts={cellCountsForType(cells, "residual")}
           matrixSize={matrixSize}
           variant="bare"
           selectedCell={selectedChartCell(cell, "residual")}

@@ -27,7 +27,7 @@ import { table } from "./variants";
 
 export type TableRowHeaderCellProps
   = Omit<ComponentProps<"th">, "width">
-    & Pick<VariantProps<typeof table>, "justify">
+    & Pick<VariantProps<typeof table>, "justify" | "interactive">
     & {
       width?: string;
       minWidth?: string;
@@ -36,9 +36,9 @@ export type TableRowHeaderCellProps
 
 // Row heading cell (Radix "Table.RowHeaderCell"). Renders a <th scope="row">.
 export function TableRowHeaderCell(props: TableRowHeaderCellProps) {
-  const { justify, width, minWidth, maxWidth, className, style, ...rest } = props;
+  const { justify, width, minWidth, maxWidth, interactive, className, style, ...rest } = props;
   const size = useTableContext();
-  const { cell, rowHeader } = table({ size, justify });
+  const { cell, rowHeader } = table({ size, justify, interactive });
 
   return (
     <th

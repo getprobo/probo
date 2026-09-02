@@ -1,0 +1,80 @@
+{
+  "detailsPage": {
+    "notFound": "Taak niet gevonden",
+    "empty": "—",
+    "none": "Geen",
+    "noDescription": "Geen beschrijving",
+    "descriptionPlaceholder": "Voeg een beschrijving toe",
+    "unassigned": "Niet toegewezen",
+    "fields": {
+      "name": "Naam",
+      "description": "Beschrijving",
+      "state": "Status",
+      "priority": "Prioriteit",
+      "assignedTo": "Toegewezen aan",
+      "measure": "Maatregel",
+      "timeEstimate": "Tijdsinschatting",
+      "timeEstimateUnit": "Eenheid van inschatting",
+      "deadline": "Deadline",
+      "createdAt": "Aangemaakt",
+      "updatedAt": "Bijgewerkt"
+    },
+    "duration": {
+      "S": "Seconden",
+      "M": "Minuten",
+      "H": "Uren",
+      "D": "Dagen",
+      "W": "Weken"
+    },
+    "states": {
+      "backlog": "Backlog",
+      "todo": "Te doen",
+      "inProgress": "In uitvoering",
+      "done": "Voltooid",
+      "canceled": "Geannuleerd",
+      "duplicate": "Duplicaat"
+    },
+    "priorities": {
+      "urgent": "Urgent",
+      "high": "Hoog",
+      "medium": "Gemiddeld",
+      "low": "Laag"
+    },
+    "actions": {
+      "addEstimate": "Schatting toevoegen",
+      "clearEstimate": "Schatting wissen",
+      "delete": "Verwijderen",
+      "cancel": "Annuleren",
+      "more": "Meer acties"
+    },
+    "delete": {
+      "title": "Taak verwijderen",
+      "description": "Weet u zeker dat u deze taak wilt verwijderen?",
+      "confirm": "Verwijderen"
+    },
+    "messages": {
+      "updated": "Taak succesvol bijgewerkt.",
+      "deleted": "Taak succesvol verwijderd."
+    },
+    "errors": {
+      "delete": "Verwijderen van taak mislukt",
+      "update": "Bijwerken van taak mislukt"
+    }
+  },
+  "createDialog": {
+    "title": "Nieuwe taak",
+    "fields": {
+      "namePlaceholder": "Taaknaam"
+    },
+    "actions": {
+      "create": "Taak aanmaken"
+    },
+    "messages": {
+      "created": "Taak succesvol aangemaakt."
+    },
+    "errors": {
+      "create": "Aanmaken van taak mislukt",
+      "nameRequired": "Voer een taaknaam in"
+    }
+  }
+}

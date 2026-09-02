@@ -52,4 +52,11 @@ export const accessReviewRoutes = [
       () => import("./connections/CreateCsvAccessReviewSourcePageLoader"),
     ),
   },
+  {
+    path: "connections/new/aws-workload-identity",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./connections/CreateAwsAccessReviewSourcePageLoader"),
+    ),
+  },
 ] satisfies AppRoute[];

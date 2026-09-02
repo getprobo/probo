@@ -50,6 +50,7 @@ export async function execute(
 				... on TreatmentPlan {
 					id
 					treatment
+					category
 					inherentLikelihood
 					inherentImpact
 					inherentRiskScore

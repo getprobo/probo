@@ -785,20 +785,6 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
-		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
 	identity := authn.IdentityFromContext(ctx)
 
 	var filterMode coredata.EmployeeFilterMode
@@ -815,6 +801,28 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 
 	versionFilter := coredata.NewDocumentVersionFilter().
 		WithEmployeeIdentityID(&identity.ID, filterMode)
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.EmployeeDocumentVersionConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+			Filters:  versionFilter,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
+		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
 	versionsPage, err := r.probo.Documents.ListVersions(ctx, scope, obj.ID, cursor, versionFilter)
 	if err != nil {
@@ -839,9 +847,29 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 		}
 	}
 
-	p := page.NewPage(employeeVersions, versionsPage.Cursor)
+	p := &page.Page[*types.EmployeeDocumentVersion, coredata.DocumentVersionOrderField]{
+		Info:   versionsPage.Info,
+		Cursor: versionsPage.Cursor,
+		Data:   employeeVersions,
+	}
 
-	return types.NewEmployeeDocumentVersionConnection(p), nil
+	return types.NewEmployeeDocumentVersionConnection(p, r, obj.ID, versionFilter), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *employeeDocumentConnectionResolver) TotalCount(ctx context.Context, obj *types.EmployeeDocumentConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionEmployeeDocumentList)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.probo.Documents.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count employee documents", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // Signed is the resolver for the signed field.
@@ -888,6 +916,27 @@ func (r *employeeDocumentVersionResolver) ApprovalDecision(ctx context.Context, 
 	}
 
 	return types.NewDocumentVersionApprovalDecision(decision), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *employeeDocumentVersionConnectionResolver) TotalCount(ctx context.Context, obj *types.EmployeeDocumentVersionConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionEmployeeDocumentGet)
+	if err != nil {
+		return 0, err
+	}
+
+	filter := &coredata.DocumentVersionFilter{}
+	if obj.Filters != nil {
+		filter = obj.Filters
+	}
+
+	count, err := r.probo.Documents.CountVersionsForDocumentID(ctx, scope, obj.ParentID, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count employee document versions", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // CreateDocument is the resolver for the createDocument field.
@@ -1747,9 +1796,19 @@ func (r *Resolver) EmployeeDocument() schema.EmployeeDocumentResolver {
 	return &employeeDocumentResolver{r}
 }
 
+// EmployeeDocumentConnection returns schema.EmployeeDocumentConnectionResolver implementation.
+func (r *Resolver) EmployeeDocumentConnection() schema.EmployeeDocumentConnectionResolver {
+	return &employeeDocumentConnectionResolver{r}
+}
+
 // EmployeeDocumentVersion returns schema.EmployeeDocumentVersionResolver implementation.
 func (r *Resolver) EmployeeDocumentVersion() schema.EmployeeDocumentVersionResolver {
 	return &employeeDocumentVersionResolver{r}
+}
+
+// EmployeeDocumentVersionConnection returns schema.EmployeeDocumentVersionConnectionResolver implementation.
+func (r *Resolver) EmployeeDocumentVersionConnection() schema.EmployeeDocumentVersionConnectionResolver {
+	return &employeeDocumentVersionConnectionResolver{r}
 }
 
 type (
@@ -1764,5 +1823,7 @@ type (
 	documentVersionSignatureResolver                  struct{ *Resolver }
 	documentVersionSignatureConnectionResolver        struct{ *Resolver }
 	employeeDocumentResolver                          struct{ *Resolver }
+	employeeDocumentConnectionResolver                struct{ *Resolver }
 	employeeDocumentVersionResolver                   struct{ *Resolver }
+	employeeDocumentVersionConnectionResolver         struct{ *Resolver }
 )

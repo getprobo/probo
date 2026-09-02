@@ -236,6 +236,14 @@ input DocumentFilter {
     published: Boolean
 }
 
+input EmployeeDocumentFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentFilter"
+    ) {
+    signed: Boolean
+    approvalStates: [DocumentVersionApprovalDecisionState!]
+}
+
 input DocumentVersionFilter {
     statuses: [DocumentVersionStatus!]
 }
@@ -511,6 +519,7 @@ type EmployeeDocumentConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentConnection"
     ) {
+    totalCount: Int! @goField(forceResolver: true)
     edges: [EmployeeDocumentEdge!]!
     pageInfo: PageInfo!
 }
@@ -527,6 +536,7 @@ type EmployeeDocumentVersionConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentVersionConnection"
     ) {
+    totalCount: Int! @goField(forceResolver: true)
     edges: [EmployeeDocumentVersionEdge!]!
     pageInfo: PageInfo!
 }

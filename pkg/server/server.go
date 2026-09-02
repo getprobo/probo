@@ -28,10 +28,12 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/apps/console"
+	employeeportalstatics "go.probo.inc/probo/apps/employee-portal"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -57,6 +59,7 @@ import (
 	server_identityfederation "go.probo.inc/probo/pkg/server/identityfederation"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
+	employeeportal_web "go.probo.inc/probo/pkg/server/web/employeeportal"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
@@ -102,58 +105,63 @@ type Config struct {
 	// IdentityFederationIssuer serves the outbound OIDC documents. It is nil when the
 	// identity federation issuer is disabled, in which case no /federation route exists.
 	IdentityFederationIssuer *identityfederation.Issuer
+	AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 }
 
 type Server struct {
-	cfg                       Config
-	apiServer                 *api.Server
-	mailActionsHandler        http.Handler
-	identityFederationHandler http.Handler
-	consoleWebServer          *console_web.Server
-	consoleSecurityPolicy     string
-	router                    *chi.Mux
-	extraHeaderFields         map[string]string
-	baseURL                   string
-	proboService              *probo.Service
-	iamService                *iam.Service
-	logger                    *log.Logger
+	cfg                          Config
+	apiServer                    *api.Server
+	mailActionsHandler           http.Handler
+	identityFederationHandler    http.Handler
+	consoleWebServer             *console_web.Server
+	consoleSecurityPolicy        string
+	employeePortalWebServer      *employeeportal_web.Server
+	employeePortalSecurityPolicy string
+	router                       *chi.Mux
+	extraHeaderFields            map[string]string
+	baseURL                      string
+	proboService                 *probo.Service
+	iamService                   *iam.Service
+	logger                       *log.Logger
 }
 
 func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
-		BaseURL:                 cfg.BaseURL,
-		AllowedOrigins:          cfg.AllowedOrigins,
-		Probo:                   cfg.Probo,
-		ResourceAlias:           cfg.ResourceAlias,
-		File:                    cfg.File,
-		IAM:                     cfg.IAM,
-		Visitor:                 cfg.Visitor,
-		ESign:                   cfg.ESign,
-		Management:              cfg.Management,
-		CertManager:             cfg.CertManager,
-		AccessReview:            cfg.AccessReview,
-		AgentExecution:          cfg.AgentExecution,
-		Slack:                   cfg.Slack,
-		BotDeliveryDestinations: cfg.BotDeliveryDestinations,
-		ComplianceMessages:      cfg.ComplianceMessages,
-		Slackbot:                cfg.Slackbot,
-		SlackInteractiveInbox:   cfg.SlackInteractiveInbox,
-		ProbotIdentityBindings:  cfg.ProbotIdentityBindings,
-		SlackbotInstallations:   cfg.SlackbotInstallations,
-		ProbotCapabilities:      cfg.ProbotCapabilities,
-		Mailman:                 cfg.Mailman,
-		CookieBanner:            cfg.CookieBanner,
-		Geoloc:                  cfg.Geoloc,
-		ThirdParty:              cfg.ThirdParty,
-		RiskManagement:          cfg.RiskManagement,
-		ITAM:                    cfg.ITAM,
-		Cookie:                  cfg.Cookie,
-		TokenSecret:             cfg.TokenSecret,
-		ConnectorRegistry:       cfg.ConnectorRegistry,
-		ProviderRegistry:        cfg.ProviderRegistry,
-		CustomDomainCname:       cfg.CustomDomainCname,
-		GraphQLLimits:           cfg.GraphQLLimits,
-		Logger:                  cfg.Logger.Named("api"),
+		BaseURL:                  cfg.BaseURL,
+		AllowedOrigins:           cfg.AllowedOrigins,
+		Probo:                    cfg.Probo,
+		ResourceAlias:            cfg.ResourceAlias,
+		File:                     cfg.File,
+		IAM:                      cfg.IAM,
+		Visitor:                  cfg.Visitor,
+		ESign:                    cfg.ESign,
+		Management:               cfg.Management,
+		CertManager:              cfg.CertManager,
+		AccessReview:             cfg.AccessReview,
+		AgentExecution:           cfg.AgentExecution,
+		Slack:                    cfg.Slack,
+		BotDeliveryDestinations:  cfg.BotDeliveryDestinations,
+		ComplianceMessages:       cfg.ComplianceMessages,
+		Slackbot:                 cfg.Slackbot,
+		SlackInteractiveInbox:    cfg.SlackInteractiveInbox,
+		ProbotIdentityBindings:   cfg.ProbotIdentityBindings,
+		SlackbotInstallations:    cfg.SlackbotInstallations,
+		ProbotCapabilities:       cfg.ProbotCapabilities,
+		Mailman:                  cfg.Mailman,
+		CookieBanner:             cfg.CookieBanner,
+		Geoloc:                   cfg.Geoloc,
+		ThirdParty:               cfg.ThirdParty,
+		RiskManagement:           cfg.RiskManagement,
+		ITAM:                     cfg.ITAM,
+		Cookie:                   cfg.Cookie,
+		TokenSecret:              cfg.TokenSecret,
+		ConnectorRegistry:        cfg.ConnectorRegistry,
+		ProviderRegistry:         cfg.ProviderRegistry,
+		CustomDomainCname:        cfg.CustomDomainCname,
+		GraphQLLimits:            cfg.GraphQLLimits,
+		Logger:                   cfg.Logger.Named("api"),
+		IdentityFederationIssuer: cfg.IdentityFederationIssuer,
+		AWSConnectorInstall:      cfg.AWSConnectorInstall,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)
@@ -162,6 +170,11 @@ func NewServer(cfg Config) (*Server, error) {
 	}
 
 	consoleWebServer, err := console_web.NewServer()
+	if err != nil {
+		return nil, err
+	}
+
+	employeePortalWebServer, err := employeeportal_web.NewServer()
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +195,11 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, fmt.Errorf("cannot build console content security policy: %w", err)
 	}
 
+	employeePortalCSP, err := employeeportalstatics.ContentSecurityPolicy(appOrigin, cfg.FileStorageOrigin)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build employee portal content security policy: %w", err)
+	}
+
 	router := chi.NewRouter()
 
 	var identityFederationHandler http.Handler
@@ -199,18 +217,20 @@ func NewServer(cfg Config) (*Server, error) {
 	}
 
 	server := &Server{
-		cfg:                       cfg,
-		apiServer:                 apiServer,
-		mailActionsHandler:        mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
-		identityFederationHandler: identityFederationHandler,
-		consoleWebServer:          consoleWebServer,
-		consoleSecurityPolicy:     consoleCSP,
-		router:                    router,
-		extraHeaderFields:         cfg.ExtraHeaderFields,
-		baseURL:                   cfg.BaseURL.String(),
-		proboService:              cfg.Probo,
-		iamService:                cfg.IAM,
-		logger:                    cfg.Logger,
+		cfg:                          cfg,
+		apiServer:                    apiServer,
+		mailActionsHandler:           mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
+		identityFederationHandler:    identityFederationHandler,
+		consoleWebServer:             consoleWebServer,
+		consoleSecurityPolicy:        consoleCSP,
+		employeePortalWebServer:      employeePortalWebServer,
+		employeePortalSecurityPolicy: employeePortalCSP,
+		router:                       router,
+		extraHeaderFields:            cfg.ExtraHeaderFields,
+		baseURL:                      cfg.BaseURL.String(),
+		proboService:                 cfg.Probo,
+		iamService:                   cfg.IAM,
+		logger:                       cfg.Logger,
 	}
 
 	server.setupRoutes()
@@ -243,13 +263,23 @@ func (s *Server) setupRoutes() {
 	}
 
 	s.router.Mount(
+		employeeportal_web.PathPrefix,
+		NewSecurityHeadersMiddleware(
+			SecurityHeadersOptions{
+				ExtraHeaderFields:     s.extraHeaderFields,
+				ContentSecurityPolicy: s.employeePortalSecurityPolicy,
+			},
+		)(http.StripPrefix(employeeportal_web.PathPrefix, s.employeePortalWebServer)),
+	)
+
+	s.router.Mount(
 		"/",
 		NewSecurityHeadersMiddleware(
 			SecurityHeadersOptions{
 				ExtraHeaderFields:     s.extraHeaderFields,
 				ContentSecurityPolicy: s.consoleSecurityPolicy,
 			},
-		)(s.consoleWebServer),
+		)(employeeportal_web.LegacyRedirectMiddleware(s.consoleWebServer)),
 	)
 }
 

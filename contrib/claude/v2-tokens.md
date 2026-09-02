@@ -29,6 +29,7 @@ The v2 UI kit uses [Radix Colors](https://www.radix-ui.com/colors) 12-step scale
 | **green** | Success / positive |
 | **amber** | Warning |
 | **sky** | Informational |
+| **indigo** | Action / brand accent |
 
 ## Step-to-usage mapping
 
@@ -72,6 +73,7 @@ Three bands: **low = light/background**, **middle = borders**, **high = text/sol
 3. **Which hue?**
    - Neutral UI → `sand`
    - Semantic meaning → `red` (error), `green` (success), `amber` (warning), `sky` (info)
+   - Action / brand accent → `indigo`
    - Warm accent → `gold`
 
 ## Neutral vs accent
@@ -100,7 +102,7 @@ Per the [Radix spec](https://www.radix-ui.com/colors/docs/palette-composition/un
 
 ## Dark mode
 
-**Never apply dark-mode color overrides in components.** The v2 theme imports `@radix-ui/colors` CSS files which handle light/dark switching automatically. Dark mode activates when a `.dark` class is present on `<html>`:
+**Never apply dark-mode color overrides in components.** The v2 theme imports `@radix-ui/colors` CSS files which handle light/dark switching automatically. Page-level dark mode is a `.dark` class on `<html>`:
 
 ```ts
 document.documentElement.classList.toggle("dark", isDark);
@@ -109,6 +111,20 @@ document.documentElement.classList.toggle("dark", isDark);
 The same Tailwind classes (`bg-sand-1`, `text-red-11`, etc.) resolve to the correct dark values automatically because the `@theme inline` mappings reference the Radix variables (`var(--sand-1)`, etc.) which switch based on the `.dark` class. P3 wide-gamut colors are included for both light and dark modes on supported displays.
 
 This is independent of v1's dark mode which uses `@variant dark` / `prefers-color-scheme`.
+
+### Inverse islands
+
+Radix keys `.dark` / `.light` on **any** ancestor, not only `<html>`. A subtree can therefore run the opposite scale of the page — dark chrome on a light page, or light chrome on a dark page — without per-component color overrides.
+
+```tsx
+const island = displayMode === "dark" ? "light" : "dark";
+
+<header className={island === "dark" ? "dark scheme-dark bg-sand-1" : "light scheme-light bg-sand-1"}>
+  {/* stock outline buttons resolve the island's sand-7 / sand-11 */}
+</header>
+```
+
+`.light` on the island is required when `<html>` is `.dark`: without it the bar inherits the page's dark variables. Pair the class with `scheme-dark` / `scheme-light` so native controls inside the island match.
 
 ## Isolation from v1
 

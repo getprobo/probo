@@ -11,7 +11,7 @@
 // all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING WITHOUT LIMITATION THE WARRANTIES OF MERCHANTABILITY,
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
@@ -37,17 +37,40 @@ import (
 // temporary ones. It therefore declares no OAuth2, API-key or
 // client-credentials path — there is no credential for a customer to paste or
 // an operator to configure.
+//
+// Isolation is the per-organization issuer; a successful assume is the whole
+// check, so there is no grant readback beside Probe.
 func awsRegistration() *Registration {
 	return &Registration{
-		Provider:                    coredata.ConnectorProviderAWS,
-		DisplayName:                 "Amazon Web Services",
+		Provider:    coredata.ConnectorProviderAWS,
+		DisplayName: "AWS",
+		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession: newAWSSession,
-			NewDriver:  newAWSDriver,
-			Probe:      probeAWS,
+			NewSession:      newAWSSession,
+			NewDriver:       newAWSDriver,
+			Probe:           probeAWS,
+			NewNameResolver: newAWSNameResolver,
+			ExtraSettings: []ExtraSetting{
+				{Key: "roleArn", Label: "Role ARN", Required: true},
+			},
 		},
 	}
+}
+
+func newAWSNameResolver(
+	ctx context.Context,
+	session cloud.Session,
+	_ *coredata.Connector,
+	logger *log.Logger,
+) drivers.NameResolver {
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		logger.ErrorCtx(ctx, "cannot create aws name resolver", log.String("cloud", session.Cloud()))
+		return nil
+	}
+
+	return drivers.NewAWSNameResolver(awsSession, logger)
 }
 
 // newAWSSession opens a session on the account the connector names, by
@@ -74,15 +97,20 @@ func newAWSSession(
 	return session, nil
 }
 
-// newAWSDriver builds the access review driver. Listing IAM users in the
-// connected account is not implemented yet.
+// newAWSDriver builds the access review driver over the session already
+// assumed on the connected account.
 func newAWSDriver(
 	_ context.Context,
-	_ cloud.Session,
+	session cloud.Session,
 	_ *coredata.Connector,
-	_ *log.Logger,
+	logger *log.Logger,
 ) (drivers.Driver, error) {
-	return nil, fmt.Errorf("cannot create aws driver: access review for AWS is not implemented")
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot create aws driver: session is for %s", session.Cloud())
+	}
+
+	return drivers.NewAWSDriver(awsSession, logger), nil
 }
 
 // probeAWS checks the connection by asking AWS who we are. It reaches for the

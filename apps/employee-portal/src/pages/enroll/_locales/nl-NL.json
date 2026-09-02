@@ -1,0 +1,20 @@
+{
+  "title": "Apparaat registreren",
+  "unavailable": {
+    "title": "Registratie niet beschikbaar",
+    "description": "U heeft geen rechten om apparaten te registreren in enige organisatie.",
+    "home": "Terug naar organisaties"
+  },
+  "steps": {
+    "organization": {
+      "title": "Organisatie kiezen",
+      "description": "Kies welke organisatie dit apparaat zal beheren."
+    }
+  },
+  "organization": {
+    "title": "Organisatie kiezen",
+    "description": "Kies welke organisatie dit apparaat zal beheren.",
+    "placeholder": "Selecteer een organisatie",
+    "continue": "Doorgaan"
+  }
+}

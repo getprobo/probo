@@ -1,0 +1,134 @@
+{
+  "title": "Register this device",
+  "breadcrumb": "Devices",
+  "registerBreadcrumb": "Register",
+  "addManuallyBreadcrumb": "Add manually",
+  "list": {
+    "title": "Devices",
+    "register": "Register new device",
+    "addManually": "Add manually",
+    "lastActive": "Last active",
+    "never": "Never",
+    "justNow": "Just now",
+    "pendingHostname": "Pending",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "columns": {
+      "hostname": "Device",
+      "details": "Details"
+    },
+    "platforms": {
+      "DARWIN": "macOS",
+      "WINDOWS": "Windows",
+      "LINUX": "Linux",
+      "FREEBSD": "FreeBSD"
+    }
+  },
+  "empty": {
+    "title": "No devices yet",
+    "description": "Register a device to connect it to your organization and monitor its security status.",
+    "register": "Register device",
+    "addManually": "Add manually"
+  },
+  "unavailable": {
+    "title": "Enrollment unavailable",
+    "description": "You do not have permission to enroll devices in this organization.",
+    "home": "Back to home"
+  },
+  "steps": {
+    "review": {
+      "title": "Review device information",
+      "description": "See what Probo Agent will save."
+    },
+    "download": {
+      "title": "Download the agent",
+      "description": "Install the desktop agent"
+    },
+    "enroll": {
+      "title": "Open Probo Agent",
+      "description": "Finish registering this device."
+    }
+  },
+  "review": {
+    "title": "Review collected data",
+    "description": "Probo collects the following device metadata for inventory and posture reporting.",
+    "understand": "I understand",
+    "thisDevice": {
+      "title": "This device",
+      "hostname": "Hostname",
+      "platform": "Platform",
+      "osVersion": "OS version"
+    },
+    "identity": {
+      "title": "Device identity",
+      "hardwareUuid": "Hardware UUID",
+      "hostname": "Hostname",
+      "serialNumber": "Serial number, when available"
+    },
+    "system": {
+      "title": "System details",
+      "platform": "Platform",
+      "osVersion": "OS version",
+      "agentVersion": "Probo Agent version"
+    },
+    "activity": {
+      "title": "Activity signals",
+      "enrollmentTime": "Enrollment time",
+      "heartbeats": "Agent heartbeats",
+      "posture": "Posture check results"
+    }
+  },
+  "download": {
+    "title": "Download Probo Agent",
+    "description": "Install the app to secure this device and connect it to your organization.",
+    "featured": "Probo Agent for macOS",
+    "continue": "Continue",
+    "download": "Download",
+    "downloadNamed": "Download {{title}}",
+    "macosIntel": {
+      "title": "macOS Intel",
+      "meta": "macOS 13.0+"
+    },
+    "windows": {
+      "title": "Windows",
+      "meta": "Windows 11+"
+    }
+  },
+  "enroll": {
+    "title": "Continue in the app",
+    "description": "Open Probo Agent to finish registering this device.",
+    "open": "Open Probo Agent",
+    "preparing": "Preparing…",
+    "waiting": "Waiting for the agent's first check-in…",
+    "timedOut": "We haven't heard from the agent yet. Make sure the desktop agent is installed and running, then try again.",
+    "failed": "We couldn't start enrollment. Try again.",
+    "tryAgain": "Try again",
+    "enrolled": "This device is enrolled.",
+    "enrolledWithHostname": "{{hostname}} is enrolled.",
+    "home": "Back to home"
+  },
+  "addManually": {
+    "title": "Manual enrollment",
+    "creating": "Creating device…",
+    "failed": "We couldn't create an enrollment token. Try again.",
+    "created": "Device created. Copy the enrollment token now — it will not be shown again.",
+    "done": "Done",
+    "retry": "Try again",
+    "back": "Back to devices",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Failed to copy to clipboard",
+    "token": {
+      "title": "Enrollment token generated",
+      "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.",
+      "releaseListHint": "Browse <link>probo-agent releases on GitHub</link> (tags probo-agent/v*), then pick the archive for your OS and architecture (for example probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz, or probo-agent_Windows_x86_64.zip). Replace vX.Y.Z, OS, and ARCH in the download command with the values from the asset you chose.",
+      "tabUnix": "macOS / Linux",
+      "tabWindows": "Windows",
+      "installUnix": "Install on macOS or Linux (run from a shell with sudo access)",
+      "installWindows": "Install on Windows (run from an elevated PowerShell session)",
+      "downloadStep": "Download and place the binary",
+      "enrollStep": "Configure the device and start the agent",
+      "securityNotice": "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification."
+    }
+  }
+}

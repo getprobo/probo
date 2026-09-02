@@ -29,11 +29,14 @@ export const riskAnalysisTreatmentPlansPageQuery = graphql`
   query RiskAnalysisTreatmentPlansPageQuery(
     $riskAnalysisId: ID!
     $filter: TreatmentPlanFilter
+    $asOf: Datetime
+    $includeUnplanned: Boolean!
   ) {
     node(id: $riskAnalysisId) {
       __typename
       ... on RiskAnalysis {
-        ...RiskAnalysisPlansSection_analysis @arguments(filter: $filter)
+        ...RiskAnalysisPlansSection_analysis
+          @arguments(filter: $filter, asOf: $asOf, includeUnplanned: $includeUnplanned)
       }
     }
   }

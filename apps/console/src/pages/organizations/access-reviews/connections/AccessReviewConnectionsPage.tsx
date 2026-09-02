@@ -34,7 +34,7 @@ import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
-import { createAccessReviewSourceMutation } from "../dialogs/accessReviewSourceMutations";
+import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
 import {
   AccessReviewSourceProviderListItem,
@@ -90,7 +90,6 @@ const sourcesFragment = graphql`
         node {
           id
           name
-          connectorId
           connector {
             provider
           }
@@ -133,17 +132,6 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     AccessReviewConnectionsPageFragment$key
   >(sourcesFragment, organization);
 
-  const existingSourceProviders = useMemo(
-    () =>
-      accessReviewSources.edges
-        .map(edge => edge.node.connector?.provider)
-        .filter((p): p is NonNullable<typeof p> => p != null),
-    [accessReviewSources.edges],
-  );
-  const connectedProviderSet = useMemo(
-    () => new Set(existingSourceProviders),
-    [existingSourceProviders],
-  );
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const isSearching = normalizedSearch !== "";
   // accessReviewSources has no server-side filter, so the search matches only
@@ -180,16 +168,15 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
   const availableProviders = useMemo(
     () => accessReviewDrivers
       .filter(provider =>
-        !connectedProviderSet.has(provider.provider)
-        && (!normalizedSearch
-          || provider.displayName.toLowerCase().includes(normalizedSearch)
-          || provider.provider
-            .replaceAll("_", " ")
-            .toLowerCase()
-            .includes(normalizedSearch)),
+        !normalizedSearch
+        || provider.displayName.toLowerCase().includes(normalizedSearch)
+        || provider.provider
+          .replaceAll("_", " ")
+          .toLowerCase()
+          .includes(normalizedSearch),
       )
       .sort((a, b) => a.displayName.localeCompare(b.displayName)),
-    [accessReviewDrivers, connectedProviderSet, normalizedSearch],
+    [accessReviewDrivers, normalizedSearch],
   );
   const showCSV = !normalizedSearch
     || "csv".includes(normalizedSearch)
@@ -202,33 +189,25 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
       createAccessReviewSourceMutation,
     );
 
-  // Handle OAuth callback: after the provider redirects back with connector_id,
-  // automatically create the access source for that connector. Missing scopes
-  // arrive as a backend error query param and are toasted like other errors.
+  // Handle OAuth callback: ensure an access source exists for the
+  // returned connector_id. Creation is idempotent server-side (a
+  // reconnect resolves to the existing source, created=false), so the
+  // page always asks. Missing scopes arrive as a backend error query
+  // param.
   const callbackConnectorId = searchParams.get("connector_id");
   const callbackProvider = searchParams.get("provider");
   const callbackError = searchParams.get("error");
-  const hasSourceForCallback = !!callbackConnectorId
-    && accessReviewSources?.edges.some(edge => edge.node.connectorId === callbackConnectorId);
 
   useEffect(() => {
-    if (!callbackConnectorId) return;
-
-    if (hasSourceForCallback) {
-      // Create sets processedConnectorIdRef before the mutation; when Relay
-      // inserts the edge mid-callback, skip toasting here so onCompleted is
-      // the only toast. Reconnect never sets that ref, so it still toasts.
-      const createInFlight
-        = processedConnectorIdRef.current === callbackConnectorId;
-      if (callbackError && !createInFlight) {
+    if (!callbackConnectorId) {
+      // Provider-denied OAuth errors redirect with an error and no
+      // connector_id; toast rather than leaving it latched in the URL.
+      if (callbackError) {
         toast({
           title: t("accessReviewConnectionsPage.messages.error"),
           description: callbackError,
           variant: "error",
         });
-      }
-      if (!createInFlight) {
-        processedConnectorIdRef.current = null;
         setSearchParams(clearOAuthCallbackParams, { replace: true });
       }
       return;
@@ -252,9 +231,9 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
           name: sourceName,
           csvData: null,
         },
-        connections: [accessReviewSources.__id],
       },
-      onCompleted(_, errors) {
+      updater: store => prependCreatedSourceEdge(store, accessReviewSources.__id),
+      onCompleted(data, errors) {
         if (errors?.length) {
           processedConnectorIdRef.current = null;
           setSearchParams(clearOAuthCallbackParams, { replace: true });
@@ -274,7 +253,7 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
             description: callbackError,
             variant: "error",
           });
-        } else {
+        } else if (data.createAccessReviewSource.created) {
           toast({
             title: t("accessReviewConnectionsPage.messages.success"),
             description: t("accessReviewConnectionsPage.messages.created"),
@@ -303,7 +282,6 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     callbackError,
     accessReviewDrivers,
     createAccessReviewSource,
-    hasSourceForCallback,
     isCreatingSource,
     organizationId,
     accessReviewSources.__id,
@@ -365,7 +343,7 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
 
         {organization.canCreateSource && (
           <SourceSection
-            title={t("accessReviewConnectionsPage.sections.notConnected")}
+            title={t("accessReviewConnectionsPage.sections.available")}
             count={availableProviders.length + (showCSV ? 1 : 0)}
             empty={t("accessReviewConnectionsPage.emptyAvailableSearch")}
           >

@@ -571,6 +571,8 @@ func copyTreatmentPlans(
 	}
 
 	sourcePlanIDs := make([]gid.GID, 0, len(plans))
+	copiedPlans := make(map[gid.GID]*coredata.TreatmentPlan, len(plans))
+
 	for _, source := range plans {
 		copied := &coredata.TreatmentPlan{
 			ID:                 gid.New(scope.GetTenantID(), coredata.TreatmentPlanEntityType),
@@ -583,10 +585,12 @@ func copyTreatmentPlans(
 			InherentImpact:     source.InherentImpact,
 			ResidualLikelihood: source.ResidualLikelihood,
 			ResidualImpact:     source.ResidualImpact,
+			Category:           source.Category,
 			CreatedAt:          now,
 			UpdatedAt:          now,
 		}
 		idMap[source.ID] = copied.ID
+		copiedPlans[copied.ID] = copied
 		sourcePlanIDs = append(sourcePlanIDs, source.ID)
 
 		if err := copied.Insert(ctx, tx, scope); err != nil {
@@ -598,6 +602,8 @@ func copyTreatmentPlans(
 	if err := mappings.LoadByTreatmentPlanIDs(ctx, tx, scope, sourcePlanIDs); err != nil {
 		return fmt.Errorf("cannot load treatment plan measures: %w", err)
 	}
+
+	measureIDsByPlan := make(map[gid.GID][]gid.GID, len(copiedPlans))
 
 	for _, mapping := range mappings {
 		planID, err := remapID(idMap, mapping.TreatmentPlanID)
@@ -613,6 +619,22 @@ func copyTreatmentPlans(
 		}
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert treatment plan measure: %w", err)
+		}
+
+		measureIDsByPlan[planID] = append(measureIDsByPlan[planID], copied.MeasureID)
+	}
+
+	for planID, copied := range copiedPlans {
+		if err := insertTreatmentPlanEvent(
+			ctx,
+			tx,
+			scope,
+			copied,
+			coredata.TreatmentPlanEventTypeCreated,
+			measureIDsByPlan[planID],
+			now,
+		); err != nil {
+			return fmt.Errorf("cannot record forked treatment plan created event: %w", err)
 		}
 	}
 

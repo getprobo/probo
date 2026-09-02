@@ -23,6 +23,8 @@
     "years_other": "years",
     "session": "session",
     "persistent": "persistent",
+    "sec_one": "{{count}} Second",
+    "sec_other": "{{count}} Seconds",
     "min_one": "{{count}} Minute",
     "min_other": "{{count}} Minutes",
     "hour_one": "{{count}} Hour",
@@ -289,17 +291,6 @@
     "status": { "approved": "Approved", "rejected": "Rejected", "pending": "Pending", "voided": "Voided" },
     "actions": { "review": "Review" }
   },
-  "documentApprovePage": {
-    "pageTitle": "Review and approve document",
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": { "approved": "Approved", "rejected": "Rejected", "voided": "Voided", "inReview": "In review", "pending": "Pending" },
-    "messages": { "noLongerRequired": "Your approval is no longer required for this version.", "approved": "You have approved this document.", "rejected": "You have rejected this document.", "successTitle": "Success", "approvalSuccess": "Document approved successfully", "rejectionSuccess": "Document rejected" },
-    "errors": { "title": "Error", "approve": "Failed to approve document", "reject": "Failed to reject document", "loadPdf": "Failed to load PDF" },
-    "actions": { "back": "Back to documents", "approve": "Approve", "reject": "Reject" },
-    "rejectDialog": { "title": "Reject document", "description": "Please provide a reason for rejecting this document. The document will be sent back to draft status.", "placeholder": "Reason for rejection...", "submit": "Reject document" },
-    "reviewHint": "Please review the document carefully before making your decision."
-  },
   "documentDescriptionPage": {
     "messages": { "successTitle": "Success", "saved": "Content saved" },
     "errors": { "title": "Error", "save": "Content not saved" }
@@ -319,44 +310,6 @@
     "messages": { "sent": "Signature request sent successfully" },
     "errors": { "send": "Failed to send signature request" },
     "actions": { "request": "Request signature" }
-  },
-  "employeeApprovalsPage": {
-    "pageTitle": "Documents",
-    "columns": { "name": "Name", "type": "Type", "classification": "Classification", "lastUpdate": "Last update", "approved": "Approved" },
-    "empty": { "title": "No documents yet", "description": "No documents have been requested for your approval." }
-  },
-  "employeeDocumentSignaturePage": {
-    "pageTitle": "Sign document",
-    "messages": { "successTitle": "Success", "signed": "Document signed successfully" },
-    "errors": { "title": "Error", "sign": "Failed to sign document", "loadPdf": "Failed to load PDF" },
-    "reviewHint": "Please review the document carefully before signing."
-  },
-  "employeeDocumentsPage": {
-    "pageTitle": "Documents",
-    "columns": { "name": "Name", "type": "Type", "classification": "Classification", "lastUpdate": "Last update", "signed": "Signed" },
-    "empty": { "title": "No documents yet", "description": "No documents have been requested for your signature." }
-  },
-  "employeeTabsLayout": {
-    "title": "Documents",
-    "tabs": { "signatures": "Signatures", "approvals": "Approvals", "bindings": "Slack" }
-  },
-  "approvableDocumentRow": {
-    "states": { "approved": "Approved", "rejected": "Rejected", "noLongerRequired": "No longer required", "pending": "Pending" },
-    "documentTypes": { "other": "Other", "governance": "Governance", "policy": "Policy", "procedure": "Procedure", "plan": "Plan", "register": "Register", "record": "Record", "report": "Report", "template": "Template", "statement_of_applicability": "Statement of applicability" },
-    "classifications": { "public": "Public", "internal": "Internal", "confidential": "Confidential", "secret": "Secret" }
-  },
-  "employeeDocumentRow": {
-    "documentTypes": { "other": "Other", "governance": "Governance", "policy": "Policy", "procedure": "Procedure", "plan": "Plan", "register": "Register", "record": "Record", "report": "Report", "template": "Template", "statement_of_applicability": "Statement of applicability" },
-    "classifications": { "public": "Public", "internal": "Internal", "confidential": "Confidential", "secret": "Secret" },
-    "signed": { "yes": "Yes", "no": "No" }
-  },
-  "versionActions": {
-    "actions": { "back": "Back to documents", "reviewAndSign": "Review and sign" }
-  },
-  "versionRow": {
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": { "signed": "Signed", "inReview": "In review", "waitingSignature": "Waiting signature" }
   },
   "findingDetails": {
     "kinds": { "minor_nonconformity": "Minor nonconformity", "major_nonconformity": "Major nonconformity", "observation": "Observation", "exception": "Exception" },
@@ -753,27 +706,8 @@
   "sortableDataTable": {
     "actions": { "showMore": "Show more" }
   },
-  "taskFormDialog": {
-    "breadcrumb": { "tasks": "Tasks", "edit": "Edit Task", "new": "New Task" },
-    "properties": "Properties",
-    "fields": {
-      "title": { "placeholder": "Task title" },
-      "description": { "placeholder": "Add description" },
-      "state": { "label": "State" },
-      "priority": { "label": "Priority" },
-      "assignedTo": { "label": "Assigned to" },
-      "measure": { "label": "Measure" },
-      "timeEstimate": { "label": "Time estimate" },
-      "deadline": { "label": "Deadline" }
-    },
-    "states": { "todo": "To do", "inProgress": "In progress", "done": "Done" },
-    "priorities": { "urgent": "Urgent", "high": "High", "medium": "Medium", "low": "Low" },
-    "messages": { "created": "Task created successfully.", "updated": "Task updated successfully." },
-    "errors": { "create": "Failed to create task", "update": "Failed to update task" },
-    "actions": { "create": "Create task", "update": "Update task" }
-  },
   "tasksCard": {
-    "states": { "all": "All", "todo": "To do", "inProgress": "In progress", "done": "Done" },
+    "states": { "all": "All", "backlog": "Backlog", "todo": "To do", "inProgress": "In progress", "done": "Done", "canceled": "Canceled", "duplicate": "Duplicate" },
     "empty": "No tasks",
     "error": { "title": "Error", "reorder": "Failed to reorder task." },
     "dragInstructions": {
@@ -781,7 +715,7 @@
       "state": "Drag and drop to reorder tasks"
     },
     "deleteConfirmation": "Are you sure you want to delete this task?",
-    "actions": { "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" }
+    "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Delete Reference",
@@ -1868,7 +1802,6 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": { "connectWithOAuth": "OAuth", "connectWithGitHubApp": "GitHub App", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "connectWithWorkloadIdentity": "Workload Identity", "chooseAnotherMethod": "Choose another connection method", "open": "Open" },
-    "comingSoon": "Coming soon!",
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {
@@ -1914,6 +1847,46 @@
     "region": { "placeholder": "Select a region", "us": "United States (US)", "ca": "Canada (CA)", "eu": "Europe (EU)" },
     "actions": { "connect": "Connect", "connecting": "Connecting..." }
   },
+  "createAwsAccessReviewSourcePage": {
+    "pageTitle": "Connect AWS",
+    "title": "Connect AWS",
+    "description": "Deploy the audit role. Then enter its ARN.",
+    "permissionDenied": "You do not have permission to create access sources.",
+    "fields": {
+      "roleArn": "Role ARN",
+      "issuer": "Issuer",
+      "audience": "Audience",
+      "subject": "Subject",
+      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+    },
+    "messages": {
+      "copyFailed": "Copy failed",
+      "copied": "Copied to clipboard",
+      "copiedIssuer": "Issuer copied.",
+      "copiedAudience": "Audience copied.",
+      "copiedSubject": "Subject copied.",
+      "copiedTerraform": "Terraform snippet copied.",
+      "error": "Error",
+      "success": "Success",
+      "created": "Access source created successfully."
+    },
+    "errors": {
+      "roleArn": "Enter a valid IAM role ARN.",
+      "create": "Could not create the connector. Check the role ARN and try again.",
+      "disconnected": "Probo could not assume the audit role. Confirm the stack is deployed in this account and that the issuer and subject match the values shown during setup.",
+      "delete": "Could not delete the connector. Try again.",
+      "source": "Failed to create access source",
+      "copy": "Copy the value manually."
+    },
+    "actions": {
+      "copy": "Copy",
+      "connect": "Connect",
+      "back": "Back",
+      "installViaCloudFormation": "Install via CloudFormation",
+      "installViaTerraform": "Install via Terraform",
+      "chooseAnotherInstallMethod": "Choose another install method"
+    }
+  },
   "oauthExtraDialog": {
     "actions": { "continue": "Continue" },
     "datadog": { "title": "Connect Datadog", "description": "Select your Datadog site, then continue to authorize access.", "siteLabel": "Datadog site", "sitePlaceholder": "Select a site" },
@@ -1929,7 +1902,7 @@
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." },
     "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry" },
-    "sections": { "connected": "Connected", "notConnected": "Not connected" },
+    "sections": { "connected": "Connected", "available": "Available" },
     "searchPlaceholder": "Search sources and providers...",
     "emptyConnected": "No access sources are connected yet.",
     "emptyConnectedSearch": "No connected sources match your search.",
@@ -2659,6 +2632,7 @@
     "unplannedWarning_one": "{{count}} linked risk has no treatment plan yet.",
     "unplannedWarning_other": "{{count}} linked risks have no treatment plan yet.",
     "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "asOf": "As of",
     "search": "Search risks",
     "states": { "inherent": "Inherent", "net": "Net", "residual": "Residual" },
     "axes": { "likelihood": "Likelihood", "impact": "Impact" },
@@ -2678,7 +2652,6 @@
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
     "progressEmpty": "No measures",
-    "unassigned": "Unassigned",
     "actions": {
       "tasks": "Tasks",
       "edit": "Edit",
@@ -2694,12 +2667,12 @@
   "riskTreatmentPlanListItem": {
     "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
-    "unassigned": "Unassigned",
     "actions": { "measures": "Measures", "edit": "Edit", "delete": "Delete" }
   },
   "treatmentPlanMeasureList": {
     "title": "Measures",
     "empty": "No measures linked yet.",
+    "deleted": "Deleted measure",
     "acceptedEmpty": "Accepted risks cannot have linked measures.",
     "actions": { "create": "New measure", "link": "Link measure", "unlink": "Unlink", "showMore": "Show more" }
   },
@@ -3227,27 +3200,7 @@
       "actions": { "copyCorrelationId": "Copy correlation ID", "correlationIdCopied": "Correlation ID copied" }
     }
   },
-  "employeeDevices": { "title": "Your devices" },
   "deviceEnrollment": {
-    "pageTitle": "Enroll device",
-    "title": "Device enrollment",
-    "setup": "Setup",
-    "stepProgress": "Step {{current}} of {{total}}",
-    "steps": {
-      "privacy": { "title": "Privacy", "description": "Review collected data" },
-      "download": { "title": "Download", "description": "Install the desktop agent" },
-      "organization": { "description": "Choose destination workspace" },
-      "enroll": { "title": "Open and wait", "description": "Finish setup in the desktop agent" }
-    },
-    "unavailable": { "title": "Enrollment unavailable", "description": "You do not have permission to enroll devices in any organization." },
-    "intro": { "title": "Before you start", "description": "Probo collects the following device metadata for inventory and posture reporting:" },
-    "download": { "title": "Download the Probo agent", "description": "Download the Probo agent from <a>pro.bo/install</a>.", "alreadyInstalled": "This step is not necessary if the agent is already installed on this device." },
-    "privacy": { "identity": "Device identity: hardware UUID, hostname, and serial number (when available).", "systemDetails": "System details: platform, OS version, and Probo agent version.", "activitySignals": "Activity signals: enrollment time, heartbeats, and posture check results." },
-    "organization": { "title": "Choose organization", "description": "Pick which organization will own and manage this device." },
-    "openAgent": { "title": "Open the Probo agent", "description": "Click on '{{action}}' to finish setup, then keep this page open until enrollment is confirmed." },
-    "actions": { "backToOrganizations": "Back to organizations", "enrollNew": "Enroll new device", "openAgent": "Open Probo agent", "preparing": "Preparing…" },
-    "status": { "enrolledWithHostname": "{{hostname}} is enrolled.", "enrolled": "This device is enrolled.", "closeWindow": "You can close this window.", "waitingForCheckIn": "Waiting for the agent's first check-in…", "timedOut": "We haven't heard from the agent yet. Make sure the desktop agent is installed and running, then try again." },
-    "manual": { "cannotEnroll": "Can't enroll new device?", "tryCreating": "Try creating it manually", "title": "Manual enrollment", "creating": "Creating device…" },
     "token": { "title": "Enrollment token generated", "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.", "manualInstall": "Manual install (CLI / MDM)", "releaseListHint": "Browse <link>probo-agent releases on GitHub</link> (tags probo-agent/v*), then pick the archive for your OS and architecture (for example probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz, or probo-agent_Windows_x86_64.zip). Replace vX.Y.Z, OS, and ARCH in the download command with the values from the asset you chose.", "installUnix": "Install on macOS or Linux (run from a shell with sudo access)", "installWindows": "Install on Windows (run from an elevated PowerShell session)", "downloadStep": "Download and place the binary", "enrollStep": "Configure the device and start the agent", "securityNotice": "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification." },
     "messages": { "created": "Device created. Copy the enrollment token now — it will not be shown again." },
     "errors": { "copyToClipboard": "Failed to copy to clipboard" }
@@ -3255,27 +3208,6 @@
   "thirdPartyRiskAssessmentRow": {
     "expired": "Expired",
     "notes": "Notes"
-  },
-  "employeeBindPage": {
-    "title": "Connect Slack to Probo",
-    "description": "Link this Slack account to your Probo identity so Probot can help you.",
-    "loading": "Loading…",
-    "fields": { "tenant": "Workspace", "account": "Account" },
-    "actions": { "confirm": "Link Slack account", "linking": "Linking…" },
-    "messages": { "linked": "Your Slack account is now linked to Probo." },
-    "missingToken": { "title": "No confirmation link", "description": "Run /probot login in Slack to get a private confirmation link." },
-    "errors": { "linkFailed": "Link failed", "invalidOrExpiredTokenTitle": "This link has expired", "invalidOrExpiredToken": "Ask the bot for a new private confirmation link." }
-  },
-  "employeeBindingsPage": {
-    "title": "Slack",
-    "description": "Link your Slack account so Probot can help you from this organization.",
-    "connectedDescription": "{{account}} · {{workspace}}",
-    "providers": { "slack": "Slack" },
-    "actions": { "unlink": "Unlink" },
-    "empty": { "title": "No Slack account linked", "description": "Run /probot login in Slack to get a private confirmation link." },
-    "messages": { "unlinked": "Slack account unlinked." },
-    "errors": { "unlinkFailed": "Could not unlink this account." },
-    "confirmations": { "unlink": "Unlink this Slack account? Probot will not be able to help you until you link again." }
   },
   "country": { "GLOBAL": "Global", "AD": "Andorra", "AE": "United Arab Emirates", "AF": "Afghanistan", "AG": "Antigua and Barbuda", "AI": "Anguilla", "AL": "Albania", "AM": "Armenia", "AO": "Angola", "AQ": "Antarctica", "AR": "Argentina", "AS": "American Samoa", "AT": "Austria", "AU": "Australia", "AW": "Aruba", "AX": "Åland Islands", "AZ": "Azerbaijan", "BA": "Bosnia and Herzegovina", "BB": "Barbados", "BD": "Bangladesh", "BE": "Belgium", "BF": "Burkina Faso", "BG": "Bulgaria", "BH": "Bahrain", "BI": "Burundi", "BJ": "Benin", "BL": "Saint Barthélemy", "BM": "Bermuda", "BN": "Brunei", "BO": "Bolivia", "BQ": "Bonaire, Sint Eustatius and Saba", "BR": "Brazil", "BS": "Bahamas", "BT": "Bhutan", "BV": "Bouvet Island", "BW": "Botswana", "BY": "Belarus", "BZ": "Belize", "CA": "Canada", "CC": "Cocos (Keeling) Islands", "CD": "Congo (DRC)", "CF": "Central African Republic", "CG": "Congo (Republic)", "CH": "Switzerland", "CI": "Côte d'Ivoire", "CK": "Cook Islands", "CL": "Chile", "CM": "Cameroon", "CN": "China", "CO": "Colombia", "CR": "Costa Rica", "CU": "Cuba", "CV": "Cape Verde", "CW": "Curaçao", "CX": "Christmas Island", "CY": "Cyprus", "CZ": "Czechia", "DE": "Germany", "DJ": "Djibouti", "DK": "Denmark", "DM": "Dominica", "DO": "Dominican Republic", "DZ": "Algeria", "EC": "Ecuador", "EE": "Estonia", "EG": "Egypt", "EH": "Western Sahara", "ER": "Eritrea", "ES": "Spain", "ET": "Ethiopia", "EU": "EU", "FI": "Finland", "FJ": "Fiji", "FK": "Falkland Islands", "FM": "Micronesia", "FO": "Faroe Islands", "FR": "France", "GA": "Gabon", "GB": "United Kingdom", "GD": "Grenada", "GE": "Georgia", "GF": "French Guiana", "GG": "Guernsey", "GH": "Ghana", "GI": "Gibraltar", "GL": "Greenland", "GM": "Gambia", "GN": "Guinea", "GP": "Guadeloupe", "GQ": "Equatorial Guinea", "GR": "Greece", "GT": "Guatemala", "GU": "Guam", "GW": "Guinea-Bissau", "GY": "Guyana", "HK": "Hong Kong", "HM": "Heard Island and McDonald Islands", "HN": "Honduras", "HR": "Croatia", "HT": "Haiti", "HU": "Hungary", "ID": "Indonesia", "IE": "Ireland", "IL": "Israel", "IM": "Isle of Man", "IN": "India", "IO": "British Indian Ocean Territory", "IQ": "Iraq", "IR": "Iran", "IS": "Iceland", "IT": "Italy", "JE": "Jersey", "JM": "Jamaica", "JO": "Jordan", "JP": "Japan", "KE": "Kenya", "KG": "Kyrgyzstan", "KH": "Cambodia", "KI": "Kiribati", "KM": "Comoros", "KN": "Saint Kitts and Nevis", "KP": "North Korea", "KR": "South Korea", "KW": "Kuwait", "KY": "Cayman Islands", "KZ": "Kazakhstan", "LA": "Laos", "LB": "Lebanon", "LC": "Saint Lucia", "LI": "Liechtenstein", "LK": "Sri Lanka", "LR": "Liberia", "LS": "Lesotho", "LT": "Lithuania", "LU": "Luxembourg", "LV": "Latvia", "LY": "Libya", "MA": "Morocco", "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro", "MF": "Saint Martin", "MG": "Madagascar", "MH": "Marshall Islands", "MK": "North Macedonia", "ML": "Mali", "MM": "Myanmar", "MN": "Mongolia", "MO": "Macau", "MP": "Northern Mariana Islands", "MQ": "Martinique", "MR": "Mauritania", "MS": "Montserrat", "MT": "Malta", "MU": "Mauritius", "MV": "Maldives", "MW": "Malawi", "MX": "Mexico", "MY": "Malaysia", "MZ": "Mozambique", "NA": "Namibia", "NC": "New Caledonia", "NE": "Niger", "NF": "Norfolk Island", "NG": "Nigeria", "NI": "Nicaragua", "NL": "Netherlands", "NO": "Norway", "NP": "Nepal", "NR": "Nauru", "NU": "Niue", "NZ": "New Zealand", "OM": "Oman", "PA": "Panama", "PE": "Peru", "PF": "French Polynesia", "PG": "Papua New Guinea", "PH": "Philippines", "PK": "Pakistan", "PL": "Poland", "PM": "Saint Pierre and Miquelon", "PN": "Pitcairn", "PR": "Puerto Rico", "PS": "Palestine", "PT": "Portugal", "PW": "Palau", "PY": "Paraguay", "QA": "Qatar", "RE": "Réunion", "RO": "Romania", "RS": "Serbia", "RU": "Russia", "RW": "Rwanda", "SA": "Saudi Arabia", "SB": "Solomon Islands", "SC": "Seychelles", "SD": "Sudan", "SE": "Sweden", "SG": "Singapore", "SH": "Saint Helena", "SI": "Slovenia", "SJ": "Svalbard and Jan Mayen", "SK": "Slovakia", "SL": "Sierra Leone", "SM": "San Marino", "SN": "Senegal", "SO": "Somalia", "SR": "Suriname", "SS": "South Sudan", "ST": "São Tomé and Príncipe", "SV": "El Salvador", "SX": "Sint Maarten", "SY": "Syria", "SZ": "Eswatini", "TC": "Turks and Caicos Islands", "TD": "Chad", "TF": "French Southern Territories", "TG": "Togo", "TH": "Thailand", "TJ": "Tajikistan", "TK": "Tokelau", "TL": "Timor-Leste", "TM": "Turkmenistan", "TN": "Tunisia", "TO": "Tonga", "TR": "Turkey", "TT": "Trinidad and Tobago", "TV": "Tuvalu", "TW": "Taiwan", "TZ": "Tanzania", "UA": "Ukraine", "UG": "Uganda", "UM": "United States Minor Outlying Islands", "US": "USA", "UY": "Uruguay", "UZ": "Uzbekistan", "VA": "Vatican City", "VC": "Saint Vincent and the Grenadines", "VE": "Venezuela", "VG": "Virgin Islands (British)", "VI": "Virgin Islands (U.S.)", "VN": "Vietnam", "VU": "Vanuatu", "WF": "Wallis and Futuna", "WS": "Samoa", "YE": "Yemen", "YT": "Mayotte", "ZA": "South Africa", "ZM": "Zambia", "ZW": "Zimbabwe" }
 }

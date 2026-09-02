@@ -67,13 +67,30 @@ export function RiskAnalysisListItem({
     <Tr
       to={`/organizations/${organizationId}/risk-management/risk-analyses/${riskAnalysis.id}/treatment-plans`}
     >
-      <Td className="w-px whitespace-nowrap font-medium">{riskAnalysis.name}</Td>
-      <Td className="text-txt-secondary max-w-md">
-        {riskAnalysis.description || "—"}
+      <Td className="w-72 min-w-48 max-w-72 font-medium wrap-break-word">
+        {riskAnalysis.name}
       </Td>
-      <Td className="w-px whitespace-nowrap text-txt-secondary">
+      <Td className="min-w-64 w-full text-txt-secondary">
+        <span className="line-clamp-2" title={riskAnalysis.description ?? undefined}>
+          {riskAnalysis.description || "—"}
+        </span>
+      </Td>
+      <Td className="whitespace-nowrap text-txt-secondary">
         {riskAnalysis.period
-          ? `${riskAnalysis.period.start ? dateFormat(i18n.language, riskAnalysis.period.start) : "—"} – ${riskAnalysis.period.end ? dateFormat(i18n.language, riskAnalysis.period.end) : "—"}`
+          ? (
+              <span className="flex flex-col">
+                <span>
+                  {riskAnalysis.period.start
+                    ? dateFormat(i18n.language, riskAnalysis.period.start)
+                    : "—"}
+                </span>
+                <span>
+                  {riskAnalysis.period.end
+                    ? dateFormat(i18n.language, riskAnalysis.period.end)
+                    : "—"}
+                </span>
+              </span>
+            )
           : "—"}
       </Td>
       <Td className="w-px whitespace-nowrap text-txt-secondary">

@@ -187,6 +187,27 @@ type ConnectorProviderInfo {
     client cannot render one path's settings on the other.
     """
     clientCredentialsExtraSettings: [ConnectorProviderSettingInfo!]!
+    """
+    workloadIdentitySupported is true when this provider connects by federating
+    a Probo-issued OIDC token into the customer's cloud account, and this
+    deployment has the identity federation issuer enabled.
+    """
+    workloadIdentitySupported: Boolean!
+    """
+    workloadIdentityExtraSettings lists the settings the workload-identity
+    connect form must render and submit, in render order. Empty when the
+    provider has no workload-identity path.
+    """
+    workloadIdentityExtraSettings: [ConnectorProviderSettingInfo!]!
+}
+
+type AWSConnectorSetup {
+    issuer: String!
+    audience: String!
+    subject: String!
+    suggestedRoleName: String!
+    terraformSnippet: String!
+    cloudFormationQuickCreateURL: String!
 }
 
 type ConnectorProviderSettingInfo {
@@ -199,12 +220,31 @@ input ConnectorFilter {
     providers: [ConnectorProvider!]
 }
 
+"""
+Why a connector's credential is or is not usable right now.
+
+DISCONNECTED covers every reason the credential did not work — revoked,
+expired, a role Probo cannot assume, a provider outage — because the
+underlying failure wraps provider-controlled text and stays server-side.
+"""
+enum ConnectorConnectionStatus {
+    CONNECTED
+    DISCONNECTED
+    RECONNECT_REQUIRED
+}
+
 type Connector {
     id: ID!
     provider: ConnectorProvider!
     protocol: ConnectorProtocol!
     canReconnect: Boolean! @goField(forceResolver: true)
     oauth2Scopes: [String!]! @goField(forceResolver: true)
+    """
+    connectionStatus probes the provider live on every read, so selecting it
+    across a list of connectors costs one outbound call per connector. Select
+    it on a single connector, or on the one a mutation just returned.
+    """
+    connectionStatus: ConnectorConnectionStatus! @goField(forceResolver: true)
     createdAt: Datetime!
 }
 
@@ -235,6 +275,9 @@ extend type Mutation {
     createClientCredentialsConnector(
         input: CreateClientCredentialsConnectorInput!
     ): CreateClientCredentialsConnectorPayload!
+    createWorkloadIdentityConnector(
+        input: CreateWorkloadIdentityConnectorInput!
+    ): CreateWorkloadIdentityConnectorPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
     deleteSlackConnection(
         input: DeleteSlackConnectionInput!
@@ -289,6 +332,16 @@ input CreateClientCredentialsConnectorInput {
 
 type CreateClientCredentialsConnectorPayload {
     connector: Connector
+}
+
+input CreateWorkloadIdentityConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    awsRoleArn: String!
+}
+
+type CreateWorkloadIdentityConnectorPayload {
+    connector: Connector!
 }
 
 input DeleteConnectorInput {

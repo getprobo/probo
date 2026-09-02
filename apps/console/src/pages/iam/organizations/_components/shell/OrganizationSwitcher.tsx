@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon, CaretUpDownIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -51,11 +51,10 @@ const organizationSwitcherFragment = graphql`
 `;
 
 export interface OrganizationSwitcherProps {
-  variant?: "bar" | "rail";
   organizationKey: OrganizationSwitcher_organization$key;
 }
 
-export function OrganizationSwitcher({ variant = "bar", organizationKey }: OrganizationSwitcherProps) {
+export function OrganizationSwitcher({ organizationKey }: OrganizationSwitcherProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const [search, setSearch] = useState("");
@@ -75,35 +74,25 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
 
   const slots = organizationSwitcher();
   const railSlots = navRail();
-  const isRail = variant === "rail";
 
-  const trigger = isRail
-    ? (
-        <button type="button" className={railSlots.item()}>
-          <span className={railSlots.icon()}>
-            <Avatar
-              size={2}
-              variant="solid"
-              color="gold"
-              radius="small"
-              src={organization.logo?.downloadUrl ?? undefined}
-              fallback={organization.name.charAt(0) || "?"}
-            />
-          </span>
-          <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
-            {organization.name}
-          </Text>
-          <CaretDownIcon className={railSlots.caret()} />
-        </button>
-      )
-    : (
-        <button type="button" className={slots.trigger()}>
-          <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
-            {organization.name}
-          </Text>
-          <CaretUpDownIcon className="size-4 shrink-0 text-sand-11" />
-        </button>
-      );
+  const trigger = (
+    <button type="button" className={railSlots.item()}>
+      <span className={railSlots.icon()}>
+        <Avatar
+          size={2}
+          variant="solid"
+          color="gold"
+          radius="small"
+          src={organization.logo?.downloadUrl ?? undefined}
+          fallback={organization.name.charAt(0) || "?"}
+        />
+      </span>
+      <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
+        {organization.name}
+      </Text>
+      <CaretDownIcon className={railSlots.caret()} />
+    </button>
+  );
 
   return (
     <Dropdown onOpenChange={handleOpenChange}>

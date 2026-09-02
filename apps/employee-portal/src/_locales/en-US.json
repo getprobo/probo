@@ -1,0 +1,174 @@
+{
+  "topBar": {
+    "tagline": "Employee Portal"
+  },
+  "userMenu": {
+    "apiKeys": "API Keys",
+    "oauthTokens": "OAuth tokens",
+    "switchToDarkMode": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode",
+    "help": "Help",
+    "signOut": "Sign out",
+    "signOutFailed": "Cannot sign out"
+  },
+  "organizationsPage": {
+    "title": "Your organizations",
+    "searchPlaceholder": "Search organizations",
+    "empty": "You do not have access to any employee portals yet.",
+    "emptySearch": "No organizations match that search.",
+    "status": {
+      "authenticated": "Authenticated",
+      "sessionExpired": "Session expired",
+      "authenticationRequired": "Authentication required"
+    },
+    "actions": {
+      "open": "Open",
+      "continue": "Continue"
+    }
+  },
+  "breadcrumb": {
+    "nav": "Breadcrumb"
+  },
+  "homePage": {
+    "breadcrumb": "Home",
+    "welcome": "Welcome {{name}}.",
+    "welcomeFallback": "Welcome.",
+    "getStarted": {
+      "title": "Get started",
+      "description": "Complete the required steps to finish setting up your employee portal.",
+      "signatures": {
+        "count_one": "{{count}} document to sign",
+        "count_other": "{{count}} documents to sign",
+        "description": "Review and sign the document assigned to you.",
+        "action": "Sign"
+      },
+      "approvals": {
+        "count_one": "{{count}} document to approve",
+        "count_other": "{{count}} documents to approve",
+        "description": "Review and approve the document assigned to you.",
+        "action": "Approve"
+      }
+    },
+    "dashboard": {
+      "view": "View",
+      "allDone": "You're all done",
+      "signatures": {
+        "title": "Signatures",
+        "description": "Sign assigned documents.",
+        "empty": "Nothing to sign yet",
+        "pendingCount_one": "{{count}} document to sign",
+        "pendingCount_other": "{{count}} documents to sign",
+        "action": "Start signing"
+      },
+      "approvals": {
+        "title": "Approvals",
+        "description": "Review documents awaiting approval.",
+        "empty": "Nothing to approve yet",
+        "pendingCount_one": "{{count}} document to approve",
+        "pendingCount_other": "{{count}} documents to approve",
+        "action": "Start approving"
+      },
+      "devices": {
+        "title": "Devices",
+        "description": "Manage your work devices.",
+        "connected": "Device connected",
+        "action": "Register a device"
+      },
+      "slack": {
+        "title": "Slack",
+        "description": "Link your Slack account so Probot can help you.",
+        "connected": "Slack connected",
+        "hint": "Run <cmd>/probot login</cmd> in Slack"
+      }
+    }
+  },
+  "common": {
+    "error": "Something went wrong"
+  },
+  "pagination": {
+    "previous": "Prev",
+    "next": "Next"
+  },
+  "queue": {
+    "previous": "Previous document",
+    "next": "Next document",
+    "close": "Close",
+    "progressSignatures": "Document {{current}} of {{total}} to sign",
+    "progressApprovals": "Document {{current}} of {{total}} to approve",
+    "empty": "There are no documents left in this queue"
+  },
+  "viewer": {
+    "pageOf": "Page {{current}} of {{total}}",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "download": "Download PDF"
+  },
+  "documents": {
+    "lastUpdated": "Last updated",
+    "columns": {
+      "title": "Title",
+      "classification": "Classification",
+      "type": "Type",
+      "status": "Status",
+      "action": "Action"
+    },
+    "types": {
+      "other": "Other",
+      "governance": "Governance",
+      "policy": "Policy",
+      "procedure": "Procedure",
+      "plan": "Plan",
+      "register": "Register",
+      "record": "Record",
+      "report": "Report",
+      "template": "Template",
+      "statement_of_applicability": "Statement of applicability"
+    },
+    "classifications": {
+      "public": "Public",
+      "internal": "Internal",
+      "confidential": "Confidential",
+      "secret": "Secret"
+    },
+    "versions": {
+      "heading": "Version history",
+      "count_one": "{{count}} version",
+      "count_other": "{{count}} versions",
+      "label": "v{{major}}.{{minor}}",
+      "current": "Current",
+      "select": "View version {{major}}.{{minor}}",
+      "status": {
+        "inReview": "In review",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "voided": "Voided",
+        "signed": "Signed"
+      }
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you're looking for doesn't exist or may have been moved."
+    },
+    "forbidden": {
+      "title": "Access denied",
+      "description": "You don't have permission to view this page. Go back to your organizations, or contact support if you think this is a mistake."
+    },
+    "serverError": {
+      "title": "Something went wrong",
+      "description": "Something went wrong on our side. Try again, or contact support if the issue continues."
+    },
+    "generic": {
+      "title": "Unable to load page",
+      "description": "We couldn't load this page. Try again, or contact support if the issue continues."
+    },
+    "actions": {
+      "tryAgain": "Try again",
+      "backToOrganizations": "Back to organizations",
+      "contactSupport": "Contact support"
+    }
+  }
+}

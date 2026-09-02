@@ -38,9 +38,10 @@ jobs:
           node: "false"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist packages/emails/dist
           echo ci > apps/console/dist/index.html
           echo ci > apps/compliance-portal/dist/index.html
+          echo ci > apps/employee-portal/dist/index.html
           echo ci > packages/emails/dist/placeholder
       - name: "Classify changed paths"
         id: classify
@@ -75,16 +76,21 @@ jobs:
         run: |
           npm --workspace @probo/compliance-portal run check
           NODE_ENV=production npm --workspace @probo/compliance-portal run build
+      - name: "Build employee-portal"
+        run: |
+          npm --workspace @probo/employee-portal run check
+          NODE_ENV=production npm --workspace @probo/employee-portal run build
       - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "frontend-apps"
           path: |
             apps/console/dist/
             apps/compliance-portal/dist/
+            apps/employee-portal/dist/
             packages/emails/dist/
           retention-days: 1
 
-  # ── Snapshot: build the Linux/amd64 probod group binaries ─────────
+  # ── Snapshot: Linux/amd64 (Docker) and FreeBSD/arm64 (staging) ──
   build-snapshot-binary:
     name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
@@ -97,6 +103,7 @@ jobs:
       matrix:
         include:
           - { goos: linux, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
@@ -234,9 +241,10 @@ jobs:
       - uses: "./.github/actions/setup"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
+          echo dev-server > apps/employee-portal/dist/index.html
       - run: "npm --workspace @probo/emails run build"
       - name: "Generate Go code"
         run: |
@@ -307,9 +315,10 @@ jobs:
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist packages/emails/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
+          echo dev-server > apps/employee-portal/dist/index.html
           echo dev-server > packages/emails/dist/placeholder
       - name: "Generate Go code"
         run: |
@@ -371,7 +380,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for dir in apps/console apps/compliance-portal packages/ui packages/eslint-config; do
+          for dir in apps/console apps/compliance-portal apps/employee-portal packages/ui packages/eslint-config; do
             (cd "$dir" && npx eslint . --concurrency 4 --format stylish 2>/dev/null) | \
               reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -name="eslint ($dir)" || true
           done
@@ -480,9 +489,10 @@ jobs:
         run: "docker compose up --detach --wait postgres"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
+          echo dev-server > apps/employee-portal/dist/index.html
       - run: "npm --workspace @probo/emails run build"
       - run: "make test"
         env:

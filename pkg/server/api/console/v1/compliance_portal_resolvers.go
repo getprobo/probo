@@ -528,16 +528,7 @@ func (r *compliancePortalAccessResolver) Profile(ctx context.Context, obj *types
 }
 
 // Resources is the resolver for the resources field.
-func (r *compliancePortalAccessResolver) Resources(
-	ctx context.Context,
-	obj *types.CompliancePortalAccess,
-	first *int,
-	after *page.CursorKey,
-	last *int,
-	before *page.CursorKey,
-	orderBy *types.CompliancePortalAccessResourceOrderBy,
-	filter *types.CompliancePortalAccessResourceFilter,
-) (*types.CompliancePortalAccessResourceConnection, error) {
+func (r *compliancePortalAccessResolver) Resources(ctx context.Context, obj *types.CompliancePortalAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CompliancePortalAccessResourceOrderBy, filter *types.CompliancePortalAccessResourceFilter) (*types.CompliancePortalAccessResourceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return nil, err

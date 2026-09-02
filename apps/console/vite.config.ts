@@ -63,6 +63,14 @@ function consoleContentSecurityPolicy(
     .replace(/\s+/g, " ");
 }
 
+function proxyTo(target: string) {
+  return {
+    target,
+    changeOrigin: true,
+    ws: true,
+  };
+}
+
 function appOriginFromEnv(env: Record<string, string>): string {
   const explicit = env.CONSOLE_APP_ORIGIN?.trim();
   if (explicit) {
@@ -250,6 +258,10 @@ export default defineConfig(({ mode, command }) => {
           target: "http://localhost:8080",
           changeOrigin: true,
         },
+        // Employee-portal Vite on 5175. Same-origin /employee-portal hrefs
+        // then load that SPA's /employee-portal/@vite and assets from this
+        // origin. Inverse of employee-portal proxying /auth and /me here.
+        "/employee-portal": proxyTo("http://localhost:5175"),
       },
     },
     resolve: {

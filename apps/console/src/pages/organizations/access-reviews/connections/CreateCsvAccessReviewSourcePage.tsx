@@ -38,7 +38,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
 
-import { createAccessReviewSourceMutation } from "../dialogs/accessReviewSourceMutations";
+import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
 export const createCsvAccessReviewSourcePageQuery = graphql`
   query CreateCsvAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -115,7 +115,11 @@ export function CreateCsvAccessReviewSourcePage({
           name: data.name,
           csvData: data.csvData,
         },
-        connections: connectionId ? [connectionId] : [],
+      },
+      updater: (store) => {
+        if (connectionId) {
+          prependCreatedSourceEdge(store, connectionId);
+        }
       },
       onCompleted(_, errors) {
         if (errors?.length) {

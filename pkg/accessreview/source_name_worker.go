@@ -24,17 +24,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/identityfederation"
 )
 
 // sourceNameHandler polls for access sources that have a connector but no
@@ -44,6 +45,7 @@ type sourceNameHandler struct {
 	encryptionKey     cipher.EncryptionKey
 	connectorRegistry *connector.Registry
 	providerRegistry  *provider.Registry
+	federation        *identityfederation.Issuer
 	logger            *log.Logger
 }
 
@@ -52,6 +54,7 @@ func NewSourceNameWorker(
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
+	federation *identityfederation.Issuer,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.AccessReviewSource] {
@@ -60,6 +63,7 @@ func NewSourceNameWorker(
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
 		providerRegistry:  providerRegistry,
+		federation:        federation,
 		logger:            logger,
 	}
 
@@ -101,7 +105,6 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		ctx,
 		"syncing source name",
 		log.String("source_id", source.ID.String()),
-		log.String("current_name", source.Name),
 	)
 
 	var (
@@ -121,44 +124,37 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 			}
 
-			// Every name resolver reads the provider's HTTP API, so a connector
-			// whose credential does not ride on HTTP has none to build. Leave
-			// resolver nil for the ordinary "no resolver for provider" path
-			// below, rather than the failure path, which would warn about
-			// normal operation.
-			conn, ok := dbConnector.Connection.(connector.HTTPConnection)
-			if !ok {
-				return nil
-			}
-
-			var tokenBefore string
-			if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
-				tokenBefore = oauth2Conn.AccessToken
-			}
-
-			httpClient, err := buildHTTPClient(
-				ctx,
-				h.connectorRegistry,
-				h.providerRegistry,
-				dbConnector.Provider,
-				conn,
-			)
-			if err != nil {
-				return fmt.Errorf("cannot create HTTP client for connector: %w", err)
-			}
-
-			if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
-				if oauth2Conn.AccessToken != tokenBefore {
-					dbConnector.UpdatedAt = time.Now()
-					if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
-						return fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
-					}
+			// The connection decides which credential the resolver can be
+			// built from, the same way ProbeConnector and resolveDriver
+			// pick a path. A protocol without a factory lands in the
+			// default arm rather than falling through to the other kind.
+			switch conn := dbConnector.Connection.(type) {
+			case *connector.WorkloadIdentityConnection:
+				r, err := h.newCloudNameResolver(ctx, &dbConnector)
+				if err != nil {
+					return err
 				}
+
+				resolver = r
+
+				return nil
+
+			case connector.HTTPConnection:
+				r, err := h.newHTTPNameResolver(ctx, tx, scope, &dbConnector, conn)
+				if err != nil {
+					return err
+				}
+
+				resolver = r
+
+				return nil
+
+			default:
+				return fmt.Errorf(
+					"cannot resolve source name: %s connector has an unsupported credential",
+					dbConnector.Provider,
+				)
 			}
-
-			resolver = h.buildResolver(ctx, &dbConnector, httpClient)
-
-			return nil
 		},
 	)
 	if err != nil {
@@ -166,6 +162,10 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		// or an eager refresh on a revoked token). Mark the source synced
 		// rather than returning nil: an unsynced row is re-claimed every poll
 		// with no backoff and hot-loops the vendor. A reconnect clears it.
+		if ctx.Err() != nil {
+			return err
+		}
+
 		h.logger.WarnCtx(
 			ctx,
 			"cannot set up name resolver, keeping generic name",
@@ -238,8 +238,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		ctx,
 		"resolved source name",
 		log.String("source_id", source.ID.String()),
-		log.String("old_name", source.Name),
-		log.String("new_name", newName),
+		log.String("connector_id", dbConnector.ID.String()),
 	)
 
 	source.Name = newName
@@ -269,15 +268,86 @@ func (h *sourceNameHandler) markNameSynced(
 	)
 }
 
-func (h *sourceNameHandler) buildResolver(
+func (h *sourceNameHandler) newCloudNameResolver(
 	ctx context.Context,
 	dbConnector *coredata.Connector,
-	httpClient *http.Client,
-) drivers.NameResolver {
+) (drivers.NameResolver, error) {
 	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
-	if !ok || reg.NewNameResolver == nil {
-		return nil
+	if !ok || reg.WorkloadIdentity == nil || reg.WorkloadIdentity.NewNameResolver == nil {
+		return nil, nil
 	}
 
-	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints)
+	session, err := h.buildCloudSession(ctx, dbConnector)
+	if err != nil {
+		return nil, err
+	}
+
+	return reg.WorkloadIdentity.NewNameResolver(ctx, session, dbConnector, h.logger), nil
+}
+
+func (h *sourceNameHandler) newHTTPNameResolver(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	dbConnector *coredata.Connector,
+	conn connector.HTTPConnection,
+) (drivers.NameResolver, error) {
+	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.NewNameResolver == nil {
+		return nil, nil
+	}
+
+	var tokenBefore string
+	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+		tokenBefore = oauth2Conn.AccessToken
+	}
+
+	httpClient, err := buildHTTPClient(
+		ctx,
+		h.connectorRegistry,
+		h.providerRegistry,
+		dbConnector.Provider,
+		conn,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create HTTP client for connector: %w", err)
+	}
+
+	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+		if oauth2Conn.AccessToken != tokenBefore {
+			dbConnector.UpdatedAt = time.Now()
+			if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
+				return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", dbConnector.ID, err)
+			}
+		}
+	}
+
+	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints), nil
+}
+
+func (h *sourceNameHandler) buildCloudSession(
+	ctx context.Context,
+	dbConnector *coredata.Connector,
+) (cloud.Session, error) {
+	if h.federation == nil {
+		return nil, fmt.Errorf(
+			"cannot reach %s connector: identity federation is not configured in this deployment",
+			dbConnector.Provider,
+		)
+	}
+
+	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.WorkloadIdentity == nil {
+		return nil, fmt.Errorf(
+			"cannot reach %s connector: provider offers no workload identity path",
+			dbConnector.Provider,
+		)
+	}
+
+	session, err := reg.WorkloadIdentity.NewSession(ctx, h.federation, dbConnector)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open cloud session for %s connector: %w", dbConnector.Provider, err)
+	}
+
+	return session, nil
 }

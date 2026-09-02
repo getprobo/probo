@@ -63,6 +63,7 @@ const typographyVariants = {
     green: "",
     amber: "",
     sky: "",
+    indigo: "",
   },
   highContrast: {
     true: "",
@@ -86,6 +87,8 @@ const colorCompoundVariants = [
   { color: "amber", highContrast: true, class: "text-amber-12" },
   { color: "sky", highContrast: false, class: "text-sky-11" },
   { color: "sky", highContrast: true, class: "text-sky-12" },
+  { color: "indigo", highContrast: false, class: "text-indigo-11" },
+  { color: "indigo", highContrast: true, class: "text-indigo-12" },
 ] as const;
 
 export const text = tv({

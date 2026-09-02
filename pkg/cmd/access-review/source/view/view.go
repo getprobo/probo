@@ -38,6 +38,7 @@ query($id: ID!) {
       id
       name
       connectorId
+      connectionStatus
       createdAt
       updatedAt
     }
@@ -47,12 +48,13 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename    string  `json:"__typename"`
-		ID          string  `json:"id"`
-		Name        string  `json:"name"`
-		ConnectorID *string `json:"connectorId"`
-		CreatedAt   string  `json:"createdAt"`
-		UpdatedAt   string  `json:"updatedAt"`
+		Typename         string  `json:"__typename"`
+		ID               string  `json:"id"`
+		Name             string  `json:"name"`
+		ConnectorID      *string `json:"connectorId"`
+		ConnectionStatus string  `json:"connectionStatus"`
+		CreatedAt        string  `json:"createdAt"`
+		UpdatedAt        string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -125,6 +127,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			if s.ConnectorID != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Connector:"), *s.ConnectorID)
 			}
+
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Connection:"), s.ConnectionStatus)
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(s.CreatedAt))

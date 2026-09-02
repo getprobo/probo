@@ -1,0 +1,20 @@
+{
+  "title": "Inscrire un appareil",
+  "unavailable": {
+    "title": "Enrôlement indisponible",
+    "description": "Vous n’avez pas l’autorisation d’enrôler des appareils dans aucune organisation.",
+    "home": "Retour aux organisations"
+  },
+  "steps": {
+    "organization": {
+      "title": "Choisir une organisation",
+      "description": "Choisissez l’organisation qui possédera cet appareil."
+    }
+  },
+  "organization": {
+    "title": "Choisir une organisation",
+    "description": "Choisissez l’organisation qui possédera et gérera cet appareil.",
+    "placeholder": "Sélectionner une organisation",
+    "continue": "Continuer"
+  }
+}

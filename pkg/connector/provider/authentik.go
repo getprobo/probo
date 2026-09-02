@@ -36,8 +36,9 @@ import (
 // password a service account is created with.
 func authentikRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderAuthentik,
-		DisplayName: "authentik",
+		Provider:         coredata.ConnectorProviderAuthentik,
+		DisplayName:      "authentik",
+		DocumentationURL: accessReviewDocsURL("authentik"),
 		APIKey: &APIKeyConfig{
 			ExtraSettings: []ExtraSetting{
 				{Key: "baseUrl", Label: "Base URL", Required: true},

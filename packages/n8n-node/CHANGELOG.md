@@ -4,6 +4,24 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.225.0] - 2026-09-01
+
+### Added
+
+- Access Review Source `Create`, to create an AWS workload-identity access source
+- Access Review Source `Setup AWS`, to get the AWS connector setup values (issuer, audience, subject, suggested role name, Terraform snippet, CloudFormation quick-create URL)
+
+## [0.224.0] - 2026-09-01
+
+### Added
+
+- `As Of` on Risk Analysis `Get` and Treatment Plan `Get Many` reconstructs matrix cells and plans as of that instant; on Treatment Plan `Get Many` it requires `Risk Analysis ID`, and leaving it empty keeps reading live tables
+- `State` on Task `Create`, and `Backlog`, `Canceled`, and `Duplicate` added to the Task state options
+
+### Changed
+
+- Treatment Plan `Get` and `Get Many` return the plan's `category`
+
 ## [0.223.0] - 2026-08-27
 
 ### Added

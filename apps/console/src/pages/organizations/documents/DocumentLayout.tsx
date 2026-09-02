@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { Badge, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,6 +43,7 @@ export const documentLayoutQuery = graphql`
       ... on DocumentVersion {
         id
         status
+        title
         ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_versionFragment
         ...DocumentDetailsCard_versionFragment
@@ -86,6 +88,7 @@ export const documentLayoutQuery = graphql`
             node {
               id
               status
+              title
               ...DocumentTitleFormFragment
               ...DocumentActionsDropdown_versionFragment
               ...DocumentDetailsCard_versionFragment
@@ -157,6 +160,8 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const hasApprovals = lastQuorum != null;
 
   const currentTab = location.pathname.split("/").at(-1);
+
+  usePageTitle(currentVersion.title);
 
   // For changes on the current version (type, classification, title, content).
   // Refreshes layout data but does NOT remount the editor.

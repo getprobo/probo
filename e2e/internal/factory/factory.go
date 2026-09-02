@@ -1761,6 +1761,32 @@ func LinkTreatmentPlanMeasure(c *testutil.Client, treatmentPlanID, measureID str
 	require.NoError(c.T, err, "createTreatmentPlanMeasureMapping mutation failed")
 }
 
+func UnlinkTreatmentPlanMeasure(c *testutil.Client, treatmentPlanID, measureID string) {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: DeleteTreatmentPlanMeasureMappingInput!) {
+			deleteTreatmentPlanMeasureMapping(input: $input) {
+				deletedMeasureId
+			}
+		}
+	`
+
+	var result struct {
+		DeleteTreatmentPlanMeasureMapping struct {
+			DeletedMeasureID string `json:"deletedMeasureId"`
+		} `json:"deleteTreatmentPlanMeasureMapping"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"treatmentPlanId": treatmentPlanID,
+			"measureId":       measureID,
+		},
+	}, &result)
+	require.NoError(c.T, err, "deleteTreatmentPlanMeasureMapping mutation failed")
+}
+
 func CreateRiskAnalysisDiagram(c *testutil.Client, riskAnalysisID string, attrs ...Attrs) string {
 	c.T.Helper()
 

@@ -81,3 +81,37 @@ AND
 )
 	`
 }
+
+func (f *MeasureFilter) EventSQLFragment() string {
+	return `
+(
+	CASE
+		WHEN @query::text IS NULL OR @query::text = '' THEN
+			TRUE
+		ELSE
+			to_tsvector('simple', name) @@ (
+				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
+				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+			)
+	END
+)
+AND
+(
+	CASE
+		WHEN @state::mitigation_state IS NULL THEN
+			TRUE
+		ELSE
+			state = @state::mitigation_state::text
+		END
+)
+AND
+(
+	CASE
+		WHEN @category::text IS NULL OR @category::text = '' THEN
+			TRUE
+		ELSE
+			category = @category::text
+	END
+)
+	`
+}

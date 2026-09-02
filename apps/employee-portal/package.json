@@ -1,0 +1,50 @@
+{
+  "name": "@probo/employee-portal",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5175",
+    "build": "tsc -b && vite build",
+    "check": "tsc --noEmit -p tsconfig.app.json",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@probo/helpers": "1.0.0",
+    "@probo/i18n": "1.0.0",
+    "@probo/react-lazy": "1.0.0",
+    "@probo/relay": "1.0.0",
+    "@probo/routes": "1.0.0",
+    "@probo/ui": "1.0.0",
+    "i18next": "^26.3.4",
+    "pdfjs-dist": "5.4.296",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.11",
+    "react-pdf": "^10.5.0",
+    "react-relay": "^21.0.1",
+    "react-router": "^8.3.0",
+    "relay-runtime": "^21.0.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@rolldown/plugin-babel": "^0.2.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/react-relay": "^18.2.1",
+    "@types/relay-runtime": "^20.1.1",
+    "@vitejs/plugin-react": "^6.0.5",
+    "babel-plugin-relay": "^21.0.1",
+    "graphql": "^17.0.2",
+    "tailwindcss": "^4.3.1",
+    "typescript": "~7.0.2",
+    "vite": "^8.2.0"
+  },
+  "volta": {
+    "node": "24.19.0"
+  }
+}

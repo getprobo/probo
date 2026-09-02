@@ -96,7 +96,7 @@ func (tpm TreatmentPlanMeasure) Delete(
 	scope Scoper,
 	treatmentPlanID gid.GID,
 	measureID gid.GID,
-) error {
+) (bool, error) {
 	q := `
 DELETE
 FROM
@@ -115,12 +115,12 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete treatment plan measure: %w", err)
+		return false, fmt.Errorf("cannot delete treatment plan measure: %w", err)
 	}
 
-	return nil
+	return result.RowsAffected() > 0, nil
 }
 
 func (tpms *TreatmentPlanMeasures) LoadByTreatmentPlanIDs(

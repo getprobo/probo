@@ -1,0 +1,38 @@
+{
+  "title": "Approvals",
+  "breadcrumb": "Approvals",
+  "pending": {
+    "heading": "Waiting for your approval ({{count}})",
+    "summaryTitle_one": "{{count}} document to approve",
+    "summaryTitle_other": "{{count}} documents to approve",
+    "summaryDescription": "Review and approve the documents required to complete your employee setup.",
+    "action": "Start approving",
+    "itemAction": "Approve"
+  },
+  "history": {
+    "heading": "Reviewed ({{count}})",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected"
+  },
+  "empty": {
+    "none": {
+      "title": "No approval requests yet",
+      "description": "Documents that need your approval will appear here."
+    },
+    "allDone": {
+      "title": "You're all done",
+      "description": "You're up to date. Documents you've already reviewed are listed below."
+    }
+  },
+  "document": {
+    "instruction": "Review this document, then approve or reject it.",
+    "reviewAndApprove": "Review and approve",
+    "reject": "Reject",
+    "approved": "You approved this document.",
+    "rejected": "You rejected this document.",
+    "voided": "This approval is no longer required.",
+    "goToNext": "Go to next document",
+    "finish": "Finish approvals",
+    "backToList": "Back to approvals"
+  }
+}

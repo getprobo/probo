@@ -243,7 +243,7 @@ func TestServiceBindURLIsOpaque(t *testing.T) {
 	assert.Contains(
 		t,
 		bindURL,
-		"/organizations/"+organizationID.String()+"/employee/bind",
+		"/employee-portal/"+organizationID.String()+"/bind",
 	)
 }
 

@@ -1,0 +1,134 @@
+{
+  "title": "Dit apparaat registreren",
+  "breadcrumb": "Apparaten",
+  "registerBreadcrumb": "Registreren",
+  "addManuallyBreadcrumb": "Handmatig toevoegen",
+  "list": {
+    "title": "Apparaten",
+    "register": "Nieuw apparaat registreren",
+    "addManually": "Handmatig toevoegen",
+    "lastActive": "Laatst actief",
+    "never": "Nooit",
+    "justNow": "Zojuist",
+    "pendingHostname": "In behandeling",
+    "connected": "Verbonden",
+    "disconnected": "Niet verbonden",
+    "columns": {
+      "hostname": "Apparaat",
+      "details": "Details"
+    },
+    "platforms": {
+      "DARWIN": "macOS",
+      "WINDOWS": "Windows",
+      "LINUX": "Linux",
+      "FREEBSD": "FreeBSD"
+    }
+  },
+  "empty": {
+    "title": "Nog geen apparaten",
+    "description": "Registreer een apparaat om het te koppelen aan uw organisatie en de beveiligingsstatus te monitoren.",
+    "register": "Apparaat registreren",
+    "addManually": "Handmatig toevoegen"
+  },
+  "unavailable": {
+    "title": "Registratie niet beschikbaar",
+    "description": "U heeft geen rechten om apparaten te registreren in deze organisatie.",
+    "home": "Terug naar home"
+  },
+  "steps": {
+    "review": {
+      "title": "Apparaatgegevens bekijken",
+      "description": "Bekijk wat Probo Agent zal opslaan."
+    },
+    "download": {
+      "title": "Download de agent",
+      "description": "Installeer de desktopagent"
+    },
+    "enroll": {
+      "title": "Open Probo Agent",
+      "description": "Rond de registratie van dit apparaat af."
+    }
+  },
+  "review": {
+    "title": "Verzamelde gegevens bekijken",
+    "description": "Probo verzamelt de volgende apparaatmetadata voor inventarisatie- en postuurrapportage.",
+    "understand": "Ik begrijp het",
+    "thisDevice": {
+      "title": "Dit apparaat",
+      "hostname": "Hostnaam",
+      "platform": "Platform",
+      "osVersion": "OS-versie"
+    },
+    "identity": {
+      "title": "Apparaatidentiteit",
+      "hardwareUuid": "Hardware-UUID",
+      "hostname": "Hostnaam",
+      "serialNumber": "Serienummer, indien beschikbaar"
+    },
+    "system": {
+      "title": "Systeemdetails",
+      "platform": "Platform",
+      "osVersion": "OS-versie",
+      "agentVersion": "Versie van de Probo-agent"
+    },
+    "activity": {
+      "title": "Activiteitssignalen",
+      "enrollmentTime": "Registratietijd",
+      "heartbeats": "Agent-heartbeats",
+      "posture": "Resultaten van postuurcontroles"
+    }
+  },
+  "download": {
+    "title": "Download Probo Agent",
+    "description": "Installeer de app om dit apparaat te beveiligen en te koppelen aan uw organisatie.",
+    "featured": "Probo Agent voor macOS",
+    "continue": "Doorgaan",
+    "download": "Downloaden",
+    "downloadNamed": "{{title}} downloaden",
+    "macosIntel": {
+      "title": "macOS Intel",
+      "meta": "macOS 13.0+"
+    },
+    "windows": {
+      "title": "Windows",
+      "meta": "Windows 11+"
+    }
+  },
+  "enroll": {
+    "title": "Ga verder in de app",
+    "description": "Open Probo Agent om de registratie van dit apparaat af te ronden.",
+    "open": "Probo Agent openen",
+    "preparing": "Voorbereiden…",
+    "waiting": "Wachten op de eerste check-in van de agent…",
+    "timedOut": "We hebben nog niets van de agent gehoord. Zorg ervoor dat de desktopagent is geïnstalleerd en actief, en probeer het opnieuw.",
+    "failed": "We konden de registratie niet starten. Probeer het opnieuw.",
+    "tryAgain": "Opnieuw proberen",
+    "enrolled": "Dit apparaat is geregistreerd.",
+    "enrolledWithHostname": "{{hostname}} is geregistreerd.",
+    "home": "Terug naar home"
+  },
+  "addManually": {
+    "title": "Handmatige registratie",
+    "creating": "Apparaat aanmaken…",
+    "failed": "We konden geen registratietoken aanmaken. Probeer het opnieuw.",
+    "created": "Apparaat aangemaakt. Kopieer de registratietoken nu — deze wordt niet opnieuw getoond.",
+    "done": "Klaar",
+    "retry": "Opnieuw proberen",
+    "back": "Terug naar apparaten",
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd",
+    "copyFailed": "Kopiëren naar klembord mislukt",
+    "token": {
+      "title": "Registratietoken gegenereerd",
+      "description": "Deel deze registratietoken alleen met de apparaateigenaar via een beveiligd kanaal. Deze kan één keer worden gebruikt en verloopt na zeven dagen.",
+      "releaseListHint": "Blader door <link>probo-agent releases op GitHub</link> (tags probo-agent/v*) en kies het archief voor uw besturingssysteem en architectuur (bijvoorbeeld probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz of probo-agent_Windows_x86_64.zip). Vervang vX.Y.Z, OS en ARCH in het downloadcommando door de waarden van het door u gekozen bestand.",
+      "tabUnix": "macOS / Linux",
+      "tabWindows": "Windows",
+      "installUnix": "Installeren op macOS of Linux (uitvoeren vanuit een shell met sudo-toegang)",
+      "installWindows": "Installeren op Windows (uitvoeren vanuit een PowerShell-sessie met verhoogde rechten)",
+      "downloadStep": "Download het programma en plaats het",
+      "enrollStep": "Configureer het apparaat en start de agent",
+      "securityNotice": "De token wordt doorgegeven als CLI-vlag (niet via curl-piped-to-shell of sudo-omgevingsvariabelen). Eenmaal geïnstalleerd, werkt de agent zichzelf automatisch bij vanuit GitHub Releases met cosign-handtekeningverificatie."
+    }
+  }
+}

@@ -78,16 +78,28 @@ export const description: INodeProperties[] = [
 				value: '',
 			},
 			{
-				name: 'Todo',
-				value: 'TODO',
+				name: 'Backlog',
+				value: 'BACKLOG',
+			},
+			{
+				name: 'Canceled',
+				value: 'CANCELED',
+			},
+			{
+				name: 'Done',
+				value: 'DONE',
+			},
+			{
+				name: 'Duplicate',
+				value: 'DUPLICATE',
 			},
 			{
 				name: 'In Progress',
 				value: 'IN_PROGRESS',
 			},
 			{
-				name: 'Done',
-				value: 'DONE',
+				name: 'Todo',
+				value: 'TODO',
 			},
 		],
 		default: '',

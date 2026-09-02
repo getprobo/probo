@@ -41,46 +41,40 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import type { MatrixSize } from "../../_components/matrixSize";
+import { type MatrixSize } from "../../_components/matrixSize";
 
 import { TreatmentPlanMeasureList } from "./TreatmentPlanMeasureList";
+import { TreatmentPlanProgressBar } from "./TreatmentPlanProgressBar";
 import { TreatmentPlanScoreTags } from "./TreatmentPlanScoreTags";
 import { UpdateTreatmentPlanDialog } from "./UpdateTreatmentPlanDialog";
 
 export const treatmentPlanListItemFragment = graphql`
-  fragment TreatmentPlanListItem_treatmentPlan on TreatmentPlan {
+  fragment TreatmentPlanListItem_treatmentPlan on TreatmentPlan
+  @argumentDefinitions(asOf: { type: "Datetime", defaultValue: null }) {
     id
     treatment
     inherentLikelihood
     inherentImpact
     residualLikelihood
     residualImpact
+    category
     owner {
       fullName
     }
     risk {
       id
       name
-      category
     }
     canUpdate: permission(action: "risk-management:treatment-plan:update")
     canDelete: permission(action: "risk-management:treatment-plan:delete")
-    measureCount: measures(first: 0) {
-      totalCount
+    progress {
+      done
+      inProgress
+      notImplemented
+      total
     }
-    implementedMeasures: measures(first: 0, filter: { state: IMPLEMENTED }) {
-      totalCount
-    }
-    inProgressMeasures: measures(first: 0, filter: { state: IN_PROGRESS }) {
-      totalCount
-    }
-    notImplementedMeasures: measures(
-      first: 0
-      filter: { state: NOT_IMPLEMENTED }
-    ) {
-      totalCount
-    }
-    ...TreatmentPlanMeasureList_treatmentPlan
+    ...TreatmentPlanMeasureList_meta
+    ...TreatmentPlanMeasureList_treatmentPlan @arguments(asOf: $asOf)
     ...UpdateTreatmentPlanDialog_treatmentPlan
   }
 `;
@@ -100,6 +94,7 @@ interface TreatmentPlanListItemProps {
   treatmentPlanKey: TreatmentPlanListItem_treatmentPlan$key;
   connectionId: string;
   matrixSize: MatrixSize;
+  readOnly?: boolean;
   onChanged?: () => void;
 }
 
@@ -107,6 +102,7 @@ export function TreatmentPlanListItem({
   treatmentPlanKey,
   connectionId,
   matrixSize,
+  readOnly = false,
   onChanged,
 }: TreatmentPlanListItemProps) {
   const { t } = useTranslation();
@@ -118,21 +114,11 @@ export function TreatmentPlanListItem({
   const treatmentPlan = useFragment(treatmentPlanListItemFragment, treatmentPlanKey);
   const relayEnv = useRelayEnvironment();
   const [deleteTreatmentPlan] = useMutation<TreatmentPlanListItemDeleteMutation>(deleteMutation);
-  const progress = {
-    done: treatmentPlan.implementedMeasures.totalCount,
-    inProgress: treatmentPlan.inProgressMeasures.totalCount,
-    notImplemented: treatmentPlan.notImplementedMeasures.totalCount,
-    total: treatmentPlan.measureCount.totalCount,
-  };
-  const donePct = progress.total === 0
-    ? 0
-    : Math.round((progress.done / progress.total) * 100);
-  const inProgressPct = progress.total === 0
-    ? 0
-    : Math.round((progress.inProgress / progress.total) * 100);
-  const notImplementedPct = progress.total === 0
-    ? 0
-    : Math.round((progress.notImplemented / progress.total) * 100);
+  const progress = treatmentPlan.progress;
+  const inherentLikelihood = treatmentPlan.inherentLikelihood;
+  const inherentImpact = treatmentPlan.inherentImpact;
+  const residualLikelihood = treatmentPlan.residualLikelihood;
+  const residualImpact = treatmentPlan.residualImpact;
 
   const onDelete = () => {
     confirm(
@@ -158,11 +144,13 @@ export function TreatmentPlanListItem({
 
   return (
     <>
-      <UpdateTreatmentPlanDialog
-        dialogRef={formDialogRef}
-        treatmentPlanKey={treatmentPlan}
-        matrixSize={matrixSize}
-      />
+      {!readOnly && (
+        <UpdateTreatmentPlanDialog
+          dialogRef={formDialogRef}
+          treatmentPlanKey={treatmentPlan}
+          matrixSize={matrixSize}
+        />
+      )}
       <Tr
         className="cursor-pointer"
         onClick={() => setExpanded(open => !open)}
@@ -194,7 +182,7 @@ export function TreatmentPlanListItem({
             </Link>
           </div>
         </Td>
-        <Td className="w-px whitespace-nowrap pr-6">{treatmentPlan.risk.category}</Td>
+        <Td className="w-px whitespace-nowrap pr-6">{treatmentPlan.category}</Td>
         <Td className="w-px whitespace-nowrap pr-6">
           {t(`formRiskDialog.treatments.${treatmentPlan.treatment.toLowerCase()}`)}
         </Td>
@@ -203,41 +191,23 @@ export function TreatmentPlanListItem({
         </Td>
         <Td className="w-px whitespace-nowrap pr-6">
           <TreatmentPlanScoreTags
-            inherentLikelihood={treatmentPlan.inherentLikelihood}
-            inherentImpact={treatmentPlan.inherentImpact}
-            residualLikelihood={treatmentPlan.residualLikelihood}
-            residualImpact={treatmentPlan.residualImpact}
+            inherentLikelihood={inherentLikelihood}
+            inherentImpact={inherentImpact}
+            residualLikelihood={residualLikelihood}
+            residualImpact={residualImpact}
             matrixSize={matrixSize}
           />
         </Td>
         <Td className="w-px whitespace-nowrap pr-6">
-          <div className="flex w-28 items-center gap-2">
-            <div className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-border-low">
-              <div
-                className="h-full bg-txt-success"
-                style={{ width: `${donePct}%` }}
-              />
-              <div
-                className="h-full bg-txt-warning"
-                style={{ width: `${inProgressPct}%` }}
-              />
-              <div
-                className="h-full bg-txt-danger"
-                style={{ width: `${notImplementedPct}%` }}
-              />
-            </div>
-            <span className="text-xs tabular-nums text-txt-secondary">
-              {progress.total === 0
-                ? t("treatmentPlanListItem.progressEmpty")
-                : t("treatmentPlanListItem.progress", {
-                    done: progress.done,
-                    total: progress.total,
-                  })}
-            </span>
-          </div>
+          <TreatmentPlanProgressBar
+            done={progress.done}
+            inProgress={progress.inProgress}
+            notImplemented={progress.notImplemented}
+            total={progress.total}
+          />
         </Td>
         <Td noLink width={48} className="w-px text-end">
-          {(treatmentPlan.canUpdate || treatmentPlan.canDelete) && (
+          {!readOnly && (treatmentPlan.canUpdate || treatmentPlan.canDelete) && (
             <div onClick={event => event.stopPropagation()}>
               <ActionDropdown>
                 {treatmentPlan.canUpdate && (

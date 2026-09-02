@@ -20,7 +20,7 @@
 
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { navPanel, navRail, organizationLayout, topBar } from "./_components/shell/variants";
+import { navPanel, navRail, organizationLayout } from "./_components/shell/variants";
 import { NAV_GROUPS } from "./_lib/navigation";
 
 // Widths track the English labels of the widest product (Governance).
@@ -35,54 +35,40 @@ const PANEL_ITEMS = [
   { key: "statementsOfApplicability", width: "w-44" },
 ] as const;
 
-export interface OrganizationLayoutSkeletonProps {
-  hideNavigation?: boolean;
-}
-
-export function OrganizationLayoutSkeleton({ hideNavigation = false }: OrganizationLayoutSkeletonProps) {
+export function OrganizationLayoutSkeleton() {
   const layoutSlots = organizationLayout();
   const railSlots = navRail({ expandable: false });
   const panelSlots = navPanel();
-  const barSlots = topBar();
 
   return (
     <div className={layoutSlots.root()}>
-      {hideNavigation && (
-        <div className={barSlots.bar()}>
-          <div className="h-5 w-12 animate-pulse rounded-1 bg-sand-3" />
-        </div>
-      )}
       <div className={layoutSlots.body()}>
-        {!hideNavigation && (
-          <>
-            <div className={railSlots.root()}>
-              <div className={railSlots.rail()}>
-                <div className={railSlots.icon()}>
-                  <div className="size-8 animate-pulse rounded-2 bg-sand-3" />
-                </div>
-                <div className={railSlots.items()}>
-                  {NAV_GROUPS.map(group => (
-                    <div key={group.key} className="size-10 animate-pulse rounded-3 bg-sand-3" />
-                  ))}
-                </div>
-                <div className="size-10 animate-pulse rounded-3 bg-sand-3" />
-                <div className="size-10 animate-pulse rounded-3 bg-sand-3" />
-                <div className={railSlots.icon()}>
-                  <div className="size-8 animate-pulse rounded-full bg-sand-3" />
-                </div>
-              </div>
+        <div className={railSlots.root()}>
+          <div className={railSlots.rail()}>
+            <div className={railSlots.icon()}>
+              <div className="size-8 animate-pulse rounded-2 bg-sand-3" />
             </div>
+            <div className={railSlots.items()}>
+              {NAV_GROUPS.map(group => (
+                <div key={group.key} className="size-10 animate-pulse rounded-3 bg-sand-3" />
+              ))}
+            </div>
+            <div className="size-10 animate-pulse rounded-3 bg-sand-3" />
+            <div className="size-10 animate-pulse rounded-3 bg-sand-3" />
+            <div className={railSlots.icon()}>
+              <div className="size-8 animate-pulse rounded-full bg-sand-3" />
+            </div>
+          </div>
+        </div>
 
-            <div className={panelSlots.panel()}>
-              <TextSkeleton size={1} className={`w-20 ${panelSlots.title()}`} />
-              <div className={panelSlots.list()}>
-                {PANEL_ITEMS.map(item => (
-                  <TextSkeleton key={item.key} size={2} className={`my-1.5 ${item.width}`} />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+        <div className={panelSlots.panel()}>
+          <TextSkeleton size={1} className={`w-20 ${panelSlots.title()}`} />
+          <div className={panelSlots.list()}>
+            {PANEL_ITEMS.map(item => (
+              <TextSkeleton key={item.key} size={2} className={`my-1.5 ${item.width}`} />
+            ))}
+          </div>
+        </div>
 
         <div className={layoutSlots.content()}>
           <div className={layoutSlots.contentInner()} />

@@ -14,7 +14,9 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/complianceportal/management"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -2133,6 +2135,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 			MeasureID:      input.MeasureID,
 			Name:           input.Name,
 			Description:    input.Description,
+			State:          input.State,
 			Priority:       priority,
 			TimeEstimate:   input.TimeEstimate,
 			Deadline:       input.Deadline,
@@ -3796,7 +3799,7 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 		return nil, types.CreateAccessReviewSourceOutput{}, err
 	}
 
-	source, err := r.accessReview.CreateSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
+	source, created, err := r.accessReview.EnsureSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
 		OrganizationID: input.OrganizationID,
 		ConnectorID:    input.ConnectorID,
 		Name:           input.Name,
@@ -3810,6 +3813,7 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 
 	return nil, types.CreateAccessReviewSourceOutput{
 		AccessReviewSource: types.NewAccessReviewSource(source),
+		Created:            created,
 	}, nil
 }
 
@@ -6190,7 +6194,7 @@ func (r *Resolver) CreateSCIMConfigurationTool(ctx context.Context, req *mcp.Cal
 		return nil, types.CreateSCIMConfigurationOutput{}, err
 	}
 
-	config, token, err := r.iamSvc.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID)
+	config, bridge, token, err := r.iamSvc.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID, input.ConnectorID)
 	if err != nil {
 		return nil, types.CreateSCIMConfigurationOutput{}, fmt.Errorf("cannot create SCIM configuration: %w", err)
 	}
@@ -6200,12 +6204,7 @@ func (r *Resolver) CreateSCIMConfigurationTool(ctx context.Context, req *mcp.Cal
 		Token:             token,
 	}
 
-	if input.ConnectorID != nil {
-		bridge, err := r.iamSvc.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
-		if err != nil {
-			return nil, types.CreateSCIMConfigurationOutput{}, fmt.Errorf("cannot create SCIM bridge: %w", err)
-		}
-
+	if bridge != nil {
 		output.ScimBridge = types.NewSCIMBridge(bridge)
 	}
 
@@ -6535,7 +6534,7 @@ func (r *Resolver) GetRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		}
 	}
 
-	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, listScope, ra.ID)
+	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, listScope, ra.ID, input.AsOf)
 	if err != nil {
 		return nil, types.GetRiskAnalysisOutput{}, fmt.Errorf("failed to get risk analysis matrix cells: %w", err)
 	}
@@ -9126,6 +9125,16 @@ func (r *Resolver) ListTreatmentPlansTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
+	if input.AsOf != nil && input.RiskAnalysisID == nil {
+		return nil, types.ListTreatmentPlansOutput{}, validator.ValidationErrors{
+			{
+				Field:   "as_of",
+				Code:    validator.ErrorCodeCustom,
+				Message: "can only be set together with risk_analysis_id",
+			},
+		}
+	}
+
 	scope, err := r.Authorize(ctx, input.OrganizationID, riskmanagement.ActionTreatmentPlanList)
 	if err != nil {
 		return nil, types.ListTreatmentPlansOutput{}, err
@@ -9158,6 +9167,25 @@ func (r *Resolver) ListTreatmentPlansTool(ctx context.Context, req *mcp.CallTool
 	switch {
 	case input.RiskID != nil:
 		p, err = r.riskManagement.ListTreatmentPlansForRiskID(ctx, scope, *input.RiskID, cursor, planFilter)
+	case input.RiskAnalysisID != nil && input.AsOf != nil:
+		asOfPage, listErr := r.riskManagement.ListTreatmentPlansAsOf(
+			ctx,
+			scope,
+			*input.RiskAnalysisID,
+			*input.AsOf,
+			cursor,
+			planFilter,
+			true,
+		)
+		if listErr != nil {
+			return nil, types.ListTreatmentPlansOutput{}, mapTreatmentPlanError(ctx, r.logger, "list", listErr)
+		}
+
+		return nil, types.NewListTreatmentPlansAsOfOutput(
+			asOfPage.Page,
+			asOfPage.ProgressByID,
+			asOfPage.MeasuresByID,
+		), nil
 	case input.RiskAnalysisID != nil:
 		p, err = r.riskManagement.ListTreatmentPlansForRiskAnalysisID(ctx, scope, *input.RiskAnalysisID, cursor, planFilter)
 	default:
@@ -9295,4 +9323,76 @@ func mapTreatmentPlanError(ctx context.Context, logger *log.Logger, op string, e
 	logger.ErrorCtx(ctx, "cannot "+op+" treatment plan", log.Error(err))
 
 	return fmt.Errorf("internal server error")
+}
+
+func (r *Resolver) AwsConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AwsConnectorSetupInput) (*mcp.CallToolResult, types.AwsConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.AwsConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.AwsConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudaws.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.awsConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build aws connector setup", log.Error(err))
+
+		return nil, types.AwsConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.AwsConnectorSetupOutput{
+		Setup: types.NewAWSConnectorSetup(setup),
+	}, nil
+}
+
+func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateWorkloadIdentityConnectorInput) (*mcp.CallToolResult, types.CreateWorkloadIdentityConnectorOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	if input.Provider != coredata.ConnectorProviderAWS {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("provider does not support workload identity")
+	}
+
+	settings, err := cloudaws.NewConnectorSettings(input.AwsRoleArn)
+	if err != nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
+	}
+
+	raw, err := json.Marshal(settings)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot marshal aws connector settings", log.Error(err))
+
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       input.Provider,
+		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+		Connection:     &connector.WorkloadIdentityConnection{},
+		RawSettings:    raw,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create workload identity connector", log.Error(err))
+
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.CreateWorkloadIdentityConnectorOutput{
+		Connector: types.NewConnector(
+			cnnctr,
+			r.connectorConnectionStatus(ctx, scope, cnnctr.ID),
+		),
+	}, nil
 }
