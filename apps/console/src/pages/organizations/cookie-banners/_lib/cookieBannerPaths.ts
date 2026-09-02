@@ -30,10 +30,6 @@ export function cookieBannerPath(organizationId: string, cookieBannerId: string)
   return `${cookieBannersBasePath(organizationId)}/${cookieBannerId}`;
 }
 
-export function cookieBannerSettingsPath(organizationId: string, cookieBannerId: string): string {
-  return `${cookieBannerPath(organizationId, cookieBannerId)}/configure/settings`;
-}
-
 export function cookieBannerTCFPath(organizationId: string, cookieBannerId: string): string {
   return `${cookieBannerPath(organizationId, cookieBannerId)}/tcf`;
 }
