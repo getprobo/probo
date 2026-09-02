@@ -393,6 +393,11 @@ WHERE
 	return count, nil
 }
 
+// Unlike Load and Count, the ByCookieBannerID variants deliberately omit the
+// deleted_date filter: a vendor soft-deleted from the GVL after being linked is
+// still disclosed by the banner, so it must stay visible for the operator to
+// remove. Filtering it out here would leave an invisible link that
+// ensureDraftVersion keeps folding into every new snapshot.
 func (v *CommonGVLVendors) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -458,6 +463,11 @@ WHERE
 	return nil
 }
 
+// Unlike Load and Count, the ByCookieBannerID variants deliberately omit the
+// deleted_date filter: a vendor soft-deleted from the GVL after being linked is
+// still disclosed by the banner, so it must stay visible for the operator to
+// remove. Filtering it out here would leave an invisible link that
+// ensureDraftVersion keeps folding into every new snapshot.
 func (v *CommonGVLVendors) CountByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
