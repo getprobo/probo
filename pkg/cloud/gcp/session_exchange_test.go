@@ -199,8 +199,10 @@ func newExchangeTestSession(t *testing.T) *exchangeProbe {
 					return
 				}
 
-				if !slices.Equal(req.Scope, []string{cloudPlatformScope}) ||
-					req.Lifetime != serviceAccountLifetime {
+				if !slices.Equal(
+					req.Scope,
+					[]string{cloudPlatformScope, adminDirectoryUserReadonlyScope},
+				) || req.Lifetime != serviceAccountLifetime {
 					http.Error(w, "unexpected iam request", http.StatusBadRequest)
 					return
 				}

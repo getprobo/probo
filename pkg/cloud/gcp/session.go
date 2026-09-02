@@ -51,7 +51,9 @@ const (
 	idTokenType            = "urn:ietf:params:oauth:token-type:id_token"
 	accessTokenType        = "urn:ietf:params:oauth:token-type:access_token"
 	cloudPlatformScope     = "https://www.googleapis.com/auth/cloud-platform"
-	serviceAccountLifetime = "3600s"
+	// Admin Directory is a Workspace API; cloud-platform does not cover it.
+	adminDirectoryUserReadonlyScope = "https://www.googleapis.com/auth/admin.directory.user.readonly"
+	serviceAccountLifetime          = "3600s"
 )
 
 type (
@@ -84,6 +86,11 @@ type (
 var (
 	_ cloud.Session     = (*Session)(nil)
 	_ http.RoundTripper = (*sessionTransport)(nil)
+
+	serviceAccountScopes = []string{
+		cloudPlatformScope,
+		adminDirectoryUserReadonlyScope,
+	}
 )
 
 // NewSession opens a session on the project named by providerResource, by
@@ -299,7 +306,7 @@ func (s *Session) impersonate(ctx context.Context, federated *oauth2.Token) (*oa
 	resp, err := svc.Projects.ServiceAccounts.GenerateAccessToken(
 		name,
 		&iamcredentials.GenerateAccessTokenRequest{
-			Scope:    []string{cloudPlatformScope},
+			Scope:    serviceAccountScopes,
 			Lifetime: serviceAccountLifetime,
 		},
 	).Context(ctx).Do()

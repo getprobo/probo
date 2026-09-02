@@ -1,0 +1,90 @@
+---
+# Policy Analyzer last-auth and key last-auth succeed, then Admin Activity
+# for users (alice), then Directory MFA for alice. The group is never
+# queried. Call order is the contract.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: policyanalyzer.googleapis.com
+        url: https://policyanalyzer.googleapis.com/v1/projects/123456789012/locations/global/activityTypes/serviceAccountLastAuthentication/activities:query
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"activities":[{"fullResourceName":"//iam.googleapis.com/projects/123456789012/serviceAccounts/sa@my-project.iam.gserviceaccount.com","activityType":"serviceAccountLastAuthentication","activity":{"lastAuthenticatedTime":"2026-08-10T07:00:00Z"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: policyanalyzer.googleapis.com
+        url: https://policyanalyzer.googleapis.com/v1/projects/123456789012/locations/global/activityTypes/serviceAccountKeyLastAuthentication/activities:query
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"activities":[{"fullResourceName":"//iam.googleapis.com/projects/123456789012/serviceAccounts/sa@my-project.iam.gserviceaccount.com/keys/KEY1","activityType":"serviceAccountKeyLastAuthentication","activity":{"lastAuthenticatedTime":"2026-08-09T07:00:00Z"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: logging.googleapis.com
+        url: https://logging.googleapis.com/v2/entries:list
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"entries":[{"timestamp":"2026-08-15T12:00:00Z","protoPayload":{"@type":"type.googleapis.com/google.cloud.audit.AuditLog","authenticationInfo":{"principalEmail":"alice@example.com"}}},{"timestamp":"2026-08-01T12:00:00Z","protoPayload":{"authenticationInfo":{"principalEmail":"alice@example.com"}}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: admin.googleapis.com
+        url: https://admin.googleapis.com/admin/directory/v1/users/alice@example.com
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"primaryEmail":"alice@example.com","isEnrolledIn2Sv":true}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

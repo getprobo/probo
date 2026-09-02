@@ -54,7 +54,7 @@ func TestGCPDriver(t *testing.T) {
 	rec := newGCPRecorder(t, "testdata/gcp")
 	session := newGCPTestSession(t, rec)
 
-	records, err := NewGCPDriver(session).
+	records, err := NewGCPDriver(session, log.NewLogger(log.WithName("test"))).
 		ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 5)
@@ -115,7 +115,7 @@ func TestGCPDriver_FailsWhenServiceAccountsDenied(t *testing.T) {
 	rec := newGCPRecorder(t, "testdata/gcp_service_accounts_denied")
 	session := newGCPTestSession(t, rec)
 
-	_, err := NewGCPDriver(session).
+	_, err := NewGCPDriver(session, log.NewLogger(log.WithName("test"))).
 		ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot list service accounts of the gcp project")
@@ -127,7 +127,7 @@ func TestGCPDriver_FailsWhenIAMPolicyDenied(t *testing.T) {
 	rec := newGCPRecorder(t, "testdata/gcp_iam_denied")
 	session := newGCPTestSession(t, rec)
 
-	_, err := NewGCPDriver(session).
+	_, err := NewGCPDriver(session, log.NewLogger(log.WithName("test"))).
 		ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot get gcp project iam policy")

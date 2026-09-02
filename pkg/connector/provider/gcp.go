@@ -119,14 +119,14 @@ func newGCPDriver(
 	_ context.Context,
 	session cloud.Session,
 	_ *coredata.Connector,
-	_ *log.Logger,
+	logger *log.Logger,
 ) (drivers.Driver, error) {
 	gcpSession, ok := session.(*cloudgcp.Session)
 	if !ok {
 		return nil, fmt.Errorf("cannot create gcp driver: session is for %s", session.Cloud())
 	}
 
-	return drivers.NewGCPDriver(gcpSession), nil
+	return drivers.NewGCPDriver(gcpSession, logger), nil
 }
 
 // probeGCP checks the connection by completing the STS exchange and

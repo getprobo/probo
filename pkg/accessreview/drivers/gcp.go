@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"slices"
 
+	"go.gearno.de/kit/log"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -43,6 +44,7 @@ type (
 	// produces one source.
 	GCPDriver struct {
 		session *cloudgcp.Session
+		logger  *log.Logger
 	}
 )
 
@@ -50,8 +52,8 @@ var _ Driver = (*GCPDriver)(nil)
 
 // NewGCPDriver builds the driver over a session already impersonated on the
 // connected project.
-func NewGCPDriver(session *cloudgcp.Session) *GCPDriver {
-	return &GCPDriver{session: session}
+func NewGCPDriver(session *cloudgcp.Session, logger *log.Logger) *GCPDriver {
+	return &GCPDriver{session: session, logger: logger}
 }
 
 func (d *GCPDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -74,6 +76,18 @@ func (d *GCPDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	records := make([]AccountRecord, 0, len(identities))
 	for _, identity := range identities {
 		records = append(records, gcpIdentityRecord(identity))
+	}
+
+	if err := enrichGCPIdentities(ctx, d.session, records); err != nil {
+		if ctx.Err() != nil {
+			return nil, err
+		}
+
+		d.logger.WarnCtx(
+			ctx,
+			"cannot enrich gcp activity, reporting last login and mfa unknown",
+			cloudgcp.SafeLogFields(err)...,
+		)
 	}
 
 	return records, nil

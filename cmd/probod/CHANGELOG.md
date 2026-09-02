@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- GCP access-review MFA now uses the same WIF-impersonated service-account
+  token with `admin.directory.user.readonly` in addition to
+  `cloud-platform`. A Workspace Users-read admin role on that service
+  account is still required; a Directory 403 keeps identities and last
+  login and leaves MFA unknown.
+
 ## [0.279.0] - 2026-09-04
 
 ### Added

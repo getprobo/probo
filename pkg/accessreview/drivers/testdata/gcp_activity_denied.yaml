@@ -1,51 +1,10 @@
 ---
-# Hand-authored. getIamPolicy succeeds; serviceAccounts.list is 403.
-# The fetch must fail.
+# Policy Analyzer and Admin Activity are both denied, then Directory MFA
+# is denied. Identities must still be returned with last login nil and
+# MFA unknown. Call order is the contract.
 version: 2
 interactions:
     - id: 0
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        host: cloudresourcemanager.googleapis.com
-        url: https://cloudresourcemanager.googleapis.com/v1/projects/123456789012:getIamPolicy
-        method: POST
-      response:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: -1
-        uncompressed: true
-        body: '{"bindings":[{"role":"roles/owner","members":["user:alice@example.com"]},{"role":"roles/viewer","members":["group:eng@example.com","allUsers","domain:example.com"]},{"role":"roles/editor","members":["serviceAccount:ci@my-project.iam.gserviceaccount.com"]},{"role":"projects/my-project/roles/customAdmin","members":["serviceAccount:disabled-bot@my-project.iam.gserviceaccount.com"]}]}'
-        headers:
-            Content-Type:
-                - application/json
-        status: 200 OK
-        code: 200
-        duration: 1ms
-    - id: 1
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        host: iam.googleapis.com
-        url: https://iam.googleapis.com/v1/projects/123456789012/serviceAccounts
-        method: GET
-      response:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: -1
-        uncompressed: true
-        body: '{"error":{"code":403,"message":"Permission denied","status":"PERMISSION_DENIED"}}'
-        headers:
-            Content-Type:
-                - application/json
-        status: 403 Forbidden
-        code: 403
-        duration: 1ms
-    - id: 2
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -66,7 +25,7 @@ interactions:
         status: 403 Forbidden
         code: 403
         duration: 1ms
-    - id: 3
+    - id: 1
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -87,7 +46,7 @@ interactions:
         status: 403 Forbidden
         code: 403
         duration: 1ms
-    - id: 4
+    - id: 2
       request:
         proto: HTTP/1.1
         proto_major: 1
