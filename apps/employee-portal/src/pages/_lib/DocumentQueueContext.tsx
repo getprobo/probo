@@ -85,6 +85,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const fetchGenerationRef = useRef(0);
+  const snapshotRef = useRef<DocumentQueueSnapshot | null>(null);
 
   useEffect(() => {
     try {
@@ -105,28 +106,32 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     }
     fetchGenerationRef.current += 1;
     setAdvancing(false);
-    setSnapshot(enterQueueSnapshot(
+    const next = enterQueueSnapshot(
       kind,
       page,
       openedDocumentId,
       organizationId,
-    ));
+    );
+    snapshotRef.current = next;
+    setSnapshot(next);
   }, [organizationId]);
 
   const leave = useCallback(() => {
     fetchGenerationRef.current += 1;
     clearQueueDirection();
+    snapshotRef.current = null;
     setSnapshot(null);
     setAdvancing(false);
   }, []);
 
   const markDone = useCallback((completedId: string) => {
-    setSnapshot((current) => {
-      if (current == null) {
-        return current;
-      }
-      return markQueueDone(current, completedId);
-    });
+    const current = snapshotRef.current;
+    if (current == null) {
+      return;
+    }
+    const next = markQueueDone(current, completedId);
+    snapshotRef.current = next;
+    setSnapshot(next);
   }, []);
 
   const goTo = useCallback((targetId: string, direction: DocumentQueueDirection) => {
@@ -173,7 +178,9 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       if (generation !== fetchGenerationRef.current) {
         return;
       }
-      const next = appendQueuePage(snapshot, page);
+      const latest = snapshotRef.current ?? snapshot;
+      const next = appendQueuePage(latest, page);
+      snapshotRef.current = next;
       setSnapshot(next);
       const firstNew = nextForwardId(next, documentId);
       if (firstNew != null) {
