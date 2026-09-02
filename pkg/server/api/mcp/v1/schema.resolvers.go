@@ -9578,6 +9578,11 @@ func (r *Resolver) ListCommonGVLVendorsTool(ctx context.Context, req *mcp.CallTo
 		}
 
 		cdFilter = cdFilter.WithMembership(input.Filter.CookieBannerID, input.Filter.Membership)
+	} else if input.Filter != nil && input.Filter.CookieBannerID != nil {
+		// cookie_banner_id only means anything alongside membership. Reject the
+		// lone value rather than silently dropping it and returning the
+		// unfiltered global catalog, which reads as a successful filter.
+		return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("membership is required when filtering by cookie_banner_id")
 	}
 
 	vendors, err := r.cookieBanner.ListCommonGVLVendors(ctx, cursor, cdFilter)

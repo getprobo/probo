@@ -41,6 +41,13 @@ func commonGVLVendorFilter(
 
 	cdFilter = coredata.NewCommonGVLVendorFilter(filter.Query)
 	if filter.Membership == nil {
+		// cookieBannerId only means anything alongside membership. Reject the
+		// lone value rather than silently dropping it and returning the
+		// unfiltered global catalog, which reads as a successful filter.
+		if filter.CookieBannerID != nil {
+			return nil, gqlutils.Invalidf(ctx, "membership is required when filtering by cookieBannerId")
+		}
+
 		return cdFilter, nil
 	}
 
