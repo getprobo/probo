@@ -41,6 +41,9 @@ export const personPageQuery = graphql`
         emailAddress
         source
         state
+        avatar {
+          downloadUrl
+        }
         canDeactivate: permission(action: "iam:membership-profile:deactivate")
         canRemoveMember: permission(action: "iam:membership:delete")
         ...PersonFormFragment
@@ -149,7 +152,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
     <div className="space-y-6">
       <div className="flex justify-between">
         <div className="flex items-center gap-6">
-          <Avatar name={person.fullName} size="xl" />
+          <Avatar name={person.fullName} src={person.avatar?.downloadUrl} size="xl" />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-2xl">{person.fullName}</span>

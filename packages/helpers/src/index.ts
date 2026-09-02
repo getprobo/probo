@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 export { objectKeys, objectEntries, cleanFormData } from "./object";
-export { sprintf, faviconUrl, slugify } from "./string";
+export { sprintf, faviconUrl, slugify, avatarFallback } from "./string";
 export {
   getCertificateProvisioningErrorMessage,
   getCustomDomainStatusBadgeLabel,

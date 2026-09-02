@@ -1643,6 +1643,21 @@ func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organi
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// Avatar is the resolver for the avatar field.
+func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*types.File, error) {
+	file, err := r.iam.AccountService.AvatarFileForProfile(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load profile avatar", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.fileManager), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)

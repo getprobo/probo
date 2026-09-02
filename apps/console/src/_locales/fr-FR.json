@@ -2017,6 +2017,25 @@
       "logout": "Déconnexion"
     }
   },
+  "editAvatar": {
+    "title": "Photo de profil",
+    "description": "Ajoutez une photo pour que les autres puissent vous reconnaître. Sinon, vos initiales sont utilisées.",
+    "messages": {
+      "updated": "Photo de profil mise à jour.",
+      "removed": "Photo de profil supprimée."
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de la photo de profil",
+      "remove": "Échec de la suppression de la photo de profil"
+    },
+    "actions": {
+      "upload": "Téléverser une photo",
+      "replace": "Remplacer la photo",
+      "remove": "Supprimer la photo",
+      "close": "Fermer",
+      "change": "Changer la photo de profil"
+    }
+  },
   "newOAuthTokenPage": {
     "pageTitle": "Nouveau jeton OAuth",
     "breadcrumb": "Nouveau jeton",

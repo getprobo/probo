@@ -150,6 +150,21 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
 }
 
+// Avatar is the resolver for the avatar field.
+func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*types.File, error) {
+	file, err := r.iam.AccountService.AvatarFileForProfile(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load profile avatar", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.fileManager), nil
+}
+
 // Identity is the resolver for the identity field.
 func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*types.Identity, error) {
 	if _, err := r.authorize(

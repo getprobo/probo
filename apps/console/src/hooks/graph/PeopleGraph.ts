@@ -42,6 +42,9 @@ export const peopleQuery = graphql`
               id
               fullName
               emailAddress
+              avatar {
+                downloadUrl
+              }
             }
           }
         }

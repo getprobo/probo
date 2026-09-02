@@ -43,6 +43,7 @@ type Profile implements Node {
     kind: String
     position: String
     contract: Period
+    avatar: File @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
