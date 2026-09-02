@@ -22,17 +22,12 @@ package console_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
-
-func uniqueIABVendorID() int {
-	return int(time.Now().UnixNano()%90_000_000) + 10_000_000
-}
 
 func TestCookieBannerGVLVendor(t *testing.T) {
 	t.Parallel()
@@ -44,8 +39,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		factory.EnableCookieBannerTCF(t, bannerID)
 
-		iabVendorID := uniqueIABVendorID()
-		factory.SeedCommonGVLVendor(t, iabVendorID, "Example Ad Vendor", false)
+		iabVendorID, _ := factory.SeedCommonGVLVendor(t, "Example Ad Vendor", false)
 
 		const catalogQuery = `
 			query($query: String) {
@@ -178,11 +172,8 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		factory.EnableCookieBannerTCF(t, bannerID)
 
-		onBannerID := uniqueIABVendorID()
-		offBannerID := uniqueIABVendorID()
-
-		factory.SeedCommonGVLVendor(t, onBannerID, "On Banner Vendor", false)
-		factory.SeedCommonGVLVendor(t, offBannerID, "Off Banner Vendor", false)
+		onBannerID, _ := factory.SeedCommonGVLVendor(t, "On Banner Vendor", false)
+		offBannerID, _ := factory.SeedCommonGVLVendor(t, "Off Banner Vendor", false)
 
 		const addMutation = `
 			mutation($input: AddCookieBannerGVLVendorInput!) {
@@ -262,8 +253,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		t.Parallel()
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
-		iabVendorID := uniqueIABVendorID()
-		version := factory.SeedCommonGVLVendor(t, iabVendorID, "Catalog Version Vendor", false)
+		_, version := factory.SeedCommonGVLVendor(t, "Catalog Version Vendor", false)
 		factory.SeedCommonGVLCatalogState(t, version)
 
 		const query = `
@@ -297,11 +287,8 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		factory.EnableCookieBannerTCF(t, bannerID)
 
-		firstID := uniqueIABVendorID()
-		secondID := uniqueIABVendorID()
-
-		factory.SeedCommonGVLVendor(t, firstID, "Draft Count Vendor", false)
-		factory.SeedCommonGVLVendor(t, secondID, "Published Count Vendor", false)
+		firstID, _ := factory.SeedCommonGVLVendor(t, "Draft Count Vendor", false)
+		secondID, _ := factory.SeedCommonGVLVendor(t, "Published Count Vendor", false)
 
 		const addMutation = `
 			mutation($input: AddCookieBannerGVLVendorInput!) {
@@ -380,8 +367,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		bannerID := factory.CreateCookieBanner(owner)
-		iabVendorID := uniqueIABVendorID()
-		factory.SeedCommonGVLVendor(t, iabVendorID, "Disabled TCF Vendor", false)
+		iabVendorID, _ := factory.SeedCommonGVLVendor(t, "Disabled TCF Vendor", false)
 
 		const addMutation = `
 			mutation($input: AddCookieBannerGVLVendorInput!) {
@@ -423,8 +409,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		factory.EnableCookieBannerTCF(t, bannerID)
 
-		iabVendorID := uniqueIABVendorID()
-		factory.SeedCommonGVLVendor(t, iabVendorID, "Deleted Vendor", true)
+		iabVendorID, _ := factory.SeedCommonGVLVendor(t, "Deleted Vendor", true)
 
 		const addMutation = `
 			mutation($input: AddCookieBannerGVLVendorInput!) {
