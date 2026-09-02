@@ -909,33 +909,6 @@ func (s *Service) CountCommonGVLVendors(
 	return count, nil
 }
 
-func (s *Service) GetCommonGVLVendor(
-	ctx context.Context,
-	id gid.GID,
-) (*coredata.CommonGVLVendor, error) {
-	var vendor coredata.CommonGVLVendor
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := vendor.LoadByID(ctx, conn, id); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrGVLVendorNotFound
-				}
-
-				return fmt.Errorf("cannot load common gvl vendor: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &vendor, nil
-}
-
 func (s *Service) GetCommonGVLCatalog(ctx context.Context) (*CommonGVLCatalog, error) {
 	catalog := &CommonGVLCatalog{}
 

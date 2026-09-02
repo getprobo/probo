@@ -191,7 +191,6 @@ var CommonGVLVendorCatalogPolicy = policy.NewPolicy(
 	"probo:common-gvl-vendor-catalog",
 	"Probo Common GVL Vendor Catalog",
 	policy.Allow(
-		ActionCommonGVLVendorGet,
 		ActionCommonGVLVendorList,
 	).WithSID("read-common-gvl-vendor-catalog"),
 ).WithDescription("Allows every authenticated user to read the global IAB GVL vendor catalog")
