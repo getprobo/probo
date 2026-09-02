@@ -168,9 +168,9 @@ func newAWSRecorder(t *testing.T, cassettePath string) *recorder.Recorder {
 }
 
 // awsAPIMatcher matches AWS SDK POSTs without relying on SigV4 headers or
-// byte-for-byte bodies. IAM Query is identified by form Action; SSO Admin
-// and Identity Store use AWS JSON and are identified by X-Amz-Target;
-// Account Management is REST-JSON and is identified by path.
+// byte-for-byte bodies. IAM Query is identified by form Action; SSO Admin,
+// Identity Store, and Organizations use AWS JSON and are identified by
+// X-Amz-Target; Account Management is REST-JSON and is identified by path.
 func awsAPIMatcher(r *http.Request, i cassette.Request) bool {
 	if r.Method != i.Method {
 		return false

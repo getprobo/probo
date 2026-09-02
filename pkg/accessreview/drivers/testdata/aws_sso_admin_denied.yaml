@@ -81,6 +81,30 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
+        host: organizations.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - AWSOrganizationsV20161128.DescribeAccount
+        url: https://organizations.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"Account":{"Id":"123456789012","Arn":"arn:aws:organizations::123456789012:account/o-example/123456789012","Email":"root@example.com","Name":"acme-prod","Status":"ACTIVE"}}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
         host: sso.us-east-1.amazonaws.com
         headers:
             X-Amz-Target:
@@ -100,7 +124,7 @@ interactions:
         status: 200 OK
         code: 200
         duration: 1ms
-    - id: 4
+    - id: 5
       request:
         proto: HTTP/1.1
         proto_major: 1

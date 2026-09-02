@@ -33,6 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/aws/aws-sdk-go-v2/service/organizations"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/awsx/arn"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -63,6 +64,7 @@ type (
 	iamUser struct {
 		ARN              string
 		Name             string
+		Email            string
 		Groups           []string
 		AttachedPolicies []string
 		InlinePolicies   []string
@@ -139,7 +141,43 @@ func listIAMUsers(ctx context.Context, session *cloudaws.Session, logger *log.Lo
 		root = rootIdentity(session.Partition(), session.AccountID())
 	}
 
+	email, err := accountEmail(ctx, session)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, err
+		}
+
+		logger.WarnCtx(
+			ctx,
+			"cannot read aws account email, reporting root email unknown",
+			log.Error(err),
+		)
+	} else {
+		root.Email = email
+	}
+
 	return append(users, root), nil
+}
+
+// accountEmail is the Organizations email of this session's account, which
+// is the root sign-in address. A standalone account, or a member role that
+// cannot call Organizations, has no email to report.
+func accountEmail(ctx context.Context, session *cloudaws.Session) (string, error) {
+	out, err := organizations.NewFromConfig(session.Config()).DescribeAccount(
+		ctx,
+		&organizations.DescribeAccountInput{
+			AccountId: aws.String(session.AccountID()),
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot describe the aws account: %w", err)
+	}
+
+	if out.Account == nil {
+		return "", nil
+	}
+
+	return aws.ToString(out.Account.Email), nil
 }
 
 // listAuthorizationDetails walks iam:GetAccountAuthorizationDetails, filtered

@@ -96,14 +96,16 @@ func (d *AWSDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 
 // iamUserRecord maps one IAM user.
 //
-// Email stays empty: an IAM user has no email attribute, and inventing one from
-// the user name would create an identity that matches the wrong human during
-// reconciliation. Active follows the credential report (console password or an
-// access key), not an IAM enabled/disabled flag — IAM has none.
+// Email is empty for IAM users: they have no email attribute, and inventing
+// one from the user name would match the wrong human during reconciliation.
+// Root may carry the Organizations account email. Active follows the
+// credential report (console password or an access key), not an IAM
+// enabled/disabled flag — IAM has none.
 func iamUserRecord(user iamUser) AccountRecord {
 	grants := slices.Concat(user.Groups, user.AttachedPolicies, user.InlinePolicies)
 
 	return AccountRecord{
+		Email:       user.Email,
 		FullName:    user.Name,
 		Roles:       grants,
 		IsAdmin:     awsIsAdmin(user, grants),

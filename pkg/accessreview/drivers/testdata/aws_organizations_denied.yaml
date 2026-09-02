@@ -1,10 +1,7 @@
 ---
-# Hand-authored AWS cassette. Never recorded against a live account: SigV4
-# headers and credentials are not present. IAM Query interactions are matched
-# by host and Action; Organizations and Identity Center by host and
-# X-Amz-Target (see awsAPIMatcher). Synthetic IAM users: alice (console
-# admin with MFA), ci-deploy (access-key service account), and the account
-# root. ListInstances is empty so this account degrades to IAM only.
+# IAM identities of testdata/aws.yaml, then DescribeAccount reports the
+# account is not in an organization. ListAccounts must keep the root
+# identity with an empty email instead of aborting the fetch.
 version: 2
 interactions:
     - id: 0
@@ -96,12 +93,14 @@ interactions:
         proto_minor: 1
         content_length: -1
         uncompressed: true
-        body: '{"Account":{"Id":"123456789012","Arn":"arn:aws:organizations::123456789012:account/o-example/123456789012","Email":"root@example.com","Name":"acme-prod","Status":"ACTIVE"}}'
+        body: '{"__type":"AWSOrganizationsNotInUseException","Message":"Your account is not a member of an organization."}'
         headers:
             Content-Type:
                 - application/x-amz-json-1.1
-        status: 200 OK
-        code: 200
+            X-Amzn-Errortype:
+                - AWSOrganizationsNotInUseException
+        status: 400 Bad Request
+        code: 400
         duration: 1ms
     - id: 4
       request:

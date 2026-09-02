@@ -110,6 +110,7 @@ func TestAWSDriver(t *testing.T) {
 
 	root := byID["arn:aws:iam::123456789012:root"]
 	assert.Equal(t, "<root_account>", root.FullName)
+	assert.Equal(t, "root@example.com", root.Email)
 	assert.Equal(t, coredata.MFAStatusDisabled, root.MFAStatus)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, root.AuthMethod)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, root.AccountType)
@@ -119,6 +120,30 @@ func TestAWSDriver(t *testing.T) {
 	assert.True(t, *root.Active)
 	require.NotNil(t, root.LastLogin)
 	assert.True(t, root.LastLogin.Equal(time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)))
+}
+
+func TestAWSDriver_LeavesRootEmailEmptyWhenOrganizationsDenied(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_organizations_denied")
+	session := newAWSTestSession(t, rec)
+
+	records, err := NewAWSDriver(session, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
+	require.NoError(t, err)
+
+	var root AccountRecord
+
+	for _, record := range records {
+		if record.ExternalID == "arn:aws:iam::123456789012:root" {
+			root = record
+			break
+		}
+	}
+
+	assert.Equal(t, "<root_account>", root.FullName)
+	assert.Empty(t, root.Email)
+	require.NotNil(t, root.IsAdmin)
+	assert.True(t, *root.IsAdmin)
 }
 
 func TestAWSDriver_KeepsIAMWhenLaterSSOAdminDenied(t *testing.T) {
@@ -191,6 +216,7 @@ func TestIAMUserRecord_MapsBareRootAsAdminWithUnknownSignals(t *testing.T) {
 
 	assert.Equal(t, rootUser, record.FullName)
 	assert.Equal(t, "arn:aws:iam::123456789012:root", record.ExternalID)
+	assert.Empty(t, record.Email)
 	require.NotNil(t, record.IsAdmin)
 	assert.True(t, *record.IsAdmin)
 	assert.Nil(t, record.Active)
@@ -205,12 +231,14 @@ func TestIAMUserRecord_MapsRootAsAdmin(t *testing.T) {
 		iamUser{
 			ARN:           "arn:aws:iam::123456789012:root",
 			Name:          rootUser,
+			Email:         "root@example.com",
 			MFAEnabled:    new(false),
 			ConsoleAccess: new(true),
 		},
 	)
 
 	assert.Equal(t, rootUser, record.FullName)
+	assert.Equal(t, "root@example.com", record.Email)
 	require.NotNil(t, record.IsAdmin)
 	assert.True(t, *record.IsAdmin)
 	require.NotNil(t, record.Active)
@@ -356,6 +384,17 @@ func TestPickAWSInstanceName(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestAccountEmail_ReadsOrganizationsEmail(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_account_email")
+	session := newAWSTestSession(t, rec)
+
+	email, err := accountEmail(context.Background(), session)
+	require.NoError(t, err)
+	assert.Equal(t, "root@example.com", email)
 }
 
 func TestAWSNameResolver_UsesAccountName(t *testing.T) {
