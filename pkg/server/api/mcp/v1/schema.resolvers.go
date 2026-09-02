@@ -9925,7 +9925,7 @@ func (r *Resolver) RemoveCookieBannerGVLVendorTool(ctx context.Context, req *mcp
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, cookiebanner.ErrBannerNotFound), errors.Is(err, cookiebanner.ErrTCFNotEnabled):
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
 			return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
 		default:
 			if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
