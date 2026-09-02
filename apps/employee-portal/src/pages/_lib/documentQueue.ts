@@ -34,6 +34,7 @@ export type DocumentQueuePage = {
 export type DocumentQueueSnapshot = {
   kind: DocumentQueueKind;
   organizationId: string;
+  doneIds: string[];
 } & DocumentQueuePage;
 
 // Builds the snapshot ID list from the live pending connection, ensuring the
@@ -58,6 +59,7 @@ export function enterQueueSnapshot(
     kind,
     organizationId,
     ids,
+    doneIds: [],
     totalCount: Math.max(page.totalCount, ids.length),
     endCursor: page.endCursor,
     hasNextPage: page.hasNextPage,
@@ -82,8 +84,72 @@ export function appendQueuePage(
     kind: snapshot.kind,
     organizationId: snapshot.organizationId,
     ids,
+    doneIds: snapshot.doneIds,
     totalCount: Math.max(snapshot.totalCount, ids.length),
     endCursor: page.endCursor,
     hasNextPage: page.hasNextPage,
   };
+}
+
+export function markQueueDone(
+  snapshot: DocumentQueueSnapshot,
+  documentId: string,
+): DocumentQueueSnapshot {
+  if (snapshot.doneIds.includes(documentId)) {
+    return snapshot;
+  }
+  return {
+    ...snapshot,
+    doneIds: [...snapshot.doneIds, documentId],
+  };
+}
+
+function firstUndone(
+  ids: readonly string[],
+  doneIds: readonly string[],
+  start: number,
+  end: number,
+): string | null {
+  const done = new Set(doneIds);
+  for (let i = start; i < end; i++) {
+    const id = ids[i];
+    if (id != null && !done.has(id)) {
+      return id;
+    }
+  }
+  return null;
+}
+
+// Next leftover pending id after the current one. Wraps to an earlier leftover
+// only once the snapshot has no further page to load.
+export function nextForwardId(
+  snapshot: DocumentQueueSnapshot,
+  documentId: string,
+): string | null {
+  const index = snapshot.ids.indexOf(documentId);
+  const after = firstUndone(
+    snapshot.ids,
+    snapshot.doneIds,
+    index >= 0 ? index + 1 : 0,
+    snapshot.ids.length,
+  );
+  if (after != null) {
+    return after;
+  }
+  if (snapshot.hasNextPage) {
+    return null;
+  }
+  return firstUndone(
+    snapshot.ids,
+    snapshot.doneIds,
+    0,
+    index >= 0 ? index : 0,
+  );
+}
+
+export function canGoForward(
+  snapshot: DocumentQueueSnapshot,
+  documentId: string,
+): boolean {
+  return nextForwardId(snapshot, documentId) != null || snapshot.hasNextPage;
 }

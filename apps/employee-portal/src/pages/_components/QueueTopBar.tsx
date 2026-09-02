@@ -26,6 +26,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
+import { canGoForward } from "#/pages/_lib/documentQueue";
 import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
 
 import { queueTopBar } from "./variants";
@@ -47,10 +48,7 @@ export function QueueTopBar() {
   const current = index >= 0 ? index + 1 : 1;
   const total = snapshot.totalCount;
   const previousId = index > 0 ? snapshot.ids[index - 1] : null;
-  const nextId = index >= 0 && index < snapshot.ids.length - 1
-    ? snapshot.ids[index + 1]
-    : null;
-  const canGoForward = nextId != null || snapshot.hasNextPage;
+  const allowForward = canGoForward(snapshot, documentId);
   const progressKey = snapshot.kind === "signatures"
     ? "queue.progressSignatures"
     : "queue.progressApprovals";
@@ -80,7 +78,7 @@ export function QueueTopBar() {
             variant="outline"
             color="neutral"
             aria-label={t("queue.next")}
-            disabled={!canGoForward || advancing}
+            disabled={!allowForward || advancing}
             loading={advancing}
             onClick={() => {
               goForward();

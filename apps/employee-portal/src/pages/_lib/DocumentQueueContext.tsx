@@ -41,6 +41,8 @@ import {
   type DocumentQueuePage,
   type DocumentQueueSnapshot,
   enterQueueSnapshot,
+  markQueueDone,
+  nextForwardId,
 } from "./documentQueue";
 import { fetchDocumentQueuePage } from "./fetchDocumentQueuePage";
 
@@ -51,6 +53,7 @@ type DocumentQueueContextValue = {
   leave: () => void;
   goTo: (documentId: string, direction: DocumentQueueDirection) => void;
   goForward: () => void;
+  markDone: (documentId: string) => void;
   startQueue: (kind: DocumentQueueKind) => void;
   close: (kind?: DocumentQueueKind) => void;
 };
@@ -117,6 +120,15 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     setAdvancing(false);
   }, []);
 
+  const markDone = useCallback((completedId: string) => {
+    setSnapshot((current) => {
+      if (current == null) {
+        return current;
+      }
+      return markQueueDone(current, completedId);
+    });
+  }, []);
+
   const goTo = useCallback((targetId: string, direction: DocumentQueueDirection) => {
     if (
       organizationId == null
@@ -142,10 +154,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     ) {
       return;
     }
-    const index = snapshot.ids.indexOf(documentId);
-    const nextId = index >= 0 && index < snapshot.ids.length - 1
-      ? snapshot.ids[index + 1]
-      : null;
+    const nextId = nextForwardId(snapshot, documentId);
     if (nextId != null) {
       goTo(nextId, "forward");
       return;
@@ -165,17 +174,15 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
         return;
       }
       const next = appendQueuePage(snapshot, page);
-      const firstNew = next.ids.find(id => !snapshot.ids.includes(id));
+      setSnapshot(next);
+      const firstNew = nextForwardId(next, documentId);
       if (firstNew != null) {
-        setSnapshot(next);
         setQueueDirection("forward");
         void navigate(
           `/${organizationId}/${snapshot.kind}/${firstNew}`,
           queueNavigateOpts,
         );
-        return;
       }
-      setSnapshot(next);
     }).catch((error: unknown) => {
       if (generation !== fetchGenerationRef.current) {
         return;
@@ -256,9 +263,10 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     leave,
     goTo,
     goForward,
+    markDone,
     startQueue,
     close,
-  }), [advancing, close, enter, goForward, goTo, leave, scopedSnapshot, startQueue]);
+  }), [advancing, close, enter, goForward, goTo, leave, markDone, scopedSnapshot, startQueue]);
 
   useLayoutEffect(() => {
     return () => {
@@ -311,10 +319,13 @@ export function useSyncDocumentQueue({
   isPending,
   pendingPage,
 }: SyncDocumentQueueOptions): void {
-  const { snapshot, enter, leave } = useDocumentQueue();
+  const { snapshot, enter, leave, markDone } = useDocumentQueue();
 
   useLayoutEffect(() => {
     if (snapshot != null && snapshot.kind === kind && snapshot.ids.includes(documentId)) {
+      if (!isPending) {
+        markDone(documentId);
+      }
       return;
     }
     if (isPending) {
@@ -324,7 +335,7 @@ export function useSyncDocumentQueue({
     if (snapshot != null) {
       leave();
     }
-  }, [documentId, enter, isPending, kind, leave, pendingPage, snapshot]);
+  }, [documentId, enter, isPending, kind, leave, markDone, pendingPage, snapshot]);
 }
 
 // List pages drop the snapshot so a later visit captures a fresh pending count.

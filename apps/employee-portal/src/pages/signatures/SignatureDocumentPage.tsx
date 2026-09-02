@@ -26,6 +26,7 @@ import type { SignatureDocumentPageQuery } from "#/__generated__/core/SignatureD
 import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentVersionHistory } from "#/pages/_components/DocumentVersionHistory";
 import { DocumentWorkspace } from "#/pages/_components/DocumentWorkspace";
+import { canGoForward } from "#/pages/_lib/documentQueue";
 import {
   useDocumentQueue,
   useDocumentQueueActive,
@@ -132,9 +133,7 @@ export function SignatureDocumentPage({ queryRef }: SignatureDocumentPageProps) 
   const currentVersion = selectedVersionId === version.id;
   const dataUri = useExportEmployeeDocumentPdf(selectedVersionId);
 
-  const index = snapshot?.ids.indexOf(documentId) ?? -1;
-  const hasNext = snapshot != null
-    && ((index >= 0 && index < snapshot.ids.length - 1) || snapshot.hasNextPage);
+  const hasNext = snapshot != null && canGoForward(snapshot, documentId);
 
   return (
     <DocumentWorkspace
