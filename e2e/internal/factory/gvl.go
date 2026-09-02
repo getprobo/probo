@@ -32,9 +32,11 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// SeedCommonGVLVendor inserts a catalog GVL vendor (and a snapshot if needed)
-// for e2e tests. iabVendorID must be unique across the shared catalog table.
-func SeedCommonGVLVendor(t *testing.T, iabVendorID int, name string, deleted bool) int {
+// SeedCommonGVLVendor inserts a catalog GVL vendor (and its snapshot) for e2e
+// tests, drawing a fresh iab_vendor_id and vendor_list_version from a dedicated
+// sequence. Sequence values are never handed out twice, so parallel subtests and
+// concurrent test binaries sharing the database never collide.
+func SeedCommonGVLVendor(t *testing.T, name string, deleted bool) (iabVendorID int, version int) {
 	t.Helper()
 
 	client := test.PGClient(t)
@@ -43,10 +45,24 @@ func SeedCommonGVLVendor(t *testing.T, iabVendorID int, name string, deleted boo
 	tenantID := gid.NewTenantID()
 	snapshotID := gid.New(tenantID, coredata.CommonGVLSnapshotEntityType)
 	vendorID := gid.New(tenantID, coredata.CommonGVLVendorEntityType)
-	version := int(now.UnixNano()%1_000_000_000) + iabVendorID
 
 	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		// The real GVL uses low vendor ids, so start well above them to keep
+		// seeded vendors distinguishable from any imported catalog rows.
 		_, err := conn.Exec(ctx, `
+CREATE SEQUENCE IF NOT EXISTS e2e_gvl_seq START WITH 10000001
+`)
+		if err != nil {
+			return err
+		}
+
+		if err := conn.QueryRow(ctx, `SELECT nextval('e2e_gvl_seq')`).Scan(&iabVendorID); err != nil {
+			return err
+		}
+
+		version = iabVendorID
+
+		_, err = conn.Exec(ctx, `
 INSERT INTO common_gvl_snapshots (
     id,
     vendor_list_version,
@@ -99,7 +115,7 @@ INSERT INTO common_gvl_vendors (
 	})
 	require.NoError(t, err, "test setup: cannot seed common gvl vendor")
 
-	return version
+	return iabVendorID, version
 }
 
 // SeedCommonGVLCatalogState points the singleton catalog pointer at version.
