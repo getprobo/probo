@@ -162,3 +162,22 @@ WHERE id = $1
 	})
 	require.NoError(t, err, "test setup: cannot enable cookie banner tcf")
 }
+
+// DisableCookieBannerTCF flips the hidden tcf capability back off on a banner.
+func DisableCookieBannerTCF(t *testing.T, bannerID string) {
+	t.Helper()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		_, err := conn.Exec(ctx, `
+UPDATE cookie_banners
+SET capabilities = capabilities || '{"tcf": false}'::jsonb
+WHERE id = $1
+`, bannerID)
+
+		return err
+	})
+	require.NoError(t, err, "test setup: cannot disable cookie banner tcf")
+}

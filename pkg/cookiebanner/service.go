@@ -1115,10 +1115,10 @@ func (s *Service) RemoveCookieBannerGVLVendor(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			if !banner.Capabilities.TCF {
-				return ErrTCFNotEnabled
-			}
-
+			// Removal stays available even when TCF is off, so vendors linked
+			// while it was on can still be cleaned up. Gating it too would leave
+			// those rows undeletable while ensureDraftVersion keeps folding them
+			// into every new snapshot.
 			var link coredata.CookieBannerGVLVendor
 			if err := link.Delete(ctx, tx, scope, banner.ID, req.IABVendorID); err != nil {
 				return fmt.Errorf("cannot remove cookie banner gvl vendor: %w", err)
