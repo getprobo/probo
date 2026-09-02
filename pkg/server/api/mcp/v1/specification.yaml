@@ -12244,10 +12244,14 @@ components:
       type: object
       required:
         - resource_reporting
+        - tcf
       properties:
         resource_reporting:
           type: boolean
           description: Whether the SDK reports detected resources
+        tcf:
+          type: boolean
+          description: Whether IAB TCF is enabled for this banner
 
     CookieBannerCapabilitiesInput:
       type: object

@@ -328,3 +328,43 @@ func TestRecordConsentRequest_Validate(t *testing.T) {
 		assert.NotEmpty(t, validationErrors.ByField("action"))
 	})
 }
+
+func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
+	t.Parallel()
+
+	tenant := gid.NewTenantID()
+	bannerID := gid.New(tenant, coredata.CookieBannerEntityType)
+	snapshot := coredata.CookieBannerVersionSnapshot{
+		CookiePolicyURL:   "https://example.com/cookies",
+		ConsentExpiryDays: 365,
+		DefaultLanguage:   "en",
+	}
+	version := &coredata.CookieBannerVersion{Version: 1}
+
+	t.Run("follows the banner capability when enabled", func(t *testing.T) {
+		t.Parallel()
+
+		banner := &coredata.CookieBanner{
+			ID: bannerID,
+			Capabilities: coredata.CookieBannerCapabilities{
+				ResourceReporting: true,
+				TCF:               true,
+			},
+		}
+
+		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
+		assert.True(t, config.TCFEnabled)
+	})
+
+	t.Run("defaults to disabled", func(t *testing.T) {
+		t.Parallel()
+
+		banner := &coredata.CookieBanner{
+			ID:           bannerID,
+			Capabilities: coredata.DefaultCookieBannerCapabilities(),
+		}
+
+		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
+		assert.False(t, config.TCFEnabled)
+	})
+}
