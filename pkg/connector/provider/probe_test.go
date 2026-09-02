@@ -580,3 +580,90 @@ func TestProbeClosureURL(t *testing.T) {
 		})
 	}
 }
+
+func TestDoProbeRequest_RejectsHTMLBody(t *testing.T) {
+	t.Parallel()
+
+	// A base URL the customer supplies can reach a server that is not the
+	// provider's API: a single-page app serving its index for any unknown
+	// path, an SSO portal, a proxy error page. Those answer 200, so the
+	// status alone reports a healthy connector against which no request will
+	// ever work — and the failure only surfaces much later, in a worker.
+	cases := []struct {
+		name       string
+		status     int
+		body       string
+		wantReject bool
+	}{
+		{"json object", http.StatusOK, `{"site-name":"Acme"}`, false},
+		{"json array", http.StatusOK, `[{"id":1}]`, false},
+		{"empty body", http.StatusOK, "", false},
+		{"no content", http.StatusNoContent, "", false},
+		{"leading whitespace then json", http.StatusOK, "\n  {\"ok\":true}", false},
+		{"html index page", http.StatusOK, "<!doctype html><html><body>Metabase</body></html>", true},
+		{"uppercase doctype", http.StatusOK, "<!DOCTYPE html>\n<html lang=\"en\">", true},
+		{"bare html element", http.StatusOK, "<html>\r\n<head><title>502</title></head>", true},
+		{"html with leading whitespace", http.StatusOK, "\n\t<html></html>", true},
+		{"html behind a byte order mark", http.StatusOK, "\xef\xbb\xbf<!doctype html>", true},
+		{"html padded past the first read", http.StatusOK, strings.Repeat(" ", 600) + "<!doctype html>", true},
+		{"proxy maintenance page on 5xx stays transient", http.StatusBadGateway, "<html><h1>502 Bad Gateway</h1></html>", false},
+		{"not found html page stays a pass", http.StatusNotFound, "<html>404</html>", false},
+		// An XML API is a legitimate thing to reach. Rejecting it would retire
+		// a working connector, which is worse than missing a misconfiguration.
+		{"xml declaration", http.StatusOK, `<?xml version="1.0"?><Error/>`, false},
+		{"bare xml element", http.StatusOK, "<soap:Envelope><soap:Body/></soap:Envelope>", false},
+		{"whitespace only", http.StatusOK, strings.Repeat(" ", 2000), false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: tc.status,
+					Body:       io.NopCloser(strings.NewReader(tc.body)),
+					Header:     make(http.Header),
+				}, nil
+			})}
+
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+			require.NoError(t, err)
+
+			err = doProbeRequest(client, req)
+
+			if !tc.wantReject {
+				require.NoError(t, err)
+
+				return
+			}
+
+			var notAPI *NotAnAPIEndpointError
+
+			require.ErrorAs(t, err, &notAPI)
+			assert.Equal(t, tc.status, notAPI.StatusCode)
+		})
+	}
+}
+
+func TestDoProbeRequest_CredentialRejectionWinsOverMarkup(t *testing.T) {
+	t.Parallel()
+
+	// A 401 that renders a login page is still a rejected credential, which
+	// is the more actionable verdict of the two.
+	client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Body:       io.NopCloser(strings.NewReader("<html>sign in</html>")),
+			Header:     make(http.Header),
+		}, nil
+	})}
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+	require.NoError(t, err)
+
+	var rejected *CredentialRejectedError
+
+	require.ErrorAs(t, doProbeRequest(client, req), &rejected)
+	assert.Equal(t, http.StatusUnauthorized, rejected.StatusCode)
+}

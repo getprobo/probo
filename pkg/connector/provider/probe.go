@@ -149,11 +149,32 @@ func (e *CredentialRejectedError) Error() string {
 	return fmt.Sprintf("credential rejected: status %d", e.StatusCode)
 }
 
+// NotAnAPIEndpointError reports that the probe reached a server that answered
+// with markup instead of JSON. It carries no body: the page is the customer's
+// and may hold anything.
+type NotAnAPIEndpointError struct {
+	StatusCode int
+}
+
+func (e *NotAnAPIEndpointError) Error() string {
+	return fmt.Sprintf(
+		"endpoint returned an HTML page instead of JSON (status %d): check the instance URL points at the API",
+		e.StatusCode,
+	)
+}
+
 // doProbeRequest executes a probe request and maps the status to a verdict:
 // 401/403 always mean the credential is rejected, any 2xx/other status means
 // connected. extraReject lets a provider add statuses that also mean a hard
 // rejection (e.g. OpenRouter's 404 for a non-organization key); pass none for
 // the default 401/403-only contract.
+//
+// A 2xx that answers with an HTML document is rejected: only there does the
+// status lie.
+// A customer-supplied base URL can reach a single-page app serving its index
+// for any unknown path, or an SSO portal, and both answer 200. Other statuses
+// keep their existing verdict, so a provider's 5xx maintenance page stays a
+// transient failure rather than flipping a working connector to disconnected.
 func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...int) error {
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -171,7 +192,59 @@ func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...i
 		return &CredentialRejectedError{StatusCode: resp.StatusCode}
 	}
 
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 && respondsWithHTML(resp.Body) {
+		return &NotAnAPIEndpointError{StatusCode: resp.StatusCode}
+	}
+
 	return nil
+}
+
+// respondsWithHTML reports whether the body opens an HTML document. It matches
+// HTML specifically rather than any '<': an XML API is a legitimate thing for a
+// probe to reach, and a false positive here retires a working connector.
+//
+// Leading whitespace is skipped over a bounded number of reads, so a page
+// padded ahead of its doctype is still recognised without letting a slow or
+// endless body hold the probe open.
+func respondsWithHTML(body io.Reader) bool {
+	// The byte order mark some servers prepend to an HTML page.
+	const utf8BOM = "\xef\xbb\xbf"
+
+	prefixes := [][]byte{
+		[]byte("<!doctype"),
+		[]byte("<html"),
+		[]byte("<head"),
+		[]byte("<body"),
+	}
+
+	var (
+		buf     [512]byte
+		scanned []byte
+	)
+
+	for range 8 {
+		n, err := io.ReadFull(body, buf[:])
+		if n > 0 {
+			scanned = append(scanned, buf[:n]...)
+			scanned = bytes.TrimLeft(bytes.TrimPrefix(scanned, []byte(utf8BOM)), " \t\r\n\v\f")
+		}
+
+		// Keep reading only while everything seen so far is whitespace; the
+		// longest prefix below decides how much is enough to classify.
+		if len(scanned) >= 9 || err != nil {
+			break
+		}
+	}
+
+	lowered := bytes.ToLower(scanned)
+
+	for _, prefix := range prefixes {
+		if bytes.HasPrefix(lowered, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func buildDatadogProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {

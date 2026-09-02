@@ -80,13 +80,46 @@ func NewSourceNameWorker(
 	)
 }
 
+// Name resolution is best-effort display metadata, so its retry budget is
+// small: a briefly unreachable provider gets a few spaced retries, and
+// anything still failing keeps the generic name until a reconnect resets the
+// budget. See LoadNextUnsyncedNameForUpdateSkipLocked for why the budget, not
+// the error taxonomy, is what bounds the claim.
+const (
+	maxNameSyncAttempts = 5
+	nameSyncBaseBackoff = time.Minute
+	nameSyncMaxBackoff  = time.Hour
+)
+
+// nameSyncBackoff returns how long to hold a source out of the queue after its
+// attempt-th failure, doubling from nameSyncBaseBackoff up to the cap.
+func nameSyncBackoff(attempt int) time.Duration {
+	backoff := nameSyncBaseBackoff << max(attempt-1, 0)
+	if backoff > nameSyncMaxBackoff || backoff <= 0 {
+		return nameSyncMaxBackoff
+	}
+
+	return backoff
+}
+
 func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessReviewSource, error) {
 	var source coredata.AccessReviewSource
 
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return source.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx)
+			if err := source.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx); err != nil {
+				return fmt.Errorf("cannot claim next unsynced source name: %w", err)
+			}
+
+			// Charging the attempt here, rather than after Process, is what
+			// bounds the claim: nothing else transitions the predicate.
+			return source.RecordNameSyncAttempt(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(source.ID),
+				nameSyncBackoff(source.NameSyncAttempts+1),
+			)
 		},
 	)
 	if err != nil {
@@ -101,11 +134,9 @@ func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessReviewSou
 }
 
 func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessReviewSource) error {
-	h.logger.InfoCtx(
-		ctx,
-		"syncing source name",
-		log.String("source_id", source.ID.String()),
-	)
+	logger := h.logger.With(log.String("source_id", source.ID.String()))
+
+	logger.DebugCtx(ctx, "syncing source name")
 
 	var (
 		dbConnector coredata.Connector
@@ -166,10 +197,9 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 			return err
 		}
 
-		h.logger.WarnCtx(
+		logger.WarnCtx(
 			ctx,
 			"cannot set up name resolver, keeping generic name",
-			log.String("source_id", source.ID.String()),
 			log.Error(err),
 		)
 
@@ -177,11 +207,24 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 	}
 
 	if resolver == nil {
-		h.logger.InfoCtx(
+		logger.DebugCtx(
 			ctx,
 			"no name resolver for provider, keeping generic name",
-			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
+		)
+
+		return h.markNameSynced(ctx, &source)
+	}
+
+	// The budget is charged at claim time, so a crash between the charge and
+	// the resolve leaves the row already over it. Retire it here rather than
+	// spending another request the budget did not authorise.
+	if source.NameSyncAttempts > maxNameSyncAttempts {
+		logger.WarnCtx(
+			ctx,
+			"name resolution exhausted its attempts, keeping generic name",
+			log.String("provider", dbConnector.Provider.String()),
+			log.Int("attempts", source.NameSyncAttempts),
 		)
 
 		return h.markNameSynced(ctx, &source)
@@ -192,16 +235,13 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
-		// A permanent failure (auth/bad-request) cannot be fixed by
-		// retrying: keep the generic name and mark the source synced so the
-		// worker stops re-claiming it every poll. Returning the error here
-		// would leave name_synced_at NULL and re-enqueue the source forever
-		// (a single unauthorized source produced millions of error logs).
+		// Retiring a known-permanent failure on its first attempt spares the
+		// budget four pointless requests. It is only that shortcut: the
+		// budget below, not this branch, is what bounds the claim.
 		if errors.Is(err, drivers.ErrTerminalNameResolution) {
-			h.logger.WarnCtx(
+			logger.WarnCtx(
 				ctx,
 				"permanent name resolution failure, keeping generic name",
-				log.String("source_id", source.ID.String()),
 				log.String("provider", dbConnector.Provider.String()),
 				log.Error(err),
 			)
@@ -209,22 +249,25 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 			return h.markNameSynced(ctx, &source)
 		}
 
-		h.logger.WarnCtx(
-			ctx,
-			"cannot resolve instance name",
-			log.String("source_id", source.ID.String()),
-			log.String("provider", dbConnector.Provider.String()),
-			log.Error(err),
-		)
+		if source.NameSyncAttempts >= maxNameSyncAttempts {
+			logger.WarnCtx(
+				ctx,
+				"name resolution exhausted its attempts, keeping generic name",
+				log.String("provider", dbConnector.Provider.String()),
+				log.Int("attempts", source.NameSyncAttempts),
+				log.Error(err),
+			)
+
+			return h.markNameSynced(ctx, &source)
+		}
 
 		return fmt.Errorf("cannot resolve instance name for source %s: %w", source.ID, err)
 	}
 
 	if instanceName == "" {
-		h.logger.InfoCtx(
+		logger.DebugCtx(
 			ctx,
 			"instance name is empty, keeping generic name",
-			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
 
@@ -234,10 +277,9 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 	displayName := h.providerRegistry.ProviderDisplayName(dbConnector.Provider)
 	newName := displayName + " / " + instanceName
 
-	h.logger.InfoCtx(
+	logger.InfoCtx(
 		ctx,
 		"resolved source name",
-		log.String("source_id", source.ID.String()),
 		log.String("connector_id", dbConnector.ID.String()),
 	)
 
@@ -254,16 +296,8 @@ func (h *sourceNameHandler) markNameSynced(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
-			now := time.Now()
 
-			source.NameSyncedAt = new(now)
-			source.UpdatedAt = now
-
-			if err := source.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update access source: %w", err)
-			}
-
-			return nil
+			return source.MarkNameSynced(ctx, tx, scope, time.Now())
 		},
 	)
 }

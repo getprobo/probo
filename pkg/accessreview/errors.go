@@ -193,8 +193,9 @@ func (e *ProbeError) Unwrap() error {
 }
 
 // IsProviderVerdict reports whether err is the provider's answer rather than a
-// failure on Probo's side. Only a rejected credential, a transport failure that
-// reached the provider, and a refused token refresh qualify. Everything else a
+// failure on Probo's side. Only a rejected credential, a host that answered
+// with a page instead of its API, a transport failure that reached the
+// provider, and a refused token refresh qualify. Everything else a
 // probe can return (settings that will not decode, a request that could not be
 // built, a registry misconfiguration) is ours, so the default is to treat a
 // failure as Probo's and report it in full.
@@ -209,6 +210,12 @@ func IsProviderVerdict(err error) bool {
 	}
 
 	if _, ok := errors.AsType[*provider.CredentialRejectedError](err); ok {
+		return true
+	}
+
+	// The server answered, just not with its API: the URL the customer gave
+	// points somewhere else. That is their configuration, not our failure.
+	if notAPI, ok := errors.AsType[*provider.NotAnAPIEndpointError](err); ok && notAPI != nil {
 		return true
 	}
 
@@ -246,6 +253,10 @@ func ProbeFailureCode(err error) string {
 	// would cost more than the lost detail.
 	if rejected, ok := errors.AsType[*provider.CredentialRejectedError](err); ok && rejected != nil {
 		return fmt.Sprintf("credential_rejected_%d", rejected.StatusCode)
+	}
+
+	if notAPI, ok := errors.AsType[*provider.NotAnAPIEndpointError](err); ok && notAPI != nil {
+		return fmt.Sprintf("not_an_api_endpoint_%d", notAPI.StatusCode)
 	}
 
 	if _, ok := errors.AsType[*url.Error](err); ok {

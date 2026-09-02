@@ -62,6 +62,15 @@ func TestProbeFailureCodeIsSafeToLog(t *testing.T) {
 	)
 	assert.Equal(t, "credential_rejected_403", accessreview.ProbeFailureCode(rejected))
 
+	// A base URL that reaches a page instead of an API is the customer's
+	// configuration, and the status is what separates it from a credential
+	// they need to reconnect. The page itself is theirs and never quoted.
+	notAPI := accessreview.NewProbeError(
+		coredata.ConnectorProviderMetabase,
+		&provider.NotAnAPIEndpointError{StatusCode: 200},
+	)
+	assert.Equal(t, "not_an_api_endpoint_200", accessreview.ProbeFailureCode(notAPI))
+
 	// A transport error embeds the customer's self-hosted host, so only the
 	// classification survives.
 	transport := accessreview.NewProbeError(
@@ -169,6 +178,7 @@ func TestIsProviderVerdict(t *testing.T) {
 
 	// The provider answered.
 	assert.True(t, accessreview.IsProviderVerdict(&provider.CredentialRejectedError{StatusCode: 401}))
+	assert.True(t, accessreview.IsProviderVerdict(&provider.NotAnAPIEndpointError{StatusCode: 200}))
 	assert.True(t, accessreview.IsProviderVerdict(&url.Error{Op: "Get", URL: "https://x.example", Err: errors.New("refused")}))
 	assert.True(t, accessreview.IsProviderVerdict(&oauth2.RetrieveError{ErrorCode: "invalid_grant"}))
 	// A workload identity connector is answered by STS through the SDK, so an

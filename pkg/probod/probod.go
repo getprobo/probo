@@ -811,6 +811,7 @@ func (impl *Implm) Run(
 		providerRegistry,
 		l.Named("access-review"),
 		accessreview.WithIdentityFederation(identityFederationIssuer),
+		accessreview.WithRegisterer(r),
 	)
 
 	agentExecutionService := agentexecution.NewService(pgClient)

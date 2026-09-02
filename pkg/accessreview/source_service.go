@@ -261,8 +261,8 @@ func (s *Service) UpdateSource(
 
 				// A (re)linked connector may resolve to a different instance
 				// name; clear the synced flag so the source-name worker picks
-				// the row up and re-resolves it.
-				source.NameSyncedAt = nil
+				// the row up and re-resolves it, with a fresh retry budget.
+				source.ResetNameSync()
 			}
 
 			if req.CsvData != nil {
@@ -532,8 +532,8 @@ func (s *Service) ConfigureAccessReviewSource(
 
 			// The selected org changed, so the resolvable instance name may
 			// have too; clear the synced flag so the source-name worker
-			// re-resolves the display name.
-			source.NameSyncedAt = nil
+			// re-resolves the display name, with a fresh retry budget.
+			source.ResetNameSync()
 			source.UpdatedAt = time.Now()
 
 			if err := source.Update(ctx, conn, scope); err != nil {
@@ -976,7 +976,7 @@ func (s *Service) ResetSourceNameSyncForConnector(
 		func(ctx context.Context, conn pg.Tx) error {
 			sources := &coredata.AccessReviewSources{}
 
-			return sources.ClearNameSyncedAtByConnectorID(ctx, conn, scope, connectorID)
+			return sources.ResetNameSyncByConnectorID(ctx, conn, scope, connectorID)
 		},
 	)
 }
