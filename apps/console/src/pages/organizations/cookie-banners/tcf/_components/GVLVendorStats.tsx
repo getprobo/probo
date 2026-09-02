@@ -48,9 +48,15 @@ const cookieBannerFragment = graphql`
   fragment GVLVendorStats_cookieBanner on CookieBanner {
     gvlVendors(first: 500) {
       totalCount
+      edges {
+        node {
+          iabVendorId
+        }
+      }
     }
     publishedVersion {
       gvlVendorCount
+      gvlVendorIds
     }
   }
 `;
@@ -71,7 +77,10 @@ export function GVLVendorStats({ queryKey, cookieBannerKey }: GVLVendorStatsProp
   const missing = t("tcfPage.stats.empty");
   const draftCount = banner.gvlVendors?.totalCount ?? 0;
   const liveCount = banner.publishedVersion?.gvlVendorCount;
-  const status = vendorStatus(draftCount, liveCount);
+  const status = vendorStatus(
+    (banner.gvlVendors?.edges ?? []).map(edge => edge.node.iabVendorId),
+    banner.publishedVersion?.gvlVendorIds,
+  );
 
   return (
     <div className={root()}>
@@ -95,13 +104,34 @@ export function GVLVendorStats({ queryKey, cookieBannerKey }: GVLVendorStatsProp
             {t("tcfPage.stats.unpublishedNever")}
           </Badge>
         )}
-        {status.kind === "ahead" && (
+        {status.kind === "added" && (
           <Badge
             size={1}
             variant="soft"
             color="amber"
           >
-            {t("tcfPage.stats.unpublished", { count: status.count })}
+            {t("tcfPage.stats.unpublishedAdded", { count: status.count })}
+          </Badge>
+        )}
+        {status.kind === "removed" && (
+          <Badge
+            size={1}
+            variant="soft"
+            color="amber"
+          >
+            {t("tcfPage.stats.unpublishedRemoved", { count: status.count })}
+          </Badge>
+        )}
+        {status.kind === "changed" && (
+          <Badge
+            size={1}
+            variant="soft"
+            color="amber"
+          >
+            {t("tcfPage.stats.unpublishedChanged", {
+              added: status.added,
+              removed: status.removed,
+            })}
           </Badge>
         )}
       </StatTile>
@@ -168,19 +198,44 @@ function StatTile({ title, entries, children }: StatTileProps) {
   );
 }
 
+type VendorStatus =
+  | { kind: "synced" }
+  | { kind: "never" }
+  | { kind: "added"; count: number }
+  | { kind: "removed"; count: number }
+  | { kind: "changed"; added: number; removed: number };
+
+/**
+ * Compares the draft and published vendor sets by id rather than by size, so a
+ * swap of one vendor for another is reported as a pending change instead of
+ * reading as synced.
+ */
 function vendorStatus(
-  draftCount: number,
-  liveCount: number | null | undefined,
-): { kind: "synced" } | { kind: "never" } | { kind: "ahead"; count: number } {
-  if (liveCount == null) {
+  draftIDs: readonly number[],
+  liveIDs: readonly number[] | null | undefined,
+): VendorStatus {
+  if (liveIDs == null) {
     return { kind: "never" };
   }
 
-  if (draftCount === liveCount) {
+  const live = new Set(liveIDs);
+  const draft = new Set(draftIDs);
+  const added = draftIDs.filter(id => !live.has(id)).length;
+  const removed = liveIDs.filter(id => !draft.has(id)).length;
+
+  if (added === 0 && removed === 0) {
     return { kind: "synced" };
   }
 
-  return { kind: "ahead", count: Math.abs(draftCount - liveCount) };
+  if (removed === 0) {
+    return { kind: "added", count: added };
+  }
+
+  if (added === 0) {
+    return { kind: "removed", count: removed };
+  }
+
+  return { kind: "changed", added, removed };
 }
 
 function formatVersion(

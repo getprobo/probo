@@ -244,8 +244,11 @@
       "version": "v{{version}}",
       "catalogTotal_one": "{{count}} fournisseur",
       "catalogTotal_other": "{{count}} fournisseurs",
-      "unpublished_one": "{{count}} non publié",
-      "unpublished_other": "{{count}} non publiés",
+      "unpublishedAdded_one": "{{count}} fournisseur à ajouter",
+      "unpublishedAdded_other": "{{count}} fournisseurs à ajouter",
+      "unpublishedRemoved_one": "{{count}} fournisseur à retirer",
+      "unpublishedRemoved_other": "{{count}} fournisseurs à retirer",
+      "unpublishedChanged": "{{added}} à ajouter, {{removed}} à retirer",
       "unpublishedNever": "Pas encore publié"
     },
     "emptyCatalog": "Aucun fournisseur GVL n’est encore importé. Exécutez gvl-import pour remplir le catalogue.",
