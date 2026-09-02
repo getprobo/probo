@@ -42,7 +42,7 @@ func TestTaskComment_Create(t *testing.T) {
 				taskCommentEdge {
 					node {
 						id
-						description
+						content
 						owner {
 							id
 						}
@@ -56,9 +56,9 @@ func TestTaskComment_Create(t *testing.T) {
 		CreateTaskComment struct {
 			TaskCommentEdge struct {
 				Node struct {
-					ID          string `json:"id"`
-					Description string `json:"description"`
-					Owner       struct {
+					ID      string `json:"id"`
+					Content string `json:"content"`
+					Owner   struct {
 						ID string `json:"id"`
 					} `json:"owner"`
 				} `json:"node"`
@@ -68,15 +68,15 @@ func TestTaskComment_Create(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"taskId":      taskID,
-			"description": "First comment",
+			"taskId":  taskID,
+			"content": factory.ProseMirrorPlainText("First comment"),
 		},
 	}, &result)
 	require.NoError(t, err)
 
 	comment := result.CreateTaskComment.TaskCommentEdge.Node
 	assert.NotEmpty(t, comment.ID)
-	assert.Equal(t, "First comment", comment.Description)
+	factory.AssertProseMirrorPlainText(t, "First comment", comment.Content)
 	assert.Equal(t, owner.GetProfileID().String(), comment.Owner.ID)
 }
 
@@ -88,7 +88,7 @@ func TestTaskComment_CreateWithOwner(t *testing.T) {
 	ownerID := assignee.GetProfileID().String()
 
 	commentID := factory.NewTaskComment(owner, taskID).
-		WithDescription("Assigned comment").
+		WithContent("Assigned comment").
 		WithOwnerID(ownerID).
 		Create()
 
@@ -121,8 +121,8 @@ func TestTaskComment_ListOldestFirst(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	taskID := factory.NewTaskWithoutMeasure(owner).Create()
-	firstID := factory.NewTaskComment(owner, taskID).WithDescription("Oldest comment").Create()
-	secondID := factory.NewTaskComment(owner, taskID).WithDescription("Newest comment").Create()
+	firstID := factory.NewTaskComment(owner, taskID).WithContent("Oldest comment").Create()
+	secondID := factory.NewTaskComment(owner, taskID).WithContent("Newest comment").Create()
 
 	query := `
 		query($id: ID!) {
@@ -133,7 +133,7 @@ func TestTaskComment_ListOldestFirst(t *testing.T) {
 						edges {
 							node {
 								id
-								description
+								content
 							}
 						}
 					}
@@ -148,8 +148,8 @@ func TestTaskComment_ListOldestFirst(t *testing.T) {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
-						ID          string `json:"id"`
-						Description string `json:"description"`
+						ID      string `json:"id"`
+						Content string `json:"content"`
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"comments"`
@@ -162,23 +162,23 @@ func TestTaskComment_ListOldestFirst(t *testing.T) {
 	require.GreaterOrEqual(t, result.Node.Comments.TotalCount, 2)
 	require.GreaterOrEqual(t, len(result.Node.Comments.Edges), 2)
 	assert.Equal(t, firstID, result.Node.Comments.Edges[0].Node.ID)
-	assert.Equal(t, "Oldest comment", result.Node.Comments.Edges[0].Node.Description)
+	factory.AssertProseMirrorPlainText(t, "Oldest comment", result.Node.Comments.Edges[0].Node.Content)
 	assert.Equal(t, secondID, result.Node.Comments.Edges[1].Node.ID)
-	assert.Equal(t, "Newest comment", result.Node.Comments.Edges[1].Node.Description)
+	factory.AssertProseMirrorPlainText(t, "Newest comment", result.Node.Comments.Edges[1].Node.Content)
 }
 
 func TestTaskComment_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	taskID := factory.NewTaskWithoutMeasure(owner).Create()
-	commentID := factory.NewTaskComment(owner, taskID).WithDescription("Original comment").Create()
+	commentID := factory.NewTaskComment(owner, taskID).WithContent("Original comment").Create()
 
 	query := `
 		mutation UpdateTaskComment($input: UpdateTaskCommentInput!) {
 			updateTaskComment(input: $input) {
 				taskComment {
 					id
-					description
+					content
 				}
 			}
 		}
@@ -187,8 +187,8 @@ func TestTaskComment_Update(t *testing.T) {
 	var result struct {
 		UpdateTaskComment struct {
 			TaskComment struct {
-				ID          string `json:"id"`
-				Description string `json:"description"`
+				ID      string `json:"id"`
+				Content string `json:"content"`
 			} `json:"taskComment"`
 		} `json:"updateTaskComment"`
 	}
@@ -196,13 +196,96 @@ func TestTaskComment_Update(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"taskCommentId": commentID,
-			"description":   "Updated comment",
+			"content":       factory.ProseMirrorPlainText("Updated comment"),
 		},
 	}, &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, commentID, result.UpdateTaskComment.TaskComment.ID)
-	assert.Equal(t, "Updated comment", result.UpdateTaskComment.TaskComment.Description)
+	factory.AssertProseMirrorPlainText(t, "Updated comment", result.UpdateTaskComment.TaskComment.Content)
+}
+
+func TestTaskComment_OmittableContent(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+
+	const query = `
+		mutation UpdateTaskComment($input: UpdateTaskCommentInput!) {
+			updateTaskComment(input: $input) {
+				taskComment {
+					id
+					content
+				}
+			}
+		}
+	`
+
+	t.Run("clear content saves empty document", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name    string
+			content any
+		}{
+			{name: "null", content: nil},
+			{name: "empty string", content: ""},
+			{name: "empty document", content: factory.ProseMirrorPlainText("")},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				commentID := factory.NewTaskComment(owner, taskID).
+					WithContent("Initial comment").
+					Create()
+
+				var result struct {
+					UpdateTaskComment struct {
+						TaskComment struct {
+							ID      string `json:"id"`
+							Content string `json:"content"`
+						} `json:"taskComment"`
+					} `json:"updateTaskComment"`
+				}
+
+				err := owner.Execute(query, map[string]any{
+					"input": map[string]any{
+						"taskCommentId": commentID,
+						"content":       tt.content,
+					},
+				}, &result)
+				require.NoError(t, err)
+				factory.AssertProseMirrorPlainText(t, "", result.UpdateTaskComment.TaskComment.Content)
+			})
+		}
+	})
+
+	t.Run("update without content preserves value", func(t *testing.T) {
+		t.Parallel()
+
+		commentID := factory.NewTaskComment(owner, taskID).
+			WithContent("Should persist").
+			Create()
+
+		var result struct {
+			UpdateTaskComment struct {
+				TaskComment struct {
+					ID      string `json:"id"`
+					Content string `json:"content"`
+				} `json:"taskComment"`
+			} `json:"updateTaskComment"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"taskCommentId": commentID,
+			},
+		}, &result)
+		require.NoError(t, err)
+		factory.AssertProseMirrorPlainText(t, "Should persist", result.UpdateTaskComment.TaskComment.Content)
+	})
 }
 
 func TestTaskComment_Delete(t *testing.T) {
@@ -252,8 +335,8 @@ func TestTaskComment_ViewerCannotCreate(t *testing.T) {
 
 	_, err := viewer.Do(query, map[string]any{
 		"input": map[string]any{
-			"taskId":      taskID,
-			"description": "Viewer comment",
+			"taskId":  taskID,
+			"content": factory.ProseMirrorPlainText("Viewer comment"),
 		},
 	})
 	testutil.RequireForbiddenError(t, err, "viewer cannot create task comments")
@@ -280,32 +363,32 @@ func TestTaskComment_CreateValidation(t *testing.T) {
 		wantErrorContains string
 	}{
 		{
-			name: "empty description",
+			name: "empty content",
 			input: map[string]any{
-				"description": "",
+				"content": "",
 			},
-			wantErrorContains: "description",
+			wantErrorContains: "content",
 		},
 		{
 			name: "HTML injection",
 			input: map[string]any{
-				"description": "<script>xss</script>",
+				"content": "<script>xss</script>",
 			},
-			wantErrorContains: "HTML",
+			wantErrorContains: "ProseMirror document",
 		},
 		{
 			name: "control char",
 			input: map[string]any{
-				"description": "Test\x00",
+				"content": "Test\x00",
 			},
-			wantErrorContains: "control",
+			wantErrorContains: "ProseMirror document",
 		},
 		{
 			name: "max length",
 			input: map[string]any{
-				"description": strings.Repeat("c", 5001),
+				"content": factory.ProseMirrorPlainText(strings.Repeat("c", 5001)),
 			},
-			wantErrorContains: "description",
+			wantErrorContains: "at most",
 		},
 	}
 
@@ -345,8 +428,8 @@ func TestTaskComment_AuditorCannotAccess(t *testing.T) {
 
 		_, err := auditor.Do(query, map[string]any{
 			"input": map[string]any{
-				"taskId":      taskID,
-				"description": "Auditor comment",
+				"taskId":  taskID,
+				"content": factory.ProseMirrorPlainText("Auditor comment"),
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "auditor cannot create task comments")
@@ -381,7 +464,7 @@ func TestTaskComment_AuditorCannotAccess(t *testing.T) {
 				node(id: $id) {
 					... on TaskComment {
 						id
-						description
+						content
 					}
 				}
 			}
@@ -403,7 +486,7 @@ func TestTaskComment_ViewerCanList(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 	taskID := factory.NewTaskWithoutMeasure(owner).Create()
-	commentID := factory.NewTaskComment(owner, taskID).WithDescription("Visible comment").Create()
+	commentID := factory.NewTaskComment(owner, taskID).WithContent("Visible comment").Create()
 
 	query := `
 		query($id: ID!) {
@@ -413,7 +496,7 @@ func TestTaskComment_ViewerCanList(t *testing.T) {
 						edges {
 							node {
 								id
-								description
+								content
 							}
 						}
 					}
@@ -427,8 +510,8 @@ func TestTaskComment_ViewerCanList(t *testing.T) {
 			Comments struct {
 				Edges []struct {
 					Node struct {
-						ID          string `json:"id"`
-						Description string `json:"description"`
+						ID      string `json:"id"`
+						Content string `json:"content"`
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"comments"`
@@ -440,7 +523,7 @@ func TestTaskComment_ViewerCanList(t *testing.T) {
 
 	require.NotEmpty(t, result.Node.Comments.Edges)
 	assert.Equal(t, commentID, result.Node.Comments.Edges[0].Node.ID)
-	assert.Equal(t, "Visible comment", result.Node.Comments.Edges[0].Node.Description)
+	factory.AssertProseMirrorPlainText(t, "Visible comment", result.Node.Comments.Edges[0].Node.Content)
 }
 
 func TestTaskComment_TenantIsolation(t *testing.T) {
@@ -459,7 +542,7 @@ func TestTaskComment_TenantIsolation(t *testing.T) {
 				node(id: $id) {
 					... on TaskComment {
 						id
-						description
+						content
 					}
 				}
 			}
@@ -467,8 +550,7 @@ func TestTaskComment_TenantIsolation(t *testing.T) {
 
 		var result struct {
 			Node *struct {
-				ID          string `json:"id"`
-				Description string `json:"description"`
+				ID string `json:"id"`
 			} `json:"node"`
 		}
 
@@ -490,7 +572,7 @@ func TestTaskComment_TenantIsolation(t *testing.T) {
 		_, err := org2Owner.Do(query, map[string]any{
 			"input": map[string]any{
 				"taskCommentId": commentID,
-				"description":   "Hijacked comment",
+				"content":       factory.ProseMirrorPlainText("Hijacked comment"),
 			},
 		})
 		require.Error(t, err)

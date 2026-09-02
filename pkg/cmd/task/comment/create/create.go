@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const createMutation = `
@@ -36,7 +37,7 @@ mutation($input: CreateTaskCommentInput!) {
     taskCommentEdge {
       node {
         id
-        description
+        content
       }
     }
   }
@@ -47,8 +48,8 @@ type createResponse struct {
 	CreateTaskComment struct {
 		TaskCommentEdge struct {
 			Node struct {
-				ID          string `json:"id"`
-				Description string `json:"description"`
+				ID      string `json:"id"`
+				Content string `json:"content"`
 			} `json:"node"`
 		} `json:"taskCommentEdge"`
 	} `json:"createTaskComment"`
@@ -56,9 +57,9 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagTask        string
-		flagOwner       string
-		flagDescription string
+		flagTask    string
+		flagOwner   string
+		flagContent string
 	)
 
 	cmd := &cobra.Command{
@@ -68,7 +69,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb task comment create
 
   # Create a comment non-interactively
-  prb task comment create --task <task-id> --description "Looks good"`,
+  prb task comment create --task <task-id> --content "Looks good"`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -100,10 +101,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					}
 				}
 
-				if flagDescription == "" {
+				if flagContent == "" {
 					err := huh.NewText().
 						Title("Comment").
-						Value(&flagDescription).
+						Value(&flagContent).
 						Run()
 					if err != nil {
 						return err
@@ -115,13 +116,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("task is required; pass --task or run interactively")
 			}
 
-			if flagDescription == "" {
-				return fmt.Errorf("description is required; pass --description or run interactively")
+			if flagContent == "" {
+				return fmt.Errorf("content is required; pass --content or run interactively")
 			}
 
 			input := map[string]any{
-				"taskId":      flagTask,
-				"description": flagDescription,
+				"taskId":  flagTask,
+				"content": prosemirror.FromPlainText(flagContent),
 			}
 
 			if flagOwner != "" {
@@ -153,7 +154,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagTask, "task", "", "Task ID (required)")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (defaults to the authenticated user)")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "Comment description (required)")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Comment content (required)")
 
 	return cmd
 }

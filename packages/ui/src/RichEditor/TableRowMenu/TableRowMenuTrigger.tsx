@@ -9,6 +9,7 @@ import { type Editor } from "@tiptap/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { DRAG_THRESHOLD } from "../_lib/constants";
+import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
 
 import { getRowRect, type HoveredRow, moveRow } from "./TableRowMenu";
@@ -342,39 +343,42 @@ export function TableRowMenuTrigger({
   };
 
   return (
-    <>
-      <button
-        ref={(node) => {
-          handleRefs.setFloating(node);
-          setTriggerEl(node);
-          menuRefs.setReference(node);
-        }}
-        data-row-handle
-        onMouseDown={onHandleMouseDown}
-        type="button"
-        style={{
-          ...handleStyles,
-          visibility:
-            isPositioned && (hoveredRow || menuOpen) ? "visible" : "hidden",
-        }}
-        className={trigger()}
-      >
-        <DotsThreeVerticalIcon size={16} weight="bold" />
-      </button>
-      {dragIndicator && (
-        <div
-          style={{
-            position: "fixed",
-            left: dragIndicator.left,
-            top: dragIndicator.top - 1,
-            width: dragIndicator.width,
-            height: 2,
-            backgroundColor: "var(--color-border-info)",
-            zIndex: 40,
-            pointerEvents: "none",
+    <EditorFloatingPortal>
+      <>
+        <button
+          ref={(node) => {
+            handleRefs.setFloating(node);
+            setTriggerEl(node);
+            menuRefs.setReference(node);
           }}
-        />
-      )}
-    </>
+          data-row-handle
+          data-rich-editor-floating=""
+          onMouseDown={onHandleMouseDown}
+          type="button"
+          style={{
+            ...handleStyles,
+            visibility:
+              isPositioned && (hoveredRow || menuOpen) ? "visible" : "hidden",
+          }}
+          className={trigger()}
+        >
+          <DotsThreeVerticalIcon size={16} weight="bold" />
+        </button>
+        {dragIndicator && (
+          <div
+            style={{
+              position: "fixed",
+              left: dragIndicator.left,
+              top: dragIndicator.top - 1,
+              width: dragIndicator.width,
+              height: 2,
+              backgroundColor: "var(--color-border-info)",
+              zIndex: 40,
+              pointerEvents: "none",
+            }}
+          />
+        )}
+      </>
+    </EditorFloatingPortal>
   );
 }

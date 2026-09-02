@@ -75,6 +75,7 @@ export function BlockMenuTrigger({ editor, hoveredBlock }: BlockMenuTriggerProps
       onClick={handleTriggerClick}
       onMouseDown={e => e.preventDefault()}
       type="button"
+      data-rich-editor-floating=""
       style={{
         ...triggerStyles,
         visibility: isPositioned ? "visible" : "hidden",

@@ -7,6 +7,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import { cellAround, CellSelection } from "@tiptap/pm/tables";
 import { type Editor } from "@tiptap/react";
 
+import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
 import { MenuButton } from "../MenuButton";
 
@@ -67,32 +68,35 @@ export function TableCellMenuContent({
   };
 
   return (
-    <div
-      ref={(node) => {
-        setDropdownEl(node);
-        menuRefs.setFloating(node);
-      }}
-      style={menuStyles}
-      {...getFloatingProps()}
-      onMouseDown={e => e.preventDefault()}
-      className={menu()}
-    >
-      {editor.can().mergeCells() && (
-        <MenuButton onClick={handleMergeCells}>
-          <IntersectIcon size={16} weight="bold" />
-          Merge cells
+    <EditorFloatingPortal>
+      <div
+        ref={(node) => {
+          setDropdownEl(node);
+          menuRefs.setFloating(node);
+        }}
+        style={menuStyles}
+        {...getFloatingProps()}
+        onMouseDown={e => e.preventDefault()}
+        className={menu()}
+        data-rich-editor-floating=""
+      >
+        {editor.can().mergeCells() && (
+          <MenuButton onClick={handleMergeCells}>
+            <IntersectIcon size={16} weight="bold" />
+            Merge cells
+          </MenuButton>
+        )}
+        {editor.can().splitCell() && (
+          <MenuButton onClick={handleSplitCell}>
+            <SplitHorizontalIcon size={16} weight="bold" />
+            Split cells
+          </MenuButton>
+        )}
+        <MenuButton onClick={handleClearContents}>
+          <BroomIcon size={16} weight="bold" />
+          Clear contents
         </MenuButton>
-      )}
-      {editor.can().splitCell() && (
-        <MenuButton onClick={handleSplitCell}>
-          <SplitHorizontalIcon size={16} weight="bold" />
-          Split cells
-        </MenuButton>
-      )}
-      <MenuButton onClick={handleClearContents}>
-        <BroomIcon size={16} weight="bold" />
-        Clear contents
-      </MenuButton>
-    </div>
+      </div>
+    </EditorFloatingPortal>
   );
 }

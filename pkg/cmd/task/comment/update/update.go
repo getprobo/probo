@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const updateMutation = `
@@ -34,7 +35,7 @@ mutation($input: UpdateTaskCommentInput!) {
   updateTaskComment(input: $input) {
     taskComment {
       id
-      description
+      content
     }
   }
 }
@@ -43,16 +44,16 @@ mutation($input: UpdateTaskCommentInput!) {
 type updateResponse struct {
 	UpdateTaskComment struct {
 		TaskComment struct {
-			ID          string `json:"id"`
-			Description string `json:"description"`
+			ID      string `json:"id"`
+			Content string `json:"content"`
 		} `json:"taskComment"`
 	} `json:"updateTaskComment"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOwner       string
-		flagDescription string
+		flagOwner   string
+		flagContent string
 	)
 
 	cmd := &cobra.Command{
@@ -78,16 +79,20 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if !cmd.Flags().Changed("description") && !cmd.Flags().Changed("owner") {
-				return fmt.Errorf("description or owner is required; pass --description or --owner")
+			if !cmd.Flags().Changed("content") && !cmd.Flags().Changed("owner") {
+				return fmt.Errorf("content or owner is required; pass --content or --owner")
 			}
 
 			input := map[string]any{
 				"taskCommentId": args[0],
 			}
 
-			if cmd.Flags().Changed("description") {
-				input["description"] = flagDescription
+			if cmd.Flags().Changed("content") {
+				if flagContent == "" {
+					input["content"] = nil
+				} else {
+					input["content"] = prosemirror.FromPlainText(flagContent)
+				}
 			}
 
 			if cmd.Flags().Changed("owner") {
@@ -118,7 +123,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "Comment description")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Comment content")
 
 	return cmd
 }

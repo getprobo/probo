@@ -47,6 +47,24 @@ func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
 	return md, nil
 }
 
+// richTextToMarkdown converts stored ProseMirror JSON to markdown.
+func richTextToMarkdown(s string) (string, error) {
+	return proseMirrorJSONToMarkdown(s)
+}
+
+func optionalRichTextToMarkdown(s *string) (*string, error) {
+	if s == nil {
+		return nil, nil
+	}
+
+	md, err := richTextToMarkdown(*s)
+	if err != nil {
+		return nil, err
+	}
+
+	return &md, nil
+}
+
 func NewDocument(d *coredata.Document) *Document {
 	return &Document{
 		ID:                    d.ID,

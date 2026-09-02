@@ -44,7 +44,7 @@ input TaskOrder
 type Task implements Node {
     id: ID!
     name: String!
-    description: String
+    content: String!
     state: TaskState!
     priority: TaskPriority!
     rank: Int!
@@ -101,7 +101,7 @@ input CreateTaskInput {
     organizationId: ID!
     measureId: ID
     name: String!
-    description: String
+    content: String
     state: TaskState
     priority: TaskPriority!
     timeEstimate: Duration
@@ -112,7 +112,7 @@ input CreateTaskInput {
 input UpdateTaskInput {
     taskId: ID!
     name: String
-    description: String @goField(omittable: true)
+    content: String @goField(omittable: true)
     state: TaskState
     priority: TaskPriority
     rank: Int

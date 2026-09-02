@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -50,8 +50,8 @@ export const description: INodeProperties[] = [
 		description: 'The name of the task',
 	},
 	{
-		displayName: 'Description',
-		name: 'description',
+		displayName: 'Content',
+		name: 'content',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -60,7 +60,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The description of the task',
+		description: 'The content of the task',
 	},
 	{
 		displayName: 'State',
@@ -213,7 +213,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const description = this.getNodeParameter('description', itemIndex, '') as string;
+	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
 	const priority = this.getNodeParameter('priority', itemIndex, '') as string;
 	const rank = this.getNodeParameter('rank', itemIndex, '') as string;
@@ -228,7 +228,7 @@ export async function execute(
 				task {
 					id
 					name
-					description
+					content
 					state
 					priority
 					timeEstimate
@@ -242,7 +242,7 @@ export async function execute(
 
 	const input: Record<string, string> = { taskId };
 	if (name) input.name = name;
-	if (description) input.description = description;
+	if (content) input.content = plainTextToProseMirrorJSON(content);
 	if (state) input.state = state;
 	if (priority) input.priority = priority;
 	if (rank) input.rank = rank;
@@ -252,6 +252,12 @@ export async function execute(
 	if (measureId) input.measureId = measureId;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
+	const data = responseData.data as IDataObject | undefined;
+	const payload = data?.updateTask as IDataObject | undefined;
+	const task = payload?.task as IDataObject | undefined;
+	if (payload && task) {
+		payload.task = withPlainTextContent(task);
+	}
 
 	return {
 		json: responseData,

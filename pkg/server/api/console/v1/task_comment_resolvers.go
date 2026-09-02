@@ -34,10 +34,10 @@ func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.Cr
 	taskComment, err := r.probo.TaskComments.Create(
 		ctx, scope,
 		probo.CreateTaskCommentRequest{
-			TaskID:      input.TaskID,
-			OwnerID:     input.OwnerID,
-			IdentityID:  identity.ID,
-			Description: input.Description,
+			TaskID:     input.TaskID,
+			OwnerID:    input.OwnerID,
+			IdentityID: identity.ID,
+			Content:    input.Content,
 		},
 	)
 	if err != nil {
@@ -69,9 +69,9 @@ func (r *mutationResolver) UpdateTaskComment(ctx context.Context, input types.Up
 	taskComment, err := r.probo.TaskComments.Update(
 		ctx, scope,
 		probo.UpdateTaskCommentRequest{
-			ID:          input.TaskCommentID,
-			OwnerID:     gqlutils.UnwrapOmittable(input.OwnerID),
-			Description: gqlutils.UnwrapOmittable(input.Description),
+			ID:      input.TaskCommentID,
+			OwnerID: gqlutils.UnwrapOmittable(input.OwnerID),
+			Content: gqlutils.UnwrapOmittable(input.Content),
 		},
 	)
 	if err != nil {

@@ -2130,13 +2130,18 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		priority = *input.Priority
 	}
 
+	content, err := optionalMarkdownToProseMirrorJSON(input.Content)
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
 	task, err := svc.Tasks.Create(
 		ctx, scope,
 		probo.CreateTaskRequest{
 			OrganizationID: input.OrganizationID,
 			MeasureID:      input.MeasureID,
 			Name:           input.Name,
-			Description:    input.Description,
+			Content:        content,
 			State:          input.State,
 			Priority:       priority,
 			TimeEstimate:   input.TimeEstimate,
@@ -2161,12 +2166,17 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	svc := r.proboSvc
 
+	content, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Content))
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
 	task, err := svc.Tasks.Update(
 		ctx, scope,
 		probo.UpdateTaskRequest{
 			TaskID:       input.ID,
 			Name:         input.Name,
-			Description:  UnwrapOmittable(input.Description),
+			Content:      content,
 			State:        input.State,
 			Priority:     input.Priority,
 			Rank:         input.Rank,
@@ -9424,7 +9434,12 @@ func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRe
 		return nil, types.ListTaskCommentsOutput{}, fmt.Errorf("internal server error")
 	}
 
-	return nil, types.NewListTaskCommentsOutput(commentPage), nil
+	output, err := types.NewListTaskCommentsOutput(commentPage)
+	if err != nil {
+		return nil, types.ListTaskCommentsOutput{}, err
+	}
+
+	return nil, output, nil
 }
 
 func (r *Resolver) GetTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskCommentInput) (*mcp.CallToolResult, types.GetTaskCommentOutput, error) {
@@ -9444,8 +9459,13 @@ func (r *Resolver) GetTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 		return nil, types.GetTaskCommentOutput{}, fmt.Errorf("internal server error")
 	}
 
+	converted, err := types.NewTaskComment(taskComment)
+	if err != nil {
+		return nil, types.GetTaskCommentOutput{}, err
+	}
+
 	return nil, types.GetTaskCommentOutput{
-		TaskComment: types.NewTaskComment(taskComment),
+		TaskComment: converted,
 	}, nil
 }
 
@@ -9457,13 +9477,18 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 
 	identity := authn.IdentityFromContext(ctx)
 
+	content, err := markdownToProseMirrorJSON(input.Content)
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
 	taskComment, err := r.proboSvc.TaskComments.Create(
 		ctx, scope,
 		probo.CreateTaskCommentRequest{
-			TaskID:      input.TaskID,
-			OwnerID:     input.OwnerID,
-			IdentityID:  identity.ID,
-			Description: input.Description,
+			TaskID:     input.TaskID,
+			OwnerID:    input.OwnerID,
+			IdentityID: identity.ID,
+			Content:    content,
 		},
 	)
 	if err != nil {
@@ -9480,8 +9505,13 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 		return nil, types.AddTaskCommentOutput{}, fmt.Errorf("internal server error")
 	}
 
+	converted, err := types.NewTaskComment(taskComment)
+	if err != nil {
+		return nil, types.AddTaskCommentOutput{}, err
+	}
+
 	return nil, types.AddTaskCommentOutput{
-		TaskComment: types.NewTaskComment(taskComment),
+		TaskComment: converted,
 	}, nil
 }
 
@@ -9491,12 +9521,17 @@ func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.UpdateTaskCommentOutput{}, err
 	}
 
+	content, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Content))
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
 	taskComment, err := r.proboSvc.TaskComments.Update(
 		ctx, scope,
 		probo.UpdateTaskCommentRequest{
-			ID:          input.ID,
-			OwnerID:     optionalPtr(input.OwnerID),
-			Description: optionalPtr(input.Description),
+			ID:      input.ID,
+			OwnerID: optionalPtr(input.OwnerID),
+			Content: content,
 		},
 	)
 	if err != nil {
@@ -9513,8 +9548,13 @@ func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.UpdateTaskCommentOutput{}, fmt.Errorf("internal server error")
 	}
 
+	converted, err := types.NewTaskComment(taskComment)
+	if err != nil {
+		return nil, types.UpdateTaskCommentOutput{}, err
+	}
+
 	return nil, types.UpdateTaskCommentOutput{
-		TaskComment: types.NewTaskComment(taskComment),
+		TaskComment: converted,
 	}, nil
 }
 

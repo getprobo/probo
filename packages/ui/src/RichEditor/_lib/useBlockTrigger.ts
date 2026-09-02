@@ -9,17 +9,20 @@ const TRIGGER_HEIGHT = 24;
 
 export function useBlockTrigger(hoveredBlock: HTMLElement | null, offsetValue: number) {
   const blockHeight = hoveredBlock?.getBoundingClientRect().height ?? 0;
-  const triggerPlacement = blockHeight > 2 * TRIGGER_HEIGHT ? "left-start" as const : "left" as const;
+  // Center on a single line. Only pin to the top for tall blocks (headings,
+  // lists) so the control does not sit above the first line of text.
+  const triggerPlacement = blockHeight > 4 * TRIGGER_HEIGHT ? "left-start" as const : "left" as const;
 
   const {
     refs: triggerRefs,
     floatingStyles: triggerStyles,
     isPositioned,
   } = useFloating({
-    strategy: "fixed",
+    strategy: "absolute",
     placement: triggerPlacement,
     middleware: [offset(offsetValue)],
-    whileElementsMounted: autoUpdate,
+    whileElementsMounted: (reference, floating, update) =>
+      autoUpdate(reference, floating, update, { animationFrame: true }),
   });
 
   useLayoutEffect(() => {

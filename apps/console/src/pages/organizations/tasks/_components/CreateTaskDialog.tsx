@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { PriorityLevel, TaskStateIcon } from "@probo/ui";
+import { PriorityLevel, RichEditor, TaskStateIcon } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { Dialog, type DialogProps } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
 import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
@@ -30,7 +30,6 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
 import { Field } from "@probo/ui/src/v2/form/Field";
-import { Textarea } from "@probo/ui/src/v2/form/Textarea";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -40,6 +39,7 @@ import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { isRichEditorContentEmpty } from "../_lib/richEditorContent";
 import type { TaskPriority, TaskState } from "../_lib/taskState";
 import {
   taskPriorities,
@@ -50,7 +50,19 @@ import { useCreateTask } from "../_lib/useCreateTask";
 import { createTaskDialog } from "../variants";
 
 const taskNameMaxLength = 1000;
-const taskDescriptionMaxLength = 5000;
+
+type DialogOpenChangeDetails = Parameters<
+  NonNullable<DialogProps["onOpenChange"]>
+>[1];
+
+function isRichEditorFloatingDismiss(details: DialogOpenChangeDetails) {
+  if (details.reason !== "outside-press" && details.reason !== "focus-out") {
+    return false;
+  }
+
+  const target = details.event.target;
+  return target instanceof Element && target.closest("[data-rich-editor-floating]") != null;
+}
 
 interface CreateTaskDialogProps {
   connectionId: string;
@@ -68,23 +80,30 @@ export function CreateTaskDialog({
   const { t } = useTranslation("organizations/tasks");
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<TaskState>("TODO");
   const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
   const [createTask, isCreating] = useCreateTask();
   const bodyRef = useRef<HTMLDivElement>(null);
-  const { form, fields, value } = createTaskDialog();
+  const { form, fields, descriptionField, editor, value } = createTaskDialog();
 
   function reset() {
     setName("");
-    setNameError(null);
-    setDescription("");
+    setContent("");
+    setEditorKey(key => key + 1);
+    setErrors({});
     setState("TODO");
     setPriority("MEDIUM");
   }
 
-  function handleOpenChange(next: boolean) {
+  function handleOpenChange(next: boolean, details: DialogOpenChangeDetails) {
+    if (!next && isRichEditorFloatingDismiss(details)) {
+      details.cancel();
+      return;
+    }
+
     setOpen(next);
     if (!next) {
       reset();
@@ -94,15 +113,15 @@ export function CreateTaskDialog({
   function handleSubmit() {
     const nextName = name.trim();
     if (!nextName) {
-      setNameError(t("createDialog.errors.nameRequired"));
+      setErrors({ name: t("createDialog.errors.nameRequired") });
       return;
     }
-    setNameError(null);
+    setErrors({});
 
     void createTask(
       {
         name: nextName,
-        description: description.trim() || null,
+        content: isRichEditorContentEmpty(content) ? null : content,
         state,
         priority,
         measureId,
@@ -110,7 +129,8 @@ export function CreateTaskDialog({
       connectionId,
     ).then(
       () => {
-        handleOpenChange(false);
+        setOpen(false);
+        reset();
         onCompleted?.();
       },
       () => {
@@ -122,13 +142,13 @@ export function CreateTaskDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={children} />
-      <DialogPopup>
-        <Form className={form()} onFormSubmit={handleSubmit}>
+      <DialogPopup lockScroll>
+        <Form className={form()} errors={errors} onFormSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{t("createDialog.title")}</DialogTitle>
           </DialogHeader>
           <DialogBody ref={bodyRef} className={fields()}>
-            <Field label={t("detailsPage.fields.name")} error={nameError}>
+            <Field label={t("detailsPage.fields.name")} error={errors.name}>
               <TextField
                 name="name"
                 required
@@ -139,20 +159,23 @@ export function CreateTaskDialog({
                 onValueChange={(next) => {
                   setName(next);
                   if (next.trim()) {
-                    setNameError(null);
+                    setErrors((current) => {
+                      const nextErrors = { ...current };
+                      delete nextErrors.name;
+                      return nextErrors;
+                    });
                   }
                 }}
               />
             </Field>
-            <Field label={t("detailsPage.fields.description")}>
-              <Textarea
-                name="description"
-                rows={4}
-                maxLength={taskDescriptionMaxLength}
-                value={description}
+            <Field className={descriptionField()} label={t("detailsPage.fields.description")}>
+              <RichEditor
+                key={editorKey}
+                className={editor()}
+                content={content}
                 disabled={isCreating}
-                placeholder={t("detailsPage.descriptionPlaceholder")}
-                onChange={event => setDescription(event.currentTarget.value)}
+                aria-label={t("detailsPage.fields.description")}
+                onChangeContent={setContent}
               />
             </Field>
             <Select

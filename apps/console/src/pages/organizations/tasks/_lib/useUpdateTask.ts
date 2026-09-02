@@ -25,7 +25,7 @@ import { graphql } from "relay-runtime";
 import type { useUpdateTaskMutation } from "#/__generated__/core/useUpdateTaskMutation.graphql";
 import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { useMutation } from "#/lib/relay/useMutation";
+import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
 import { moveTaskNodeSorted } from "./taskConnectionOrder";
 import {
@@ -71,7 +71,10 @@ export function useUpdateTask() {
     },
   );
 
-  function updateTask(config: UseMutationConfig<useUpdateTaskMutation>) {
+  function updateTask(
+    config: UseMutationConfig<useUpdateTaskMutation>,
+    feedback?: MutationFeedback,
+  ) {
     const previousMeasureId = linkedRecordId(
       relayEnv.getStore().getSource().get(config.variables.input.taskId),
       "measure",
@@ -103,7 +106,7 @@ export function useUpdateTask() {
         }
         config.updater?.(store, data);
       },
-    }).then((result) => {
+    }, feedback).then((result) => {
       if (measureChanged && previousMeasureId !== nextMeasureId) {
         if (previousMeasureId) {
           updateStoreCounter(relayEnv, previousMeasureId, "tasks(first:0)", -1);

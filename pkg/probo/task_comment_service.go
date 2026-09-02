@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -38,16 +39,16 @@ type (
 	}
 
 	CreateTaskCommentRequest struct {
-		TaskID      gid.GID
-		OwnerID     *gid.GID
-		IdentityID  gid.GID
-		Description string
+		TaskID     gid.GID
+		OwnerID    *gid.GID
+		IdentityID gid.GID
+		Content    string
 	}
 
 	UpdateTaskCommentRequest struct {
-		ID          gid.GID
-		OwnerID     **gid.GID
-		Description **string
+		ID      gid.GID
+		OwnerID **gid.GID
+		Content **string
 	}
 )
 
@@ -57,7 +58,17 @@ func (req *CreateTaskCommentRequest) Validate() error {
 	v.Check(req.TaskID, "task_id", validator.Required(), validator.GID(coredata.TaskEntityType))
 	v.Check(req.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
-	v.Check(req.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(req.Content, "content", validator.MaxLen(richTextMaxJSONBytes))
+
+	if len(req.Content) <= richTextMaxJSONBytes {
+		v.Check(
+			req.Content,
+			"content",
+			validator.HasVisibleRichText(),
+			validator.ProseMirrorDocumentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+		)
+	}
 
 	return v.Error()
 }
@@ -71,8 +82,14 @@ func (req *UpdateTaskCommentRequest) Validate() error {
 		v.Check(*req.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	}
 
-	if req.Description != nil {
-		v.Check(*req.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
+	if req.Content != nil {
+		v.Check(
+			req.Content,
+			"content",
+			validator.MaxLen(richTextMaxJSONBytes),
+			validator.ProseMirrorDocumentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+		)
 	}
 
 	return v.Error()
@@ -159,16 +176,21 @@ func (s TaskCommentService) Create(
 		return nil, err
 	}
 
-	now := time.Now()
-	taskComment := &coredata.TaskComment{
-		ID:          gid.New(scope.GetTenantID(), coredata.TaskCommentEntityType),
-		TaskID:      req.TaskID,
-		Description: req.Description,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+	content, err := prosemirror.DefaultDocumentJSON(&req.Content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot sanitize task comment content: %w", err)
 	}
 
-	err := s.svc.pg.WithTx(
+	now := time.Now()
+	taskComment := &coredata.TaskComment{
+		ID:        gid.New(scope.GetTenantID(), coredata.TaskCommentEntityType),
+		TaskID:    req.TaskID,
+		Content:   content,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			task := &coredata.Task{}
@@ -245,8 +267,13 @@ func (s TaskCommentService) Update(
 				taskComment.OwnerID = **req.OwnerID
 			}
 
-			if req.Description != nil {
-				taskComment.Description = **req.Description
+			if req.Content != nil {
+				content, err := prosemirror.DefaultDocumentJSON(*req.Content)
+				if err != nil {
+					return fmt.Errorf("cannot sanitize task comment content: %w", err)
+				}
+
+				taskComment.Content = content
 			}
 
 			taskComment.UpdatedAt = time.Now()

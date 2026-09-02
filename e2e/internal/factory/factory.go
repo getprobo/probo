@@ -491,8 +491,8 @@ func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
 		input["measureId"] = *measureID
 	}
 
-	if desc := a.getStringPtr("description"); desc != nil {
-		input["description"] = *desc
+	if content := a.getStringPtr("content"); content != nil {
+		input["content"] = ProseMirrorPlainText(*content)
 	}
 
 	var result struct {
@@ -709,8 +709,8 @@ func (b *TaskBuilder) WithName(name string) *TaskBuilder {
 	return b
 }
 
-func (b *TaskBuilder) WithDescription(desc string) *TaskBuilder {
-	b.attrs["description"] = desc
+func (b *TaskBuilder) WithContent(content string) *TaskBuilder {
+	b.attrs["content"] = content
 	return b
 }
 
@@ -737,8 +737,8 @@ func CreateTaskComment(c *testutil.Client, taskID string, attrs ...Attrs) string
 	`
 
 	input := map[string]any{
-		"taskId":      taskID,
-		"description": a.getString("description", SafeName("Comment")),
+		"taskId":  taskID,
+		"content": ProseMirrorPlainText(a.getString("content", SafeName("Comment"))),
 	}
 
 	if ownerID, ok := a["ownerId"]; ok {
@@ -771,8 +771,8 @@ func NewTaskComment(c *testutil.Client, taskID string) *TaskCommentBuilder {
 	return &TaskCommentBuilder{client: c, taskID: taskID, attrs: Attrs{}}
 }
 
-func (b *TaskCommentBuilder) WithDescription(description string) *TaskCommentBuilder {
-	b.attrs["description"] = description
+func (b *TaskCommentBuilder) WithContent(content string) *TaskCommentBuilder {
+	b.attrs["content"] = content
 	return b
 }
 
