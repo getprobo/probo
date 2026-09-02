@@ -37,7 +37,6 @@ export const homePageQuery = graphql`
     viewer @required(action: THROW) {
       pendingSignatures: signableDocuments(
         organizationId: $organizationId
-        first: 1
         filter: { signed: false }
       ) {
         totalCount
@@ -50,7 +49,6 @@ export const homePageQuery = graphql`
       }
       pendingApprovals: approvableDocuments(
         organizationId: $organizationId
-        first: 1
         filter: { approvalStates: [PENDING] }
       ) {
         totalCount

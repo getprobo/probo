@@ -24,10 +24,10 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { GetStartedCard_viewer$key } from "#/__generated__/core/GetStartedCard_viewer.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import type { DocumentQueueKind } from "#/pages/_lib/documentQueue";
+import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
 
 import { GetStartedStep } from "./GetStartedStep";
 import { getStartedCard } from "./variants";
@@ -38,27 +38,15 @@ const getStartedCardFragment = graphql`
   @throwOnFieldError {
     pendingSignatures: signableDocuments(
       organizationId: $organizationId
-      first: 1
       filter: { signed: false }
     ) {
       totalCount
-      edges {
-        node {
-          id
-        }
-      }
     }
     pendingApprovals: approvableDocuments(
       organizationId: $organizationId
-      first: 1
       filter: { approvalStates: [PENDING] }
     ) {
       totalCount
-      edges {
-        node {
-          id
-        }
-      }
     }
   }
 `;
@@ -69,38 +57,35 @@ export interface GetStartedCardProps {
 
 export function GetStartedCard({ viewerKey }: GetStartedCardProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const { advancing, startQueue } = useDocumentQueue();
   const slots = getStartedCard();
   const viewer = useFragment(getStartedCardFragment, viewerKey);
 
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
-
   const pendingSignatureCount = viewer.pendingSignatures.totalCount;
   const pendingApprovalCount = viewer.pendingApprovals.totalCount;
-  const firstPendingSignatureId = viewer.pendingSignatures.edges[0]?.node.id ?? null;
-  const firstPendingApprovalId = viewer.pendingApprovals.edges[0]?.node.id ?? null;
 
-  const steps = [];
+  const steps: {
+    key: DocumentQueueKind;
+    title: string;
+    description: string;
+    actionLabel: string;
+  }[] = [];
 
-  if (pendingSignatureCount > 0 && firstPendingSignatureId != null) {
+  if (pendingSignatureCount > 0) {
     steps.push({
       key: "signatures",
       title: t("homePage.getStarted.signatures.count", { count: pendingSignatureCount }),
       description: t("homePage.getStarted.signatures.description"),
       actionLabel: t("homePage.getStarted.signatures.action"),
-      to: `/${organizationId}/signatures/${firstPendingSignatureId}`,
     });
   }
 
-  if (pendingApprovalCount > 0 && firstPendingApprovalId != null) {
+  if (pendingApprovalCount > 0) {
     steps.push({
       key: "approvals",
       title: t("homePage.getStarted.approvals.count", { count: pendingApprovalCount }),
       description: t("homePage.getStarted.approvals.description"),
       actionLabel: t("homePage.getStarted.approvals.action"),
-      to: `/${organizationId}/approvals/${firstPendingApprovalId}`,
     });
   }
 
@@ -127,8 +112,11 @@ export function GetStartedCard({ viewerKey }: GetStartedCardProps) {
               title={step.title}
               description={step.description}
               actionLabel={step.actionLabel}
-              to={step.to}
+              actionBusy={advancing}
               tone={index === 0 ? "current" : "upcoming"}
+              onAction={() => {
+                startQueue(step.key);
+              }}
             />
           ))}
         </div>

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 
@@ -29,8 +29,9 @@ export interface GetStartedStepProps {
   title: string;
   description: string;
   actionLabel: string;
-  to: string;
+  actionBusy?: boolean;
   tone: "current" | "upcoming";
+  onAction: () => void;
 }
 
 export function GetStartedStep({
@@ -38,8 +39,9 @@ export function GetStartedStep({
   title,
   description,
   actionLabel,
-  to,
+  actionBusy = false,
   tone,
+  onAction,
 }: GetStartedStepProps) {
   const slots = getStartedStep({ tone });
 
@@ -56,15 +58,16 @@ export function GetStartedStep({
           </Text>
         </div>
       </div>
-      <ButtonLink
-        to={to}
+      <Button
         size={2}
         variant={tone === "current" ? "solid" : "soft"}
         color="neutral"
         highContrast={tone === "current"}
+        loading={actionBusy}
+        onClick={onAction}
       >
         {actionLabel}
-      </ButtonLink>
+      </Button>
     </div>
   );
 }

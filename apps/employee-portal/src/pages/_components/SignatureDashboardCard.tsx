@@ -30,15 +30,9 @@ const signatureDashboardCardFragment = graphql`
   @throwOnFieldError {
     pendingSignatures: signableDocuments(
       organizationId: $organizationId
-      first: 1
       filter: { signed: false }
     ) {
       totalCount
-      edges {
-        node {
-          id
-        }
-      }
     }
     completedSignatures: signableDocuments(
       organizationId: $organizationId
@@ -65,7 +59,6 @@ export function SignatureDashboardCard({
       kind="signatures"
       pendingCount={viewer.pendingSignatures.totalCount}
       completedCount={viewer.completedSignatures.totalCount}
-      firstPendingId={viewer.pendingSignatures.edges[0]?.node.id ?? null}
       wash={wash}
     />
   );

@@ -25,7 +25,7 @@ import {
   StampIcon,
   TrayIcon,
 } from "@phosphor-icons/react";
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -35,14 +35,15 @@ import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { NotFoundError } from "#/lib/relay/errors";
+import type { DocumentQueueKind } from "#/pages/_lib/documentQueue";
+import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
 
 import { dashboardCard } from "./variants";
 
 export interface DashboardCardProps {
-  kind: "signatures" | "approvals";
+  kind: DocumentQueueKind;
   pendingCount: number;
   completedCount: number;
-  firstPendingId: string | null;
   wash?: boolean;
 }
 
@@ -50,7 +51,6 @@ export function DashboardCard({
   kind,
   pendingCount,
   completedCount,
-  firstPendingId,
   wash = false,
 }: DashboardCardProps) {
   const { t } = useTranslation();
@@ -104,8 +104,6 @@ export function DashboardCard({
           kind={kind}
           bodyState={bodyState}
           pendingCount={pendingCount}
-          firstPendingId={firstPendingId}
-          organizationId={organizationId}
         />
       </div>
     </Card>
@@ -116,16 +114,13 @@ function DashboardCardBody({
   kind,
   bodyState,
   pendingCount,
-  firstPendingId,
-  organizationId,
 }: {
-  kind: "signatures" | "approvals";
+  kind: DocumentQueueKind;
   bodyState: "empty" | "pending" | "allDone";
   pendingCount: number;
-  firstPendingId: string | null;
-  organizationId: string;
 }): ReactNode {
   const { t } = useTranslation();
+  const { advancing, startQueue } = useDocumentQueue();
   const slots = dashboardCard();
 
   if (bodyState === "empty") {
@@ -150,26 +145,23 @@ function DashboardCardBody({
     );
   }
 
-  const actionPath = kind === "signatures"
-    ? `/${organizationId}/signatures/${firstPendingId}`
-    : `/${organizationId}/approvals/${firstPendingId}`;
-
   return (
     <>
       <Heading level={3} size={5} weight="medium" highContrast>
         {t(`homePage.dashboard.${kind}.pendingCount`, { count: pendingCount })}
       </Heading>
-      {firstPendingId != null && (
-        <ButtonLink
-          to={actionPath}
-          size={2}
-          variant="soft"
-          color="neutral"
-          iconEnd={<ArrowRightIcon />}
-        >
-          {t(`homePage.dashboard.${kind}.action`)}
-        </ButtonLink>
-      )}
+      <Button
+        size={2}
+        variant="soft"
+        color="neutral"
+        iconEnd={<ArrowRightIcon />}
+        loading={advancing}
+        onClick={() => {
+          startQueue(kind);
+        }}
+      >
+        {t(`homePage.dashboard.${kind}.action`)}
+      </Button>
     </>
   );
 }

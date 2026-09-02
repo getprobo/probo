@@ -30,15 +30,9 @@ const approvalDashboardCardFragment = graphql`
   @throwOnFieldError {
     pendingApprovals: approvableDocuments(
       organizationId: $organizationId
-      first: 1
       filter: { approvalStates: [PENDING] }
     ) {
       totalCount
-      edges {
-        node {
-          id
-        }
-      }
     }
     approvedDocuments: approvableDocuments(
       organizationId: $organizationId
@@ -65,7 +59,6 @@ export function ApprovalDashboardCard({
       kind="approvals"
       pendingCount={viewer.pendingApprovals.totalCount}
       completedCount={viewer.approvedDocuments.totalCount}
-      firstPendingId={viewer.pendingApprovals.edges[0]?.node.id ?? null}
       wash={wash}
     />
   );
