@@ -362,7 +362,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		assert.Equal(t, 1, afterDraft.Node.PublishedVersion.GvlVendorCount)
 	})
 
-	t.Run("rejects add and remove when tcf is off", func(t *testing.T) {
+	t.Run("rejects add when tcf is off but still allows remove", func(t *testing.T) {
 		t.Parallel()
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -393,13 +393,72 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 			}
 		`
 
+		// Removal is intentionally ungated so vendors linked while TCF was on
+		// can still be cleaned up after it is turned off.
 		err = owner.Execute(removeMutation, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId": bannerID,
 				"iabVendorId":    iabVendorID,
 			},
 		}, new(map[string]any))
-		testutil.RequireErrorCode(t, err, "INVALID")
+		require.NoError(t, err)
+	})
+
+	t.Run("removes a vendor linked before tcf was turned off", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		bannerID := factory.CreateCookieBanner(owner)
+		factory.EnableCookieBannerTCF(t, bannerID)
+
+		iabVendorID, _ := factory.SeedCommonGVLVendor(t, "Legacy Linked Vendor", false)
+
+		const addMutation = `
+			mutation($input: AddCookieBannerGVLVendorInput!) {
+				addCookieBannerGVLVendor(input: $input) {
+					cookieBanner { id }
+				}
+			}
+		`
+
+		err := owner.Execute(addMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"iabVendorId":    iabVendorID,
+			},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		factory.DisableCookieBannerTCF(t, bannerID)
+
+		const removeMutation = `
+			mutation($input: RemoveCookieBannerGVLVendorInput!) {
+				removeCookieBannerGVLVendor(input: $input) {
+					cookieBanner {
+						gvlVendors { totalCount }
+					}
+				}
+			}
+		`
+
+		var removed struct {
+			RemoveCookieBannerGVLVendor struct {
+				CookieBanner struct {
+					GVLVendors struct {
+						TotalCount int `json:"totalCount"`
+					} `json:"gvlVendors"`
+				} `json:"cookieBanner"`
+			} `json:"removeCookieBannerGVLVendor"`
+		}
+
+		err = owner.Execute(removeMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"iabVendorId":    iabVendorID,
+			},
+		}, &removed)
+		require.NoError(t, err)
+		assert.Equal(t, 0, removed.RemoveCookieBannerGVLVendor.CookieBanner.GVLVendors.TotalCount)
 	})
 
 	t.Run("rejects a deleted catalog vendor", func(t *testing.T) {

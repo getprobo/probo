@@ -1557,8 +1557,6 @@ func (r *mutationResolver) RemoveCookieBannerGVLVendor(ctx context.Context, inpu
 		switch {
 		case errors.Is(err, cookiebanner.ErrBannerNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
-		case errors.Is(err, cookiebanner.ErrTCFNotEnabled):
-			return nil, gqlutils.Invalidf(ctx, "tcf is not enabled for this cookie banner")
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
