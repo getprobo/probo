@@ -1,9 +1,9 @@
 module go.probo.inc/probo
 
-go 1.27.0
+go 1.26.6
 
 require (
-	codeberg.org/miekg/dns v0.6.105
+	codeberg.org/miekg/dns v0.6.90
 	fyne.io/systray v1.12.2
 	github.com/99designs/gqlgen v0.17.94
 	github.com/anthropics/anthropic-sdk-go v1.68.0
