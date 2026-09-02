@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -66,6 +66,36 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'Restrict to vendors already on the banner, or not on it',
 	},
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['cookieBanner'],
+				operation: ['listGVLCatalog'],
+			},
+		},
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['cookieBanner'],
+				operation: ['listGVLCatalog'],
+				returnAll: [false],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+		},
+		default: 50,
+		description: 'Max number of results to return',
+	},
 ];
 
 export async function execute(
@@ -75,11 +105,12 @@ export async function execute(
 	const query = this.getNodeParameter('query', itemIndex, '') as string;
 	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '') as string;
 	const membership = this.getNodeParameter('membership', itemIndex, '') as string;
+	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
+	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const gql = `
-		query ListCommonGVLVendors($first: Int, $filter: CommonGVLVendorFilter) {
-			commonGVLVendors(first: $first, filter: $filter) {
-				totalCount
+		query ListCommonGVLVendors($first: Int, $after: CursorKey, $filter: CommonGVLVendorFilter) {
+			commonGVLVendors(first: $first, after: $after, filter: $filter) {
 				edges {
 					node {
 						id
@@ -88,11 +119,15 @@ export async function execute(
 						policyUrl
 					}
 				}
+				pageInfo {
+					hasNextPage
+					endCursor
+				}
 			}
 		}
 	`;
 
-	const variables: IDataObject = { first: 50 };
+	const variables: IDataObject = {};
 	const filter: IDataObject = {};
 	if (query) {
 		filter.query = query;
@@ -108,10 +143,20 @@ export async function execute(
 		variables.filter = filter;
 	}
 
-	const responseData = await proboApiRequest.call(this, gql, variables);
+	const commonGVLVendors = await proboApiRequestAllItems.call(
+		this,
+		gql,
+		variables,
+		(response) => {
+			const data = response?.data as IDataObject | undefined;
+			return data?.commonGVLVendors as IDataObject | undefined;
+		},
+		returnAll,
+		limit,
+	);
 
 	return {
-		json: responseData,
+		json: { commonGVLVendors },
 		pairedItem: { item: itemIndex },
 	};
 }
