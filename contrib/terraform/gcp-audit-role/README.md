@@ -66,6 +66,20 @@ output "probo_service_account_email" {
 Give Probo the `workload_identity_provider` and `service_account_email`
 outputs when you create the connector.
 
+## Optional: MFA for human users
+
+Human identities on the project are Google Workspace or Cloud Identity
+users. Cloud IAM cannot grant Directory reads, so this module does not
+cover MFA. After you apply, a Super Admin can assign a Users-read admin
+role to the `probo-audit` service account in the Google Admin console
+(Account > Admin roles > Assign service accounts). See [Assign a Google
+Workspace administrator role to a service
+account](https://developers.google.com/workspace/guides/create-credentials#assign_a_google_workspace_administrator_role_to_a_service_account).
+
+Probo then reads 2-Step Verification enrollment with the same WIF token.
+Skip this step if you do not need MFA on the GCP source; those accounts
+stay MFA unknown.
+
 ## Verifying an install
 
 Probo probes the install by exchanging a token and impersonating the service
