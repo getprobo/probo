@@ -255,59 +255,6 @@ func emptyInt32s(values []int32) []int32 {
 	return values
 }
 
-func (v *CommonGVLVendor) LoadByID(
-	ctx context.Context,
-	conn pg.Querier,
-	id gid.GID,
-) error {
-	q := `
-SELECT
-    id,
-    iab_vendor_id,
-    vendor_list_version,
-    name,
-    deleted_date,
-    purposes,
-    leg_int_purposes,
-    flexible_purposes,
-    special_purposes,
-    features,
-    special_features,
-    policy_url,
-    uses_cookies,
-    cookie_refresh,
-    uses_non_cookie_access,
-    cookie_max_age_seconds,
-    created_at,
-    updated_at
-FROM
-    common_gvl_vendors
-WHERE
-    id = @id
-LIMIT 1;
-`
-
-	args := pgx.StrictNamedArgs{"id": id}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query common gvl vendor: %w", err)
-	}
-
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonGVLVendor])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect common gvl vendor: %w", err)
-	}
-
-	*v = row
-
-	return nil
-}
-
 func (v *CommonGVLVendors) Load(
 	ctx context.Context,
 	conn pg.Querier,
