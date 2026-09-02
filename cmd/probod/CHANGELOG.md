@@ -4,9 +4,20 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
-### Fixed
+## [0.276.0] - 2026-09-02
 
-- AWS access review now includes Identity Center users with no permission-set assignment on the connected account (empty roles). Still no Organizations walk and no cross-account assignment listing
+### Added
+
+- Task details page comments: description-only notes owned by a membership profile (the author by default), ordered oldest first, and available on GraphQL so discussion lives on the work itself
+- AWS Identity Center access-review entries now include MFA status and last login from CloudTrail Event History (90 days) and registered MFA devices or a TOTP/WebAuthn sign-in; enrichment failures keep the listed users and leave those signals unknown
+- AWS access review now includes Identity Center users with no permission-set assignment on the connected account (empty roles). MFA device lookup is skipped for those users so a large unused directory stays inside the fetch budget. Still no Organizations walk and no cross-account assignment listing
+- AWS root account identities now show the Organizations account email when the audit role can call DescribeAccount, so reviewers can match `<root_account>` to a person; standalone accounts and denied Organizations calls leave email empty
+- Provider catalog and AWS connector create flow link to the AWS access-review setup guide at `/aws`
+
+### Changed
+
+- Business-function MTD, RTO, and RPO columns show hours and remaining minutes instead of a raw minute count
+- Access-review source names separate the provider label from the account with a slash (`Amazon Web Services / acme-prod`) instead of a space
 
 ## [0.275.0] - 2026-09-02
 
