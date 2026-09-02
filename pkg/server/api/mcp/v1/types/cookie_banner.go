@@ -28,6 +28,7 @@ import (
 func NewCookieBannerCapabilities(c coredata.CookieBannerCapabilities) *CookieBannerCapabilities {
 	return &CookieBannerCapabilities{
 		ResourceReporting: c.ResourceReporting,
+		Tcf:               c.TCF,
 	}
 }
 

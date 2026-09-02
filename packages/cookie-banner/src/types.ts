@@ -91,6 +91,7 @@ export interface BannerConfig {
   layout: BannerLayout;
   show_branding: boolean;
   resource_reporting_enabled: boolean;
+  tcf_enabled?: boolean;
   categories: Category[];
   texts: BannerTexts;
 }
