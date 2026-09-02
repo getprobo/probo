@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package latestversion
+package publishedversion
 
 import (
 	"encoding/json"
@@ -30,11 +30,11 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const versionsQuery = `
+const publishedQuery = `
 query($id: ID!) {
   node(id: $id) {
     ... on CookieBanner {
-      latestVersion {
+      publishedVersion {
         id
         version
         state
@@ -56,12 +56,12 @@ type versionInfo struct {
 	UpdatedAt      string `json:"updatedAt"`
 }
 
-func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
+func NewCmdPublishedVersion(f *cmdutil.Factory) *cobra.Command {
 	var flagOutput *string
 
 	cmd := &cobra.Command{
-		Use:   "latest-version <id>",
-		Short: "Show the latest version of a cookie banner",
+		Use:   "published-version <id>",
+		Short: "Show the latest published version of a cookie banner",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -86,26 +86,26 @@ func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(versionsQuery, map[string]any{"id": args[0]})
+			data, err := client.Do(publishedQuery, map[string]any{"id": args[0]})
 			if err != nil {
 				return err
 			}
 
 			var resp struct {
 				Node *struct {
-					LatestVersion *versionInfo `json:"latestVersion"`
+					PublishedVersion *versionInfo `json:"publishedVersion"`
 				} `json:"node"`
 			}
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return err
 			}
 
-			if resp.Node == nil || resp.Node.LatestVersion == nil {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No versions found.")
+			if resp.Node == nil || resp.Node.PublishedVersion == nil {
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No published version found.")
 				return nil
 			}
 
-			v := resp.Node.LatestVersion
+			v := resp.Node.PublishedVersion
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, v)

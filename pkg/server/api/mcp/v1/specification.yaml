@@ -12323,6 +12323,16 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        published_version:
+          $ref: "#/components/schemas/CookieBannerVersion"
+          description: Latest published cookie banner version, if any
+
+    CommonGVLVendorMembership:
+      type: string
+      enum:
+        - ON_BANNER
+        - NOT_ON_BANNER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CommonGVLVendorMembership
 
     CommonGVLVendor:
       type: object
@@ -12364,6 +12374,31 @@ components:
             type: integer
           description: IAB special features the vendor declares
 
+    CommonGVLCatalog:
+      type: object
+      properties:
+        vendor_list_version:
+          type:
+            - integer
+            - "null"
+          description: Latest IAB vendor list version
+        tcf_policy_version:
+          type:
+            - integer
+            - "null"
+          description: TCF policy version of the latest GVL snapshot
+
+    GetCommonGVLCatalogInput:
+      type: object
+
+    GetCommonGVLCatalogOutput:
+      type: object
+      required:
+        - common_gvl_catalog
+      properties:
+        common_gvl_catalog:
+          $ref: "#/components/schemas/CommonGVLCatalog"
+
     ListCommonGVLVendorsInput:
       type: object
       properties:
@@ -12377,6 +12412,12 @@ components:
             query:
               type: string
               description: Search by vendor name or IAB vendor ID
+            cookie_banner_id:
+              $ref: "#/components/schemas/GID"
+              description: Cookie banner ID required when filtering by membership
+            membership:
+              $ref: "#/components/schemas/CommonGVLVendorMembership"
+              description: Restrict to vendors already on the banner, or not on it
 
     ListCommonGVLVendorsOutput:
       type: object
@@ -12667,6 +12708,7 @@ components:
         - cookie_banner_id
         - version
         - state
+        - gvl_vendor_count
         - created_at
         - updated_at
       properties:
@@ -12691,6 +12733,9 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        gvl_vendor_count:
+          type: integer
+          description: Number of IAB GVL vendors snapshotted on this version
 
     CookieBannerTranslation:
       type: object
@@ -19014,6 +19059,18 @@ tools:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationInput"
     outputSchema:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationOutput"
+  - name: getCommonGVLCatalog
+    title: Get Common GVL Catalog
+    description: Get the current IAB GVL catalog versions
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetCommonGVLCatalogInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCommonGVLCatalogOutput"
   - name: listCommonGVLVendors
     title: List Common GVL Vendors
     description: List IAB GVL vendors from the global catalog

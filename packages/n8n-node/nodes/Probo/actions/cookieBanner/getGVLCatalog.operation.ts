@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,60 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
-export const description: INodeProperties[] = [
-	{
-		displayName: 'Cookie Banner ID',
-		name: 'cookieBannerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['cookieBanner'],
-				operation: ['get'],
-			},
-		},
-		default: '',
-		description: 'The ID of the cookie banner',
-		required: true,
-	},
-];
+export const description: INodeProperties[] = [];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex) as string;
-
-	const query = `
-		query GetCookieBanner($cookieBannerId: ID!) {
-			node(id: $cookieBannerId) {
-				... on CookieBanner {
-					id
-					name
-					origin
-					state
-					privacyPolicyUrl
-					cookiePolicyUrl
-					consentExpiryDays
-					showBranding
-					capabilities { resourceReporting }
-					defaultLanguage
-					createdAt
-					updatedAt
-					publishedVersion {
-						id
-						version
-						state
-						gvlVendorCount
-					}
-				}
+	const gql = `
+		query GetCommonGVLCatalog {
+			commonGVLCatalog {
+				vendorListVersion
+				tcfPolicyVersion
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { cookieBannerId });
+	const responseData = await proboApiRequest.call(this, gql, {});
 
 	return {
 		json: responseData,

@@ -34,7 +34,7 @@ import (
 
 // SeedCommonGVLVendor inserts a catalog GVL vendor (and a snapshot if needed)
 // for e2e tests. iabVendorID must be unique across the shared catalog table.
-func SeedCommonGVLVendor(t *testing.T, iabVendorID int, name string, deleted bool) {
+func SeedCommonGVLVendor(t *testing.T, iabVendorID int, name string, deleted bool) int {
 	t.Helper()
 
 	client := test.PGClient(t)
@@ -98,6 +98,34 @@ INSERT INTO common_gvl_vendors (
 		return err
 	})
 	require.NoError(t, err, "test setup: cannot seed common gvl vendor")
+
+	return version
+}
+
+// SeedCommonGVLCatalogState points the singleton catalog pointer at version.
+func SeedCommonGVLCatalogState(t *testing.T, vendorListVersion int) {
+	t.Helper()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	now := time.Now()
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		_, err := conn.Exec(ctx, `
+INSERT INTO common_gvl_state (
+    singleton,
+    latest_vendor_list_version,
+    last_fetched_at
+) VALUES (TRUE, $1, $2)
+ON CONFLICT (singleton) DO UPDATE
+SET
+    latest_vendor_list_version = EXCLUDED.latest_vendor_list_version,
+    last_fetched_at = EXCLUDED.last_fetched_at
+`, vendorListVersion, now)
+
+		return err
+	})
+	require.NoError(t, err, "test setup: cannot seed common gvl catalog state")
 }
 
 // EnableCookieBannerTCF flips the hidden tcf capability on a banner.

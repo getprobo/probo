@@ -168,6 +168,201 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		assert.Equal(t, 0, removed.RemoveCookieBannerGVLVendor.CookieBanner.GVLVendors.TotalCount)
 	})
 
+	t.Run("filters catalog by banner membership", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		bannerID := factory.CreateCookieBanner(owner)
+		factory.EnableCookieBannerTCF(t, bannerID)
+
+		onBannerID := uniqueIABVendorID()
+		offBannerID := uniqueIABVendorID()
+		factory.SeedCommonGVLVendor(t, onBannerID, "On Banner Vendor", false)
+		factory.SeedCommonGVLVendor(t, offBannerID, "Off Banner Vendor", false)
+
+		const addMutation = `
+			mutation($input: AddCookieBannerGVLVendorInput!) {
+				addCookieBannerGVLVendor(input: $input) {
+					cookieBanner { id }
+				}
+			}
+		`
+		err := owner.Execute(addMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"iabVendorId":    onBannerID,
+			},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		const catalogQuery = `
+			query($filter: CommonGVLVendorFilter) {
+				commonGVLVendors(first: 50, filter: $filter) {
+					edges {
+						node { iabVendorId }
+					}
+				}
+			}
+		`
+
+		var onBanner struct {
+			CommonGVLVendors struct {
+				Edges []struct {
+					Node struct {
+						IabVendorID int `json:"iabVendorId"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"commonGVLVendors"`
+		}
+		err = owner.Execute(catalogQuery, map[string]any{
+			"filter": map[string]any{
+				"query":          "On Banner Vendor",
+				"cookieBannerId": bannerID,
+				"membership":     "ON_BANNER",
+			},
+		}, &onBanner)
+		require.NoError(t, err)
+		require.Len(t, onBanner.CommonGVLVendors.Edges, 1)
+		assert.Equal(t, onBannerID, onBanner.CommonGVLVendors.Edges[0].Node.IabVendorID)
+
+		var notOnBanner struct {
+			CommonGVLVendors struct {
+				Edges []struct {
+					Node struct {
+						IabVendorID int `json:"iabVendorId"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"commonGVLVendors"`
+		}
+		err = owner.Execute(catalogQuery, map[string]any{
+			"filter": map[string]any{
+				"query":          "Off Banner Vendor",
+				"cookieBannerId": bannerID,
+				"membership":     "NOT_ON_BANNER",
+			},
+		}, &notOnBanner)
+		require.NoError(t, err)
+		require.Len(t, notOnBanner.CommonGVLVendors.Edges, 1)
+		assert.Equal(t, offBannerID, notOnBanner.CommonGVLVendors.Edges[0].Node.IabVendorID)
+
+		err = owner.Execute(catalogQuery, map[string]any{
+			"filter": map[string]any{"membership": "ON_BANNER"},
+		}, new(map[string]any))
+		testutil.RequireErrorCode(t, err, "INVALID")
+	})
+
+	t.Run("returns catalog versions", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		iabVendorID := uniqueIABVendorID()
+		version := factory.SeedCommonGVLVendor(t, iabVendorID, "Catalog Version Vendor", false)
+		factory.SeedCommonGVLCatalogState(t, version)
+
+		const query = `
+			query {
+				commonGVLCatalog {
+					vendorListVersion
+					tcfPolicyVersion
+				}
+			}
+		`
+
+		var result struct {
+			CommonGVLCatalog struct {
+				VendorListVersion *int `json:"vendorListVersion"`
+				TcfPolicyVersion  *int `json:"tcfPolicyVersion"`
+			} `json:"commonGVLCatalog"`
+		}
+		err := owner.Execute(query, nil, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.CommonGVLCatalog.VendorListVersion)
+		require.NotNil(t, result.CommonGVLCatalog.TcfPolicyVersion)
+		assert.Equal(t, version, *result.CommonGVLCatalog.VendorListVersion)
+		assert.Equal(t, 5, *result.CommonGVLCatalog.TcfPolicyVersion)
+	})
+
+	t.Run("counts draft and published gvl vendors", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		bannerID := factory.CreateCookieBanner(owner)
+		factory.EnableCookieBannerTCF(t, bannerID)
+
+		firstID := uniqueIABVendorID()
+		secondID := uniqueIABVendorID()
+		factory.SeedCommonGVLVendor(t, firstID, "Draft Count Vendor", false)
+		factory.SeedCommonGVLVendor(t, secondID, "Published Count Vendor", false)
+
+		const addMutation = `
+			mutation($input: AddCookieBannerGVLVendorInput!) {
+				addCookieBannerGVLVendor(input: $input) {
+					cookieBanner { id }
+				}
+			}
+		`
+		err := owner.Execute(addMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"iabVendorId":    firstID,
+			},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		const statsQuery = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on CookieBanner {
+						gvlVendors(first: 1) { totalCount }
+						publishedVersion { gvlVendorCount }
+					}
+				}
+			}
+		`
+
+		var beforePublish struct {
+			Node struct {
+				GVLVendors struct {
+					TotalCount int `json:"totalCount"`
+				} `json:"gvlVendors"`
+				PublishedVersion *struct {
+					GvlVendorCount int `json:"gvlVendorCount"`
+				} `json:"publishedVersion"`
+			} `json:"node"`
+		}
+		err = owner.Execute(statsQuery, map[string]any{"id": bannerID}, &beforePublish)
+		require.NoError(t, err)
+		assert.Equal(t, 1, beforePublish.Node.GVLVendors.TotalCount)
+		assert.Nil(t, beforePublish.Node.PublishedVersion)
+
+		published := publishBanner(t, owner, bannerID)
+		assert.Equal(t, "PUBLISHED", published.State)
+
+		err = owner.Execute(addMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"iabVendorId":    secondID,
+			},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		var afterDraft struct {
+			Node struct {
+				GVLVendors struct {
+					TotalCount int `json:"totalCount"`
+				} `json:"gvlVendors"`
+				PublishedVersion *struct {
+					GvlVendorCount int `json:"gvlVendorCount"`
+				} `json:"publishedVersion"`
+			} `json:"node"`
+		}
+		err = owner.Execute(statsQuery, map[string]any{"id": bannerID}, &afterDraft)
+		require.NoError(t, err)
+		assert.Equal(t, 2, afterDraft.Node.GVLVendors.TotalCount)
+		require.NotNil(t, afterDraft.Node.PublishedVersion)
+		assert.Equal(t, 1, afterDraft.Node.PublishedVersion.GvlVendorCount)
+	})
+
 	t.Run("rejects add and remove when tcf is off", func(t *testing.T) {
 		t.Parallel()
 

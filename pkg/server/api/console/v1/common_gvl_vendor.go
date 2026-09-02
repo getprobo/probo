@@ -18,45 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package types
+package console_v1
 
 import (
+	"context"
+
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewCookieBannerVersion(v *coredata.CookieBannerVersion) *CookieBannerVersion {
-	count := 0
-	if snapshot, err := v.GetSnapshot(); err == nil {
-		count = len(snapshot.IABVendorIDs)
+func commonGVLVendorFilter(
+	ctx context.Context,
+	r *queryResolver,
+	filter *types.CommonGVLVendorFilter,
+) (*coredata.CommonGVLVendorFilter, error) {
+	cdFilter := coredata.NewCommonGVLVendorFilter(nil)
+	if filter == nil {
+		return cdFilter, nil
 	}
 
-	return &CookieBannerVersion{
-		ID:             v.ID,
-		CookieBannerID: v.CookieBannerID,
-		Version:        v.Version,
-		State:          CookieBannerVersionState(v.State),
-		GvlVendorCount: count,
-		CreatedAt:      v.CreatedAt,
-		UpdatedAt:      v.UpdatedAt,
-	}
-}
-
-func NewListCookieBannerVersionsOutput(p *page.Page[*coredata.CookieBannerVersion, coredata.CookieBannerVersionOrderField]) ListCookieBannerVersionsOutput {
-	versions := make([]*CookieBannerVersion, 0, len(p.Data))
-	for _, v := range p.Data {
-		versions = append(versions, NewCookieBannerVersion(v))
+	cdFilter = coredata.NewCommonGVLVendorFilter(filter.Query)
+	if filter.Membership == nil {
+		return cdFilter, nil
 	}
 
-	var nextCursor *page.CursorKey
-
-	if len(p.Data) > 0 {
-		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
-		nextCursor = &cursorKey
+	if filter.CookieBannerID == nil {
+		return nil, gqlutils.Invalidf(ctx, "cookieBannerId is required when filtering by membership")
 	}
 
-	return ListCookieBannerVersionsOutput{
-		NextCursor:           nextCursor,
-		CookieBannerVersions: versions,
+	if _, err := r.authorize(ctx, *filter.CookieBannerID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
 	}
+
+	return cdFilter.WithMembership(filter.CookieBannerID, filter.Membership), nil
 }

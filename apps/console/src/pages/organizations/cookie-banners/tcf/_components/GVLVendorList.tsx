@@ -20,7 +20,6 @@
 
 import { List } from "@probo/ui/src/v2/List/List";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useRefetchableFragment } from "react-relay";
@@ -35,13 +34,13 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import type { CursorPaginationVariables } from "../_lib/useCursorPagination";
 import { useCursorPagination } from "../_lib/useCursorPagination";
-import { useGVLVendorFilters } from "../_lib/useGVLVendorFilters";
+import { gvlVendorGraphqlFilter, useGVLVendorFilters } from "../_lib/useGVLVendorFilters";
 import { tcfSection } from "../variants";
 
 import { GVLVendorListEmpty } from "./GVLVendorListEmpty";
 import { GVLVendorListItem } from "./GVLVendorListItem";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 15;
 
 const cookieBannerFragment = graphql`
   fragment GVLVendorList_cookieBanner on CookieBanner {
@@ -61,20 +60,19 @@ const catalogFragment = graphql`
   fragment GVLVendorList_query on Query
   @refetchable(queryName: "GVLVendorListRefetchQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 25 }
+    first: { type: "Int", defaultValue: 15 }
     after: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
-    query: { type: "String", defaultValue: null }
+    filter: { type: "CommonGVLVendorFilter", defaultValue: null }
   ) {
     commonGVLVendors(
       first: $first
       after: $after
       last: $last
       before: $before
-      filter: { query: $query }
+      filter: $filter
     ) {
-      totalCount
       pageInfo {
         hasNextPage
         hasPreviousPage
@@ -133,7 +131,7 @@ interface GVLVendorListProps {
 
 export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { query, hasActiveFilters } = useGVLVendorFilters();
+  const { query, membership } = useGVLVendorFilters();
   const [isSearchPending, startSearchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
   const banner = useFragment<GVLVendorList_cookieBanner$key>(
@@ -149,6 +147,23 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
     refetch(variables, { fetchPolicy: "store-or-network" });
   }, [refetch]);
 
+  const refetchCatalogFromStart = useCallback((
+    fetchPolicy: "store-or-network" | "network-only",
+  ) => {
+    startSearchTransition(() => {
+      refetch(
+        {
+          first: PAGE_SIZE,
+          after: null,
+          last: null,
+          before: null,
+          filter: gvlVendorGraphqlFilter(query, membership, banner.id),
+        },
+        { fetchPolicy },
+      );
+    });
+  }, [banner.id, membership, query, refetch]);
+
   const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
     refetchCatalog,
     catalog.commonGVLVendors.pageInfo,
@@ -161,19 +176,8 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
       return;
     }
 
-    startSearchTransition(() => {
-      refetch(
-        {
-          first: PAGE_SIZE,
-          after: null,
-          last: null,
-          before: null,
-          query: query || null,
-        },
-        { fetchPolicy: "store-or-network" },
-      );
-    });
-  }, [query, refetch]);
+    refetchCatalogFromStart("store-or-network");
+  }, [refetchCatalogFromStart]);
 
   const [addVendor] = useMutation<GVLVendorListAddMutation>(addVendorMutation, {
     errorToast: t("tcfPage.errors.add"),
@@ -186,7 +190,6 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
     (banner.gvlVendors?.edges ?? []).map(edge => edge.node.iabVendorId),
   );
   const catalogEdges = catalog.commonGVLVendors.edges;
-  const catalogCount = catalog.commonGVLVendors.totalCount;
   const isPending = isSearchPending || isPagePending;
   const { results, pager } = tcfSection({ pending: isPending });
 
@@ -211,11 +214,14 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
                             cookieBannerId: banner.id,
                             iabVendorId: edge.node.iabVendorId,
                           };
-                          if (selectedIDs.has(edge.node.iabVendorId)) {
-                            void removeVendor({ variables: { input } });
-                            return;
-                          }
-                          void addVendor({ variables: { input } });
+                          const commit = selectedIDs.has(edge.node.iabVendorId)
+                            ? removeVendor
+                            : addVendor;
+                          void commit({ variables: { input } }).then(() => {
+                            if (membership !== "all") {
+                              refetchCatalogFromStart("network-only");
+                            }
+                          });
                         }
                       : undefined}
                   />
@@ -236,11 +242,6 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
               </div>
             </>
           )}
-      {catalogCount > 0 && !hasActiveFilters && (
-        <Text size={2} color="faint">
-          {t("tcfPage.catalogCount", { count: catalogCount })}
-        </Text>
-      )}
     </div>
   );
 }

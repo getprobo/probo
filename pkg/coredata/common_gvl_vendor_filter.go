@@ -22,14 +22,26 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type CommonGVLVendorFilter struct {
-	query *string
+	query          *string
+	cookieBannerID *gid.GID
+	membership     *CommonGVLVendorMembership
 }
 
 func NewCommonGVLVendorFilter(query *string) *CommonGVLVendorFilter {
 	return &CommonGVLVendorFilter{query: query}
+}
+
+func (f *CommonGVLVendorFilter) WithMembership(
+	cookieBannerID *gid.GID,
+	membership *CommonGVLVendorMembership,
+) *CommonGVLVendorFilter {
+	f.cookieBannerID = cookieBannerID
+	f.membership = membership
+	return f
 }
 
 func (f *CommonGVLVendorFilter) SQLFragment() string {
@@ -40,16 +52,49 @@ func (f *CommonGVLVendorFilter) SQLFragment() string {
 			 OR iab_vendor_id::text ILIKE '%' || @filter_query || '%')
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @filter_membership::text = @membership_on_banner
+			AND @filter_cookie_banner_id::text IS NOT NULL THEN
+			iab_vendor_id IN (
+				SELECT
+					iab_vendor_id
+				FROM
+					cookie_banner_gvl_vendors
+				WHERE
+					cookie_banner_id = @filter_cookie_banner_id
+			)
+		WHEN @filter_membership::text = @membership_not_on_banner
+			AND @filter_cookie_banner_id::text IS NOT NULL THEN
+			iab_vendor_id NOT IN (
+				SELECT
+					iab_vendor_id
+				FROM
+					cookie_banner_gvl_vendors
+				WHERE
+					cookie_banner_id = @filter_cookie_banner_id
+			)
+		ELSE TRUE
+	END
 )`
 }
 
 func (f *CommonGVLVendorFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"filter_query": nil,
+		"filter_query":             nil,
+		"filter_cookie_banner_id":  nil,
+		"filter_membership":        nil,
+		"membership_on_banner":     CommonGVLVendorMembershipOnBanner,
+		"membership_not_on_banner": CommonGVLVendorMembershipNotOnBanner,
 	}
 
 	if f != nil && f.query != nil {
 		args["filter_query"] = *f.query
+	}
+
+	if f != nil && f.cookieBannerID != nil && f.membership != nil {
+		args["filter_cookie_banner_id"] = *f.cookieBannerID
+		args["filter_membership"] = *f.membership
 	}
 
 	return args

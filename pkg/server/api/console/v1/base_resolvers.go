@@ -690,12 +690,10 @@ func (r *queryResolver) CommonGVLVendors(ctx context.Context, first *int, after 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var query *string
-	if filter != nil {
-		query = filter.Query
+	cdFilter, err := commonGVLVendorFilter(ctx, r, filter)
+	if err != nil {
+		return nil, err
 	}
-
-	cdFilter := coredata.NewCommonGVLVendorFilter(query)
 
 	vendors, err := r.cookieBanner.ListCommonGVLVendors(ctx, cursor, cdFilter)
 	if err != nil {
@@ -706,6 +704,23 @@ func (r *queryResolver) CommonGVLVendors(ctx context.Context, first *int, after 
 	p := page.NewPage(vendors, cursor)
 
 	return types.NewCommonGVLVendorConnection(p, r, nil, cdFilter), nil
+}
+
+// CommonGVLCatalog is the resolver for the commonGVLCatalog field.
+func (r *queryResolver) CommonGVLCatalog(ctx context.Context) (*types.CommonGVLCatalog, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, err
+	}
+
+	catalog, err := r.cookieBanner.GetCommonGVLCatalog(ctx)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get common gvl catalog", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCommonGVLCatalog(catalog), nil
 }
 
 // AccessReviewDrivers is the resolver for the accessReviewDrivers field.

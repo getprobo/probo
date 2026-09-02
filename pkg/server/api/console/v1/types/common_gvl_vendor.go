@@ -21,6 +21,7 @@
 package types
 
 import (
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -30,7 +31,9 @@ type (
 	CommonGVLVendorOrderBy OrderBy[coredata.CommonGVLVendorOrderField]
 
 	CommonGVLVendorFilter struct {
-		Query *string
+		Query          *string
+		CookieBannerID *gid.GID
+		Membership     *coredata.CommonGVLVendorMembership
 	}
 
 	CommonGVLVendorConnection struct {
@@ -42,7 +45,23 @@ type (
 		ParentID *gid.GID
 		Filter   *coredata.CommonGVLVendorFilter
 	}
+
+	CommonGVLCatalog struct {
+		VendorListVersion *int
+		TcfPolicyVersion  *int
+	}
 )
+
+func NewCommonGVLCatalog(c *cookiebanner.CommonGVLCatalog) *CommonGVLCatalog {
+	if c == nil {
+		return &CommonGVLCatalog{}
+	}
+
+	return &CommonGVLCatalog{
+		VendorListVersion: c.VendorListVersion,
+		TcfPolicyVersion:  c.TCFPolicyVersion,
+	}
+}
 
 func NewCommonGVLVendor(v *coredata.CommonGVLVendor) *CommonGVLVendor {
 	return &CommonGVLVendor{

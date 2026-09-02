@@ -40,11 +40,35 @@ input CommonGVLVendorOrder
     field: CommonGVLVendorOrderField!
 }
 
+enum CommonGVLVendorMembership
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CommonGVLVendorMembership"
+    ) {
+    ON_BANNER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonGVLVendorMembershipOnBanner"
+        )
+    NOT_ON_BANNER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonGVLVendorMembershipNotOnBanner"
+        )
+}
+
 input CommonGVLVendorFilter
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CommonGVLVendorFilter"
     ) {
     query: String
+    cookieBannerId: ID
+    membership: CommonGVLVendorMembership
+}
+
+type CommonGVLCatalog
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CommonGVLCatalog"
+    ) {
+    vendorListVersion: Int
+    tcfPolicyVersion: Int
 }
 
 type CommonGVLVendor {

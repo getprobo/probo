@@ -245,6 +245,11 @@ type (
 		CreatedAt   time.Time                    `json:"created_at"`
 	}
 
+	CommonGVLCatalog struct {
+		VendorListVersion *int
+		TCFPolicyVersion  *int
+	}
+
 	AddCookieBannerGVLVendorRequest struct {
 		CookieBannerID gid.GID
 		IABVendorID    int
@@ -928,6 +933,47 @@ func (s *Service) GetCommonGVLVendor(
 	}
 
 	return &vendor, nil
+}
+
+func (s *Service) GetCommonGVLCatalog(ctx context.Context) (*CommonGVLCatalog, error) {
+	catalog := &CommonGVLCatalog{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var state coredata.CommonGVLState
+			if err := state.Load(ctx, conn); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load common gvl state: %w", err)
+			}
+
+			if state.LatestVendorListVersion == nil {
+				return nil
+			}
+
+			var snapshot coredata.CommonGVLSnapshot
+			if err := snapshot.LoadByVendorListVersion(ctx, conn, *state.LatestVendorListVersion); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load common gvl snapshot: %w", err)
+			}
+
+			catalog.VendorListVersion = state.LatestVendorListVersion
+			catalog.TCFPolicyVersion = new(snapshot.TCFPolicyVersion)
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return catalog, nil
 }
 
 func (s *Service) ListCookieBannerGVLVendors(
@@ -1823,6 +1869,34 @@ func (s *Service) GetCookieBannerVersion(
 				}
 
 				return fmt.Errorf("cannot load cookie banner version: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &version, nil
+}
+
+func (s *Service) GetLatestPublishedCookieBannerVersion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (*coredata.CookieBannerVersion, error) {
+	var version coredata.CookieBannerVersion
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := version.LoadLatestPublishedByCookieBannerID(ctx, conn, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrVersionNotFound
+				}
+
+				return fmt.Errorf("cannot load latest published cookie banner version: %w", err)
 			}
 
 			return nil
