@@ -143,6 +143,32 @@ func (r *cookieBannerResolver) LatestVersion(ctx context.Context, obj *types.Coo
 	}, nil
 }
 
+// PublishedVersion is the resolver for the publishedVersion field.
+func (r *cookieBannerResolver) PublishedVersion(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerVersion, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionList)
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrVersionNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load published cookie banner version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CookieBannerVersion{
+		ID:        v.ID,
+		Version:   v.Version,
+		State:     string(v.State),
+		CreatedAt: v.CreatedAt,
+		UpdatedAt: v.UpdatedAt,
+	}, nil
+}
+
 // PolicyDocument is the resolver for the policyDocument field.
 func (r *cookieBannerResolver) PolicyDocument(ctx context.Context, obj *types.CookieBanner) (*types.Document, error) {
 	if obj.PolicyDocument == nil {
@@ -490,6 +516,28 @@ func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types
 	}
 
 	return categories, nil
+}
+
+// GvlVendorCount is the resolver for the gvlVendorCount field.
+func (r *cookieBannerVersionResolver) GvlVendorCount(ctx context.Context, obj *types.CookieBannerVersion) (int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionGet)
+	if err != nil {
+		return 0, err
+	}
+
+	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	snapshot, err := version.GetSnapshot()
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return len(snapshot.IABVendorIDs), nil
 }
 
 // CookieBanner is the resolver for the cookieBanner field.

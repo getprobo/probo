@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
@@ -26,21 +28,29 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { tcfPageSkeleton } from "./variants";
 
 export function CookieBannerTCFPageSkeleton() {
-  const { root, intro, title, description, count, tools, search } = tcfPageSkeleton();
+  const { root, intro, title, description, stats, list, tools, search, filter } = tcfPageSkeleton();
 
   return (
     <div className={root()}>
       <div className={intro()}>
         <HeadingSkeleton size={6} className={title()} />
         <TextSkeleton size={2} className={description()} />
-        <TextSkeleton size={2} className={count()} />
+        <div className={stats()}>
+          <CardSkeleton size={3} />
+          <CardSkeleton size={3} />
+        </div>
+      </div>
+      <div className={list()}>
         <div className={tools()}>
           <div className={search()}>
             <TextFieldSkeleton />
           </div>
+          <div className={filter()}>
+            <ButtonSkeleton size={2} />
+          </div>
         </div>
+        <ListSkeleton count={4} />
       </div>
-      <ListSkeleton count={4} />
     </div>
   );
 }

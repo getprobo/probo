@@ -58,9 +58,11 @@ type vendor struct {
 
 func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagQuery  string
-		flagLimit  int
-		flagOutput *string
+		flagQuery          string
+		flagCookieBannerID string
+		flagMembership     string
+		flagLimit          int
+		flagOutput         *string
 	)
 
 	cmd := &cobra.Command{
@@ -90,9 +92,21 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			variables := map[string]any{}
+			filter := map[string]any{}
 			if flagQuery != "" {
-				variables["filter"] = map[string]any{"query": flagQuery}
+				filter["query"] = flagQuery
+			}
+			if flagMembership != "" {
+				if flagCookieBannerID == "" {
+					return fmt.Errorf("--cookie-banner-id is required with --membership")
+				}
+				filter["cookieBannerId"] = flagCookieBannerID
+				filter["membership"] = flagMembership
+			}
+
+			variables := map[string]any{}
+			if len(filter) > 0 {
+				variables["filter"] = filter
 			}
 
 			vendors, totalCount, err := api.Paginate(
@@ -146,6 +160,8 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagQuery, "query", "", "Search by name or IAB vendor ID")
+	cmd.Flags().StringVar(&flagCookieBannerID, "cookie-banner-id", "", "Cookie banner ID (required with --membership)")
+	cmd.Flags().StringVar(&flagMembership, "membership", "", "Filter by banner membership: ON_BANNER or NOT_ON_BANNER")
 	cmd.Flags().IntVar(&flagLimit, "limit", 50, "Maximum number of vendors to return")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

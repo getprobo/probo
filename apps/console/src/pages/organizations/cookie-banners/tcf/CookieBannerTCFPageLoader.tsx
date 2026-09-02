@@ -24,18 +24,34 @@ import { useParams, useSearchParams } from "react-router";
 
 import type { CookieBannerTCFPageQuery } from "#/__generated__/core/CookieBannerTCFPageQuery.graphql";
 
+import {
+  gvlVendorGraphqlFilter,
+  type GVLVendorMembership,
+  isGVLVendorMembershipOption,
+} from "./_lib/useGVLVendorFilters";
 import { CookieBannerTCFPage, cookieBannerTCFPageQuery } from "./CookieBannerTCFPage";
 import { CookieBannerTCFPageSkeleton } from "./CookieBannerTCFPageSkeleton";
 
 export default function CookieBannerTCFPageLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const [searchParams] = useSearchParams();
-  const initialQuery = useRef(searchParams.get("q") || null);
+  const rawMembership = searchParams.get("membership") ?? "";
+  const initialQuery = useRef(searchParams.get("q") ?? "");
+  const initialMembership = useRef<GVLVendorMembership>(
+    isGVLVendorMembershipOption(rawMembership) ? rawMembership : "all",
+  );
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerTCFPageQuery>(cookieBannerTCFPageQuery);
 
   useEffect(() => {
     if (cookieBannerId) {
-      loadQuery({ cookieBannerId, query: initialQuery.current });
+      loadQuery({
+        cookieBannerId,
+        filter: gvlVendorGraphqlFilter(
+          initialQuery.current,
+          initialMembership.current,
+          cookieBannerId,
+        ),
+      });
     }
   }, [loadQuery, cookieBannerId]);
 

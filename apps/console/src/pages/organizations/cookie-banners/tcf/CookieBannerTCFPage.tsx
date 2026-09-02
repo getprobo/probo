@@ -24,38 +24,35 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CookieBannerTCFPage_cookieBanner$key } from "#/__generated__/core/CookieBannerTCFPage_cookieBanner.graphql";
 import type { CookieBannerTCFPageQuery } from "#/__generated__/core/CookieBannerTCFPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { GVLVendorList } from "./_components/GVLVendorList";
+import { GVLVendorListFilter } from "./_components/GVLVendorListFilter";
 import { GVLVendorListSearch } from "./_components/GVLVendorListSearch";
+import { GVLVendorStats } from "./_components/GVLVendorStats";
 import { tcfPage, tcfSection } from "./variants";
 
 export const cookieBannerTCFPageQuery = graphql`
-  query CookieBannerTCFPageQuery($cookieBannerId: ID!, $query: String) {
+  query CookieBannerTCFPageQuery(
+    $cookieBannerId: ID!
+    $filter: CommonGVLVendorFilter
+  ) {
     node(id: $cookieBannerId) {
       __typename
       ... on CookieBanner {
         capabilities {
           tcf
         }
-        ...CookieBannerTCFPage_cookieBanner
         ...GVLVendorList_cookieBanner
+        ...GVLVendorStats_cookieBanner
       }
     }
-    ...GVLVendorList_query @arguments(first: 25, query: $query)
-  }
-`;
-
-const cookieBannerFragment = graphql`
-  fragment CookieBannerTCFPage_cookieBanner on CookieBanner {
-    gvlVendors(first: 500) {
-      totalCount
-    }
+    ...GVLVendorList_query @arguments(first: 15, filter: $filter)
+    ...GVLVendorStats_query
   }
 `;
 
@@ -77,12 +74,7 @@ export function CookieBannerTCFPage({ queryRef }: CookieBannerTCFPageProps) {
     throw new NotFoundError(t("tcfPage.notFound"));
   }
 
-  const banner = useFragment<CookieBannerTCFPage_cookieBanner$key>(
-    cookieBannerFragment,
-    data.node,
-  );
-  const selectedCount = banner.gvlVendors?.totalCount ?? 0;
-  const { root, intro, tools } = tcfSection();
+  const { root, intro, list, tools } = tcfSection();
 
   return (
     <div className={tcfPage()}>
@@ -94,19 +86,23 @@ export function CookieBannerTCFPage({ queryRef }: CookieBannerTCFPageProps) {
           <Text size={2} color="faint">
             {t("tcfPage.description")}
           </Text>
-          <Text size={2} color="neutral">
-            {t("tcfPage.vendorCount", { count: selectedCount })}
-          </Text>
-          <div className={tools()}>
-            <GVLVendorListSearch />
-          </div>
-        </div>
-        <Suspense fallback={<ListSkeleton count={4} />}>
-          <GVLVendorList
+          <GVLVendorStats
             queryKey={data}
             cookieBannerKey={data.node}
           />
-        </Suspense>
+        </div>
+        <div className={list()}>
+          <div className={tools()}>
+            <GVLVendorListSearch />
+            <GVLVendorListFilter />
+          </div>
+          <Suspense fallback={<ListSkeleton count={4} />}>
+            <GVLVendorList
+              queryKey={data}
+              cookieBannerKey={data.node}
+            />
+          </Suspense>
+        </div>
       </section>
     </div>
   );

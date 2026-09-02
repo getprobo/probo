@@ -21,9 +21,21 @@
 package types
 
 import (
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 )
+
+func NewCommonGVLCatalog(c *cookiebanner.CommonGVLCatalog) *CommonGVLCatalog {
+	if c == nil {
+		return &CommonGVLCatalog{}
+	}
+
+	return &CommonGVLCatalog{
+		VendorListVersion: c.VendorListVersion,
+		TcfPolicyVersion:  c.TCFPolicyVersion,
+	}
+}
 
 func NewCommonGVLVendor(v *coredata.CommonGVLVendor) *CommonGVLVendor {
 	return &CommonGVLVendor{

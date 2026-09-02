@@ -26,22 +26,26 @@ export const tcfPage = tv({
 
 export const tcfPageSkeleton = tv({
   slots: {
-    root: "flex flex-col gap-6",
+    root: "flex flex-col gap-8",
     intro: "flex flex-col gap-3",
     title: "w-40",
     description: "w-96",
-    count: "w-48",
+    stats: "mt-6 grid grid-cols-4 gap-3 max-lg:grid-cols-2",
+    list: "flex flex-col gap-4",
     tools: "flex w-full items-center justify-between gap-2",
     search: "w-60 max-sm:min-w-0 max-sm:flex-1",
+    filter: "w-48 shrink-0",
   },
 });
 
 export const tcfSection = tv({
   slots: {
-    root: "flex flex-col gap-4",
+    root: "flex flex-col gap-8",
     intro: "flex flex-col gap-3",
+    list: "flex flex-col gap-4",
     tools: "flex w-full items-center justify-between gap-2",
     search: "w-60 max-sm:min-w-0 max-sm:flex-1",
+    filter: "w-48 shrink-0",
     pager: "flex justify-center pt-4",
     results: "flex flex-col transition-opacity",
   },
@@ -51,6 +55,17 @@ export const tcfSection = tv({
         results: "opacity-60",
       },
     },
+  },
+});
+
+export const gvlVendorStats = tv({
+  slots: {
+    root: "mt-6 grid grid-cols-4 gap-3 max-lg:grid-cols-2",
+    card: "flex h-full flex-col items-start gap-2",
+    comparison: "flex items-baseline gap-4",
+    valueRow: "flex items-baseline gap-1.5",
+    value: "font-mono",
+    footer: "mt-auto pt-3",
   },
 });
 

@@ -161,6 +161,7 @@ type CookieBanner implements Node {
     translations: [CookieBannerTranslation!]! @goField(forceResolver: true)
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
+    publishedVersion: CookieBannerVersion @goField(forceResolver: true)
 
     policyDocument: Document @goField(forceResolver: true)
 
@@ -587,6 +588,7 @@ type CookieBannerVersion implements Node {
     version: Int!
     state: String!
     categories: [CookieBannerVersionCategory!]! @goField(forceResolver: true)
+    gvlVendorCount: Int! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 }
