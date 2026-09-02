@@ -21,6 +21,7 @@
 package coredata_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -83,6 +84,32 @@ func TestConnectorSettings_RoundTrip(t *testing.T) {
 		require.NoError(t, c.SetSettings(&want))
 
 		got, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](c)
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("GCPConnectorSettings", func(t *testing.T) {
+		t.Parallel()
+
+		want := coredata.GCPConnectorSettings{
+			WorkloadIdentityProvider: "projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo",
+			ServiceAccountEmail:      "probo-audit@my-project.iam.gserviceaccount.com",
+		}
+		c := &coredata.Connector{}
+		require.NoError(t, c.SetSettings(&want))
+
+		raw := map[string]string{}
+		require.NoError(t, json.Unmarshal(c.RawSettings, &raw))
+		assert.Equal(
+			t,
+			map[string]string{
+				"workload_identity_provider": want.WorkloadIdentityProvider,
+				"service_account_email":      want.ServiceAccountEmail,
+			},
+			raw,
+		)
+
+		got, err := coredata.ConnectorSettings[coredata.GCPConnectorSettings](c)
 		require.NoError(t, err)
 		assert.Equal(t, want, got)
 	})

@@ -3191,7 +3191,8 @@
     "emptyConnected": "Aucune source d’accès n’est encore connectée.",
     "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",
     "searchLoadFailed": "Certaines sources n’ont pas pu être chargées, la recherche est donc incomplète. Réessayez pour toutes les rechercher.",
-    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche."
+    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche.",
+    "comingSoon": "Bientôt disponible"
   },
   "assetDetailsPage": {
     "validation": {

@@ -1865,7 +1865,8 @@
     "emptyConnected": "No access sources are connected yet.",
     "emptyConnectedSearch": "No connected sources match your search.",
     "searchLoadFailed": "Some sources could not be loaded, so the search is incomplete. Retry to search them all.",
-    "emptyAvailableSearch": "No available providers match your search."
+    "emptyAvailableSearch": "No available providers match your search.",
+    "comingSoon": "Coming soon"
   },
   "assetDetailsPage": {
     "validation": { "nameRequired": "Name is required", "amountRequired": "Amount is required", "dataTypesStoredRequired": "Data types stored is required", "ownerRequired": "Owner is required" },

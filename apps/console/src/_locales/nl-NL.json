@@ -3195,7 +3195,8 @@
     "emptyConnected": "Er zijn nog geen toegangsbronnen verbonden.",
     "emptyConnectedSearch": "Geen verbonden bronnen komen overeen met uw zoekopdracht.",
     "searchLoadFailed": "Sommige bronnen konden niet worden geladen, dus de zoekopdracht is onvolledig. Probeer opnieuw om alle bronnen te doorzoeken.",
-    "emptyAvailableSearch": "Geen beschikbare providers komen overeen met uw zoekopdracht."
+    "emptyAvailableSearch": "Geen beschikbare providers komen overeen met uw zoekopdracht.",
+    "comingSoon": "Binnenkort beschikbaar"
   },
   "assetDetailsPage": {
     "validation": {

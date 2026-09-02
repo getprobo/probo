@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ThirdPartyLogo } from "@probo/ui";
+import { Badge, ThirdPartyLogo } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -103,6 +103,7 @@ export function AccessReviewSourceProviderListItem({
     = supportsOAuth && provider.provider === "DATADOG";
   const supportsZendeskOAuth
     = supportsOAuth && provider.provider === "ZENDESK";
+  const isComingSoon = provider.provider === "GCP";
   const methods = connectMethods(provider);
 
   const connectWithOAuth = () => {
@@ -163,14 +164,22 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        <ActionSplitButton
-          actions={actions}
-          chooseAnotherMethodLabel={t(
-            "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
-          )}
-        />
+        {isComingSoon
+          ? (
+              <Badge variant="info">
+                {t("accessReviewConnectionsPage.comingSoon")}
+              </Badge>
+            )
+          : (
+              <ActionSplitButton
+                actions={actions}
+                chooseAnotherMethodLabel={t(
+                  "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
+                )}
+              />
+            )}
       </div>
-      {supportsAPIKey && (
+      {!isComingSoon && supportsAPIKey && (
         <APIKeyConnectorDialog
           providerKey={activeDialog === "apiKey" ? provider : null}
           organizationId={organizationId}
@@ -179,7 +188,7 @@ export function AccessReviewSourceProviderListItem({
           onSuccess={() => setActiveDialog(null)}
         />
       )}
-      {provider.clientCredentialsSupported && (
+      {!isComingSoon && provider.clientCredentialsSupported && (
         <ClientCredentialsConnectorDialog
           providerKey={activeDialog === "clientCredentials" ? provider : null}
           organizationId={organizationId}
@@ -188,14 +197,14 @@ export function AccessReviewSourceProviderListItem({
           onSuccess={() => setActiveDialog(null)}
         />
       )}
-      {supportsDatadogOAuth && (
+      {!isComingSoon && supportsDatadogOAuth && (
         <DatadogConnectDialog
           providerKey={activeDialog === "datadog" ? provider : null}
           organizationId={organizationId}
           onClose={() => setActiveDialog(null)}
         />
       )}
-      {supportsZendeskOAuth && (
+      {!isComingSoon && supportsZendeskOAuth && (
         <ZendeskConnectDialog
           providerKey={activeDialog === "zendesk" ? provider : null}
           organizationId={organizationId}

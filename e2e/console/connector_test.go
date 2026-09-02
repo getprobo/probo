@@ -125,9 +125,16 @@ func TestAccessReviewDrivers(t *testing.T) {
 	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
 	assert.True(t, providerNames["AWS"], "expected AWS provider to be present when identity federation is enabled")
+	assert.True(t, providerNames["GCP"], "expected GCP provider to be present when identity federation is enabled")
 	assert.Equal(t, []string{"OAUTH2"}, protocolsByProvider["GITHUB"])
 	assert.True(t, workloadIdentitySupported["AWS"])
 	assert.Equal(t, []string{"roleArn"}, workloadIdentitySettingKeys["AWS"])
+	assert.True(t, workloadIdentitySupported["GCP"])
+	assert.Equal(
+		t,
+		[]string{"workloadIdentityProvider", "serviceAccountEmail"},
+		workloadIdentitySettingKeys["GCP"],
+	)
 	assert.False(t, workloadIdentitySupported["BREX"])
 	assert.Empty(t, workloadIdentitySettingKeys["BREX"])
 
