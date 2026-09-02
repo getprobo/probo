@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -36,6 +36,36 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the cookie banner',
 		required: true,
 	},
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['cookieBanner'],
+				operation: ['listGVLVendors'],
+			},
+		},
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['cookieBanner'],
+				operation: ['listGVLVendors'],
+				returnAll: [false],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+		},
+		default: 50,
+		description: 'Max number of results to return',
+	},
 ];
 
 export async function execute(
@@ -43,13 +73,14 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex) as string;
+	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
+	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query ListCookieBannerGVLVendors($cookieBannerId: ID!) {
+		query ListCookieBannerGVLVendors($cookieBannerId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $cookieBannerId) {
 				... on CookieBanner {
-					gvlVendors(first: 50) {
-						totalCount
+					gvlVendors(first: $first, after: $after) {
 						edges {
 							node {
 								id
@@ -58,16 +89,31 @@ export async function execute(
 								policyUrl
 							}
 						}
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
 					}
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { cookieBannerId });
+	const gvlVendors = await proboApiRequestAllItems.call(
+		this,
+		query,
+		{ cookieBannerId },
+		(response) => {
+			const data = response?.data as IDataObject | undefined;
+			const node = data?.node as IDataObject | undefined;
+			return node?.gvlVendors as IDataObject | undefined;
+		},
+		returnAll,
+		limit,
+	);
 
 	return {
-		json: responseData,
+		json: { gvlVendors },
 		pairedItem: { item: itemIndex },
 	};
 }
