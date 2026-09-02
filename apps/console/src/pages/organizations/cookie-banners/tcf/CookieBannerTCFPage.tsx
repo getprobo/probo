@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -64,6 +65,8 @@ interface CookieBannerTCFPageProps {
 
 export function CookieBannerTCFPage({ queryRef }: CookieBannerTCFPageProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const title = t("tcfPage.title");
+  usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerTCFPageQuery>(cookieBannerTCFPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -85,8 +88,8 @@ export function CookieBannerTCFPage({ queryRef }: CookieBannerTCFPageProps) {
     <div className={tcfPage()}>
       <section className={root()}>
         <div className={intro()}>
-          <Heading level={2} size={4} weight="medium" highContrast>
-            {t("tcfPage.title")}
+          <Heading level={1} size={6} weight="medium" highContrast>
+            {title}
           </Heading>
           <Text size={2} color="faint">
             {t("tcfPage.description")}
