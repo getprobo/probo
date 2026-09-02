@@ -57,6 +57,6 @@
   },
   "devDependencies": {
     "@n8n/node-cli": "0.46.1",
-    "eslint": "10.9.1"
+    "eslint": "9.29.0"
   }
 }
