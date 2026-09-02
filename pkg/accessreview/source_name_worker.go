@@ -232,7 +232,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 	}
 
 	displayName := h.providerRegistry.ProviderDisplayName(dbConnector.Provider)
-	newName := displayName + " " + instanceName
+	newName := displayName + " / " + instanceName
 
 	h.logger.InfoCtx(
 		ctx,

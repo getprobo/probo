@@ -127,7 +127,7 @@ export function awsAccessReviewSourceName(
     return displayName;
   }
 
-  return `${displayName} ${accountID}`;
+  return `${displayName} / ${accountID}`;
 }
 
 export function mapClientCredentialsExtraSettingToField(
