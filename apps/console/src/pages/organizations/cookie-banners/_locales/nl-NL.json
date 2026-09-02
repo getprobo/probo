@@ -244,8 +244,11 @@
       "version": "v{{version}}",
       "catalogTotal_one": "{{count}} leverancier",
       "catalogTotal_other": "{{count}} leveranciers",
-      "unpublished_one": "{{count}} ongepubliceerd",
-      "unpublished_other": "{{count}} ongepubliceerd",
+      "unpublishedAdded_one": "{{count}} leverancier toe te voegen",
+      "unpublishedAdded_other": "{{count}} leveranciers toe te voegen",
+      "unpublishedRemoved_one": "{{count}} leverancier te verwijderen",
+      "unpublishedRemoved_other": "{{count}} leveranciers te verwijderen",
+      "unpublishedChanged": "{{added}} toe te voegen, {{removed}} te verwijderen",
       "unpublishedNever": "Nog niet gepubliceerd"
     },
     "emptyCatalog": "Er zijn nog geen GVL-leveranciers geïmporteerd. Voer gvl-import uit om de catalogus te vullen.",

@@ -541,6 +541,32 @@ func (r *cookieBannerVersionResolver) GvlVendorCount(ctx context.Context, obj *t
 	return len(snapshot.IABVendorIDs), nil
 }
 
+// GvlVendorIds is the resolver for the gvlVendorIds field.
+func (r *cookieBannerVersionResolver) GvlVendorIds(ctx context.Context, obj *types.CookieBannerVersion) ([]int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionGet)
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	snapshot, err := version.GetSnapshot()
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if snapshot.IABVendorIDs == nil {
+		return []int{}, nil
+	}
+
+	return snapshot.IABVendorIDs, nil
+}
+
 // CookieBanner is the resolver for the cookieBanner field.
 func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.CookieCategory) (*types.CookieBanner, error) {
 	if obj.CookieBanner == nil {
