@@ -4062,6 +4062,13 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		}
 	}
 
+	content, err := prosemirror.SanitizeDocumentJSON(version.Content)
+	if err != nil {
+		return fmt.Errorf("cannot sanitize generated document content: %w", err)
+	}
+
+	version.Content = content
+
 	if err := version.Insert(ctx, tx, scope); err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			switch previousVersion.Status {

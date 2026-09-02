@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 func TestFinding_PublishFindingList(t *testing.T) {
@@ -116,6 +117,10 @@ func TestFinding_PublishFindingList(t *testing.T) {
 			assert.Equal(t, 0, ver.Minor)
 			assert.Contains(t, ver.Content, "Purpose")
 			assert.Contains(t, ver.Content, "Test Finding")
+
+			// The stored content is sanitized before insert, so it must be a
+			// parseable ProseMirror document rooted at a "doc" node.
+			require.NoError(t, prosemirror.ValidateDocumentContentJSON(ver.Content))
 		},
 	)
 
