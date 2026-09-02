@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.274.1] - 2026-09-02
+
+### Fixed
+
+- Employee-portal document queue no longer dead-ends at the last document when items are skipped or the queue is entered mid-list; Next and Finish now wrap back to the documents left over, including ones signed while the next page was still loading
+- Start-to-sign and start-to-approve from the employee-portal home now open the first document of the queue instead of dropping into the middle of the list
+
 ## [0.274.0] - 2026-09-01
 
 ### Added
