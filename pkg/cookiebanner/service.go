@@ -215,6 +215,7 @@ type (
 		Layout                   Layout                                         `json:"layout"`
 		ShowBranding             bool                                           `json:"show_branding"`
 		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
+		TCFEnabled               bool                                           `json:"tcf_enabled"`
 		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts                    map[string]string                              `json:"texts"`
 	}
@@ -1868,6 +1869,7 @@ func buildBannerConfig(
 		ConsentExpiryDays:        snapshot.ConsentExpiryDays,
 		ShowBranding:             banner.ShowBranding,
 		ResourceReportingEnabled: banner.Capabilities.ResourceReporting,
+		TCFEnabled:               banner.Capabilities.TCF,
 		Categories:               categories,
 		Texts:                    texts,
 	}
