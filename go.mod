@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.3.13
 	github.com/aws/aws-sdk-go-v2/service/account v1.39.0
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.57.3
+	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.57.1
 	github.com/aws/aws-sdk-go-v2/service/iam v1.59.2
 	github.com/aws/aws-sdk-go-v2/service/identitystore v1.42.0
 	github.com/aws/aws-sdk-go-v2/service/organizations v1.58.0

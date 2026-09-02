@@ -83,6 +83,8 @@ github.com/aws/aws-sdk-go-v2/service/account v1.39.0 h1:qFq5cqivuaypTfmNUteSQXW7
 github.com/aws/aws-sdk-go-v2/service/account v1.39.0/go.mod h1:/6l8GO1Mf2ywirWh1SrlxHbqS7YzuZC6+K14nXl9K78=
 github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.57.3 h1:owjauLAE3bW8PZDN1xLo9B/JQ0sbUCNFoNhkXCSNri0=
 github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.57.3/go.mod h1:dn4LwmeCdEtY0vnHnFz48VtLf+9GFnnjRvS7su00tt0=
+github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.57.1 h1:5XlIVn2Z60K3GkDz/Ktjtiuy1Ck2xSdcO57ZVjKBojA=
+github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.57.1/go.mod h1:WbDasAgg1UxPx3TjF9wsbDKCXTcI4jsB5synkB8CCB8=
 github.com/aws/aws-sdk-go-v2/service/iam v1.59.2 h1:An/8OH+HhHxKar6bDa8v1ITiG7V3/lU+TwErOzzCm1M=
 github.com/aws/aws-sdk-go-v2/service/iam v1.59.2/go.mod h1:gQRbwtyMFDBnV/58n5bVWmZi50c7H2HN/+ikrW876So=
 github.com/aws/aws-sdk-go-v2/service/identitystore v1.42.0 h1:VbS7xQeUpRv3jc182zlu1SnY3HZtMcyX/eUo5KOF4Nk=

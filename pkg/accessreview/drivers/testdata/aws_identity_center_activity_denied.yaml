@@ -1,16 +1,7 @@
 ---
-# Hand-authored Identity Center cassette. Never recorded against a live
-# account. Interactions are matched by host and X-Amz-Target (see
-# awsAPIMatcher) and consumed in call order when the target repeats.
-# Call order: ListInstances, ListPermissionSets, DescribePermissionSet
-# (AdministratorAccess, then ReadOnlyAccess), ListManagedPolicies for
-# ReadOnlyAccess only (the admin name short-circuits), ListAccountAssignments
-# for each set, DescribeGroup, ListGroupMemberships, ListUsers,
-# LookupEvents, ListMfaDevicesForUser for Bob then Carol.
-# Bob is assigned AdministratorAccess directly. Carol reaches ReadOnlyAccess
-# through the Engineers group. Dave is in the store with no assignment.
-# Bob last logged in with TOTP and has a virtual MFA device. Carol's last
-# login is password-only and she has no registered device.
+# Same Identity Center listing as testdata/aws_identity_center.yaml, then
+# LookupEvents and ListMfaDevicesForUser are denied. Assigned users must
+# still be returned with MFA and last login unknown.
 version: 2
 interactions:
     - id: 0
@@ -270,12 +261,14 @@ interactions:
         proto_minor: 1
         content_length: -1
         uncompressed: true
-        body: '{"Events":[{"EventName":"UserAuthentication","EventTime":1786752000,"CloudTrailEvent":"{\"userIdentity\":{\"onBehalfOf\":{\"userId\":\"11111111-1111-1111-1111-111111111111\"}},\"additionalEventData\":{\"CredentialType\":\"PASSWORD,TOTP\"}}"},{"EventName":"UserAuthentication","EventTime":1782864000,"CloudTrailEvent":"{\"userIdentity\":{\"onBehalfOf\":{\"userId\":\"22222222-2222-2222-2222-222222222222\"}},\"additionalEventData\":{\"CredentialType\":\"PASSWORD\"}}"}]}'
+        body: '{"__type":"AccessDeniedException","Message":"not authorized to perform cloudtrail:LookupEvents"}'
         headers:
             Content-Type:
                 - application/x-amz-json-1.1
-        status: 200 OK
-        code: 200
+            X-Amzn-Errortype:
+                - AccessDeniedException
+        status: 400 Bad Request
+        code: 400
         duration: 1ms
     - id: 11
       request:
@@ -294,34 +287,12 @@ interactions:
         proto_minor: 1
         content_length: -1
         uncompressed: true
-        body: '{"MfaDevices":[{"DeviceId":"m-bob","DeviceType":"TOTP"}]}'
+        body: '{"__type":"AccessDeniedException","Message":"not authorized to perform sso-directory:ListMfaDevicesForUser"}'
         headers:
             Content-Type:
                 - application/x-amz-json-1.1
-        status: 200 OK
-        code: 200
-        duration: 1ms
-    - id: 12
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        host: identitystore.us-east-1.amazonaws.com
-        headers:
-            X-Amz-Target:
-                - AWSIdentityStore.ListMfaDevicesForUser
-        url: https://identitystore.us-east-1.amazonaws.com/
-        method: POST
-      response:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: -1
-        uncompressed: true
-        body: '{"MfaDevices":[]}'
-        headers:
-            Content-Type:
-                - application/x-amz-json-1.1
-        status: 200 OK
-        code: 200
+            X-Amzn-Errortype:
+                - AccessDeniedException
+        status: 400 Bad Request
+        code: 400
         duration: 1ms

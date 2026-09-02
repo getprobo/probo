@@ -113,6 +113,13 @@ func TestListIdentityCenterUsers_FindsInstanceOutsideSessionRegion(t *testing.T)
 	carol := byID["arn:aws:identitystore::123456789012:user/22222222-2222-2222-2222-222222222222"]
 	assert.Equal(t, "Carol Engineer", carol.FullName)
 	assert.ElementsMatch(t, []string{"Engineers", "ReadOnlyAccess"}, carol.Roles)
+	assert.Equal(t, coredata.MFAStatusUnknown, carol.MFAStatus)
+	require.NotNil(t, carol.LastLogin)
+	assert.True(t, carol.LastLogin.Equal(time.Unix(1782864000, 0).UTC()))
+
+	assert.Equal(t, coredata.MFAStatusEnabled, bob.MFAStatus)
+	require.NotNil(t, bob.LastLogin)
+	assert.True(t, bob.LastLogin.Equal(time.Unix(1786752000, 0).UTC()))
 }
 
 func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
@@ -142,26 +149,51 @@ func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 	assert.Equal(t, []string{"AdministratorAccess"}, bob.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, bob.AuthMethod)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, bob.AccountType)
-	assert.Equal(t, coredata.MFAStatusUnknown, bob.MFAStatus)
+	assert.Equal(t, coredata.MFAStatusEnabled, bob.MFAStatus)
 	require.NotNil(t, bob.IsAdmin)
 	assert.True(t, *bob.IsAdmin)
 	require.NotNil(t, bob.Active)
 	assert.True(t, *bob.Active)
 	require.NotNil(t, bob.CreatedAt)
 	assert.True(t, bob.CreatedAt.Equal(time.Unix(1767225600, 0).UTC()))
-	assert.Nil(t, bob.LastLogin)
+	require.NotNil(t, bob.LastLogin)
+	assert.True(t, bob.LastLogin.Equal(time.Unix(1786752000, 0).UTC()))
 
 	carol := byID["arn:aws:identitystore::123456789012:user/22222222-2222-2222-2222-222222222222"]
 	assert.Equal(t, "Carol Engineer", carol.FullName)
 	assert.Equal(t, "carol@example.com", carol.Email)
 	assert.ElementsMatch(t, []string{"Engineers", "ReadOnlyAccess"}, carol.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, carol.AuthMethod)
+	assert.Equal(t, coredata.MFAStatusUnknown, carol.MFAStatus)
 	assert.Nil(t, carol.IsAdmin)
 	require.NotNil(t, carol.Active)
 	assert.True(t, *carol.Active)
+	require.NotNil(t, carol.LastLogin)
+	assert.True(t, carol.LastLogin.Equal(time.Unix(1782864000, 0).UTC()))
 
 	_, unused := byID["arn:aws:identitystore::123456789012:user/33333333-3333-3333-3333-333333333333"]
 	assert.False(t, unused)
+}
+
+func TestListIdentityCenterUsers_DegradesWhenActivityDenied(t *testing.T) {
+	t.Parallel()
+
+	rec := newAWSRecorder(t, "testdata/aws_identity_center_activity_denied")
+	session := newAWSTestSession(t, rec)
+
+	users, err := listIdentityCenterUsers(context.Background(), session, log.NewLogger(log.WithName("test")))
+	require.NoError(t, err)
+	require.Len(t, users, 2)
+
+	records := make([]AccountRecord, 0, len(users))
+	for _, user := range users {
+		records = append(records, identityCenterUserRecord(user))
+	}
+
+	for _, record := range records {
+		assert.Equal(t, coredata.MFAStatusUnknown, record.MFAStatus)
+		assert.Nil(t, record.LastLogin)
+	}
 }
 
 func TestListIdentityCenterUsers_DegradesWhenLaterSSOAdminDenied(t *testing.T) {
@@ -235,6 +267,24 @@ func TestIdentityCenterUserRecord_MapsPrimaryEmailAndAdminName(t *testing.T) {
 	assert.Equal(t, &createdAt, record.CreatedAt)
 	assert.Nil(t, record.LastLogin)
 	assert.Equal(t, "arn:aws:identitystore::123456789012:user/bob", record.ExternalID)
+}
+
+func TestIdentityCenterUserRecord_MapsActivitySignals(t *testing.T) {
+	t.Parallel()
+
+	lastLogin := time.Date(2026, 8, 15, 0, 0, 0, 0, time.UTC)
+
+	record := identityCenterUserRecord(
+		identityCenterUser{
+			ARN:        "arn:aws:identitystore::123456789012:user/bob",
+			UserName:   "bob",
+			MFAEnabled: new(true),
+			LastLogin:  &lastLogin,
+		},
+	)
+
+	assert.Equal(t, coredata.MFAStatusEnabled, record.MFAStatus)
+	assert.Equal(t, &lastLogin, record.LastLogin)
 }
 
 func TestIdentityCenterUserRecord_FallsBackToUserNameEmailAndDisplayName(t *testing.T) {

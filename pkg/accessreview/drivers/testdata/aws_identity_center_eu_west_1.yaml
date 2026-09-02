@@ -3,7 +3,8 @@
 # account. Interactions are matched by host and X-Amz-Target (see
 # awsAPIMatcher) and consumed in call order when the target repeats.
 # Call order: ListInstances empty in us-east-1, then the usual walk in
-# eu-west-1. Same principals as testdata/aws_identity_center.yaml.
+# eu-west-1, then LookupEvents and ListMfaDevicesForUser in eu-west-1.
+# Same principals and activity as testdata/aws_identity_center.yaml.
 version: 2
 interactions:
     - id: 0
@@ -264,6 +265,78 @@ interactions:
         content_length: -1
         uncompressed: true
         body: '{"Users":[{"UserId":"11111111-1111-1111-1111-111111111111","IdentityStoreId":"d-1234567890","UserName":"bob","DisplayName":"Bob Admin","Title":"Security Lead","UserStatus":"ENABLED","CreatedAt":1767225600,"Emails":[{"Primary":true,"Value":"bob@example.com"}]},{"UserId":"22222222-2222-2222-2222-222222222222","IdentityStoreId":"d-1234567890","UserName":"carol@example.com","DisplayName":"Carol Engineer","UserStatus":"ENABLED"},{"UserId":"33333333-3333-3333-3333-333333333333","IdentityStoreId":"d-1234567890","UserName":"dave","DisplayName":"Dave Unused","Emails":[{"Primary":true,"Value":"dave@example.com"}]}]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: cloudtrail.eu-west-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - CloudTrail_20131101.LookupEvents
+        url: https://cloudtrail.eu-west-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"Events":[{"EventName":"UserAuthentication","EventTime":1786752000,"CloudTrailEvent":"{\"userIdentity\":{\"onBehalfOf\":{\"userId\":\"11111111-1111-1111-1111-111111111111\"}},\"additionalEventData\":{\"CredentialType\":\"PASSWORD,TOTP\"}}"},{"EventName":"UserAuthentication","EventTime":1782864000,"CloudTrailEvent":"{\"userIdentity\":{\"onBehalfOf\":{\"userId\":\"22222222-2222-2222-2222-222222222222\"}},\"additionalEventData\":{\"CredentialType\":\"PASSWORD\"}}"}]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: identitystore.eu-west-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - AWSIdentityStore.ListMfaDevicesForUser
+        url: https://identitystore.eu-west-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"MfaDevices":[{"DeviceId":"m-bob","DeviceType":"TOTP"}]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: identitystore.eu-west-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - AWSIdentityStore.ListMfaDevicesForUser
+        url: https://identitystore.eu-west-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"MfaDevices":[]}'
         headers:
             Content-Type:
                 - application/x-amz-json-1.1
