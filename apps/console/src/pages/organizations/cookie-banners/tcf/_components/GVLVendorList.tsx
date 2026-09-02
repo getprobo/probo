@@ -217,11 +217,13 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
                           const commit = selectedIDs.has(edge.node.iabVendorId)
                             ? removeVendor
                             : addVendor;
-                          void commit({ variables: { input } }).then(() => {
-                            if (membership !== "all") {
-                              refetchCatalogFromStart("network-only");
-                            }
-                          });
+                          void commit({ variables: { input } })
+                            .then(() => {
+                              if (membership !== "all") {
+                                refetchCatalogFromStart("network-only");
+                              }
+                            })
+                            .catch(() => undefined);
                         }
                       : undefined}
                   />
