@@ -41,6 +41,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 import {
   businessFunctionListConnectionFilters,
   BusinessFunctionsConnectionKey,
+  formatContinuityMinutes,
   getClassificationLabel,
   getClassificationVariant,
 } from "../_lib/businessFunctionHelpers";
@@ -163,9 +164,9 @@ export function BusinessFunctionListItem({
           {getClassificationLabel(businessFunction.classification, t, "businessFunctionsPage")}
         </Badge>
       </Td>
-      <Td>{businessFunction.mtdMinutes}</Td>
-      <Td>{businessFunction.rtoMinutes}</Td>
-      <Td>{businessFunction.rpoMinutes}</Td>
+      <Td>{formatContinuityMinutes(businessFunction.mtdMinutes, t)}</Td>
+      <Td>{formatContinuityMinutes(businessFunction.rtoMinutes, t)}</Td>
+      <Td>{formatContinuityMinutes(businessFunction.rpoMinutes, t)}</Td>
       <Td>{businessFunction.owner?.fullName || "-"}</Td>
       <Td>
         <EntityBadgeList

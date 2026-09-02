@@ -83,6 +83,25 @@ export function durationMinutesHelperText(
   return t(`${prefix}.fields.durationHelper`);
 }
 
+type DurationTranslator = (key: string, options?: { count?: number }) => string;
+
+export function formatContinuityMinutes(
+  minutes: number,
+  t: DurationTranslator,
+): string {
+  const totalMinutes = Number.isFinite(minutes) ? Math.max(0, Math.trunc(minutes)) : 0;
+  const hours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+
+  if (hours > 0 && remainingMinutes > 0) {
+    return `${t("duration.hour", { count: hours })}, ${t("duration.min", { count: remainingMinutes })}`;
+  }
+  if (hours > 0) {
+    return t("duration.hour", { count: hours });
+  }
+  return t("duration.min", { count: remainingMinutes });
+}
+
 export const BusinessFunctionsConnectionKey = "BusinessFunctionsPage_businessFunctions";
 
 export const emptyBusinessFunctionFilter = {
