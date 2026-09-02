@@ -76,6 +76,9 @@ type (
 		session *Session
 		base    http.RoundTripper
 	}
+
+	// SessionOption configures a session built by NewSessionFromToken.
+	SessionOption func(*Session)
 )
 
 var (
@@ -125,16 +128,27 @@ func NewSession(
 	return session, nil
 }
 
+// WithHTTPClient sets the transport the authorized client wraps. Tests pass a
+// VCR client. Omit it to use the default SSRF-protected pool.
+func WithHTTPClient(httpClient *http.Client) SessionOption {
+	return func(s *Session) {
+		s.httpClient = httpClient
+	}
+}
+
 // NewSessionFromToken builds a session from an already-issued access token.
 // Production uses NewSession, which obtains credentials through WIF.
-func NewSessionFromToken(projectNumber, accessToken string) *Session {
-	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+func NewSessionFromToken(projectNumber, accessToken string, opts ...SessionOption) *Session {
 	session := &Session{
-		httpClient: httpClient,
+		httpClient: httpclient.DefaultPooledClient(httpclient.WithSSRFProtection()),
 		token:      &oauth2.Token{AccessToken: accessToken},
 		accountID:  projectNumber,
 	}
-	session.authorizedClient = authorizeSession(httpClient, session)
+	for _, opt := range opts {
+		opt(session)
+	}
+
+	session.authorizedClient = authorizeSession(session.httpClient, session)
 
 	return session
 }
