@@ -95,6 +95,7 @@ func TestAWSRegistration(t *testing.T) {
 	require.True(t, ok)
 
 	assert.Equal(t, "Amazon Web Services", reg.DisplayName)
+	assert.Equal(t, "https://www.probo.com/docs/product/access-review/aws", reg.DocumentationURL)
 	assert.True(t, reg.SupportsWorkloadIdentity())
 	assert.False(t, reg.SupportsAPIKey())
 	assert.False(t, reg.IsManagedAPIKey())

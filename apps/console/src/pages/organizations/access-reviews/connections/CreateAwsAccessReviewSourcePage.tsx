@@ -45,6 +45,7 @@ import {
   ActionSplitButton,
   type ActionSplitButtonAction,
 } from "../_components/ActionSplitButton";
+import { ConnectorDocumentationLink } from "../dialogs/_components/ConnectorDocumentationLink";
 import {
   AWS_IAM_ROLE_ARN_PATTERN,
   awsAccessReviewSourceName,
@@ -64,6 +65,7 @@ export const createAwsAccessReviewSourcePageQuery = graphql`
     accessReviewDrivers {
       provider
       displayName
+      documentationUrl
     }
     organization: node(id: $organizationId) {
       __typename
@@ -376,15 +378,21 @@ export function CreateAwsAccessReviewSourcePage({
             </Field>
           ))}
 
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="secondary" asChild>
-              <Link to={`/organizations/${organizationId}/access-reviews/connections`}>
-                {t("createAwsAccessReviewSourcePage.actions.back")}
-              </Link>
-            </Button>
-            <Button disabled={!roleArnValid || isCreating} type="submit">
-              {t("createAwsAccessReviewSourcePage.actions.connect")}
-            </Button>
+          <div className="flex items-center justify-between gap-2">
+            <ConnectorDocumentationLink
+              url={awsDriver.documentationUrl}
+              variant="button"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="secondary" asChild>
+                <Link to={`/organizations/${organizationId}/access-reviews/connections`}>
+                  {t("createAwsAccessReviewSourcePage.actions.back")}
+                </Link>
+              </Button>
+              <Button disabled={!roleArnValid || isCreating} type="submit">
+                {t("createAwsAccessReviewSourcePage.actions.connect")}
+              </Button>
+            </div>
           </div>
         </form>
       </Card>

@@ -156,16 +156,19 @@ func TestAccessReviewDrivers(t *testing.T) {
 		assert.Equal(t, "https://www.probo.com/docs/product/access-review/calcom", *url)
 	}
 
-	// AWS carries the null case because it is the one provider that cannot
-	// acquire a doc page by being written. Any provider picked here purely for
-	// being undocumented today gets documented eventually and breaks this
-	// assertion, as BREX did.
+	if url := docURLByProvider["AWS"]; assert.NotNil(t, url) {
+		assert.Equal(t, "https://www.probo.com/docs/product/access-review/aws", *url)
+	}
+
+	// Sentry carries the null case: it is an API-key provider, so the catalog
+	// never skips it, and it still has no page. A provider picked here purely
+	// for being undocumented today gets documented eventually and breaks this
+	// assertion, as BREX and AWS did.
 	//
 	// Contains first: a bare Nil on a missing key passes whether or not the
-	// field is really null, which would let the null path rot unnoticed. E2E
-	// enables identity federation, so AWS is in the catalog.
-	require.Contains(t, docURLByProvider, "AWS")
-	assert.Nil(t, docURLByProvider["AWS"], "AWS has no doc page, documentationUrl must be null")
+	// field is really null, which would let the null path rot unnoticed.
+	require.Contains(t, docURLByProvider, "SENTRY")
+	assert.Nil(t, docURLByProvider["SENTRY"], "SENTRY has no doc page, documentationUrl must be null")
 
 	t.Run("viewer can list access review drivers", func(t *testing.T) {
 		t.Parallel()

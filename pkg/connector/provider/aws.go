@@ -42,8 +42,9 @@ import (
 // check, so there is no grant readback beside Probe.
 func awsRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderAWS,
-		DisplayName: "Amazon Web Services",
+		Provider:         coredata.ConnectorProviderAWS,
+		DisplayName:      "Amazon Web Services",
+		DocumentationURL: accessReviewDocsURL("aws"),
 		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
