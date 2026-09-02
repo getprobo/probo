@@ -244,8 +244,11 @@
       "version": "v{{version}}",
       "catalogTotal_one": "{{count}} vendor",
       "catalogTotal_other": "{{count}} vendors",
-      "unpublished_one": "{{count}} unpublished",
-      "unpublished_other": "{{count}} unpublished",
+      "unpublishedAdded_one": "{{count}} vendor to add",
+      "unpublishedAdded_other": "{{count}} vendors to add",
+      "unpublishedRemoved_one": "{{count}} vendor to remove",
+      "unpublishedRemoved_other": "{{count}} vendors to remove",
+      "unpublishedChanged": "{{added}} to add, {{removed}} to remove",
       "unpublishedNever": "Not published yet"
     },
     "emptyCatalog": "No GVL vendors are imported yet. Run gvl-import to fill the catalog.",

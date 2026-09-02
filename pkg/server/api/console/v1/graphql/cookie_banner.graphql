@@ -589,6 +589,7 @@ type CookieBannerVersion implements Node {
     state: String!
     categories: [CookieBannerVersionCategory!]! @goField(forceResolver: true)
     gvlVendorCount: Int! @goField(forceResolver: true)
+    gvlVendorIds: [Int!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 }
