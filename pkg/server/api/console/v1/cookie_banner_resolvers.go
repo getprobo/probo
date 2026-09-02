@@ -157,6 +157,7 @@ func (r *cookieBannerResolver) PublishedVersion(ctx context.Context, obj *types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load published cookie banner version", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

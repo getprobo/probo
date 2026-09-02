@@ -41,6 +41,7 @@ func (f *CommonGVLVendorFilter) WithMembership(
 ) *CommonGVLVendorFilter {
 	f.cookieBannerID = cookieBannerID
 	f.membership = membership
+
 	return f
 }
 

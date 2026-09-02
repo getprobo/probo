@@ -96,10 +96,12 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 			if flagQuery != "" {
 				filter["query"] = flagQuery
 			}
+
 			if flagMembership != "" {
 				if flagCookieBannerID == "" {
 					return fmt.Errorf("--cookie-banner-id is required with --membership")
 				}
+
 				filter["cookieBannerId"] = flagCookieBannerID
 				filter["membership"] = flagMembership
 			}

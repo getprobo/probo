@@ -5685,10 +5685,12 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 	}
 
 	out := types.NewCookieBanner(banner)
+
 	published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
 	if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {
 		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
 	}
+
 	if published != nil {
 		out.PublishedVersion = types.NewCookieBannerVersion(published)
 	}
@@ -9565,6 +9567,7 @@ func (r *Resolver) ListCommonGVLVendorsTool(ctx context.Context, req *mcp.CallTo
 	}
 
 	cdFilter := coredata.NewCommonGVLVendorFilter(query)
+
 	if input.Filter != nil && input.Filter.Membership != nil {
 		if input.Filter.CookieBannerID == nil {
 			return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("cookie_banner_id is required when filtering by membership")
