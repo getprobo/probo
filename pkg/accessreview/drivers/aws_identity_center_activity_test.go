@@ -37,12 +37,12 @@ func TestParseIdentityCenterLoginEvent(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			userID, usedMFA, ok := parseIdentityCenterLoginEvent(
+			userID, credentialType, ok := parseIdentityCenterLoginEvent(
 				`{"userIdentity":{"onBehalfOf":{"userId":"11111111-1111-1111-1111-111111111111"}},"additionalEventData":{"CredentialType":"PASSWORD,TOTP"}}`,
 			)
 			require.True(t, ok)
 			assert.Equal(t, "11111111-1111-1111-1111-111111111111", userID)
-			assert.True(t, usedMFA)
+			assert.Equal(t, "PASSWORD,TOTP", credentialType)
 		},
 	)
 
@@ -51,12 +51,12 @@ func TestParseIdentityCenterLoginEvent(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			userID, usedMFA, ok := parseIdentityCenterLoginEvent(
+			userID, credentialType, ok := parseIdentityCenterLoginEvent(
 				`{"userIdentity":{"onBehalfOf":{"userId":"carol"}},"additionalEventData":{"CredentialType":"PASSWORD"}}`,
 			)
 			require.True(t, ok)
 			assert.Equal(t, "carol", userID)
-			assert.False(t, usedMFA)
+			assert.Equal(t, "PASSWORD", credentialType)
 		},
 	)
 
@@ -65,12 +65,12 @@ func TestParseIdentityCenterLoginEvent(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			userID, usedMFA, ok := parseIdentityCenterLoginEvent(
+			userID, credentialType, ok := parseIdentityCenterLoginEvent(
 				`{"userIdentity":{"onBehalfOf":{"userId":"bob"},"additionalEventData":{"CredentialType":"WEBAUTHN"}}}`,
 			)
 			require.True(t, ok)
 			assert.Equal(t, "bob", userID)
-			assert.True(t, usedMFA)
+			assert.Equal(t, "WEBAUTHN", credentialType)
 		},
 	)
 
@@ -119,8 +119,8 @@ func TestApplyIdentityCenterActivity(t *testing.T) {
 	applyIdentityCenterActivity(
 		users,
 		map[string]identityCenterLogin{
-			"bob":   {at: lastLogin, usedMFA: true},
-			"carol": {at: lastLogin, usedMFA: false},
+			"bob":   {at: lastLogin, credentialType: "PASSWORD,TOTP"},
+			"carol": {at: lastLogin, credentialType: "PASSWORD"},
 		},
 		map[string]bool{"dave": true},
 	)
@@ -129,14 +129,17 @@ func TestApplyIdentityCenterActivity(t *testing.T) {
 	assert.True(t, users[0].LastLogin.Equal(lastLogin))
 	require.NotNil(t, users[0].MFAEnabled)
 	assert.True(t, *users[0].MFAEnabled)
+	assert.Equal(t, "PASSWORD,TOTP", users[0].CredentialType)
 
 	require.NotNil(t, users[1].LastLogin)
 	assert.True(t, users[1].LastLogin.Equal(lastLogin))
 	assert.Nil(t, users[1].MFAEnabled)
+	assert.Equal(t, "PASSWORD", users[1].CredentialType)
 
 	assert.Nil(t, users[2].LastLogin)
 	require.NotNil(t, users[2].MFAEnabled)
 	assert.True(t, *users[2].MFAEnabled)
+	assert.Empty(t, users[2].CredentialType)
 }
 
 func TestApplyIdentityCenterActivity_DeviceOverridesPasswordLogin(t *testing.T) {
@@ -147,7 +150,7 @@ func TestApplyIdentityCenterActivity_DeviceOverridesPasswordLogin(t *testing.T) 
 
 	applyIdentityCenterActivity(
 		users,
-		map[string]identityCenterLogin{"bob": {at: lastLogin, usedMFA: false}},
+		map[string]identityCenterLogin{"bob": {at: lastLogin, credentialType: "PASSWORD"}},
 		map[string]bool{"bob": true},
 	)
 

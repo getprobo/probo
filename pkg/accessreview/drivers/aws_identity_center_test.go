@@ -113,10 +113,12 @@ func TestListIdentityCenterUsers_FindsInstanceOutsideSessionRegion(t *testing.T)
 	carol := byID["arn:aws:identitystore::123456789012:user/22222222-2222-2222-2222-222222222222"]
 	assert.Equal(t, "Carol Engineer", carol.FullName)
 	assert.ElementsMatch(t, []string{"Engineers", "ReadOnlyAccess"}, carol.Roles)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, carol.AuthMethod)
 	assert.Equal(t, coredata.MFAStatusUnknown, carol.MFAStatus)
 	require.NotNil(t, carol.LastLogin)
 	assert.True(t, carol.LastLogin.Equal(time.Unix(1782864000, 0).UTC()))
 
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, bob.AuthMethod)
 	assert.Equal(t, coredata.MFAStatusEnabled, bob.MFAStatus)
 	require.NotNil(t, bob.LastLogin)
 	assert.True(t, bob.LastLogin.Equal(time.Unix(1786752000, 0).UTC()))
@@ -124,6 +126,7 @@ func TestListIdentityCenterUsers_FindsInstanceOutsideSessionRegion(t *testing.T)
 	dave := byID["arn:aws:identitystore::123456789012:user/33333333-3333-3333-3333-333333333333"]
 	assert.Equal(t, "Dave Unused", dave.FullName)
 	assert.Empty(t, dave.Roles)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, dave.AuthMethod)
 	assert.Nil(t, dave.IsAdmin)
 }
 
@@ -152,7 +155,7 @@ func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 	assert.Equal(t, "bob@example.com", bob.Email)
 	assert.Equal(t, "Security Lead", bob.JobTitle)
 	assert.Equal(t, []string{"AdministratorAccess"}, bob.Roles)
-	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, bob.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, bob.AuthMethod)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, bob.AccountType)
 	assert.Equal(t, coredata.MFAStatusEnabled, bob.MFAStatus)
 	require.NotNil(t, bob.IsAdmin)
@@ -168,7 +171,7 @@ func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 	assert.Equal(t, "Carol Engineer", carol.FullName)
 	assert.Equal(t, "carol@example.com", carol.Email)
 	assert.ElementsMatch(t, []string{"Engineers", "ReadOnlyAccess"}, carol.Roles)
-	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, carol.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, carol.AuthMethod)
 	assert.Equal(t, coredata.MFAStatusUnknown, carol.MFAStatus)
 	assert.Nil(t, carol.IsAdmin)
 	require.NotNil(t, carol.Active)
@@ -180,7 +183,7 @@ func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
 	assert.Equal(t, "Dave Unused", dave.FullName)
 	assert.Equal(t, "dave@example.com", dave.Email)
 	assert.Empty(t, dave.Roles)
-	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, dave.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, dave.AuthMethod)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, dave.AccountType)
 	assert.Equal(t, coredata.MFAStatusUnknown, dave.MFAStatus)
 	assert.Nil(t, dave.IsAdmin)
@@ -204,6 +207,7 @@ func TestListIdentityCenterUsers_DegradesWhenActivityDenied(t *testing.T) {
 	}
 
 	for _, record := range records {
+		assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, record.AuthMethod)
 		assert.Equal(t, coredata.MFAStatusUnknown, record.MFAStatus)
 		assert.Nil(t, record.LastLogin)
 	}
@@ -247,6 +251,39 @@ func TestListIdentityCenterUsers_FailsOnCancel(t *testing.T) {
 	assert.Empty(t, users)
 }
 
+func TestIdentityCenterAuthMethod(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		credentialType string
+		want           coredata.AccessReviewEntryAuthMethod
+	}{
+		{name: "empty is unknown", credentialType: "", want: coredata.AccessReviewEntryAuthMethodUnknown},
+		{name: "unrecognized is unknown", credentialType: "SOMETHING_ELSE", want: coredata.AccessReviewEntryAuthMethodUnknown},
+		{name: "external idp is sso", credentialType: "EXTERNAL_IDP", want: coredata.AccessReviewEntryAuthMethodSSO},
+		{name: "password is password", credentialType: "PASSWORD", want: coredata.AccessReviewEntryAuthMethodPassword},
+		{name: "password and totp is password", credentialType: "PASSWORD,TOTP", want: coredata.AccessReviewEntryAuthMethodPassword},
+		{name: "email otp is password", credentialType: "EMAIL_OTP", want: coredata.AccessReviewEntryAuthMethodPassword},
+		{name: "webauthn is password", credentialType: "WEBAUTHN", want: coredata.AccessReviewEntryAuthMethodPassword},
+		{name: "totp is password", credentialType: "TOTP", want: coredata.AccessReviewEntryAuthMethodPassword},
+		{name: "resync totp is password", credentialType: "RESYNC_TOTP", want: coredata.AccessReviewEntryAuthMethodPassword},
+		{name: "external idp wins over local", credentialType: "PASSWORD,EXTERNAL_IDP", want: coredata.AccessReviewEntryAuthMethodSSO},
+		{name: "mixed case external idp", credentialType: "external_idp", want: coredata.AccessReviewEntryAuthMethodSSO},
+	}
+
+	for _, tc := range tests {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tc.want, identityCenterAuthMethod(tc.credentialType))
+			},
+		)
+	}
+}
+
 func TestIdentityCenterUserRecord_MapsPrimaryEmailAndAdminName(t *testing.T) {
 	t.Parallel()
 
@@ -270,7 +307,7 @@ func TestIdentityCenterUserRecord_MapsPrimaryEmailAndAdminName(t *testing.T) {
 	assert.Equal(t, "Bob Admin", record.FullName)
 	assert.Equal(t, "Security Lead", record.JobTitle)
 	assert.Equal(t, []string{"AdministratorAccess"}, record.Roles)
-	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, record.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, record.AuthMethod)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, record.AccountType)
 	assert.Equal(t, coredata.MFAStatusUnknown, record.MFAStatus)
 	require.NotNil(t, record.IsAdmin)
@@ -289,15 +326,29 @@ func TestIdentityCenterUserRecord_MapsActivitySignals(t *testing.T) {
 
 	record := identityCenterUserRecord(
 		identityCenterUser{
-			ARN:        "arn:aws:identitystore::123456789012:user/bob",
-			UserName:   "bob",
-			MFAEnabled: new(true),
-			LastLogin:  &lastLogin,
+			ARN:            "arn:aws:identitystore::123456789012:user/bob",
+			UserName:       "bob",
+			MFAEnabled:     new(true),
+			LastLogin:      &lastLogin,
+			CredentialType: "PASSWORD,TOTP",
 		},
 	)
 
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, record.AuthMethod)
 	assert.Equal(t, coredata.MFAStatusEnabled, record.MFAStatus)
 	assert.Equal(t, &lastLogin, record.LastLogin)
+
+	federated := identityCenterUserRecord(
+		identityCenterUser{
+			ARN:            "arn:aws:identitystore::123456789012:user/carol",
+			UserName:       "carol",
+			LastLogin:      &lastLogin,
+			CredentialType: "EXTERNAL_IDP",
+		},
+	)
+
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, federated.AuthMethod)
+	assert.Equal(t, coredata.MFAStatusUnknown, federated.MFAStatus)
 }
 
 func TestIdentityCenterUserRecord_FallsBackToUserNameEmailAndDisplayName(t *testing.T) {
@@ -333,6 +384,7 @@ func TestIdentityCenterUserRecord_LeavesUnknownSignalsNil(t *testing.T) {
 
 	assert.Empty(t, record.Email)
 	assert.Equal(t, "mystery", record.FullName)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, record.AuthMethod)
 	assert.Equal(t, coredata.MFAStatusUnknown, record.MFAStatus)
 	assert.Nil(t, record.Active)
 	assert.Nil(t, record.IsAdmin)

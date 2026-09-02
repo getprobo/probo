@@ -50,8 +50,8 @@ const (
 
 type (
 	identityCenterLogin struct {
-		at      time.Time
-		usedMFA bool
+		at             time.Time
+		credentialType string
 	}
 
 	identityCenterCloudTrailEvent struct {
@@ -189,7 +189,7 @@ func lookupIdentityCenterLogins(
 		}
 
 		for _, event := range page.Events {
-			userID, usedMFA, ok := parseIdentityCenterLoginEvent(aws.ToString(event.CloudTrailEvent))
+			userID, credentialType, ok := parseIdentityCenterLoginEvent(aws.ToString(event.CloudTrailEvent))
 			if !ok {
 				continue
 			}
@@ -206,7 +206,10 @@ func lookupIdentityCenterLogins(
 				continue
 			}
 
-			found[userID] = identityCenterLogin{at: event.EventTime.UTC(), usedMFA: usedMFA}
+			found[userID] = identityCenterLogin{
+				at:             event.EventTime.UTC(),
+				credentialType: credentialType,
+			}
 			if len(found) == len(wanted) {
 				return found, nil
 			}
@@ -219,19 +222,19 @@ func lookupIdentityCenterLogins(
 	)
 }
 
-func parseIdentityCenterLoginEvent(raw string) (string, bool, bool) {
+func parseIdentityCenterLoginEvent(raw string) (string, string, bool) {
 	if raw == "" {
-		return "", false, false
+		return "", "", false
 	}
 
 	var event identityCenterCloudTrailEvent
 	if err := json.Unmarshal([]byte(raw), &event); err != nil {
-		return "", false, false
+		return "", "", false
 	}
 
 	userID := event.UserIdentity.OnBehalfOf.UserID
 	if userID == "" {
-		return "", false, false
+		return "", "", false
 	}
 
 	credentialType := event.AdditionalEventData.CredentialType
@@ -239,7 +242,7 @@ func parseIdentityCenterLoginEvent(raw string) (string, bool, bool) {
 		credentialType = event.UserIdentity.AdditionalEventData.CredentialType
 	}
 
-	return userID, identityCenterCredentialUsedMFA(credentialType), true
+	return userID, credentialType, true
 }
 
 func identityCenterCredentialUsedMFA(credentialType string) bool {
@@ -287,7 +290,9 @@ func applyIdentityCenterActivity(
 	for i := range users {
 		if login, ok := logins[users[i].ID]; ok {
 			users[i].LastLogin = new(login.at)
-			if login.usedMFA {
+
+			users[i].CredentialType = login.credentialType
+			if identityCenterCredentialUsedMFA(login.credentialType) {
 				users[i].MFAEnabled = new(true)
 			}
 		}

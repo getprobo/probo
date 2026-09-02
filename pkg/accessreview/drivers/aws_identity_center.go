@@ -64,10 +64,12 @@ type (
 		Status      istypes.UserStatus
 		CreatedAt   *time.Time
 
-		// MFAEnabled and LastLogin are filled after listing, from registered
-		// MFA devices and CloudTrail UserAuthentication. Nil is no signal.
-		MFAEnabled *bool
-		LastLogin  *time.Time
+		// MFAEnabled, LastLogin, and CredentialType are filled after listing,
+		// from registered MFA devices and CloudTrail UserAuthentication.
+		// Nil / empty is no signal.
+		MFAEnabled     *bool
+		LastLogin      *time.Time
+		CredentialType string
 	}
 
 	identityCenterInstance struct {
@@ -810,10 +812,31 @@ func identityCenterActive(status istypes.UserStatus) *bool {
 	}
 }
 
+// identityCenterAuthMethod maps CloudTrail CredentialType to the portal
+// first factor. No type is UNKNOWN: a 90-day gap is unobserved, not SSO.
+func identityCenterAuthMethod(credentialType string) coredata.AccessReviewEntryAuthMethod {
+	local := false
+
+	for part := range strings.SplitSeq(credentialType, ",") {
+		switch strings.ToUpper(strings.TrimSpace(part)) {
+		case "EXTERNAL_IDP":
+			return coredata.AccessReviewEntryAuthMethodSSO
+		case "PASSWORD", "EMAIL_OTP", "WEBAUTHN", "TOTP", "RESYNC_TOTP":
+			local = true
+		}
+	}
+
+	if local {
+		return coredata.AccessReviewEntryAuthMethodPassword
+	}
+
+	return coredata.AccessReviewEntryAuthMethodUnknown
+}
+
 // identityCenterUserRecord maps one Identity Center user. MFA and last
 // login come from registered devices and CloudTrail UserAuthentication
-// when those calls succeed. Active follows UserStatus when the store
-// reports it.
+// when those calls succeed. Auth follows the observed CredentialType.
+// Active follows UserStatus when the store reports it.
 func identityCenterUserRecord(user identityCenterUser) AccountRecord {
 	return AccountRecord{
 		Email:       user.Email,
@@ -823,7 +846,7 @@ func identityCenterUserRecord(user identityCenterUser) AccountRecord {
 		IsAdmin:     identityCenterIsAdmin(user),
 		Active:      identityCenterActive(user.Status),
 		MFAStatus:   awsMFAStatus(user.MFAEnabled),
-		AuthMethod:  coredata.AccessReviewEntryAuthMethodSSO,
+		AuthMethod:  identityCenterAuthMethod(user.CredentialType),
 		AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		LastLogin:   user.LastLogin,
 		CreatedAt:   user.CreatedAt,
