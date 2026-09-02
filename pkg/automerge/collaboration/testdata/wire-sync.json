@@ -1,0 +1,11 @@
+{
+  "description": "Framed sync message carrying opaque Automerge sync bytes",
+  "message": {
+    "type": "sync",
+    "senderId": "peer-a",
+    "targetId": "server",
+    "documentId": "4NMNnkMhL2wRfvHYuG1uxN",
+    "data": "AAECAw=="
+  },
+  "frameCborBase64": "uQAFZHR5cGVkc3luY2hzZW5kZXJJZGZwZWVyLWFodGFyZ2V0SWRmc2VydmVyamRvY3VtZW50SWR2NE5NTm5rTWhMMndSZnZIWXVHMXV4TmRkYXRhRAABAgM="
+}

@@ -1,0 +1,231 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+// The tests in this file reproduce upstream Rust diff tests from automerge 0.11
+// (rust/automerge/tests/test.rs). Each builds the same document on the native
+// and Rust/WASM reference engines and asserts their diff patch streams agree.
+
+package automerge_test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
+)
+
+// TestRustDiff_LargePatchesInLists reproduces large_patches_in_lists_are_correct:
+// a string list element counts as a single index, so a long run of following
+// objects is indexed correctly in the diff patch stream.
+func TestRustDiff_LargePatchesInLists(t *testing.T) {
+	t.Parallel()
+
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		before, err := document.Heads()
+		require.NoError(t, err)
+
+		list, err := document.Root().CreateObject("list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		require.NoError(t, list.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "123456"}))
+
+		for i := 1; i < 501; i++ {
+			inner, err := list.InsertObject(uint64(i), automerge.ObjectTypeMap)
+			require.NoError(t, err)
+			require.NoError(t, inner.PutScalar("a", automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)}))
+		}
+
+		_, err = document.Commit("large", commitTime)
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(before, after)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+
+	last := result["native"][len(result["native"])-1]
+	assert.Equal(t, automerge.PatchPutMap, last.Action)
+	assert.Equal(t, "a", last.Key)
+	require.NotNil(t, last.Value.Scalar)
+	assert.Equal(t, int64(500), last.Value.Scalar.Int)
+}
+
+// TestRustDiff_ReverseDeletionOfObjectInList reproduces
+// diff_should_reverse_deletion_of_object_in_list_correctly.
+func TestRustDiff_ReverseDeletionOfObjectInList(t *testing.T) {
+	t.Parallel()
+
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		list, err := document.Root().CreateObject("list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		require.NoError(t, list.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "a"}))
+		text, err := list.InsertObject(1, automerge.ObjectTypeText)
+		require.NoError(t, err)
+		textValue, err := text.Text()
+		require.NoError(t, err)
+		require.NoError(t, textValue.Splice(0, 0, "b"))
+		require.NoError(t, list.InsertScalar(2, automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
+
+		_, err = document.Commit("build", commitTime)
+		require.NoError(t, err)
+
+		before, err := document.Heads()
+		require.NoError(t, err)
+		require.NoError(t, list.DeleteIndex(1))
+
+		_, err = document.Commit("delete", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(after, before)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+	require.Len(t, result["native"], 2)
+	assert.Equal(t, automerge.PatchInsert, result["native"][0].Action)
+	assert.Equal(t, uint64(1), result["native"][0].Index)
+	require.Len(t, result["native"][0].Values, 1)
+	assert.Equal(t, automerge.ObjectTypeText, result["native"][0].Values[0].Value.Object)
+	assert.Equal(t, automerge.PatchSpliceText, result["native"][1].Action)
+	assert.Equal(t, "b", result["native"][1].Text)
+}
+
+// TestRustDiff_ReverseDeletionOfObjectInMap reproduces
+// diff_should_reverse_deletion_of_object_in_map_correctly.
+func TestRustDiff_ReverseDeletionOfObjectInMap(t *testing.T) {
+	t.Parallel()
+
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		mapObject, err := document.Root().CreateObject("map", automerge.ObjectTypeMap)
+		require.NoError(t, err)
+		_, err = mapObject.CreateObject("text", automerge.ObjectTypeText)
+		require.NoError(t, err)
+		require.NoError(t, mapObject.PutScalar("a", automerge.Scalar{Type: automerge.ScalarTypeString, String: "a"}))
+		textB, err := mapObject.CreateObject("b", automerge.ObjectTypeText)
+		require.NoError(t, err)
+		textBValue, err := textB.Text()
+		require.NoError(t, err)
+		require.NoError(t, textBValue.Splice(0, 0, "b"))
+		require.NoError(t, mapObject.PutScalar("c", automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
+
+		_, err = document.Commit("build", commitTime)
+		require.NoError(t, err)
+
+		before, err := document.Heads()
+		require.NoError(t, err)
+		require.NoError(t, mapObject.DeleteKey("b"))
+
+		_, err = document.Commit("delete", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(after, before)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+	require.Len(t, result["native"], 2)
+	assert.Equal(t, automerge.PatchPutMap, result["native"][0].Action)
+	assert.Equal(t, "b", result["native"][0].Key)
+	assert.Equal(t, automerge.ObjectTypeText, result["native"][0].Value.Object)
+	assert.Equal(t, automerge.PatchSpliceText, result["native"][1].Action)
+	assert.Equal(t, "b", result["native"][1].Text)
+}
+
+// TestRustDiff_ReverseDeletionOfBlockInText reproduces
+// diff_should_reverse_deletion_of_block_in_text_correctly.
+func TestRustDiff_ReverseDeletionOfBlockInText(t *testing.T) {
+	t.Parallel()
+
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText("text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(0, 0, "a"))
+		block, err := text.SplitBlock(1)
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(2, 0, "b"))
+		require.NoError(t, block.PutScalar("key", automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"}))
+
+		_, err = document.Commit("build", commitTime)
+		require.NoError(t, err)
+
+		before, err := document.Heads()
+		require.NoError(t, err)
+		require.NoError(t, text.JoinBlock(1))
+
+		_, err = document.Commit("delete", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(after, before)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+	require.Len(t, result["native"], 2)
+	assert.Equal(t, automerge.PatchInsert, result["native"][0].Action)
+	assert.Equal(t, uint64(1), result["native"][0].Index)
+	require.Len(t, result["native"][0].Values, 1)
+	assert.Equal(t, automerge.ObjectTypeMap, result["native"][0].Values[0].Value.Object)
+	assert.Equal(t, automerge.PatchPutMap, result["native"][1].Action)
+	assert.Equal(t, "key", result["native"][1].Key)
+	require.NotNil(t, result["native"][1].Value.Scalar)
+	assert.Equal(t, "value", result["native"][1].Value.Scalar.String)
+}

@@ -1,0 +1,15 @@
+{
+  "description": "CBOR round-trip of a presence update envelope",
+  "envelope": {
+    "__presence": {
+      "type": "update",
+      "channel": "cursor",
+      "value": {
+        "anchor": "AAEC",
+        "head": "AwQF"
+      }
+    }
+  },
+  "cborBase64": "uQABal9fcHJlc2VuY2W5AANkdHlwZWZ1cGRhdGVnY2hhbm5lbGZjdXJzb3JldmFsdWW5AAJmYW5jaG9yZEFBRUNkaGVhZGRBd1FG",
+  "decodesEqual": true
+}

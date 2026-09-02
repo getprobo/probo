@@ -1,0 +1,4699 @@
+[
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "encode_decode_empty_message",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncMessageEncodeDecodeEmptyV2"
+    ],
+    "rationale": "An empty V2 sync message encodes to the reference wire bytes and parses back without error, keeping the native V2 codec byte-compatible."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_handle_false_positive_head",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ShouldHandleFalsePositiveHead"
+    ],
+    "rationale": "A concurrent head that is a Bloom false positive (located with the reference engine's real Bloom filter) still converges under V2 sync on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_handle_chains_of_false_positives",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ShouldHandleChainsOfFalsePositives"
+    ],
+    "rationale": "Two chained changes that are both Bloom false positives (located with the reference engine's real Bloom filter) still converge under V2 sync on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/tests.rs",
+    "name": "observe_counter_change_application",
+    "classification": "covered",
+    "localTests": [
+      "TestRustAutomerge_ObserveCounterChangeApplication"
+    ],
+    "rationale": "Applying a change that creates and increments a counter yields identical incremental patches on both engines; the pinned reference collapses the sequence into a single put through diff_incremental and native matches it exactly."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_compressed_doc_cols",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CompressedDocCols"
+    ],
+    "rationale": "A large document saves smaller with DEFLATE compression than without on both engines, and the compressed save loads back to the same 200-element list."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "can_isolate",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CanIsolate"
+    ],
+    "rationale": "Isolating to a historical frontier pins reads and branches writes with derived concurrency actors; merges during isolation stay hidden until integrate; repeated isolate/integrate cycles reproduce the reference text and values on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "can_transaction_at",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CanTransactionAt"
+    ],
+    "rationale": "Writing at a pinned historical frontier via isolate/integrate branches from those heads and merges with concurrent writes, reproducing the reference text and values on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "incorrect_patches_produced_when_isolating_and_integrating",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating"
+    ],
+    "rationale": "An incremental diff across an isolate/integrate cycle with a conflicting object put resets to the isolate frontier and rebuilds, emitting deletes, conflicting puts, and a splice only for each winning object, matching the reference on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "update_text_change_at",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_UpdateTextChangeAt"
+    ],
+    "rationale": "An isolated update_text branches from the initial heads and integrates alongside the concurrent update, yielding the reference text on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test_save_load_orphans.rs",
+    "name": "save_orphaned_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustOrphans_SaveOrphanedChanges"
+    ],
+    "rationale": "A retained orphan change survives a save/load round trip on both engines, so applying the missing dependency afterwards resolves it to the final value."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test_save_load_orphans.rs",
+    "name": "discard_orphans",
+    "classification": "covered",
+    "localTests": [
+      "TestRustOrphans_DiscardOrphans"
+    ],
+    "rationale": "Saving with retain_orphans disabled drops the orphan change on both engines, so a reload plus the missing dependency yields only the applicable value."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "marks_are_okay",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_MarksAreOkay"
+    ],
+    "rationale": "Randomized insert/delete/split-block/mark sequences keep spans consolidated and reproduce the accumulated text on both engines, matching the upstream property invariants."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "insertions_after_noexpand_spans_are_not_marked",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_InsertionsAfterNoexpandSpans"
+    ],
+    "rationale": "Text appended after a block with no expanding mark in scope is reported by a diff as an unmarked splice."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_load_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_LoadChanges"
+    ],
+    "rationale": "Loading a stored document and materializing current state yields the summed counter put, matching the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "marks.ts",
+    "name": "should allow marks that can be seen in patches",
+    "classification": "covered",
+    "localTests": [
+      "TestJSMarks_MarksSeenInPatches"
+    ],
+    "rationale": "Mark and unmark operations are reported as Mark patches, and text spliced into an expanding mark carries it, matching the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "marks.ts",
+    "name": "patches properly report marks on end of expand true",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_ExpandMarksAreReportedInPatches"
+    ],
+    "rationale": "Mark and unmark operations are reported as Mark patches, and text spliced into an expanding mark carries it, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_change_encoding_expanded_change_round_trip",
+    "classification": "covered",
+    "localTests": [
+      "TestChangeEncodingExpandedRoundTrip"
+    ],
+    "rationale": "A change decoded from its canonical bytes re-encodes to exactly those bytes, validating change wire fidelity."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "if_first_message_has_no_heads_and_supports_v2_message_send_whole_doc",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_FirstMessageNoHeadsSendsWholeDoc"
+    ],
+    "rationale": "An empty peer receives the entire document in the first sync response and converges after a single exchange."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "reproduce_clock_cache_bug",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ReproduceClockCacheBug"
+    ],
+    "rationale": "Merging many branches by distinct actors leaves no change outside the merged frontier, exercising vector-clock ancestry."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "getCursor should respect heads",
+    "classification": "covered",
+    "localTests": [
+      "TestJSCursors_GetCursorRespectsHeads"
+    ],
+    "rationale": "Cursors created against a historical view resolve to the same positions on both engines."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should be able to pass a doc to from() to make a shallow copy",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript Automerge.from(doc) shallow-copy binding helper; Go clones via save/load."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "patch callbacks inform where they came from",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript patchCallback PatchSource metadata; a binding-specific callback channel with no wire or state interop meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/convert_string_to_text.rs",
+    "name": "test_strings_in_maps_are_converted_to_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustConvert_StringsInMapsAreConvertedToText"
+    ],
+    "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/convert_string_to_text.rs",
+    "name": "test_strings_in_lists_are_converted_to_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustConvert_StringsInListsAreConvertedToText"
+    ],
+    "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/convert_string_to_text.rs",
+    "name": "test_does_not_add_size_when_strings_are_not_converted",
+    "classification": "covered",
+    "localTests": [
+      "TestRustConvert_DoesNotAddSizeWhenStringsAreNotConverted"
+    ],
+    "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/iter/list_range.rs",
+    "name": "list_range_bounds",
+    "classification": "covered",
+    "localTests": [
+      "TestRustListRange_Bounds"
+    ],
+    "rationale": "List values and per-element conflict flags match the reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/iter/list_range.rs",
+    "name": "list_range_conflict",
+    "classification": "covered",
+    "localTests": [
+      "TestRustListRange_Conflict"
+    ],
+    "rationale": "List values and per-element conflict flags match the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test_mark_patches.rs",
+    "name": "mark_patches_at_end_of_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustMarkPatches_AtEndOfText"
+    ],
+    "rationale": "A mark loaded incrementally into another document produces a single Mark patch through the diff cursor."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "rollback_discards_ops",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTransaction_RollbackDiscardsOps"
+    ],
+    "rationale": "Transaction rollback discards uncommitted operations and reports the discarded count, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "rollback_undoes_writes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Transaction rollback discards uncommitted operations and reports the discarded count, matching the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should update marks",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/should_update_marks"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "allows configuring the default expand value of created marks",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/configuring_default_expand"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should allow overriding the default expand on a per mark basis",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/override_default_expand_per_mark"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should allow omitting any part of the update spans config",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_OmittingConfigParts"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "updates the document even if the only change was to a block attribute",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/updates_document_on_block_attribute_change"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should show historical marks",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_ShowHistoricalMarks"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "can allow small values in block attributes",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/small_values_in_block_attributes"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "allows updating all blocks at once",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/allows_updating_all_blocks_at_once"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "emits insert patches with ImmutableString for attribute updatese",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString (RawString) patch value wrapper; a binding-specific scalar type."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "when loading blocks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString (RawString) block attribute wrapper round-trip; a binding-specific scalar type."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "when loading spans",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString (RawString) block attribute wrapper round-trip; a binding-specific scalar type."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should support implicit and explicit deletion",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_ImplicitAndExplicitDeletion"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should handle text and other ops in the same change",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_TextAndOtherOpsSameChange"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should initialize text in Automerge.from()",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_InitializeTextInFrom"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should encode the initial value as a change",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_InitializeTextInFrom"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should allow splicing into text in arrays",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_SplicingIntoArrays"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should calculate a diff when updating text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_SimpleUpdateText"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should serialize to JSON as a simple string",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript JSON.stringify serialization shape of the document proxy; no wire or state interop meaning."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should allow modification after an object is assigned to a document",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript mutable-proxy assignment semantics inside a change callback; Go mutates through explicit typed methods."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should not allow modification outside of a change callback",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript change-callback guard on the mutable proxy; Go has no ambient-mutation API to guard."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "marks_on_spans_respect_heads",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlock_MarksOnSpansRespectHeads"
+    ],
+    "rationale": "Historical spans and block insertion diffs match the reference patch and span output."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "diff_emits_block_updates",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlock_DiffEmitsBlockUpdates"
+    ],
+    "rationale": "Historical spans and block insertion diffs match the reference patch and span output."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "merge_produces_block_insertion_diffs",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlock_MergeProducesBlockInsertionDiffs"
+    ],
+    "rationale": "Historical spans and block insertion diffs match the reference patch and span output."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_generates_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatchInsert_GeneratesPatches"
+    ],
+    "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_text_generates_splice_patch",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatchInsert_TextGeneratesSplicePatch"
+    ],
+    "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_init_map_generates_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatchInit_MapGeneratesPatches"
+    ],
+    "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_change_block_properties",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_change_block_properties"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_updates_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_updates_text"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_updates_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_updates_marks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_updates_text_and_blocks_at_once",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_updates_text_and_blocks_at_once"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_spans_delete_attribute",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_delete_attribute"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_spans_diffs_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_diffs_marks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_spans_uses_expand_config",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_uses_expand_config"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_noop",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans_Noop"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_spans_across_block",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/mark_spans_across_block"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_ends_at_block_boundary",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/mark_ends_at_block_boundary"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "block_properties_change_with_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/block_properties_change_with_marks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "block_with_marked_content",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/block_with_marked_content"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "update_spans_with_only_blocks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_with_only_blocks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_survive_block_updates",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/marks_survive_block_updates"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "adjacent_marks_merge",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/adjacent_marks_merge"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "adjacent_marks_stay_separate",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/adjacent_marks_stay_separate"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "alternating_mark_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks_Alternating"
+    ],
+    "rationale": "Repeatedly adding and removing a mark converges on the final span set."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "complex_unicode_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/complex_unicode_text"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "empty_spans_between_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/empty_spans_between_marks"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "idempotent_update_spans",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks_Idempotent"
+    ],
+    "rationale": "Repeating the same update_spans call produces no additional changes."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "many_marks_on_same_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/many_marks_on_same_text"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_contracts",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_contracts"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_expands",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_expands"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_on_empty_string",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_on_empty_string"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_on_whitespace",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_on_whitespace"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_shifts_position",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_shifts_position"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_value_changes_color",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_value_changes_color"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_value_changes_link_url",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_value_changes_link_url"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_value_type_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_value_type_changes"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_on_combining_characters",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/marks_on_combining_characters"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_with_different_values_same_name",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/marks_with_different_values_same_name"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_with_expand_none_at_boundaries",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/marks_with_expand_none_at_boundaries"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "multiple_marks_different_expand_behaviors",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/multiple_marks_different_expand_behaviors"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "nested_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/nested_marks"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "overlapping_marks_add_third_mark",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/overlapping_marks_add_third_mark"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "overlapping_marks_change_boundaries",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/overlapping_marks_change_boundaries"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "overlapping_marks_remove_one_keep_other",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/overlapping_marks_remove_one_keep_other"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "removing_all_text_from_marked_span",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/removing_all_text_from_marked_span"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "update_spans_which_inserts_at_the_end_of_expand_mark_doesnt_generate_mark_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/update_spans_which_inserts_at_the_end_of_expand_mark_doesnt_generate_mark_changes"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "marks_which_cross_optree_boundaries_are_not_double_counted_in_splice_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_CrossPageMarksNotDoubleCounted"
+    ],
+    "rationale": "A non-expanding mark crossing an operation-tree page boundary does not leak onto text appended after repeated block insertions."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "expand_marks_are_reported_in_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_ExpandMarksAreReportedInPatches"
+    ],
+    "rationale": "A both-expanding mark includes text inserted at either boundary and both incremental splice patches carry it."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "test_remote_patches_for_marks_with_expand_after",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_RemotePatchesForExpandAfter"
+    ],
+    "rationale": "A remote insertion at an after-expanding boundary produces the same marked splice patch as the local edit."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustMarks_ExpansionAndUnmark"
+    ],
+    "rationale": "A both-expanding mark grows at its end, unmark removes only the original prefix, and prepended text remains unmarked."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "patch_put_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchPutText"
+    ],
+    "rationale": "An in-place string put in text produces a UTF-16-addressed deletion followed by a text splice."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "patch_mark",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchMark"
+    ],
+    "rationale": "A mark produces a Mark patch whose start and end are UTF-16 code units, and the diff carries added, removed (null-valued), and changed marks."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "patch_insert",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchInsert"
+    ],
+    "rationale": "An insert on text produces a SpliceText patch addressed by UTF-16 code units."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "patch_splice_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchSpliceText"
+    ],
+    "rationale": "A splice on text produces a SpliceText patch addressed by UTF-16 code units."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "patch_delete",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchDelete"
+    ],
+    "rationale": "A delete on text produces a DeleteSeq patch at a UTF-16 index with length one."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "length",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Length"
+    ],
+    "rationale": "ReadDoc::length reports UTF-16 code units for text; a family emoji counts as 11 units."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "get",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Get"
+    ],
+    "rationale": "ReadDoc::get resolves a UTF-16 index across a multi-code-point grapheme to the correct element."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "put",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Put"
+    ],
+    "rationale": "Transactable::put replaces the element at a UTF-16 index, materializing the winning value for text."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "delete",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Delete"
+    ],
+    "rationale": "Transactable::delete removes the element addressed by a UTF-16 index."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "split_block",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_SplitBlock"
+    ],
+    "rationale": "Transactable::split_block splits text at a UTF-16 index between grapheme clusters."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "incremental_splice_patches_include_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_IncrementalSplicePatchesIncludeMarks"
+    ],
+    "rationale": "Text spliced inside an expanding mark is reported as a splice_text patch carrying that mark, with no separate mark patch for the range growth."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "noexpand_marks_at_the_end_of_text_should_not_emit_marked_patches_on_following_insertions",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_NoexpandMarksAtEndOfText"
+    ],
+    "rationale": "Text appended after a non-expanding mark does not inherit it, so the splice patch carries no marks."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "local_patches_created_for_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_LocalPatchesCreatedForMarks"
+    ],
+    "rationale": "Materializing marked text through the diff cursor splits it into one splice_text patch per mark run, each carrying the active marks."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "simple_update_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_SimpleUpdateText"
+    ],
+    "rationale": "update_text computes a minimal grapheme diff so concurrent edits to disjoint words merge into a combined document, matching the reference change history."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "update_text_big_ole_graphemes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_UpdateTextBigOleGraphemes"
+    ],
+    "rationale": "update_text treats emoji ZWJ sequences as single grapheme clusters so concurrent family swaps merge side by side, matching the reference change history."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "in_flight_logic_should_not_sabotage_concurrent_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_ReferenceEditsWhileMessageInFlight"
+    ],
+    "rationale": "A reference peer commits another change while its previous message is awaiting acknowledgement."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "triangle_changes_arrive_via_two_paths",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ThreePeerRelayConvergesWithReference"
+    ],
+    "rationale": "Three peers relay concurrent changes through native and reference engines and converge to identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "generate_sync_message_twice_does_nothing",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_SyncWaitsForPeerResponse"
+    ],
+    "rationale": "A second generation attempt while a message is in flight returns no message."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "handle_repeated_out_of_order_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_AppliesDependentChangesInAnyOrder",
+      "TestBackendMerge_AppliesReversedDependentChanges"
+    ],
+    "rationale": "Dependent changes are applied child-first in one batch, separately, and repeatedly."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "splicing_into_multibyte_characters",
+    "classification": "covered",
+    "localTests": [
+      "TestText_SpliceUsesUTF16Offsets",
+      "TestPureGoDocument_RandomTextParity"
+    ],
+    "rationale": "UTF-16 splices include surrogate-pair insertion and deletion with reference parity."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "deleting_in_middle_of_multibyte_char_moves_the_cursor_to_after_the_character",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_DeletingInMiddleOfMultibyteChar"
+    ],
+    "rationale": "Splice starts and deletion ends inside UTF-16 surrogate pairs are advanced to the following character boundary, with every intermediate text value compared directly against Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "splice_text",
+    "classification": "covered",
+    "localTests": [
+      "TestText_SpliceUsesUTF16Offsets",
+      "TestPureGoDocument_RandomTextParity"
+    ],
+    "rationale": "Random and deterministic UTF-16 splices are checked after every operation against Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "cursors",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_UTF16CursorBoundariesMatchReference",
+      "TestPureGoDocument_DeletedCursorMatchesReference"
+    ],
+    "rationale": "Live and deleted cursor targets are compared with the UTF-16 Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "mark",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_MarkAuthoringMatchesReference"
+    ],
+    "rationale": "Go and Rust independently author the same mark and cross-load the resulting marked text."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "unmark",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_MarkAuthoringMatchesReference"
+    ],
+    "rationale": "Go and Rust independently unmark an interior UTF-16 range and cross-load the split spans."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_with_empty_commits",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_EmptyCommitTimeParity",
+      "TestDocument_EmptyCommitChangesSince"
+    ],
+    "rationale": "Sequences of empty changes save, load in Rust, preserve metadata, and retain their head hashes."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "get_changes_with_hash_of_empty_change_produces_correct_result",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_EmptyCommitChangesSince"
+    ],
+    "rationale": "ChangesSince returns the empty change from no heads and no changes when given its hash."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_and_restore_empty",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_EmptySnapshotLoadsInReference"
+    ],
+    "rationale": "An empty native document saves and loads in Rust with no heads."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should allow a subset of changes to be sent",
+    "classification": "covered",
+    "localTests": [
+      "TestBackendSync_SendsOnlyChangesSinceRemoteHeads"
+    ],
+    "rationale": "After acknowledging the initial frontier, only the subsequent change is sent."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should not generate messages once synced",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ExchangesConcurrentChanges",
+      "TestPureGoDocument_SyncWaitsForPeerResponse"
+    ],
+    "rationale": "The shared sync helper requires bounded quiescence and generation blocks while awaiting acknowledgement."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should allow simultaneous messages during synchronization",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_ReferenceEditsWhileMessageInFlight"
+    ],
+    "rationale": "Native and official peers exchange edits created while another message is in flight."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should work with prior sync state",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ResumesPersistedSession",
+      "TestSyncState_ResendsInFlightMessageAfterRestore"
+    ],
+    "rationale": "Quiescent and in-flight serialized sync sessions resume and converge."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should handle changes concurrent to the last sync heads",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ExchangesConcurrentChanges",
+      "TestPureGoDocument_RandomConcurrentSyncParity"
+    ],
+    "rationale": "Both peers edit from the last shared frontier before each randomized sync round."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should sync three nodes",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ThreePeerRelayConvergesWithReference"
+    ],
+    "rationale": "Three native/reference peers relay and converge concurrent changes."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should support unicode when creating text",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_JavaScriptLoadsGoDocument",
+      "TestConformance_GoLoadsJavaScriptDocument"
+    ],
+    "rationale": "Emoji-bearing text documents load in both JavaScript-to-Go and Go-to-JavaScript directions."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should handle multi character grapheme clusters",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_RandomTextParity",
+      "TestPureGoDocument_UTF16CursorBoundariesMatchReference"
+    ],
+    "rationale": "Random UTF-16 operations include non-ASCII and surrogate pairs with Rust parity."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should support insertion",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_RandomTextParity"
+    ],
+    "rationale": "Random insertion positions are checked against the official reference after every operation."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should support deletion",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_RandomTextParity"
+    ],
+    "rationale": "Random UTF-16 deletions are checked against the official reference after every operation."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should handle concurrent insertion",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_RandomConcurrentSyncParity"
+    ],
+    "rationale": "Both engines insert concurrently at randomized positions and compare values and heads."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "getCursorPosition should work",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_CursorMatchesReference"
+    ],
+    "rationale": "Cursor bytes and resolved positions are compared directly with Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should use javascript string indices",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_UTF16CursorBoundariesMatchReference"
+    ],
+    "rationale": "Cursor behavior at every relevant UTF-16 boundary of an emoji string matches Rust's JavaScript indexing mode."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should allow for usage of start/end cursors",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_CursorModesMatchReference"
+    ],
+    "rationale": "Start and end cursor bytes and resolved UTF-16 positions match Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should allow for usage of move before/after",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_CursorModesMatchReference"
+    ],
+    "rationale": "Before/after movement bytes and deleted-target resolution are compared directly with Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should convert negative indices into a start cursor",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_CursorModesMatchReference"
+    ],
+    "rationale": "Negative Go cursor indices clamp to the canonical start cursor and match Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should convert indices >= string length into an end cursor",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_CursorModesMatchReference"
+    ],
+    "rationale": "Indices at and beyond UTF-16 text length clamp to the canonical end cursor."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "can use cursors in common text operations",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_CursorModesMatchReference"
+    ],
+    "rationale": "A stable cursor is resolved and used for replacement in native and Rust texts."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "can use cursors in splice calls",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_CursorModesMatchReference"
+    ],
+    "rationale": "Cursor-addressed UTF-16 splice operations produce identical native and Rust text."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "handle basic set and read on root object",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_StringParity",
+      "TestDocument_AllScalarTypesMatchReference"
+    ],
+    "rationale": "Root scalar writes and reads execute against native and Rust engines and cross-load in both directions."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "handle overwrites to values",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_StringParity"
+    ],
+    "rationale": "Multiple assignments in one change resolve to the final value in both engines."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "it should be able to handle ints and floats at their limits",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_AllScalarTypesMatchReference"
+    ],
+    "rationale": "The scalar differential includes maximum unsigned integers, minimum signed integers, infinity, and NaN with bit-exact float comparison."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "negative_64",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_AllScalarTypesMatchReference"
+    ],
+    "rationale": "The minimum signed 64-bit scalar round-trips through native, Rust, and native-to-Rust loading."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_and_reload_create_object",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_LoadedObjectRemainsEditable"
+    ],
+    "rationale": "A list created without children is saved, loaded, mutated under a new actor, saved again, and read by Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "handle set with object value",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_NestedMapsAndListsMatchReference"
+    ],
+    "rationale": "Nested map values are authored independently by Go and Rust and cross-loaded."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "handle simple list creation",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_LoadedObjectRemainsEditable"
+    ],
+    "rationale": "An empty list is created, committed, saved, loaded, and resolved as the same object."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "handle simple lists",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_NestedMapsAndListsMatchReference",
+      "TestDocument_AppliesDependentChangesInAnyOrder"
+    ],
+    "rationale": "List insertion, indexed reads, replacement, deletion, change encoding, and cross-engine application are exercised."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_local_inc_in_map",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CountersMatchReference"
+    ],
+    "rationale": "Map counters are incremented repeatedly with positive and negative deltas in native and Rust engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_and_load_incremented_counter",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CountersMatchReference"
+    ],
+    "rationale": "Incremented counters are saved by Go, loaded by Rust, and compared after concurrent merging."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "add_concurrent_increments_of_same_property",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CountersMatchReference"
+    ],
+    "rationale": "Two actors increment the same counter concurrently; Go merges to the summed value and Rust verifies it."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "increment_non_counter_map",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CountersMatchReference"
+    ],
+    "rationale": "Both native and Rust reject incrementing an integer map property."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "increment_non_counter_list",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CountersMatchReference"
+    ],
+    "rationale": "Both native and Rust reject incrementing an integer list element."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should add concurrent increments of the same property",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CountersMatchReference"
+    ],
+    "rationale": "Concurrent increments merge additively and are loaded by the JavaScript-compatible Rust engine."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should allow deleting counters from maps",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CounterDeletionMatchesReference"
+    ],
+    "rationale": "Native and Rust both delete a map counter after it is committed."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should initially be an empty map",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_MapKeysMatchReference"
+    ],
+    "rationale": "Fresh native and Rust root maps expose no keys."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should save and load maps with @ symbols in the keys",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_MapKeysMatchReference"
+    ],
+    "rationale": "Empty, lexical, and @-containing keys persist through native and Rust save/load."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should allow a document to be cloned",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ForkMatchesReference"
+    ],
+    "rationale": "Native and Rust forks preserve base history while accepting independent changes."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should allow passing an actorId when instantiating from an existing object",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ForkMatchesReference"
+    ],
+    "rationale": "Fork assigns the requested actor before creating and merging independent changes."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "missing_actors_when_docs_are_forked",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ForkMatchesReference"
+    ],
+    "rationale": "Forked histories with a new actor save, merge, and resolve in both native and Rust engines."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "have many list methods",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomListParity"
+    ],
+    "rationale": "Randomized indexed insertion, replacement, and deletion execute identically and produce identical change hashes in Go and Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "list_deletion",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomListParity"
+    ],
+    "rationale": "Random list histories repeatedly delete first, middle, and last elements and compare every remaining value with Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "handle basic sets over many changes",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomMapParity"
+    ],
+    "rationale": "One thousand randomized nested-map changes produce identical values and change hashes in Go and Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "delete_only_change",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomMapParity"
+    ],
+    "rationale": "Random histories commit standalone map deletions and compare their hashes and resulting absence with Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "allows_empty_keys_in_mappings",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomMapParity"
+    ],
+    "rationale": "The randomized map key set explicitly includes the empty string for writes, reads, overwrites, and deletion."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_merging_test_conflicts_then_saving_and_loading",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentStringWinnerMatchesReference"
+    ],
+    "rationale": "Concurrent map assignments are merged, all conflicts and the winner are checked, then the merged document is loaded by Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "repeated_map_assignment_which_resolves_conflict_not_ignored",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentStringWinnerMatchesReference"
+    ],
+    "rationale": "A merged two-value conflict is overwritten and verified to contain exactly the resolving value."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_overwriting_a_conflict",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentStringWinnerMatchesReference"
+    ],
+    "rationale": "The winner and both conflicts are checked before a new assignment clears the conflict."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "no_conflict_on_repeated_assignment",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_StringParity"
+    ],
+    "rationale": "Repeated assignments in one change produce exactly one visible value in Go and Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "handle text",
+    "classification": "covered",
+    "localTests": [
+      "TestInteropScenario_CoreDataModel"
+    ],
+    "rationale": "The same text creation, UTF-16 splice, save, cross-load, and materialization scenario runs independently in Go, Rust, and JavaScript."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should generate a hash",
+    "classification": "covered",
+    "localTests": [
+      "TestInteropScenario_CoreDataModel",
+      "TestConformance_JavaScriptPreservesGoChanges"
+    ],
+    "rationale": "All engines generate heads, and transferred Go changes retain their original hash through JavaScript."
+  },
+  {
+    "source": "javascript",
+    "file": "change_time.ts",
+    "line": 7,
+    "name": "should default to current timestamp",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CommitTimeParity"
+    ],
+    "rationale": "CommitNow records a current Unix-seconds timestamp in native and Rust changes."
+  },
+  {
+    "source": "javascript",
+    "file": "change_time.ts",
+    "line": 18,
+    "name": "should allow user provided timestamp",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CommitTimeParity"
+    ],
+    "rationale": "An explicit timestamp is decoded unchanged from native and Rust changes."
+  },
+  {
+    "source": "javascript",
+    "file": "change_time.ts",
+    "line": 27,
+    "name": "should allow no timestamp",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_CommitTimeParity"
+    ],
+    "rationale": "A zero time records the protocol no-timestamp value in native and Rust changes."
+  },
+  {
+    "source": "javascript",
+    "file": "change_time.ts",
+    "line": 37,
+    "name": "should default to current timestamp",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_EmptyCommitTimeParity"
+    ],
+    "rationale": "EmptyCommitNow records a current Unix-seconds timestamp in native and Rust changes."
+  },
+  {
+    "source": "javascript",
+    "file": "change_time.ts",
+    "line": 48,
+    "name": "should allow user provided timestamp",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_EmptyCommitTimeParity"
+    ],
+    "rationale": "An explicit timestamp is preserved on empty native and Rust changes."
+  },
+  {
+    "source": "javascript",
+    "file": "change_time.ts",
+    "line": 57,
+    "name": "should allow no timestamp",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_EmptyCommitTimeParity",
+      "TestConformance_NativeParsesJavaScriptEmptyChange"
+    ],
+    "rationale": "Zero-timestamp empty changes decode and round-trip with JavaScript and Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should be the same as saveIncremental since heads of the last saveIncremental",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalSaveLoadParity"
+    ],
+    "rationale": "Repeated incremental saves emit only new changes, and a full save advances the incremental cursor."
+  },
+  {
+    "source": "javascript",
+    "file": "extra_api_tests.ts",
+    "name": "should allow you to load incrementally",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalSaveLoadParity"
+    ],
+    "rationale": "Native and Rust incrementally load each other's changes, ignore duplicates, and converge heads."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should incrementally apply changes since the last given version",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalSaveLoadParity"
+    ],
+    "rationale": "Two successive incremental batches apply in both Go-to-Rust and Rust-to-Go directions."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should return true if the document in question has all the heads",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_HistoricalReadsMatchReference"
+    ],
+    "rationale": "Native and Rust report true for current, historical, and empty head sets."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should return false if the document does not have the heads",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_HistoricalReadsMatchReference"
+    ],
+    "rationale": "Native and Rust report false for an unknown change hash."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should return the document at its correct heads",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_HistoricalReadsMatchReference"
+    ],
+    "rationale": "Historical scalar and text values are materialized at the first head after later changes exist."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should report missing dependencies with out-of-order applyChanges",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_AppliesDependentChangesInAnyOrder"
+    ],
+    "rationale": "A child-first change is queued, reports only its missing parent, then clears the dependency after the parent arrives."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should clear conflicts after assigning a new value",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentStringWinnerMatchesReference"
+    ],
+    "rationale": "A two-actor conflict is resolved by assignment and GetAll returns one value."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should not register any conflicts on repeated assignment",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_StringParity"
+    ],
+    "rationale": "Repeated writes from one actor retain only the final scalar value."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should not ignore field updates that resolve a conflict",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentStringWinnerMatchesReference"
+    ],
+    "rationale": "The conflict-resolving map update is committed and remains the sole value."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "get change metadata",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeParsesJavaScriptChange"
+    ],
+    "rationale": "Go validates the actor, sequence, start operation, timestamp, message, dependencies, operations, and hash of an official change."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should return a decoded representation of the change",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeParsesJavaScriptChange"
+    ],
+    "rationale": "Every operation and metadata field in a JavaScript change is decoded and asserted before byte-compatible re-encoding."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_get_change_meta",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeParsesJavaScriptChange"
+    ],
+    "rationale": "The native decoder exposes and verifies the official change metadata fields and hash."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_get_last_local_change_generation",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_JavaScriptPreservesGoChanges",
+      "TestDocument_AppliesDependentChangesInAnyOrder"
+    ],
+    "rationale": "The most recent generated change is returned with its exact hash and bytes and preserved by JavaScript."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_compressed_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestDecode_CompressedOfficialChangeFixture"
+    ],
+    "rationale": "An official change is compressed, decoded, and verified to preserve its original hash and change type."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "overlong_leb",
+    "classification": "covered",
+    "localTests": [
+      "TestReaderULEB_RejectsNonCanonicalValue"
+    ],
+    "rationale": "The native reader rejects an overlong, non-minimal unsigned LEB128 representation."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "zero_length_data",
+    "classification": "covered",
+    "localTests": [
+      "TestLoad_InvalidDocument",
+      "FuzzDecode"
+    ],
+    "rationale": "Empty input is a deterministic loader regression seed and part of the native decoder fuzz corpus."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fuzz_crashers",
+    "classification": "covered",
+    "localTests": [
+      "TestDecode_OfficialFuzzCrashersDoNotPanic",
+      "FuzzDecode"
+    ],
+    "rationale": "Every pinned upstream fuzz crasher is a deterministic test and fuzz seed for the native decoder."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "load",
+    "classification": "covered",
+    "localTests": [
+      "TestDecode_OfficialStorageCorpus"
+    ],
+    "rationale": "Ordered, compressed, and out-of-order official multi-change fixtures all load successfully."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "obj_id_64bits",
+    "classification": "covered",
+    "localTests": [
+      "TestDecode_Official64BitObjectIDs"
+    ],
+    "rationale": "Official change and document fixtures with a 2^42 object operation ID either reject safely or preserve the full ID."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "ops_on_wrong_objets",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_WrongObjectOperationsMatchReference"
+    ],
+    "rationale": "Map writes on list/text objects and sequence writes on maps reject consistently with Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "load_doc_with_deleted_objects",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_DeletedObjectsSaveLoad"
+    ],
+    "rationale": "Deleted list, text, map, and table objects save and load in native and Rust engines with an empty root."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "insert_after_many_deletes",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ManyMapDeletes"
+    ],
+    "rationale": "One hundred map insert/delete pairs commit and materialize without index corruption in Go or Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_after_noop_then_real_put",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_NoOpMergeAndEqualPutMatchReference"
+    ],
+    "rationale": "A fork records a no-op change followed by a real assignment, then merges and reloads in Go and Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_panic_after_putting_value_equal_to_initial_value",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_NoOpMergeAndEqualPutMatchReference"
+    ],
+    "rationale": "An equal-value assignment creates no operation and does not panic when merged with a real fork update."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "load_incremental_with_corrupted_tail",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalLoadIgnoresCorruptTail"
+    ],
+    "rationale": "Native and Rust apply the complete valid prefix and ignore the corrupt trailing fragment."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_load_incremental_partial_load",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalSaveLoadParity"
+    ],
+    "rationale": "A standalone incremental change batch applies to a peer in both Go-to-Rust and Rust-to-Go directions."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_sync_does_not_apply_incoming_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity"
+    ],
+    "rationale": "Native and Rust read-only receivers reject incoming changes in both engine directions."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_empty_peer_syncs_with_data_peer",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity"
+    ],
+    "rationale": "An empty read-only peer exchanges protocol state with a populated peer without applying its document."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "changes_not_sent_to_read_only_peer",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity"
+    ],
+    "rationale": "The publisher discovers read-only mode and quiesces without repeatedly sending document changes."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "peer_discovers_remote_read_only_status",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity"
+    ],
+    "rationale": "PeerReadOnly is asserted after flag exchange for native and Rust publishers."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "switch_read_only_to_read_write_mid_session",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity"
+    ],
+    "rationale": "A read-only peer switches to read-write, requests a reset, receives prior changes, and converges."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "generate_message_after_set_read_only_even_with_in_flight",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyModeOverridesInFlight"
+    ],
+    "rationale": "Changing to read-only forces a new message while an earlier message remains in flight."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "generate_message_after_set_read_only_false_even_with_in_flight",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyModeOverridesInFlight"
+    ],
+    "rationale": "Changing back to read-write forces a reset message despite an in-flight message."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_peers_read_only",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_BothReadOnlyResumeConvergence"
+    ],
+    "rationale": "Two peers with independent changes enter read-only mode and exchange no document changes."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_peers_read_only_converges_to_none",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_BothReadOnlyResumeConvergence"
+    ],
+    "rationale": "Both read-only peers quiesce while retaining distinct local heads."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_read_only_both_make_local_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_BothReadOnlyResumeConvergence"
+    ],
+    "rationale": "Both peers begin with independent local changes that remain isolated during read-only synchronization."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_toggle_read_only_to_read_write_simultaneously",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_BothReadOnlyResumeConvergence"
+    ],
+    "rationale": "Both peers switch to read-write simultaneously and converge their prior local changes."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_toggle_read_only_to_read_write_with_new_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_BothReadOnlyResumeConvergence"
+    ],
+    "rationale": "Independent changes created before the simultaneous transition are exchanged after reset."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should not apply incoming changes when read-only",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity"
+    ],
+    "rationale": "Read-only behavior is tested in both native-to-Rust and Rust-to-native directions."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should discover peer read-only status",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity"
+    ],
+    "rationale": "Both implementations expose the remote read-only state after flags are exchanged."
+  },
+  {
+    "source": "javascript",
+    "file": "sync_test.ts",
+    "name": "should allow switching from read-only to read-write",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_ReadOnlyParity",
+      "TestSyncState_BothReadOnlyResumeConvergence"
+    ],
+    "rationale": "One-sided and simultaneous read-only transitions reset and converge against Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "marks.ts",
+    "name": "should do unicode sensibly",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeUnicodeMarks"
+    ],
+    "rationale": "An emoji-range mark followed by a UTF-16 prefix insertion materializes identically in Go and JavaScript."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "can split a block",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_BlockAuthoringMatchesReference"
+    ],
+    "rationale": "Go and Rust independently insert and populate block marker maps at matching rich-text positions."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "can join a block",
+    "classification": "covered",
+    "localTests": [
+      "TestPureGoDocument_BlockAuthoringMatchesReference"
+    ],
+    "rationale": "Go and Rust delete a block marker, preserve surrounding text, and cross-load identical spans."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "unmark_part_of_range",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeSplitMarks"
+    ],
+    "rationale": "Unmarking the middle of a marked range produces two marked outer spans and an unmarked gap."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "unmark_creates_gaps",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeSplitMarks"
+    ],
+    "rationale": "Null mark operations remove the mark from the requested interior range without affecting adjacent spans."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_splits",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeSplitMarks"
+    ],
+    "rationale": "A single mark split by unmarking materializes as separate marked spans."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "different_adjacent_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeBoundaryMarks"
+    ],
+    "rationale": "Different marks on adjacent ranges remain separate at head and element anchors."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_on_emoji",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativeUnicodeMarks"
+    ],
+    "rationale": "Marked emoji ranges and subsequent UTF-16 edits materialize with Rust parity."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_concurrent_map_prop_updates",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentMapParity"
+    ],
+    "rationale": "Twenty deterministic multi-change histories update shared map properties concurrently and compare every conflict with an independently merged Rust history."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_updates_of_same_field",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentMapParity"
+    ],
+    "rationale": "Both actors repeatedly assign the same bounded key set before merge-order and Rust differential checks."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_updates_of_same_list_element",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentListParity"
+    ],
+    "rationale": "Both actors replace shared base-list elements in deterministic randomized histories and compare the merged sequence with Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_insertions_at_different_list_positions",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentListParity"
+    ],
+    "rationale": "Independent actors insert throughout the same base list and both merge orders are compared with Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_insertions_at_same_list_position",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentListParity"
+    ],
+    "rationale": "The bounded random index space repeatedly creates same-position concurrent insertions and verifies deterministic Rust ordering."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_assignment_and_deletion_of_a_map_entry",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentMapParity"
+    ],
+    "rationale": "Each actor independently assigns and deletes the same bounded key set before conflict comparison with Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_assignment_and_deletion_of_list_entry",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentListParity"
+    ],
+    "rationale": "Concurrent list replacements and deletions are merged in both orders and compared element-by-element with Rust."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "it should handle conflicts the same in merges as with loads",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentMapParity"
+    ],
+    "rationale": "Native and Rust independently construct and merge identical histories, then compare all scalar conflicts."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should obtain the same conflicts, regardless of merge order",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RandomConcurrentMapParity"
+    ],
+    "rationale": "Left-first and right-first merges converge to identical conflicts in native and Rust engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "does_not_interleave_sequence_insertions_at_same_position",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentListOrderingMatchesReference"
+    ],
+    "rationale": "Two multi-value insertions at the same position remain contiguous and match Rust ordering."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "mutliple_insertions_at_same_list_position_with_insertion_by_greater_actor_id",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentListOrderingMatchesReference"
+    ],
+    "rationale": "The greater actor's insertion chunk is ordered before the lesser actor's chunk in Go and Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "mutliple_insertions_at_same_list_position_with_insertion_by_lesser_actor_id",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentListOrderingMatchesReference"
+    ],
+    "rationale": "Actor-order-independent construction converges to the same chunk ordering in Go and Rust."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "insertion_after_a_deleted_list_element",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_InsertAfterConcurrentDeleteMatchesReference"
+    ],
+    "rationale": "An insertion anchored after an element deleted concurrently remains visible in the correct position."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should not interleave sequence insertions at the same position",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentListOrderingMatchesReference"
+    ],
+    "rationale": "Concurrent insertion chunks remain contiguous with native and Rust parity."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should handle insertion by greater actor ID",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentListOrderingMatchesReference"
+    ],
+    "rationale": "Explicit deterministic actors verify greater-ID insertion ordering."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should handle insertion by lesser actor ID",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_ConcurrentListOrderingMatchesReference"
+    ],
+    "rationale": "Explicit deterministic actors verify lesser-ID insertion ordering."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should handle insertion after a deleted list element",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_InsertAfterConcurrentDeleteMatchesReference"
+    ],
+    "rationale": "Delete/insert concurrency preserves the insertion anchored to a deleted element."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "rollback_with_no_ops",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference"
+    ],
+    "rationale": "Rollback with no pending operations returns zero in native and Rust engines."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "it should be able to roll back a transaction",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference"
+    ],
+    "rationale": "Pending scalar and object operations are rolled back, committed values and heads remain unchanged, and Rust reports the same cancelled operation count."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "repeated_list_assignment_which_resolves_conflict_not_ignored",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_RepeatedListAssignmentResolvesConflict"
+    ],
+    "rationale": "A list element is assigned across a merge and then reassigned; both engines resolve to the single winning value and agree on heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "add_increments_only_to_preceeded_values",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_AddIncrementsOnlyToPreceededValues"
+    ],
+    "rationale": "Two actors create and increment separate counters at the same key; the increments stay attached to their own counters, yielding conflicting values 1 and 3 on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "assignment_conflicts_of_different_types",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_AssignmentConflictsOfDifferentTypes"
+    ],
+    "rationale": "Three actors assign a string, a list, and a map to the same key; both engines pick the same winner and produce identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "changes_within_conflicting_map_field",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ChangesWithinConflictingMapField"
+    ],
+    "rationale": "A string and a populated map conflict at one key; both engines expose the winning map with its inner value and agree on heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "changes_within_conflicting_list_element",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ChangesWithinConflictingListElement"
+    ],
+    "rationale": "Two actors replace the same list element with maps and mutate them across merges; both engines expose the same winning map contents and heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrently_assigned_nested_maps_should_not_merge",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentlyAssignedNestedMapsShouldNotMerge"
+    ],
+    "rationale": "Two actors assign different maps to the same key; the maps do not merge and the winning map keeps exactly one key on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_deletion_of_same_list_element",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentDeletionOfSameListElement"
+    ],
+    "rationale": "Both actors delete the same list element concurrently; the element is removed once and the surviving order matches on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_updates_at_different_levels",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentUpdatesAtDifferentLevels"
+    ],
+    "rationale": "One actor edits a nested map while another deletes it; the deletion wins and only the sibling list remains on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_updates_of_concurrently_deleted_objects",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects"
+    ],
+    "rationale": "One actor updates a nested object another actor deleted concurrently; the deletion wins and the parent becomes empty on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "insertion_consistent_with_causality",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_InsertionConsistentWithCausality"
+    ],
+    "rationale": "Interleaved head insertions across repeated merges produce the causally ordered list one,two,three,four on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_restore_complex1",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_SaveRestoreComplex1"
+    ],
+    "rationale": "A todo list with a conflicting title survives save and reload; both engines expose both conflicting titles and the retained boolean."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_restore_complex_transactional",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_SaveRestoreComplexTransactional"
+    ],
+    "rationale": "The transactional variant groups writes into single commits; the reloaded document exposes the same conflicting titles and boolean on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "big_list",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_BigList"
+    ],
+    "rationale": "A list of many null elements is replaced with map objects; both engines materialize N+1 maps that survive a cross-engine save/load with identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "invalid_index",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_InvalidIndex"
+    ],
+    "rationale": "Inserting or putting beyond the end of a list is rejected by both engines while an in-bounds put succeeds."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "has_our_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_HasOurChanges"
+    ],
+    "rationale": "Two peers with concurrent changes synchronize until each contains the other's change and both converge to identical heads on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "make_sure_load_incremental_doesnt_skip_a_load_with_a_common_head",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_LoadIncrementalWithCommonHead"
+    ],
+    "rationale": "Incremental loads that share a common head are not skipped; both engines end with the expected merged two-head frontier."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "regression_nth_miscount",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_RegressionNthMiscount"
+    ],
+    "rationale": "A 30-element list of nested maps is indexed after insert-then-replace at every position; both engines resolve each element to the expected map and value with identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "regression_nth_miscount_smaller",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_RegressionNthMiscountSmaller"
+    ],
+    "rationale": "A list spanning several op-tree nodes (B*4 elements) is inserted then overwritten at each index; both engines read back every scalar with identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "regression_insert_opid",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_RegressionInsertOpid"
+    ],
+    "rationale": "Interleaved insert-then-overwrite operations round-trip through a cross-engine save/load with every list value preserved and identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "rollback_with_several_actors",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_RollbackWithSeveralActors"
+    ],
+    "rationale": "Uncommitted edits by a third forked actor are rolled back, leaving the document byte-identical to the forked-from state on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_with_ops_which_reference_actors_only_via_delete",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_SaveWithOpsReferencingActorsOnlyViaDelete"
+    ],
+    "rationale": "A merged delete op references a fork's actor only through successors; the document still saves and reloads cleanly across both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "simple_bad_saveload",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_SimpleBadSaveload"
+    ],
+    "rationale": "An empty commit interleaved between real changes does not corrupt the save/load round trip on either engine."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "bad_change_on_optree_node_boundary",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_BadChangeOnOptreeNodeBoundary"
+    ],
+    "rationale": "A document grown across an op-tree node boundary is saved, reloaded elsewhere, and a further change is transferred and reloaded with matching state and heads on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "list_counter_del",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ListCounterDel"
+    ],
+    "rationale": "Three actors write conflicting counters and an integer to the same list elements; increments apply to every conflicting counter and delete the non-counter, and the conflict sets, lengths, and reloads match the reference engine."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "first_response_is_some_even_if_no_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_FirstResponseIsSomeEvenIfNoChanges"
+    ],
+    "rationale": "Two peers at identical heads still exchange a first sync message so each learns the other's heads."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_allow_simultaneous_messages_during_synchronisation",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_AllowSimultaneousMessages"
+    ],
+    "rationale": "Two peers each committing five concurrent changes exchange messages in both directions and converge to identical heads with each other's keys."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_read_only_one_makes_local_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_BothReadOnlyOneMakesLocalChanges"
+    ],
+    "rationale": "Both peers are read-only; local changes on one are not transferred to the other and the session still quiesces."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_read_only_simultaneous_changes_during_sync",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_BothReadOnlySimultaneousChanges"
+    ],
+    "rationale": "Both read-only peers make simultaneous changes across two rounds; neither receives the other's data and both quiesce."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_peer_new_changes_between_sync_rounds",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ReadOnlyPeerNewChangesBetweenRounds"
+    ],
+    "rationale": "A read-only publisher's new changes flow to the read-write peer as a conflict while the publisher never receives the consumer's data."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_publisher_to_multiple_consumers",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ReadOnlyPublisherToMultipleConsumers"
+    ],
+    "rationale": "A read-only publisher's changes reach two independent consumers, and one consumer's changes never reach the other through the publisher."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_fully_connected_triangle",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ReadOnlyFullyConnectedTriangle"
+    ],
+    "rationale": "A read-only peer publishes to two read-write peers that then merge; both gain all three change sets while the publisher keeps only its own."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "stale_shared_heads_after_read_only_sync",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_StaleSharedHeadsAfterReadOnlySync"
+    ],
+    "rationale": "A consumer that already has the read-only publisher's changes via a third peer re-syncs directly and still quiesces without the publisher accepting data."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_peer_receives_same_changes_from_two_peers",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ReadOnlyPeerReceivesSameChangesFromTwoPeers"
+    ],
+    "rationale": "A read-only publisher announced the same changes by two peers keeps only its own history and later distributes a new change to both."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "switch_read_write_to_read_only_mid_session",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_SwitchReadWriteToReadOnlyMidSession"
+    ],
+    "rationale": "A peer switched to read-only mid-session still publishes its own new change but no longer accepts the peer's new change."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "switch_read_only_to_read_write_with_multiple_rounds",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_SwitchReadOnlyToReadWriteMultipleRounds"
+    ],
+    "rationale": "A read-only peer that ignored several rounds of changes receives all of them after switching to read-write and converges."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "toggle_read_only_multiple_times",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ToggleReadOnlyMultipleTimes"
+    ],
+    "rationale": "Toggling read-only on and off across rounds gates change acceptance correctly and converges once read-write."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "both_toggle_after_multiple_read_only_rounds",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_BothToggleAfterMultipleReadOnlyRounds"
+    ],
+    "rationale": "Both peers accumulate changes across read-only rounds and exchange all of them after both switch to read-write."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_merges_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_MergesCorrectly"
+    ],
+    "rationale": "Two forks each batch-create a distinct nested map; after merge both objects and their fields are present, verified against the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "multiple_batch_inserts",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_MultipleInserts"
+    ],
+    "rationale": "Three sequential batch-created maps each retain their scalar fields on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_into_existing_map",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_InsertIntoExistingMap"
+    ],
+    "rationale": "Batch-creating a nested map inside a populated map preserves the existing key and materializes the new nested values."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_put_overwrite_with_nested_structure",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_PutOverwriteWithNestedStructure"
+    ],
+    "rationale": "Overwriting a list element with a deeply nested map and child list keeps the sibling element and materializes the nested structure."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "splice_merges_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_SpliceMergesCorrectly"
+    ],
+    "rationale": "Concurrent hydrated splices into a shared list merge to length three with the shared element retained."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test_save_load_orphans.rs",
+    "name": "load_incremental_change_without_deps_throws",
+    "classification": "covered",
+    "localTests": [
+      "TestRustOrphans_LoadIncrementalChangeWithoutDepsThrows"
+    ],
+    "rationale": "Loading a bare change chunk whose dependencies are absent is rejected by both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_not_reply_if_we_have_no_data_after_first_round",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ShouldNotReplyIfNoDataAfterFirstRound"
+    ],
+    "rationale": "Two empty peers exchange a mandatory first message each, then fall silent once neither has anything to send."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_peer_concurrent_changes_during_sync",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ReadOnlyPeerConcurrentChanges"
+    ],
+    "rationale": "A read-only peer that commits a change mid-flight still publishes it to the read-write peer, which the read-only peer never consumes in return."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "marks_in_spans_cross_block_markers",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_MarksInSpansCrossBlockMarkers"
+    ],
+    "rationale": "A mark spanning text split by a block marker is reported as two marked text spans around the block, identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "test_mark_behavior_on_delete_insert",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_MarkBehaviorOnDeleteInsert"
+    ],
+    "rationale": "Deleting all marked text and inserting new text leaves the new text unmarked on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "spans_consolidates_marks_which_are_empty_due_to_deleted_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidateEmptyDueToDeletedMarks"
+    ],
+    "rationale": "Overlapping bold/italic marks partially removed consolidate into the expected three spans on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "spans_consolidates_marks_with_deleted_marks_followed_by_empty_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidateDeletedThenEmptyMarks"
+    ],
+    "rationale": "Marking then unmarking a leading range consolidates back to a single unmarked span on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "spans_consolidates_marks_with_empty_marks_followed_by_deleted_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidateEmptyThenDeletedMarks"
+    ],
+    "rationale": "Marking then unmarking a trailing range consolidates back to a single span on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "text_complex_block_properties",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_ComplexBlockProperties"
+    ],
+    "rationale": "A block populated with nested text and list properties materializes identical span block values on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "mark_created_after_insertion",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_MarkCreatedAfterInsertion"
+    ],
+    "rationale": "Two disjoint strong marks created after insertion produce identical spans on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "spans_are_consolidated_in_the_presence_of_zero_length_spans",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Zero-length marks do not fragment the span stream; both engines report a single consolidated text span."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "empty_marks_before_block_marker_dont_repeat_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_EmptyMarksBeforeBlockMarker"
+    ],
+    "rationale": "Empty marks and text inserted around block markers do not duplicate text; both engines report two block spans followed by a single text span."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "test_splice_with_mark",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpliceWithMark"
+    ],
+    "rationale": "Replacing text exactly at two mark boundaries preserves the expanding mark while dropping the non-expanding mark, matching upstream issue #935."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "get_marks_at_heads",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_GetMarksAtHeads"
+    ],
+    "rationale": "Marks active at a text index resolved at a historical frontier match the reference after the mark is later removed."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "inserting_text_near_deleted_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_InsertingTextNearDeletedMarks"
+    ],
+    "rationale": "Inserting text around ranges whose marked elements were deleted yields the same active marks as the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "removed_marks_should_not_appear_in_get_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_RemovedMarksNotInGetMarks"
+    ],
+    "rationale": "A mark removed by a null value does not appear in the active mark set on either engine."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_handle_lots_of_branching_and_merging",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_BranchingAndMerging"
+    ],
+    "rationale": "Two peers exchange many concurrent changes, a third peer's concurrent change is merged into one, and a final synchronization converges both peers to identical heads on both engines."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should support Date objects in maps",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativePreservesJavaScriptDataModel"
+    ],
+    "rationale": "A JavaScript Date stored in a map round-trips through the native Go engine and is re-read identically by JavaScript."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should support Date objects in lists",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativePreservesJavaScriptDataModel"
+    ],
+    "rationale": "A JavaScript Date stored in a list round-trips through the native Go engine and is re-read identically by JavaScript."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should allow dates from an existing document to be used in another document",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_DatesFlowBetweenDocuments"
+    ],
+    "rationale": "A JavaScript Date read from one document as a timestamp scalar is written into another document through the native engine and re-read as a Date by JavaScript, in both a map and a list."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "stats_smoke_test",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_StatsMatchReference"
+    ],
+    "rationale": "Two committed puts report two changes, two ops, and one actor identically on the native and reference engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "basic_test",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_Basic"
+    ],
+    "rationale": "Materializing a document with a scalar, nested map, list, and text produces the same ordered patch stream on the native and reference engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_deleted_ops_omitted",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_DeletedOpsOmitted"
+    ],
+    "rationale": "Deleted scalars, map keys, and list elements are omitted from the materialization patches identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_text_spliced",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_TextSpliced"
+    ],
+    "rationale": "Sequential text splices materialize as a single consolidated splice_text patch identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_counters",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_Counters"
+    ],
+    "rationale": "A counter with merged increments conflicting with a concurrent value materializes as a conflicted put of the summed counter on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_multiple_list_insertions",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_MultipleListInsertions"
+    ],
+    "rationale": "Multiple list insertions materialize as the same grouped insert patch on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_concurrent_insertions_at_same_index",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_ConcurrentInsertions"
+    ],
+    "rationale": "Concurrent insertions at the same index materialize in the same converged order on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_insert_objects",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_InsertObjects"
+    ],
+    "rationale": "Inserting an object into a list materializes the insert and the nested object's properties identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_insert_and_update",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_InsertAndUpdate"
+    ],
+    "rationale": "Inserting then overwriting list elements materializes the updated values identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_should_reverse_deletion_of_object_in_list_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_ReverseDeletionOfObjectInList"
+    ],
+    "rationale": "Diffing after a list-object deletion back to before re-inserts the object and materializes its text identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_should_reverse_deletion_of_object_in_map_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_ReverseDeletionOfObjectInMap"
+    ],
+    "rationale": "Diffing after a map-object deletion back to before re-puts the object and materializes its text identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_should_reverse_deletion_of_block_in_text_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_ReverseDeletionOfBlockInText"
+    ],
+    "rationale": "Diffing after a text-block deletion back to before re-inserts the block and materializes its properties identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "large_patches_in_lists_are_correct",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_LargePatchesInLists"
+    ],
+    "rationale": "A string list element counts as one index, so a run of 500 following objects is indexed identically in the native and reference diff patch streams."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should export RawString and isRawString for backwards compatibility",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should export a predicate to check if something is an immutablestring",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should treat any class which has the correct symbol as a ImmutableString",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "accepts strings as initial values, but treats them as an array of characters",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "Legacy JavaScript Text-as-array-of-characters proxy semantics; superseded by string text and specific to the JS binding."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back empty",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back flag",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back nothing",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back the assigned hasOwnProperty inside and outside change()",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back the assigned toString inside and outside change()",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back the assigned valueOf inside and outside change()",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back zero",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should respect `in` and Object.keys for hasOwnProperty",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should respect `in` and Object.keys for toString",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should respect `in` and Object.keys for valueOf",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "anonymize_test.ts",
+    "name": "returns a loadable document with anonymized data and matching history shape",
+    "classification": "covered",
+    "requirement": "interop-required",
+    "localTests": [
+      "TestEngineAnonymize_PreservesHistoryAndSource",
+      "TestConformance_AnonymizedDocumentLoadsAcrossEngines"
+    ],
+    "rationale": "Go anonymization preserves history shape while replacing identifying data, and the resulting document loads in both Rust and JavaScript."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize.rs",
+    "name": "anonymizes_data_while_preserving_history_and_shape",
+    "classification": "covered",
+    "requirement": "interop-required",
+    "localTests": [
+      "TestEngineAnonymize_PreservesHistoryAndSource",
+      "TestConformance_AnonymizedDocumentLoadsAcrossEngines"
+    ],
+    "rationale": "The Go API rewrites identifying history data without mutating the source, preserves causal and operation shape, and produces documents accepted by Rust and JavaScript."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize.rs",
+    "name": "repeated_numeric_values_receive_varied_replacements",
+    "classification": "covered",
+    "requirement": "interop-required",
+    "localTests": [
+      "TestAnonymization_RepeatedNumbersReceiveVariedReplacements"
+    ],
+    "rationale": "Anonymization replaces every numeric scalar independently while preserving its Automerge scalar kind."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize.rs",
+    "name": "structural_strings_are_seeded_unique_and_preserve_encoded_lengths",
+    "classification": "covered",
+    "requirement": "interop-required",
+    "localTests": [
+      "TestAnonymization_StructuralStringsPreserveShape"
+    ],
+    "rationale": "Structural keys and mark names are replaced through a per-run bijection that preserves UTF-8 and UTF-16 widths."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize/fuzz.rs",
+    "name": "randomized_documents_retain_their_shape",
+    "classification": "covered",
+    "requirement": "interop-required",
+    "localTests": [
+      "TestEngineAnonymize_PreservesHistoryAndSource"
+    ],
+    "rationale": "A branched, merged history with text and marks is anonymized and checked operation-by-operation for preserved causal and structural shape."
+  },
+  {
+    "source": "rust",
+    "file": "src/autocommit.rs",
+    "name": "test_autocommit_is_send",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "Rust Send auto-trait assertion for AutoCommit; a Rust concurrency property with no cross-engine meaning."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_combined_operations",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_create_list_and_insert",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_create_map_and_put",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_create_text_and_splice",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_conflicted_field",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_list_item",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_map_key",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_object",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_text_range",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_increment_counter",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_increment_counter_conflicted_by_non_counter",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_scoped_transaction_on_conflicted_register",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_splice_text_multiple_locations",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "bundle_fragments_roundtrips_through_load_incremental",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "bundle_size_is_independent_of_input_hash_order",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragment_deps_reference_known_hashes",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragment_id_and_level_consistent",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragments_cover_all_changes",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragments_filtered_by_levels",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragments_work_with_concurrent_actors",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "get_fragment_returns_loose_and_cached",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/hydrate/tests.rs",
+    "name": "simple_hydrate",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust hydrate::Value reader API; document hydration is covered via NewFrom and materialization. Rust-ergonomic reader, not cross-engine interop."
+  },
+  {
+    "source": "rust",
+    "file": "src/iter/doc.rs",
+    "name": "doc_iter",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust document-iterator API; document traversal is covered by current-state and value reads. Rust-ergonomic iterator, not cross-engine interop."
+  },
+  {
+    "source": "rust",
+    "file": "src/marks.rs",
+    "name": "from_query_state_strips_unmark_tombstones",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "empty_column",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "large_column_multi_slab",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "multiple_non_overlapping_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "nested_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "overlapping_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "rich_text_at_every_position",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "single_mark_span",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "undo_preserves_other_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "undo_removes_mark",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "undo_verify_every_position",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "switch_to_read_write_with_old_peer",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync/v1_compat_test/mod.rs",
+    "name": "sync_from_v1_to_v2",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync/v1_compat_test/mod.rs",
+    "name": "sync_from_v2_to_v1",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync/v1_compat_test/mod.rs",
+    "name": "sync_v1_to_v2_with_compressed_change",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "commit_with_options",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "empty_commit_returns_none_hash",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "get_heads_returns_pre_tx_heads",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "log_patches",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "nested_objects",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "owned_transaction_at",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "pending_ops",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "put_and_get_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "read_during_transaction",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_create_object_rejects_map_key_in_text",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_HydrateMatchesReference",
+      "TestDocument_HydrateRollback"
+    ],
+    "rationale": "Recursive map/list/text/scalar hydration, save/load, empty values, deep nesting, and rollback execute against native and Rust engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_scalar_fails",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust batch_create_object rejects a scalar target; the Go hydrate API intentionally accepts scalars via PutValue. API-shape contract, not cross-engine interop."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_with_transaction",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust explicit-transaction integration for batch insert; the batch result is covered elsewhere. Rust transaction-object API shape."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "load_rejects_historical_zero_width_mark_end_before_begin",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_LoadRejectsMarkEndBeforeBegin"
+    ],
+    "rationale": "The upstream malformed document fixture is loaded by both engines and both must reject its inverted mark operations."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "mark_within_single_multi_width_element_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "rescue_recovers_snapshot_from_historical_zero_width_mark_order",
+    "classification": "covered",
+    "requirement": "interop-required",
+    "localTests": [
+      "TestRescue_RecoversInvalidMarkOrderSnapshot"
+    ],
+    "rationale": "The Go rescue API recovers the same hydrated root value from the upstream malformed-mark fixture while strict loading continues to reject it."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "splice_scalar_into_marked_text",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises Rust Transactable::splice dispatch; Go exposes separate typed text and sequence mutation methods."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "splice_string_into_marked_text",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises Rust Transactable::splice dispatch; Go exposes separate typed text and sequence mutation methods."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "splice_text_at_length_over_conflicted_element_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "zero_width_mark_does_not_leak_to_later_text_object_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "zero_width_mark_on_empty_text_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "zero_width_unmark_on_empty_text_sync_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "applying_changes_with_patch_log_from_another_document_returns_error_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "bundle_with_mark_columns_decodes_from_fuzz_trace",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises the experimental Rust fragment and bundle API, which is not exposed by the Go package."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_exposes_list_object_when_conflict_winner_is_removed",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_from_integrated_to_isolated_heads_reconstructs_target",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_incremental_respects_isolated_heads_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_preserves_conflict_after_winning_value_is_deleted_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_spans_preserve_marks_on_inserted_text",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_spans_skip_losing_conflicting_text_overwrites",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_to_isolated_batch_created_text_applies_to_hydrated_value_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "doc_iter_spans_skip_losing_conflicting_text_overwrites_after_object_shift",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "duplicate_seq_number_changes_are_rejected",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "duplicate_seq_number_in_batch_change_aborts_whole_batch",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "duplicate_seq_number_within_incoming_batch_is_rejected",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "failed_merge_with_duplicate_sequence_number_does_not_corrupt_save_load",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_current_heads_after_interleaved_actor_changes",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_foreign_heads_errors_instead_of_panicking",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_preserves_text_encoding",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_rejects_edit_to_object_outside_isolation_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_with_increment_over_conflicted_counter_survives_save_load_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "historical_owned_transaction_omits_patches_for_unreachable_object_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "increment_patch_clears_resolved_map_conflict",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_counter_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_deep_text_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_diff_discards_edits_inside_deleted_map",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_list_conflict_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_load_preserves_text_encoding_for_all_change_chunk_types",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_patches_survive_nested_edit_and_list_shift_across_isolation",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_put_seq_in_text_applies_to_hydrated_value_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_sibling_text_diffs_survive_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_text_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "insert_into_replaced_text_run_with_trailing_zero_width_unmark_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "load_incremental_into_empty_doc_preserves_utf8_text_encoding",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_patches_clear_conflict_after_losing_list_value_is_deleted_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_patches_include_text_element_update_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_patches_replace_multi_character_string_in_text_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "owned_transaction_with_patch_log_from_another_document_does_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "patches_expose_surviving_conflict_after_deleting_other_branch_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "queued_change_does_not_collide_with_later_local_change",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "queued_orphan_need_does_not_block_unrelated_sync_response",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_QuiescesWithOrphanedChange",
+      "TestRustSync_AllowSimultaneousMessages"
+    ],
+    "rationale": "Orphaned changes and unrelated simultaneous sync traffic are exercised to quiescence."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "queued_orphan_with_conflicting_actor_seq_rejects_incoming_batch",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "reverse_diff_of_replaced_lists_applies_to_hydrated_value_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "rollback_after_save_load_of_deep_hydrated_root_map_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "round_trip_change_with_extra_bytes",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_JavaScriptPreservesGoChanges",
+      "TestConformance_NativeParsesJavaScriptChange"
+    ],
+    "rationale": "Cross-language change parsing and byte preservation cover opaque trailing change data."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "should_reload_document_containing_deflated_columns",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CompressedDocCols"
+    ],
+    "rationale": "Compressed document columns are saved, loaded, and compared against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "spans_match_text_after_merge_of_conflicting_text_overwrites_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_at_with_patch_log_from_another_document_does_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_insert_hidden_scalar_into_utf8_text_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_mark_at_normalized_utf8_indexes",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_replace_multi_character_string_in_text_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_split_block_at_normalized_utf8_index",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_with_patch_log_from_another_document_does_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "unmark_at_end_of_remotely_inserted_conflicted_scalar_in_text_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "update_text_after_marking_text_with_hidden_scalar",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autocommit.rs",
+    "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::commit_with (line 683)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autocommit.rs",
+    "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff (line 238)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autocommit.rs",
+    "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff_incremental (line 334)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autoserde.rs",
+    "name": "automerge/src/autoserde.rs - autoserde::AutoSerde (line 9)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/patches/patch_log.rs",
+    "name": "automerge/src/patches/patch_log.rs - patches::patch_log::PatchLog (line 29)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/document.rs",
+    "name": "automerge/src/storage/document.rs - storage::document::Document<'a>::parse (line 55)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse (line 17)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse (line 56)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse (line 69)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse::Input<'a>::split (line 264)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse::Split::remaining (line 325)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse::range_of (line 561)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/sync.rs",
+    "name": "automerge/src/sync.rs - sync (line 25)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/transaction/manual_transaction.rs",
+    "name": "automerge/src/transaction/manual_transaction.rs - transaction::manual_transaction::Transaction<'_>::commit_with (line 77)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
+  },
+  {
+    "source": "rust-doc",
+    "file": "unknown",
+    "name": "automerge/src/lib.rs - (line 117)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "unknown",
+    "name": "automerge/src/lib.rs - (line 147)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  }
+]
