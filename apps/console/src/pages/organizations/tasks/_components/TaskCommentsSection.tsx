@@ -18,16 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { Suspense } from "react";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskCommentsSection_task$key } from "#/__generated__/core/TaskCommentsSection_task.graphql";
 
-import { taskCommentsSection } from "../variants";
-
 import { TaskCommentsList } from "./TaskCommentsList";
+import { TaskCommentsSectionSkeleton } from "./TaskCommentsSectionSkeleton";
 
 const taskCommentsSectionFragment = graphql`
   fragment TaskCommentsSection_task on Task {
@@ -39,19 +36,6 @@ interface TaskCommentsSectionProps {
   taskKey: TaskCommentsSection_task$key;
 }
 
-function TaskCommentsSectionFallback() {
-  const { root, header } = taskCommentsSection();
-
-  return (
-    <div className={root()}>
-      <div className={header()}>
-        <HeadingSkeleton size={4} className="w-32" />
-      </div>
-      <ListSkeleton count={2} />
-    </div>
-  );
-}
-
 export function TaskCommentsSection({ taskKey }: TaskCommentsSectionProps) {
   const task = useFragment(taskCommentsSectionFragment, taskKey);
 
@@ -60,7 +44,7 @@ export function TaskCommentsSection({ taskKey }: TaskCommentsSectionProps) {
   }
 
   return (
-    <Suspense fallback={<TaskCommentsSectionFallback />}>
+    <Suspense fallback={<TaskCommentsSectionSkeleton />}>
       <TaskCommentsList />
     </Suspense>
   );

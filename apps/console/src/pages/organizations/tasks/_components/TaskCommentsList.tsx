@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { List } from "@probo/ui/src/v2/List/List";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
@@ -62,7 +61,7 @@ const taskCommentsListFragment = graphql`
       edges {
         node {
           id
-          ...TaskCommentListItem_comment
+          ...TaskCommentListItem_taskComment
         }
       }
     }
@@ -84,7 +83,7 @@ function TaskCommentsListContent({ taskKey }: TaskCommentsListContentProps) {
     TaskCommentsListRefetchQuery,
     TaskCommentsList_comments$key
   >(taskCommentsListFragment, taskKey);
-  const { root, header, actions } = taskCommentsSection();
+  const { root, header, actions, list } = taskCommentsSection();
   const comments = task.comments.edges.map(edge => edge.node);
 
   return (
@@ -111,14 +110,14 @@ function TaskCommentsListContent({ taskKey }: TaskCommentsListContentProps) {
       {comments.length === 0
         ? <TaskCommentsEmpty />
         : (
-            <List>
+            <ul className={list()}>
               {comments.map(comment => (
                 <TaskCommentListItem
                   key={comment.id}
                   taskCommentKey={comment}
                 />
               ))}
-            </List>
+            </ul>
           )}
       {task.canCreateComment && <TaskCommentForm />}
     </div>

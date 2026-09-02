@@ -62,7 +62,7 @@ export function useCreateTask() {
   async function createTask(
     input: {
       name: string;
-      description?: string | null;
+      content?: string | null;
       state?: TaskState;
       priority: TaskPriority;
       measureId?: string | null;
@@ -83,7 +83,7 @@ export function useCreateTask() {
         input: {
           organizationId,
           name: input.name,
-          description: input.description || null,
+          content: input.content || null,
           state: input.state,
           priority: input.priority,
           measureId,

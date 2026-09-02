@@ -65,7 +65,7 @@ func TestTask_Create(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"measureId":      measureID,
 			"name":           "Owner Task",
-			"description":    "Created by owner",
+			"content":        factory.ProseMirrorPlainText("Created by owner"),
 			"priority":       "MEDIUM",
 		},
 	}, &result)
@@ -115,7 +115,7 @@ func TestTask_CreateWithoutMeasure(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"name":           "Task without measure",
-			"description":    "Created without a measure",
+			"content":        factory.ProseMirrorPlainText("Created without a measure"),
 			"priority":       "HIGH",
 		},
 	}, &result)
@@ -133,7 +133,7 @@ func TestTask_Update(t *testing.T) {
 	measureID := factory.NewMeasure(owner).Create()
 	taskID := factory.NewTask(owner, measureID).
 		WithName("Task to Update").
-		WithDescription("Original description").
+		WithContent("Original description").
 		Create()
 
 	query := `
@@ -158,9 +158,9 @@ func TestTask_Update(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"taskId":      taskID,
-			"name":        "Updated by Owner",
-			"description": "Owner updated this",
+			"taskId":  taskID,
+			"name":    "Updated by Owner",
+			"content": factory.ProseMirrorPlainText("Owner updated this"),
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -433,7 +433,7 @@ func TestTask_SubResolvers(t *testing.T) {
 					... on Task {
 						id
 						name
-						description
+						content
 						state
 					}
 				}
@@ -442,10 +442,10 @@ func TestTask_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID          string  `json:"id"`
-				Name        string  `json:"name"`
-				Description *string `json:"description"`
-				State       string  `json:"state"`
+				ID      string  `json:"id"`
+				Name    string  `json:"name"`
+				Content *string `json:"content"`
+				State   string  `json:"state"`
 			} `json:"node"`
 		}
 
@@ -579,7 +579,7 @@ func TestTask_InvalidID(t *testing.T) {
 	})
 }
 
-func TestTask_OmittableDescription(t *testing.T) {
+func TestTask_OmittableContent(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -589,16 +589,16 @@ func TestTask_OmittableDescription(t *testing.T) {
 
 	taskID := factory.NewTask(owner, measureID).
 		WithName("Description Test Task").
-		WithDescription("Initial description").
+		WithContent("Initial description").
 		Create()
 
-	t.Run("set description", func(t *testing.T) {
+	t.Run("set content", func(t *testing.T) {
 		query := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
 					task {
 						id
-						description
+						content
 					}
 				}
 			}
@@ -607,30 +607,30 @@ func TestTask_OmittableDescription(t *testing.T) {
 		var result struct {
 			UpdateTask struct {
 				Task struct {
-					ID          string  `json:"id"`
-					Description *string `json:"description"`
+					ID      string  `json:"id"`
+					Content *string `json:"content"`
 				} `json:"task"`
 			} `json:"updateTask"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"taskId":      taskID,
-				"description": "Updated description",
+				"taskId":  taskID,
+				"content": factory.ProseMirrorPlainText("Updated description"),
 			},
 		}, &result)
 		require.NoError(t, err)
-		require.NotNil(t, result.UpdateTask.Task.Description)
-		assert.Equal(t, "Updated description", *result.UpdateTask.Task.Description)
+		require.NotNil(t, result.UpdateTask.Task.Content)
+		factory.AssertProseMirrorPlainText(t, "Updated description", *result.UpdateTask.Task.Content)
 	})
 
-	t.Run("clear description with null", func(t *testing.T) {
+	t.Run("clear content with null", func(t *testing.T) {
 		query := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
 					task {
 						id
-						description
+						content
 					}
 				}
 			}
@@ -639,24 +639,23 @@ func TestTask_OmittableDescription(t *testing.T) {
 		var result struct {
 			UpdateTask struct {
 				Task struct {
-					ID          string  `json:"id"`
-					Description *string `json:"description"`
+					ID      string `json:"id"`
+					Content string `json:"content"`
 				} `json:"task"`
 			} `json:"updateTask"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"taskId":      taskID,
-				"description": nil,
+				"taskId":  taskID,
+				"content": nil,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Nil(t, result.UpdateTask.Task.Description)
+		factory.AssertProseMirrorPlainText(t, "", result.UpdateTask.Task.Content)
 	})
 
-	t.Run("update without description preserves value", func(t *testing.T) {
-		// First set a description
+	t.Run("update without content preserves value", func(t *testing.T) {
 		setQuery := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
@@ -669,20 +668,19 @@ func TestTask_OmittableDescription(t *testing.T) {
 
 		err := owner.Execute(setQuery, map[string]any{
 			"input": map[string]any{
-				"taskId":      taskID,
-				"description": "Should persist",
+				"taskId":  taskID,
+				"content": factory.ProseMirrorPlainText("Should persist"),
 			},
 		}, nil)
 		require.NoError(t, err)
 
-		// Update only name
 		query := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
 					task {
 						id
 						name
-						description
+						content
 					}
 				}
 			}
@@ -691,9 +689,9 @@ func TestTask_OmittableDescription(t *testing.T) {
 		var result struct {
 			UpdateTask struct {
 				Task struct {
-					ID          string  `json:"id"`
-					Name        string  `json:"name"`
-					Description *string `json:"description"`
+					ID      string  `json:"id"`
+					Name    string  `json:"name"`
+					Content *string `json:"content"`
 				} `json:"task"`
 			} `json:"updateTask"`
 		}
@@ -705,8 +703,8 @@ func TestTask_OmittableDescription(t *testing.T) {
 			},
 		}, &result)
 		require.NoError(t, err)
-		require.NotNil(t, result.UpdateTask.Task.Description)
-		assert.Equal(t, "Should persist", *result.UpdateTask.Task.Description)
+		require.NotNil(t, result.UpdateTask.Task.Content)
+		factory.AssertProseMirrorPlainText(t, "Should persist", *result.UpdateTask.Task.Content)
 	})
 }
 

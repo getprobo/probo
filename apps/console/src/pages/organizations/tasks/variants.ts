@@ -66,10 +66,7 @@ export const taskNameField = tv({
 export const taskDescriptionSection = tv({
   slots: {
     root: "min-w-0",
-    textarea: [
-      "w-full field-sizing-content resize-none overflow-hidden border-0 bg-transparent p-0 text-2 text-sand-12 outline-none",
-      "placeholder:text-sand-a9",
-    ],
+    editor: "min-h-40",
   },
 });
 
@@ -84,6 +81,9 @@ export const taskCommentsSection = tv({
     root: "flex min-w-0 flex-col gap-3",
     header: "flex items-center justify-between gap-3",
     actions: "flex justify-end",
+    list: "flex flex-col gap-4",
+    titleSkeleton: "w-32",
+    itemSkeleton: "h-24 animate-pulse rounded-2 bg-sand-3",
   },
 });
 
@@ -101,17 +101,28 @@ export const taskCommentForm = tv({
   },
 });
 
+export const taskCommentEditor = tv({
+  base: [
+    "flex-none! overflow-visible! bg-sand-1! py-3! pr-3! pl-14! shadow-2!",
+    "[&_.tiptap>p:first-child]:mt-0",
+  ],
+});
+
 export const taskCommentListItem = tv({
   slots: {
-    header: "flex flex-wrap items-baseline gap-x-2 gap-y-0.5",
-    description: "whitespace-pre-wrap wrap-break-word",
+    root: "flex flex-col gap-2",
+    header: "flex items-center gap-2",
+    meta: "flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5",
+    content: "min-w-0",
   },
 });
 
 export const createTaskDialog = tv({
   slots: {
-    form: "flex flex-col gap-4",
-    fields: "flex flex-col gap-4",
+    form: "flex h-full min-h-0 flex-1 flex-col gap-4",
+    fields: "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto",
+    descriptionField: "flex min-h-0 flex-1 flex-col",
+    editor: "min-h-80 py-3! [&_.tiptap]:min-h-full [&_.tiptap>p:first-child]:mt-0",
     value: "flex items-center gap-2",
   },
 });

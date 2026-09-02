@@ -21,17 +21,24 @@
 package types
 
 import (
+	"fmt"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 )
 
 func NewTask(t *coredata.Task) *Task {
+	content, err := richTextToMarkdown(t.Content)
+	if err != nil {
+		panic(fmt.Errorf("cannot convert task content to markdown: %w", err))
+	}
+
 	return &Task{
 		ID:             t.ID,
 		OrganizationID: t.OrganizationID,
 		MeasureID:      t.MeasureID,
 		Name:           t.Name,
-		Description:    t.Description,
+		Content:        content,
 		State:          t.State,
 		Priority:       t.Priority,
 		Rank:           t.Rank,

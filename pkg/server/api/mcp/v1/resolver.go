@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -86,6 +87,38 @@ func markdownToProseMirrorJSON(markdown string) (string, error) {
 	}
 
 	return string(out), nil
+}
+
+func optionalMarkdownToProseMirrorJSON(markdown *string) (*string, error) {
+	if markdown == nil || strings.TrimSpace(*markdown) == "" {
+		return nil, nil
+	}
+
+	converted, err := markdownToProseMirrorJSON(*markdown)
+	if err != nil {
+		return nil, err
+	}
+
+	return &converted, nil
+}
+
+func omittableMarkdownToProseMirrorJSON(field **string) (**string, error) {
+	if field == nil || *field == nil {
+		return field, nil
+	}
+
+	if strings.TrimSpace(**field) == "" {
+		cleared := (*string)(nil)
+
+		return &cleared, nil
+	}
+
+	converted, err := markdownToProseMirrorJSON(**field)
+	if err != nil {
+		return nil, err
+	}
+
+	return optionalPtr(&converted), nil
 }
 
 func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action, opts ...authz.AuthorizeFuncOption) (*coredata.Scope, error) {

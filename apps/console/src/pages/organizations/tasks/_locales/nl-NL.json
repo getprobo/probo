@@ -4,7 +4,6 @@
     "empty": "—",
     "none": "Geen",
     "noDescription": "Geen beschrijving",
-    "descriptionPlaceholder": "Voeg een beschrijving toe",
     "unassigned": "Niet toegewezen",
     "fields": {
       "name": "Naam",
@@ -58,14 +57,15 @@
     },
     "errors": {
       "delete": "Verwijderen van taak mislukt",
-      "update": "Bijwerken van taak mislukt"
+      "update": "Bijwerken van taak mislukt",
+      "content": "Deze beschrijving kon niet worden weergegeven"
     },
     "comments": {
       "title": "Opmerkingen",
       "empty": "Nog geen opmerkingen",
-      "placeholder": "Voeg een opmerking toe",
       "fields": {
-        "description": "Opmerking"
+        "comment": "Opmerking",
+        "leaveAComment": "Laat een opmerking achter"
       },
       "actions": {
         "submit": "Opmerking toevoegen",
@@ -79,12 +79,16 @@
       },
       "messages": {
         "created": "Opmerking succesvol toegevoegd.",
+        "updated": "Opmerking succesvol bijgewerkt.",
         "deleted": "Opmerking succesvol verwijderd."
       },
       "errors": {
         "create": "Toevoegen van opmerking mislukt",
+        "update": "Bijwerken van opmerking mislukt",
         "delete": "Verwijderen van opmerking mislukt",
-        "descriptionRequired": "Voer een opmerking in"
+        "content": "Deze opmerking kon niet worden weergegeven",
+        "contentRequired": "Voer een opmerking in",
+        "contentTooLong": "Opmerking mag maximaal {{max}} tekens bevatten"
       }
     }
   },

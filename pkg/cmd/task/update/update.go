@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const updateMutation = `
@@ -56,7 +57,7 @@ type updateResponse struct {
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagName         string
-		flagDescription  string
+		flagContent      string
 		flagState        string
 		flagPriority     string
 		flagTimeEstimate string
@@ -96,8 +97,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["name"] = flagName
 			}
 
-			if cmd.Flags().Changed("description") {
-				input["description"] = flagDescription
+			if cmd.Flags().Changed("content") {
+				if flagContent == "" {
+					input["content"] = nil
+				} else {
+					input["content"] = prosemirror.FromPlainText(flagContent)
+				}
 			}
 
 			if cmd.Flags().Changed("state") {
@@ -166,7 +171,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "Task description")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")

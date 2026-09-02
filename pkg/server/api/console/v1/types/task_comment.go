@@ -78,8 +78,8 @@ func NewTaskComment(c *coredata.TaskComment) *TaskComment {
 		Owner: &Profile{
 			ID: c.OwnerID,
 		},
-		Description: c.Description,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
+		Content:   c.Content,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
 	}
 }

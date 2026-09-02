@@ -265,6 +265,84 @@ export async function proboApiMultipartRequest(
 	}
 }
 
+export function plainTextToProseMirrorJSON(text: string): string {
+	return JSON.stringify({
+		type: 'doc',
+		content: text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map((line) => ({
+			type: 'paragraph',
+			...(line ? { content: [{ type: 'text', text: line }] } : {}),
+		})),
+	});
+}
+
+type ProseMirrorNode = {
+	type?: string;
+	text?: string;
+	content?: ProseMirrorNode[];
+};
+
+function isProseMirrorNode(value: unknown): value is ProseMirrorNode {
+	return typeof value === 'object' && value !== null;
+}
+
+function collectPlainText(node: ProseMirrorNode): string {
+	if (node.type === 'text') {
+		return node.text ?? '';
+	}
+
+	if (node.type === 'hardBreak' || node.type === 'horizontalRule') {
+		return '\n';
+	}
+
+	const inner = (node.content ?? []).map(collectPlainText).join('');
+
+	switch (node.type) {
+		case 'paragraph':
+		case 'heading':
+		case 'codeBlock':
+			return `${inner}\n`;
+		default:
+			return inner;
+	}
+}
+
+// GraphQL stores task/comment bodies as ProseMirror JSON. n8n create/update
+// accept plaintext, so reads convert that JSON back to text (one paragraph
+// per line), matching MCP's human-readable content field.
+export function proseMirrorJSONToPlainText(json: unknown): string {
+	if (typeof json !== 'string') {
+		return '';
+	}
+
+	if (json.trim() === '') {
+		return '';
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(json);
+	} catch {
+		return json;
+	}
+
+	if (!isProseMirrorNode(parsed) || parsed.type !== 'doc') {
+		return json;
+	}
+
+	return collectPlainText(parsed).replace(/\n+$/, '');
+}
+
+export function withPlainTextContent(value: IDataObject): IDataObject {
+	if (typeof value.content !== 'string') {
+		return value;
+	}
+
+	return {
+		...value,
+		content: proseMirrorJSONToPlainText(value.content),
+	};
+}
+
 export function toPeriod(
 	start?: string | null,
 	end?: string | null,

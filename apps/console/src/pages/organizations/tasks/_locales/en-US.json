@@ -4,7 +4,6 @@
     "empty": "—",
     "none": "None",
     "noDescription": "No description",
-    "descriptionPlaceholder": "Add a description",
     "unassigned": "Unassigned",
     "fields": {
       "name": "Name",
@@ -58,14 +57,15 @@
     },
     "errors": {
       "delete": "Failed to delete task",
-      "update": "Failed to update task"
+      "update": "Failed to update task",
+      "content": "Could not display this description"
     },
     "comments": {
       "title": "Comments",
       "empty": "No comments yet",
-      "placeholder": "Add a comment",
       "fields": {
-        "description": "Comment"
+        "comment": "Comment",
+        "leaveAComment": "Leave a comment"
       },
       "actions": {
         "submit": "Add comment",
@@ -79,12 +79,16 @@
       },
       "messages": {
         "created": "Comment added successfully.",
+        "updated": "Comment updated successfully.",
         "deleted": "Comment deleted successfully."
       },
       "errors": {
         "create": "Failed to add comment",
+        "update": "Failed to update comment",
         "delete": "Failed to delete comment",
-        "descriptionRequired": "Enter a comment"
+        "content": "Could not display this comment",
+        "contentRequired": "Enter a comment",
+        "contentTooLong": "Comment must be at most {{max}} characters"
       }
     }
   },

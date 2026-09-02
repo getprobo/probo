@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 
 import type { PropsWithChildren } from "react";
-import { tv } from "tailwind-variants";
+import { tv } from "tailwind-variants/lite";
 
 const menuButtonVariants = tv({
   base: [
@@ -26,6 +26,7 @@ export function MenuButton({ children, active, onClick }: PropsWithChildren<Menu
   return (
     <button
       type="button"
+      onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       className={menuButtonVariants({ active })}
     >
