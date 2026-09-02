@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.224.0] - 2026-09-02
+
+### Added
+
+- `task comment create`, `list`, `view`, `update`, and `delete` manage description-only comments on a task, owned by a membership profile (the author by default)
+
 ## [0.223.0] - 2026-09-01
 
 ### Added
