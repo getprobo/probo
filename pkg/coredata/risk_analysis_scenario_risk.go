@@ -270,3 +270,35 @@ WHERE
 
 	return count, nil
 }
+
+func (srs *RiskAnalysisScenarioRisks) DeleteByOrganizationID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+DELETE FROM risk_analysis_scenario_risks
+WHERE
+	%s
+	AND risk_id IN (
+		SELECT id
+		FROM risks
+		WHERE
+			%s
+			AND organization_id = @organization_id
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete risk analysis scenario risks: %w", err)
+	}
+
+	return nil
+}

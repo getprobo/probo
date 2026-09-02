@@ -30,6 +30,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
@@ -306,6 +307,29 @@ ON CONFLICT DO NOTHING
 		return err
 	})
 	require.NoError(t, err, "test setup: cannot inject cross-tenant third party administrator")
+}
+
+func RequireFileSoftDeleted(t *testing.T, fileID string) {
+	t.Helper()
+
+	var deletedAt *time.Time
+
+	err := test.PGClient(t).WithConn(
+		context.Background(),
+		func(ctx context.Context, conn pg.Querier) error {
+			return conn.QueryRow(
+				ctx,
+				`
+SELECT deleted_at
+FROM files
+WHERE id = $1
+`,
+				fileID,
+			).Scan(&deletedAt)
+		},
+	)
+	require.NoError(t, err, "cannot load file deleted_at")
+	require.NotNil(t, deletedAt, "file %s must be soft-deleted", fileID)
 }
 
 func CreateFramework(c *testutil.Client, attrs ...Attrs) string {

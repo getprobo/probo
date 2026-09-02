@@ -926,6 +926,10 @@ func (s *OrganizationService) DeleteOrganization(ctx context.Context, organizati
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
+			if err := deleteOrganizationDependencies(ctx, tx, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot delete organization dependencies: %w", err)
+			}
+
 			err = organization.Delete(ctx, tx, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot delete organization: %w", err)
@@ -934,6 +938,84 @@ func (s *OrganizationService) DeleteOrganization(ctx context.Context, organizati
 			return nil
 		},
 	)
+}
+
+func deleteOrganizationDependencies(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) error {
+	// These tables restrict deleting a membership profile that still owns
+	// them, or a risk that is still linked to a scenario. They must be
+	// removed before organizations cascade-deletes those rows.
+	if err := new(coredata.TreatmentPlanEvents).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete treatment plan events: %w", err)
+	}
+
+	if err := new(coredata.TreatmentPlans).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete treatment plans: %w", err)
+	}
+
+	if err := new(coredata.RiskAnalysisScenarioRisks).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete risk analysis scenario risks: %w", err)
+	}
+
+	if err := new(coredata.DocumentVersionApprovalDecisions).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete document version approval decisions: %w", err)
+	}
+
+	if err := new(coredata.DocumentVersionSignatures).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete document version signatures: %w", err)
+	}
+
+	if err := new(coredata.ThirdPartyAdministrators).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete third party administrators: %w", err)
+	}
+
+	if err := new(coredata.Assets).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete assets: %w", err)
+	}
+
+	if err := new(coredata.Data).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete data: %w", err)
+	}
+
+	if err := new(coredata.Devices).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete devices: %w", err)
+	}
+
+	if err := new(coredata.Obligations).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete obligations: %w", err)
+	}
+
+	if err := new(coredata.ProcessingActivities).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete processing activities: %w", err)
+	}
+
+	if err := new(coredata.StatementsOfApplicability).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete statements of applicability: %w", err)
+	}
+
+	if err := new(coredata.AiSystems).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete ai systems: %w", err)
+	}
+
+	if err := new(coredata.BusinessFunctions).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete business functions: %w", err)
+	}
+
+	if err := new(coredata.Findings).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete findings: %w", err)
+	}
+
+	// files.organization_id has no foreign key, so they cannot cascade
+	// from the organization delete.
+	if err := new(coredata.Files).SoftDeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot soft delete files: %w", err)
+	}
+
+	return nil
 }
 
 func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Scoper, req *CreateUserRequest) (*coredata.MembershipProfile, error) {

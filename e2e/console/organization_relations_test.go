@@ -35,25 +35,34 @@ import (
 // covered here.
 
 type organizationRelationGraph struct {
-	orgID                string
-	ownerProfileID       string
-	contextProduct       string
-	frameworkID          string
-	controlID            string
-	measureID            string
-	taskID               string
-	soaID                string
-	assetID              string
-	datumID              string
-	documentID           string
-	auditID              string
-	findingID            string
-	processingActivityID string
-	compliancePortalID   string
-	thirdPartyID         string
-	riskID               string
-	riskAnalysisID       string
-	riskScenarioID       string
+	orgID                  string
+	ownerProfileID         string
+	contextProduct         string
+	frameworkID            string
+	controlID              string
+	measureID              string
+	taskID                 string
+	soaID                  string
+	assetID                string
+	datumID                string
+	documentID             string
+	auditID                string
+	findingID              string
+	processingActivityID   string
+	compliancePortalID     string
+	thirdPartyID           string
+	riskID                 string
+	riskAnalysisID         string
+	riskScenarioID         string
+	treatmentPlanID        string
+	obligationID           string
+	aiSystemID             string
+	businessFunctionID     string
+	deviceID               string
+	cookieBannerID         string
+	accessReviewSourceID   string
+	accessReviewCampaignID string
+	logoFileID             string
 }
 
 func populateOrganizationRelationGraph(
@@ -84,6 +93,7 @@ func populateOrganizationRelationGraph(
 	}, &struct{}{})
 	require.NoError(t, err)
 
+	g.logoFileID = createOrganizationRelationLogo(t, owner)
 	g.frameworkID = factory.NewFramework(owner).
 		WithName(marker + " framework").
 		Create()
@@ -112,6 +122,13 @@ func populateOrganizationRelationGraph(
 	g.documentID = factory.NewDocument(owner).
 		WithTitle(marker + " document").
 		Create()
+	approveTestDocument(t, owner, g.documentID)
+	requestDocumentSignature(
+		t,
+		owner,
+		latestDocumentVersionID(t, owner, g.documentID),
+		g.ownerProfileID,
+	)
 	g.auditID = factory.NewAudit(owner, g.frameworkID).
 		WithName(marker + " audit").
 		Create()
@@ -125,7 +142,10 @@ func populateOrganizationRelationGraph(
 	)
 	g.thirdPartyID = factory.CreateThirdParty(
 		owner,
-		factory.Attrs{"name": marker + " third party"},
+		factory.Attrs{
+			"name":             marker + " third party",
+			"administratorIds": []string{g.ownerProfileID},
+		},
 	)
 	g.riskID = factory.NewRisk(owner).
 		WithName(marker + " risk").
@@ -145,8 +165,97 @@ func populateOrganizationRelationGraph(
 		scopeID,
 		factory.Attrs{"name": marker + " scenario"},
 	)
+	factory.LinkRiskAnalysisScenarioRisk(owner, g.riskScenarioID, g.riskID)
+	g.treatmentPlanID = factory.CreateTreatmentPlan(
+		owner,
+		g.riskID,
+		g.riskAnalysisID,
+		factory.Attrs{"ownerId": g.ownerProfileID},
+	)
+	g.obligationID = createOrganizationRelationObligation(
+		t,
+		owner,
+		g.ownerProfileID,
+		marker+" obligation",
+	)
+	g.aiSystemID = createOrganizationRelationAiSystem(
+		t,
+		owner,
+		g.ownerProfileID,
+		marker+" ai system",
+	)
+	g.businessFunctionID = createOrganizationRelationBusinessFunction(
+		t,
+		owner,
+		g.ownerProfileID,
+		marker+" business function",
+	)
+	g.deviceID = createOrganizationRelationDevice(t, owner, g.ownerProfileID)
+	g.cookieBannerID = factory.NewCookieBanner(owner).
+		WithName(marker + " banner").
+		Create()
+	g.accessReviewSourceID = factory.NewAccessReviewSource(owner, g.orgID).
+		WithName(marker + " source").
+		Create()
+	g.accessReviewCampaignID = factory.NewAccessReviewCampaign(owner, g.orgID).
+		WithName(marker + " campaign").
+		WithAccessReviewSourceIDs([]string{g.accessReviewSourceID}).
+		Create()
 
 	return g
+}
+
+func createOrganizationRelationLogo(t *testing.T, owner *testutil.Client) string {
+	t.Helper()
+
+	pngContent := []byte{
+		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+		0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+		0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+		0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+		0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41,
+		0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+		0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
+		0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+		0x42, 0x60, 0x82,
+	}
+
+	var result struct {
+		UpdateOrganization struct {
+			Organization struct {
+				Logo *struct {
+					ID string `json:"id"`
+				} `json:"logo"`
+			} `json:"organization"`
+		} `json:"updateOrganization"`
+	}
+
+	err := owner.ExecuteConnectWithFile(
+		`
+			mutation($input: UpdateOrganizationInput!) {
+				updateOrganization(input: $input) {
+					organization { logo { id } }
+				}
+			}
+		`,
+		map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"logoFile":       nil,
+			},
+		},
+		"input.logoFile",
+		testutil.UploadFile{
+			Filename:    "org-relations-logo.png",
+			ContentType: "image/png",
+			Content:     pngContent,
+		},
+		&result,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, result.UpdateOrganization.Organization.Logo)
+
+	return result.UpdateOrganization.Organization.Logo.ID
 }
 
 func createOrganizationRelationAsset(
@@ -227,6 +336,151 @@ func createOrganizationRelationFinding(
 	return result.CreateFinding.FindingEdge.Node.ID
 }
 
+func createOrganizationRelationObligation(
+	t *testing.T,
+	owner *testutil.Client,
+	ownerProfileID, requirement string,
+) string {
+	t.Helper()
+
+	var result struct {
+		CreateObligation struct {
+			ObligationEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"obligationEdge"`
+		} `json:"createObligation"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateObligationInput!) {
+			createObligation(input: $input) {
+				obligationEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"requirement":    requirement,
+			"status":         "NON_COMPLIANT",
+			"type":           "LEGAL",
+			"ownerId":        ownerProfileID,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result.CreateObligation.ObligationEdge.Node.ID
+}
+
+func createOrganizationRelationAiSystem(
+	t *testing.T,
+	owner *testutil.Client,
+	ownerProfileID, name string,
+) string {
+	t.Helper()
+
+	var result struct {
+		CreateAiSystem struct {
+			AiSystemEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"aiSystemEdge"`
+		} `json:"createAiSystem"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateAiSystemInput!) {
+			createAiSystem(input: $input) {
+				aiSystemEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId":     owner.GetOrganizationID().String(),
+			"name":               name,
+			"status":             "ACTIVE",
+			"riskClassification": "MINIMAL",
+			"ownerId":            ownerProfileID,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result.CreateAiSystem.AiSystemEdge.Node.ID
+}
+
+func createOrganizationRelationBusinessFunction(
+	t *testing.T,
+	owner *testutil.Client,
+	ownerProfileID, name string,
+) string {
+	t.Helper()
+
+	var result struct {
+		CreateBusinessFunction struct {
+			BusinessFunctionEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"businessFunctionEdge"`
+		} `json:"createBusinessFunction"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateBusinessFunctionInput!) {
+			createBusinessFunction(input: $input) {
+				businessFunctionEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"name":           name,
+			"classification": "CRITICAL",
+			"mtdMinutes":     240,
+			"rtoMinutes":     120,
+			"rpoMinutes":     60,
+			"ownerId":        ownerProfileID,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result.CreateBusinessFunction.BusinessFunctionEdge.Node.ID
+}
+
+func createOrganizationRelationDevice(
+	t *testing.T,
+	owner *testutil.Client,
+	ownerProfileID string,
+) string {
+	t.Helper()
+
+	var result struct {
+		CreateDevice struct {
+			Device struct {
+				ID string `json:"id"`
+			} `json:"device"`
+		} `json:"createDevice"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateDeviceInput!) {
+			createDevice(input: $input) {
+				device { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"ownerId":        ownerProfileID,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result.CreateDevice.Device.ID
+}
+
 func TestOrganization_Relations(t *testing.T) {
 	t.Parallel()
 
@@ -243,6 +497,7 @@ func TestOrganization_Relations(t *testing.T) {
 		{name: "AuditsFindings", run: orgRelationsAuditsFindings},
 		{name: "PrivacyPortalThirdParties", run: orgRelationsPrivacyPortalThirdParties},
 		{name: "RiskPortfolio", run: orgRelationsRiskPortfolio},
+		{name: "OwnedPrivacyAndReviews", run: orgRelationsOwnedPrivacyAndReviews},
 	}
 
 	for _, tc := range cases {
@@ -280,6 +535,9 @@ func orgRelationsContextProfilesPermission(
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"profiles"`
+			Logo *struct {
+				ID string `json:"id"`
+			} `json:"logo"`
 			CanCreateFramework bool `json:"canCreateFramework"`
 			CanListRisks       bool `json:"canListRisks"`
 		} `json:"node"`
@@ -301,6 +559,7 @@ func orgRelationsContextProfilesPermission(
 						totalCount
 						edges { node { id } }
 					}
+					logo { id }
 					canCreateFramework: permission(action: "core:framework:create")
 					canListRisks: permission(action: "risk-management:risk:list")
 				}
@@ -321,6 +580,8 @@ func orgRelationsContextProfilesPermission(
 
 	profileIDs := collectRelationNodeIDs(result.Node.Profiles.Edges)
 	assert.True(t, profileIDs[g.ownerProfileID], "profiles must include owner membership")
+	require.NotNil(t, result.Node.Logo)
+	assert.Equal(t, g.logoFileID, result.Node.Logo.ID)
 	assert.True(t, result.Node.CanCreateFramework)
 	assert.True(t, result.Node.CanListRisks)
 }
@@ -858,4 +1119,144 @@ func orgRelationsRiskPortfolio(
 	require.NoError(t, err)
 	assert.Equal(t, g.orgID, riskReverse.Node.Organization.ID)
 	assert.True(t, riskReverse.Node.CanUpdate)
+}
+
+func orgRelationsOwnedPrivacyAndReviews(
+	t *testing.T,
+	owner *testutil.Client,
+	g organizationRelationGraph,
+) {
+	var result struct {
+		Node struct {
+			Obligations struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"obligations"`
+			BusinessFunctions struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"businessFunctions"`
+			AiSystems struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"aiSystems"`
+			Devices struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"devices"`
+			TreatmentPlans struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"treatmentPlans"`
+			CookieBanners struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"cookieBanners"`
+			AccessReviewSources struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accessReviewSources"`
+			AccessReviewCampaigns struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accessReviewCampaigns"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					obligations(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+					businessFunctions(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+					aiSystems(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+					devices(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+					treatmentPlans(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+					cookieBanners(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+					accessReviewSources(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+					accessReviewCampaigns(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": g.orgID}, &result)
+	require.NoError(t, err)
+
+	assert.GreaterOrEqual(t, result.Node.Obligations.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.Obligations.Edges)[g.obligationID])
+	assert.GreaterOrEqual(t, result.Node.BusinessFunctions.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.BusinessFunctions.Edges)[g.businessFunctionID])
+	assert.GreaterOrEqual(t, result.Node.AiSystems.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.AiSystems.Edges)[g.aiSystemID])
+	assert.GreaterOrEqual(t, result.Node.Devices.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.Devices.Edges)[g.deviceID])
+	assert.GreaterOrEqual(t, result.Node.TreatmentPlans.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.TreatmentPlans.Edges)[g.treatmentPlanID])
+	assert.GreaterOrEqual(t, result.Node.CookieBanners.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.CookieBanners.Edges)[g.cookieBannerID])
+	assert.GreaterOrEqual(t, result.Node.AccessReviewSources.TotalCount, 1)
+	assert.True(
+		t,
+		collectRelationNodeIDs(result.Node.AccessReviewSources.Edges)[g.accessReviewSourceID],
+	)
+	assert.GreaterOrEqual(t, result.Node.AccessReviewCampaigns.TotalCount, 1)
+	assert.True(
+		t,
+		collectRelationNodeIDs(result.Node.AccessReviewCampaigns.Edges)[g.accessReviewCampaignID],
+	)
 }

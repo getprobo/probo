@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -147,4 +148,76 @@ func TestOrganization_Get(t *testing.T) {
 
 	assert.Equal(t, owner.GetOrganizationID().String(), result.Node.ID)
 	assert.NotEmpty(t, result.Node.Name)
+}
+
+func TestOrganization_Delete(t *testing.T) {
+	t.Parallel()
+
+	const deleteMutation = `
+		mutation DeleteOrganization($input: DeleteOrganizationInput!) {
+			deleteOrganization(input: $input) {
+				deletedOrganizationId
+			}
+		}
+	`
+
+	t.Run("owner can delete an organization with related records", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		orgID := owner.GetOrganizationID().String()
+
+		graph := populateOrganizationRelationGraph(t, owner)
+
+		var result struct {
+			DeleteOrganization struct {
+				DeletedOrganizationID string `json:"deletedOrganizationId"`
+			} `json:"deleteOrganization"`
+		}
+
+		err := owner.ExecuteConnect(deleteMutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": orgID,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, orgID, result.DeleteOrganization.DeletedOrganizationID)
+		factory.RequireFileSoftDeleted(t, graph.logoFileID)
+
+		err = owner.ExecuteConnectShouldFail(`
+			query GetOrganization($id: ID!) {
+				node(id: $id) {
+					... on Organization {
+						id
+					}
+				}
+			}
+		`, map[string]any{"id": orgID})
+		require.Error(t, err)
+	})
+
+	t.Run("admin cannot delete", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+
+		err := admin.ExecuteConnectShouldFail(deleteMutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+			},
+		})
+		testutil.RequireForbiddenError(t, err)
+	})
+
+	t.Run("viewer cannot delete", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+		err := viewer.ExecuteConnectShouldFail(deleteMutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+			},
+		})
+		testutil.RequireForbiddenError(t, err)
+	})
 }
