@@ -18,62 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package console_v1
+package mcp_v1
 
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
-	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
-	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
-
-func newAWSConnectorSetup(setup cloudaws.ConnectorSetup) *types.AWSConnectorSetup {
-	return &types.AWSConnectorSetup{
-		Issuer:                       setup.Issuer,
-		Audience:                     setup.Audience,
-		Subject:                      setup.Subject,
-		SuggestedRoleName:            setup.SuggestedRoleName,
-		TerraformSnippet:             setup.TerraformSnippet,
-		CloudFormationQuickCreateURL: setup.CloudFormationQuickCreateURL,
-	}
-}
-
-func newGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *types.GCPConnectorSetup {
-	return &types.GCPConnectorSetup{
-		Issuer:                      setup.Issuer,
-		Audience:                    setup.Audience,
-		Subject:                     setup.Subject,
-		SuggestedServiceAccountName: setup.SuggestedServiceAccountName,
-		TerraformSnippet:            setup.TerraformSnippet,
-	}
-}
 
 func (r *Resolver) workloadIdentitySettings(
 	ctx context.Context,
-	input types.CreateWorkloadIdentityConnectorInput,
+	input *types.CreateWorkloadIdentityConnectorInput,
 ) ([]byte, error) {
 	raw, err := probo.MarshalWorkloadIdentitySettings(
 		probo.WorkloadIdentitySettingsInput{
 			Provider:                    input.Provider,
-			AWSRoleARN:                  ref.UnrefOrZero(input.AWSRoleArn),
-			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GCPWorkloadIdentityProvider),
-			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GCPServiceAccountEmail),
+			AWSRoleARN:                  ref.UnrefOrZero(input.AwsRoleArn),
+			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GcpWorkloadIdentityProvider),
+			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GcpServiceAccountEmail),
 		},
 	)
 	if err != nil {
 		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
 			r.logger.ErrorCtx(ctx, "cannot marshal workload identity connector settings", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, fmt.Errorf("internal server error")
 		}
 
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, err
 	}
 
 	return raw, nil

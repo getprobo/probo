@@ -1,0 +1,44 @@
+{
+  "createGcpAccessReviewSourcePage": {
+    "pageTitle": "Connecter GCP",
+    "title": "Connecter GCP",
+    "description": "Déployez le compte de service d’audit. Saisissez ensuite la ressource du fournisseur et l’e-mail du compte de service.",
+    "permissionDenied": "Vous n’avez pas la permission de créer des sources d’accès.",
+    "fields": {
+      "workloadIdentityProvider": "Fournisseur d’identité de charge de travail",
+      "serviceAccountEmail": "E-mail du compte de service",
+      "issuer": "Émetteur",
+      "audience": "Audience",
+      "subject": "Sujet",
+      "workloadIdentityProviderPlaceholder": "projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com"
+    },
+    "messages": {
+      "copyFailed": "Échec de la copie",
+      "copied": "Copié dans le presse-papiers",
+      "copiedIssuer": "Émetteur copié.",
+      "copiedAudience": "Audience copiée.",
+      "copiedSubject": "Sujet copié.",
+      "copiedTerraform": "Extrait Terraform copié.",
+      "error": "Erreur",
+      "success": "Succès",
+      "created": "Source d’accès créée avec succès."
+    },
+    "errors": {
+      "workloadIdentityProvider": "Saisissez une ressource de fournisseur d’identité de charge de travail valide.",
+      "serviceAccountEmail": "Saisissez un e-mail de compte de service valide.",
+      "create": "Échec de la création du connecteur. Vérifiez la ressource du fournisseur et l’e-mail du compte de service, puis réessayez.",
+      "disconnected": "Probo n’a pas pu usurper le compte de service d’audit. Vérifiez que le module est appliqué dans ce projet et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration.",
+      "delete": "Impossible de supprimer le connecteur. Réessayez.",
+      "source": "Échec de la création de la source d’accès",
+      "copy": "Copiez la valeur manuellement."
+    },
+    "actions": {
+      "copy": "Copier",
+      "connect": "Connecter",
+      "back": "Retour",
+      "installViaTerraform": "Installer via Terraform",
+      "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
+    }
+  }
+}

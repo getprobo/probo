@@ -52,6 +52,30 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
+		displayName: 'Provider',
+		name: 'provider',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['create'],
+			},
+		},
+		options: [
+			{
+				name: 'AWS',
+				value: 'AWS',
+			},
+			{
+				name: 'GCP',
+				value: 'GCP',
+			},
+		],
+		default: 'AWS',
+		description: 'Cloud provider for the workload-identity connector',
+		required: true,
+	},
+	{
 		displayName: 'AWS Role ARN',
 		name: 'awsRoleArn',
 		type: 'string',
@@ -59,10 +83,41 @@ export const description: INodeProperties[] = [
 			show: {
 				resource: ['accessReviewSource'],
 				operation: ['create'],
+				provider: ['AWS'],
 			},
 		},
 		default: '',
 		description: 'IAM role ARN, including partition, account, and role name',
+		required: true,
+	},
+	{
+		displayName: 'GCP Workload Identity Provider',
+		name: 'gcpWorkloadIdentityProvider',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['create'],
+				provider: ['GCP'],
+			},
+		},
+		default: '',
+		description: 'Workload identity provider resource',
+		required: true,
+	},
+	{
+		displayName: 'GCP Service Account Email',
+		name: 'gcpServiceAccountEmail',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['create'],
+				provider: ['GCP'],
+			},
+		},
+		default: '',
+		description: 'Service account email to impersonate',
 		required: true,
 	},
 ];
@@ -73,7 +128,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
-	const awsRoleArn = this.getNodeParameter('awsRoleArn', itemIndex) as string;
+	const provider = this.getNodeParameter('provider', itemIndex) as string;
 
 	const createConnectorQuery = `
 		mutation CreateWorkloadIdentityConnector($input: CreateWorkloadIdentityConnectorInput!) {
@@ -91,9 +146,21 @@ export async function execute(
 
 	const connectorInput: Record<string, string> = {
 		organizationId,
-		provider: 'AWS',
-		awsRoleArn,
+		provider,
 	};
+
+	if (provider === 'GCP') {
+		connectorInput.gcpWorkloadIdentityProvider = this.getNodeParameter(
+			'gcpWorkloadIdentityProvider',
+			itemIndex,
+		) as string;
+		connectorInput.gcpServiceAccountEmail = this.getNodeParameter(
+			'gcpServiceAccountEmail',
+			itemIndex,
+		) as string;
+	} else {
+		connectorInput.awsRoleArn = this.getNodeParameter('awsRoleArn', itemIndex) as string;
+	}
 
 	const connectorResponse = await proboApiRequest.call(this, createConnectorQuery, {
 		input: connectorInput,

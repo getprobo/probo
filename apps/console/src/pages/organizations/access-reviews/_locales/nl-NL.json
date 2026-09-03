@@ -1,0 +1,44 @@
+{
+  "createGcpAccessReviewSourcePage": {
+    "pageTitle": "GCP verbinden",
+    "title": "GCP verbinden",
+    "description": "Implementeer het audit-serviceaccount. Voer daarna de providerresource en het e-mailadres van het serviceaccount in.",
+    "permissionDenied": "U heeft geen rechten om toegangsbronnen aan te maken.",
+    "fields": {
+      "workloadIdentityProvider": "Workload Identity-provider",
+      "serviceAccountEmail": "E-mailadres van serviceaccount",
+      "issuer": "Uitgever",
+      "audience": "Audience",
+      "subject": "Subject",
+      "workloadIdentityProviderPlaceholder": "projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com"
+    },
+    "messages": {
+      "copyFailed": "Kopiëren mislukt",
+      "copied": "Gekopieerd naar klembord",
+      "copiedIssuer": "Uitgever gekopieerd.",
+      "copiedAudience": "Audience gekopieerd.",
+      "copiedSubject": "Subject gekopieerd.",
+      "copiedTerraform": "Terraform-fragment gekopieerd.",
+      "error": "Fout",
+      "success": "Succes",
+      "created": "Toegangsbron succesvol aangemaakt."
+    },
+    "errors": {
+      "workloadIdentityProvider": "Voer een geldige Workload Identity-providerresource in.",
+      "serviceAccountEmail": "Voer een geldig e-mailadres van een serviceaccount in.",
+      "create": "Aanmaken van de connector mislukt. Controleer de providerresource en het e-mailadres van het serviceaccount en probeer het opnieuw.",
+      "disconnected": "Probo kon het audit-serviceaccount niet impersoneren. Controleer of de module in dit project is toegepast en of de issuer en het subject overeenkomen met de waarden die tijdens de installatie zijn getoond.",
+      "delete": "Kan de connector niet verwijderen. Probeer het opnieuw.",
+      "source": "Aanmaken van toegangsbron mislukt",
+      "copy": "Kopieer de waarde handmatig."
+    },
+    "actions": {
+      "copy": "Kopiëren",
+      "connect": "Verbinden",
+      "back": "Terug",
+      "installViaTerraform": "Installeren via Terraform",
+      "chooseAnotherInstallMethod": "Kies een andere installatiemethode"
+    }
+  }
+}

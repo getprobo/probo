@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -109,6 +110,7 @@ type (
 		// IdentityFederationIssuer is nil when identity federation is disabled.
 		IdentityFederationIssuer *identityfederation.Issuer
 		AWSConnectorInstall      cloudaws.ConnectorInstallConfig
+		GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 	}
 
 	MCPConfig struct {
@@ -272,6 +274,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ITAM,
 			cfg.IdentityFederationIssuer,
 			cfg.AWSConnectorInstall,
+			cfg.GCPConnectorInstall,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -305,6 +308,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.BaseURL,
 			cfg.IdentityFederationIssuer,
 			cfg.AWSConnectorInstall,
+			cfg.GCPConnectorInstall,
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),

@@ -24,11 +24,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"testing"
 
 	"github.com/aws/smithy-go"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/googleapi"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -105,6 +107,15 @@ func TestProbeFailureCodeIsSafeToLog(t *testing.T) {
 	)
 	assert.Equal(t, "aws_AccessDenied", awsCode)
 	assert.NotContains(t, awsCode, "123456789012")
+
+	// A GCP status and reason are fixed identifiers, so they are reported;
+	// the message around them, which can name a service-account email, is not.
+	gcpCode := accessreview.ProbeFailureCode(
+		gcpImpersonationDenied(http.StatusForbidden, "forbidden"),
+	)
+	assert.Equal(t, "gcp_403_forbidden", gcpCode)
+	assert.NotContains(t, gcpCode, "iam.gserviceaccount.com")
+	assert.Equal(t, "gcp_403", accessreview.ProbeFailureCode(gcpImpersonationDenied(http.StatusForbidden, "")))
 }
 
 // nilMatchingError reports a match while assigning a nil value, which is what
@@ -184,6 +195,9 @@ func TestIsProviderVerdict(t *testing.T) {
 	// A workload identity connector is answered by STS through the SDK, so an
 	// AWS API error is the provider's verdict, not a Probo failure.
 	assert.True(t, accessreview.IsProviderVerdict(fmt.Errorf("cannot reach aws account: %w", &smithy.GenericAPIError{Code: "AccessDenied", Message: "not authorized"})))
+	assert.True(t, accessreview.IsProviderVerdict(gcpImpersonationDenied(http.StatusForbidden, "forbidden")))
+	assert.True(t, accessreview.IsProviderVerdict(gcpImpersonationDenied(http.StatusBadRequest, "")))
+	assert.False(t, accessreview.IsProviderVerdict(gcpImpersonationDenied(http.StatusInternalServerError, "")))
 
 	// Probo never got as far as asking. Defaulting these to "ours" keeps a
 	// settings decode or a request we could not build in the error budget,
@@ -205,4 +219,40 @@ func TestIsProviderVerdict(t *testing.T) {
 	assert.False(t, accessreview.IsProviderVerdict(
 		&url.Error{Op: "parse", URL: "://bad", Err: errors.New("missing protocol scheme")},
 	))
+}
+
+func TestIsProbeOperationRefused_GCPImpersonationDenied(t *testing.T) {
+	t.Parallel()
+
+	denied := accessreview.NewProbeError(
+		coredata.ConnectorProviderGCP,
+		gcpImpersonationDenied(http.StatusForbidden, "forbidden"),
+	)
+	assert.True(t, accessreview.IsProbeOperationRefused(denied))
+
+	rejected := accessreview.NewProbeError(
+		coredata.ConnectorProviderGCP,
+		gcpImpersonationDenied(http.StatusBadRequest, ""),
+	)
+	assert.False(t, accessreview.IsProbeOperationRefused(rejected))
+}
+
+func gcpImpersonationDenied(status int, reason string) error {
+	const email = "ci@my-project.iam.gserviceaccount.com"
+
+	message := "Permission 'iam.serviceAccounts.getAccessToken' denied on resource " +
+		"'projects/-/serviceAccounts/" + email + "' (or it may not exist)."
+
+	apiErr := &googleapi.Error{
+		Code:    status,
+		Message: message,
+	}
+	if reason != "" {
+		apiErr.Errors = []googleapi.ErrorItem{{Reason: reason, Message: message}}
+	}
+
+	return fmt.Errorf(
+		"cannot reach gcp project: %w",
+		fmt.Errorf("cannot impersonate gcp service account: %w", apiErr),
+	)
 }

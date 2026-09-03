@@ -18,15 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, ThirdPartyLogo } from "@probo/ui";
+import { ThirdPartyLogo } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useNavigate } from "react-router";
 
 import type { AccessReviewSourceProviderListItem_provider$key } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
 
-import { ActionSplitButton } from "../../_components/ActionSplitButton";
+import {
+  ActionSplitButton,
+  type ActionSplitButtonAction,
+} from "../../_components/ActionSplitButton";
 import { APIKeyConnectorDialog } from "../../dialogs/_components/APIKeyConnectorDialog";
 import { ClientCredentialsConnectorDialog } from "../../dialogs/_components/ClientCredentialsConnectorDialog";
 import { ConnectorDocumentationLink } from "../../dialogs/_components/ConnectorDocumentationLink";
@@ -38,7 +40,11 @@ import {
   connectOAuthProvider,
   connectProviderProtocol,
 } from "../../dialogs/_lib/connectorSettings";
-import { type ConnectMethod, connectMethods } from "../_lib/connectMethods";
+import {
+  type ConnectMethod,
+  connectMethods,
+  workloadIdentityPath,
+} from "../_lib/connectMethods";
 
 import { accessReviewSourceSection } from "./variants";
 
@@ -81,7 +87,6 @@ export function AccessReviewSourceProviderListItem({
   connectionId,
 }: AccessReviewSourceProviderListItemProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const provider = useFragment(
     accessReviewSourceProviderListItemFragment,
     providerKey,
@@ -103,8 +108,13 @@ export function AccessReviewSourceProviderListItem({
     = supportsOAuth && provider.provider === "DATADOG";
   const supportsZendeskOAuth
     = supportsOAuth && provider.provider === "ZENDESK";
-  const isComingSoon = provider.provider === "GCP";
-  const methods = connectMethods(provider);
+  const methods = connectMethods({
+    configuredProtocols: provider.configuredProtocols,
+    apiKeySupported: provider.apiKeySupported,
+    apiKeyManaged: provider.apiKeyManaged,
+    clientCredentialsSupported: provider.clientCredentialsSupported,
+    workloadIdentitySupported: provider.workloadIdentitySupported,
+  });
 
   const connectWithOAuth = () => {
     if (provider.provider === "DATADOG") {
@@ -120,7 +130,7 @@ export function AccessReviewSourceProviderListItem({
     }
   };
 
-  const connect = (method: ConnectMethod) => {
+  const connect = (method: Exclude<ConnectMethod, "WORKLOAD_IDENTITY">) => {
     switch (method) {
       case "OAUTH2":
         connectWithOAuth();
@@ -138,18 +148,23 @@ export function AccessReviewSourceProviderListItem({
           method,
         );
         break;
-      case "WORKLOAD_IDENTITY":
-        void navigate(
-          `/organizations/${organizationId}/access-reviews/connections/new/aws-workload-identity`,
-        );
-        break;
     }
   };
-  const actions = methods.map(method => ({
-    id: method,
-    label: t(connectMethodActionLabelKey[method]),
-    onSelect: () => connect(method),
-  }));
+  const actions = methods.flatMap((method): ActionSplitButtonAction[] => {
+    const label = t(connectMethodActionLabelKey[method]);
+    if (method === "WORKLOAD_IDENTITY") {
+      const to = workloadIdentityPath(organizationId, provider.provider);
+      if (!to) {
+        return [];
+      }
+      return [{ id: method, label, to }];
+    }
+    return [{
+      id: method,
+      label,
+      onSelect: () => connect(method),
+    }];
+  });
 
   return (
     <li className={item()}>
@@ -164,22 +179,14 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        {isComingSoon
-          ? (
-              <Badge variant="info">
-                {t("accessReviewConnectionsPage.comingSoon")}
-              </Badge>
-            )
-          : (
-              <ActionSplitButton
-                actions={actions}
-                chooseAnotherMethodLabel={t(
-                  "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
-                )}
-              />
-            )}
+        <ActionSplitButton
+          actions={actions}
+          chooseAnotherMethodLabel={t(
+            "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
+          )}
+        />
       </div>
-      {!isComingSoon && supportsAPIKey && (
+      {supportsAPIKey && (
         <APIKeyConnectorDialog
           providerKey={activeDialog === "apiKey" ? provider : null}
           organizationId={organizationId}
@@ -188,7 +195,7 @@ export function AccessReviewSourceProviderListItem({
           onSuccess={() => setActiveDialog(null)}
         />
       )}
-      {!isComingSoon && provider.clientCredentialsSupported && (
+      {provider.clientCredentialsSupported && (
         <ClientCredentialsConnectorDialog
           providerKey={activeDialog === "clientCredentials" ? provider : null}
           organizationId={organizationId}
@@ -197,14 +204,14 @@ export function AccessReviewSourceProviderListItem({
           onSuccess={() => setActiveDialog(null)}
         />
       )}
-      {!isComingSoon && supportsDatadogOAuth && (
+      {supportsDatadogOAuth && (
         <DatadogConnectDialog
           providerKey={activeDialog === "datadog" ? provider : null}
           organizationId={organizationId}
           onClose={() => setActiveDialog(null)}
         />
       )}
-      {!isComingSoon && supportsZendeskOAuth && (
+      {supportsZendeskOAuth && (
         <ZendeskConnectDialog
           providerKey={activeDialog === "zendesk" ? provider : null}
           organizationId={organizationId}

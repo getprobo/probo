@@ -18,60 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties } from 'n8n-workflow';
-import * as createOp from './create.operation';
-import * as getAllOp from './getAll.operation';
-import * as setupAwsOp from './setupAws.operation';
-import * as setupGcpOp from './setupGcp.operation';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Operation',
-		name: 'operation',
-		type: 'options',
-		noDataExpression: true,
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['accessReviewSource'],
+				operation: ['setupGcp'],
 			},
 		},
-		options: [
-			{
-				name: 'Create',
-				value: 'create',
-				description: 'Create a workload-identity access source',
-				action: 'Create an access review source',
-			},
-			{
-				name: 'Get Many',
-				value: 'getAll',
-				description: 'Get many access review sources',
-				action: 'Get many access review sources',
-			},
-			{
-				name: 'Setup AWS',
-				value: 'setupAws',
-				description: 'Get AWS access source setup values',
-				action: 'Get AWS access source setup',
-			},
-			{
-				name: 'Setup GCP',
-				value: 'setupGcp',
-				description: 'Get GCP access source setup values',
-				action: 'Get GCP access source setup',
-			},
-		],
-		default: 'getAll',
+		default: '',
+		description: 'The ID of the organization',
+		required: true,
 	},
-	...createOp.description,
-	...getAllOp.description,
-	...setupAwsOp.description,
-	...setupGcpOp.description,
 ];
 
-export {
-	createOp as create,
-	getAllOp as getAll,
-	setupAwsOp as setupAws,
-	setupGcpOp as setupGcp,
-};
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+
+	const query = `
+		query GcpConnectorSetup($organizationId: ID!) {
+			gcpConnectorSetup(organizationId: $organizationId) {
+				issuer
+				audience
+				subject
+				suggestedServiceAccountName
+				terraformSnippet
+			}
+		}
+	`;
+
+	const responseData = await proboApiRequest.call(this, query, { organizationId });
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
+}

@@ -24,11 +24,13 @@ import {
   DropdownItem,
   IconChevronDown,
 } from "@probo/ui";
+import { Link } from "react-router";
 
 export interface ActionSplitButtonAction {
   id: string;
   label: string;
   href?: string;
+  to?: string;
   onSelect?: () => void;
 }
 
@@ -48,33 +50,9 @@ export function ActionSplitButton({
 
   const splitClassName
     = alternativeActions.length > 0 ? "rounded-r-none" : undefined;
-  const preferredButton = preferredAction.href
-    ? (
-        <Button
-          type="button"
-          variant="primary"
-          className={splitClassName}
-          asChild
-        >
-          <a
-            href={preferredAction.href}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {preferredAction.label}
-          </a>
-        </Button>
-      )
-    : (
-        <Button
-          type="button"
-          variant="primary"
-          className={splitClassName}
-          onClick={preferredAction.onSelect}
-        >
-          {preferredAction.label}
-        </Button>
-      );
+  const preferredButton = (
+    <ActionButton action={preferredAction} className={splitClassName} />
+  );
 
   if (alternativeActions.length === 0) {
     return preferredButton;
@@ -96,25 +74,76 @@ export function ActionSplitButton({
         )}
       >
         {alternativeActions.map(action => (
-          action.href
-            ? (
-                <DropdownItem key={action.id} asChild>
-                  <a
-                    href={action.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {action.label}
-                  </a>
-                </DropdownItem>
-              )
-            : (
-                <DropdownItem key={action.id} onSelect={action.onSelect}>
-                  {action.label}
-                </DropdownItem>
-              )
+          <ActionMenuItem key={action.id} action={action} />
         ))}
       </Dropdown>
     </div>
+  );
+}
+
+function ActionButton({
+  action,
+  className,
+}: {
+  action: ActionSplitButtonAction;
+  className?: string;
+}) {
+  if (action.to) {
+    return (
+      <Button variant="primary" className={className} asChild>
+        <Link to={action.to}>{action.label}</Link>
+      </Button>
+    );
+  }
+  if (action.href) {
+    return (
+      <Button variant="primary" className={className} asChild>
+        <a
+          href={action.href}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {action.label}
+        </a>
+      </Button>
+    );
+  }
+  return (
+    <Button
+      type="button"
+      variant="primary"
+      className={className}
+      onClick={action.onSelect}
+    >
+      {action.label}
+    </Button>
+  );
+}
+
+function ActionMenuItem({ action }: { action: ActionSplitButtonAction }) {
+  if (action.to) {
+    return (
+      <DropdownItem asChild>
+        <Link to={action.to}>{action.label}</Link>
+      </DropdownItem>
+    );
+  }
+  if (action.href) {
+    return (
+      <DropdownItem asChild>
+        <a
+          href={action.href}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {action.label}
+        </a>
+      </DropdownItem>
+    );
+  }
+  return (
+    <DropdownItem onSelect={action.onSelect}>
+      {action.label}
+    </DropdownItem>
   );
 }

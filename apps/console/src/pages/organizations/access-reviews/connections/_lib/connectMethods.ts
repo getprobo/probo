@@ -18,7 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ConnectorProtocol } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
+import type {
+  ConnectorProtocol,
+  ConnectorProvider,
+} from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
 
 export type ConnectMethod = ConnectorProtocol | "CLIENT_CREDENTIALS";
 
@@ -62,4 +65,19 @@ export function connectMethods({
   }
 
   return connectMethodPreference.filter(method => supportedMethods.has(method));
+}
+
+const workloadIdentitySlugByProvider = {
+  AWS: "aws-workload-identity",
+  GCP: "gcp-workload-identity",
+} as const;
+
+export function workloadIdentityPath(
+  organizationId: string,
+  provider: ConnectorProvider,
+): string | undefined {
+  if (provider !== "AWS" && provider !== "GCP") {
+    return undefined;
+  }
+  return `/organizations/${organizationId}/access-reviews/connections/new/${workloadIdentitySlugByProvider[provider]}`;
 }
