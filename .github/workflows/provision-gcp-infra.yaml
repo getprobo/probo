@@ -1,0 +1,70 @@
+name: "Provision GCP Infra (Postgres + GCS)"
+
+# Applies contrib/terraform/gcp-probo-infra: the Cloud SQL Postgres
+# instance, GCS bucket, HMAC key, and the two Secret Manager secrets that
+# deploy-gcp.yaml reads at deploy time. Manual trigger only, on purpose —
+# this touches a stateful database, so it must never run implicitly on a
+# push the way the app deploy does.
+#
+# See contrib/terraform/gcp-probo-infra/README.md for the one-time bootstrap
+# (enabling APIs, creating the Terraform state bucket) that has to happen
+# before the first run.
+#
+# Required secrets (beyond GCP_SA_KEY / GCP_PROJECT_ID, shared with
+# deploy-gcp.yaml): TF_STATE_BUCKET, GCP_REGION, GCS_BUCKET_NAME
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Terraform action"
+        type: choice
+        options: [plan, apply]
+        default: plan
+
+permissions:
+  contents: "read"
+
+jobs:
+  terraform:
+    name: "terraform-${{ inputs.action }}"
+    runs-on: "ubuntu-latest"
+    environment: production
+    defaults:
+      run:
+        working-directory: "contrib/terraform/gcp-probo-infra"
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+
+      - uses: "hashicorp/setup-terraform@v3"
+
+      - name: "Resolve deploy service account email"
+        id: sa
+        run: |
+          EMAIL=$(echo '${{ secrets.GCP_SA_KEY }}' | jq -r .client_email)
+          echo "::add-mask::${EMAIL}"
+          echo "email=${EMAIL}" >> "$GITHUB_OUTPUT"
+
+      - name: "Terraform init"
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="prefix=probo-infra"
+
+      - name: "Terraform ${{ inputs.action }}"
+        env:
+          TF_VAR_project_id: "${{ secrets.GCP_PROJECT_ID }}"
+          TF_VAR_region: "${{ secrets.GCP_REGION }}"
+          TF_VAR_bucket_name: "${{ secrets.GCS_BUCKET_NAME }}"
+          TF_VAR_deploy_service_account_email: "${{ steps.sa.outputs.email }}"
+        run: |
+          if [ "${{ inputs.action }}" = "apply" ]; then
+            terraform apply -auto-approve
+          else
+            terraform plan
+          fi

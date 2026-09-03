@@ -13,8 +13,13 @@ name: "Deploy to GCP (GKE)"
 #
 # Required repository/environment secrets:
 #   GCP_SA_KEY              service account JSON key (Artifact Registry
-#                           writer, Cloud Build editor, GKE developer)
+#                           writer, Cloud Build editor, GKE developer, and
+#                           the Secret Manager + Cloud SQL/Storage viewer
+#                           roles provision-gcp-infra.yaml grants it)
 #   GCP_PROJECT_ID          GCP project id
+#   GCP_REGION              region the Postgres instance and GCS bucket live
+#                           in (set by provision-gcp-infra.yaml)
+#   GCS_BUCKET_NAME         the bucket name given to provision-gcp-infra.yaml
 #   GKE_CLUSTER             GKE cluster name
 #   GKE_CLUSTER_LOCATION    GKE cluster region (regional cluster) or zone
 #   GAR_LOCATION            Artifact Registry location, e.g. us-central1
@@ -24,19 +29,22 @@ name: "Deploy to GCP (GKE)"
 #   PROBO_PASSWORD_PEPPER   openssl rand -base64 32
 #   PROBO_TRUST_TOKEN_SECRET  openssl rand -base64 32
 #   PROBO_OAUTH2_SIGNING_KEY  PEM RSA private key (openssl genpkey ...)
-#   POSTGRES_HOST / POSTGRES_DATABASE / POSTGRES_USERNAME / POSTGRES_PASSWORD
-#   S3_BUCKET / S3_REGION / S3_ENDPOINT / S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY
-#     (GCS via its S3-compatible XML API: endpoint
-#     https://storage.googleapis.com, HMAC keys from `gcloud storage hmac
-#     keys create`)
 #   SMTP_ADDR / SMTP_USER / SMTP_PASSWORD
 #
 # Optional (added only when set):
 #   OPENAI_API_KEY, ANTHROPIC_API_KEY
 #
-# Prerequisites this workflow does not create: the GKE cluster, the
-# Artifact Registry Docker repo named "probo" in GAR_LOCATION, the Cloud
-# SQL/PostgreSQL instance, and the GCS bucket + HMAC key.
+# Not required anymore: POSTGRES_HOST/PASSWORD and S3_ACCESS_KEY_ID/
+# S3_SECRET_ACCESS_KEY used to be manually-copied secrets. They're now
+# resolved at deploy time straight from the infrastructure that
+# provision-gcp-infra.yaml (contrib/terraform/gcp-probo-infra) creates —
+# the DB host and HMAC access key are looked up with gcloud, the DB
+# password and HMAC secret key are read from Secret Manager. Run that
+# workflow first; see contrib/terraform/gcp-probo-infra/README.md.
+#
+# Prerequisites this workflow does not create: the GKE cluster and the
+# Artifact Registry Docker repo named "probo" in GAR_LOCATION. The Postgres
+# instance and GCS bucket come from provision-gcp-infra.yaml, not this one.
 
 on:
   push:
@@ -154,6 +162,33 @@ jobs:
       - name: "Install Helm"
         uses: "azure/setup-helm@v4"
 
+      - name: "Resolve Postgres/GCS connection details"
+        id: infra
+        env:
+          PROJECT: "${{ secrets.GCP_PROJECT_ID }}"
+        run: |
+          # These come from contrib/terraform/gcp-probo-infra, applied by
+          # provision-gcp-infra.yaml — nothing here creates them. Resource
+          # names (instance, service account, secret ids) must match that
+          # module's defaults.
+          DB_HOST=$(gcloud sql instances describe probo-db \
+            --project "$PROJECT" --format="value(ipAddresses[0].ipAddress)")
+          DB_PASSWORD=$(gcloud secrets versions access latest \
+            --secret=probo-db-password --project "$PROJECT")
+          S3_ACCESS_KEY_ID=$(gcloud storage hmac keys list \
+            --service-account="probo-storage@${PROJECT}.iam.gserviceaccount.com" \
+            --project "$PROJECT" --format="value(accessId)" --limit=1)
+          S3_SECRET_ACCESS_KEY=$(gcloud secrets versions access latest \
+            --secret=probo-s3-hmac-secret --project "$PROJECT")
+
+          echo "::add-mask::${DB_PASSWORD}"
+          echo "::add-mask::${S3_SECRET_ACCESS_KEY}"
+
+          echo "db_host=${DB_HOST}" >> "$GITHUB_OUTPUT"
+          echo "db_password=${DB_PASSWORD}" >> "$GITHUB_OUTPUT"
+          echo "s3_access_key_id=${S3_ACCESS_KEY_ID}" >> "$GITHUB_OUTPUT"
+          echo "s3_secret_access_key=${S3_SECRET_ACCESS_KEY}" >> "$GITHUB_OUTPUT"
+
       - name: "Deploy with Helm"
         env:
           IMAGE: "${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/probo/probod"
@@ -164,15 +199,18 @@ jobs:
           PROBO_PASSWORD_PEPPER: "${{ secrets.PROBO_PASSWORD_PEPPER }}"
           PROBO_TRUST_TOKEN_SECRET: "${{ secrets.PROBO_TRUST_TOKEN_SECRET }}"
           PROBO_OAUTH2_SIGNING_KEY: "${{ secrets.PROBO_OAUTH2_SIGNING_KEY }}"
-          POSTGRES_HOST: "${{ secrets.POSTGRES_HOST }}"
-          POSTGRES_DATABASE: "${{ secrets.POSTGRES_DATABASE }}"
-          POSTGRES_USERNAME: "${{ secrets.POSTGRES_USERNAME }}"
-          POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD }}"
-          S3_BUCKET: "${{ secrets.S3_BUCKET }}"
-          S3_REGION: "${{ secrets.S3_REGION }}"
-          S3_ENDPOINT: "${{ secrets.S3_ENDPOINT }}"
-          S3_ACCESS_KEY_ID: "${{ secrets.S3_ACCESS_KEY_ID }}"
-          S3_SECRET_ACCESS_KEY: "${{ secrets.S3_SECRET_ACCESS_KEY }}"
+          # Fixed values matching contrib/terraform/gcp-probo-infra's
+          # defaults (database_name/database_user variables) — change both
+          # sides together if you override them there.
+          POSTGRES_DATABASE: "probod"
+          POSTGRES_USERNAME: "probod"
+          POSTGRES_HOST: "${{ steps.infra.outputs.db_host }}"
+          POSTGRES_PASSWORD: "${{ steps.infra.outputs.db_password }}"
+          S3_BUCKET: "${{ secrets.GCS_BUCKET_NAME }}"
+          S3_REGION: "${{ secrets.GCP_REGION }}"
+          S3_ENDPOINT: "https://storage.googleapis.com"
+          S3_ACCESS_KEY_ID: "${{ steps.infra.outputs.s3_access_key_id }}"
+          S3_SECRET_ACCESS_KEY: "${{ steps.infra.outputs.s3_secret_access_key }}"
           SMTP_ADDR: "${{ secrets.SMTP_ADDR }}"
           SMTP_USER: "${{ secrets.SMTP_USER }}"
           SMTP_PASSWORD: "${{ secrets.SMTP_PASSWORD }}"
