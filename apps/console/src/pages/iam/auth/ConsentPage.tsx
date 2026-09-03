@@ -310,7 +310,7 @@ export default function ConsentPage(props: {
           <Text size={2} align="center" className="block">
             {t("consentPage.redirectingTo")}
             {" "}
-            <Text weight="medium" highContrast>
+            <Text size={2} weight="medium" highContrast>
               {consent.application.name}
             </Text>
             …

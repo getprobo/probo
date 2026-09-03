@@ -1986,7 +1986,6 @@
       "sessionExpired": "Sessie verlopen",
       "authenticationRequired": "Authenticatie vereist"
     },
-    "accountDeactivated": "Account gedeactiveerd",
     "actions": {
       "open": "Openen",
       "continue": "Doorgaan"

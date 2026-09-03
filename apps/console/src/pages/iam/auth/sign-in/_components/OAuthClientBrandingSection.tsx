@@ -37,12 +37,17 @@ export function OAuthClientBrandingSection({
 }: OAuthClientBrandingSectionProps) {
   return (
     <div className="flex flex-col items-center gap-3 text-center">
-      <Avatar
-        size={4}
-        src={logoDownloadUrl ?? undefined}
-        alt=""
-        fallback={name.slice(0, 1)}
-      />
+      {logoDownloadUrl
+        ? (
+            <img
+              src={logoDownloadUrl}
+              alt=""
+              className="h-12 w-auto max-w-45 object-contain"
+            />
+          )
+        : (
+            <Avatar size={4} fallback={name.slice(0, 1)} />
+          )}
 
       <Text size={4} weight="medium" highContrast className="block">
         {name}

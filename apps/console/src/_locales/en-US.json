@@ -1297,7 +1297,6 @@
   "invitingOrganizationCard": { "checkEmail": "Check your email" },
   "membershipCard": {
     "status": { "authenticated": "Authenticated", "sessionExpired": "Session expired", "authenticationRequired": "Authentication required" },
-    "accountDeactivated": "Account deactivated",
     "actions": { "open": "Open", "continue": "Continue" }
   },
   "viewerDropdown": {

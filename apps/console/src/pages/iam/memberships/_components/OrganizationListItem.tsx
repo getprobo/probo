@@ -22,7 +22,6 @@ import { CheckIcon, ClockIcon, LockIcon } from "@phosphor-icons/react";
 import { getMembershipSessionStatus } from "@probo/helpers";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
@@ -34,7 +33,6 @@ import type { OrganizationListItem_profile$key } from "#/__generated__/iam/Organ
 
 const organizationListItemFragment = graphql`
   fragment OrganizationListItem_profile on Profile {
-    state
     membership @required(action: THROW) {
       lastSession {
         expiresAt
@@ -56,7 +54,7 @@ interface OrganizationListItemProps {
 
 export function OrganizationListItem({ profileKey }: OrganizationListItemProps) {
   const { t } = useTranslation();
-  const { membership, organization, state } = useFragment(
+  const { membership, organization } = useFragment(
     organizationListItemFragment,
     profileKey,
   );
@@ -103,24 +101,16 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
         </Text>
         {statusBadge}
       </ListItemContent>
-      {state === "ACTIVE"
-        ? (
-            <ButtonLink
-              to={`/organizations/${organization.id}`}
-              size={2}
-              variant={isAssuming ? "soft" : "solid"}
-              color={isAssuming ? "neutral" : "gold"}
-            >
-              {isAssuming
-                ? t("membershipCard.actions.continue")
-                : t("membershipCard.actions.open")}
-            </ButtonLink>
-          )
-        : (
-            <Button size={2} variant="soft" color="neutral" disabled>
-              {t("membershipCard.accountDeactivated")}
-            </Button>
-          )}
+      <ButtonLink
+        to={`/organizations/${organization.id}`}
+        size={2}
+        variant={isAssuming ? "soft" : "solid"}
+        color={isAssuming ? "neutral" : "gold"}
+      >
+        {isAssuming
+          ? t("membershipCard.actions.continue")
+          : t("membershipCard.actions.open")}
+      </ButtonLink>
     </ListItem>
   );
 }

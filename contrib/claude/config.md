@@ -58,7 +58,7 @@ Console and compliance-portal CSPs are rendered in Go from `PROBOD_BASE_URL` and
 
 | Env | Role |
 |-----|------|
-| `CONSOLE_APP_ORIGIN` / `COMPLIANCE_PORTAL_APP_ORIGIN` | Optional override for app / `downloadUrl` origin (`img-src` / `connect-src`). Defaults to origin of `VITE_API_URL`. Console / employee-portal Vite also allow `http://localhost:8080`. |
+| `CONSOLE_APP_ORIGIN` / `EMPLOYEE_PORTAL_APP_ORIGIN` / `COMPLIANCE_PORTAL_APP_ORIGIN` | Optional override for app / `downloadUrl` origin (`img-src` / `connect-src`). Defaults to origin of `VITE_API_URL`. Console / employee-portal Vite also allow `http://localhost:8080`. |
 | `PROBOD_AWS_ENDPOINT` / `REGION` / `BUCKET` / `USE_PATH_STYLE` | Object-storage origin after file 307s — same derivation as `pkg/awsconfig.CSPFileStorageOrigin` (set in the app `.env` for Vite). |
 
-Keep `apps/console/.env.example` and `apps/compliance-portal/.env.example` in sync when these change.
+Keep `apps/console/.env.example`, `apps/employee-portal/.env.example`, and `apps/compliance-portal/.env.example` in sync when these change.
