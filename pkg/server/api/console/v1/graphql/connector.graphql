@@ -211,6 +211,14 @@ type AWSConnectorSetup {
     cloudFormationQuickCreateURL: String!
 }
 
+type GCPConnectorSetup {
+    issuer: String!
+    audience: String!
+    subject: String!
+    suggestedServiceAccountName: String!
+    terraformSnippet: String!
+}
+
 type ConnectorProviderSettingInfo {
     key: String!
     label: String!
@@ -338,7 +346,9 @@ type CreateClientCredentialsConnectorPayload {
 input CreateWorkloadIdentityConnectorInput {
     organizationId: ID!
     provider: ConnectorProvider!
-    awsRoleArn: String!
+    awsRoleArn: String
+    gcpWorkloadIdentityProvider: String
+    gcpServiceAccountEmail: String
 }
 
 type CreateWorkloadIdentityConnectorPayload {

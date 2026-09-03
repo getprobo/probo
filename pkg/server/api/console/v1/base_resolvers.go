@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -777,6 +778,30 @@ func (r *queryResolver) AWSConnectorSetup(ctx context.Context, organizationID gi
 	}
 
 	return newAWSConnectorSetup(setup), nil
+}
+
+// GCPConnectorSetup is the resolver for the gcpConnectorSetup field.
+func (r *queryResolver) GCPConnectorSetup(ctx context.Context, organizationID gid.GID) (*types.GCPConnectorSetup, error) {
+	if _, err := r.authorize(ctx, organizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudgcp.ConnectorSetupFor(
+		r.identityFederation,
+		organizationID,
+		r.gcpConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build gcp connector setup", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return newGCPConnectorSetup(setup), nil
 }
 
 // CrispVerificationCode is the resolver for the crispVerificationCode field. It

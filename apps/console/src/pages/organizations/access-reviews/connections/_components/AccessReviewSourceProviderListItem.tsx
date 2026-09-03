@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, ThirdPartyLogo } from "@probo/ui";
+import { ThirdPartyLogo } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -103,7 +103,6 @@ export function AccessReviewSourceProviderListItem({
     = supportsOAuth && provider.provider === "DATADOG";
   const supportsZendeskOAuth
     = supportsOAuth && provider.provider === "ZENDESK";
-  const isComingSoon = provider.provider === "GCP";
   const methods = connectMethods(provider);
 
   const connectWithOAuth = () => {
@@ -140,7 +139,9 @@ export function AccessReviewSourceProviderListItem({
         break;
       case "WORKLOAD_IDENTITY":
         void navigate(
-          `/organizations/${organizationId}/access-reviews/connections/new/aws-workload-identity`,
+          provider.provider === "GCP"
+            ? `/organizations/${organizationId}/access-reviews/connections/new/gcp-workload-identity`
+            : `/organizations/${organizationId}/access-reviews/connections/new/aws-workload-identity`,
         );
         break;
     }
@@ -164,22 +165,14 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        {isComingSoon
-          ? (
-              <Badge variant="info">
-                {t("accessReviewConnectionsPage.comingSoon")}
-              </Badge>
-            )
-          : (
-              <ActionSplitButton
-                actions={actions}
-                chooseAnotherMethodLabel={t(
-                  "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
-                )}
-              />
-            )}
+        <ActionSplitButton
+          actions={actions}
+          chooseAnotherMethodLabel={t(
+            "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
+          )}
+        />
       </div>
-      {!isComingSoon && supportsAPIKey && (
+      {supportsAPIKey && (
         <APIKeyConnectorDialog
           providerKey={activeDialog === "apiKey" ? provider : null}
           organizationId={organizationId}
@@ -188,7 +181,7 @@ export function AccessReviewSourceProviderListItem({
           onSuccess={() => setActiveDialog(null)}
         />
       )}
-      {!isComingSoon && provider.clientCredentialsSupported && (
+      {provider.clientCredentialsSupported && (
         <ClientCredentialsConnectorDialog
           providerKey={activeDialog === "clientCredentials" ? provider : null}
           organizationId={organizationId}
@@ -197,14 +190,14 @@ export function AccessReviewSourceProviderListItem({
           onSuccess={() => setActiveDialog(null)}
         />
       )}
-      {!isComingSoon && supportsDatadogOAuth && (
+      {supportsDatadogOAuth && (
         <DatadogConnectDialog
           providerKey={activeDialog === "datadog" ? provider : null}
           organizationId={organizationId}
           onClose={() => setActiveDialog(null)}
         />
       )}
-      {!isComingSoon && supportsZendeskOAuth && (
+      {supportsZendeskOAuth && (
         <ZendeskConnectDialog
           providerKey={activeDialog === "zendesk" ? provider : null}
           organizationId={organizationId}

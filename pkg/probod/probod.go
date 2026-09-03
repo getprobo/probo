@@ -975,6 +975,9 @@ func (impl *Implm) Run(
 				CloudFormationTemplateURL: impl.cfg.IdentityFederation.CloudFormationTemplateURL,
 				TerraformModuleSource:     impl.cfg.IdentityFederation.TerraformModuleSource,
 			},
+			GCPConnectorInstall: cloudgcp.ConnectorInstallConfig{
+				TerraformModuleSource: impl.cfg.IdentityFederation.GCPTerraformModuleSource,
+			},
 		},
 	)
 	if err != nil {

@@ -18,81 +18,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package console_v1
+package mcp_v1
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"go.gearno.de/kit/log"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
-
-func newAWSConnectorSetup(setup cloudaws.ConnectorSetup) *types.AWSConnectorSetup {
-	return &types.AWSConnectorSetup{
-		Issuer:                       setup.Issuer,
-		Audience:                     setup.Audience,
-		Subject:                      setup.Subject,
-		SuggestedRoleName:            setup.SuggestedRoleName,
-		TerraformSnippet:             setup.TerraformSnippet,
-		CloudFormationQuickCreateURL: setup.CloudFormationQuickCreateURL,
-	}
-}
-
-func newGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *types.GCPConnectorSetup {
-	return &types.GCPConnectorSetup{
-		Issuer:                      setup.Issuer,
-		Audience:                    setup.Audience,
-		Subject:                     setup.Subject,
-		SuggestedServiceAccountName: setup.SuggestedServiceAccountName,
-		TerraformSnippet:            setup.TerraformSnippet,
-	}
-}
 
 func (r *Resolver) workloadIdentitySettings(
 	ctx context.Context,
-	input types.CreateWorkloadIdentityConnectorInput,
+	input *types.CreateWorkloadIdentityConnectorInput,
 ) ([]byte, error) {
 	switch input.Provider {
 	case coredata.ConnectorProviderAWS:
-		if input.AWSRoleArn == nil || *input.AWSRoleArn == "" {
-			return nil, gqlutils.Invalidf(ctx, "awsRoleArn is required")
+		if input.AwsRoleArn == nil || *input.AwsRoleArn == "" {
+			return nil, fmt.Errorf("aws_role_arn is required")
 		}
 
-		settings, err := cloudaws.NewConnectorSettings(*input.AWSRoleArn)
+		settings, err := cloudaws.NewConnectorSettings(*input.AwsRoleArn)
 		if err != nil {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, err
 		}
 
 		raw, err := json.Marshal(settings)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot marshal aws connector settings", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, fmt.Errorf("internal server error")
 		}
 
 		return raw, nil
 	case coredata.ConnectorProviderGCP:
-		if input.GCPWorkloadIdentityProvider == nil ||
-			*input.GCPWorkloadIdentityProvider == "" ||
-			input.GCPServiceAccountEmail == nil ||
-			*input.GCPServiceAccountEmail == "" {
-			return nil, gqlutils.Invalidf(
-				ctx,
-				"gcpWorkloadIdentityProvider and gcpServiceAccountEmail are required",
-			)
+		if input.GcpWorkloadIdentityProvider == nil ||
+			*input.GcpWorkloadIdentityProvider == "" ||
+			input.GcpServiceAccountEmail == nil ||
+			*input.GcpServiceAccountEmail == "" {
+			return nil, fmt.Errorf("gcp_workload_identity_provider and gcp_service_account_email are required")
 		}
 
 		validated, err := cloudgcp.NewConnectorSettings(
-			*input.GCPWorkloadIdentityProvider,
-			*input.GCPServiceAccountEmail,
+			*input.GcpWorkloadIdentityProvider,
+			*input.GcpServiceAccountEmail,
 		)
 		if err != nil {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, err
 		}
 
 		settings := coredata.GCPConnectorSettings{
@@ -104,11 +80,11 @@ func (r *Resolver) workloadIdentitySettings(
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot marshal gcp connector settings", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, fmt.Errorf("internal server error")
 		}
 
 		return raw, nil
 	default:
-		return nil, gqlutils.Invalidf(ctx, "provider does not support workload identity")
+		return nil, fmt.Errorf("provider does not support workload identity")
 	}
 }

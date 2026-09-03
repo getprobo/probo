@@ -48,7 +48,7 @@ mutation($input: CreateAccessReviewSourceInput!) {
 }
 `
 
-	createAWSConnectorMutation = `
+	createWorkloadIdentityConnectorMutation = `
 mutation($input: CreateWorkloadIdentityConnectorInput!) {
   createWorkloadIdentityConnector(input: $input) {
     connector {
@@ -81,7 +81,7 @@ type (
 		} `json:"createAccessReviewSource"`
 	}
 
-	createAWSConnectorResponse struct {
+	createWorkloadIdentityConnectorResponse struct {
 		CreateWorkloadIdentityConnector struct {
 			Connector struct {
 				ID               string `json:"id"`
@@ -93,11 +93,13 @@ type (
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg         string
-		flagName        string
-		flagCSVFile     string
-		flagConnectorID string
-		flagRoleARN     string
+		flagOrg                         string
+		flagName                        string
+		flagCSVFile                     string
+		flagConnectorID                 string
+		flagRoleARN                     string
+		flagGCPWorkloadIdentityProvider string
+		flagGCPServiceAccountEmail      string
 	)
 
 	cmd := &cobra.Command{
@@ -110,7 +112,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb access-review source create --name "GitHub" --connector-id <connector-id>
 
   # Create an AWS workload-identity access source
-  prb access-review source create --name "AWS prod" --aws-role-arn arn:aws:iam::123456789012:role/ProboAudit`,
+  prb access-review source create --name "AWS prod" --aws-role-arn arn:aws:iam::123456789012:role/ProboAudit
+
+  # Create a GCP workload-identity access source
+  prb access-review source create --name "GCP prod" \
+    --gcp-workload-identity-provider projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo \
+    --gcp-service-account-email probo-audit@my-project.iam.gserviceaccount.com`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -143,6 +150,29 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			if flagRoleARN != "" {
 				connectorID, status, err := createAWSConnector(client, flagOrg, flagRoleARN)
+				if err != nil {
+					return err
+				}
+
+				createdConnectorID = connectorID
+				flagConnectorID = connectorID
+
+				if status != connectionStatusConnected {
+					return abandonCreatedConnector(
+						client,
+						createdConnectorID,
+						fmt.Errorf("connector is %s", status),
+					)
+				}
+			}
+
+			if flagGCPWorkloadIdentityProvider != "" {
+				connectorID, status, err := createGCPConnector(
+					client,
+					flagOrg,
+					flagGCPWorkloadIdentityProvider,
+					flagGCPServiceAccountEmail,
+				)
 				if err != nil {
 					return err
 				}
@@ -214,9 +244,30 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data")
 	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID to use as data source")
 	cmd.Flags().StringVar(&flagRoleARN, "aws-role-arn", "", "IAM role ARN")
+	cmd.Flags().StringVar(
+		&flagGCPWorkloadIdentityProvider,
+		"gcp-workload-identity-provider",
+		"",
+		"GCP workload identity provider resource",
+	)
+	cmd.Flags().StringVar(
+		&flagGCPServiceAccountEmail,
+		"gcp-service-account-email",
+		"",
+		"GCP service account email to impersonate",
+	)
 
 	_ = cmd.MarkFlagRequired("name")
-	cmd.MarkFlagsMutuallyExclusive("csv-file", "connector-id", "aws-role-arn")
+	cmd.MarkFlagsMutuallyExclusive(
+		"csv-file",
+		"connector-id",
+		"aws-role-arn",
+		"gcp-workload-identity-provider",
+	)
+	cmd.MarkFlagsRequiredTogether(
+		"gcp-workload-identity-provider",
+		"gcp-service-account-email",
+	)
 
 	return cmd
 }
@@ -226,18 +277,46 @@ func createAWSConnector(
 	orgID string,
 	roleARN string,
 ) (string, string, error) {
-	input := map[string]any{
-		"organizationId": orgID,
-		"provider":       "AWS",
-		"awsRoleArn":     roleARN,
-	}
+	return createWorkloadIdentityConnector(
+		client,
+		map[string]any{
+			"organizationId": orgID,
+			"provider":       "AWS",
+			"awsRoleArn":     roleARN,
+		},
+	)
+}
 
-	data, err := client.Do(createAWSConnectorMutation, map[string]any{"input": input})
+func createGCPConnector(
+	client *api.Client,
+	orgID string,
+	providerResource string,
+	serviceAccountEmail string,
+) (string, string, error) {
+	return createWorkloadIdentityConnector(
+		client,
+		map[string]any{
+			"organizationId":              orgID,
+			"provider":                    "GCP",
+			"gcpWorkloadIdentityProvider": providerResource,
+			"gcpServiceAccountEmail":      serviceAccountEmail,
+		},
+	)
+}
+
+func createWorkloadIdentityConnector(
+	client *api.Client,
+	input map[string]any,
+) (string, string, error) {
+	data, err := client.Do(
+		createWorkloadIdentityConnectorMutation,
+		map[string]any{"input": input},
+	)
 	if err != nil {
 		return "", "", err
 	}
 
-	var resp createAWSConnectorResponse
+	var resp createWorkloadIdentityConnectorResponse
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return "", "", fmt.Errorf("cannot parse response: %w", err)
 	}

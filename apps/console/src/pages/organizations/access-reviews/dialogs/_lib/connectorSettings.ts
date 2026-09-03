@@ -130,6 +130,41 @@ export function awsAccessReviewSourceName(
   return `${displayName} / ${accountID}`;
 }
 
+const GCP_PROVIDER_RESOURCE_PATTERN
+  = /^(?:https:\/\/iam\.googleapis\.com\/|\/\/iam\.googleapis\.com\/)?projects\/([1-9][0-9]*)\/locations\/global\/workloadIdentityPools\/([a-z][a-z0-9-]{3,31})\/providers\/([a-z][a-z0-9-]{3,31})\/?$/;
+
+const GCP_SERVICE_ACCOUNT_EMAIL_PATTERN
+  = /^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9]\.iam\.gserviceaccount\.com$/;
+
+export function isGCPWorkloadIdentityProvider(value: string): boolean {
+  return GCP_PROVIDER_RESOURCE_PATTERN.test(value.trim());
+}
+
+export function isGCPServiceAccountEmail(value: string): boolean {
+  return GCP_SERVICE_ACCOUNT_EMAIL_PATTERN.test(value.trim());
+}
+
+export function gcpProjectNumberFromProvider(value: string): string | null {
+  const match = value.trim().match(GCP_PROVIDER_RESOURCE_PATTERN);
+  if (!match) {
+    return null;
+  }
+
+  return match[1] ?? null;
+}
+
+export function gcpAccessReviewSourceName(
+  displayName: string,
+  providerResource: string,
+): string {
+  const projectNumber = gcpProjectNumberFromProvider(providerResource);
+  if (!projectNumber) {
+    return displayName;
+  }
+
+  return `${displayName} / ${projectNumber}`;
+}
+
 export function mapClientCredentialsExtraSettingToField(
   provider: string,
   settingKey: string,

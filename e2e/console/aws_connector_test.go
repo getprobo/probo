@@ -196,6 +196,19 @@ func TestCreateWorkloadIdentityConnector(t *testing.T) {
 	})
 }
 
+func TestCreateWorkloadIdentityConnector_MissingRoleARN(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"provider":       "AWS",
+		},
+	}, &createWorkloadIdentityConnectorResult{})
+	testutil.RequireErrorCode(t, err, "INVALID")
+}
+
 func TestCreateWorkloadIdentityConnector_InvalidRoleARN(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

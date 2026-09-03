@@ -15,6 +15,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -9361,20 +9362,9 @@ func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req 
 		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
 	}
 
-	if input.Provider != coredata.ConnectorProviderAWS {
-		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("provider does not support workload identity")
-	}
-
-	settings, err := cloudaws.NewConnectorSettings(input.AwsRoleArn)
+	raw, err := r.workloadIdentitySettings(ctx, input)
 	if err != nil {
 		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
-	}
-
-	raw, err := json.Marshal(settings)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot marshal aws connector settings", log.Error(err))
-
-		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("internal server error")
 	}
 
 	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
@@ -9395,6 +9385,31 @@ func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req 
 			cnnctr,
 			r.connectorConnectionStatus(ctx, scope, cnnctr.ID),
 		),
+	}, nil
+}
+
+func (r *Resolver) GcpConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GcpConnectorSetupInput) (*mcp.CallToolResult, types.GcpConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.GcpConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.GcpConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudgcp.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.gcpConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build gcp connector setup", log.Error(err))
+
+		return nil, types.GcpConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GcpConnectorSetupOutput{
+		Setup: types.NewGCPConnectorSetup(setup),
 	}, nil
 }
 
