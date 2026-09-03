@@ -1627,84 +1627,6 @@
       "commit": "Doorvoeren van deze bewerking mislukt"
     }
   },
-  "apiKeys": {
-    "title": "API-sleutels"
-  },
-  "personalApiKeyList": {
-    "messages": {
-      "created": "API-sleutel succesvol aangemaakt."
-    },
-    "errors": {
-      "create": "Aanmaken van API-sleutel mislukt."
-    },
-    "empty": {
-      "title": "Geen API-sleutels",
-      "description": "Maak een API-sleutel aan om programmatische toegang te authenticeren."
-    },
-    "fields": {
-      "name": {
-        "label": "Naam",
-        "placeholder": "bijv. Productie-API-sleutel"
-      },
-      "expiresIn": {
-        "label": "Verloopt over"
-      }
-    },
-    "expirations": {
-      "month_one": "{{count}} Maand",
-      "month_other": "{{count}} Maanden",
-      "year_one": "{{count}} Jaar",
-      "year_other": "{{count}} Jaar"
-    },
-    "actions": {
-      "create": "API-sleutel aanmaken",
-      "creating": "Aanmaken..."
-    }
-  },
-  "personalApiKeyRow": {
-    "messages": {
-      "revoked": "API-sleutel succesvol ingetrokken."
-    },
-    "errors": {
-      "revoke": "Intrekken van API-sleutel mislukt."
-    },
-    "revoke": {
-      "title": "API-sleutel intrekken",
-      "confirmation": "Weet u zeker dat u de API-sleutel \"{{name}}\" wilt intrekken? Deze actie kan niet ongedaan worden gemaakt."
-    },
-    "status": {
-      "expired": "Verlopen",
-      "active": "Actief"
-    },
-    "never": "Nooit",
-    "actions": {
-      "revoke": "Intrekken"
-    }
-  },
-  "personalApiKeyTokenAction": {
-    "errors": {
-      "load": "Laden van API-sleuteltoken mislukt."
-    },
-    "actions": {
-      "show": "Tonen"
-    }
-  },
-  "personalApiKeyTokenDialog": {
-    "title": "Token",
-    "actions": {
-      "copy": "Kopiëren",
-      "copied": "Gekopieerd",
-      "done": "Voltooid"
-    }
-  },
-  "personalApiKeysTable": {
-    "columns": {
-      "name": "Naam",
-      "lastUsed": "Laatst gebruikt",
-      "created": "Aangemaakt",
-      "expires": "Verloopt"
-    }
-  },
   "activateAccountPage": {
     "pageTitle": "Account activeren",
     "title": "Accountactivering",
@@ -2297,7 +2219,6 @@
       "cannotSignOut": "Kan niet worden uitgelogd"
     },
     "actions": {
-      "apiKeys": "API-sleutels",
       "oauthTokens": "OAuth-tokens",
       "employeePortal": "Medewerkersportaal",
       "switchToDarkMode": "Overschakelen naar donkere modus",

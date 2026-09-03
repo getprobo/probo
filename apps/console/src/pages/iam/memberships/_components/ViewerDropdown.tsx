@@ -37,7 +37,6 @@ import type { ViewerDropdownSignOutMutation } from "#/__generated__/iam/ViewerDr
 
 export const fragment = graphql`
   fragment ViewerDropdownFragment on Identity {
-    canListAPIKeys: permission(action: "iam:personal-api-key:list")
     canListOAuth2AccessTokens: permission(action: "iam:oauth2-access-token:list")
     email
     fullName
@@ -58,7 +57,7 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  const { canListAPIKeys, canListOAuth2AccessTokens, email, fullName }
+  const { canListOAuth2AccessTokens, email, fullName }
     = useFragment<ViewerDropdownFragment$key>(fragment, fKey);
   const [signOut] = useMutation<ViewerDropdownSignOutMutation>(signOutMutation);
 
@@ -90,13 +89,6 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
 
   return (
     <UserDropdown fullName={fullName} email={email}>
-      {canListAPIKeys && (
-        <UserDropdownItem
-          to="/me/api-keys"
-          icon={IconKey}
-          label={t("apiKeys.title")}
-        />
-      )}
       {canListOAuth2AccessTokens && (
         <UserDropdownItem
           to="/me/oauth-tokens"

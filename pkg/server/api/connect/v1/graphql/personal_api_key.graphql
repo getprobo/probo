@@ -31,11 +31,6 @@ type PersonalAPIKeyEdge {
 }
 
 extend type Mutation {
-  createPersonalAPIKey(
-    input: CreatePersonalAPIKeyInput!
-  ): CreatePersonalAPIKeyPayload
-    @authentication(required: PRESENT)
-    @sessionOnly
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
   ): RevokePersonalAPIKeyPayload
@@ -43,18 +38,8 @@ extend type Mutation {
     @sessionOnly
 }
 
-input CreatePersonalAPIKeyInput {
-  name: String!
-  expiresAt: Datetime!
-}
-
 input RevokePersonalAPIKeyInput {
   personalAPIKeyId: ID!
-}
-
-type CreatePersonalAPIKeyPayload {
-  personalAPIKeyEdge: PersonalAPIKeyEdge!
-  token: String!
 }
 
 type RevokePersonalAPIKeyPayload {

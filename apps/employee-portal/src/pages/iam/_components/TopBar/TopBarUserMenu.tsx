@@ -49,7 +49,6 @@ const topBarUserMenuFragment = graphql`
   fragment TopBarUserMenu_identity on Identity {
     email
     fullName
-    canListAPIKeys: permission(action: "iam:personal-api-key:list")
     canListOAuth2AccessTokens: permission(
       action: "iam:oauth2-access-token:list"
     )
@@ -72,7 +71,7 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
   const { t } = useTranslation();
   const { displayMode, toggleDisplayMode } = useDisplayMode();
 
-  const { canListAPIKeys, canListOAuth2AccessTokens, email, fullName }
+  const { canListOAuth2AccessTokens, email, fullName }
     = useFragment(topBarUserMenuFragment, identityKey);
   const [signOut, isSigningOut] = useMutation<TopBarUserMenuSignOutMutation>(
     signOutMutation,
@@ -123,11 +122,6 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
           </div>
         </DropdownGroup>
         <DropdownSeparator />
-        {canListAPIKeys && (
-          <DropdownItem iconStart={<KeyIcon />} render={<a href="/me/api-keys" />}>
-            {t("userMenu.apiKeys")}
-          </DropdownItem>
-        )}
         {canListOAuth2AccessTokens && (
           <DropdownItem iconStart={<KeyIcon />} render={<a href="/me/oauth-tokens" />}>
             {t("userMenu.oauthTokens")}

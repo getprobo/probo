@@ -3,7 +3,6 @@
     "tagline": "Employee Portal"
   },
   "userMenu": {
-    "apiKeys": "API Keys",
     "oauthTokens": "OAuth tokens",
     "switchToDarkMode": "Switch to dark mode",
     "switchToLightMode": "Switch to light mode",

@@ -128,20 +128,43 @@ EXPIRES_AT=$(date -u -v+1y +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
 vars=$(jo input="$(
   jo \
     name=seed \
-    expiresAt="$EXPIRES_AT"
+    expiresAt="$EXPIRES_AT" \
+    scopes="$(
+      jo -a \
+        v1:access-review \
+        v1:agent \
+        v1:ai-system \
+        v1:asset \
+        v1:audit \
+        v1:business-function \
+        v1:compliance-page \
+        v1:connector \
+        v1:control \
+        v1:datum \
+        v1:document \
+        v1:iam \
+        v1:itam \
+        v1:org \
+        v1:privacy \
+        v1:resource-alias \
+        v1:risk \
+        v1:task \
+        v1:third-party \
+        v1:webhook
+    )"
 )")
 resp=$(gql_connect '
-  mutation($input: CreatePersonalAPIKeyInput!) {
-    createPersonalAPIKey(input: $input) {
+  mutation($input: CreateOAuth2AccessTokenInput!) {
+    createOAuth2AccessToken(input: $input) {
       token
     }
   }
 ' "$vars")
-check_error "$resp" "createPersonalAPIKey"
-PROBO_TOKEN=$(echo "$resp" | jq -r '.data.createPersonalAPIKey.token')
+check_error "$resp" "createOAuth2AccessToken"
+PROBO_TOKEN=$(echo "$resp" | jq -r '.data.createOAuth2AccessToken.token')
 export PROBO_TOKEN
 export PROBO_HOST="$BASE_URL"
-echo "  Created API key"
+echo "  Created OAuth access token"
 
 echo ""
 echo "==> Seeding data..."
