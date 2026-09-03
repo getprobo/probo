@@ -75,7 +75,7 @@ The [`@probo/n8n-nodes-probo`](packages/n8n-node/) community node brings Probo i
 
 | Tool | Version |
 |------|---------|
-| Go | 1.26+ |
+| Go | 1.27+ |
 | Node.js | 24.15+ |
 | npm | 12.0.2+ |
 | Docker | latest |

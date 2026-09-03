@@ -58,10 +58,8 @@ var keyRingTestKeys = sync.OnceValue(
 // NewKeyRing reads only the public half, so nothing is generated.
 func weakRSAKey() *rsa.PrivateKey {
 	return &rsa.PrivateKey{
-		PublicKey: rsa.PublicKey{
-			N: new(big.Int).Lsh(big.NewInt(1), 1023),
-			E: 65537,
-		},
+		N: new(big.Int).Lsh(big.NewInt(1), 1023),
+		E: 65537,
 	}
 }
 

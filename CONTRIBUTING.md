@@ -47,7 +47,7 @@ Signed-off-by: John Doe <john.doe@example.org>
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.27+
 - Node.js 24.15+
 - npm 12.0.2+
 - Docker
