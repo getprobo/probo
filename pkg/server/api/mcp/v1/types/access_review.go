@@ -100,7 +100,6 @@ func NewAccessReviewEntry(
 		LastLogin:                    e.LastLogin,
 		AccountCreatedAt:             e.AccountCreatedAt,
 		ExternalID:                   e.ExternalID,
-		IncrementalTag:               e.IncrementalTag,
 		Flags:                        e.Flags,
 		FlagReasons:                  e.FlagReasons,
 		Decision:                     e.Decision,
@@ -168,15 +167,9 @@ func NewAccessReviewStatistics(s *coredata.AccessReviewStatistics) *AccessReview
 		flagCounts[string(k)] = v
 	}
 
-	incrementalTagCounts := make(map[string]any, len(s.IncrementalTagCounts))
-	for k, v := range s.IncrementalTagCounts {
-		incrementalTagCounts[string(k)] = v
-	}
-
 	return &AccessReviewStatistics{
-		TotalCount:           s.TotalCount,
-		DecisionCounts:       decisionCounts,
-		FlagCounts:           flagCounts,
-		IncrementalTagCounts: incrementalTagCounts,
+		TotalCount:     s.TotalCount,
+		DecisionCounts: decisionCounts,
+		FlagCounts:     flagCounts,
 	}
 }

@@ -100,7 +100,6 @@ export async function execute(
 								lastLogin
 								accountCreatedAt
 								externalId
-								incrementalTag
 								flags
 								flagReasons
 								decision

@@ -25,13 +25,12 @@ import (
 )
 
 type AccessReviewEntryFilter struct {
-	Decision       *AccessReviewEntryDecision
-	Flag           *AccessReviewEntryFlag
-	IncrementalTag *AccessReviewEntryIncrementalTag
-	IsAdmin        *bool
-	Active         *bool
-	AuthMethod     *AccessReviewEntryAuthMethod
-	AccountType    *AccessReviewEntryAccountType
+	Decision    *AccessReviewEntryDecision
+	Flag        *AccessReviewEntryFlag
+	IsAdmin     *bool
+	Active      *bool
+	AuthMethod  *AccessReviewEntryAuthMethod
+	AccountType *AccessReviewEntryAccountType
 }
 
 func (f *AccessReviewEntryFilter) SQLFragment() string {
@@ -50,12 +49,6 @@ func (f *AccessReviewEntryFilter) SQLFragment() string {
 	CASE
 		WHEN @filter_flag::text IS NOT NULL THEN
 			@filter_flag::text = ANY(flags)
-		ELSE TRUE
-	END
-	AND
-	CASE
-		WHEN @filter_incremental_tag::access_review_entry_incremental_tag IS NOT NULL THEN
-			incremental_tag = @filter_incremental_tag::access_review_entry_incremental_tag
 		ELSE TRUE
 	END
 	AND
@@ -91,13 +84,12 @@ func (f *AccessReviewEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 	}
 
 	args := pgx.StrictNamedArgs{
-		"filter_decision":        nil,
-		"filter_flag":            nil,
-		"filter_incremental_tag": nil,
-		"filter_is_admin":        nil,
-		"filter_active":          nil,
-		"filter_auth_method":     nil,
-		"filter_account_type":    nil,
+		"filter_decision":     nil,
+		"filter_flag":         nil,
+		"filter_is_admin":     nil,
+		"filter_active":       nil,
+		"filter_auth_method":  nil,
+		"filter_account_type": nil,
 	}
 
 	if f.Decision != nil {
@@ -106,10 +98,6 @@ func (f *AccessReviewEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.Flag != nil {
 		args["filter_flag"] = string(*f.Flag)
-	}
-
-	if f.IncrementalTag != nil {
-		args["filter_incremental_tag"] = string(*f.IncrementalTag)
 	}
 
 	if f.IsAdmin != nil {

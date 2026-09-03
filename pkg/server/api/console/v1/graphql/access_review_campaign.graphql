@@ -136,22 +136,6 @@ enum AccessReviewEntryDecision
         )
 }
 
-enum AccessReviewEntryIncrementalTag
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTag") {
-    NEW
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTagNew"
-        )
-    REMOVED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTagRemoved"
-        )
-    UNCHANGED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTagUnchanged"
-        )
-}
-
 enum MfaStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.MFAStatus") {
     ENABLED
@@ -280,7 +264,6 @@ input AccessReviewEntryFilter
     ) {
     decision: AccessReviewEntryDecision
     flag: AccessReviewEntryFlag
-    incrementalTag: AccessReviewEntryIncrementalTag
     isAdmin: Boolean
     active: Boolean
     authMethod: AccessReviewEntryAuthMethod
@@ -446,7 +429,6 @@ type AccessReviewEntry implements Node {
     lastLogin: Datetime
     accountCreatedAt: Datetime
     externalId: String!
-    incrementalTag: AccessReviewEntryIncrementalTag!
     flags: [AccessReviewEntryFlag!]!
     flagReasons: [String!]!
     decision: AccessReviewEntryDecision!
@@ -530,7 +512,6 @@ type AccessReviewStatistics {
     totalCount: Int!
     decisionCounts: [AccessReviewEntryDecisionCount!]!
     flagCounts: [AccessReviewEntryFlagCount!]!
-    incrementalTagCounts: [AccessReviewEntryIncrementalTagCount!]!
 }
 
 type AccessReviewEntryDecisionCount {
@@ -540,11 +521,6 @@ type AccessReviewEntryDecisionCount {
 
 type AccessReviewEntryFlagCount {
     flag: AccessReviewEntryFlag!
-    count: Int!
-}
-
-type AccessReviewEntryIncrementalTagCount {
-    incrementalTag: AccessReviewEntryIncrementalTag!
     count: Int!
 }
 

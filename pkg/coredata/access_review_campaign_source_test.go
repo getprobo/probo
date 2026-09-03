@@ -55,7 +55,6 @@ func insertAccessReviewEntry(t *testing.T, ctx context.Context, client *pg.Clien
 		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
 		ExternalID:                   "ext-snapshot",
 		AccountKey:                   accountKey,
-		IncrementalTag:               coredata.AccessReviewEntryIncrementalTagNew,
 		Flags:                        []coredata.AccessReviewEntryFlag{},
 		FlagReasons:                  []string{},
 		Decision:                     coredata.AccessReviewEntryDecisionPending,

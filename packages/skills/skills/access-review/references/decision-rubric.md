@@ -11,7 +11,7 @@ for non-`APPROVED` decisions.
 | --- | --- | --- |
 | `TERMINATED_USER` flag | `REVOKE` | Terminated user — access no longer required |
 | `CONTRACTOR_EXPIRED` flag | `REVOKE` | Contractor engagement ended |
-| `active === false` and no `NEW` tag | `REVOKE` | Account inactive at source |
+| `active === false` | `REVOKE` | Account inactive at the source |
 | `ORPHANED` flag and `active === false` | `REVOKE` | Orphaned inactive account |
 | `ORPHANED` flag only, `active !== false` | `ESCALATE` | Orphaned account still active — needs owner |
 | `SHARED_ACCOUNT` flag | `ESCALATE` | Shared account — assign individual owner |
@@ -19,7 +19,7 @@ for non-`APPROVED` decisions.
 | `PRIVILEGED_ACCESS` or `ROLE_CREEP` flag | `ESCALATE` | Privileged access requires explicit approval |
 | `is_admin === true` and (`DORMANT` flag or last_login very stale) | `ESCALATE` | Admin access dormant — confirm business need |
 | `account_type === SERVICE_ACCOUNT`, active, no danger flags | `APPROVED` | Service account with expected access |
-| Active user, no flags (or only `NONE`), not admin, `incremental_tag !== NEW` | `APPROVED` | Routine access reaffirmed |
+| Active user, no flags (or only `NONE`), not admin | `APPROVED` | Routine access reaffirmed |
 
 "Very stale" last_login: no login in 90+ days when `last_login` is present.
 
@@ -27,7 +27,6 @@ for non-`APPROVED` decisions.
 
 | Condition | Suggested default | Why ambiguous |
 | --- | --- | --- |
-| `incremental_tag === NEW` | `ESCALATE` | New access since last campaign |
 | `NO_BUSINESS_JUSTIFICATION` flag | `ESCALATE` or `REVOKE` | Needs human judgment |
 | `OUT_OF_DEPARTMENT` flag | `ESCALATE` | Role/department mismatch |
 | `EXCESSIVE` or `ROLE_MISMATCH` flag | `ESCALATE` | Role change needs context |
