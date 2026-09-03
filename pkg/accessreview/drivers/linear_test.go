@@ -45,4 +45,10 @@ func TestLinearDriver(t *testing.T) {
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.Roles)
+
+	// Suspended accounts are hidden unless the query opts into them, so the
+	// review would silently lose them.
+	require.Len(t, records, 5)
+	assert.Equal(t, "leaver@example.com", records[4].Email)
+	assert.Equal(t, new(false), records[4].Active)
 }
