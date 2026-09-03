@@ -1,0 +1,89 @@
+{
+  "pageTitle": "Organization onboarding",
+  "title": "Welcome to Probo",
+  "description": "Connect your stack in a few steps. You can finish anything later from Settings.",
+  "stepper": {
+    "ariaLabel": "Onboarding progress",
+    "scim": "SCIM",
+    "accessReview": "Access reviews",
+    "agent": "Probo agent",
+    "mcp": "MCP",
+    "congrats": "Done"
+  },
+  "status": {
+    "complete": "Connected",
+    "later": "Later"
+  },
+  "actions": {
+    "continue": "Continue",
+    "doLater": "Do this later",
+    "openInSettings": "Open in Settings",
+    "finishLater": "Finish in Settings"
+  },
+  "steps": {
+    "scim": {
+      "learnTitle": "Sync people from your identity provider",
+      "purpose": "SCIM keeps Probo aligned with joiners, movers, and leavers in your IdP. Accurate people data powers access reviews and ownership across the platform.",
+      "bullets": [
+        "Automatic user and group provisioning",
+        "Fewer manual invites and stale accounts",
+        "Consistent baseline for IAM and compliance workflows"
+      ],
+      "doTitle": "Connect SCIM",
+      "doDescription": "Connect Google Workspace, Microsoft 365, or enable manual SCIM credentials.",
+      "manualScimHeading": "Manual SCIM token"
+    },
+    "accessReview": {
+      "learnTitle": "Connect systems for access reviews",
+      "purpose": "Access review connectors pull account and permission data from your SaaS and identity tools so campaigns reflect real access.",
+      "bullets": [
+        "See who has access in each connected app",
+        "Run periodic access review campaigns",
+        "Evidence for auditors without spreadsheet hunts"
+      ],
+      "doTitle": "Add a connector",
+      "doDescription": "Choose a provider and authorize Probo to read access data.",
+      "addConnector": "Add connector",
+      "noPermission": "You do not have permission to add sources. Ask an organization admin, or open Settings later."
+    },
+    "agent": {
+      "learnTitle": "Enroll devices with the Probo agent",
+      "purpose": "The Probo agent reports endpoint posture (OS, encryption, and related signals) so you can manage fleet compliance alongside your cloud controls.",
+      "bullets": [
+        "Link employees to enrolled devices",
+        "Monitor posture from the Devices page",
+        "Support endpoint requirements in your frameworks"
+      ],
+      "doTitle": "Register a device",
+      "doDescription": "Create an enrollment and install the agent on a machine.",
+      "instructions": "Register a device to get an enrollment token, then install probo-agent on the endpoint using the instructions shown in the dialog.",
+      "registerDevice": "Register device",
+      "noPermission": "You do not have permission to register devices. Ask an organization admin, or open Devices in Settings later."
+    },
+    "mcp": {
+      "learnTitle": "Connect AI tools with Probo MCP",
+      "purpose": "The Probo MCP server lets Cursor, Claude Code, and other agents call your org data securely via OAuth—no static API keys in config files.",
+      "bullets": [
+        "OAuth to your Probo instance",
+        "Use compliance skills and workflows from your IDE",
+        "Same policies as the rest of the product"
+      ],
+      "doTitle": "Install MCP in your editor",
+      "doDescription": "Point your MCP client at this instance and complete OAuth when prompted.",
+      "steps": {
+        "oauth": "In Cursor or your agent, add an MCP server and choose OAuth when connecting.",
+        "url": "Use the endpoint below (HTTP transport).",
+        "skills": "Optional: install @probo/skills for ready-made compliance workflows."
+      },
+      "endpointLabel": "MCP endpoint",
+      "docsLink": "Probo skills and MCP setup guide"
+    },
+    "congrats": {
+      "title": "You are all set for now",
+      "description": "Thanks for walking through onboarding. You can close this tab or jump into the console anytime.",
+      "pendingTitle": "Still open",
+      "goToConsole": "Go to tasks",
+      "closeHint": "Safe to close this page—you can return to onboarding anytime with the same link."
+    }
+  }
+}
