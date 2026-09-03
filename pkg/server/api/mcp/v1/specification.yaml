@@ -12855,7 +12855,7 @@ components:
           properties:
             exclude_kind:
               $ref: "#/components/schemas/CookieCategoryKind"
-              description: Exclude categories of this kind. Defaults to UNCATEGORISED when omitted.
+              description: Exclude categories of this kind. UNCATEGORISED is excluded when no filter object is given; pass an empty filter object to exclude nothing.
 
     ListCookieCategoriesOutput:
       type: object
