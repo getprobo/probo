@@ -4,6 +4,36 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.277.0] - 2026-09-03
+
+### Changed
+
+- Document download dialog starts with signatures unchecked so users
+  must explicitly request signature pages
+- AWS Identity Center access-review Auth now maps EXTERNAL_IDP to SSO,
+  local factors (password, email OTP, passkey, TOTP) to PASSWORD, and
+  no observed CredentialType to UNKNOWN instead of labeling every user
+  SSO
+
+### Removed
+
+- Personal API key creation UI and its GraphQL creation mutation; use
+  scoped OAuth access tokens instead
+
+### Fixed
+
+- Organization deletion no longer fails when related rows still
+  reference it; missing organization_id foreign keys cascade, and the
+  IAM service deletes rows that restrict on membership-profile owners
+  or scenario-linked risks
+- Access-review source name-sync no longer retries a failing provider
+  without bound, which could flood logs and block later sources; five
+  attempts over fifteen minutes then keep the generic name until
+  reconnect
+- Connector probe now rejects a 2xx response whose body opens with '<'
+  so a customer-supplied URL that hits an SPA or SSO portal is not
+  reported healthy
+
 ## [0.276.0] - 2026-09-02
 
 ### Added
