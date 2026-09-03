@@ -4,6 +4,8 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.4.2] - 2026-09-03
+
 ### Fixed
 
 - Bumped golang.org/x/crypto to 0.56.0, addressing denial-of-service on
