@@ -246,3 +246,58 @@ func TestSigNozDriverServiceAccountsForbidden(t *testing.T) {
 		})
 	}
 }
+
+// A failed role lookup must leave admin status unknown, not false.
+func TestSigNozDriverServiceAccountRolesUnavailable(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/user":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"status":"success","data":[]}`))
+		case "/api/v1/service_accounts":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"status":"success","data":[{"id":"sa1","name":"bot","email":"bot@example.com","status":"active"}]}`))
+		default:
+			w.WriteHeader(http.StatusForbidden)
+		}
+	}))
+	defer srv.Close()
+
+	records, err := NewSigNozDriver(srv.Client(), srv.URL).ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, "bot@example.com", records[0].Email)
+	assert.Nil(t, records[0].Roles)
+	assert.Nil(t, records[0].IsAdmin)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, records[0].AccountType)
+}
+
+func TestSigNozDriverServiceAccountRolesContextCancelled(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/api/v1/user":
+			_, _ = w.Write([]byte(`{"status":"success","data":[]}`))
+		case "/api/v1/service_accounts":
+			// Cancel only once users and the account list have been served, so
+			// the failure lands on the role lookup rather than earlier.
+			cancel()
+
+			_, _ = w.Write([]byte(`{"status":"success","data":[{"id":"sa1","name":"bot","email":"bot@example.com","status":"active"}]}`))
+		default:
+			_, _ = w.Write([]byte(`{"status":"success","data":{"serviceAccountRoles":[]}}`))
+		}
+	}))
+	defer srv.Close()
+
+	_, err := NewSigNozDriver(srv.Client(), srv.URL).ListAccounts(ctx)
+	require.ErrorIs(t, err, context.Canceled)
+}

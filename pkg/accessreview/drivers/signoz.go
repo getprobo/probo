@@ -132,14 +132,17 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			continue
 		}
 
-		roles := d.serviceAccountRoles(ctx, sa.ID)
+		roles, err := d.serviceAccountRoles(ctx, sa.ID)
+		if err != nil {
+			return nil, err
+		}
 
 		record := AccountRecord{
 			Email:       email,
 			FullName:    strings.TrimSpace(sa.Name),
 			Roles:       roles,
 			Active:      sigNozServiceAccountActiveStatus(sa.Status),
-			IsAdmin:     new(slices.Contains(roles, "Admin")),
+			IsAdmin:     sigNozIsAdmin(roles),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodAPIKey,
 			AccountType: coredata.AccessReviewEntryAccountTypeServiceAccount,
@@ -156,15 +159,21 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	return records, nil
 }
 
-// Roles are best-effort: the account stays reviewable without them.
-func (d *SigNozDriver) serviceAccountRoles(ctx context.Context, id string) []string {
+// Roles are best-effort: a nil slice means unknown, which keeps the account
+// reviewable without reporting it as non-admin. A cancelled context is a real
+// failure and propagates.
+func (d *SigNozDriver) serviceAccountRoles(ctx context.Context, id string) ([]string, error) {
 	if strings.TrimSpace(id) == "" {
-		return []string{}
+		return nil, nil
 	}
 
 	assigned, err := d.queryServiceAccountRoles(ctx, id)
 	if err != nil {
-		return []string{}
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("cannot fetch signoz service account roles: %w", err)
+		}
+
+		return nil, nil
 	}
 
 	roles := make([]string, 0, len(assigned))
@@ -177,7 +186,15 @@ func (d *SigNozDriver) serviceAccountRoles(ctx context.Context, id string) []str
 		}
 	}
 
-	return roles
+	return roles, nil
+}
+
+func sigNozIsAdmin(roles []string) *bool {
+	if roles == nil {
+		return nil
+	}
+
+	return new(slices.Contains(roles, "Admin"))
 }
 
 func (d *SigNozDriver) queryUsers(ctx context.Context) ([]sigNozUser, error) {
