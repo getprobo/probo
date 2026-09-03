@@ -5,7 +5,7 @@
 - HTTP server: `go.gearno.de/kit/httpserver`
 - HTTP client: `go.gearno.de/kit/httpclient`
 - Tracing: OpenTelemetry (`go.opentelemetry.io/otel`)
-- Pointers: Go 1.26 — use `new(expr)` to create pointers to values (e.g. `new(1)`, `new("foo")`, `new(time.Now())`). Use `go.gearno.de/x/ref` only for dereference helpers (`ref.UnrefOrZero`, etc.)
+- Pointers: use `new(expr)` to create pointers to values (e.g. `new(1)`, `new("foo")`, `new(time.Now())`). Use `go.gearno.de/x/ref` only for dereference helpers (`ref.UnrefOrZero`, etc.)
 
 ## Grouped declarations
 

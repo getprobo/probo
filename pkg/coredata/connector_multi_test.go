@@ -132,10 +132,8 @@ func TestLoadSlackMessagingConnector(t *testing.T) {
 	insertSlack := func(createdAt time.Time, channelID string) gid.GID {
 		id := gid.New(scope.GetTenantID(), coredata.ConnectorEntityType)
 		conn := &connector.SlackConnection{
-			OAuth2Connection: connector.OAuth2Connection{
-				AccessToken: "test-token",
-				TokenType:   "Bearer",
-			},
+			AccessToken: "test-token",
+			TokenType:   "Bearer",
 		}
 		// Insert copies the channel from the connection's settings into
 		// the connector settings column the selector orders by.
