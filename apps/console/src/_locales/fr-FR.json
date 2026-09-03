@@ -1908,6 +1908,7 @@
     },
     "actions": {
       "back": "Retour",
+      "backToLogin": "Retour à la connexion",
       "loggingIn": "Connexion...",
       "login": "Connexion",
       "register": "S’inscrire",
@@ -1926,6 +1927,7 @@
     },
     "actions": {
       "back": "Retour",
+      "backToLogin": "Retour à la connexion",
       "checking": "Vérification en cours...",
       "continue": "Continuer avec SSO",
       "register": "S’inscrire"

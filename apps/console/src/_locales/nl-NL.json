@@ -1908,6 +1908,7 @@
     },
     "actions": {
       "back": "Terug",
+      "backToLogin": "Terug naar inloggen",
       "loggingIn": "Inloggen...",
       "login": "Inloggen",
       "register": "Register",
@@ -1926,6 +1927,7 @@
     },
     "actions": {
       "back": "Terug",
+      "backToLogin": "Terug naar inloggen",
       "checking": "Controleren...",
       "continue": "Doorgaan met SSO",
       "register": "Register"

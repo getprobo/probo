@@ -1260,7 +1260,7 @@
     "forgotPassword": "Forgot password?",
     "errors": { "login": "Failed to login" },
     "fields": { "email": "Email", "password": "Password" },
-    "actions": { "back": "Back", "loggingIn": "Logging in...", "login": "Login", "register": "Register", "resetPassword": "Reset password" }
+    "actions": { "back": "Back", "backToLogin": "Back to login", "loggingIn": "Logging in...", "login": "Login", "register": "Register", "resetPassword": "Reset password" }
   },
   "ssoSignInPage": {
     "title": "Login with SSO",
@@ -1268,7 +1268,7 @@
     "noAccount": "Don't have an account ?",
     "errors": { "unavailable": "SSO not available for this email domain" },
     "fields": { "workEmail": "Work Email" },
-    "actions": { "back": "Back", "checking": "Checking...", "continue": "Continue with SSO", "register": "Register" }
+    "actions": { "back": "Back", "backToLogin": "Back to login", "checking": "Checking...", "continue": "Continue with SSO", "register": "Register" }
   },
   "signInPage": {
     "title": "Sign in to your account",

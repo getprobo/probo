@@ -26,7 +26,6 @@ export const authLayout = tv({
   slots: {
     column: "flex w-full max-w-lg flex-col gap-6",
     header: "relative z-2 flex min-h-6 items-center justify-center",
-    back: "absolute left-0 top-1/2 -translate-y-1/2",
     stack: "relative",
     wash: [
       "pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[calc(140%+32px)] -translate-x-1/2 -translate-y-1/2",

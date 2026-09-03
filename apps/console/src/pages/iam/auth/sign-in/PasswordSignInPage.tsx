@@ -170,6 +170,12 @@ export default function PasswordSignInPage() {
             {t("passwordSignInPage.actions.resetPassword")}
           </Link>
         </Text>
+
+        <Text align="center" size={2} className="block">
+          <Link to={{ pathname: "/auth/login", search: location.search }}>
+            {t("passwordSignInPage.actions.backToLogin")}
+          </Link>
+        </Text>
       </div>
     </div>
   );

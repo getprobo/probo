@@ -18,13 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretLeftIcon } from "@phosphor-icons/react";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Link } from "@probo/ui/src/v2/Link/Link";
 import { ProboLogo } from "@probo/ui/src/v2/ProboLogo/ProboLogo";
 import type { PropsWithChildren } from "react";
-import { useTranslation } from "react-i18next";
-import { matchPath, Outlet, useLocation, useSearchParams } from "react-router";
+import { Outlet, useSearchParams } from "react-router";
 
 import { isOAuthAuthorizeContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
@@ -33,32 +30,16 @@ import { authLayout } from "./_components/variants";
 
 export default function AuthLayout(props: PropsWithChildren) {
   const { children } = props;
-  const { t } = useTranslation();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
   const isAuthorizeFlow = isOAuthAuthorizeContinueUrl(searchParams.get("continue"));
-  const showBack
-    = matchPath("/auth/password-login", location.pathname) != null
-      || matchPath("/auth/sso-login", location.pathname) != null;
   const slots = authLayout();
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-sand-2 p-4">
       <div className={slots.column()}>
-        {(!isAuthorizeFlow || showBack) && (
+        {!isAuthorizeFlow && (
           <div className={slots.header()}>
-            {!isAuthorizeFlow && (
-              <ProboLogo className="h-6 w-auto text-sand-12" />
-            )}
-            {showBack && (
-              <Link
-                to={{ pathname: "/auth/login", search: location.search }}
-                iconStart={<CaretLeftIcon />}
-                className={slots.back()}
-              >
-                {t("common.actions.back")}
-              </Link>
-            )}
+            <ProboLogo className="h-6 w-auto text-sand-12" />
           </div>
         )}
         <div className={slots.stack()}>

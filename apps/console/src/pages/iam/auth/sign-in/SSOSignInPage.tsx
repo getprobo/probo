@@ -95,15 +95,23 @@ export default function SSOSignInPage() {
           </Button>
         </Form>
 
-        <Text align="center" size={2} className="block">
-          {t("ssoSignInPage.noAccount")}
-          {" "}
-          <Link
-            to={{ pathname: "/auth/register", search: location.search }}
-          >
-            {t("ssoSignInPage.actions.register")}
-          </Link>
-        </Text>
+        <div className="flex flex-col gap-2">
+          <Text align="center" size={2} className="block">
+            {t("ssoSignInPage.noAccount")}
+            {" "}
+            <Link
+              to={{ pathname: "/auth/register", search: location.search }}
+            >
+              {t("ssoSignInPage.actions.register")}
+            </Link>
+          </Text>
+
+          <Text align="center" size={2} className="block">
+            <Link to={{ pathname: "/auth/login", search: location.search }}>
+              {t("ssoSignInPage.actions.backToLogin")}
+            </Link>
+          </Text>
+        </div>
       </div>
 
       {queryRef && (
