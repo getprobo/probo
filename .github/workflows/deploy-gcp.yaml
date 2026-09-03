@@ -1,0 +1,239 @@
+name: "Deploy to GCP (GKE)"
+
+# probod is a single stateful Go binary (API + GraphQL + MCP + background
+# workers + static frontends) backed by PostgreSQL, an S3-compatible store,
+# and headless Chrome. That shape does not fit Cloud Run (no split
+# worker process, no local disk), so this pushes the image built here to
+# Google Artifact Registry and deploys it with the chart already checked in
+# at contrib/helm/charts/probo via `helm upgrade`, onto GKE.
+#
+# Auth mirrors the existing team pattern: google-github-actions/auth with a
+# service-account key in GCP_SA_KEY (rather than Workload Identity
+# Federation).
+#
+# Required repository/environment secrets:
+#   GCP_SA_KEY              service account JSON key (Artifact Registry
+#                           writer, Cloud Build editor, GKE developer)
+#   GCP_PROJECT_ID          GCP project id
+#   GKE_CLUSTER             GKE cluster name
+#   GKE_CLUSTER_LOCATION    GKE cluster region (regional cluster) or zone
+#   GAR_LOCATION            Artifact Registry location, e.g. us-central1
+#   PROBO_DOMAIN            public hostname, e.g. probo.example.com
+#   PROBO_ENCRYPTION_KEY    openssl rand -base64 32
+#   PROBO_COOKIE_SECRET     openssl rand -base64 32
+#   PROBO_PASSWORD_PEPPER   openssl rand -base64 32
+#   PROBO_TRUST_TOKEN_SECRET  openssl rand -base64 32
+#   PROBO_OAUTH2_SIGNING_KEY  PEM RSA private key (openssl genpkey ...)
+#   POSTGRES_HOST / POSTGRES_DATABASE / POSTGRES_USERNAME / POSTGRES_PASSWORD
+#   S3_BUCKET / S3_REGION / S3_ENDPOINT / S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY
+#     (GCS via its S3-compatible XML API: endpoint
+#     https://storage.googleapis.com, HMAC keys from `gcloud storage hmac
+#     keys create`)
+#   SMTP_ADDR / SMTP_USER / SMTP_PASSWORD
+#
+# Optional (added only when set):
+#   OPENAI_API_KEY, ANTHROPIC_API_KEY
+#
+# Prerequisites this workflow does not create: the GKE cluster, the
+# Artifact Registry Docker repo named "probo" in GAR_LOCATION, the Cloud
+# SQL/PostgreSQL instance, and the GCS bucket + HMAC key.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cmd/**"
+      - "pkg/**"
+      - "apps/**"
+      - "packages/**"
+      - "Dockerfile"
+      - "entrypoint.sh"
+      - "contrib/helm/charts/probo/**"
+      - ".github/workflows/deploy-gcp.yaml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: "deploy-gcp"
+  cancel-in-progress: false
+
+permissions:
+  contents: "read"
+
+jobs:
+  deploy:
+    name: "build-and-deploy"
+    runs-on: "ubuntu-latest"
+    environment: production
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          submodules: recursive
+
+      - uses: "./.github/actions/setup"
+
+      - name: "Build frontend apps"
+        run: |
+          npm --workspace @probo/emails run build
+          make relay
+          npm --workspace @probo/console run build
+          npm --workspace @probo/compliance-portal run build
+          npm --workspace @probo/employee-portal run build
+        env:
+          NODE_ENV: production
+
+      - name: "Generate Go code"
+        run: |
+          go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/mcp/v1
+          go generate ./pkg/server/api/console/v1
+          go generate ./pkg/server/api/complianceportal/v1
+
+      - name: "Build probod binaries (linux/amd64)"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "linux"
+          GOARCH: "amd64"
+        run: |
+          VERSION="$(git rev-parse --short HEAD)"
+          BOOTSTRAP_VERSION="$(cat cmd/probod-bootstrap/VERSION)"
+          mkdir -p linux/amd64
+          go build -ldflags "-s -w -X 'main.version=${VERSION}' -X 'main.env=prod'" \
+            -gcflags="-e" -o linux/amd64/probod ./cmd/probod/main.go
+          go build -ldflags "-s -w -X 'main.version=${BOOTSTRAP_VERSION}'" \
+            -gcflags="-e" -o linux/amd64/probod-bootstrap ./cmd/probod-bootstrap/main.go
+
+      - name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+
+      - name: "Set up gcloud"
+        uses: "google-github-actions/setup-gcloud@v2"
+
+      - name: "Install gke-gcloud-auth-plugin"
+        run: "gcloud components install gke-gcloud-auth-plugin --quiet"
+
+      - name: "Compute image tag"
+        id: tag
+        run: echo "value=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: "Build and push Docker image via Cloud Build"
+        env:
+          IMAGE: "${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/probo/probod"
+          TAG: "${{ steps.tag.outputs.value }}"
+        run: |
+          # Submit async to avoid the log-streaming permission requirement.
+          BUILD=$(gcloud builds submit \
+            --tag "${IMAGE}:${TAG}" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --async \
+            --format="value(name)")
+          BUILD_ID="${BUILD##*/}"
+          echo "Build submitted: $BUILD_ID"
+
+          for i in $(seq 1 90); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" \
+              --project "${{ secrets.GCP_PROJECT_ID }}" \
+              --format="value(status)" 2>/dev/null || echo "UNKNOWN")
+            echo "[$i/90] Status: $STATUS"
+            case "$STATUS" in
+              SUCCESS) echo "Build succeeded"; exit 0 ;;
+              FAILURE|CANCELLED|TIMEOUT|INTERNAL_ERROR) echo "Build failed with status: $STATUS"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "Timed out waiting for build to complete"
+          exit 1
+
+      - name: "Get GKE credentials"
+        run: |
+          gcloud container clusters get-credentials "${{ secrets.GKE_CLUSTER }}" \
+            --region "${{ secrets.GKE_CLUSTER_LOCATION }}" \
+            --project "${{ secrets.GCP_PROJECT_ID }}"
+
+      - name: "Install Helm"
+        uses: "azure/setup-helm@v4"
+
+      - name: "Deploy with Helm"
+        env:
+          IMAGE: "${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/probo/probod"
+          TAG: "${{ steps.tag.outputs.value }}"
+          PROBO_DOMAIN: "${{ secrets.PROBO_DOMAIN }}"
+          PROBO_ENCRYPTION_KEY: "${{ secrets.PROBO_ENCRYPTION_KEY }}"
+          PROBO_COOKIE_SECRET: "${{ secrets.PROBO_COOKIE_SECRET }}"
+          PROBO_PASSWORD_PEPPER: "${{ secrets.PROBO_PASSWORD_PEPPER }}"
+          PROBO_TRUST_TOKEN_SECRET: "${{ secrets.PROBO_TRUST_TOKEN_SECRET }}"
+          PROBO_OAUTH2_SIGNING_KEY: "${{ secrets.PROBO_OAUTH2_SIGNING_KEY }}"
+          POSTGRES_HOST: "${{ secrets.POSTGRES_HOST }}"
+          POSTGRES_DATABASE: "${{ secrets.POSTGRES_DATABASE }}"
+          POSTGRES_USERNAME: "${{ secrets.POSTGRES_USERNAME }}"
+          POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD }}"
+          S3_BUCKET: "${{ secrets.S3_BUCKET }}"
+          S3_REGION: "${{ secrets.S3_REGION }}"
+          S3_ENDPOINT: "${{ secrets.S3_ENDPOINT }}"
+          S3_ACCESS_KEY_ID: "${{ secrets.S3_ACCESS_KEY_ID }}"
+          S3_SECRET_ACCESS_KEY: "${{ secrets.S3_SECRET_ACCESS_KEY }}"
+          SMTP_ADDR: "${{ secrets.SMTP_ADDR }}"
+          SMTP_USER: "${{ secrets.SMTP_USER }}"
+          SMTP_PASSWORD: "${{ secrets.SMTP_PASSWORD }}"
+          OPENAI_API_KEY: "${{ secrets.OPENAI_API_KEY }}"
+          ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}"
+        run: |
+          # A PEM private key can't safely go through --set-string (newlines,
+          # comma-splitting), so it's the one value written to a temp file
+          # and passed via --set-file. Everything else uses --set-string as
+          # discrete args, which sidesteps gcloud-style delimiter escaping
+          # entirely since each flag is its own argv entry.
+          SIGNING_KEY_FILE="$(mktemp)"
+          printf '%s' "$PROBO_OAUTH2_SIGNING_KEY" > "$SIGNING_KEY_FILE"
+
+          HELM_ARGS=(
+            --install
+            --namespace probo --create-namespace
+            --set "image.repository=${IMAGE}"
+            --set "image.tag=${TAG}"
+
+            # Use managed Postgres/GCS, not the chart's bundled dev services.
+            --set "postgresql.enabled=false"
+            --set "seaweedfs.enabled=false"
+
+            --set "probo.baseUrl=${PROBO_DOMAIN}"
+            --set "probo.auth.cookieDomain=${PROBO_DOMAIN}"
+            --set "probo.trustAuth.cookieDomain=${PROBO_DOMAIN}"
+            --set "probo.cors.allowedOrigins[0]=https://${PROBO_DOMAIN}"
+            --set "ingress.hosts[0].host=${PROBO_DOMAIN}"
+            --set "ingress.tls[0].secretName=probo-tls"
+            --set "ingress.tls[0].hosts[0]=${PROBO_DOMAIN}"
+            --set-string "probo.encryptionKey=${PROBO_ENCRYPTION_KEY}"
+            --set-string "probo.auth.cookieSecret=${PROBO_COOKIE_SECRET}"
+            --set-string "probo.auth.passwordPepper=${PROBO_PASSWORD_PEPPER}"
+            --set-string "probo.trustAuth.tokenSecret=${PROBO_TRUST_TOKEN_SECRET}"
+            --set-file "probo.oauth2.signingKey=${SIGNING_KEY_FILE}"
+
+            --set-string "postgresql.host=${POSTGRES_HOST}"
+            --set-string "postgresql.database=${POSTGRES_DATABASE}"
+            --set-string "postgresql.username=${POSTGRES_USERNAME}"
+            --set-string "postgresql.password=${POSTGRES_PASSWORD}"
+
+            --set-string "s3.bucket=${S3_BUCKET}"
+            --set-string "s3.region=${S3_REGION}"
+            --set-string "s3.endpoint=${S3_ENDPOINT}"
+            --set-string "s3.accessKeyId=${S3_ACCESS_KEY_ID}"
+            --set-string "s3.secretAccessKey=${S3_SECRET_ACCESS_KEY}"
+
+            --set-string "probo.mailer.smtp.addr=${SMTP_ADDR}"
+            --set-string "probo.mailer.smtp.user=${SMTP_USER}"
+            --set-string "probo.mailer.smtp.password=${SMTP_PASSWORD}"
+          )
+
+          if [ -n "$OPENAI_API_KEY" ]; then
+            HELM_ARGS+=(--set-string "probo.openai.apiKey=${OPENAI_API_KEY}")
+          fi
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            HELM_ARGS+=(--set-string "probo.anthropic.apiKey=${ANTHROPIC_API_KEY}")
+          fi
+
+          helm upgrade probo contrib/helm/charts/probo "${HELM_ARGS[@]}" \
+            --wait --timeout 10m
+
+          rm -f "$SIGNING_KEY_FILE"
