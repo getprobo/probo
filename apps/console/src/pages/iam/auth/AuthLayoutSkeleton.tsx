@@ -18,13 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function Divider({ children }: { children: React.ReactNode }) {
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+
+import { authLayout } from "./_components/variants";
+
+// Loading fallback for the /auth zone while the layout chunk or a Relay
+// query resolves.
+export function AuthLayoutSkeleton() {
+  const slots = authLayout();
+
   return (
-    <div className="relative my-2 w-full">
-      <div className="border-t border-sand-6" />
-      <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-sand-1 px-4 text-1 uppercase text-sand-11">
-        {children}
-      </span>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-sand-2 p-4">
+      <div className={slots.column()}>
+        <CardSkeleton size={3} className="h-64 w-full" />
+      </div>
     </div>
   );
 }

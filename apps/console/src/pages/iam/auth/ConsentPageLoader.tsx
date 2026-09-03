@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Component, type ReactNode, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryLoader } from "react-relay";
@@ -64,11 +66,13 @@ function ConsentErrorFallback() {
   const { t } = useTranslation();
 
   return (
-    <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-      <h1 className="text-2xl font-bold">{t("consentPage.invalidRequest.title")}</h1>
-      <p className="text-txt-tertiary">
+    <div className="flex w-full flex-col gap-4">
+      <Heading level={1} size={4} weight="medium" align="center" highContrast>
+        {t("consentPage.invalidRequest.title")}
+      </Heading>
+      <Callout color="red">
         {t("consentPage.invalidRequest.description")}
-      </p>
+      </Callout>
     </div>
   );
 }

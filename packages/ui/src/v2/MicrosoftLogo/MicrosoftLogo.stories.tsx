@@ -18,13 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function Divider({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative my-2 w-full">
-      <div className="border-t border-sand-6" />
-      <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-sand-1 px-4 text-1 uppercase text-sand-11">
-        {children}
-      </span>
+import type { Meta, StoryObj } from "@storybook/react";
+
+import { MicrosoftLogo } from "./MicrosoftLogo";
+
+export default {
+  title: "v2/MicrosoftLogo",
+  component: MicrosoftLogo,
+  args: {
+    className: "size-6",
+  },
+  render: args => <MicrosoftLogo {...args} />,
+} satisfies Meta<typeof MicrosoftLogo>;
+
+type Story = StoryObj<typeof MicrosoftLogo>;
+
+export const Playground: Story = {};
+
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-6">
+      <MicrosoftLogo className="size-4" />
+      <MicrosoftLogo className="size-6" />
+      <MicrosoftLogo className="size-10" />
     </div>
-  );
-}
+  ),
+};

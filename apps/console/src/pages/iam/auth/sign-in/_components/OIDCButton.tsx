@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Google, Microsoft } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { GoogleLogo } from "@probo/ui/src/v2/GoogleLogo/GoogleLogo";
+import { MicrosoftLogo } from "@probo/ui/src/v2/MicrosoftLogo/MicrosoftLogo";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -39,8 +41,8 @@ const providerIcons: Record<
   string,
   (props: ComponentProps<"svg">) => React.ReactNode
 > = {
-  google: Google,
-  microsoft: Microsoft,
+  google: GoogleLogo,
+  microsoft: MicrosoftLogo,
 };
 
 export function OIDCButton({
@@ -60,8 +62,11 @@ export function OIDCButton({
 
   return (
     <Button
-      variant="secondary"
-      className="w-full h-10"
+      variant="soft"
+      color="neutral"
+      size={3}
+      className="w-full"
+      iconStart={Icon ? <Icon width={18} height={18} /> : undefined}
       onClick={() => {
         const loginURL = new URL(provider.loginURL, window.location.origin);
         loginURL.searchParams.set("continue", targetContinue);
@@ -72,12 +77,9 @@ export function OIDCButton({
         window.location.href = loginURL.toString();
       }}
     >
-      <span className="flex items-center gap-2">
-        {Icon && <Icon width={18} height={18} />}
-        {t("oidcButton.signInWith", {
-          provider: provider.name.charAt(0).toUpperCase() + provider.name.slice(1),
-        })}
-      </span>
+      {t("oidcButton.signInWith", {
+        provider: provider.name.charAt(0).toUpperCase() + provider.name.slice(1),
+      })}
     </Button>
   );
 }

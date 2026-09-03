@@ -18,13 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function Divider({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative my-2 w-full">
-      <div className="border-t border-sand-6" />
-      <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-sand-1 px-4 text-1 uppercase text-sand-11">
-        {children}
-      </span>
-    </div>
-  );
-}
+import { tv } from "tailwind-variants/lite";
+
+// Shared /auth card chrome. The wash matches the employee-portal dashboard
+// cards: a lime radial pinned to the bottom of the white card, not the page.
+export const authLayout = tv({
+  slots: {
+    column: "flex w-full max-w-lg flex-col gap-6",
+    frame: "relative w-full",
+    wash: [
+      "pointer-events-none absolute inset-x-0 bottom-0 z-0 h-24",
+      "bg-[radial-gradient(ellipse_85%_55%_at_50%_100%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
+      "mask-[linear-gradient(to_top,black_0%,black_40%,transparent_100%)]",
+    ],
+    body: "relative z-1 px-8 pt-8 pb-24",
+  },
+});

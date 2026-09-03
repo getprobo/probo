@@ -18,13 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function Divider({ children }: { children: React.ReactNode }) {
+import type { ComponentProps } from "react";
+
+export type MicrosoftLogoProps = ComponentProps<"svg">;
+
+// Official Microsoft four-square mark. Fills are Microsoft's brand palette
+// and do not follow currentColor — size it with width/height or a size class.
+export function MicrosoftLogo(props: MicrosoftLogoProps) {
   return (
-    <div className="relative my-2 w-full">
-      <div className="border-t border-sand-6" />
-      <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-sand-1 px-4 text-1 uppercase text-sand-11">
-        {children}
-      </span>
-    </div>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      preserveAspectRatio="xMidYMid"
+      {...props}
+    >
+      <rect x="0" y="0" width="121" height="121" fill="#F25022" />
+      <rect x="135" y="0" width="121" height="121" fill="#7FBA00" />
+      <rect x="0" y="135" width="121" height="121" fill="#00A4EF" />
+      <rect x="135" y="135" width="121" height="121" fill="#FFB900" />
+    </svg>
   );
 }

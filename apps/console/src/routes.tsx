@@ -30,6 +30,7 @@ import { PageError } from "./components/PageError";
 import { RedirectToEmployeePortal } from "./components/RedirectToEmployeePortal";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
+import { AuthLayoutSkeleton } from "./pages/iam/auth/AuthLayoutSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { auditLogRoutes } from "./pages/iam/organizations/audit-log/routes";
 import { authRoutes } from "./pages/iam/organizations/auth/routes";
@@ -61,6 +62,7 @@ const routes = [
   {
     path: "/auth",
     Component: lazy(() => import("./pages/iam/auth/AuthLayout")),
+    Fallback: AuthLayoutSkeleton,
     children: [
       {
         path: "login",

@@ -18,20 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import {
+  ArrowsClockwiseIcon,
+  CaretDownIcon,
+  EnvelopeSimpleIcon,
+  KeyIcon,
+  LockOpenIcon,
+  UserCircleIcon,
+  UserIcon,
+} from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import {
-  Button,
-  IconArrowsClockwise,
-  IconChevronDown,
-  IconEnvelope,
-  IconKey,
-  IconLockOpen,
-  IconUser,
-  IconUserCircle,
-  Spinner,
-  useToast,
-} from "@probo/ui";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
+import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
@@ -72,14 +75,14 @@ const scopeLabels: Record<string, string> = {
 };
 
 const scopeIcons: Record<string, React.ReactNode> = {
-  openid: <IconUser size={18} className="shrink-0 text-txt-tertiary" />,
-  email: <IconEnvelope size={18} className="shrink-0 text-txt-tertiary" />,
-  profile: <IconUserCircle size={18} className="shrink-0 text-txt-tertiary" />,
-  offline_access: <IconArrowsClockwise size={18} className="shrink-0 text-txt-tertiary" />,
+  openid: <UserIcon className="size-[18px] shrink-0 text-sand-11" />,
+  email: <EnvelopeSimpleIcon className="size-[18px] shrink-0 text-sand-11" />,
+  profile: <UserCircleIcon className="size-[18px] shrink-0 text-sand-11" />,
+  offline_access: <ArrowsClockwiseIcon className="size-[18px] shrink-0 text-sand-11" />,
 };
 
 function scopeIcon(name: string): React.ReactNode {
-  return scopeIcons[name] ?? <IconKey size={18} className="shrink-0 text-txt-tertiary" />;
+  return scopeIcons[name] ?? <KeyIcon className="size-[18px] shrink-0 text-sand-11" />;
 }
 
 function isApiScope(scope: string): boolean {
@@ -116,8 +119,8 @@ function ConsentScopeRow({
     <li
       className={
         nested
-          ? "flex items-center gap-2.5 py-1.5 text-sm text-txt-secondary"
-          : "flex items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary border border-border-mid rounded-lg"
+          ? "flex items-center gap-2.5 py-1.5 text-2 text-sand-11"
+          : "flex items-center gap-2.5 rounded-3 border border-sand-6 px-3 py-2.5 text-2 text-sand-11"
       }
     >
       {scopeIcon(scope)}
@@ -138,16 +141,15 @@ function ConsentApiScopesAccordion({
   }
 
   return (
-    <details className="group border border-border-mid rounded-lg">
-      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary select-none [&::-webkit-details-marker]:hidden">
-        <IconKey size={18} className="shrink-0 text-txt-tertiary" />
+    <details className="group rounded-3 border border-sand-6">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-2.5 text-2 text-sand-11 select-none [&::-webkit-details-marker]:hidden">
+        <KeyIcon className="size-[18px] shrink-0 text-sand-11" />
         <span className="min-w-0 flex-1 text-start">{summaryLabel}</span>
-        <IconChevronDown
-          size={16}
-          className="shrink-0 text-txt-tertiary transition-transform group-open:rotate-180"
+        <CaretDownIcon
+          className="size-4 shrink-0 text-sand-11 transition-transform group-open:rotate-180"
         />
       </summary>
-      <ul className="space-y-1 border-t border-border-mid px-3 py-2.5">
+      <ul className="space-y-1 border-t border-sand-6 px-3 py-2.5">
         {scopes.map(scope => (
           <ConsentScopeRow
             key={scope}
@@ -260,79 +262,85 @@ export default function ConsentPage(props: {
 
   if (!consent.application || !consent.scopes) {
     return (
-      <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{t("consentPage.invalidRequest.title")}</h1>
-        <p className="text-txt-tertiary">
+      <div className="flex w-full flex-col gap-4">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("consentPage.invalidRequest.title")}
+        </Heading>
+        <Callout color="red">
           {t("consentPage.invalidRequest.description")}
-        </p>
+        </Callout>
       </div>
     );
   }
 
   if (deviceResult === "authorized") {
     return (
-      <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{t("consentPage.deviceAuthorized.title")}</h1>
-        <p className="text-txt-tertiary">
+      <div className="flex w-full flex-col gap-4">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("consentPage.deviceAuthorized.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
           {t("consentPage.deviceAuthorized.description")}
-        </p>
+        </Text>
       </div>
     );
   }
 
   if (deviceResult === "denied") {
     return (
-      <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{t("consentPage.accessDenied.title")}</h1>
-        <p className="text-txt-tertiary">
+      <div className="flex w-full flex-col gap-4">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("consentPage.accessDenied.title")}
+        </Heading>
+        <Callout color="amber">
           {t("consentPage.accessDenied.description")}
-        </p>
+        </Callout>
       </div>
     );
   }
 
   if (redirectState) {
     return (
-      <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <Spinner size={24} centered className="text-txt-tertiary" />
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold">
+      <div className="flex w-full flex-col items-center gap-4">
+        <Spinner size={3} aria-label={t("consentPage.redirectingTo")} />
+        <div className="flex flex-col gap-1">
+          <Heading level={1} size={4} weight="medium" align="center" highContrast>
             {redirectState.approved ? t("consentPage.authorizationComplete") : t("consentPage.accessDenied.title")}
-          </h1>
-          <p className="text-txt-tertiary">
+          </Heading>
+          <Text size={2} align="center" className="block">
             {t("consentPage.redirectingTo")}
             {" "}
-            <span className="font-medium text-txt-secondary">
+            <Text weight="medium" highContrast>
               {consent.application.name}
-            </span>
+            </Text>
             …
-          </p>
+          </Text>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-md mx-auto pt-8 space-y-6">
-      <div className="space-y-2 text-center">
-        <div className="flex justify-center mb-4">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-level-1">
-            <IconLockOpen size={24} />
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <div className="mb-2 flex justify-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-sand-3 text-sand-12">
+            <LockOpenIcon className="size-6" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
           {t("consentPage.authorize")}
           {" "}
-          <span className="font-bold">{consent.application.name}</span>
-        </h1>
-        <p className="text-txt-tertiary text-sm">
+          {consent.application.name}
+        </Heading>
+        <Text align="center" size={2} className="block">
           {t("consentPage.description")}
-        </p>
+        </Text>
       </div>
 
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         {oidcScopes.length > 0 && (
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-2">
             {oidcScopes.map(scope => (
               <ConsentScopeRow
                 key={scope}
@@ -350,27 +358,33 @@ export default function ConsentPage(props: {
 
       <div className="flex gap-3">
         <Button
-          variant="secondary"
-          className="flex-1 h-10"
+          variant="soft"
+          color="neutral"
+          size={3}
+          className="flex-1"
+          loading={pendingAction === "deny"}
           disabled={pendingAction !== null}
-          icon={pendingAction === "deny" ? Spinner : undefined}
           onClick={() => handleAction(false)}
         >
           {t("consentPage.actions.deny")}
         </Button>
         <Button
-          className="flex-1 h-10"
+          variant="solid"
+          color="neutral"
+          highContrast
+          size={3}
+          className="flex-1"
+          loading={pendingAction === "allow"}
           disabled={pendingAction !== null}
-          icon={pendingAction === "allow" ? Spinner : undefined}
           onClick={() => handleAction(true)}
         >
           {t("consentPage.actions.allow")}
         </Button>
       </div>
 
-      <p className="text-center text-xs text-txt-tertiary">
+      <Text align="center" size={1} className="block">
         {t("consentPage.revokeNotice")}
-      </p>
+      </Text>
     </div>
   );
 }

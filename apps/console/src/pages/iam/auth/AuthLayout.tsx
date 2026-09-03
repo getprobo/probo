@@ -18,33 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card, Logo } from "@probo/ui";
+import { CaretLeftIcon } from "@phosphor-icons/react";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { ProboLogo } from "@probo/ui/src/v2/ProboLogo/ProboLogo";
 import type { PropsWithChildren } from "react";
-import { Outlet, useSearchParams } from "react-router";
+import { useTranslation } from "react-i18next";
+import { matchPath, Outlet, useLocation, useSearchParams } from "react-router";
 
 import { isOAuthAuthorizeContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
+import { authLayout } from "./_components/variants";
+
 export default function AuthLayout(props: PropsWithChildren) {
   const { children } = props;
+  const { t } = useTranslation();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const isAuthorizeFlow = isOAuthAuthorizeContinueUrl(searchParams.get("continue"));
+  const showBack
+    = matchPath("/auth/password-login", location.pathname) != null
+      || matchPath("/auth/sso-login", location.pathname) != null;
+  const slots = authLayout();
 
   return (
-    <div className="min-h-screen text-txt-primary bg-level-0 flex flex-col items-center justify-center">
-      <Card className="w-full max-w-lg px-12 py-8 flex flex-col items-center justify-center">
-        <div className="w-full flex flex-col items-center justify-center gap-8">
-          {!isAuthorizeFlow && (
-            <>
-              <Logo withPicto className="w-[110px]" />
-              <div className="w-full border-t border-t-border-mid" />
-            </>
-          )}
-        </div>
-        <IAMRelayProvider>
-          {children ?? <Outlet />}
-        </IAMRelayProvider>
-      </Card>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-sand-2 p-4">
+      <div className={slots.column()}>
+        {!isAuthorizeFlow && (
+          <ProboLogo className="mx-auto h-6 w-auto text-sand-12" />
+        )}
+        {showBack && (
+          <Link
+            to={{ pathname: "/auth/login", search: location.search }}
+            iconStart={<CaretLeftIcon />}
+            className="self-start"
+          >
+            {t("common.actions.back")}
+          </Link>
+        )}
+        <Card variant="soft" size={3} padding="none" className={slots.frame()}>
+          <div className={slots.wash()} />
+          <div className={slots.body()}>
+            <IAMRelayProvider>
+              {children ?? <Outlet />}
+            </IAMRelayProvider>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

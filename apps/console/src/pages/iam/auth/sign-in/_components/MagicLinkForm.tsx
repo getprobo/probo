@@ -18,27 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Field, useToast } from "@probo/ui";
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useRelayEnvironment } from "react-relay";
 
 import type { MagicLinkFormSSOQuery } from "#/__generated__/iam/MagicLinkFormSSOQuery.graphql";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
-import { z } from "#/lib/zod";
 
 const magicLinkFormSSOQuery = graphql`
   query MagicLinkFormSSOQuery($email: EmailAddr!) {
     ssoLoginURL(email: $email) @catch(to: RESULT)
   }
 `;
-
-const schema = z.object({
-  email: z.string().email(),
-});
-
-type FormData = z.infer<typeof schema>;
 
 const timerDurationSeconds = 60;
 
@@ -48,6 +45,7 @@ export function MagicLinkForm() {
   const environment = useRelayEnvironment();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const interval = useRef<ReturnType<typeof setInterval>>(undefined);
   const [timer, setTimer] = useState(timerDurationSeconds);
@@ -69,101 +67,114 @@ export function MagicLinkForm() {
     };
   }, [magicLinkSent]);
 
-  const {
-    handleSubmit: handleSubmitWrapper,
-    register,
-    formState,
-  } = useFormWithSchema(schema, {
-    defaultValues: { email: "" },
-  });
-
-  const handleSubmit = handleSubmitWrapper(async ({ email }: FormData) => {
+  const handleSubmit = async (email: string) => {
+    setIsSubmitting(true);
     try {
-      const data = await fetchQuery<MagicLinkFormSSOQuery>(
-        environment,
-        magicLinkFormSSOQuery,
-        { email },
-        { fetchPolicy: "network-only" },
-      ).toPromise();
+      try {
+        const data = await fetchQuery<MagicLinkFormSSOQuery>(
+          environment,
+          magicLinkFormSSOQuery,
+          { email },
+          { fetchPolicy: "network-only" },
+        ).toPromise();
 
-      const ssoLoginURL = data?.ssoLoginURL;
-      if (ssoLoginURL?.ok && ssoLoginURL.value) {
-        const url = new URL(ssoLoginURL.value, window.location.origin);
-        url.searchParams.set("continue", postAuthRedirectUrl);
-        window.location.href = url.toString();
+        const ssoLoginURL = data?.ssoLoginURL;
+        if (ssoLoginURL?.ok && ssoLoginURL.value) {
+          const url = new URL(ssoLoginURL.value, window.location.origin);
+          url.searchParams.set("continue", postAuthRedirectUrl);
+          window.location.href = url.toString();
+          return;
+        }
+      } catch {
+        // No unique SAML config (or the lookup failed): send a magic link.
+      }
+
+      const body = new URLSearchParams();
+      body.set("email", email);
+      body.set("continue", postAuthRedirectUrl);
+
+      let response: Response;
+      try {
+        response = await fetch("/api/connect/v1/magic-link/send", {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          credentials: "include",
+          body,
+        });
+      } catch {
+        toast({
+          title: t("common.error"),
+          description: t("magicLinkForm.errors.send"),
+          variant: "error",
+        });
         return;
       }
-    } catch {
-      // No unique SAML config (or the lookup failed): send a magic link.
-    }
 
-    const body = new URLSearchParams();
-    body.set("email", email);
-    body.set("continue", postAuthRedirectUrl);
+      if (!response.ok) {
+        toast({
+          title: t("common.error"),
+          description: t("magicLinkForm.errors.send"),
+          variant: "error",
+        });
+        return;
+      }
 
-    let response: Response;
-    try {
-      response = await fetch("/api/connect/v1/magic-link/send", {
-        method: "POST",
-        headers: { "content-type": "application/x-www-form-urlencoded" },
-        credentials: "include",
-        body,
-      });
-    } catch {
       toast({
-        title: t("common.error"),
-        description: t("magicLinkForm.errors.send"),
-        variant: "error",
+        title: t("common.success"),
+        description: t("magicLinkForm.messages.sent"),
+        variant: "success",
       });
-      return;
+      setTimer(timerDurationSeconds);
+      setMagicLinkSent(true);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    if (!response.ok) {
-      toast({
-        title: t("common.error"),
-        description: t("magicLinkForm.errors.send"),
-        variant: "error",
-      });
-      return;
-    }
-
-    toast({
-      title: t("common.success"),
-      description: t("magicLinkForm.messages.sent"),
-      variant: "success",
-    });
-    setTimer(timerDurationSeconds);
-    setMagicLinkSent(true);
-  });
+  const waitingToResend = magicLinkSent && timer !== 0;
 
   return (
-    <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-      <Field
-        label={t("magicLinkForm.fields.email")}
-        placeholder="john.doe@acme.com"
-        {...register("email")}
-        type="email"
-        required
-        error={formState.errors.email?.message}
-      />
+    <Form
+      className="flex flex-col gap-5"
+      onFormSubmit={(values) => {
+        void handleSubmit(String(values.email ?? ""));
+      }}
+    >
+      <Field.Root name="email" className="flex flex-col gap-1.5">
+        <Field.Label className="text-1 font-medium text-sand-12">
+          {t("magicLinkForm.fields.email")}
+        </Field.Label>
+        <TextField
+          type="email"
+          name="email"
+          required
+          placeholder="john.doe@acme.com"
+        />
+        <Field.Error className="text-1 text-red-11" />
+      </Field.Root>
 
       {magicLinkSent && (
-        <p className="text-txt-primary text-sm">
+        <Text size={2} className="block">
           {t("magicLinkForm.sentDescription")}
-        </p>
+        </Text>
       )}
 
       <Button
         type="submit"
-        className="w-full h-10"
-        disabled={formState.isSubmitting || (magicLinkSent && timer !== 0)}
+        variant="solid"
+        color="neutral"
+        highContrast
+        size={3}
+        className="w-full"
+        loading={isSubmitting}
+        disabled={waitingToResend}
       >
         {magicLinkSent
-          ? timer === 0
-            ? t("magicLinkForm.actions.resend")
-            : t("magicLinkForm.actions.resendIn", { count: timer })
+          ? waitingToResend
+            ? t("magicLinkForm.actions.resendIn", { count: timer })
+            : t("magicLinkForm.actions.resend")
           : t("magicLinkForm.actions.send")}
       </Button>
-    </form>
+    </Form>
   );
 }

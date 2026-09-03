@@ -18,15 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
-import { type FormEventHandler, useEffect, useState } from "react";
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SSOSignInPageQuery } from "#/__generated__/iam/SSOSignInPageQuery.graphql";
@@ -46,59 +53,58 @@ export default function SSOSignInPage() {
     = useQueryLoader<SSOSignInPageQuery>(ssoAvailabilityQuery);
   const [checking, setChecking] = useState(false);
 
-  const handleSSOCheck: FormEventHandler<HTMLFormElement> = (e) => {
-    e.preventDefault();
-    setChecking(true);
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") ? (formData.get("email") as string).toString() : "";
-
-    if (!email) return;
-
-    loadQuery({ email }, { fetchPolicy: "network-only" });
-  };
-
   return (
     <>
-      <form className="space-y-6 w-full max-w-md mx-auto pt-4" onSubmit={handleSSOCheck}>
-        <Link
-          to={{ pathname: "/auth/login", search: location.search }}
-          className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
+      <div className="flex w-full flex-col gap-8">
+        <div className="flex flex-col gap-1">
+          <Heading level={1} size={4} weight="medium" align="center" highContrast>
+            {t("ssoSignInPage.title")}
+          </Heading>
+          <Text size={2} align="center" className="block">
+            {t("ssoSignInPage.description")}
+          </Text>
+        </div>
+
+        <Form
+          className="flex flex-col gap-5"
+          onFormSubmit={(values) => {
+            const email = String(values.email ?? "");
+            if (!email) return;
+            setChecking(true);
+            loadQuery({ email }, { fetchPolicy: "network-only" });
+          }}
         >
-          <IconChevronLeft size={20} />
-          <span className="text-sm">{t("ssoSignInPage.actions.back")}</span>
-        </Link>
+          <Field.Root name="email" className="flex flex-col gap-1.5">
+            <Field.Label className="text-1 font-medium text-sand-12">
+              {t("ssoSignInPage.fields.workEmail")}
+            </Field.Label>
+            <TextField type="email" name="email" required autoFocus />
+            <Field.Error className="text-1 text-red-11" />
+          </Field.Root>
 
-        <h1 className="text-center text-2xl font-bold">
-          {t("ssoSignInPage.title")}
-        </h1>
-        <p className="text-center text-txt-tertiary mt-1 mb-6">
-          {t("ssoSignInPage.description")}
-        </p>
+          <Button
+            type="submit"
+            variant="solid"
+            color="neutral"
+            highContrast
+            size={3}
+            className="w-full"
+            loading={checking}
+          >
+            {t("ssoSignInPage.actions.continue")}
+          </Button>
+        </Form>
 
-        <Field
-          required
-          placeholder={t("ssoSignInPage.fields.workEmail")}
-          name="email"
-          type="email"
-          label={t("ssoSignInPage.fields.workEmail")}
-          autoFocus
-        />
-
-        <Button className="w-xs h-10 mx-auto mt-6" disabled={checking}>
-          {checking ? t("ssoSignInPage.actions.checking") : t("ssoSignInPage.actions.continue")}
-        </Button>
-
-        <div className="text-center mt-6 text-sm text-txt-secondary">
+        <Text align="center" size={2} className="block">
           {t("ssoSignInPage.noAccount")}
           {" "}
           <Link
             to={{ pathname: "/auth/register", search: location.search }}
-            className="underline hover:text-txt-primary"
           >
             {t("ssoSignInPage.actions.register")}
           </Link>
-        </div>
-      </form>
+        </Text>
+      </div>
 
       {queryRef && (
         <NavigateToSSOLoginURL

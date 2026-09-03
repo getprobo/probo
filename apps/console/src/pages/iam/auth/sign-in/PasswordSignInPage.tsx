@@ -18,12 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
 import { formatError, type GraphQLError } from "@probo/helpers";
-import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
-import type { FormEventHandler } from "react";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, matchPath, useLocation, useNavigate, useSearchParams } from "react-router";
+import { matchPath, useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -51,14 +57,7 @@ export default function PasswordSignInPage() {
   const [signIn, isSigningIn]
     = useMutation<PasswordSignInPageMutation>(signInMutation);
 
-  const handlePasswordLogin: FormEventHandler<HTMLFormElement> = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const emailValue = formData.get("email") ? (formData.get("email") as string).toString() : "";
-    const passwordValue = formData.get("password") ? (formData.get("password") as string).toString() : "";
-
-    if (!emailValue || !passwordValue) return;
-
+  const handlePasswordLogin = (emailValue: string, passwordValue: string) => {
     const match = matchPath(
       { path: "/organizations/:organizationId", caseSensitive: false, end: false },
       new URL(postAuthRedirectUrl, window.location.origin).pathname,
@@ -110,63 +109,68 @@ export default function PasswordSignInPage() {
   };
 
   return (
-    <form className="space-y-6 w-full max-w-md mx-auto pt-4" onSubmit={handlePasswordLogin}>
-      <Link
-        to={{ pathname: "/auth/login", search: location.search }}
-        className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("passwordSignInPage.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
+          {t("passwordSignInPage.description")}
+        </Text>
+      </div>
+
+      <Form
+        className="flex flex-col gap-5"
+        onFormSubmit={(values) => {
+          handlePasswordLogin(String(values.email ?? ""), String(values.password ?? ""));
+        }}
       >
-        <IconChevronLeft size={20} />
-        <span className="text-sm">{t("passwordSignInPage.actions.back")}</span>
-      </Link>
+        <Field.Root name="email" className="flex flex-col gap-1.5">
+          <Field.Label className="text-1 font-medium text-sand-12">
+            {t("passwordSignInPage.fields.email")}
+          </Field.Label>
+          <TextField type="email" name="email" required autoFocus />
+          <Field.Error className="text-1 text-red-11" />
+        </Field.Root>
 
-      <h1 className="text-center text-2xl font-bold">
-        {t("passwordSignInPage.title")}
-      </h1>
-      <p className="text-center text-txt-tertiary mt-1 mb-6">
-        {t("passwordSignInPage.description")}
-      </p>
+        <Field.Root name="password" className="flex flex-col gap-1.5">
+          <Field.Label className="text-1 font-medium text-sand-12">
+            {t("passwordSignInPage.fields.password")}
+          </Field.Label>
+          <TextField type="password" name="password" required />
+          <Field.Error className="text-1 text-red-11" />
+        </Field.Root>
 
-      <div className="space-y-4">
-        <Field
-          required
-          placeholder={t("passwordSignInPage.fields.email")}
-          name="email"
-          type="email"
-          label={t("passwordSignInPage.fields.email")}
-          autoFocus
-        />
-
-        <Field
-          required
-          placeholder={t("passwordSignInPage.fields.password")}
-          name="password"
-          type="password"
-          label={t("passwordSignInPage.fields.password")}
-        />
-      </div>
-
-      <Button className="w-xs h-10 mx-auto mt-6" disabled={isSigningIn}>
-        {isSigningIn ? t("passwordSignInPage.actions.loggingIn") : t("passwordSignInPage.actions.login")}
-      </Button>
-
-      <div className="text-center mt-6 text-sm text-txt-secondary">
-        {t("passwordSignInPage.noAccount")}
-        {" "}
-        <Link to={{ pathname: "/auth/register", search: location.search }} className="underline hover:text-txt-primary">
-          {t("passwordSignInPage.actions.register")}
-        </Link>
-      </div>
-
-      <div className="text-center text-sm text-txt-secondary">
-        {t("passwordSignInPage.forgotPassword")}
-        {" "}
-        <Link
-          to="/auth/forgot-password"
-          className="underline hover:text-txt-primary"
+        <Button
+          type="submit"
+          variant="solid"
+          color="neutral"
+          highContrast
+          size={3}
+          className="w-full"
+          loading={isSigningIn}
         >
-          {t("passwordSignInPage.actions.resetPassword")}
-        </Link>
+          {t("passwordSignInPage.actions.login")}
+        </Button>
+      </Form>
+
+      <div className="flex flex-col gap-2">
+        <Text align="center" size={2} className="block">
+          {t("passwordSignInPage.noAccount")}
+          {" "}
+          <Link to={{ pathname: "/auth/register", search: location.search }}>
+            {t("passwordSignInPage.actions.register")}
+          </Link>
+        </Text>
+
+        <Text align="center" size={2} className="block">
+          {t("passwordSignInPage.forgotPassword")}
+          {" "}
+          <Link to="/auth/forgot-password">
+            {t("passwordSignInPage.actions.resetPassword")}
+          </Link>
+        </Text>
       </div>
-    </form>
+    </div>
   );
 }
