@@ -1275,7 +1275,7 @@
     "authorize": { "title": "Sign in to continue", "titleWithClient": "Sign in to {{name}}", "description": "Use your email or a connected account to continue" },
     "or": "Or",
     "newToProbo": "New to Probo?",
-    "actions": { "signInWithSso": "Sign in with SSO", "signInWithEmail": "Sign in with email", "createAccount": "Create account" }
+    "actions": { "usePassword": "Use a password", "createAccount": "Create account" }
   },
   "oidcButton": { "signInWith": "Sign in with {{provider}}" },
   "topBar": { "tagline": "Console" },
@@ -3117,7 +3117,7 @@
     "messages": { "sent": "Magic link sent!" },
     "fields": { "email": "Email" },
     "sentDescription": "Magic link sent! Check your email and use the link to continue.",
-    "actions": { "resend": "Resend Link", "resendIn": "Resend Link in {{count}}s", "send": "Send Magic Link" }
+    "actions": { "resend": "Resend Link", "resendIn": "Resend Link in {{count}}s", "send": "Continue" }
   },
   "auth": {
     "actions": { "signIn": "Sign in" }

@@ -1941,8 +1941,7 @@
     "or": "Ou",
     "newToProbo": "Nouveau sur Probo ?",
     "actions": {
-      "signInWithSso": "Se connecter avec SSO",
-      "signInWithEmail": "Se connecter avec l’e-mail",
+      "usePassword": "Utiliser un mot de passe",
       "createAccount": "Créer un compte"
     }
   },
@@ -5969,7 +5968,7 @@
     "actions": {
       "resend": "Renvoyer le lien",
       "resendIn": "Renvoyer le lien dans {{count}} s",
-      "send": "Envoyer le lien magique"
+      "send": "Continuer"
     }
   },
   "auth": {

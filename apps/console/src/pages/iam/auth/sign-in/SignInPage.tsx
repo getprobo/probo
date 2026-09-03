@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Button } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useLocation, useSearchParams } from "react-router";
@@ -104,35 +103,29 @@ export default function SignInPage(props: Props) {
       </div>
 
       <div className="space-y-4">
-        {data.oidcProviders.map((providerRef, index) => (
-          <OIDCButton
-            key={index}
-            providerRef={providerRef}
-            continueURL={oidcContinueURL}
-          />
-        ))}
-
         <MagicLinkForm />
 
-        <Divider>{t("signInPage.or")}</Divider>
+        {data.oidcProviders.length > 0 && (
+          <>
+            <Divider>{t("signInPage.or")}</Divider>
+            {data.oidcProviders.map((providerRef, index) => (
+              <OIDCButton
+                key={index}
+                providerRef={providerRef}
+                continueURL={oidcContinueURL}
+              />
+            ))}
+          </>
+        )}
 
-        <Button
-          variant="secondary"
-          className="w-full h-10"
-          to={{ pathname: "/auth/sso-login", search: location.search }}
-        >
-          {t("signInPage.actions.signInWithSso")}
-        </Button>
-
-        <Divider>{t("signInPage.or")}</Divider>
-
-        <Button
-          variant="secondary"
-          className="w-full h-10"
-          to={{ pathname: "/auth/password-login", search: location.search }}
-        >
-          {t("signInPage.actions.signInWithEmail")}
-        </Button>
+        <p className="text-center text-sm text-txt-secondary">
+          <Link
+            to={{ pathname: "/auth/password-login", search: location.search }}
+            className="underline hover:text-txt-primary"
+          >
+            {t("signInPage.actions.usePassword")}
+          </Link>
+        </p>
       </div>
 
       <p className="mt-8 text-center text-sm text-txt-secondary">

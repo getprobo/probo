@@ -1941,8 +1941,7 @@
     "or": "Of",
     "newToProbo": "Nieuw bij Probo?",
     "actions": {
-      "signInWithSso": "Inloggen met SSO",
-      "signInWithEmail": "Inloggen met e-mail",
+      "usePassword": "Een wachtwoord gebruiken",
       "createAccount": "Account aanmaken"
     }
   },
@@ -5962,7 +5961,7 @@
     "actions": {
       "resend": "Link opnieuw verzenden",
       "resendIn": "Link opnieuw verzenden over {{count}}s",
-      "send": "Magic link verzenden"
+      "send": "Doorgaan"
     }
   },
   "auth": {

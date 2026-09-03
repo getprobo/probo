@@ -21,10 +21,18 @@
 import { Button, Field, useToast } from "@probo/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { fetchQuery, graphql, useRelayEnvironment } from "react-relay";
 
+import type { MagicLinkFormSSOQuery } from "#/__generated__/iam/MagicLinkFormSSOQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
 import { z } from "#/lib/zod";
+
+const magicLinkFormSSOQuery = graphql`
+  query MagicLinkFormSSOQuery($email: EmailAddr!) {
+    ssoLoginURL(email: $email) @catch(to: RESULT)
+  }
+`;
 
 const schema = z.object({
   email: z.string().email(),
@@ -37,6 +45,7 @@ const timerDurationSeconds = 60;
 export function MagicLinkForm() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const environment = useRelayEnvironment();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
   const [magicLinkSent, setMagicLinkSent] = useState(false);
@@ -69,6 +78,25 @@ export function MagicLinkForm() {
   });
 
   const handleSubmit = handleSubmitWrapper(async ({ email }: FormData) => {
+    try {
+      const data = await fetchQuery<MagicLinkFormSSOQuery>(
+        environment,
+        magicLinkFormSSOQuery,
+        { email },
+        { fetchPolicy: "network-only" },
+      ).toPromise();
+
+      const ssoLoginURL = data?.ssoLoginURL;
+      if (ssoLoginURL?.ok && ssoLoginURL.value) {
+        const url = new URL(ssoLoginURL.value, window.location.origin);
+        url.searchParams.set("continue", postAuthRedirectUrl);
+        window.location.href = url.toString();
+        return;
+      }
+    } catch {
+      // No unique SAML config (or the lookup failed): send a magic link.
+    }
+
     const body = new URLSearchParams();
     body.set("email", email);
     body.set("continue", postAuthRedirectUrl);
