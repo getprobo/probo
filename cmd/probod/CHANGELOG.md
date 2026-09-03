@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.278.0] - 2026-09-03
+
+### Added
+
+- GCP Workload Identity Federation connector: registers GCP alongside AWS for the access-review source, with a Terraform module reference and console provider entry (access-review driver still pending)
+
+### Fixed
+
+- Access review campaigns no longer diff against the previous campaign's incremental tags; each campaign is now an independent snapshot (previously this could resurrect accounts the source no longer returned, and the console never showed the tag)
+- Linear access-review source now includes disabled/suspended users, which were previously omitted unless `includeDisabled` was requested
+
 ## [0.277.2] - 2026-09-03
 
 ### Fixed
