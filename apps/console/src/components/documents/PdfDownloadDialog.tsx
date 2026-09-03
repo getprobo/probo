@@ -60,7 +60,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
         defaultValues: {
           withWatermark: false,
           watermarkText: defaultEmail,
-          withSignatures: true,
+          withSignatures: false,
         },
       });
 
