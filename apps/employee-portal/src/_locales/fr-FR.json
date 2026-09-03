@@ -3,7 +3,6 @@
     "tagline": "Portail employé"
   },
   "userMenu": {
-    "apiKeys": "Clés API",
     "oauthTokens": "Jetons OAuth",
     "switchToDarkMode": "Passer en mode sombre",
     "switchToLightMode": "Passer en mode clair",

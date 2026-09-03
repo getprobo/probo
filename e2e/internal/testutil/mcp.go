@@ -40,35 +40,6 @@ type MCPClient struct {
 	httpClient *http.Client
 }
 
-// CreateAPIKey creates a personal API key via the connect GraphQL API.
-// It returns the raw bearer token string.
-func (c *Client) CreateAPIKey(name string) string {
-	const query = `
-		mutation($input: CreatePersonalAPIKeyInput!) {
-			createPersonalAPIKey(input: $input) {
-				token
-			}
-		}
-	`
-
-	var result struct {
-		CreatePersonalAPIKey struct {
-			Token string `json:"token"`
-		} `json:"createPersonalAPIKey"`
-	}
-
-	err := c.ExecuteConnect(query, map[string]any{
-		"input": map[string]any{
-			"name":      name,
-			"expiresAt": time.Now().Add(1 * time.Hour).Format(time.RFC3339),
-		},
-	}, &result)
-	require.NoError(c.T, err, "createPersonalAPIKey failed")
-	require.NotEmpty(c.T, result.CreatePersonalAPIKey.Token, "API key token is empty")
-
-	return result.CreatePersonalAPIKey.Token
-}
-
 // CreateOAuth2AccessToken creates a manual OAuth access token via the connect GraphQL API.
 // It returns the raw bearer token string.
 func (c *Client) CreateOAuth2AccessToken(name string, scopes []string) string {
@@ -99,10 +70,35 @@ func (c *Client) CreateOAuth2AccessToken(name string, scopes []string) string {
 	return result.CreateOAuth2AccessToken.Token
 }
 
-// NewMCPClient creates an MCP client authenticated with an API key.
+// NewMCPClient creates an MCP client with all scopes used by the e2e suite.
 // It initializes an MCP session and stores the session ID.
 func NewMCPClient(t require.TestingT, owner *Client) *MCPClient {
-	return NewMCPClientWithAccessToken(t, owner, owner.CreateAPIKey("e2e-mcp-test"))
+	scopes := []string{
+		"v1:access-review",
+		"v1:agent",
+		"v1:ai-system",
+		"v1:asset",
+		"v1:audit",
+		"v1:business-function",
+		"v1:compliance-page",
+		"v1:connector",
+		"v1:control",
+		"v1:datum",
+		"v1:document",
+		"v1:iam",
+		"v1:itam",
+		"v1:org",
+		"v1:privacy",
+		"v1:resource-alias",
+		"v1:risk",
+		"v1:task",
+		"v1:third-party",
+		"v1:webhook",
+	}
+
+	token := owner.CreateOAuth2AccessToken("e2e-mcp-test", scopes)
+
+	return NewMCPClientWithAccessToken(t, owner, token)
 }
 
 // NewMCPClientWithAccessToken creates an MCP client authenticated with a bearer token.

@@ -1627,84 +1627,6 @@
       "commit": "Échec de l’exécution de cette opération"
     }
   },
-  "apiKeys": {
-    "title": "Clés API"
-  },
-  "personalApiKeyList": {
-    "messages": {
-      "created": "Clé API créée avec succès."
-    },
-    "errors": {
-      "create": "Échec de la création de la clé API."
-    },
-    "empty": {
-      "title": "Aucune clé API",
-      "description": "Créez une clé API pour authentifier les accès programmatiques."
-    },
-    "fields": {
-      "name": {
-        "label": "Nom",
-        "placeholder": "par ex. Clé API de production"
-      },
-      "expiresIn": {
-        "label": "Expire dans"
-      }
-    },
-    "expirations": {
-      "month_one": "{{count}} mois",
-      "month_other": "{{count}} mois",
-      "year_one": "{{count}} an",
-      "year_other": "{{count}} ans"
-    },
-    "actions": {
-      "create": "Créer une clé API",
-      "creating": "Création..."
-    }
-  },
-  "personalApiKeyRow": {
-    "messages": {
-      "revoked": "Clé API révoquée avec succès."
-    },
-    "errors": {
-      "revoke": "Échec de la révocation de la clé API."
-    },
-    "revoke": {
-      "title": "Révoquer la clé API",
-      "confirmation": "Voulez-vous vraiment révoquer la clé API « {{name}} » ? Cette action est irréversible."
-    },
-    "status": {
-      "expired": "Expirée",
-      "active": "Active"
-    },
-    "never": "Jamais",
-    "actions": {
-      "revoke": "Révoquer"
-    }
-  },
-  "personalApiKeyTokenAction": {
-    "errors": {
-      "load": "Échec du chargement du jeton de clé API."
-    },
-    "actions": {
-      "show": "Afficher"
-    }
-  },
-  "personalApiKeyTokenDialog": {
-    "title": "Jeton",
-    "actions": {
-      "copy": "Copier",
-      "copied": "Copié",
-      "done": "Terminé"
-    }
-  },
-  "personalApiKeysTable": {
-    "columns": {
-      "name": "Nom",
-      "lastUsed": "Dernière utilisation",
-      "created": "Créée",
-      "expires": "Expire"
-    }
-  },
   "activateAccountPage": {
     "pageTitle": "Activer le compte",
     "title": "Activation du compte",
@@ -2297,7 +2219,6 @@
       "cannotSignOut": "Impossible de se déconnecter"
     },
     "actions": {
-      "apiKeys": "Clés API",
       "oauthTokens": "Jetons OAuth",
       "employeePortal": "Portail employé",
       "switchToDarkMode": "Passer en mode sombre",

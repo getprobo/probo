@@ -3,7 +3,6 @@
     "tagline": "Medewerkersportaal"
   },
   "userMenu": {
-    "apiKeys": "API-sleutels",
     "oauthTokens": "OAuth-tokens",
     "switchToDarkMode": "Overschakelen naar donkere modus",
     "switchToLightMode": "Overschakelen naar lichte modus",

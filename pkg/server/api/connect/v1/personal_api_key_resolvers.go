@@ -9,38 +9,12 @@ import (
 	"context"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
-
-// CreatePersonalAPIKey is the resolver for the createPersonalAPIKey field.
-func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-
-	if _, err := r.authorize(ctx, identity.ID, iam.ActionPersonalAPIKeyCreate); err != nil {
-		return nil, err
-	}
-
-	userAPIKey, token, err := r.iam.AccountService.CreatePersonalAPIKey(
-		ctx,
-		identity.ID,
-		input.Name,
-		input.ExpiresAt,
-	)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create personal api key", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.CreatePersonalAPIKeyPayload{
-		PersonalAPIKeyEdge: types.NewPersonalAPIKeyEdge(userAPIKey, coredata.PersonalAPIKeyOrderFieldCreatedAt),
-		Token:              token,
-	}, nil
-}
 
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
 func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error) {

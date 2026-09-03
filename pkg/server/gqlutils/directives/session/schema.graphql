@@ -10,7 +10,7 @@
 #
 # Usage in your schema.graphql:
 #   type Mutation {
-#     createPersonalAPIKey(input: CreatePersonalAPIKeyInput!): CreatePersonalAPIKeyPayload
+#     rotateSecret(input: RotateSecretInput!): RotateSecretPayload
 #       @authentication(required: PRESENT)
 #       @sessionOnly
 #   }

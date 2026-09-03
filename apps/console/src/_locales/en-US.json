@@ -1105,48 +1105,6 @@
     "messages": { "completed": "Operation completed successfully" },
     "errors": { "commit": "Failed to commit this operation" }
   },
-  "apiKeys": { "title": "API Keys" },
-  "personalApiKeyList": {
-    "messages": { "created": "API key created successfully." },
-    "errors": { "create": "Failed to create API key." },
-    "empty": {
-      "title": "No API keys",
-      "description": "Create an API key to authenticate programmatic access."
-    },
-    "fields": {
-      "name": { "label": "Name", "placeholder": "e.g., Production API Key" },
-      "expiresIn": { "label": "Expires In" }
-    },
-    "expirations": {
-      "month_one": "{{count}} Month",
-      "month_other": "{{count}} Months",
-      "year_one": "{{count}} Year",
-      "year_other": "{{count}} Years"
-    },
-    "actions": { "create": "Create API Key", "creating": "Creating..." }
-  },
-  "personalApiKeyRow": {
-    "messages": { "revoked": "API key revoked successfully." },
-    "errors": { "revoke": "Failed to revoke API key." },
-    "revoke": {
-      "title": "Revoke API Key",
-      "confirmation": "Are you sure you want to revoke the API key \"{{name}}\"? This action cannot be undone."
-    },
-    "status": { "expired": "Expired", "active": "Active" },
-    "never": "Never",
-    "actions": { "revoke": "Revoke" }
-  },
-  "personalApiKeyTokenAction": {
-    "errors": { "load": "Failed to load API key token." },
-    "actions": { "show": "Show" }
-  },
-  "personalApiKeyTokenDialog": {
-    "title": "Token",
-    "actions": { "copy": "Copy", "copied": "Copied", "done": "Done" }
-  },
-  "personalApiKeysTable": {
-    "columns": { "name": "Name", "lastUsed": "Last used", "created": "Created", "expires": "Expires" }
-  },
   "activateAccountPage": {
     "pageTitle": "Activate Account",
     "title": "Account Activation",
@@ -1496,7 +1454,7 @@
   },
   "viewerMembershipDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
-    "actions": { "apiKeys": "API Keys", "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "switchToDarkMode": "Switch to dark mode", "switchToLightMode": "Switch to light mode", "help": "Help", "logout": "Logout" }
+    "actions": { "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "switchToDarkMode": "Switch to dark mode", "switchToLightMode": "Switch to light mode", "help": "Help", "logout": "Logout" }
   },
   "peoplePage": {
     "actions": { "add": "Add Person" }

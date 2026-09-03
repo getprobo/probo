@@ -147,12 +147,6 @@ const routes = [
             ),
           },
           {
-            path: "me/api-keys",
-            Component: lazy(
-              () => import("./pages/iam/apiKeys/APIKeysPageLoader"),
-            ),
-          },
-          {
             path: "me/oauth-tokens",
             Component: lazy(
               () => import("./pages/iam/oauthTokens/OAuthTokensPageLoader"),
