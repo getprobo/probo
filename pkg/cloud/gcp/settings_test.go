@@ -29,8 +29,9 @@ import (
 )
 
 const (
-	testProviderResource = "projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo"
-	testServiceAccount   = "probo-audit@my-project.iam.gserviceaccount.com"
+	testProviderResource   = "projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo"
+	testServiceAccount     = "probo-audit@my-project.iam.gserviceaccount.com"
+	testS3NSServiceAccount = "probo-audit@my-project.s3ns.iam.gserviceaccount.com"
 )
 
 func TestNewConnectorSettings(t *testing.T) {
@@ -122,5 +123,54 @@ func TestNewConnectorSettings(t *testing.T) {
 		assert.Contains(t, err.Error(), "serviceAccountEmail is not a service account email")
 		assert.NotContains(t, err.Error(), raw)
 		assert.NotContains(t, err.Error(), "alice")
+	})
+
+	t.Run("accepts an s3ns service account email", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name     string
+			resource string
+		}{
+			{name: "bare resource", resource: testProviderResource},
+			{name: "commercial iam host", resource: "https://iam.googleapis.com/" + testProviderResource},
+			{name: "s3ns https prefix", resource: "https://iam.s3nsapis.fr/" + testProviderResource},
+			{name: "s3ns scheme-relative prefix", resource: "//iam.s3nsapis.fr/" + testProviderResource},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				settings, err := cloudgcp.NewConnectorSettings(tt.resource, testS3NSServiceAccount)
+				require.NoError(t, err)
+				assert.Equal(t, testProviderResource, settings.WorkloadIdentityProvider)
+				assert.Equal(t, testS3NSServiceAccount, settings.ServiceAccountEmail)
+			})
+		}
+	})
+
+	t.Run("refuses an s3ns host with a commercial email without echoing them", func(t *testing.T) {
+		t.Parallel()
+
+		resource := "https://iam.s3nsapis.fr/" + testProviderResource
+
+		_, err := cloudgcp.NewConnectorSettings(resource, testServiceAccount)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "name different GCP universes")
+		assert.NotContains(t, err.Error(), resource)
+		assert.NotContains(t, err.Error(), testServiceAccount)
+	})
+
+	t.Run("refuses an unsupported universe host without echoing it", func(t *testing.T) {
+		t.Parallel()
+
+		resource := "https://iam.example.com/" + testProviderResource
+
+		_, err := cloudgcp.NewConnectorSettings(resource, testServiceAccount)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not a supported GCP universe")
+		assert.NotContains(t, err.Error(), resource)
+		assert.NotContains(t, err.Error(), "example.com")
 	})
 }

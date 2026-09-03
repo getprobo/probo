@@ -131,10 +131,10 @@ export function awsAccessReviewSourceName(
 }
 
 const GCP_PROVIDER_RESOURCE_PATTERN
-  = /^(?:https:\/\/iam\.googleapis\.com\/|\/\/iam\.googleapis\.com\/)?projects\/([1-9][0-9]*)\/locations\/global\/workloadIdentityPools\/([a-z][a-z0-9-]{3,31})\/providers\/([a-z][a-z0-9-]{3,31})\/?$/;
+  = /^(?:(?:https:)?\/\/iam\.(?:googleapis\.com|s3nsapis\.fr)\/)?projects\/([1-9][0-9]*)\/locations\/global\/workloadIdentityPools\/([a-z][a-z0-9-]{3,31})\/providers\/([a-z][a-z0-9-]{3,31})\/?$/;
 
 const GCP_SERVICE_ACCOUNT_EMAIL_PATTERN
-  = /^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9]\.iam\.gserviceaccount\.com$/;
+  = /^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9](?:\.s3ns)?\.iam\.gserviceaccount\.com$/;
 
 export function isGCPWorkloadIdentityProvider(value: string): boolean {
   return GCP_PROVIDER_RESOURCE_PATTERN.test(value.trim());

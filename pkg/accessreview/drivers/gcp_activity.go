@@ -32,7 +32,6 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/coredata"
 	cloudlogging "google.golang.org/api/logging/v2"
-	"google.golang.org/api/option"
 	policyanalyzer "google.golang.org/api/policyanalyzer/v1"
 )
 
@@ -136,11 +135,7 @@ func queryGCPPolicyAnalyzer(
 	ctx context.Context,
 	session *cloudgcp.Session,
 ) (map[string]time.Time, map[string]bool, error) {
-	svc, err := policyanalyzer.NewService(
-		ctx,
-		option.WithHTTPClient(session.HTTPClient()),
-		option.WithoutAuthentication(),
-	)
+	svc, err := policyanalyzer.NewService(ctx, session.ServiceOptions()...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create gcp policy analyzer client: %w", err)
 	}
@@ -269,11 +264,7 @@ func queryGCPAdminActivity(
 		return nil, nil
 	}
 
-	svc, err := cloudlogging.NewService(
-		ctx,
-		option.WithHTTPClient(session.HTTPClient()),
-		option.WithoutAuthentication(),
-	)
+	svc, err := cloudlogging.NewService(ctx, session.ServiceOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create gcp logging client: %w", err)
 	}

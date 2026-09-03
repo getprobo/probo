@@ -252,6 +252,11 @@ func TestProjectIDFromServiceAccountEmail(t *testing.T) {
 		"my-project",
 		projectIDFromServiceAccountEmail("probo-audit@my-project.iam.gserviceaccount.com"),
 	)
+	assert.Equal(
+		t,
+		"my-project",
+		projectIDFromServiceAccountEmail("probo-audit@my-project.s3ns.iam.gserviceaccount.com"),
+	)
 	assert.Empty(t, projectIDFromServiceAccountEmail("alice@example.com"))
 	assert.Empty(t, projectIDFromServiceAccountEmail(""))
 }

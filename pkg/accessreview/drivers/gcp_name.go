@@ -28,10 +28,12 @@ import (
 	"go.gearno.de/kit/log"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v1"
-	"google.golang.org/api/option"
 )
 
-const gcpServiceAccountEmailSuffix = ".iam.gserviceaccount.com"
+var gcpServiceAccountEmailSuffixes = []string{
+	".s3ns.iam.gserviceaccount.com",
+	".iam.gserviceaccount.com",
+}
 
 // gcpNameResolver names the connected project for the source-name worker.
 // The official display name is preferred, then the connected project's
@@ -88,11 +90,7 @@ func (r *gcpNameResolver) ResolveInstanceName(ctx context.Context) (string, erro
 }
 
 func (r *gcpNameResolver) getProject(ctx context.Context) (*cloudresourcemanager.Project, error) {
-	svc, err := cloudresourcemanager.NewService(
-		ctx,
-		option.WithHTTPClient(r.session.HTTPClient()),
-		option.WithoutAuthentication(),
-	)
+	svc, err := cloudresourcemanager.NewService(ctx, r.session.ServiceOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create gcp resource manager client: %w", err)
 	}
@@ -111,9 +109,11 @@ func projectIDFromServiceAccountEmail(email string) string {
 		return ""
 	}
 
-	if !strings.HasSuffix(host, gcpServiceAccountEmailSuffix) {
-		return ""
+	for _, suffix := range gcpServiceAccountEmailSuffixes {
+		if before, ok0 := strings.CutSuffix(host, suffix); ok0 {
+			return before
+		}
 	}
 
-	return strings.TrimSuffix(host, gcpServiceAccountEmailSuffix)
+	return ""
 }

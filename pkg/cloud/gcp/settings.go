@@ -27,22 +27,20 @@ import (
 	"strings"
 )
 
-const (
-	iamHost = "iam.googleapis.com"
-)
-
 var (
 	errInvalidProviderResource    = errors.New("workloadIdentityProvider is not a workload identity provider resource")
 	errInvalidServiceAccountEmail = errors.New("serviceAccountEmail is not a service account email")
 
 	providerResourcePattern = regexp.MustCompile(
-		`^(?:https://iam\.googleapis\.com/|//iam\.googleapis\.com/)?` +
+		`^(?:(?:https:)?//([^/]+)/)?` +
 			`/?projects/([1-9][0-9]*)` +
 			`/locations/global` +
 			`/workloadIdentityPools/([a-z0-9][a-z0-9-]{2,30}[a-z0-9])` +
 			`/providers/([a-z0-9][a-z0-9-]{2,30}[a-z0-9])/?$`,
 	)
-	serviceAccountEmailPattern = regexp.MustCompile(`^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9]\.iam\.gserviceaccount\.com$`)
+	serviceAccountEmailPattern = regexp.MustCompile(
+		`^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9](?:\.s3ns)?\.iam\.gserviceaccount\.com$`,
+	)
 )
 
 type (
@@ -54,6 +52,7 @@ type (
 	}
 
 	providerResource struct {
+		iamHost       string
 		projectNumber string
 		poolID        string
 		providerID    string
@@ -74,6 +73,10 @@ func NewConnectorSettings(providerResource, serviceAccountEmail string) (Connect
 		return ConnectorSettings{}, fmt.Errorf("cannot create gcp connector: %w", err)
 	}
 
+	if _, err := inferUniverse(parsed, email); err != nil {
+		return ConnectorSettings{}, fmt.Errorf("cannot create gcp connector: %w", err)
+	}
+
 	return ConnectorSettings{
 		WorkloadIdentityProvider: canonicalProviderResource(parsed),
 		ServiceAccountEmail:      email,
@@ -86,10 +89,16 @@ func parseProviderResource(raw string) (providerResource, error) {
 		return providerResource{}, errInvalidProviderResource
 	}
 
+	host := matches[1]
+	if host != "" && !supportedIAMHost(host) {
+		return providerResource{}, errUnsupportedUniverse
+	}
+
 	return providerResource{
-		projectNumber: matches[1],
-		poolID:        matches[2],
-		providerID:    matches[3],
+		iamHost:       host,
+		projectNumber: matches[2],
+		poolID:        matches[3],
+		providerID:    matches[4],
 	}, nil
 }
 
