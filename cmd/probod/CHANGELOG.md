@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.277.2] - 2026-09-03
+
 ### Fixed
 
 - Bumped golang.org/x/crypto to 0.56.0, addressing denial-of-service on
