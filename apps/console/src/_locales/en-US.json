@@ -1278,13 +1278,14 @@
     "actions": { "signInWithSso": "Sign in with SSO", "signInWithEmail": "Sign in with email", "createAccount": "Create account" }
   },
   "oidcButton": { "signInWith": "Sign in with {{provider}}" },
+  "topBar": { "tagline": "Console" },
   "membershipsPage": {
-    "pageTitle": "Select an organization",
-    "title": "Select an organization",
+    "pageTitle": "Your organizations",
+    "title": "Your organizations",
     "pendingInvitations": "Pending invitations",
-    "yourOrganizations": "Your organizations",
-    "searchPlaceholder": "Search organizations...",
+    "searchPlaceholder": "Search organizations",
     "empty": "No organizations found",
+    "emptySearch": "No organizations match that search.",
     "createOrganization": { "title": "Create an organization", "description": "Add a new organization to your account", "action": "Create organization" }
   },
   "noOrganizationAccess": {
@@ -1297,7 +1298,7 @@
   "membershipCard": {
     "status": { "authenticated": "Authenticated", "sessionExpired": "Session expired", "authenticationRequired": "Authentication required" },
     "accountDeactivated": "Account deactivated",
-    "actions": { "start": "Start", "login": "Login" }
+    "actions": { "open": "Open", "continue": "Continue" }
   },
   "viewerDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },

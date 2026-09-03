@@ -18,41 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, Card, IconMail } from "@probo/ui";
-import { useTranslation } from "react-i18next";
-import { useFragment } from "react-relay";
-import { graphql } from "relay-runtime";
+import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 
-import type { InvitingOrganizationCardFragment$key } from "#/__generated__/iam/InvitingOrganizationCardFragment.graphql";
-
-const fragment = graphql`
-  fragment InvitingOrganizationCardFragment on Organization {
-    name
-  }
-`;
-
-interface InvitingOrganizationCardProps {
-  fKey: InvitingOrganizationCardFragment$key;
-}
-
-export function InvitingOrganizationCard(props: InvitingOrganizationCardProps) {
-  const { fKey } = props;
-  const { t } = useTranslation();
-
-  const organization = useFragment<InvitingOrganizationCardFragment$key>(
-    fragment,
-    fKey,
-  );
-
+export function MembershipsPageSkeleton() {
   return (
-    <Card padded className="w-full">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-xl">{organization.name}</h2>
-        <Badge variant="neutral" className="flex items-center gap-1">
-          <IconMail size={14} />
-          {t("invitingOrganizationCard.checkEmail")}
-        </Badge>
-      </div>
-    </Card>
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-8 py-8">
+      <HeadingSkeleton size={6} className="w-64" />
+      <TextFieldSkeleton size={2} />
+      <ListSkeleton count={4} />
+    </div>
   );
 }

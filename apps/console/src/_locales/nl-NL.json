@@ -1949,13 +1949,16 @@
   "oidcButton": {
     "signInWith": "Inloggen met {{provider}}"
   },
+  "topBar": {
+    "tagline": "Console"
+  },
   "membershipsPage": {
-    "pageTitle": "Selecteer een organisatie",
-    "title": "Selecteer een organisatie",
+    "pageTitle": "Uw organisaties",
+    "title": "Uw organisaties",
     "pendingInvitations": "Openstaande uitnodigingen",
-    "yourOrganizations": "Uw organisaties",
-    "searchPlaceholder": "Organisaties zoeken...",
+    "searchPlaceholder": "Organisaties zoeken",
     "empty": "Geen organisaties gevonden",
+    "emptySearch": "Geen organisaties komen overeen met deze zoekopdracht.",
     "createOrganization": {
       "title": "Een organisatie aanmaken",
       "description": "Voeg een nieuwe organisatie toe aan uw account",
@@ -1984,8 +1987,8 @@
     },
     "accountDeactivated": "Account gedeactiveerd",
     "actions": {
-      "start": "Starten",
-      "login": "Inloggen"
+      "open": "Openen",
+      "continue": "Doorgaan"
     }
   },
   "viewerDropdown": {

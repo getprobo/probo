@@ -22,6 +22,7 @@ import { CheckIcon, ClockIcon, LockIcon } from "@phosphor-icons/react";
 import { getMembershipSessionStatus } from "@probo/helpers";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
@@ -33,6 +34,7 @@ import type { OrganizationListItem_profile$key } from "#/__generated__/iam/Organ
 
 const organizationListItemFragment = graphql`
   fragment OrganizationListItem_profile on Profile {
+    state
     membership @required(action: THROW) {
       lastSession {
         expiresAt
@@ -54,7 +56,7 @@ interface OrganizationListItemProps {
 
 export function OrganizationListItem({ profileKey }: OrganizationListItemProps) {
   const { t } = useTranslation();
-  const { membership, organization } = useFragment(
+  const { membership, organization, state } = useFragment(
     organizationListItemFragment,
     profileKey,
   );
@@ -68,19 +70,19 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
 
   let statusBadge = (
     <Badge color="neutral" variant="soft" iconStart={<LockIcon />}>
-      {t("organizationsPage.status.authenticationRequired")}
+      {t("membershipCard.status.authenticationRequired")}
     </Badge>
   );
   if (sessionStatus === "authenticated") {
     statusBadge = (
       <Badge color="green" variant="soft" iconStart={<CheckIcon />}>
-        {t("organizationsPage.status.authenticated")}
+        {t("membershipCard.status.authenticated")}
       </Badge>
     );
   } else if (sessionStatus === "expired") {
     statusBadge = (
       <Badge color="amber" variant="soft" iconStart={<ClockIcon />}>
-        {t("organizationsPage.status.sessionExpired")}
+        {t("membershipCard.status.sessionExpired")}
       </Badge>
     );
   }
@@ -101,16 +103,24 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
         </Text>
         {statusBadge}
       </ListItemContent>
-      <ButtonLink
-        to={`/${organization.id}`}
-        size={2}
-        variant={isAssuming ? "soft" : "solid"}
-        color={isAssuming ? "neutral" : "gold"}
-      >
-        {isAssuming
-          ? t("organizationsPage.actions.continue")
-          : t("organizationsPage.actions.open")}
-      </ButtonLink>
+      {state === "ACTIVE"
+        ? (
+            <ButtonLink
+              to={`/organizations/${organization.id}`}
+              size={2}
+              variant={isAssuming ? "soft" : "solid"}
+              color={isAssuming ? "neutral" : "gold"}
+            >
+              {isAssuming
+                ? t("membershipCard.actions.continue")
+                : t("membershipCard.actions.open")}
+            </ButtonLink>
+          )
+        : (
+            <Button size={2} variant="soft" color="neutral" disabled>
+              {t("membershipCard.accountDeactivated")}
+            </Button>
+          )}
     </ListItem>
   );
 }

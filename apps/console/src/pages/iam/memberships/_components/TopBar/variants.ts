@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,38 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { tv } from "tailwind-variants/lite";
 
-import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+// Viewer-layout top bar. Slots are shared by the live header and its
+// skeleton so the loading placeholder is structurally identical. Inner
+// width matches the memberships page content column (1024px / max-w-5xl).
+export const topBar = tv({
+  slots: {
+    bar: "flex h-14 items-center bg-sand-1",
+    inner: "mx-auto flex w-full max-w-5xl items-center justify-between gap-6 px-8",
+    brand: "flex min-w-0 items-center gap-2",
+    brandText: "flex min-w-0 flex-col",
+    brandName: "truncate",
+  },
+});
 
-import { MembershipsPage, membershipsPageQuery } from "./MembershipsPage";
-import { MembershipsPageSkeleton } from "./MembershipsPageSkeleton";
-
-function MembershipsPageQueryLoader() {
-  const [queryRef, loadQuery]
-    = useQueryLoader<MembershipsPageQuery>(membershipsPageQuery);
-
-  useEffect(() => {
-    loadQuery({});
-  }, [loadQuery]);
-
-  if (!queryRef) {
-    return <MembershipsPageSkeleton />;
-  }
-
-  return (
-    <Suspense fallback={<MembershipsPageSkeleton />}>
-      <MembershipsPage queryRef={queryRef} />
-    </Suspense>
-  );
-}
-
-export default function MembershipsPageLoader() {
-  return (
-    <IAMRelayProvider>
-      <MembershipsPageQueryLoader />
-    </IAMRelayProvider>
-  );
-}
+// User-menu trigger. Radius matches v2 Button size 2 and Avatar `small`.
+export const topBarUserMenuTrigger = tv({
+  base: [
+    "flex h-8 items-center gap-2 rounded-2 py-1 pr-2.5 pl-1",
+    "cursor-pointer outline-none transition-colors select-none",
+    "hover:bg-sand-3 data-popup-open:bg-sand-3",
+    "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+  ],
+});

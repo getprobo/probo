@@ -115,6 +115,10 @@ export {
   type Period,
 } from "./date";
 export {
+  getMembershipSessionStatus,
+  type MembershipSessionStatus,
+} from "./membershipSession";
+export {
   DURATION_UNITS,
   toMaxAgeSeconds,
   fromMaxAgeSeconds,

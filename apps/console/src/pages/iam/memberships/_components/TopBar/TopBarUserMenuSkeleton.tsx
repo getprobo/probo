@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,38 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+import { topBarUserMenuTrigger } from "./variants";
 
-import { MembershipsPage, membershipsPageQuery } from "./MembershipsPage";
-import { MembershipsPageSkeleton } from "./MembershipsPageSkeleton";
-
-function MembershipsPageQueryLoader() {
-  const [queryRef, loadQuery]
-    = useQueryLoader<MembershipsPageQuery>(membershipsPageQuery);
-
-  useEffect(() => {
-    loadQuery({});
-  }, [loadQuery]);
-
-  if (!queryRef) {
-    return <MembershipsPageSkeleton />;
-  }
-
+export function TopBarUserMenuSkeleton() {
   return (
-    <Suspense fallback={<MembershipsPageSkeleton />}>
-      <MembershipsPage queryRef={queryRef} />
-    </Suspense>
-  );
-}
-
-export default function MembershipsPageLoader() {
-  return (
-    <IAMRelayProvider>
-      <MembershipsPageQueryLoader />
-    </IAMRelayProvider>
+    <div className={topBarUserMenuTrigger()}>
+      <AvatarSkeleton size={1} radius="small" />
+      <TextSkeleton size={2} className="w-20" />
+    </div>
   );
 }

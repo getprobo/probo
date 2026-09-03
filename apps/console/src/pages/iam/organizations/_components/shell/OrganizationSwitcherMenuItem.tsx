@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CheckIcon, ClockIcon, LockSimpleIcon } from "@phosphor-icons/react";
-import { parseDate } from "@probo/helpers";
+import { getMembershipSessionStatus } from "@probo/helpers";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { useTranslation } from "react-i18next";
@@ -49,9 +49,9 @@ const organizationFragment = graphql`
 `;
 
 const SESSION_STATES = {
-  active: { Icon: CheckIcon, className: "text-green-11", labelKey: "organizationSwitcher.sessionActive" },
+  authenticated: { Icon: CheckIcon, className: "text-green-11", labelKey: "organizationSwitcher.sessionActive" },
   expired: { Icon: ClockIcon, className: "text-amber-11", labelKey: "organizationSwitcher.sessionExpired" },
-  locked: { Icon: LockSimpleIcon, className: "text-sand-11", labelKey: "organizationSwitcher.sessionLocked" },
+  required: { Icon: LockSimpleIcon, className: "text-sand-11", labelKey: "organizationSwitcher.sessionLocked" },
 } as const;
 
 export interface OrganizationSwitcherMenuItemProps {
@@ -66,10 +66,9 @@ export function OrganizationSwitcherMenuItem(props: OrganizationSwitcherMenuItem
   const { lastSession } = useFragment(membershipFragment, membershipKey);
   const organization = useFragment(organizationFragment, organizationKey);
 
-  let sessionState: keyof typeof SESSION_STATES = "locked";
-  if (lastSession != null) {
-    sessionState = parseDate(lastSession.expiresAt) < new Date() ? "expired" : "active";
-  }
+  const sessionState = getMembershipSessionStatus(
+    lastSession == null ? null : { expiresAt: lastSession.expiresAt },
+  );
   const { Icon: SessionIcon, className, labelKey } = SESSION_STATES[sessionState];
 
   return (

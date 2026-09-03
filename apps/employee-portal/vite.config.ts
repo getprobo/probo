@@ -60,19 +60,37 @@ function employeePortalContentSecurityPolicy(
     .replace(/\s+/g, " ");
 }
 
-function appOriginFromEnv(env: Record<string, string>): string {
-  const explicit = env.EMPLOYEE_PORTAL_APP_ORIGIN?.trim();
-  if (explicit) {
-    return explicit.replace(/\/$/, "");
+function originFromURL(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
   }
 
-  const apiURL = env.VITE_API_URL?.trim() || "http://localhost:8080";
   const formatted
-    = apiURL.startsWith("http://") || apiURL.startsWith("https://")
-      ? apiURL
-      : `https://${apiURL}`;
+    = trimmed.startsWith("http://") || trimmed.startsWith("https://")
+      ? trimmed
+      : `https://${trimmed}`;
 
   return new URL(formatted).origin;
+}
+
+const defaultFileOrigin = "http://localhost:8080";
+
+// Local downloadUrl hosts are minted on localhost:8080. VITE_API_URL
+// can point elsewhere (a leftover Lima IP), so img-src/connect-src
+// must allow both.
+function appOriginFromEnv(env: Record<string, string>): string {
+  const origins = new Set<string>();
+
+  const explicit = env.EMPLOYEE_PORTAL_APP_ORIGIN?.trim();
+  if (explicit) {
+    origins.add(explicit.replace(/\/$/, ""));
+  }
+
+  origins.add(originFromURL(env.VITE_API_URL?.trim() || defaultFileOrigin));
+  origins.add(defaultFileOrigin);
+
+  return [...origins].join(" ");
 }
 
 const defaultAWSRegion = "us-east-2";

@@ -1949,13 +1949,16 @@
   "oidcButton": {
     "signInWith": "Se connecter avec {{provider}}"
   },
+  "topBar": {
+    "tagline": "Console"
+  },
   "membershipsPage": {
-    "pageTitle": "Sélectionner une organisation",
-    "title": "Sélectionner une organisation",
+    "pageTitle": "Vos organisations",
+    "title": "Vos organisations",
     "pendingInvitations": "Invitations en attente",
-    "yourOrganizations": "Vos organisations",
-    "searchPlaceholder": "Rechercher des organisations...",
+    "searchPlaceholder": "Rechercher des organisations",
     "empty": "Aucune organisation trouvée",
+    "emptySearch": "Aucune organisation ne correspond à cette recherche.",
     "createOrganization": {
       "title": "Créer une organisation",
       "description": "Ajoutez une nouvelle organisation à votre compte",
@@ -1984,8 +1987,8 @@
     },
     "accountDeactivated": "Compte désactivé",
     "actions": {
-      "start": "Démarrer",
-      "login": "Connexion"
+      "open": "Ouvrir",
+      "continue": "Continuer"
     }
   },
   "viewerDropdown": {
