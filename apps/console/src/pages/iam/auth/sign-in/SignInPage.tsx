@@ -108,13 +108,15 @@ export default function SignInPage(props: Props) {
         {data.oidcProviders.length > 0 && (
           <>
             <Divider>{t("signInPage.or")}</Divider>
-            {data.oidcProviders.map((providerRef, index) => (
-              <OIDCButton
-                key={index}
-                providerRef={providerRef}
-                continueURL={oidcContinueURL}
-              />
-            ))}
+            <div className="flex gap-4">
+              {data.oidcProviders.map((providerRef, index) => (
+                <OIDCButton
+                  key={index}
+                  providerRef={providerRef}
+                  continueURL={oidcContinueURL}
+                />
+              ))}
+            </div>
           </>
         )}
 

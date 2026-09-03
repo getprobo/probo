@@ -61,14 +61,16 @@ export default function AuthLayout(props: PropsWithChildren) {
             )}
           </div>
         )}
-        <Card variant="soft" size={3} padding="none" className={slots.frame()}>
+        <div className={slots.stack()}>
           <div className={slots.wash()} />
-          <div className={slots.body()}>
-            <IAMRelayProvider>
-              {children ?? <Outlet />}
-            </IAMRelayProvider>
-          </div>
-        </Card>
+          <Card variant="soft" size={3} padding="none" className={slots.frame()}>
+            <div className={slots.body()}>
+              <IAMRelayProvider>
+                {children ?? <Outlet />}
+              </IAMRelayProvider>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );

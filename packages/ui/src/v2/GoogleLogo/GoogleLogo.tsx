@@ -28,7 +28,7 @@ export function GoogleLogo(props: GoogleLogoProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="-3 0 262 262"
+      viewBox="0 0 262 262"
       preserveAspectRatio="xMidYMid"
       {...props}
     >

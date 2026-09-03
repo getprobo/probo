@@ -20,19 +20,19 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Shared /auth card chrome. The wash matches the employee-portal get-started
-// cards: a lime radial pinned to the top of the white card, behind the title.
+// Shared /auth card chrome. A lime circle sits behind the card (wider than
+// the card) so the glow peeks past the left and right edges.
 export const authLayout = tv({
   slots: {
     column: "flex w-full max-w-lg flex-col gap-6",
-    header: "relative flex min-h-6 items-center justify-center",
+    header: "relative z-2 flex min-h-6 items-center justify-center",
     back: "absolute left-0 top-1/2 -translate-y-1/2",
-    frame: "relative w-full overflow-hidden",
+    stack: "relative",
     wash: [
-      "pointer-events-none absolute inset-x-0 top-0 z-0 h-3/5",
-      "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
-      "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
+      "pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[calc(140%+32px)] -translate-x-1/2 -translate-y-1/2",
+      "bg-[radial-gradient(circle,rgb(230_255_3/0.95)_0%,rgb(230_255_3/0.5)_40%,transparent_68%)]",
     ],
+    frame: "relative z-1 w-full",
     body: "relative z-1 px-8 pt-14 pb-8",
   },
 });

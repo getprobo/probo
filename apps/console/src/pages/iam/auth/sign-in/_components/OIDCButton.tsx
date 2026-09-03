@@ -59,14 +59,17 @@ export function OIDCButton({
   const Icon = providerIcons[provider.name];
   const organizationId = searchParams.get("organization-id");
   const targetContinue = continueURL ?? safeContinueUrl.toString();
+  const providerLabel
+    = provider.name.charAt(0).toUpperCase() + provider.name.slice(1);
 
   return (
     <Button
       variant="soft"
       color="neutral"
       size={3}
-      className="w-full"
-      iconStart={Icon ? <Icon width={18} height={18} /> : undefined}
+      className="min-w-0 flex-1"
+      aria-label={t("oidcButton.signInWith", { provider: providerLabel })}
+      iconStart={Icon ? <Icon className="size-5" /> : undefined}
       onClick={() => {
         const loginURL = new URL(provider.loginURL, window.location.origin);
         loginURL.searchParams.set("continue", targetContinue);
@@ -77,9 +80,7 @@ export function OIDCButton({
         window.location.href = loginURL.toString();
       }}
     >
-      {t("oidcButton.signInWith", {
-        provider: provider.name.charAt(0).toUpperCase() + provider.name.slice(1),
-      })}
+      {providerLabel}
     </Button>
   );
 }
