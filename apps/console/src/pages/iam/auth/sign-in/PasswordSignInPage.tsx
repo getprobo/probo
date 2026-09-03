@@ -139,6 +139,13 @@ export default function PasswordSignInPage() {
           </Field.Label>
           <TextField type="password" name="password" required />
           <Field.Error className="text-1 text-red-11" />
+          <Text align="right" size={2} className="block">
+            {t("passwordSignInPage.forgotPassword")}
+            {" "}
+            <Link to="/auth/forgot-password">
+              {t("passwordSignInPage.actions.resetPassword")}
+            </Link>
+          </Text>
         </Field.Root>
 
         <Button
@@ -160,14 +167,6 @@ export default function PasswordSignInPage() {
           {" "}
           <Link to={{ pathname: "/auth/register", search: location.search }}>
             {t("passwordSignInPage.actions.register")}
-          </Link>
-        </Text>
-
-        <Text align="center" size={2} className="block">
-          {t("passwordSignInPage.forgotPassword")}
-          {" "}
-          <Link to="/auth/forgot-password">
-            {t("passwordSignInPage.actions.resetPassword")}
           </Link>
         </Text>
 
