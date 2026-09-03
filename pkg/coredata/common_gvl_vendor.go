@@ -24,11 +24,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -52,7 +54,24 @@ type (
 		CreatedAt           time.Time  `db:"created_at"`
 		UpdatedAt           time.Time  `db:"updated_at"`
 	}
+
+	CommonGVLVendors []*CommonGVLVendor
 )
+
+func (v CommonGVLVendor) IsDeleted(now time.Time) bool {
+	return v.DeletedDate != nil && !v.DeletedDate.After(now)
+}
+
+func (v *CommonGVLVendor) CursorKey(field CommonGVLVendorOrderField) page.CursorKey {
+	switch field {
+	case CommonGVLVendorOrderFieldName:
+		return page.NewCursorKey(v.ID, v.Name)
+	case CommonGVLVendorOrderFieldIABVendorID:
+		return page.NewCursorKey(v.ID, v.IABVendorID)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
 
 func (v *CommonGVLVendor) LoadByIABVendorID(
 	ctx context.Context,
@@ -234,4 +253,302 @@ func emptyInt32s(values []int32) []int32 {
 	}
 
 	return values
+}
+
+func (v *CommonGVLVendor) LoadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    iab_vendor_id,
+    vendor_list_version,
+    name,
+    deleted_date,
+    purposes,
+    leg_int_purposes,
+    flexible_purposes,
+    special_purposes,
+    features,
+    special_features,
+    policy_url,
+    uses_cookies,
+    cookie_refresh,
+    uses_non_cookie_access,
+    cookie_max_age_seconds,
+    created_at,
+    updated_at
+FROM
+    common_gvl_vendors
+WHERE
+    id = @id
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"id": id}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common gvl vendor: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonGVLVendor])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect common gvl vendor: %w", err)
+	}
+
+	*v = row
+
+	return nil
+}
+
+func (v *CommonGVLVendors) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	cursor *page.Cursor[CommonGVLVendorOrderField],
+	filter *CommonGVLVendorFilter,
+) error {
+	q := `
+SELECT
+    id,
+    iab_vendor_id,
+    vendor_list_version,
+    name,
+    deleted_date,
+    purposes,
+    leg_int_purposes,
+    flexible_purposes,
+    special_purposes,
+    features,
+    special_features,
+    policy_url,
+    uses_cookies,
+    cookie_refresh,
+    uses_non_cookie_access,
+    cookie_max_age_seconds,
+    created_at,
+    updated_at
+FROM
+    common_gvl_vendors
+WHERE
+    (deleted_date IS NULL OR deleted_date > NOW())
+    AND %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common gvl vendors: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonGVLVendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect common gvl vendors: %w", err)
+	}
+
+	*v = vendors
+
+	return nil
+}
+
+func (v *CommonGVLVendors) Count(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonGVLVendorFilter,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(id)
+FROM
+    common_gvl_vendors
+WHERE
+    (deleted_date IS NULL OR deleted_date > NOW())
+    AND %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count common gvl vendors: %w", err)
+	}
+
+	return count, nil
+}
+
+func (v *CommonGVLVendors) LoadByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	cursor *page.Cursor[CommonGVLVendorOrderField],
+) error {
+	q := `
+SELECT
+    id,
+    iab_vendor_id,
+    vendor_list_version,
+    name,
+    deleted_date,
+    purposes,
+    leg_int_purposes,
+    flexible_purposes,
+    special_purposes,
+    features,
+    special_features,
+    policy_url,
+    uses_cookies,
+    cookie_refresh,
+    uses_non_cookie_access,
+    cookie_max_age_seconds,
+    created_at,
+    updated_at
+FROM
+    common_gvl_vendors
+WHERE
+    iab_vendor_id IN (
+        SELECT
+            iab_vendor_id
+        FROM
+            cookie_banner_gvl_vendors
+        WHERE
+            %s
+            AND cookie_banner_id = @cookie_banner_id
+    )
+    AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie banner gvl vendors: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonGVLVendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect cookie banner gvl vendors: %w", err)
+	}
+
+	*v = vendors
+
+	return nil
+}
+
+func (v *CommonGVLVendors) CountByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(id)
+FROM
+    common_gvl_vendors
+WHERE
+    iab_vendor_id IN (
+        SELECT
+            iab_vendor_id
+        FROM
+            cookie_banner_gvl_vendors
+        WHERE
+            %s
+            AND cookie_banner_id = @cookie_banner_id
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count cookie banner gvl vendors: %w", err)
+	}
+
+	return count, nil
+}
+
+func (v *CommonGVLVendors) LoadByIABVendorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	iabVendorIDs []int,
+) error {
+	if len(iabVendorIDs) == 0 {
+		*v = CommonGVLVendors{}
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    iab_vendor_id,
+    vendor_list_version,
+    name,
+    deleted_date,
+    purposes,
+    leg_int_purposes,
+    flexible_purposes,
+    special_purposes,
+    features,
+    special_features,
+    policy_url,
+    uses_cookies,
+    cookie_refresh,
+    uses_non_cookie_access,
+    cookie_max_age_seconds,
+    created_at,
+    updated_at
+FROM
+    common_gvl_vendors
+WHERE
+    iab_vendor_id = ANY(@iab_vendor_ids)
+ORDER BY
+    iab_vendor_id
+`
+
+	args := pgx.StrictNamedArgs{"iab_vendor_ids": iabVendorIDs}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common gvl vendors by iab ids: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonGVLVendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect common gvl vendors by iab ids: %w", err)
+	}
+
+	*v = vendors
+
+	return nil
 }

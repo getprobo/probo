@@ -12324,6 +12324,140 @@ components:
           format: date-time
           description: Last update timestamp
 
+    CommonGVLVendor:
+      type: object
+      required:
+        - id
+        - iab_vendor_id
+        - name
+        - purposes
+        - leg_int_purposes
+        - special_features
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Common GVL vendor ID
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+        name:
+          type: string
+          description: Vendor name
+        policy_url:
+          type:
+            - string
+            - "null"
+          description: Vendor privacy policy URL
+        purposes:
+          type: array
+          items:
+            type: integer
+          description: IAB purposes the vendor declares
+        leg_int_purposes:
+          type: array
+          items:
+            type: integer
+          description: IAB purposes the vendor declares under legitimate interest
+        special_features:
+          type: array
+          items:
+            type: integer
+          description: IAB special features the vendor declares
+
+    ListCommonGVLVendorsInput:
+      type: object
+      properties:
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search by vendor name or IAB vendor ID
+
+    ListCommonGVLVendorsOutput:
+      type: object
+      required:
+        - common_gvl_vendors
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        common_gvl_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommonGVLVendor"
+
+    ListCookieBannerGVLVendorsInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookieBannerGVLVendorsOutput:
+      type: object
+      required:
+        - common_gvl_vendors
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        common_gvl_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommonGVLVendor"
+
+    AddCookieBannerGVLVendorInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - iab_vendor_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+
+    AddCookieBannerGVLVendorOutput:
+      type: object
+      required:
+        - common_gvl_vendor
+        - cookie_banner
+      properties:
+        common_gvl_vendor:
+          $ref: "#/components/schemas/CommonGVLVendor"
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    RemoveCookieBannerGVLVendorInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - iab_vendor_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+
+    RemoveCookieBannerGVLVendorOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
     CookieCategory:
       type: object
       required:
@@ -18880,6 +19014,54 @@ tools:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationInput"
     outputSchema:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationOutput"
+  - name: listCommonGVLVendors
+    title: List Common GVL Vendors
+    description: List IAB GVL vendors from the global catalog
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCommonGVLVendorsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCommonGVLVendorsOutput"
+  - name: listCookieBannerGVLVendors
+    title: List Cookie Banner GVL Vendors
+    description: List IAB GVL vendors selected on a cookie banner
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannerGVLVendorsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannerGVLVendorsOutput"
+  - name: addCookieBannerGVLVendor
+    title: Add Cookie Banner GVL Vendor
+    description: Add an IAB GVL vendor to a cookie banner's disclosed set
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookieBannerGVLVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookieBannerGVLVendorOutput"
+  - name: removeCookieBannerGVLVendor
+    title: Remove Cookie Banner GVL Vendor
+    description: Remove an IAB GVL vendor from a cookie banner's disclosed set
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RemoveCookieBannerGVLVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/RemoveCookieBannerGVLVendorOutput"
   - name: listCookieConsentRecords
     title: List Cookie Consent Records
     description: List consent records for a cookie banner

@@ -92,8 +92,19 @@ export interface BannerConfig {
   show_branding: boolean;
   resource_reporting_enabled: boolean;
   tcf_enabled?: boolean;
+  tcf_vendors?: TCFVendor[];
+  gvl_version?: number;
   categories: Category[];
   texts: BannerTexts;
+}
+
+export interface TCFVendor {
+  iab_vendor_id: number;
+  name: string;
+  purposes: number[];
+  leg_int_purposes: number[];
+  special_features: number[];
+  policy_url?: string;
 }
 
 export type ConsentAction =

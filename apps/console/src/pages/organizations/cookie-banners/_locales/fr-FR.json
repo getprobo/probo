@@ -228,5 +228,35 @@
       "consentExpiryDays": "Expiration du consentement (jours)"
     },
     "actions": { "creating": "Création...", "create": "Créer la bannière" }
+  },
+  "tcfPage": {
+    "title": "Fournisseurs TCF",
+    "description": "Choisissez les fournisseurs de la Global Vendor List IAB que cette bannière divulgue.",
+    "vendorCount_one": "{{count}} fournisseur sélectionné",
+    "vendorCount_other": "{{count}} fournisseurs sélectionnés",
+    "catalogCount_one": "{{count}} fournisseur dans le catalogue",
+    "catalogCount_other": "{{count}} fournisseurs dans le catalogue",
+    "searchPlaceholder": "Rechercher",
+    "emptyCatalog": "Aucun fournisseur GVL n’est encore importé. Exécutez gvl-import pour remplir le catalogue.",
+    "emptySearch": "Aucun fournisseur ne correspond à cette recherche.",
+    "emptyFiltered": "Aucun fournisseur correspondant",
+    "emptyFilteredDescription": "Essayez un autre nom ou identifiant IAB, ou effacez la recherche.",
+    "previous": "Préc.",
+    "next": "Suiv.",
+    "noUpdatePermission": "Vous n’avez pas l’autorisation de modifier les fournisseurs TCF.",
+    "iabVendorId": "IAB {{id}}",
+    "policy": "Politique de confidentialité",
+    "notFound": "Page introuvable",
+    "actions": {
+      "clearSearch": "Effacer la recherche",
+      "add": "Ajouter",
+      "remove": "Retirer",
+      "addVendor": "Ajouter {{name}} à cette bannière",
+      "removeVendor": "Retirer {{name}} de cette bannière"
+    },
+    "errors": {
+      "add": "Échec de l’ajout du fournisseur",
+      "remove": "Échec de la suppression du fournisseur"
+    }
   }
 }

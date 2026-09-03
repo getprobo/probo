@@ -42,7 +42,7 @@ import {
 import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
 
 export interface CookieBannerSwitcherProps {
-  banner: SelectedCookieBanner | null;
+  banner: Pick<SelectedCookieBanner, "id" | "name"> | null;
 }
 
 export function CookieBannerSwitcher({ banner }: CookieBannerSwitcherProps) {

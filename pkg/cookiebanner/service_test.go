@@ -262,8 +262,8 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 	t.Run("snapshot is identical regardless of rank values", func(t *testing.T) {
 		t.Parallel()
 
-		original := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil)
-		shuffled := buildSnapshot(banner, mkCategories(99, 50, 25, 10), nil)
+		original := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, nil)
+		shuffled := buildSnapshot(banner, mkCategories(99, 50, 25, 10), nil, nil)
 
 		assert.True(t, snapshotsEqual(original, shuffled), "rank changes must not affect the snapshot")
 	})
@@ -274,8 +274,8 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		ordered := mkCategories(0, 1, 2, 3)
 		reversed := coredata.CookieCategories{ordered[3], ordered[2], ordered[1], ordered[0]}
 
-		a := buildSnapshot(banner, ordered, nil)
-		b := buildSnapshot(banner, reversed, nil)
+		a := buildSnapshot(banner, ordered, nil, nil)
+		b := buildSnapshot(banner, reversed, nil, nil)
 
 		assert.True(t, snapshotsEqual(a, b))
 	})
@@ -284,10 +284,20 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		t.Parallel()
 
 		consentOnly := mkCategories(0, 1, 2, 3)[:3]
-		snap := buildSnapshot(banner, consentOnly, nil)
+		snap := buildSnapshot(banner, consentOnly, nil, nil)
 
 		require.Len(t, snap.Categories, 3)
 		assert.Equal(t, coredata.CookieCategoryKindNecessary, snap.Categories[0].Kind)
+	})
+
+	t.Run("sorts iab vendor ids so selection order does not matter", func(t *testing.T) {
+		t.Parallel()
+
+		a := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, []int{755, 52})
+		b := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, []int{52, 755})
+
+		assert.True(t, snapshotsEqual(a, b))
+		assert.Equal(t, []int{52, 755}, a.IABVendorIDs)
 	})
 }
 

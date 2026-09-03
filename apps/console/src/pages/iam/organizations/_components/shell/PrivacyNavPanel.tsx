@@ -170,7 +170,7 @@ function CookieBannerNavSection() {
     return (
       <Suspense fallback={fallback}>
         <CookieBannerSwitcher banner={remembered} />
-        <CookieBannerNavItems cookieBannerId={remembered.id} />
+        <CookieBannerNavItems cookieBannerId={remembered.id} tcf={remembered.tcf} />
       </Suspense>
     );
   }
@@ -217,17 +217,18 @@ function CookieBannerNavSelection({ queryRef, onResolve }: CookieBannerNavSelect
   const banner = cookieBannerFromSwitcherValueQuery(data, organizationId);
   const id = banner?.id ?? null;
   const name = banner?.name ?? null;
+  const tcf = banner?.capabilities.tcf ?? false;
 
   useEffect(() => {
     if (id != null && name != null) {
-      onResolve?.({ id, name });
+      onResolve?.({ id, name, tcf });
     }
-  }, [id, name, onResolve]);
+  }, [id, name, onResolve, tcf]);
 
   return (
     <>
       <CookieBannerSwitcher banner={banner} />
-      {id != null && <CookieBannerNavItems cookieBannerId={id} />}
+      {id != null && <CookieBannerNavItems cookieBannerId={id} tcf={tcf} />}
     </>
   );
 }
