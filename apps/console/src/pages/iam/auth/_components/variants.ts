@@ -20,17 +20,19 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Shared /auth card chrome. The wash matches the employee-portal dashboard
-// cards: a lime radial pinned to the bottom of the white card, not the page.
+// Shared /auth card chrome. The wash matches the employee-portal get-started
+// cards: a lime radial pinned to the top of the white card, behind the title.
 export const authLayout = tv({
   slots: {
     column: "flex w-full max-w-lg flex-col gap-6",
-    frame: "relative w-full",
+    header: "relative flex min-h-6 items-center justify-center",
+    back: "absolute left-0 top-1/2 -translate-y-1/2",
+    frame: "relative w-full overflow-hidden",
     wash: [
-      "pointer-events-none absolute inset-x-0 bottom-0 z-0 h-24",
-      "bg-[radial-gradient(ellipse_85%_55%_at_50%_100%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
-      "mask-[linear-gradient(to_top,black_0%,black_40%,transparent_100%)]",
+      "pointer-events-none absolute inset-x-0 top-0 z-0 h-3/5",
+      "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
+      "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
     ],
-    body: "relative z-1 px-8 pt-8 pb-24",
+    body: "relative z-1 px-8 pt-14 pb-8",
   },
 });

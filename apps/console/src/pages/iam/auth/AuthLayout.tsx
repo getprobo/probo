@@ -45,17 +45,21 @@ export default function AuthLayout(props: PropsWithChildren) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-sand-2 p-4">
       <div className={slots.column()}>
-        {!isAuthorizeFlow && (
-          <ProboLogo className="mx-auto h-6 w-auto text-sand-12" />
-        )}
-        {showBack && (
-          <Link
-            to={{ pathname: "/auth/login", search: location.search }}
-            iconStart={<CaretLeftIcon />}
-            className="self-start"
-          >
-            {t("common.actions.back")}
-          </Link>
+        {(!isAuthorizeFlow || showBack) && (
+          <div className={slots.header()}>
+            {!isAuthorizeFlow && (
+              <ProboLogo className="h-6 w-auto text-sand-12" />
+            )}
+            {showBack && (
+              <Link
+                to={{ pathname: "/auth/login", search: location.search }}
+                iconStart={<CaretLeftIcon />}
+                className={slots.back()}
+              >
+                {t("common.actions.back")}
+              </Link>
+            )}
+          </div>
         )}
         <Card variant="soft" size={3} padding="none" className={slots.frame()}>
           <div className={slots.wash()} />
