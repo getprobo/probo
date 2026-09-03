@@ -10207,10 +10207,10 @@ components:
           description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
         gcp_workload_identity_provider:
           type: string
-          description: Workload identity provider resource. Required when provider is GCP.
+          description: Workload identity provider resource, including the S3NS IAM host when applicable. Required when provider is GCP.
         gcp_service_account_email:
           type: string
-          description: Service account email to impersonate. Required when provider is GCP.
+          description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
 
     CreateWorkloadIdentityConnectorMCPOutput:
       type: object

@@ -30,7 +30,6 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 	iam "google.golang.org/api/iam/v1"
-	"google.golang.org/api/option"
 )
 
 const (
@@ -73,11 +72,7 @@ const (
 )
 
 func listProjectIAMPrincipals(ctx context.Context, session *cloudgcp.Session) ([]gcpIdentity, error) {
-	svc, err := cloudresourcemanager.NewService(
-		ctx,
-		option.WithHTTPClient(session.HTTPClient()),
-		option.WithoutAuthentication(),
-	)
+	svc, err := cloudresourcemanager.NewService(ctx, session.ServiceOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create gcp resource manager client: %w", err)
 	}
@@ -198,11 +193,7 @@ func skipGCPPrincipal(member string) bool {
 }
 
 func listProjectServiceAccounts(ctx context.Context, session *cloudgcp.Session) ([]gcpServiceAccount, error) {
-	svc, err := iam.NewService(
-		ctx,
-		option.WithHTTPClient(session.HTTPClient()),
-		option.WithoutAuthentication(),
-	)
+	svc, err := iam.NewService(ctx, session.ServiceOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create gcp iam client: %w", err)
 	}
@@ -304,11 +295,7 @@ func attachUserManagedKeys(
 	session *cloudgcp.Session,
 	identities []gcpIdentity,
 ) error {
-	svc, err := iam.NewService(
-		ctx,
-		option.WithHTTPClient(session.HTTPClient()),
-		option.WithoutAuthentication(),
-	)
+	svc, err := iam.NewService(ctx, session.ServiceOptions()...)
 	if err != nil {
 		return fmt.Errorf("cannot create gcp iam client: %w", err)
 	}

@@ -28,7 +28,6 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/coredata"
 	admin "google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/option"
 )
 
 func fetchGCPMFA(
@@ -41,11 +40,7 @@ func fetchGCPMFA(
 		return nil, nil
 	}
 
-	svc, err := admin.NewService(
-		ctx,
-		option.WithHTTPClient(session.HTTPClient()),
-		option.WithoutAuthentication(),
-	)
+	svc, err := admin.NewService(ctx, session.ServiceOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create gcp admin directory client: %w", err)
 	}

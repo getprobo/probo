@@ -243,15 +243,3 @@ func TestUnionGCPIdentities_IncludesUnboundServiceAccount(t *testing.T) {
 	require.NotNil(t, unbound.Disabled)
 	assert.True(t, *unbound.Disabled)
 }
-
-func TestProjectIDFromServiceAccountEmail(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(
-		t,
-		"my-project",
-		projectIDFromServiceAccountEmail("probo-audit@my-project.iam.gserviceaccount.com"),
-	)
-	assert.Empty(t, projectIDFromServiceAccountEmail("alice@example.com"))
-	assert.Empty(t, projectIDFromServiceAccountEmail(""))
-}

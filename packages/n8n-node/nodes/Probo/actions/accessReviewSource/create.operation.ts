@@ -102,7 +102,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Workload identity provider resource',
+		description: 'Workload identity provider resource, including the S3NS IAM host when applicable',
 		required: true,
 	},
 	{
@@ -117,7 +117,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Service account email to impersonate',
+		description: 'Service account email to impersonate, including the universe-specific suffix',
 		required: true,
 	},
 ];

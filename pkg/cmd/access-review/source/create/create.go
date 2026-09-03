@@ -248,13 +248,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		&flagGCPWorkloadIdentityProvider,
 		"gcp-workload-identity-provider",
 		"",
-		"GCP workload identity provider resource",
+		"GCP workload identity provider resource, including the S3NS IAM host when applicable",
 	)
 	cmd.Flags().StringVar(
 		&flagGCPServiceAccountEmail,
 		"gcp-service-account-email",
 		"",
-		"GCP service account email to impersonate",
+		"GCP service account email to impersonate, including the universe-specific suffix",
 	)
 
 	_ = cmd.MarkFlagRequired("name")
