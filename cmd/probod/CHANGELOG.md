@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.277.1] - 2026-09-03
+
+### Fixed
+
+- Bumped fast-uri to 3.1.6 and qs to 6.16.0, addressing a decoded-scheme
+  rejection bypass (CVE-2026-76172) and array-limit / isBuffer denial-of-service
+  issues (GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g)
+
 ## [0.277.0] - 2026-09-03
 
 ### Changed
