@@ -4,6 +4,11 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Bumped golang.org/x/crypto to 0.56.0, addressing denial-of-service on
+  deadlocked SSH channels (CVE-2026-78662, CVE-2026-56855)
+
 ## [0.4.1] - 2026-07-01
 
 ### Changed

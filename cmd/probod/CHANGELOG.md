@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Bumped golang.org/x/crypto to 0.56.0, addressing denial-of-service on
+  deadlocked SSH channels (CVE-2026-78662, CVE-2026-56855)
+
 ## [0.277.1] - 2026-09-03
 
 ### Fixed
