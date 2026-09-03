@@ -23,6 +23,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -70,13 +71,33 @@ func NewSigNozDriver(httpClient *http.Client, baseURL string) *SigNozDriver {
 	}
 }
 
+// The list endpoint omits roles, so admin detection needs a second call.
+type sigNozServiceAccount struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type sigNozServiceAccountRole struct {
+	Role struct {
+		Name string `json:"name"`
+	} `json:"role"`
+}
+
 func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	users, err := d.queryUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	records := make([]AccountRecord, 0, len(users))
+	serviceAccounts, err := d.queryServiceAccounts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]AccountRecord, 0, len(users)+len(serviceAccounts))
 
 	for _, u := range users {
 		email := strings.TrimSpace(u.Email)
@@ -105,7 +126,58 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		records = append(records, record)
 	}
 
+	for _, sa := range serviceAccounts {
+		email := strings.TrimSpace(sa.Email)
+		if email == "" {
+			continue
+		}
+
+		roles := d.serviceAccountRoles(ctx, sa.ID)
+
+		record := AccountRecord{
+			Email:       email,
+			FullName:    strings.TrimSpace(sa.Name),
+			Roles:       roles,
+			Active:      sigNozServiceAccountActiveStatus(sa.Status),
+			IsAdmin:     new(slices.Contains(roles, "Admin")),
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodAPIKey,
+			AccountType: coredata.AccessReviewEntryAccountTypeServiceAccount,
+			ExternalID:  strings.TrimSpace(sa.ID),
+		}
+
+		if t, ok := parseSigNozTimestamp(sa.CreatedAt); ok {
+			record.CreatedAt = &t
+		}
+
+		records = append(records, record)
+	}
+
 	return records, nil
+}
+
+// Roles are best-effort: the account stays reviewable without them.
+func (d *SigNozDriver) serviceAccountRoles(ctx context.Context, id string) []string {
+	if strings.TrimSpace(id) == "" {
+		return []string{}
+	}
+
+	assigned, err := d.queryServiceAccountRoles(ctx, id)
+	if err != nil {
+		return []string{}
+	}
+
+	roles := make([]string, 0, len(assigned))
+
+	for _, a := range assigned {
+		for _, role := range sigNozRoles(a.Role.Name) {
+			if !slices.Contains(roles, role) {
+				roles = append(roles, role)
+			}
+		}
+	}
+
+	return roles
 }
 
 func (d *SigNozDriver) queryUsers(ctx context.Context) ([]sigNozUser, error) {
@@ -151,6 +223,101 @@ func (d *SigNozDriver) queryUsers(ctx context.Context) ([]sigNozUser, error) {
 	}
 
 	return users, nil
+}
+
+// Listing service accounts needs `serviceaccount:list`, which a key below
+// signoz-admin lacks. Degrade to empty rather than failing the whole source:
+// the users already fetched remain a valid review population.
+func (d *SigNozDriver) queryServiceAccounts(ctx context.Context) ([]sigNozServiceAccount, error) {
+	var accounts []sigNozServiceAccount
+
+	err := d.getJSON(ctx, "service accounts", &accounts, "api", "v1", "service_accounts")
+	if err != nil {
+		if errors.Is(err, errSigNozUnavailable) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return accounts, nil
+}
+
+func (d *SigNozDriver) queryServiceAccountRoles(ctx context.Context, id string) ([]sigNozServiceAccountRole, error) {
+	var account struct {
+		ServiceAccountRoles []sigNozServiceAccountRole `json:"serviceAccountRoles"`
+	}
+
+	err := d.getJSON(ctx, "service account roles", &account, "api", "v1", "service_accounts", url.PathEscape(id))
+	if err != nil {
+		return nil, err
+	}
+
+	return account.ServiceAccountRoles, nil
+}
+
+var (
+	errSigNozUnavailable = errors.New("signoz endpoint unavailable to this key")
+)
+
+func (d *SigNozDriver) getJSON(ctx context.Context, what string, out any, segments ...string) error {
+	baseURL, err := url.Parse(d.baseURL)
+	if err != nil {
+		return fmt.Errorf("cannot parse signoz base URL: %w", err)
+	}
+
+	endpoint := baseURL.JoinPath(segments...)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return fmt.Errorf("cannot create signoz %s request: %w", what, err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("cannot execute signoz %s request: %w", what, err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	switch {
+	case httpResp.StatusCode == http.StatusUnauthorized,
+		httpResp.StatusCode == http.StatusForbidden,
+		httpResp.StatusCode == http.StatusNotFound:
+		return errSigNozUnavailable
+	case httpResp.StatusCode < 200 || httpResp.StatusCode >= 300:
+		return fmt.Errorf("cannot fetch signoz %s: unexpected status %d", what, httpResp.StatusCode)
+	}
+
+	var envelope sigNozEnvelope
+	if err := json.NewDecoder(httpResp.Body).Decode(&envelope); err != nil {
+		return fmt.Errorf("cannot decode signoz %s response: %w", what, err)
+	}
+
+	if len(envelope.Data) == 0 || string(envelope.Data) == "null" {
+		return nil
+	}
+
+	if err := json.Unmarshal(envelope.Data, out); err != nil {
+		return fmt.Errorf("cannot decode signoz %s data: %w", what, err)
+	}
+
+	return nil
+}
+
+func sigNozServiceAccountActiveStatus(status string) *bool {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "active":
+		return new(true)
+	case "revoked", "deleted", "inactive":
+		return new(false)
+	default:
+		return nil
+	}
 }
 
 // sigNozRoles normalizes a SigNoz role string (ADMIN / EDITOR / VIEWER, or the
