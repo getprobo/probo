@@ -4,6 +4,28 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.279.0] - 2026-09-04
+
+### Added
+
+- Audits gain `TO_BOOK` and `AUDIT_BOOKED` states ahead of `NOT_STARTED`, plus an optional audit firm on create and update, across GraphQL, MCP, CLI, n8n, and the console (clearing the firm removes an obsolete assignment)
+
+### Changed
+
+- Signing up no longer opens a session: the account is confirmed first, and the session is created when email verification flips the address to verified. Verification requires an explicit click, so email scanners that prefetch links cannot sign themselves in
+- Magic-link and confirmation tokens are consumed only on an explicit POST, and an already-verified email is treated as success so confirmation stays idempotent
+- The console `/auth` zone moved to the v2 kit: the login hub leads with email (SAML when the domain is unique, otherwise a magic link), Google and Microsoft sit below, password is a quiet link, forgot-password sits under the password field, and the assume page renders inside the auth layout
+- The console organization picker now matches the employee portal
+- Empty-token errors explain that the token must be typed or the link opened from email, instead of repeating the field label
+
+### Fixed
+
+- SSO login URLs are no longer offered for SAML configs that are turned off, which previously sent people into a login that rejected them
+- Deleting an organization failed when control, risk, or measure mappings still referenced its documents and risks; those rows are now removed first
+- Generated documents are sanitized before insert, so malformed content is rejected instead of rendering as escaped raw JSON in exported PDFs
+- `listTrackerPatterns` no longer errors on a whole page when it contains a pattern whose source is `HTTP`
+- Wide document tables wrap their cells instead of only being readable by scrolling sideways
+
 ## [0.278.0] - 2026-09-03
 
 ### Added
