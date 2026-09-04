@@ -202,7 +202,7 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) (*coredat
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := identity.LoadByID(ctx, tx, payload.Data.IdentityID)
+			err := identity.LoadByIDForUpdate(ctx, tx, payload.Data.IdentityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewIdentityNotFoundError(payload.Data.IdentityID)

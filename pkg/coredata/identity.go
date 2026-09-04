@@ -155,6 +155,53 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent
+// VerifyEmail calls serialize the verified-flag transition.
+func (i *Identity) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	identityID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    email_address,
+    full_name,
+    hashed_password,
+    email_address_verified,
+    saml_subject,
+    locale,
+    created_at,
+    updated_at
+FROM
+    identities
+WHERE
+    id = @identity_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query identity: %w", err)
+	}
+
+	identity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Identity])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect identity: %w", err)
+	}
+
+	*i = identity
+
+	return nil
+}
+
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Identity struct.
 func (i *Identity) AuthorizationAttributes(

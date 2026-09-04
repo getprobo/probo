@@ -80,8 +80,14 @@ export default function PasswordSignInPage() {
             e => (e as GraphQLError).extensions?.code === "EMAIL_NOT_VERIFIED",
           );
           if (emailNotVerified) {
-            const search = new URLSearchParams({ email: emailValue }).toString();
-            void navigate(`/auth/resend-verification-email?${search}`);
+            const loginSearch = searchParams.toString();
+            void navigate(
+              {
+                pathname: "/auth/resend-verification-email",
+                search: loginSearch === "" ? "" : "?" + loginSearch,
+              },
+              { state: { email: emailValue } },
+            );
             return;
           }
 

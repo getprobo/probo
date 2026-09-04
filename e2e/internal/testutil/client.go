@@ -809,15 +809,6 @@ func (c *Client) postConnectMagicLinkVerify(httpClient *http.Client, token strin
 	body := url.Values{}
 	body.Set("token", token)
 
-	noRedirectClient := &http.Client{
-		Jar:       httpClient.Jar,
-		Timeout:   httpClient.Timeout,
-		Transport: httpClient.Transport,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
 	req, err := http.NewRequest(
 		http.MethodPost,
 		c.baseURL+"/api/connect/v1/magic-link/verify",
@@ -827,7 +818,7 @@ func (c *Client) postConnectMagicLinkVerify(httpClient *http.Client, token strin
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := noRedirectClient.Do(req)
+	resp, err := noRedirectHTTPClient(httpClient).Do(req)
 	require.NoError(c.T, err, "magic-link verify request failed")
 
 	defer func() { _ = resp.Body.Close() }()
@@ -866,22 +857,24 @@ func (c *Client) redirectLocation(client *http.Client, rawURL string) string {
 	return resolveRedirectURL(rawURL, location)
 }
 
-func (c *Client) redirectHTTPResponse(client *http.Client, rawURL string) *OAuth2HTTPResponse {
-	c.T.Helper()
-
-	noRedirectClient := &http.Client{
-		Jar:       client.Jar,
-		Timeout:   client.Timeout,
-		Transport: client.Transport,
+func noRedirectHTTPClient(httpClient *http.Client) *http.Client {
+	return &http.Client{
+		Jar:       httpClient.Jar,
+		Timeout:   httpClient.Timeout,
+		Transport: httpClient.Transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
+}
+
+func (c *Client) redirectHTTPResponse(client *http.Client, rawURL string) *OAuth2HTTPResponse {
+	c.T.Helper()
 
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
 	require.NoError(c.T, err)
 
-	resp, err := noRedirectClient.Do(req)
+	resp, err := noRedirectHTTPClient(client).Do(req)
 	require.NoError(c.T, err, "request to %s failed", rawURL)
 
 	defer func() { _ = resp.Body.Close() }()

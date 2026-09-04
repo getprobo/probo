@@ -59,6 +59,11 @@ export default function VerifyEmailPage() {
 
   const handleSubmit = useCallback((token: string) => {
     if (token === "") {
+      toast({
+        title: t("common.error"),
+        description: t("verifyEmailPage.fields.token"),
+        variant: "error",
+      });
       return;
     }
 

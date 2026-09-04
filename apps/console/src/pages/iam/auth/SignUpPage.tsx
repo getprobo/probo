@@ -32,6 +32,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, usePreloadedQuery, useQueryLoader } from "react-relay";
+import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignUpPageMutation } from "#/__generated__/iam/SignUpPageMutation.graphql";
@@ -56,6 +57,7 @@ const signUpMutation = graphql`
 function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQueryLoader<SignUpPageQuery>>[0]> }) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [signedUpEmail, setSignedUpEmail] = useState("");
 
   usePageTitle(t("signUpPage.pageTitle"));
@@ -100,7 +102,8 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
   };
 
   if (signedUpEmail !== "") {
-    const resendSearch = new URLSearchParams({ email: signedUpEmail }).toString();
+    const loginSearch = searchParams.toString();
+    const authSearch = loginSearch === "" ? "" : "?" + loginSearch;
 
     return (
       <div className="flex w-full flex-col gap-8">
@@ -116,13 +119,24 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
         <Text align="center" size={2} className="block">
           {t("signUpPage.checkEmail.resend")}
           {" "}
-          <Link to={{ pathname: "/auth/resend-verification-email", search: `?${resendSearch}` }}>
+          <Link
+            to={{
+              pathname: "/auth/resend-verification-email",
+              search: authSearch,
+            }}
+            state={{ email: signedUpEmail }}
+          >
             {t("signUpPage.actions.resend")}
           </Link>
         </Text>
 
         <Text align="center" size={2} className="block">
-          <Link to="/auth/login">
+          <Link
+            to={{
+              pathname: "/auth/login",
+              search: authSearch,
+            }}
+          >
             {t("signUpPage.actions.backToLogin")}
           </Link>
         </Text>

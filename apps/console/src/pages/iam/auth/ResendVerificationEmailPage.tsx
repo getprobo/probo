@@ -31,10 +31,19 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { useSearchParams } from "react-router";
+import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { ResendVerificationEmailPageMutation } from "#/__generated__/iam/ResendVerificationEmailPageMutation.graphql";
+
+function emailFromLocationState(state: unknown): string {
+  if (state == null || typeof state !== "object" || !("email" in state)) {
+    return "";
+  }
+
+  const { email } = state;
+  return typeof email === "string" ? email : "";
+}
 
 const resendVerificationEmailMutation = graphql`
   mutation ResendVerificationEmailPageMutation($input: ResendVerificationEmailInput!) {
@@ -47,7 +56,8 @@ const resendVerificationEmailMutation = graphql`
 export default function ResendVerificationEmailPage() {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const defaultEmail = emailFromLocationState(location.state);
 
   usePageTitle(t("resendVerificationEmailPage.pageTitle"));
 
@@ -153,7 +163,7 @@ export default function ResendVerificationEmailPage() {
             type="email"
             name="email"
             required
-            defaultValue={searchParams.get("email") ?? ""}
+            defaultValue={defaultEmail}
             placeholder={t("resendVerificationEmailPage.fields.emailPlaceholder")}
           />
           <Field.Error className="text-1 text-red-11" />
