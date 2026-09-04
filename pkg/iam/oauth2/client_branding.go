@@ -33,7 +33,7 @@ func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*Clie
 		return nil, nil
 	}
 
-	client, err := s.resolveClient(ctx, nil, clientIDRaw)
+	client, allowance, err := s.resolveClientWithAllowance(ctx, nil, clientIDRaw)
 	if err != nil {
 		if _, ok := errors.AsType[*OAuth2Error](err); ok {
 			return nil, nil
@@ -47,18 +47,9 @@ func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*Clie
 		return nil, nil
 	}
 
-	branding.IsCompliancePortal = s.isCompliancePortalClient(ctx, clientIDRaw)
+	branding.IsCompliancePortal = allowance.SkipsConsent()
 
 	return branding, nil
-}
-
-func (s *Service) isCompliancePortalClient(ctx context.Context, clientIDRaw string) bool {
-	allowance, err := s.cimdAllowance(ctx, clientIDRaw)
-	if err != nil {
-		return false
-	}
-
-	return allowance.SkipsConsent()
 }
 
 func ClientBrandingFromClient(client *coredata.OAuth2Client) *ClientBranding {

@@ -30,49 +30,22 @@ import { Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
-  useLazyLoadQuery,
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { SSOSignInPageCreateAccountQuery } from "#/__generated__/iam/SSOSignInPageCreateAccountQuery.graphql";
 import type { SSOSignInPageQuery } from "#/__generated__/iam/SSOSignInPageQuery.graphql";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
-import { clientIdFromContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 
-import { CreateAccountFooter } from "./_components/CreateAccountFooter";
+import { CreateAccountFooterLazy } from "./_components/CreateAccountFooter";
 
 const ssoAvailabilityQuery = graphql`
   query SSOSignInPageQuery($email: EmailAddr!) {
     ssoLoginURL(email: $email) @catch(to: RESULT)
   }
 `;
-
-const ssoCreateAccountQuery = graphql`
-  query SSOSignInPageCreateAccountQuery($clientId: String) {
-    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
-  }
-`;
-
-function SSOCreateAccountFooter() {
-  const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
-  const clientId = clientIdFromContinueUrl(searchParams.get("continue"));
-  const data = useLazyLoadQuery<SSOSignInPageCreateAccountQuery>(
-    ssoCreateAccountQuery,
-    { clientId },
-  );
-
-  return (
-    <CreateAccountFooter
-      queryKey={data}
-      prefix={t("ssoSignInPage.noAccount")}
-      label={t("ssoSignInPage.actions.register")}
-    />
-  );
-}
 
 export default function SSOSignInPage() {
   const location = useLocation();
@@ -126,7 +99,10 @@ export default function SSOSignInPage() {
 
         <div className="flex flex-col gap-2">
           <Suspense fallback={null}>
-            <SSOCreateAccountFooter />
+            <CreateAccountFooterLazy
+              prefix={t("ssoSignInPage.noAccount")}
+              label={t("ssoSignInPage.actions.register")}
+            />
           </Suspense>
 
           <Text align="center" size={2} className="block">

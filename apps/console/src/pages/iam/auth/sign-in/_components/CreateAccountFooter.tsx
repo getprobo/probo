@@ -20,11 +20,13 @@
 
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useFragment } from "react-relay";
-import { useLocation } from "react-router";
+import { useFragment, useLazyLoadQuery } from "react-relay";
+import { useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CreateAccountFooterFragment$key } from "#/__generated__/iam/CreateAccountFooterFragment.graphql";
+import type { CreateAccountFooterQuery } from "#/__generated__/iam/CreateAccountFooterQuery.graphql";
+import { clientIdFromContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 
 const createAccountFooterFragment = graphql`
   fragment CreateAccountFooterFragment on Query
@@ -33,6 +35,12 @@ const createAccountFooterFragment = graphql`
     oauthClientBranding(clientId: $clientId) {
       isCompliancePortal
     }
+  }
+`;
+
+const createAccountFooterQuery = graphql`
+  query CreateAccountFooterQuery($clientId: String) {
+    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
   }
 `;
 
@@ -66,4 +74,18 @@ export function CreateAccountFooter({
       </Link>
     </Text>
   );
+}
+
+export function CreateAccountFooterLazy({
+  prefix,
+  label,
+}: Pick<CreateAccountFooterProps, "prefix" | "label">) {
+  const [searchParams] = useSearchParams();
+  const clientId = clientIdFromContinueUrl(searchParams.get("continue"));
+  const data = useLazyLoadQuery<CreateAccountFooterQuery>(
+    createAccountFooterQuery,
+    { clientId },
+  );
+
+  return <CreateAccountFooter queryKey={data} prefix={prefix} label={label} />;
 }
