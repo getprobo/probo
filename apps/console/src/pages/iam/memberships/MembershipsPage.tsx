@@ -151,12 +151,12 @@ export function MembershipsPage({ queryRef }: MembershipsPageProps) {
             </>
           )
         : hasNoAccess
-            ? (
-                <Callout color="neutral" variant="soft">
-                  {t("noOrganizationAccess.description")}
-                </Callout>
-              )
-            : null}
+          ? (
+              <Callout color="neutral" variant="soft">
+                {t("noOrganizationAccess.description")}
+              </Callout>
+            )
+          : null}
 
       {canCreateOrganization && (
         <Card padding={2} variant="soft">
