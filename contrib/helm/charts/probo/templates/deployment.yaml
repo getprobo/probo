@@ -189,6 +189,10 @@ spec:
             - name: PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE
               value: {{ .Values.probo.identityFederation.terraformModuleSource | quote }}
             {{- end }}
+            {{- if .Values.probo.identityFederation.gcpTerraformModuleSource }}
+            - name: PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE
+              value: {{ .Values.probo.identityFederation.gcpTerraformModuleSource | quote }}
+            {{- end }}
             - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             - name: PROBOD_ITAM_DEVICE_ENROLLMENT_TOKEN_VALIDITY

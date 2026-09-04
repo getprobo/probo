@@ -96,6 +96,7 @@ const (
 	ConnectorProviderCalCom          ConnectorProvider = "CAL_COM"
 	ConnectorProviderCalendly        ConnectorProvider = "CALENDLY"
 	ConnectorProviderAWS             ConnectorProvider = "AWS"
+	ConnectorProviderGCP             ConnectorProvider = "GCP"
 )
 
 var (
@@ -170,6 +171,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderCalCom,
 		ConnectorProviderCalendly,
 		ConnectorProviderAWS,
+		ConnectorProviderGCP,
 	}
 }
 
@@ -240,7 +242,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderAuthentik,
 		ConnectorProviderCalCom,
 		ConnectorProviderCalendly,
-		ConnectorProviderAWS:
+		ConnectorProviderAWS,
+		ConnectorProviderGCP:
 		return true
 	}
 

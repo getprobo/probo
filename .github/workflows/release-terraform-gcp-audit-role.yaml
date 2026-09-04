@@ -1,0 +1,198 @@
+name: "Release terraform-gcp-audit-role"
+
+on:
+  push:
+    tags:
+      - "terraform-gcp-audit-role/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  github-release:
+    name: "github-release"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "write"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+        with:
+          fetch-depth: 0
+      - uses: "runs-on/action@46910bf61b41721b0579f237e186afb35477007a" # v2
+      - uses: "hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e" # v4.0.1
+        with:
+          terraform_wrapper: false
+      - name: "Validate module version"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          MODULE_VERSION="$(tr -d '[:space:]' < contrib/terraform/gcp-audit-role/VERSION)"
+          if [ "${MODULE_VERSION}" != "${VERSION}" ]; then
+            echo "VERSION (${MODULE_VERSION}) does not match tag (${VERSION})"
+            exit 1
+          fi
+      - name: "Check terraform formatting"
+        run: terraform fmt -check -recursive contrib/terraform/gcp-audit-role
+      - name: "Package module"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          STAGE="$(mktemp -d)"
+          cp -R contrib/terraform/gcp-audit-role/. "${STAGE}/"
+          cp LICENSE "${STAGE}/"
+          rm -rf "${STAGE}/.terraform" "${STAGE}/.terraform.lock.hcl"
+          (cd "${STAGE}" && zip -r "${GITHUB_WORKSPACE}/terraform-gcp-audit-role-${VERSION}.zip" .)
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' contrib/terraform/gcp-audit-role/CHANGELOG.md > release-notes.md
+          cat >> release-notes.md << EOF
+
+          ## Install
+
+          \`\`\`hcl
+          module "probo_audit" {
+            source  = "getprobo/audit-role/gcp"
+            version = "${VERSION}"
+          }
+          \`\`\`
+          EOF
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            terraform-gcp-audit-role-*.zip
+
+  publish-module:
+    name: "publish-module"
+    needs: [github-release]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "runs-on/action@46910bf61b41721b0579f237e186afb35477007a" # v2
+      - name: "Update getprobo/terraform-gcp-audit-role"
+        env:
+          GH_TOKEN: ${{ secrets.TERRAFORM_MODULE_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          REPO="getprobo/terraform-gcp-audit-role"
+          HEADLINE="Release v${VERSION} from getprobo/probo@${GITHUB_SHA}"
+
+          if gh api "repos/${REPO}/git/ref/tags/v${VERSION}" >/dev/null 2>&1; then
+            echo "tag v${VERSION} already exists; skipping"
+            exit 0
+          fi
+
+          STAGE="$(mktemp -d)"
+          cp -R "${GITHUB_WORKSPACE}/contrib/terraform/gcp-audit-role/." "${STAGE}/"
+          cp "${GITHUB_WORKSPACE}/LICENSE" "${STAGE}/"
+          rm -rf "${STAGE}/.terraform" "${STAGE}/.terraform.lock.hcl"
+
+          HEAD_OID=$(gh api "repos/${REPO}/git/ref/heads/main" --jq '.object.sha')
+          TREE_SHA=$(gh api "repos/${REPO}/git/commits/${HEAD_OID}" --jq '.tree.sha')
+          TREE_JSON=$(gh api "repos/${REPO}/git/trees/${TREE_SHA}?recursive=1")
+          if [ "$(jq -r '.truncated' <<<"${TREE_JSON}")" = "true" ]; then
+            echo "module repo tree is truncated; refusing to sync" >&2
+            exit 1
+          fi
+          EXISTING=$(jq -c '[.tree[] | select(.type=="blob") | .path]' <<<"${TREE_JSON}")
+
+          ADDITIONS_FILE="$(mktemp)"
+          printf '%s\n' '[]' > "${ADDITIONS_FILE}"
+          while IFS= read -r -d '' file; do
+            rel="${file#./}"
+            contents=$(base64 -w0 "${STAGE}/${rel}")
+            jq -c --arg path "${rel}" --arg contents "${contents}" \
+              '. + [{path: $path, contents: $contents}]' \
+              "${ADDITIONS_FILE}" > "${ADDITIONS_FILE}.new"
+            mv "${ADDITIONS_FILE}.new" "${ADDITIONS_FILE}"
+          done < <(cd "${STAGE}" && find . -type f -print0)
+
+          # -n is required: the filter reads --argjson/--slurpfile only.
+          # Without it jq waits on stdin, writes an empty file, and
+          # --slurpfile then makes $deletions[0] null.
+          DELETIONS_FILE="$(mktemp)"
+          jq -n -c --argjson existing "${EXISTING}" --slurpfile additions "${ADDITIONS_FILE}" '
+            ($additions[0] | map(.path)) as $keep
+            | ($existing - $keep)
+            | map({path: .})
+          ' > "${DELETIONS_FILE}"
+
+          # gh -F splits JSON arrays on commas, so [] becomes [""] and
+          # FileAddition objects are passed as strings. Send variables in
+          # the request body instead.
+          QUERY='mutation($headline: String!, $oid: GitObjectID!, $additions: [FileAddition!]!, $deletions: [FileDeletion!]!) {
+            createCommitOnBranch(input: {
+              branch: {
+                repositoryNameWithOwner: "getprobo/terraform-gcp-audit-role"
+                branchName: "main"
+              }
+              message: { headline: $headline }
+              expectedHeadOid: $oid
+              fileChanges: {
+                additions: $additions
+                deletions: $deletions
+              }
+            }) {
+              commit { oid url }
+            }
+          }'
+          PAYLOAD="$(mktemp)"
+          jq -n \
+            --arg query "${QUERY}" \
+            --arg headline "${HEADLINE}" \
+            --arg oid "${HEAD_OID}" \
+            --slurpfile additions "${ADDITIONS_FILE}" \
+            --slurpfile deletions "${DELETIONS_FILE}" \
+            '{
+              query: $query,
+              variables: {
+                headline: $headline,
+                oid: $oid,
+                additions: $additions[0],
+                deletions: ($deletions[0] // [])
+              }
+            }' > "${PAYLOAD}"
+
+          ERR="$(mktemp)"
+          set +e
+          RESPONSE=$(gh api graphql --input "${PAYLOAD}" 2>"${ERR}")
+          STATUS=$?
+          set -e
+
+          if [ "${STATUS}" -ne 0 ]; then
+            MSG="$(jq -r '.errors[0].message // empty' <<<"${RESPONSE}" 2>/dev/null || true)"
+            if [[ "${MSG}" == *"empty commit"* ]] || grep -qi "empty commit" "${ERR}"; then
+              COMMIT_OID="${HEAD_OID}"
+            else
+              cat "${ERR}" >&2
+              printf '%s\n' "${RESPONSE}" >&2
+              exit 1
+            fi
+          else
+            COMMIT_OID=$(jq -r '.data.createCommitOnBranch.commit.oid' <<<"${RESPONSE}")
+            if [ -z "${COMMIT_OID}" ] || [ "${COMMIT_OID}" = "null" ]; then
+              printf '%s\n' "${RESPONSE}" >&2
+              exit 1
+            fi
+            echo "created ${COMMIT_OID}"
+          fi
+
+          TAG_SHA=$(gh api "repos/${REPO}/git/tags" \
+            -f tag="v${VERSION}" \
+            -f message="v${VERSION}" \
+            -f type="commit" \
+            -f object="${COMMIT_OID}" \
+            --jq '.sha')
+          gh api "repos/${REPO}/git/refs" \
+            -f ref="refs/tags/v${VERSION}" \
+            -f sha="${TAG_SHA}"

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CheckIcon, ClockIcon, LockIcon } from "@phosphor-icons/react";
-import { parseDate } from "@probo/helpers";
+import { getMembershipSessionStatus } from "@probo/helpers";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
@@ -59,23 +59,25 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
     profileKey,
   );
 
-  const isExpired
-    = membership.lastSession != null
-      && parseDate(membership.lastSession.expiresAt) < new Date();
-  const isAssuming = membership.lastSession != null && !isExpired;
+  const sessionStatus = getMembershipSessionStatus(
+    membership.lastSession == null
+      ? null
+      : { expiresAt: membership.lastSession.expiresAt },
+  );
+  const isAssuming = sessionStatus === "authenticated";
 
   let statusBadge = (
     <Badge color="neutral" variant="soft" iconStart={<LockIcon />}>
       {t("organizationsPage.status.authenticationRequired")}
     </Badge>
   );
-  if (isAssuming) {
+  if (sessionStatus === "authenticated") {
     statusBadge = (
       <Badge color="green" variant="soft" iconStart={<CheckIcon />}>
         {t("organizationsPage.status.authenticated")}
       </Badge>
     );
-  } else if (isExpired) {
+  } else if (sessionStatus === "expired") {
     statusBadge = (
       <Badge color="amber" variant="soft" iconStart={<ClockIcon />}>
         {t("organizationsPage.status.sessionExpired")}
@@ -86,7 +88,7 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
   return (
     <ListItem>
       <Avatar
-        size={2}
+        size={4}
         variant="soft"
         color="neutral"
         radius="small"

@@ -22,7 +22,6 @@ package accessreview
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -58,12 +57,11 @@ func (s *Service) FetchSource(
 
 	sourceID := *campaignSource.AccessReviewSourceID
 
-	// Resolve the driver and load baseline data outside the write transaction
-	// so that external HTTP calls do not hold a database connection.
+	// Resolve the driver outside the write transaction so that external HTTP
+	// calls do not hold a database connection.
 	var (
-		source   *coredata.AccessReviewSource
-		driver   drivers.Driver
-		baseline []coredata.BaselineAccountEntry
+		source *coredata.AccessReviewSource
+		driver drivers.Driver
 	)
 
 	err := s.pg.WithTx(
@@ -81,30 +79,11 @@ func (s *Service) FetchSource(
 				return fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err)
 			}
 
-			lastCompletedCampaign := &coredata.AccessReviewCampaign{}
-			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, tx, scope, campaign.OrganizationID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load last completed campaign: %w", err)
-				}
-			} else {
-				entries := &coredata.AccessReviewEntries{}
-
-				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, scope, lastCompletedCampaign.ID, sourceID)
-				if err != nil {
-					return fmt.Errorf("cannot load baseline entries by source: %w", err)
-				}
-			}
-
 			return nil
 		},
 	)
 	if err != nil {
 		return 0, err
-	}
-
-	previousByAccountKey := make(map[string]coredata.BaselineAccountEntry, len(baseline))
-	for _, entry := range baseline {
-		previousByAccountKey[entry.AccountKey] = entry
 	}
 
 	sourceCtx, cancel := context.WithTimeout(ctx, sourceFetchTimeout)
@@ -122,16 +101,9 @@ func (s *Service) FetchSource(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			now := time.Now()
-			seenAccountKeys := make(map[string]struct{}, len(accounts))
 
 			for _, account := range accounts {
 				accountKey := normalizeAccountKey(account.Email, account.ExternalID)
-				seenAccountKeys[accountKey] = struct{}{}
-
-				incrementalTag := coredata.AccessReviewEntryIncrementalTagNew
-				if _, ok := previousByAccountKey[accountKey]; ok {
-					incrementalTag = coredata.AccessReviewEntryIncrementalTagUnchanged
-				}
 
 				entry := &coredata.AccessReviewEntry{
 					ID:                           gid.New(scope.GetTenantID(), coredata.AccessReviewEntryEntityType),
@@ -151,7 +123,6 @@ func (s *Service) FetchSource(
 					AccountCreatedAt:             account.CreatedAt,
 					ExternalID:                   account.ExternalID,
 					AccountKey:                   accountKey,
-					IncrementalTag:               incrementalTag,
 					Flags:                        []coredata.AccessReviewEntryFlag{},
 					FlagReasons:                  []string{},
 					Decision:                     coredata.AccessReviewEntryDecisionPending,
@@ -161,37 +132,6 @@ func (s *Service) FetchSource(
 
 				if err := entry.Upsert(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot upsert access entry: %w", err)
-				}
-			}
-
-			// Create REMOVED entries for accounts that existed in the previous
-			// campaign but are no longer present in the current fetch.
-			for accountKey, prev := range previousByAccountKey {
-				if _, seen := seenAccountKeys[accountKey]; seen {
-					continue
-				}
-
-				entry := &coredata.AccessReviewEntry{
-					ID:                           gid.New(scope.GetTenantID(), coredata.AccessReviewEntryEntityType),
-					OrganizationID:               campaign.OrganizationID,
-					AccessReviewCampaignID:       campaign.ID,
-					AccessReviewCampaignSourceID: campaignSource.ID,
-					Email:                        prev.Email,
-					FullName:                     prev.FullName,
-					AccountKey:                   accountKey,
-					IncrementalTag:               coredata.AccessReviewEntryIncrementalTagRemoved,
-					Flags:                        []coredata.AccessReviewEntryFlag{},
-					FlagReasons:                  []string{},
-					Decision:                     coredata.AccessReviewEntryDecisionPending,
-					MFAStatus:                    coredata.MFAStatusUnknown,
-					AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
-					AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
-					CreatedAt:                    now,
-					UpdatedAt:                    now,
-				}
-
-				if err := entry.Upsert(ctx, conn, scope); err != nil {
-					return fmt.Errorf("cannot upsert removed access entry: %w", err)
 				}
 			}
 

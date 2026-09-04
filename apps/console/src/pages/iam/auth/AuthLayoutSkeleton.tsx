@@ -18,41 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, Card, IconMail } from "@probo/ui";
-import { useTranslation } from "react-i18next";
-import { useFragment } from "react-relay";
-import { graphql } from "relay-runtime";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 
-import type { InvitingOrganizationCardFragment$key } from "#/__generated__/iam/InvitingOrganizationCardFragment.graphql";
+import { authLayout } from "./_components/variants";
 
-const fragment = graphql`
-  fragment InvitingOrganizationCardFragment on Organization {
-    name
-  }
-`;
-
-interface InvitingOrganizationCardProps {
-  fKey: InvitingOrganizationCardFragment$key;
-}
-
-export function InvitingOrganizationCard(props: InvitingOrganizationCardProps) {
-  const { fKey } = props;
-  const { t } = useTranslation();
-
-  const organization = useFragment<InvitingOrganizationCardFragment$key>(
-    fragment,
-    fKey,
-  );
+// Loading fallback for the /auth zone while the layout chunk or a Relay
+// query resolves.
+export function AuthLayoutSkeleton() {
+  const slots = authLayout();
 
   return (
-    <Card padded className="w-full">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-xl">{organization.name}</h2>
-        <Badge variant="neutral" className="flex items-center gap-1">
-          <IconMail size={14} />
-          {t("invitingOrganizationCard.checkEmail")}
-        </Badge>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-sand-2 p-4">
+      <div className={slots.column()}>
+        <CardSkeleton size={3} className="h-64 w-full" />
       </div>
-    </Card>
+    </div>
   );
 }

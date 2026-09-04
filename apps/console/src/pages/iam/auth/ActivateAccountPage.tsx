@@ -21,10 +21,14 @@
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { ActivateAccountPageMutation$data, ActivateAccountPageMutation } from "#/__generated__/iam/ActivateAccountPageMutation.graphql";
@@ -140,21 +144,23 @@ export default function ActivateAccountPage() {
   }, [handleActivateAccount, searchParams]);
 
   return (
-    <div className="space-y-6 w-full max-w-md mx-auto pt-8">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{t("activateAccountPage.title")}</h1>
-        <p className="text-txt-tertiary">
-          {t("activateAccountPage.activating")}
-        </p>
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col items-center gap-4">
+        <Spinner size={3} aria-label={t("activateAccountPage.activating")} />
+        <div className="flex flex-col gap-1">
+          <Heading level={1} size={4} weight="medium" align="center" highContrast>
+            {t("activateAccountPage.title")}
+          </Heading>
+          <Text size={2} align="center" className="block">
+            {t("activateAccountPage.activating")}
+          </Text>
+        </div>
       </div>
-      <div className="text-center mt-6 text-sm text-txt-secondary">
-        <Link
-          to="/auth/login"
-          className="underline hover:text-txt-primary"
-        >
+      <Text align="center" size={2} className="block">
+        <Link to="/auth/login">
           {t("activateAccountPage.actions.goBack")}
         </Link>
-      </div>
+      </Text>
     </div>
   );
 }

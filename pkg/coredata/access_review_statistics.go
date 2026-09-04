@@ -31,10 +31,9 @@ import (
 )
 
 type AccessReviewStatistics struct {
-	TotalCount           int
-	DecisionCounts       map[AccessReviewEntryDecision]int
-	FlagCounts           map[AccessReviewEntryFlag]int
-	IncrementalTagCounts map[AccessReviewEntryIncrementalTag]int
+	TotalCount     int
+	DecisionCounts map[AccessReviewEntryDecision]int
+	FlagCounts     map[AccessReviewEntryFlag]int
 }
 
 func (s *AccessReviewStatistics) LoadByCampaignID(
@@ -48,7 +47,6 @@ func (s *AccessReviewStatistics) LoadByCampaignID(
 
 	s.DecisionCounts = make(map[AccessReviewEntryDecision]int)
 	s.FlagCounts = make(map[AccessReviewEntryFlag]int)
-	s.IncrementalTagCounts = make(map[AccessReviewEntryIncrementalTag]int)
 	s.TotalCount = 0
 
 	q := `
@@ -116,39 +114,6 @@ GROUP BY f;
 
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate flag counts: %w", err)
-	}
-
-	q = `
-SELECT incremental_tag, COUNT(*) as count
-FROM access_review_entries
-WHERE
-    %s
-    AND access_review_campaign_id = @campaign_id
-GROUP BY incremental_tag;
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	rows, err = conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query access entry incremental tag counts: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			tag   AccessReviewEntryIncrementalTag
-			count int
-		)
-
-		if err := rows.Scan(&tag, &count); err != nil {
-			return fmt.Errorf("cannot scan incremental tag count: %w", err)
-		}
-
-		s.IncrementalTagCounts[tag] = count
-	}
-
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("cannot iterate incremental tag counts: %w", err)
 	}
 
 	return nil
@@ -169,7 +134,6 @@ func (s *AccessReviewStatistics) LoadByCampaignIDAndSourceID(
 
 	s.DecisionCounts = make(map[AccessReviewEntryDecision]int)
 	s.FlagCounts = make(map[AccessReviewEntryFlag]int)
-	s.IncrementalTagCounts = make(map[AccessReviewEntryIncrementalTag]int)
 	s.TotalCount = 0
 
 	q := `
@@ -239,40 +203,6 @@ GROUP BY f;
 
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate flag counts: %w", err)
-	}
-
-	q = `
-SELECT incremental_tag, COUNT(*) as count
-FROM access_review_entries
-WHERE
-    %s
-    AND access_review_campaign_id = @campaign_id
-    AND access_review_campaign_source_id = @source_id
-GROUP BY incremental_tag;
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	rows, err = conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query access entry incremental tag counts: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			tag   AccessReviewEntryIncrementalTag
-			count int
-		)
-
-		if err := rows.Scan(&tag, &count); err != nil {
-			return fmt.Errorf("cannot scan incremental tag count: %w", err)
-		}
-
-		s.IncrementalTagCounts[tag] = count
-	}
-
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("cannot iterate incremental tag counts: %w", err)
 	}
 
 	return nil

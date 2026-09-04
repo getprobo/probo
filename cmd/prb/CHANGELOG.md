@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.224.1] - 2026-09-03
+
+### Fixed
+
+- `access-review entry list` no longer supports `--incremental-tag` filtering (campaigns are independent snapshots now)
+
 ## [0.224.0] - 2026-09-02
 
 ### Added

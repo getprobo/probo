@@ -1908,6 +1908,7 @@
     },
     "actions": {
       "back": "Retour",
+      "backToLogin": "Retour à la connexion",
       "loggingIn": "Connexion...",
       "login": "Connexion",
       "register": "S’inscrire",
@@ -1926,6 +1927,7 @@
     },
     "actions": {
       "back": "Retour",
+      "backToLogin": "Retour à la connexion",
       "checking": "Vérification en cours...",
       "continue": "Continuer avec SSO",
       "register": "S’inscrire"
@@ -1941,21 +1943,23 @@
     "or": "Ou",
     "newToProbo": "Nouveau sur Probo ?",
     "actions": {
-      "signInWithSso": "Se connecter avec SSO",
-      "signInWithEmail": "Se connecter avec l’e-mail",
+      "usePassword": "Utiliser un mot de passe",
       "createAccount": "Créer un compte"
     }
   },
   "oidcButton": {
     "signInWith": "Se connecter avec {{provider}}"
   },
+  "topBar": {
+    "tagline": "Console"
+  },
   "membershipsPage": {
-    "pageTitle": "Sélectionner une organisation",
-    "title": "Sélectionner une organisation",
+    "pageTitle": "Vos organisations",
+    "title": "Vos organisations",
     "pendingInvitations": "Invitations en attente",
-    "yourOrganizations": "Vos organisations",
-    "searchPlaceholder": "Rechercher des organisations...",
+    "searchPlaceholder": "Rechercher des organisations",
     "empty": "Aucune organisation trouvée",
+    "emptySearch": "Aucune organisation ne correspond à cette recherche.",
     "createOrganization": {
       "title": "Créer une organisation",
       "description": "Ajoutez une nouvelle organisation à votre compte",
@@ -1982,10 +1986,9 @@
       "sessionExpired": "Session expirée",
       "authenticationRequired": "Authentification requise"
     },
-    "accountDeactivated": "Compte désactivé",
     "actions": {
-      "start": "Démarrer",
-      "login": "Connexion"
+      "open": "Ouvrir",
+      "continue": "Continuer"
     }
   },
   "viewerDropdown": {
@@ -3191,7 +3194,8 @@
     "emptyConnected": "Aucune source d’accès n’est encore connectée.",
     "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",
     "searchLoadFailed": "Certaines sources n’ont pas pu être chargées, la recherche est donc incomplète. Réessayez pour toutes les rechercher.",
-    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche."
+    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche.",
+    "comingSoon": "Bientôt disponible"
   },
   "assetDetailsPage": {
     "validation": {
@@ -5965,7 +5969,7 @@
     "actions": {
       "resend": "Renvoyer le lien",
       "resendIn": "Renvoyer le lien dans {{count}} s",
-      "send": "Envoyer le lien magique"
+      "send": "Continuer"
     }
   },
   "auth": {

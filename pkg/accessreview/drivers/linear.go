@@ -143,9 +143,12 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 }
 
 func (d *LinearDriver) queryUsers(ctx context.Context, after *string) (*linearUsersResponse, error) {
+	// Linear defaults `users` to includeDisabled: false, so suspended
+	// accounts are omitted from the response entirely instead of arriving
+	// with active: false.
 	const query = `
 query AccessReviewLinearUsers($after: String) {
-  users(first: 100, after: $after) {
+  users(first: 100, after: $after, includeDisabled: true) {
     nodes {
       id
       email

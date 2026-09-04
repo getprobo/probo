@@ -9393,14 +9393,6 @@ components:
         - SHARED_ACCOUNT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewEntryFlag
 
-    AccessReviewEntryIncrementalTag:
-      type: string
-      enum:
-        - NEW
-        - REMOVED
-        - UNCHANGED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTag
-
     AccessReviewEntryAuthMethod:
       type: string
       enum:
@@ -9528,7 +9520,6 @@ components:
         - auth_method
         - account_type
         - external_id
-        - incremental_tag
         - flags
         - decision
         - created_at
@@ -9599,9 +9590,6 @@ components:
         external_id:
           type: string
           description: External ID in the source system
-        incremental_tag:
-          $ref: "#/components/schemas/AccessReviewEntryIncrementalTag"
-          description: Change tag compared to previous campaign
         flags:
           type: array
           items:
@@ -9646,7 +9634,6 @@ components:
         - total_count
         - decision_counts
         - flag_counts
-        - incremental_tag_counts
       properties:
         total_count:
           type: integer
@@ -9661,11 +9648,6 @@ components:
           additionalProperties:
             type: integer
           description: Count of entries per flag type
-        incremental_tag_counts:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Count of entries per incremental tag
 
     ListAccessReviewCampaignsInput:
       type: object
@@ -9725,9 +9707,6 @@ components:
             flag:
               $ref: "#/components/schemas/AccessReviewEntryFlag"
               description: Filter by flag
-            incremental_tag:
-              $ref: "#/components/schemas/AccessReviewEntryIncrementalTag"
-              description: Filter by incremental tag
             is_admin:
               type: boolean
               description: Filter by admin status
@@ -17618,7 +17597,7 @@ tools:
       $ref: "#/components/schemas/ListAccessReviewCampaignsOutput"
   - name: listAccessEntries
     title: List Access Entries
-    description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, active, auth_method, account_type)
+    description: List access entries for a campaign with optional filters (decision, flag, is_admin, active, auth_method, account_type)
     hints:
       readonly: true
       destructive: false
@@ -17630,7 +17609,7 @@ tools:
       $ref: "#/components/schemas/ListAccessEntriesOutput"
   - name: getAccessReviewStatistics
     title: Get Access Review Statistics
-    description: Get statistics for an access review campaign including counts by decision, flag, and incremental tag
+    description: Get statistics for an access review campaign including counts by decision and flag
     hints:
       readonly: true
       destructive: false
