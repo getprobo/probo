@@ -29,6 +29,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/dnaeon/go-vcr.v4/pkg/cassette"
 	"gopkg.in/dnaeon/go-vcr.v4/pkg/recorder"
 )
@@ -150,6 +152,45 @@ func sanitizeAWSSigningHeaders(i *cassette.Interaction) error {
 	}
 
 	return nil
+}
+
+// newGCPRecorder replays a hand-authored GCP cassette. It never records:
+// recording would require live GCP credentials, which these tests refuse to
+// read from the environment.
+func newGCPRecorder(t *testing.T, cassettePath string) *recorder.Recorder {
+	t.Helper()
+
+	return newRecorderWithMatcher(
+		t,
+		cassettePath,
+		"",
+		gcpAPIMatcher,
+	)
+}
+
+// gcpAPIMatcher matches Google API REST calls by method, host, path, and
+// pageToken. Client-default query parameters (alt, prettyPrint, pageSize,
+// keyTypes) are ignored so cassettes stay stable across library versions.
+func gcpAPIMatcher(r *http.Request, i cassette.Request) bool {
+	if r.Method != i.Method {
+		return false
+	}
+
+	host := r.URL.Host
+	if host == "" {
+		host = r.Host
+	}
+
+	cassetteURL, err := url.Parse(i.URL)
+	if err != nil {
+		return false
+	}
+
+	if host != cassetteURL.Host || r.URL.Path != cassetteURL.Path {
+		return false
+	}
+
+	return r.URL.Query().Get("pageToken") == cassetteURL.Query().Get("pageToken")
 }
 
 // newAWSRecorder replays a hand-authored AWS cassette. It never records:
@@ -332,4 +373,104 @@ type roundTripFunc func(req *http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+
+func TestGCPAPIMatcher(t *testing.T) {
+	t.Parallel()
+
+	const (
+		serviceAccounts = "https://iam.googleapis.com/v1/projects/123456789012/serviceAccounts"
+		serviceKeys     = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/ci@my-project.iam.gserviceaccount.com/keys"
+		resourceManager = "https://cloudresourcemanager.googleapis.com/v1/projects/123456789012:getIamPolicy"
+	)
+
+	tests := []struct {
+		name        string
+		method      string
+		requestURL  string
+		cassetteURL string
+		want        bool
+	}{
+		{
+			name:        "same path without page token",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts,
+			cassetteURL: serviceAccounts,
+			want:        true,
+		},
+		{
+			name:        "same path and page token",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts + "?pageToken=abc",
+			cassetteURL: serviceAccounts + "?pageToken=abc",
+			want:        true,
+		},
+		{
+			name:        "same path with different page tokens",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts + "?pageToken=abc",
+			cassetteURL: serviceAccounts + "?pageToken=def",
+			want:        false,
+		},
+		{
+			name:        "page token only on the request",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts + "?pageToken=abc",
+			cassetteURL: serviceAccounts,
+			want:        false,
+		},
+		{
+			name:        "page token only on the cassette",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts,
+			cassetteURL: serviceAccounts + "?pageToken=abc",
+			want:        false,
+		},
+		{
+			name:        "ignores client-default query parameters",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts + "?alt=json&prettyPrint=false&pageSize=100&keyTypes=USER_MANAGED",
+			cassetteURL: serviceAccounts,
+			want:        true,
+		},
+		{
+			name:        "matches page token while ignoring client defaults",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts + "?alt=json&pageSize=100&pageToken=abc",
+			cassetteURL: serviceAccounts + "?pageToken=abc",
+			want:        true,
+		},
+		{
+			name:        "different path",
+			method:      http.MethodGet,
+			requestURL:  serviceAccounts,
+			cassetteURL: serviceKeys,
+			want:        false,
+		},
+		{
+			name:        "different host",
+			method:      http.MethodPost,
+			requestURL:  resourceManager,
+			cassetteURL: serviceAccounts,
+			want:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				req, err := http.NewRequest(tt.method, tt.requestURL, nil)
+				require.NoError(t, err)
+
+				got := gcpAPIMatcher(
+					req,
+					cassette.Request{Method: tt.method, URL: tt.cassetteURL},
+				)
+				assert.Equal(t, tt.want, got)
+			},
+		)
+	}
 }

@@ -55,6 +55,8 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 		".localhost",
 		// Google Workspace test domain family (RFC-style synthetic).
 		".test-google-a.com",
+		// Synthetic GCP project used in hand-authored cassettes.
+		".my-project.iam.gserviceaccount.com",
 	}
 
 	// allowedExactDomains lists individual domains that pre-date this

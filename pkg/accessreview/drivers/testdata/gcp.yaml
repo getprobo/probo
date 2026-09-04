@@ -1,0 +1,113 @@
+---
+# Hand-authored GCP cassette. Never recorded against a live project.
+# getIamPolicy plus serviceAccounts.list and keys.list for the listed SAs.
+# Synthetic principals: alice (owner user), eng (viewer group), ci (SA with
+# a user-managed key), unbound (listed SA with no binding), disabled-bot
+# (custom role, disabled). allUsers and domain: are present and skipped.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: cloudresourcemanager.googleapis.com
+        url: https://cloudresourcemanager.googleapis.com/v1/projects/123456789012:getIamPolicy
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"bindings":[{"role":"roles/owner","members":["user:alice@example.com"]},{"role":"roles/viewer","members":["group:eng@example.com","allUsers","domain:example.com"]},{"role":"roles/editor","members":["serviceAccount:ci@my-project.iam.gserviceaccount.com"]},{"role":"projects/my-project/roles/customAdmin","members":["serviceAccount:disabled-bot@my-project.iam.gserviceaccount.com"]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.googleapis.com
+        url: https://iam.googleapis.com/v1/projects/123456789012/serviceAccounts
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"accounts":[{"email":"ci@my-project.iam.gserviceaccount.com","uniqueId":"111111111111111111111","displayName":"CI Deploy","disabled":false},{"email":"unbound@my-project.iam.gserviceaccount.com","uniqueId":"222222222222222222222","displayName":"Unbound Runner","disabled":false},{"email":"disabled-bot@my-project.iam.gserviceaccount.com","uniqueId":"333333333333333333333","displayName":"Disabled Bot","disabled":true}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.googleapis.com
+        url: https://iam.googleapis.com/v1/projects/-/serviceAccounts/ci@my-project.iam.gserviceaccount.com/keys
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"keys":[{"name":"projects/my-project/serviceAccounts/ci@my-project.iam.gserviceaccount.com/keys/key1","keyType":"USER_MANAGED"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.googleapis.com
+        url: https://iam.googleapis.com/v1/projects/-/serviceAccounts/disabled-bot@my-project.iam.gserviceaccount.com/keys
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"keys":[]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: iam.googleapis.com
+        url: https://iam.googleapis.com/v1/projects/-/serviceAccounts/unbound@my-project.iam.gserviceaccount.com/keys
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"keys":[]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

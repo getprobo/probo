@@ -50,9 +50,10 @@ func gcpRegistration() *Registration {
 		// Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the GCP APIs resolve their own hosts, not values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession: newGCPSession,
-			NewDriver:  newGCPDriver,
-			Probe:      probeGCP,
+			NewSession:      newGCPSession,
+			NewDriver:       newGCPDriver,
+			Probe:           probeGCP,
+			NewNameResolver: newGCPNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "workloadIdentityProvider", Label: "Workload identity provider", Required: true},
 				{Key: "serviceAccountEmail", Label: "Service account email", Required: true},
@@ -91,20 +92,41 @@ func newGCPSession(
 	return session, nil
 }
 
-// newGCPDriver is a placeholder until the access-review driver lands. Register
-// requires a factory; returning a clear error keeps a silent no-op driver out
-// of the catalog.
+func newGCPNameResolver(
+	ctx context.Context,
+	session cloud.Session,
+	conn *coredata.Connector,
+	logger *log.Logger,
+) drivers.NameResolver {
+	gcpSession, ok := session.(*cloudgcp.Session)
+	if !ok {
+		logger.ErrorCtx(ctx, "cannot create gcp name resolver", log.String("cloud", session.Cloud()))
+		return nil
+	}
+
+	settings, err := coredata.ConnectorSettings[coredata.GCPConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read gcp connector settings", log.Error(err))
+		return nil
+	}
+
+	return drivers.NewGCPNameResolver(gcpSession, settings.ServiceAccountEmail, logger)
+}
+
+// newGCPDriver builds the access review driver over the session already
+// impersonated on the connected project.
 func newGCPDriver(
 	_ context.Context,
 	session cloud.Session,
 	_ *coredata.Connector,
 	_ *log.Logger,
 ) (drivers.Driver, error) {
-	if _, ok := session.(*cloudgcp.Session); !ok {
+	gcpSession, ok := session.(*cloudgcp.Session)
+	if !ok {
 		return nil, fmt.Errorf("cannot create gcp driver: session is for %s", session.Cloud())
 	}
 
-	return nil, fmt.Errorf("cannot create gcp driver: not implemented")
+	return drivers.NewGCPDriver(gcpSession), nil
 }
 
 // probeGCP checks the connection by completing the STS exchange and
