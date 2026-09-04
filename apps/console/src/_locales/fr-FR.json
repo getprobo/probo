@@ -1851,6 +1851,11 @@
     "title": "Inscription",
     "description": "Saisissez vos informations pour créer un compte",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "checkEmail": {
+      "title": "Vérifiez votre e-mail",
+      "description": "Nous avons envoyé un lien de confirmation à {{email}}.",
+      "resend": "Vous n’avez pas reçu l’e-mail ?"
+    },
     "messages": {
       "created": "Compte créé avec succès"
     },
@@ -1872,13 +1877,15 @@
       "backToLogin": "Retour à la connexion",
       "creating": "Création du compte...",
       "signUpWithEmail": "S’inscrire avec e-mail",
-      "logIn": "Connectez-vous ici"
+      "logIn": "Connectez-vous ici",
+      "resend": "Renvoyer l’e-mail de confirmation"
     }
   },
   "verifyEmailPage": {
     "pageTitle": "Confirmer l’e-mail",
     "title": "Confirmation de l’e-mail",
     "description": "Confirmez votre adresse e-mail pour finaliser votre inscription",
+    "continueDescription": "Cliquez sur continuer pour confirmer votre e-mail et vous connecter.",
     "messages": {
       "confirmed": "Votre e-mail a été confirmé avec succès",
       "confirmedWithExclamation": "Votre e-mail a été confirmé avec succès !"
@@ -1895,6 +1902,7 @@
       "proceedToLogin": "Continuer vers la connexion",
       "confirming": "Confirmation...",
       "confirm": "Confirmer l’e-mail",
+      "continue": "Continuer",
       "backToLogin": "Retour à la connexion"
     }
   },

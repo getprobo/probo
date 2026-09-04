@@ -29,10 +29,9 @@ import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, usePreloadedQuery, useQueryLoader } from "react-relay";
-import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignUpPageMutation } from "#/__generated__/iam/SignUpPageMutation.graphql";
@@ -57,7 +56,7 @@ const signUpMutation = graphql`
 function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQueryLoader<SignUpPageQuery>>[0]> }) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [signedUpEmail, setSignedUpEmail] = useState("");
 
   usePageTitle(t("signUpPage.pageTitle"));
 
@@ -84,11 +83,11 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
           return;
         }
 
+        setSignedUpEmail(email);
         toast({
           title: t("common.success"), description: t("signUpPage.messages.created"),
           variant: "success",
         });
-        void navigate("/", { replace: true });
       },
       onError: (e) => {
         toast({
@@ -99,6 +98,37 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
       },
     });
   };
+
+  if (signedUpEmail !== "") {
+    const resendSearch = new URLSearchParams({ email: signedUpEmail }).toString();
+
+    return (
+      <div className="flex w-full flex-col gap-8">
+        <div className="flex flex-col gap-1">
+          <Heading level={1} size={4} weight="medium" align="center" highContrast>
+            {t("signUpPage.checkEmail.title")}
+          </Heading>
+          <Text size={2} align="center" className="block">
+            {t("signUpPage.checkEmail.description", { email: signedUpEmail })}
+          </Text>
+        </div>
+
+        <Text align="center" size={2} className="block">
+          {t("signUpPage.checkEmail.resend")}
+          {" "}
+          <Link to={{ pathname: "/auth/resend-verification-email", search: `?${resendSearch}` }}>
+            {t("signUpPage.actions.resend")}
+          </Link>
+        </Text>
+
+        <Text align="center" size={2} className="block">
+          <Link to="/auth/login">
+            {t("signUpPage.actions.backToLogin")}
+          </Link>
+        </Text>
+      </div>
+    );
+  }
 
   if (!data.signUpEnabled) {
     return (

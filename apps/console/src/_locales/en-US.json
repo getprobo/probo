@@ -1241,20 +1241,26 @@
     "title": "Sign up",
     "description": "Enter your information to create an account",
     "alreadyHaveAccount": "Already have an account?",
+    "checkEmail": {
+      "title": "Check your email",
+      "description": "We sent a confirmation link to {{email}}.",
+      "resend": "Didn't receive the email?"
+    },
     "messages": { "created": "Account created successfully" },
     "errors": { "failed": "Sign up failed" },
     "unavailable": { "title": "Registration unavailable", "description": "New account registration is currently disabled. Please contact your administrator or reach out to Probo for assistance." },
     "fields": { "fullName": "Full Name", "fullNamePlaceholder": "John Doe", "email": "Email", "emailPlaceholder": "name@example.com", "password": "Password" },
-    "actions": { "backToLogin": "Back to login", "creating": "Creating account...", "signUpWithEmail": "Sign up with email", "logIn": "Log in here" }
+    "actions": { "backToLogin": "Back to login", "creating": "Creating account...", "signUpWithEmail": "Sign up with email", "logIn": "Log in here", "resend": "Resend confirmation email" }
   },
   "verifyEmailPage": {
     "pageTitle": "Confirm Email",
     "title": "Email Confirmation",
     "description": "Confirm your email address to complete registration",
+    "continueDescription": "Click continue to confirm your email and sign in.",
     "messages": { "confirmed": "Your email has been confirmed successfully", "confirmedWithExclamation": "Your email has been confirmed successfully!" },
     "errors": { "confirm": "Failed to confirm email" },
     "fields": { "token": "Confirmation Token", "tokenPlaceholder": "Enter your confirmation token", "tokenHelp": "The token has been automatically filled from the URL if available" },
-    "actions": { "proceedToLogin": "Proceed to Login", "confirming": "Confirming...", "confirm": "Confirm Email", "backToLogin": "Back to Login" }
+    "actions": { "proceedToLogin": "Proceed to Login", "confirming": "Confirming...", "confirm": "Confirm Email", "continue": "Continue", "backToLogin": "Back to Login" }
   },
   "passwordSignInPage": {
     "title": "Login with Email",

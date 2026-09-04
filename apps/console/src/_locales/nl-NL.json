@@ -1851,6 +1851,11 @@
     "title": "Registreren",
     "description": "Voer uw gegevens in om een account aan te maken",
     "alreadyHaveAccount": "Heeft u al een account?",
+    "checkEmail": {
+      "title": "Controleer uw e-mail",
+      "description": "We hebben een bevestigingslink gestuurd naar {{email}}.",
+      "resend": "Geen e-mail ontvangen?"
+    },
     "messages": {
       "created": "Account succesvol aangemaakt"
     },
@@ -1872,13 +1877,15 @@
       "backToLogin": "Terug naar inloggen",
       "creating": "Account aanmaken...",
       "signUpWithEmail": "Registreren met e-mail",
-      "logIn": "Hier inloggen"
+      "logIn": "Hier inloggen",
+      "resend": "Bevestigingsmail opnieuw versturen"
     }
   },
   "verifyEmailPage": {
     "pageTitle": "E-mail bevestigen",
     "title": "E-mailbevestiging",
     "description": "Bevestig uw e-mailadres om de registratie te voltooien",
+    "continueDescription": "Klik op doorgaan om uw e-mail te bevestigen en in te loggen.",
     "messages": {
       "confirmed": "Uw e-mail is succesvol bevestigd",
       "confirmedWithExclamation": "Uw e-mail is succesvol bevestigd!"
@@ -1895,6 +1902,7 @@
       "proceedToLogin": "Doorgaan naar inloggen",
       "confirming": "Bevestigen...",
       "confirm": "E-mail bevestigen",
+      "continue": "Doorgaan",
       "backToLogin": "Terug naar inloggen"
     }
   },
