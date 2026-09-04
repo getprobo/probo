@@ -36,7 +36,7 @@ const createTaskCommentMutation = graphql`
       taskCommentEdge @appendEdge(connections: $connections) {
         node {
           id
-          ...TaskCommentListItem_comment
+          ...TaskCommentListItem_taskComment
         }
       }
     }
@@ -55,7 +55,7 @@ export function useCreateTaskComment() {
       },
     );
 
-  async function createTaskCommentOnTask(description: string) {
+  async function createTaskCommentOnTask(content: string) {
     if (taskId == null) {
       throw new Error(":taskId missing in route params");
     }
@@ -64,7 +64,7 @@ export function useCreateTaskComment() {
       variables: {
         input: {
           taskId,
-          description,
+          content,
         },
         connections: [taskCommentsConnectionId(taskId)],
       },

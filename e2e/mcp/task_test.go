@@ -64,15 +64,19 @@ func TestMCP_Task_CRUD(t *testing.T) {
 	// Update
 	var updateResult struct {
 		Task struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
+			ID      string  `json:"id"`
+			Name    string  `json:"name"`
+			Content *string `json:"content"`
 		} `json:"task"`
 	}
 	mc.CallToolInto("updateTask", map[string]any{
-		"id":   addResult.Task.ID,
-		"name": "Updated Task",
+		"id":      addResult.Task.ID,
+		"name":    "Updated Task",
+		"content": "Task **description**",
 	}, &updateResult)
 	assert.Equal(t, "Updated Task", updateResult.Task.Name)
+	require.NotNil(t, updateResult.Task.Content)
+	assert.Equal(t, "Task **description**\n", *updateResult.Task.Content)
 
 	// List
 	var listResult struct {

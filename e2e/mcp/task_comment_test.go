@@ -34,13 +34,13 @@ func TestMCP_TaskComment_ListOldestFirst(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
 	taskID := factory.NewTaskWithoutMeasure(owner).Create()
-	firstID := factory.NewTaskComment(owner, taskID).WithDescription("Oldest MCP comment").Create()
-	secondID := factory.NewTaskComment(owner, taskID).WithDescription("Newest MCP comment").Create()
+	firstID := factory.NewTaskComment(owner, taskID).WithContent("Oldest MCP comment").Create()
+	secondID := factory.NewTaskComment(owner, taskID).WithContent("Newest MCP comment").Create()
 
 	var listResult struct {
 		TaskComments []struct {
-			ID          string `json:"id"`
-			Description string `json:"description"`
+			ID      string `json:"id"`
+			Content string `json:"content"`
 		} `json:"task_comments"`
 	}
 	mc.CallToolInto("listTaskComments", map[string]any{
@@ -48,9 +48,9 @@ func TestMCP_TaskComment_ListOldestFirst(t *testing.T) {
 	}, &listResult)
 	require.GreaterOrEqual(t, len(listResult.TaskComments), 2)
 	assert.Equal(t, firstID, listResult.TaskComments[0].ID)
-	assert.Equal(t, "Oldest MCP comment", listResult.TaskComments[0].Description)
+	assert.Equal(t, "Oldest MCP comment\n", listResult.TaskComments[0].Content)
 	assert.Equal(t, secondID, listResult.TaskComments[1].ID)
-	assert.Equal(t, "Newest MCP comment", listResult.TaskComments[1].Description)
+	assert.Equal(t, "Newest MCP comment\n", listResult.TaskComments[1].Content)
 }
 
 func TestMCP_TaskComment_CRUD(t *testing.T) {
@@ -61,17 +61,17 @@ func TestMCP_TaskComment_CRUD(t *testing.T) {
 
 	var addResult struct {
 		TaskComment struct {
-			ID          string `json:"id"`
-			Description string `json:"description"`
-			OwnerID     string `json:"owner_id"`
+			ID      string `json:"id"`
+			Content string `json:"content"`
+			OwnerID string `json:"owner_id"`
 		} `json:"task_comment"`
 	}
 	mc.CallToolInto("addTaskComment", map[string]any{
-		"task_id":     taskID,
-		"description": "MCP comment",
+		"task_id": taskID,
+		"content": "MCP **comment**",
 	}, &addResult)
 	require.NotEmpty(t, addResult.TaskComment.ID)
-	assert.Equal(t, "MCP comment", addResult.TaskComment.Description)
+	assert.Equal(t, "MCP **comment**\n", addResult.TaskComment.Content)
 	assert.Equal(t, owner.GetProfileID().String(), addResult.TaskComment.OwnerID)
 
 	var getResult struct {
@@ -86,15 +86,26 @@ func TestMCP_TaskComment_CRUD(t *testing.T) {
 
 	var updateResult struct {
 		TaskComment struct {
-			ID          string `json:"id"`
-			Description string `json:"description"`
+			ID      string `json:"id"`
+			Content string `json:"content"`
 		} `json:"task_comment"`
 	}
 	mc.CallToolInto("updateTaskComment", map[string]any{
-		"id":          addResult.TaskComment.ID,
-		"description": "Updated MCP comment",
+		"id":      addResult.TaskComment.ID,
+		"content": "Updated MCP comment",
 	}, &updateResult)
-	assert.Equal(t, "Updated MCP comment", updateResult.TaskComment.Description)
+	assert.Equal(t, "Updated MCP comment\n", updateResult.TaskComment.Content)
+
+	mc.CallToolInto("updateTaskComment", map[string]any{
+		"id": addResult.TaskComment.ID,
+	}, &updateResult)
+	assert.Equal(t, "Updated MCP comment\n", updateResult.TaskComment.Content)
+
+	mc.CallToolInto("updateTaskComment", map[string]any{
+		"id":      addResult.TaskComment.ID,
+		"content": nil,
+	}, &updateResult)
+	assert.Equal(t, "", updateResult.TaskComment.Content)
 
 	var listResult struct {
 		TaskComments []struct {

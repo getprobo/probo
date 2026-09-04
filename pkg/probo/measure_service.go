@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -493,7 +494,7 @@ func (s MeasureService) Import(
 						OrganizationID: organizationID,
 						MeasureID:      &measure.ID,
 						Name:           req.Measures[i].Tasks[j].Name,
-						Description:    &taskDescription,
+						Content:        prosemirror.FromPlainText(taskDescription),
 						ReferenceID:    req.Measures[i].Tasks[j].ReferenceID,
 						State:          coredata.TaskStateTodo,
 						Priority:       coredata.TaskPriorityMedium,

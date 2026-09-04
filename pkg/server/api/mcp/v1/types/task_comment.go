@@ -21,28 +21,40 @@
 package types
 
 import (
+	"fmt"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewTaskComment(c *coredata.TaskComment) *TaskComment {
+func NewTaskComment(c *coredata.TaskComment) (*TaskComment, error) {
+	content, err := richTextToMarkdown(c.Content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert task comment content to markdown: %w", err)
+	}
+
 	return &TaskComment{
 		ID:             c.ID,
 		OrganizationID: c.OrganizationID,
 		TaskID:         c.TaskID,
 		OwnerID:        c.OwnerID,
-		Description:    c.Description,
+		Content:        content,
 		CreatedAt:      c.CreatedAt,
 		UpdatedAt:      c.UpdatedAt,
-	}
+	}, nil
 }
 
 func NewListTaskCommentsOutput(
 	commentPage *page.Page[*coredata.TaskComment, coredata.TaskCommentOrderField],
-) ListTaskCommentsOutput {
+) (ListTaskCommentsOutput, error) {
 	comments := make([]*TaskComment, 0, len(commentPage.Data))
 	for _, v := range commentPage.Data {
-		comments = append(comments, NewTaskComment(v))
+		comment, err := NewTaskComment(v)
+		if err != nil {
+			return ListTaskCommentsOutput{}, err
+		}
+
+		comments = append(comments, comment)
 	}
 
 	var nextCursor *page.CursorKey
@@ -55,5 +67,5 @@ func NewListTaskCommentsOutput(
 	return ListTaskCommentsOutput{
 		NextCursor:   nextCursor,
 		TaskComments: comments,
-	}
+	}, nil
 }

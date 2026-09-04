@@ -6928,6 +6928,7 @@ components:
         - id
         - organization_id
         - name
+        - content
         - state
         - priority
         - rank
@@ -6950,13 +6951,9 @@ components:
         name:
           type: string
           description: Task name
-        description:
-          anyOf:
-            - type: string
-              description: Task description
-            - type: "null"
-              description: No description
-          description: Task description
+        content:
+          type: string
+          description: Task content in markdown (converted from stored ProseMirror JSON)
         state:
           $ref: "#/components/schemas/TaskState"
           description: Task state
@@ -7069,9 +7066,9 @@ components:
         name:
           type: string
           description: Task name
-        description:
+        content:
           type: string
-          description: Task description
+          description: Task content in markdown format
         time_estimate:
           $ref: "#/components/schemas/Duration"
           description: Time estimate
@@ -7114,9 +7111,9 @@ components:
         name:
           type: string
           description: Task name
-        description:
+        content:
           type: ["string", "null"]
-          description: Task description
+          description: Task content in markdown format
           go.probo.inc/mcpgen/omittable: true
         state:
           anyOf:
@@ -7258,7 +7255,7 @@ components:
         - organization_id
         - task_id
         - owner_id
-        - description
+        - content
         - created_at
         - updated_at
       properties:
@@ -7274,9 +7271,9 @@ components:
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner membership profile ID
-        description:
+        content:
           type: string
-          description: Task comment description
+          description: Task comment body in markdown (converted from stored ProseMirror JSON)
         created_at:
           type: string
           format: date-time
@@ -7341,7 +7338,7 @@ components:
       type: object
       required:
         - task_id
-        - description
+        - content
       properties:
         task_id:
           $ref: "#/components/schemas/GID"
@@ -7349,9 +7346,9 @@ components:
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner membership profile ID. Defaults to the caller's profile in the task organization when omitted.
-        description:
+        content:
           type: string
-          description: Task comment description
+          description: Task comment content in markdown format
 
     AddTaskCommentOutput:
       type: object
@@ -7372,9 +7369,10 @@ components:
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner membership profile ID
-        description:
-          type: string
-          description: Task comment description
+        content:
+          type: ["string", "null"]
+          description: Task comment content in markdown format
+          go.probo.inc/mcpgen/omittable: true
 
     UpdateTaskCommentOutput:
       type: object

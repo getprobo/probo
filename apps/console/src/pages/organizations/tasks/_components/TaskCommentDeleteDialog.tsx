@@ -30,18 +30,18 @@ import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import type { TaskCommentDeleteDialog_comment$key } from "#/__generated__/core/TaskCommentDeleteDialog_comment.graphql";
+import type { TaskCommentDeleteDialog_taskComment$key } from "#/__generated__/core/TaskCommentDeleteDialog_taskComment.graphql";
 
 import { useDeleteTaskComment } from "../_lib/useDeleteTaskComment";
 
 const taskCommentDeleteDialogFragment = graphql`
-  fragment TaskCommentDeleteDialog_comment on TaskComment {
+  fragment TaskCommentDeleteDialog_taskComment on TaskComment {
     id
   }
 `;
 
 interface TaskCommentDeleteDialogProps {
-  taskCommentKey: TaskCommentDeleteDialog_comment$key;
+  taskCommentKey: TaskCommentDeleteDialog_taskComment$key;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
