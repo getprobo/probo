@@ -92,8 +92,10 @@ func TestClientBranding_InvalidClientID(t *testing.T) {
 func TestClientBranding_CompliancePortalFlag(t *testing.T) {
 	t.Parallel()
 
-	const portalClientID = "https://portal.example.com/.well-known/oauth-client-metadata"
-	const thirdPartyClientID = "https://chatgpt.com/oauth/client.json"
+	const (
+		portalClientID     = "https://portal.example.com/.well-known/oauth-client-metadata"
+		thirdPartyClientID = "https://chatgpt.com/oauth/client.json"
+	)
 
 	t.Run(
 		"skip consent marks compliance portal",
