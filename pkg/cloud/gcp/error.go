@@ -22,6 +22,7 @@ package gcp
 
 import (
 	"errors"
+	"net/http"
 
 	"go.gearno.de/kit/log"
 	"google.golang.org/api/googleapi"
@@ -42,4 +43,33 @@ func SafeLogFields(err error) []log.Attr {
 	}
 
 	return fields
+}
+
+type (
+	// ErrPermissionDenied matches a Google API 403. Pass it to As.
+	ErrPermissionDenied struct{}
+
+	// ErrNotFound matches a Google API 404. Pass it to As.
+	ErrNotFound struct{}
+
+	statusError interface {
+		ErrPermissionDenied | ErrNotFound
+		code() int
+	}
+)
+
+func (ErrPermissionDenied) code() int { return http.StatusForbidden }
+
+func (ErrNotFound) code() int { return http.StatusNotFound }
+
+// As reports whether err is or wraps a Google API error whose status is T.
+func As[T statusError](err error) bool {
+	apiErr, ok := errors.AsType[*googleapi.Error](err)
+	if !ok {
+		return false
+	}
+
+	var status T
+
+	return apiErr.Code == status.code()
 }

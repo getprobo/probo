@@ -1,0 +1,26 @@
+---
+# Directory Users.Get is denied. MFA stays unknown. Call order is the
+# contract.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: admin.googleapis.com
+        url: https://admin.googleapis.com/admin/directory/v1/users/alice@example.com
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 403 Forbidden
+        code: 403
+        duration: 1ms
