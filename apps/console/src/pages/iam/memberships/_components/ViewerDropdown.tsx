@@ -35,7 +35,9 @@ import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { EditableAvatarButton } from "@probo/ui/src/v2/EditableAvatarButton/EditableAvatarButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
@@ -43,6 +45,7 @@ import { Link } from "react-router";
 import type { ViewerDropdownFragment$key } from "#/__generated__/iam/ViewerDropdownFragment.graphql";
 import type { ViewerDropdownSignOutMutation } from "#/__generated__/iam/ViewerDropdownSignOutMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { IdentityAvatarDialog } from "#/pages/iam/_components/IdentityAvatarDialog";
 
 import { topBarUserMenuTrigger } from "./TopBar/variants";
 
@@ -51,6 +54,10 @@ export const fragment = graphql`
     canListOAuth2AccessTokens: permission(action: "iam:oauth2-access-token:list")
     email
     fullName
+    avatar {
+      downloadUrl
+    }
+    ...IdentityAvatarDialog_identity
   }
 `;
 
@@ -70,14 +77,16 @@ export function ViewerDropdown({ identityKey }: ViewerDropdownProps) {
   const { t } = useTranslation();
   const { displayMode, toggleDisplayMode } = useDisplayMode();
 
-  const { canListOAuth2AccessTokens, email, fullName }
-    = useFragment<ViewerDropdownFragment$key>(fragment, identityKey);
+  const identity = useFragment<ViewerDropdownFragment$key>(fragment, identityKey);
+  const { canListOAuth2AccessTokens, email, fullName, avatar } = identity;
   const [signOut, isSigningOut] = useMutation<ViewerDropdownSignOutMutation>(
     signOutMutation,
     { errorToast: t("viewerDropdown.errors.cannotSignOut") },
   );
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   const displayName = fullName.trim() || email;
+  const avatarSrc = avatar?.downloadUrl;
 
   function handleSignOut() {
     void signOut({ variables: {} }).then(() => {
@@ -90,62 +99,81 @@ export function ViewerDropdown({ identityKey }: ViewerDropdownProps) {
   }
 
   return (
-    <Dropdown>
-      <DropdownTrigger
-        render={(
-          <button type="button" className={topBarUserMenuTrigger()} aria-label={displayName}>
-            <Avatar
-              size={1}
-              variant="soft"
-              color="gold"
-              radius="small"
-              fallback={<UserIcon />}
-            />
-            <Text size={2} weight="medium" color="neutral" highContrast className="max-w-36 truncate">
-              {displayName}
-            </Text>
-            <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
-          </button>
-        )}
-      />
-      <DropdownPopup align="end">
-        <DropdownGroup>
-          <div className="flex w-full flex-col gap-1 px-3 py-3">
-            <Text size={2} weight="medium" color="neutral" highContrast>
-              {displayName}
-            </Text>
-            <Text size={1} color="faint" className="truncate">
-              {email}
-            </Text>
-          </div>
-        </DropdownGroup>
-        <DropdownSeparator />
-        {canListOAuth2AccessTokens && (
-          <DropdownItem iconStart={<KeyIcon />} render={<Link to="/me/oauth-tokens" />}>
-            {t("viewerDropdown.actions.oauthTokens")}
+    <>
+      <Dropdown>
+        <DropdownTrigger
+          render={(
+            <button type="button" className={topBarUserMenuTrigger()} aria-label={displayName}>
+              <Avatar
+                size={1}
+                variant="soft"
+                color="gold"
+                radius="small"
+                src={avatarSrc}
+                fallback={<UserIcon />}
+              />
+              <Text size={2} weight="medium" color="neutral" highContrast className="max-w-36 truncate">
+                {displayName}
+              </Text>
+              <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
+            </button>
+          )}
+        />
+        <DropdownPopup align="end">
+          <DropdownGroup>
+            <div className="flex w-full items-center gap-3 px-3 py-3">
+              <EditableAvatarButton
+                fullName={displayName}
+                src={avatarSrc}
+                fallback={<UserIcon />}
+                onClick={() => setAvatarOpen(true)}
+                label={t("editAvatar.actions.change")}
+                size={2}
+                radius="full"
+              />
+              <div className="flex min-w-0 flex-col gap-1">
+                <Text size={2} weight="medium" color="neutral" highContrast>
+                  {displayName}
+                </Text>
+                <Text size={1} color="faint" className="truncate">
+                  {email}
+                </Text>
+              </div>
+            </div>
+          </DropdownGroup>
+          <DropdownSeparator />
+          {canListOAuth2AccessTokens && (
+            <DropdownItem iconStart={<KeyIcon />} render={<Link to="/me/oauth-tokens" />}>
+              {t("viewerDropdown.actions.oauthTokens")}
+            </DropdownItem>
+          )}
+          <DropdownItem
+            iconStart={displayMode === "dark" ? <SunIcon /> : <MoonIcon />}
+            onClick={toggleDisplayMode}
+          >
+            {displayMode === "dark"
+              ? t("nav.switchToLightMode")
+              : t("nav.switchToDarkMode")}
           </DropdownItem>
-        )}
-        <DropdownItem
-          iconStart={displayMode === "dark" ? <SunIcon /> : <MoonIcon />}
-          onClick={toggleDisplayMode}
-        >
-          {displayMode === "dark"
-            ? t("nav.switchToLightMode")
-            : t("nav.switchToDarkMode")}
-        </DropdownItem>
-        <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
-          {t("viewerDropdown.actions.help")}
-        </DropdownItem>
-        <DropdownSeparator />
-        <DropdownItem
-          color="error"
-          iconStart={<SignOutIcon />}
-          disabled={isSigningOut}
-          onClick={handleSignOut}
-        >
-          {t("viewerDropdown.actions.logout")}
-        </DropdownItem>
-      </DropdownPopup>
-    </Dropdown>
+          <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
+            {t("viewerDropdown.actions.help")}
+          </DropdownItem>
+          <DropdownSeparator />
+          <DropdownItem
+            color="error"
+            iconStart={<SignOutIcon />}
+            disabled={isSigningOut}
+            onClick={handleSignOut}
+          >
+            {t("viewerDropdown.actions.logout")}
+          </DropdownItem>
+        </DropdownPopup>
+      </Dropdown>
+      <IdentityAvatarDialog
+        identityKey={identity}
+        open={avatarOpen}
+        onOpenChange={setAvatarOpen}
+      />
+    </>
   );
 }

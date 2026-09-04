@@ -3,6 +3,7 @@ type Identity implements Node {
   email: EmailAddr!
   fullName: String!
   emailVerified: Boolean!
+  avatar: File @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 
@@ -56,4 +57,25 @@ type Identity implements Node {
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @authentication(required: PRESENT)
+}
+
+extend type Mutation {
+  updateIdentityAvatar(
+    input: UpdateIdentityAvatarInput!
+  ): UpdateIdentityAvatarPayload @authentication(required: PRESENT) @sessionOnly
+  deleteIdentityAvatar: DeleteIdentityAvatarPayload
+    @authentication(required: PRESENT)
+    @sessionOnly
+}
+
+input UpdateIdentityAvatarInput {
+  file: Upload!
+}
+
+type UpdateIdentityAvatarPayload {
+  identity: Identity!
+}
+
+type DeleteIdentityAvatarPayload {
+  identity: Identity!
 }

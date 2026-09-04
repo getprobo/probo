@@ -2017,6 +2017,25 @@
       "logout": "Uitloggen"
     }
   },
+  "editAvatar": {
+    "title": "Profielfoto",
+    "description": "Upload een foto zodat anderen je herkennen. Zonder foto worden je initialen gebruikt.",
+    "messages": {
+      "updated": "Profielfoto bijgewerkt.",
+      "removed": "Profielfoto verwijderd."
+    },
+    "errors": {
+      "update": "Profielfoto bijwerken mislukt",
+      "remove": "Profielfoto verwijderen mislukt"
+    },
+    "actions": {
+      "upload": "Foto uploaden",
+      "replace": "Foto vervangen",
+      "remove": "Foto verwijderen",
+      "close": "Sluiten",
+      "change": "Profielfoto wijzigen"
+    }
+  },
   "newOAuthTokenPage": {
     "pageTitle": "Nieuwe OAuth-token",
     "breadcrumb": "Nieuwe token",

@@ -97,6 +97,9 @@ const signatureDocumentsDialogPeopleFragment = graphql`
           id
           fullName
           emailAddress
+          avatar {
+            downloadUrl
+          }
         }
       }
     }
@@ -240,7 +243,7 @@ function PeopleList({
               </Td>
               <Td>
                 <div className="flex gap-3 items-center">
-                  <Avatar name={person.fullName} />
+                  <Avatar name={person.fullName} src={person.avatar?.downloadUrl} />
                   <div>
                     <div className="text-sm">{person.fullName}</div>
                     <div className="text-xs text-txt-tertiary">

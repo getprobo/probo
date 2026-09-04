@@ -41,6 +41,17 @@ export function faviconUrl(url?: string | null): string | null {
     }
 }
 
+export function avatarFallback(name: string): string {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+        return "?";
+    }
+    if (words.length >= 2) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    }
+    return words[0].slice(0, 2).toUpperCase();
+}
+
 export function slugify(str: string): string {
     return str
         .normalize("NFD") // split an accented letter in the base letter and the acent

@@ -10,6 +10,25 @@
     "signOut": "Sign out",
     "signOutFailed": "Cannot sign out"
   },
+  "editAvatar": {
+    "title": "Profile photo",
+    "description": "Upload a photo so others can recognize you. If you do not have one, your initials are used.",
+    "messages": {
+      "updated": "Profile photo updated.",
+      "removed": "Profile photo removed."
+    },
+    "errors": {
+      "update": "Failed to update profile photo",
+      "remove": "Failed to remove profile photo"
+    },
+    "actions": {
+      "upload": "Upload photo",
+      "replace": "Replace photo",
+      "remove": "Remove photo",
+      "close": "Close",
+      "change": "Change profile photo"
+    }
+  },
   "organizationsPage": {
     "title": "Your organizations",
     "searchPlaceholder": "Search organizations",

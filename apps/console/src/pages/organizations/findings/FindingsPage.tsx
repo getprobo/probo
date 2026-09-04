@@ -563,7 +563,7 @@ function OwnerFilterSelect({
       <Option value="ALL">{t("findingsPage.filters.allOwners")}</Option>
       {people.map(p => (
         <Option key={p.id} value={p.id}>
-          <Avatar name={p.fullName} />
+          <Avatar name={p.fullName} src={p.avatar?.downloadUrl} />
           {p.fullName}
         </Option>
       ))}

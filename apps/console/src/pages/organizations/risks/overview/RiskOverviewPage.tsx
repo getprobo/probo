@@ -39,6 +39,9 @@ export const riskOverviewPageQuery = graphql`
         residualImpact
         owner {
           fullName
+          avatar {
+            downloadUrl
+          }
         }
       }
     }
@@ -96,7 +99,7 @@ export default function RiskOverviewPage({ queryRef }: RiskOverviewPageProps) {
             {risk.owner?.fullName
               ? (
                   <div className="flex items-center gap-2">
-                    <Avatar name={risk.owner.fullName} />
+                    <Avatar name={risk.owner.fullName} src={risk.owner.avatar?.downloadUrl} />
                     <span className="text-sm text-txt-primary">{risk.owner.fullName}</span>
                   </div>
                 )

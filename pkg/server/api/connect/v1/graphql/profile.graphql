@@ -11,6 +11,7 @@ type Profile implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
 
+  avatar: File @goField(forceResolver: true)
   identity: Identity @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   membership: Membership @goField(forceResolver: true)

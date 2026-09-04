@@ -99,7 +99,7 @@ function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
           )}
           {people?.map(p => (
             <Option key={p.id} value={p.id} className="flex gap-2">
-              <Avatar name={p.fullName} />
+              <Avatar name={p.fullName} src={p.avatar?.downloadUrl} />
               {p.fullName}
             </Option>
           ))}

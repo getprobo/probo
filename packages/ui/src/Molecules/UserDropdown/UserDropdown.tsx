@@ -31,22 +31,33 @@ import {
 import { IconChevronDown } from "../../Atoms/Icons";
 import type { IconProps } from "../../Atoms/Icons/type";
 
-type Props = PropsWithChildren<{ fullName: string; email: string }>;
+type Props = PropsWithChildren<{
+  fullName: string;
+  email: string;
+  src?: string | null;
+  onAvatarClick?: () => void;
+}>;
 
-export function UserDropdown({ fullName, children, email }: Props) {
+export function UserDropdown({ fullName, children, email, src, onAvatarClick }: Props) {
   return (
     <Dropdown
       className="w-60"
       toggle={(
         <Button variant="tertiary">
-          <Avatar name={fullName} />
+          <Avatar name={fullName} src={src} />
           <span>{fullName}</span>
           <IconChevronDown size={16} />
         </Button>
       )}
     >
       <div className="flex gap-2 items-center">
-        <Avatar name={fullName} size="l" />
+        {onAvatarClick
+          ? (
+              <button type="button" onClick={onAvatarClick} aria-label={fullName}>
+                <Avatar name={fullName} src={src} size="l" />
+              </button>
+            )
+          : <Avatar name={fullName} src={src} size="l" />}
         <div>
           <p className="text-sm font-medium text-txt-primary">
             {fullName}

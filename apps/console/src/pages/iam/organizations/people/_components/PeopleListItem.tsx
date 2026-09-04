@@ -22,6 +22,7 @@ import { getAssignableRoles, getMembershipRoles } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
+  Avatar,
   Badge,
   DropdownItem,
   IconArchive,
@@ -52,6 +53,9 @@ const fragment = graphql`
     state
     fullName
     emailAddress
+    avatar {
+      downloadUrl
+    }
     membership @required(action: THROW) {
       id
       role
@@ -268,7 +272,10 @@ export function PeopleListItem(props: {
         isInactive && "opacity-50",
       )}
       >
-        <span className="font-semibold">{profile.fullName}</span>
+        <span className="flex items-center gap-2 font-semibold">
+          <Avatar name={profile.fullName} src={profile.avatar?.downloadUrl} />
+          {profile.fullName}
+        </span>
       </Td>
       <Td>
         <Badge variant={isActive ? "success" : "neutral"}>{profile.state}</Badge>

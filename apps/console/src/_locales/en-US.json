@@ -1312,6 +1312,13 @@
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "oauthTokens": "OAuth tokens", "help": "Help", "logout": "Logout" }
   },
+  "editAvatar": {
+    "title": "Profile photo",
+    "description": "Upload a photo so others can recognize you. If you do not have one, your initials are used.",
+    "messages": { "updated": "Profile photo updated.", "removed": "Profile photo removed." },
+    "errors": { "update": "Failed to update profile photo", "remove": "Failed to remove profile photo" },
+    "actions": { "upload": "Upload photo", "replace": "Replace photo", "remove": "Remove photo", "close": "Close", "change": "Change profile photo" }
+  },
   "newOAuthTokenPage": {
     "pageTitle": "New OAuth token",
     "breadcrumb": "New token",
