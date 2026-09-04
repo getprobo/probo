@@ -31,6 +31,7 @@ import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphq
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
 import { isOAuthAuthorizeContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 
+import { CreateAccountFooter } from "./_components/CreateAccountFooter";
 import { Divider } from "./_components/Divider";
 import { MagicLinkForm } from "./_components/MagicLinkForm";
 import { OAuthClientBrandingSection } from "./_components/OAuthClientBrandingSection";
@@ -38,6 +39,7 @@ import { OIDCButton } from "./_components/OIDCButton";
 
 export const signInPageQuery = graphql`
   query SignInPageQuery($clientId: String) {
+    ...CreateAccountFooterFragment
     oidcProviders {
       ...OIDCButtonFragment
     }
@@ -129,15 +131,11 @@ export default function SignInPage(props: Props) {
         </Text>
       </div>
 
-      <Text align="center" size={2} className="block">
-        {t("signInPage.newToProbo")}
-        {" "}
-        <Link
-          to={{ pathname: "/auth/register", search: location.search }}
-        >
-          {t("signInPage.actions.createAccount")}
-        </Link>
-      </Text>
+      <CreateAccountFooter
+        queryKey={data}
+        prefix={t("signInPage.newToProbo")}
+        label={t("signInPage.actions.createAccount")}
+      />
     </div>
   );
 }

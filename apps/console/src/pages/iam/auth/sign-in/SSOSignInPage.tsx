@@ -26,24 +26,50 @@ import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
+  useLazyLoadQuery,
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
+import type { SSOSignInPageCreateAccountQuery } from "#/__generated__/iam/SSOSignInPageCreateAccountQuery.graphql";
 import type { SSOSignInPageQuery } from "#/__generated__/iam/SSOSignInPageQuery.graphql";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
+
+import { CreateAccountFooter } from "./_components/CreateAccountFooter";
 
 const ssoAvailabilityQuery = graphql`
   query SSOSignInPageQuery($email: EmailAddr!) {
     ssoLoginURL(email: $email) @catch(to: RESULT)
   }
 `;
+
+const ssoCreateAccountQuery = graphql`
+  query SSOSignInPageCreateAccountQuery {
+    ...CreateAccountFooterFragment
+  }
+`;
+
+function SSOCreateAccountFooter() {
+  const { t } = useTranslation();
+  const data = useLazyLoadQuery<SSOSignInPageCreateAccountQuery>(
+    ssoCreateAccountQuery,
+    {},
+  );
+
+  return (
+    <CreateAccountFooter
+      queryKey={data}
+      prefix={t("ssoSignInPage.noAccount")}
+      label={t("ssoSignInPage.actions.register")}
+    />
+  );
+}
 
 export default function SSOSignInPage() {
   const location = useLocation();
@@ -96,15 +122,9 @@ export default function SSOSignInPage() {
         </Form>
 
         <div className="flex flex-col gap-2">
-          <Text align="center" size={2} className="block">
-            {t("ssoSignInPage.noAccount")}
-            {" "}
-            <Link
-              to={{ pathname: "/auth/register", search: location.search }}
-            >
-              {t("ssoSignInPage.actions.register")}
-            </Link>
-          </Text>
+          <Suspense fallback={null}>
+            <SSOCreateAccountFooter />
+          </Suspense>
 
           <Text align="center" size={2} className="block">
             <Link to={{ pathname: "/auth/login", search: location.search }}>
