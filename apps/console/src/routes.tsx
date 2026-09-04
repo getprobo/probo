@@ -183,8 +183,14 @@ const routes = [
     path: "/organizations/:organizationId",
     children: [
       {
-        path: "assume",
-        Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
+        Component: lazy(() => import("./pages/iam/auth/AuthLayout")),
+        Fallback: AuthLayoutSkeleton,
+        children: [
+          {
+            path: "assume",
+            Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
+          },
+        ],
       },
       {
         Component: lazy(
