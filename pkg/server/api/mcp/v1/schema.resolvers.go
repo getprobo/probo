@@ -5797,7 +5797,12 @@ func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallTo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieCategoryOrderField]{Field: coredata.CookieCategoryOrderFieldRank, Direction: page.OrderDirectionAsc})
 
-	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, input.CookieBannerID, cursor, coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised)))
+	excludeKind := new(coredata.CookieCategoryKindUncategorised)
+	if input.Filter != nil {
+		excludeKind = input.Filter.ExcludeKind
+	}
+
+	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, input.CookieBannerID, cursor, coredata.NewCookieCategoryFilter(excludeKind))
 	if err != nil {
 		panic(fmt.Errorf("cannot list cookie categories: %w", err))
 	}
