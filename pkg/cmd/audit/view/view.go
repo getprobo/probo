@@ -37,6 +37,7 @@ query($id: ID!) {
     ... on Audit {
       id
       name
+      firm
       state
       validity {
         start
@@ -58,6 +59,7 @@ type viewResponse struct {
 		Typename string `json:"__typename"`
 		ID       string `json:"id"`
 		Name     string `json:"name"`
+		Firm     string `json:"firm"`
 		State    string `json:"state"`
 		Validity *struct {
 			Start *string `json:"start"`
@@ -136,6 +138,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(a.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), a.ID)
+			if a.Firm != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Firm:"), a.Firm)
+			}
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), a.State)
 
 			if a.Validity != nil && a.Validity.Start != nil && *a.Validity.Start != "" {

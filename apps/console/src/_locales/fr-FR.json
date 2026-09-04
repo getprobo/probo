@@ -1302,6 +1302,8 @@
       "unknown": "Inconnu"
     },
     "auditState": {
+      "toBook": "À réserver",
+      "auditBooked": "Audit réservé",
       "notStarted": "Non commencé",
       "inProgress": "En cours",
       "completed": "Terminé",
@@ -3461,6 +3463,8 @@
     },
     "deleteReportConfirmation": "Cette action supprimera définitivement le rapport d’audit « {{name}} ». Cette action est irréversible.",
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -3470,6 +3474,8 @@
     "fields": {
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
+      "firm": "Cabinet d’audit",
+      "firmPlaceholder": "Cabinet d’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
@@ -3512,6 +3518,8 @@
       "report": "Rapport"
     },
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -3550,6 +3558,8 @@
       "frameworkPlaceholder": "Sélectionner un référentiel",
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
+      "firm": "Cabinet d’audit",
+      "firmPlaceholder": "Cabinet d’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
@@ -3557,6 +3567,8 @@
       "auditEndDate": "Date de fin de l’audit"
     },
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",

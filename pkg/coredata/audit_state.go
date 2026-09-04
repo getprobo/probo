@@ -28,11 +28,13 @@ import (
 type AuditState string
 
 const (
-	AuditStateNotStarted AuditState = "NOT_STARTED"
-	AuditStateInProgress AuditState = "IN_PROGRESS"
-	AuditStateCompleted  AuditState = "COMPLETED"
-	AuditStateRejected   AuditState = "REJECTED"
-	AuditStateOutdated   AuditState = "OUTDATED"
+	AuditStateToBook      AuditState = "TO_BOOK"
+	AuditStateAuditBooked AuditState = "AUDIT_BOOKED"
+	AuditStateNotStarted  AuditState = "NOT_STARTED"
+	AuditStateInProgress  AuditState = "IN_PROGRESS"
+	AuditStateCompleted   AuditState = "COMPLETED"
+	AuditStateRejected    AuditState = "REJECTED"
+	AuditStateOutdated    AuditState = "OUTDATED"
 )
 
 var (
@@ -43,6 +45,8 @@ var (
 
 func AuditStates() []AuditState {
 	return []AuditState{
+		AuditStateToBook,
+		AuditStateAuditBooked,
 		AuditStateNotStarted,
 		AuditStateInProgress,
 		AuditStateCompleted,
@@ -54,6 +58,8 @@ func AuditStates() []AuditState {
 func (v AuditState) IsValid() bool {
 	switch v {
 	case
+		AuditStateToBook,
+		AuditStateAuditBooked,
 		AuditStateNotStarted,
 		AuditStateInProgress,
 		AuditStateCompleted,

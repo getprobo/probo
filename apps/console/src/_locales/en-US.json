@@ -839,6 +839,8 @@
   "helpers": {
     "common": { "unknown": "Unknown" },
     "auditState": {
+      "toBook": "To book",
+      "auditBooked": "Audit booked",
       "notStarted": "Not Started",
       "inProgress": "In Progress",
       "completed": "Completed",
@@ -2082,8 +2084,8 @@
     "errors": { "update": "Failed to update audit" },
     "messages": { "success": "Success", "error": "Error", "updated": "Audit updated successfully" },
     "deleteReportConfirmation": "This will permanently delete the audit report \"{{name}}\". This action cannot be undone.",
-    "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
-    "fields": { "name": "Name", "namePlaceholder": "Audit name", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
+    "fields": { "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
     "actions": { "delete": "Delete", "update": "Update", "updating": "Updating...", "download": "Download" },
     "report": { "title": "Audit Report", "uploaded": "Uploaded {{date}}", "uploadDescription": "Upload the final audit report document (PDF recommended)", "dropzoneDescription": "Only PDF up to 25MB are allowed" }
   },
@@ -2096,7 +2098,7 @@
     "dropzoneOverlay": "Drop a PDF to create an audit with a report",
     "actions": { "addAudit": "Add audit", "delete": "Delete" },
     "columns": { "name": "Name", "framework": "Framework", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "report": "Report" },
-    "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
+    "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "row": { "untitled": "Untitled", "unknownFramework": "Unknown Framework", "notSet": "Not set", "uploaded": "Uploaded", "notUploaded": "Not uploaded" }
   },
   "createAuditDialog": {
@@ -2106,8 +2108,8 @@
     "errors": { "create": "Failed to create audit" },
     "fileSize": "{{value}} MB",
     "loading": "Loading...",
-    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "name": "Name", "namePlaceholder": "Audit name", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
-    "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
+    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "actions": { "create": "Create" }
   },
   "context": {

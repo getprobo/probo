@@ -57,6 +57,12 @@ export const description: INodeProperties[] = [
 				description: 'The end date of the audit',
 			},
 			{
+				displayName: 'Audit Firm',
+				name: 'firm',
+				type: 'string',
+				default: '',
+			},
+			{
 				displayName: 'Audit Start Date',
 				name: 'auditStartDate',
 				type: 'dateTime',
@@ -76,6 +82,10 @@ export const description: INodeProperties[] = [
 				type: 'options',
 				options: [
 					{
+						name: 'Audit Booked',
+						value: 'AUDIT_BOOKED',
+					},
+					{
 						name: 'Completed',
 						value: 'COMPLETED',
 					},
@@ -94,6 +104,10 @@ export const description: INodeProperties[] = [
 					{
 						name: 'Rejected',
 						value: 'REJECTED',
+					},
+					{
+						name: 'To Book',
+						value: 'TO_BOOK',
 					},
 				],
 				default: 'NOT_STARTED',
@@ -124,6 +138,7 @@ export async function execute(
 	const id = this.getNodeParameter('id', itemIndex) as string;
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
 		name?: string;
+		firm?: string;
 		state?: string;
 		validFrom?: string;
 		validUntil?: string;
@@ -137,6 +152,7 @@ export async function execute(
 				audit {
 					id
 					name
+					firm
 					state
 					validity {
 						start
@@ -156,6 +172,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = { id };
 	if (updateFields.name) input.name = updateFields.name;
+	if (updateFields.firm !== undefined) input.firm = updateFields.firm === '' ? null : updateFields.firm;
 	if (updateFields.state) input.state = updateFields.state;
 	const validity = toPeriod(updateFields.validFrom, updateFields.validUntil);
 	if (validity) input.validity = validity;

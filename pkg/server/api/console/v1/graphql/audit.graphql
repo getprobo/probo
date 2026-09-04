@@ -1,4 +1,8 @@
 enum AuditState @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
+    TO_BOOK
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateToBook")
+    AUDIT_BOOKED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateAuditBooked")
     NOT_STARTED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateNotStarted")
     IN_PROGRESS
@@ -155,6 +159,7 @@ input FindingFilter {
 type Audit implements Node {
     id: ID!
     name: String
+    firm: String
     organization: Organization @goField(forceResolver: true)
     framework: Framework @goField(forceResolver: true)
     validity: Period
@@ -286,6 +291,7 @@ input CreateAuditInput {
     organizationId: ID!
     frameworkId: ID!
     name: String
+    firm: String
     validity: PeriodInput
     auditDates: PeriodInput
     state: AuditState
@@ -295,6 +301,7 @@ input CreateAuditInput {
 input UpdateAuditInput {
     id: ID!
     name: String @goField(omittable: true)
+    firm: String @goField(omittable: true)
     validity: PeriodInput
     auditDates: PeriodInput
     state: AuditState

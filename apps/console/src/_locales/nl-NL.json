@@ -1302,6 +1302,8 @@
       "unknown": "Onbekend"
     },
     "auditState": {
+      "toBook": "Te boeken",
+      "auditBooked": "Audit geboekt",
       "notStarted": "Niet gestart",
       "inProgress": "In uitvoering",
       "completed": "Voltooid",
@@ -3461,6 +3463,8 @@
     },
     "deleteReportConfirmation": "Hiermee wordt het auditrapport \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "states": {
+      "to_book": "Te boeken",
+      "audit_booked": "Audit geboekt",
       "not_started": "Niet gestart",
       "in_progress": "In uitvoering",
       "completed": "Voltooid",
@@ -3470,6 +3474,8 @@
     "fields": {
       "name": "Naam",
       "namePlaceholder": "Auditnaam",
+      "firm": "Auditkantoor",
+      "firmPlaceholder": "Auditkantoor",
       "state": "Status",
       "validFrom": "Geldig vanaf",
       "validUntil": "Geldig tot",
@@ -3512,6 +3518,8 @@
       "report": "Rapport"
     },
     "states": {
+      "to_book": "Te boeken",
+      "audit_booked": "Audit geboekt",
       "not_started": "Niet gestart",
       "in_progress": "In uitvoering",
       "completed": "Voltooid",
@@ -3550,6 +3558,8 @@
       "frameworkPlaceholder": "Selecteer een framework",
       "name": "Naam",
       "namePlaceholder": "Auditnaam",
+      "firm": "Auditkantoor",
+      "firmPlaceholder": "Auditkantoor",
       "state": "Status",
       "validFrom": "Geldig vanaf",
       "validUntil": "Geldig tot",
@@ -3557,6 +3567,8 @@
       "auditEndDate": "Einddatum audit"
     },
     "states": {
+      "to_book": "Te boeken",
+      "audit_booked": "Audit geboekt",
       "not_started": "Niet gestart",
       "in_progress": "In uitvoering",
       "completed": "Voltooid",

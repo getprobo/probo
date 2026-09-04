@@ -443,6 +443,7 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 		OrganizationID: input.OrganizationID,
 		FrameworkID:    input.FrameworkID,
 		Name:           input.Name,
+		Firm:           input.Firm,
 		State:          input.State,
 	}
 	req.ValidFrom, req.ValidUntil = types.PeriodInputDates(input.Validity)
@@ -497,6 +498,7 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	req := probo.UpdateAuditRequest{
 		ID:    input.ID,
 		Name:  gqlutils.UnwrapOmittable(input.Name),
+		Firm:  gqlutils.UnwrapOmittable(input.Firm),
 		State: input.State,
 	}
 	req.ValidFrom, req.ValidUntil = types.PeriodInputDates(input.Validity)

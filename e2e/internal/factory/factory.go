@@ -855,6 +855,10 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 		input["state"] = *state
 	}
 
+	if firm := a.getStringPtr("firm"); firm != nil {
+		input["firm"] = *firm
+	}
+
 	var result struct {
 		CreateAudit struct {
 			AuditEdge struct {
@@ -888,6 +892,11 @@ func (b *AuditBuilder) WithName(name string) *AuditBuilder {
 
 func (b *AuditBuilder) WithState(state string) *AuditBuilder {
 	b.attrs["state"] = state
+	return b
+}
+
+func (b *AuditBuilder) WithFirm(firm string) *AuditBuilder {
+	b.attrs["firm"] = firm
 	return b
 }
 

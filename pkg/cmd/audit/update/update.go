@@ -35,6 +35,7 @@ mutation($input: UpdateAuditInput!) {
     audit {
       id
       name
+      firm
       state
       validity {
         start
@@ -54,6 +55,7 @@ type updateResponse struct {
 		Audit struct {
 			ID       string `json:"id"`
 			Name     string `json:"name"`
+			Firm     string `json:"firm"`
 			State    string `json:"state"`
 			Validity *struct {
 				Start *string `json:"start"`
@@ -70,6 +72,7 @@ type updateResponse struct {
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagName           string
+		flagFirm           string
 		flagState          string
 		flagValidFrom      string
 		flagValidUntil     string
@@ -106,6 +109,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
+			}
+
+			if cmd.Flags().Changed("firm") {
+				input["firm"] = flagFirm
 			}
 
 			if cmd.Flags().Changed("state") {
@@ -168,7 +175,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Audit name")
-	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
+	cmd.Flags().StringVar(&flagFirm, "firm", "", "Audit firm")
+	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: TO_BOOK, AUDIT_BOOKED, NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
 	cmd.Flags().StringVar(&flagAuditStartDate, "audit-start-date", "", "Audit start date (e.g. 2026-03-01)")

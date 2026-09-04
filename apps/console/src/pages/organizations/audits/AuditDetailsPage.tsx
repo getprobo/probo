@@ -67,17 +67,12 @@ import {
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
+  firm: z.string().nullable().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
   auditStartDate: z.string().optional(),
   auditEndDate: z.string().optional(),
-  state: z.enum([
-    "NOT_STARTED",
-    "IN_PROGRESS",
-    "COMPLETED",
-    "REJECTED",
-    "OUTDATED",
-  ]),
+  state: z.enum(auditStates),
 });
 
 type Props = {
@@ -104,6 +99,7 @@ export default function AuditDetailsPage(props: Props) {
     = useFormWithSchema(updateAuditSchema, {
       defaultValues: {
         name: auditEntry.name || null,
+        firm: auditEntry.firm || null,
         validFrom: auditEntry.validity?.start?.split("T")[0] || "",
         validUntil: auditEntry.validity?.end?.split("T")[0] || "",
         auditStartDate: auditEntry.auditDates?.start?.split("T")[0] || "",
@@ -125,6 +121,7 @@ export default function AuditDetailsPage(props: Props) {
       await updateAudit({
         id: auditEntry.id,
         name: formData.name || null,
+        firm: formData.firm || null,
         validity: toPeriod(
           formatDatetime(formData.validFrom),
           formatDatetime(formData.validUntil),
@@ -215,6 +212,13 @@ export default function AuditDetailsPage(props: Props) {
             <Input
               {...register("name")}
               placeholder={t("auditDetailsPage.fields.namePlaceholder")}
+            />
+          </Field>
+
+          <Field label={t("auditDetailsPage.fields.firm")}>
+            <Input
+              {...register("firm")}
+              placeholder={t("auditDetailsPage.fields.firmPlaceholder")}
             />
           </Field>
 
