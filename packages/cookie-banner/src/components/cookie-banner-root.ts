@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { resolveBooleanAttribute } from "../attributes";
 import { CookieBannerClient } from "../client";
 import { resolveGcmEnabled } from "../integrations";
 import { resolveLayout } from "../layout";
@@ -146,12 +147,14 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
 
     const lang = this.getAttribute("lang") ?? undefined;
     const gcmEnabled = resolveGcmEnabled(this.getAttribute("gcm-enabled"));
+    const gpcRecord = resolveBooleanAttribute(this.getAttribute("gpc-record"), "gpc-record");
 
     this._client = new CookieBannerClient({
       bannerId,
       baseUrl,
       lang,
       integrations: [{ name: "gcm", enabled: gcmEnabled }],
+      gpcRecord,
     });
 
     try {
@@ -179,7 +182,9 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
 
     this.scheduleValidation(() => this.validateSettingsLink());
 
-    if (this._client.hasConsent) {
+    // gpcApplied covers the opt-out being in effect without a stored consent,
+    // which is the gpcRecord: false case.
+    if (this._client.hasConsent || this._client.gpcApplied) {
       this.setState("hidden");
     } else {
       this.setState(resolveLayout(this._config).initial_state);
