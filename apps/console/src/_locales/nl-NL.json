@@ -1908,6 +1908,7 @@
     },
     "actions": {
       "back": "Terug",
+      "backToLogin": "Terug naar inloggen",
       "loggingIn": "Inloggen...",
       "login": "Inloggen",
       "register": "Register",
@@ -1926,6 +1927,7 @@
     },
     "actions": {
       "back": "Terug",
+      "backToLogin": "Terug naar inloggen",
       "checking": "Controleren...",
       "continue": "Doorgaan met SSO",
       "register": "Register"
@@ -1941,21 +1943,23 @@
     "or": "Of",
     "newToProbo": "Nieuw bij Probo?",
     "actions": {
-      "signInWithSso": "Inloggen met SSO",
-      "signInWithEmail": "Inloggen met e-mail",
+      "usePassword": "Een wachtwoord gebruiken",
       "createAccount": "Account aanmaken"
     }
   },
   "oidcButton": {
     "signInWith": "Inloggen met {{provider}}"
   },
+  "topBar": {
+    "tagline": "Console"
+  },
   "membershipsPage": {
-    "pageTitle": "Selecteer een organisatie",
-    "title": "Selecteer een organisatie",
+    "pageTitle": "Uw organisaties",
+    "title": "Uw organisaties",
     "pendingInvitations": "Openstaande uitnodigingen",
-    "yourOrganizations": "Uw organisaties",
-    "searchPlaceholder": "Organisaties zoeken...",
+    "searchPlaceholder": "Organisaties zoeken",
     "empty": "Geen organisaties gevonden",
+    "emptySearch": "Geen organisaties komen overeen met deze zoekopdracht.",
     "createOrganization": {
       "title": "Een organisatie aanmaken",
       "description": "Voeg een nieuwe organisatie toe aan uw account",
@@ -1982,10 +1986,9 @@
       "sessionExpired": "Sessie verlopen",
       "authenticationRequired": "Authenticatie vereist"
     },
-    "accountDeactivated": "Account gedeactiveerd",
     "actions": {
-      "start": "Starten",
-      "login": "Inloggen"
+      "open": "Openen",
+      "continue": "Doorgaan"
     }
   },
   "viewerDropdown": {
@@ -3195,7 +3198,8 @@
     "emptyConnected": "Er zijn nog geen toegangsbronnen verbonden.",
     "emptyConnectedSearch": "Geen verbonden bronnen komen overeen met uw zoekopdracht.",
     "searchLoadFailed": "Sommige bronnen konden niet worden geladen, dus de zoekopdracht is onvolledig. Probeer opnieuw om alle bronnen te doorzoeken.",
-    "emptyAvailableSearch": "Geen beschikbare providers komen overeen met uw zoekopdracht."
+    "emptyAvailableSearch": "Geen beschikbare providers komen overeen met uw zoekopdracht.",
+    "comingSoon": "Binnenkort beschikbaar"
   },
   "assetDetailsPage": {
     "validation": {
@@ -5958,7 +5962,7 @@
     "actions": {
       "resend": "Link opnieuw verzenden",
       "resendIn": "Link opnieuw verzenden over {{count}}s",
-      "send": "Magic link verzenden"
+      "send": "Doorgaan"
     }
   },
   "auth": {

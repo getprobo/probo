@@ -241,6 +241,13 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 	}
 
 	samlConfig := samlConfigs[0]
+	if samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyOff {
+		return nil, graphql.ErrorOnPath(
+			ctx,
+			fmt.Errorf("no SAML configuration for email"),
+		)
+	}
+
 	loginURL := r.SSOLoginURL(samlConfig.ID)
 
 	return &loginURL, nil

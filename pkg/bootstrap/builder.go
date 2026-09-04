@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/probodconfig"
@@ -206,6 +207,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				TerraformModuleSource: b.resolver.getEnvOrDefault(
 					"PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE",
 					cloudaws.DefaultTerraformModuleSource,
+				),
+				GCPTerraformModuleSource: b.resolver.getEnvOrDefault(
+					"PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE",
+					cloudgcp.DefaultTerraformModuleSource,
 				),
 			},
 			ITAM: probodconfig.ITAMConfig{

@@ -18,18 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Button, Field, useToast } from "@probo/ui";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { VerifyEmailPageMutation } from "#/__generated__/iam/VerifyEmailPageMutation.graphql";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
 
 const verifyEmailMutation = graphql`
   mutation VerifyEmailPageMutation($input: VerifyEmailInput!) {
@@ -38,10 +44,6 @@ const verifyEmailMutation = graphql`
     }
   }
 `;
-
-const confirmEmailSchema = z.object({
-  token: z.string().min(1, "Please enter a confirmation token"),
-});
 
 export default function VerifyEmailPage() {
   const { t } = useTranslation();
@@ -52,20 +54,14 @@ export default function VerifyEmailPage() {
 
   const [isConfirmed, setIsConfirmed] = useState(false);
 
-  const form = useFormWithSchema(confirmEmailSchema, {
-    defaultValues: {
-      token: searchParams.get("token") ?? "",
-    },
-  });
-
-  const [verifyEmail]
+  const [verifyEmail, isVerifying]
     = useMutation<VerifyEmailPageMutation>(verifyEmailMutation);
 
-  const handleSubmit = form.handleSubmit((data) => {
+  const handleSubmit = (token: string) => {
     verifyEmail({
       variables: {
         input: {
-          token: data.token.trim(),
+          token: token.trim(),
         },
       },
       onCompleted: (_, errors) => {
@@ -90,64 +86,83 @@ export default function VerifyEmailPage() {
         });
       },
     });
-  });
+  };
 
   return (
-    <div className="space-y-6 w-full max-w-md mx-auto pt-8">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{t("verifyEmailPage.title")}</h1>
-        <p className="text-txt-tertiary">
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("verifyEmailPage.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
           {t("verifyEmailPage.description")}
-        </p>
+        </Text>
       </div>
 
       {isConfirmed
         ? (
-            <div className="space-y-4 text-center">
-              <p className="text-green-600 dark:text-green-400">
+            <div className="flex flex-col gap-5">
+              <Text align="center" color="green" highContrast className="block">
                 {t("verifyEmailPage.messages.confirmedWithExclamation")}
-              </p>
-              <Button to="/auth/login" className="w-full">
+              </Text>
+              <ButtonLink
+                to="/auth/login"
+                variant="solid"
+                color="neutral"
+                highContrast
+                size={3}
+                className="w-full"
+              >
                 {t("verifyEmailPage.actions.proceedToLogin")}
-              </Button>
+              </ButtonLink>
             </div>
           )
         : (
-            <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-              <Field
-                label={t("verifyEmailPage.fields.token")}
-                type="text"
-                placeholder={t("verifyEmailPage.fields.tokenPlaceholder")}
-                {...form.register("token")}
-                error={form.formState.errors.token?.message}
-                disabled={form.formState.isSubmitting}
-                help={t("verifyEmailPage.fields.tokenHelp")}
-              />
+            <Form
+              className="flex flex-col gap-5"
+              onFormSubmit={(values) => {
+                handleSubmit(String(values.token ?? ""));
+              }}
+            >
+              <Field.Root name="token" className="flex flex-col gap-1.5">
+                <Field.Label className="text-1 font-medium text-sand-12">
+                  {t("verifyEmailPage.fields.token")}
+                </Field.Label>
+                <TextField
+                  type="text"
+                  name="token"
+                  required
+                  defaultValue={searchParams.get("token") ?? ""}
+                  placeholder={t("verifyEmailPage.fields.tokenPlaceholder")}
+                  disabled={isVerifying}
+                />
+                <Field.Description className="text-1 text-sand-11">
+                  {t("verifyEmailPage.fields.tokenHelp")}
+                </Field.Description>
+                <Field.Error className="text-1 text-red-11" />
+              </Field.Root>
 
               <Button
                 type="submit"
-                className="w-xs h-10 mx-auto mt-6"
-                disabled={form.formState.isSubmitting}
+                variant="solid"
+                color="neutral"
+                highContrast
+                size={3}
+                className="w-full"
+                loading={isVerifying}
               >
-                {form.formState.isSubmitting
-                  ? t("verifyEmailPage.actions.confirming")
-                  : t("verifyEmailPage.actions.confirm")}
+                {t("verifyEmailPage.actions.confirm")}
               </Button>
-            </form>
+            </Form>
           )}
 
-      <div className="text-center">
-        {!isConfirmed && (
-          <p className="text-sm text-txt-tertiary">
-            <Link
-              to="/auth/login"
-              className="underline text-txt-primary hover:text-txt-secondary"
-            >
-              {t("verifyEmailPage.actions.backToLogin")}
-            </Link>
-          </p>
-        )}
-      </div>
+      {!isConfirmed && (
+        <Text align="center" size={2} className="block">
+          <Link to="/auth/login">
+            {t("verifyEmailPage.actions.backToLogin")}
+          </Link>
+        </Text>
+      )}
     </div>
   );
 }

@@ -18,22 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
 import {
-  DropdownSeparator,
-  IconArrowBoxLeft,
-  IconCircleQuestionmark,
-  IconKey,
-  UserDropdown,
-  UserDropdownItem,
-  useToast,
-} from "@probo/ui";
+  CaretDownIcon,
+  KeyIcon,
+  MoonIcon,
+  QuestionIcon,
+  SignOutIcon,
+  SunIcon,
+  UserIcon,
+} from "@phosphor-icons/react";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
+import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
-import { useFragment, useMutation } from "react-relay";
-import { graphql } from "relay-runtime";
+import { graphql, useFragment } from "react-relay";
+import { Link } from "react-router";
 
 import type { ViewerDropdownFragment$key } from "#/__generated__/iam/ViewerDropdownFragment.graphql";
 import type { ViewerDropdownSignOutMutation } from "#/__generated__/iam/ViewerDropdownSignOutMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
+
+import { topBarUserMenuTrigger } from "./TopBar/variants";
 
 export const fragment = graphql`
   fragment ViewerDropdownFragment on Identity {
@@ -51,64 +62,90 @@ const signOutMutation = graphql`
   }
 `;
 
-export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
-  const { fKey } = props;
+interface ViewerDropdownProps {
+  identityKey: ViewerDropdownFragment$key;
+}
 
+export function ViewerDropdown({ identityKey }: ViewerDropdownProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const { displayMode, toggleDisplayMode } = useDisplayMode();
 
   const { canListOAuth2AccessTokens, email, fullName }
-    = useFragment<ViewerDropdownFragment$key>(fragment, fKey);
-  const [signOut] = useMutation<ViewerDropdownSignOutMutation>(signOutMutation);
+    = useFragment<ViewerDropdownFragment$key>(fragment, identityKey);
+  const [signOut, isSigningOut] = useMutation<ViewerDropdownSignOutMutation>(
+    signOutMutation,
+    { errorToast: t("viewerDropdown.errors.cannotSignOut") },
+  );
 
-  const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
-    e.preventDefault();
+  const displayName = fullName.trim() || email;
 
-    signOut({
-      variables: {},
-      onCompleted: (_, e) => {
-        if (e) {
-          toast({
-            title: t("viewerDropdown.errors.requestFailed"),
-            description: formatError(t("viewerDropdown.errors.cannotSignOut"), e),
-            variant: "error",
-          });
-          return;
-        }
-        window.location.reload();
-      },
-      onError: (e) => {
-        toast({
-          title: t("common.error"),
-          description: e.message,
-          variant: "error",
-        });
-      },
+  function handleSignOut() {
+    void signOut({ variables: {} }).then(() => {
+      // Full reload rather than a client navigation, so no Relay store
+      // survives the session it belonged to.
+      window.location.href = "/auth/login";
+    }).catch(() => {
+      // errorToast already handles user-facing feedback.
     });
-  };
+  }
 
   return (
-    <UserDropdown fullName={fullName} email={email}>
-      {canListOAuth2AccessTokens && (
-        <UserDropdownItem
-          to="/me/oauth-tokens"
-          icon={IconKey}
-          label={t("viewerDropdown.actions.oauthTokens")}
-        />
-      )}
-      <UserDropdownItem
-        to="mailto:support@probo.com"
-        icon={IconCircleQuestionmark}
-        label={t("viewerDropdown.actions.help")}
+    <Dropdown>
+      <DropdownTrigger
+        render={(
+          <button type="button" className={topBarUserMenuTrigger()} aria-label={displayName}>
+            <Avatar
+              size={1}
+              variant="soft"
+              color="gold"
+              radius="small"
+              fallback={<UserIcon />}
+            />
+            <Text size={2} weight="medium" color="neutral" highContrast className="max-w-36 truncate">
+              {displayName}
+            </Text>
+            <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
+          </button>
+        )}
       />
-      <DropdownSeparator />
-      <UserDropdownItem
-        variant="danger"
-        to="/logout"
-        icon={IconArrowBoxLeft}
-        label={t("viewerDropdown.actions.logout")}
-        onClick={handleLogout}
-      />
-    </UserDropdown>
+      <DropdownPopup align="end">
+        <DropdownGroup>
+          <div className="flex w-full flex-col gap-1 px-3 py-3">
+            <Text size={2} weight="medium" color="neutral" highContrast>
+              {displayName}
+            </Text>
+            <Text size={1} color="faint" className="truncate">
+              {email}
+            </Text>
+          </div>
+        </DropdownGroup>
+        <DropdownSeparator />
+        {canListOAuth2AccessTokens && (
+          <DropdownItem iconStart={<KeyIcon />} render={<Link to="/me/oauth-tokens" />}>
+            {t("viewerDropdown.actions.oauthTokens")}
+          </DropdownItem>
+        )}
+        <DropdownItem
+          iconStart={displayMode === "dark" ? <SunIcon /> : <MoonIcon />}
+          onClick={toggleDisplayMode}
+        >
+          {displayMode === "dark"
+            ? t("nav.switchToLightMode")
+            : t("nav.switchToDarkMode")}
+        </DropdownItem>
+        <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
+          {t("viewerDropdown.actions.help")}
+        </DropdownItem>
+        <DropdownSeparator />
+        <DropdownItem
+          color="error"
+          iconStart={<SignOutIcon />}
+          disabled={isSigningOut}
+          onClick={handleSignOut}
+        >
+          {t("viewerDropdown.actions.logout")}
+        </DropdownItem>
+      </DropdownPopup>
+    </Dropdown>
   );
 }

@@ -18,17 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Button, Field, useToast } from "@probo/ui";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { ResetPasswordPageMutation } from "#/__generated__/iam/ResetPasswordPageMutation.graphql";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
 
 const resetPasswordMutation = graphql`
   mutation ResetPasswordPageMutation($input: ResetPasswordInput!) {
@@ -37,16 +42,6 @@ const resetPasswordMutation = graphql`
     }
   }
 `;
-
-const schema = z
-  .object({
-    password: z.string().min(8),
-    confirmPassword: z.string().min(8),
-  })
-  .refine(data => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
@@ -57,18 +52,11 @@ export default function ResetPasswordPage() {
 
   usePageTitle(t("resetPasswordPage.pageTitle"));
 
-  const { register, handleSubmit, formState } = useFormWithSchema(schema, {
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
-  });
-
-  const [resetPassword] = useMutation<ResetPasswordPageMutation>(
+  const [resetPassword, isResetting] = useMutation<ResetPasswordPageMutation>(
     resetPasswordMutation,
   );
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = (password: string) => {
     if (!token) {
       toast({
         title: t("resetPasswordPage.errors.resetFailed"),
@@ -81,7 +69,7 @@ export default function ResetPasswordPage() {
     resetPassword({
       variables: {
         input: {
-          password: data.password,
+          password,
           token,
         },
       },
@@ -112,55 +100,78 @@ export default function ResetPasswordPage() {
         void navigate("/auth/login", { replace: true });
       },
     });
-  });
+  };
 
   return (
-    <div className="space-y-6 w-full max-w-md mx-auto pt-8">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{t("resetPasswordPage.title")}</h1>
-        <p className="text-txt-tertiary">
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("resetPasswordPage.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
           {t("resetPasswordPage.description")}
-        </p>
+        </Text>
       </div>
 
-      <form onSubmit={e => void onSubmit(e)} className="space-y-4">
-        <Field
-          label={t("resetPasswordPage.fields.newPassword")}
-          type="password"
-          placeholder="••••••••"
-          {...register("password")}
-          required
-          error={formState.errors.password?.message}
-        />
+      <Form
+        className="flex flex-col gap-5"
+        onFormSubmit={(values) => {
+          onSubmit(String(values.password ?? ""));
+        }}
+      >
+        <Field.Root name="password" className="flex flex-col gap-1.5">
+          <Field.Label className="text-1 font-medium text-sand-12">
+            {t("resetPasswordPage.fields.newPassword")}
+          </Field.Label>
+          <TextField
+            type="password"
+            name="password"
+            required
+            minLength={8}
+            placeholder="••••••••"
+          />
+          <Field.Error className="text-1 text-red-11" />
+        </Field.Root>
 
-        <Field
-          label={t("resetPasswordPage.fields.confirmPassword")}
-          type="password"
-          placeholder="••••••••"
-          {...register("confirmPassword")}
-          required
-          error={formState.errors.confirmPassword?.message}
-        />
+        <Field.Root
+          name="confirmPassword"
+          className="flex flex-col gap-1.5"
+          validate={(value, formValues) =>
+            value === formValues.password ? null : "Passwords don't match"}
+        >
+          <Field.Label className="text-1 font-medium text-sand-12">
+            {t("resetPasswordPage.fields.confirmPassword")}
+          </Field.Label>
+          <TextField
+            type="password"
+            name="confirmPassword"
+            required
+            minLength={8}
+            placeholder="••••••••"
+          />
+          <Field.Error className="text-1 text-red-11" />
+        </Field.Root>
 
-        <Button type="submit" className="w-xs h-10 mx-auto mt-6" disabled={formState.isLoading}>
-          {formState.isLoading
-            ? t("resetPasswordPage.actions.resetting")
-            : t("resetPasswordPage.actions.reset")}
+        <Button
+          type="submit"
+          variant="solid"
+          color="neutral"
+          highContrast
+          size={3}
+          className="w-full"
+          loading={isResetting}
+        >
+          {t("resetPasswordPage.actions.reset")}
         </Button>
-      </form>
+      </Form>
 
-      <div className="text-center">
-        <p className="text-sm text-txt-tertiary">
-          {t("resetPasswordPage.rememberPassword")}
-          {" "}
-          <Link
-            to="/auth/login"
-            className="underline text-txt-primary hover:text-txt-secondary"
-          >
-            {t("resetPasswordPage.actions.logIn")}
-          </Link>
-        </p>
-      </div>
+      <Text align="center" size={2} className="block">
+        {t("resetPasswordPage.rememberPassword")}
+        {" "}
+        <Link to="/auth/login">
+          {t("resetPasswordPage.actions.logIn")}
+        </Link>
+      </Text>
     </div>
   );
 }

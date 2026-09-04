@@ -245,6 +245,16 @@ type (
 		// is the one that ARN names; it is not stored separately.
 		RoleARN string `json:"role_arn"`
 	}
+
+	// GCPConnectorSettings names the workload identity provider and the
+	// service account Probo impersonates. Every field is public knowledge —
+	// the project owns the trust, and the connection itself holds no
+	// credential — so unlike the connection blob these stay in plain
+	// settings JSONB.
+	GCPConnectorSettings struct {
+		WorkloadIdentityProvider string `json:"workload_identity_provider"`
+		ServiceAccountEmail      string `json:"service_account_email"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

@@ -4,6 +4,62 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.278.0] - 2026-09-03
+
+### Added
+
+- GCP Workload Identity Federation connector: registers GCP alongside AWS for the access-review source, with a Terraform module reference and console provider entry (access-review driver still pending)
+
+### Fixed
+
+- Access review campaigns no longer diff against the previous campaign's incremental tags; each campaign is now an independent snapshot (previously this could resurrect accounts the source no longer returned, and the console never showed the tag)
+- Linear access-review source now includes disabled/suspended users, which were previously omitted unless `includeDisabled` was requested
+
+## [0.277.2] - 2026-09-03
+
+### Fixed
+
+- Bumped golang.org/x/crypto to 0.56.0, addressing denial-of-service on
+  deadlocked SSH channels (CVE-2026-78662, CVE-2026-56855)
+
+## [0.277.1] - 2026-09-03
+
+### Fixed
+
+- Bumped fast-uri to 3.1.6 and qs to 6.16.0, addressing a decoded-scheme
+  rejection bypass (CVE-2026-76172) and array-limit / isBuffer denial-of-service
+  issues (GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g)
+
+## [0.277.0] - 2026-09-03
+
+### Changed
+
+- Document download dialog starts with signatures unchecked so users
+  must explicitly request signature pages
+- AWS Identity Center access-review Auth now maps EXTERNAL_IDP to SSO,
+  local factors (password, email OTP, passkey, TOTP) to PASSWORD, and
+  no observed CredentialType to UNKNOWN instead of labeling every user
+  SSO
+
+### Removed
+
+- Personal API key creation UI and its GraphQL creation mutation; use
+  scoped OAuth access tokens instead
+
+### Fixed
+
+- Organization deletion no longer fails when related rows still
+  reference it; missing organization_id foreign keys cascade, and the
+  IAM service deletes rows that restrict on membership-profile owners
+  or scenario-linked risks
+- Access-review source name-sync no longer retries a failing provider
+  without bound, which could flood logs and block later sources; five
+  attempts over fifteen minutes then keep the generic name until
+  reconnect
+- Connector probe now rejects a 2xx response whose body opens with '<'
+  so a customer-supplied URL that hits an SPA or SSO portal is not
+  reported healthy
+
 ## [0.276.0] - 2026-09-02
 
 ### Added

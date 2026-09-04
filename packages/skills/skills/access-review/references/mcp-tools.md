@@ -40,7 +40,6 @@ List entries for a campaign. Primary data source for this command.
 | `campaign_id` | Campaign GID |
 | `filter.decision` | Use `PENDING` for review batches |
 | `filter.flag` | Optional — focus on a flag (e.g. `TERMINATED_USER`) |
-| `filter.incremental_tag` | Optional — `NEW`, `REMOVED`, `UNCHANGED` |
 | `filter.is_admin` | Optional boolean |
 | `filter.active` | Optional boolean |
 | `size` | Page size; use `50` per batch |
@@ -54,8 +53,8 @@ infer the tool from account IDs, roles, email patterns, or other entry data.
 
 Required: `campaign_id`
 
-Returns `statistics` with `total_count`, `decision_counts`, `flag_counts`,
-`incremental_tag_counts`. Call at the start of each run and after large batches.
+Returns `statistics` with `total_count`, `decision_counts`, `flag_counts`.
+Call at the start of each run and after large batches.
 
 ## Write (semi-auto command)
 
@@ -102,7 +101,6 @@ Do not call unless the user explicitly asks for campaign setup:
 | `auth_method` | `SSO`, `PASSWORD`, `API_KEY`, `OAUTH2`, `SSH`, `SERVICE_ACCOUNT` context |
 | `account_type` | `SERVICE_ACCOUNT` vs `USER` |
 | `last_login` | Dormancy signal |
-| `incremental_tag` | `NEW` needs extra scrutiny |
 | `flags`, `flag_reasons` | Primary risk signals |
 | `decision` | Target `PENDING` entries only |
 

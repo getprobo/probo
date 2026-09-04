@@ -78,6 +78,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		docusignRegistration(),
 		dotfileRegistration(),
 		grafanaRegistration(),
+		gcpRegistration(),
 		githubRegistration(),
 		gitlabRegistration(),
 		googleAnalyticsRegistration(),

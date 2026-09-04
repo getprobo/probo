@@ -20,6 +20,7 @@ export { Deepgram } from "./Deepgram";
 export { DocuSign } from "./DocuSign";
 export { Dotfile } from "./Dotfile";
 export { Figma } from "./Figma";
+export { GCP } from "./GCP";
 export { GitHub } from "./GitHub";
 export { GitLab } from "./GitLab";
 export { Google } from "./Google";

@@ -146,7 +146,6 @@ func TestAccessReviewGovernance_CampaignSourceGraph(t *testing.T) {
 						canClose: permission(action: "access-review:campaign:close")
 						statistics {
 							totalCount
-							incrementalTagCounts { incrementalTag count }
 						}
 					}
 					statistics {
@@ -179,11 +178,7 @@ func TestAccessReviewGovernance_CampaignSourceGraph(t *testing.T) {
 				ID         string `json:"id"`
 				CanClose   bool   `json:"canClose"`
 				Statistics struct {
-					TotalCount           int `json:"totalCount"`
-					IncrementalTagCounts []struct {
-						IncrementalTag string `json:"incrementalTag"`
-						Count          int    `json:"count"`
-					} `json:"incrementalTagCounts"`
+					TotalCount int `json:"totalCount"`
 				} `json:"statistics"`
 			} `json:"campaign"`
 			Statistics struct {

@@ -18,44 +18,62 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Layout, Skeleton } from "@probo/ui";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
 import type { ViewerLayoutQuery } from "#/__generated__/iam/ViewerLayoutQuery.graphql";
 
+import { TopBarUserMenuSkeleton } from "./_components/TopBar/TopBarUserMenuSkeleton";
+import { topBar } from "./_components/TopBar/variants";
 import { ViewerDropdown } from "./_components/ViewerDropdown";
 
 export const viewerLayoutQuery = graphql`
-  query ViewerLayoutQuery {
+  query ViewerLayoutQuery @throwOnFieldError {
     viewer @required(action: THROW) {
       ...ViewerDropdownFragment
     }
   }
 `;
 
-export function ViewerLayout(props: {
+interface ViewerLayoutProps {
   queryRef: PreloadedQuery<ViewerLayoutQuery>;
-}) {
-  const { queryRef } = props;
+}
 
+export function ViewerLayout({ queryRef }: ViewerLayoutProps) {
+  const { t } = useTranslation();
   const { viewer } = usePreloadedQuery<ViewerLayoutQuery>(
     viewerLayoutQuery,
     queryRef,
   );
+  const slots = topBar();
+  const tagline = t("topBar.tagline");
 
   return (
-    <Layout
-      headerTrailing={(
-        <div className="ml-auto">
-          <Suspense fallback={<Skeleton className="w-32 h-8" />}>
-            <ViewerDropdown fKey={viewer} />
+    <div className="flex min-h-dvh flex-col bg-sand-2">
+      <header className={slots.bar()}>
+        <div className={slots.inner()}>
+          <span className={slots.brand()}>
+            <span className={slots.brandText()}>
+              <Text
+                size={2}
+                weight="medium"
+                color="neutral"
+                highContrast
+                className={slots.brandName()}
+              >
+                {tagline}
+              </Text>
+            </span>
+          </span>
+          <Suspense fallback={<TopBarUserMenuSkeleton />}>
+            <ViewerDropdown identityKey={viewer} />
           </Suspense>
         </div>
-      )}
-    >
+      </header>
       <Outlet />
-    </Layout>
+    </div>
   );
 }

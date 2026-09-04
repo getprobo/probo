@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CenteredLayoutSkeleton } from "@probo/ui";
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
@@ -26,6 +25,7 @@ import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQu
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { MembershipsPage, membershipsPageQuery } from "./MembershipsPage";
+import { MembershipsPageSkeleton } from "./MembershipsPageSkeleton";
 
 function MembershipsPageQueryLoader() {
   const [queryRef, loadQuery]
@@ -36,11 +36,11 @@ function MembershipsPageQueryLoader() {
   }, [loadQuery]);
 
   if (!queryRef) {
-    return <CenteredLayoutSkeleton />;
+    return <MembershipsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<CenteredLayoutSkeleton />}>
+    <Suspense fallback={<MembershipsPageSkeleton />}>
       <MembershipsPage queryRef={queryRef} />
     </Suspense>
   );

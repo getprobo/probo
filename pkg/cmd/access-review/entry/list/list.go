@@ -62,7 +62,6 @@ query(
             accountType
             lastLogin
             externalId
-            incrementalTag
             flags
             flagReasons
             decision
@@ -115,7 +114,6 @@ query(
             accountType
             lastLogin
             externalId
-            incrementalTag
             flags
             flagReasons
             decision
@@ -149,7 +147,6 @@ type entryNode struct {
 	AccountType    string   `json:"accountType"`
 	LastLogin      *string  `json:"lastLogin"`
 	ExternalID     string   `json:"externalId"`
-	IncrementalTag string   `json:"incrementalTag"`
 	Flags          []string `json:"flags"`
 	FlagReasons    []string `json:"flagReasons"`
 	Decision       string   `json:"decision"`
@@ -168,7 +165,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagCampaignSourceID string
 		flagDecision         string
 		flagFlag             string
-		flagIncTag           string
 		flagIsAdmin          *bool
 		flagActive           *bool
 		flagAuthMethod       string
@@ -272,18 +268,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				filter["flag"] = flagFlag
-			}
-
-			if flagIncTag != "" {
-				if err := cmdutil.ValidateEnum(
-					"incremental-tag",
-					flagIncTag,
-					[]string{"NEW", "REMOVED", "UNCHANGED"},
-				); err != nil {
-					return err
-				}
-
-				filter["incrementalTag"] = flagIncTag
 			}
 
 			if cmd.Flags().Changed("is-admin") {
@@ -433,7 +417,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCampaignSourceID, "source-id", "", "Campaign source ID to list entries for")
 	cmd.Flags().StringVar(&flagDecision, "decision", "", "Filter by decision (PENDING, APPROVED, REVOKE, DEFER, ESCALATE)")
 	cmd.Flags().StringVar(&flagFlag, "flag", "", "Filter by flag (NONE, ORPHANED, INACTIVE, EXCESSIVE, ROLE_MISMATCH, NEW)")
-	cmd.Flags().StringVar(&flagIncTag, "incremental-tag", "", "Filter by incremental tag (NEW, REMOVED, UNCHANGED)")
 	flagIsAdmin = cmd.Flags().Bool("is-admin", false, "Filter by admin status")
 	flagActive = cmd.Flags().Bool("active", false, "Filter by active status at the source")
 	cmd.Flags().StringVar(&flagAuthMethod, "auth-method", "", "Filter by auth method (SSO, PASSWORD, API_KEY, OAUTH2, SSH, SERVICE_ACCOUNT, UNKNOWN)")

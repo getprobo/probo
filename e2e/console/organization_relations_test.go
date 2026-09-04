@@ -202,6 +202,11 @@ func populateOrganizationRelationGraph(
 		WithAccessReviewSourceIDs([]string{g.accessReviewSourceID}).
 		Create()
 
+	linkControlToDocument(t, owner, g.controlID, g.documentID)
+	linkMeasureToDocument(t, owner, g.measureID, g.documentID)
+	linkRiskToDocument(t, owner, g.riskID, g.documentID)
+	linkRiskToMeasure(t, owner, g.riskID, g.measureID)
+
 	return g
 }
 

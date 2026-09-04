@@ -19,7 +19,9 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Button } from "@probo/ui";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 
@@ -83,20 +85,28 @@ export default function AuthErrorPage() {
   usePageTitle(content.title);
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">{content.title}</h1>
-        <p className="text-txt-tertiary">{content.description}</p>
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {content.title}
+        </Heading>
+        <Text size={2} align="center" className="block">
+          {content.description}
+        </Text>
       </div>
-      <Button
-        className="w-full h-10"
+      <ButtonLink
         to={{
           pathname: "/auth/login",
           search: loginSearch,
         }}
+        variant="solid"
+        color="neutral"
+        highContrast
+        size={3}
+        className="w-full"
       >
         {t("auth.actions.signIn")}
-      </Button>
+      </ButtonLink>
     </div>
   );
 }

@@ -18,17 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Button, Field, useToast } from "@probo/ui";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CreatePasswordPageMutation } from "#/__generated__/iam/CreatePasswordPageMutation.graphql";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
 
 const createPasswordMutation = graphql`
   mutation CreatePasswordPageMutation($input: ResetPasswordInput!) {
@@ -38,10 +43,6 @@ const createPasswordMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  password: z.string().min(8),
-});
-
 export default function CreatePasswordPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -50,19 +51,13 @@ export default function CreatePasswordPage() {
 
   usePageTitle(t("createPasswordPage.pageTitle"));
 
-  const { register, handleSubmit, formState } = useFormWithSchema(schema, {
-    defaultValues: {
-      password: "",
-    },
-  });
-
   const [createPassword, isCreatingPassword] = useMutation<CreatePasswordPageMutation>(createPasswordMutation);
 
-  const onSubmit = (data: z.infer<typeof schema>) => {
+  const onSubmit = (password: string) => {
     createPassword({
       variables: {
         input: {
-          password: data.password,
+          password,
           token: searchParams.get("token") ?? "",
         },
       },
@@ -101,41 +96,56 @@ export default function CreatePasswordPage() {
   };
 
   return (
-    <div className="space-y-6 w-full max-w-md mx-auto pt-8">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{t("createPasswordPage.title")}</h1>
-        <p className="text-txt-tertiary">
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("createPasswordPage.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
           {t("createPasswordPage.description")}
-        </p>
+        </Text>
       </div>
 
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
-        <Field
-          label={t("createPasswordPage.fields.password")}
-          type="password"
-          placeholder="••••••••"
-          {...register("password")}
-          required
-          error={formState.errors.password?.message}
-        />
+      <Form
+        className="flex flex-col gap-5"
+        onFormSubmit={(values) => {
+          onSubmit(String(values.password ?? ""));
+        }}
+      >
+        <Field.Root name="password" className="flex flex-col gap-1.5">
+          <Field.Label className="text-1 font-medium text-sand-12">
+            {t("createPasswordPage.fields.password")}
+          </Field.Label>
+          <TextField
+            type="password"
+            name="password"
+            required
+            minLength={8}
+            placeholder="••••••••"
+          />
+          <Field.Error className="text-1 text-red-11" />
+        </Field.Root>
 
-        <Button type="submit" className="w-xs h-10 mx-auto mt-6" disabled={formState.isLoading || isCreatingPassword}>
+        <Button
+          type="submit"
+          variant="solid"
+          color="neutral"
+          highContrast
+          size={3}
+          className="w-full"
+          loading={isCreatingPassword}
+        >
           {t("createPasswordPage.actions.save")}
         </Button>
-      </form>
+      </Form>
 
-      <div className="text-center">
-        <p className="text-sm text-txt-tertiary">
-          {t("createPasswordPage.alreadyHaveAccount")}
-          {" "}
-          <Link
-            to="/auth/login"
-            className="underline text-txt-primary hover:text-txt-secondary"
-          >
-            {t("createPasswordPage.actions.logIn")}
-          </Link>
-        </p>
-      </div>
+      <Text align="center" size={2} className="block">
+        {t("createPasswordPage.alreadyHaveAccount")}
+        {" "}
+        <Link to="/auth/login">
+          {t("createPasswordPage.actions.logIn")}
+        </Link>
+      </Text>
     </div>
   );
 }
