@@ -12408,7 +12408,7 @@ components:
           description: Pattern description
         source:
           type: string
-          enum: [SCRIPT, PRE_EXISTING, EXTENSION]
+          enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           description: How the pattern was discovered
         excluded:
           type: boolean
