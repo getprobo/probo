@@ -159,9 +159,8 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	return records, nil
 }
 
-// Roles are best-effort: a nil slice means unknown, which keeps the account
-// reviewable without reporting it as non-admin. A cancelled context is a real
-// failure and propagates.
+// A nil slice means the roles are unknown, so the caller reports admin status
+// as unknown rather than false.
 func (d *SigNozDriver) serviceAccountRoles(ctx context.Context, id string) ([]string, error) {
 	if strings.TrimSpace(id) == "" {
 		return nil, nil
@@ -169,11 +168,11 @@ func (d *SigNozDriver) serviceAccountRoles(ctx context.Context, id string) ([]st
 
 	assigned, err := d.queryServiceAccountRoles(ctx, id)
 	if err != nil {
-		if ctx.Err() != nil {
-			return nil, fmt.Errorf("cannot fetch signoz service account roles: %w", err)
+		if errors.Is(err, errSigNozUnavailable) {
+			return nil, nil
 		}
 
-		return nil, nil
+		return nil, err
 	}
 
 	roles := make([]string, 0, len(assigned))
