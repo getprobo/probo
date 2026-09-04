@@ -3081,6 +3081,7 @@
     "errors": {
       "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en verificatiecode en probeer het opnieuw.",
       "apiKeyConnect": "Verbinden met provider mislukt. Controleer uw API-sleutel en probeer het opnieuw.",
+      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}",
       "copy": "Kopieer de verificatiecode handmatig.",
       "generateCode": "Kan geen verificatiecode genereren. Controleer de Website-ID en probeer het opnieuw."
     },

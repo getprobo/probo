@@ -1802,7 +1802,7 @@
     "apiKeyDescription": "Enter the API key for {{provider}} to connect it as an access source.",
     "apiKey": "API Key",
     "messages": { "connectionFailed": "Connection failed", "copyFailed": "Copy failed", "copied": "Copied to clipboard" },
-    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and verification code, then try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "copy": "Copy the verification code manually.", "generateCode": "Couldn't generate a verification code. Check the Website ID and try again." },
+    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and verification code, then try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}", "copy": "Copy the verification code manually.", "generateCode": "Couldn't generate a verification code. Check the Website ID and try again." },
     "verificationCode": { "label": "Verification code", "description": "Paste this code into the Probo plugin settings for this website in your Crisp dashboard, then click Connect. It proves you control this website.", "enterWebsiteId": "Enter your Website ID above to get your verification code.", "generating": "Generating code..." },
     "actions": { "copy": "Copy", "retry": "Retry", "connect": "Connect", "connecting": "Connecting..." }
   },

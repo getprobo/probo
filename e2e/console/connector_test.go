@@ -48,6 +48,10 @@ func TestAccessReviewDrivers(t *testing.T) {
 					label
 					required
 				}
+				apiKeyFormat {
+					pattern
+					example
+				}
 				clientCredentialsExtraSettings {
 					key
 					label
@@ -69,6 +73,11 @@ func TestAccessReviewDrivers(t *testing.T) {
 		Required bool   `json:"required"`
 	}
 
+	type keyFormat struct {
+		Pattern string `json:"pattern"`
+		Example string `json:"example"`
+	}
+
 	var result struct {
 		AccessReviewDrivers []struct {
 			Provider                       string        `json:"provider"`
@@ -79,6 +88,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 			APIKeySupported                bool          `json:"apiKeySupported"`
 			ClientCredentialsSupported     bool          `json:"clientCredentialsSupported"`
 			APIKeyExtraSettings            []settingInfo `json:"apiKeyExtraSettings"`
+			APIKeyFormat                   *keyFormat    `json:"apiKeyFormat"`
 			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
 			WorkloadIdentitySupported      bool          `json:"workloadIdentitySupported"`
 			WorkloadIdentityExtraSettings  []settingInfo `json:"workloadIdentityExtraSettings"`
@@ -91,6 +101,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
+	keyFormatByProvider := make(map[string]*keyFormat)
 	protocolsByProvider := make(map[string][]string)
 	apiKeySettingKeys := make(map[string][]string)
 	clientCredentialsSettingKeys := make(map[string][]string)
@@ -105,6 +116,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 		assert.NotNil(t, info.WorkloadIdentityExtraSettings)
 		providerNames[info.Provider] = true
 		docURLByProvider[info.Provider] = info.DocumentationURL
+		keyFormatByProvider[info.Provider] = info.APIKeyFormat
 		protocolsByProvider[info.Provider] = info.ConfiguredProtocols
 		workloadIdentitySupported[info.Provider] = info.WorkloadIdentitySupported
 		assert.Equal(t, slices.Contains(info.ConfiguredProtocols, "OAUTH2"), info.OAuthConfigured)
@@ -176,6 +188,20 @@ func TestAccessReviewDrivers(t *testing.T) {
 	// field is really null, which would let the null path rot unnoticed.
 	require.Contains(t, docURLByProvider, "SENTRY")
 	assert.Nil(t, docURLByProvider["SENTRY"], "SENTRY has no doc page, documentationUrl must be null")
+
+	// apiKeyFormat is what the connect dialog checks the pasted key against and
+	// shows as its placeholder, so it has to reach the client. Langfuse is the
+	// only provider declaring one; Sentry carries the null case, on the same
+	// Contains-first reasoning as the doc URL above.
+	require.Contains(t, keyFormatByProvider, "LANGFUSE")
+
+	if format := keyFormatByProvider["LANGFUSE"]; assert.NotNil(t, format) {
+		assert.Equal(t, `^pk-lf-[^:]+:sk-lf-[^:]+$`, format.Pattern)
+		assert.Equal(t, "pk-lf-…:sk-lf-…", format.Example)
+	}
+
+	require.Contains(t, keyFormatByProvider, "SENTRY")
+	assert.Nil(t, keyFormatByProvider["SENTRY"], "SENTRY declares no key shape, apiKeyFormat must be null")
 
 	t.Run("viewer can list access review drivers", func(t *testing.T) {
 		t.Parallel()
@@ -274,6 +300,74 @@ func TestCreateAPIKeyConnectorSentryMissingSlug(t *testing.T) {
 		},
 	})
 	testutil.RequireErrorCode(t, err, "INVALID", "missing sentryOrganizationSlug must return INVALID not INTERNAL")
+}
+
+// TestCreateAPIKeyConnectorMalformedKey asserts that a key whose shape its
+// provider could never have minted is refused before anything is written.
+// Langfuse pastes two keys as one colon-joined string and the transport
+// base64s it verbatim, so half a credential is otherwise stored and then
+// authenticates as nothing.
+func TestCreateAPIKeyConnectorMalformedKey(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const query = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`
+
+	_, err := owner.Do(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"provider":       "LANGFUSE",
+			// The public half alone: the colon and the secret key are missing.
+			"apiKey":          "pk-lf-11111111-2222-3333-4444-555555555555",
+			"langfuseBaseUrl": "https://cloud.langfuse.com",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a half-pasted key must return INVALID, not create a connector")
+}
+
+// TestCreateAPIKeyConnectorLangfuseKeyPair asserts the counterpart: a
+// well-formed pair is accepted. It says nothing about the key working —
+// only Langfuse can judge that, and it is not called here.
+func TestCreateAPIKeyConnectorLangfuseKeyPair(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const query = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id provider }
+			}
+		}
+	`
+
+	var result struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID       string `json:"id"`
+				Provider string `json:"provider"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId":  orgID,
+			"provider":        "LANGFUSE",
+			"apiKey":          "pk-lf-11111111-2222-3333-4444-555555555555:sk-lf-66666666-7777-8888-9999-000000000000",
+			"langfuseBaseUrl": "https://cloud.langfuse.com",
+		},
+	}, &result)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result.CreateAPIKeyConnector.Connector.ID)
+	assert.Equal(t, "LANGFUSE", result.CreateAPIKeyConnector.Connector.Provider)
 }
 
 // TestCreateAPIKeyConnectorSentryRoundTrip asserts that supplying

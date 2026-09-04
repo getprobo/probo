@@ -25,6 +25,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -40,6 +41,10 @@ func langfuseRegistration() *Registration {
 			Auth: APIKeyAuth{Mode: APIKeyAuthBasicUserPass},
 			ExtraSettings: []ExtraSetting{
 				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
+			KeyFormat: &KeyFormat{
+				Pattern: langfuseKeyPattern,
+				Example: "pk-lf-…:sk-lf-…",
 			},
 		},
 		// Langfuse's organization-scoped public API authenticates with HTTP
@@ -79,12 +84,14 @@ func langfuseRegistration() *Registration {
 const langfuseOrganizationKeyRequired = "Organization-scoped API key required"
 
 // classifyLangfuseRejection tells Langfuse's two 403s apart. The memberships
-// endpoint checks the key's scope before the organization's plan, and a
-// customer whose plan lacks the admin-api entitlement never sees the
-// organization API-keys tab at all, so the common failure is a pasted project
-// key: a wrong credential, which the customer fixes by pasting the right one.
-// Everything else the endpoint refuses is the plan gate, which no credential
-// can satisfy.
+// endpoint checks the key's scope before the plan, so a wrong-scope key is
+// reported as the credential problem it is; anything else it refuses is the
+// plan gate, which no credential can satisfy.
 func classifyLangfuseRejection(body []byte) bool {
 	return !bytes.Contains(body, []byte(langfuseOrganizationKeyRequired))
 }
+
+// langfuseKeyPattern is the colon-joined pair the Basic transport needs. Both
+// scopes carry these same prefixes, so it says nothing about whether the key
+// is organization-scoped.
+var langfuseKeyPattern = regexp.MustCompile(`^pk-lf-[^:]+:sk-lf-[^:]+$`)

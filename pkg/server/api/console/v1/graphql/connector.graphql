@@ -181,6 +181,14 @@ type ConnectorProviderInfo {
     """
     apiKeyExtraSettings: [ConnectorProviderSettingInfo!]!
     """
+    apiKeyFormat is the shape a pasted API key must have, for the connect form
+    to check as the customer leaves the field and to show as its placeholder.
+    Null when the provider's keys have no shape worth asserting, which is the
+    common case. The create mutation applies the same rule, so a client that
+    skips this check is refused rather than trusted.
+    """
+    apiKeyFormat: ConnectorAPIKeyFormat
+    """
     clientCredentialsExtraSettings lists the settings the client-credentials
     connect form must render and submit. A provider offering both paths
     (1Password) returns different fields here than in apiKeyExtraSettings,
@@ -215,6 +223,27 @@ type ConnectorProviderSettingInfo {
     key: String!
     label: String!
     required: Boolean!
+}
+
+"""
+The shape of a pasted API key. It catches a half-copied credential, never a
+well-formed key that is simply the wrong one — only the provider can answer
+that, which is what connectionStatus is for.
+"""
+type ConnectorAPIKeyFormat {
+    """
+    pattern is an RE2 regular expression asserting the key's prefix and
+    separator, and deliberately nothing about the random part. It is written to
+    the subset RE2 and JavaScript read alike; a client that cannot compile it
+    should skip its own check rather than reject the key, since the server
+    applies the same rule on create.
+    """
+    pattern: String!
+    """
+    example is the shape to show the customer — as the field's placeholder and
+    in the rejection message. It matches pattern, and carries no real key.
+    """
+    example: String!
 }
 
 input ConnectorFilter {

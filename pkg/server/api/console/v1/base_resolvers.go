@@ -739,6 +739,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			ClientCredentialsSupported:     clientCredentialsSupported,
 			Oauth2Scopes:                   scopes,
 			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings()),
+			APIKeyFormat:                   connectorAPIKeyFormat(reg),
 			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings()),
 			WorkloadIdentitySupported:      workloadIdentityReady,
 			WorkloadIdentityExtraSettings:  connectorProviderSettingInfos(reg.WorkloadIdentityExtraSettings()),

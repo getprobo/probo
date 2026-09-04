@@ -23,6 +23,7 @@ package provider
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 
@@ -247,6 +248,37 @@ type APIKeyConfig struct {
 	// Orthogonal to Auth, which still selects how the injected key goes on the
 	// wire.
 	Managed *ManagedAPIKey
+
+	// KeyFormat is the shape a customer-pasted key must have. Nil for a
+	// provider whose keys have no shape worth asserting — an opaque token is
+	// the common case, and a guess at its format would reject valid keys the
+	// day the provider mints a new one.
+	KeyFormat *KeyFormat
+}
+
+// KeyFormat is a paste check, not an authenticity check: it catches a
+// half-copied credential or a missing separator, never a key that is
+// well-formed and wrong. It is data rather than a closure because both sides of
+// the API evaluate it.
+type KeyFormat struct {
+	// Pattern asserts the prefix and the separator, and nothing else. It must
+	// not constrain the length or the alphabet of the random part: a provider
+	// that changes those would otherwise lock out customers holding valid
+	// keys, with no way around it.
+	//
+	// The console compiles this same source as a JavaScript RegExp. The two
+	// dialects only overlap, so keep to what both read the same way — literals,
+	// character classes, quantifiers, anchors, alternation and (?:. A pattern
+	// the browser will not compile costs the client-side check and nothing
+	// more: the server applies the rule either way.
+	Pattern *regexp.Regexp
+
+	// Example is the shape shown to the customer, as the field's placeholder
+	// and in the rejection message. Register enforces that it matches Pattern,
+	// so the two cannot drift into telling the customer to paste something the
+	// check refuses. It stands in for the pattern, which is unreadable to the
+	// people who need to act on it, so it carries no real key material.
+	Example string
 }
 
 // ManagedAPIKey is the Probo-held variant of the API-key path. Nesting it under

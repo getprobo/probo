@@ -3077,6 +3077,7 @@
     "errors": {
       "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres et votre code de vérification, puis réessayez.",
       "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
+      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}",
       "copy": "Copiez le code de vérification manuellement.",
       "generateCode": "Impossible de générer un code de vérification. Vérifiez l’identifiant du site et réessayez."
     },

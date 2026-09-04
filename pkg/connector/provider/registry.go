@@ -113,6 +113,24 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
+	// A key format describes what the customer pastes, so a Probo-held key has
+	// nothing to describe, and an example that its own pattern rejects would
+	// tell the customer to paste what the check then refuses.
+	if reg.APIKey != nil && reg.APIKey.KeyFormat != nil {
+		if reg.IsManagedAPIKey() {
+			return fmt.Errorf("cannot register connector provider %q: a managed API key has no customer-supplied key to shape", reg.Provider)
+		}
+
+		format := reg.APIKey.KeyFormat
+		if format.Pattern == nil || format.Example == "" {
+			return fmt.Errorf("cannot register connector provider %q: KeyFormat needs both a Pattern and an Example", reg.Provider)
+		}
+
+		if !format.Pattern.MatchString(format.Example) {
+			return fmt.Errorf("cannot register connector provider %q: KeyFormat example does not match its own pattern", reg.Provider)
+		}
+	}
+
 	// A Probo-held key ignores any customer credential, so pairing it with the
 	// client-credentials path would advertise a credential field whose value is
 	// silently discarded. Its former conflict with a customer-supplied API key
@@ -342,6 +360,28 @@ func (r *Registry) NewAPIKeyConnection(
 	}
 
 	return conn
+}
+
+// ValidateAPIKey checks a customer-pasted key against the shape its provider
+// declares, if it declares one. A provider with no KeyFormat, or one whose key
+// Probo supplies itself, accepts anything here and lets the connection check
+// be the judge. The error reaches the customer, so it names the expected shape
+// and never the key.
+func (r *Registry) ValidateAPIKey(p coredata.ConnectorProvider, key string) error {
+	reg, ok := r.Get(p)
+	if !ok || reg.APIKey == nil || reg.APIKey.KeyFormat == nil {
+		return nil
+	}
+
+	if !reg.APIKey.KeyFormat.Pattern.MatchString(key) {
+		return fmt.Errorf(
+			"apiKey does not look like a %s key: expected the form %s",
+			reg.DisplayName,
+			reg.APIKey.KeyFormat.Example,
+		)
+	}
+
+	return nil
 }
 
 // SetManagedAPIKey records the Probo-supplied API key for a

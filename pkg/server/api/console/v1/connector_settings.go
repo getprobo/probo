@@ -59,11 +59,21 @@ func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorP
 		return "", nil
 	}
 
-	if clientKey == nil || *clientKey == "" {
+	if clientKey == nil || strings.TrimSpace(*clientKey) == "" {
 		return "", fmt.Errorf("apiKey is required")
 	}
 
-	return *clientKey, nil
+	// A key is copied out of a provider's UI, so it arrives with whatever the
+	// clipboard picked up. Several transports encode the credential verbatim,
+	// where a trailing newline is an authentication failure the customer has
+	// no way to see.
+	key := strings.TrimSpace(*clientKey)
+
+	if err := r.providerRegistry.ValidateAPIKey(provider, key); err != nil {
+		return "", err
+	}
+
+	return key, nil
 }
 
 // newAPIKeyConnection builds an API-key connection for provider, filling the auth

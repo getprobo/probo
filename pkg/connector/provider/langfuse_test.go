@@ -59,6 +59,65 @@ func TestLangfuseRegistrationMetadata(t *testing.T) {
 	assert.Nil(t, reg.NewNameResolver, "langfuse must not wire a name resolver")
 	assert.Nil(t, reg.SetOrganizationSettings, "langfuse must not wire a picker store")
 	require.NotNil(t, reg.ClassifyRejection, "langfuse must tell its two 403s apart")
+	require.NotNil(t, reg.APIKey.KeyFormat, "langfuse must declare the shape of a pasted key")
+	assert.Equal(t, "pk-lf-…:sk-lf-…", reg.APIKey.KeyFormat.Example)
+}
+
+func TestLangfuseKeyFormat(t *testing.T) {
+	t.Parallel()
+
+	// The check exists to catch a credential that was pasted wrong, which is
+	// otherwise indistinguishable from a dead one: the transport base64s the
+	// value verbatim, so a missing half authenticates as nothing.
+	//
+	// What it must NOT do is claim to know the key's scope. Langfuse mints
+	// organization and project keys with the same prefixes, so the first two
+	// cases below are both well-formed and only one of them can list an
+	// organization's members. Only the provider can say which.
+	cases := []struct {
+		name string
+		key  string
+		want bool
+	}{
+		{name: "organization key pair", key: "pk-lf-1111:sk-lf-2222", want: true},
+		{name: "project key pair is well formed too", key: "pk-lf-3333:sk-lf-4444", want: true},
+		{name: "public key alone", key: "pk-lf-1111"},
+		{name: "secret key alone", key: "sk-lf-2222"},
+		{name: "halves pasted in the wrong order", key: "sk-lf-2222:pk-lf-1111"},
+		{name: "separated by something else", key: "pk-lf-1111 sk-lf-2222"},
+		{name: "missing the secret half", key: "pk-lf-1111:"},
+		{name: "missing the public half", key: ":sk-lf-2222"},
+		{name: "prefixes only", key: "pk-lf-:sk-lf-"},
+		{name: "a third colon", key: "pk-lf-1111:sk-lf-2222:extra"},
+		{name: "both pairs pasted at once", key: "pk-lf-1111:sk-lf-2222:pk-lf-3333:sk-lf-4444"},
+		{name: "some other provider's key", key: "sk-ant-api03-abcdef"},
+		{name: "empty", key: ""},
+	}
+
+	r := provider.NewBuiltinRegistry()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := r.ValidateAPIKey(coredata.ConnectorProviderLangfuse, tc.key)
+
+			if tc.want {
+				require.NoError(t, err)
+
+				return
+			}
+
+			require.Error(t, err)
+			// The message reaches the customer, so it shows the shape it
+			// wanted and never what they pasted.
+			assert.Contains(t, err.Error(), "pk-lf-…:sk-lf-…")
+
+			if tc.key != "" {
+				assert.NotContains(t, err.Error(), tc.key)
+			}
+		})
+	}
 }
 
 // langfuseRoundTripFunc answers a probe with a canned response.
