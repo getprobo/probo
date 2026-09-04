@@ -76,7 +76,23 @@ func TestNewSession(t *testing.T) {
 
 	assert.Equal(t, cloud.GCP, session.Cloud())
 	assert.Equal(t, "123456789012", session.AccountID(), "account comes from the provider resource")
+	assert.Equal(t, cloudgcp.CommercialUniverse, session.UniverseDomain())
 	assert.NotNil(t, session.HTTPClient())
+}
+
+func TestNewSession_S3NSUniverse(t *testing.T) {
+	t.Parallel()
+
+	session, err := cloudgcp.NewSession(
+		testIssuer(t),
+		testOrganizationID(),
+		testProviderResource,
+		testS3NSServiceAccount,
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, cloudgcp.S3NSUniverse, session.UniverseDomain())
+	assert.Equal(t, "123456789012", session.AccountID())
 }
 
 func TestNewSessionFromToken(t *testing.T) {
@@ -86,6 +102,7 @@ func TestNewSessionFromToken(t *testing.T) {
 
 	assert.Equal(t, cloud.GCP, session.Cloud())
 	assert.Equal(t, "123456789012", session.AccountID())
+	assert.Equal(t, cloudgcp.CommercialUniverse, session.UniverseDomain())
 	assert.NotNil(t, session.HTTPClient())
 
 	err := session.CheckAccess(context.Background())
@@ -118,6 +135,20 @@ func TestNewSession_Validation(t *testing.T) {
 			serviceAccountEmail: "alice@example.com",
 			wantMessage:         "serviceAccountEmail is not a service account email",
 			forbidden:           "alice@example.com",
+		},
+		{
+			name:                "unsupported universe host",
+			providerResource:    "https://iam.example.com/" + testProviderResource,
+			serviceAccountEmail: testServiceAccount,
+			wantMessage:         "not a supported GCP universe",
+			forbidden:           "example.com",
+		},
+		{
+			name:                "s3ns host with commercial email",
+			providerResource:    "https://iam.s3nsapis.fr/" + testProviderResource,
+			serviceAccountEmail: testServiceAccount,
+			wantMessage:         "name different GCP universes",
+			forbidden:           testServiceAccount,
 		},
 	}
 

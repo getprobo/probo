@@ -122,3 +122,20 @@ output descriptions in [`variables.tf`](variables.tf) and
 - **The four project roles are additive members**, not bindings. A binding
   would replace every other member of that role in the project.
 - Requires the `google` provider at 5.0 or later.
+
+## Cloud de Confiance (S3NS)
+
+S3NS is a separate Google Cloud universe. Set the universe on the **root**
+provider; this module does not configure it. Project IDs carry the `s3ns:`
+prefix. Workload identity principals still use `iam.googleapis.com`.
+
+```hcl
+provider "google" {
+  project         = "s3ns:my-project"
+  universe_domain = "s3nsapis.fr"
+}
+```
+
+The service account email this module creates ends in
+`.s3ns.iam.gserviceaccount.com`. Paste that email when you create the
+connector so Probo dials `*.s3nsapis.fr`.

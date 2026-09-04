@@ -23,9 +23,9 @@
 // customer's audit service account.
 //
 // Probo holds no GCP credential for any customer. It mints a short-lived
-// assertion (pkg/identityfederation), exchanges it at sts.googleapis.com, and
-// impersonates the customer's service account. The customer revokes by
-// deleting the workload identity binding.
+// assertion (pkg/identityfederation), exchanges it at STS in the project's
+// universe, and impersonates the customer's service account. The customer
+// revokes by deleting the workload identity binding.
 package gcp
 
 import (
@@ -70,6 +70,7 @@ type (
 		provider               providerResource
 		serviceAccountEmail    string
 		accountID              string
+		universeDomain         string
 		stsEndpoint            string
 		iamCredentialsEndpoint string
 	}
@@ -120,6 +121,11 @@ func NewSession(
 		return nil, fmt.Errorf("cannot open gcp session: %w", err)
 	}
 
+	universe, err := inferUniverse(parsed, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open gcp session: %w", err)
+	}
+
 	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
 
 	session := &Session{
@@ -129,6 +135,7 @@ func NewSession(
 		provider:            parsed,
 		serviceAccountEmail: email,
 		accountID:           parsed.projectNumber,
+		universeDomain:      universe,
 	}
 	session.authorizedClient = authorizeSession(httpClient, session)
 
@@ -147,10 +154,12 @@ func WithHTTPClient(httpClient *http.Client) SessionOption {
 // Production uses NewSession, which obtains credentials through WIF.
 func NewSessionFromToken(projectNumber, accessToken string, opts ...SessionOption) *Session {
 	session := &Session{
-		httpClient: httpclient.DefaultPooledClient(httpclient.WithSSRFProtection()),
-		token:      &oauth2.Token{AccessToken: accessToken},
-		accountID:  projectNumber,
+		httpClient:     httpclient.DefaultPooledClient(httpclient.WithSSRFProtection()),
+		token:          &oauth2.Token{AccessToken: accessToken},
+		accountID:      projectNumber,
+		universeDomain: CommercialUniverse,
 	}
+
 	for _, opt := range opts {
 		opt(session)
 	}
@@ -175,6 +184,32 @@ func (s *Session) AccountID() string {
 // context.
 func (s *Session) HTTPClient() *http.Client {
 	return s.authorizedClient
+}
+
+// UniverseDomain is the Google Cloud universe this session dials:
+// googleapis.com (commercial) or s3nsapis.fr (S3NS). JWT audiences stay on
+// iam.googleapis.com in every universe; only HTTP hosts change.
+func (s *Session) UniverseDomain() string {
+	if s.universeDomain == "" {
+		return CommercialUniverse
+	}
+
+	return s.universeDomain
+}
+
+// ServiceOptions are the client options every Google API client on this
+// session must use: the impersonated HTTP client, no ADC, and the universe
+// domain so hosts resolve to this universe rather than always public GCP.
+func (s *Session) ServiceOptions() []option.ClientOption {
+	return s.serviceOptions(s.HTTPClient())
+}
+
+func (s *Session) serviceOptions(httpClient *http.Client) []option.ClientOption {
+	return []option.ClientOption{
+		option.WithHTTPClient(httpClient),
+		option.WithoutAuthentication(),
+		option.WithUniverseDomain(s.UniverseDomain()),
+	}
 }
 
 // CheckAccess reports whether this session can actually reach its project.
@@ -245,10 +280,7 @@ func (s *Session) mintAssertion(ctx context.Context) (string, error) {
 }
 
 func (s *Session) exchangeAssertion(ctx context.Context, assertion string) (*oauth2.Token, error) {
-	opts := []option.ClientOption{
-		option.WithHTTPClient(s.httpClient),
-		option.WithoutAuthentication(),
-	}
+	opts := s.serviceOptions(s.httpClient)
 	if s.stsEndpoint != "" {
 		opts = append(opts, option.WithEndpoint(s.stsEndpoint))
 	}
@@ -290,10 +322,7 @@ func (s *Session) impersonate(ctx context.Context, federated *oauth2.Token) (*oa
 		return nil, err
 	}
 
-	opts := []option.ClientOption{
-		option.WithHTTPClient(authorizeClient(s.httpClient, oauth2.StaticTokenSource(federated))),
-		option.WithoutAuthentication(),
-	}
+	opts := s.serviceOptions(authorizeClient(s.httpClient, oauth2.StaticTokenSource(federated)))
 	if s.iamCredentialsEndpoint != "" {
 		opts = append(opts, option.WithEndpoint(s.iamCredentialsEndpoint))
 	}

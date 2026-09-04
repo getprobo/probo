@@ -10187,10 +10187,10 @@ components:
           description: IAM role ARN, including partition, account, and role name
         gcp_workload_identity_provider:
           type: string
-          description: Workload identity provider resource
+          description: Workload identity provider resource, including the S3NS IAM host when applicable
         gcp_service_account_email:
           type: string
-          description: Service account email to impersonate
+          description: Service account email to impersonate, including the universe-specific suffix
 
     CreateWorkloadIdentityConnectorMCPOutput:
       type: object
