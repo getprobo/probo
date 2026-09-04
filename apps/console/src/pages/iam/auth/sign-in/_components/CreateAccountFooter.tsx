@@ -27,8 +27,12 @@ import { graphql } from "relay-runtime";
 import type { CreateAccountFooterFragment$key } from "#/__generated__/iam/CreateAccountFooterFragment.graphql";
 
 const createAccountFooterFragment = graphql`
-  fragment CreateAccountFooterFragment on Query {
+  fragment CreateAccountFooterFragment on Query
+  @argumentDefinitions(clientId: { type: "String" }) {
     signUpEnabled
+    oauthClientBranding(clientId: $clientId) {
+      isCompliancePortal
+    }
   }
 `;
 
@@ -44,9 +48,12 @@ export function CreateAccountFooter({
   label,
 }: CreateAccountFooterProps) {
   const location = useLocation();
-  const { signUpEnabled } = useFragment(createAccountFooterFragment, queryKey);
+  const { signUpEnabled, oauthClientBranding } = useFragment(
+    createAccountFooterFragment,
+    queryKey,
+  );
 
-  if (!signUpEnabled) {
+  if (!signUpEnabled || oauthClientBranding?.isCompliancePortal) {
     return null;
   }
 

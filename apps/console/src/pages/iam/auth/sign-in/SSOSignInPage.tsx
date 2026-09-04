@@ -40,6 +40,7 @@ import { graphql } from "relay-runtime";
 import type { SSOSignInPageCreateAccountQuery } from "#/__generated__/iam/SSOSignInPageCreateAccountQuery.graphql";
 import type { SSOSignInPageQuery } from "#/__generated__/iam/SSOSignInPageQuery.graphql";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
+import { clientIdFromContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 
 import { CreateAccountFooter } from "./_components/CreateAccountFooter";
 
@@ -50,16 +51,18 @@ const ssoAvailabilityQuery = graphql`
 `;
 
 const ssoCreateAccountQuery = graphql`
-  query SSOSignInPageCreateAccountQuery {
-    ...CreateAccountFooterFragment
+  query SSOSignInPageCreateAccountQuery($clientId: String) {
+    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
   }
 `;
 
 function SSOCreateAccountFooter() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const clientId = clientIdFromContinueUrl(searchParams.get("continue"));
   const data = useLazyLoadQuery<SSOSignInPageCreateAccountQuery>(
     ssoCreateAccountQuery,
-    {},
+    { clientId },
   );
 
   return (
