@@ -72,7 +72,7 @@ export const reviewGrid = tv({
     cell: [
       "flex flex-col gap-8 border-sand-4 p-8",
       "max-sm:not-last:border-b",
-      "sm:odd:border-r sm:[&:nth-child(-n+2)]:border-b",
+      "sm:odd:border-r sm:nth-[-n+2]:border-b",
     ],
     heading: "flex items-center gap-3",
     headingIcon: "size-4 shrink-0 text-sand-12 [&_svg]:size-4",
@@ -106,7 +106,7 @@ export const devicesEmpty = tv({
     ],
     wash: [
       "pointer-events-none absolute inset-x-0 top-0 z-0 h-full",
-      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
+      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(from_var(--color-lime-9)_r_g_b/0.72)_0%,rgb(from_var(--color-lime-9)_r_g_b/0.28)_35%,transparent_62%)]",
       "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
     ],
     content: "relative z-1 flex w-full flex-col items-center gap-6",
@@ -146,7 +146,7 @@ export const deviceListItem = tv({
     row: "flex h-full items-center gap-8 px-8",
     title: "min-w-0 flex-1 truncate",
     meta: "flex shrink-0 items-center gap-4",
-    timestamp: "flex items-center gap-[3px]",
+    timestamp: "flex items-center gap-0.75",
     timestampLabel: "text-sand-a8",
     timestampValue: "w-32 text-sand-a11",
     os: "w-24 text-sand-a11",

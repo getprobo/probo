@@ -34,7 +34,7 @@ export const bindingsEmpty = tv({
     ],
     wash: [
       "pointer-events-none absolute inset-x-0 top-0 z-0 h-full",
-      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(230_255_3/0.72)_0%,rgb(230_255_3/0.28)_35%,transparent_62%)]",
+      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(from_var(--color-lime-9)_r_g_b/0.72)_0%,rgb(from_var(--color-lime-9)_r_g_b/0.28)_35%,transparent_62%)]",
       "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
     ],
     content: "relative z-1 flex w-full flex-col items-center gap-6",
