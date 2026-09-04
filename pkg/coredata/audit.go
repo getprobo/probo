@@ -38,6 +38,7 @@ type (
 	Audit struct {
 		ID             gid.GID    `db:"id"`
 		Name           *string    `db:"name"`
+		Firm           *string    `db:"firm"`
 		OrganizationID gid.GID    `db:"organization_id"`
 		FrameworkID    gid.GID    `db:"framework_id"`
 		ReportFileID   *gid.GID   `db:"report_file_id"`
@@ -122,6 +123,7 @@ func (a *Audit) LoadByID(
 SELECT
 	id,
 	name,
+	firm,
 	organization_id,
 	framework_id,
 	report_file_id,
@@ -216,6 +218,7 @@ func (a *Audits) LoadByCompliancePortalID(
 SELECT
 	audits.id,
 	audits.name,
+	audits.firm,
 	audits.organization_id,
 	audits.framework_id,
 	audits.report_file_id,
@@ -271,6 +274,7 @@ func (a *Audits) LoadByOrganizationID(
 SELECT
 	id,
 	name,
+	firm,
 	organization_id,
 	framework_id,
 	report_file_id,
@@ -321,6 +325,7 @@ func (a *Audit) Insert(
 INSERT INTO audits (
 	id,
 	name,
+	firm,
 	tenant_id,
 	organization_id,
 	framework_id,
@@ -335,6 +340,7 @@ INSERT INTO audits (
 ) VALUES (
 	@id,
 	@name,
+	@firm,
 	@tenant_id,
 	@organization_id,
 	@framework_id,
@@ -352,6 +358,7 @@ INSERT INTO audits (
 	args := pgx.StrictNamedArgs{
 		"id":               a.ID,
 		"name":             a.Name,
+		"firm":             a.Firm,
 		"tenant_id":        scope.GetTenantID(),
 		"organization_id":  a.OrganizationID,
 		"framework_id":     a.FrameworkID,
@@ -382,6 +389,7 @@ func (a *Audit) Update(
 UPDATE audits
 SET
 	name = @name,
+	firm = @firm,
 	report_file_id = @report_file_id,
 	valid_from = @valid_from,
 	valid_until = @valid_until,
@@ -399,6 +407,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":               a.ID,
 		"name":             a.Name,
+		"firm":             a.Firm,
 		"report_file_id":   a.ReportFileID,
 		"valid_from":       a.ValidFrom,
 		"valid_until":      a.ValidUntil,
@@ -455,6 +464,7 @@ WITH audits_by_control AS (
 		a.id,
 		a.tenant_id,
 		a.name,
+		a.firm,
 		a.organization_id,
 		a.framework_id,
 		a.report_file_id,
@@ -475,6 +485,7 @@ WITH audits_by_control AS (
 SELECT
 	id,
 	name,
+	firm,
 	organization_id,
 	framework_id,
 	report_file_id,
@@ -524,6 +535,7 @@ WITH audits_by_finding AS (
 		a.id,
 		a.tenant_id,
 		a.name,
+		a.firm,
 		a.organization_id,
 		a.framework_id,
 		a.report_file_id,
@@ -544,6 +556,7 @@ WITH audits_by_finding AS (
 SELECT
 	id,
 	name,
+	firm,
 	organization_id,
 	framework_id,
 	report_file_id,
@@ -676,6 +689,7 @@ func (a *Audit) LoadByReportFileID(
 SELECT
 	id,
 	name,
+	firm,
 	organization_id,
 	framework_id,
 	report_file_id,
@@ -731,6 +745,7 @@ func (a *Audit) LoadByCompliancePortalIDAndFrameworkID(
 SELECT
 	id,
 	name,
+	firm,
 	organization_id,
 	framework_id,
 	report_file_id,
@@ -792,6 +807,7 @@ func (as *Audits) LoadByReportFileIDs(
 SELECT
 	id,
 	name,
+	firm,
 	organization_id,
 	framework_id,
 	report_file_id,

@@ -5,6 +5,12 @@ this file.
 
 ## Unreleased
 
+## [0.3.2] - 2026-09-04
+
+### Changed
+
+- Access review decision rubric no longer keys on `incremental_tag`, matching campaigns that are now independent snapshots
+
 ## [0.3.1] - 2026-08-24
 
 ### Fixed

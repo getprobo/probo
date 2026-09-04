@@ -78,6 +78,7 @@ func NewAudit(a *coredata.Audit) *Audit {
 		AuditDates: NewPeriod(a.AuditStartDate, a.AuditEndDate),
 		State:      a.State,
 		Name:       a.Name,
+		Firm:       a.Firm,
 		CreatedAt:  a.CreatedAt,
 		UpdatedAt:  a.UpdatedAt,
 	}

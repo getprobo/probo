@@ -89,6 +89,10 @@ const routes = [
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
       },
       {
+        path: "magic-link",
+        Component: lazy(() => import("./pages/iam/auth/MagicLinkPage")),
+      },
+      {
         path: "resend-verification-email",
         Component: lazy(
           () => import("./pages/iam/auth/ResendVerificationEmailPage"),
@@ -179,8 +183,14 @@ const routes = [
     path: "/organizations/:organizationId",
     children: [
       {
-        path: "assume",
-        Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
+        Component: lazy(() => import("./pages/iam/auth/AuthLayout")),
+        Fallback: AuthLayoutSkeleton,
+        children: [
+          {
+            path: "assume",
+            Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
+          },
+        ],
       },
       {
         Component: lazy(

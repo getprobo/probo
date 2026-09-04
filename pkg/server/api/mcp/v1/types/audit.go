@@ -29,6 +29,7 @@ func NewAudit(a *coredata.Audit, file *coredata.File) *Audit {
 	audit := &Audit{
 		ID:             a.ID,
 		Name:           a.Name,
+		Firm:           a.Firm,
 		OrganizationID: a.OrganizationID,
 		FrameworkID:    a.FrameworkID,
 		State:          a.State,

@@ -85,6 +85,7 @@ export async function execute(
 							node {
 								id
 								name
+								firm
 								state
 								validity {
 									start

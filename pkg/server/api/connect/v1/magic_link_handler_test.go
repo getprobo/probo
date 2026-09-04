@@ -106,3 +106,64 @@ func TestMagicLinkHandler_SendHandler_Validation(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 }
+
+func TestMagicLinkHandler_ConfirmRedirectHandler(t *testing.T) {
+	t.Parallel()
+
+	handler := newTestMagicLinkHandler(t)
+
+	t.Run("redirects to confirm page without consuming", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/api/connect/v1/magic-link/verify?token=abc.def",
+			nil,
+		)
+		rec := httptest.NewRecorder()
+
+		handler.ConfirmRedirectHandler(rec, req)
+
+		assert.Equal(t, http.StatusFound, rec.Code)
+		assert.Equal(t, "/auth/magic-link?token=abc.def", rec.Header().Get("Location"))
+	})
+
+	t.Run("rejects missing token", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/api/connect/v1/magic-link/verify", nil)
+		rec := httptest.NewRecorder()
+
+		handler.ConfirmRedirectHandler(rec, req)
+
+		assert.Equal(t, http.StatusFound, rec.Code)
+
+		location, err := url.Parse(rec.Header().Get("Location"))
+		assert.NoError(t, err)
+		assert.Equal(t, "/auth/error", location.Path)
+		assert.Equal(t, "magic_link_invalid", location.Query().Get("error"))
+	})
+}
+
+func TestMagicLinkHandler_VerifyHandler_Validation(t *testing.T) {
+	t.Parallel()
+
+	handler := newTestMagicLinkHandler(t)
+
+	t.Run("rejects missing token", func(t *testing.T) {
+		t.Parallel()
+
+		rec := postMagicLinkForm(
+			t,
+			handler.VerifyHandler,
+			url.Values{},
+		)
+
+		assert.Equal(t, http.StatusFound, rec.Code)
+
+		location, err := url.Parse(rec.Header().Get("Location"))
+		assert.NoError(t, err)
+		assert.Equal(t, "/auth/error", location.Path)
+		assert.Equal(t, "magic_link_invalid", location.Query().Get("error"))
+	})
+}

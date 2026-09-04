@@ -99,6 +99,33 @@ func TestAudit_Create(t *testing.T) {
 			assertField: "state",
 			assertValue: "OUTDATED",
 		},
+		{
+			name: "with TO_BOOK state",
+			input: map[string]any{
+				"name":  "Audit TO_BOOK",
+				"state": "TO_BOOK",
+			},
+			assertField: "state",
+			assertValue: "TO_BOOK",
+		},
+		{
+			name: "with AUDIT_BOOKED state",
+			input: map[string]any{
+				"name":  "Audit AUDIT_BOOKED",
+				"state": "AUDIT_BOOKED",
+			},
+			assertField: "state",
+			assertValue: "AUDIT_BOOKED",
+		},
+		{
+			name: "with firm",
+			input: map[string]any{
+				"name": "Audit with firm",
+				"firm": "A-LIGN",
+			},
+			assertField: "firm",
+			assertValue: "A-LIGN",
+		},
 	}
 
 	for _, tt := range tests {
@@ -110,6 +137,7 @@ func TestAudit_Create(t *testing.T) {
 							node {
 								id
 								name
+								firm
 								state
 							}
 						}
@@ -129,6 +157,7 @@ func TestAudit_Create(t *testing.T) {
 						Node struct {
 							ID    string `json:"id"`
 							Name  string `json:"name"`
+							Firm  string `json:"firm"`
 							State string `json:"state"`
 						} `json:"node"`
 					} `json:"auditEdge"`
@@ -144,6 +173,8 @@ func TestAudit_Create(t *testing.T) {
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, node.Name)
+			case "firm":
+				assert.Equal(t, tt.assertValue, node.Firm)
 			case "state":
 				assert.Equal(t, tt.assertValue, node.State)
 			}
@@ -285,6 +316,13 @@ func TestAudit_Create_Validation(t *testing.T) {
 			name: "name with HTML tags",
 			input: map[string]any{
 				"name": "<script>alert('xss')</script>",
+			},
+			wantErrorContains: "HTML",
+		},
+		{
+			name: "firm with HTML tags",
+			input: map[string]any{
+				"firm": "<script>alert('xss')</script>",
 			},
 			wantErrorContains: "HTML",
 		},
@@ -453,6 +491,45 @@ func TestAudit_Update(t *testing.T) {
 			assertField: "state",
 			assertValue: "OUTDATED",
 		},
+		{
+			name: "update to TO_BOOK state",
+			setup: func() string {
+				return factory.NewAudit(owner, frameworkID).
+					WithName("State Test").
+					Create()
+			},
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "state": "TO_BOOK"}
+			},
+			assertField: "state",
+			assertValue: "TO_BOOK",
+		},
+		{
+			name: "update to AUDIT_BOOKED state",
+			setup: func() string {
+				return factory.NewAudit(owner, frameworkID).
+					WithName("State Test").
+					Create()
+			},
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "state": "AUDIT_BOOKED"}
+			},
+			assertField: "state",
+			assertValue: "AUDIT_BOOKED",
+		},
+		{
+			name: "update firm",
+			setup: func() string {
+				return factory.NewAudit(owner, frameworkID).
+					WithName("Firm Test").
+					Create()
+			},
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "firm": "BSI"}
+			},
+			assertField: "firm",
+			assertValue: "BSI",
+		},
 	}
 
 	for _, tt := range tests {
@@ -465,6 +542,7 @@ func TestAudit_Update(t *testing.T) {
 						audit {
 							id
 							name
+							firm
 							state
 						}
 					}
@@ -476,6 +554,7 @@ func TestAudit_Update(t *testing.T) {
 					Audit struct {
 						ID    string `json:"id"`
 						Name  string `json:"name"`
+						Firm  string `json:"firm"`
 						State string `json:"state"`
 					} `json:"audit"`
 				} `json:"updateAudit"`
@@ -489,6 +568,8 @@ func TestAudit_Update(t *testing.T) {
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, audit.Name)
+			case "firm":
+				assert.Equal(t, tt.assertValue, audit.Firm)
 			case "state":
 				assert.Equal(t, tt.assertValue, audit.State)
 			}
@@ -522,6 +603,14 @@ func TestAudit_Update_Validation(t *testing.T) {
 			setup: func() string { return baseAuditID },
 			input: func(id string) map[string]any {
 				return map[string]any{"id": id, "name": "<script>alert('xss')</script>"}
+			},
+			wantErrorContains: "HTML",
+		},
+		{
+			name:  "firm with HTML tags",
+			setup: func() string { return baseAuditID },
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "firm": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
 		},

@@ -50,6 +50,7 @@ export async function execute(
 				... on Audit {
 					id
 					name
+					firm
 					state
 					validity {
 						start

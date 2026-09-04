@@ -40,6 +40,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
           node {
             id
             name
+            firm
             state
             validity {
               start
@@ -64,6 +65,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
 type audit struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
+	Firm     string `json:"firm"`
 	State    string `json:"state"`
 	Validity *struct {
 		Start *string `json:"start"`
@@ -209,6 +211,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				rows = append(rows, []string{
 					a.ID,
 					a.Name,
+					a.Firm,
 					a.State,
 					validFrom,
 					validUntil,
@@ -217,7 +220,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "STATE", "VALID FROM", "VALID UNTIL", "AUDIT START", "AUDIT END").Rows(rows...)
+			t := cmdutil.NewTable("ID", "NAME", "FIRM", "STATE", "VALID FROM", "VALID UNTIL", "AUDIT START", "AUDIT END").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

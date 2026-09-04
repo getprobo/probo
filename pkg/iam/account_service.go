@@ -188,18 +188,21 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 	)
 }
 
-func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
+func (s AccountService) VerifyEmail(ctx context.Context, token string) (*coredata.Identity, bool, error) {
 	payload, err := statelesstoken.ValidateToken[EmailConfirmationData](s.tokenSecret, TokenTypeEmailConfirmation, token)
 	if err != nil {
-		return NewInvalidTokenError()
+		return nil, false, NewInvalidTokenError()
 	}
 
-	return s.pg.WithTx(
+	var (
+		identity      = &coredata.Identity{}
+		newlyVerified bool
+	)
+
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			identity := &coredata.Identity{}
-
-			err := identity.LoadByID(ctx, tx, payload.Data.IdentityID)
+			err := identity.LoadByIDForUpdate(ctx, tx, payload.Data.IdentityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewIdentityNotFoundError(payload.Data.IdentityID)
@@ -213,7 +216,7 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
 			}
 
 			if identity.EmailAddressVerified {
-				return NewEmailAlreadyVerifiedError()
+				return nil
 			}
 
 			identity.EmailAddressVerified = true
@@ -224,9 +227,16 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
 				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
+			newlyVerified = true
+
 			return nil
 		},
 	)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return identity, newlyVerified, nil
 }
 
 func (s AccountService) ResendVerificationEmail(ctx context.Context, email mail.Addr) error {

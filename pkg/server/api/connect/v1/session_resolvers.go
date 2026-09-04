@@ -111,7 +111,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 
 // SignUp is the resolver for the signUp field.
 func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) (*types.SignUpPayload, error) {
-	identity, session, err := r.iam.AuthService.CreateIdentityWithPassword(
+	identity, err := r.iam.AuthService.CreateIdentityWithPassword(
 		ctx,
 		&iam.CreateIdentityWithPasswordRequest{
 			Email:    input.Email,
@@ -132,9 +132,6 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 
 		return nil, gqlutils.Internal(ctx)
 	}
-
-	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	r.sessionCookie.Set(w, session)
 
 	return &types.SignUpPayload{
 		Identity: types.NewIdentity(identity),
@@ -297,7 +294,7 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetP
 
 // VerifyEmail is the resolver for the verifyEmail field.
 func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEmailInput) (*types.VerifyEmailPayload, error) {
-	err := r.iam.AccountService.VerifyEmail(ctx, input.Token)
+	identity, newlyVerified, err := r.iam.AccountService.VerifyEmail(ctx, input.Token)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
@@ -307,10 +304,6 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		if _, ok := errors.AsType[*iam.ErrEmailAlreadyVerified](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
 		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -318,6 +311,36 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 		r.logger.ErrorCtx(ctx, "cannot verify email", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	if newlyVerified {
+		session := authn.SessionFromContext(ctx)
+
+		switch {
+		case session == nil:
+			session, err = r.iam.AuthService.OpenSessionWithPassword(ctx, identity.ID)
+			if err != nil {
+				r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+
+				return nil, gqlutils.Internal(ctx)
+			}
+		case session.IdentityID != identity.ID:
+			if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
+				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+
+				return nil, gqlutils.Internal(ctx)
+			}
+
+			session, err = r.iam.AuthService.OpenSessionWithPassword(ctx, identity.ID)
+			if err != nil {
+				r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+
+				return nil, gqlutils.Internal(ctx)
+			}
+		}
+
+		w := gqlutils.HTTPResponseWriterFromContext(ctx)
+		r.sessionCookie.Set(w, session)
 	}
 
 	return &types.VerifyEmailPayload{

@@ -543,9 +543,7 @@ func (c *Client) SignInWithMagicLink(email string) {
 	c.postConnectMagicLink(email, continueURL)
 
 	token := c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Connect to\"", email))
-	verifyURL := c.baseURL + "/api/connect/v1/magic-link/verify?token=" + url.QueryEscape(token)
-
-	resp := c.redirectHTTPResponse(c.httpClient, verifyURL)
+	resp := c.postConnectMagicLinkVerify(c.httpClient, token)
 	require.Equal(
 		c.T,
 		http.StatusFound,
@@ -740,9 +738,17 @@ func (c *Client) connectViaCIMD(email string) {
 	c.postConnectMagicLink(email, continueURL)
 
 	token := c.pollForLinkToken(fmt.Sprintf("to:%s", email))
-	verifyURL := c.baseURL + "/api/connect/v1/magic-link/verify?token=" + url.QueryEscape(token)
-
-	resumeAuthorizeURL := c.redirectLocation(c.proboHTTPClient, verifyURL)
+	verifyResp := c.postConnectMagicLinkVerify(c.proboHTTPClient, token)
+	require.Equal(
+		c.T,
+		http.StatusFound,
+		verifyResp.StatusCode,
+		"magic-link verify must redirect after opening a session",
+	)
+	resumeAuthorizeURL := resolveRedirectURL(
+		c.baseURL+"/api/connect/v1/magic-link/verify",
+		verifyResp.Header.Get("Location"),
+	)
 	require.Contains(c.T, resumeAuthorizeURL, "/api/connect/v1/oauth2/authorize")
 
 	authorizeResp := c.redirectHTTPResponse(c.proboHTTPClient, resumeAuthorizeURL)
@@ -797,6 +803,36 @@ func (c *Client) postConnectMagicLink(email, continueURL string) {
 	require.Equal(c.T, http.StatusNoContent, resp.StatusCode, "magic-link send must return 204")
 }
 
+func (c *Client) postConnectMagicLinkVerify(httpClient *http.Client, token string) *OAuth2HTTPResponse {
+	c.T.Helper()
+
+	body := url.Values{}
+	body.Set("token", token)
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		c.baseURL+"/api/connect/v1/magic-link/verify",
+		strings.NewReader(body.Encode()),
+	)
+	require.NoError(c.T, err)
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := noRedirectHTTPClient(httpClient).Do(req)
+	require.NoError(c.T, err, "magic-link verify request failed")
+
+	defer func() { _ = resp.Body.Close() }()
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(c.T, err)
+
+	return &OAuth2HTTPResponse{
+		StatusCode: resp.StatusCode,
+		Header:     resp.Header,
+		Body:       respBody,
+	}
+}
+
 func (c *Client) GetNoRedirect(rawURL string) *OAuth2HTTPResponse {
 	c.T.Helper()
 
@@ -821,22 +857,24 @@ func (c *Client) redirectLocation(client *http.Client, rawURL string) string {
 	return resolveRedirectURL(rawURL, location)
 }
 
-func (c *Client) redirectHTTPResponse(client *http.Client, rawURL string) *OAuth2HTTPResponse {
-	c.T.Helper()
-
-	noRedirectClient := &http.Client{
-		Jar:       client.Jar,
-		Timeout:   client.Timeout,
-		Transport: client.Transport,
+func noRedirectHTTPClient(httpClient *http.Client) *http.Client {
+	return &http.Client{
+		Jar:       httpClient.Jar,
+		Timeout:   httpClient.Timeout,
+		Transport: httpClient.Transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
+}
+
+func (c *Client) redirectHTTPResponse(client *http.Client, rawURL string) *OAuth2HTTPResponse {
+	c.T.Helper()
 
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
 	require.NoError(c.T, err)
 
-	resp, err := noRedirectClient.Do(req)
+	resp, err := noRedirectHTTPClient(client).Do(req)
 	require.NoError(c.T, err, "request to %s failed", rawURL)
 
 	defer func() { _ = resp.Body.Close() }()

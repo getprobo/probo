@@ -98,16 +98,6 @@ func (e ErrIdentityAlreadyExists) Error() string {
 	return fmt.Sprintf("identity %q already exists", e.EmailAddress.String())
 }
 
-type ErrEmailAlreadyVerified struct{ message string }
-
-func NewEmailAlreadyVerifiedError() error {
-	return &ErrEmailAlreadyVerified{"email already verified"}
-}
-
-func (e ErrEmailAlreadyVerified) Error() string {
-	return e.message
-}
-
 type ErrEmailNotVerified struct{ message string }
 
 func NewEmailNotVerifiedError() error {

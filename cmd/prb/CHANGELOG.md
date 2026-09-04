@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.225.0] - 2026-09-04
+
+### Added
+
+- `audit create` and `audit update` accept `--firm` to record the firm running the engagement; an empty value on update clears it
+- `audit` accepts the new `TO_BOOK` and `AUDIT_BOOKED` states, which sort ahead of `NOT_STARTED`
+
 ## [0.224.1] - 2026-09-03
 
 ### Fixed

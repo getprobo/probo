@@ -37,6 +37,7 @@ mutation($input: CreateAuditInput!) {
       node {
         id
         name
+        firm
         state
         validity {
           start
@@ -58,6 +59,7 @@ type createResponse struct {
 			Node struct {
 				ID       string `json:"id"`
 				Name     string `json:"name"`
+				Firm     string `json:"firm"`
 				State    string `json:"state"`
 				Validity *struct {
 					Start *string `json:"start"`
@@ -77,6 +79,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagOrg            string
 		flagFramework      string
 		flagName           string
+		flagFirm           string
 		flagState          string
 		flagValidFrom      string
 		flagValidUntil     string
@@ -134,6 +137,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					err := huh.NewSelect[string]().
 						Title("Audit state").
 						Options(
+							huh.NewOption("To Book", "TO_BOOK"),
+							huh.NewOption("Audit Booked", "AUDIT_BOOKED"),
 							huh.NewOption("Not Started", "NOT_STARTED"),
 							huh.NewOption("In Progress", "IN_PROGRESS"),
 							huh.NewOption("Completed", "COMPLETED"),
@@ -159,6 +164,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			if flagFramework != "" {
 				input["frameworkId"] = flagFramework
+			}
+
+			if flagFirm != "" {
+				input["firm"] = flagFirm
 			}
 
 			if flagState != "" {
@@ -219,7 +228,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagFramework, "framework", "", "Framework ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Audit name (required)")
-	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
+	cmd.Flags().StringVar(&flagFirm, "firm", "", "Audit firm")
+	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: TO_BOOK, AUDIT_BOOKED, NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
 	cmd.Flags().StringVar(&flagAuditStartDate, "audit-start-date", "", "Audit start date (e.g. 2026-03-01)")

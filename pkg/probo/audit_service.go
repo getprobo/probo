@@ -42,6 +42,7 @@ type (
 		OrganizationID gid.GID
 		FrameworkID    gid.GID
 		Name           *string
+		Firm           *string
 		ValidFrom      *time.Time
 		ValidUntil     *time.Time
 		AuditStartDate *time.Time
@@ -52,6 +53,7 @@ type (
 	UpdateAuditRequest struct {
 		ID             gid.GID
 		Name           **string
+		Firm           **string
 		ValidFrom      *time.Time
 		ValidUntil     *time.Time
 		AuditStartDate *time.Time
@@ -71,6 +73,7 @@ func (car *CreateAuditRequest) Validate() error {
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(car.Firm, "firm", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
 	v.Check(car.AuditEndDate, "audit_end_date", validator.After(car.AuditStartDate))
 	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
@@ -83,6 +86,7 @@ func (uar *UpdateAuditRequest) Validate() error {
 
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AuditEntityType))
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(uar.Firm, "firm", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
 	v.Check(uar.AuditEndDate, "audit_end_date", validator.After(uar.AuditStartDate))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
@@ -168,6 +172,7 @@ func (s *AuditService) Create(
 	audit := &coredata.Audit{
 		ID:             gid.New(scope.GetTenantID(), coredata.AuditEntityType),
 		Name:           req.Name,
+		Firm:           req.Firm,
 		OrganizationID: req.OrganizationID,
 		FrameworkID:    req.FrameworkID,
 		ValidFrom:      req.ValidFrom,
@@ -229,6 +234,10 @@ func (s *AuditService) Update(
 
 			if req.Name != nil {
 				audit.Name = *req.Name
+			}
+
+			if req.Firm != nil {
+				audit.Firm = *req.Firm
 			}
 
 			if req.ValidFrom != nil {

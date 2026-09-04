@@ -1302,6 +1302,8 @@
       "unknown": "Inconnu"
     },
     "auditState": {
+      "toBook": "À réserver",
+      "auditBooked": "Audit réservé",
       "notStarted": "Non commencé",
       "inProgress": "En cours",
       "completed": "Terminé",
@@ -1630,14 +1632,17 @@
   "activateAccountPage": {
     "pageTitle": "Activer le compte",
     "title": "Activation du compte",
+    "description": "Cliquez sur continuer pour activer votre compte.",
     "activating": "Activation de votre compte…",
     "messages": {
       "activated": "Compte activé avec succès."
     },
     "errors": {
-      "activationFailed": "Échec de l’activation"
+      "activationFailed": "Échec de l’activation",
+      "missingToken": "Veuillez utiliser le lien d’activation envoyé par e-mail"
     },
     "actions": {
+      "continue": "Continuer",
       "goBack": "Retour"
     }
   },
@@ -1733,7 +1738,8 @@
       "created": "Compte créé avec succès"
     },
     "errors": {
-      "creationFailed": "Échec de la création du mot de passe"
+      "creationFailed": "Échec de la création du mot de passe",
+      "missingToken": "Veuillez utiliser le lien de création de mot de passe envoyé par e-mail"
     },
     "fields": {
       "password": "Mot de passe"
@@ -1829,7 +1835,7 @@
     },
     "errors": {
       "resetFailed": "Échec de la réinitialisation",
-      "invalidToken": "Jeton de réinitialisation invalide ou manquant",
+      "invalidToken": "Veuillez utiliser le lien de réinitialisation envoyé par e-mail",
       "reset": "Échec de la réinitialisation du mot de passe"
     },
     "fields": {
@@ -1847,6 +1853,11 @@
     "title": "Inscription",
     "description": "Saisissez vos informations pour créer un compte",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "checkEmail": {
+      "title": "Vérifiez votre e-mail",
+      "description": "Nous avons envoyé un lien de confirmation à {{email}}.",
+      "resend": "Vous n’avez pas reçu l’e-mail ?"
+    },
     "messages": {
       "created": "Compte créé avec succès"
     },
@@ -1868,19 +1879,22 @@
       "backToLogin": "Retour à la connexion",
       "creating": "Création du compte...",
       "signUpWithEmail": "S’inscrire avec e-mail",
-      "logIn": "Connectez-vous ici"
+      "logIn": "Connectez-vous ici",
+      "resend": "Renvoyer l’e-mail de confirmation"
     }
   },
   "verifyEmailPage": {
     "pageTitle": "Confirmer l’e-mail",
     "title": "Confirmation de l’e-mail",
     "description": "Confirmez votre adresse e-mail pour finaliser votre inscription",
+    "continueDescription": "Cliquez sur continuer pour confirmer votre e-mail et vous connecter.",
     "messages": {
       "confirmed": "Votre e-mail a été confirmé avec succès",
       "confirmedWithExclamation": "Votre e-mail a été confirmé avec succès !"
     },
     "errors": {
-      "confirm": "Échec de la confirmation de l’e-mail"
+      "confirm": "Échec de la confirmation de l’e-mail",
+      "tokenRequired": "Veuillez saisir votre jeton de confirmation"
     },
     "fields": {
       "token": "Jeton de confirmation",
@@ -1891,6 +1905,7 @@
       "proceedToLogin": "Continuer vers la connexion",
       "confirming": "Confirmation...",
       "confirm": "Confirmer l’e-mail",
+      "continue": "Continuer",
       "backToLogin": "Retour à la connexion"
     }
   },
@@ -3461,6 +3476,8 @@
     },
     "deleteReportConfirmation": "Cette action supprimera définitivement le rapport d’audit « {{name}} ». Cette action est irréversible.",
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -3470,6 +3487,8 @@
     "fields": {
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
+      "firm": "Cabinet d’audit",
+      "firmPlaceholder": "Cabinet d’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
@@ -3512,6 +3531,8 @@
       "report": "Rapport"
     },
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -3550,6 +3571,8 @@
       "frameworkPlaceholder": "Sélectionner un référentiel",
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
+      "firm": "Cabinet d’audit",
+      "firmPlaceholder": "Cabinet d’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
@@ -3557,6 +3580,8 @@
       "auditEndDate": "Date de fin de l’audit"
     },
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -5954,6 +5979,12 @@
       "edit": "Modifier",
       "delete": "Supprimer"
     }
+  },
+  "magicLinkPage": {
+    "pageTitle": "Continuer la connexion",
+    "title": "Continuer la connexion",
+    "description": "Cliquez sur continuer pour terminer la connexion.",
+    "actions": { "continue": "Continuer" }
   },
   "magicLinkForm": {
     "errors": {

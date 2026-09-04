@@ -71,6 +71,12 @@ export const description: INodeProperties[] = [
 				description: 'The end date of the audit',
 			},
 			{
+				displayName: 'Audit Firm',
+				name: 'firm',
+				type: 'string',
+				default: '',
+			},
+			{
 				displayName: 'Audit Start Date',
 				name: 'auditStartDate',
 				type: 'dateTime',
@@ -90,6 +96,10 @@ export const description: INodeProperties[] = [
 				type: 'options',
 				options: [
 					{
+						name: 'Audit Booked',
+						value: 'AUDIT_BOOKED',
+					},
+					{
 						name: 'Completed',
 						value: 'COMPLETED',
 					},
@@ -108,6 +118,10 @@ export const description: INodeProperties[] = [
 					{
 						name: 'Rejected',
 						value: 'REJECTED',
+					},
+					{
+						name: 'To Book',
+						value: 'TO_BOOK',
 					},
 				],
 				default: 'NOT_STARTED',
@@ -139,6 +153,7 @@ export async function execute(
 	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
+		firm?: string;
 		state?: string;
 		validFrom?: string;
 		validUntil?: string;
@@ -153,6 +168,7 @@ export async function execute(
 					node {
 						id
 						name
+						firm
 						state
 						validity {
 							start
@@ -176,6 +192,7 @@ export async function execute(
 		frameworkId,
 	};
 	if (additionalFields.name) input.name = additionalFields.name;
+	if (additionalFields.firm) input.firm = additionalFields.firm;
 	if (additionalFields.state) input.state = additionalFields.state;
 	const validity = toPeriod(additionalFields.validFrom, additionalFields.validUntil);
 	if (validity) input.validity = validity;

@@ -6069,6 +6069,8 @@ components:
     AuditState:
       type: string
       enum:
+        - TO_BOOK
+        - AUDIT_BOOKED
         - NOT_STARTED
         - IN_PROGRESS
         - COMPLETED
@@ -6184,6 +6186,11 @@ components:
             - string
             - "null"
           description: Audit name
+        firm:
+          type:
+            - string
+            - "null"
+          description: Audit firm
         validity:
           $ref: "#/components/schemas/Period"
           description: Certificate validity period
@@ -6313,6 +6320,9 @@ components:
         name:
           type: string
           description: Audit name
+        firm:
+          type: string
+          description: Audit firm
         validity:
           $ref: "#/components/schemas/Period"
           description: Certificate validity period
@@ -6342,6 +6352,10 @@ components:
         name:
           type: ["string", "null"]
           description: Audit name
+          go.probo.inc/mcpgen/omittable: true
+        firm:
+          type: ["string", "null"]
+          description: Audit firm
           go.probo.inc/mcpgen/omittable: true
         validity:
           $ref: "#/components/schemas/Period"
@@ -12408,7 +12422,7 @@ components:
           description: Pattern description
         source:
           type: string
-          enum: [SCRIPT, PRE_EXISTING, EXTENSION]
+          enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           description: How the pattern was discovered
         excluded:
           type: boolean

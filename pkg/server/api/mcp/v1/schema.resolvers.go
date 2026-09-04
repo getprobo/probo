@@ -1533,6 +1533,7 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 		&probo.CreateAuditRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
+			Firm:           input.Firm,
 			ValidFrom:      validFrom,
 			ValidUntil:     validUntil,
 			AuditStartDate: auditStart,
@@ -1566,6 +1567,7 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		&probo.UpdateAuditRequest{
 			ID:             input.ID,
 			Name:           UnwrapOmittable(input.Name),
+			Firm:           UnwrapOmittable(input.Firm),
 			ValidFrom:      validFrom,
 			ValidUntil:     validUntil,
 			AuditStartDate: auditStart,

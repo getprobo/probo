@@ -19,6 +19,8 @@
 // SOFTWARE.
 
 import { UnAuthenticatedError } from "@probo/relay";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
@@ -29,8 +31,6 @@ import type { AssumePageMutation } from "#/__generated__/iam/AssumePageMutation.
 import type { AssumePageQuery } from "#/__generated__/iam/AssumePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
-
-import AuthLayout from "../auth/AuthLayout";
 
 const assumeMutation = graphql`
   mutation AssumePageMutation(
@@ -123,15 +123,15 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
   }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl, searchParams, viewer.ssoLoginURL]);
 
   return (
-    <AuthLayout>
-      <div className="space-y-6 w-full max-w-md mx-auto pt-8">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">{t("assumePage.title")}</h1>
-          <p className="text-txt-tertiary">
-            {t("assumePage.description")}
-          </p>
-        </div>
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("assumePage.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
+          {t("assumePage.description")}
+        </Text>
       </div>
-    </AuthLayout>
+    </div>
   );
 }

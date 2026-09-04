@@ -839,6 +839,8 @@
   "helpers": {
     "common": { "unknown": "Unknown" },
     "auditState": {
+      "toBook": "To book",
+      "auditBooked": "Audit booked",
       "notStarted": "Not Started",
       "inProgress": "In Progress",
       "completed": "Completed",
@@ -1108,10 +1110,11 @@
   "activateAccountPage": {
     "pageTitle": "Activate Account",
     "title": "Account Activation",
+    "description": "Click continue to activate your account.",
     "activating": "Activating your account…",
     "messages": { "activated": "Account activated successfully." },
-    "errors": { "activationFailed": "Activation failed" },
-    "actions": { "goBack": "Go back" }
+    "errors": { "activationFailed": "Activation failed", "missingToken": "Please use the activation link from your email" },
+    "actions": { "continue": "Continue", "goBack": "Go back" }
   },
   "consentPage": {
     "pageTitle": "Authorize Application",
@@ -1187,7 +1190,7 @@
     "description": "Set a password for your account, with at least 8 characters",
     "alreadyHaveAccount": "Already have an account?",
     "messages": { "created": "Account created successfully" },
-    "errors": { "creationFailed": "Password creation failed" },
+    "errors": { "creationFailed": "Password creation failed", "missingToken": "Please use the password setup link from your email" },
     "fields": { "password": "Password" },
     "actions": { "save": "Save", "logIn": "Log in here" }
   },
@@ -1229,7 +1232,7 @@
     "description": "Enter your new password to reset your account",
     "rememberPassword": "Remember your password?",
     "messages": { "reset": "Password reset successfully" },
-    "errors": { "resetFailed": "Reset failed", "invalidToken": "Invalid or missing reset token", "reset": "Password reset failed" },
+    "errors": { "resetFailed": "Reset failed", "invalidToken": "Please use the reset link from your email", "reset": "Password reset failed" },
     "fields": { "newPassword": "New Password", "confirmPassword": "Confirm Password" },
     "actions": { "resetting": "Resetting password...", "reset": "Reset password", "logIn": "Log in here" }
   },
@@ -1238,20 +1241,26 @@
     "title": "Sign up",
     "description": "Enter your information to create an account",
     "alreadyHaveAccount": "Already have an account?",
+    "checkEmail": {
+      "title": "Check your email",
+      "description": "We sent a confirmation link to {{email}}.",
+      "resend": "Didn't receive the email?"
+    },
     "messages": { "created": "Account created successfully" },
     "errors": { "failed": "Sign up failed" },
     "unavailable": { "title": "Registration unavailable", "description": "New account registration is currently disabled. Please contact your administrator or reach out to Probo for assistance." },
     "fields": { "fullName": "Full Name", "fullNamePlaceholder": "John Doe", "email": "Email", "emailPlaceholder": "name@example.com", "password": "Password" },
-    "actions": { "backToLogin": "Back to login", "creating": "Creating account...", "signUpWithEmail": "Sign up with email", "logIn": "Log in here" }
+    "actions": { "backToLogin": "Back to login", "creating": "Creating account...", "signUpWithEmail": "Sign up with email", "logIn": "Log in here", "resend": "Resend confirmation email" }
   },
   "verifyEmailPage": {
     "pageTitle": "Confirm Email",
     "title": "Email Confirmation",
     "description": "Confirm your email address to complete registration",
+    "continueDescription": "Click continue to confirm your email and sign in.",
     "messages": { "confirmed": "Your email has been confirmed successfully", "confirmedWithExclamation": "Your email has been confirmed successfully!" },
-    "errors": { "confirm": "Failed to confirm email" },
+    "errors": { "confirm": "Failed to confirm email", "tokenRequired": "Please enter your confirmation token" },
     "fields": { "token": "Confirmation Token", "tokenPlaceholder": "Enter your confirmation token", "tokenHelp": "The token has been automatically filled from the URL if available" },
-    "actions": { "proceedToLogin": "Proceed to Login", "confirming": "Confirming...", "confirm": "Confirm Email", "backToLogin": "Back to Login" }
+    "actions": { "proceedToLogin": "Proceed to Login", "confirming": "Confirming...", "confirm": "Confirm Email", "continue": "Continue", "backToLogin": "Back to Login" }
   },
   "passwordSignInPage": {
     "title": "Login with Email",
@@ -2082,8 +2091,8 @@
     "errors": { "update": "Failed to update audit" },
     "messages": { "success": "Success", "error": "Error", "updated": "Audit updated successfully" },
     "deleteReportConfirmation": "This will permanently delete the audit report \"{{name}}\". This action cannot be undone.",
-    "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
-    "fields": { "name": "Name", "namePlaceholder": "Audit name", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
+    "fields": { "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
     "actions": { "delete": "Delete", "update": "Update", "updating": "Updating...", "download": "Download" },
     "report": { "title": "Audit Report", "uploaded": "Uploaded {{date}}", "uploadDescription": "Upload the final audit report document (PDF recommended)", "dropzoneDescription": "Only PDF up to 25MB are allowed" }
   },
@@ -2096,7 +2105,7 @@
     "dropzoneOverlay": "Drop a PDF to create an audit with a report",
     "actions": { "addAudit": "Add audit", "delete": "Delete" },
     "columns": { "name": "Name", "framework": "Framework", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "report": "Report" },
-    "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
+    "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "row": { "untitled": "Untitled", "unknownFramework": "Unknown Framework", "notSet": "Not set", "uploaded": "Uploaded", "notUploaded": "Not uploaded" }
   },
   "createAuditDialog": {
@@ -2106,8 +2115,8 @@
     "errors": { "create": "Failed to create audit" },
     "fileSize": "{{value}} MB",
     "loading": "Loading...",
-    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "name": "Name", "namePlaceholder": "Audit name", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
-    "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
+    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "actions": { "create": "Create" }
   },
   "context": {
@@ -3110,6 +3119,12 @@
     "unnamed": "Unnamed contact",
     "emptyValue": "—",
     "actions": { "edit": "Edit", "delete": "Delete" }
+  },
+  "magicLinkPage": {
+    "pageTitle": "Continue sign-in",
+    "title": "Continue sign-in",
+    "description": "Click continue to finish signing in.",
+    "actions": { "continue": "Continue" }
   },
   "magicLinkForm": {
     "errors": { "send": "Cannot send magic link" },

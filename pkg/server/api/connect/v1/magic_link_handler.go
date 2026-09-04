@@ -23,6 +23,7 @@ package connect_v1
 import (
 	"errors"
 	"net/http"
+	"net/url"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -33,6 +34,8 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
+
+const magicLinkConfirmPath = "/auth/magic-link"
 
 type MagicLinkHandler struct {
 	iam           *iam.Service
@@ -103,7 +106,7 @@ func (h *MagicLinkHandler) SendHandler(w http.ResponseWriter, r *http.Request) {
 
 	req := &iam.SendMagicLinkRequest{
 		Email:            emailAddr,
-		URLPath:          "/api/connect/v1/magic-link/verify",
+		URLPath:          magicLinkConfirmPath,
 		MagicLinkBaseURL: &proboURL,
 		Continue:         &safeContinue,
 	}
@@ -122,10 +125,34 @@ func (h *MagicLinkHandler) SendHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// ConfirmRedirectHandler is GET /magic-link/verify. Scanners prefetch GET
+// URLs, so this must not consume the token.
+func (h *MagicLinkHandler) ConfirmRedirectHandler(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		h.redirectAuthError(w, r, authErrorMagicLinkInvalid, "")
+
+		return
+	}
+
+	redirectURL := url.URL{
+		Path:     magicLinkConfirmPath,
+		RawQuery: url.Values{"token": {token}}.Encode(),
+	}
+
+	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+}
+
 func (h *MagicLinkHandler) VerifyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	token := r.URL.Query().Get("token")
+	if err := r.ParseForm(); err != nil {
+		h.redirectAuthError(w, r, authErrorMagicLinkInvalid, "")
+
+		return
+	}
+
+	token := r.FormValue("token")
 	if token == "" {
 		h.redirectAuthError(w, r, authErrorMagicLinkInvalid, "")
 

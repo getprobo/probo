@@ -1302,6 +1302,8 @@
       "unknown": "Onbekend"
     },
     "auditState": {
+      "toBook": "Te boeken",
+      "auditBooked": "Audit geboekt",
       "notStarted": "Niet gestart",
       "inProgress": "In uitvoering",
       "completed": "Voltooid",
@@ -1630,14 +1632,17 @@
   "activateAccountPage": {
     "pageTitle": "Account activeren",
     "title": "Accountactivering",
+    "description": "Klik op doorgaan om uw account te activeren.",
     "activating": "Uw account wordt geactiveerd…",
     "messages": {
       "activated": "Account succesvol geactiveerd."
     },
     "errors": {
-      "activationFailed": "Activering mislukt"
+      "activationFailed": "Activering mislukt",
+      "missingToken": "Gebruik de activeringslink uit uw e-mail"
     },
     "actions": {
+      "continue": "Doorgaan",
       "goBack": "Terug"
     }
   },
@@ -1733,7 +1738,8 @@
       "created": "Account succesvol aangemaakt"
     },
     "errors": {
-      "creationFailed": "Aanmaken van wachtwoord mislukt"
+      "creationFailed": "Aanmaken van wachtwoord mislukt",
+      "missingToken": "Gebruik de wachtwoordinstellink uit uw e-mail"
     },
     "fields": {
       "password": "Wachtwoord"
@@ -1829,7 +1835,7 @@
     },
     "errors": {
       "resetFailed": "Reset mislukt",
-      "invalidToken": "Ongeldige of ontbrekende resettoken",
+      "invalidToken": "Gebruik de resetlink uit uw e-mail",
       "reset": "Opnieuw instellen van wachtwoord mislukt"
     },
     "fields": {
@@ -1847,6 +1853,11 @@
     "title": "Registreren",
     "description": "Voer uw gegevens in om een account aan te maken",
     "alreadyHaveAccount": "Heeft u al een account?",
+    "checkEmail": {
+      "title": "Controleer uw e-mail",
+      "description": "We hebben een bevestigingslink gestuurd naar {{email}}.",
+      "resend": "Geen e-mail ontvangen?"
+    },
     "messages": {
       "created": "Account succesvol aangemaakt"
     },
@@ -1868,19 +1879,22 @@
       "backToLogin": "Terug naar inloggen",
       "creating": "Account aanmaken...",
       "signUpWithEmail": "Registreren met e-mail",
-      "logIn": "Hier inloggen"
+      "logIn": "Hier inloggen",
+      "resend": "Bevestigingsmail opnieuw versturen"
     }
   },
   "verifyEmailPage": {
     "pageTitle": "E-mail bevestigen",
     "title": "E-mailbevestiging",
     "description": "Bevestig uw e-mailadres om de registratie te voltooien",
+    "continueDescription": "Klik op doorgaan om uw e-mail te bevestigen en in te loggen.",
     "messages": {
       "confirmed": "Uw e-mail is succesvol bevestigd",
       "confirmedWithExclamation": "Uw e-mail is succesvol bevestigd!"
     },
     "errors": {
-      "confirm": "Bevestigen van e-mail mislukt"
+      "confirm": "Bevestigen van e-mail mislukt",
+      "tokenRequired": "Voer uw bevestigingstoken in"
     },
     "fields": {
       "token": "Bevestigingstoken",
@@ -1891,6 +1905,7 @@
       "proceedToLogin": "Doorgaan naar inloggen",
       "confirming": "Bevestigen...",
       "confirm": "E-mail bevestigen",
+      "continue": "Doorgaan",
       "backToLogin": "Terug naar inloggen"
     }
   },
@@ -3461,6 +3476,8 @@
     },
     "deleteReportConfirmation": "Hiermee wordt het auditrapport \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "states": {
+      "to_book": "Te boeken",
+      "audit_booked": "Audit geboekt",
       "not_started": "Niet gestart",
       "in_progress": "In uitvoering",
       "completed": "Voltooid",
@@ -3470,6 +3487,8 @@
     "fields": {
       "name": "Naam",
       "namePlaceholder": "Auditnaam",
+      "firm": "Auditkantoor",
+      "firmPlaceholder": "Auditkantoor",
       "state": "Status",
       "validFrom": "Geldig vanaf",
       "validUntil": "Geldig tot",
@@ -3512,6 +3531,8 @@
       "report": "Rapport"
     },
     "states": {
+      "to_book": "Te boeken",
+      "audit_booked": "Audit geboekt",
       "not_started": "Niet gestart",
       "in_progress": "In uitvoering",
       "completed": "Voltooid",
@@ -3550,6 +3571,8 @@
       "frameworkPlaceholder": "Selecteer een framework",
       "name": "Naam",
       "namePlaceholder": "Auditnaam",
+      "firm": "Auditkantoor",
+      "firmPlaceholder": "Auditkantoor",
       "state": "Status",
       "validFrom": "Geldig vanaf",
       "validUntil": "Geldig tot",
@@ -3557,6 +3580,8 @@
       "auditEndDate": "Einddatum audit"
     },
     "states": {
+      "to_book": "Te boeken",
+      "audit_booked": "Audit geboekt",
       "not_started": "Niet gestart",
       "in_progress": "In uitvoering",
       "completed": "Voltooid",
@@ -5947,6 +5972,12 @@
       "edit": "Bewerken",
       "delete": "Verwijderen"
     }
+  },
+  "magicLinkPage": {
+    "pageTitle": "Doorgaan met inloggen",
+    "title": "Doorgaan met inloggen",
+    "description": "Klik op doorgaan om het inloggen te voltooien.",
+    "actions": { "continue": "Doorgaan" }
   },
   "magicLinkForm": {
     "errors": {
