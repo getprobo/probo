@@ -10120,10 +10120,53 @@ components:
         setup:
           $ref: "#/components/schemas/AWSConnectorSetup"
 
+    GCPConnectorSetup:
+      type: object
+      required:
+        - issuer
+        - audience
+        - subject
+        - suggested_service_account_name
+        - terraform_snippet
+      properties:
+        issuer:
+          type: string
+          description: Organization issuer URL
+        audience:
+          type: string
+          description: Token audience template
+        subject:
+          type: string
+          description: Token subject
+        suggested_service_account_name:
+          type: string
+          description: Default service account name
+        terraform_snippet:
+          type: string
+          description: Terraform module block with issuer, subject and service account name filled
+
+    GCPConnectorSetupMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    GCPConnectorSetupMCPOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/GCPConnectorSetup"
+
     WorkloadIdentityConnectorProvider:
       type: string
       enum:
         - AWS
+        - GCP
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConnectorProvider
       description: Connector provider that supports workload identity
 
@@ -10132,17 +10175,22 @@ components:
       required:
         - organization_id
         - provider
-        - aws_role_arn
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
-          description: Connector provider (AWS)
+          description: Connector provider (AWS or GCP)
         aws_role_arn:
           type: string
           description: IAM role ARN, including partition, account, and role name
+        gcp_workload_identity_provider:
+          type: string
+          description: Workload identity provider resource
+        gcp_service_account_email:
+          type: string
+          description: Service account email to impersonate
 
     CreateWorkloadIdentityConnectorMCPOutput:
       type: object
@@ -17741,9 +17789,21 @@ tools:
       $ref: "#/components/schemas/AWSConnectorSetupMCPInput"
     outputSchema:
       $ref: "#/components/schemas/AWSConnectorSetupMCPOutput"
+  - name: gcpConnectorSetup
+    title: GCP Connector Setup
+    description: Return issuer, subject, audience template and deploy artifacts for connecting a GCP project
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GCPConnectorSetupMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/GCPConnectorSetupMCPOutput"
   - name: createWorkloadIdentityConnector
     title: Create Workload Identity Connector
-    description: Create a workload-identity connector (AWS) and report whether the audit role can be assumed
+    description: Create a workload-identity connector (AWS or GCP) and report whether the audit identity can be assumed
     hints:
       readonly: false
       destructive: false

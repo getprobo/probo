@@ -7,12 +7,10 @@ package console_v1
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/log"
-	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
@@ -181,20 +179,9 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
 	}
 
-	if input.Provider != coredata.ConnectorProviderAWS {
-		return nil, gqlutils.Invalidf(ctx, "provider does not support workload identity")
-	}
-
-	settings, err := cloudaws.NewConnectorSettings(input.AWSRoleArn)
+	raw, err := r.workloadIdentitySettings(ctx, input)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
-	}
-
-	raw, err := json.Marshal(settings)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot marshal aws connector settings", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, err
 	}
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{

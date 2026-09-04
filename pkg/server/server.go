@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -106,6 +107,7 @@ type Config struct {
 	// identity federation issuer is disabled, in which case no /federation route exists.
 	IdentityFederationIssuer *identityfederation.Issuer
 	AWSConnectorInstall      cloudaws.ConnectorInstallConfig
+	GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 }
 
 type Server struct {
@@ -162,6 +164,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Logger:                   cfg.Logger.Named("api"),
 		IdentityFederationIssuer: cfg.IdentityFederationIssuer,
 		AWSConnectorInstall:      cfg.AWSConnectorInstall,
+		GCPConnectorInstall:      cfg.GCPConnectorInstall,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

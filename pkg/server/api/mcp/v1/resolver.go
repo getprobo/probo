@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
@@ -72,6 +73,7 @@ type Resolver struct {
 	baseURL             *baseurl.BaseURL
 	identityFederation  *identityfederation.Issuer
 	awsConnectorInstall cloudaws.ConnectorInstallConfig
+	gcpConnectorInstall cloudgcp.ConnectorInstallConfig
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {
