@@ -60,6 +60,7 @@ type OAuthClientBranding {
   name: String!
   logoUrl: String
   clientURL: String
+  isCompliancePortal: Boolean!
 }
 
 type OIDCProviderInfo {

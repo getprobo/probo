@@ -88,3 +88,56 @@ func TestClientBranding_InvalidClientID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, branding)
 }
+
+func TestClientBranding_CompliancePortalFlag(t *testing.T) {
+	t.Parallel()
+
+	const portalClientID = "https://portal.example.com/.well-known/oauth-client-metadata"
+	const thirdPartyClientID = "https://chatgpt.com/oauth/client.json"
+
+	t.Run(
+		"skip consent marks compliance portal",
+		func(t *testing.T) {
+			t.Parallel()
+
+			svc := NewService(
+				nil,
+				nil,
+				"",
+				log.NewLogger(),
+				WithCIMDAllow(
+					func(_ context.Context, clientIDURL string) (CIMDAllowance, error) {
+						if clientIDURL == portalClientID {
+							return CIMDAllowanceAllowedSkipConsent, nil
+						}
+
+						return CIMDAllowanceDenied, nil
+					},
+				),
+			)
+
+			assert.True(t, svc.isCompliancePortalClient(context.Background(), portalClientID))
+		},
+	)
+
+	t.Run(
+		"allowed cimd is not a compliance portal",
+		func(t *testing.T) {
+			t.Parallel()
+
+			svc := NewService(
+				nil,
+				nil,
+				"",
+				log.NewLogger(),
+				WithCIMDAllow(
+					func(_ context.Context, _ string) (CIMDAllowance, error) {
+						return CIMDAllowanceAllowed, nil
+					},
+				),
+			)
+
+			assert.False(t, svc.isCompliancePortalClient(context.Background(), thirdPartyClientID))
+		},
+	)
+}

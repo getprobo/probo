@@ -39,7 +39,7 @@ import { OIDCButton } from "./_components/OIDCButton";
 
 export const signInPageQuery = graphql`
   query SignInPageQuery($clientId: String) {
-    ...CreateAccountFooterFragment
+    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
     oidcProviders {
       ...OIDCButtonFragment
     }
@@ -47,6 +47,7 @@ export const signInPageQuery = graphql`
       name
       clientURL
       logoUrl
+      isCompliancePortal
     }
   }
 `;
@@ -122,13 +123,15 @@ export default function SignInPage(props: Props) {
           </>
         )}
 
-        <Text align="center" size={2} className="block">
-          <Link
-            to={{ pathname: "/auth/password-login", search: location.search }}
-          >
-            {t("signInPage.actions.usePassword")}
-          </Link>
-        </Text>
+        {!clientBranding?.isCompliancePortal && (
+          <Text align="center" size={2} className="block">
+            <Link
+              to={{ pathname: "/auth/password-login", search: location.search }}
+            >
+              {t("signInPage.actions.usePassword")}
+            </Link>
+          </Text>
+        )}
       </div>
 
       <CreateAccountFooter

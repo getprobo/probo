@@ -22,9 +22,10 @@ import (
 )
 
 type ClientBranding struct {
-	Name      string
-	ClientURL *string
-	LogoURL   *string
+	Name               string
+	ClientURL          *string
+	LogoURL            *string
+	IsCompliancePortal bool
 }
 
 func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*ClientBranding, error) {
@@ -41,7 +42,23 @@ func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*Clie
 		return nil, err
 	}
 
-	return ClientBrandingFromClient(client), nil
+	branding := ClientBrandingFromClient(client)
+	if branding == nil {
+		return nil, nil
+	}
+
+	branding.IsCompliancePortal = s.isCompliancePortalClient(ctx, clientIDRaw)
+
+	return branding, nil
+}
+
+func (s *Service) isCompliancePortalClient(ctx context.Context, clientIDRaw string) bool {
+	allowance, err := s.cimdAllowance(ctx, clientIDRaw)
+	if err != nil {
+		return false
+	}
+
+	return allowance.SkipsConsent()
 }
 
 func ClientBrandingFromClient(client *coredata.OAuth2Client) *ClientBranding {

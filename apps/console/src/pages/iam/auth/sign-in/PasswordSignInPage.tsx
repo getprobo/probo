@@ -36,6 +36,7 @@ import { graphql } from "relay-runtime";
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
 import type { PasswordSignInPageQuery } from "#/__generated__/iam/PasswordSignInPageQuery.graphql";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
+import { clientIdFromContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 
 import { CreateAccountFooter } from "./_components/CreateAccountFooter";
 
@@ -50,16 +51,18 @@ const signInMutation = graphql`
 `;
 
 const passwordSignInPageQuery = graphql`
-  query PasswordSignInPageQuery {
-    ...CreateAccountFooterFragment
+  query PasswordSignInPageQuery($clientId: String) {
+    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
   }
 `;
 
 function PasswordCreateAccountFooter() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const clientId = clientIdFromContinueUrl(searchParams.get("continue"));
   const data = useLazyLoadQuery<PasswordSignInPageQuery>(
     passwordSignInPageQuery,
-    {},
+    { clientId },
   );
 
   return (
