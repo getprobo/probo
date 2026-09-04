@@ -29,27 +29,13 @@ export type RiskNode = Pick<
   | "name"
   | "category"
   | "description"
-  | "treatment"
-  | "inherentLikelihood"
-  | "inherentImpact"
-  | "residualLikelihood"
-  | "residualImpact"
-  | "inherentRiskScore"
-  | "residualRiskScore"
   | "note"
-  | "owner"
 >;
 
 export const riskSchema = z.object({
   category: z.string().min(1, "Category is required"),
   name: z.string().min(1, "Name is required"),
   description: z.string().optional().nullable(),
-  ownerId: z.string().min(1, "Owner is required"),
-  treatment: z.enum(["AVOIDED", "MITIGATED", "TRANSFERRED", "ACCEPTED"]),
-  inherentLikelihood: z.coerce.number().min(1).max(5),
-  inherentImpact: z.coerce.number().min(1).max(5),
-  residualLikelihood: z.coerce.number().min(1).max(5),
-  residualImpact: z.coerce.number().min(1).max(5),
   note: z.string().optional(),
 });
 
@@ -59,15 +45,8 @@ export const useRiskForm = (risk?: RiskNode) => {
       ? {
           ...risk,
           description: risk.description ?? undefined,
-          ownerId: risk.owner?.id,
-          treatment: risk.treatment ?? undefined,
         }
-      : {
-          inherentLikelihood: 3,
-          inherentImpact: 3,
-          residualLikelihood: 3,
-          residualImpact: 3,
-        },
+      : undefined,
   });
 };
 

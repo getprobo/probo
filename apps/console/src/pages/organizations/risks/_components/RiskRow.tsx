@@ -24,7 +24,6 @@ import {
   DropdownItem,
   IconPencil,
   IconTrashCan,
-  SeverityBadge,
   Td,
   Tr,
   useConfirm,
@@ -45,13 +44,6 @@ const riskRowFragment = graphql`
     id
     name
     category
-    treatment
-    owner {
-      id
-      fullName
-    }
-    inherentRiskScore
-    residualRiskScore
     canUpdate: permission(action: "risk-management:risk:update")
     canDelete: permission(action: "risk-management:risk:delete")
     ...FormRiskDialog_risk
@@ -127,22 +119,6 @@ export function RiskRow(props: RiskRowProps) {
       <Tr to={riskUrl}>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>
-        <Td>
-          {risk.treatment
-            ? t(`riskRow.treatments.${risk.treatment.toLowerCase()}`)
-            : "—"}
-        </Td>
-        <Td>
-          {risk.inherentRiskScore != null
-            ? <SeverityBadge score={risk.inherentRiskScore} />
-            : "—"}
-        </Td>
-        <Td>
-          {risk.residualRiskScore != null
-            ? <SeverityBadge score={risk.residualRiskScore} />
-            : "—"}
-        </Td>
-        <Td>{risk.owner?.fullName || t("riskRow.unassigned")}</Td>
         {props.hasAnyAction && (
           <Td noLink className="text-end">
             <ActionDropdown>

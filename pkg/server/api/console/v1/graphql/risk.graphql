@@ -25,22 +25,6 @@ enum RiskOrderField
     NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldName")
     CATEGORY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCategory")
-    TREATMENT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldTreatment"
-        )
-    INHERENT_RISK_SCORE
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldInherentRiskScore"
-        )
-    RESIDUAL_RISK_SCORE
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldResidualRiskScore"
-        )
-    OWNER_FULL_NAME
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldOwnerFullName"
-        )
 }
 
 input RiskOrder
@@ -60,16 +44,8 @@ type Risk implements Node {
     name: String!
     description: String
     category: String!
-    treatment: RiskTreatment
-    inherentLikelihood: Int
-    inherentImpact: Int
-    inherentRiskScore: Int
-    residualLikelihood: Int
-    residualImpact: Int
-    residualRiskScore: Int
     note: String!
 
-    owner: Profile @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     measures(
@@ -187,12 +163,6 @@ input CreateRiskInput {
     name: String!
     description: String
     category: String!
-    ownerId: ID
-    treatment: RiskTreatment
-    inherentLikelihood: Int
-    inherentImpact: Int
-    residualLikelihood: Int
-    residualImpact: Int
     note: String
 }
 
@@ -201,12 +171,6 @@ input UpdateRiskInput {
     name: String
     description: String @goField(omittable: true)
     category: String
-    ownerId: ID @goField(omittable: true)
-    treatment: RiskTreatment
-    inherentLikelihood: Int
-    inherentImpact: Int
-    residualLikelihood: Int
-    residualImpact: Int
     note: String
 }
 

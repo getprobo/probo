@@ -727,12 +727,9 @@ func rbacVariables(
 		case "create":
 			return map[string]any{
 				"input": map[string]any{
-					"organizationId":     shared.orgID,
-					"name":               factory.SafeName("Risk"),
-					"category":           "SECURITY",
-					"treatment":          "MITIGATED",
-					"inherentLikelihood": 2,
-					"inherentImpact":     2,
+					"organizationId": shared.orgID,
+					"name":           factory.SafeName("Risk"),
+					"category":       "SECURITY",
 				},
 			}
 		case "update":

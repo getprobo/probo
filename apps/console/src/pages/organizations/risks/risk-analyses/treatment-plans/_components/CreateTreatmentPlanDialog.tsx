@@ -28,7 +28,7 @@ import {
   IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
-import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, Suspense, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useQueryLoader } from "react-relay";
@@ -42,7 +42,6 @@ import type { ScenarioLinkedRiskSelectQuery } from "#/__generated__/core/Scenari
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { MatrixSize } from "../../_components/matrixSize";
-import { type TreatmentPlanPrefillValues, usePrefillFromRisk } from "../_lib/usePrefillFromRisk";
 
 import { ScenarioLinkedRiskSelect, scenarioLinkedRiskSelectQuery } from "./ScenarioLinkedRiskSelect";
 import { TreatmentPlanDialogFields } from "./TreatmentPlanDialogFields";
@@ -101,7 +100,6 @@ export function CreateTreatmentPlanDialog({
   const { t } = useTranslation();
   const { riskAnalysisId } = useParams<{ riskAnalysisId: string }>();
   const dialogRef = useDialogRef();
-  const [open, setOpen] = useState(false);
   const [createTreatmentPlan, isCreating]
     = useMutation<CreateTreatmentPlanDialogCreateMutation>(createMutation);
   const [eligibleQueryRef, loadEligibleQuery]
@@ -123,13 +121,6 @@ export function CreateTreatmentPlanDialog({
   const residualDirty = Boolean(
     formState.dirtyFields.residualLikelihood || formState.dirtyFields.residualImpact,
   );
-  const dirtyFieldsRef = useRef(formState.dirtyFields);
-  const [prefilledRiskId, setPrefilledRiskId] = useState("");
-  const prefillPending = Boolean(riskId) && prefilledRiskId !== riskId;
-
-  useEffect(() => {
-    dirtyFieldsRef.current = formState.dirtyFields;
-  });
 
   useEffect(() => {
     resetField("treatment");
@@ -148,26 +139,6 @@ export function CreateTreatmentPlanDialog({
     setValue("residualLikelihood", inherentLikelihood);
     setValue("residualImpact", inherentImpact);
   }, [inherentImpact, inherentLikelihood, residualDirty, setValue]);
-
-  const onPrefill = useCallback(
-    (values: TreatmentPlanPrefillValues) => {
-      if (values.riskId !== riskId) {
-        return;
-      }
-
-      const dirty = dirtyFieldsRef.current;
-      if (!dirty.treatment) {
-        setValue("treatment", values.treatment);
-      }
-      if (!dirty.ownerId) {
-        setValue("ownerId", values.ownerId);
-      }
-      setPrefilledRiskId(values.riskId);
-    },
-    [riskId, setValue],
-  );
-
-  usePrefillFromRisk(riskId, open, onPrefill);
 
   const onSubmit = async (data: FormData) => {
     if (!data.riskId) {
@@ -239,7 +210,6 @@ export function CreateTreatmentPlanDialog({
         />
       )}
       onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
         if (!nextOpen) {
           return;
         }
@@ -252,7 +222,6 @@ export function CreateTreatmentPlanDialog({
         <TreatmentPlanDialogFields
           control={control}
           copy="createTreatmentPlanDialog"
-          disabled={prefillPending}
           matrixSize={matrixSize}
         >
           {lockedRiskId
@@ -289,7 +258,7 @@ export function CreateTreatmentPlanDialog({
               )}
         </TreatmentPlanDialogFields>
         <DialogFooter>
-          <Button type="submit" disabled={isCreating || prefillPending}>
+          <Button type="submit" disabled={isCreating}>
             {t("createTreatmentPlanDialog.actions.create")}
           </Button>
         </DialogFooter>

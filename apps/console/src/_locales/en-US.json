@@ -2402,7 +2402,7 @@
     "columns": { "name": "Risk name", "category": "Category", "treatment": "Treatment", "initialRisk": "Initial Risk", "residualRisk": "Residual Risk", "owner": "Owner" }
   },
   "riskOverviewPage": {
-    "emptyScores": "Scores are set on a treatment plan in a risk analysis.",
+    "emptyNote": "This risk has no note.",
     "fields": { "owner": "Owner", "treatment": "Treatment", "initialRiskScore": "Initial score", "residualRiskScore": "Residual score", "note": "Note" },
     "treatments": { "mitigated": "Mitigate", "accepted": "Accept", "transferred": "Transfer", "avoided": "Avoid", "unknown": "Unknown" }
   },

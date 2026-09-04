@@ -372,15 +372,11 @@ func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	risk, err := svc.Risks.Create(
 		ctx, scope,
 		probo.CreateRiskRequest{
-			OrganizationID:     input.OrganizationID,
-			Name:               input.Name,
-			Description:        input.Description,
-			Category:           input.Category,
-			Treatment:          &input.Treatment,
-			InherentLikelihood: &input.InherentLikelihood,
-			InherentImpact:     &input.InherentImpact,
-			ResidualLikelihood: input.ResidualLikelihood,
-			ResidualImpact:     input.ResidualImpact,
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Category:       input.Category,
+			Note:           input.Note,
 		},
 	)
 	if err != nil {
@@ -403,17 +399,11 @@ func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 	risk, err := svc.Risks.Update(
 		ctx, scope,
 		probo.UpdateRiskRequest{
-			ID:                 input.ID,
-			Name:               input.Name,
-			Description:        UnwrapOmittable(input.Description),
-			Category:           input.Category,
-			Treatment:          input.Treatment,
-			OwnerID:            UnwrapOmittable(input.OwnerID),
-			InherentLikelihood: input.InherentLikelihood,
-			InherentImpact:     input.InherentImpact,
-			ResidualLikelihood: input.ResidualLikelihood,
-			ResidualImpact:     input.ResidualImpact,
-			Note:               input.Note,
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: UnwrapOmittable(input.Description),
+			Category:    input.Category,
+			Note:        input.Note,
 		},
 	)
 	if err != nil {

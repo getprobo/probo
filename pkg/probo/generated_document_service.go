@@ -3850,46 +3850,13 @@ func (s *GeneratedDocumentService) buildRiskListDocumentData(
 		}, nil
 	}
 
-	ownerIDs := make([]gid.GID, 0, len(risks))
-	ownerIDSet := make(map[gid.GID]struct{})
-
-	for _, r := range risks {
-		if r.OwnerID != nil {
-			if _, ok := ownerIDSet[*r.OwnerID]; !ok {
-				ownerIDs = append(ownerIDs, *r.OwnerID)
-				ownerIDSet[*r.OwnerID] = struct{}{}
-			}
-		}
-	}
-
-	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
-
-	if len(ownerIDs) > 0 {
-		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return docgen.RiskListData{}, fmt.Errorf("cannot load profiles: %w", err)
-		}
-
-		for _, p := range profiles {
-			profileMap[p.ID] = p
-		}
-	}
-
 	rows := make([]docgen.RiskListRow, 0, len(risks))
 	for _, r := range risks {
 		rows = append(rows, docgen.RiskListRow{
-			Name:               r.Name,
-			Description:        derefStringOrNotSpecified(r.Description),
-			Category:           stringOrNotSpecified(r.Category),
-			Treatment:          formatRiskTreatment(r.Treatment),
-			Owner:              lookupProfileName(profileMap, r.OwnerID),
-			InherentLikelihood: formatScoreCell(r.InherentLikelihood, riskLikelihoodLabelPtr(r.InherentLikelihood)),
-			InherentImpact:     formatScoreCell(r.InherentImpact, riskImpactLabelPtr(r.InherentImpact)),
-			InherentRiskScore:  formatScoreCell(r.InherentRiskScore, riskSeverityLabelPtr(r.InherentRiskScore)),
-			ResidualLikelihood: formatScoreCell(r.ResidualLikelihood, riskLikelihoodLabelPtr(r.ResidualLikelihood)),
-			ResidualImpact:     formatScoreCell(r.ResidualImpact, riskImpactLabelPtr(r.ResidualImpact)),
-			ResidualRiskScore:  formatScoreCell(r.ResidualRiskScore, riskSeverityLabelPtr(r.ResidualRiskScore)),
-			Note:               stringOrNotSpecified(r.Note),
+			Name:        r.Name,
+			Description: derefStringOrNotSpecified(r.Description),
+			Category:    stringOrNotSpecified(r.Category),
+			Note:        stringOrNotSpecified(r.Note),
 		})
 	}
 
@@ -3900,102 +3867,6 @@ func (s *GeneratedDocumentService) buildRiskListDocumentData(
 		TotalRisks:       len(risks),
 		Rows:             rows,
 	}, nil
-}
-
-func formatScoreCell(value *int, label string) string {
-	if value == nil {
-		return label
-	}
-
-	return fmt.Sprintf("%d — %s", *value, label)
-}
-
-func riskLikelihoodLabelPtr(v *int) string {
-	if v == nil {
-		return "Not specified"
-	}
-
-	return riskLikelihoodLabel(*v)
-}
-
-func riskImpactLabelPtr(v *int) string {
-	if v == nil {
-		return "Not specified"
-	}
-
-	return riskImpactLabel(*v)
-}
-
-func riskSeverityLabelPtr(v *int) string {
-	if v == nil {
-		return "Not specified"
-	}
-
-	return riskSeverityLabel(*v)
-}
-
-func riskLikelihoodLabel(v int) string {
-	switch v {
-	case 1:
-		return "Improbable"
-	case 2:
-		return "Remote"
-	case 3:
-		return "Occasional"
-	case 4:
-		return "Probable"
-	case 5:
-		return "Frequent"
-	default:
-		return "Unknown"
-	}
-}
-
-func riskImpactLabel(v int) string {
-	switch v {
-	case 1:
-		return "Negligible"
-	case 2:
-		return "Low"
-	case 3:
-		return "Moderate"
-	case 4:
-		return "Significant"
-	case 5:
-		return "Catastrophic"
-	default:
-		return "Unknown"
-	}
-}
-
-func riskSeverityLabel(score int) string {
-	switch {
-	case score >= 15:
-		return "Critical"
-	case score >= 5:
-		return "High"
-	default:
-		return "Low"
-	}
-}
-
-func formatRiskTreatment(t *coredata.RiskTreatment) string {
-	if t == nil {
-		return "Not specified"
-	}
-
-	switch *t {
-	case coredata.RiskTreatmentMitigated:
-		return "Mitigated"
-	case coredata.RiskTreatmentAccepted:
-		return "Accepted"
-	case coredata.RiskTreatmentAvoided:
-		return "Avoided"
-	case coredata.RiskTreatmentTransferred:
-		return "Transferred"
-	default:
-		return stringOrNotSpecified(string(*t))
-	}
 }
 
 // publishOrRequestApproval finalises a freshly built generated document
