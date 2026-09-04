@@ -1,0 +1,67 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { Suspense, useEffect, useRef } from "react";
+import { useQueryLoader } from "react-relay";
+import { useParams, useSearchParams } from "react-router";
+
+import type { CookieBannerTCFPageQuery } from "#/__generated__/core/CookieBannerTCFPageQuery.graphql";
+
+import {
+  gvlVendorGraphqlFilter,
+  type GVLVendorMembership,
+  isGVLVendorMembershipOption,
+} from "./_lib/useGVLVendorFilters";
+import { CookieBannerTCFPage, cookieBannerTCFPageQuery } from "./CookieBannerTCFPage";
+import { CookieBannerTCFPageSkeleton } from "./CookieBannerTCFPageSkeleton";
+
+export default function CookieBannerTCFPageLoader() {
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
+  const [searchParams] = useSearchParams();
+  const rawMembership = searchParams.get("membership") ?? "";
+  const initialQuery = useRef(searchParams.get("q") ?? "");
+  const initialMembership = useRef<GVLVendorMembership>(
+    isGVLVendorMembershipOption(rawMembership) ? rawMembership : "all",
+  );
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannerTCFPageQuery>(cookieBannerTCFPageQuery);
+
+  useEffect(() => {
+    if (cookieBannerId) {
+      loadQuery({
+        cookieBannerId,
+        filter: gvlVendorGraphqlFilter(
+          initialQuery.current,
+          initialMembership.current,
+          cookieBannerId,
+        ),
+      });
+    }
+  }, [loadQuery, cookieBannerId]);
+
+  if (!queryRef) {
+    return <CookieBannerTCFPageSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<CookieBannerTCFPageSkeleton />}>
+      <CookieBannerTCFPage queryRef={queryRef} />
+    </Suspense>
+  );
+}

@@ -29,3 +29,7 @@ export function cookieBannersBasePath(organizationId: string): string {
 export function cookieBannerPath(organizationId: string, cookieBannerId: string): string {
   return `${cookieBannersBasePath(organizationId)}/${cookieBannerId}`;
 }
+
+export function cookieBannerTCFPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/tcf`;
+}

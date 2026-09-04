@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -666,6 +667,60 @@ func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]
 	}
 
 	return result, nil
+}
+
+// CommonGVLVendors is the resolver for the commonGVLVendors field.
+func (r *queryResolver) CommonGVLVendors(ctx context.Context, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CommonGVLVendorOrderBy, filter *types.CommonGVLVendorFilter) (*types.CommonGVLVendorConnection, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CommonGVLVendorOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	cdFilter, err := commonGVLVendorFilter(ctx, r, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	vendors, err := r.cookieBanner.ListCommonGVLVendors(ctx, cursor, cdFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list common gvl vendors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(vendors, cursor)
+
+	return types.NewCommonGVLVendorConnection(p, r, nil, cdFilter), nil
+}
+
+// CommonGVLCatalog is the resolver for the commonGVLCatalog field.
+func (r *queryResolver) CommonGVLCatalog(ctx context.Context) (*types.CommonGVLCatalog, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, err
+	}
+
+	catalog, err := r.cookieBanner.GetCommonGVLCatalog(ctx)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get common gvl catalog", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCommonGVLCatalog(catalog), nil
 }
 
 // AccessReviewDrivers is the resolver for the accessReviewDrivers field.

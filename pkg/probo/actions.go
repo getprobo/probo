@@ -369,6 +369,9 @@ const (
 	ActionCommonThirdPartyGet  = "core:common-third-party:get"
 	ActionCommonThirdPartyList = "core:common-third-party:list"
 
+	// CommonGVLVendor actions (global IAB GVL catalog, no organization scope).
+	ActionCommonGVLVendorList = "core:common-gvl-vendor:list"
+
 	// ElectronicSignature actions (tenant-scoped via the related document
 	// version signature / compliance portal access).
 	ActionElectronicSignatureGet = "core:electronic-signature:get"

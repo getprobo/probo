@@ -26,6 +26,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 export interface SelectedCookieBanner {
   id: string;
   name: string;
+  tcf: boolean;
 }
 
 interface UseSelectedCookieBanner {
@@ -49,7 +50,7 @@ export function useSelectedCookieBanner(): UseSelectedCookieBanner {
   const remember = useCallback((banner: SelectedCookieBanner) => {
     setByOrganization((previous) => {
       const current = previous[organizationId];
-      if (current?.id === banner.id && current.name === banner.name) {
+      if (current?.id === banner.id && current.name === banner.name && current.tcf === banner.tcf) {
         return previous;
       }
       return { ...previous, [organizationId]: banner };

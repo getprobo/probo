@@ -183,6 +183,18 @@ var CommonThirdPartyCatalogPolicy = policy.NewPolicy(
 	).WithSID("read-common-third-party-catalog"),
 ).WithDescription("Allows every authenticated user to read the global common third-party catalog")
 
+// CommonGVLVendorCatalogPolicy grants every authenticated identity
+// read access to the global IAB GVL vendor catalog. The catalog is
+// shared across all tenants and has no organization scoping, so the
+// allow has no condition.
+var CommonGVLVendorCatalogPolicy = policy.NewPolicy(
+	"probo:common-gvl-vendor-catalog",
+	"Probo Common GVL Vendor Catalog",
+	policy.Allow(
+		ActionCommonGVLVendorList,
+	).WithSID("read-common-gvl-vendor-catalog"),
+).WithDescription("Allows every authenticated user to read the global IAB GVL vendor catalog")
+
 // EmployeePolicy defines permissions for employee role.
 var EmployeePolicy = policy.NewPolicy(
 	"probo:employee",
@@ -270,5 +282,6 @@ func ProboPolicySet() *iam.PolicySet {
 		AddRolePolicy("EMPLOYEE", EmployeePolicy).
 		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", CompliancePortalManagerPolicy).
 		AddRolePolicy("COMPLIANCE_PORTAL_ACCESS_MANAGER", CompliancePortalAccessManagerPolicy).
-		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy)
+		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy).
+		AddIdentityScopedPolicy(CommonGVLVendorCatalogPolicy)
 }

@@ -132,6 +132,7 @@ type CookieBannerCapabilities
         model: "go.probo.inc/probo/pkg/coredata.CookieBannerCapabilities"
     ) {
     resourceReporting: Boolean!
+    tcf: Boolean! @goField(name: "TCF")
 }
 
 type CookieBanner implements Node {
@@ -160,6 +161,7 @@ type CookieBanner implements Node {
     translations: [CookieBannerTranslation!]! @goField(forceResolver: true)
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
+    publishedVersion: CookieBannerVersion @goField(forceResolver: true)
 
     policyDocument: Document @goField(forceResolver: true)
 
@@ -189,6 +191,14 @@ type CookieBanner implements Node {
     """
     linkedThirdParties: [TrackerPatternThirdPartyLink!]!
         @goField(forceResolver: true)
+
+    gvlVendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CommonGVLVendorOrder
+    ): CommonGVLVendorConnection @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -578,6 +588,8 @@ type CookieBannerVersion implements Node {
     version: Int!
     state: String!
     categories: [CookieBannerVersionCategory!]! @goField(forceResolver: true)
+    gvlVendorCount: Int! @goField(forceResolver: true)
+    gvlVendorIds: [Int!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 }
@@ -686,6 +698,12 @@ extend type Mutation {
     moveTrackerResourceToCategory(
         input: MoveTrackerResourceToCategoryInput!
     ): MoveTrackerResourceToCategoryPayload!
+    addCookieBannerGVLVendor(
+        input: AddCookieBannerGVLVendorInput!
+    ): AddCookieBannerGVLVendorPayload!
+    removeCookieBannerGVLVendor(
+        input: RemoveCookieBannerGVLVendorInput!
+    ): RemoveCookieBannerGVLVendorPayload!
 }
 
 input CreateCookieBannerInput {
@@ -904,5 +922,24 @@ type DeleteTrackerResourcePayload {
 
 type MoveTrackerResourceToCategoryPayload {
     trackerResource: TrackerResource!
+    cookieBanner: CookieBanner!
+}
+
+input AddCookieBannerGVLVendorInput {
+    cookieBannerId: ID!
+    iabVendorId: Int!
+}
+
+input RemoveCookieBannerGVLVendorInput {
+    cookieBannerId: ID!
+    iabVendorId: Int!
+}
+
+type AddCookieBannerGVLVendorPayload {
+    commonGVLVendor: CommonGVLVendor!
+    cookieBanner: CookieBanner!
+}
+
+type RemoveCookieBannerGVLVendorPayload {
     cookieBanner: CookieBanner!
 }

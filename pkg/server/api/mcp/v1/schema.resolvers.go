@@ -5683,7 +5683,18 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get cookie banner: %w", err)
 	}
 
-	return nil, types.GetCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	out := types.NewCookieBanner(banner)
+
+	published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
+	if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {
+		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+	}
+
+	if published != nil {
+		out.PublishedVersion = types.NewCookieBannerVersion(published)
+	}
+
+	return nil, types.GetCookieBannerOutput{CookieBanner: out}, nil
 }
 
 func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieBannerInput) (*mcp.CallToolResult, types.AddCookieBannerOutput, error) {
@@ -9534,5 +9545,158 @@ func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 
 	return nil, types.DeleteTaskCommentOutput{
 		DeletedTaskCommentID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListCommonGVLVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCommonGVLVendorsInput) (*mcp.CallToolResult, types.ListCommonGVLVendorsOutput, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.Authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, types.ListCommonGVLVendorsOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	})
+
+	var query *string
+	if input.Filter != nil {
+		query = input.Filter.Query
+	}
+
+	cdFilter := coredata.NewCommonGVLVendorFilter(query)
+
+	if input.Filter != nil && input.Filter.Membership != nil {
+		if input.Filter.CookieBannerID == nil {
+			return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("cookie_banner_id is required when filtering by membership")
+		}
+
+		if _, err := r.Authorize(ctx, *input.Filter.CookieBannerID, probo.ActionCookieBannerGet); err != nil {
+			return nil, types.ListCommonGVLVendorsOutput{}, err
+		}
+
+		cdFilter = cdFilter.WithMembership(input.Filter.CookieBannerID, input.Filter.Membership)
+	} else if input.Filter != nil && input.Filter.CookieBannerID != nil {
+		// cookie_banner_id only means anything alongside membership. Reject the
+		// lone value rather than silently dropping it and returning the
+		// unfiltered global catalog, which reads as a successful filter.
+		return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("membership is required when filtering by cookie_banner_id")
+	}
+
+	vendors, err := r.cookieBanner.ListCommonGVLVendors(ctx, cursor, cdFilter)
+	if err != nil {
+		return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("internal error")
+	}
+
+	p := page.NewPage(vendors, cursor)
+
+	return nil, types.NewListCommonGVLVendorsOutput(p), nil
+}
+
+func (r *Resolver) ListCookieBannerGVLVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerGVLVendorsInput) (*mcp.CallToolResult, types.ListCookieBannerGVLVendorsOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.ListCookieBannerGVLVendorsOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	})
+
+	vendors, err := r.cookieBanner.ListCookieBannerGVLVendors(ctx, scope, input.CookieBannerID, cursor)
+	if err != nil {
+		return nil, types.ListCookieBannerGVLVendorsOutput{}, fmt.Errorf("internal error")
+	}
+
+	p := page.NewPage(vendors, cursor)
+
+	return nil, types.NewListCookieBannerGVLVendorsOutput(p), nil
+}
+
+func (r *Resolver) AddCookieBannerGVLVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieBannerGVLVendorInput) (*mcp.CallToolResult, types.AddCookieBannerGVLVendorOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.AddCookieBannerGVLVendorOutput{}, err
+	}
+
+	vendor, err := r.cookieBanner.AddCookieBannerGVLVendor(ctx, scope, cookiebanner.AddCookieBannerGVLVendorRequest{
+		CookieBannerID: input.CookieBannerID,
+		IABVendorID:    input.IabVendorID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound), errors.Is(err, cookiebanner.ErrGVLVendorNotFound):
+			return nil, types.AddCookieBannerGVLVendorOutput{}, err
+		case errors.Is(err, cookiebanner.ErrGVLVendorDeleted), errors.Is(err, cookiebanner.ErrTCFNotEnabled):
+			return nil, types.AddCookieBannerGVLVendorOutput{}, err
+		default:
+			if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.AddCookieBannerGVLVendorOutput{}, err
+			}
+
+			return nil, types.AddCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.AddCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.AddCookieBannerGVLVendorOutput{
+		CommonGvlVendor: types.NewCommonGVLVendor(vendor),
+		CookieBanner:    types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) RemoveCookieBannerGVLVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveCookieBannerGVLVendorInput) (*mcp.CallToolResult, types.RemoveCookieBannerGVLVendorOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+	}
+
+	err = r.cookieBanner.RemoveCookieBannerGVLVendor(ctx, scope, cookiebanner.RemoveCookieBannerGVLVendorRequest{
+		CookieBannerID: input.CookieBannerID,
+		IABVendorID:    input.IabVendorID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+		default:
+			if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+			}
+
+			return nil, types.RemoveCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.RemoveCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.RemoveCookieBannerGVLVendorOutput{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) GetCommonGVLCatalogTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCommonGVLCatalogInput) (*mcp.CallToolResult, types.GetCommonGVLCatalogOutput, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.Authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, types.GetCommonGVLCatalogOutput{}, err
+	}
+
+	catalog, err := r.cookieBanner.GetCommonGVLCatalog(ctx)
+	if err != nil {
+		return nil, types.GetCommonGVLCatalogOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.GetCommonGVLCatalogOutput{
+		CommonGvlCatalog: types.NewCommonGVLCatalog(catalog),
 	}, nil
 }

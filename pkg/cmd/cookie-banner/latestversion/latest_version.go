@@ -38,6 +38,7 @@ query($id: ID!) {
         id
         version
         state
+        gvlVendorCount
         createdAt
         updatedAt
       }
@@ -47,11 +48,12 @@ query($id: ID!) {
 `
 
 type versionInfo struct {
-	ID        string `json:"id"`
-	Version   int    `json:"version"`
-	State     string `json:"state"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID             string `json:"id"`
+	Version        int    `json:"version"`
+	State          string `json:"state"`
+	GvlVendorCount int    `json:"gvlVendorCount"`
+	CreatedAt      string `json:"createdAt"`
+	UpdatedAt      string `json:"updatedAt"`
 }
 
 func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
@@ -110,9 +112,15 @@ func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			rows := [][]string{
-				{v.ID, strconv.Itoa(v.Version), v.State, cmdutil.FormatTime(v.CreatedAt)},
+				{
+					v.ID,
+					strconv.Itoa(v.Version),
+					v.State,
+					strconv.Itoa(v.GvlVendorCount),
+					cmdutil.FormatTime(v.CreatedAt),
+				},
 			}
-			t := cmdutil.NewTable("ID", "VERSION", "STATE", "CREATED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "VERSION", "STATE", "GVL VENDORS", "CREATED").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			return nil

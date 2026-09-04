@@ -60,6 +60,12 @@ export async function execute(
 					defaultLanguage
 					createdAt
 					updatedAt
+					publishedVersion {
+						id
+						version
+						state
+						gvlVendorCount
+					}
 				}
 			}
 		}

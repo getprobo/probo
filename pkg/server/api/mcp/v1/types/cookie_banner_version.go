@@ -26,11 +26,17 @@ import (
 )
 
 func NewCookieBannerVersion(v *coredata.CookieBannerVersion) *CookieBannerVersion {
+	count := 0
+	if snapshot, err := v.GetSnapshot(); err == nil {
+		count = len(snapshot.IABVendorIDs)
+	}
+
 	return &CookieBannerVersion{
 		ID:             v.ID,
 		CookieBannerID: v.CookieBannerID,
 		Version:        v.Version,
 		State:          CookieBannerVersionState(v.State),
+		GvlVendorCount: count,
 		CreatedAt:      v.CreatedAt,
 		UpdatedAt:      v.UpdatedAt,
 	}
