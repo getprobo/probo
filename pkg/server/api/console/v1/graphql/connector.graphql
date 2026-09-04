@@ -224,13 +224,22 @@ input ConnectorFilter {
 """
 Why a connector's credential is or is not usable right now.
 
-DISCONNECTED covers every reason the credential did not work — revoked,
-expired, a role Probo cannot assume, a provider outage — because the
-underlying failure wraps provider-controlled text and stays server-side.
+DISCONNECTED covers every reason the credential itself did not work —
+revoked, expired, a role Probo cannot assume, a provider outage — because
+the underlying failure wraps provider-controlled text and stays
+server-side. A credential the provider took before refusing the operation
+is NOT_AUTHORIZED instead: a different thing for the customer to fix.
 """
 enum ConnectorConnectionStatus {
     CONNECTED
     DISCONNECTED
+    """
+    NOT_AUTHORIZED means the provider accepted the credential and refused the
+    operation anyway — a plan that excludes the endpoint, a role without the
+    permission. Supplying another credential does not fix it, so it is kept
+    apart from DISCONNECTED.
+    """
+    NOT_AUTHORIZED
     RECONNECT_REQUIRED
 }
 
@@ -246,6 +255,16 @@ type Connector {
     it on a single connector, or on the one a mutation just returned.
     """
     connectionStatus: ConnectorConnectionStatus! @goField(forceResolver: true)
+    """
+    displayName is the provider's own name as it should be shown to a user
+    ("Google Workspace", not GOOGLE_WORKSPACE).
+    """
+    displayName: String! @goField(forceResolver: true)
+    """
+    documentationUrl is the public probo.com docs page for connecting this
+    provider as an access source, or null when no doc page exists yet.
+    """
+    documentationUrl: String @goField(forceResolver: true)
     createdAt: Datetime!
 }
 

@@ -21,6 +21,7 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -51,8 +52,9 @@ func langfuseRegistration() *Registration {
 		// BuildProbeURL derives the probe endpoint from the per-connection
 		// base URL (the host is regional/self-hosted, so a static ProbeURL
 		// cannot express it); the transport attaches the Basic credential
-		// and a dead key returns 401/403.
-		BuildProbeURL: buildLangfuseProbeURL,
+		// and a dead key returns 401/403, which ClassifyRejection tells apart.
+		BuildProbeURL:     buildLangfuseProbeURL,
+		ClassifyRejection: classifyLangfuseRejection,
 		//
 		// No NewNameResolver: the memberships endpoint carries no
 		// organization name, so the source keeps its generic name.
@@ -70,4 +72,19 @@ func langfuseRegistration() *Registration {
 			return drivers.NewLangfuseDriver(c, baseURL), nil
 		},
 	}
+}
+
+// langfuseOrganizationKeyRequired is how Langfuse refuses a key that
+// authenticates but is scoped to a project rather than to the organization.
+const langfuseOrganizationKeyRequired = "Organization-scoped API key required"
+
+// classifyLangfuseRejection tells Langfuse's two 403s apart. The memberships
+// endpoint checks the key's scope before the organization's plan, and a
+// customer whose plan lacks the admin-api entitlement never sees the
+// organization API-keys tab at all, so the common failure is a pasted project
+// key: a wrong credential, which the customer fixes by pasting the right one.
+// Everything else the endpoint refuses is the plan gate, which no credential
+// can satisfy.
+func classifyLangfuseRejection(body []byte) bool {
+	return !bytes.Contains(body, []byte(langfuseOrganizationKeyRequired))
 }

@@ -583,6 +583,8 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 		return types.AccessReviewSourceConnectionStatusConnected, nil
 	case types.ConnectorConnectionStatusReconnectRequired:
 		return types.AccessReviewSourceConnectionStatusReconnectRequired, nil
+	case types.ConnectorConnectionStatusNotAuthorized:
+		return types.AccessReviewSourceConnectionStatusNotAuthorized, nil
 	default:
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}

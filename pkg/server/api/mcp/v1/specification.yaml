@@ -10043,10 +10043,14 @@ components:
         - CONNECTED
         - DISCONNECTED
         - RECONNECT_REQUIRED
+        - NOT_AUTHORIZED
       description: >-
-        Whether the connector credential is usable right now. DISCONNECTED
-        covers every reason it did not work, because the underlying failure
-        wraps provider-controlled text and stays server-side.
+        Whether the connector credential is usable right now. NOT_AUTHORIZED
+        means the provider accepted the credential and refused the operation,
+        which the customer fixes on their plan or their roles rather than by
+        supplying another credential. DISCONNECTED covers every other reason it
+        did not work, because the underlying failure wraps provider-controlled
+        text and stays server-side.
 
     Connector:
       type: object

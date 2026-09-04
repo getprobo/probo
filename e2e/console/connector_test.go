@@ -199,12 +199,17 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
+	// displayName and documentationUrl are selected here and connectionStatus
+	// is not: the first two read the provider registration, while the third
+	// would probe Brex live from a test.
 	const query = `
 		mutation($input: CreateAPIKeyConnectorInput!) {
 			createAPIKeyConnector(input: $input) {
 				connector {
 					id
 					provider
+					displayName
+					documentationUrl
 				}
 			}
 		}
@@ -213,8 +218,10 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	var result struct {
 		CreateAPIKeyConnector struct {
 			Connector struct {
-				ID       string `json:"id"`
-				Provider string `json:"provider"`
+				ID               string  `json:"id"`
+				Provider         string  `json:"provider"`
+				DisplayName      string  `json:"displayName"`
+				DocumentationURL *string `json:"documentationUrl"`
 			} `json:"connector"`
 		} `json:"createAPIKeyConnector"`
 	}
@@ -231,6 +238,14 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	connector := result.CreateAPIKeyConnector.Connector
 	assert.NotEmpty(t, connector.ID)
 	assert.Equal(t, "BREX", connector.Provider)
+	// The name a user reads, which is the registration's and not the enum.
+	assert.Equal(t, "Brex", connector.DisplayName)
+	require.NotNil(t, connector.DocumentationURL)
+	assert.Equal(
+		t,
+		"https://www.probo.com/docs/product/access-review/brex",
+		*connector.DocumentationURL,
+	)
 }
 
 // TestCreateAPIKeyConnectorSentryMissingSlug asserts that creating a

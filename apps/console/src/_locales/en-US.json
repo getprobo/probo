@@ -1676,7 +1676,7 @@
     "actions": { "back": "Back", "create": "Create" }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV", "googleWorkspace": "Google Workspace", "microsoft365": "Microsoft 365", "linear": "Linear", "slack": "Slack", "metabase": "Metabase", "signoz": "SigNoz", "cursor": "Cursor", "github": "GitHub", "cloudflare": "Cloudflare", "authentik": "authentik" },
+    "sources": { "csv": "CSV" },
     "errors": { "delete": "Failed to delete access source", "configure": "Failed to configure source" },
     "messages": { "error": "Error", "success": "Success", "organizationUpdated": "Organization updated." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
@@ -1695,7 +1695,9 @@
         "reconnectTitle": "{{provider}} is disconnected",
         "credentialsTitle": "{{provider}} credentials are invalid",
         "reconnectDescription": "Reconnect this source to restore access to organizations.",
-        "credentialsDescription": "Probo cannot access organizations with the current credentials. Check this source's credentials and permissions."
+        "credentialsDescription": "Probo cannot read this source with the current credentials. Check the credentials and the permissions they carry on {{provider}}.",
+        "notAuthorizedTitle": "{{provider}} refused this request",
+        "notAuthorizedDescription": "{{provider}} accepted the credential but refused the request Probo made. Check the permissions this credential has on {{provider}}, and whether your plan includes the API Probo uses."
       }
     }
   },

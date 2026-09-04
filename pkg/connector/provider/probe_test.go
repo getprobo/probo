@@ -23,6 +23,7 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -399,13 +400,18 @@ func TestProbeRailway(t *testing.T) {
 		// a credential rejection: reporting a 502 that way would tell a
 		// customer to reconnect a working token.
 		wantCredentialRejected bool
+		// wantRefused holds Railway to the same reading of a 403 as
+		// every provider probed through doProbeRequest: the credential was
+		// taken and the operation refused.
+		wantRefused bool
 	}{
-		{"valid token", http.StatusOK, `{"data":{"me":{"id":"u-1"}}}`, false, false},
-		{"rejected token (200 + errors)", http.StatusOK, `{"errors":[{"message":"Not Authorized"}],"data":null}`, true, true},
-		{"null me", http.StatusOK, `{"data":{"me":null}}`, true, true},
-		{"unauthorized status", http.StatusUnauthorized, ``, true, true},
-		{"upstream outage", http.StatusBadGateway, `<html>502 Bad Gateway</html>`, true, false},
-		{"rate limited", http.StatusTooManyRequests, `{"errors":[{"message":"rate limited"}]}`, true, false},
+		{"valid token", http.StatusOK, `{"data":{"me":{"id":"u-1"}}}`, false, false, false},
+		{"rejected token (200 + errors)", http.StatusOK, `{"errors":[{"message":"Not Authorized"}],"data":null}`, true, true, false},
+		{"null me", http.StatusOK, `{"data":{"me":null}}`, true, true, false},
+		{"unauthorized status", http.StatusUnauthorized, ``, true, true, false},
+		{"forbidden status", http.StatusForbidden, ``, true, true, true},
+		{"upstream outage", http.StatusBadGateway, `<html>502 Bad Gateway</html>`, true, false, false},
+		{"rate limited", http.StatusTooManyRequests, `{"errors":[{"message":"rate limited"}]}`, true, false, false},
 	}
 
 	for _, tc := range cases {
@@ -438,8 +444,12 @@ func TestProbeRailway(t *testing.T) {
 
 			require.Error(t, err)
 
-			_, isCredentialRejected := errors.AsType[*CredentialRejectedError](err)
+			rejected, isCredentialRejected := errors.AsType[*CredentialRejectedError](err)
 			assert.Equal(t, tc.wantCredentialRejected, isCredentialRejected)
+
+			if isCredentialRejected {
+				assert.Equal(t, tc.wantRefused, rejected.OperationRefused)
+			}
 		})
 	}
 }
@@ -644,6 +654,218 @@ func TestDoProbeRequest_RejectsHTMLBody(t *testing.T) {
 			assert.Equal(t, tc.status, notAPI.StatusCode)
 		})
 	}
+}
+
+func TestDoProbeRequest_RefusalVerdict(t *testing.T) {
+	t.Parallel()
+
+	// The two rejections a customer fixes in different places: a credential
+	// the provider will not take at all, and one it takes before refusing the
+	// operation. An extra status a provider opts into is the former — it
+	// opted in precisely because the status is unambiguous there.
+	cases := []struct {
+		name        string
+		status      int
+		extraReject []int
+		wantRefused bool
+	}{
+		{name: "unauthorized status is the credential", status: http.StatusUnauthorized},
+		{name: "forbidden status is the authorization", status: http.StatusForbidden, wantRefused: true},
+		{
+			name:        "opted-in status stays the credential",
+			status:      http.StatusNotFound,
+			extraReject: []int{http.StatusNotFound},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: tc.status,
+					Body:       io.NopCloser(strings.NewReader(`{"error":"nope"}`)),
+					Header:     make(http.Header),
+				}, nil
+			})}
+
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+			require.NoError(t, err)
+
+			var rejected *CredentialRejectedError
+
+			require.ErrorAs(t, doProbeRequest(client, req, tc.extraReject...), &rejected)
+			assert.Equal(t, tc.status, rejected.StatusCode)
+			assert.Equal(t, tc.wantRefused, rejected.OperationRefused)
+
+			// Only a 403 is ever reclassified, so only a 403 pays to keep the
+			// provider's explanation.
+			if tc.status == http.StatusForbidden {
+				assert.Equal(t, `{"error":"nope"}`, string(rejected.body))
+			} else {
+				assert.Nil(t, rejected.body)
+			}
+		})
+	}
+
+	t.Run("a talkative provider is cut off at the limit", func(t *testing.T) {
+		t.Parallel()
+
+		// The hosts this reads from are customer-supplied for Langfuse,
+		// Metabase and SigNoz, so the body is bounded rather than trusted.
+		client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusForbidden,
+				Body:       io.NopCloser(strings.NewReader(strings.Repeat("a", rejectionBodyLimit*3))),
+				Header:     make(http.Header),
+			}, nil
+		})}
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+		require.NoError(t, err)
+
+		var rejected *CredentialRejectedError
+
+		require.ErrorAs(t, doProbeRequest(client, req), &rejected)
+		assert.Len(t, rejected.body, rejectionBodyLimit)
+	})
+}
+
+func TestClassifyRejection(t *testing.T) {
+	t.Parallel()
+
+	// The classifier only ever sees a 403, and its verdict replaces the one
+	// the status gave. Anything else — a 401, a failure that is not a
+	// rejection, a provider that registers no classifier — is left alone.
+	// Every case carries a body, so the assertion that classification drops it
+	// has something to drop, and a classifier can prove it was handed one.
+	const explanation = `{"error":"this feature is not available on your plan"}`
+
+	forbidden := func() *CredentialRejectedError {
+		return &CredentialRejectedError{
+			StatusCode:       http.StatusForbidden,
+			OperationRefused: true,
+			body:             []byte(explanation),
+		}
+	}
+
+	cases := []struct {
+		name           string
+		reg            *Registration
+		err            error
+		wantRefused    bool
+		wantClassified bool
+	}{
+		{
+			name:        "no classifier leaves the status verdict",
+			reg:         &Registration{},
+			err:         forbidden(),
+			wantRefused: true,
+		},
+		{
+			name:           "classifier can demote a forbidden to a bad credential",
+			reg:            &Registration{ClassifyRejection: func([]byte) bool { return false }},
+			err:            forbidden(),
+			wantRefused:    false,
+			wantClassified: true,
+		},
+		{
+			name: "classifier is not consulted on a 401",
+			reg:  &Registration{ClassifyRejection: func([]byte) bool { return true }},
+			err: &CredentialRejectedError{
+				StatusCode: http.StatusUnauthorized,
+				body:       []byte(explanation),
+			},
+			wantRefused: false,
+		},
+		{
+			name:           "a wrapped rejection is still refined",
+			reg:            &Registration{ClassifyRejection: func([]byte) bool { return false }},
+			err:            fmt.Errorf("probe: %w", forbidden()),
+			wantRefused:    false,
+			wantClassified: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var classified []byte
+
+			if inner := tc.reg.ClassifyRejection; inner != nil {
+				tc.reg.ClassifyRejection = func(body []byte) bool {
+					classified = body
+
+					return inner(body)
+				}
+			}
+
+			var rejected *CredentialRejectedError
+
+			require.ErrorAs(t, classifyRejection(tc.reg, tc.err), &rejected)
+			assert.Equal(t, tc.wantRefused, rejected.OperationRefused)
+			assert.Nil(t, rejected.body, "provider text must not outlive classification")
+
+			if tc.wantClassified {
+				assert.Equal(t, explanation, string(classified), "the classifier reads the provider's explanation")
+			} else {
+				assert.Nil(t, classified)
+			}
+		})
+	}
+
+	// Seven providers answer through a custom Probe closure, and that branch of
+	// ProbeConnection is the only other place a rejection carrying provider
+	// text can escape. Driven through the registry, not classifyRejection, so
+	// removing the call at either branch fails here.
+	t.Run("a custom Probe closure is classified too", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewRegistry()
+		require.NoError(t, r.Register(&Registration{
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			Probe: func(_ context.Context, httpClient *http.Client, _ *coredata.Connector, _ Endpoints) error {
+				req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+				if err != nil {
+					return err
+				}
+
+				return fmt.Errorf("slack probe: %w", doProbeRequest(httpClient, req))
+			},
+			ClassifyRejection: func([]byte) bool { return false },
+		}))
+
+		client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusForbidden,
+				Body:       io.NopCloser(strings.NewReader(`{"error":"go away"}`)),
+				Header:     make(http.Header),
+			}, nil
+		})}
+
+		err := r.ProbeConnection(
+			context.Background(),
+			client,
+			&coredata.Connector{Provider: coredata.ConnectorProviderSlack},
+		)
+
+		var rejected *CredentialRejectedError
+
+		require.ErrorAs(t, err, &rejected)
+		assert.False(t, rejected.OperationRefused, "the registration's classifier must reach a custom Probe's rejection")
+		assert.Nil(t, rejected.body, "provider text must not outlive classification")
+	})
+
+	t.Run("passes a non-rejection through untouched", func(t *testing.T) {
+		t.Parallel()
+
+		notAPI := &NotAnAPIEndpointError{StatusCode: http.StatusOK}
+		assert.Same(t, notAPI, classifyRejection(&Registration{}, notAPI))
+		assert.NoError(t, classifyRejection(&Registration{}, nil))
+	})
 }
 
 func TestDoProbeRequest_CredentialRejectionWinsOverMarkup(t *testing.T) {

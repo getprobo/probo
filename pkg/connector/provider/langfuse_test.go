@@ -23,6 +23,9 @@ package provider_test
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,6 +58,99 @@ func TestLangfuseRegistrationMetadata(t *testing.T) {
 	// Single-tenant API-key provider: no picker, no name resolver.
 	assert.Nil(t, reg.NewNameResolver, "langfuse must not wire a name resolver")
 	assert.Nil(t, reg.SetOrganizationSettings, "langfuse must not wire a picker store")
+	require.NotNil(t, reg.ClassifyRejection, "langfuse must tell its two 403s apart")
+}
+
+// langfuseRoundTripFunc answers a probe with a canned response.
+type langfuseRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f langfuseRoundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestLangfuseProbeClassifiesRejection(t *testing.T) {
+	t.Parallel()
+
+	// The bodies are Langfuse's own, from
+	// web/src/pages/api/public/organizations/memberships/index.ts. It checks
+	// the key's scope before the organization's plan, and a plan without the
+	// admin-api entitlement hides the organization API-keys tab altogether —
+	// so a customer who cannot reach the entitlement pastes a project key and
+	// gets the scope error, which is a credential they can still fix.
+	cases := []struct {
+		name         string
+		status       int
+		body         string
+		wantRejected bool
+		wantRefused  bool
+	}{
+		{
+			name:         "project key instead of organization key is a bad credential",
+			status:       http.StatusForbidden,
+			body:         `{"error":"Invalid API key. Organization-scoped API key required for this operation."}`,
+			wantRejected: true,
+		},
+		{
+			name:         "plan gate is a refused operation",
+			status:       http.StatusForbidden,
+			body:         `{"error":"This feature is not available on your current plan."}`,
+			wantRejected: true,
+			wantRefused:  true,
+		},
+		{
+			name:         "dead key is a bad credential",
+			status:       http.StatusUnauthorized,
+			body:         `{"error":"Invalid credentials. Confirm that you've configured the correct host."}`,
+			wantRejected: true,
+		},
+		{
+			name:   "a listable organization is connected",
+			status: http.StatusOK,
+			body:   `{"memberships":[]}`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := provider.NewBuiltinRegistry()
+
+			raw, err := json.Marshal(&coredata.LangfuseConnectorSettings{
+				BaseURL: "https://cloud.langfuse.com",
+			})
+			require.NoError(t, err)
+
+			client := &http.Client{Transport: langfuseRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+				assert.Equal(t, "/api/public/organizations/memberships", req.URL.Path)
+
+				return &http.Response{
+					StatusCode: tc.status,
+					Body:       io.NopCloser(strings.NewReader(tc.body)),
+					Header:     make(http.Header),
+				}, nil
+			})}
+
+			err = r.ProbeConnection(
+				context.Background(),
+				client,
+				&coredata.Connector{
+					Provider:    coredata.ConnectorProviderLangfuse,
+					RawSettings: raw,
+				},
+			)
+
+			if !tc.wantRejected {
+				require.NoError(t, err)
+
+				return
+			}
+
+			var rejected *provider.CredentialRejectedError
+
+			require.ErrorAs(t, err, &rejected)
+			assert.Equal(t, tc.status, rejected.StatusCode)
+			assert.Equal(t, tc.wantRefused, rejected.OperationRefused)
+		})
+	}
 }
 
 func TestLangfuseNewDriver(t *testing.T) {

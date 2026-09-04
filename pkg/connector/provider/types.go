@@ -152,6 +152,16 @@ type Registration struct {
 	// ProbeURL and BuildProbeURL when set. It receives the registration's
 	// resolved Endpoints for the same reason BuildProbeURL does.
 	Probe func(context.Context, *http.Client, *coredata.Connector, Endpoints) error
+	// ClassifyRejection refines a 403 by reading the provider's own
+	// explanation of it: it reports whether the provider accepted the
+	// credential and refused the operation (true, the customer fixes the plan
+	// or the permissions) or refused the credential itself (false, the
+	// customer fixes the key). Nil for a provider that does not explain
+	// itself, which leaves 403 meaning refused-operation.
+	//
+	// It receives the response body and must map it onto that one bit:
+	// provider text is never carried any further than this closure.
+	ClassifyRejection func(body []byte) bool
 
 	// Factory closures — wired by Stages 2 and 3.
 	// NewDriver and NewNameResolver receive the registration's resolved
