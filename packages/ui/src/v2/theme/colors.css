@@ -81,7 +81,7 @@
 @import "@radix-ui/colors/sand-dark-alpha.css";
 @import "@radix-ui/colors/black-alpha.css";
 
-/* Brand lime wash. Dark is the same hue at L=0.76 so it does not bloom. */
+/* Brand lime wash. Dark is the same hue at L=0.50 so it does not bloom. */
 :root,
 .light,
 .light-theme {
