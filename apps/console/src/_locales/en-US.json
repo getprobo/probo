@@ -1113,7 +1113,7 @@
     "description": "Click continue to activate your account.",
     "activating": "Activating your account…",
     "messages": { "activated": "Account activated successfully." },
-    "errors": { "activationFailed": "Activation failed" },
+    "errors": { "activationFailed": "Activation failed", "missingToken": "Please use the activation link from your email" },
     "actions": { "continue": "Continue", "goBack": "Go back" }
   },
   "consentPage": {
@@ -1190,7 +1190,7 @@
     "description": "Set a password for your account, with at least 8 characters",
     "alreadyHaveAccount": "Already have an account?",
     "messages": { "created": "Account created successfully" },
-    "errors": { "creationFailed": "Password creation failed" },
+    "errors": { "creationFailed": "Password creation failed", "missingToken": "Please use the password setup link from your email" },
     "fields": { "password": "Password" },
     "actions": { "save": "Save", "logIn": "Log in here" }
   },
@@ -1232,7 +1232,7 @@
     "description": "Enter your new password to reset your account",
     "rememberPassword": "Remember your password?",
     "messages": { "reset": "Password reset successfully" },
-    "errors": { "resetFailed": "Reset failed", "invalidToken": "Invalid or missing reset token", "reset": "Password reset failed" },
+    "errors": { "resetFailed": "Reset failed", "invalidToken": "Please use the reset link from your email", "reset": "Password reset failed" },
     "fields": { "newPassword": "New Password", "confirmPassword": "Confirm Password" },
     "actions": { "resetting": "Resetting password...", "reset": "Reset password", "logIn": "Log in here" }
   },
@@ -1258,7 +1258,7 @@
     "description": "Confirm your email address to complete registration",
     "continueDescription": "Click continue to confirm your email and sign in.",
     "messages": { "confirmed": "Your email has been confirmed successfully", "confirmedWithExclamation": "Your email has been confirmed successfully!" },
-    "errors": { "confirm": "Failed to confirm email" },
+    "errors": { "confirm": "Failed to confirm email", "tokenRequired": "Please enter your confirmation token" },
     "fields": { "token": "Confirmation Token", "tokenPlaceholder": "Enter your confirmation token", "tokenHelp": "The token has been automatically filled from the URL if available" },
     "actions": { "proceedToLogin": "Proceed to Login", "confirming": "Confirming...", "confirm": "Confirm Email", "continue": "Continue", "backToLogin": "Back to Login" }
   },

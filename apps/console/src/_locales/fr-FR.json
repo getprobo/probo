@@ -1638,7 +1638,8 @@
       "activated": "Compte activé avec succès."
     },
     "errors": {
-      "activationFailed": "Échec de l’activation"
+      "activationFailed": "Échec de l’activation",
+      "missingToken": "Veuillez utiliser le lien d’activation envoyé par e-mail"
     },
     "actions": {
       "continue": "Continuer",
@@ -1737,7 +1738,8 @@
       "created": "Compte créé avec succès"
     },
     "errors": {
-      "creationFailed": "Échec de la création du mot de passe"
+      "creationFailed": "Échec de la création du mot de passe",
+      "missingToken": "Veuillez utiliser le lien de création de mot de passe envoyé par e-mail"
     },
     "fields": {
       "password": "Mot de passe"
@@ -1833,7 +1835,7 @@
     },
     "errors": {
       "resetFailed": "Échec de la réinitialisation",
-      "invalidToken": "Jeton de réinitialisation invalide ou manquant",
+      "invalidToken": "Veuillez utiliser le lien de réinitialisation envoyé par e-mail",
       "reset": "Échec de la réinitialisation du mot de passe"
     },
     "fields": {
@@ -1891,7 +1893,8 @@
       "confirmedWithExclamation": "Votre e-mail a été confirmé avec succès !"
     },
     "errors": {
-      "confirm": "Échec de la confirmation de l’e-mail"
+      "confirm": "Échec de la confirmation de l’e-mail",
+      "tokenRequired": "Veuillez saisir votre jeton de confirmation"
     },
     "fields": {
       "token": "Jeton de confirmation",

@@ -61,7 +61,7 @@ export default function VerifyEmailPage() {
     if (token === "") {
       toast({
         title: t("common.error"),
-        description: t("verifyEmailPage.fields.token"),
+        description: t("verifyEmailPage.errors.tokenRequired"),
         variant: "error",
       });
       return;

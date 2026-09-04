@@ -1638,7 +1638,8 @@
       "activated": "Account succesvol geactiveerd."
     },
     "errors": {
-      "activationFailed": "Activering mislukt"
+      "activationFailed": "Activering mislukt",
+      "missingToken": "Gebruik de activeringslink uit uw e-mail"
     },
     "actions": {
       "continue": "Doorgaan",
@@ -1737,7 +1738,8 @@
       "created": "Account succesvol aangemaakt"
     },
     "errors": {
-      "creationFailed": "Aanmaken van wachtwoord mislukt"
+      "creationFailed": "Aanmaken van wachtwoord mislukt",
+      "missingToken": "Gebruik de wachtwoordinstellink uit uw e-mail"
     },
     "fields": {
       "password": "Wachtwoord"
@@ -1833,7 +1835,7 @@
     },
     "errors": {
       "resetFailed": "Reset mislukt",
-      "invalidToken": "Ongeldige of ontbrekende resettoken",
+      "invalidToken": "Gebruik de resetlink uit uw e-mail",
       "reset": "Opnieuw instellen van wachtwoord mislukt"
     },
     "fields": {
@@ -1891,7 +1893,8 @@
       "confirmedWithExclamation": "Uw e-mail is succesvol bevestigd!"
     },
     "errors": {
-      "confirm": "Bevestigen van e-mail mislukt"
+      "confirm": "Bevestigen van e-mail mislukt",
+      "tokenRequired": "Voer uw bevestigingstoken in"
     },
     "fields": {
       "token": "Bevestigingstoken",

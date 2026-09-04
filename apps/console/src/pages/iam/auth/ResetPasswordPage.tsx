@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get("token")?.trim() ?? "";
 
   usePageTitle(t("resetPasswordPage.pageTitle"));
 
@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
   );
 
   const onSubmit = (password: string) => {
-    if (!token) {
+    if (token === "") {
       toast({
         title: t("resetPasswordPage.errors.resetFailed"),
         description: t("resetPasswordPage.errors.invalidToken"),

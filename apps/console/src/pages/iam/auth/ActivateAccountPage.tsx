@@ -59,7 +59,16 @@ export default function ActivateAccountPage() {
   const [activateAccount, isActivating] = useMutation<ActivateAccountPageMutation>(activateAccountMutation);
 
   const handleActivateAccount = useCallback(() => {
-    if (submittedRef.current || token === "") {
+    if (submittedRef.current) {
+      return;
+    }
+
+    if (token === "") {
+      toast({
+        title: t("activateAccountPage.errors.activationFailed"),
+        description: t("activateAccountPage.errors.missingToken"),
+        variant: "error",
+      });
       return;
     }
 
@@ -161,7 +170,6 @@ export default function ActivateAccountPage() {
         size={3}
         className="w-full"
         loading={isActivating}
-        disabled={token === ""}
         onClick={handleActivateAccount}
       >
         {t("activateAccountPage.actions.continue")}

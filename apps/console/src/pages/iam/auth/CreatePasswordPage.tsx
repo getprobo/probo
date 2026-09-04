@@ -52,13 +52,23 @@ export default function CreatePasswordPage() {
   usePageTitle(t("createPasswordPage.pageTitle"));
 
   const [createPassword, isCreatingPassword] = useMutation<CreatePasswordPageMutation>(createPasswordMutation);
+  const token = searchParams.get("token")?.trim() ?? "";
 
   const onSubmit = (password: string) => {
+    if (token === "") {
+      toast({
+        title: t("createPasswordPage.errors.creationFailed"),
+        description: t("createPasswordPage.errors.missingToken"),
+        variant: "error",
+      });
+      return;
+    }
+
     createPassword({
       variables: {
         input: {
           password,
-          token: searchParams.get("token") ?? "",
+          token,
         },
       },
       onCompleted: (_, e) => {
