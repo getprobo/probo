@@ -89,6 +89,10 @@ const routes = [
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
       },
       {
+        path: "magic-link",
+        Component: lazy(() => import("./pages/iam/auth/MagicLinkPage")),
+      },
+      {
         path: "resend-verification-email",
         Component: lazy(
           () => import("./pages/iam/auth/ResendVerificationEmailPage"),

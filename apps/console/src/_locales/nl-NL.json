@@ -1632,6 +1632,7 @@
   "activateAccountPage": {
     "pageTitle": "Account activeren",
     "title": "Accountactivering",
+    "description": "Klik op doorgaan om uw account te activeren.",
     "activating": "Uw account wordt geactiveerd…",
     "messages": {
       "activated": "Account succesvol geactiveerd."
@@ -1640,6 +1641,7 @@
       "activationFailed": "Activering mislukt"
     },
     "actions": {
+      "continue": "Doorgaan",
       "goBack": "Terug"
     }
   },
@@ -5959,6 +5961,12 @@
       "edit": "Bewerken",
       "delete": "Verwijderen"
     }
+  },
+  "magicLinkPage": {
+    "pageTitle": "Doorgaan met inloggen",
+    "title": "Doorgaan met inloggen",
+    "description": "Klik op doorgaan om het inloggen te voltooien.",
+    "actions": { "continue": "Doorgaan" }
   },
   "magicLinkForm": {
     "errors": {

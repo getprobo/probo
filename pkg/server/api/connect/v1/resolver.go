@@ -137,7 +137,8 @@ func NewMux(
 	router.Get("/oidc/{provider}/callback", oidcHandler.CallbackHandler)
 
 	r.Post("/magic-link/send", magicLinkHandler.SendHandler)
-	r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)
+	r.Get("/magic-link/verify", magicLinkHandler.ConfirmRedirectHandler)
+	r.Post("/magic-link/verify", magicLinkHandler.VerifyHandler)
 
 	// SCIM 2.0 endpoints - these use their own bearer token authentication
 	scimServer := NewSCIMServer(scimHandler)

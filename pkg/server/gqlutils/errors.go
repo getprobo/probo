@@ -106,6 +106,16 @@ func AccountAlreadyActivated(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
+func EmailAlreadyVerified(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "EMAIL_ALREADY_VERIFIED",
+		},
+	}
+}
+
 // MembershipRequired reports that the identity is authenticated but belongs to
 // no organization on an instance where signup is disabled. It is distinct from
 // FORBIDDEN so the frontend can offer a sign-out screen instead of rendering a

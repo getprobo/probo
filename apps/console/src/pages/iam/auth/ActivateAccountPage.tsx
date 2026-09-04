@@ -21,11 +21,11 @@
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Link/Link";
-import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { useNavigate, useSearchParams } from "react-router";
@@ -50,15 +50,20 @@ export default function ActivateAccountPage() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const submittedRef = useRef<boolean>(false);
+  const submittedRef = useRef(false);
   const safeContinueUrl = useSafeContinueUrl();
+  const token = searchParams.get("token")?.trim() ?? "";
 
   usePageTitle(t("activateAccountPage.pageTitle"));
 
-  const [activateAccount] = useMutation<ActivateAccountPageMutation>(activateAccountMutation);
+  const [activateAccount, isActivating] = useMutation<ActivateAccountPageMutation>(activateAccountMutation);
 
-  const handleActivateAccount = useCallback((token: string) => {
-    if (submittedRef.current) return;
+  const handleActivateAccount = useCallback(() => {
+    if (submittedRef.current || token === "") {
+      return;
+    }
+
+    submittedRef.current = true;
 
     activateAccount({
       variables: {
@@ -75,6 +80,8 @@ export default function ActivateAccountPage() {
               return;
             }
           }
+
+          submittedRef.current = false;
           toast({
             title: t("activateAccountPage.errors.activationFailed"),
             description: formatError(t("activateAccountPage.errors.activationFailed"), errors),
@@ -126,6 +133,7 @@ export default function ActivateAccountPage() {
         }, { replace: true });
       },
       onError: (e) => {
+        submittedRef.current = false;
         toast({
           title: t("activateAccountPage.errors.activationFailed"),
           description: e.message,
@@ -133,29 +141,31 @@ export default function ActivateAccountPage() {
         });
       },
     });
-  }, [t, toast, activateAccount, navigate, safeContinueUrl]);
-
-  useEffect(() => {
-    const token = searchParams.get("token");
-    if (!submittedRef.current && token) {
-      void handleActivateAccount(token.trim());
-      submittedRef.current = true;
-    }
-  }, [handleActivateAccount, searchParams]);
+  }, [t, toast, activateAccount, navigate, safeContinueUrl, token]);
 
   return (
     <div className="flex w-full flex-col gap-8">
-      <div className="flex flex-col items-center gap-4">
-        <Spinner size={3} aria-label={t("activateAccountPage.activating")} />
-        <div className="flex flex-col gap-1">
-          <Heading level={1} size={4} weight="medium" align="center" highContrast>
-            {t("activateAccountPage.title")}
-          </Heading>
-          <Text size={2} align="center" className="block">
-            {t("activateAccountPage.activating")}
-          </Text>
-        </div>
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("activateAccountPage.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
+          {t("activateAccountPage.description")}
+        </Text>
       </div>
+      <Button
+        type="button"
+        variant="solid"
+        color="neutral"
+        highContrast
+        size={3}
+        className="w-full"
+        loading={isActivating}
+        disabled={token === ""}
+        onClick={handleActivateAccount}
+      >
+        {t("activateAccountPage.actions.continue")}
+      </Button>
       <Text align="center" size={2} className="block">
         <Link to="/auth/login">
           {t("activateAccountPage.actions.goBack")}

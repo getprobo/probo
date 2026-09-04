@@ -1632,6 +1632,7 @@
   "activateAccountPage": {
     "pageTitle": "Activer le compte",
     "title": "Activation du compte",
+    "description": "Cliquez sur continuer pour activer votre compte.",
     "activating": "Activation de votre compte…",
     "messages": {
       "activated": "Compte activé avec succès."
@@ -1640,6 +1641,7 @@
       "activationFailed": "Échec de l’activation"
     },
     "actions": {
+      "continue": "Continuer",
       "goBack": "Retour"
     }
   },
@@ -5966,6 +5968,12 @@
       "edit": "Modifier",
       "delete": "Supprimer"
     }
+  },
+  "magicLinkPage": {
+    "pageTitle": "Continuer la connexion",
+    "title": "Continuer la connexion",
+    "description": "Cliquez sur continuer pour terminer la connexion.",
+    "actions": { "continue": "Continuer" }
   },
   "magicLinkForm": {
     "errors": {

@@ -20,16 +20,17 @@
 
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
-import { formatError } from "@probo/helpers";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { useSearchParams } from "react-router";
@@ -49,15 +50,18 @@ export default function VerifyEmailPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const queryToken = searchParams.get("token")?.trim() ?? "";
+  const autoStartedRef = useRef(false);
 
   usePageTitle(t("verifyEmailPage.pageTitle"));
 
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
 
   const [verifyEmail, isVerifying]
     = useMutation<VerifyEmailPageMutation>(verifyEmailMutation);
 
-  const handleSubmit = (token: string) => {
+  const handleSubmit = useCallback((token: string) => {
     verifyEmail({
       variables: {
         input: {
@@ -65,7 +69,8 @@ export default function VerifyEmailPage() {
         },
       },
       onCompleted: (_, errors) => {
-        if (errors) {
+        if (errors && !errors.some(error => (error as GraphQLError).extensions?.code === "EMAIL_ALREADY_VERIFIED")) {
+          setHasFailed(true);
           toast({
             title: t("common.error"), description: formatError(t("verifyEmailPage.errors.confirm"), errors),
             variant: "error",
@@ -80,13 +85,23 @@ export default function VerifyEmailPage() {
         });
       },
       onError: (err) => {
+        setHasFailed(true);
         toast({
           title: t("common.error"), description: err.message || t("verifyEmailPage.errors.confirm"),
           variant: "error",
         });
       },
     });
-  };
+  }, [t, toast, verifyEmail]);
+
+  useEffect(() => {
+    if (queryToken === "" || autoStartedRef.current) {
+      return;
+    }
+
+    autoStartedRef.current = true;
+    handleSubmit(queryToken);
+  }, [handleSubmit, queryToken]);
 
   return (
     <div className="flex w-full flex-col gap-8">
@@ -117,44 +132,52 @@ export default function VerifyEmailPage() {
               </ButtonLink>
             </div>
           )
-        : (
-            <Form
-              className="flex flex-col gap-5"
-              onFormSubmit={(values) => {
-                handleSubmit(String(values.token ?? ""));
-              }}
-            >
-              <Field.Root name="token" className="flex flex-col gap-1.5">
-                <Field.Label className="text-1 font-medium text-sand-12">
-                  {t("verifyEmailPage.fields.token")}
-                </Field.Label>
-                <TextField
-                  type="text"
-                  name="token"
-                  required
-                  defaultValue={searchParams.get("token") ?? ""}
-                  placeholder={t("verifyEmailPage.fields.tokenPlaceholder")}
-                  disabled={isVerifying}
-                />
-                <Field.Description className="text-1 text-sand-11">
-                  {t("verifyEmailPage.fields.tokenHelp")}
-                </Field.Description>
-                <Field.Error className="text-1 text-red-11" />
-              </Field.Root>
-
-              <Button
-                type="submit"
-                variant="solid"
-                color="neutral"
-                highContrast
-                size={3}
-                className="w-full"
-                loading={isVerifying}
+        : queryToken !== "" && !hasFailed
+          ? (
+              <div className="flex flex-col items-center gap-4">
+                <Spinner size={3} aria-label={t("verifyEmailPage.actions.confirming")} />
+                <Text size={2} align="center" className="block">
+                  {t("verifyEmailPage.actions.confirming")}
+                </Text>
+              </div>
+            )
+          : (
+              <Form
+                className="flex flex-col gap-5"
+                onFormSubmit={(values) => {
+                  handleSubmit(String(values.token ?? ""));
+                }}
               >
-                {t("verifyEmailPage.actions.confirm")}
-              </Button>
-            </Form>
-          )}
+                <Field.Root name="token" className="flex flex-col gap-1.5">
+                  <Field.Label className="text-1 font-medium text-sand-12">
+                    {t("verifyEmailPage.fields.token")}
+                  </Field.Label>
+                  <TextField
+                    type="text"
+                    name="token"
+                    required
+                    placeholder={t("verifyEmailPage.fields.tokenPlaceholder")}
+                    disabled={isVerifying}
+                  />
+                  <Field.Description className="text-1 text-sand-11">
+                    {t("verifyEmailPage.fields.tokenHelp")}
+                  </Field.Description>
+                  <Field.Error className="text-1 text-red-11" />
+                </Field.Root>
+
+                <Button
+                  type="submit"
+                  variant="solid"
+                  color="neutral"
+                  highContrast
+                  size={3}
+                  className="w-full"
+                  loading={isVerifying}
+                >
+                  {t("verifyEmailPage.actions.confirm")}
+                </Button>
+              </Form>
+            )}
 
       {!isConfirmed && (
         <Text align="center" size={2} className="block">

@@ -49,17 +49,14 @@ func confirmGetHandler() http.HandlerFunc {
 		renderPage(
 			w,
 			http.StatusOK,
-			// The confirmation should happen too quickly for the user to notice.
-			// This content is only shown as a fallback.
 			page{
 				Title:   "Confirm subscription",
 				Heading: "Confirm your subscription",
-				Body:    "Your confirmation should be processed automatically. If it isn’t, click the button below to confirm that you want to receive updates.",
+				Body:    "Click the button below to confirm that you want to receive updates.",
 				Form: &form{
-					ActionURL:  template.URL("?token=" + url.QueryEscape(token)),
-					Button:     "Confirm subscription",
-					AutoSubmit: true,
-					Danger:     false,
+					ActionURL: template.URL("?token=" + url.QueryEscape(token)),
+					Button:    "Confirm subscription",
+					Danger:    false,
 				},
 			},
 		)

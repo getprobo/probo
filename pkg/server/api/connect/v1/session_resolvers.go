@@ -308,7 +308,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 		}
 
 		if _, ok := errors.AsType[*iam.ErrEmailAlreadyVerified](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlutils.EmailAlreadyVerified(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {

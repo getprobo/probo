@@ -1110,10 +1110,11 @@
   "activateAccountPage": {
     "pageTitle": "Activate Account",
     "title": "Account Activation",
+    "description": "Click continue to activate your account.",
     "activating": "Activating your account…",
     "messages": { "activated": "Account activated successfully." },
     "errors": { "activationFailed": "Activation failed" },
-    "actions": { "goBack": "Go back" }
+    "actions": { "continue": "Continue", "goBack": "Go back" }
   },
   "consentPage": {
     "pageTitle": "Authorize Application",
@@ -3112,6 +3113,12 @@
     "unnamed": "Unnamed contact",
     "emptyValue": "—",
     "actions": { "edit": "Edit", "delete": "Delete" }
+  },
+  "magicLinkPage": {
+    "pageTitle": "Continue sign-in",
+    "title": "Continue sign-in",
+    "description": "Click continue to finish signing in.",
+    "actions": { "continue": "Continue" }
   },
   "magicLinkForm": {
     "errors": { "send": "Cannot send magic link" },
