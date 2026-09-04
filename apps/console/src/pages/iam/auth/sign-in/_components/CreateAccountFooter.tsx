@@ -1,0 +1,91 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useFragment, useLazyLoadQuery } from "react-relay";
+import { useLocation, useSearchParams } from "react-router";
+import { graphql } from "relay-runtime";
+
+import type { CreateAccountFooterFragment$key } from "#/__generated__/iam/CreateAccountFooterFragment.graphql";
+import type { CreateAccountFooterQuery } from "#/__generated__/iam/CreateAccountFooterQuery.graphql";
+import { clientIdFromContinueUrl } from "#/lib/buildAuthorizeContinueURL";
+
+const createAccountFooterFragment = graphql`
+  fragment CreateAccountFooterFragment on Query
+  @argumentDefinitions(clientId: { type: "String" }) {
+    signUpEnabled
+    oauthClientBranding(clientId: $clientId) {
+      isCompliancePortal
+    }
+  }
+`;
+
+const createAccountFooterQuery = graphql`
+  query CreateAccountFooterQuery($clientId: String) {
+    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
+  }
+`;
+
+interface CreateAccountFooterProps {
+  queryKey: CreateAccountFooterFragment$key;
+  prefix: string;
+  label: string;
+}
+
+export function CreateAccountFooter({
+  queryKey,
+  prefix,
+  label,
+}: CreateAccountFooterProps) {
+  const location = useLocation();
+  const { signUpEnabled, oauthClientBranding } = useFragment(
+    createAccountFooterFragment,
+    queryKey,
+  );
+
+  if (!signUpEnabled || oauthClientBranding?.isCompliancePortal) {
+    return null;
+  }
+
+  return (
+    <Text align="center" size={2} className="block">
+      {prefix}
+      {" "}
+      <Link to={{ pathname: "/auth/register", search: location.search }}>
+        {label}
+      </Link>
+    </Text>
+  );
+}
+
+export function CreateAccountFooterLazy({
+  prefix,
+  label,
+}: Pick<CreateAccountFooterProps, "prefix" | "label">) {
+  const [searchParams] = useSearchParams();
+  const clientId = clientIdFromContinueUrl(searchParams.get("continue"));
+  const data = useLazyLoadQuery<CreateAccountFooterQuery>(
+    createAccountFooterQuery,
+    { clientId },
+  );
+
+  return <CreateAccountFooter queryKey={data} prefix={prefix} label={label} />;
+}

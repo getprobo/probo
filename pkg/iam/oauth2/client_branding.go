@@ -22,9 +22,10 @@ import (
 )
 
 type ClientBranding struct {
-	Name      string
-	ClientURL *string
-	LogoURL   *string
+	Name               string
+	ClientURL          *string
+	LogoURL            *string
+	IsCompliancePortal bool
 }
 
 func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*ClientBranding, error) {
@@ -32,7 +33,7 @@ func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*Clie
 		return nil, nil
 	}
 
-	client, err := s.resolveClient(ctx, nil, clientIDRaw)
+	client, allowance, err := s.resolveClientWithAllowance(ctx, nil, clientIDRaw)
 	if err != nil {
 		if _, ok := errors.AsType[*OAuth2Error](err); ok {
 			return nil, nil
@@ -41,7 +42,14 @@ func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*Clie
 		return nil, err
 	}
 
-	return ClientBrandingFromClient(client), nil
+	branding := ClientBrandingFromClient(client)
+	if branding == nil {
+		return nil, nil
+	}
+
+	branding.IsCompliancePortal = allowance.SkipsConsent()
+
+	return branding, nil
 }
 
 func ClientBrandingFromClient(client *coredata.OAuth2Client) *ClientBranding {

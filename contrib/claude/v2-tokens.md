@@ -30,6 +30,7 @@ The v2 UI kit uses [Radix Colors](https://www.radix-ui.com/colors) 12-step scale
 | **amber** | Warning |
 | **sky** | Informational |
 | **indigo** | Action / brand accent |
+| **lime** | Brand wash — step 9 only (`#e6ff03` / derived dark). Not a Radix scale. |
 
 ## Step-to-usage mapping
 

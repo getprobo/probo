@@ -29,7 +29,7 @@ export const authLayout = tv({
     stack: "relative",
     wash: [
       "pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[calc(140%+32px)] -translate-x-1/2 -translate-y-1/2",
-      "bg-[radial-gradient(circle,rgb(230_255_3/0.95)_0%,rgb(230_255_3/0.5)_40%,transparent_68%)]",
+      "bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-lime-9)_95%,transparent)_0%,color-mix(in_srgb,var(--color-lime-9)_50%,transparent)_40%,transparent_68%)]",
     ],
     frame: "relative z-1 w-full",
     body: "relative z-1 px-8 pt-14 pb-8",

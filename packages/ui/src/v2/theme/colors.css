@@ -47,6 +47,7 @@
  *   amber  — warning
  *   sky    — informational
  *   indigo — action / brand accent
+ *   lime   — brand wash (step 9 only; not a Radix scale)
  *
  * Dark mode: toggle .dark on <html>. Radix dark imports handle the rest.
  * P3 wide gamut: included automatically via @radix-ui/colors @supports blocks.
@@ -79,6 +80,18 @@
 @import "@radix-ui/colors/sand-alpha.css";
 @import "@radix-ui/colors/sand-dark-alpha.css";
 @import "@radix-ui/colors/black-alpha.css";
+
+/* Brand lime wash. Dark is the same hue at L=0.50 so it does not bloom. */
+:root,
+.light,
+.light-theme {
+    --lime-9: #e6ff03;
+}
+
+.dark,
+.dark-theme {
+    --lime-9: oklch(from #e6ff03 0.50 c h);
+}
 
 /* ---------------------------------------------------------------------------
  * Base colors
@@ -213,6 +226,9 @@
     --color-indigo-10: var(--indigo-10);
     --color-indigo-11: var(--indigo-11);
     --color-indigo-12: var(--indigo-12);
+
+    /* lime — brand wash solid (step 9 only) */
+    --color-lime-9: var(--lime-9);
 }
 
 @layer base {
