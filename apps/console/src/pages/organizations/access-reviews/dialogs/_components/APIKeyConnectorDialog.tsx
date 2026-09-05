@@ -29,7 +29,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation, useRelayEnvironment } from "react-relay";
 import { fetchQuery, graphql } from "relay-runtime";
@@ -61,6 +61,10 @@ const apiKeyConnectorDialogFragment = graphql`
       key
       label
       required
+    }
+    apiKeyFormat {
+      pattern
+      example
     }
   }
 `;
@@ -119,6 +123,10 @@ export function APIKeyConnectorDialog({
   const environment = useRelayEnvironment();
 
   const [apiKeyValue, setApiKeyValue] = useState("");
+  // The shape check is shown once the customer has left the field or tried to
+  // connect. Judging a key while it is still being typed would mark every
+  // partial paste as wrong.
+  const [apiKeyBlurred, setApiKeyBlurred] = useState(false);
   const [extraSettingValues, setExtraSettingValues] = useState<Record<string, string>>({});
   const [isConnectingAPIKey, setIsConnectingAPIKey] = useState(false);
   const [crispCode, setCrispCode] = useState<CrispCodeState | null>(null);
@@ -202,11 +210,38 @@ export function APIKeyConnectorDialog({
     };
   }, [environment, isCrispManaged, crispWebsiteId, organizationId, crispRetry]);
 
+  // The provider states the shape it mints keys in; the server applies the
+  // same rule at create, so this is what saves a round trip, not what enforces
+  // it. A pattern that will not compile here is treated as no check at all —
+  // the server still has the real one.
+  const apiKeyPattern = useMemo(() => {
+    const pattern = provider?.apiKeyFormat?.pattern;
+    if (!pattern) {
+      return null;
+    }
+
+    try {
+      return new RegExp(pattern);
+    } catch {
+      return null;
+    }
+  }, [provider?.apiKeyFormat?.pattern]);
+
+  const trimmedAPIKey = apiKeyValue.trim();
+  const apiKeyMalformed
+    = !!apiKeyPattern && trimmedAPIKey !== "" && !apiKeyPattern.test(trimmedAPIKey);
+
   const connectAPIKeyProvider = () => {
     // Managed providers (Model B, e.g. Crisp) supply no customer key: the
     // server injects Probo's own credential, so only the extra settings
     // are required.
-    if (!provider || (!provider.apiKeyManaged && !apiKeyValue.trim())) {
+    if (!provider || (!provider.apiKeyManaged && !trimmedAPIKey)) {
+      return;
+    }
+
+    if (apiKeyMalformed) {
+      setApiKeyBlurred(true);
+
       return;
     }
 
@@ -241,6 +276,7 @@ export function APIKeyConnectorDialog({
           () => {
             setIsConnectingAPIKey(false);
             setApiKeyValue("");
+            setApiKeyBlurred(false);
             setExtraSettingValues({});
             setCrispCode(null);
             dialogRef.current?.close();
@@ -332,6 +368,7 @@ export function APIKeyConnectorDialog({
         // Reset on dismiss so the next open starts fresh (the imperative
         // close() on success does not fire onClose, so success resets inline).
         setApiKeyValue("");
+        setApiKeyBlurred(false);
         setExtraSettingValues({});
         setCrispCode(null);
         setIsConnectingAPIKey(false);
@@ -365,6 +402,15 @@ export function APIKeyConnectorDialog({
               type="password"
               value={apiKeyValue}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKeyValue(e.target.value)}
+              onBlur={() => setApiKeyBlurred(true)}
+              placeholder={provider?.apiKeyFormat?.example}
+              error={
+                apiKeyBlurred && apiKeyMalformed && provider?.apiKeyFormat
+                  ? t("apiKeyConnectorDialog.errors.apiKeyFormat", {
+                      example: provider.apiKeyFormat.example,
+                    })
+                  : undefined
+              }
               required
               autoFocus
             />

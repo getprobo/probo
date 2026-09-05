@@ -46,6 +46,20 @@ func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.Co
 	return out
 }
 
+// connectorAPIKeyFormat surfaces the shape a provider expects a pasted key to
+// have, so the connect form can check it as the customer leaves the field and
+// show it as the field's placeholder. Nil for a provider that declares none.
+func connectorAPIKeyFormat(reg *provider.Registration) *types.ConnectorAPIKeyFormat {
+	if reg.APIKey == nil || reg.APIKey.KeyFormat == nil {
+		return nil
+	}
+
+	return &types.ConnectorAPIKeyFormat{
+		Pattern: reg.APIKey.KeyFormat.Pattern.String(),
+		Example: reg.APIKey.KeyFormat.Example,
+	}
+}
+
 func connectorProtocols(protocols []connector.ProtocolType) []coredata.ConnectorProtocol {
 	out := make([]coredata.ConnectorProtocol, 0, len(protocols))
 	for _, protocol := range protocols {

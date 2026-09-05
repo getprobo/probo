@@ -22,10 +22,12 @@ package accessreview_test
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -113,4 +115,46 @@ func TestMissingOAuthScopesError(t *testing.T) {
 		err.Error(),
 	)
 	assert.ErrorIs(t, err, accessreview.ErrMissingOAuthScopes)
+}
+
+func TestProbeUnauthorized(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{
+			name: "refused operation",
+			err: accessreview.NewProbeError(
+				coredata.ConnectorProviderLangfuse,
+				&provider.CredentialRejectedError{StatusCode: http.StatusForbidden, OperationRefused: true},
+			),
+			want: true,
+		},
+		{
+			name: "refused credential",
+			err: accessreview.NewProbeError(
+				coredata.ConnectorProviderLangfuse,
+				&provider.CredentialRejectedError{StatusCode: http.StatusUnauthorized},
+			),
+		},
+		{
+			name: "a host answering with a page is not an authorization verdict",
+			err: accessreview.NewProbeError(
+				coredata.ConnectorProviderMetabase,
+				&provider.NotAnAPIEndpointError{StatusCode: http.StatusOK},
+			),
+		},
+		{name: "no failure at all", err: nil},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tc.want, accessreview.IsProbeOperationRefused(tc.err))
+		})
+	}
 }

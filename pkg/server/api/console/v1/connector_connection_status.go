@@ -55,16 +55,26 @@ func (r *Resolver) connectorConnectionStatus(
 		field := log.String("connector_id", connectorID.String())
 
 		if probeErr, ok := errors.AsType[*accessreview.ProbeError](err); ok && probeErr != nil {
-			// Not Probo's failure, so not in the error budget.
+			// The provider took the credential and refused the operation: the
+			// customer has a plan or a role to fix, not a key to re-paste.
+			status := types.ConnectorConnectionStatusDisconnected
+			if accessreview.IsProbeOperationRefused(err) {
+				status = types.ConnectorConnectionStatusNotAuthorized
+			}
+
+			// Not Probo's failure, so not in the error budget. The status is
+			// logged rather than spelled into the message, which would then
+			// have to agree with what is returned below.
 			r.logger.WarnCtx(
 				ctx,
-				"connector credential probe failed, reporting disconnected",
+				"connector credential probe failed",
 				field,
 				log.String("provider", probeErr.Provider.String()),
 				log.String("probe_failure", accessreview.ProbeFailureCode(err)),
+				log.String("connection_status", string(status)),
 			)
 
-			return types.ConnectorConnectionStatusDisconnected, nil
+			return status, nil
 		}
 
 		// A database read, a decrypt, a deployment without identity

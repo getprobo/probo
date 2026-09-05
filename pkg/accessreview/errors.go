@@ -243,6 +243,17 @@ func IsProviderVerdict(err error) bool {
 	return false
 }
 
+// IsProbeOperationRefused reports whether a probe failure is the provider
+// accepting the credential and then refusing what was asked of it — a plan
+// that excludes the endpoint, a role without the permission — rather than
+// refusing the credential itself. The two are told apart at the probe, because
+// only there is the provider's own explanation still in hand.
+func IsProbeOperationRefused(err error) bool {
+	rejected, ok := errors.AsType[*provider.CredentialRejectedError](err)
+
+	return ok && rejected != nil && rejected.OperationRefused
+}
+
 // ProbeFailureCode reduces a probe failure to a token safe to log. Probe
 // errors wrap text Probo does not control (an OAuth error_description, a
 // response body, a customer's self-hosted host), so anything unrecognised

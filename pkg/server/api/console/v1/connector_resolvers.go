@@ -67,6 +67,25 @@ func (r *connectorResolver) ConnectionStatus(ctx context.Context, obj *types.Con
 	return status, nil
 }
 
+// DisplayName is the resolver for the displayName field.
+func (r *connectorResolver) DisplayName(ctx context.Context, obj *types.Connector) (string, error) {
+	return r.providerRegistry.ProviderDisplayName(obj.Provider), nil
+}
+
+// DocumentationURL is the resolver for the documentationUrl field.
+//
+// The same page ConnectorProviderInfo advertises before connecting, repeated
+// on the connector so a source whose connection went wrong can point at the
+// prerequisites — plan, role, key kind — that explain why.
+func (r *connectorResolver) DocumentationURL(ctx context.Context, obj *types.Connector) (*string, error) {
+	reg, ok := r.providerRegistry.Get(obj.Provider)
+	if !ok || reg.DocumentationURL == "" {
+		return nil, nil
+	}
+
+	return new(reg.DocumentationURL), nil
+}
+
 // CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
 func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input types.CreateAPIKeyConnectorInput) (*types.CreateAPIKeyConnectorPayload, error) {
 	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)

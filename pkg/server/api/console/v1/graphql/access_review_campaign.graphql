@@ -239,6 +239,11 @@ input AccessReviewCampaignSourceFetchAttemptOrder {
 enum AccessReviewSourceConnectionStatus {
     CONNECTED
     DISCONNECTED
+    """
+    NOT_AUTHORIZED mirrors ConnectorConnectionStatus.NOT_AUTHORIZED: the
+    provider accepted the credential and refused the operation anyway.
+    """
+    NOT_AUTHORIZED
     RECONNECT_REQUIRED
     NOT_APPLICABLE
 }
