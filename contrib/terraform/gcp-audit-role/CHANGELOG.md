@@ -5,6 +5,14 @@ be documented in this file.
 
 ## Unreleased
 
+## [0.2.0] - 2026-09-07
+
+### Added
+
+- Document how to point the root `google` provider at the Cloud de
+  Confiance (S3NS) universe; the service account this module creates
+  gets a `.s3ns.iam.gserviceaccount.com` email in that universe.
+
 ### Changed
 
 - Replace project-wide `roles/logging.viewer` with
