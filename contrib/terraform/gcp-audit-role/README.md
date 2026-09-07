@@ -40,10 +40,11 @@ The Google provider must target the project you want to connect. Set
 `project` on the provider, or export `GOOGLE_CLOUD_PROJECT`.
 
 Enable `iam.googleapis.com`, `cloudresourcemanager.googleapis.com`,
-`sts.googleapis.com`, and `iamcredentials.googleapis.com` in that
-project before you apply. Terraform uses the first two. Probo uses STS
-and IAM Credentials to exchange a token and impersonate the service
-account.
+`sts.googleapis.com`, `iamcredentials.googleapis.com`, and
+`logging.googleapis.com` in that project before you apply. Terraform
+uses the first two and Logging to grant the `_Required` view. Probo
+uses STS and IAM Credentials to exchange a token and impersonate the
+service account.
 
 ```hcl
 module "probo_audit" {
@@ -97,7 +98,7 @@ it back.
 | `google_service_account` | `probo-audit` by default. |
 | `roles/iam.securityReviewer` | Project IAM, additive. |
 | `roles/iam.serviceAccountViewer` | Project IAM, additive. |
-| `roles/logging.viewer` | Project IAM, additive. |
+| `roles/logging.viewAccessor` | On `_Required`/`_AllLogs` only, additive. Admin Activity and the other `_Required` audit logs; not `_Default` application logs. |
 | `roles/policyanalyzer.activityAnalysisViewer` | Project IAM, additive. |
 | `roles/iam.workloadIdentityUser` | On the service account, for `principal://…/subject/{probo_subject}` only. |
 
@@ -119,6 +120,8 @@ output descriptions in [`variables.tf`](variables.tf) and
   URL as the JWT `aud`.
 - **The subject condition is exact equality.** A `startsWith` wildcard would
   let any subject this issuer can mint impersonate the service account.
-- **The four project roles are additive members**, not bindings. A binding
-  would replace every other member of that role in the project.
+- **IAM members are additive**, not bindings. A binding would replace
+  every other member of that role in the project or on the log view.
+- **`_Required` is queried in `global` by default.** If default resource
+  settings moved that bucket, set `required_bucket_location` to match.
 - Requires the `google` provider at 5.0 or later.

@@ -54,6 +54,9 @@ const (
 	gcpLoggingFilterMaxLen         = 18000
 	gcpLoggingOrderByNewest        = "timestamp desc"
 	gcpServiceAccountsResourceMark = "/serviceAccounts/"
+	gcpRequiredBucketLocation      = "global"
+	gcpRequiredBucketID            = "_Required"
+	gcpRequiredViewID              = "_AllLogs"
 )
 
 type gcpPolicyActivityPayload struct {
@@ -278,9 +281,9 @@ func queryGCPAdminActivity(
 		return nil, fmt.Errorf("cannot create gcp logging client: %w", err)
 	}
 
-	resource, err := url.JoinPath("projects", url.PathEscape(session.AccountID()))
+	resource, err := gcpRequiredLogViewName(session.AccountID())
 	if err != nil {
-		return nil, fmt.Errorf("cannot build gcp logging resource name: %w", err)
+		return nil, err
 	}
 
 	since := time.Now().UTC().Add(-gcpActivityLookback)
@@ -556,6 +559,24 @@ func gcpAdminActivityFilter(project string, since time.Time, emails []string) st
 
 func gcpActivityLogName(project string) string {
 	return "projects/" + url.PathEscape(project) + "/logs/" + gcpActivityLogID
+}
+
+func gcpRequiredLogViewName(project string) (string, error) {
+	resource, err := url.JoinPath(
+		"projects",
+		url.PathEscape(project),
+		"locations",
+		gcpRequiredBucketLocation,
+		"buckets",
+		gcpRequiredBucketID,
+		"views",
+		gcpRequiredViewID,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot build gcp logging resource name: %w", err)
+	}
+
+	return resource, nil
 }
 
 func gcpActivityTypeParent(project string, activityType string) (string, error) {

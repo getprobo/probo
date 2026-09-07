@@ -275,6 +275,18 @@ func TestApplyGCPActivity_DoesNotOverwriteKnownAuthMethod(t *testing.T) {
 	assert.Nil(t, records[0].LastLogin)
 }
 
+func TestGcpRequiredLogViewName(t *testing.T) {
+	t.Parallel()
+
+	name, err := gcpRequiredLogViewName("123456789012")
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		"projects/123456789012/locations/global/buckets/_Required/views/_AllLogs",
+		name,
+	)
+}
+
 func TestGcpEmailFilterBatches(t *testing.T) {
 	t.Parallel()
 

@@ -88,3 +88,18 @@ variable "provider_id" {
     error_message = "The provider id must be 4-32 characters of [a-z0-9-] and must not start with gcp-."
   }
 }
+
+variable "required_bucket_location" {
+  type        = string
+  default     = "global"
+  description = <<-EOT
+    Location of the project's _Required log bucket. Leave the default unless
+    Cloud Logging default resource settings moved that bucket. Probo queries
+    the same location; a mismatch leaves last login unknown.
+  EOT
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]*$", var.required_bucket_location))
+    error_message = "The _Required bucket location must be a Cloud Logging location such as global or us-central1."
+  }
+}
