@@ -283,6 +283,24 @@ func (s *Service) PutFile(
 	return *headOutput.ContentLength, nil
 }
 
+func (s *Service) DeleteFile(
+	ctx context.Context,
+	file *coredata.File,
+) error {
+	_, err := s.s3Client.DeleteObject(
+		ctx,
+		&s3.DeleteObjectInput{
+			Bucket: new(file.BucketName),
+			Key:    new(file.FileKey),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot delete file from S3: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) GeneratePresignedURL(
 	ctx context.Context,
 	file *coredata.File,

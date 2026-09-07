@@ -334,6 +334,15 @@ probo:
 #      tlsRequired: false
 #      helloName: ""
 
+  # Soft-deleted file purge (seconds)
+  filePurge:
+    # How often the worker scans for expired soft-deleted files (default: 1 hour)
+    interval: 3600
+    # How long a soft-deleted file is kept before purge (default: 30 days)
+    retention: 2592000
+    # Maximum number of files processed in one run
+    maxPerTick: 1000
+
   # Outbound webhook delivery
   webhook:
     senderInterval: 5

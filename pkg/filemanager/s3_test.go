@@ -77,6 +77,41 @@ func newTestS3Service(
 	return filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
 }
 
+func TestDeleteFile_SendsDeleteObject(t *testing.T) {
+	t.Parallel()
+
+	var (
+		mu        sync.Mutex
+		gotPath   string
+		gotMethod string
+	)
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+			gotMethod = r.Method
+			gotPath = r.URL.Path
+			mu.Unlock()
+
+			w.WriteHeader(http.StatusNoContent)
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+	}
+
+	require.NoError(t, svc.DeleteFile(context.Background(), file))
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	assert.Equal(t, http.MethodDelete, gotMethod)
+	assert.Equal(t, "/uploads/tenant/file", gotPath)
+}
+
 func TestOpenFile_StreamsBody(t *testing.T) {
 	t.Parallel()
 

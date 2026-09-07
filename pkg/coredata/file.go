@@ -459,3 +459,155 @@ WHERE
 
 	return nil
 }
+
+func (f *Files) LoadDeletedBefore(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	before time.Time,
+	afterID *gid.GID,
+	limit int,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    visibility,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    %s
+    AND deleted_at IS NOT NULL
+    AND deleted_at < @before
+    AND (
+        CASE
+            WHEN @has_after_id THEN id > @after_id
+            ELSE TRUE
+        END
+    )
+ORDER BY
+    id ASC
+LIMIT @limit
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"before":       before,
+		"has_after_id": afterID != nil,
+		"after_id":     gid.Nil,
+		"limit":        limit,
+	}
+	if afterID != nil {
+		args["after_id"] = *afterID
+	}
+
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query deleted files: %w", err)
+	}
+
+	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[File])
+	if err != nil {
+		return fmt.Errorf("cannot collect deleted files: %w", err)
+	}
+
+	*f = files
+
+	return nil
+}
+
+func (f *File) LoadDeletedByIDForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	fileID gid.GID,
+	before time.Time,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    visibility,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    %s
+    AND id = @file_id
+    AND deleted_at IS NOT NULL
+    AND deleted_at < @before
+FOR UPDATE SKIP LOCKED
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"file_id": fileID, "before": before}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query deleted file: %w", err)
+	}
+
+	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect deleted file: %w", err)
+	}
+
+	*f = file
+
+	return nil
+}
+
+func (f File) Delete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM files
+WHERE
+    %s
+    AND id = @file_id
+    AND deleted_at IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"file_id": f.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok &&
+			(pgErr.Code == "23503" || pgErr.Code == "23001") {
+			return fmt.Errorf("cannot delete file from database: file is still referenced: %w", ErrResourceInUse)
+		}
+
+		return fmt.Errorf("cannot delete file from database: %w", err)
+	}
+
+	return nil
+}

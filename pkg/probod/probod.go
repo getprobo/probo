@@ -176,6 +176,11 @@ func New() *Implm {
 				Region: "us-east-1",
 				Bucket: "probod",
 			},
+			FilePurge: FilePurgeConfig{
+				Interval:   DefaultFilePurgeIntervalSeconds,
+				Retention:  DefaultFilePurgeRetentionSeconds,
+				MaxPerTick: DefaultFilePurgeMaxPerTick,
+			},
 			Notifications: NotificationsConfig{
 				Mailer: MailerConfig{
 					MailerInterval: 60,
@@ -1224,6 +1229,42 @@ func (impl *Implm) Run(
 		},
 	)
 
+	filePurgeInterval := time.Duration(impl.cfg.FilePurge.Interval) * time.Second
+	if filePurgeInterval <= 0 {
+		filePurgeInterval = filemanager.DefaultDeletedFileCleanupPeriod
+	}
+
+	filePurgeRetention := time.Duration(impl.cfg.FilePurge.Retention) * time.Second
+	if filePurgeRetention <= 0 {
+		filePurgeRetention = filemanager.DefaultDeletedFileRetention
+	}
+
+	filePurgeMaxPerTick := impl.cfg.FilePurge.MaxPerTick
+	if filePurgeMaxPerTick <= 0 {
+		filePurgeMaxPerTick = filemanager.DefaultDeletedFileMaxPerTick
+	}
+
+	filePurgeWorker := filemanager.NewDeletedFilePurgeWorker(
+		fileManagerService,
+		l.Named("file-purge-worker"),
+		filePurgeRetention,
+		filePurgeMaxPerTick,
+		worker.WithInterval(filePurgeInterval),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	filePurgeWorkerCtx, stopFilePurgeWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := filePurgeWorker.Run(filePurgeWorkerCtx); err != nil {
+				cancel(fmt.Errorf("file purge worker crashed: %w", err))
+			}
+		},
+	)
+
 	webhookWorkerCtx, stopWebhookWorker := context.WithCancel(context.Background())
 	webhookWorker := webhook.NewWebhookWorker(pgClient, l.Named("webhook-sender"), webhook.Config{
 		Interval:       time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
@@ -1596,6 +1637,7 @@ func (impl *Implm) Run(
 	stopSlackInteractiveCommandWorker()
 	stopSlackDeliveryWorker()
 	stopProbotRetentionWorker()
+	stopFilePurgeWorker()
 
 	wg.Wait()
 

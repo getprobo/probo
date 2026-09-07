@@ -46,6 +46,7 @@ type (
 	PrivateKey                         = probodconfig.PrivateKey
 	RSAPrivateKey                      = probodconfig.RSAPrivateKey
 	AWSConfig                          = probodconfig.AWSConfig
+	FilePurgeConfig                    = probodconfig.FilePurgeConfig
 	ConnectorConfig                    = probodconfig.ConnectorConfig
 	ConnectorConfigOAuth2              = probodconfig.ConnectorConfigOAuth2
 	ConnectorConfigGitHubApp           = probodconfig.ConnectorConfigGitHubApp
@@ -77,6 +78,10 @@ type (
 )
 
 const (
+	DefaultFilePurgeIntervalSeconds  = probodconfig.DefaultFilePurgeIntervalSeconds
+	DefaultFilePurgeRetentionSeconds = probodconfig.DefaultFilePurgeRetentionSeconds
+	DefaultFilePurgeMaxPerTick       = probodconfig.DefaultFilePurgeMaxPerTick
+
 	CompliancePortalTLSModeDirect   = probodconfig.CompliancePortalTLSModeDirect
 	CompliancePortalTLSModeExternal = probodconfig.CompliancePortalTLSModeExternal
 	CookieSameSiteLax               = probodconfig.CookieSameSiteLax

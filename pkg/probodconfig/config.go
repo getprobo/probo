@@ -64,6 +64,7 @@ type (
 		ITAM               ITAMConfig               `json:"itam"`
 		CompliancePortal   CompliancePortalConfig   `json:"trust-center"`
 		AWS                AWSConfig                `json:"aws"`
+		FilePurge          FilePurgeConfig          `json:"file-purge"`
 		Notifications      NotificationsConfig      `json:"notifications"`
 		Connectors         []ConnectorConfig        `json:"connectors,omitempty"`
 		// ConnectorEndpoints repoints a provider at different hosts (a vendor

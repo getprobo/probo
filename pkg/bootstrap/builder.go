@@ -346,6 +346,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					},
 				}
 			}(),
+			FilePurge: probodconfig.FilePurgeConfig{
+				Interval:   b.resolver.getEnvIntOrDefault("PROBOD_FILE_PURGE_INTERVAL", probodconfig.DefaultFilePurgeIntervalSeconds),
+				Retention:  b.resolver.getEnvIntOrDefault("PROBOD_FILE_PURGE_RETENTION", probodconfig.DefaultFilePurgeRetentionSeconds),
+				MaxPerTick: b.resolver.getEnvIntOrDefault("PROBOD_FILE_PURGE_MAX_PER_TICK", probodconfig.DefaultFilePurgeMaxPerTick),
+			},
 			CustomDomains: probodconfig.CustomDomainsConfig{
 				RenewalInterval:   b.resolver.getEnvIntOrDefault("PROBOD_CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),
 				ProvisionInterval: b.resolver.getEnvIntOrDefault("PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL", 30),

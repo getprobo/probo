@@ -262,6 +262,13 @@ spec:
             - name: PROBOD_AWS_USE_PATH_STYLE
               value: "true"
             {{- end }}
+            # Soft-deleted file purge
+            - name: PROBOD_FILE_PURGE_INTERVAL
+              value: {{ .Values.probo.filePurge.interval | quote }}
+            - name: PROBOD_FILE_PURGE_RETENTION
+              value: {{ .Values.probo.filePurge.retention | quote }}
+            - name: PROBOD_FILE_PURGE_MAX_PER_TICK
+              value: {{ .Values.probo.filePurge.maxPerTick | quote }}
             # Email (SMTP)
             - name: PROBOD_MAILER_SENDER_NAME
               value: {{ .Values.probo.mailer.senderName | quote }}

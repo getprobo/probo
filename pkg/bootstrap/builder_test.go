@@ -388,6 +388,11 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 1500, cfg.Probod.ThirdPartyVetting.StaleAfter)
 	assert.Equal(t, 1, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 
+	// File purge config
+	assert.Equal(t, probodconfig.DefaultFilePurgeIntervalSeconds, cfg.Probod.FilePurge.Interval)
+	assert.Equal(t, probodconfig.DefaultFilePurgeRetentionSeconds, cfg.Probod.FilePurge.Retention)
+	assert.Equal(t, probodconfig.DefaultFilePurgeMaxPerTick, cfg.Probod.FilePurge.MaxPerTick)
+
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
 	assert.Equal(t, 30, cfg.Probod.CustomDomains.ProvisionInterval)
@@ -538,6 +543,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_THIRD_PARTY_VETTING_INTERVAL"] = "15"
 	env["PROBOD_THIRD_PARTY_VETTING_STALE_AFTER"] = "1800"
 	env["PROBOD_THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
+	// File purge
+	env["PROBOD_FILE_PURGE_INTERVAL"] = "1800"
+	env["PROBOD_FILE_PURGE_RETENTION"] = "86400"
+	env["PROBOD_FILE_PURGE_MAX_PER_TICK"] = "50"
 	// Custom domains
 	env["PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["PROBOD_ACME_ACCOUNT_KEY"] = testECKeyPEM()
@@ -698,6 +707,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, testECKeyPEM(), cfg.Probod.CustomDomains.ACME.AccountKey.PEM())
+	// File purge
+	assert.Equal(t, 1800, cfg.Probod.FilePurge.Interval)
+	assert.Equal(t, 86400, cfg.Probod.FilePurge.Retention)
+	assert.Equal(t, 50, cfg.Probod.FilePurge.MaxPerTick)
 	// SCIM bridge
 	assert.Equal(t, 1800, cfg.Probod.SCIMBridge.SyncInterval)
 	assert.Equal(t, 60, cfg.Probod.SCIMBridge.PollInterval)
