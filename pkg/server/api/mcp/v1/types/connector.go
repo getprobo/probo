@@ -22,6 +22,7 @@ package types
 
 import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -43,5 +44,15 @@ func NewAWSConnectorSetup(setup cloudaws.ConnectorSetup) *AWSConnectorSetup {
 		SuggestedRoleName:            setup.SuggestedRoleName,
 		TerraformSnippet:             setup.TerraformSnippet,
 		CloudFormationQuickCreateURL: setup.CloudFormationQuickCreateURL,
+	}
+}
+
+func NewGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *GCPConnectorSetup {
+	return &GCPConnectorSetup{
+		Issuer:                      setup.Issuer,
+		Audience:                    setup.Audience,
+		Subject:                     setup.Subject,
+		SuggestedServiceAccountName: setup.SuggestedServiceAccountName,
+		TerraformSnippet:            setup.TerraformSnippet,
 	}
 }

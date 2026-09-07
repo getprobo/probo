@@ -234,6 +234,41 @@ func TestResolveAPIKeyConnectorCredential(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "customer-key", key)
 	})
+
+	// A key is copied out of a provider's UI, so it arrives with whatever the
+	// clipboard picked up. The trim is what catches that, and only the trim:
+	// a shape pattern cannot, because [^:] matches a newline and Go's $ is
+	// end-of-text, so "pk-lf-a:sk-lf-b\n" satisfies Langfuse's own pattern.
+	t.Run("surrounding whitespace is trimmed off the key", func(t *testing.T) {
+		t.Parallel()
+
+		pasted := " pk-lf-1111:sk-lf-2222\n"
+
+		key, err := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderLangfuse, &pasted)
+		require.NoError(t, err)
+		assert.Equal(t, "pk-lf-1111:sk-lf-2222", key)
+	})
+
+	t.Run("a key of only whitespace is no key", func(t *testing.T) {
+		t.Parallel()
+
+		blank := "   "
+
+		_, err := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderLangfuse, &blank)
+		require.EqualError(t, err, "apiKey is required")
+	})
+
+	// The trim runs before the shape check, which is what lets a pasted key
+	// with a trailing newline reach the provider at all.
+	t.Run("a key of the wrong shape is refused", func(t *testing.T) {
+		t.Parallel()
+
+		half := " pk-lf-1111\n"
+
+		_, err := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderLangfuse, &half)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "pk-lf-…:sk-lf-…")
+	})
 }
 
 // verifyCrispOwnershipWith is the #1b create-time ownership gate. This pins its

@@ -20,6 +20,9 @@
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ComponentProps } from "react";
+import { useState } from "react";
+
+import { OverlayPortalRootContext } from "../../lib/overlayPortalRoot";
 
 import { dialog } from "./variants";
 
@@ -27,20 +30,26 @@ export type DialogPopupProps
   = & Omit<ComponentProps<typeof BaseDialog.Popup>, "className">
     & {
       className?: string;
+      // When true, the popup itself does not scroll; inner regions manage overflow.
+      lockScroll?: boolean;
     };
 
 // Portal + dimmed backdrop + centered, styled popup frame. Children compose the
 // header / body / footer regions.
 export function DialogPopup(props: DialogPopupProps) {
-  const { className, children, ...popupProps } = props;
-  const { backdrop, popup } = dialog();
+  const { className, children, lockScroll = false, ...popupProps } = props;
+  const { backdrop, popup, overlayRoot: overlayRootSlot } = dialog({ lockScroll });
+  const [overlayRoot, setOverlayRoot] = useState<HTMLElement | null>(null);
 
   return (
     <BaseDialog.Portal>
-      <BaseDialog.Backdrop className={backdrop()} />
-      <BaseDialog.Popup className={popup({ className })} {...popupProps}>
-        {children}
-      </BaseDialog.Popup>
+      <OverlayPortalRootContext.Provider value={overlayRoot}>
+        <BaseDialog.Backdrop className={backdrop()} />
+        <BaseDialog.Popup className={popup({ className })} {...popupProps}>
+          {children}
+        </BaseDialog.Popup>
+        <div ref={setOverlayRoot} className={overlayRootSlot()} />
+      </OverlayPortalRootContext.Provider>
     </BaseDialog.Portal>
   );
 }

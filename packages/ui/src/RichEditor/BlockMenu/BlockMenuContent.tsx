@@ -27,6 +27,7 @@ import {
 import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import { getSlashStorage } from "../_lib/getSlashStorage";
 import { MenuButton } from "../MenuButton";
 import { deactivateSlashCommand } from "../SlashCommandExtension";
@@ -177,31 +178,34 @@ export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) 
   }, [editor, slashState.active, slashState.query, filteredItems, slashActiveIndex, handleSlashAction]);
 
   return (
-    <div
-      ref={(node) => {
-        slashDropdownRef.current = node;
-        slashMenuRefs.setFloating(node);
-      }}
-      style={slashMenuStyles}
-      onMouseDown={e => e.preventDefault()}
-      className={menu()}
-    >
-      {filteredItems.length > 0
-        ? filteredItems.map((item, index) => (
-            <MenuButton
-              key={item.label}
-              active={index === slashActiveIndex}
-              onClick={() => handleSlashAction(item)}
-            >
-              <item.icon size={16} weight="bold" />
-              {item.label}
-            </MenuButton>
-          ))
-        : (
-            <div className="px-2 py-1.5 text-sm text-txt-tertiary">
-              No results
-            </div>
-          )}
-    </div>
+    <EditorFloatingPortal>
+      <div
+        ref={(node) => {
+          slashDropdownRef.current = node;
+          slashMenuRefs.setFloating(node);
+        }}
+        style={slashMenuStyles}
+        onMouseDown={e => e.preventDefault()}
+        className={menu()}
+        data-rich-editor-floating=""
+      >
+        {filteredItems.length > 0
+          ? filteredItems.map((item, index) => (
+              <MenuButton
+                key={item.label}
+                active={index === slashActiveIndex}
+                onClick={() => handleSlashAction(item)}
+              >
+                <item.icon size={16} weight="bold" />
+                {item.label}
+              </MenuButton>
+            ))
+          : (
+              <div className="px-2 py-1.5 text-sm text-txt-tertiary">
+                No results
+              </div>
+            )}
+      </div>
+    </EditorFloatingPortal>
   );
 }

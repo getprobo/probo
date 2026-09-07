@@ -35,7 +35,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 			MeasureID:      input.MeasureID,
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
-			Description:    input.Description,
+			Content:        input.Content,
 			State:          input.State,
 			Priority:       input.Priority,
 			TimeEstimate:   input.TimeEstimate,
@@ -78,7 +78,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		probo.UpdateTaskRequest{
 			TaskID:       input.TaskID,
 			Name:         input.Name,
-			Description:  gqlutils.UnwrapOmittable(input.Description),
+			Content:      gqlutils.UnwrapOmittable(input.Content),
 			State:        input.State,
 			Priority:     input.Priority,
 			Rank:         input.Rank,

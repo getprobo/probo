@@ -23,6 +23,7 @@ package provider_test
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -226,6 +227,62 @@ func TestRegistry_Register(t *testing.T) {
 					Provider:    coredata.ConnectorProviderSlack,
 					DisplayName: "Slack",
 					APIKey:      &provider.APIKeyConfig{Auth: tc.auth},
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.want)
+			})
+		}
+	})
+
+	// A KeyFormat is a promise to the customer, shown as the field's
+	// placeholder and echoed in the rejection: Register refuses the two ways
+	// that promise can be a lie.
+	t.Run("KeyFormat rules", func(t *testing.T) {
+		t.Parallel()
+
+		for name, tc := range map[string]struct {
+			apiKey *provider.APIKeyConfig
+			want   string
+		}{
+			"example its own pattern rejects": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{
+						Pattern: regexp.MustCompile(`^pk-lf-.+:sk-lf-.+$`),
+						Example: "sk-lf-…",
+					},
+				},
+				want: "example does not match its own pattern",
+			},
+			"example missing": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{Pattern: regexp.MustCompile(`.`)},
+				},
+				want: "needs both a Pattern and an Example",
+			},
+			"pattern missing": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{Example: "pk-lf-…"},
+				},
+				want: "needs both a Pattern and an Example",
+			},
+			"shape declared for a key the customer never types": {
+				apiKey: &provider.APIKeyConfig{
+					Managed: &provider.ManagedAPIKey{},
+					KeyFormat: &provider.KeyFormat{
+						Pattern: regexp.MustCompile(`^k-.+$`),
+						Example: "k-…",
+					},
+				},
+				want: "no customer-supplied key to shape",
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderSlack,
+					DisplayName: "Slack",
+					APIKey:      tc.apiKey,
 				})
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.want)

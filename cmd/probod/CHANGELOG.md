@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.280.0] - 2026-09-07
+
+### Added
+
+- GCP project IAM access-review driver: lists project IAM principals and service accounts, degrading gracefully when service-account listing is denied, with best-effort last activity (Admin Activity for users, Policy Analyzer with a Cloud Audit Logs fallback for service accounts) and MFA (Directory 2-Step Verification enrollment for users)
+- A connector provider may declare the shape of a pasted API key; the connect dialog checks it as the field loses focus and the create resolver checks and trims it again, catching a truncated or malformed paste before it is stored (Langfuse is the first provider to declare one)
+
+### Changed
+
+- GCP access-review MFA now uses the same WIF-impersonated service-account
+  token with `admin.directory.user.readonly` in addition to
+  `cloud-platform`. A Workspace Users-read admin role on that service
+  account is still required; a Directory 403 keeps identities and last
+  login and leaves MFA unknown.
+
+### Fixed
+
+- A connector probe now tells a refused request (403) from a refused credential (401): the source row reports the operation as not authorized, pointing at the plan and permissions with a link to the provider's setup guide, instead of claiming the credentials are invalid
+- Employee portal PDF viewer: a `pdfjs-dist@6` pin bundled a worker that did not match `react-pdf`'s 5.4 API, breaking signature and approval document previews
+
 ## [0.279.0] - 2026-09-04
 
 ### Added

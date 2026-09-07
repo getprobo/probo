@@ -86,7 +86,7 @@ func TestGCPRegistration(t *testing.T) {
 	assert.Equal(t, "serviceAccountEmail", reg.WorkloadIdentityExtraSettings()[1].Key)
 	assert.True(t, reg.WorkloadIdentityExtraSettings()[1].Required)
 	assert.Nil(t, reg.NewNameResolver)
-	assert.Nil(t, reg.WorkloadIdentity.NewNameResolver)
+	require.NotNil(t, reg.WorkloadIdentity.NewNameResolver)
 }
 
 func TestGCPNewSession(t *testing.T) {
@@ -142,7 +142,7 @@ func TestGCPNewDriver(t *testing.T) {
 		assert.Contains(t, err.Error(), "session is for AWS")
 	})
 
-	t.Run("returns not implemented for a gcp session", func(t *testing.T) {
+	t.Run("returns a driver for a gcp session", func(t *testing.T) {
 		t.Parallel()
 
 		conn := gcpTestConnector(
@@ -156,15 +156,68 @@ func TestGCPNewDriver(t *testing.T) {
 		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
 		require.NoError(t, err)
 
-		_, err = reg.WorkloadIdentity.NewDriver(
+		driver, err := reg.WorkloadIdentity.NewDriver(
 			context.Background(),
 			session,
 			conn,
 			log.NewLogger(log.WithOutput(io.Discard)),
 		)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "not implemented")
+		require.NoError(t, err)
+		require.NotNil(t, driver)
 	})
+}
+
+func TestGCPNewNameResolver(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderGCP)
+	require.True(t, ok)
+	require.NotNil(t, reg.WorkloadIdentity.NewNameResolver)
+
+	conn := gcpTestConnector(
+		t,
+		coredata.GCPConnectorSettings{
+			WorkloadIdentityProvider: gcpTestProviderResource,
+			ServiceAccountEmail:      gcpTestServiceAccount,
+		},
+	)
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+
+	t.Run(
+		"refuses a session on another cloud",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Nil(
+				t,
+				reg.WorkloadIdentity.NewNameResolver(
+					context.Background(),
+					awsForeignSession{},
+					conn,
+					logger,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"returns a resolver for a gcp session",
+		func(t *testing.T) {
+			t.Parallel()
+
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			require.NoError(t, err)
+
+			resolver := reg.WorkloadIdentity.NewNameResolver(
+				context.Background(),
+				session,
+				conn,
+				logger,
+			)
+			require.NotNil(t, resolver)
+		},
+	)
 }
 
 func TestGCPProbe(t *testing.T) {

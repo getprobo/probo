@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -50,14 +50,14 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Description',
-				name: 'description',
+				displayName: 'Content',
+				name: 'content',
 				type: 'string',
 				typeOptions: {
 					rows: 4,
 				},
 				default: '',
-				description: 'The comment description',
+				description: 'The comment content',
 			},
 			{
 				displayName: 'Owner ID',
@@ -76,7 +76,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const commentId = this.getNodeParameter('commentId', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
-		description?: string;
+		content?: string;
 		ownerId?: string;
 	};
 
@@ -85,7 +85,7 @@ export async function execute(
 			updateTaskComment(input: $input) {
 				taskComment {
 					id
-					description
+					content
 					createdAt
 					updatedAt
 					owner {
@@ -97,15 +97,23 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string> = { taskCommentId: commentId };
-	if (additionalFields.description !== undefined) {
-		input.description = additionalFields.description;
+	const input: Record<string, string | null> = { taskCommentId: commentId };
+	if (additionalFields.content !== undefined) {
+		input.content = additionalFields.content === ''
+			? null
+			: plainTextToProseMirrorJSON(additionalFields.content);
 	}
 	if (additionalFields.ownerId) {
 		input.ownerId = additionalFields.ownerId;
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
+	const data = responseData.data as IDataObject | undefined;
+	const payload = data?.updateTaskComment as IDataObject | undefined;
+	const taskComment = payload?.taskComment as IDataObject | undefined;
+	if (payload && taskComment) {
+		payload.taskComment = withPlainTextContent(taskComment);
+	}
 
 	return {
 		json: responseData,

@@ -31,8 +31,11 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+const richTextMaxJSONBytes = 64 << 10
 
 type (
 	TaskService struct {
@@ -43,7 +46,7 @@ type (
 		OrganizationID gid.GID
 		MeasureID      *gid.GID
 		Name           string
-		Description    *string
+		Content        *string
 		State          *coredata.TaskState
 		Priority       coredata.TaskPriority
 		TimeEstimate   *time.Duration
@@ -54,7 +57,7 @@ type (
 	UpdateTaskRequest struct {
 		TaskID       gid.GID
 		Name         *string
-		Description  **string
+		Content      **string
 		State        *coredata.TaskState
 		Priority     *coredata.TaskPriority
 		TimeEstimate **time.Duration
@@ -71,7 +74,13 @@ func (ctr *CreateTaskRequest) Validate() error {
 	v.Check(ctr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(ctr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
 	v.Check(ctr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(ctr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(
+		ctr.Content,
+		"content",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
 	v.Check(ctr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
 	v.Check(ctr.Priority, "priority", validator.Required(), validator.OneOfSlice(coredata.TaskPriorities()))
 	v.Check(ctr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
@@ -85,7 +94,13 @@ func (utr *UpdateTaskRequest) Validate() error {
 
 	v.Check(utr.TaskID, "task_id", validator.Required(), validator.GID(coredata.TaskEntityType))
 	v.Check(utr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(utr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(
+		utr.Content,
+		"content",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
 	v.Check(utr.Priority, "priority", validator.OneOfSlice(coredata.TaskPriorities()))
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
@@ -107,6 +122,11 @@ func (s TaskService) Create(
 	now := time.Now()
 	taskID := gid.New(scope.GetTenantID(), coredata.TaskEntityType)
 
+	content, err := prosemirror.DefaultDocumentJSON(req.Content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot sanitize task content: %w", err)
+	}
+
 	referenceID, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate reference id: %w", err)
@@ -122,7 +142,7 @@ func (s TaskService) Create(
 		OrganizationID: req.OrganizationID,
 		MeasureID:      req.MeasureID,
 		Name:           req.Name,
-		Description:    req.Description,
+		Content:        content,
 		Priority:       req.Priority,
 		TimeEstimate:   req.TimeEstimate,
 		AssignedToID:   req.AssignedToID,
@@ -301,8 +321,13 @@ func (s TaskService) Update(
 				task.Name = *req.Name
 			}
 
-			if req.Description != nil {
-				task.Description = *req.Description
+			if req.Content != nil {
+				content, err := prosemirror.DefaultDocumentJSON(*req.Content)
+				if err != nil {
+					return fmt.Errorf("cannot sanitize task content: %w", err)
+				}
+
+				task.Content = content
 			}
 
 			if req.State != nil {

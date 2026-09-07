@@ -36,9 +36,11 @@ import (
 // scopes against the current registration.
 //
 // MCP has no lazy field resolution, so this runs eagerly wherever a Connector
-// is built. Every failure collapses to DISCONNECTED: the underlying error
-// wraps provider-controlled text and customer-chosen hosts, and stays in the
-// logs rather than travelling to the client.
+// is built. A provider that accepted the credential and refused the operation
+// reports NOT_AUTHORIZED; every other failure collapses to DISCONNECTED,
+// because the underlying error wraps provider-controlled text and
+// customer-chosen hosts, and stays in the logs rather than travelling to the
+// client.
 func (r *Resolver) connectorConnectionStatus(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -48,16 +50,22 @@ func (r *Resolver) connectorConnectionStatus(
 		field := log.String("connector_id", connectorID.String())
 
 		if probeErr, ok := errors.AsType[*accessreview.ProbeError](err); ok && probeErr != nil {
+			status := types.ConnectorConnectionStatusDISCONNECTED
+			if accessreview.IsProbeOperationRefused(err) {
+				status = types.ConnectorConnectionStatusNOTAUTHORIZED
+			}
+
 			// Not Probo's failure, so not in the error budget.
 			r.logger.WarnCtx(
 				ctx,
-				"connector credential probe failed, reporting disconnected",
+				"connector credential probe failed",
 				field,
 				log.String("provider", probeErr.Provider.String()),
 				log.String("probe_failure", accessreview.ProbeFailureCode(err)),
+				log.String("connection_status", string(status)),
 			)
 
-			return types.ConnectorConnectionStatusDISCONNECTED
+			return status
 		}
 
 		r.logger.ErrorCtx(

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -37,8 +37,8 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Description',
-		name: 'description',
+		displayName: 'Content',
+		name: 'content',
 		type: 'string',
 		typeOptions: {
 			rows: 4,
@@ -50,7 +50,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The comment description',
+		description: 'The comment content',
 		required: true,
 	},
 	{
@@ -73,7 +73,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
-	const description = this.getNodeParameter('description', itemIndex) as string;
+	const content = this.getNodeParameter('content', itemIndex) as string;
 	const ownerId = this.getNodeParameter('ownerId', itemIndex, '') as string;
 
 	const query = `
@@ -82,7 +82,7 @@ export async function execute(
 				taskCommentEdge {
 					node {
 						id
-						description
+						content
 						createdAt
 						updatedAt
 						owner {
@@ -95,12 +95,19 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string> = { taskId, description };
+	const input: Record<string, string> = { taskId, content: plainTextToProseMirrorJSON(content) };
 	if (ownerId) {
 		input.ownerId = ownerId;
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
+	const data = responseData.data as IDataObject | undefined;
+	const payload = data?.createTaskComment as IDataObject | undefined;
+	const edge = payload?.taskCommentEdge as IDataObject | undefined;
+	const node = edge?.node as IDataObject | undefined;
+	if (edge && node) {
+		edge.node = withPlainTextContent(node);
+	}
 
 	return {
 		json: responseData,

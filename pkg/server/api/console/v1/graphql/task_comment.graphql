@@ -36,7 +36,7 @@ input TaskCommentOrder
 
 type TaskComment implements Node {
     id: ID!
-    description: String!
+    content: String!
     owner: Profile! @goField(forceResolver: true)
     task: Task! @goField(forceResolver: true)
     createdAt: Datetime!
@@ -73,13 +73,13 @@ extend type Mutation {
 input CreateTaskCommentInput {
     taskId: ID!
     ownerId: ID
-    description: String!
+    content: String!
 }
 
 input UpdateTaskCommentInput {
     taskCommentId: ID!
     ownerId: ID @goField(omittable: true)
-    description: String @goField(omittable: true)
+    content: String @goField(omittable: true)
 }
 
 input DeleteTaskCommentInput {

@@ -40,6 +40,9 @@ func TestProseMirrorDocumentContent(t *testing.T) {
 		{"valid doc", validDoc, false},
 		{"plain text", "not json", true},
 		{"non-doc root", `{"type":"paragraph","content":[]}`, true},
+		{"unknown node", `{"type":"doc","content":[{"type":"unknownWidget"}]}`, true},
+		{"unknown mark", `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"glow"}],"text":"hi"}]}]}`, true},
+		{"invalid heading level", `{"type":"doc","content":[{"type":"heading","attrs":{"level":9},"content":[{"type":"text","text":"hi"}]}]}`, true},
 		{"nil value", nil, false},
 		{"nil *string", (*string)(nil), false},
 		{"non-string", 1, true},
@@ -98,6 +101,52 @@ func TestProseMirrorDocumentMaxTextLength(t *testing.T) {
 			err := fn(tt.value)
 			if (err != nil) != tt.wantError {
 				t.Errorf("ProseMirrorDocumentMaxTextLength() error = %v, wantError %v", err, tt.wantError)
+			}
+
+			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {
+				t.Errorf("expected code %s, got %s", tt.wantCode, err.Code)
+			}
+		})
+	}
+}
+
+func TestHasVisibleRichText(t *testing.T) {
+	t.Parallel()
+
+	emptyHR := `{"type":"doc","content":[{"type":"horizontalRule"}]}`
+	imageOnly := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`
+	emptyList := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph"}]}]}]}`
+	emptyTable := `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableCell","content":[{"type":"paragraph"}]}]}]}]}`
+
+	tests := []struct {
+		name      string
+		value     any
+		wantError bool
+		wantCode  ErrorCode
+	}{
+		{"nil value", nil, true, ErrorCodeRequired},
+		{"empty string", "", true, ErrorCodeRequired},
+		{"whitespace only", "   \n", true, ErrorCodeRequired},
+		{"doc with text", proseMirrorDoc("hello"), false, ""},
+		{"empty paragraph doc", `{"type":"doc","content":[{"type":"paragraph"}]}`, true, ErrorCodeRequired},
+		{"text on non-text node", `{"type":"doc","content":[{"type":"paragraph","text":"hello"}]}`, true, ErrorCodeRequired},
+		{"horizontal rule only", emptyHR, false, ""},
+		{"image only", imageOnly, false, ""},
+		{"empty list", emptyList, true, ErrorCodeRequired},
+		{"empty table", emptyTable, true, ErrorCodeRequired},
+		{"plain text", "hello", true, ErrorCodeInvalidFormat},
+		{"non-string", 1, true, ErrorCodeInvalidFormat},
+	}
+
+	fn := HasVisibleRichText()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := fn(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("HasVisibleRichText() error = %v, wantError %v", err, tt.wantError)
 			}
 
 			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {

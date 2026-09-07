@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -66,6 +67,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	identityFederation *identityfederation.Issuer,
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
+	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
@@ -88,6 +90,7 @@ func NewMux(
 		baseURL:             baseURL,
 		identityFederation:  identityFederation,
 		awsConnectorInstall: awsConnectorInstall,
+		gcpConnectorInstall: gcpConnectorInstall,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))

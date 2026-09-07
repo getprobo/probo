@@ -86,10 +86,13 @@ resource "google_project_iam_member" "service_account_viewer" {
   member  = "serviceAccount:${google_service_account.probo_audit.email}"
 }
 
-resource "google_project_iam_member" "logging_viewer" {
-  project = data.google_project.current.project_id
-  role    = "roles/logging.viewer"
-  member  = "serviceAccount:${google_service_account.probo_audit.email}"
+resource "google_logging_log_view_iam_member" "required_logs" {
+  parent   = "projects/${data.google_project.current.project_id}"
+  location = var.required_bucket_location
+  bucket   = "_Required"
+  name     = "_AllLogs"
+  role     = "roles/logging.viewAccessor"
+  member   = "serviceAccount:${google_service_account.probo_audit.email}"
 }
 
 resource "google_project_iam_member" "policy_analyzer" {

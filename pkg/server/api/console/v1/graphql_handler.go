@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -79,6 +80,7 @@ func NewGraphQLHandler(
 	complianceMessages ComplianceMessages,
 	identityFederation *identityfederation.Issuer,
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
+	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -106,6 +108,7 @@ func NewGraphQLHandler(
 			logger:                  logger,
 			identityFederation:      identityFederation,
 			awsConnectorInstall:     awsConnectorInstall,
+			gcpConnectorInstall:     gcpConnectorInstall,
 			probotIdentityBindings:  probotIdentityBindings,
 			slackbotInstallations:   slackbotInstallations,
 			botDeliveryDestinations: botDeliveryDestinations,

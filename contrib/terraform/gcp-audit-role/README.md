@@ -40,10 +40,11 @@ The Google provider must target the project you want to connect. Set
 `project` on the provider, or export `GOOGLE_CLOUD_PROJECT`.
 
 Enable `iam.googleapis.com`, `cloudresourcemanager.googleapis.com`,
-`sts.googleapis.com`, and `iamcredentials.googleapis.com` in that
-project before you apply. Terraform uses the first two. Probo uses STS
-and IAM Credentials to exchange a token and impersonate the service
-account.
+`sts.googleapis.com`, `iamcredentials.googleapis.com`, and
+`logging.googleapis.com` in that project before you apply. Terraform
+uses the first two and Logging to grant the `_Required` view. Probo
+uses STS and IAM Credentials to exchange a token and impersonate the
+service account.
 
 ```hcl
 module "probo_audit" {
@@ -66,6 +67,20 @@ output "probo_service_account_email" {
 Give Probo the `workload_identity_provider` and `service_account_email`
 outputs when you create the connector.
 
+## Optional: MFA for human users
+
+Human identities on the project are Google Workspace or Cloud Identity
+users. Cloud IAM cannot grant Directory reads, so this module does not
+cover MFA. After you apply, a Super Admin can assign a Users-read admin
+role to the `probo-audit` service account in the Google Admin console
+(Account > Admin roles > Assign service accounts). See [Assign a Google
+Workspace administrator role to a service
+account](https://developers.google.com/workspace/guides/create-credentials#assign_a_google_workspace_administrator_role_to_a_service_account).
+
+Probo then reads 2-Step Verification enrollment with the same WIF token.
+Skip this step if you do not need MFA on the GCP source; those accounts
+stay MFA unknown.
+
 ## Verifying an install
 
 Probo probes the install by exchanging a token and impersonating the service
@@ -83,7 +98,7 @@ it back.
 | `google_service_account` | `probo-audit` by default. |
 | `roles/iam.securityReviewer` | Project IAM, additive. |
 | `roles/iam.serviceAccountViewer` | Project IAM, additive. |
-| `roles/logging.viewer` | Project IAM, additive. |
+| `roles/logging.viewAccessor` | On `_Required`/`_AllLogs` only, additive. Admin Activity and the other `_Required` audit logs; not `_Default` application logs. |
 | `roles/policyanalyzer.activityAnalysisViewer` | Project IAM, additive. |
 | `roles/iam.workloadIdentityUser` | On the service account, for `principal://…/subject/{probo_subject}` only. |
 
@@ -105,6 +120,25 @@ output descriptions in [`variables.tf`](variables.tf) and
   URL as the JWT `aud`.
 - **The subject condition is exact equality.** A `startsWith` wildcard would
   let any subject this issuer can mint impersonate the service account.
-- **The four project roles are additive members**, not bindings. A binding
-  would replace every other member of that role in the project.
+- **IAM members are additive**, not bindings. A binding would replace
+  every other member of that role in the project or on the log view.
+- **`_Required` is queried in `global` by default.** If default resource
+  settings moved that bucket, set `required_bucket_location` to match.
 - Requires the `google` provider at 5.0 or later.
+
+## Cloud de Confiance (S3NS)
+
+S3NS is a separate Google Cloud universe. Set the universe on the **root**
+provider; this module does not configure it. Project IDs carry the `s3ns:`
+prefix. Workload identity principals still use `iam.googleapis.com`.
+
+```hcl
+provider "google" {
+  project         = "s3ns:my-project"
+  universe_domain = "s3nsapis.fr"
+}
+```
+
+The service account email this module creates ends in
+`.s3ns.iam.gserviceaccount.com`. Paste that email when you create the
+connector so Probo dials `*.s3nsapis.fr`.

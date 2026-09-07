@@ -59,4 +59,11 @@ export const accessReviewRoutes = [
       () => import("./connections/CreateAwsAccessReviewSourcePageLoader"),
     ),
   },
+  {
+    path: "connections/new/gcp-workload-identity",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./connections/CreateGcpAccessReviewSourcePageLoader"),
+    ),
+  },
 ] satisfies AppRoute[];

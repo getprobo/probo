@@ -4,6 +4,10 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Changed
+
+- Task and Task Comment operations return `content` as plaintext instead of ProseMirror JSON
+
 ## [0.226.0] - 2026-09-02
 
 ### Added

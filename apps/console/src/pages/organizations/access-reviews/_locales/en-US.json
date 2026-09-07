@@ -1,0 +1,44 @@
+{
+  "createGcpAccessReviewSourcePage": {
+    "pageTitle": "Connect GCP",
+    "title": "Connect GCP",
+    "description": "Deploy the audit service account. Then enter the provider resource and the service account email.",
+    "permissionDenied": "You do not have permission to create access sources.",
+    "fields": {
+      "workloadIdentityProvider": "Workload identity provider",
+      "serviceAccountEmail": "Service account email",
+      "issuer": "Issuer",
+      "audience": "Audience",
+      "subject": "Subject",
+      "workloadIdentityProviderPlaceholder": "projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com"
+    },
+    "messages": {
+      "copyFailed": "Copy failed",
+      "copied": "Copied to clipboard",
+      "copiedIssuer": "Issuer copied.",
+      "copiedAudience": "Audience copied.",
+      "copiedSubject": "Subject copied.",
+      "copiedTerraform": "Terraform snippet copied.",
+      "error": "Error",
+      "success": "Success",
+      "created": "Access source created successfully."
+    },
+    "errors": {
+      "workloadIdentityProvider": "Enter a valid workload identity provider resource.",
+      "serviceAccountEmail": "Enter a valid service account email.",
+      "create": "Could not create the connector. Check the provider resource and the service account email, then try again.",
+      "disconnected": "Probo could not impersonate the audit service account. Confirm that the module is applied in this project and that the issuer and subject match the values shown during setup.",
+      "delete": "Could not delete the connector. Try again.",
+      "source": "Failed to create access source",
+      "copy": "Copy the value manually."
+    },
+    "actions": {
+      "copy": "Copy",
+      "connect": "Connect",
+      "back": "Back",
+      "installViaTerraform": "Install via Terraform",
+      "chooseAnotherInstallMethod": "Choose another install method"
+    }
+  }
+}

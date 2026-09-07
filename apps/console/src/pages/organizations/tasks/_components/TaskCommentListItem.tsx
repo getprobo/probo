@@ -19,86 +19,113 @@
 // SOFTWARE.
 
 import { TrashIcon, UserIcon } from "@phosphor-icons/react";
-import { dateTimeFormat } from "@probo/i18n";
+import { RichEditor } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { ListItem } from "@probo/ui/src/v2/List/ListItem";
-import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import type { TaskCommentListItem_comment$key } from "#/__generated__/core/TaskCommentListItem_comment.graphql";
+import type { TaskCommentListItem_taskComment$key } from "#/__generated__/core/TaskCommentListItem_taskComment.graphql";
 
-import { taskCommentListItem } from "../variants";
+import { taskCommentEditor, taskCommentListItem } from "../variants";
 
 import { TaskCommentDeleteDialog } from "./TaskCommentDeleteDialog";
+import { TaskCommentEditor } from "./TaskCommentEditor";
 
 const taskCommentListItemFragment = graphql`
-  fragment TaskCommentListItem_comment on TaskComment {
-    description
+  fragment TaskCommentListItem_taskComment on TaskComment {
+    content
     createdAt
     owner {
       fullName
     }
+    canUpdate: permission(action: "core:task-comment:update")
     canDelete: permission(action: "core:task-comment:delete")
-    ...TaskCommentDeleteDialog_comment
+    ...TaskCommentEditor_taskComment
+    ...TaskCommentDeleteDialog_taskComment
   }
 `;
 
 interface TaskCommentListItemProps {
-  taskCommentKey: TaskCommentListItem_comment$key;
+  taskCommentKey: TaskCommentListItem_taskComment$key;
 }
 
 export function TaskCommentListItem({ taskCommentKey }: TaskCommentListItemProps) {
   const { i18n, t } = useTranslation("organizations/tasks");
   const comment = useFragment(taskCommentListItemFragment, taskCommentKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { header, description } = taskCommentListItem();
+  const { root, header, meta, content } = taskCommentListItem();
   const ownerInitial = comment.owner.fullName.charAt(0).toUpperCase();
+  const createdAt = new Intl.DateTimeFormat(i18n.language, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(comment.createdAt));
 
   return (
-    <ListItem>
-      <Avatar
-        size={2}
-        variant="soft"
-        color="gold"
-        radius="full"
-        fallback={ownerInitial || <UserIcon />}
-      />
-      <ListItemContent>
-        <div className={header()}>
+    <li className={root()}>
+      <div className={header()}>
+        <Avatar
+          size={2}
+          variant="soft"
+          color="gold"
+          radius="full"
+          fallback={ownerInitial || <UserIcon />}
+        />
+        <div className={meta()}>
           <Text size={2} weight="medium">
             {comment.owner.fullName}
           </Text>
           <Text size={1} color="faint">
-            {dateTimeFormat(i18n.language, comment.createdAt)}
+            {createdAt}
           </Text>
         </div>
-        <div className={description()}>
-          <Text size={2}>{comment.description}</Text>
-        </div>
-      </ListItemContent>
-      {comment.canDelete && (
-        <>
-          <IconButton
-            variant="ghost"
-            color="neutral"
-            aria-label={t("detailsPage.comments.actions.delete")}
-            onClick={() => {
-              setDeleteOpen(true);
-            }}
-          >
-            <TrashIcon />
-          </IconButton>
-          <TaskCommentDeleteDialog
-            taskCommentKey={comment}
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-          />
-        </>
-      )}
-    </ListItem>
+        {comment.canDelete && (
+          <>
+            <IconButton
+              variant="ghost"
+              color="neutral"
+              aria-label={t("detailsPage.comments.actions.delete")}
+              onClick={() => {
+                setDeleteOpen(true);
+              }}
+            >
+              <TrashIcon />
+            </IconButton>
+            <TaskCommentDeleteDialog
+              taskCommentKey={comment}
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+            />
+          </>
+        )}
+      </div>
+      <div className={content()}>
+        <ErrorBoundary
+          fallback={(
+            <Text size={2} color="faint">
+              {t("detailsPage.comments.errors.content")}
+            </Text>
+          )}
+        >
+          {comment.canUpdate
+            ? <TaskCommentEditor taskCommentKey={comment} />
+            : (
+                <RichEditor
+                  className={taskCommentEditor()}
+                  content={comment.content}
+                  disabled
+                  aria-label={t("detailsPage.comments.fields.comment")}
+                />
+              )}
+        </ErrorBoundary>
+      </div>
+    </li>
   );
 }

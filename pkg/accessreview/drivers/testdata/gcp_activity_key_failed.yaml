@@ -1,0 +1,90 @@
+---
+# Policy Analyzer last-auth succeeds, key last-auth fails, then Admin
+# Activity covers users only. The last-auth timestamp must be kept.
+# Directory MFA for alice still succeeds. Call order is the contract.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: policyanalyzer.googleapis.com
+        url: https://policyanalyzer.googleapis.com/v1/projects/123456789012/locations/global/activityTypes/serviceAccountLastAuthentication/activities:query
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"activities":[{"fullResourceName":"//iam.googleapis.com/projects/123456789012/serviceAccounts/sa@my-project.iam.gserviceaccount.com","activityType":"serviceAccountLastAuthentication","activity":{"lastAuthenticatedTime":"2026-08-10T07:00:00Z"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: policyanalyzer.googleapis.com
+        url: https://policyanalyzer.googleapis.com/v1/projects/123456789012/locations/global/activityTypes/serviceAccountKeyLastAuthentication/activities:query
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":500,"message":"Internal error encountered","status":"INTERNAL"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 500 Internal Server Error
+        code: 500
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: logging.googleapis.com
+        url: https://logging.googleapis.com/v2/entries:list
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"entries":[{"timestamp":"2026-08-15T12:00:00Z","protoPayload":{"authenticationInfo":{"principalEmail":"alice@example.com"}}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: admin.googleapis.com
+        url: https://admin.googleapis.com/admin/directory/v1/users/alice@example.com
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"primaryEmail":"alice@example.com","isEnrolledIn2Sv":true}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

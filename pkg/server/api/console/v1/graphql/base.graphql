@@ -51,6 +51,8 @@ type Query {
     accessReviewDrivers: [ConnectorProviderInfo!]! @goField(forceResolver: true)
     awsConnectorSetup(organizationId: ID!): AWSConnectorSetup!
         @goField(forceResolver: true)
+    gcpConnectorSetup(organizationId: ID!): GCPConnectorSetup!
+        @goField(forceResolver: true)
     crispVerificationCode(organizationId: ID!, websiteId: String!): String!
         @goField(forceResolver: true)
     probotIdentityBindPreview(token: String!): ProbotIdentityBindPreview!

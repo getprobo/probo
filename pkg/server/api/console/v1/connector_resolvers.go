@@ -7,12 +7,10 @@ package console_v1
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/log"
-	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
@@ -65,6 +63,25 @@ func (r *connectorResolver) ConnectionStatus(ctx context.Context, obj *types.Con
 	}
 
 	return status, nil
+}
+
+// DisplayName is the resolver for the displayName field.
+func (r *connectorResolver) DisplayName(ctx context.Context, obj *types.Connector) (string, error) {
+	return r.providerRegistry.ProviderDisplayName(obj.Provider), nil
+}
+
+// DocumentationURL is the resolver for the documentationUrl field.
+//
+// The same page ConnectorProviderInfo advertises before connecting, repeated
+// on the connector so a source whose connection went wrong can point at the
+// prerequisites — plan, role, key kind — that explain why.
+func (r *connectorResolver) DocumentationURL(ctx context.Context, obj *types.Connector) (*string, error) {
+	reg, ok := r.providerRegistry.Get(obj.Provider)
+	if !ok || reg.DocumentationURL == "" {
+		return nil, nil
+	}
+
+	return new(reg.DocumentationURL), nil
 }
 
 // CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
@@ -181,20 +198,9 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
 	}
 
-	if input.Provider != coredata.ConnectorProviderAWS {
-		return nil, gqlutils.Invalidf(ctx, "provider does not support workload identity")
-	}
-
-	settings, err := cloudaws.NewConnectorSettings(input.AWSRoleArn)
+	raw, err := r.workloadIdentitySettings(ctx, input)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
-	}
-
-	raw, err := json.Marshal(settings)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot marshal aws connector settings", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, err
 	}
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{

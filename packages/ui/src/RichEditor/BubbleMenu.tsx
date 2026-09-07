@@ -5,8 +5,10 @@
 import { CodeIcon, LinkIcon, TextBIcon, TextItalicIcon, TextStrikethroughIcon, TextUnderlineIcon, TrashIcon } from "@phosphor-icons/react";
 import { Editor, useEditorState } from "@tiptap/react";
 import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { tv } from "tailwind-variants";
+import { type KeyboardEvent, useContext, useEffect, useRef, useState } from "react";
+import { tv } from "tailwind-variants/lite";
+
+import { OverlayPortalRootContext } from "../lib/overlayPortalRoot";
 
 import { MenuButton } from "./MenuButton";
 
@@ -26,21 +28,36 @@ type BubbleMenuProps = {
 
 export function BubbleMenu(props: BubbleMenuProps) {
   const { editor } = props;
+  const portalRoot = useContext(OverlayPortalRootContext);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const linkInputRef = useRef<HTMLInputElement>(null);
 
   const state = useEditorState({
     editor,
-    selector: ({ editor }) => ({
-      isBold: editor.isActive("bold"),
-      isItalic: editor.isActive("italic"),
-      isUnderline: editor.isActive("underline"),
-      isStrike: editor.isActive("strike"),
-      isCode: editor.isActive("code"),
-      isLink: editor.isActive("link"),
-      linkHref: editor.getAttributes("link").href as string | undefined,
-    }),
+    selector: ({ editor: current }) => {
+      if (current.isDestroyed) {
+        return {
+          isBold: false,
+          isItalic: false,
+          isUnderline: false,
+          isStrike: false,
+          isCode: false,
+          isLink: false,
+          linkHref: undefined,
+        };
+      }
+
+      return {
+        isBold: current.isActive("bold"),
+        isItalic: current.isActive("italic"),
+        isUnderline: current.isActive("underline"),
+        isStrike: current.isActive("strike"),
+        isCode: current.isActive("code"),
+        isLink: current.isActive("link"),
+        linkHref: current.getAttributes("link").href as string | undefined,
+      };
+    },
   });
 
   useEffect(() => {
@@ -82,14 +99,25 @@ export function BubbleMenu(props: BubbleMenuProps) {
       e.preventDefault();
       setShowLinkInput(false);
       setLinkUrl("");
-      editor.commands.focus();
+      if (!editor.isDestroyed) {
+        editor.commands.focus();
+      }
     }
   }
 
   return (
     <BaseBubbleMenu
       editor={editor}
+      {...(portalRoot ? { appendTo: () => portalRoot } : {})}
       className={root()}
+      data-rich-editor-floating=""
+      onMouseDown={(e) => {
+        if (e.target instanceof HTMLInputElement) {
+          return;
+        }
+
+        e.preventDefault();
+      }}
     >
       <div className={toolbar()}>
         <MenuButton

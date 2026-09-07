@@ -24,11 +24,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/aws/smithy-go"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/googleapi"
 
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
@@ -240,6 +242,33 @@ func IsProviderVerdict(err error) bool {
 		return true
 	}
 
+	// STS rejects an assertion with 400. The probe's only Google clients
+	// are STS Token and IAM GenerateAccessToken, so 400 is their answer.
+	if apiErr, ok := errors.AsType[*googleapi.Error](err); ok && apiErr != nil {
+		switch apiErr.Code {
+		case http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound:
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsProbeOperationRefused reports whether a probe failure is the provider
+// accepting the credential and then refusing what was asked of it — a plan
+// that excludes the endpoint, a role without the permission — rather than
+// refusing the credential itself. The two are told apart at the probe, because
+// only there is the provider's own explanation still in hand.
+func IsProbeOperationRefused(err error) bool {
+	rejected, ok := errors.AsType[*provider.CredentialRejectedError](err)
+	if ok && rejected != nil && rejected.OperationRefused {
+		return true
+	}
+
+	if apiErr, ok := errors.AsType[*googleapi.Error](err); ok && apiErr != nil {
+		return apiErr.Code == http.StatusForbidden
+	}
+
 	return false
 }
 
@@ -267,6 +296,16 @@ func ProbeFailureCode(err error) string {
 	// safe to report where the surrounding message is not.
 	if apiErr, ok := errors.AsType[smithy.APIError](err); ok && apiErr != nil {
 		return fmt.Sprintf("aws_%s", apiErr.ErrorCode())
+	}
+
+	// Status and reason are fixed identifiers; Message and Body can name a
+	// service-account email, so they stay out of the token.
+	if apiErr, ok := errors.AsType[*googleapi.Error](err); ok && apiErr != nil {
+		if len(apiErr.Errors) > 0 && apiErr.Errors[0].Reason != "" {
+			return fmt.Sprintf("gcp_%d_%s", apiErr.Code, apiErr.Errors[0].Reason)
+		}
+
+		return fmt.Sprintf("gcp_%d", apiErr.Code)
 	}
 
 	cause := err

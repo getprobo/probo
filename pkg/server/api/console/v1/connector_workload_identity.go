@@ -21,8 +21,16 @@
 package console_v1
 
 import (
+	"context"
+	"errors"
+
+	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 func newAWSConnectorSetup(setup cloudaws.ConnectorSetup) *types.AWSConnectorSetup {
@@ -34,4 +42,39 @@ func newAWSConnectorSetup(setup cloudaws.ConnectorSetup) *types.AWSConnectorSetu
 		TerraformSnippet:             setup.TerraformSnippet,
 		CloudFormationQuickCreateURL: setup.CloudFormationQuickCreateURL,
 	}
+}
+
+func newGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *types.GCPConnectorSetup {
+	return &types.GCPConnectorSetup{
+		Issuer:                      setup.Issuer,
+		Audience:                    setup.Audience,
+		Subject:                     setup.Subject,
+		SuggestedServiceAccountName: setup.SuggestedServiceAccountName,
+		TerraformSnippet:            setup.TerraformSnippet,
+	}
+}
+
+func (r *Resolver) workloadIdentitySettings(
+	ctx context.Context,
+	input types.CreateWorkloadIdentityConnectorInput,
+) ([]byte, error) {
+	raw, err := probo.MarshalWorkloadIdentitySettings(
+		probo.WorkloadIdentitySettingsInput{
+			Provider:                    input.Provider,
+			AWSRoleARN:                  ref.UnrefOrZero(input.AWSRoleArn),
+			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GCPWorkloadIdentityProvider),
+			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GCPServiceAccountEmail),
+		},
+	)
+	if err != nil {
+		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
+			r.logger.ErrorCtx(ctx, "cannot marshal workload identity connector settings", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	return raw, nil
 }

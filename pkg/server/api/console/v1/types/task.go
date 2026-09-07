@@ -74,7 +74,7 @@ func NewTask(t *coredata.Task) *Task {
 		},
 
 		Name:         t.Name,
-		Description:  t.Description,
+		Content:      t.Content,
 		State:        t.State,
 		Priority:     t.Priority,
 		Rank:         t.Rank,

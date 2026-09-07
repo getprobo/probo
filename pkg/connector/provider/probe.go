@@ -64,7 +64,7 @@ func (r *Registry) ProbeConnection(
 	}
 
 	if reg.Probe != nil {
-		return reg.Probe(ctx, httpClient, conn, reg.Endpoints)
+		return classifyRejection(reg, reg.Probe(ctx, httpClient, conn, reg.Endpoints))
 	}
 
 	probeURL := reg.Endpoints.Probe
@@ -77,7 +77,28 @@ func (r *Registry) ProbeConnection(
 		probeURL = built
 	}
 
-	return probeGET(ctx, httpClient, probeURL)
+	return classifyRejection(reg, probeGET(ctx, httpClient, probeURL))
+}
+
+// classifyRejection lets a registration read the provider's own explanation of
+// a rejection the status alone cannot settle. Only a 403 is ambiguous: 401 is
+// always the credential, and an extra status a provider rejects on is one it
+// chose precisely because it is unambiguous. The error is refined in place so
+// that whatever a provider's Probe wrapped it in survives, and the body is
+// dropped either way — no caller past this point may read provider text.
+func classifyRejection(reg *Registration, err error) error {
+	rejected, ok := errors.AsType[*CredentialRejectedError](err)
+	if !ok || rejected == nil {
+		return err
+	}
+
+	if reg.ClassifyRejection != nil && rejected.StatusCode == http.StatusForbidden {
+		rejected.OperationRefused = reg.ClassifyRejection(rejected.body)
+	}
+
+	rejected.body = nil
+
+	return err
 }
 
 // ProbeCloudConnection is ProbeConnection for a workload identity connector,
@@ -141,12 +162,38 @@ func probePOSTJSON(
 
 // CredentialRejectedError reports that the provider refused the credential,
 // carrying the status separately so callers can log it without the message.
+//
+// OperationRefused separates the two rejections a customer fixes differently: a
+// credential the provider will not accept at all (a dead key, the wrong kind
+// of key) from one it accepts before refusing what was asked of it (a plan
+// that excludes the endpoint, a role without the permission). The status
+// decides it — 401 is the credential, 403 is the refusal — unless the provider
+// explains itself in the body and its registration reads that explanation.
+//
+// Deliberately not named for HTTP's own word: 401 is the status called
+// Unauthorized, and this is the bit that is true for 403.
 type CredentialRejectedError struct {
-	StatusCode int
+	StatusCode       int
+	OperationRefused bool
+
+	// body is the provider's own explanation, held only until ProbeConnection
+	// has run the registration's ClassifyRejection over it. Provider-controlled
+	// text, so it stays unexported and out of Error().
+	body []byte
 }
 
 func (e *CredentialRejectedError) Error() string {
 	return fmt.Sprintf("credential rejected: status %d", e.StatusCode)
+}
+
+// newCredentialRejected builds the rejection a status implies, so that the
+// "403 is the authorization, everything else is the credential" rule lives in
+// one place rather than at each site that answers a provider's refusal.
+func newCredentialRejected(statusCode int) *CredentialRejectedError {
+	return &CredentialRejectedError{
+		StatusCode:       statusCode,
+		OperationRefused: statusCode == http.StatusForbidden,
+	}
 }
 
 // NotAnAPIEndpointError reports that the probe reached a server that answered
@@ -163,11 +210,18 @@ func (e *NotAnAPIEndpointError) Error() string {
 	)
 }
 
+// rejectionBodyLimit caps what a provider's explanation of a rejection can
+// cost: enough for the one-line JSON error a rejection carries, never enough
+// for a page.
+const rejectionBodyLimit = 4 << 10
+
 // doProbeRequest executes a probe request and maps the status to a verdict:
 // 401/403 always mean the credential is rejected, any 2xx/other status means
 // connected. extraReject lets a provider add statuses that also mean a hard
 // rejection (e.g. OpenRouter's 404 for a non-organization key); pass none for
-// the default 401/403-only contract.
+// the default 401/403-only contract. A rejection is the credential's fault
+// unless the status is 403, which means the provider got far enough to refuse
+// the operation instead.
 //
 // A 2xx that answers with an HTML document is rejected: only there does the
 // status lie.
@@ -189,7 +243,14 @@ func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...i
 	if resp.StatusCode == http.StatusUnauthorized ||
 		resp.StatusCode == http.StatusForbidden ||
 		slices.Contains(extraReject, resp.StatusCode) {
-		return &CredentialRejectedError{StatusCode: resp.StatusCode}
+		rejected := newCredentialRejected(resp.StatusCode)
+
+		// Only a 403 is ever reclassified, so only a 403 body is worth keeping.
+		if resp.StatusCode == http.StatusForbidden {
+			rejected.body, _ = io.ReadAll(io.LimitReader(resp.Body, rejectionBodyLimit))
+		}
+
+		return rejected
 	}
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 && respondsWithHTML(resp.Body) {
@@ -590,7 +651,7 @@ func probeRailway(
 	}()
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return &CredentialRejectedError{StatusCode: resp.StatusCode}
+		return newCredentialRejected(resp.StatusCode)
 	}
 
 	// The errors-array rule below is Railway's documented rejection, and it
@@ -616,7 +677,7 @@ func probeRailway(
 	// Railway answers 200 with an errors array rather than a 401, so this is
 	// a rejection too and must classify the same way.
 	if len(parsed.Errors) > 0 || parsed.Data.Me == nil {
-		return &CredentialRejectedError{StatusCode: resp.StatusCode}
+		return newCredentialRejected(resp.StatusCode)
 	}
 
 	return nil

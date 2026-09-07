@@ -39,7 +39,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskCommentOrder) {
         edges {
           node {
             id
-            description
+            content
             createdAt
             owner {
               id
@@ -58,10 +58,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskCommentOrder) {
 `
 
 type comment struct {
-	ID          string `json:"id"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"createdAt"`
-	Owner       struct {
+	ID        string `json:"id"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"createdAt"`
+	Owner     struct {
 		ID       string `json:"id"`
 		FullName string `json:"fullName"`
 	} `json:"owner"`
@@ -167,15 +167,20 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(comments))
 			for _, c := range comments {
+				content, err := cmdutil.FormatRichText(c.Content)
+				if err != nil {
+					return fmt.Errorf("cannot format comment content: %w", err)
+				}
+
 				rows = append(rows, []string{
 					c.ID,
 					c.Owner.FullName,
-					c.Description,
+					content,
 					cmdutil.FormatTime(c.CreatedAt),
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "OWNER", "DESCRIPTION", "CREATED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "OWNER", "CONTENT", "CREATED").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

@@ -18,63 +18,79 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { RichEditor } from "@probo/ui";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback, useState } from "react";
+import { type ErrorInfo, type ReactNode, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskDescriptionSection_task$key } from "#/__generated__/core/TaskDescriptionSection_task.graphql";
 
+import { isRichEditorContentEmpty } from "../_lib/richEditorContent";
 import { useDebouncedSerializedFieldSave } from "../_lib/useSerializedFieldSave";
 import { useUpdateTask } from "../_lib/useUpdateTask";
 import { taskDescriptionSection } from "../variants";
 
-const taskDescriptionMaxLength = 5000;
 const taskDescriptionSaveDelayMs = 1000;
 
 const taskDescriptionSectionFragment = graphql`
   fragment TaskDescriptionSection_task on Task {
     id
-    description
+    content
     canUpdate: permission(action: "core:task:update")
   }
 `;
 
 interface TaskDescriptionSectionProps {
   taskKey: TaskDescriptionSection_task$key;
+  fallback?: ReactNode;
+  onError?: (error: unknown, info: ErrorInfo) => void;
 }
 
-export function TaskDescriptionSection({ taskKey }: TaskDescriptionSectionProps) {
+function normalizeContent(value: string) {
+  return isRichEditorContentEmpty(value) ? "" : value;
+}
+
+function TaskDescriptionSectionContent({
+  taskKey,
+}: {
+  taskKey: TaskDescriptionSection_task$key;
+}) {
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskDescriptionSectionFragment, taskKey);
   const [updateTask] = useUpdateTask();
-  const saved = task.description ?? "";
+  const saved = task.content;
   const [draft, setDraft] = useState(saved);
-  const [savedDescription, setSavedDescription] = useState(saved);
+  const [savedContent, setSavedContent] = useState(saved);
   const [dirty, setDirty] = useState(false);
+  const [editorGeneration, setEditorGeneration] = useState(0);
 
-  if (saved !== savedDescription) {
-    setSavedDescription(saved);
+  if (saved !== savedContent) {
+    setSavedContent(saved);
     if (!dirty) {
       setDraft(saved);
+      setEditorGeneration(generation => generation + 1);
     }
   }
 
   const persist = useCallback(
     async (value: string) => {
-      const next = value.trim();
+      const next = normalizeContent(value);
 
       try {
-        await updateTask({
-          variables: {
-            input: {
-              taskId: task.id,
-              description: next || null,
+        await updateTask(
+          {
+            variables: {
+              input: {
+                taskId: task.id,
+                content: next || null,
+              },
             },
           },
-        });
+        );
         setDraft((current) => {
-          if (current === value || current.trim() === next) {
+          if (current === value || normalizeContent(current) === next) {
             setDirty(false);
             return next;
           }
@@ -82,8 +98,9 @@ export function TaskDescriptionSection({ taskKey }: TaskDescriptionSectionProps)
         });
       } catch {
         setDraft((current) => {
-          if (current.trim() === next) {
+          if (normalizeContent(current) === next) {
             setDirty(false);
+            setEditorGeneration(generation => generation + 1);
             return saved;
           }
           return current;
@@ -96,21 +113,18 @@ export function TaskDescriptionSection({ taskKey }: TaskDescriptionSectionProps)
     persist,
     taskDescriptionSaveDelayMs,
   );
-  const { root, textarea } = taskDescriptionSection();
+  const { root, editor } = taskDescriptionSection();
 
   return (
     <div className={root()}>
       {task.canUpdate
         ? (
-            <textarea
-              className={textarea()}
-              rows={1}
-              value={draft}
-              maxLength={taskDescriptionMaxLength}
-              placeholder={t("detailsPage.descriptionPlaceholder")}
+            <RichEditor
+              key={editorGeneration}
+              className={editor()}
+              content={draft}
               aria-label={t("detailsPage.fields.description")}
-              onChange={(event) => {
-                const next = event.currentTarget.value;
+              onChangeContent={(next) => {
                 setDirty(true);
                 setDraft(next);
                 persistDebounced.schedule(next);
@@ -120,17 +134,41 @@ export function TaskDescriptionSection({ taskKey }: TaskDescriptionSectionProps)
               }}
             />
           )
-        : task.description
+        : isRichEditorContentEmpty(saved)
           ? (
-              <Text size={2} className="whitespace-pre-wrap wrap-break-word">
-                {task.description}
-              </Text>
-            )
-          : (
               <Text size={2} color="faint">
                 {t("detailsPage.noDescription")}
               </Text>
+            )
+          : (
+              <RichEditor
+                className={editor()}
+                content={saved}
+                disabled
+                aria-label={t("detailsPage.fields.description")}
+              />
             )}
     </div>
+  );
+}
+
+export function TaskDescriptionSection({
+  taskKey,
+  fallback,
+  onError,
+}: TaskDescriptionSectionProps) {
+  const { t } = useTranslation("organizations/tasks");
+
+  return (
+    <ErrorBoundary
+      fallback={fallback ?? (
+        <Text size={2} color="faint">
+          {t("detailsPage.errors.content")}
+        </Text>
+      )}
+      onError={onError}
+    >
+      <TaskDescriptionSectionContent taskKey={taskKey} />
+    </ErrorBoundary>
   );
 }

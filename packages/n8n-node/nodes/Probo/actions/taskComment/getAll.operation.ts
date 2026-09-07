@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, withPlainTextContent } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -86,7 +86,7 @@ export async function execute(
 						edges {
 							node {
 								id
-								description
+								content
 								createdAt
 								updatedAt
 								owner {
@@ -131,7 +131,7 @@ export async function execute(
 	);
 
 	return {
-		json: { comments },
+		json: { comments: comments.map(withPlainTextContent) },
 		pairedItem: { item: itemIndex },
 	};
 }

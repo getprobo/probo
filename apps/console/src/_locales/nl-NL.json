@@ -2774,19 +2774,7 @@
     }
   },
   "accessReviewSourceRow": {
-    "sources": {
-      "csv": "CSV",
-      "googleWorkspace": "Google Workspace",
-      "microsoft365": "Microsoft 365",
-      "linear": "Linear",
-      "slack": "Slack",
-      "metabase": "Metabase",
-      "signoz": "SigNoz",
-      "cursor": "Cursor",
-      "github": "GitHub",
-      "cloudflare": "Cloudflare",
-      "authentik": "authentik"
-    },
+    "sources": { "csv": "CSV" },
     "errors": {
       "delete": "Verwijderen van toegangsbron mislukt",
       "configure": "Configureren van bron mislukt"
@@ -2815,7 +2803,9 @@
         "reconnectTitle": "{{provider}} is niet verbonden",
         "credentialsTitle": "De inloggegevens van {{provider}} zijn ongeldig",
         "reconnectDescription": "Verbind deze bron opnieuw om de toegang tot organisaties te herstellen.",
-        "credentialsDescription": "Probo heeft met de huidige inloggegevens geen toegang tot organisaties. Controleer de inloggegevens en rechten van deze bron."
+        "credentialsDescription": "Probo kan deze bron niet lezen met de huidige inloggegevens. Controleer de inloggegevens en de rechten die ze bij {{provider}} hebben.",
+        "notAuthorizedTitle": "{{provider}} heeft dit verzoek geweigerd",
+        "notAuthorizedDescription": "{{provider}} accepteert de inloggegevens, maar weigerde het verzoek van Probo. Controleer de rechten die ze bij {{provider}} hebben en of uw abonnement de API bevat die Probo gebruikt."
       }
     }
   },
@@ -3091,6 +3081,7 @@
     "errors": {
       "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en verificatiecode en probeer het opnieuw.",
       "apiKeyConnect": "Verbinden met provider mislukt. Controleer uw API-sleutel en probeer het opnieuw.",
+      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}",
       "copy": "Kopieer de verificatiecode handmatig.",
       "generateCode": "Kan geen verificatiecode genereren. Controleer de Website-ID en probeer het opnieuw."
     },
