@@ -585,10 +585,12 @@ func setupDeviceEnrollmentClients(t *testing.T) (
 func TestDeviceEnrollment(t *testing.T) {
 	t.Parallel()
 
+	sharedOwner, sharedAdmin, sharedEmployee, sharedViewer, orgID, ownerProfileID := setupDeviceEnrollmentClients(t)
+
 	t.Run("enrollment token can be exchanged once", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollDevice(t, employee, orgID)
 
@@ -603,7 +605,8 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("revoked device enrollment token returns unauthorized", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollDevice(t, employee, orgID)
 
@@ -626,7 +629,8 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("revoked device API key is rejected on heartbeat", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollDevice(t, employee, orgID)
 		status, payload := exchangeEnrollmentToken(t, enrolled.EnrollDevice.EnrollmentToken)
@@ -658,7 +662,8 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("re-enrollment succeeds after revoke with same hardware UUID", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollAndActivateDevice(t, employee, orgID)
 		hardwareUUID := enrolled.EnrollDevice.Device.ID + "-hw"
@@ -692,7 +697,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("owner can enroll device", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 
 		enrollDevice(t, owner, orgID)
 	})
@@ -700,7 +705,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("admin can enroll device", func(t *testing.T) {
 		t.Parallel()
 
-		_, admin, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		admin := sharedAdmin.ForTest(t)
 
 		enrollDevice(t, admin, orgID)
 	})
@@ -708,7 +713,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee can enroll device", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrollDevice(t, employee, orgID)
 	})
@@ -716,7 +721,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee permission gate", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		var result struct {
 			Node struct {
@@ -730,7 +735,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee can read own device", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollDevice(t, employee, orgID)
 
@@ -748,7 +753,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee cannot read another users device via node", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 
 		employeeA := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 		employeeB := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
@@ -764,7 +769,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee cannot list org devices", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		_, err := employee.Do(listDevicesQuery, map[string]any{"orgId": orgID})
 		testutil.RequireForbiddenError(t, err, "employee should not list org devices")
@@ -799,7 +804,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee enrolled devices exclude pending devices", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollDevice(t, employee, orgID)
 
@@ -810,7 +815,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee only sees own enrolled devices", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 
 		employeeA := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 		employeeB := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
@@ -844,7 +849,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("owner can list own enrolled devices", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 
 		enrolled := enrollAndActivateDevice(t, owner, orgID)
 
@@ -855,7 +860,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("admin can list own enrolled devices", func(t *testing.T) {
 		t.Parallel()
 
-		_, admin, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		admin := sharedAdmin.ForTest(t)
 
 		enrolled := enrollAndActivateDevice(t, admin, orgID)
 
@@ -879,7 +884,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee sees device when owner was set with profile id", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 
 		employeeA := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 		profileID := employeeA.GetProfileID().String()
@@ -915,7 +920,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee cannot revoke device", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollDevice(t, employee, orgID)
 
@@ -930,7 +935,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("employee cannot create device for another user", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, ownerProfileID := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		_, err := employee.Do(createDeviceMutation, map[string]any{
 			"input": map[string]any{
@@ -944,7 +949,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("viewer cannot enroll device", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, _, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
+		viewer := sharedViewer.ForTest(t)
 
 		_, err := viewer.Do(enrollDeviceMutation, map[string]any{
 			"input": map[string]any{
@@ -957,7 +962,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("unassumed session can poll own enrolledDevice", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled := enrollAndActivateDevice(t, employee, orgID)
 		deviceID := enrolled.EnrollDevice.Device.ID
@@ -983,7 +988,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("unassumed session cannot read another users enrolledDevice", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 
 		employeeA := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 		employeeB := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
@@ -1001,7 +1006,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("enrolledDevice does not disclose foreign org device existence", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employeeA, _, _, _ := setupDeviceEnrollmentClients(t)
+		employeeA := sharedEmployee.ForTest(t)
 		_, _, employeeB, _, orgBID, _ := setupDeviceEnrollmentClients(t)
 
 		enrolledB := enrollDevice(t, employeeB, orgBID)
@@ -1023,7 +1028,7 @@ func TestDeviceEnrollment(t *testing.T) {
 	t.Run("owner retains admin access", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 
 		created := createDevice(t, owner, orgID, nil)
 
@@ -1070,10 +1075,12 @@ func TestDeviceEnrollment(t *testing.T) {
 func TestDeviceDelete(t *testing.T) {
 	t.Parallel()
 
+	sharedOwner, _, sharedEmployee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
 	t.Run("cannot delete pending device", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 		created := createDevice(t, owner, orgID, nil)
 
 		_, err := owner.Do(deleteDeviceMutation, map[string]any{
@@ -1087,7 +1094,7 @@ func TestDeviceDelete(t *testing.T) {
 	t.Run("owner can delete revoked device", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
 		created := createDevice(t, owner, orgID, nil)
 		deviceID := created.CreateDevice.Device.ID
 
@@ -1118,7 +1125,8 @@ func TestDeviceDelete(t *testing.T) {
 	t.Run("cannot delete active device", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 		enrolled, _ := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 
 		_, err := owner.Do(deleteDeviceMutation, map[string]any{
@@ -1132,7 +1140,8 @@ func TestDeviceDelete(t *testing.T) {
 	t.Run("employee cannot delete device", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 		created := createDevice(t, owner, orgID, nil)
 		deviceID := created.CreateDevice.Device.ID
 
@@ -1156,9 +1165,7 @@ func TestDeviceDelete(t *testing.T) {
 func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
 	t.Parallel()
 
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-	orgID := owner.GetOrganizationID().String()
+	owner, admin, employee, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
 
 	for _, tc := range []struct {
 		name   string
@@ -1170,7 +1177,8 @@ func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			resp, err := tc.client.Do(devicePermissionQuery, map[string]any{"orgId": orgID})
+			client := tc.client.ForTest(t)
+			resp, err := client.Do(devicePermissionQuery, map[string]any{"orgId": orgID})
 			require.NoError(t, err)
 
 			var result struct {
@@ -1186,8 +1194,6 @@ func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
 	t.Run("unassumed session can query enroll permission via connect", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
-
 		unassumedEmployee := testutil.NewClientWithNewSession(t, employee)
 		unassumedViewer := testutil.NewClientWithNewSession(t, viewer)
 
@@ -1199,10 +1205,13 @@ func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
 func TestDevicePostureReports(t *testing.T) {
 	t.Parallel()
 
+	sharedOwner, _, sharedEmployee, sharedViewer, orgID, _ := setupDeviceEnrollmentClients(t)
+
 	t.Run("one agent run becomes one report", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 		deviceID := enrolled.EnrollDevice.Device.ID
@@ -1260,7 +1269,8 @@ func TestDevicePostureReports(t *testing.T) {
 	t.Run("legacy agent without correlation_id still groups one report", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 		deviceID := enrolled.EnrollDevice.Device.ID
@@ -1310,7 +1320,8 @@ func TestDevicePostureReports(t *testing.T) {
 	t.Run("each agent run adds a report", func(t *testing.T) {
 		t.Parallel()
 
-		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		owner := sharedOwner.ForTest(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 		deviceID := enrolled.EnrollDevice.Device.ID
@@ -1372,7 +1383,8 @@ func TestDevicePostureReports(t *testing.T) {
 	t.Run("viewer can read posture reports", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
+		viewer := sharedViewer.ForTest(t)
 
 		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 		deviceID := enrolled.EnrollDevice.Device.ID
@@ -1407,7 +1419,7 @@ func TestDevicePostureReports(t *testing.T) {
 	t.Run("another organization cannot read posture reports", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		employee := sharedEmployee.ForTest(t)
 
 		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 		deviceID := enrolled.EnrollDevice.Device.ID
