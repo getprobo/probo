@@ -27,6 +27,7 @@ import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { matchPath, useLocation, useNavigate, useSearchParams } from "react-router";
@@ -34,6 +35,8 @@ import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
+
+import { CreateAccountFooterLazy } from "./_components/CreateAccountFooter";
 
 const signInMutation = graphql`
   mutation PasswordSignInPageMutation($input: SignInInput!) {
@@ -168,13 +171,12 @@ export default function PasswordSignInPage() {
       </Form>
 
       <div className="flex flex-col gap-2">
-        <Text align="center" size={2} className="block">
-          {t("passwordSignInPage.noAccount")}
-          {" "}
-          <Link to={{ pathname: "/auth/register", search: location.search }}>
-            {t("passwordSignInPage.actions.register")}
-          </Link>
-        </Text>
+        <Suspense fallback={null}>
+          <CreateAccountFooterLazy
+            prefix={t("passwordSignInPage.noAccount")}
+            label={t("passwordSignInPage.actions.register")}
+          />
+        </Suspense>
 
         <Text align="center" size={2} className="block">
           <Link to={{ pathname: "/auth/login", search: location.search }}>

@@ -399,33 +399,49 @@ func (s *Service) resolveClient(
 	tx pg.Tx,
 	clientIDRaw string,
 ) (*coredata.OAuth2Client, error) {
+	client, _, err := s.resolveClientWithAllowance(ctx, tx, clientIDRaw)
+
+	return client, err
+}
+
+func (s *Service) resolveClientWithAllowance(
+	ctx context.Context,
+	tx pg.Tx,
+	clientIDRaw string,
+) (*coredata.OAuth2Client, CIMDAllowance, error) {
 	if clientID, err := gid.ParseGID(clientIDRaw); err == nil {
 		if tx != nil {
 			client := coredata.OAuth2Client{}
 			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), clientID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil, NewError(ErrInvalidClient, WithDescription("client not found"))
+					return nil, CIMDAllowanceDenied, NewError(ErrInvalidClient, WithDescription("client not found"))
 				}
 
-				return nil, fmt.Errorf("cannot load oauth2 client: %w", err)
+				return nil, CIMDAllowanceDenied, fmt.Errorf("cannot load oauth2 client: %w", err)
 			}
 
-			return &client, nil
+			return &client, CIMDAllowanceDenied, nil
 		}
 
-		return s.GetClientByID(ctx, clientID)
+		client, err := s.GetClientByID(ctx, clientID)
+		if err != nil {
+			return nil, CIMDAllowanceDenied, err
+		}
+
+		return client, CIMDAllowanceDenied, nil
 	}
 
 	if !IsCIMDClientID(clientIDRaw) {
-		return nil, NewError(ErrInvalidClient, WithDescription("invalid client_id"))
+		return nil, CIMDAllowanceDenied, NewError(ErrInvalidClient, WithDescription("invalid client_id"))
 	}
 
-	if allowance, err := s.cimdAllowance(ctx, clientIDRaw); err != nil || !allowance.Allowed() {
+	allowance, err := s.cimdAllowance(ctx, clientIDRaw)
+	if err != nil || !allowance.Allowed() {
 		if err != nil {
 			s.logger.WarnCtx(ctx, "cannot check cimd client allowance", log.Error(err))
 		}
 
-		return nil, NewError(
+		return nil, allowance, NewError(
 			ErrInvalidClient,
 			WithDescription("client_id is not allowed for client metadata documents"),
 		)
@@ -433,20 +449,20 @@ func (s *Service) resolveClient(
 
 	doc, err := s.cimd.fetch(ctx, clientIDRaw)
 	if err != nil {
-		return nil, err
+		return nil, allowance, err
 	}
 
 	scopes, err := s.cimdScopes(doc)
 	if err != nil {
-		return nil, err
+		return nil, allowance, err
 	}
 
 	client, err := s.upsertCIMDClient(ctx, tx, clientIDRaw, doc, scopes)
 	if err != nil {
-		return nil, err
+		return nil, allowance, err
 	}
 
-	return client, nil
+	return client, allowance, nil
 }
 
 func (s *Service) upsertCIMDClient(

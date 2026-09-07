@@ -88,3 +88,16 @@ func TestClientBranding_InvalidClientID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, branding)
 }
+
+func TestClientBrandingFromClient_CompliancePortalUnset(t *testing.T) {
+	t.Parallel()
+
+	branding := ClientBrandingFromClient(
+		&coredata.OAuth2Client{
+			ClientName: "Acme",
+		},
+	)
+
+	require.NotNil(t, branding)
+	assert.False(t, branding.IsCompliancePortal)
+}
