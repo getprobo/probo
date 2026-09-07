@@ -34,7 +34,9 @@ func tailscaleRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderTailscale,
 		DisplayName:      "Tailscale",
 		DocumentationURL: accessReviewDocsURL("tailscale"),
-		APIKey:           &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			KeyFormat: apiKeyPrefix("tskey-api-", "tskey-api-…"),
+		},
 		Endpoints: Endpoints{
 			Probe:   "https://api.tailscale.com/api/v2/tailnet/-/users",
 			APIBase: "https://api.tailscale.com/api/v2",

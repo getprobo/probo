@@ -256,10 +256,14 @@ type APIKeyConfig struct {
 	KeyFormat *KeyFormat
 }
 
-// KeyFormat is a paste check, not an authenticity check: it catches a
-// half-copied credential or a missing separator, never a key that is
-// well-formed and wrong. It is data rather than a closure because both sides of
-// the API evaluate it.
+// KeyFormat is the shape the customer has to paste: the prefix that marks the
+// one credential this connector can use, and the separator where the credential
+// joins two halves. So it catches a credential pasted wrong, and one of the
+// provider's other credential classes that could never have worked here. It
+// cannot catch a key of the right class that is dead, revoked or too narrowly
+// scoped, which is what the probe is for.
+//
+// It is data rather than a closure because both sides of the API evaluate it.
 type KeyFormat struct {
 	// Pattern asserts the prefix and the separator, and nothing else. It must
 	// not constrain the length or the alphabet of the random part: a provider
@@ -271,6 +275,9 @@ type KeyFormat struct {
 	// character classes, quantifiers, anchors, alternation and (?:. A pattern
 	// the browser will not compile costs the client-side check and nothing
 	// more: the server applies the rule either way.
+	//
+	// . is not one of them, since the two exclude different line terminators
+	// from it. Write [\s\S] where any character will do.
 	Pattern *regexp.Regexp
 
 	// Example is the shape shown to the customer, as the field's placeholder
@@ -279,6 +286,19 @@ type KeyFormat struct {
 	// check refuses. It stands in for the pattern, which is unreadable to the
 	// people who need to act on it, so it carries no real key material.
 	Example string
+}
+
+// apiKeyPrefix is the KeyFormat of a provider that mints every key with one
+// fixed prefix. It quotes and anchors the prefix and asks for one character
+// after it, so a registration cannot reach past the prefix into the random
+// part and a key copied no further than the prefix is not well formed. Stop
+// the prefix short of any version segment the provider can bump; Example still
+// shows the whole of today's shape.
+func apiKeyPrefix(prefix, example string) *KeyFormat {
+	return &KeyFormat{
+		Pattern: regexp.MustCompile("^" + regexp.QuoteMeta(prefix) + "[\\s\\S]"),
+		Example: example,
+	}
 }
 
 // ManagedAPIKey is the Probo-held variant of the API-key path. Nesting it under

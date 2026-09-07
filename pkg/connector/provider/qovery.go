@@ -24,11 +24,17 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// qoveryKeyPattern covers both organization token classes, which ride the
+// same Token scheme: a regular API token and a policy token. What it turns
+// away is the Console's own JWT, which the API takes only as a Bearer.
+var qoveryKeyPattern = regexp.MustCompile(`^(?:qov_|sk-qov-)[\s\S]`)
 
 func qoveryRegistration() *Registration {
 	return &Registration{
@@ -39,6 +45,10 @@ func qoveryRegistration() *Registration {
 			Auth: APIKeyAuth{Mode: APIKeyAuthScheme, Name: "Token"},
 			ExtraSettings: []ExtraSetting{
 				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
+			KeyFormat: &KeyFormat{
+				Pattern: qoveryKeyPattern,
+				Example: "qov_… or sk-qov-…",
 			},
 		},
 		BuildProbeURL: buildQoveryProbeURL,

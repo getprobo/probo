@@ -23,11 +23,18 @@ package provider
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// clickhouseKeyPattern asserts the separator and nothing else: neither half
+// carries a prefix, so what the check can catch is a customer who pasted the
+// key ID or the secret on its own, which the Basic transport would encode as a
+// credential with no password and no way to tell from a dead key.
+var clickhouseKeyPattern = regexp.MustCompile(`^[^:]+:[\s\S]`)
 
 func clickhouseRegistration() *Registration {
 	return &Registration{
@@ -36,6 +43,10 @@ func clickhouseRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("clickhouse"),
 		APIKey: &APIKeyConfig{
 			Auth: APIKeyAuth{Mode: APIKeyAuthBasicUserPass},
+			KeyFormat: &KeyFormat{
+				Pattern: clickhouseKeyPattern,
+				Example: "keyId:keySecret",
+			},
 		},
 		// ClickHouse Cloud's control-plane API authenticates with HTTP Basic
 		// auth where the credential is keyId:keySecret. APIKeyBasicAuthUserPass

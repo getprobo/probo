@@ -35,7 +35,8 @@ func anthropicRegistration() *Registration {
 		DisplayName:      "Anthropic",
 		DocumentationURL: accessReviewDocsURL("anthropic"),
 		APIKey: &APIKeyConfig{
-			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+			Auth:      APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+			KeyFormat: apiKeyPrefix("sk-ant-", "sk-ant-…"),
 		},
 		Endpoints: Endpoints{
 			// Every Admin API endpoint the driver calls shares the /v1
@@ -47,7 +48,10 @@ func anthropicRegistration() *Registration {
 		// 400 when both headers are present. APIKeyHeader makes the
 		// APIKeyConnection send x-api-key instead of Bearer. There is no
 		// third-party OAuth2 flow for the Admin API, so this is API-key
-		// only and takes a single admin key (sk-ant-admin...) per org.
+		// only and takes a single key per org: an Admin API key
+		// (sk-ant-admin...), or a personal or service account key scoped to
+		// no workspace, both of which Anthropic documents as reaching the
+		// member endpoints.
 		Probe: probeAnthropic,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewAnthropicDriver(c, ep.APIBase), nil

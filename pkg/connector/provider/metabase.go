@@ -42,6 +42,7 @@ func metabaseRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "instanceUrl", Label: "Instance URL", Required: true},
 			},
+			KeyFormat: apiKeyPrefix("mb_", "mb_…"),
 		},
 		BuildProbeURL: buildMetabaseProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {

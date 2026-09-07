@@ -35,7 +35,8 @@ func brevoRegistration() *Registration {
 		DisplayName:      "Brevo",
 		DocumentationURL: accessReviewDocsURL("brevo"),
 		APIKey: &APIKeyConfig{
-			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "api-key"},
+			Auth:      APIKeyAuth{Mode: APIKeyAuthHeader, Name: "api-key"},
+			KeyFormat: apiKeyPrefix("xkeysib-", "xkeysib-…"),
 		},
 		// Brevo authenticates with an API key sent in the api-key header
 		// rather than Authorization: Bearer. APIKeyHeader makes the

@@ -44,7 +44,7 @@ func TestCreateAPIKeyConnector_RBAC(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": viewer.GetOrganizationID().String(),
 				"provider":       "BREX",
-				"apiKey":         "test-key",
+				"apiKey":         "bxt_test-key",
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create connector")

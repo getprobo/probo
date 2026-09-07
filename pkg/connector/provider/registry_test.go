@@ -235,8 +235,8 @@ func TestRegistry_Register(t *testing.T) {
 	})
 
 	// A KeyFormat is a promise to the customer, shown as the field's
-	// placeholder and echoed in the rejection: Register refuses the two ways
-	// that promise can be a lie.
+	// placeholder and echoed in the rejection: Register refuses every way that
+	// promise can be a lie.
 	t.Run("KeyFormat rules", func(t *testing.T) {
 		t.Parallel()
 
@@ -252,6 +252,15 @@ func TestRegistry_Register(t *testing.T) {
 					},
 				},
 				want: "example does not match its own pattern",
+			},
+			"pattern not written with a leading caret": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{
+						Pattern: regexp.MustCompile(`sk-admin-`),
+						Example: "sk-admin-…",
+					},
+				},
+				want: "must be written starting with ^",
 			},
 			"example missing": {
 				apiKey: &provider.APIKeyConfig{
