@@ -26,7 +26,6 @@ import { usePageTitle } from "@probo/hooks";
 import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
-  Avatar,
   Badge,
   Button,
   Card,
@@ -47,6 +46,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Suspense, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -563,7 +563,13 @@ function OwnerFilterSelect({
       <Option value="ALL">{t("findingsPage.filters.allOwners")}</Option>
       {people.map(p => (
         <Option key={p.id} value={p.id}>
-          <Avatar name={p.fullName} />
+          <Avatar
+            name={p.fullName}
+            email={p.emailAddress}
+            src={p.avatar?.downloadUrl}
+            size={1}
+            radius="full"
+          />
           {p.fullName}
         </Option>
       ))}

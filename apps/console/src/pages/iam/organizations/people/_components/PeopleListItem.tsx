@@ -33,6 +33,7 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { clsx } from "clsx";
 import { use } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,6 +53,9 @@ const fragment = graphql`
     state
     fullName
     emailAddress
+    avatar {
+      downloadUrl
+    }
     membership @required(action: THROW) {
       id
       role
@@ -268,7 +272,16 @@ export function PeopleListItem(props: {
         isInactive && "opacity-50",
       )}
       >
-        <span className="font-semibold">{profile.fullName}</span>
+        <span className="flex items-center gap-2 font-semibold">
+          <Avatar
+            name={profile.fullName}
+            email={profile.emailAddress}
+            src={profile.avatar?.downloadUrl}
+            size={1}
+            radius="full"
+          />
+          {profile.fullName}
+        </span>
       </Td>
       <Td>
         <Badge variant={isActive ? "success" : "neutral"}>{profile.state}</Badge>

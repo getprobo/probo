@@ -45,6 +45,7 @@ type (
 		EmailAddressVerified bool      `db:"email_address_verified"`
 		SAMLSubject          *string   `db:"saml_subject"`
 		Locale               *string   `db:"locale"`
+		AvatarFileID         *gid.GID  `db:"avatar_file_id"`
 		CreatedAt            time.Time `db:"created_at"`
 		UpdatedAt            time.Time `db:"updated_at"`
 	}
@@ -80,6 +81,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -125,6 +127,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -135,6 +138,51 @@ LIMIT 1;
 `
 
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query identity: %w", err)
+	}
+
+	identity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Identity])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect identity: %w", err)
+	}
+
+	*i = identity
+
+	return nil
+}
+
+func (i *Identity) LoadByAvatarFileID(
+	ctx context.Context,
+	conn pg.Querier,
+	fileID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    email_address,
+    full_name,
+    hashed_password,
+    email_address_verified,
+    saml_subject,
+    locale,
+    avatar_file_id,
+    created_at,
+    updated_at
+FROM
+    identities
+WHERE
+    avatar_file_id = @file_id
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"file_id": fileID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -171,6 +219,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -268,6 +317,7 @@ INSERT INTO
         email_address_verified,
         saml_subject,
         locale,
+        avatar_file_id,
         created_at,
         updated_at
     )
@@ -279,6 +329,7 @@ VALUES (
     @email_address_verified,
     @saml_subject,
     @locale,
+    @avatar_file_id,
     @created_at,
     @updated_at
 )
@@ -291,6 +342,7 @@ VALUES (
 		"hashed_password":        i.HashedPassword,
 		"saml_subject":           i.SAMLSubject,
 		"locale":                 i.Locale,
+		"avatar_file_id":         i.AvatarFileID,
 		"created_at":             i.CreatedAt,
 		"updated_at":             i.UpdatedAt,
 		"email_address_verified": i.EmailAddressVerified,
@@ -324,6 +376,7 @@ SET
     saml_subject = @saml_subject,
     hashed_password = @hashed_password,
     locale = @locale,
+    avatar_file_id = @avatar_file_id,
     updated_at = @updated_at
 WHERE
     id = @identity_id
@@ -337,6 +390,7 @@ WHERE
 		"saml_subject":           i.SAMLSubject,
 		"hashed_password":        i.HashedPassword,
 		"locale":                 i.Locale,
+		"avatar_file_id":         i.AvatarFileID,
 		"updated_at":             i.UpdatedAt,
 	}
 
@@ -399,6 +453,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -468,6 +523,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM

@@ -65,13 +65,13 @@ func (ps *PolicySet) Merge(other *PolicySet) *PolicySet {
 
 func IAMPolicySet() *PolicySet {
 	return NewPolicySet().
-		AddRolePolicy("OWNER", IAMOwnerPolicy).
-		AddRolePolicy("ADMIN", IAMAdminPolicy).
-		AddRolePolicy("VIEWER", IAMViewerPolicy).
+		AddRolePolicy("OWNER", IAMOwnerPolicy, IAMConsoleColleagueAvatarPolicy).
+		AddRolePolicy("ADMIN", IAMAdminPolicy, IAMConsoleColleagueAvatarPolicy).
+		AddRolePolicy("VIEWER", IAMViewerPolicy, IAMConsoleColleagueAvatarPolicy).
 		AddRolePolicy("EMPLOYEE", IAMViewerPolicy).
-		AddRolePolicy("AUDITOR", IAMViewerPolicy).
-		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", IAMViewerPolicy).
-		AddRolePolicy("COMPLIANCE_PORTAL_ACCESS_MANAGER", IAMCompliancePortalAccessManagerPolicy).
+		AddRolePolicy("AUDITOR", IAMViewerPolicy, IAMConsoleColleagueAvatarPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", IAMViewerPolicy, IAMConsoleColleagueAvatarPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_ACCESS_MANAGER", IAMCompliancePortalAccessManagerPolicy, IAMConsoleColleagueAvatarPolicy).
 		AddIdentityScopedPolicy(
 			IAMSelfManageIdentityPolicy,
 			IAMSelfManageSessionPolicy,

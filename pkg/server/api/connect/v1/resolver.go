@@ -58,6 +58,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
@@ -129,7 +130,7 @@ func NewMux(
 		logger,
 	)
 
-	router.Handle("/graphql", graphqlHandler)
+	router.With(dataloader.NewMiddleware(svc)).Handle("/graphql", graphqlHandler)
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)
 	router.Post("/saml/2.0/consume", samlHandler.ConsumeHandler)
 	router.Get("/saml/2.0/{samlConfigID}", samlHandler.LoginHandler)

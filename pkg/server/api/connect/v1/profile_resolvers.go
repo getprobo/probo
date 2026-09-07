@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -148,6 +149,33 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 	}
 
 	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
+}
+
+// Avatar is the resolver for the avatar field.
+func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*types.File, error) {
+	if _, err := r.authorize(
+		ctx,
+		obj.ID,
+		iam.ActionMembershipProfileGetAvatar,
+		authz.WithSkipAssumptionCheck(),
+	); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	file, err := loaders.AvatarFileForProfile.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load profile avatar", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // Identity is the resolver for the identity field.

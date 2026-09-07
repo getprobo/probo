@@ -252,6 +252,47 @@ LIMIT 1;
 	return nil
 }
 
+func (p *MembershipProfile) LoadBySharedOrganization(
+	ctx context.Context,
+	conn pg.Querier,
+	avatarIdentityID gid.GID,
+	principalID gid.GID,
+) error {
+	q := `
+SELECT
+    p.id
+FROM
+    iam_membership_profiles p
+INNER JOIN iam_memberships m
+    ON m.organization_id = p.organization_id
+    AND m.identity_id = @principal_id
+WHERE
+    p.identity_id = @avatar_identity_id
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{
+		"avatar_identity_id": avatarIdentityID,
+		"principal_id":       principalID,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query shared profile: %w", err)
+	}
+
+	profileID, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect shared profile: %w", err)
+	}
+
+	return p.LoadByID(ctx, conn, NewScopeFromObjectID(profileID), profileID)
+}
+
 func (p *MembershipProfile) LoadByIdentityIDAndOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

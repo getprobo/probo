@@ -104,6 +104,7 @@ type (
 		ThirdParty                                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
 		Document                                   *dataloadgen.Loader[gid.GID, *coredata.Document]
 		Profile                                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
+		AvatarFileForProfile                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		Risk                                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
 		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
@@ -174,6 +175,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		ThirdParty:                               dataloadgen.NewMappedLoader(f.fetchThirdParties),
 		Document:                                 dataloadgen.NewMappedLoader(f.fetchDocuments),
 		Profile:                                  dataloadgen.NewMappedLoader(f.fetchProfiles),
+		AvatarFileForProfile:                     dataloadgen.NewMappedLoader(f.fetchAvatarFilesForProfiles),
 		Risk:                                     dataloadgen.NewMappedLoader(f.fetchRisks),
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
 		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
@@ -571,6 +573,18 @@ func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[g
 	}
 
 	return result, nil
+}
+
+func (f *batchFetcher) fetchAvatarFilesForProfiles(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.File, error) {
+	files, err := f.iam.AccountService.AvatarFilesForProfiles(ctx, keys)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load profile avatars: %w", err)
+	}
+
+	return files, nil
 }
 
 func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Risk, error) {

@@ -7,6 +7,7 @@ package connect_v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -16,11 +17,34 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/validator"
 )
+
+// Avatar is the resolver for the avatar field.
+func (r *identityResolver) Avatar(ctx context.Context, obj *types.Identity) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	file, err := loaders.AvatarFileForIdentity.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load identity avatar", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.fileManager), nil
+}
 
 // Profiles is the resolver for the profiles field.
 func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
@@ -248,6 +272,58 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 // Permission is the resolver for the permission field.
 func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// UpdateAvatar is the resolver for the updateAvatar field.
+func (r *mutationResolver) UpdateAvatar(ctx context.Context, input types.UpdateAvatarInput) (*types.UpdateAvatarPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if _, err := r.authorize(ctx, identity.ID, iam.ActionIdentityUpdate); err != nil {
+		return nil, err
+	}
+
+	updated, err := r.iam.AccountService.UpdateAvatar(
+		ctx,
+		identity.ID,
+		&iam.UpdateAvatarRequest{
+			File: iam.UploadedFile{
+				Filename:    input.File.Filename,
+				ContentType: input.File.ContentType,
+				Size:        input.File.Size,
+				Content:     input.File.File,
+			},
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update identity avatar", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateAvatarPayload{
+		Identity: types.NewIdentity(updated),
+	}, nil
+}
+
+// DeleteAvatar is the resolver for the deleteAvatar field.
+func (r *mutationResolver) DeleteAvatar(ctx context.Context) (*types.DeleteAvatarPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if _, err := r.authorize(ctx, identity.ID, iam.ActionIdentityUpdate); err != nil {
+		return nil, err
+	}
+
+	updated, err := r.iam.AccountService.DeleteAvatar(ctx, identity.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete identity avatar", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteAvatarPayload{
+		Identity: types.NewIdentity(updated),
+	}, nil
 }
 
 // Identity returns schema.IdentityResolver implementation.

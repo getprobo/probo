@@ -317,6 +317,53 @@ LIMIT 1;
 	return nil
 }
 
+func (f *Files) LoadActiveByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	fileIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    visibility,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    %s
+    AND id = ANY(@file_ids)
+    AND deleted_at IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"file_ids": fileIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query files: %w", err)
+	}
+
+	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[File])
+	if err != nil {
+		return fmt.Errorf("cannot collect files: %w", err)
+	}
+
+	*f = files
+
+	return nil
+}
+
 func (f *File) LoadPublicByID(
 	ctx context.Context,
 	conn pg.Querier,

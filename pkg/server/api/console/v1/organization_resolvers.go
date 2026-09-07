@@ -22,6 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/riskmanagement"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -1641,6 +1642,28 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 // Permission is the resolver for the permission field.
 func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// Avatar is the resolver for the avatar field.
+func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGetAvatar); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	file, err := loaders.AvatarFileForProfile.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load profile avatar", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // Permission is the resolver for the permission field.

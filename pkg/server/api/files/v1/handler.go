@@ -139,46 +139,55 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)
 
-	params := iam.AuthorizeParams{
-		Principal:          identity.ID,
-		Resource:           fileID,
-		Action:             probo.ActionFileGet,
-		ResourceAttributes: make(map[string]string),
-	}
+	var (
+		sessionID    *gid.GID
+		membershipID *gid.GID
+	)
+
 	if session != nil {
-		params.Session = &session.ID
+		sessionID = &session.ID
+		membershipID = session.MembershipID
 	}
 
-	scope, err := h.iamSvc.Authorizer.Authorize(ctx, params)
+	f, err := h.iamSvc.AccountService.AvatarFileForDownload(
+		ctx,
+		fileID,
+		identity.ID,
+		sessionID,
+		membershipID,
+	)
 	if err != nil {
-		if scopeErr, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
-			bearertoken.SetBearerInsufficientScope(w, h.baseURL, scopeErr.Scopes...)
-			jsonx.RenderForbidden(w)
-
-			return
-		}
-
-		if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
-			jsonx.RenderForbidden(w)
-			return
-		}
-
-		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
-
+		h.renderPrivateFileError(w, err)
 		return
 	}
 
-	f, err := h.probo.Files.Get(ctx, scope, fileID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+	if f == nil {
+		params := iam.AuthorizeParams{
+			Principal:          identity.ID,
+			Resource:           fileID,
+			Action:             probo.ActionFileGet,
+			ResourceAttributes: make(map[string]string),
+			Session:            sessionID,
+		}
+
+		scope, err := h.iamSvc.Authorizer.Authorize(ctx, params)
+		if err != nil {
+			h.renderPrivateFileError(w, err)
 			return
 		}
 
-		h.logger.ErrorCtx(ctx, "cannot get file", log.Error(err), log.String("file_id", fileIDStr))
-		jsonx.RenderInternalServerError(w)
+		f, err = h.probo.Files.Get(ctx, scope, fileID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+				return
+			}
 
-		return
+			h.logger.ErrorCtx(ctx, "cannot get file", log.Error(err), log.String("file_id", fileIDStr))
+			jsonx.RenderInternalServerError(w)
+
+			return
+		}
 	}
 
 	presignedURL, err := h.fileSvc.GeneratePresignedURL(ctx, f, presignedURLExpiry)
@@ -190,4 +199,20 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, presignedURL, http.StatusTemporaryRedirect)
+}
+
+func (h *Handler) renderPrivateFileError(w http.ResponseWriter, err error) {
+	if scopeErr, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		bearertoken.SetBearerInsufficientScope(w, h.baseURL, scopeErr.Scopes...)
+		jsonx.RenderForbidden(w)
+
+		return
+	}
+
+	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+		jsonx.RenderForbidden(w)
+		return
+	}
+
+	jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 }

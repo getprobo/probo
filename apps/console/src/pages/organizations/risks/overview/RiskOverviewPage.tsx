@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Avatar, Badge, Card, RiskOverview, SeverityBadge } from "@probo/ui";
+import { Badge, Card, RiskOverview, SeverityBadge } from "@probo/ui";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
@@ -39,6 +40,10 @@ export const riskOverviewPageQuery = graphql`
         residualImpact
         owner {
           fullName
+          emailAddress
+          avatar {
+            downloadUrl
+          }
         }
       }
     }
@@ -96,7 +101,13 @@ export default function RiskOverviewPage({ queryRef }: RiskOverviewPageProps) {
             {risk.owner?.fullName
               ? (
                   <div className="flex items-center gap-2">
-                    <Avatar name={risk.owner.fullName} />
+                    <Avatar
+                      name={risk.owner.fullName}
+                      email={risk.owner.emailAddress}
+                      src={risk.owner.avatar?.downloadUrl}
+                      size={1}
+                      radius="full"
+                    />
                     <span className="text-sm text-txt-primary">{risk.owner.fullName}</span>
                   </div>
                 )

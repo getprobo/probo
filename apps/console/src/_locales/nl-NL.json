@@ -2017,6 +2017,26 @@
       "logout": "Uitloggen"
     }
   },
+  "editAvatar": {
+    "title": "Profielfoto",
+    "description": "Upload een foto zodat anderen je herkennen.",
+    "messages": {
+      "updated": "Profielfoto bijgewerkt.",
+      "removed": "Profielfoto verwijderd."
+    },
+    "errors": {
+      "update": "Profielfoto bijwerken mislukt",
+      "remove": "Profielfoto verwijderen mislukt",
+      "invalidFile": "Gebruik een JPEG of PNG kleiner dan 5 MB."
+    },
+    "actions": {
+      "upload": "Foto uploaden",
+      "replace": "Foto vervangen",
+      "remove": "Foto verwijderen",
+      "close": "Sluiten",
+      "change": "Profielfoto wijzigen"
+    }
+  },
   "newOAuthTokenPage": {
     "pageTitle": "Nieuwe OAuth-token",
     "breadcrumb": "Nieuwe token",
