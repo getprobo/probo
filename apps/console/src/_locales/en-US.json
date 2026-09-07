@@ -2462,7 +2462,7 @@
     "deleteConfirmation": "This will permanently delete this risk analysis and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
     "actions": { "fork": "Fork", "edit": "Edit", "delete": "Delete", "showMore": "Show more" },
     "details": "Details",
-    "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at", "updatedAt": "Updated at" },
+    "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at" },
     "diagrams": "Diagrams",
     "treatmentPlans": "Risks and Treatment Plans",
     "emptyDiagrams": "No diagrams yet. Create a diagram to start defining nodes, processes, and threats.",

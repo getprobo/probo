@@ -4608,8 +4608,7 @@
     "fields": {
       "period": "Période",
       "matrixSize": "Taille de matrice",
-      "createdAt": "Créé le",
-      "updatedAt": "Mis à jour le"
+      "createdAt": "Créé le"
     },
     "diagrams": "Diagrammes",
     "treatmentPlans": "Risques et plans de traitement",

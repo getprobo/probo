@@ -4598,8 +4598,7 @@
     "fields": {
       "period": "Periode",
       "matrixSize": "Matrixgrootte",
-      "createdAt": "Aangemaakt op",
-      "updatedAt": "Bijgewerkt op"
+      "createdAt": "Aangemaakt op"
     },
     "diagrams": "Diagrammen",
     "treatmentPlans": "Risico's en behandelplannen",
