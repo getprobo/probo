@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.281.0] - 2026-09-07
+
+### Added
+
+- GCP access-review connector setup: `gcpConnectorSetup` query, create fields, and a dedicated console connect page for workload-identity federation
+- Task descriptions and comments use the same Tiptap rich text editor as documents, stored as JSONB content; comments speak markdown over MCP the same way document content does
+
+### Changed
+
+- GCP access-review activity driver reads only the `_Required` log bucket's `_AllLogs` view (`roles/logging.viewAccessor`) instead of project-wide `roles/logging.viewer`, so the impersonated token can no longer read application logs in `_Default`
+- GCP connectors recognize Sovereign Cloud de Confiance (S3NS) service accounts and dial `*.s3nsapis.fr` instead of public GCP
+
 ## [0.280.0] - 2026-09-07
 
 ### Added
