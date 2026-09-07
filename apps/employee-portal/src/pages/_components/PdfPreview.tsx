@@ -33,6 +33,11 @@ import { Document, Page, pdfjs } from "react-pdf";
 
 import { pdfPreview } from "./variants";
 
+// Bundle the pdf.js worker with the app (via Vite's `?url`) instead of loading
+// it from a CDN, so the viewer works under a strict employee-portal CSP.
+// Pin pdfjs-dist in package.json to the same version react-pdf requires. A
+// newer direct pin makes Vite emit a mismatched worker and Document fails
+// with only a silent warning ("API version does not match the Worker version").
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 // Figma document page at 100% (2093:1856) is 672px in the 928px stage.
