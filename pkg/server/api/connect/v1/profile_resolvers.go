@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
@@ -156,26 +157,34 @@ func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*type
 	if _, err := r.authorize(
 		ctx,
 		obj.ID,
-		iam.ActionMembershipProfileGetAvatar,
+		iam.ActionMembershipProfileGet,
 		authz.WithSkipAssumptionCheck(),
 	); err != nil {
 		return nil, err
 	}
 
+	if obj.Identity == nil {
+		return nil, nil
+	}
+
 	loaders := dataloader.FromContext(ctx)
 
-	file, err := loaders.AvatarFileForProfile.Load(ctx, obj.ID)
+	identity, err := loaders.Identity.Load(ctx, obj.Identity.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load profile avatar", log.Error(err))
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load profile identity", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if file == nil {
+	if identity.AvatarFileID == nil {
 		return nil, nil
 	}
 
-	return types.NewFile(file, r.fileManager), nil
+	return r.loadFile(ctx, *identity.AvatarFileID)
 }
 
 // Identity is the resolver for the identity field.

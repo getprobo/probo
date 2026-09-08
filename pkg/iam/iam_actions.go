@@ -56,7 +56,6 @@ const (
 
 	// Membership Profile actions
 	ActionMembershipProfileGet        = "iam:membership-profile:get"
-	ActionMembershipProfileGetAvatar  = "iam:membership-profile:get-avatar"
 	ActionMembershipProfileList       = "iam:membership-profile:list"
 	ActionMembershipProfileCreate     = "iam:membership-profile:create"
 	ActionMembershipProfileUpdate     = "iam:membership-profile:update"

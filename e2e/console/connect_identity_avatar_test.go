@@ -105,29 +105,12 @@ func TestIdentity_UpdateAvatar(t *testing.T) {
 	assert.Contains(
 		t,
 		uploadResult.UpdateAvatar.Identity.Avatar.DownloadURL,
-		"/api/files/v1/",
-	)
-	assert.NotContains(
-		t,
-		uploadResult.UpdateAvatar.Identity.Avatar.DownloadURL,
 		"/api/files/v1/public/",
 	)
 
 	downloadURL := uploadResult.UpdateAvatar.Identity.Avatar.DownloadURL
-	ownerDownload := owner.GetNoRedirect(downloadURL)
-	assert.Equal(t, http.StatusTemporaryRedirect, ownerDownload.StatusCode)
-
-	colleague := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-	colleagueDownload := colleague.GetNoRedirect(downloadURL)
-	assert.Equal(t, http.StatusTemporaryRedirect, colleagueDownload.StatusCode)
-
-	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
-	employeeDownload := employee.GetNoRedirect(downloadURL)
-	assert.Equal(t, http.StatusForbidden, employeeDownload.StatusCode)
-
-	stranger := testutil.NewClient(t, testutil.RoleOwner)
-	strangerDownload := stranger.GetNoRedirect(downloadURL)
-	assert.Equal(t, http.StatusForbidden, strangerDownload.StatusCode)
+	publicDownload := owner.GetNoRedirect(downloadURL)
+	assert.Equal(t, http.StatusOK, publicDownload.StatusCode)
 
 	const deleteMutation = `
 		mutation DeleteAvatar {

@@ -171,3 +171,50 @@ func TestEncode_RejectsUnknownFormat(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorIs(t, err, imageutil.ErrUnsupportedFormat)
 }
+
+func jpegWithExifAPP1(t *testing.T) []byte {
+	t.Helper()
+
+	encoded := jpegBytes(t, 8, 8)
+	require.GreaterOrEqual(t, len(encoded), 2)
+
+	// Minimal APP1 Exif body with an Orientation tag and a GPS IFD
+	// pointer so the input is representative of a phone photo.
+	tiff := &bytes.Buffer{}
+	tiff.WriteString("MM")
+	_ = binary.Write(tiff, binary.BigEndian, uint16(0x002A))
+	_ = binary.Write(tiff, binary.BigEndian, uint32(8))
+	_ = binary.Write(tiff, binary.BigEndian, uint16(2))
+	_ = binary.Write(tiff, binary.BigEndian, uint16(0x0112))
+	_ = binary.Write(tiff, binary.BigEndian, uint16(3))
+	_ = binary.Write(tiff, binary.BigEndian, uint32(1))
+	_ = binary.Write(tiff, binary.BigEndian, uint16(6))
+	_ = binary.Write(tiff, binary.BigEndian, uint16(0))
+	_ = binary.Write(tiff, binary.BigEndian, uint16(0x8825))
+	_ = binary.Write(tiff, binary.BigEndian, uint16(4))
+	_ = binary.Write(tiff, binary.BigEndian, uint32(1))
+	_ = binary.Write(tiff, binary.BigEndian, uint32(0))
+	payload := append(append([]byte{}, "Exif\x00\x00"...), tiff.Bytes()...)
+	length := uint16(len(payload) + 2)
+	app1 := []byte{0xFF, 0xE1, byte(length >> 8), byte(length)}
+	app1 = append(app1, payload...)
+
+	out := make([]byte, 0, 2+len(app1)+len(encoded)-2)
+	out = append(out, 0xFF, 0xD8)
+	out = append(out, app1...)
+	out = append(out, encoded[2:]...)
+
+	require.True(t, bytes.Contains(out, []byte("Exif\x00\x00")))
+
+	return out
+}
+
+func TestDownscale_StripsJPEGExif(t *testing.T) {
+	t.Parallel()
+
+	result, err := imageutil.Downscale(bytes.NewReader(jpegWithExifAPP1(t)), 512)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	assert.False(t, bytes.Contains(result.Bytes, []byte("Exif\x00\x00")))
+}

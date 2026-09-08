@@ -104,7 +104,7 @@ type (
 		ThirdParty                                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
 		Document                                   *dataloadgen.Loader[gid.GID, *coredata.Document]
 		Profile                                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
-		AvatarFileForProfile                       *dataloadgen.Loader[gid.GID, *coredata.File]
+		Identity                                   *dataloadgen.Loader[gid.GID, *coredata.Identity]
 		Risk                                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
 		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
@@ -175,7 +175,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		ThirdParty:                               dataloadgen.NewMappedLoader(f.fetchThirdParties),
 		Document:                                 dataloadgen.NewMappedLoader(f.fetchDocuments),
 		Profile:                                  dataloadgen.NewMappedLoader(f.fetchProfiles),
-		AvatarFileForProfile:                     dataloadgen.NewMappedLoader(f.fetchAvatarFilesForProfiles),
+		Identity:                                 dataloadgen.NewMappedLoader(f.fetchIdentities),
 		Risk:                                     dataloadgen.NewMappedLoader(f.fetchRisks),
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
 		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
@@ -575,16 +575,21 @@ func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[g
 	return result, nil
 }
 
-func (f *batchFetcher) fetchAvatarFilesForProfiles(
+func (f *batchFetcher) fetchIdentities(
 	ctx context.Context,
 	keys []gid.GID,
-) (map[gid.GID]*coredata.File, error) {
-	files, err := f.iam.AccountService.AvatarFilesForProfiles(ctx, keys)
+) (map[gid.GID]*coredata.Identity, error) {
+	identities, err := f.iam.AccountService.GetIdentitiesByIDs(ctx, keys)
 	if err != nil {
-		return nil, fmt.Errorf("cannot batch load profile avatars: %w", err)
+		return nil, fmt.Errorf("cannot batch load identities: %w", err)
 	}
 
-	return files, nil
+	result := make(map[gid.GID]*coredata.Identity, len(identities))
+	for _, identity := range identities {
+		result[identity.ID] = identity
+	}
+
+	return result, nil
 }
 
 func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Risk, error) {
@@ -650,16 +655,23 @@ func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.File, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	result := make(map[gid.GID]*coredata.File, len(keys))
+	fileIDsByTenant := make(map[gid.TenantID][]gid.GID)
 
-	files, err := f.probo.Files.GetByIDs(ctx, scope, keys...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load files: %w", err)
+	for _, fileID := range keys {
+		tenantID := fileID.TenantID()
+		fileIDsByTenant[tenantID] = append(fileIDsByTenant[tenantID], fileID)
 	}
 
-	result := make(map[gid.GID]*coredata.File, len(files))
-	for _, v := range files {
-		result[v.ID] = v
+	for tenantID, fileIDs := range fileIDsByTenant {
+		files, err := f.probo.Files.GetByIDs(ctx, coredata.NewScope(tenantID), fileIDs...)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load files: %w", err)
+		}
+
+		for _, file := range files {
+			result[file.ID] = file
+		}
 	}
 
 	return result, nil

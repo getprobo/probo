@@ -2019,7 +2019,7 @@
   },
   "editAvatar": {
     "title": "Photo de profil",
-    "description": "Ajoutez une photo pour que les autres puissent vous reconnaître.",
+    "description": "Ajoutez une photo publique.",
     "messages": {
       "updated": "Photo de profil mise à jour.",
       "removed": "Photo de profil supprimée."

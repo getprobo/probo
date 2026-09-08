@@ -1646,24 +1646,29 @@ func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organi
 
 // Avatar is the resolver for the avatar field.
 func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGetAvatar); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
 
-	file, err := loaders.AvatarFileForProfile.Load(ctx, obj.ID)
+	profile, err := loaders.Profile.Load(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load profile avatar", log.Error(err))
-
+		r.logger.ErrorCtx(ctx, "cannot load profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if file == nil {
+	identity, err := loaders.Identity.Load(ctx, profile.IdentityID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load profile identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if identity.AvatarFileID == nil {
 		return nil, nil
 	}
 
-	return types.NewFile(file, r.fileManager), nil
+	return r.loadFile(ctx, *identity.AvatarFileID)
 }
 
 // Permission is the resolver for the permission field.

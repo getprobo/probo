@@ -17,7 +17,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
-	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -31,19 +30,11 @@ func (r *identityResolver) Avatar(ctx context.Context, obj *types.Identity) (*ty
 		return nil, err
 	}
 
-	loaders := dataloader.FromContext(ctx)
-
-	file, err := loaders.AvatarFileForIdentity.Load(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load identity avatar", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if file == nil {
+	if obj.Avatar == nil {
 		return nil, nil
 	}
 
-	return types.NewFile(file, r.fileManager), nil
+	return r.loadFile(ctx, obj.Avatar.ID)
 }
 
 // Profiles is the resolver for the profiles field.

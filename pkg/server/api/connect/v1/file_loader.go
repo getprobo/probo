@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,23 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package types
+package connect_v1
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"context"
+	"errors"
 
-func NewIdentity(identity *coredata.Identity) *Identity {
-	obj := &Identity{
-		ID:            identity.ID,
-		Email:         identity.EmailAddress,
-		FullName:      identity.FullName,
-		EmailVerified: identity.EmailAddressVerified,
-		CreatedAt:     identity.CreatedAt,
-		UpdatedAt:     identity.UpdatedAt,
+	"github.com/vikstrous/dataloadgen"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
+)
+
+func (r *Resolver) loadFile(ctx context.Context, fileID gid.GID) (*types.File, error) {
+	loaders := dataloader.FromContext(ctx)
+
+	file, err := loaders.File.Load(ctx, fileID)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load file", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	if identity.AvatarFileID != nil {
-		obj.Avatar = &File{ID: *identity.AvatarFileID}
+	if file == nil {
+		return nil, nil
 	}
 
-	return obj
+	return types.NewFile(file, r.fileManager), nil
 }

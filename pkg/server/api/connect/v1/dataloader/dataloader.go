@@ -35,8 +35,8 @@ type (
 	ctxKey struct{ name string }
 
 	Loaders struct {
-		AvatarFileForIdentity *dataloadgen.Loader[gid.GID, *coredata.File]
-		AvatarFileForProfile  *dataloadgen.Loader[gid.GID, *coredata.File]
+		Identity *dataloadgen.Loader[gid.GID, *coredata.Identity]
+		File     *dataloadgen.Loader[gid.GID, *coredata.File]
 	}
 
 	batchFetcher struct {
@@ -55,7 +55,8 @@ func NewMiddleware(iamSvc *iam.Service) func(http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				f := &batchFetcher{iam: iamSvc}
-				ctx := context.WithValue(r.Context(), loadersKey, f.newLoaders())
+				loaders := f.newLoaders()
+				ctx := context.WithValue(r.Context(), loadersKey, loaders)
 				next.ServeHTTP(w, r.WithContext(ctx))
 			},
 		)
@@ -64,31 +65,54 @@ func NewMiddleware(iamSvc *iam.Service) func(http.Handler) http.Handler {
 
 func (f *batchFetcher) newLoaders() *Loaders {
 	return &Loaders{
-		AvatarFileForIdentity: dataloadgen.NewMappedLoader(f.fetchAvatarFilesForIdentities),
-		AvatarFileForProfile:  dataloadgen.NewMappedLoader(f.fetchAvatarFilesForProfiles),
+		Identity: dataloadgen.NewMappedLoader(f.fetchIdentities),
+		File:     dataloadgen.NewMappedLoader(f.fetchFiles),
 	}
 }
 
-func (f *batchFetcher) fetchAvatarFilesForIdentities(
+func (f *batchFetcher) fetchIdentities(
 	ctx context.Context,
 	keys []gid.GID,
-) (map[gid.GID]*coredata.File, error) {
-	files, err := f.iam.AccountService.AvatarFiles(ctx, keys)
+) (map[gid.GID]*coredata.Identity, error) {
+	identities, err := f.iam.AccountService.GetIdentitiesByIDs(ctx, keys)
 	if err != nil {
-		return nil, fmt.Errorf("cannot batch load identity avatars: %w", err)
+		return nil, fmt.Errorf("cannot batch load identities: %w", err)
 	}
 
-	return files, nil
+	result := make(map[gid.GID]*coredata.Identity, len(identities))
+	for _, identity := range identities {
+		result[identity.ID] = identity
+	}
+
+	return result, nil
 }
 
-func (f *batchFetcher) fetchAvatarFilesForProfiles(
+func (f *batchFetcher) fetchFiles(
 	ctx context.Context,
 	keys []gid.GID,
 ) (map[gid.GID]*coredata.File, error) {
-	files, err := f.iam.AccountService.AvatarFilesForProfiles(ctx, keys)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load profile avatars: %w", err)
+	result := make(map[gid.GID]*coredata.File, len(keys))
+	fileIDsByTenant := make(map[gid.TenantID][]gid.GID)
+
+	for _, fileID := range keys {
+		tenantID := fileID.TenantID()
+		fileIDsByTenant[tenantID] = append(fileIDsByTenant[tenantID], fileID)
 	}
 
-	return files, nil
+	for tenantID, fileIDs := range fileIDsByTenant {
+		files, err := f.iam.AccountService.GetFilesByIDs(
+			ctx,
+			coredata.NewScope(tenantID),
+			fileIDs...,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load files: %w", err)
+		}
+
+		for _, file := range files {
+			result[file.ID] = file
+		}
+	}
+
+	return result, nil
 }

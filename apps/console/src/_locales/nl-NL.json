@@ -2019,7 +2019,7 @@
   },
   "editAvatar": {
     "title": "Profielfoto",
-    "description": "Upload een foto zodat anderen je herkennen.",
+    "description": "Upload een openbare foto.",
     "messages": {
       "updated": "Profielfoto bijgewerkt.",
       "removed": "Profielfoto verwijderd."

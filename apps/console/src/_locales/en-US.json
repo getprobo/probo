@@ -1314,7 +1314,7 @@
   },
   "editAvatar": {
     "title": "Profile photo",
-    "description": "Upload a photo so others can recognize you.",
+    "description": "Upload a public photo.",
     "messages": { "updated": "Profile photo updated.", "removed": "Profile photo removed." },
     "errors": { "update": "Failed to update profile photo", "remove": "Failed to remove profile photo", "invalidFile": "Use a JPEG or PNG under 5 MB." },
     "actions": { "upload": "Upload photo", "replace": "Replace photo", "remove": "Remove photo", "close": "Close", "change": "Change profile photo" }

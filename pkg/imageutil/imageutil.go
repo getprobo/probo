@@ -61,9 +61,8 @@ type (
 )
 
 // Decode reads a JPEG or PNG image from r. Other formats are rejected
-// even if a decoder is registered in the process. JPEG pixels are
-// rotated to match the EXIF Orientation tag; image.Decode leaves that
-// tag unused and jpeg.Encode would drop it.
+// even if a decoder is registered in the process. Metadata (EXIF, GPS,
+// orientation, comments) is ignored; Encode writes pixels only.
 func Decode(r io.Reader) (image.Image, string, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
@@ -99,10 +98,6 @@ func Decode(r io.Reader) (image.Image, string, error) {
 		return nil, "", fmt.Errorf("cannot decode image: %w", err)
 	}
 
-	if format == FormatJPEG {
-		img = applyOrientation(img, jpegOrientation(data))
-	}
-
 	return img, format, nil
 }
 
@@ -127,7 +122,8 @@ func Fit(img image.Image, maxEdge int) image.Image {
 	return dst
 }
 
-// Encode writes img to w in format (jpeg or png).
+// Encode writes img to w in format (jpeg or png) with no metadata
+// segments or ancillary chunks.
 func Encode(w io.Writer, img image.Image, format string) error {
 	switch format {
 	case FormatJPEG:

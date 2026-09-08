@@ -158,51 +158,6 @@ LIMIT 1;
 	return nil
 }
 
-func (i *Identity) LoadByAvatarFileID(
-	ctx context.Context,
-	conn pg.Querier,
-	fileID gid.GID,
-) error {
-	q := `
-SELECT
-    id,
-    email_address,
-    full_name,
-    hashed_password,
-    email_address_verified,
-    saml_subject,
-    locale,
-    avatar_file_id,
-    created_at,
-    updated_at
-FROM
-    identities
-WHERE
-    avatar_file_id = @file_id
-LIMIT 1;
-`
-
-	args := pgx.StrictNamedArgs{"file_id": fileID}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query identity: %w", err)
-	}
-
-	identity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Identity])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect identity: %w", err)
-	}
-
-	*i = identity
-
-	return nil
-}
-
 // LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent
 // VerifyEmail calls serialize the verified-flag transition.
 func (i *Identity) LoadByIDForUpdate(

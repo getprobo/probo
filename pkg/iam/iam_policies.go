@@ -444,14 +444,3 @@ var IAMCompliancePortalAccessManagerPolicy = policy.NewPolicy(
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Minimal IAM access for compliance portal access managers")
-
-// IAMConsoleColleagueAvatarPolicy allows console roles to fetch a colleague's
-// identity avatar. It is not attached to EMPLOYEE.
-var IAMConsoleColleagueAvatarPolicy = policy.NewPolicy(
-	"iam:console-colleague-avatar",
-	"Console Colleague Avatar",
-	policy.Allow(ActionMembershipProfileGetAvatar).
-		WithSID("get-colleague-avatar").
-		When(policy.Equals("principal.organization_id", "resource.organization_id")),
-).
-	WithDescription("Allows console users to download a colleague identity avatar")
