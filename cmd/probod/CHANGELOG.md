@@ -4,6 +4,20 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.282.0] - 2026-09-08
+
+### Added
+
+- Identity avatars: upload a photo shown on people lists and owner cells without a profile page, stored as a public file with EXIF stripped; falls back to initials when none is uploaded
+
+### Changed
+
+- Remove the risk analysis last-updated timestamp from the frontend: it only reflected edits to the parent record, not to diagrams, scenarios, treatment-plan results, or measure status, so it was misleading
+
+### Fixed
+
+- MCP `ListCookieCategoriesTool` now honours the `exclude_kind` filter argument instead of ignoring it, so callers can enumerate all categories including `UNCATEGORISED`
+
 ## [0.281.0] - 2026-09-07
 
 ### Added
