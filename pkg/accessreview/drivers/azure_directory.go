@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,10 +35,16 @@ import (
 )
 
 const (
-	azureGraphAPIVersion    = "v1.0"
-	azureGraphDirectoryPath = "directoryObjects"
-	azureGraphGetByIDsPath  = "getByIds"
-	azureGraphGetByIDsBatch = 1000
+	azureGraphAPIVersion                  = "v1.0"
+	azureGraphDirectoryPath               = "directoryObjects"
+	azureGraphGetByIDsPath                = "getByIds"
+	azureGraphUsersPath                   = "users"
+	azureGraphBatchPath                   = "$batch"
+	azureGraphReportsPath                 = "reports"
+	azureGraphAuthenticationMethodsPath   = "authenticationMethods"
+	azureGraphUserRegistrationDetailsPath = "userRegistrationDetails"
+	azureGraphGetByIDsBatch               = 1000
+	azureGraphLicenceErrorCode            = "Authentication_RequestFromNonPremiumTenantOrB2CTenant"
 )
 
 type (
@@ -248,4 +255,100 @@ func azureGraphResponseError(resp *http.Response) error {
 		StatusCode: resp.StatusCode,
 		ErrorCode:  payload.Error.Code,
 	}
+}
+
+func azureGraphError(statusCode int, body []byte) error {
+	var payload azureGraphErrorBody
+
+	_ = json.Unmarshal(body, &payload)
+
+	return &azcore.ResponseError{
+		StatusCode: statusCode,
+		ErrorCode:  payload.Error.Code,
+	}
+}
+
+func azureGraphLicenceError(err error) bool {
+	apiErr, ok := errors.AsType[*azcore.ResponseError](err)
+	if !ok {
+		return false
+	}
+
+	return apiErr.ErrorCode == azureGraphLicenceErrorCode
+}
+
+func azureGraphBadRequest(err error) bool {
+	apiErr, ok := errors.AsType[*azcore.ResponseError](err)
+	if !ok {
+		return false
+	}
+
+	return apiErr.StatusCode == http.StatusBadRequest
+}
+
+func azureGraphEnrichmentUnavailable(err error) bool {
+	return cloudazure.As[cloudazure.ErrPermissionDenied](err) ||
+		cloudazure.As[cloudazure.ErrNotFound](err) ||
+		azureGraphLicenceError(err)
+}
+
+func fetchAzureGraphJSON(
+	ctx context.Context,
+	session *cloudazure.Session,
+	endpoint string,
+	dst any,
+) error {
+	return doAzureGraphJSON(ctx, session, http.MethodGet, endpoint, nil, dst)
+}
+
+func postAzureGraphJSON(
+	ctx context.Context,
+	session *cloudazure.Session,
+	endpoint string,
+	body []byte,
+	dst any,
+) error {
+	return doAzureGraphJSON(ctx, session, http.MethodPost, endpoint, body, dst)
+}
+
+func doAzureGraphJSON(
+	ctx context.Context,
+	session *cloudazure.Session,
+	method string,
+	endpoint string,
+	body []byte,
+	dst any,
+) error {
+	var reader io.Reader
+	if body != nil {
+		reader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
+	if err != nil {
+		return fmt.Errorf("cannot create azure graph request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := session.GraphClient().Do(req)
+	if err != nil {
+		return fmt.Errorf("cannot execute azure graph request: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return azureGraphResponseError(resp)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(dst); err != nil {
+		return fmt.Errorf("cannot decode azure graph response: %w", err)
+	}
+
+	return nil
 }

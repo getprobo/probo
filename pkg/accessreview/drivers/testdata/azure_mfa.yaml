@@ -1,0 +1,26 @@
+---
+# Hand-authored. alice is MFA capable, bob is not, dana is absent from the
+# report. Call order is the contract.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: graph.microsoft.com
+        url: https://graph.microsoft.com/v1.0/reports/authenticationMethods/userRegistrationDetails
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"value":[{"id":"22222222-2222-4222-8222-222222222222","isMfaCapable":true},{"id":"66666666-6666-4666-8666-666666666666","isMfaCapable":false}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

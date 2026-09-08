@@ -1,6 +1,7 @@
 ---
 # Hand-authored Azure public-cloud cassette. Never recorded against a live tenant.
-# Role assignments at subscription scope, role-definition lookups, then Graph getByIds.
+# Role assignments at subscription scope, role-definition lookups, Graph
+# getByIds, then signInActivity and userRegistrationDetails for alice.
 # Synthetic principals: alice (Owner user), eng (Reader group), ci (custom-role
 # disabled service principal), build-agent (Contributor device, unresolved in Graph).
 version: 2
@@ -125,6 +126,48 @@ interactions:
         content_length: -1
         uncompressed: true
         body: '{"value":[{"@odata.type":"#microsoft.graph.user","id":"22222222-2222-4222-8222-222222222222","displayName":"Alice Chen","mail":"alice@probo-azure.test","userPrincipalName":"alice@probo-azure.test","accountEnabled":true},{"@odata.type":"#microsoft.graph.group","id":"33333333-3333-4333-8333-333333333333","displayName":"Engineering","mail":"eng@probo-azure.test"},{"@odata.type":"#microsoft.graph.servicePrincipal","id":"44444444-4444-4444-8444-444444444444","displayName":"CI Deploy","accountEnabled":false},{"id":"55555555-5555-4555-8555-555555555555"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: graph.microsoft.com
+        url: "https://graph.microsoft.com/v1.0/users"
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"value":[{"id":"22222222-2222-4222-8222-222222222222","signInActivity":{"lastSuccessfulSignInDateTime":"2026-08-15T12:00:00Z","lastSignInDateTime":"2026-07-01T00:00:00Z"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: graph.microsoft.com
+        url: https://graph.microsoft.com/v1.0/reports/authenticationMethods/userRegistrationDetails
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"value":[{"id":"22222222-2222-4222-8222-222222222222","isMfaCapable":true}]}'
         headers:
             Content-Type:
                 - application/json

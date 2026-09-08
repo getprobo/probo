@@ -101,6 +101,18 @@ func (d *AzureDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 		records = append(records, azureIdentityRecord(identity))
 	}
 
+	if err := enrichAzureIdentities(ctx, d.session, records); err != nil {
+		if ctx.Err() != nil {
+			return nil, err
+		}
+
+		d.logger.WarnCtx(
+			ctx,
+			"cannot enrich azure activity, reporting last login and mfa unknown",
+			cloudazure.SafeLogFields(err)...,
+		)
+	}
+
 	return records, nil
 }
 

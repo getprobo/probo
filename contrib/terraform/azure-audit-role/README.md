@@ -170,3 +170,7 @@ output descriptions in [`variables.tf`](variables.tf) and
   `roleDefinitions/read`. Do not add Security Reader.
 - Requires the `azuread` provider at 3.9 or later and the `azurerm`
   provider at 5.4 or later.
+- **Last login and MFA need Entra ID P1 or P2** and
+  `AuditLog.Read.All`. Without the licence, or when China or DoD Graph
+  does not expose `signInActivity` or `userRegistrationDetails`, those
+  columns stay Unknown.
