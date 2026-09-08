@@ -234,6 +234,11 @@ export class Probo implements INodeType {
 						description: 'Manage tasks',
 					},
 					{
+						name: 'Task Activity',
+						value: 'taskActivity',
+						description: 'List task activities',
+					},
+					{
 						name: 'Task Comment',
 						value: 'taskComment',
 						description: 'Manage task comments',

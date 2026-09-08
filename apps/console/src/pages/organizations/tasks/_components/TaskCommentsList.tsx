@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { useParams } from "react-router";
@@ -83,16 +82,11 @@ function TaskCommentsListContent({ taskKey }: TaskCommentsListContentProps) {
     TaskCommentsListRefetchQuery,
     TaskCommentsList_comments$key
   >(taskCommentsListFragment, taskKey);
-  const { root, header, actions, list } = taskCommentsSection();
+  const { root, actions, list } = taskCommentsSection();
   const comments = task.comments.edges.map(edge => edge.node);
 
   return (
     <div className={root()}>
-      <div className={header()}>
-        <Heading level={2} size={4}>
-          {t("detailsPage.comments.title")}
-        </Heading>
-      </div>
       {hasPrevious && (
         <div className={actions()}>
           <Button

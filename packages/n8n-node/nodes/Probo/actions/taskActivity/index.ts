@@ -18,17 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskCommentsSection } from "../variants";
+import type { INodeProperties } from 'n8n-workflow';
+import * as getOp from './get.operation';
+import * as getAllOp from './getAll.operation';
 
-export function TaskCommentsSectionSkeleton() {
-  const { root, list, itemSkeleton } = taskCommentsSection();
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['taskActivity'],
+			},
+		},
+		options: [
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get a task activity',
+				action: 'Get a task activity',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Get many task activities',
+				action: 'Get many task activities',
+			},
+		],
+		default: 'getAll',
+	},
+	...getOp.description,
+	...getAllOp.description,
+];
 
-  return (
-    <div className={root()}>
-      <div className={list()}>
-        <div className={itemSkeleton()} />
-        <div className={itemSkeleton()} />
-      </div>
-    </div>
-  );
-}
+export { getOp as get, getAllOp as getAll };

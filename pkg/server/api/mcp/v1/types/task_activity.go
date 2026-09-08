@@ -18,17 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskCommentsSection } from "../variants";
+package types
 
-export function TaskCommentsSectionSkeleton() {
-  const { root, list, itemSkeleton } = taskCommentsSection();
+import (
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
+)
 
-  return (
-    <div className={root()}>
-      <div className={list()}>
-        <div className={itemSkeleton()} />
-        <div className={itemSkeleton()} />
-      </div>
-    </div>
-  );
+func NewTaskActivity(e *coredata.TaskActivity) *TaskActivity {
+	return &TaskActivity{
+		ID:             e.ID,
+		OrganizationID: e.OrganizationID,
+		TaskID:         e.TaskID,
+		ActorID:        e.ActorID,
+		ActivityType:   e.ActivityType,
+		Field:          e.Field,
+		OldValue:       e.OldValue,
+		NewValue:       e.NewValue,
+		CreatedAt:      e.CreatedAt,
+	}
+}
+
+func NewListTaskActivitiesOutput(
+	activityPage *page.Page[*coredata.TaskActivity, coredata.TaskActivityOrderField],
+) ListTaskActivitiesOutput {
+	activities := make([]*TaskActivity, 0, len(activityPage.Data))
+	for _, v := range activityPage.Data {
+		activities = append(activities, NewTaskActivity(v))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if activityPage.Info.HasNext && len(activityPage.Data) > 0 {
+		cursorKey := activityPage.Data[len(activityPage.Data)-1].CursorKey(activityPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListTaskActivitiesOutput{
+		NextCursor:     nextCursor,
+		TaskActivities: activities,
+	}
 }

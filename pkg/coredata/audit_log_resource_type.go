@@ -121,6 +121,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "AiSystem"
 	case TaskCommentEntityType:
 		return "TaskComment"
+	case TaskActivityEntityType:
+		return "TaskActivity"
 	default:
 		return "Unknown"
 	}

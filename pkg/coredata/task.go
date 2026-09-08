@@ -165,6 +165,66 @@ LIMIT 1;
 	return nil
 }
 
+func (t *Task) LoadByMeasureIDAndReferenceID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureID gid.GID,
+	referenceID string,
+) error {
+	q := `
+SELECT
+    id,
+	organization_id,
+    measure_id,
+    name,
+    content,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    %s
+    AND measure_id = @measure_id
+    AND reference_id = @reference_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"measure_id":   measureID,
+		"reference_id": referenceID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tasks: %w", err)
+	}
+
+	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect tasks: %w", err)
+	}
+
+	*t = task
+
+	return nil
+}
+
 func (t *Tasks) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,

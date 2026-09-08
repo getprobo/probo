@@ -16,6 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -435,11 +436,15 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 		return nil, err
 	}
 
+	identity := authn.IdentityFromContext(ctx)
+
 	var req probo.ImportMeasureRequest
 	if err := json.NewDecoder(input.File.File).Decode(&req.Measures); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot unmarshal measure", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
+	req.IdentityID = &identity.ID
 
 	measures, err := r.probo.Measures.Import(ctx, scope, input.OrganizationID, req)
 	if err != nil {

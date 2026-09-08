@@ -135,6 +135,10 @@ const (
 	ActionTaskCommentUpdate = "core:task-comment:update"
 	ActionTaskCommentDelete = "core:task-comment:delete"
 
+	// TaskActivity actions
+	ActionTaskActivityGet  = "core:task-activity:get"
+	ActionTaskActivityList = "core:task-activity:list"
+
 	// Evidence actions
 	ActionEvidenceList   = "core:evidence:list"
 	ActionEvidenceDelete = "core:evidence:delete"

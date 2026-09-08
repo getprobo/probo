@@ -399,6 +399,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionTaskList,
 		ActionTaskCommentGet,
 		ActionTaskCommentList,
+		ActionTaskActivityGet,
+		ActionTaskActivityList,
 		ActionEvidenceList,
 	},
 	ScopeV1Task: {
@@ -406,6 +408,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionTaskList,
 		ActionTaskCommentGet,
 		ActionTaskCommentList,
+		ActionTaskActivityGet,
+		ActionTaskActivityList,
 		ActionEvidenceList,
 		ActionTaskCreate,
 		ActionTaskUpdate,

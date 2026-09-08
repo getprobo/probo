@@ -18,17 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskCommentsSection } from "../variants";
+package activity
 
-export function TaskCommentsSectionSkeleton() {
-  const { root, list, itemSkeleton } = taskCommentsSection();
+import (
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/task/activity/list"
+	"go.probo.inc/probo/pkg/cmd/task/activity/view"
+)
 
-  return (
-    <div className={root()}>
-      <div className={list()}>
-        <div className={itemSkeleton()} />
-        <div className={itemSkeleton()} />
-      </div>
-    </div>
-  );
+func NewCmdActivity(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "activity <command>",
+		Short: "Manage task activities",
+	}
+
+	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(view.NewCmdView(f))
+
+	return cmd
 }

@@ -42,9 +42,9 @@ import type { TaskDetailsPageQuery } from "#/__generated__/core/TaskDetailsPageQ
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
-import { TaskCommentsSection } from "./_components/TaskCommentsSection";
 import { TaskDeleteDialog } from "./_components/TaskDeleteDialog";
 import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
+import { TaskEngagementSection } from "./_components/TaskEngagementSection";
 import { TaskNameField } from "./_components/TaskNameField";
 import { TaskPropertiesSection } from "./_components/TaskPropertiesSection";
 import { taskDetailsPage } from "./variants";
@@ -58,7 +58,7 @@ export const taskDetailsPageFragment = graphql`
     }
     ...TaskNameField_task
     ...TaskDescriptionSection_task
-    ...TaskCommentsSection_task
+    ...TaskEngagementSection_task
     ...TaskPropertiesSection_task
     ...TaskDeleteDialog_task
   }
@@ -138,7 +138,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
       <div className={body()}>
         <div className={main()}>
           <TaskDescriptionSection taskKey={task} />
-          <TaskCommentsSection taskKey={task} />
+          <TaskEngagementSection taskKey={task} />
         </div>
         <TaskPropertiesSection taskKey={task} />
       </div>

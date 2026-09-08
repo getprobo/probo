@@ -18,17 +18,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskCommentsSection } from "../variants";
+package coredata
 
-export function TaskCommentsSectionSkeleton() {
-  const { root, list, itemSkeleton } = taskCommentsSection();
+import (
+	"encoding"
+	"fmt"
+)
 
-  return (
-    <div className={root()}>
-      <div className={list()}>
-        <div className={itemSkeleton()} />
-        <div className={itemSkeleton()} />
-      </div>
-    </div>
-  );
+type (
+	TaskActivityType string
+)
+
+const (
+	TaskActivityTypeCreated TaskActivityType = "CREATED"
+	TaskActivityTypeUpdated TaskActivityType = "UPDATED"
+)
+
+var (
+	_ fmt.Stringer             = TaskActivityType("")
+	_ encoding.TextMarshaler   = TaskActivityType("")
+	_ encoding.TextUnmarshaler = (*TaskActivityType)(nil)
+)
+
+func (v TaskActivityType) IsValid() bool {
+	switch v {
+	case TaskActivityTypeCreated, TaskActivityTypeUpdated:
+		return true
+	}
+
+	return false
+}
+
+func (v TaskActivityType) String() string {
+	return string(v)
+}
+
+func (v TaskActivityType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TaskActivityType) UnmarshalText(text []byte) error {
+	val := TaskActivityType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TaskActivityType value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

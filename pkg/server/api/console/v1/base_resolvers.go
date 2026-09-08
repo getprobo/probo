@@ -98,6 +98,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewTaskComment(taskComment), nil
 		}
+	case coredata.TaskActivityEntityType:
+		action = probo.ActionTaskActivityGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			taskActivity, err := r.probo.TaskActivities.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewTaskActivity(taskActivity), nil
+		}
 	case coredata.EvidenceEntityType:
 		action = probo.ActionEvidenceList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

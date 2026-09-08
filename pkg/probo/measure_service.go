@@ -56,7 +56,8 @@ type (
 	}
 
 	ImportMeasureRequest struct {
-		Measures []struct {
+		IdentityID *gid.GID
+		Measures   []struct {
 			Name        string `json:"name"`
 			Category    string `json:"category"`
 			ReferenceID string `json:"reference-id"`
@@ -445,6 +446,17 @@ func (s MeasureService) Import(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
+			actorID, err := resolveTaskActivityActorID(
+				ctx,
+				tx,
+				scope,
+				req.IdentityID,
+				organization.ID,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot resolve task activity actor: %w", err)
+			}
+
 			for i := range req.Measures {
 				now := time.Now()
 
@@ -502,8 +514,47 @@ func (s MeasureService) Import(
 						UpdatedAt:      now,
 					}
 
+					existingTask := &coredata.Task{}
+
+					existingErr := existingTask.LoadByMeasureIDAndReferenceID(
+						ctx,
+						tx,
+						scope,
+						measure.ID,
+						req.Measures[i].Tasks[j].ReferenceID,
+					)
+					if existingErr != nil && !errors.Is(existingErr, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load task: %w", existingErr)
+					}
+
+					originalTaskID := task.ID
 					if err := task.Upsert(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot upsert task: %w", err)
+					}
+
+					if originalTaskID == task.ID {
+						if err := insertTaskCreatedActivity(
+							ctx,
+							tx,
+							scope,
+							task,
+							actorID,
+							now,
+						); err != nil {
+							return fmt.Errorf("cannot record task created event: %w", err)
+						}
+					} else if existingErr == nil {
+						if err := insertTaskUpdateActivities(
+							ctx,
+							tx,
+							scope,
+							existingTask,
+							task,
+							actorID,
+							now,
+						); err != nil {
+							return fmt.Errorf("cannot record task update events: %w", err)
+						}
 					}
 
 					for k := range req.Measures[i].Tasks[j].RequestedEvidences {

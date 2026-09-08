@@ -18,17 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskCommentsSection } from "../variants";
+import { Tabs as BaseTabs } from "@base-ui/react/tabs";
+import type { ComponentProps } from "react";
 
-export function TaskCommentsSectionSkeleton() {
-  const { root, list, itemSkeleton } = taskCommentsSection();
+export type TabsPanelProps = Omit<ComponentProps<typeof BaseTabs.Panel>, "className"> & {
+  className?: string;
+};
 
-  return (
-    <div className={root()}>
-      <div className={list()}>
-        <div className={itemSkeleton()} />
-        <div className={itemSkeleton()} />
-      </div>
-    </div>
-  );
+// The tab body associated with a trigger. Selected state is driven by Base UI
+// (`hidden`, `aria-labelledby`). See contrib/claude/ui.md.
+export function TabsPanel(props: TabsPanelProps) {
+  const { className, ...rest } = props;
+
+  return <BaseTabs.Panel className={className} {...rest} />;
 }

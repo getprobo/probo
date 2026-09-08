@@ -90,6 +90,34 @@
         "contentRequired": "Saisissez un commentaire",
         "contentTooLong": "Le commentaire ne doit pas dépasser {{max}} caractères"
       }
+    },
+    "activity": {
+      "title": "Activité",
+      "empty": "Aucune activité pour le moment",
+      "actorFallback": "Quelqu'un",
+      "actions": {
+        "showMore": "Afficher plus"
+      },
+      "sentences": {
+        "created": "{{actor}} a créé cette tâche",
+        "updated": "{{actor}} a mis à jour cette tâche",
+        "renamed": "{{actor}} a renommé de {{oldValue}} en {{newValue}}",
+        "descriptionUpdated": "{{actor}} a mis à jour la description",
+        "stateChanged": "{{actor}} a changé le statut de {{oldValue}} à {{newValue}}",
+        "priorityChanged": "{{actor}} a changé la priorité de {{oldValue}} à {{newValue}}",
+        "assigned": "{{actor}} a assigné {{newValue}}",
+        "reassigned": "{{actor}} a réassigné de {{oldValue}} à {{newValue}}",
+        "unassigned": "{{actor}} a retiré l'assignation de {{oldValue}}",
+        "measureLinked": "{{actor}} a lié {{newValue}}",
+        "measureChanged": "{{actor}} a déplacé de {{oldValue}} à {{newValue}}",
+        "measureUnlinked": "{{actor}} a délié {{oldValue}}",
+        "deadlineSet": "{{actor}} a défini l'échéance au {{newValue}}",
+        "deadlineChanged": "{{actor}} a changé l'échéance de {{oldValue}} à {{newValue}}",
+        "deadlineRemoved": "{{actor}} a retiré l'échéance",
+        "timeEstimateSet": "{{actor}} a défini l'estimation à {{newValue}}",
+        "timeEstimateChanged": "{{actor}} a changé l'estimation de {{oldValue}} à {{newValue}}",
+        "timeEstimateRemoved": "{{actor}} a retiré l'estimation"
+      }
     }
   },
   "createDialog": {

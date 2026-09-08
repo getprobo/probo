@@ -18,41 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
-import { TabsSkeleton } from "@probo/ui/src/v2/Tabs/TabsSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { Suspense } from "react";
+import { graphql, useFragment } from "react-relay";
 
-import { taskDetailsPageSkeleton } from "./variants";
+import type { TaskActivitySection_task$key } from "#/__generated__/core/TaskActivitySection_task.graphql";
 
-export function TaskDetailsPageSkeleton() {
-  const { root, header, titleRow, title, body, main, description, engagement }
-    = taskDetailsPageSkeleton();
+import { taskCommentsSection } from "../variants";
+
+import { TaskActivityList } from "./TaskActivityList";
+
+const taskActivitySectionFragment = graphql`
+  fragment TaskActivitySection_task on Task {
+    updatedAt
+    canListActivities: permission(action: "core:task-activity:list")
+  }
+`;
+
+interface TaskActivitySectionProps {
+  taskKey: TaskActivitySection_task$key;
+}
+
+function TaskActivitySectionFallback() {
+  const { root } = taskCommentsSection();
 
   return (
     <div className={root()}>
-      <div className={header()}>
-        <div className={titleRow()}>
-          <div className={title()}>
-            <HeadingSkeleton size={6} className="w-64" />
-          </div>
-        </div>
-      </div>
-      <div className={body()}>
-        <div className={main()}>
-          <div className={description()}>
-            <TextSkeleton size={2} className="w-full" />
-            <TextSkeleton size={2} className="w-5/6" />
-            <TextSkeleton size={2} className="w-2/3" />
-          </div>
-          <div className={engagement()}>
-            <TabsSkeleton count={2} />
-            <ListSkeleton count={2} />
-          </div>
-        </div>
-        <CardSkeleton size={2} />
-      </div>
+      <ListSkeleton count={2} />
     </div>
+  );
+}
+
+export function TaskActivitySection({ taskKey }: TaskActivitySectionProps) {
+  const task = useFragment(taskActivitySectionFragment, taskKey);
+
+  if (!task.canListActivities) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={<TaskActivitySectionFallback />}>
+      <TaskActivityList fetchKey={task.updatedAt} />
+    </Suspense>
   );
 }

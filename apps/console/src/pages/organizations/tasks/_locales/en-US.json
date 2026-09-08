@@ -90,6 +90,34 @@
         "contentRequired": "Enter a comment",
         "contentTooLong": "Comment must be at most {{max}} characters"
       }
+    },
+    "activity": {
+      "title": "Activity",
+      "empty": "No activity yet",
+      "actorFallback": "Someone",
+      "actions": {
+        "showMore": "Show more"
+      },
+      "sentences": {
+        "created": "{{actor}} created this task",
+        "updated": "{{actor}} updated this task",
+        "renamed": "{{actor}} renamed from {{oldValue}} to {{newValue}}",
+        "descriptionUpdated": "{{actor}} updated the description",
+        "stateChanged": "{{actor}} changed status from {{oldValue}} to {{newValue}}",
+        "priorityChanged": "{{actor}} changed priority from {{oldValue}} to {{newValue}}",
+        "assigned": "{{actor}} assigned {{newValue}}",
+        "reassigned": "{{actor}} reassigned from {{oldValue}} to {{newValue}}",
+        "unassigned": "{{actor}} unassigned {{oldValue}}",
+        "measureLinked": "{{actor}} linked {{newValue}}",
+        "measureChanged": "{{actor}} moved from {{oldValue}} to {{newValue}}",
+        "measureUnlinked": "{{actor}} unlinked {{oldValue}}",
+        "deadlineSet": "{{actor}} set the deadline to {{newValue}}",
+        "deadlineChanged": "{{actor}} changed the deadline from {{oldValue}} to {{newValue}}",
+        "deadlineRemoved": "{{actor}} removed the deadline",
+        "timeEstimateSet": "{{actor}} set the time estimate to {{newValue}}",
+        "timeEstimateChanged": "{{actor}} changed the time estimate from {{oldValue}} to {{newValue}}",
+        "timeEstimateRemoved": "{{actor}} removed the time estimate"
+      }
     }
   },
   "createDialog": {
