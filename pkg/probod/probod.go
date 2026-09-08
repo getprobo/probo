@@ -55,6 +55,7 @@ import (
 	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
@@ -159,9 +160,10 @@ func New() *Implm {
 				},
 			},
 			IdentityFederation: IdentityFederationConfig{
-				CloudFormationTemplateURL: cloudaws.DefaultCloudFormationTemplateURL,
-				TerraformModuleSource:     cloudaws.DefaultTerraformModuleSource,
-				GCPTerraformModuleSource:  cloudgcp.DefaultTerraformModuleSource,
+				CloudFormationTemplateURL:  cloudaws.DefaultCloudFormationTemplateURL,
+				TerraformModuleSource:      cloudaws.DefaultTerraformModuleSource,
+				GCPTerraformModuleSource:   cloudgcp.DefaultTerraformModuleSource,
+				AzureTerraformModuleSource: cloudazure.DefaultTerraformModuleSource,
 			},
 			ITAM: ITAMConfig{
 				DeviceEnrollmentTokenValidity: 604800,
@@ -977,6 +979,9 @@ func (impl *Implm) Run(
 			},
 			GCPConnectorInstall: cloudgcp.ConnectorInstallConfig{
 				TerraformModuleSource: impl.cfg.IdentityFederation.GCPTerraformModuleSource,
+			},
+			AzureConnectorInstall: cloudazure.ConnectorInstallConfig{
+				TerraformModuleSource: impl.cfg.IdentityFederation.AzureTerraformModuleSource,
 			},
 		},
 	)
