@@ -40,5 +40,59 @@
       "installViaTerraform": "Installer via Terraform",
       "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
     }
+  },
+  "createAzureAccessReviewSourcePage": {
+    "pageTitle": "Connecter Azure",
+    "title": "Connecter Azure",
+    "description": "Déployez l’application d’audit. Saisissez ensuite les identifiants de locataire, d’application et d’abonnement.",
+    "permissionDenied": "Vous n’avez pas la permission de créer des sources d’accès.",
+    "propagationHint": "La fédération peut prendre quelques minutes. Si Connexion indique un connecteur déconnecté, attendez puis réessayez.",
+    "fields": {
+      "tenantId": "ID d’annuaire (locataire)",
+      "clientId": "ID d’application (client)",
+      "subscriptionId": "ID d’abonnement",
+      "environment": "Environnement Azure",
+      "environmentGccNote": "GCC utilise Azure Public. Seuls GCC High et DoD utilisent Government.",
+      "issuer": "Émetteur",
+      "audience": "Audience",
+      "subject": "Sujet",
+      "tenantIdPlaceholder": "11111111-1111-1111-1111-111111111111",
+      "clientIdPlaceholder": "22222222-2222-2222-2222-222222222222",
+      "subscriptionIdPlaceholder": "33333333-3333-3333-3333-333333333333"
+    },
+    "environments": {
+      "AZURE_PUBLIC": "Public — GCC utilise Azure Public",
+      "AZURE_GOVERNMENT": "Government (GCC High)",
+      "AZURE_GOVERNMENT_DOD": "Government DoD",
+      "AZURE_CHINA": "Chine"
+    },
+    "messages": {
+      "copyFailed": "Échec de la copie",
+      "copied": "Copié dans le presse-papiers",
+      "copiedIssuer": "Émetteur copié.",
+      "copiedAudience": "Audience copiée.",
+      "copiedSubject": "Sujet copié.",
+      "copiedTerraform": "Extrait Terraform copié.",
+      "error": "Erreur",
+      "success": "Succès",
+      "created": "Source d’accès créée avec succès."
+    },
+    "errors": {
+      "tenantId": "Saisissez un ID d’annuaire (locataire) valide.",
+      "clientId": "Saisissez un ID d’application (client) valide.",
+      "subscriptionId": "Saisissez un ID d’abonnement valide.",
+      "create": "Échec de la création du connecteur. Vérifiez les identifiants de locataire, d’application et d’abonnement, puis réessayez.",
+      "disconnected": "Probo n’a pas pu assumer l’identité d’audit. Vérifiez que le module est appliqué et que l’émetteur et le sujet correspondent aux valeurs affichées. La fédération peut prendre quelques minutes.",
+      "delete": "Impossible de supprimer le connecteur. Réessayez.",
+      "source": "Échec de la création de la source d’accès",
+      "copy": "Copiez la valeur manuellement."
+    },
+    "actions": {
+      "copy": "Copier",
+      "connect": "Connecter",
+      "back": "Retour",
+      "installViaTerraform": "Installer via Terraform",
+      "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
+    }
   }
 }

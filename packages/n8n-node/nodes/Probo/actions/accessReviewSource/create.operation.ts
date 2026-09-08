@@ -67,6 +67,10 @@ export const description: INodeProperties[] = [
 				value: 'AWS',
 			},
 			{
+				name: 'Azure',
+				value: 'AZURE',
+			},
+			{
 				name: 'GCP',
 				value: 'GCP',
 			},
@@ -120,6 +124,83 @@ export const description: INodeProperties[] = [
 		description: 'Service account email to impersonate, including the universe-specific suffix',
 		required: true,
 	},
+	{
+		displayName: 'Azure Tenant ID',
+		name: 'azureTenantId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['create'],
+				provider: ['AZURE'],
+			},
+		},
+		default: '',
+		description: 'Entra directory (tenant) ID',
+		required: true,
+	},
+	{
+		displayName: 'Azure Client ID',
+		name: 'azureClientId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['create'],
+				provider: ['AZURE'],
+			},
+		},
+		default: '',
+		description: 'Entra application (client) ID',
+		required: true,
+	},
+	{
+		displayName: 'Azure Subscription ID',
+		name: 'azureSubscriptionId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['create'],
+				provider: ['AZURE'],
+			},
+		},
+		default: '',
+		required: true,
+	},
+	{
+		displayName: 'Azure Environment',
+		name: 'azureEnvironment',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['create'],
+				provider: ['AZURE'],
+			},
+		},
+		options: [
+			{
+				name: 'Public (GCC Uses This)',
+				value: 'AZURE_PUBLIC',
+			},
+			{
+				name: 'Government (GCC High)',
+				value: 'AZURE_GOVERNMENT',
+			},
+			{
+				name: 'Government DoD',
+				value: 'AZURE_GOVERNMENT_DOD',
+			},
+			{
+				name: 'China',
+				value: 'AZURE_CHINA',
+			},
+		],
+		default: 'AZURE_PUBLIC',
+		description: 'Azure cloud environment. GCC uses Public. Only GCC High and DoD use Government.',
+		required: true,
+	},
 ];
 
 export async function execute(
@@ -149,17 +230,36 @@ export async function execute(
 		provider,
 	};
 
-	if (provider === 'GCP') {
-		connectorInput.gcpWorkloadIdentityProvider = this.getNodeParameter(
-			'gcpWorkloadIdentityProvider',
-			itemIndex,
-		) as string;
-		connectorInput.gcpServiceAccountEmail = this.getNodeParameter(
-			'gcpServiceAccountEmail',
-			itemIndex,
-		) as string;
-	} else {
-		connectorInput.awsRoleArn = this.getNodeParameter('awsRoleArn', itemIndex) as string;
+	switch (provider) {
+		case 'GCP':
+			connectorInput.gcpWorkloadIdentityProvider = this.getNodeParameter(
+				'gcpWorkloadIdentityProvider',
+				itemIndex,
+			) as string;
+			connectorInput.gcpServiceAccountEmail = this.getNodeParameter(
+				'gcpServiceAccountEmail',
+				itemIndex,
+			) as string;
+			break;
+		case 'AZURE':
+			connectorInput.azureTenantId = this.getNodeParameter('azureTenantId', itemIndex) as string;
+			connectorInput.azureClientId = this.getNodeParameter('azureClientId', itemIndex) as string;
+			connectorInput.azureSubscriptionId = this.getNodeParameter(
+				'azureSubscriptionId',
+				itemIndex,
+			) as string;
+			connectorInput.azureEnvironment = this.getNodeParameter(
+				'azureEnvironment',
+				itemIndex,
+			) as string;
+			break;
+		case 'AWS':
+			connectorInput.awsRoleArn = this.getNodeParameter('awsRoleArn', itemIndex) as string;
+			break;
+		default:
+			throw new NodeOperationError(this.getNode(), `Unsupported provider ${provider}`, {
+				itemIndex,
+			});
 	}
 
 	const connectorResponse = await proboApiRequest.call(this, createConnectorQuery, {

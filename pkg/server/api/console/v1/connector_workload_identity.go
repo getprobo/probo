@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -54,6 +55,16 @@ func newGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *types.GCPConnectorSetu
 	}
 }
 
+func newAzureConnectorSetup(setup cloudazure.ConnectorSetup) *types.AzureConnectorSetup {
+	return &types.AzureConnectorSetup{
+		Issuer:                   setup.Issuer,
+		Audience:                 setup.Audience,
+		Subject:                  setup.Subject,
+		SuggestedApplicationName: setup.SuggestedApplicationName,
+		TerraformSnippet:         setup.TerraformSnippet,
+	}
+}
+
 func (r *Resolver) workloadIdentitySettings(
 	ctx context.Context,
 	input types.CreateWorkloadIdentityConnectorInput,
@@ -64,6 +75,10 @@ func (r *Resolver) workloadIdentitySettings(
 			AWSRoleARN:                  ref.UnrefOrZero(input.AWSRoleArn),
 			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GCPWorkloadIdentityProvider),
 			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GCPServiceAccountEmail),
+			AzureTenantID:               ref.UnrefOrZero(input.AzureTenantID),
+			AzureClientID:               ref.UnrefOrZero(input.AzureClientID),
+			AzureSubscriptionID:         ref.UnrefOrZero(input.AzureSubscriptionID),
+			AzureEnvironment:            ref.UnrefOrZero(input.AzureEnvironment),
 		},
 	)
 	if err != nil {

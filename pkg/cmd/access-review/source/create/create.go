@@ -100,6 +100,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagRoleARN                     string
 		flagGCPWorkloadIdentityProvider string
 		flagGCPServiceAccountEmail      string
+		flagAzureTenantID               string
+		flagAzureClientID               string
+		flagAzureSubscriptionID         string
+		flagAzureEnvironment            string
 	)
 
 	cmd := &cobra.Command{
@@ -117,7 +121,20 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   # Create a GCP workload-identity access source
   prb access-review source create --name "GCP prod" \
     --gcp-workload-identity-provider projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo \
-    --gcp-service-account-email probo-audit@my-project.iam.gserviceaccount.com`,
+    --gcp-service-account-email probo-audit@my-project.iam.gserviceaccount.com
+
+  # Create an Azure workload-identity access source
+  prb access-review source create --name "Azure prod" \
+    --azure-tenant-id 11111111-1111-1111-1111-111111111111 \
+    --azure-client-id 22222222-2222-2222-2222-222222222222 \
+    --azure-subscription-id 33333333-3333-3333-3333-333333333333
+
+  # Create an Azure Government workload-identity access source
+  prb access-review source create --name "Azure gov" \
+    --azure-tenant-id 11111111-1111-1111-1111-111111111111 \
+    --azure-client-id 22222222-2222-2222-2222-222222222222 \
+    --azure-subscription-id 33333333-3333-3333-3333-333333333333 \
+    --azure-environment AZURE_GOVERNMENT`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -172,6 +189,31 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					flagOrg,
 					flagGCPWorkloadIdentityProvider,
 					flagGCPServiceAccountEmail,
+				)
+				if err != nil {
+					return err
+				}
+
+				createdConnectorID = connectorID
+				flagConnectorID = connectorID
+
+				if status != connectionStatusConnected {
+					return abandonCreatedConnector(
+						client,
+						createdConnectorID,
+						fmt.Errorf("connector is %s", status),
+					)
+				}
+			}
+
+			if flagAzureTenantID != "" {
+				connectorID, status, err := createAzureConnector(
+					client,
+					flagOrg,
+					flagAzureTenantID,
+					flagAzureClientID,
+					flagAzureSubscriptionID,
+					flagAzureEnvironment,
 				)
 				if err != nil {
 					return err
@@ -256,6 +298,30 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		"",
 		"GCP service account email to impersonate, including the universe-specific suffix",
 	)
+	cmd.Flags().StringVar(
+		&flagAzureTenantID,
+		"azure-tenant-id",
+		"",
+		"Entra directory (tenant) ID",
+	)
+	cmd.Flags().StringVar(
+		&flagAzureClientID,
+		"azure-client-id",
+		"",
+		"Entra application (client) ID",
+	)
+	cmd.Flags().StringVar(
+		&flagAzureSubscriptionID,
+		"azure-subscription-id",
+		"",
+		"Azure subscription ID",
+	)
+	cmd.Flags().StringVar(
+		&flagAzureEnvironment,
+		"azure-environment",
+		"AZURE_PUBLIC",
+		"Azure cloud environment (AZURE_PUBLIC, AZURE_GOVERNMENT, AZURE_GOVERNMENT_DOD, AZURE_CHINA)",
+	)
 
 	_ = cmd.MarkFlagRequired("name")
 	cmd.MarkFlagsMutuallyExclusive(
@@ -263,10 +329,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		"connector-id",
 		"aws-role-arn",
 		"gcp-workload-identity-provider",
+		"azure-tenant-id",
 	)
 	cmd.MarkFlagsRequiredTogether(
 		"gcp-workload-identity-provider",
 		"gcp-service-account-email",
+	)
+	cmd.MarkFlagsRequiredTogether(
+		"azure-tenant-id",
+		"azure-client-id",
+		"azure-subscription-id",
 	)
 
 	return cmd
@@ -300,6 +372,27 @@ func createGCPConnector(
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": providerResource,
 			"gcpServiceAccountEmail":      serviceAccountEmail,
+		},
+	)
+}
+
+func createAzureConnector(
+	client *api.Client,
+	orgID string,
+	tenantID string,
+	clientID string,
+	subscriptionID string,
+	environment string,
+) (string, string, error) {
+	return createWorkloadIdentityConnector(
+		client,
+		map[string]any{
+			"organizationId":      orgID,
+			"provider":            "AZURE",
+			"azureTenantId":       tenantID,
+			"azureClientId":       clientID,
+			"azureSubscriptionId": subscriptionID,
+			"azureEnvironment":    environment,
 		},
 	)
 }

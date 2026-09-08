@@ -165,6 +165,32 @@ export function gcpAccessReviewSourceName(
   return `${displayName} / ${projectNumber}`;
 }
 
+const AZURE_GUID_PATTERN
+  = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+const AZURE_NIL_GUID = "00000000-0000-0000-0000-000000000000";
+
+export function isAzureGUID(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed === "" || trimmed === AZURE_NIL_GUID) {
+    return false;
+  }
+
+  return AZURE_GUID_PATTERN.test(trimmed);
+}
+
+export function azureAccessReviewSourceName(
+  displayName: string,
+  subscriptionId: string,
+): string {
+  const trimmed = subscriptionId.trim();
+  if (!isAzureGUID(trimmed)) {
+    return displayName;
+  }
+
+  return `${displayName} / ${trimmed}`;
+}
+
 export function mapClientCredentialsExtraSettingToField(
   provider: string,
   settingKey: string,

@@ -67,17 +67,30 @@ export function connectMethods({
   return connectMethodPreference.filter(method => supportedMethods.has(method));
 }
 
-const workloadIdentitySlugByProvider = {
+const workloadIdentitySlugByProvider: Partial<
+  Record<ConnectorProvider, string>
+> = {
   AWS: "aws-workload-identity",
+  AZURE: "azure-workload-identity",
   GCP: "gcp-workload-identity",
-} as const;
+};
 
 export function workloadIdentityPath(
   organizationId: string,
   provider: ConnectorProvider,
 ): string | undefined {
-  if (provider !== "AWS" && provider !== "GCP") {
+  const slug = workloadIdentitySlugByProvider[provider];
+  if (!slug) {
     return undefined;
   }
-  return `/organizations/${organizationId}/access-reviews/connections/new/${workloadIdentitySlugByProvider[provider]}`;
+
+  return [
+    "",
+    "organizations",
+    organizationId,
+    "access-reviews",
+    "connections",
+    "new",
+    slug,
+  ].join("/");
 }
