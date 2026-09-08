@@ -193,7 +193,7 @@ export function CreateGcpAccessReviewSourcePage({
   const formValid = providerValid && emailValid;
 
   const onSubmit = async () => {
-    if (!formValid) {
+    if (!formValid || isCreating) {
       return;
     }
 

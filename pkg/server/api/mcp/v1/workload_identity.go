@@ -41,6 +41,10 @@ func (r *Resolver) workloadIdentitySettings(
 			AWSRoleARN:                  ref.UnrefOrZero(input.AwsRoleArn),
 			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GcpWorkloadIdentityProvider),
 			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GcpServiceAccountEmail),
+			AzureTenantID:               ref.UnrefOrZero(input.AzureTenantID),
+			AzureClientID:               ref.UnrefOrZero(input.AzureClientID),
+			AzureSubscriptionID:         ref.UnrefOrZero(input.AzureSubscriptionID),
+			AzureEnvironment:            ref.UnrefOrZero(input.AzureEnvironment),
 		},
 	)
 	if err != nil {

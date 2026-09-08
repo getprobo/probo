@@ -25,7 +25,9 @@ import {
   Field,
   IconSquareBehindSquare2,
   Input,
+  Option,
   PageHeader,
+  Select,
   useToast,
 } from "@probo/ui";
 import { type ChangeEvent, useState } from "react";
@@ -35,9 +37,12 @@ import { Link, useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
-import type { CreateAwsAccessReviewSourcePageCreateMutation } from "#/__generated__/core/CreateAwsAccessReviewSourcePageCreateMutation.graphql";
-import type { CreateAwsAccessReviewSourcePageDeleteMutation } from "#/__generated__/core/CreateAwsAccessReviewSourcePageDeleteMutation.graphql";
-import type { CreateAwsAccessReviewSourcePageQuery } from "#/__generated__/core/CreateAwsAccessReviewSourcePageQuery.graphql";
+import type {
+  AzureEnvironment,
+  CreateAzureAccessReviewSourcePageCreateMutation,
+} from "#/__generated__/core/CreateAzureAccessReviewSourcePageCreateMutation.graphql";
+import type { CreateAzureAccessReviewSourcePageDeleteMutation } from "#/__generated__/core/CreateAzureAccessReviewSourcePageDeleteMutation.graphql";
+import type { CreateAzureAccessReviewSourcePageQuery } from "#/__generated__/core/CreateAzureAccessReviewSourcePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -47,20 +52,25 @@ import {
 } from "../_components/ActionSplitButton";
 import { ConnectorDocumentationLink } from "../dialogs/_components/ConnectorDocumentationLink";
 import {
-  AWS_IAM_ROLE_ARN_PATTERN,
-  awsAccessReviewSourceName,
-  isAWSRoleARN,
+  azureAccessReviewSourceName,
+  isAzureGUID,
 } from "../dialogs/_lib/connectorSettings";
 import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
-export const createAwsAccessReviewSourcePageQuery = graphql`
-  query CreateAwsAccessReviewSourcePageQuery($organizationId: ID!) {
-    awsConnectorSetup(organizationId: $organizationId) {
+const azureEnvironments = [
+  "AZURE_PUBLIC",
+  "AZURE_GOVERNMENT",
+  "AZURE_GOVERNMENT_DOD",
+  "AZURE_CHINA",
+] as const satisfies ReadonlyArray<AzureEnvironment>;
+
+export const createAzureAccessReviewSourcePageQuery = graphql`
+  query CreateAzureAccessReviewSourcePageQuery($organizationId: ID!) {
+    azureConnectorSetup(organizationId: $organizationId) {
       issuer
       audience
       subject
       terraformSnippet
-      cloudFormationQuickCreateURL
     }
     accessReviewDrivers {
       provider
@@ -78,7 +88,7 @@ export const createAwsAccessReviewSourcePageQuery = graphql`
 `;
 
 const createWorkloadIdentityConnectorMutation = graphql`
-  mutation CreateAwsAccessReviewSourcePageCreateMutation(
+  mutation CreateAzureAccessReviewSourcePageCreateMutation(
     $input: CreateWorkloadIdentityConnectorInput!
   ) {
     createWorkloadIdentityConnector(input: $input) {
@@ -92,7 +102,7 @@ const createWorkloadIdentityConnectorMutation = graphql`
 `;
 
 const deleteConnectorMutation = graphql`
-  mutation CreateAwsAccessReviewSourcePageDeleteMutation(
+  mutation CreateAzureAccessReviewSourcePageDeleteMutation(
     $input: DeleteConnectorInput!
   ) {
     deleteConnector(input: $input) {
@@ -101,36 +111,39 @@ const deleteConnectorMutation = graphql`
   }
 `;
 
-interface CreateAwsAccessReviewSourcePageProps {
-  queryRef: PreloadedQuery<CreateAwsAccessReviewSourcePageQuery>;
+interface CreateAzureAccessReviewSourcePageProps {
+  queryRef: PreloadedQuery<CreateAzureAccessReviewSourcePageQuery>;
 }
 
-export function CreateAwsAccessReviewSourcePage({
+export function CreateAzureAccessReviewSourcePage({
   queryRef,
-}: CreateAwsAccessReviewSourcePageProps) {
-  const { t } = useTranslation();
+}: CreateAzureAccessReviewSourcePageProps) {
+  const { t } = useTranslation("organizations/access-reviews");
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
-  const [roleArn, setRoleArn] = useState("");
+  const [tenantId, setTenantId] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [subscriptionId, setSubscriptionId] = useState("");
+  const [environment, setEnvironment] = useState<AzureEnvironment>("AZURE_PUBLIC");
   const [isCreating, setIsCreating] = useState(false);
 
-  usePageTitle(t("createAwsAccessReviewSourcePage.pageTitle"));
+  usePageTitle(t("createAzureAccessReviewSourcePage.pageTitle"));
 
-  const { organization, awsConnectorSetup, accessReviewDrivers }
-    = usePreloadedQuery<CreateAwsAccessReviewSourcePageQuery>(
-      createAwsAccessReviewSourcePageQuery,
+  const { organization, azureConnectorSetup, accessReviewDrivers }
+    = usePreloadedQuery<CreateAzureAccessReviewSourcePageQuery>(
+      createAzureAccessReviewSourcePageQuery,
       queryRef,
     );
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
 
-  const awsDriver = accessReviewDrivers.find(
-    driver => driver.provider === "AWS",
+  const azureDriver = accessReviewDrivers.find(
+    driver => driver.provider === "AZURE",
   );
-  if (!awsDriver) {
-    throw new Error("AWS access review driver not found");
+  if (!azureDriver) {
+    throw new Error("Azure access review driver not found");
   }
 
   const connectionId = ConnectionHandler.getConnectionID(
@@ -139,10 +152,10 @@ export function CreateAwsAccessReviewSourcePage({
   );
 
   const [createWorkloadIdentityConnector] = useMutation<
-    CreateAwsAccessReviewSourcePageCreateMutation
+    CreateAzureAccessReviewSourcePageCreateMutation
   >(createWorkloadIdentityConnectorMutation);
   const [deleteConnector] = useMutation<
-    CreateAwsAccessReviewSourcePageDeleteMutation
+    CreateAzureAccessReviewSourcePageDeleteMutation
   >(deleteConnectorMutation);
   const [createAccessReviewSource] = useMutation<
     accessReviewSourceMutationsCreateMutation
@@ -152,7 +165,7 @@ export function CreateAwsAccessReviewSourcePage({
     return (
       <Card padded>
         <p className="text-txt-secondary text-sm">
-          {t("createAwsAccessReviewSourcePage.permissionDenied")}
+          {t("createAzureAccessReviewSourcePage.permissionDenied")}
         </p>
       </Card>
     );
@@ -161,8 +174,8 @@ export function CreateAwsAccessReviewSourcePage({
   const copyValue = (value: string, successKey: string) => {
     const onCopyFailure = () =>
       toast({
-        title: t("createAwsAccessReviewSourcePage.messages.copyFailed"),
-        description: t("createAwsAccessReviewSourcePage.errors.copy"),
+        title: t("createAzureAccessReviewSourcePage.messages.copyFailed"),
+        description: t("createAzureAccessReviewSourcePage.errors.copy"),
         variant: "error",
       });
 
@@ -175,7 +188,7 @@ export function CreateAwsAccessReviewSourcePage({
       navigator.clipboard.writeText(value).then(
         () =>
           toast({
-            title: t("createAwsAccessReviewSourcePage.messages.copied"),
+            title: t("createAzureAccessReviewSourcePage.messages.copied"),
             description: t(successKey),
             variant: "success",
           }),
@@ -186,11 +199,16 @@ export function CreateAwsAccessReviewSourcePage({
     }
   };
 
-  const roleArnValid = isAWSRoleARN(roleArn);
-  const roleArnInvalid = roleArn.trim() !== "" && !roleArnValid;
+  const tenantValid = isAzureGUID(tenantId);
+  const tenantInvalid = tenantId.trim() !== "" && !tenantValid;
+  const clientValid = isAzureGUID(clientId);
+  const clientInvalid = clientId.trim() !== "" && !clientValid;
+  const subscriptionValid = isAzureGUID(subscriptionId);
+  const subscriptionInvalid = subscriptionId.trim() !== "" && !subscriptionValid;
+  const formValid = tenantValid && clientValid && subscriptionValid;
 
   const onSubmit = async () => {
-    if (!roleArnValid || isCreating) {
+    if (!formValid || isCreating) {
       return;
     }
 
@@ -202,12 +220,15 @@ export function CreateAwsAccessReviewSourcePage({
           variables: {
             input: {
               organizationId,
-              provider: "AWS",
-              awsRoleArn: roleArn.trim(),
+              provider: "AZURE",
+              azureTenantId: tenantId.trim(),
+              azureClientId: clientId.trim(),
+              azureSubscriptionId: subscriptionId.trim(),
+              azureEnvironment: environment,
             },
           },
         },
-        { errorToast: t("createAwsAccessReviewSourcePage.errors.create") },
+        { errorToast: t("createAzureAccessReviewSourcePage.errors.create") },
       );
       const { id: connectorId, connectionStatus }
         = created.createWorkloadIdentityConnector.connector;
@@ -215,14 +236,14 @@ export function CreateAwsAccessReviewSourcePage({
       const discardConnector = () =>
         deleteConnector(
           { variables: { input: { connectorId } } },
-          { errorToast: t("createAwsAccessReviewSourcePage.errors.delete") },
+          { errorToast: t("createAzureAccessReviewSourcePage.errors.delete") },
         );
 
       if (connectionStatus !== "CONNECTED") {
         toast({
-          title: t("createAwsAccessReviewSourcePage.messages.error"),
+          title: t("createAzureAccessReviewSourcePage.messages.error"),
           description: t(
-            "createAwsAccessReviewSourcePage.errors.disconnected",
+            "createAzureAccessReviewSourcePage.errors.disconnected",
           ),
           variant: "error",
         });
@@ -237,7 +258,10 @@ export function CreateAwsAccessReviewSourcePage({
               input: {
                 organizationId,
                 connectorId,
-                name: awsAccessReviewSourceName(awsDriver.displayName, roleArn),
+                name: azureAccessReviewSourceName(
+                  azureDriver.displayName,
+                  subscriptionId,
+                ),
                 csvData: null,
               },
             },
@@ -247,7 +271,7 @@ export function CreateAwsAccessReviewSourcePage({
               }
             },
           },
-          { errorToast: t("createAwsAccessReviewSourcePage.errors.source") },
+          { errorToast: t("createAzureAccessReviewSourcePage.errors.source") },
         );
       } catch {
         await discardConnector();
@@ -255,11 +279,19 @@ export function CreateAwsAccessReviewSourcePage({
       }
 
       toast({
-        title: t("createAwsAccessReviewSourcePage.messages.success"),
-        description: t("createAwsAccessReviewSourcePage.messages.created"),
+        title: t("createAzureAccessReviewSourcePage.messages.success"),
+        description: t("createAzureAccessReviewSourcePage.messages.created"),
         variant: "success",
       });
-      void navigate(`/organizations/${organizationId}/access-reviews/connections`);
+      void navigate(
+        [
+          "",
+          "organizations",
+          organizationId,
+          "access-reviews",
+          "connections",
+        ].join("/"),
+      );
     } catch {
       return;
     } finally {
@@ -268,23 +300,14 @@ export function CreateAwsAccessReviewSourcePage({
   };
 
   const installActions: ActionSplitButtonAction[] = [];
-  if (awsConnectorSetup.cloudFormationQuickCreateURL) {
-    installActions.push({
-      id: "cloudformation",
-      label: t(
-        "createAwsAccessReviewSourcePage.actions.installViaCloudFormation",
-      ),
-      href: awsConnectorSetup.cloudFormationQuickCreateURL,
-    });
-  }
-  if (awsConnectorSetup.terraformSnippet) {
+  if (azureConnectorSetup.terraformSnippet) {
     installActions.push({
       id: "terraform",
-      label: t("createAwsAccessReviewSourcePage.actions.installViaTerraform"),
+      label: t("createAzureAccessReviewSourcePage.actions.installViaTerraform"),
       onSelect: () =>
         copyValue(
-          awsConnectorSetup.terraformSnippet,
-          "createAwsAccessReviewSourcePage.messages.copiedTerraform",
+          azureConnectorSetup.terraformSnippet,
+          "createAzureAccessReviewSourcePage.messages.copiedTerraform",
         ),
     });
   }
@@ -292,14 +315,14 @@ export function CreateAwsAccessReviewSourcePage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("createAwsAccessReviewSourcePage.title")}
-        description={t("createAwsAccessReviewSourcePage.description")}
+        title={t("createAzureAccessReviewSourcePage.title")}
+        description={t("createAzureAccessReviewSourcePage.description")}
       >
         {installActions.length > 0 && (
           <ActionSplitButton
             actions={installActions}
             chooseAnotherMethodLabel={t(
-              "createAwsAccessReviewSourcePage.actions.chooseAnotherInstallMethod",
+              "createAzureAccessReviewSourcePage.actions.chooseAnotherInstallMethod",
             )}
           />
         )}
@@ -314,48 +337,103 @@ export function CreateAwsAccessReviewSourcePage({
           className="space-y-4"
         >
           <Field
-            name="roleArn"
-            label={t("createAwsAccessReviewSourcePage.fields.roleArn")}
-            value={roleArn}
+            name="tenantId"
+            label={t("createAzureAccessReviewSourcePage.fields.tenantId")}
+            value={tenantId}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setRoleArn(e.target.value)}
+              setTenantId(e.target.value)}
             required
-            pattern={AWS_IAM_ROLE_ARN_PATTERN}
             placeholder={t(
-              "createAwsAccessReviewSourcePage.fields.roleArnPlaceholder",
+              "createAzureAccessReviewSourcePage.fields.tenantIdPlaceholder",
             )}
             error={
-              roleArnInvalid
-                ? t("createAwsAccessReviewSourcePage.errors.roleArn")
+              tenantInvalid
+                ? t("createAzureAccessReviewSourcePage.errors.tenantId")
                 : undefined
             }
           />
+          <Field
+            name="clientId"
+            label={t("createAzureAccessReviewSourcePage.fields.clientId")}
+            value={clientId}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setClientId(e.target.value)}
+            required
+            placeholder={t(
+              "createAzureAccessReviewSourcePage.fields.clientIdPlaceholder",
+            )}
+            error={
+              clientInvalid
+                ? t("createAzureAccessReviewSourcePage.errors.clientId")
+                : undefined
+            }
+          />
+          <Field
+            name="subscriptionId"
+            label={t("createAzureAccessReviewSourcePage.fields.subscriptionId")}
+            value={subscriptionId}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setSubscriptionId(e.target.value)}
+            required
+            placeholder={t(
+              "createAzureAccessReviewSourcePage.fields.subscriptionIdPlaceholder",
+            )}
+            error={
+              subscriptionInvalid
+                ? t("createAzureAccessReviewSourcePage.errors.subscriptionId")
+                : undefined
+            }
+          />
+          <Field
+            name="environment"
+            label={t("createAzureAccessReviewSourcePage.fields.environment")}
+            help={t("createAzureAccessReviewSourcePage.fields.environmentGccNote")}
+          >
+            <Select
+              id="environment"
+              value={environment}
+              onValueChange={(value) => {
+                if ((azureEnvironments as ReadonlyArray<string>).includes(value)) {
+                  setEnvironment(value as AzureEnvironment);
+                }
+              }}
+            >
+              {azureEnvironments.map(value => (
+                <Option key={value} value={value}>
+                  {t(`createAzureAccessReviewSourcePage.environments.${value}`)}
+                </Option>
+              ))}
+            </Select>
+          </Field>
+          <p className="text-txt-secondary text-sm">
+            {t("createAzureAccessReviewSourcePage.propagationHint")}
+          </p>
           {(
             [
               {
                 name: "issuer",
-                value: awsConnectorSetup.issuer,
+                value: azureConnectorSetup.issuer,
                 successKey:
-                  "createAwsAccessReviewSourcePage.messages.copiedIssuer",
+                  "createAzureAccessReviewSourcePage.messages.copiedIssuer",
               },
               {
                 name: "audience",
-                value: awsConnectorSetup.audience,
+                value: azureConnectorSetup.audience,
                 successKey:
-                  "createAwsAccessReviewSourcePage.messages.copiedAudience",
+                  "createAzureAccessReviewSourcePage.messages.copiedAudience",
               },
               {
                 name: "subject",
-                value: awsConnectorSetup.subject,
+                value: azureConnectorSetup.subject,
                 successKey:
-                  "createAwsAccessReviewSourcePage.messages.copiedSubject",
+                  "createAzureAccessReviewSourcePage.messages.copiedSubject",
               },
             ] as const
           ).map(row => (
             <Field
               key={row.name}
               name={row.name}
-              label={t(`createAwsAccessReviewSourcePage.fields.${row.name}`)}
+              label={t(`createAzureAccessReviewSourcePage.fields.${row.name}`)}
             >
               <div className="flex items-center gap-2">
                 <div className="min-w-0 flex-1">
@@ -372,7 +450,7 @@ export function CreateAwsAccessReviewSourcePage({
                   variant="secondary"
                   icon={IconSquareBehindSquare2}
                   onClick={() => copyValue(row.value, row.successKey)}
-                  aria-label={t("createAwsAccessReviewSourcePage.actions.copy")}
+                  aria-label={t("createAzureAccessReviewSourcePage.actions.copy")}
                 />
               </div>
             </Field>
@@ -380,17 +458,25 @@ export function CreateAwsAccessReviewSourcePage({
 
           <div className="flex items-center justify-between gap-2">
             <ConnectorDocumentationLink
-              url={awsDriver.documentationUrl}
+              url={azureDriver.documentationUrl}
               variant="button"
             />
             <div className="flex items-center justify-end gap-2">
               <Button variant="secondary" asChild>
-                <Link to={`/organizations/${organizationId}/access-reviews/connections`}>
-                  {t("createAwsAccessReviewSourcePage.actions.back")}
+                <Link
+                  to={[
+                    "",
+                    "organizations",
+                    organizationId,
+                    "access-reviews",
+                    "connections",
+                  ].join("/")}
+                >
+                  {t("createAzureAccessReviewSourcePage.actions.back")}
                 </Link>
               </Button>
-              <Button disabled={!roleArnValid || isCreating} type="submit">
-                {t("createAwsAccessReviewSourcePage.actions.connect")}
+              <Button disabled={!formValid || isCreating} type="submit">
+                {t("createAzureAccessReviewSourcePage.actions.connect")}
               </Button>
             </div>
           </div>

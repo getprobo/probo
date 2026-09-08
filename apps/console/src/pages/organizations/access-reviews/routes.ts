@@ -66,4 +66,11 @@ export const accessReviewRoutes = [
       () => import("./connections/CreateGcpAccessReviewSourcePageLoader"),
     ),
   },
+  {
+    path: "connections/new/azure-workload-identity",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./connections/CreateAzureAccessReviewSourcePageLoader"),
+    ),
+  },
 ] satisfies AppRoute[];

@@ -18,35 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package source
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
-import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/create"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/delete"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/list"
-	setupaws "go.probo.inc/probo/pkg/cmd/access-review/source/setup-aws"
-	setupazure "go.probo.inc/probo/pkg/cmd/access-review/source/setup-azure"
-	setupgcp "go.probo.inc/probo/pkg/cmd/access-review/source/setup-gcp"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/update"
-	"go.probo.inc/probo/pkg/cmd/access-review/source/view"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-)
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['setupAzure'],
+			},
+		},
+		default: '',
+		description: 'The ID of the organization',
+		required: true,
+	},
+];
 
-func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "source <command>",
-		Short: "Manage access sources",
-	}
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(setupaws.NewCmdSetupAWS(f))
-	cmd.AddCommand(setupazure.NewCmdSetupAzure(f))
-	cmd.AddCommand(setupgcp.NewCmdSetupGCP(f))
+	const query = `
+		query AzureConnectorSetup($organizationId: ID!) {
+			azureConnectorSetup(organizationId: $organizationId) {
+				issuer
+				audience
+				subject
+				suggestedApplicationName
+				terraformSnippet
+			}
+		}
+	`;
 
-	return cmd
+	const responseData = await proboApiRequest.call(this, query, { organizationId });
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
 }
