@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,11 @@ const (
 	vcrAzureEngID          = "33333333-3333-4333-8333-333333333333"
 	vcrAzureCIID           = "44444444-4444-4444-8444-444444444444"
 	vcrAzureDeviceID       = "55555555-5555-4555-8555-555555555555"
+	vcrAzureBobID          = "66666666-6666-4666-8666-666666666666"
+	vcrAzureDanaID         = "77777777-7777-4777-8777-777777777777"
 )
+
+var azureAliceLastLogin = time.Date(2026, 8, 15, 12, 0, 0, 0, time.UTC)
 
 func newAzureTestSession(
 	t *testing.T,
@@ -81,12 +86,13 @@ func TestAzureDriver(t *testing.T) {
 	assert.Equal(t, []string{"Owner"}, alice.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, alice.AccountType)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, alice.AuthMethod)
-	assert.Equal(t, coredata.MFAStatusUnknown, alice.MFAStatus)
+	assert.Equal(t, coredata.MFAStatusEnabled, alice.MFAStatus)
 	require.NotNil(t, alice.IsAdmin)
 	assert.True(t, *alice.IsAdmin)
 	require.NotNil(t, alice.Active)
 	assert.True(t, *alice.Active)
-	assert.Nil(t, alice.LastLogin)
+	require.NotNil(t, alice.LastLogin)
+	assert.True(t, alice.LastLogin.Equal(azureAliceLastLogin))
 	assert.Nil(t, alice.CreatedAt)
 
 	eng := byID[vcrAzureEngID]
@@ -95,17 +101,21 @@ func TestAzureDriver(t *testing.T) {
 	assert.Equal(t, []string{"Reader"}, eng.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, eng.AccountType)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, eng.AuthMethod)
+	assert.Equal(t, coredata.MFAStatusUnknown, eng.MFAStatus)
 	assert.Nil(t, eng.IsAdmin)
 	assert.Nil(t, eng.Active)
+	assert.Nil(t, eng.LastLogin)
 
 	ci := byID[vcrAzureCIID]
 	assert.Equal(t, "CI Deploy", ci.FullName)
 	assert.Empty(t, ci.Email)
 	assert.Equal(t, []string{"Custom Admin"}, ci.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, ci.AccountType)
+	assert.Equal(t, coredata.MFAStatusUnknown, ci.MFAStatus)
 	assert.Nil(t, ci.IsAdmin)
 	require.NotNil(t, ci.Active)
 	assert.False(t, *ci.Active)
+	assert.Nil(t, ci.LastLogin)
 
 	device := byID[vcrAzureDeviceID]
 	assert.Empty(t, device.Email)
@@ -113,8 +123,10 @@ func TestAzureDriver(t *testing.T) {
 	assert.Equal(t, []string{"Contributor"}, device.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, device.AccountType)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, device.AuthMethod)
+	assert.Equal(t, coredata.MFAStatusUnknown, device.MFAStatus)
 	assert.Nil(t, device.IsAdmin)
 	assert.Nil(t, device.Active)
+	assert.Nil(t, device.LastLogin)
 }
 
 func TestAzureDriver_Government(t *testing.T) {
@@ -129,6 +141,9 @@ func TestAzureDriver_Government(t *testing.T) {
 	require.Len(t, records, 1)
 	assert.Equal(t, vcrAzureAliceID, records[0].ExternalID)
 	assert.Equal(t, "alice@probo-azure.test", records[0].Email)
+	assert.Equal(t, coredata.MFAStatusEnabled, records[0].MFAStatus)
+	require.NotNil(t, records[0].LastLogin)
+	assert.True(t, records[0].LastLogin.Equal(azureAliceLastLogin))
 }
 
 func TestAzureDriver_FailsWhenRoleAssignmentsDenied(t *testing.T) {
@@ -159,6 +174,8 @@ func TestAzureDriver_GraphForbiddenDegrades(t *testing.T) {
 	assert.Equal(t, []string{"Owner"}, records[0].Roles)
 	require.NotNil(t, records[0].IsAdmin)
 	assert.True(t, *records[0].IsAdmin)
+	assert.Equal(t, coredata.MFAStatusUnknown, records[0].MFAStatus)
+	assert.Nil(t, records[0].LastLogin)
 }
 
 func TestAzureDriver_GraphNotFoundDegrades(t *testing.T) {
@@ -174,6 +191,8 @@ func TestAzureDriver_GraphNotFoundDegrades(t *testing.T) {
 	assert.Equal(t, vcrAzureAliceID, records[0].ExternalID)
 	assert.Empty(t, records[0].Email)
 	assert.Empty(t, records[0].FullName)
+	assert.Equal(t, coredata.MFAStatusUnknown, records[0].MFAStatus)
+	assert.Nil(t, records[0].LastLogin)
 }
 
 func TestAzureNameResolver_UsesDisplayName(t *testing.T) {

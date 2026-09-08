@@ -120,6 +120,30 @@ func TestAzureGraphResponseError_OmitsBody(t *testing.T) {
 	assert.NotContains(t, err.Error(), "alice@probo-azure.test")
 }
 
+func TestAzureGraphLicenceError(t *testing.T) {
+	t.Parallel()
+
+	assert.True(
+		t,
+		azureGraphLicenceError(
+			&azcore.ResponseError{
+				StatusCode: http.StatusBadRequest,
+				ErrorCode:  azureGraphLicenceErrorCode,
+			},
+		),
+	)
+	assert.False(
+		t,
+		azureGraphLicenceError(
+			&azcore.ResponseError{
+				StatusCode: http.StatusForbidden,
+				ErrorCode:  "Authorization_RequestDenied",
+			},
+		),
+	)
+	assert.False(t, azureGraphLicenceError(assert.AnError))
+}
+
 func TestAzureEmail(t *testing.T) {
 	t.Parallel()
 
