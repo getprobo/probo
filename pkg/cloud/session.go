@@ -21,16 +21,17 @@
 // Package cloud holds the narrow boundary the per-cloud packages share.
 //
 // The boundary is deliberately just "authenticated access to one account".
-// AWS and GCP diverge too far below that for a shared abstraction to pay for
-// itself, so pkg/cloud/aws and a future pkg/cloud/gcp implement Session and
-// share nothing else.
+// AWS, Azure, and GCP diverge too far below that for a shared abstraction to
+// pay for itself, so the per-cloud packages implement Session and share
+// nothing else.
 package cloud
 
-// AWS and GCP are the cloud discriminators, so that the per-cloud packages and
-// the connector framework cannot drift apart on the spelling.
+// AWS, Azure, and GCP are the cloud discriminators, so that the per-cloud
+// packages and the connector framework cannot drift apart on the spelling.
 const (
-	AWS = "AWS"
-	GCP = "GCP"
+	AWS   = "AWS"
+	Azure = "AZURE"
+	GCP   = "GCP"
 )
 
 // Session is authenticated access to one cloud account. Implementations hold
@@ -40,6 +41,6 @@ type Session interface {
 	// Cloud is the discriminator of the cloud this session reaches.
 	Cloud() string
 	// AccountID identifies the account within that cloud — an AWS account ID,
-	// a GCP project number.
+	// an Azure subscription ID, or a GCP project number.
 	AccountID() string
 }
