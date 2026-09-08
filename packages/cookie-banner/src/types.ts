@@ -127,4 +127,5 @@ export interface CookieBannerClientOptions {
   baseUrl: string;
   lang?: string;
   integrations?: IntegrationConfig[];
+  gpcRecord?: boolean;
 }

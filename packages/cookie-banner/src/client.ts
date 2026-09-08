@@ -79,6 +79,7 @@ export class CookieBannerClient {
   private readonly lang: string;
 
   private readonly integrations: ConsentIntegration[];
+  private readonly gpcRecord: boolean;
 
   private bannerConfig: BannerConfig | null = null;
   private consent: VisitorConsent | null = null;
@@ -97,6 +98,7 @@ export class CookieBannerClient {
     this.visitorId = getVisitorId(config.bannerId);
     this.lang = detectLanguage(config.lang);
     this.integrations = createDefaultIntegrations(config.integrations);
+    this.gpcRecord = config.gpcRecord !== false;
   }
 
   get loaded(): boolean {
@@ -194,7 +196,13 @@ export class CookieBannerClient {
         gpcData[cat.slug] = cat.kind === "NECESSARY";
       }
       getConsent()._setReady(gpcData, false);
-      this.gpc();
+      // GPC is honoured either way; gpcRecord only controls whether the
+      // decision is persisted and sent.
+      if (this.gpcRecord) {
+        this.gpc();
+      } else {
+        this.activate(gpcData);
+      }
       this._gpcApplied = true;
     } else if (!this.consent) {
       const defaults = this.buildDefaultConsentData();

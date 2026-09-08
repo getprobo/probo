@@ -56,6 +56,11 @@ if (script) {
         el.setAttribute("gcm-enabled", gcm);
       }
 
+      const gpc = script.getAttribute("data-gpc-record");
+      if (gpc) {
+        el.setAttribute("gpc-record", gpc);
+      }
+
       document.body.appendChild(el);
     };
 
