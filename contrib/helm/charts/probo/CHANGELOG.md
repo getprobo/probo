@@ -4,6 +4,15 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `probo.identityFederation.azureTerraformModuleSource` Helm value, used to
+  build the Azure connector install snippet
+- `probo.identityFederation.cloudformationTemplateUrl`,
+  `probo.identityFederation.terraformModuleSource`, and
+  `probo.identityFederation.gcpTerraformModuleSource` documented on the
+  production values example and the Helm README
+
 ## [0.21.0] - 2026-09-03
 
 ### Added

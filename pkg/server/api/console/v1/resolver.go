@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
@@ -99,6 +100,7 @@ type (
 		identityFederation      *identityfederation.Issuer
 		awsConnectorInstall     cloudaws.ConnectorInstallConfig
 		gcpConnectorInstall     cloudgcp.ConnectorInstallConfig
+		azureConnectorInstall   cloudazure.ConnectorInstallConfig
 		probotIdentityBindings  *identitybinding.Service
 		slackbotInstallations   *slackchannel.InstallationService
 		botDeliveryDestinations BotDeliveryDestinations
@@ -136,6 +138,7 @@ func NewMux(
 	identityFederation *identityfederation.Issuer,
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
+	azureConnectorInstall cloudazure.ConnectorInstallConfig,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -170,6 +173,7 @@ func NewMux(
 		identityFederation,
 		awsConnectorInstall,
 		gcpConnectorInstall,
+		azureConnectorInstall,
 	)
 
 	r.Group(func(r chi.Router) {
