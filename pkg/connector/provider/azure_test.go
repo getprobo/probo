@@ -146,6 +146,35 @@ func TestAzureNewDriver(t *testing.T) {
 			assert.Contains(t, err.Error(), "session is for AWS")
 		},
 	)
+
+	t.Run(
+		"returns a driver for an azure session",
+		func(t *testing.T) {
+			t.Parallel()
+
+			conn := azureTestConnector(
+				t,
+				coredata.AzureConnectorSettings{
+					TenantID:       azureTestTenantID,
+					ClientID:       azureTestClientID,
+					SubscriptionID: azureTestSubscriptionID,
+					Environment:    string(cloudazure.EnvironmentPublic),
+				},
+			)
+
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			require.NoError(t, err)
+
+			driver, err := reg.WorkloadIdentity.NewDriver(
+				context.Background(),
+				session,
+				conn,
+				log.NewLogger(log.WithOutput(io.Discard)),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, driver)
+		},
+	)
 }
 
 func TestAzureNewNameResolver(t *testing.T) {
@@ -177,6 +206,26 @@ func TestAzureNewNameResolver(t *testing.T) {
 				reg.WorkloadIdentity.NewNameResolver(
 					context.Background(),
 					awsForeignSession{},
+					conn,
+					logger,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"returns a resolver for an azure session",
+		func(t *testing.T) {
+			t.Parallel()
+
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			require.NoError(t, err)
+
+			assert.NotNil(
+				t,
+				reg.WorkloadIdentity.NewNameResolver(
+					context.Background(),
+					session,
 					conn,
 					logger,
 				),

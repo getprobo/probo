@@ -258,6 +258,12 @@ func (s *Session) ARMClientOptions() *arm.ClientOptions {
 	return &arm.ClientOptions{ClientOptions: s.clientOptions}
 }
 
+// TokenCredential is the WIF client-assertion credential ARM clients use
+// with ARMClientOptions. Graph traffic goes through GraphClient instead.
+func (s *Session) TokenCredential() azcore.TokenCredential {
+	return s.credential
+}
+
 // GraphBaseURL is the Microsoft Graph host for this session's environment.
 // Every Graph URL must be built from this value with url.JoinPath.
 func (s *Session) GraphBaseURL() string {

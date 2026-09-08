@@ -98,28 +98,36 @@ func newAzureSession(
 func newAzureNameResolver(
 	ctx context.Context,
 	session cloud.Session,
-	_ *coredata.Connector,
+	conn *coredata.Connector,
 	logger *log.Logger,
 ) drivers.NameResolver {
-	if _, ok := session.(*cloudazure.Session); !ok {
+	azureSession, ok := session.(*cloudazure.Session)
+	if !ok {
 		logger.ErrorCtx(ctx, "cannot create azure name resolver", log.String("cloud", session.Cloud()))
 		return nil
 	}
 
-	return nil
+	return drivers.NewAzureNameResolver(
+		azureSession,
+		logger.With(log.String("connector_id", conn.ID.String())),
+	)
 }
 
 func newAzureDriver(
 	_ context.Context,
 	session cloud.Session,
-	_ *coredata.Connector,
-	_ *log.Logger,
+	conn *coredata.Connector,
+	logger *log.Logger,
 ) (drivers.Driver, error) {
-	if _, ok := session.(*cloudazure.Session); !ok {
+	azureSession, ok := session.(*cloudazure.Session)
+	if !ok {
 		return nil, fmt.Errorf("cannot create azure driver: session is for %s", session.Cloud())
 	}
 
-	return nil, fmt.Errorf("cannot create azure driver: not implemented")
+	return drivers.NewAzureDriver(
+		azureSession,
+		logger.With(log.String("connector_id", conn.ID.String())),
+	), nil
 }
 
 // probeAzure checks the connection by acquiring an ARM token. It reaches for
