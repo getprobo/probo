@@ -1867,20 +1867,62 @@ func (s *Service) supportedResources(values []string) ([]uri.URI, error) {
 			)
 		}
 
-		resource := uri.URI(raw)
-		if !slices.Contains(supported, resource) {
+		// RFC 3986 section 6.2.3: for http and https an empty path and "/"
+		// identify the same resource. A client that round-trips the advertised
+		// identifier through a URL library gets the "/" spelling back, so
+		// comparing raw bytes rejects a resource this server itself
+		// advertised. Match on the normalized form, but keep the configured
+		// spelling, so everything stored and compared downstream continues to
+		// use one vocabulary.
+		matched, ok := matchResource(supported, uri.URI(raw))
+		if !ok {
 			return nil, NewError(
 				ErrInvalidTarget,
 				WithDescription("unsupported resource"),
 			)
 		}
 
-		if !slices.Contains(resources, resource) {
-			resources = append(resources, resource)
+		if !slices.Contains(resources, matched) {
+			resources = append(resources, matched)
 		}
 	}
 
 	return resources, nil
+}
+
+// matchResource reports which supported resource the requested one denotes,
+// comparing both under scheme-based normalization. The returned value is the
+// supported entry as configured, not the requested spelling.
+func matchResource(supported []uri.URI, requested uri.URI) (uri.URI, bool) {
+	normalized := normalizeResource(requested)
+
+	for _, entry := range supported {
+		if normalizeResource(entry) == normalized {
+			return entry, true
+		}
+	}
+
+	return "", false
+}
+
+// normalizeResource applies RFC 3986 section 6.2.3 scheme-based normalization
+// to a resource identifier: for an http(s) URI a bare "/" path is equivalent to
+// no path at all. A trailing slash on any longer path is a genuinely different
+// path and is left alone, so this widens nothing beyond the root case. Input
+// that does not parse is returned unchanged, leaving the caller to reject it.
+func normalizeResource(resource uri.URI) uri.URI {
+	parsed, err := url.Parse(resource.String())
+	if err != nil {
+		return resource
+	}
+
+	if parsed.Path != "/" {
+		return resource
+	}
+
+	parsed.Path = ""
+
+	return uri.URI(parsed.String())
 }
 
 func resourcesSubset(requested []uri.URI, allowed []uri.URI) bool {

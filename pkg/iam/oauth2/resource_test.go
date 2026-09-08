@@ -119,6 +119,92 @@ func TestServiceProtectedResource(t *testing.T) {
 	}
 }
 
+func TestServiceProtectedResourceTrailingSlash(t *testing.T) {
+	t.Parallel()
+
+	// RFC 3986 section 6.2.3: for http(s) an empty path and "/" denote the same
+	// resource. A client that round-trips the advertised identifier through a
+	// URL library sends the "/" spelling, so both must be accepted whichever
+	// way the issuer itself is configured, and both must resolve to the
+	// configured spelling so downstream comparisons stay consistent.
+	tests := []struct {
+		name    string
+		baseURL uri.URI
+		value   string
+		want    []uri.URI
+	}{
+		{
+			name:    "slashless issuer accepts trailing slash",
+			baseURL: "https://auth.example.com",
+			value:   "https://auth.example.com/",
+			want:    []uri.URI{"https://auth.example.com"},
+		},
+		{
+			name:    "slashless issuer accepts itself",
+			baseURL: "https://auth.example.com",
+			value:   "https://auth.example.com",
+			want:    []uri.URI{"https://auth.example.com"},
+		},
+		{
+			name:    "trailing slash issuer accepts slashless",
+			baseURL: "https://auth.example.com/",
+			value:   "https://auth.example.com",
+			want:    []uri.URI{"https://auth.example.com/"},
+		},
+		{
+			name:    "trailing slash issuer accepts itself",
+			baseURL: "https://auth.example.com/",
+			value:   "https://auth.example.com/",
+			want:    []uri.URI{"https://auth.example.com/"},
+		},
+		{
+			name:    "mcp resource unaffected",
+			baseURL: "https://auth.example.com",
+			value:   "https://auth.example.com/api/mcp/v1",
+			want:    []uri.URI{"https://auth.example.com/api/mcp/v1"},
+		},
+		{
+			name:    "mcp resource unaffected when issuer has trailing slash",
+			baseURL: "https://auth.example.com/",
+			value:   "https://auth.example.com/api/mcp/v1",
+			want:    []uri.URI{"https://auth.example.com/api/mcp/v1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				service := &Service{baseURL: tt.baseURL}
+
+				got, err := service.protectedResources([]string{tt.value})
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			},
+		)
+	}
+}
+
+func TestServiceProtectedResourceNormalizationIsNarrow(t *testing.T) {
+	t.Parallel()
+
+	// Only the root case is equivalent. A trailing slash on a longer path is a
+	// different path, and a different host is still a different resource.
+	service := &Service{baseURL: "https://auth.example.com"}
+
+	for _, value := range []string{
+		"https://auth.example.com/api/mcp/v1/",
+		"https://auth.example.com/api/mcp/",
+		"https://other.example.com/",
+		"https://other.example.com",
+	} {
+		_, err := service.protectedResources([]string{value})
+		require.ErrorIs(t, err, ErrInvalidTarget, "value %q must not be accepted", value)
+	}
+}
+
 func TestResourcesSubset(t *testing.T) {
 	t.Parallel()
 
