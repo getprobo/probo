@@ -125,6 +125,24 @@ enum ConnectorProvider
     RETOOL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRetool")
     TWINGATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTwingate")
     ATTIO @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAttio")
+    AZURE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAzure")
+}
+
+enum AzureEnvironment
+    @goModel(model: "go.probo.inc/probo/pkg/cloud/azure.Environment") {
+    AZURE_PUBLIC
+        @goEnum(value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentPublic")
+    AZURE_GOVERNMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentGovernment"
+        )
+    AZURE_GOVERNMENT_DOD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentGovernmentDoD"
+        )
+    AZURE_CHINA
+        @goEnum(value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentChina")
 }
 
 enum ConnectorProtocol

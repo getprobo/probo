@@ -102,6 +102,7 @@ const (
 	ConnectorProviderRetool          ConnectorProvider = "RETOOL"
 	ConnectorProviderTwingate        ConnectorProvider = "TWINGATE"
 	ConnectorProviderAttio           ConnectorProvider = "ATTIO"
+	ConnectorProviderAzure           ConnectorProvider = "AZURE"
 )
 
 var (
@@ -182,6 +183,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderRetool,
 		ConnectorProviderTwingate,
 		ConnectorProviderAttio,
+		ConnectorProviderAzure,
 	}
 }
 
@@ -258,7 +260,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderNewRelic,
 		ConnectorProviderRetool,
 		ConnectorProviderTwingate,
-		ConnectorProviderAttio:
+		ConnectorProviderAttio,
+		ConnectorProviderAzure:
 		return true
 	}
 
