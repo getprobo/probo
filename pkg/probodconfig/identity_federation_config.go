@@ -43,6 +43,9 @@ type (
 		// GCPTerraformModuleSource is the module address copied into the GCP
 		// Terraform install snippet.
 		GCPTerraformModuleSource string `json:"gcp-terraform-module-source,omitempty"`
+		// AzureTerraformModuleSource is the module address copied into the Azure
+		// Terraform install snippet.
+		AzureTerraformModuleSource string `json:"azure-terraform-module-source,omitempty"`
 	}
 
 	// IdentityFederationSigningKeyConfig is one RSA key published in the identity federation

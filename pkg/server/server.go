@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
@@ -108,6 +109,7 @@ type Config struct {
 	IdentityFederationIssuer *identityfederation.Issuer
 	AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 	GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
+	AzureConnectorInstall    cloudazure.ConnectorInstallConfig
 }
 
 type Server struct {
@@ -165,6 +167,7 @@ func NewServer(cfg Config) (*Server, error) {
 		IdentityFederationIssuer: cfg.IdentityFederationIssuer,
 		AWSConnectorInstall:      cfg.AWSConnectorInstall,
 		GCPConnectorInstall:      cfg.GCPConnectorInstall,
+		AzureConnectorInstall:    cfg.AzureConnectorInstall,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)
