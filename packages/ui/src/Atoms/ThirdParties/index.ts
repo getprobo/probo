@@ -1,5 +1,6 @@
 export { AWS } from "./AWS";
 export { Anthropic } from "./Anthropic";
+export { Azure } from "./Azure";
 export { Apollo } from "./Apollo";
 export { Asana } from "./Asana";
 export { Authentik } from "./Authentik";

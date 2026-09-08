@@ -245,6 +245,14 @@ type GCPConnectorSetup {
     terraformSnippet: String!
 }
 
+type AzureConnectorSetup {
+    issuer: String!
+    audience: String!
+    subject: String!
+    suggestedApplicationName: String!
+    terraformSnippet: String!
+}
+
 type ConnectorProviderSettingInfo {
     key: String!
     label: String!
@@ -415,6 +423,10 @@ input CreateWorkloadIdentityConnectorInput {
     awsRoleArn: String
     gcpWorkloadIdentityProvider: String
     gcpServiceAccountEmail: String
+    azureTenantId: String
+    azureClientId: String
+    azureSubscriptionId: String
+    azureEnvironment: AzureEnvironment
 }
 
 type CreateWorkloadIdentityConnectorPayload {

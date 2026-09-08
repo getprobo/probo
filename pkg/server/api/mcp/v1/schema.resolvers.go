@@ -15,6 +15,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
@@ -9425,6 +9426,31 @@ func (r *Resolver) GcpConnectorSetupTool(ctx context.Context, req *mcp.CallToolR
 
 	return nil, types.GcpConnectorSetupOutput{
 		Setup: types.NewGCPConnectorSetup(setup),
+	}, nil
+}
+
+func (r *Resolver) AzureConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AzureConnectorSetupInput) (*mcp.CallToolResult, types.AzureConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.AzureConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.AzureConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudazure.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.azureConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build azure connector setup", log.Error(err))
+
+		return nil, types.AzureConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.AzureConnectorSetupOutput{
+		Setup: types.NewAzureConnectorSetup(setup),
 	}, nil
 }
 
