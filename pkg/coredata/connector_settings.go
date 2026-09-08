@@ -255,6 +255,18 @@ type (
 		WorkloadIdentityProvider string `json:"workload_identity_provider"`
 		ServiceAccountEmail      string `json:"service_account_email"`
 	}
+
+	// AzureConnectorSettings names the Entra application Probo federates
+	// with and the subscription it reviews. Every field is public knowledge —
+	// the tenant owns the trust, and the connection itself holds no
+	// credential — so unlike the connection blob these stay in plain
+	// settings JSONB.
+	AzureConnectorSettings struct {
+		TenantID       string `json:"tenant_id"`
+		ClientID       string `json:"client_id"`
+		SubscriptionID string `json:"subscription_id"`
+		Environment    string `json:"environment"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

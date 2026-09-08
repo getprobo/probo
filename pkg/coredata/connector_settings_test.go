@@ -114,6 +114,36 @@ func TestConnectorSettings_RoundTrip(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 
+	t.Run("AzureConnectorSettings", func(t *testing.T) {
+		t.Parallel()
+
+		want := coredata.AzureConnectorSettings{
+			TenantID:       "a1111111-1111-4111-8111-111111111111",
+			ClientID:       "b2222222-2222-4222-8222-222222222222",
+			SubscriptionID: "c3333333-3333-4333-8333-333333333333",
+			Environment:    "AZURE_PUBLIC",
+		}
+		c := &coredata.Connector{}
+		require.NoError(t, c.SetSettings(&want))
+
+		raw := map[string]string{}
+		require.NoError(t, json.Unmarshal(c.RawSettings, &raw))
+		assert.Equal(
+			t,
+			map[string]string{
+				"tenant_id":       want.TenantID,
+				"client_id":       want.ClientID,
+				"subscription_id": want.SubscriptionID,
+				"environment":     want.Environment,
+			},
+			raw,
+		)
+
+		got, err := coredata.ConnectorSettings[coredata.AzureConnectorSettings](c)
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	})
+
 	t.Run("empty RawSettings returns zero value", func(t *testing.T) {
 		t.Parallel()
 

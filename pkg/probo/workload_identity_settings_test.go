@@ -26,14 +26,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 )
 
 const (
-	testAWSRoleARN        = "arn:aws:iam::123456789012:role/ProboAudit"
-	testGCPProvider       = "projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo"
-	testGCPServiceAccount = "probo-audit@my-project.iam.gserviceaccount.com"
+	testAWSRoleARN          = "arn:aws:iam::123456789012:role/ProboAudit"
+	testGCPProvider         = "projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo"
+	testGCPServiceAccount   = "probo-audit@my-project.iam.gserviceaccount.com"
+	testAzureTenantID       = "a1111111-1111-4111-8111-111111111111"
+	testAzureClientID       = "b2222222-2222-4222-8222-222222222222"
+	testAzureSubscriptionID = "c3333333-3333-4333-8333-333333333333"
 )
 
 func TestMarshalWorkloadIdentitySettings(t *testing.T) {
@@ -175,6 +179,132 @@ func TestMarshalWorkloadIdentitySettings(t *testing.T) {
 		)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "workloadIdentityProvider is not a workload identity provider resource")
+		assert.NotContains(t, err.Error(), raw)
+		assert.NotErrorIs(t, err, probo.ErrMarshalWorkloadIdentitySettings)
+	})
+
+	t.Run("azure marshals canonical fields", func(t *testing.T) {
+		t.Parallel()
+
+		raw, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:            coredata.ConnectorProviderAzure,
+				AzureTenantID:       "  " + testAzureTenantID + "  ",
+				AzureClientID:       "  " + testAzureClientID + "  ",
+				AzureSubscriptionID: "  " + testAzureSubscriptionID + "  ",
+				AzureEnvironment:    cloudazure.EnvironmentGovernment,
+			},
+		)
+		require.NoError(t, err)
+
+		var got map[string]string
+		require.NoError(t, json.Unmarshal(raw, &got))
+		assert.Equal(
+			t,
+			map[string]string{
+				"tenant_id":       testAzureTenantID,
+				"client_id":       testAzureClientID,
+				"subscription_id": testAzureSubscriptionID,
+				"environment":     string(cloudazure.EnvironmentGovernment),
+			},
+			got,
+		)
+	})
+
+	t.Run("azure defaults an empty environment to AZURE_PUBLIC", func(t *testing.T) {
+		t.Parallel()
+
+		raw, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:            coredata.ConnectorProviderAzure,
+				AzureTenantID:       testAzureTenantID,
+				AzureClientID:       testAzureClientID,
+				AzureSubscriptionID: testAzureSubscriptionID,
+			},
+		)
+		require.NoError(t, err)
+
+		var got map[string]string
+		require.NoError(t, json.Unmarshal(raw, &got))
+		assert.Equal(t, string(cloudazure.EnvironmentPublic), got["environment"])
+	})
+
+	t.Run("refuses missing azure fields", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name           string
+			tenantID       string
+			clientID       string
+			subscriptionID string
+		}{
+			{name: "empty tenant", clientID: testAzureClientID, subscriptionID: testAzureSubscriptionID},
+			{name: "empty client", tenantID: testAzureTenantID, subscriptionID: testAzureSubscriptionID},
+			{name: "empty subscription", tenantID: testAzureTenantID, clientID: testAzureClientID},
+			{name: "all empty"},
+		}
+
+		for _, tt := range tests {
+			t.Run(
+				tt.name,
+				func(t *testing.T) {
+					t.Parallel()
+
+					_, err := probo.MarshalWorkloadIdentitySettings(
+						probo.WorkloadIdentitySettingsInput{
+							Provider:            coredata.ConnectorProviderAzure,
+							AzureTenantID:       tt.tenantID,
+							AzureClientID:       tt.clientID,
+							AzureSubscriptionID: tt.subscriptionID,
+						},
+					)
+					require.Error(t, err)
+					assert.Equal(
+						t,
+						"azureTenantId, azureClientId and azureSubscriptionId are required",
+						err.Error(),
+					)
+					assert.NotErrorIs(t, err, probo.ErrMarshalWorkloadIdentitySettings)
+				},
+			)
+		}
+	})
+
+	t.Run("refuses an unknown azure environment", func(t *testing.T) {
+		t.Parallel()
+
+		raw := "AZURE_GERMAN"
+
+		_, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:            coredata.ConnectorProviderAzure,
+				AzureTenantID:       testAzureTenantID,
+				AzureClientID:       testAzureClientID,
+				AzureSubscriptionID: testAzureSubscriptionID,
+				AzureEnvironment:    cloudazure.Environment(raw),
+			},
+		)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "environment is not a supported Azure environment")
+		assert.NotContains(t, err.Error(), raw)
+		assert.NotErrorIs(t, err, probo.ErrMarshalWorkloadIdentitySettings)
+	})
+
+	t.Run("refuses an invalid azure tenant id", func(t *testing.T) {
+		t.Parallel()
+
+		raw := "not-a-guid"
+
+		_, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:            coredata.ConnectorProviderAzure,
+				AzureTenantID:       raw,
+				AzureClientID:       testAzureClientID,
+				AzureSubscriptionID: testAzureSubscriptionID,
+			},
+		)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "tenantId is not a GUID")
 		assert.NotContains(t, err.Error(), raw)
 		assert.NotErrorIs(t, err, probo.ErrMarshalWorkloadIdentitySettings)
 	})
