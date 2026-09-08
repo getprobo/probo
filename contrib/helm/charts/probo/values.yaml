@@ -239,6 +239,8 @@ probo:
     terraformModuleSource: "getprobo/audit-role/aws"
     # Terraform module address copied into the GCP connector install snippet.
     gcpTerraformModuleSource: "getprobo/audit-role/gcp"
+    # Terraform module address copied into the Azure connector install snippet.
+    azureTerraformModuleSource: "getprobo/audit-role/azurerm"
 
   # CORS configuration
   cors:

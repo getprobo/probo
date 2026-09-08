@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -68,29 +69,31 @@ func NewMux(
 	identityFederation *identityfederation.Issuer,
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
+	azureConnectorInstall cloudazure.ConnectorInstallConfig,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
 
 	resolver := &Resolver{
-		proboSvc:            proboSvc,
-		management:          managementSvc,
-		certManager:         certManagerSvc,
-		resourceAlias:       resourceAliasSvc,
-		thirdPartySvc:       thirdPartySvc,
-		iamSvc:              iamSvc,
-		accessReview:        accessReviewSvc,
-		cookieBanner:        cookieBannerSvc,
-		riskManagement:      riskManagementSvc,
-		itamSvc:             itamSvc,
-		mailman:             mailmanSvc,
-		logger:              logger,
-		fileManager:         fileManagerSvc,
-		baseURL:             baseURL,
-		identityFederation:  identityFederation,
-		awsConnectorInstall: awsConnectorInstall,
-		gcpConnectorInstall: gcpConnectorInstall,
+		proboSvc:              proboSvc,
+		management:            managementSvc,
+		certManager:           certManagerSvc,
+		resourceAlias:         resourceAliasSvc,
+		thirdPartySvc:         thirdPartySvc,
+		iamSvc:                iamSvc,
+		accessReview:          accessReviewSvc,
+		cookieBanner:          cookieBannerSvc,
+		riskManagement:        riskManagementSvc,
+		itamSvc:               itamSvc,
+		mailman:               mailmanSvc,
+		logger:                logger,
+		fileManager:           fileManagerSvc,
+		baseURL:               baseURL,
+		identityFederation:    identityFederation,
+		awsConnectorInstall:   awsConnectorInstall,
+		gcpConnectorInstall:   gcpConnectorInstall,
+		azureConnectorInstall: azureConnectorInstall,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
