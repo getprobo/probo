@@ -16,7 +16,7 @@
       "timeEstimateUnit": "Eenheid van inschatting",
       "deadline": "Deadline",
       "recurrence": "Herhaling",
-      "recurrenceCount": "Aantal herhalingen",
+      "recurrenceUnit": "Herhalingseenheid",
       "createdAt": "Aangemaakt",
       "updatedAt": "Bijgewerkt"
     },
@@ -25,7 +25,9 @@
       "M": "Minuten",
       "H": "Uren",
       "D": "Dagen",
-      "W": "Weken"
+      "W": "Weken",
+      "MO": "Maanden",
+      "Y": "Jaren"
     },
     "states": {
       "backlog": "Backlog",
@@ -41,17 +43,15 @@
       "medium": "Gemiddeld",
       "low": "Laag"
     },
-    "recurrenceIntervalUnits": {
-      "none": "Herhaalt niet",
-      "day": "Dag",
-      "week": "Week",
-      "month": "Maand",
-      "year": "Jaar"
+    "doesNotRepeat": "Herhaalt zich niet",
+    "hints": {
+      "recurrenceNeedsDeadline": "Stel eerst een deadline in voordat u een herhalingsinterval toevoegt"
     },
-    "recurrenceSummary": "Elke {{count}} {{unit}}",
     "actions": {
       "addEstimate": "Schatting toevoegen",
       "clearEstimate": "Schatting wissen",
+      "addRecurrence": "Interval toevoegen",
+      "clearRecurrence": "Interval wissen",
       "delete": "Verwijderen",
       "cancel": "Annuleren",
       "more": "Meer acties"

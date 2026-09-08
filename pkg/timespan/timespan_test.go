@@ -372,6 +372,112 @@ func TestJSONRoundTripMixedSigns(t *testing.T) {
 	assert.Equal(t, original, parsed)
 }
 
+func TestAddTo(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		start time.Time
+		span  timespan.TimeSpan
+		want  time.Time
+	}{
+		{
+			name:  "one hour",
+			start: time.Date(2026, time.July, 28, 12, 0, 0, 0, time.UTC),
+			span:  timespan.TimeSpan{Microseconds: 3600 * 1_000_000},
+			want:  time.Date(2026, time.July, 28, 13, 0, 0, 0, time.UTC),
+		},
+		{
+			name:  "one day",
+			start: time.Date(2026, time.July, 28, 12, 0, 0, 0, time.UTC),
+			span:  timespan.TimeSpan{Days: 1},
+			want:  time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			name:  "one calendar month",
+			start: time.Date(2026, time.July, 28, 12, 0, 0, 0, time.UTC),
+			span:  timespan.TimeSpan{Months: 1},
+			want:  time.Date(2026, time.August, 28, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			name:  "january 31 clamps to february",
+			start: time.Date(2026, time.January, 31, 12, 0, 0, 0, time.UTC),
+			span:  timespan.TimeSpan{Months: 1},
+			want:  time.Date(2026, time.February, 28, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			name:  "january 31 in a leap year clamps to february 29",
+			start: time.Date(2024, time.January, 31, 12, 0, 0, 0, time.UTC),
+			span:  timespan.TimeSpan{Months: 1},
+			want:  time.Date(2024, time.February, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			name:  "one year from february 29",
+			start: time.Date(2024, time.February, 29, 12, 0, 0, 0, time.UTC),
+			span:  timespan.TimeSpan{Months: 12},
+			want:  time.Date(2025, time.February, 28, 12, 0, 0, 0, time.UTC),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(t, tt.span.AddTo(tt.start).Equal(tt.want))
+		})
+	}
+}
+
+func TestAddTo_OverflowingMicroseconds(t *testing.T) {
+	t.Parallel()
+
+	start := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+	maxChunk := math.MaxInt64 / int64(time.Microsecond)
+	span := timespan.TimeSpan{
+		Days:         math.MaxInt32,
+		Microseconds: maxChunk + 1,
+	}
+	got := span.AddTo(start)
+	want := start.
+		AddDate(0, 0, math.MaxInt32).
+		Add(time.Duration(maxChunk) * time.Microsecond).
+		Add(time.Microsecond)
+	wrapped := start.
+		AddDate(0, 0, math.MaxInt32).
+		Add(time.Duration(maxChunk+1) * time.Microsecond)
+
+	assert.True(t, got.Equal(want), "got %v, want %v", got, want)
+	assert.False(t, got.Equal(wrapped), "AddTo must not wrap Duration")
+
+	negative := timespan.TimeSpan{
+		Days:         math.MinInt32,
+		Microseconds: -(maxChunk + 1),
+	}
+	gotNegative := negative.AddTo(start)
+	wantNegative := start.
+		AddDate(0, 0, math.MinInt32).
+		Add(-time.Duration(maxChunk) * time.Microsecond).
+		Add(-time.Microsecond)
+
+	assert.True(t, gotNegative.Equal(wantNegative), "got %v, want %v", gotNegative, wantNegative)
+}
+
+func TestTimes(t *testing.T) {
+	t.Parallel()
+
+	scaled, err := timespan.TimeSpan{Months: 1}.Times(2)
+	require.NoError(t, err)
+	assert.Equal(t, timespan.TimeSpan{Months: 2}, scaled)
+	assert.True(
+		t,
+		scaled.AddTo(time.Date(2026, time.January, 31, 12, 0, 0, 0, time.UTC)).
+			Equal(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC)),
+	)
+
+	_, err = timespan.TimeSpan{Months: 1}.Times(-1)
+	assert.Error(t, err)
+}
+
 func TestJSONRoundTrip(t *testing.T) {
 	t.Parallel()
 

@@ -16,7 +16,7 @@
       "timeEstimateUnit": "Unité d'estimation",
       "deadline": "Échéance",
       "recurrence": "Répétition",
-      "recurrenceCount": "Nombre de répétitions",
+      "recurrenceUnit": "Unité de répétition",
       "createdAt": "Créé le",
       "updatedAt": "Mis à jour le"
     },
@@ -25,7 +25,9 @@
       "M": "Minutes",
       "H": "Heures",
       "D": "Jours",
-      "W": "Semaines"
+      "W": "Semaines",
+      "MO": "Mois",
+      "Y": "Années"
     },
     "states": {
       "backlog": "Backlog",
@@ -41,17 +43,15 @@
       "medium": "Moyenne",
       "low": "Basse"
     },
-    "recurrenceIntervalUnits": {
-      "none": "Ne se répète pas",
-      "day": "Jour",
-      "week": "Semaine",
-      "month": "Mois",
-      "year": "Année"
+    "doesNotRepeat": "Ne se répète pas",
+    "hints": {
+      "recurrenceNeedsDeadline": "Définissez une échéance avant d'ajouter un intervalle de répétition"
     },
-    "recurrenceSummary": "Tous les {{count}} {{unit}}",
     "actions": {
       "addEstimate": "Ajouter une estimation",
       "clearEstimate": "Effacer l'estimation",
+      "addRecurrence": "Ajouter un intervalle",
+      "clearRecurrence": "Effacer l'intervalle",
       "delete": "Supprimer",
       "cancel": "Annuler",
       "more": "Plus d'actions"

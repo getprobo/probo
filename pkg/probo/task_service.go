@@ -44,34 +44,39 @@ type (
 	}
 
 	CreateTaskRequest struct {
-		OrganizationID          gid.GID
-		MeasureID               *gid.GID
-		Name                    string
-		Content                 *string
-		State                   *coredata.TaskState
-		Priority                coredata.TaskPriority
-		TimeEstimate            *timespan.TimeSpan
-		AssignedToID            *gid.GID
-		Deadline                *time.Time
-		RecurrenceIntervalUnit  *coredata.TaskRecurrenceIntervalUnit
-		RecurrenceIntervalCount *int
+		OrganizationID     gid.GID
+		MeasureID          *gid.GID
+		Name               string
+		Content            *string
+		State              *coredata.TaskState
+		Priority           coredata.TaskPriority
+		TimeEstimate       *timespan.TimeSpan
+		AssignedToID       *gid.GID
+		Deadline           *time.Time
+		RecurrenceInterval *timespan.TimeSpan
 	}
 
 	UpdateTaskRequest struct {
-		TaskID                  gid.GID
-		Name                    *string
-		Content                 **string
-		State                   *coredata.TaskState
-		Priority                *coredata.TaskPriority
-		TimeEstimate            **timespan.TimeSpan
-		Deadline                **time.Time
-		AssignedToID            **gid.GID
-		MeasureID               **gid.GID
-		Rank                    *int
-		RecurrenceIntervalUnit  **coredata.TaskRecurrenceIntervalUnit
-		RecurrenceIntervalCount **int
+		TaskID             gid.GID
+		Name               *string
+		Content            **string
+		State              *coredata.TaskState
+		Priority           *coredata.TaskPriority
+		TimeEstimate       **timespan.TimeSpan
+		Deadline           **time.Time
+		AssignedToID       **gid.GID
+		MeasureID          **gid.GID
+		Rank               *int
+		RecurrenceInterval **timespan.TimeSpan
+	}
+
+	UpdateTaskResult struct {
+		Task     *coredata.Task
+		NextTask *coredata.Task
 	}
 )
+
+const maxRecurrenceInterval = 10 * 365 * 24 * time.Hour
 
 func (ctr *CreateTaskRequest) Validate() error {
 	v := validator.New()
@@ -90,34 +95,35 @@ func (ctr *CreateTaskRequest) Validate() error {
 	v.Check(ctr.Priority, "priority", validator.Required(), validator.OneOfSlice(coredata.TaskPriorities()))
 	v.Check(ctr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(ctr.RecurrenceIntervalUnit, "recurrence_interval_unit", validator.OneOfSlice(coredata.TaskRecurrenceIntervalUnits()))
-	v.Check(ctr.RecurrenceIntervalCount, "recurrence_interval_count", validator.Min(1))
+	v.Check(ctr.RecurrenceInterval, "recurrence_interval", validator.RangeDuration(time.Nanosecond, maxRecurrenceInterval))
 
-	recurring := ctr.RecurrenceIntervalUnit != nil || ctr.RecurrenceIntervalCount != nil
-
-	if ctr.RecurrenceIntervalUnit == nil && ctr.RecurrenceIntervalCount != nil {
-		v.Check(ctr.RecurrenceIntervalUnit, "recurrence_interval_unit", func(any) *validator.ValidationError {
-			return &validator.ValidationError{
-				Code:    validator.ErrorCodeCustom,
-				Message: "must be set when recurrence_interval_count is set",
-			}
-		})
-	}
-
-	if ctr.RecurrenceIntervalUnit != nil && ctr.RecurrenceIntervalCount == nil {
-		v.Check(ctr.RecurrenceIntervalCount, "recurrence_interval_count", func(any) *validator.ValidationError {
-			return &validator.ValidationError{
-				Code:    validator.ErrorCodeCustom,
-				Message: "must be set when recurrence_interval_unit is set",
-			}
-		})
-	}
-
-	if recurring && ctr.Deadline == nil {
+	if ctr.RecurrenceInterval != nil && ctr.Deadline == nil {
 		v.Check(ctr.Deadline, "deadline", func(any) *validator.ValidationError {
 			return &validator.ValidationError{
 				Code:    validator.ErrorCodeCustom,
 				Message: "deadline is required when the task is recurring",
+			}
+		})
+	}
+
+	if ctr.RecurrenceInterval != nil && ctr.Deadline != nil {
+		v.Check(ctr.RecurrenceInterval, "recurrence_interval", func(any) *validator.ValidationError {
+			if recurrenceAdvancesDeadline(*ctr.Deadline, *ctr.RecurrenceInterval) {
+				return nil
+			}
+
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must advance the deadline",
+			}
+		})
+	}
+
+	if ctr.RecurrenceInterval != nil && ctr.State != nil && *ctr.State == coredata.TaskStateDone {
+		v.Check(ctr.State, "state", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "a recurring task cannot be created as done",
 			}
 		})
 	}
@@ -143,8 +149,7 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(utr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
 	v.Check(utr.Rank, "rank", validator.Min(1))
-	v.Check(utr.RecurrenceIntervalUnit, "recurrence_interval_unit", validator.OneOfSlice(coredata.TaskRecurrenceIntervalUnits()))
-	v.Check(utr.RecurrenceIntervalCount, "recurrence_interval_count", validator.Min(1))
+	v.Check(utr.RecurrenceInterval, "recurrence_interval", validator.RangeDuration(time.Nanosecond, maxRecurrenceInterval))
 
 	return v.Error()
 }
@@ -176,21 +181,20 @@ func (s TaskService) Create(
 	}
 
 	task := &coredata.Task{
-		ID:                      taskID,
-		OrganizationID:          req.OrganizationID,
-		MeasureID:               req.MeasureID,
-		Name:                    req.Name,
-		Content:                 content,
-		Priority:                req.Priority,
-		TimeEstimate:            req.TimeEstimate,
-		AssignedToID:            req.AssignedToID,
-		Deadline:                req.Deadline,
-		RecurrenceIntervalUnit:  req.RecurrenceIntervalUnit,
-		RecurrenceIntervalCount: req.RecurrenceIntervalCount,
-		State:                   state,
-		ReferenceID:             "custom-task-" + referenceID.String(),
-		CreatedAt:               now,
-		UpdatedAt:               now,
+		ID:             taskID,
+		OrganizationID: req.OrganizationID,
+		MeasureID:      req.MeasureID,
+		Name:           req.Name,
+		Content:        content,
+		Priority:       req.Priority,
+		TimeEstimate:   req.TimeEstimate,
+		AssignedToID:   req.AssignedToID,
+		Deadline:       req.Deadline,
+		Recurrence:     req.RecurrenceInterval,
+		State:          state,
+		ReferenceID:    "custom-task-" + referenceID.String(),
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	err = s.svc.pg.WithTx(
@@ -340,17 +344,19 @@ func (s TaskService) Unassign(
 func (s TaskService) Update(
 	ctx context.Context, scope coredata.Scoper,
 	req UpdateTaskRequest,
-) (*coredata.Task, error) {
+) (*UpdateTaskResult, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	task := &coredata.Task{}
 
+	var nextTask *coredata.Task
+
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := task.LoadByID(ctx, conn, scope, req.TaskID); err != nil {
+			if err := task.LoadByIDForUpdate(ctx, conn, scope, req.TaskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", req.TaskID, err)
 			}
 
@@ -412,23 +418,12 @@ func (s TaskService) Update(
 				task.Priority = *req.Priority
 			}
 
-			if req.RecurrenceIntervalUnit != nil {
-				task.RecurrenceIntervalUnit = *req.RecurrenceIntervalUnit
+			if req.RecurrenceInterval != nil {
+				task.Recurrence = *req.RecurrenceInterval
 			}
 
-			if req.RecurrenceIntervalCount != nil {
-				task.RecurrenceIntervalCount = *req.RecurrenceIntervalCount
-			}
-
-			if (task.RecurrenceIntervalUnit == nil) != (task.RecurrenceIntervalCount == nil) {
-				return validator.ValidationErrors{&validator.ValidationError{
-					Field:   "recurrence_interval_count",
-					Code:    validator.ErrorCodeCustom,
-					Message: "recurrence_interval_unit and recurrence_interval_count must be set together",
-				}}
-			}
-
-			if task.RecurrenceIntervalUnit != nil && task.Deadline == nil {
+			settingRecurrence := req.RecurrenceInterval != nil && *req.RecurrenceInterval != nil
+			if settingRecurrence && task.Deadline == nil {
 				return validator.ValidationErrors{&validator.ValidationError{
 					Field:   "deadline",
 					Code:    validator.ErrorCodeCustom,
@@ -436,7 +431,33 @@ func (s TaskService) Update(
 				}}
 			}
 
-			task.UpdatedAt = time.Now()
+			if task.Deadline == nil {
+				task.Recurrence = nil
+			}
+
+			changingRecurrence := req.RecurrenceInterval != nil || req.Deadline != nil
+			if task.Recurrence != nil && task.Deadline != nil && changingRecurrence {
+				if !recurrenceAdvancesDeadline(*task.Deadline, *task.Recurrence) {
+					return validator.ValidationErrors{&validator.ValidationError{
+						Field:   "recurrence_interval",
+						Code:    validator.ErrorCodeCustom,
+						Message: "must advance the deadline",
+					}}
+				}
+			}
+
+			now := time.Now()
+			if shouldCloneRecurringTask(oldState, task.State, task) {
+				next, err := insertNextRecurringTask(ctx, conn, scope, task, now)
+				if err != nil {
+					return err
+				}
+
+				task.Recurrence = nil
+				nextTask = next
+			}
+
+			task.UpdatedAt = now
 
 			targetRank := req.Rank
 			priorityChanged := task.Priority != oldPriority
@@ -466,7 +487,10 @@ func (s TaskService) Update(
 		return nil, err
 	}
 
-	return task, nil
+	return &UpdateTaskResult{
+		Task:     task,
+		NextTask: nextTask,
+	}, nil
 }
 
 func (s TaskService) Delete(

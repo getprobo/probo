@@ -73,17 +73,16 @@ func NewTask(t *coredata.Task) *Task {
 			ID: t.OrganizationID,
 		},
 
-		Name:                    t.Name,
-		Content:                 t.Content,
-		State:                   t.State,
-		Priority:                t.Priority,
-		Rank:                    t.Rank,
-		TimeEstimate:            t.TimeEstimate,
-		Deadline:                t.Deadline,
-		RecurrenceIntervalUnit:  t.RecurrenceIntervalUnit,
-		RecurrenceIntervalCount: t.RecurrenceIntervalCount,
-		CreatedAt:               t.CreatedAt,
-		UpdatedAt:               t.UpdatedAt,
+		Name:               t.Name,
+		Content:            t.Content,
+		State:              t.State,
+		Priority:           t.Priority,
+		Rank:               t.Rank,
+		TimeEstimate:       t.TimeEstimate,
+		Deadline:           t.Deadline,
+		RecurrenceInterval: t.Recurrence,
+		CreatedAt:          t.CreatedAt,
+		UpdatedAt:          t.UpdatedAt,
 	}
 
 	if t.MeasureID != nil {

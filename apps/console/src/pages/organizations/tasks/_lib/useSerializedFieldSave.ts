@@ -101,17 +101,25 @@ export function useDebouncedSerializedFieldSave(
   }, [delayMs, pending, persist]);
 
   function schedule(value: string) {
+    pendingSave.current = { value, save };
     setPending(value);
   }
 
   function flush() {
-    if (pending == null) {
+    const queued = pendingSave.current;
+    if (queued == null) {
       return;
     }
 
-    persist(pending);
+    persist(queued.value);
+    pendingSave.current = null;
     setPending(null);
   }
 
-  return { schedule, flush };
+  function cancel() {
+    pendingSave.current = null;
+    setPending(null);
+  }
+
+  return { schedule, flush, cancel };
 }

@@ -186,55 +186,17 @@ export const description: INodeProperties[] = [
 		description: 'The deadline for the task',
 	},
 	{
-		displayName: 'Recurrence Interval Unit',
-		name: 'recurrenceIntervalUnit',
-		type: 'options',
+		displayName: 'Recurrence Interval',
+		name: 'recurrenceInterval',
+		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['task'],
 				operation: ['create'],
 			},
 		},
-		options: [
-			{
-				name: 'Day',
-				value: 'DAY',
-			},
-			{
-				name: 'Month',
-				value: 'MONTH',
-			},
-			{
-				name: 'None',
-				value: '',
-			},
-			{
-				name: 'Week',
-				value: 'WEEK',
-			},
-			{
-				name: 'Year',
-				value: 'YEAR',
-			},
-		],
 		default: '',
-		description: 'The recurrence unit for the task, e.g. "Week" with a count of 3 means "every 3 weeks". Requires a deadline to be set.',
-	},
-	{
-		displayName: 'Recurrence Interval Count',
-		name: 'recurrenceIntervalCount',
-		type: 'number',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['create'],
-			},
-		},
-		typeOptions: {
-			minValue: 1,
-		},
-		default: 1,
-		description: 'The recurrence count, used together with the recurrence interval unit',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set.',
 	},
 ];
 
@@ -251,8 +213,7 @@ export async function execute(
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
-	const recurrenceIntervalUnit = this.getNodeParameter('recurrenceIntervalUnit', itemIndex, '') as string;
-	const recurrenceIntervalCount = this.getNodeParameter('recurrenceIntervalCount', itemIndex, 1) as number;
+	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 
 	const query = `
 		mutation CreateTask($input: CreateTaskInput!) {
@@ -266,8 +227,7 @@ export async function execute(
 						priority
 						timeEstimate
 						deadline
-						recurrenceIntervalUnit
-						recurrenceIntervalCount
+						recurrenceInterval
 						createdAt
 						updatedAt
 					}
@@ -287,8 +247,7 @@ export async function execute(
 			...(timeEstimate && { timeEstimate }),
 			...(assignedToId && { assignedToId }),
 			...(deadline && { deadline }),
-			...(recurrenceIntervalUnit && { recurrenceIntervalUnit }),
-			...(recurrenceIntervalUnit && { recurrenceIntervalCount }),
+			...(recurrenceInterval && { recurrenceInterval }),
 		},
 	};
 
