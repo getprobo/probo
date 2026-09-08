@@ -16,7 +16,7 @@
       "timeEstimateUnit": "Time estimate unit",
       "deadline": "Deadline",
       "recurrence": "Repeats",
-      "recurrenceCount": "Recurrence count",
+      "recurrenceUnit": "Recurrence unit",
       "createdAt": "Created",
       "updatedAt": "Updated"
     },
@@ -25,7 +25,9 @@
       "M": "Minutes",
       "H": "Hours",
       "D": "Days",
-      "W": "Weeks"
+      "W": "Weeks",
+      "MO": "Months",
+      "Y": "Years"
     },
     "states": {
       "backlog": "Backlog",
@@ -41,18 +43,15 @@
       "medium": "Medium",
       "low": "Low"
     },
-    "recurrenceIntervalUnits": {
-      "none": "Does not repeat",
-      "day": "Day",
-      "week": "Week",
-      "month": "Month",
-      "year": "Year"
+    "doesNotRepeat": "Does not repeat",
+    "hints": {
+      "recurrenceNeedsDeadline": "Set a deadline before adding a recurrence interval"
     },
-    "recurrenceSummary_one": "Every {{unit}}",
-    "recurrenceSummary_other": "Every {{count}} {{unit}}s",
     "actions": {
       "addEstimate": "Add estimate",
       "clearEstimate": "Clear estimate",
+      "addRecurrence": "Add interval",
+      "clearRecurrence": "Clear interval",
       "delete": "Delete",
       "cancel": "Cancel",
       "more": "More actions"

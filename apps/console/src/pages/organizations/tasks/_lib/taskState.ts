@@ -39,8 +39,5 @@ export const taskStateKeys = {
 } as const;
 
 export const taskPriorities = ["URGENT", "HIGH", "MEDIUM", "LOW"] as const;
-export const taskRecurrenceIntervalUnits = ["DAY", "WEEK", "MONTH", "YEAR"] as const;
-
-export type TaskRecurrenceIntervalUnit = (typeof taskRecurrenceIntervalUnits)[number];
 
 export type TaskPriority = (typeof taskPriorities)[number];

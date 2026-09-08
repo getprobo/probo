@@ -60,6 +60,7 @@ import type { TasksCardOrganizationQuery } from "#/__generated__/core/TasksCardO
 import type { TasksCardUpdateRankMutation } from "#/__generated__/core/TasksCardUpdateRankMutation.graphql";
 import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { insertNextTaskEdge } from "#/pages/organizations/tasks/_lib/taskConnectionOrder";
 import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
 import {
   taskPriorities,
@@ -177,6 +178,18 @@ const updateRankMutation = graphql`
         priority
         rank
         state
+        recurrenceInterval
+        ...TasksCard_task
+        ...TasksCard_TaskRowFragment
+      }
+      nextTaskEdge {
+        node {
+          ...TasksCard_task
+          ...TasksCard_TaskRowFragment
+          measure {
+            id
+          }
+        }
       }
     }
   }
@@ -184,6 +197,8 @@ const updateRankMutation = graphql`
 
 export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
   const { t } = useTranslation();
+  const organizationId = useOrganizationId();
+  const relayEnv = useRelayEnvironment();
   const hash = useLocation().hash.replace("#", "");
   const [, startTransition] = useTransition();
 
@@ -344,6 +359,12 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
           ...(targetPriority && { priority: targetPriority }),
           ...(newState && { state: newState }),
         },
+      },
+      updater: (store) => {
+        const spawnedMeasureId = insertNextTaskEdge(store, organizationId, [connectionId]);
+        if (spawnedMeasureId) {
+          updateStoreCounter(relayEnv, spawnedMeasureId, "tasks(first:0)", 1);
+        }
       },
       onCompleted: (_, errors) => {
         if (errors?.length) {
@@ -507,8 +528,7 @@ const fragment = graphql`
     priority
     timeEstimate
     deadline
-    recurrenceIntervalUnit
-    recurrenceIntervalCount
+    recurrenceInterval
     canUpdate: permission(action: "core:task:update")
     canDelete: permission(action: "core:task:delete")
     assignedTo {
@@ -525,6 +545,15 @@ const advanceMutation = graphql`
         ...TasksCard_task
         ...TasksCard_TaskRowFragment
         ...TaskDetailsPage_task
+      }
+      nextTaskEdge {
+        node {
+          ...TasksCard_task
+          ...TasksCard_TaskRowFragment
+          measure {
+            id
+          }
+        }
       }
     }
   }
@@ -579,6 +608,12 @@ function TaskRow(props: TaskRowProps) {
           taskId: task.id,
           state: target,
         },
+      },
+      updater: (store) => {
+        const spawnedMeasureId = insertNextTaskEdge(store, organizationId, [props.connectionId]);
+        if (spawnedMeasureId) {
+          updateStoreCounter(relayEnv, spawnedMeasureId, "tasks(first:0)", 1);
+        }
       },
     });
     props.onStateChange?.();
@@ -639,11 +674,10 @@ function TaskRow(props: TaskRowProps) {
       <div className="flex flex-1 min-w-0 items-center gap-3">
         <PriorityLevel level={task.priority} />
         <TaskStateIcon state={displayState} />
-        {task.recurrenceIntervalUnit && (
+        {task.recurrenceInterval && (
           <span
             title={t("tasksCard.recurringBadge.tooltip", {
-              count: task.recurrenceIntervalCount ?? 1,
-              unit: t(`tasksCard.recurrenceIntervalUnits.${task.recurrenceIntervalUnit.toLowerCase()}`),
+              interval: formatDuration(task.recurrenceInterval, t),
             })}
           >
             <IconRotateCw size={14} className="text-txt-secondary" />

@@ -18,18 +18,4 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE TYPE task_recurrence_interval_unit AS ENUM (
-    'DAY',
-    'WEEK',
-    'MONTH',
-    'YEAR'
-);
-
-ALTER TABLE tasks ADD COLUMN recurrence_interval_unit task_recurrence_interval_unit;
-ALTER TABLE tasks ADD COLUMN recurrence_interval_count INTEGER;
-
-ALTER TABLE tasks
-    ADD CONSTRAINT tasks_recurrence_interval_check CHECK (
-        (recurrence_interval_unit IS NULL) = (recurrence_interval_count IS NULL)
-        AND (recurrence_interval_count IS NULL OR recurrence_interval_count >= 1)
-    );
+ALTER TABLE tasks ADD COLUMN recurrence INTERVAL;

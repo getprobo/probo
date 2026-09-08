@@ -39,6 +39,13 @@ mutation($input: UpdateTaskInput!) {
       state
       priority
     }
+    nextTaskEdge {
+      node {
+        id
+        name
+        state
+      }
+    }
   }
 }
 `
@@ -51,21 +58,27 @@ type updateResponse struct {
 			State    string `json:"state"`
 			Priority string `json:"priority"`
 		} `json:"task"`
+		NextTaskEdge *struct {
+			Node struct {
+				ID    string `json:"id"`
+				Name  string `json:"name"`
+				State string `json:"state"`
+			} `json:"node"`
+		} `json:"nextTaskEdge"`
 	} `json:"updateTask"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName            string
-		flagContent         string
-		flagState           string
-		flagPriority        string
-		flagTimeEstimate    string
-		flagDeadline        string
-		flagAssignedTo      string
-		flagMeasure         string
-		flagRecurrenceUnit  string
-		flagRecurrenceCount int
+		flagName               string
+		flagContent            string
+		flagState              string
+		flagPriority           string
+		flagTimeEstimate       string
+		flagDeadline           string
+		flagAssignedTo         string
+		flagMeasure            string
+		flagRecurrenceInterval string
 	)
 
 	cmd := &cobra.Command{
@@ -143,23 +156,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			if cmd.Flags().Changed("recurrence-unit") {
-				if flagRecurrenceUnit == "" {
-					input["recurrenceIntervalUnit"] = nil
+			if cmd.Flags().Changed("recurrence-interval") {
+				if flagRecurrenceInterval == "" {
+					input["recurrenceInterval"] = nil
 				} else {
-					input["recurrenceIntervalUnit"] = flagRecurrenceUnit
-				}
-			}
-
-			if cmd.Flags().Changed("recurrence-count") {
-				if flagRecurrenceCount < 0 {
-					return fmt.Errorf("--recurrence-count must be greater than or equal to 0")
-				}
-
-				if flagRecurrenceCount == 0 {
-					input["recurrenceIntervalCount"] = nil
-				} else {
-					input["recurrenceIntervalCount"] = flagRecurrenceCount
+					input["recurrenceInterval"] = flagRecurrenceInterval
 				}
 			}
 
@@ -181,12 +182,21 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			t := resp.UpdateTask.Task
+
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Updated task %s (%s)\n",
 				t.ID,
 				t.Name,
 			)
+			if next := resp.UpdateTask.NextTaskEdge; next != nil {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Created next task %s (%s)\n",
+					next.Node.ID,
+					next.Node.Name,
+				)
+			}
 
 			return nil
 		},
@@ -200,8 +210,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
-	cmd.Flags().StringVar(&flagRecurrenceUnit, "recurrence-unit", "", "Recurrence interval unit: DAY, WEEK, MONTH, YEAR (empty clears recurrence)")
-	cmd.Flags().IntVar(&flagRecurrenceCount, "recurrence-count", 0, "Recurrence interval count, e.g. 3 with --recurrence-unit WEEK means \"every 3 weeks\" (0 clears recurrence)")
+	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (empty clears recurrence)")
 
 	return cmd
 }

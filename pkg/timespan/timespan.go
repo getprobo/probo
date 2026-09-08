@@ -356,6 +356,94 @@ func absInt64(v int64) uint64 {
 	return uint64(-v)
 }
 
+// AddTo returns t advanced by ts. Months are calendar months and clamp
+// to the last day of the target month: January 31 plus one month is
+// February 28 or 29. Days and the clock component are added afterward.
+func (ts TimeSpan) AddTo(t time.Time) time.Time {
+	ts = ts.normalizeClock()
+
+	return addMicroseconds(
+		addCalendarMonths(t, int(ts.Months)).AddDate(0, 0, int(ts.Days)),
+		ts.Microseconds,
+	)
+}
+
+// addMicroseconds adds microseconds to t without wrapping Duration.
+// `Duration(us) * time.Microsecond` overflows when |us| > MaxInt64/1000;
+// normalizeClock can leave such a value when folding it into days would
+// overflow int32. A day is 8.64e13 us, so the leftover always fits.
+func addMicroseconds(t time.Time, microseconds int64) time.Time {
+	days := microseconds / microsecondsPerDay
+	remainder := microseconds % microsecondsPerDay
+
+	return t.AddDate(0, 0, int(days)).
+		Add(time.Duration(remainder) * time.Microsecond)
+}
+
+func addCalendarMonths(t time.Time, months int) time.Time {
+	year, month, day := t.Date()
+	hour, min, sec := t.Clock()
+	nsec := t.Nanosecond()
+	loc := t.Location()
+
+	first := time.Date(year, month+time.Month(months), 1, hour, min, sec, nsec, loc)
+
+	lastDay := time.Date(first.Year(), first.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	if day > lastDay {
+		day = lastDay
+	}
+
+	return time.Date(first.Year(), first.Month(), day, hour, min, sec, nsec, loc)
+}
+
+// Times returns ts scaled by n. The result is added from the original
+// timestamp so calendar months keep the source day of month (January 31
+// times two is March 31, not March 28).
+func (ts TimeSpan) Times(n int) (TimeSpan, error) {
+	if n < 0 {
+		return Zero, fmt.Errorf("cannot scale timespan by a negative factor")
+	}
+
+	if n == 0 || ts.IsZero() {
+		return Zero, nil
+	}
+
+	months, ok := mulInt64(int64(ts.Months), int64(n))
+	if !ok || months < math.MinInt32 || months > math.MaxInt32 {
+		return Zero, fmt.Errorf("cannot scale timespan: months overflow")
+	}
+
+	days, microseconds, err := scaleClock(ts.Days, ts.Microseconds, n)
+	if err != nil {
+		return Zero, err
+	}
+
+	return TimeSpan{
+		Months:       int32(months),
+		Days:         days,
+		Microseconds: microseconds,
+	}, nil
+}
+
+func scaleClock(days int32, microseconds int64, n int) (int32, int64, error) {
+	total := new(big.Int).SetInt64(int64(days))
+	total.Mul(total, big.NewInt(microsecondsPerDay))
+	total.Add(total, new(big.Int).SetInt64(microseconds))
+	total.Mul(total, big.NewInt(int64(n)))
+
+	scaledDays, scaledUs := new(big.Int).QuoRem(total, big.NewInt(microsecondsPerDay), new(big.Int))
+	if !scaledDays.IsInt64() {
+		return 0, 0, fmt.Errorf("cannot scale timespan: days overflow")
+	}
+
+	normalizedDays := scaledDays.Int64()
+	if normalizedDays < math.MinInt32 || normalizedDays > math.MaxInt32 {
+		return 0, 0, fmt.Errorf("cannot scale timespan: days overflow")
+	}
+
+	return int32(normalizedDays), scaledUs.Int64(), nil
+}
+
 func (ts TimeSpan) ClockDuration() (time.Duration, bool) {
 	if ts.Months != 0 {
 		return 0, false
