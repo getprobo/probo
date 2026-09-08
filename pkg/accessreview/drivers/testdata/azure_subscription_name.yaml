@@ -1,0 +1,25 @@
+---
+# Hand-authored. Subscription display name for the name resolver.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"subscriptionId":"11111111-1111-4111-8111-111111111111","displayName":"Contoso Production"}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
