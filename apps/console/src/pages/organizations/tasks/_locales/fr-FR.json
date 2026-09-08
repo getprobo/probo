@@ -15,6 +15,8 @@
       "timeEstimate": "Estimation de temps",
       "timeEstimateUnit": "Unité d'estimation",
       "deadline": "Échéance",
+      "recurrence": "Répétition",
+      "recurrenceCount": "Nombre de répétitions",
       "createdAt": "Créé le",
       "updatedAt": "Mis à jour le"
     },
@@ -39,6 +41,14 @@
       "medium": "Moyenne",
       "low": "Basse"
     },
+    "recurrenceIntervalUnits": {
+      "none": "Ne se répète pas",
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "year": "Année"
+    },
+    "recurrenceSummary": "Tous les {{count}} {{unit}}",
     "actions": {
       "addEstimate": "Ajouter une estimation",
       "clearEstimate": "Effacer l'estimation",

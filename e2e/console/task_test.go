@@ -1044,3 +1044,283 @@ func TestTask_TimeEstimate(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestTask_Recurrence(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).WithName("Task Recurrence Test").Create()
+
+	createQuery := `
+		mutation CreateTask($input: CreateTaskInput!) {
+			createTask(input: $input) {
+				taskEdge {
+					node {
+						id
+						deadline
+						recurrenceIntervalUnit
+						recurrenceIntervalCount
+					}
+				}
+			}
+		}
+	`
+
+	t.Run("create with recurrence and deadline round-trips", func(t *testing.T) {
+		t.Parallel()
+
+		var result struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID                      string  `json:"id"`
+						Deadline                *string `json:"deadline"`
+						RecurrenceIntervalUnit  *string `json:"recurrenceIntervalUnit"`
+						RecurrenceIntervalCount *int    `json:"recurrenceIntervalCount"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":          owner.GetOrganizationID().String(),
+				"measureId":               measureID,
+				"name":                    factory.SafeName("Recurring Task"),
+				"priority":                "MEDIUM",
+				"deadline":                "2026-01-15T00:00:00Z",
+				"recurrenceIntervalUnit":  "WEEK",
+				"recurrenceIntervalCount": 3,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		node := result.CreateTask.TaskEdge.Node
+		assert.NotEmpty(t, node.ID)
+		require.NotNil(t, node.RecurrenceIntervalUnit)
+		assert.Equal(t, "WEEK", *node.RecurrenceIntervalUnit)
+		require.NotNil(t, node.RecurrenceIntervalCount)
+		assert.Equal(t, 3, *node.RecurrenceIntervalCount)
+	})
+
+	t.Run("create with recurrence but no deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":          owner.GetOrganizationID().String(),
+				"measureId":               measureID,
+				"name":                    factory.SafeName("Recurring Task"),
+				"priority":                "MEDIUM",
+				"recurrenceIntervalUnit":  "WEEK",
+				"recurrenceIntervalCount": 3,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "deadline")
+	})
+
+	t.Run("create with unit but no count fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":         owner.GetOrganizationID().String(),
+				"measureId":              measureID,
+				"name":                   factory.SafeName("Recurring Task"),
+				"priority":               "MEDIUM",
+				"deadline":               "2026-01-15T00:00:00Z",
+				"recurrenceIntervalUnit": "WEEK",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "recurrence_interval_count")
+	})
+
+	t.Run("create with count but no unit fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":          owner.GetOrganizationID().String(),
+				"measureId":               measureID,
+				"name":                    factory.SafeName("Recurring Task"),
+				"priority":                "MEDIUM",
+				"deadline":                "2026-01-15T00:00:00Z",
+				"recurrenceIntervalCount": 3,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "recurrence_interval_unit")
+	})
+
+	t.Run("update to add recurrence without a deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		taskID := factory.NewTask(owner, measureID).
+			WithName("Task without deadline").
+			Create()
+
+		_, err := owner.Do(`
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":                  taskID,
+				"recurrenceIntervalUnit":  "MONTH",
+				"recurrenceIntervalCount": 1,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "deadline")
+	})
+}
+
+func TestTask_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	measureID := factory.NewMeasure(org1Owner).WithName("Org1 Measure").Create()
+	taskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task").Create()
+
+	t.Run("cannot read task from another organization", func(t *testing.T) {
+		query := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on Task {
+						id
+						name
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node *struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"node"`
+		}
+
+		err := org2Owner.Execute(query, map[string]any{"id": taskID}, &result)
+		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "task")
+	})
+
+	t.Run("cannot update task from another organization", func(t *testing.T) {
+		query := `
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`
+
+		_, err := org2Owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"taskId": taskID,
+				"name":   "Hijacked Task",
+			},
+		})
+		require.Error(t, err, "Should not be able to update task from another org")
+	})
+
+	t.Run("cannot delete task from another organization", func(t *testing.T) {
+		query := `
+			mutation DeleteTask($input: DeleteTaskInput!) {
+				deleteTask(input: $input) {
+					deletedTaskId
+				}
+			}
+		`
+
+		_, err := org2Owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"taskId": taskID,
+			},
+		})
+		require.Error(t, err, "Should not be able to delete task from another org")
+	})
+
+	t.Run("cannot create task referencing a measure from another organization", func(t *testing.T) {
+		org2MeasureID := factory.NewMeasure(org2Owner).WithName("Org2 Measure").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateTaskInput!) {
+				createTask(input: $input) {
+					taskEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": org1Owner.GetOrganizationID().String(),
+				"measureId":      org2MeasureID,
+				"name":           factory.SafeName("Task"),
+				"priority":       "MEDIUM",
+			},
+		})
+		require.Error(t, err, "must not accept a measureId belonging to another organization")
+	})
+
+	t.Run("cannot create task referencing an assignee from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateTaskInput!) {
+				createTask(input: $input) {
+					taskEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": org1Owner.GetOrganizationID().String(),
+				"measureId":      measureID,
+				"name":           factory.SafeName("Task"),
+				"priority":       "MEDIUM",
+				"assignedToId":   org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept an assignedToId belonging to another organization")
+	})
+
+	t.Run("cannot update task to reference a measure from another organization", func(t *testing.T) {
+		org2MeasureID := factory.NewMeasure(org2Owner).WithName("Org2 Measure for Update").Create()
+		otherTaskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task for MeasureID").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":    otherTaskID,
+				"measureId": org2MeasureID,
+			},
+		})
+		require.Error(t, err, "must not accept a measureId belonging to another organization")
+	})
+
+	t.Run("cannot update task to reference an assignee from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+		otherTaskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task for AssignedToID").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":       otherTaskID,
+				"assignedToId": org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept an assignedToId belonging to another organization")
+	})
+}
