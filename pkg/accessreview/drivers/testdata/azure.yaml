@@ -1,0 +1,133 @@
+---
+# Hand-authored Azure public-cloud cassette. Never recorded against a live tenant.
+# Role assignments at subscription scope, role-definition lookups, then Graph getByIds.
+# Synthetic principals: alice (Owner user), eng (Reader group), ci (custom-role
+# disabled service principal), build-agent (Contributor device, unresolved in Graph).
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleAssignments
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"value":[{"properties":{"principalId":"22222222-2222-4222-8222-222222222222","principalType":"User","roleDefinitionId":"/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"}},{"properties":{"principalId":"33333333-3333-4333-8333-333333333333","principalType":"Group","roleDefinitionId":"/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7"}},{"properties":{"principalId":"44444444-4444-4444-8444-444444444444","principalType":"ServicePrincipal","roleDefinitionId":"/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}},{"properties":{"principalId":"55555555-5555-4555-8555-555555555555","principalType":"Device","roleDefinitionId":"/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"properties":{"roleName":"Owner"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"properties":{"roleName":"Reader"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"properties":{"roleName":"Custom Admin"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"properties":{"roleName":"Contributor"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: graph.microsoft.com
+        url: https://graph.microsoft.com/v1.0/directoryObjects/getByIds
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"value":[{"@odata.type":"#microsoft.graph.user","id":"22222222-2222-4222-8222-222222222222","displayName":"Alice Chen","mail":"alice@probo-azure.test","userPrincipalName":"alice@probo-azure.test","accountEnabled":true},{"@odata.type":"#microsoft.graph.group","id":"33333333-3333-4333-8333-333333333333","displayName":"Engineering","mail":"eng@probo-azure.test"},{"@odata.type":"#microsoft.graph.servicePrincipal","id":"44444444-4444-4444-8444-444444444444","displayName":"CI Deploy","accountEnabled":false},{"id":"55555555-5555-4555-8555-555555555555"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

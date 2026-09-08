@@ -375,6 +375,138 @@ func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
 
+func newAzureRecorder(t *testing.T, cassettePath string) *recorder.Recorder {
+	t.Helper()
+
+	return newRecorderWithMatcher(
+		t,
+		cassettePath,
+		"",
+		azureAPIMatcher,
+	)
+}
+
+func azureAPIMatcher(r *http.Request, i cassette.Request) bool {
+	if r.Method != i.Method {
+		return false
+	}
+
+	host := r.URL.Host
+	if host == "" {
+		host = r.Host
+	}
+
+	cassetteURL, err := url.Parse(i.URL)
+	if err != nil {
+		return false
+	}
+
+	if host != cassetteURL.Host || r.URL.Path != cassetteURL.Path {
+		return false
+	}
+
+	return azureContinuationToken(r.URL.Query()) == azureContinuationToken(cassetteURL.Query())
+}
+
+func azureContinuationToken(query url.Values) string {
+	if token := query.Get("$skipToken"); token != "" {
+		return token
+	}
+
+	if token := query.Get("$skiptoken"); token != "" {
+		return token
+	}
+
+	return query.Get("skipToken")
+}
+
+func TestAzureAPIMatcher(t *testing.T) {
+	t.Parallel()
+
+	const (
+		assignments = "https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleAssignments"
+		definition  = "https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+		graph       = "https://graph.microsoft.com/v1.0/directoryObjects/getByIds"
+		govGraph    = "https://graph.microsoft.us/v1.0/directoryObjects/getByIds"
+	)
+
+	tests := []struct {
+		name        string
+		method      string
+		requestURL  string
+		cassetteURL string
+		want        bool
+	}{
+		{
+			name:        "same path without continuation token",
+			method:      http.MethodGet,
+			requestURL:  assignments,
+			cassetteURL: assignments,
+			want:        true,
+		},
+		{
+			name:        "ignores api-version and filter",
+			method:      http.MethodGet,
+			requestURL:  assignments + "?api-version=2022-04-01&$filter=atScope()",
+			cassetteURL: assignments,
+			want:        true,
+		},
+		{
+			name:        "same path and skip token",
+			method:      http.MethodGet,
+			requestURL:  assignments + "?$skipToken=abc",
+			cassetteURL: assignments + "?$skipToken=abc",
+			want:        true,
+		},
+		{
+			name:        "different skip tokens",
+			method:      http.MethodGet,
+			requestURL:  assignments + "?$skipToken=abc",
+			cassetteURL: assignments + "?$skipToken=def",
+			want:        false,
+		},
+		{
+			name:        "matches graph skiptoken case",
+			method:      http.MethodGet,
+			requestURL:  graph + "?$skiptoken=abc",
+			cassetteURL: graph + "?$skiptoken=abc",
+			want:        true,
+		},
+		{
+			name:        "different path",
+			method:      http.MethodGet,
+			requestURL:  assignments,
+			cassetteURL: definition,
+			want:        false,
+		},
+		{
+			name:        "different host",
+			method:      http.MethodPost,
+			requestURL:  graph,
+			cassetteURL: govGraph,
+			want:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				req, err := http.NewRequest(tt.method, tt.requestURL, nil)
+				require.NoError(t, err)
+
+				got := azureAPIMatcher(
+					req,
+					cassette.Request{Method: tt.method, URL: tt.cassetteURL},
+				)
+				assert.Equal(t, tt.want, got)
+			},
+		)
+	}
+}
+
 func TestGCPAPIMatcher(t *testing.T) {
 	t.Parallel()
 

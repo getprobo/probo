@@ -1,0 +1,67 @@
+---
+# Hand-authored. Graph 404 degrades the same way 403 does (sovereign coverage gap).
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleAssignments
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"value":[{"properties":{"principalId":"22222222-2222-4222-8222-222222222222","principalType":"User","roleDefinitionId":"/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: management.azure.com
+        url: https://management.azure.com/subscriptions/11111111-1111-4111-8111-111111111111/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"properties":{"roleName":"Owner"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: graph.microsoft.com
+        url: https://graph.microsoft.com/v1.0/directoryObjects/getByIds
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":"Request_ResourceNotFound","message":"not found"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 404 Not Found
+        code: 404
+        duration: 1ms

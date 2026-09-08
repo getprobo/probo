@@ -63,6 +63,7 @@ func TestNewSession(t *testing.T) {
 	assert.Equal(t, cloudazure.EnvironmentPublic, session.Environment())
 	assert.Equal(t, "https://graph.microsoft.com", session.GraphBaseURL())
 	assert.NotNil(t, session.GraphClient())
+	assert.NotNil(t, session.TokenCredential())
 	assert.Equal(t, cloud.AzurePublic, session.ARMClientOptions().Cloud)
 }
 
