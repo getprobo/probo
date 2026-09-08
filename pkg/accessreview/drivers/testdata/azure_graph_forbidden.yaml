@@ -65,3 +65,45 @@ interactions:
         status: 403 Forbidden
         code: 403
         duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: graph.microsoft.com
+        url: "https://graph.microsoft.com/v1.0/users"
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":"Authorization_RequestDenied","message":"denied"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 403 Forbidden
+        code: 403
+        duration: 1ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: graph.microsoft.com
+        url: https://graph.microsoft.com/v1.0/reports/authenticationMethods/userRegistrationDetails
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":"Authorization_RequestDenied","message":"denied"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 403 Forbidden
+        code: 403
+        duration: 1ms

@@ -179,6 +179,30 @@ func TestResolveAzurePrincipals_IgnoresGUIDCasing(t *testing.T) {
 	assert.True(t, *identities[0].AccountEnabled)
 }
 
+func TestAzureGraphLicenceError(t *testing.T) {
+	t.Parallel()
+
+	assert.True(
+		t,
+		azureGraphLicenceError(
+			&azcore.ResponseError{
+				StatusCode: http.StatusBadRequest,
+				ErrorCode:  azureGraphLicenceErrorCode,
+			},
+		),
+	)
+	assert.False(
+		t,
+		azureGraphLicenceError(
+			&azcore.ResponseError{
+				StatusCode: http.StatusForbidden,
+				ErrorCode:  "Authorization_RequestDenied",
+			},
+		),
+	)
+	assert.False(t, azureGraphLicenceError(assert.AnError))
+}
+
 func TestAzureEmail(t *testing.T) {
 	t.Parallel()
 
