@@ -26,6 +26,7 @@ import {
   IconCircleCheck,
   IconCircleProgress,
   IconRadioUnchecked,
+  IconRotateCw,
   IconTrashCan,
   PriorityLevel,
   TabBadge,
@@ -506,6 +507,8 @@ const fragment = graphql`
     priority
     timeEstimate
     deadline
+    recurrenceIntervalUnit
+    recurrenceIntervalCount
     canUpdate: permission(action: "core:task:update")
     canDelete: permission(action: "core:task:delete")
     assignedTo {
@@ -636,6 +639,16 @@ function TaskRow(props: TaskRowProps) {
       <div className="flex flex-1 min-w-0 items-center gap-3">
         <PriorityLevel level={task.priority} />
         <TaskStateIcon state={displayState} />
+        {task.recurrenceIntervalUnit && (
+          <span
+            title={t("tasksCard.recurringBadge.tooltip", {
+              count: task.recurrenceIntervalCount ?? 1,
+              unit: t(`tasksCard.recurrenceIntervalUnits.${task.recurrenceIntervalUnit.toLowerCase()}`),
+            })}
+          >
+            <IconRotateCw size={14} className="text-txt-secondary" />
+          </span>
+        )}
         <h2 className="text-sm font-medium min-w-0 truncate">
           <Link
             to={detailsUrl}

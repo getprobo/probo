@@ -44,28 +44,32 @@ type (
 	}
 
 	CreateTaskRequest struct {
-		OrganizationID gid.GID
-		MeasureID      *gid.GID
-		Name           string
-		Content        *string
-		State          *coredata.TaskState
-		Priority       coredata.TaskPriority
-		TimeEstimate   *timespan.TimeSpan
-		AssignedToID   *gid.GID
-		Deadline       *time.Time
+		OrganizationID          gid.GID
+		MeasureID               *gid.GID
+		Name                    string
+		Content                 *string
+		State                   *coredata.TaskState
+		Priority                coredata.TaskPriority
+		TimeEstimate            *timespan.TimeSpan
+		AssignedToID            *gid.GID
+		Deadline                *time.Time
+		RecurrenceIntervalUnit  *coredata.TaskRecurrenceIntervalUnit
+		RecurrenceIntervalCount *int
 	}
 
 	UpdateTaskRequest struct {
-		TaskID       gid.GID
-		Name         *string
-		Content      **string
-		State        *coredata.TaskState
-		Priority     *coredata.TaskPriority
-		TimeEstimate **timespan.TimeSpan
-		Deadline     **time.Time
-		AssignedToID **gid.GID
-		MeasureID    **gid.GID
-		Rank         *int
+		TaskID                  gid.GID
+		Name                    *string
+		Content                 **string
+		State                   *coredata.TaskState
+		Priority                *coredata.TaskPriority
+		TimeEstimate            **timespan.TimeSpan
+		Deadline                **time.Time
+		AssignedToID            **gid.GID
+		MeasureID               **gid.GID
+		Rank                    *int
+		RecurrenceIntervalUnit  **coredata.TaskRecurrenceIntervalUnit
+		RecurrenceIntervalCount **int
 	}
 )
 
@@ -86,6 +90,37 @@ func (ctr *CreateTaskRequest) Validate() error {
 	v.Check(ctr.Priority, "priority", validator.Required(), validator.OneOfSlice(coredata.TaskPriorities()))
 	v.Check(ctr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(ctr.RecurrenceIntervalUnit, "recurrence_interval_unit", validator.OneOfSlice(coredata.TaskRecurrenceIntervalUnits()))
+	v.Check(ctr.RecurrenceIntervalCount, "recurrence_interval_count", validator.Min(1))
+
+	recurring := ctr.RecurrenceIntervalUnit != nil || ctr.RecurrenceIntervalCount != nil
+
+	if ctr.RecurrenceIntervalUnit == nil && ctr.RecurrenceIntervalCount != nil {
+		v.Check(ctr.RecurrenceIntervalUnit, "recurrence_interval_unit", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must be set when recurrence_interval_count is set",
+			}
+		})
+	}
+
+	if ctr.RecurrenceIntervalUnit != nil && ctr.RecurrenceIntervalCount == nil {
+		v.Check(ctr.RecurrenceIntervalCount, "recurrence_interval_count", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must be set when recurrence_interval_unit is set",
+			}
+		})
+	}
+
+	if recurring && ctr.Deadline == nil {
+		v.Check(ctr.Deadline, "deadline", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "deadline is required when the task is recurring",
+			}
+		})
+	}
 
 	return v.Error()
 }
@@ -108,6 +143,8 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(utr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
 	v.Check(utr.Rank, "rank", validator.Min(1))
+	v.Check(utr.RecurrenceIntervalUnit, "recurrence_interval_unit", validator.OneOfSlice(coredata.TaskRecurrenceIntervalUnits()))
+	v.Check(utr.RecurrenceIntervalCount, "recurrence_interval_count", validator.Min(1))
 
 	return v.Error()
 }
@@ -139,19 +176,21 @@ func (s TaskService) Create(
 	}
 
 	task := &coredata.Task{
-		ID:             taskID,
-		OrganizationID: req.OrganizationID,
-		MeasureID:      req.MeasureID,
-		Name:           req.Name,
-		Content:        content,
-		Priority:       req.Priority,
-		TimeEstimate:   req.TimeEstimate,
-		AssignedToID:   req.AssignedToID,
-		Deadline:       req.Deadline,
-		State:          state,
-		ReferenceID:    "custom-task-" + referenceID.String(),
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                      taskID,
+		OrganizationID:          req.OrganizationID,
+		MeasureID:               req.MeasureID,
+		Name:                    req.Name,
+		Content:                 content,
+		Priority:                req.Priority,
+		TimeEstimate:            req.TimeEstimate,
+		AssignedToID:            req.AssignedToID,
+		Deadline:                req.Deadline,
+		RecurrenceIntervalUnit:  req.RecurrenceIntervalUnit,
+		RecurrenceIntervalCount: req.RecurrenceIntervalCount,
+		State:                   state,
+		ReferenceID:             "custom-task-" + referenceID.String(),
+		CreatedAt:               now,
+		UpdatedAt:               now,
 	}
 
 	err = s.svc.pg.WithTx(
@@ -371,6 +410,30 @@ func (s TaskService) Update(
 
 			if req.Priority != nil {
 				task.Priority = *req.Priority
+			}
+
+			if req.RecurrenceIntervalUnit != nil {
+				task.RecurrenceIntervalUnit = *req.RecurrenceIntervalUnit
+			}
+
+			if req.RecurrenceIntervalCount != nil {
+				task.RecurrenceIntervalCount = *req.RecurrenceIntervalCount
+			}
+
+			if (task.RecurrenceIntervalUnit == nil) != (task.RecurrenceIntervalCount == nil) {
+				return validator.ValidationErrors{&validator.ValidationError{
+					Field:   "recurrence_interval_count",
+					Code:    validator.ErrorCodeCustom,
+					Message: "recurrence_interval_unit and recurrence_interval_count must be set together",
+				}}
+			}
+
+			if task.RecurrenceIntervalUnit != nil && task.Deadline == nil {
+				return validator.ValidationErrors{&validator.ValidationError{
+					Field:   "deadline",
+					Code:    validator.ErrorCodeCustom,
+					Message: "deadline is required when the task is recurring",
+				}}
 			}
 
 			task.UpdatedAt = time.Now()

@@ -1332,6 +1332,21 @@ func (impl *Implm) Run(
 		},
 	)
 
+	recurringTaskWorker := probo.NewRecurringTaskWorker(
+		proboService,
+		l.Named("recurring-task-worker"),
+		worker.WithInterval(15*time.Minute),
+	)
+	recurringTaskWorkerCtx, stopRecurringTaskWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := recurringTaskWorker.Run(recurringTaskWorkerCtx); err != nil {
+				cancel(fmt.Errorf("recurring task worker crashed: %w", err))
+			}
+		},
+	)
+
 	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -1586,6 +1601,7 @@ func (impl *Implm) Run(
 	stopDocumentApprovalQuorumPDFWorker()
 	stopDocumentNotification()
 	stopExportJobExporter()
+	stopRecurringTaskWorker()
 	stopAccessReviewWorker()
 	stopIAMService()
 	stopITAMGC()

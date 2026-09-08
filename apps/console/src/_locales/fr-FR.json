@@ -1154,7 +1154,12 @@
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",
       "delete": "Supprimer"
-    }
+    },
+    "recurringBadge": {
+      "tooltip_one": "Se répète tous les {{count}} {{unit}}",
+      "tooltip_other": "Se répète tous les {{count}} {{unit}}"
+    },
+    "recurrenceIntervalUnits": { "day": "jour", "week": "semaine", "month": "mois", "year": "année" }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Supprimer la référence",

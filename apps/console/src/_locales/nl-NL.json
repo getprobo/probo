@@ -1154,7 +1154,12 @@
       "moveToDone": "Verplaatsen naar Voltooid",
       "edit": "Bewerken",
       "delete": "Verwijderen"
-    }
+    },
+    "recurringBadge": {
+      "tooltip_one": "Herhaalt elke {{unit}}",
+      "tooltip_other": "Herhaalt elke {{count}} {{unit}}"
+    },
+    "recurrenceIntervalUnits": { "day": "dag", "week": "week", "month": "maand", "year": "jaar" }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Referentie verwijderen",

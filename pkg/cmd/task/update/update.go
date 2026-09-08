@@ -56,14 +56,16 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName         string
-		flagContent      string
-		flagState        string
-		flagPriority     string
-		flagTimeEstimate string
-		flagDeadline     string
-		flagAssignedTo   string
-		flagMeasure      string
+		flagName            string
+		flagContent         string
+		flagState           string
+		flagPriority        string
+		flagTimeEstimate    string
+		flagDeadline        string
+		flagAssignedTo      string
+		flagMeasure         string
+		flagRecurrenceUnit  string
+		flagRecurrenceCount int
 	)
 
 	cmd := &cobra.Command{
@@ -141,6 +143,26 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			if cmd.Flags().Changed("recurrence-unit") {
+				if flagRecurrenceUnit == "" {
+					input["recurrenceIntervalUnit"] = nil
+				} else {
+					input["recurrenceIntervalUnit"] = flagRecurrenceUnit
+				}
+			}
+
+			if cmd.Flags().Changed("recurrence-count") {
+				if flagRecurrenceCount < 0 {
+					return fmt.Errorf("--recurrence-count must be greater than or equal to 0")
+				}
+
+				if flagRecurrenceCount == 0 {
+					input["recurrenceIntervalCount"] = nil
+				} else {
+					input["recurrenceIntervalCount"] = flagRecurrenceCount
+				}
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -178,6 +200,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
+	cmd.Flags().StringVar(&flagRecurrenceUnit, "recurrence-unit", "", "Recurrence interval unit: DAY, WEEK, MONTH, YEAR (empty clears recurrence)")
+	cmd.Flags().IntVar(&flagRecurrenceCount, "recurrence-count", 0, "Recurrence interval count, e.g. 3 with --recurrence-unit WEEK means \"every 3 weeks\" (0 clears recurrence)")
 
 	return cmd
 }

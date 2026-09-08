@@ -38,9 +38,10 @@ import { graphql, useFragment } from "react-relay";
 import type { TaskPropertiesSection_task$key } from "#/__generated__/core/TaskPropertiesSection_task.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import type { TaskPriority, TaskState } from "../_lib/taskState";
+import type { TaskPriority, TaskRecurrenceIntervalUnit, TaskState } from "../_lib/taskState";
 import {
   taskPriorities,
+  taskRecurrenceIntervalUnits,
   taskStateKeys,
   taskStates,
 } from "../_lib/taskState";
@@ -58,6 +59,8 @@ const taskPropertiesSectionFragment = graphql`
     priority
     timeEstimate
     deadline
+    recurrenceIntervalUnit
+    recurrenceIntervalCount
     createdAt
     updatedAt
     canUpdate: permission(action: "core:task:update")
@@ -95,6 +98,8 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
       measureId?: string | null;
       timeEstimate?: string | null;
       deadline?: string | null;
+      recurrenceIntervalUnit?: TaskRecurrenceIntervalUnit | null;
+      recurrenceIntervalCount?: number | null;
     },
   ) {
     return updateTask({
@@ -295,6 +300,87 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                 )
               : (
                   <Text size={2} color="faint">{empty}</Text>
+                )}
+        </PropertyRow>
+        <PropertyRow label={t("detailsPage.fields.recurrence")}>
+          {task.canUpdate
+            ? (
+                <div className="flex items-center gap-2">
+                  <TextField
+                    size={1}
+                    type="number"
+                    min={1}
+                    className="w-16"
+                    value={String(task.recurrenceIntervalCount ?? 1)}
+                    disabled={isUpdating}
+                    aria-label={t("detailsPage.fields.recurrenceCount")}
+                    onChange={(event) => {
+                      const count = Number.parseInt(event.currentTarget.value, 10);
+                      if (!Number.isInteger(count) || count < 1) {
+                        return;
+                      }
+                      if (count === (task.recurrenceIntervalCount ?? 1) && task.recurrenceIntervalUnit) {
+                        return;
+                      }
+                      if (!task.recurrenceIntervalUnit) {
+                        return;
+                      }
+                      void save({
+                        recurrenceIntervalUnit: task.recurrenceIntervalUnit,
+                        recurrenceIntervalCount: count,
+                      });
+                    }}
+                  />
+                  <Select
+                    value={task.recurrenceIntervalUnit ?? "NONE"}
+                    disabled={isUpdating}
+                    onValueChange={(next: TaskRecurrenceIntervalUnit | "NONE" | null) => {
+                      if (next == null || next === (task.recurrenceIntervalUnit ?? "NONE")) {
+                        return;
+                      }
+                      if (next === "NONE") {
+                        void save({
+                          recurrenceIntervalUnit: null,
+                          recurrenceIntervalCount: null,
+                        });
+                        return;
+                      }
+                      void save({
+                        recurrenceIntervalUnit: next,
+                        recurrenceIntervalCount: task.recurrenceIntervalCount ?? 1,
+                      });
+                    }}
+                  >
+                    <SelectTrigger size={1} aria-label={t("detailsPage.fields.recurrence")}>
+                      {(unit: TaskRecurrenceIntervalUnit | "NONE" | null) =>
+                        unit && unit !== "NONE"
+                          ? t(`detailsPage.recurrenceIntervalUnits.${unit.toLowerCase()}`)
+                          : t("detailsPage.recurrenceIntervalUnits.none")}
+                    </SelectTrigger>
+                    <SelectPopup>
+                      <SelectItem value="NONE">
+                        {t("detailsPage.recurrenceIntervalUnits.none")}
+                      </SelectItem>
+                      {taskRecurrenceIntervalUnits.map(unit => (
+                        <SelectItem key={unit} value={unit}>
+                          {t(`detailsPage.recurrenceIntervalUnits.${unit.toLowerCase()}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectPopup>
+                  </Select>
+                </div>
+              )
+            : task.recurrenceIntervalUnit
+              ? (
+                  <Text size={2}>
+                    {t("detailsPage.recurrenceSummary", {
+                      count: task.recurrenceIntervalCount ?? 1,
+                      unit: t(`detailsPage.recurrenceIntervalUnits.${task.recurrenceIntervalUnit.toLowerCase()}`),
+                    })}
+                  </Text>
+                )
+              : (
+                  <Text size={2} color="faint">{t("detailsPage.recurrenceIntervalUnits.none")}</Text>
                 )}
         </PropertyRow>
         <PropertyRow label={t("detailsPage.fields.createdAt")}>
