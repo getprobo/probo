@@ -261,6 +261,7 @@
   },
   "documentList": {
     "filters": {
+      "searchPlaceholder": "Rechercher des documents par titre...",
       "allSources": "Toutes les sources",
       "allTypes": "Tous les types",
       "allClassifications": "Toutes les classifications"

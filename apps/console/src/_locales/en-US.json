@@ -212,7 +212,7 @@
     "none": "None"
   },
   "documentList": {
-    "filters": { "allSources": "All sources", "allTypes": "All types", "allClassifications": "All classifications" },
+    "filters": { "searchPlaceholder": "Search documents by title...", "allSources": "All sources", "allTypes": "All types", "allClassifications": "All classifications" },
     "writeModes": { "authored": "Authored", "generated": "Generated" },
     "documentTypes": {
       "other": "Other",
