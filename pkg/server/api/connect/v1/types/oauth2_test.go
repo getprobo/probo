@@ -105,6 +105,7 @@ func TestOAuth2RegisterInput_UnmarshalJSON(t *testing.T) {
 				t.Parallel()
 
 				var input OAuth2RegisterInput
+
 				err := json.Unmarshal([]byte(tt.body), &input)
 				require.NoError(t, err)
 				assert.Equal(
@@ -136,6 +137,7 @@ func TestOAuth2RegisterResponse_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	var response map[string]any
+
 	err = json.Unmarshal(data, &response)
 	require.NoError(t, err)
 	assert.Equal(t, "openid offline_access v1:org", response["scope"])
