@@ -2731,6 +2731,24 @@ components:
           items:
             $ref: "#/components/schemas/Evidence"
 
+    GetEvidenceFileUrlInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Evidence ID
+
+    GetEvidenceFileUrlOutput:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          description: Presigned download URL for the evidence file (valid for 15 minutes)
+
     Evidence:
       type: object
       required:
@@ -16009,6 +16027,18 @@ tools:
       $ref: "#/components/schemas/ListMeasureEvidencesInput"
     outputSchema:
       $ref: "#/components/schemas/ListMeasureEvidencesOutput"
+  - name: getEvidenceFileUrl
+    title: Get Evidence File URL
+    description: Get a presigned download URL for a file-backed evidence. Returns a time-limited URL valid for 15 minutes.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetEvidenceFileUrlInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetEvidenceFileUrlOutput"
   - name: deleteEvidence
     title: Delete Evidence
     description: Delete an evidence
