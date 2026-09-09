@@ -2113,9 +2113,20 @@
     },
     "dropzoneOverlay": "Drop a PDF to create an audit with a report",
     "actions": { "addAudit": "Add audit", "delete": "Delete" },
-    "columns": { "name": "Name", "framework": "Framework", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "report": "Report" },
+    "columns": { "name": "Name", "framework": "Framework", "state": "State", "auditPeriod": "Audit period", "validityPeriod": "Validity period", "report": "Report" },
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
-    "row": { "untitled": "Untitled", "unknownFramework": "Unknown Framework", "notSet": "Not set", "uploaded": "Uploaded", "notUploaded": "Not uploaded" }
+    "row": {
+      "untitled": "Untitled",
+      "unknownFramework": "Unknown Framework",
+      "notSet": "Not set",
+      "uploaded": "Uploaded",
+      "notUploaded": "Not uploaded",
+      "period": {
+        "range": "{{start}} – {{end}}",
+        "from": "From {{date}}",
+        "until": "Until {{date}}"
+      }
+    }
   },
   "createAuditDialog": {
     "breadcrumb": { "audits": "Audits", "newAudit": "New Audit" },

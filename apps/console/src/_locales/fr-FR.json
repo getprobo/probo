@@ -3538,8 +3538,8 @@
       "name": "Nom",
       "framework": "Référentiel",
       "state": "État",
-      "validFrom": "Valide à partir de",
-      "validUntil": "Valide jusqu’au",
+      "auditPeriod": "Période d’audit",
+      "validityPeriod": "Période de validité",
       "report": "Rapport"
     },
     "states": {
@@ -3556,7 +3556,12 @@
       "unknownFramework": "Référentiel inconnu",
       "notSet": "Non défini",
       "uploaded": "Téléversé",
-      "notUploaded": "Non téléversé"
+      "notUploaded": "Non téléversé",
+      "period": {
+        "range": "{{start}} – {{end}}",
+        "from": "À partir du {{date}}",
+        "until": "Jusqu’au {{date}}"
+      }
     }
   },
   "createAuditDialog": {
