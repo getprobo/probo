@@ -47,6 +47,7 @@ require (
 	github.com/prometheus/client_golang v1.24.1
 	github.com/scim2/filter-parser/v2 v2.3.1
 	github.com/sigstore/sigstore-go v1.3.0
+	github.com/sosodev/duration v1.4.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
 	github.com/tc-hib/winres v0.3.1
@@ -226,7 +227,6 @@ require (
 	github.com/sigstore/sigstore v1.10.9 // indirect
 	github.com/sigstore/timestamp-authority/v2 v2.1.3 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
-	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/standard-webhooks/standard-webhooks/libraries v0.0.1 // indirect

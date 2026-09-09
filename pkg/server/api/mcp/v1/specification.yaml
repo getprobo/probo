@@ -10,10 +10,10 @@ components:
       format: string
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/mail.Addr
 
-    Duration:
+    TimeSpan:
       type: string
-      description: A duration
-      go.probo.inc/mcpgen/type: time.Duration
+      description: An ISO-8601 duration
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/timespan.TimeSpan
 
     OrderDirection:
       type: string
@@ -6965,7 +6965,7 @@ components:
           description: Task rank within state
         time_estimate:
           anyOf:
-            - $ref: "#/components/schemas/Duration"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
               description: No time estimate
           description: Time estimate
@@ -7070,7 +7070,7 @@ components:
           type: string
           description: Task content in markdown format
         time_estimate:
-          $ref: "#/components/schemas/Duration"
+          $ref: "#/components/schemas/TimeSpan"
           description: Time estimate
         deadline:
           type: string
@@ -7134,7 +7134,7 @@ components:
           description: Task rank within state
         time_estimate:
           anyOf:
-            - $ref: "#/components/schemas/Duration"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
               description: No time estimate
           description: Time estimate

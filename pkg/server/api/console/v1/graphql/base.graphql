@@ -14,7 +14,7 @@ directive @goEnum(value: String) on ENUM_VALUE
 scalar CursorKey
 scalar Datetime
 scalar Upload
-scalar Duration
+scalar TimeSpan
 scalar BigInt
 scalar EmailAddr
 

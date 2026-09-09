@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -49,7 +50,7 @@ type (
 		Content        *string
 		State          *coredata.TaskState
 		Priority       coredata.TaskPriority
-		TimeEstimate   *time.Duration
+		TimeEstimate   *timespan.TimeSpan
 		AssignedToID   *gid.GID
 		Deadline       *time.Time
 	}
@@ -60,7 +61,7 @@ type (
 		Content      **string
 		State        *coredata.TaskState
 		Priority     *coredata.TaskPriority
-		TimeEstimate **time.Duration
+		TimeEstimate **timespan.TimeSpan
 		Deadline     **time.Time
 		AssignedToID **gid.GID
 		MeasureID    **gid.GID

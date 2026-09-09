@@ -32,9 +32,9 @@ models:
   CursorKey:
     model:
       - "go.probo.inc/probo/pkg/server/gqlutils/types/cursor.CursorKeyScalar"
-  Duration:
+  TimeSpan:
     model:
-      - "github.com/99designs/gqlgen/graphql.Duration"
+      - "go.probo.inc/probo/pkg/server/gqlutils/types/timespan.TimeSpanScalar"
   BigInt:
     model:
       - "go.probo.inc/probo/pkg/server/gqlutils/types/bigint.BigIntScalar"

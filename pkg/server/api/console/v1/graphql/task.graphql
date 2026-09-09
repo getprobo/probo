@@ -48,7 +48,7 @@ type Task implements Node {
     state: TaskState!
     priority: TaskPriority!
     rank: Int!
-    timeEstimate: Duration
+    timeEstimate: TimeSpan
     deadline: Datetime
     assignedTo: Profile @goField(forceResolver: true)
 
@@ -104,7 +104,7 @@ input CreateTaskInput {
     content: String
     state: TaskState
     priority: TaskPriority!
-    timeEstimate: Duration
+    timeEstimate: TimeSpan
     assignedToId: ID
     deadline: Datetime
 }
@@ -116,7 +116,7 @@ input UpdateTaskInput {
     state: TaskState
     priority: TaskPriority
     rank: Int
-    timeEstimate: Duration @goField(omittable: true)
+    timeEstimate: TimeSpan @goField(omittable: true)
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
     measureId: ID @goField(omittable: true)

@@ -23,6 +23,8 @@ package validator
 import (
 	"fmt"
 	"time"
+
+	"go.probo.inc/probo/pkg/timespan"
 )
 
 // After validates that a time is after the specified reference time.
@@ -99,7 +101,8 @@ func Before(t any) ValidatorFunc {
 	}
 }
 
-// RangeDuration validates that a duration is within the specified range (inclusive).
+// RangeDuration validates that a TimeSpan is within [min, max] inclusive.
+// Calendar months are ordered as 30-day units.
 func RangeDuration(min, max time.Duration) ValidatorFunc {
 	return func(value any) *ValidationError {
 		actualValue, isNil := dereferenceValue(value)
@@ -107,12 +110,12 @@ func RangeDuration(min, max time.Duration) ValidatorFunc {
 			return nil
 		}
 
-		duration, ok := actualValue.(time.Duration)
+		span, ok := actualValue.(timespan.TimeSpan)
 		if !ok {
-			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Duration")
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a timespan.TimeSpan")
 		}
 
-		if duration < min || duration > max {
+		if span.CompareDuration(min) < 0 || span.CompareDuration(max) > 0 {
 			return newValidationError(
 				ErrorCodeOutOfRange,
 				fmt.Sprintf("must be between %s and %s", min, max),
