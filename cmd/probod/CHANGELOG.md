@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.283.1] - 2026-09-09
+
 ### Fixed
 
 - Windows time sync and auto-update postures reported by probo-agent 0.6.4 and
