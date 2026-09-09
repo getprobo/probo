@@ -3558,7 +3558,6 @@
       "uploaded": "Geüpload",
       "notUploaded": "Niet geüpload",
       "period": {
-        "range": "{{start}} – {{end}}",
         "from": "Vanaf {{date}}",
         "until": "Tot {{date}}"
       }

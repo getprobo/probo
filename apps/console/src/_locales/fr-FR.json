@@ -3558,7 +3558,6 @@
       "uploaded": "Téléversé",
       "notUploaded": "Non téléversé",
       "period": {
-        "range": "{{start}} – {{end}}",
         "from": "À partir du {{date}}",
         "until": "Jusqu’au {{date}}"
       }
