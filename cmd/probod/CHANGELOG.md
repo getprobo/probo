@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.284.0] - 2026-09-09
+
+### Added
+
+- Audit list shows the audit and validity periods as two compact date ranges instead of four separate columns, with guarded parsing so malformed or out-of-order dates render safely instead of crashing
+
 ## [0.283.1] - 2026-09-09
 
 ### Fixed
