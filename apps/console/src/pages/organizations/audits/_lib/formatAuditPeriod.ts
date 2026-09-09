@@ -33,9 +33,12 @@ const compactDateOptions: Intl.DateTimeFormatOptions = {
   day: "numeric",
 };
 
+const datetimeSuffixPattern
+  = /^T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
+
 function parsePeriodDate(value?: string | null): Date | null {
-  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
-  if (!match) {
+  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/);
+  if (!match || (match[4] && !datetimeSuffixPattern.test(match[4]))) {
     return null;
   }
 
