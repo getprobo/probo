@@ -36,7 +36,7 @@ import (
 
 const (
 	hostInfoRefreshInterval = 6 * time.Hour
-	perCheckTimeout         = 15 * time.Second
+	perCheckTimeout         = 25 * time.Second
 
 	pendingFlushBackoffMin = 15 * time.Second
 	pendingFlushBackoffMax = 30 * time.Minute

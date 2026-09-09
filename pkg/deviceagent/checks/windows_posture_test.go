@@ -168,38 +168,105 @@ func TestWindowsTimeSyncOn(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
-		"running NTP is on",
+		"manual NTP service is on",
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.True(t, windowsTimeSyncOn("Running", "NTP"))
+			assert.True(t, windowsTimeSyncOn("3", "NTP"))
 		},
 	)
 
 	t.Run(
-		"stopped service is off",
+		"disabled service is off",
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, windowsTimeSyncOn("Stopped", "NTP"))
+			assert.False(t, windowsTimeSyncOn("4", "NTP"))
 		},
 	)
 
 	t.Run(
-		"running NoSync is off",
+		"manual NoSync service is off",
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, windowsTimeSyncOn("Running", "NoSync"))
+			assert.False(t, windowsTimeSyncOn("3", "NoSync"))
 		},
 	)
 
 	t.Run(
-		"running NT5DS is on",
+		"automatic NT5DS service is on",
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.True(t, windowsTimeSyncOn("Running", "NT5DS"))
+			assert.True(t, windowsTimeSyncOn("2", "NT5DS"))
 		},
 	)
+}
+
+func TestWindowsAutoUpdateOn(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		noAutoUpdate  string
+		auOptions     string
+		serviceStart  string
+		expectedOn    bool
+		expectedKnown bool
+	}{
+		{
+			name:          "default trigger-start service is on",
+			serviceStart:  "3",
+			expectedOn:    true,
+			expectedKnown: true,
+		},
+		{
+			name:          "automatic service and install policy are on",
+			auOptions:     "4",
+			serviceStart:  "2",
+			expectedOn:    true,
+			expectedKnown: true,
+		},
+		{
+			name:          "disabled by policy is off",
+			noAutoUpdate:  "1",
+			serviceStart:  "3",
+			expectedKnown: true,
+		},
+		{
+			name:          "notify-only policy is off",
+			auOptions:     "2",
+			serviceStart:  "3",
+			expectedKnown: true,
+		},
+		{
+			name:          "disabled service is off",
+			auOptions:     "4",
+			serviceStart:  "4",
+			expectedKnown: true,
+		},
+		{
+			name:          "missing service state is unknown",
+			expectedOn:    false,
+			expectedKnown: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				on, known := windowsAutoUpdateOn(
+					tt.noAutoUpdate,
+					tt.auOptions,
+					tt.serviceStart,
+				)
+				assert.Equal(t, tt.expectedOn, on)
+				assert.Equal(t, tt.expectedKnown, known)
+			},
+		)
+	}
 }

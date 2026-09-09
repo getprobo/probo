@@ -268,9 +268,9 @@ func parseNetshFirewallStates(s string) ([]string, bool) {
 func windowsTimeSync(ctx context.Context) Result {
 	out := powershell(
 		ctx,
-		`$s = Get-Service w32time; `+
+		`$s = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time'; `+
 			`$p = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters'; `+
-			`"$($s.Status);$($p.Type);$($p.NtpServer)"`,
+			`"$($s.Start);$($p.Type);$($p.NtpServer)"`,
 	)
 	if out.Err != nil {
 		return unknown(
@@ -283,9 +283,9 @@ func windowsTimeSync(ctx context.Context) Result {
 
 	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 3)
 
-	var status, typ, ntpServer string
+	var serviceStart, typ, ntpServer string
 	if len(parts) >= 1 {
-		status = strings.TrimSpace(parts[0])
+		serviceStart = strings.TrimSpace(parts[0])
 	}
 
 	if len(parts) >= 2 {
@@ -297,19 +297,19 @@ func windowsTimeSync(ctx context.Context) Result {
 	}
 
 	ev := map[string]any{
-		"backend":        "w32time",
-		"w32time_status": status,
-		"w32time_type":   typ,
+		"backend":               "w32time",
+		"w32time_service_start": serviceStart,
+		"w32time_type":          typ,
 	}
 	if ntpServer != "" {
 		ev["ntp_server"] = ntpServer
 	}
 
-	if windowsTimeSyncOn(status, typ) {
+	if windowsTimeSyncOn(serviceStart, typ) {
 		return pass(ev)
 	}
 
-	if status == "" {
+	if serviceStart == "" {
 		return unknown(ev)
 	}
 
@@ -337,7 +337,8 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		ctx,
 		`$au = Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' `+
 			`-ErrorAction SilentlyContinue; `+
-			`"$($au.NoAutoUpdate);$($au.AUOptions)"`,
+			`$svc = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\wuauserv'; `+
+			`"$($au.NoAutoUpdate);$($au.AUOptions);$($svc.Start)"`,
 	)
 
 	ev := map[string]any{}
@@ -348,9 +349,9 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		return unknown(ev)
 	}
 
-	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 2)
+	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 3)
 
-	var noAutoUpdate, auOptions string
+	var noAutoUpdate, auOptions, serviceStart string
 	if len(parts) >= 1 {
 		noAutoUpdate = strings.TrimSpace(parts[0])
 	}
@@ -359,40 +360,22 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		auOptions = strings.TrimSpace(parts[1])
 	}
 
+	if len(parts) >= 3 {
+		serviceStart = strings.TrimSpace(parts[2])
+	}
+
 	ev["no_auto_update"] = noAutoUpdate
 	ev["au_options"] = auOptions
+	ev["wuauserv_service_start"] = serviceStart
 
-	// NoAutoUpdate=1 explicitly disables automatic updates via policy.
-	if noAutoUpdate == "1" {
-		return fail(ev)
-	}
-
-	// AUOptions semantics:
-	//   2 — notify before download (no auto-install)
-	//   3 — auto download, prompt to install
-	//   4 — auto download + auto install (target SOC posture)
-	//   5 — managed by local administrators
-	switch auOptions {
-	case "3", "4", "5":
-		return pass(ev)
-	case "2":
-		return fail(ev)
-	}
-
-	// No managed policy. The Windows Update service must at least be
-	// running for the OS default of auto-install to take effect.
-	svc := RunCommand(ctx, "sc.exe", "query", "wuauserv")
-	if svc.Err != nil {
-		ev["wuauserv_error"] = svc.Err.Error()
+	on, known := windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart)
+	if !known {
 		return unknown(ev)
 	}
 
-	if strings.Contains(svc.Stdout, "RUNNING") {
-		ev["wuauserv"] = "running"
+	if on {
 		return pass(ev)
 	}
-
-	ev["wuauserv"] = "stopped"
 
 	return fail(ev)
 }

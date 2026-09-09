@@ -5,6 +5,12 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Windows auto-update and time-sync checks now inspect stable service
+  configuration instead of transient running state, and posture commands have
+  more time to complete on busy systems.
+
 ## [0.6.3] - 2026-08-18
 
 ### Fixed

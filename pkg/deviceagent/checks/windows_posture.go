@@ -79,8 +79,10 @@ func parseWindowsFirewallProfiles(s string) (map[string]string, bool) {
 	return profiles, windowsAllValuesEqualFold(profiles, "true")
 }
 
-func windowsTimeSyncOn(status, typ string) bool {
-	if !strings.EqualFold(strings.TrimSpace(status), "Running") {
+func windowsTimeSyncOn(serviceStart, typ string) bool {
+	switch strings.TrimSpace(serviceStart) {
+	case "2", "3":
+	default:
 		return false
 	}
 
@@ -90,4 +92,27 @@ func windowsTimeSyncOn(status, typ string) bool {
 	}
 
 	return false
+}
+
+func windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart string) (bool, bool) {
+	switch strings.TrimSpace(serviceStart) {
+	case "4":
+		return false, true
+	case "2", "3":
+	default:
+		return false, false
+	}
+
+	if strings.TrimSpace(noAutoUpdate) == "1" {
+		return false, true
+	}
+
+	switch strings.TrimSpace(auOptions) {
+	case "", "3", "4", "5":
+		return true, true
+	case "2":
+		return false, true
+	default:
+		return false, false
+	}
 }
