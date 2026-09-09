@@ -5,6 +5,8 @@ documented in this file.
 
 ## Unreleased
 
+## [0.6.5] - 2026-09-09
+
 ### Fixed
 
 - The Windows firewall check no longer falls back to parsing localized `netsh`
