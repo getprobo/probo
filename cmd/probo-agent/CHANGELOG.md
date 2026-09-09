@@ -5,6 +5,23 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- The Windows firewall check no longer falls back to parsing localized `netsh`
+  output, which reported a fully enabled firewall as off on non-English
+  systems. It now reads the firewall COM API, which returns booleans and needs
+  no module load, and both probes report the same evidence shape
+- A firewall state that cannot be read reports Unknown instead of Off
+- Posture runs cut short by sleep or shutdown are no longer sent, queued, or
+  replayed as reports. A partial run described the host as it was powering off,
+  and could surface a check as Unknown hours later when the queue drained
+- The Windows screen lock check reads machine-wide policy — the machine
+  inactivity limit, the MDM DeviceLock policy, and the full screensaver policy
+  rather than only whether the screensaver is secure — so a managed host no
+  longer reports Unknown when nobody is signed in
+- `probo-agent collect` no longer truncates its own run on busy hosts, and
+  reports an error rather than silently printing a short list
+
 ## [0.6.4] - 2026-09-09
 
 ### Fixed

@@ -54,6 +54,11 @@ var version = "dev"
 // "failed" state on a normal self-update.
 const restartExitCode = 75
 
+// collectTimeout bounds the whole check set for a one-shot `collect`. Every
+// check can spend the agent's per-check budget, so this has to clear the full
+// set rather than a single probe.
+const collectTimeout = 5 * time.Minute
+
 // Cobra prints a "this is a command line tool" splash and exits 1 when the
 // parent process is explorer.exe. The shell is what launches the probo://
 // handler and the HKLM Run entry, so the splash would break both browser
@@ -518,21 +523,26 @@ func newCollectCmd() *cobra.Command {
 				fmt.Println(dir)
 			}
 
-			ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(cmd.Context(), collectTimeout)
 			defer cancel()
 
 			agent := deviceagent.New(dir, version, newAgentLogger())
-			results := agent.CollectOnce(ctx)
+
+			results, collectErr := agent.CollectOnce(ctx)
 
 			if asJSON {
-				return json.NewEncoder(os.Stdout).Encode(results)
+				if err := json.NewEncoder(os.Stdout).Encode(results); err != nil {
+					return fmt.Errorf("cannot encode results: %w", err)
+				}
+
+				return collectErr
 			}
 
 			for _, r := range results {
 				fmt.Printf("%-20s %-15s %v\n", r.CheckKey, r.Status, r.Evidence)
 			}
 
-			return nil
+			return collectErr
 		},
 	}
 	cmd.Flags().BoolVar(&once, "once", true, "(default true) run the check set once and exit")

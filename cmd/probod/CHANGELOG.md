@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Windows time sync and auto-update postures reported by probo-agent 0.6.4 and
+  later no longer display as Unknown. The agent renamed the evidence it sends
+  for those checks when it moved from transient service state to service
+  configuration, and the reader still expected the old keys
+
 ## [0.283.0] - 2026-09-09
 
 ### Added
