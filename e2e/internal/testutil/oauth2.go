@@ -60,7 +60,7 @@ type (
 		GrantTypes              []string `json:"grant_types"`
 		ResponseTypes           []string `json:"response_types"`
 		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-		Scopes                  string   `json:"scopes"`
+		Scopes                  string   `json:"scope"`
 	}
 
 	OAuth2IntrospectResponse struct {

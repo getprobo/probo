@@ -21,11 +21,13 @@
 package types
 
 import (
+	"encoding/json"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
@@ -79,4 +81,63 @@ func TestParseResources(t *testing.T) {
 			require.ErrorIs(t, err, oauth2.ErrInvalidTarget)
 		},
 	)
+}
+
+func TestOAuth2RegisterInput_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name string
+		body string
+	}{
+		{
+			name: "standard scope field",
+			body: `{"scope":"openid offline_access v1:org"}`,
+		},
+		{
+			name: "legacy scopes field",
+			body: `{"scopes":"openid offline_access v1:org"}`,
+		},
+	} {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				var input OAuth2RegisterInput
+				err := json.Unmarshal([]byte(tt.body), &input)
+				require.NoError(t, err)
+				assert.Equal(
+					t,
+					coredata.OAuth2Scopes{
+						oauth2.ScopeOpenID,
+						oauth2.ScopeOfflineAccess,
+						"v1:org",
+					},
+					input.Scopes,
+				)
+			},
+		)
+	}
+}
+
+func TestOAuth2RegisterResponse_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	data, err := json.Marshal(
+		OAuth2RegisterResponse{
+			Scopes: coredata.OAuth2Scopes{
+				oauth2.ScopeOpenID,
+				oauth2.ScopeOfflineAccess,
+				"v1:org",
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	var response map[string]any
+	err = json.Unmarshal(data, &response)
+	require.NoError(t, err)
+	assert.Equal(t, "openid offline_access v1:org", response["scope"])
+	assert.NotContains(t, response, "scopes")
 }

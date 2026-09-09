@@ -21,6 +21,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -324,7 +325,7 @@ type (
 		GrantTypes              []coredata.OAuth2GrantType                   `json:"grant_types"`
 		ResponseTypes           []coredata.OAuth2ResponseType                `json:"response_types"`
 		TokenEndpointAuthMethod coredata.OAuth2ClientTokenEndpointAuthMethod `json:"token_endpoint_auth_method"`
-		Scopes                  coredata.OAuth2Scopes                        `json:"scopes"`
+		Scopes                  coredata.OAuth2Scopes                        `json:"scope"`
 	}
 
 	OAuth2ErrorResponse struct {
@@ -332,6 +333,27 @@ type (
 		Description string `json:"error_description,omitempty"`
 	}
 )
+
+func (in *OAuth2RegisterInput) UnmarshalJSON(data []byte) error {
+	type plain OAuth2RegisterInput
+
+	decoded := struct {
+		*plain
+		Scope coredata.OAuth2Scopes `json:"scope"`
+	}{
+		plain: (*plain)(in),
+	}
+
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	if len(decoded.Scope) > 0 {
+		in.Scopes = decoded.Scope
+	}
+
+	return nil
+}
 
 func NewConsent(consent *coredata.OAuth2Consent) *Consent {
 	scopes := make([]string, len(consent.Scopes))

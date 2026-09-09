@@ -164,7 +164,7 @@ func TestOAuth2_RegisterClientWithAPIScope(t *testing.T) {
 		"grant_types":                []string{"authorization_code"},
 		"response_types":             []string{"code"},
 		"token_endpoint_auth_method": "client_secret_basic",
-		"scopes":                     "openid v1:document:read",
+		"scope":                      "openid v1:document:read",
 	})
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, raw.StatusCode)
