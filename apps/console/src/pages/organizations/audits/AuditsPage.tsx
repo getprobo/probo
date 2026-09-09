@@ -18,22 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  getAuditStateVariant,
-} from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { dateFormat } from "@probo/i18n";
 import {
-  ActionDropdown,
-  Badge,
   Button,
-  DropdownItem,
   IconPlusLarge,
-  IconTrashCan,
   IconUpload,
   PageHeader,
   Tbody,
-  Td,
   Th,
   Thead,
   Tr,
@@ -52,15 +43,14 @@ import {
 
 import type { AuditGraphListQuery } from "#/__generated__/core/AuditGraphListQuery.graphql";
 import type {
-  AuditsPageFragment$data,
   AuditsPageFragment$key,
 } from "#/__generated__/core/AuditsPageFragment.graphql";
 import { SortableTable } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import type { NodeOf } from "#/types";
 
-import { auditsQuery, useDeleteAudit } from "../../../hooks/graph/AuditGraph";
+import { auditsQuery } from "../../../hooks/graph/AuditGraph";
 
+import { AuditListItem } from "./_components/AuditListItem";
 import { CreateAuditDialog } from "./dialogs/CreateAuditDialog";
 
 const paginatedAuditsFragment = graphql`
@@ -84,28 +74,14 @@ const paginatedAuditsFragment = graphql`
       edges {
         node {
           id
-          name
-          validity {
-            start
-            end
-          }
-          reportFile {
-            id
-          }
-          state
-          framework {
-            id
-            name
-          }
           canUpdate: permission(action: "core:audit:update")
           canDelete: permission(action: "core:audit:delete")
+          ...AuditListItem_audit
         }
       }
     }
   }
 `;
-
-type AuditEntry = NodeOf<AuditsPageFragment$data["audits"]>;
 
 type Props = {
   queryRef: PreloadedQuery<AuditGraphListQuery>;
@@ -245,17 +221,17 @@ export default function AuditsPage(props: Props) {
             <Th>{t("auditsPage.columns.name")}</Th>
             <Th>{t("auditsPage.columns.framework")}</Th>
             <Th>{t("auditsPage.columns.state")}</Th>
-            <Th>{t("auditsPage.columns.validFrom")}</Th>
-            <Th>{t("auditsPage.columns.validUntil")}</Th>
+            <Th>{t("auditsPage.columns.auditPeriod")}</Th>
+            <Th>{t("auditsPage.columns.validityPeriod")}</Th>
             <Th>{t("auditsPage.columns.report")}</Th>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {audits.map(entry => (
-            <AuditRow
+            <AuditListItem
               key={entry.id}
-              entry={entry}
+              auditKey={entry}
               connectionId={connectionId}
               hasAnyAction={hasAnyAction}
             />
@@ -272,69 +248,5 @@ export default function AuditsPage(props: Props) {
         />
       )}
     </div>
-  );
-}
-
-function AuditRow({
-  entry,
-  connectionId,
-  hasAnyAction,
-}: {
-  entry: AuditEntry;
-  connectionId: string;
-  hasAnyAction: boolean;
-}) {
-  const organizationId = useOrganizationId();
-  const { i18n, t } = useTranslation();
-  const deleteAudit = useDeleteAudit(entry, connectionId);
-
-  return (
-    <Tr to={`/organizations/${organizationId}/governance/audits/${entry.id}`}>
-      <Td>{entry.name || t("auditsPage.row.untitled")}</Td>
-      <Td>{entry.framework?.name ?? t("auditsPage.row.unknownFramework")}</Td>
-      <Td>
-        <Badge variant={getAuditStateVariant(entry.state)}>
-          {t(`auditsPage.states.${entry.state.toLowerCase()}`)}
-        </Badge>
-      </Td>
-      <Td>
-        {dateFormat(i18n.language, entry.validity?.start)
-          || t("auditsPage.row.notSet")}
-      </Td>
-      <Td>
-        {dateFormat(i18n.language, entry.validity?.end)
-          || t("auditsPage.row.notSet")}
-      </Td>
-      <Td>
-        {entry.reportFile
-          ? (
-              <div className="flex flex-col">
-                <Badge variant="success">
-                  {t("auditsPage.row.uploaded")}
-                </Badge>
-              </div>
-            )
-          : (
-              <Badge variant="neutral">
-                {t("auditsPage.row.notUploaded")}
-              </Badge>
-            )}
-      </Td>
-      {hasAnyAction && (
-        <Td noLink width={50} className="text-end">
-          <ActionDropdown>
-            {entry.canDelete && (
-              <DropdownItem
-                onClick={deleteAudit}
-                variant="danger"
-                icon={IconTrashCan}
-              >
-                {t("auditsPage.actions.delete")}
-              </DropdownItem>
-            )}
-          </ActionDropdown>
-        </Td>
-      )}
-    </Tr>
   );
 }

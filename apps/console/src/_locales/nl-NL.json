@@ -3538,8 +3538,8 @@
       "name": "Naam",
       "framework": "Framework",
       "state": "Status",
-      "validFrom": "Geldig vanaf",
-      "validUntil": "Geldig tot",
+      "auditPeriod": "Auditperiode",
+      "validityPeriod": "Geldigheidsperiode",
       "report": "Rapport"
     },
     "states": {
@@ -3556,7 +3556,12 @@
       "unknownFramework": "Onbekend framework",
       "notSet": "Niet ingesteld",
       "uploaded": "Geüpload",
-      "notUploaded": "Niet geüpload"
+      "notUploaded": "Niet geüpload",
+      "period": {
+        "range": "{{start}} – {{end}}",
+        "from": "Vanaf {{date}}",
+        "until": "Tot {{date}}"
+      }
     }
   },
   "createAuditDialog": {
