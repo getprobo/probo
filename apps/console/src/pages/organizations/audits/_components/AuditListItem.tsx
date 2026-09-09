@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getAuditStateVariant } from "@probo/helpers";
+import { getAuditStateVariant, parseDate } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -79,20 +79,26 @@ export function AuditListItem({
     start: string | null | undefined,
     end: string | null | undefined,
   ) {
+    const compactDateOptions: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    };
+
     if (start && end) {
-      return t("auditsPage.row.period.range", {
-        start: dateFormat(i18n.language, start),
-        end: dateFormat(i18n.language, end),
-      });
+      return new Intl.DateTimeFormat(
+        i18n.language,
+        compactDateOptions,
+      ).formatRange(parseDate(start), parseDate(end));
     }
     if (start) {
       return t("auditsPage.row.period.from", {
-        date: dateFormat(i18n.language, start),
+        date: dateFormat(i18n.language, start, compactDateOptions),
       });
     }
     if (end) {
       return t("auditsPage.row.period.until", {
-        date: dateFormat(i18n.language, end),
+        date: dateFormat(i18n.language, end, compactDateOptions),
       });
     }
     return t("auditsPage.row.notSet");

@@ -2122,7 +2122,6 @@
       "uploaded": "Uploaded",
       "notUploaded": "Not uploaded",
       "period": {
-        "range": "{{start}} – {{end}}",
         "from": "From {{date}}",
         "until": "Until {{date}}"
       }
