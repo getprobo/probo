@@ -7,11 +7,8 @@ package console_v1
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -839,15 +836,6 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 		return nil, err
 	}
 
-	queryLength := 0
-	queryPresent := filter != nil && filter.Query != nil
-	if queryPresent {
-		queryLength = len(*filter.Query)
-	}
-	// #region agent log
-	debugDocumentResolverLog("A", "organization_resolvers.go:Documents:entry", "document resolver received filter", map[string]any{"filterPresent": filter != nil, "queryPresent": queryPresent, "queryLength": queryLength})
-	// #endregion
-
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldTitle,
 		Direction: page.OrderDirectionDesc,
@@ -878,30 +866,7 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	documentIDs := make([]string, len(page.Data))
-	for i, document := range page.Data {
-		documentIDs[i] = document.ID.String()
-	}
-	// #region agent log
-	debugDocumentResolverLog("D", "organization_resolvers.go:Documents:exit", "document resolver returning page", map[string]any{"documentCount": len(page.Data), "documentIDs": documentIDs, "queryPresent": queryPresent})
-	// #endregion
-
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
-}
-
-func debugDocumentResolverLog(hypothesisID, location, message string, data map[string]any) {
-	entry, _ := json.Marshal(map[string]any{
-		"hypothesisId": hypothesisID,
-		"location":     location,
-		"message":      message,
-		"data":         data,
-		"timestamp":    time.Now().UnixMilli(),
-	})
-	file, err := os.OpenFile("/opt/cursor/logs/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
-	if err == nil {
-		_, _ = file.Write(append(entry, '\n'))
-		_ = file.Close()
-	}
 }
 
 // Frameworks is the resolver for the frameworks field.
