@@ -22,9 +22,11 @@ package coredata
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -367,6 +369,15 @@ SELECT * FROM base WHERE %s
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
+	queryLength := 0
+	queryPresent := filter.query != nil
+	if queryPresent {
+		queryLength = len(*filter.query)
+	}
+	// #region agent log
+	debugDocumentCoredataLog("B", "document.go:LoadByOrganizationID:query", "document query arguments prepared", map[string]any{"queryPresent": queryPresent, "queryLength": queryLength})
+	// #endregion
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query documents: %w", err)
@@ -377,9 +388,32 @@ SELECT * FROM base WHERE %s
 		return fmt.Errorf("cannot collect documents: %w", err)
 	}
 
+	documentIDs := make([]string, len(documents))
+	for i, document := range documents {
+		documentIDs[i] = document.ID.String()
+	}
+	// #region agent log
+	debugDocumentCoredataLog("C", "document.go:LoadByOrganizationID:result", "document database query completed", map[string]any{"documentCount": len(documents), "documentIDs": documentIDs, "queryPresent": queryPresent})
+	// #endregion
+
 	*p = documents
 
 	return nil
+}
+
+func debugDocumentCoredataLog(hypothesisID, location, message string, data map[string]any) {
+	entry, _ := json.Marshal(map[string]any{
+		"hypothesisId": hypothesisID,
+		"location":     location,
+		"message":      message,
+		"data":         data,
+		"timestamp":    time.Now().UnixMilli(),
+	})
+	file, err := os.OpenFile("/opt/cursor/logs/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+	if err == nil {
+		_, _ = file.Write(append(entry, '\n'))
+		_ = file.Close()
+	}
 }
 
 func (p *Documents) LoadPublishedByCompliancePortalID(
