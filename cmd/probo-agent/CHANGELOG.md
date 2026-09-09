@@ -5,11 +5,17 @@ documented in this file.
 
 ## Unreleased
 
+## [0.6.4] - 2026-09-09
+
 ### Fixed
 
 - Windows auto-update and time-sync checks now inspect stable service
   configuration instead of transient running state, and posture commands have
   more time to complete on busy systems.
+- The agent no longer aborts with cobra's "command line tool" splash when
+  Windows launches it with explorer.exe as the parent process, which broke
+  browser-driven enrollment (probo:// deep links) and tray auto-start from
+  the HKLM Run key.
 
 ## [0.6.3] - 2026-08-18
 
