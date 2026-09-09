@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.283.0] - 2026-09-09
+
+### Added
+
+- Search the document list by title, debounced and persisted in the URL
+
+### Fixed
+
+- OAuth dynamic client registration now accepts the standard `scope` field (a space-delimited string) in addition to `scopes`, so clients following RFC 7591 register successfully
+
 ## [0.282.0] - 2026-09-08
 
 ### Added
