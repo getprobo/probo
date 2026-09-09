@@ -54,6 +54,14 @@ var version = "dev"
 // "failed" state on a normal self-update.
 const restartExitCode = 75
 
+// Cobra prints a "this is a command line tool" splash and exits 1 when the
+// parent process is explorer.exe. The shell is what launches the probo://
+// handler and the HKLM Run entry, so the splash would break both browser
+// enrollment and tray auto-start.
+func init() {
+	cobra.MousetrapHelpText = ""
+}
+
 func main() {
 	// Best-effort cleanup of a previous-version binary left aside by
 	// a Windows self-update. No-op on Unix.
