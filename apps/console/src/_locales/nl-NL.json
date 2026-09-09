@@ -261,7 +261,6 @@
   },
   "documentList": {
     "filters": {
-      "searchPlaceholder": "Documenten zoeken op titel...",
       "allSources": "Alle bronnen",
       "allTypes": "Alle typen",
       "allClassifications": "Alle classificaties"
