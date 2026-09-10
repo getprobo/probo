@@ -45,6 +45,7 @@ import {
   ActionSplitButton,
   type ActionSplitButtonAction,
 } from "../_components/ActionSplitButton";
+import { GcpLastLoginCallout } from "../_components/GcpLastLoginCallout";
 import { ConnectorDocumentationLink } from "../dialogs/_components/ConnectorDocumentationLink";
 import {
   gcpAccessReviewSourceName,
@@ -302,6 +303,14 @@ export function CreateGcpAccessReviewSourcePage({
           />
         )}
       </PageHeader>
+
+      {gcpDriver.documentationUrl
+        ? (
+            <GcpLastLoginCallout
+              documentationUrl={gcpDriver.documentationUrl}
+            />
+          )
+        : null}
 
       <Card padded>
         <form

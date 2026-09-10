@@ -25,6 +25,8 @@ import { graphql, useFragment } from "react-relay";
 
 import type { AccessEntrySection_source$key } from "#/__generated__/core/AccessEntrySection_source.graphql";
 
+import { GcpLastLoginCallout } from "../../_components/GcpLastLoginCallout";
+
 import { accessEntrySection } from "./variants";
 
 const accessEntrySectionFragment = graphql`
@@ -33,6 +35,7 @@ const accessEntrySectionFragment = graphql`
     source {
       connector {
         provider
+        documentationUrl
       }
     }
     fetchAttempts(first: 1) {
@@ -71,6 +74,7 @@ export function AccessEntrySection({
       ? t(`campaignDetailPage.fetchStatus.${fetchStatus.toLowerCase()}`)
       : null;
   const provider = source.source?.connector?.provider;
+  const documentationUrl = source.source?.connector?.documentationUrl;
 
   return (
     <section className={root()}>
@@ -81,6 +85,9 @@ export function AccessEntrySection({
         <h2 className={titleClass()}>{source.name}</h2>
         <span className={countClass()}>{`(${count})`}</span>
       </div>
+      {provider === "GCP" && documentationUrl
+        ? <GcpLastLoginCallout documentationUrl={documentationUrl} />
+        : null}
       {error
         ? (
             <div className="flex items-start gap-2 rounded-[10px] border border-border-danger bg-danger px-4 py-3 text-sm text-txt-danger">
