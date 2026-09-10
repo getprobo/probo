@@ -193,6 +193,10 @@ spec:
             - name: PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE
               value: {{ .Values.probo.identityFederation.gcpTerraformModuleSource | quote }}
             {{- end }}
+            {{- if .Values.probo.identityFederation.azureTerraformModuleSource }}
+            - name: PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE
+              value: {{ .Values.probo.identityFederation.azureTerraformModuleSource | quote }}
+            {{- end }}
             - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             - name: PROBOD_ITAM_DEVICE_ENROLLMENT_TOKEN_VALIDITY

@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -58,23 +59,24 @@ import (
 const maxDeviceListSize = 100
 
 type Resolver struct {
-	proboSvc            *probo.Service
-	management          *management.Service
-	certManager         *certmanager.Service
-	resourceAlias       *resourcealias.Service
-	thirdPartySvc       *thirdparty.Service
-	iamSvc              *iam.Service
-	accessReview        *accessreview.Service
-	cookieBanner        *cookiebanner.Service
-	riskManagement      *riskmanagement.Service
-	itamSvc             *itam.Service
-	mailman             *mailman.Service
-	logger              *log.Logger
-	fileManager         *filemanager.Service
-	baseURL             *baseurl.BaseURL
-	identityFederation  *identityfederation.Issuer
-	awsConnectorInstall cloudaws.ConnectorInstallConfig
-	gcpConnectorInstall cloudgcp.ConnectorInstallConfig
+	proboSvc              *probo.Service
+	management            *management.Service
+	certManager           *certmanager.Service
+	resourceAlias         *resourcealias.Service
+	thirdPartySvc         *thirdparty.Service
+	iamSvc                *iam.Service
+	accessReview          *accessreview.Service
+	cookieBanner          *cookiebanner.Service
+	riskManagement        *riskmanagement.Service
+	itamSvc               *itam.Service
+	mailman               *mailman.Service
+	logger                *log.Logger
+	fileManager           *filemanager.Service
+	baseURL               *baseurl.BaseURL
+	identityFederation    *identityfederation.Issuer
+	awsConnectorInstall   cloudaws.ConnectorInstallConfig
+	gcpConnectorInstall   cloudgcp.ConnectorInstallConfig
+	azureConnectorInstall cloudazure.ConnectorInstallConfig
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {

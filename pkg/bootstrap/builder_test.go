@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/crypto/keys"
@@ -1068,6 +1069,7 @@ func TestBuilder_Build_IdentityFederationDisabledByDefault(t *testing.T) {
 	assert.Equal(t, cloudaws.DefaultCloudFormationTemplateURL, cfg.Probod.IdentityFederation.CloudFormationTemplateURL)
 	assert.Equal(t, cloudaws.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.TerraformModuleSource)
 	assert.Equal(t, cloudgcp.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
+	assert.Equal(t, cloudazure.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
 }
 
 func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
@@ -1075,6 +1077,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	env["PROBOD_IDENTITY_FEDERATION_CLOUDFORMATION_TEMPLATE_URL"] = "https://example.com/audit-role.yaml"
 	env["PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE"] = "example/terraform-aws-audit-role"
 	env["PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE"] = "example/terraform-gcp-audit-role"
+	env["PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE"] = "example/terraform-azure-audit-role"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -1084,6 +1087,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	assert.Equal(t, "https://example.com/audit-role.yaml", cfg.Probod.IdentityFederation.CloudFormationTemplateURL)
 	assert.Equal(t, "example/terraform-aws-audit-role", cfg.Probod.IdentityFederation.TerraformModuleSource)
 	assert.Equal(t, "example/terraform-gcp-audit-role", cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
+	assert.Equal(t, "example/terraform-azure-audit-role", cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
 }
 
 func TestBuilder_Build_IdentityFederationDisabledSkipsSigningKey(t *testing.T) {

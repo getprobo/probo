@@ -59,6 +59,7 @@ func TestBuildConnectorSetup(t *testing.T) {
 			assert.Contains(t, setup.TerraformSnippet, "probo_issuer_url")
 			assert.Contains(t, setup.TerraformSnippet, "probo_subject")
 			assert.Contains(t, setup.TerraformSnippet, "application_display_name")
+			assert.Contains(t, setup.TerraformSnippet, "subscription_id")
 			assert.Contains(t, setup.TerraformSnippet, strconv.Quote(cloudazure.DefaultApplicationName))
 			assert.Contains(t, setup.TerraformSnippet, cloudazure.DefaultTerraformModuleSource)
 			assert.Contains(t, setup.TerraformSnippet, "azurerm")
