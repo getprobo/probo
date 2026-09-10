@@ -4,9 +4,27 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.227.0] - 2026-09-10
+
+### Added
+
+- Access Review Source `Create` now accepts GCP (`GCP Workload Identity
+  Provider`, `GCP Service Account Email`), including S3NS universe
+  suffixes
+- Access Review Source `Setup GCP`, to get the GCP connector setup
+  values (issuer, audience, subject, suggested service account name,
+  Terraform snippet)
+- `Firm` on Audit `Create` and `Update`, and `To Book` / `Audit Booked`
+  added to the Audit state options; an empty firm on update clears it
+
 ### Changed
 
-- Task and Task Comment operations return `content` as plaintext instead of ProseMirror JSON
+- Task and Task Comment operations return `content` as plaintext
+  instead of ProseMirror JSON
+
+### Removed
+
+- Access Review `Read Entries` no longer returns `incrementalTag`
 
 ## [0.226.0] - 2026-09-02
 
