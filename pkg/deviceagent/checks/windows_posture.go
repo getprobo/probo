@@ -139,6 +139,73 @@ func windowsScreenLockOn(values map[string]string) (string, bool, bool) {
 	return "", false, false
 }
 
+// windowsInteractiveUserSID reports whether a HKEY_USERS child is a real
+// interactive account. Local and AD users are S-1-5-21-*; Entra users are
+// S-1-12-1-*. The _Classes suffix is a per-user COM hive, not a login.
+func windowsInteractiveUserSID(sid string) bool {
+	sid = strings.TrimSpace(sid)
+	if sid == "" {
+		return false
+	}
+
+	upper := strings.ToUpper(sid)
+	if strings.HasSuffix(upper, "_CLASSES") {
+		return false
+	}
+
+	return strings.HasPrefix(upper, "S-1-5-21-") || strings.HasPrefix(upper, "S-1-12-1-")
+}
+
+// parseWindowsUserScreenLock parses one "SID=secure:active:timeout" line per
+// user from the registry enumeration and reports whether each user has screen
+// saver locking enforced. A user whose values cannot be read counts as
+// disabled, so one unprotected account fails the host.
+func parseWindowsUserScreenLock(s string) (map[string]string, bool, bool) {
+	users := map[string]string{}
+
+	var anyEnabled, anyDisabled bool
+
+	for line := range strings.SplitSeq(s, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		idx := strings.Index(line, "=")
+		if idx < 0 {
+			continue
+		}
+
+		sid := strings.TrimSpace(line[:idx])
+		value := strings.TrimSpace(line[idx+1:])
+
+		if !windowsInteractiveUserSID(sid) {
+			continue
+		}
+
+		users[sid] = value
+
+		secure, active, timeout := splitWindowsUserScreenLock(value)
+		if on, known := windowsScreenSaverLockOn(secure, active, timeout); known && on {
+			anyEnabled = true
+			continue
+		}
+
+		anyDisabled = true
+	}
+
+	return users, anyDisabled, anyEnabled
+}
+
+func splitWindowsUserScreenLock(value string) (string, string, string) {
+	parts := strings.SplitN(value, ":", 3)
+	for len(parts) < 3 {
+		parts = append(parts, "")
+	}
+
+	return parts[0], parts[1], parts[2]
+}
+
 // windowsScreenSaverLockOn evaluates the screensaver trio shared by the machine
 // policy and the per-user hives. A secure screensaver only locks anything when
 // it is also active with a non-zero timeout.

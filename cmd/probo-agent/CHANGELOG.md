@@ -5,6 +5,12 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- The Windows screen lock check treats Entra ID users (`S-1-12-1-*`) as
+  interactive hives, so a signed-in cloud account is no longer reported as
+  "no interactive user hives loaded"
+
 ## [0.6.5] - 2026-09-09
 
 ### Fixed

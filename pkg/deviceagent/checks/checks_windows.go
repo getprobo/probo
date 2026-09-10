@@ -96,7 +96,7 @@ const windowsScreenLockMachineScript = `` +
 	`ScreenSaveActive=$($c.ScreenSaveActive);ScreenSaveTimeOut=$($c.ScreenSaveTimeOut)"`
 
 const windowsScreenLockUsersScript = `Get-ChildItem 'Registry::HKEY_USERS' | ` +
-	`Where-Object { $_.PSChildName -match '^S-1-5-21-' } | ` +
+	`Where-Object { $_.PSChildName -match '^(S-1-5-21-|S-1-12-1-)' -and $_.PSChildName -notmatch '_Classes$' } | ` +
 	`ForEach-Object { ` +
 	`  $path = "Registry::HKEY_USERS\$($_.PSChildName)\Control Panel\Desktop"; ` +
 	`  $key = Get-ItemProperty $path -ErrorAction SilentlyContinue; ` +
@@ -155,56 +155,6 @@ func windowsScreenLock(ctx context.Context) Result {
 	}
 
 	return fail(ev)
-}
-
-// parseWindowsUserScreenLock parses one "SID=secure:active:timeout" line per
-// user from the registry enumeration and reports whether each user has screen
-// saver locking enforced. A user whose values cannot be read counts as
-// disabled, so one unprotected account fails the host.
-func parseWindowsUserScreenLock(s string) (map[string]string, bool, bool) {
-	users := map[string]string{}
-
-	var anyEnabled, anyDisabled bool
-
-	for line := range strings.SplitSeq(s, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		idx := strings.Index(line, "=")
-		if idx < 0 {
-			continue
-		}
-
-		sid := strings.TrimSpace(line[:idx])
-		value := strings.TrimSpace(line[idx+1:])
-
-		if sid == "" {
-			continue
-		}
-
-		users[sid] = value
-
-		secure, active, timeout := splitWindowsUserScreenLock(value)
-		if on, known := windowsScreenSaverLockOn(secure, active, timeout); known && on {
-			anyEnabled = true
-			continue
-		}
-
-		anyDisabled = true
-	}
-
-	return users, anyDisabled, anyEnabled
-}
-
-func splitWindowsUserScreenLock(value string) (string, string, string) {
-	parts := strings.SplitN(value, ":", 3)
-	for len(parts) < 3 {
-		parts = append(parts, "")
-	}
-
-	return parts[0], parts[1], parts[2]
 }
 
 // windowsFirewallCOMScript reads the effective profile state through

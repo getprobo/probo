@@ -203,6 +203,122 @@ func TestWindowsScreenLockOn(t *testing.T) {
 	}
 }
 
+func TestWindowsInteractiveUserSID(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		sid      string
+		expected bool
+	}{
+		{
+			name:     "local account",
+			sid:      "S-1-5-21-1004336348-1177238915-682003330-1001",
+			expected: true,
+		},
+		{
+			name:     "entra account",
+			sid:      "S-1-12-1-123456789-1234567890-123456789-123456789",
+			expected: true,
+		},
+		{
+			name: "per-user classes hive",
+			sid:  "S-1-5-21-1004336348-1177238915-682003330-1001_Classes",
+		},
+		{
+			name: "entra classes hive",
+			sid:  "S-1-12-1-123456789-1234567890-123456789-123456789_Classes",
+		},
+		{
+			name: "local system",
+			sid:  "S-1-5-18",
+		},
+		{
+			name: "local service",
+			sid:  "S-1-5-19",
+		},
+		{
+			name: "network service",
+			sid:  "S-1-5-20",
+		},
+		{
+			name: "default user",
+			sid:  ".DEFAULT",
+		},
+		{
+			name: "empty",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.expected, windowsInteractiveUserSID(tt.sid))
+			},
+		)
+	}
+}
+
+func TestParseWindowsUserScreenLock(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                string
+		raw                 string
+		expectedUsers       map[string]string
+		expectedAnyDisabled bool
+		expectedAnyEnabled  bool
+	}{
+		{
+			name: "entra hive is counted",
+			raw:  "S-1-12-1-123456789-1234567890-123456789-123456789=1:1:600",
+			expectedUsers: map[string]string{
+				"S-1-12-1-123456789-1234567890-123456789-123456789": "1:1:600",
+			},
+			expectedAnyEnabled: true,
+		},
+		{
+			name: "local and entra hives are both counted",
+			raw: "S-1-5-21-1004336348-1177238915-682003330-1001=1:1:600\n" +
+				"S-1-12-1-123456789-1234567890-123456789-123456789=0::",
+			expectedUsers: map[string]string{
+				"S-1-5-21-1004336348-1177238915-682003330-1001":     "1:1:600",
+				"S-1-12-1-123456789-1234567890-123456789-123456789": "0::",
+			},
+			expectedAnyDisabled: true,
+			expectedAnyEnabled:  true,
+		},
+		{
+			name:                "classes and well-known hives are ignored",
+			raw:                 "S-1-5-18=1:1:600\nS-1-5-21-1004336348-1177238915-682003330-1001_Classes=1:1:600\n.DEFAULT=1:1:600",
+			expectedUsers:       map[string]string{},
+			expectedAnyDisabled: false,
+		},
+		{
+			name:          "empty output has no users",
+			raw:           "",
+			expectedUsers: map[string]string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				users, anyDisabled, anyEnabled := parseWindowsUserScreenLock(tt.raw)
+				assert.Equal(t, tt.expectedUsers, users)
+				assert.Equal(t, tt.expectedAnyDisabled, anyDisabled)
+				assert.Equal(t, tt.expectedAnyEnabled, anyEnabled)
+			},
+		)
+	}
+}
+
 func TestParseWindowsJoinedPairs(t *testing.T) {
 	t.Parallel()
 
