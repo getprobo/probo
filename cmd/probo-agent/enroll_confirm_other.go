@@ -18,33 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build windows
+//go:build !windows
 
-package tray
+package main
 
-import (
-	"fmt"
-
-	"go.probo.inc/probo/pkg/deviceagent/win32"
-	"golang.org/x/sys/windows"
-)
-
-func showAbout(version string) {
-	message := fmt.Sprintf(
-		"Version %s\r\n\r\nReports device posture to your Probo workspace.",
-		version,
-	)
-	_, _ = win32.MessageBox(
-		"Probo Device Posture Agent",
-		message,
-		windows.MB_OK|windows.MB_ICONINFORMATION,
-	)
-}
-
-func showEnrollmentError(message string) {
-	_, _ = win32.MessageBox(
-		"Probo Device Posture Agent",
-		message,
-		windows.MB_OK|windows.MB_ICONERROR,
-	)
+func confirmBrowserEnrollment(string) bool {
+	return true
 }

@@ -18,33 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build windows
-
-package tray
+package deviceagent
 
 import (
-	"fmt"
+	"testing"
 
-	"go.probo.inc/probo/pkg/deviceagent/win32"
-	"golang.org/x/sys/windows"
+	"github.com/stretchr/testify/assert"
 )
 
-func showAbout(version string) {
-	message := fmt.Sprintf(
-		"Version %s\r\n\r\nReports device posture to your Probo workspace.",
-		version,
-	)
-	_, _ = win32.MessageBox(
-		"Probo Device Posture Agent",
-		message,
-		windows.MB_OK|windows.MB_ICONINFORMATION,
-	)
-}
+func TestProbeEnrollmentTrust_NoNetwork(t *testing.T) {
+	t.Parallel()
 
-func showEnrollmentError(message string) {
-	_, _ = win32.MessageBox(
-		"Probo Device Posture Agent",
-		message,
-		windows.MB_OK|windows.MB_ICONERROR,
-	)
+	tests := []struct {
+		name  string
+		input string
+		want  EnrollmentTrust
+	}{
+		{name: "non-loopback http", input: "http://evil.example", want: TrustInsecure},
+		{name: "http Probo host", input: "http://us.probo.com", want: TrustInsecure},
+		{name: "loopback http", input: "http://localhost:3000", want: TrustUnknown},
+		{name: "loopback ipv4 http", input: "http://127.0.0.1:3000", want: TrustUnknown},
+		{name: "https self-hosted", input: "https://probo.example.com", want: TrustUnverified},
+		{name: "empty", input: "", want: TrustUnknown},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				got := ProbeEnrollmentTrust(t.Context(), tt.input)
+				assert.Equal(t, tt.want, got)
+			},
+		)
+	}
 }

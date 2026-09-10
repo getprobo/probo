@@ -46,7 +46,12 @@ type (
 
 // NewClient creates an API client.
 func NewClient(serverURL, apiKey, userAgent string) *Client {
-	httpClient := httpclient.DefaultPooledClient()
+	opts := []httpclient.Option{}
+	if IsProboServers(serverURL) {
+		opts = append(opts, httpclient.WithTLSConfig(proboCloudTLSConfig()))
+	}
+
+	httpClient := httpclient.DefaultPooledClient(opts...)
 	httpClient.Timeout = 30 * time.Second
 
 	return &Client{

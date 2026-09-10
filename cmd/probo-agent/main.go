@@ -135,7 +135,19 @@ func newEnrollURLCmd() *cobra.Command {
 					return fmt.Errorf("cannot check enrollment state: %w", err)
 				}
 
-				return writeEnrollPreflight(cmd.OutOrStdout(), serverURL, enrollmentToken, dir, enrolled)
+				trust := deviceagent.TrustUnknown
+				if !enrolled {
+					trust = deviceagent.ProbeEnrollmentTrust(cmd.Context(), serverURL)
+				}
+
+				return writeEnrollPreflight(
+					cmd.OutOrStdout(),
+					serverURL,
+					enrollmentToken,
+					dir,
+					enrolled,
+					trust,
+				)
 			}
 
 			already, err := reportIfAlreadyEnrolled(dir)
@@ -144,6 +156,10 @@ func newEnrollURLCmd() *cobra.Command {
 			}
 
 			if already {
+				return nil
+			}
+
+			if !confirmBrowserEnrollment(serverURL) {
 				return nil
 			}
 
@@ -180,18 +196,25 @@ type enrollPreflightResponse struct {
 	Token           string `json:"token"`
 	AlreadyEnrolled bool   `json:"alreadyEnrolled"`
 	ConfigDir       string `json:"configDir"`
+	Trust           string `json:"trust"`
+	ConfirmTitle    string `json:"confirmTitle"`
+	ConfirmMessage  string `json:"confirmMessage"`
 }
 
 func writeEnrollPreflight(
 	w io.Writer,
 	serverURL, enrollmentToken, dir string,
 	alreadyEnrolled bool,
+	trust deviceagent.EnrollmentTrust,
 ) error {
 	payload := enrollPreflightResponse{
 		Server:          serverURL,
 		Token:           enrollmentToken,
 		AlreadyEnrolled: alreadyEnrolled,
 		ConfigDir:       dir,
+		Trust:           string(trust),
+		ConfirmTitle:    deviceagent.EnrollmentConfirmTitle,
+		ConfirmMessage:  deviceagent.EnrollmentConfirmMessage(serverURL, trust),
 	}
 
 	out, err := json.Marshal(payload)

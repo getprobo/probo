@@ -5,6 +5,16 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Browser enrollment (`probo://` deep links) asks the user to confirm the
+  server URL before a privileged install, except when TLS presents a
+  pinned Probo leaf public key. Cancel leaves the device unenrolled.
+  The dialog warns on cleartext HTTP and on hosts that are not pinned.
+- API calls to `us.probo.com` and `eu.probo.com` require a pinned Probo
+  leaf key. A Probo certificate key change fails enroll and heartbeats
+  until the agent is updated. Self-hosted servers are unchanged.
+
 ## [0.6.6] - 2026-09-10
 
 ### Added

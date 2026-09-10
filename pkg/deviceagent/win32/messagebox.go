@@ -20,31 +20,37 @@
 
 //go:build windows
 
-package tray
+package win32
 
 import (
 	"fmt"
+	"strings"
 
-	"go.probo.inc/probo/pkg/deviceagent/win32"
 	"golang.org/x/sys/windows"
 )
 
-func showAbout(version string) {
-	message := fmt.Sprintf(
-		"Version %s\r\n\r\nReports device posture to your Probo workspace.",
-		version,
-	)
-	_, _ = win32.MessageBox(
-		"Probo Device Posture Agent",
-		message,
-		windows.MB_OK|windows.MB_ICONINFORMATION,
-	)
-}
+// IDYes is the MessageBox result when the user selects Yes.
+const IDYes = 6
 
-func showEnrollmentError(message string) {
-	_, _ = win32.MessageBox(
-		"Probo Device Posture Agent",
-		message,
-		windows.MB_OK|windows.MB_ICONERROR,
-	)
+// MessageBox shows a native Windows dialog and returns the selected button ID.
+func MessageBox(title, message string, flags uint32) (int32, error) {
+	titleUTF16, err := windows.UTF16PtrFromString(title)
+	if err != nil {
+		return 0, fmt.Errorf("cannot encode message box title: %w", err)
+	}
+
+	body := strings.ReplaceAll(message, "\r\n", "\n")
+	body = strings.ReplaceAll(body, "\n", "\r\n")
+
+	messageUTF16, err := windows.UTF16PtrFromString(body)
+	if err != nil {
+		return 0, fmt.Errorf("cannot encode message box message: %w", err)
+	}
+
+	ret, err := windows.MessageBox(0, messageUTF16, titleUTF16, flags)
+	if err != nil {
+		return 0, fmt.Errorf("cannot show message box: %w", err)
+	}
+
+	return ret, nil
 }

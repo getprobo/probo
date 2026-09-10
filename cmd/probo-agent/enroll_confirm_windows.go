@@ -20,40 +20,32 @@
 
 //go:build windows
 
-package tray
+package main
 
 import (
-	"unsafe"
+	"context"
 
+	"go.probo.inc/probo/pkg/deviceagent"
+	"go.probo.inc/probo/pkg/deviceagent/win32"
 	"golang.org/x/sys/windows"
 )
 
-const (
-	mbOK              = 0x00000000
-	mbIconInformation = 0x00000040
-	mbIconError       = 0x00000010
-)
-
-var (
-	modUser32       = windows.NewLazySystemDLL("user32.dll")
-	procMessageBoxW = modUser32.NewProc("MessageBoxW")
-)
-
-func nativeMessageBox(title, message string, flags uint32) {
-	titleUTF16, err := windows.UTF16PtrFromString(title)
-	if err != nil {
-		return
+func confirmBrowserEnrollment(serverURL string) bool {
+	trust := deviceagent.ProbeEnrollmentTrust(context.Background(), serverURL)
+	if !deviceagent.RequiresEnrollmentConfirm(trust) {
+		return true
 	}
 
-	messageUTF16, err := windows.UTF16PtrFromString(message)
-	if err != nil {
-		return
-	}
+	flags := uint32(windows.MB_YESNO | windows.MB_SETFOREGROUND | windows.MB_ICONWARNING)
 
-	_, _, _ = procMessageBoxW.Call(
-		0,
-		uintptr(unsafe.Pointer(messageUTF16)),
-		uintptr(unsafe.Pointer(titleUTF16)),
-		uintptr(flags),
+	ret, err := win32.MessageBox(
+		deviceagent.EnrollmentConfirmTitle,
+		deviceagent.EnrollmentConfirmMessage(serverURL, trust),
+		flags,
 	)
+	if err != nil {
+		return false
+	}
+
+	return ret == win32.IDYes
 }
