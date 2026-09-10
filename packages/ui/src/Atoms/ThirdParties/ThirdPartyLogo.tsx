@@ -41,6 +41,7 @@ import { Datadog } from "./Datadog";
 import { Deepgram } from "./Deepgram";
 import { DocuSign } from "./DocuSign";
 import { Dotfile } from "./Dotfile";
+import { ElevenLabs } from "./ElevenLabs";
 import { Figma } from "./Figma";
 import { GCP } from "./GCP";
 import { GitHub } from "./GitHub";
@@ -60,6 +61,7 @@ import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
 import { Neon } from "./Neon";
 import { Netlify } from "./Netlify";
+import { NewRelic } from "./NewRelic";
 import { Notion } from "./Notion";
 import { Nuki } from "./Nuki";
 import { Okta } from "./Okta";
@@ -73,6 +75,7 @@ import { Qovery } from "./Qovery";
 import { Railway } from "./Railway";
 import { Render } from "./Render";
 import { Resend } from "./Resend";
+import { Retool } from "./Retool";
 import { Scaleway } from "./Scaleway";
 import { Segment } from "./Segment";
 import { SendGrid } from "./SendGrid";
@@ -83,6 +86,7 @@ import { Square } from "./Square";
 import { Supabase } from "./Supabase";
 import { Tailscale } from "./Tailscale";
 import { Tally } from "./Tally";
+import { Twingate } from "./Twingate";
 import { UpCloud } from "./UpCloud";
 import { Vercel } from "./Vercel";
 import { Yousign } from "./Yousign";
@@ -110,6 +114,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   DEEPGRAM: Deepgram,
   DOCUSIGN: DocuSign,
   DOTFILE: Dotfile,
+  ELEVENLABS: ElevenLabs,
   FIGMA: Figma,
   GCP: GCP,
   GITHUB: GitHub,
@@ -131,6 +136,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   MONDAY: Monday,
   NEON: Neon,
   NETLIFY: Netlify,
+  NEW_RELIC: NewRelic,
   NOTION: Notion,
   NUKI: Nuki,
   OKTA: Okta,
@@ -145,6 +151,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   RAILWAY: Railway,
   RENDER: Render,
   RESEND: Resend,
+  RETOOL: Retool,
   SCALEWAY: Scaleway,
   SEGMENT: Segment,
   SENDGRID: SendGrid,
@@ -155,6 +162,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   SUPABASE: Supabase,
   TAILSCALE: Tailscale,
   TALLY: Tally,
+  TWINGATE: Twingate,
   UPCLOUD: UpCloud,
   VERCEL: Vercel,
   YOUSIGN: Yousign,

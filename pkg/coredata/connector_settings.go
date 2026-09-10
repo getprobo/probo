@@ -236,6 +236,32 @@ type (
 		BaseURL string `json:"base_url"`
 	}
 
+	// NewRelicConnectorSettings holds the New Relic data region the user key
+	// belongs to. NerdGraph runs one endpoint per region and answers a key
+	// from the other region with 403 "not authorized for account region", so
+	// the region is not discoverable from the credential — the customer names
+	// it and the driver, name resolver and probe all resolve their host from
+	// it.
+	NewRelicConnectorSettings struct {
+		Region string `json:"region"`
+	}
+
+	// RetoolConnectorSettings optionally holds the base URL of a self-hosted
+	// Retool instance. It is empty for Retool Cloud, whose API token already
+	// routes to its own organization through the shared api.retool.com
+	// gateway, so a cloud customer has no URL to supply.
+	RetoolConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
+	// TwingateConnectorSettings holds the customer's Twingate network name,
+	// the label in {network}.twingate.com. Twingate is cloud-only and gives
+	// every tenant its own host, so the network is the whole of what
+	// identifies the tenant.
+	TwingateConnectorSettings struct {
+		Network string `json:"network"`
+	}
+
 	// AWSConnectorSettings names the IAM role Probo assumes. Every field is
 	// public knowledge — the account owns the trust, and the connection
 	// itself holds no credential — so unlike the connection blob these stay

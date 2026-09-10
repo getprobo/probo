@@ -120,6 +120,10 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalendly")
     AWS @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAWS")
     GCP @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGCP")
+    ELEVENLABS @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderElevenLabs")
+    NEW_RELIC @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNewRelic")
+    RETOOL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRetool")
+    TWINGATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTwingate")
 }
 
 enum ConnectorProtocol
@@ -378,6 +382,9 @@ input CreateAPIKeyConnectorInput {
     scalewayOrganizationId: String
     segmentRegion: String
     authentikBaseUrl: String
+    newRelicRegion: String
+    retoolBaseUrl: String
+    twingateNetwork: String
 }
 
 type CreateAPIKeyConnectorPayload {

@@ -89,6 +89,15 @@ export function mapAPIKeyExtraSettingToField(
     case "SEGMENT":
       if (settingKey === "region") return "segmentRegion";
       break;
+    case "NEW_RELIC":
+      if (settingKey === "region") return "newRelicRegion";
+      break;
+    case "RETOOL":
+      if (settingKey === "baseUrl") return "retoolBaseUrl";
+      break;
+    case "TWINGATE":
+      if (settingKey === "network") return "twingateNetwork";
+      break;
   }
   return null;
 }

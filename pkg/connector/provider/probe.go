@@ -139,6 +139,7 @@ func probePOSTJSON(
 	probeURL string,
 	payload any,
 	extraHeaders map[string]string,
+	extraReject ...int,
 ) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -157,7 +158,7 @@ func probePOSTJSON(
 		req.Header.Set(key, value)
 	}
 
-	return doProbeRequest(httpClient, req)
+	return doProbeRequest(httpClient, req, extraReject...)
 }
 
 // CredentialRejectedError reports that the provider refused the credential,
@@ -196,14 +197,27 @@ func newCredentialRejected(statusCode int) *CredentialRejectedError {
 	}
 }
 
-// NotAnAPIEndpointError reports that the probe reached a server that answered
-// with markup instead of JSON. It carries no body: the page is the customer's
-// and may hold anything.
+// NotAnAPIEndpointError reports that the probe reached a server that is not
+// this provider's API: it answered with markup instead of JSON, or it answered
+// that nothing lives at the host the customer named. Either way the credential
+// was never the problem, so it must not be reported as one.
+//
+// It carries no response body: the page is the customer's and may hold
+// anything. Detail is Probo's own words, never the provider's.
 type NotAnAPIEndpointError struct {
 	StatusCode int
+
+	// Detail replaces the default explanation for a provider that can say
+	// something more useful than "this answered with a page". Empty keeps the
+	// markup wording.
+	Detail string
 }
 
 func (e *NotAnAPIEndpointError) Error() string {
+	if e.Detail != "" {
+		return fmt.Sprintf("%s (status %d)", e.Detail, e.StatusCode)
+	}
+
 	return fmt.Sprintf(
 		"endpoint returned an HTML page instead of JSON (status %d): check the instance URL points at the API",
 		e.StatusCode,
@@ -926,4 +940,230 @@ func probeGitHub(
 	}
 
 	return probeGET(ctx, httpClient, probeURL)
+}
+
+// probeElevenLabs checks the workspace-members endpoint, and treats 400 as a
+// rejected credential on top of the usual 401/403.
+//
+// ElevenLabs answers a key it will not accept with 400 and an
+// authentication_error body rather than 401 — verified against the live API
+// for both a malformed key and a well-formed one that is simply wrong. Without
+// the extra status a dead key would read as connected, which is the failure
+// this check exists to catch. The endpoint takes no parameters, so a 400 from
+// it cannot mean a bad request of ours.
+func probeElevenLabs(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+	ep Endpoints,
+) error {
+	endpoint, err := drivers.ElevenLabsMembersURL(ep.APIBase)
+	if err != nil {
+		return fmt.Errorf("cannot build elevenlabs probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	return doProbeRequest(httpClient, req, http.StatusBadRequest)
+}
+
+// probeNewRelic checks the access the roster actually needs, against the region
+// the connector names.
+//
+// Two things could each pass a lazier check and fail every campaign afterwards.
+// A user key belongs to one region and the other answers it with 403, so the
+// probe targets the same host the driver will rather than a fixed one. And any
+// live user key can answer `actor { user { id } }`, while reading the roster
+// needs organization user management, which NerdGraph refuses with 200 and an
+// errors array — a status doProbeRequest reads as connected. So this asks for
+// the roster's own entry point and treats that array as the refusal it is.
+func probeNewRelic(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	_ Endpoints,
+) error {
+	settings, err := coredata.ConnectorSettings[coredata.NewRelicConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read new relic connector settings: %w", err)
+	}
+
+	endpoint, err := drivers.NewRelicEndpoint(settings.Region)
+	if err != nil {
+		return fmt.Errorf("cannot build new relic probe URL: %w", err)
+	}
+
+	payload, err := json.Marshal(map[string]string{
+		"query": "{ actor { organization { userManagement { authenticationDomains { nextCursor } } } } }",
+	})
+	if err != nil {
+		return fmt.Errorf("cannot marshal new relic probe request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("cannot create new relic probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("new relic probe request failed: %w", err)
+	}
+
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return newCredentialRejected(resp.StatusCode)
+	}
+
+	// The errors-array rule below is NerdGraph's own rejection and only means
+	// that on a 2xx. Checked before the decode so an outage answering with a
+	// page reports its status rather than a decode failure.
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("new relic probe returned unexpected status %d", resp.StatusCode)
+	}
+
+	var parsed struct {
+		Errors []json.RawMessage `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return fmt.Errorf("cannot decode new relic probe response: %w", err)
+	}
+
+	// The key is live — it reached a 200 — but it may not read the roster.
+	// That is the operation being refused, not the credential being dead, and
+	// the customer fixes it by granting the role rather than rotating the key.
+	if len(parsed.Errors) > 0 {
+		return &CredentialRejectedError{
+			StatusCode:       resp.StatusCode,
+			OperationRefused: true,
+		}
+	}
+
+	return nil
+}
+
+// probeTwingate runs the cheapest authenticated query against the network the
+// connector names.
+//
+// It rejects 404 on top of the usual 401/403. The network name is the one thing
+// the customer types that a credential check cannot vet — a wrong token is 401,
+// but a wrong network is a host that answers 404 "Unable to find shard for
+// domain", which the default contract reads as connected. The connector would
+// then save as healthy and fail on every campaign fetch instead. The endpoint
+// takes no path parameters, so a 404 from it can only mean the host is not a
+// Twingate network.
+func probeTwingate(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	_ Endpoints,
+) error {
+	settings, err := coredata.ConnectorSettings[coredata.TwingateConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read twingate connector settings: %w", err)
+	}
+
+	endpoint, err := drivers.TwingateEndpoint(settings.Network)
+	if err != nil {
+		return fmt.Errorf("cannot build twingate probe URL: %w", err)
+	}
+
+	// The same shape the driver reads, so the check cannot pass on a field the
+	// roster never asks for.
+	payload, err := json.Marshal(map[string]string{
+		"query": "{ users(first: 1) { edges { node { id } } } }",
+	})
+	if err != nil {
+		return fmt.Errorf("cannot marshal twingate probe request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("cannot create twingate probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("twingate probe request failed: %w", err)
+	}
+
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return newCredentialRejected(resp.StatusCode)
+	}
+
+	// A 404 here is the network name, not the token: Twingate serves every
+	// tenant its own host and answers "unable to find shard for domain" when no
+	// network owns it. Reporting it as a rejected credential would send the
+	// customer to rotate a token that is fine.
+	if resp.StatusCode == http.StatusNotFound {
+		return &NotAnAPIEndpointError{
+			StatusCode: resp.StatusCode,
+			Detail:     "no twingate network answers at this host: check the network name",
+		}
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("twingate probe returned unexpected status %d", resp.StatusCode)
+	}
+
+	var parsed struct {
+		Errors []json.RawMessage `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return fmt.Errorf("cannot decode twingate probe response: %w", err)
+	}
+
+	// Twingate answers a refused query with 200 and an errors array, which the
+	// status alone cannot show. A token that authenticates but may not read the
+	// roster is the operation being refused, not a dead credential.
+	if len(parsed.Errors) > 0 {
+		return &CredentialRejectedError{
+			StatusCode:       resp.StatusCode,
+			OperationRefused: true,
+		}
+	}
+
+	return nil
+}
+
+// buildRetoolProbeURL derives the users endpoint from whichever Retool the
+// connector points at: a self-hosted instance when the customer named one, and
+// otherwise the shared cloud gateway in ep.APIBase, which the token routes to
+// its own organization by itself.
+//
+// A missing users:read scope answers 403 rather than 401, which the framework
+// already reports as the operation being refused rather than the token being
+// dead — the two are fixed differently and Retool distinguishes them for us.
+func buildRetoolProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
+	apiBase, err := retoolAPIBase(conn, ep)
+	if err != nil {
+		return "", fmt.Errorf("cannot build retool probe URL: %w", err)
+	}
+
+	endpoint, err := drivers.RetoolUsersURL(apiBase)
+	if err != nil {
+		return "", err
+	}
+
+	return endpoint + "?" + url.Values{"limit": {"1"}}.Encode(), nil
 }

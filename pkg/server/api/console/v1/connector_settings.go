@@ -198,6 +198,50 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: *input.SignozBaseURL})
+	case coredata.ConnectorProviderNewRelic:
+		if input.NewRelicRegion == nil || *input.NewRelicRegion == "" {
+			return nil, fmt.Errorf("cannot create new relic connector: newRelicRegion is required")
+		}
+
+		// The region selects which of New Relic's three NerdGraph endpoints
+		// the driver talks to, so it goes into a URL: accept only the three
+		// the driver knows and reject anything else here rather than at first use.
+		if _, err := drivers.NewRelicEndpoint(*input.NewRelicRegion); err != nil {
+			return nil, fmt.Errorf("cannot create new relic connector: newRelicRegion must be us, eu or jp")
+		}
+
+		// Stored normalized so one region is not persisted as "eu", "EU" and
+		// "  eu  " and re-normalized on every read.
+		return json.Marshal(&coredata.NewRelicConnectorSettings{
+			Region: strings.ToLower(strings.TrimSpace(*input.NewRelicRegion)),
+		})
+	case coredata.ConnectorProviderTwingate:
+		if input.TwingateNetwork == nil || *input.TwingateNetwork == "" {
+			return nil, fmt.Errorf("cannot create twingate connector: twingateNetwork is required")
+		}
+
+		// TwingateNetwork returns the canonical label, so the value stored is
+		// the one the host is built from rather than whatever was typed.
+		network, err := drivers.TwingateNetwork(*input.TwingateNetwork)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create twingate connector: twingateNetwork must be a valid network name")
+		}
+
+		return json.Marshal(&coredata.TwingateConnectorSettings{Network: network})
+	case coredata.ConnectorProviderRetool:
+		// Optional: Retool Cloud routes every organization through the shared
+		// api.retool.com gateway, so only a self-hosted customer has a URL to
+		// give. An empty setting is the cloud case, not a missing field.
+		if input.RetoolBaseURL == nil || *input.RetoolBaseURL == "" {
+			return json.Marshal(&coredata.RetoolConnectorSettings{})
+		}
+
+		u, err := url.Parse(*input.RetoolBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+			return nil, fmt.Errorf("cannot create retool connector: retoolBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.RetoolConnectorSettings{BaseURL: *input.RetoolBaseURL})
 	case coredata.ConnectorProviderAuthentik:
 		if input.AuthentikBaseURL == nil || *input.AuthentikBaseURL == "" {
 			return nil, fmt.Errorf("cannot create authentik connector: authentikBaseUrl is required")

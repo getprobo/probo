@@ -1,0 +1,47 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 64
+        host: api.eu.newrelic.com
+        body: '{"query":"{ actor { organization { name } } }","variables":null}'
+        headers:
+            Accept:
+                - application/json
+            Content-Type:
+                - application/json
+        url: https://api.eu.newrelic.com/graphql
+        method: POST
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 67
+        uncompressed: true
+        body: '{"data":{"actor":{"organization":{"name":"Example Organization"}}}}'
+        headers:
+            Cache-Control:
+                - max-age=0, private, must-revalidate
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - a38d4137285f2a58-CDG
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 10 Sep 2026 09:02:37 GMT
+            Served-By:
+                - nerd-graph
+            Server:
+                - cloudflare
+            Vary:
+                - accept-encoding
+            X-Envoy-Upstream-Service-Time:
+                - "434"
+        status: 200 OK
+        code: 200
+        duration: 1.142970542s
