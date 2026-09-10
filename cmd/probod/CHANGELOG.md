@@ -4,6 +4,29 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.285.0] - 2026-09-10
+
+### Added
+
+- Fifteen more connector providers declare a pasted-key prefix
+  (Anthropic, Brevo, Brex, Cal.com, ClickHouse Cloud, Dotfile,
+  Metabase, OpenAI, Qovery, Resend, SendGrid, Supabase, Tailscale,
+  Tally, UpCloud), so a truncated, wrong-kind, or otherwise malformed
+  key is rejected in the connect dialog instead of reaching the
+  provider
+
+### Changed
+
+- Task duration fields keep calendar months: GraphQL and MCP expose
+  `TimeSpan` instead of `Duration`, so `P1M` round-trips instead of
+  flattening to about 30 days
+
+### Fixed
+
+- Employee portal assume still runs when `ssoLoginURL` errors; that
+  field error no longer aborts the query before
+  `assumeOrganizationSession`
+
 ## [0.284.0] - 2026-09-09
 
 ### Added
