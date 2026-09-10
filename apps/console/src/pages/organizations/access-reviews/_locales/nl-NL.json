@@ -40,5 +40,8 @@
       "installViaTerraform": "Installeren via Terraform",
       "chooseAnotherInstallMethod": "Kies een andere installatiemethode"
     }
+  },
+  "gcpLastLoginCallout": {
+    "lastLoginNotice": "De GCP-connector vindt de laatste login voor een campagne niet altijd. Het veld laatste login kan leeg blijven. De <link>GCP-documentatie</link> bevat meer informatie."
   }
 }

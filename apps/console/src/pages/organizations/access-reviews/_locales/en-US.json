@@ -40,5 +40,8 @@
       "installViaTerraform": "Install via Terraform",
       "chooseAnotherInstallMethod": "Choose another install method"
     }
+  },
+  "gcpLastLoginCallout": {
+    "lastLoginNotice": "The GCP driver cannot always find last login for a campaign. Last login can stay empty. The <link>GCP documentation</link> has more information."
   }
 }

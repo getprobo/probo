@@ -99,14 +99,18 @@ func enrichGCPIdentitiesWithTimeouts(
 
 	activityCtx, cancelActivity := context.WithTimeout(ctx, activityTimeout)
 	logins, usedKey, activityErr := fetchGCPActivity(activityCtx, session, records)
+
 	cancelActivity()
+
 	if errors.Is(activityErr, context.Canceled) && ctx.Err() != nil {
 		return activityErr
 	}
 
 	mfaCtx, cancelMFA := context.WithTimeout(ctx, mfaTimeout)
 	mfa, mfaErr := fetchGCPMFA(mfaCtx, session, records)
+
 	cancelMFA()
+
 	if errors.Is(mfaErr, context.Canceled) && ctx.Err() != nil {
 		return mfaErr
 	}
