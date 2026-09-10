@@ -24,6 +24,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync/atomic"
 	"testing"
 
@@ -60,6 +61,19 @@ func passingCheck(key string) stubCheck {
 	}
 }
 
+func rememberableUnknownCheck(key string, ev map[string]any) stubCheck {
+	return stubCheck{
+		key: key,
+		run: func(context.Context) checks.Result {
+			return checks.Result{
+				Status:       checks.StatusUnknown,
+				Evidence:     ev,
+				Rememberable: true,
+			}
+		},
+	}
+}
+
 func TestAgent_CollectOnce(t *testing.T) {
 	t.Parallel()
 
@@ -89,7 +103,8 @@ func TestAgent_CollectOnce(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			a := New(t.TempDir(), "test", nil)
+			dir := t.TempDir()
+			a := New(dir, "test", nil)
 			a.checkSet = func() []checks.Check {
 				return []checks.Check{
 					passingCheck("FIRST"),
@@ -109,6 +124,56 @@ func TestAgent_CollectOnce(t *testing.T) {
 			require.ErrorIs(t, err, context.Canceled)
 			require.Len(t, results, 2)
 			assert.Equal(t, "SECOND", results[1].CheckKey)
+
+			_, statErr := os.Stat(checkMemoryPath(dir))
+			assert.ErrorIs(t, statErr, os.ErrNotExist)
+		},
+	)
+
+	t.Run(
+		"a later rememberable unknown keeps the last pass",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			a := New(dir, "test", nil)
+			a.checkSet = func() []checks.Check {
+				return []checks.Check{
+					stubCheck{
+						key: "SCREEN_LOCK",
+						run: func(context.Context) checks.Result {
+							return checks.Result{
+								Status:   checks.StatusPass,
+								Evidence: map[string]any{"screen_lock_enforced": true},
+							}
+						},
+					},
+				}
+			}
+
+			first, err := a.CollectOnce(context.Background())
+			require.NoError(t, err)
+			require.Len(t, first, 1)
+			assert.Equal(t, checks.StatusPass, first[0].Status)
+
+			a.checkSet = func() []checks.Check {
+				return []checks.Check{
+					rememberableUnknownCheck(
+						"SCREEN_LOCK",
+						map[string]any{
+							"backend": "hkey_users",
+							"note":    "no interactive user hives loaded",
+						},
+					),
+				}
+			}
+
+			second, err := a.CollectOnce(context.Background())
+			require.NoError(t, err)
+			require.Len(t, second, 1)
+			assert.Equal(t, checks.StatusPass, second[0].Status)
+			assert.Equal(t, true, second[0].Evidence["screen_lock_enforced"])
+			assert.Equal(t, true, second[0].Evidence["remembered"])
 		},
 	)
 }

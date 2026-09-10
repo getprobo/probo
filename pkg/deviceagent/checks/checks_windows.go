@@ -144,7 +144,7 @@ func windowsScreenLock(ctx context.Context) Result {
 	ev["users"] = perUser
 	if len(perUser) == 0 {
 		ev["note"] = "no interactive user hives loaded"
-		return unknown(ev)
+		return unknownRememberable(ev)
 	}
 
 	enforced := anyEnabled && !anyDisabled

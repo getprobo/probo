@@ -248,6 +248,19 @@ func TestParseDevicePostureValue_ScreenLock(t *testing.T) {
 				wantKind: coredata.DevicePostureValueKindUnknown,
 			},
 			{
+				name:     "windows remembered screen lock after no user hives",
+				checkKey: "SCREEN_LOCK",
+				evidence: map[string]any{
+					"backend":                "hkey_users",
+					"users":                  map[string]any{},
+					"note":                   "no interactive user hives loaded",
+					"screen_lock_enforced":   true,
+					"remembered":             true,
+					"remembered_observed_at": "2026-09-09T12:00:00Z",
+				},
+				wantKind: coredata.DevicePostureValueKindOn,
+			},
+			{
 				name:     "windows machine inactivity limit enforces lock",
 				checkKey: "SCREEN_LOCK",
 				evidence: map[string]any{

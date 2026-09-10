@@ -343,7 +343,25 @@ func (a *Agent) CollectOnce(ctx context.Context) ([]checks.Result, error) {
 		return results, fmt.Errorf("cannot complete posture collection: %w", err)
 	}
 
-	return results, nil
+	return a.rememberChecks(ctx, results), nil
+}
+
+func (a *Agent) rememberChecks(ctx context.Context, results []checks.Result) []checks.Result {
+	memory, err := loadCheckMemory(a.Dir)
+	if err != nil {
+		a.Logger.WarnCtx(ctx, "cannot load check memory", log.Error(err))
+
+		// An unreadable file must not be replaced with a partial map.
+		return results
+	}
+
+	if applyCheckMemory(results, memory) {
+		if err := saveCheckMemory(a.Dir, memory); err != nil {
+			a.Logger.WarnCtx(ctx, "cannot persist check memory", log.Error(err))
+		}
+	}
+
+	return results
 }
 
 func (a *Agent) checks() []checks.Check {

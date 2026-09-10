@@ -7,6 +7,9 @@ documented in this file.
 
 ### Fixed
 
+- The Windows screen lock check keeps the last PASS or FAIL when no
+  interactive user hives are loaded, so a signed-out host no longer flaps
+  to UNKNOWN after a user was once observed
 - The Windows screen lock check treats Entra ID users (`S-1-12-1-*`) as
   interactive hives, so a signed-in cloud account is no longer reported as
   "no interactive user hives loaded"
