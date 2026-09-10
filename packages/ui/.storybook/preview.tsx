@@ -16,7 +16,6 @@ import type { Preview } from "@storybook/react";
 import { useEffect } from "react";
 import { BrowserRouter } from "react-router";
 
-import "../src/theme.css";
 import "./preview.css";
 
 const preview: Preview = {
