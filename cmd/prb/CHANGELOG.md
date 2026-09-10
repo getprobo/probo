@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.227.0] - 2026-09-10
+
+### Added
+
+- `device view` and `device list` show each posture's schema version and observing agent version
+
 ## [0.226.0] - 2026-09-07
 
 ### Added
