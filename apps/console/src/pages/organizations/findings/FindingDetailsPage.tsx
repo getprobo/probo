@@ -60,6 +60,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
 
+import { FindingAuditsCard } from "./_components/FindingAuditsCard";
 import { FindingsConnectionKey } from "./FindingsPage";
 
 export const findingDetailsPageQuery = graphql`
@@ -87,6 +88,7 @@ export const findingDetailsPageQuery = graphql`
         }
         canUpdate: permission(action: "core:finding:update")
         canDelete: permission(action: "core:finding:delete")
+        ...FindingAuditsCard_finding
       }
     }
   }
@@ -373,6 +375,9 @@ export default function FindingDetailsPage(props: Props) {
       </div>
 
       <div className="max-w-4xl">
+        <div className="mb-6">
+          <FindingAuditsCard findingKey={finding} />
+        </div>
         <Card padded>
           <form onSubmit={e => void onSubmit(e)} className="space-y-6">
             <Field label={t("findingDetails.fields.description")}>

@@ -572,6 +572,7 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 				... on Finding {
 					audits(first: 10) {
 						edges {
+							referenceId
 							node {
 								id
 							}
@@ -587,7 +588,8 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 		Node struct {
 			Audits struct {
 				Edges []struct {
-					Node struct {
+					ReferenceID string `json:"referenceId"`
+					Node        struct {
 						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
@@ -602,6 +604,7 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, auditsResult.Node.Audits.TotalCount)
 	assert.Equal(t, auditID, auditsResult.Node.Audits.Edges[0].Node.ID)
+	assert.Equal(t, "MinNC/001", auditsResult.Node.Audits.Edges[0].ReferenceID)
 }
 
 func TestFinding_DeleteAuditMapping(t *testing.T) {
