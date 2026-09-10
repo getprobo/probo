@@ -21,6 +21,10 @@
 package drivers
 
 import (
+	"context"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,4 +52,54 @@ func TestActiveFromStatus(t *testing.T) {
 		require.NotNilf(t, got, "status %q", s)
 		assert.Falsef(t, *got, "status %q", s)
 	}
+}
+
+// TestRetryRoundTripperRewindsBody covers the retry of a POST. The first
+// attempt reads the body to the end, so an unrewound retry sends an empty one
+// and the provider answers 400 — turning a recoverable 5xx into a failed sync.
+func TestRetryRoundTripperRewindsBody(t *testing.T) {
+	t.Parallel()
+
+	var bodies []string
+
+	transport := roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		bodies = append(bodies, string(body))
+
+		status := http.StatusServiceUnavailable
+		if len(bodies) > 1 {
+			status = http.StatusOK
+		}
+
+		return &http.Response{
+			StatusCode: status,
+			Body:       io.NopCloser(strings.NewReader(`{}`)),
+			Header:     http.Header{},
+		}, nil
+	})
+
+	payload := `{"query":"{ viewer { id } }"}`
+
+	req, err := http.NewRequestWithContext(
+		context.Background(),
+		http.MethodPost,
+		"https://example.com/graphql",
+		strings.NewReader(payload),
+	)
+	require.NoError(t, err)
+
+	client := &http.Client{Transport: &retryRoundTripper{next: transport, maxRetries: 3}}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Len(t, bodies, 2)
+	// Both attempts carry the whole query, not just the first.
+	assert.Equal(t, payload, bodies[0])
+	assert.Equal(t, payload, bodies[1])
 }
