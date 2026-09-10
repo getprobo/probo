@@ -23,6 +23,7 @@ import type { ComponentProps, FC } from "react";
 import { Anthropic } from "./Anthropic";
 import { Apollo } from "./Apollo";
 import { Asana } from "./Asana";
+import { Attio } from "./Attio";
 import { Authentik } from "./Authentik";
 import { AWS } from "./AWS";
 import { BetterStack } from "./BetterStack";
@@ -97,6 +98,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ANTHROPIC: Anthropic,
   APOLLO: Apollo,
   ASANA: Asana,
+  ATTIO: Attio,
   AUTHENTIK: Authentik,
   BETTER_STACK: BetterStack,
   BITBUCKET: Bitbucket,

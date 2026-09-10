@@ -2,6 +2,7 @@ export { AWS } from "./AWS";
 export { Anthropic } from "./Anthropic";
 export { Apollo } from "./Apollo";
 export { Asana } from "./Asana";
+export { Attio } from "./Attio";
 export { Authentik } from "./Authentik";
 export { BetterStack } from "./BetterStack";
 export { Bitbucket } from "./Bitbucket";

@@ -45,3 +45,9 @@ export const Calendly: Story = {
     thirdParty: "CALENDLY",
   },
 };
+
+export const Attio: Story = {
+  args: {
+    thirdParty: "ATTIO",
+  },
+};

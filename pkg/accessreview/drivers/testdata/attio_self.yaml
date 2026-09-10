@@ -1,0 +1,54 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.attio.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.attio.com/v2/self
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 484
+        uncompressed: true
+        body: '{"active":true,"aud":"6f0b9b44-0000-4000-8000-000000000009","authorized_by_workspace_member_id":"50cf242c-0000-4000-8000-000000000001","client_id":"6f0b9b44-0000-4000-8000-000000000009","exp":null,"iat":1789034543,"iss":"attio.com","scope":"user_management:read","sub":"14beef7a-0000-4000-8000-000000000001","token_type":"Bearer","workspace_id":"14beef7a-0000-4000-8000-000000000001","workspace_logo_url":null,"workspace_name":"Example Workspace","workspace_slug":"example-workspace"}'
+        headers:
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - x-attio-client,x-attio-execution-id,x-attio-platform,x-attio-platform-version,x-attio-record-query-score,x-attio-app-installation-bundle-id,x-attio-locale,WWW-Authenticate
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - a38d9f259c73d121-CDG
+            Content-Length:
+                - "484"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 10 Sep 2026 10:06:44 GMT
+            Server:
+                - cloudflare
+            Strict-Transport-Security:
+                - max-age=7776000; includeSubDomains; preload
+            Vary:
+                - Origin
+            Via:
+                - 1.1 google
+            X-Attio-Execution-Id:
+                - 20a771f9-153d-4857-b9f3-be2046c131db
+            X-Frame-Options:
+                - DENY
+        status: 200 OK
+        code: 200
+        duration: 155.812875ms
