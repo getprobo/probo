@@ -88,7 +88,7 @@ export const findingDetailsPageQuery = graphql`
         }
         canUpdate: permission(action: "core:finding:update")
         canDelete: permission(action: "core:finding:delete")
-        ...FindingAuditsCard_finding
+        canListAudits: permission(action: "core:audit:list")
       }
     }
   }
@@ -375,9 +375,11 @@ export default function FindingDetailsPage(props: Props) {
       </div>
 
       <div className="max-w-4xl">
-        <div className="mb-6">
-          <FindingAuditsCard findingKey={finding} />
-        </div>
+        {finding.canListAudits && (
+          <div className="mb-6">
+            <FindingAuditsCard />
+          </div>
+        )}
         <Card padded>
           <form onSubmit={e => void onSubmit(e)} className="space-y-6">
             <Field label={t("findingDetails.fields.description")}>

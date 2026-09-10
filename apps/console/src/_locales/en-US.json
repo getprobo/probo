@@ -321,7 +321,7 @@
     "fields": { "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "acceptedRisk": "Accepted risk", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
     "placeholders": { "description": "Enter description", "source": "Enter source", "rootCause": "Enter root cause", "correctiveAction": "Enter corrective action", "effectivenessCheck": "Enter effectiveness check details" },
     "actions": { "delete": "Delete", "updating": "Updating...", "update": "Update" },
-    "audits": { "title": "Linked audits", "referenceId": "Audit reference", "link": "Link audit", "empty": "No audits linked" }
+    "audits": { "title": "Linked audits", "referenceId": "Audit reference", "link": "Link audit", "empty": "No audits linked", "loadMore": "Load more audits", "loading": "Loading..." }
   },
   "findingsPage": {
     "pageTitle": "Findings",

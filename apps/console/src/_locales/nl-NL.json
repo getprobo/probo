@@ -574,7 +574,9 @@
     "errors": {
       "title": "Fout",
       "delete": "Verwijderen van bevinding mislukt",
-      "update": "Bijwerken van bevinding mislukt"
+      "update": "Bijwerken van bevinding mislukt",
+      "linkAudit": "Koppelen van audit mislukt",
+      "unlinkAudit": "Ontkoppelen van audit mislukt"
     },
     "deleteConfirmation": "Hiermee wordt de bevinding {{referenceId}} permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "fields": {
@@ -601,6 +603,14 @@
       "delete": "Verwijderen",
       "updating": "Bijwerken...",
       "update": "Bijwerken"
+    },
+    "audits": {
+      "title": "Gekoppelde audits",
+      "referenceId": "Auditreferentie",
+      "link": "Audit koppelen",
+      "empty": "Geen audits gekoppeld",
+      "loadMore": "Meer audits laden",
+      "loading": "Laden..."
     }
   },
   "findingsPage": {
@@ -821,8 +831,14 @@
   "linkedAuditsDialog": {
     "title": "Audits koppelen",
     "searchPlaceholder": "Audits zoeken...",
+    "referenceIdLabel": "Auditreferentie",
+    "referenceIdDescription": "Voer de referentie in die voor deze bevinding in het auditrapport wordt gebruikt.",
+    "referenceIdPlaceholder": "Voer de rapportreferentie in",
+    "empty": "Geen audits gevonden voor uw zoekopdracht.",
     "actions": {
+      "back": "Terug",
       "close": "Sluiten",
+      "confirmLink": "Audit koppelen",
       "link": "Koppelen",
       "unlink": "Ontkoppelen"
     }

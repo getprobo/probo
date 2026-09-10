@@ -705,7 +705,13 @@ func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input 
 		return nil, err
 	}
 
-	finding, audit, err := r.probo.Findings.CreateAuditMapping(ctx, scope, input.FindingID, input.AuditID, input.ReferenceID)
+	finding, audit, findingAudit, err := r.probo.Findings.CreateAuditMapping(
+		ctx,
+		scope,
+		input.FindingID,
+		input.AuditID,
+		input.ReferenceID,
+	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create finding audit mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -716,7 +722,7 @@ func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input 
 		AuditEdge: types.NewFindingAuditEdge(
 			audit,
 			coredata.AuditOrderFieldCreatedAt,
-			input.ReferenceID,
+			&findingAudit.ReferenceID,
 		),
 	}, nil
 }

@@ -150,6 +150,7 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
 
   function onSelectAudit(auditId: string) {
     if (props.referenceIdRequired) {
+      setReferenceId("");
       setSelectedAuditId(auditId);
       return;
     }
@@ -201,7 +202,10 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
         <div className="flex justify-end gap-2">
           <Button
             variant="secondary"
-            onClick={() => setSelectedAuditId(null)}
+            onClick={() => {
+              setReferenceId("");
+              setSelectedAuditId(null);
+            }}
           >
             {t("linkedAuditsDialog.actions.back")}
           </Button>
@@ -273,7 +277,7 @@ function AuditRow(props: RowProps) {
 
   return (
     <div
-      className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full h-[100px]"
+      className="py-4 flex items-center gap-4 px-6 w-full h-[100px]"
     >
       <div className="flex flex-col items-start gap-1">
         <div className="font-medium">{props.audit.framework?.name}</div>

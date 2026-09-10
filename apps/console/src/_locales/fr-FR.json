@@ -574,7 +574,9 @@
     "errors": {
       "title": "Erreur",
       "delete": "Échec de la suppression du constat",
-      "update": "Échec de la mise à jour du constat"
+      "update": "Échec de la mise à jour du constat",
+      "linkAudit": "Échec de l’association de l’audit",
+      "unlinkAudit": "Échec de la dissociation de l’audit"
     },
     "deleteConfirmation": "Cette action supprimera définitivement le constat {{referenceId}}. Cette action est irréversible.",
     "fields": {
@@ -601,6 +603,14 @@
       "delete": "Supprimer",
       "updating": "Mise à jour...",
       "update": "Mettre à jour"
+    },
+    "audits": {
+      "title": "Audits associés",
+      "referenceId": "Référence de l’audit",
+      "link": "Associer un audit",
+      "empty": "Aucun audit associé",
+      "loadMore": "Charger plus d’audits",
+      "loading": "Chargement..."
     }
   },
   "findingsPage": {
@@ -821,8 +831,14 @@
   "linkedAuditsDialog": {
     "title": "Associer des audits",
     "searchPlaceholder": "Rechercher des audits...",
+    "referenceIdLabel": "Référence de l’audit",
+    "referenceIdDescription": "Saisissez la référence utilisée pour ce constat dans le rapport d’audit.",
+    "referenceIdPlaceholder": "Saisir la référence du rapport",
+    "empty": "Aucun audit ne correspond à votre recherche.",
     "actions": {
+      "back": "Retour",
       "close": "Fermer",
+      "confirmLink": "Associer l’audit",
       "link": "Associer",
       "unlink": "Dissocier"
     }

@@ -49,12 +49,14 @@ const findingAuditListItemFragment = graphql`
 interface FindingAuditListItemProps {
   auditEdgeKey: FindingAuditListItem_auditEdge$key;
   canUnlink: boolean;
+  disabled?: boolean;
   onUnlink: (auditId: string) => void;
 }
 
 export function FindingAuditListItem({
   auditEdgeKey,
   canUnlink,
+  disabled,
   onUnlink,
 }: FindingAuditListItemProps) {
   const auditEdge = useFragment(findingAuditListItemFragment, auditEdgeKey);
@@ -83,6 +85,7 @@ export function FindingAuditListItem({
           <Button
             variant="secondary"
             icon={IconTrashCan}
+            disabled={disabled}
             onClick={() => onUnlink(audit.id)}
           >
             {t("linkedAuditsCard.actions.unlink")}

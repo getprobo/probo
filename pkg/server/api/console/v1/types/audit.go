@@ -58,10 +58,15 @@ func NewFindingAuditConnection(
 
 	edges := make([]*AuditEdge, len(p.Data))
 	for i, audit := range p.Data {
+		var referenceID *string
+		if value, ok := referenceIDs[audit.ID]; ok {
+			referenceID = &value
+		}
+
 		edges[i] = NewFindingAuditEdge(
 			audit,
 			p.Cursor.OrderBy.Field,
-			referenceIDs[audit.ID],
+			referenceID,
 		)
 	}
 
@@ -96,12 +101,12 @@ func NewAuditConnection(
 func NewFindingAuditEdge(
 	a *coredata.Audit,
 	orderField coredata.AuditOrderField,
-	referenceID string,
+	referenceID *string,
 ) *AuditEdge {
 	return &AuditEdge{
 		Node:        NewAudit(a),
 		Cursor:      a.CursorKey(orderField),
-		ReferenceID: &referenceID,
+		ReferenceID: referenceID,
 	}
 }
 

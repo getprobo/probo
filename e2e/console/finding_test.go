@@ -531,6 +531,7 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 					}
 				}
 				auditEdge {
+					referenceId
 					node {
 						id
 					}
@@ -547,7 +548,8 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 				} `json:"node"`
 			} `json:"findingEdge"`
 			AuditEdge struct {
-				Node struct {
+				ReferenceID string `json:"referenceId"`
+				Node        struct {
 					ID string `json:"id"`
 				} `json:"node"`
 			} `json:"auditEdge"`
@@ -564,6 +566,17 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, findingID, linkResult.CreateFindingAuditMapping.FindingEdge.Node.ID)
 	assert.Equal(t, auditID, linkResult.CreateFindingAuditMapping.AuditEdge.Node.ID)
+	assert.Equal(t, "MinNC/001", linkResult.CreateFindingAuditMapping.AuditEdge.ReferenceID)
+
+	err = owner.Execute(linkQuery, map[string]any{
+		"input": map[string]any{
+			"findingId":   findingID,
+			"auditId":     auditID,
+			"referenceId": "MinNC/002",
+		},
+	}, &linkResult)
+	require.NoError(t, err)
+	assert.Equal(t, "MinNC/002", linkResult.CreateFindingAuditMapping.AuditEdge.ReferenceID)
 
 	// Verify audits appear on finding
 	auditsQuery := `
@@ -604,7 +617,7 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, auditsResult.Node.Audits.TotalCount)
 	assert.Equal(t, auditID, auditsResult.Node.Audits.Edges[0].Node.ID)
-	assert.Equal(t, "MinNC/001", auditsResult.Node.Audits.Edges[0].ReferenceID)
+	assert.Equal(t, "MinNC/002", auditsResult.Node.Audits.Edges[0].ReferenceID)
 }
 
 func TestFinding_DeleteAuditMapping(t *testing.T) {

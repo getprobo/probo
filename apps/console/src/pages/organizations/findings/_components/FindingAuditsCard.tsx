@@ -22,7 +22,9 @@ import { formatError } from "@probo/helpers";
 import {
   Button,
   Card,
+  IconChevronDown,
   IconPlusLarge,
+  Spinner,
   Table,
   Tbody,
   Td,
@@ -31,23 +33,52 @@ import {
   Tr,
   useToast,
 } from "@probo/ui";
+import { Suspense, useEffect, useTransition } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useMutation } from "react-relay";
+import {
+  graphql,
+  type PreloadedQuery,
+  useMutation,
+  usePaginationFragment,
+  usePreloadedQuery,
+  useQueryLoader,
+} from "react-relay";
+import { useParams } from "react-router";
 
 import type { FindingAuditsCard_finding$key } from "#/__generated__/core/FindingAuditsCard_finding.graphql";
 import type { FindingAuditsCardLinkMutation } from "#/__generated__/core/FindingAuditsCardLinkMutation.graphql";
+import type { FindingAuditsCardPaginationQuery } from "#/__generated__/core/FindingAuditsCardPaginationQuery.graphql";
+import type { FindingAuditsCardQuery } from "#/__generated__/core/FindingAuditsCardQuery.graphql";
 import type { FindingAuditsCardUnlinkMutation } from "#/__generated__/core/FindingAuditsCardUnlinkMutation.graphql";
 import { LinkedAuditsDialog } from "#/components/audits/LinkedAuditsDialog";
 
 import { FindingAuditListItem } from "./FindingAuditListItem";
 
+const findingAuditsCardQuery = graphql`
+  query FindingAuditsCardQuery($findingId: ID!) {
+    node(id: $findingId) {
+      __typename
+      ... on Finding {
+        ...FindingAuditsCard_finding
+      }
+    }
+  }
+`;
+
 const findingAuditsCardFragment = graphql`
-  fragment FindingAuditsCard_finding on Finding {
+  fragment FindingAuditsCard_finding on Finding
+  @refetchable(queryName: "FindingAuditsCardPaginationQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 100 }
+    after: { type: "CursorKey", defaultValue: null }
+  ) {
     id
     canLinkAudit: permission(action: "core:finding:create-audit-mapping")
     canUnlinkAudit: permission(action: "core:finding:delete-audit-mapping")
     audits(
-      first: 100
+      first: $first
+      after: $after
       orderBy: { field: CREATED_AT, direction: DESC }
     )
     @connection(key: "FindingAuditsCard_audits", filters: [])
@@ -64,12 +95,9 @@ const findingAuditsCardFragment = graphql`
 `;
 
 const linkAuditMutation = graphql`
-  mutation FindingAuditsCardLinkMutation(
-    $input: CreateFindingAuditMappingInput!
-    $connections: [ID!]!
-  ) {
+  mutation FindingAuditsCardLinkMutation($input: CreateFindingAuditMappingInput!) {
     createFindingAuditMapping(input: $input) {
-      auditEdge @prependEdge(connections: $connections) {
+      auditEdge {
         node {
           id
         }
@@ -90,20 +118,92 @@ const unlinkAuditMutation = graphql`
   }
 `;
 
-interface FindingAuditsCardProps {
+interface FindingAuditsCardContentProps {
+  queryRef: PreloadedQuery<FindingAuditsCardQuery>;
+}
+
+interface FindingAuditsCardDataProps {
   findingKey: FindingAuditsCard_finding$key;
 }
 
-export function FindingAuditsCard({ findingKey }: FindingAuditsCardProps) {
-  const finding = useFragment(findingAuditsCardFragment, findingKey);
+export function FindingAuditsCard() {
+  return (
+    <ErrorBoundary fallback={null}>
+      <FindingAuditsCardQueryLoader />
+    </ErrorBoundary>
+  );
+}
+
+function FindingAuditsCardQueryLoader() {
+  const { findingId } = useParams<{ findingId: string }>();
+  const [queryRef, loadQuery] = useQueryLoader<FindingAuditsCardQuery>(
+    findingAuditsCardQuery,
+  );
+
+  useEffect(() => {
+    if (findingId) {
+      loadQuery({ findingId });
+    }
+  }, [findingId, loadQuery]);
+
+  if (!queryRef) {
+    return (
+      <Card padded>
+        <Spinner centered />
+      </Card>
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={(
+        <Card padded>
+          <Spinner centered />
+        </Card>
+      )}
+    >
+      <FindingAuditsCardContent queryRef={queryRef} />
+    </Suspense>
+  );
+}
+
+function FindingAuditsCardContent({
+  queryRef,
+}: FindingAuditsCardContentProps) {
+  const query = usePreloadedQuery<FindingAuditsCardQuery>(
+    findingAuditsCardQuery,
+    queryRef,
+  );
+  if (query.node?.__typename !== "Finding") {
+    return null;
+  }
+
+  return <FindingAuditsCardData findingKey={query.node} />;
+}
+
+function FindingAuditsCardData({
+  findingKey,
+}: FindingAuditsCardDataProps) {
+  const {
+    data: finding,
+    hasNext,
+    isLoadingNext,
+    loadNext,
+    refetch,
+  } = usePaginationFragment<
+    FindingAuditsCardPaginationQuery,
+    FindingAuditsCard_finding$key
+  >(findingAuditsCardFragment, findingKey);
   const [linkAudit, isLinking] = useMutation<FindingAuditsCardLinkMutation>(
     linkAuditMutation,
   );
   const [unlinkAudit, isUnlinking] = useMutation<FindingAuditsCardUnlinkMutation>(
     unlinkAuditMutation,
   );
+  const [isRefreshing, startTransition] = useTransition();
   const { t } = useTranslation();
   const { toast } = useToast();
+
   const connectionId = finding.audits.__id;
   const auditEdges = finding.audits.edges;
   const linkedAudits = auditEdges.map(edge => edge.node);
@@ -120,7 +220,11 @@ export function FindingAuditsCard({ findingKey }: FindingAuditsCardProps) {
           auditId,
           referenceId,
         },
-        connections: [connectionId],
+      },
+      onCompleted() {
+        startTransition(() => {
+          refetch({}, { fetchPolicy: "network-only" });
+        });
       },
       onError(error) {
         toast({
@@ -158,6 +262,7 @@ export function FindingAuditsCard({ findingKey }: FindingAuditsCardProps) {
   }
 
   const columnCount = finding.canUnlinkAudit ? 4 : 3;
+  const isMutating = isLinking || isUnlinking || isRefreshing;
 
   return (
     <Card padded className="space-y-[10px]">
@@ -167,13 +272,17 @@ export function FindingAuditsCard({ findingKey }: FindingAuditsCardProps) {
         </div>
         {finding.canLinkAudit && (
           <LinkedAuditsDialog
-            disabled={isLinking || isUnlinking}
+            disabled={isMutating}
             linkedAudits={linkedAudits}
             referenceIdRequired
             onLink={onLink}
             onUnlink={finding.canUnlinkAudit ? onUnlink : undefined}
           >
-            <Button variant="tertiary" icon={IconPlusLarge}>
+            <Button
+              variant="tertiary"
+              icon={IconPlusLarge}
+              disabled={hasNext || isLoadingNext}
+            >
               {t("findingDetails.audits.link")}
             </Button>
           </LinkedAuditsDialog>
@@ -204,11 +313,25 @@ export function FindingAuditsCard({ findingKey }: FindingAuditsCardProps) {
               key={edge.node.id}
               auditEdgeKey={edge}
               canUnlink={finding.canUnlinkAudit}
+              disabled={isMutating}
               onUnlink={onUnlink}
             />
           ))}
         </Tbody>
       </Table>
+      {hasNext && (
+        <Button
+          className="mx-auto"
+          variant="tertiary"
+          icon={IconChevronDown}
+          disabled={isLoadingNext}
+          onClick={() => loadNext(100)}
+        >
+          {isLoadingNext
+            ? t("findingDetails.audits.loading")
+            : t("findingDetails.audits.loadMore")}
+        </Button>
+      )}
     </Card>
   );
 }

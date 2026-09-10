@@ -3444,7 +3444,13 @@ func (r *Resolver) LinkFindingAuditTool(ctx context.Context, req *mcp.CallToolRe
 
 	svc := r.proboSvc
 
-	finding, audit, err := svc.Findings.CreateAuditMapping(ctx, scope, input.FindingID, input.AuditID, input.ReferenceID)
+	finding, audit, _, err := svc.Findings.CreateAuditMapping(
+		ctx,
+		scope,
+		input.FindingID,
+		input.AuditID,
+		input.ReferenceID,
+	)
 	if err != nil {
 		return nil, types.LinkFindingAuditOutput{}, fmt.Errorf("cannot link finding to audit: %w", err)
 	}

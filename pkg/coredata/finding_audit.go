@@ -91,9 +91,9 @@ WHERE
 	return nil
 }
 
-func (fa FindingAudit) Upsert(
+func (fa *FindingAudit) Upsert(
 	ctx context.Context,
-	conn pg.Querier,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -114,7 +114,15 @@ VALUES (
     @tenant_id,
     @created_at
 )
-ON CONFLICT (finding_id, audit_id) DO NOTHING;
+ON CONFLICT (finding_id, audit_id) DO UPDATE
+SET
+    reference_id = EXCLUDED.reference_id
+RETURNING
+    finding_id,
+    audit_id,
+    reference_id,
+    organization_id,
+    created_at;
 `
 
 	args := pgx.StrictNamedArgs{
@@ -126,11 +134,17 @@ ON CONFLICT (finding_id, audit_id) DO NOTHING;
 		"created_at":      fa.CreatedAt,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot upsert finding audit: %w", err)
 	}
 
+	findingAudit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[FindingAudit])
+	if err != nil {
+		return fmt.Errorf("cannot collect finding audit: %w", err)
+	}
+
+	*fa = findingAudit
 	return nil
 }
 
