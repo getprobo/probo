@@ -41,9 +41,13 @@ const (
 	// not absent.
 	gcpActivityLookback = 90 * 24 * time.Hour
 
-	// gcpActivityTimeout caps enrichment so a long Logging walk cannot
-	// spend the campaign fetch budget and then drop the identity list.
+	// gcpActivityTimeout caps the Logging and Policy Analyzer walk so
+	// it cannot spend the campaign fetch budget.
 	gcpActivityTimeout = 20 * time.Second
+
+	// gcpMFATimeout caps Directory 2SV reads on their own clock so a
+	// long activity walk cannot skip MFA.
+	gcpMFATimeout = 10 * time.Second
 
 	gcpActivityLogID               = "cloudaudit.googleapis.com%2Factivity"
 	gcpActivityTypeSALastAuth      = "serviceAccountLastAuthentication"
@@ -73,19 +77,36 @@ func enrichGCPIdentities(
 	session *cloudgcp.Session,
 	records []AccountRecord,
 ) error {
+	return enrichGCPIdentitiesWithTimeouts(
+		ctx,
+		session,
+		records,
+		gcpActivityTimeout,
+		gcpMFATimeout,
+	)
+}
+
+func enrichGCPIdentitiesWithTimeouts(
+	ctx context.Context,
+	session *cloudgcp.Session,
+	records []AccountRecord,
+	activityTimeout time.Duration,
+	mfaTimeout time.Duration,
+) error {
 	if len(records) == 0 {
 		return nil
 	}
 
-	enrichCtx, cancel := context.WithTimeout(ctx, gcpActivityTimeout)
-	defer cancel()
-
-	logins, usedKey, activityErr := fetchGCPActivity(enrichCtx, session, records)
+	activityCtx, cancelActivity := context.WithTimeout(ctx, activityTimeout)
+	logins, usedKey, activityErr := fetchGCPActivity(activityCtx, session, records)
+	cancelActivity()
 	if errors.Is(activityErr, context.Canceled) && ctx.Err() != nil {
 		return activityErr
 	}
 
-	mfa, mfaErr := fetchGCPMFA(enrichCtx, session, records)
+	mfaCtx, cancelMFA := context.WithTimeout(ctx, mfaTimeout)
+	mfa, mfaErr := fetchGCPMFA(mfaCtx, session, records)
+	cancelMFA()
 	if errors.Is(mfaErr, context.Canceled) && ctx.Err() != nil {
 		return mfaErr
 	}

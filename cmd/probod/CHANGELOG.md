@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- GCP access-review enrichment gives Directory MFA its own timeout so a
+  long Admin Activity walk cannot skip 2SV reads
+
 ## [0.286.0] - 2026-09-10
 
 ### Added
