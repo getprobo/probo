@@ -1,0 +1,38 @@
+{
+  "title": "Aprobaciones",
+  "breadcrumb": "Aprobaciones",
+  "pending": {
+    "heading": "Pendientes de su aprobación ({{count}})",
+    "summaryTitle_one": "{{count}} documento por aprobar",
+    "summaryTitle_other": "{{count}} documentos por aprobar",
+    "summaryDescription": "Revise y apruebe los documentos necesarios para completar su incorporación.",
+    "action": "Empezar a aprobar",
+    "itemAction": "Aprobar"
+  },
+  "history": {
+    "heading": "Revisados ({{count}})",
+    "statusApproved": "Aprobado",
+    "statusRejected": "Rechazado"
+  },
+  "empty": {
+    "none": {
+      "title": "Todavía no hay solicitudes de aprobación",
+      "description": "Los documentos que necesiten su aprobación aparecerán aquí."
+    },
+    "allDone": {
+      "title": "Ya está todo listo",
+      "description": "Está al día. Los documentos que ya ha revisado aparecen abajo."
+    }
+  },
+  "document": {
+    "instruction": "Revise este documento y después apruébelo o rechácelo.",
+    "reviewAndApprove": "Revisar y aprobar",
+    "reject": "Rechazar",
+    "approved": "Ha aprobado este documento.",
+    "rejected": "Ha rechazado este documento.",
+    "voided": "Esta aprobación ya no es necesaria.",
+    "goToNext": "Ir al documento siguiente",
+    "finish": "Finalizar las aprobaciones",
+    "backToList": "Volver a las aprobaciones"
+  }
+}

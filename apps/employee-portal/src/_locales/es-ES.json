@@ -1,0 +1,173 @@
+{
+  "topBar": {
+    "tagline": "Portal del empleado"
+  },
+  "userMenu": {
+    "oauthTokens": "Tokens de OAuth",
+    "switchToDarkMode": "Cambiar al modo oscuro",
+    "switchToLightMode": "Cambiar al modo claro",
+    "help": "Ayuda",
+    "signOut": "Cerrar sesión",
+    "signOutFailed": "No se pudo cerrar la sesión"
+  },
+  "organizationsPage": {
+    "title": "Sus organizaciones",
+    "searchPlaceholder": "Buscar organizaciones",
+    "empty": "Todavía no tiene acceso a ningún portal del empleado.",
+    "emptySearch": "Ninguna organización coincide con la búsqueda.",
+    "status": {
+      "authenticated": "Autenticado",
+      "sessionExpired": "Sesión caducada",
+      "authenticationRequired": "Autenticación necesaria"
+    },
+    "actions": {
+      "open": "Abrir",
+      "continue": "Continuar"
+    }
+  },
+  "breadcrumb": {
+    "nav": "Ruta de navegación"
+  },
+  "homePage": {
+    "breadcrumb": "Inicio",
+    "welcome": "Le damos la bienvenida, {{name}}.",
+    "welcomeFallback": "Le damos la bienvenida.",
+    "getStarted": {
+      "title": "Primeros pasos",
+      "description": "Complete los pasos necesarios para terminar de configurar su portal del empleado.",
+      "signatures": {
+        "count_one": "{{count}} documento por firmar",
+        "count_other": "{{count}} documentos por firmar",
+        "description": "Revise y firme el documento que tiene asignado.",
+        "action": "Firmar"
+      },
+      "approvals": {
+        "count_one": "{{count}} documento por aprobar",
+        "count_other": "{{count}} documentos por aprobar",
+        "description": "Revise y apruebe el documento que tiene asignado.",
+        "action": "Aprobar"
+      }
+    },
+    "dashboard": {
+      "view": "Ver",
+      "allDone": "Ya está todo listo",
+      "signatures": {
+        "title": "Firmas",
+        "description": "Firme los documentos asignados.",
+        "empty": "No hay nada que firmar por ahora",
+        "pendingCount_one": "{{count}} documento por firmar",
+        "pendingCount_other": "{{count}} documentos por firmar",
+        "action": "Empezar a firmar"
+      },
+      "approvals": {
+        "title": "Aprobaciones",
+        "description": "Revise los documentos pendientes de aprobación.",
+        "empty": "No hay nada que aprobar por ahora",
+        "pendingCount_one": "{{count}} documento por aprobar",
+        "pendingCount_other": "{{count}} documentos por aprobar",
+        "action": "Empezar a aprobar"
+      },
+      "devices": {
+        "title": "Dispositivos",
+        "description": "Gestione sus dispositivos de trabajo.",
+        "connected": "Dispositivo conectado",
+        "action": "Registrar un dispositivo"
+      },
+      "slack": {
+        "title": "Slack",
+        "description": "Vincule su cuenta de Slack para que Probot pueda ayudarle.",
+        "connected": "Slack conectado",
+        "hint": "Ejecuta <cmd>/probot login</cmd> en Slack"
+      }
+    }
+  },
+  "common": {
+    "error": "Algo ha ido mal"
+  },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "queue": {
+    "previous": "Documento anterior",
+    "next": "Documento siguiente",
+    "close": "Cerrar",
+    "progressSignatures": "Documento {{current}} de {{total}} por firmar",
+    "progressApprovals": "Documento {{current}} de {{total}} por aprobar",
+    "empty": "No quedan documentos en esta cola"
+  },
+  "viewer": {
+    "pageOf": "Página {{current}} de {{total}}",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "zoomIn": "Ampliar",
+    "zoomOut": "Reducir",
+    "download": "Descargar PDF"
+  },
+  "documents": {
+    "lastUpdated": "Última actualización",
+    "columns": {
+      "title": "Título",
+      "classification": "Clasificación",
+      "type": "Tipo",
+      "status": "Estado",
+      "action": "Acción"
+    },
+    "types": {
+      "other": "Otro",
+      "governance": "Gobernanza",
+      "policy": "Política",
+      "procedure": "Procedimiento",
+      "plan": "Plan",
+      "register": "Registro",
+      "record": "Registro de actividad",
+      "report": "Informe",
+      "template": "Plantilla",
+      "statement_of_applicability": "Declaración de aplicabilidad"
+    },
+    "classifications": {
+      "public": "Público",
+      "internal": "Interno",
+      "confidential": "Confidencial",
+      "secret": "Secreto"
+    },
+    "versions": {
+      "heading": "Historial de versiones",
+      "count_one": "{{count}} versión",
+      "count_other": "{{count}} versiones",
+      "label": "v{{major}}.{{minor}}",
+      "current": "Actual",
+      "select": "Ver la versión {{major}}.{{minor}}",
+      "status": {
+        "inReview": "En revisión",
+        "approved": "Aprobado",
+        "rejected": "Rechazado",
+        "voided": "Anulado",
+        "signed": "Firmado"
+      }
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Página no encontrada",
+      "description": "La página que busca no existe o puede haberse movido."
+    },
+    "forbidden": {
+      "title": "Acceso denegado",
+      "description": "No tiene permiso para ver esta página. Vuelva a sus organizaciones o contacte con soporte si cree que se trata de un error."
+    },
+    "serverError": {
+      "title": "Algo ha ido mal",
+      "description": "Algo ha ido mal por nuestra parte. Inténtelo de nuevo o contacte con soporte si el problema continúa."
+    },
+    "generic": {
+      "title": "No se pudo cargar la página",
+      "description": "No hemos podido cargar esta página. Inténtelo de nuevo o contacte con soporte si el problema continúa."
+    },
+    "actions": {
+      "tryAgain": "Intentar de nuevo",
+      "backToOrganizations": "Volver a las organizaciones",
+      "contactSupport": "Contactar con soporte"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Registrar dispositivo",
+  "unavailable": {
+    "title": "Registro no disponible",
+    "description": "No tiene permiso para registrar dispositivos en ninguna organización.",
+    "home": "Volver a las organizaciones"
+  },
+  "steps": {
+    "organization": {
+      "title": "Elegir organización",
+      "description": "Elija a qué organización pertenecerá este dispositivo."
+    }
+  },
+  "organization": {
+    "title": "Elegir organización",
+    "description": "Elija qué organización tendrá y gestionará este dispositivo.",
+    "placeholder": "Seleccione una organización",
+    "continue": "Continuar"
+  }
+}
