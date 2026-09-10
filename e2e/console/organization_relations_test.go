@@ -42,6 +42,7 @@ type organizationRelationGraph struct {
 	controlID              string
 	measureID              string
 	taskID                 string
+	taskCommentID          string
 	soaID                  string
 	assetID                string
 	datumID                string
@@ -110,6 +111,10 @@ func populateOrganizationRelationGraph(
 		Create()
 	g.taskID = factory.NewTask(owner, g.measureID).
 		WithName(marker + " task").
+		Create()
+	g.taskCommentID = factory.NewTaskComment(owner, g.taskID).
+		WithContent(marker + " task comment").
+		WithOwnerID(g.ownerProfileID).
 		Create()
 	g.soaID = factory.NewStatementOfApplicability(owner).
 		WithName(marker + " soa").
@@ -687,6 +692,38 @@ func orgRelationsGovernanceCollections(
 	)
 	assert.GreaterOrEqual(t, result.Node.Tasks.TotalCount, 1)
 	assert.True(t, collectRelationNodeIDs(result.Node.Tasks.Edges)[g.taskID])
+
+	var taskComments struct {
+		Node struct {
+			Comments struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"comments"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Task {
+					comments(first: 50) {
+						totalCount
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": g.taskID}, &taskComments)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, taskComments.Node.Comments.TotalCount, 1)
+	assert.True(
+		t,
+		collectRelationNodeIDs(taskComments.Node.Comments.Edges)[g.taskCommentID],
+	)
 
 	var controlResult struct {
 		Node struct {
