@@ -85,8 +85,16 @@ type CrispDriver struct {
 
 var _ Driver = (*CrispDriver)(nil)
 
+// crispMemberTypeOperator is the only operators/list member type that is a
+// human holding access today. Crisp also returns "invite" (invited but not
+// joined, and carrying no user_id to key an entry on) and "sandbox" (a Crisp
+// Marketplace plugin developer, not a workspace member) from the same
+// endpoint; both would otherwise surface as accounts nobody granted.
+const crispMemberTypeOperator = "operator"
+
 type crispOperatorsResponse struct {
 	Data []struct {
+		Type    string               `json:"type"`
 		Details crispOperatorDetails `json:"details"`
 	} `json:"data"`
 }
@@ -98,6 +106,25 @@ type crispOperatorDetails struct {
 	LastName  string `json:"last_name"`
 	Role      string `json:"role"`
 	Title     string `json:"title"`
+	// HasToken is Crisp's two-factor flag, documented as "whether operator has
+	// Two Factor Authentication enabled or not". A pointer so an absent field
+	// stays Unknown instead of reporting every operator as MFA-disabled.
+	HasToken *bool `json:"has_token"`
+}
+
+// crispMFAStatus maps Crisp's has_token flag onto an MFA status. Crisp
+// documents the field for operator members only, so a missing value means the
+// endpoint told us nothing rather than that the factor is off.
+func crispMFAStatus(hasToken *bool) coredata.MFAStatus {
+	if hasToken == nil {
+		return coredata.MFAStatusUnknown
+	}
+
+	if *hasToken {
+		return coredata.MFAStatusEnabled
+	}
+
+	return coredata.MFAStatusDisabled
 }
 
 // NewCrispDriver builds a driver against baseURL, the versioned Crisp REST
@@ -130,6 +157,10 @@ func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 	records := make([]AccountRecord, 0, len(resp.Data))
 
 	for _, op := range resp.Data {
+		if !strings.EqualFold(strings.TrimSpace(op.Type), crispMemberTypeOperator) {
+			continue
+		}
+
 		details := op.Details
 
 		email := strings.TrimSpace(details.Email)
@@ -143,7 +174,7 @@ func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			Roles:       ownerMemberRoles(details.Role),
 			JobTitle:    strings.TrimSpace(details.Title),
 			IsAdmin:     new(isOwnerRole(details.Role)),
-			MFAStatus:   coredata.MFAStatusUnknown,
+			MFAStatus:   crispMFAStatus(details.HasToken),
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			ExternalID:  strings.TrimSpace(details.UserID),
