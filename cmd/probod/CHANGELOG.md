@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.286.0] - 2026-09-10
+
+### Added
+
+- Device postures are stamped with a schema version and the observing agent's version, exposed via GraphQL, MCP, and the CLI; older agents fall back to their last heartbeat version so a rolling deploy keeps reporting
+
 ## [0.285.0] - 2026-09-10
 
 ### Added
