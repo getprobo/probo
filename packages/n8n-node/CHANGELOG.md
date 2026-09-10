@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.228.0] - 2026-09-10
+
+### Added
+
+- Device `Get` and `Get All` actions expose each posture's schema version and observing agent version
+
 ## [0.227.0] - 2026-09-10
 
 ### Added
