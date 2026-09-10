@@ -88,6 +88,7 @@ WHERE
 	}
 
 	*fas = findingAudits
+
 	return nil
 }
 
@@ -145,6 +146,7 @@ RETURNING
 	}
 
 	*fa = findingAudit
+
 	return nil
 }
 

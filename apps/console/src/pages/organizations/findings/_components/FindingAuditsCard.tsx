@@ -146,7 +146,7 @@ function FindingAuditsCardQueryLoader() {
     }
   }, [findingId, loadQuery]);
 
-  if (!queryRef) {
+  if (!queryRef || queryRef.variables.findingId !== findingId) {
     return (
       <Card padded>
         <Spinner centered />
