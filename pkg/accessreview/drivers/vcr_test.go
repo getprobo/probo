@@ -27,6 +27,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,17 +41,6 @@ import (
 // versions. They are ignored by the matcher so cassettes keep replaying after
 // dependency bumps.
 var versionedClientHeaders = []string{"User-Agent", "X-Goog-Api-Client"}
-
-// awsSigningHeaders are written by SigV4 and the AWS SDK on every request.
-// They must not be persisted, and they cannot be replayed: dates, signatures
-// and invocation IDs change each call.
-var awsSigningHeaders = []string{
-	"X-Amz-Date",
-	"X-Amz-Security-Token",
-	"X-Amz-Content-Sha256",
-	"Amz-Sdk-Invocation-Id",
-	"Amz-Sdk-Request",
-}
 
 // newRecorder creates a go-vcr recorder for the given cassette path. When
 // the env var is non-empty the recorder runs in record mode, otherwise
@@ -127,31 +118,64 @@ func newRecorderWithMatcher(
 	return rec
 }
 
-// stripCassetteSecrets removes request headers that carry credentials so a
-// cassette can never be committed with a live secret.
+// replaySafeRequestHeaders are the request headers a cassette may keep. It is
+// an allowlist, and that direction is the whole point: a credential travels in
+// a header whose name only its provider knows, so a list of headers to REMOVE
+// is fail-open — the first provider to authenticate through a name nobody
+// thought of writes its key into a cassette verbatim, and this repository is
+// public. ElevenLabs was that provider: xi-api-key canonicalizes to
+// Xi-Api-Key, which is not the X-Api-Key that Anthropic uses, so the older
+// removal list did not cover it.
+//
+// Inverting it makes the failure loud instead. Everything here is either
+// content negotiation or a provider's API-version/routing pin, which the
+// request matcher compares and which carries no secret. A provider that needs
+// a new one gets a test that cannot find its interaction — a failure that
+// stops at CI, unlike a leaked key.
+var replaySafeRequestHeaders = []string{
+	"Accept",
+	"Accept-Encoding",
+	"Content-Type",
+	"User-Agent",
+	// Provider API-version and routing pins. They select a response shape, so
+	// the matcher must still see them.
+	"Anthropic-Version",
+	"Intercom-Version",
+	"Notion-Version",
+	"Square-Version",
+	"X-Crisp-Tier",
+	"X-Github-Api-Version",
+	"X-Goog-Api-Client",
+	"X-Amz-Target",
+	// Heroku pages with Range/Next-Range, so the request header selects which
+	// page comes back and the matcher has to see it.
+	"Range",
+}
+
+// stripCassetteSecrets drops every request header that is not known to be safe
+// to persist, so a cassette cannot be committed with a live secret.
 func stripCassetteSecrets(i *cassette.Interaction) error {
-	i.Request.Headers.Del("Authorization")
-	// Providers like Anthropic (x-api-key), SigNoz (SIGNOZ-API-KEY) and
-	// Brevo (api-key) authenticate via a custom header rather than
-	// Authorization; strip those too so a re-record never persists a raw key.
-	i.Request.Headers.Del("X-Api-Key")
-	i.Request.Headers.Del("Signoz-Api-Key")
-	i.Request.Headers.Del("Api-Key")
-	// Scaleway authenticates with the secret key in X-Auth-Token.
-	i.Request.Headers.Del("X-Auth-Token")
-	// Dotfile authenticates with the key in X-DOTFILE-API-KEY
-	// (canonicalized to X-Dotfile-Api-Key).
-	i.Request.Headers.Del("X-Dotfile-Api-Key")
+	for name := range i.Request.Headers {
+		if !slices.Contains(replaySafeRequestHeaders, http.CanonicalHeaderKey(name)) {
+			i.Request.Headers.Del(name)
+		}
+	}
 
 	return nil
 }
 
-func sanitizeAWSSigningHeaders(i *cassette.Interaction) error {
-	for _, header := range awsSigningHeaders {
-		i.Request.Headers.Del(header)
-	}
+// replaceCassetteBody swaps a recorded response body and keeps every statement
+// of its length in step: the interaction's own field and the Content-Length
+// header the provider sent. A sanitizer that sets only the field leaves a
+// header describing the length of a body that is no longer there, which is
+// harmless to a decoder reading to EOF and misleading to everyone else.
+func replaceCassetteBody(i *cassette.Interaction, body string) {
+	i.Response.Body = body
+	i.Response.ContentLength = int64(len(body))
 
-	return nil
+	if _, ok := i.Response.Headers["Content-Length"]; ok {
+		i.Response.Headers.Set("Content-Length", strconv.Itoa(len(body)))
+	}
 }
 
 // newGCPRecorder replays a hand-authored GCP cassette. It never records:
@@ -204,7 +228,6 @@ func newAWSRecorder(t *testing.T, cassettePath string) *recorder.Recorder {
 		cassettePath,
 		"",
 		awsAPIMatcher,
-		sanitizeAWSSigningHeaders,
 	)
 }
 
