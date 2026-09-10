@@ -29,7 +29,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 
 const assumeOrganizationSessionQuery = graphql`
-  query AssumeOrganizationSessionQuery @throwOnFieldError {
+  query AssumeOrganizationSessionQuery {
     viewer @required(action: THROW) {
       ssoLoginURL
     }
