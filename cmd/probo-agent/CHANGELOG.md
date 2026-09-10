@@ -5,6 +5,13 @@ documented in this file.
 
 ## Unreleased
 
+## [0.6.6] - 2026-09-10
+
+### Added
+
+- Posture pushes are stamped with the agent's version, so the server can
+  tell which agent observed a given check
+
 ### Fixed
 
 - The Windows screen lock check keeps the last PASS or FAIL when no
@@ -13,6 +20,9 @@ documented in this file.
 - The Windows screen lock check treats Entra ID users (`S-1-12-1-*`) as
   interactive hives, so a signed-in cloud account is no longer reported as
   "no interactive user hives loaded"
+- The Windows password policy check reads the effective SAM minimum from
+  `secedit` and the Intune DeviceLock PIN length, so domain- and
+  Entra-joined machines no longer report UNKNOWN
 
 ## [0.6.5] - 2026-09-09
 
