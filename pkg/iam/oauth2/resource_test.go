@@ -119,7 +119,7 @@ func TestServiceProtectedResource(t *testing.T) {
 	}
 }
 
-func TestServiceProtectedResourceTrailingSlash(t *testing.T) {
+func TestServiceProtectedResource_TrailingSlash(t *testing.T) {
 	t.Parallel()
 
 	// RFC 3986 section 6.2.3: for http(s) an empty path and "/" denote the same
@@ -187,7 +187,7 @@ func TestServiceProtectedResourceTrailingSlash(t *testing.T) {
 	}
 }
 
-func TestServiceProtectedResourceNormalizationIsNarrow(t *testing.T) {
+func TestServiceProtectedResource_NormalizationIsNarrow(t *testing.T) {
 	t.Parallel()
 
 	// Only the root case is equivalent. A trailing slash on a longer path is a
@@ -202,6 +202,21 @@ func TestServiceProtectedResourceNormalizationIsNarrow(t *testing.T) {
 	} {
 		_, err := service.protectedResources([]string{value})
 		require.ErrorIs(t, err, ErrInvalidTarget, "value %q must not be accepted", value)
+	}
+}
+
+func TestNormalizeResource_NonHTTPSchemeUnaffected(t *testing.T) {
+	t.Parallel()
+
+	// RFC 3986 section 6.2.3 only defines the empty-path/"/" equivalence for
+	// http and https. A non-http(s) resource must be returned unchanged, even
+	// when its path is a bare "/".
+	for _, value := range []uri.URI{
+		"urn:example:resource/",
+		"mailto:user@example.com/",
+		"ftp://example.com/",
+	} {
+		assert.Equal(t, value, normalizeResource(value), "value %q must not be normalized", value)
 	}
 }
 

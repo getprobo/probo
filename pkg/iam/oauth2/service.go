@@ -1907,10 +1907,15 @@ func matchResource(supported []uri.URI, requested uri.URI) (uri.URI, bool) {
 
 // normalizeResource applies RFC 3986 section 6.2.3 scheme-based normalization
 // to a resource identifier: for an http(s) URI a bare "/" path is equivalent to
-// no path at all. A trailing slash on any longer path is a genuinely different
-// path and is left alone, so this widens nothing beyond the root case. Input
-// that does not parse is returned unchanged, leaving the caller to reject it.
+// no path at all. Non-http(s) resources and a trailing slash on any longer
+// path are left alone, so this widens nothing beyond the http(s) root case.
+// Input that does not parse is returned unchanged, leaving the caller to
+// reject it.
 func normalizeResource(resource uri.URI) uri.URI {
+	if !resource.IsHTTP() {
+		return resource
+	}
+
 	parsed, err := url.Parse(resource.String())
 	if err != nil {
 		return resource
