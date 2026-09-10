@@ -168,6 +168,47 @@ func windowsInt(s string) (int, bool) {
 	return n, true
 }
 
+// parseWindowsSeceditMinPasswordLength reads the first MinimumPasswordLength
+// assignment from a secedit INF export. The key is locale-stable; surrounding
+// whitespace and a missing key must not look like a zero-length policy.
+func parseWindowsSeceditMinPasswordLength(inf string) (int, bool) {
+	for line := range strings.SplitSeq(inf, "\n") {
+		key, value, ok := strings.Cut(strings.TrimSpace(line), "=")
+		if !ok {
+			continue
+		}
+
+		if !strings.EqualFold(strings.TrimSpace(key), "MinimumPasswordLength") {
+			continue
+		}
+
+		return windowsInt(value)
+	}
+
+	return 0, false
+}
+
+// windowsPasswordPolicyOn picks the stricter of the local SAM policy and the
+// MDM DeviceLock PIN length. Both sources are optional: domain-joined hosts
+// often have only secedit, Entra-joined hosts often have only DeviceLock.
+func windowsPasswordPolicyOn(inf, mdm string) (int, string, bool) {
+	samLen, samOK := parseWindowsSeceditMinPasswordLength(inf)
+	mdmLen, mdmOK := windowsInt(mdm)
+
+	switch {
+	case samOK && mdmOK:
+		length := max(mdmLen, samLen)
+
+		return length, "max", true
+	case samOK:
+		return samLen, "secedit", true
+	case mdmOK:
+		return mdmLen, "mdm_device_lock", true
+	default:
+		return 0, "", false
+	}
+}
+
 func windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart string) (bool, bool) {
 	switch strings.TrimSpace(serviceStart) {
 	case "4":

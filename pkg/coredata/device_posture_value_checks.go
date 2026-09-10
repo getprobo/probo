@@ -513,6 +513,8 @@ func parsePasswordPolicyValue(ev map[string]any) DevicePostureValue {
 		return minPasswordLengthValue(minLen)
 	}
 
+	// Windows reports the stricter of secedit and MDM DeviceLock as
+	// min_password_length. Older agents sent that key with no backend.
 	if minLen, ok := numberEvidence(ev, "min_password_length"); ok {
 		return minPasswordLengthValue(minLen)
 	}

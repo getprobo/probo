@@ -22,7 +22,6 @@ package checks
 
 import (
 	"context"
-	"strconv"
 	"strings"
 )
 
@@ -391,31 +390,53 @@ func windowsAutoUpdate(ctx context.Context) Result {
 	return fail(ev)
 }
 
+// ADSI MinPasswordLength is an IADsDomain property; WinNT://$COMPUTERNAME
+// throws DISP_E_UNKNOWNNAME on domain- and Entra-joined hosts.
+const windowsPasswordPolicyScript = `` +
+	`$d = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\DeviceLock' -ErrorAction SilentlyContinue; ` +
+	`$dir = Join-Path $env:TEMP ('probo-secpol-' + [guid]::NewGuid().Guid); ` +
+	`$sam = ''; ` +
+	`try { ` +
+	`  New-Item -ItemType Directory -Path $dir -Force | Out-Null; ` +
+	`  $cfg = Join-Path $dir 'secpol.inf'; ` +
+	`  secedit /export /cfg $cfg /areas SECURITYPOLICY | Out-Null; ` +
+	`  if (Test-Path -LiteralPath $cfg) { ` +
+	`    $sam = Get-Content -LiteralPath $cfg -Encoding Unicode -Raw ` +
+	`  } ` +
+	`} finally { ` +
+	`  Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue ` +
+	`}; ` +
+	`Write-Output "MinDevicePasswordLength=$($d.MinDevicePasswordLength)"; Write-Output $sam`
+
 func windowsPasswordPolicy(ctx context.Context) Result {
-	out := powershell(
-		ctx,
-		`([ADSI]"WinNT://$env:COMPUTERNAME").InvokeGet('MinPasswordLength')`,
-	)
+	out := powershell(ctx, windowsPasswordPolicyScript)
 	if out.Err != nil {
 		return unknown(
 			map[string]any{
-				"error":  out.Err.Error(),
+				"error":  errString(out.Err),
 				"stderr": out.Stderr,
 			},
 		)
 	}
 
-	minLen, err := strconv.Atoi(strings.TrimSpace(out.Stdout))
-	if err != nil {
-		return unknown(
-			map[string]any{
-				"error": "invalid MinPasswordLength",
-				"raw":   truncate(out.Stdout, 80),
-			},
-		)
+	header, inf, _ := strings.Cut(out.Stdout, "\n")
+	values := parseWindowsJoinedPairs(header)
+	minLen, backend, known := windowsPasswordPolicyOn(
+		inf,
+		values["MinDevicePasswordLength"],
+	)
+
+	ev := map[string]any{
+		"backend": backend,
+		"raw":     strings.TrimSpace(header),
+	}
+	if !known {
+		ev["error"] = "no password length from secedit or DeviceLock"
+
+		return unknown(ev)
 	}
 
-	ev := map[string]any{"min_password_length": minLen}
+	ev["min_password_length"] = minLen
 	if minLen > 0 {
 		return pass(ev)
 	}

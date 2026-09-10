@@ -586,6 +586,26 @@ func TestParseDevicePostureValue_PasswordPolicy(t *testing.T) {
 				wantNumber: new(8),
 			},
 			{
+				name:     "windows secedit and device lock still use min password length",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"backend":             "max",
+					"min_password_length": float64(6),
+					"raw":                 "MinDevicePasswordLength=6;MinimumPasswordLength=0",
+				},
+				wantKind:   coredata.DevicePostureValueKindMinPasswordLength,
+				wantNumber: new(6),
+			},
+			{
+				name:     "windows password policy probe failure is unknown",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"error":  "exit status 1",
+					"stderr": "Exception calling \"InvokeGet\"",
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
 				name:     "darwin pwpolicy without account policies",
 				checkKey: "PASSWORD_POLICY",
 				evidence: map[string]any{

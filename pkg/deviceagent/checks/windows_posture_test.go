@@ -286,6 +286,137 @@ func TestWindowsTimeSyncOn(t *testing.T) {
 	)
 }
 
+func TestParseWindowsSeceditMinPasswordLength(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		inf           string
+		expectedLen   int
+		expectedKnown bool
+	}{
+		{
+			name:          "system access assignment",
+			inf:           "[System Access]\nMinimumPasswordLength = 8\nPasswordComplexity = 1\n",
+			expectedLen:   8,
+			expectedKnown: true,
+		},
+		{
+			name:          "zero is a known policy",
+			inf:           "MinimumPasswordLength = 0\n",
+			expectedKnown: true,
+		},
+		{
+			name:          "compact assignment without spaces",
+			inf:           "MinimumPasswordLength=14",
+			expectedLen:   14,
+			expectedKnown: true,
+		},
+		{
+			name: "commented assignment is ignored",
+			inf:  "; MinimumPasswordLength = 8\nPasswordComplexity = 1\n",
+		},
+		{
+			name: "missing key is unknown",
+			inf:  "[System Access]\nPasswordComplexity = 1\n",
+		},
+		{
+			name: "empty export is unknown",
+			inf:  "",
+		},
+		{
+			name: "non-numeric value is unknown",
+			inf:  "MinimumPasswordLength = unset\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				length, known := parseWindowsSeceditMinPasswordLength(tt.inf)
+				assert.Equal(t, tt.expectedLen, length)
+				assert.Equal(t, tt.expectedKnown, known)
+			},
+		)
+	}
+}
+
+func TestWindowsPasswordPolicyOn(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		inf             string
+		mdm             string
+		expectedLen     int
+		expectedBackend string
+		expectedKnown   bool
+	}{
+		{
+			name:            "secedit only",
+			inf:             "MinimumPasswordLength = 8\n",
+			expectedLen:     8,
+			expectedBackend: "secedit",
+			expectedKnown:   true,
+		},
+		{
+			name:            "mdm device lock only",
+			mdm:             "6",
+			expectedLen:     6,
+			expectedBackend: "mdm_device_lock",
+			expectedKnown:   true,
+		},
+		{
+			name:            "stricter source wins",
+			inf:             "MinimumPasswordLength = 0\n",
+			mdm:             "6",
+			expectedLen:     6,
+			expectedBackend: "max",
+			expectedKnown:   true,
+		},
+		{
+			name:            "equal sources still report max",
+			inf:             "MinimumPasswordLength = 8\n",
+			mdm:             "8",
+			expectedLen:     8,
+			expectedBackend: "max",
+			expectedKnown:   true,
+		},
+		{
+			name:            "both zero is a known disabled policy",
+			inf:             "MinimumPasswordLength = 0\n",
+			mdm:             "0",
+			expectedBackend: "max",
+			expectedKnown:   true,
+		},
+		{
+			name: "neither source is unknown",
+		},
+		{
+			name: "blank secedit and mdm are unknown",
+			inf:  "",
+			mdm:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				length, backend, known := windowsPasswordPolicyOn(tt.inf, tt.mdm)
+				assert.Equal(t, tt.expectedLen, length)
+				assert.Equal(t, tt.expectedBackend, backend)
+				assert.Equal(t, tt.expectedKnown, known)
+			},
+		)
+	}
+}
+
 func TestWindowsAutoUpdateOn(t *testing.T) {
 	t.Parallel()
 
