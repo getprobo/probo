@@ -18,22 +18,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package shared
+package coredata
 
-type (
-	PostureValue struct {
-		Kind   string `json:"kind"`
-		Text   string `json:"text"`
-		Number *int   `json:"number"`
-	}
-
-	Posture struct {
-		ID           string       `json:"id"`
-		CheckKey     string       `json:"checkKey"`
-		Status       string       `json:"status"`
-		Value        PostureValue `json:"value"`
-		Version      string       `json:"version"`
-		AgentVersion string       `json:"agentVersion"`
-		ObservedAt   string       `json:"observedAt"`
-	}
+import (
+	"encoding"
+	"fmt"
 )
+
+type DevicePostureVersion string
+
+const (
+	DevicePostureVersionV1 DevicePostureVersion = "v1"
+)
+
+var (
+	_ fmt.Stringer             = DevicePostureVersion("")
+	_ encoding.TextMarshaler   = DevicePostureVersion("")
+	_ encoding.TextUnmarshaler = (*DevicePostureVersion)(nil)
+)
+
+func DevicePostureVersions() []DevicePostureVersion {
+	return []DevicePostureVersion{
+		DevicePostureVersionV1,
+	}
+}
+
+func (v DevicePostureVersion) IsValid() bool {
+	switch v {
+	case DevicePostureVersionV1:
+		return true
+	}
+
+	return false
+}
+
+func (v DevicePostureVersion) String() string {
+	return string(v)
+}
+
+func (v DevicePostureVersion) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DevicePostureVersion) UnmarshalText(text []byte) error {
+	val := DevicePostureVersion(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DevicePostureVersion value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}

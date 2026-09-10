@@ -516,7 +516,10 @@ func (a *Agent) doPostures(ctx context.Context) {
 		return
 	}
 
-	if err := a.client.PushPostures(ctx, payload); err != nil {
+	if err := a.client.PushPostures(
+		ctx,
+		PosturesRequest{AgentVersion: a.Version, Results: payload},
+	); err != nil {
 		a.Logger.ErrorCtx(ctx, "posture push failed", log.Error(err))
 
 		if IsUnauthorized(err) {
@@ -524,7 +527,12 @@ func (a *Agent) doPostures(ctx context.Context) {
 			return
 		}
 
-		dropped, enqueueErr := enqueuePendingPostureBatch(a.Dir, payload, a.currentTime())
+		dropped, enqueueErr := enqueuePendingPostureBatch(
+			a.Dir,
+			a.Version,
+			payload,
+			a.currentTime(),
+		)
 		if enqueueErr != nil {
 			a.Logger.ErrorCtx(ctx, "cannot queue posture batch after failed push", log.Error(enqueueErr))
 			return
@@ -561,7 +569,10 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 	}
 
 	for i, batch := range batches {
-		if err := a.client.PushPostures(ctx, batch.Results); err != nil {
+		if err := a.client.PushPostures(
+			ctx,
+			PosturesRequest{AgentVersion: batch.AgentVersion, Results: batch.Results},
+		); err != nil {
 			if IsUnauthorized(err) {
 				a.handleUnauthorized()
 				return

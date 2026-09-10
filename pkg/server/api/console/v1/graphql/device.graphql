@@ -40,6 +40,13 @@ enum DeviceState
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceStateRevoked")
 }
 
+enum DevicePostureVersion
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DevicePostureVersion"
+    ) {
+    V1 @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureVersionV1")
+}
+
 enum DevicePostureStatus
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.DevicePostureStatus"
@@ -152,6 +159,8 @@ type DevicePosture implements Node {
     checkKey: String!
     status: DevicePostureStatus!
     value: DevicePostureValue!
+    version: DevicePostureVersion!
+    agentVersion: String!
     observedAt: Datetime!
 }
 

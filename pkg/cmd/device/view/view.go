@@ -62,6 +62,8 @@ query($id: ID!) {
           text
           number
         }
+        version
+        agentVersion
         observedAt
       }
     }
@@ -212,11 +214,13 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 					p.CheckKey,
 					p.Status,
 					value,
+					p.Version,
+					p.AgentVersion,
 					cmdutil.FormatTime(p.ObservedAt),
 				})
 			}
 
-			t := cmdutil.NewTable("CHECK", "STATUS", "VALUE", "OBSERVED").Rows(rows...)
+			t := cmdutil.NewTable("CHECK", "STATUS", "VALUE", "VERSION", "AGENT", "OBSERVED").Rows(rows...)
 			_, _ = fmt.Fprintln(out, t)
 
 			return nil

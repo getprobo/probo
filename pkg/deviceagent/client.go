@@ -83,7 +83,8 @@ type (
 	}
 
 	PosturesRequest struct {
-		Results []PostureResultPayload `json:"results"`
+		AgentVersion string                 `json:"agent_version"`
+		Results      []PostureResultPayload `json:"results"`
 	}
 )
 
@@ -105,8 +106,8 @@ func (c *Client) Heartbeat(ctx context.Context, req HeartbeatRequest) (*Heartbea
 }
 
 // PushPostures sends posture check results.
-func (c *Client) PushPostures(ctx context.Context, results []PostureResultPayload) error {
-	if len(results) == 0 {
+func (c *Client) PushPostures(ctx context.Context, req PosturesRequest) error {
+	if len(req.Results) == 0 {
 		return nil
 	}
 
@@ -115,7 +116,7 @@ func (c *Client) PushPostures(ctx context.Context, results []PostureResultPayloa
 		http.MethodPost,
 		"/api/agent/v1/postures",
 		true,
-		PosturesRequest{Results: results},
+		req,
 		nil,
 	)
 }

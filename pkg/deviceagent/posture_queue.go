@@ -35,8 +35,9 @@ const (
 )
 
 type pendingPostureBatch struct {
-	QueuedAt time.Time              `json:"queued_at"`
-	Results  []PostureResultPayload `json:"results"`
+	QueuedAt     time.Time              `json:"queued_at"`
+	AgentVersion string                 `json:"agent_version,omitempty"`
+	Results      []PostureResultPayload `json:"results"`
 }
 
 func pendingPosturesPath(dir string) string {
@@ -111,6 +112,7 @@ func savePendingPostureBatches(dir string, batches []pendingPostureBatch) error 
 
 func enqueuePendingPostureBatch(
 	dir string,
+	agentVersion string,
 	results []PostureResultPayload,
 	queuedAt time.Time,
 ) (int, error) {
@@ -129,8 +131,9 @@ func enqueuePendingPostureBatch(
 	batches = append(
 		batches,
 		pendingPostureBatch{
-			QueuedAt: queuedAt.UTC(),
-			Results:  clonedResults,
+			QueuedAt:     queuedAt.UTC(),
+			AgentVersion: agentVersion,
+			Results:      clonedResults,
 		},
 	)
 

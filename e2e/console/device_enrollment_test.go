@@ -437,7 +437,10 @@ func enrollActivateAndAuthenticateDevice(
 func reportPostures(t *testing.T, apiKey string, results []map[string]any) int {
 	t.Helper()
 
-	body, err := json.Marshal(map[string]any{"results": results})
+	body, err := json.Marshal(map[string]any{
+		"agent_version": "1.0.0",
+		"results":       results,
+	})
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(
