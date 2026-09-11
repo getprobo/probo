@@ -101,7 +101,7 @@ func (s *InstallationService) Complete(
 				scope,
 				processingToken.String(),
 				time.Now(),
-				installStateStaleAfter,
+				coredata.InstallStateStaleAfter,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot claim Slack install state: %w", err)
