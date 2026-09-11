@@ -703,9 +703,9 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		// and failing at connect time.
 		//
 		// A provider with an install ceremony is connected by the redirect, not
-		// by the API-key dialog; ManagedAPIKeyFormReady owns that rule.
+		// by the API-key dialog; OffersAPIKeyForm owns that rule.
 		installReady := reg.SupportsInstall() && r.providerRegistry.ManagedConnectorReady(provider)
-		apiKeyManaged := r.providerRegistry.ManagedAPIKeyFormReady(provider)
+		apiKeyManaged := reg.OffersAPIKeyForm() && r.providerRegistry.ManagedConnectorReady(provider)
 
 		// WIF is a connect path only when this deployment can mint federation
 		// tokens. AWS has no other path, so it stays hidden until then.

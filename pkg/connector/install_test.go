@@ -28,23 +28,30 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
-const (
-	installStateSecret  = "install-state-signing-key"
-	installStateOrgGID  = "gid:organization:AAAAAAAAAAAAAAAAAAAAAA"
-	installStateUserGID = "gid:identity:BBBBBBBBBBBBBBBBBBBBBB"
-)
+const installStateSecret = "install-state-signing-key"
+
+func installStateGIDs() (organizationID gid.GID, identityID gid.GID) {
+	tenantID := gid.NewTenantID()
+
+	return gid.New(tenantID, coredata.OrganizationEntityType),
+		gid.New(tenantID, coredata.IdentityEntityType)
+}
 
 func TestInstallState_RoundTrip(t *testing.T) {
 	t.Parallel()
 
+	organizationID, identityID := installStateGIDs()
+
 	state, err := connector.NewInstallState(
 		installStateSecret,
 		"CRISP",
-		installStateOrgGID,
-		installStateUserGID,
+		organizationID,
+		identityID,
 	)
 	require.NoError(t, err)
 
@@ -52,8 +59,8 @@ func TestInstallState_RoundTrip(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "CRISP", payload.Data.Provider)
-	assert.Equal(t, installStateOrgGID, payload.Data.OrganizationID)
-	assert.Equal(t, installStateUserGID, payload.Data.IdentityID)
+	assert.Equal(t, organizationID, payload.Data.OrganizationID)
+	assert.Equal(t, identityID, payload.Data.IdentityID)
 	assert.NotEmpty(t, payload.Data.Nonce, "the claim ledger keys on the digest of this token")
 }
 
@@ -65,19 +72,21 @@ func TestInstallState_RoundTrip(t *testing.T) {
 func TestInstallState_NonceMakesEachMintUnique(t *testing.T) {
 	t.Parallel()
 
+	organizationID, identityID := installStateGIDs()
+
 	first, err := connector.NewInstallState(
 		installStateSecret,
 		"CRISP",
-		installStateOrgGID,
-		installStateUserGID,
+		organizationID,
+		identityID,
 	)
 	require.NoError(t, err)
 
 	second, err := connector.NewInstallState(
 		installStateSecret,
 		"CRISP",
-		installStateOrgGID,
-		installStateUserGID,
+		organizationID,
+		identityID,
 	)
 	require.NoError(t, err)
 
@@ -87,11 +96,13 @@ func TestInstallState_NonceMakesEachMintUnique(t *testing.T) {
 func TestInstallState_Rejects(t *testing.T) {
 	t.Parallel()
 
+	organizationID, identityID := installStateGIDs()
+
 	valid, err := connector.NewInstallState(
 		installStateSecret,
 		"CRISP",
-		installStateOrgGID,
-		installStateUserGID,
+		organizationID,
+		identityID,
 	)
 	require.NoError(t, err)
 
@@ -138,8 +149,8 @@ func TestInstallState_Rejects(t *testing.T) {
 			10*time.Minute,
 			connector.InstallState{
 				Provider:       "CRISP",
-				OrganizationID: installStateOrgGID,
-				IdentityID:     installStateUserGID,
+				OrganizationID: organizationID,
+				IdentityID:     identityID,
 				Nonce:          "nonce",
 			},
 		)
@@ -158,8 +169,8 @@ func TestInstallState_Rejects(t *testing.T) {
 			-time.Minute,
 			connector.InstallState{
 				Provider:       "CRISP",
-				OrganizationID: installStateOrgGID,
-				IdentityID:     installStateUserGID,
+				OrganizationID: organizationID,
+				IdentityID:     identityID,
 				Nonce:          "nonce",
 			},
 		)

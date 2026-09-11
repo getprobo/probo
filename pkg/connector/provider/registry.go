@@ -597,19 +597,6 @@ func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
 	return true
 }
 
-// ManagedAPIKeyFormReady reports whether this deployment can connect p through
-// the managed API-key dialog: the Probo-held credential is configured AND that
-// dialog is a path the customer can reach at all. It is what the catalog
-// reports as apiKeyManaged.
-func (r *Registry) ManagedAPIKeyFormReady(p coredata.ConnectorProvider) bool {
-	reg, ok := r.Get(p)
-	if !ok {
-		return false
-	}
-
-	return reg.OffersAPIKeyForm() && r.ManagedConnectorReady(p)
-}
-
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review
 // driver for the given provider needs to list user accounts. Returns
 // nil for providers that do not need any scopes (Notion, Intercom)

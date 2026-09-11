@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"go.gearno.de/crypto/uuid"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
@@ -46,8 +47,8 @@ const (
 // organization and identity GIDs, which is true of every connector state today
 // and is the reason nothing secret goes in here.
 type InstallState struct {
-	Provider       string `json:"provider"`
-	OrganizationID string `json:"organization_id"`
+	Provider       string  `json:"provider"`
+	OrganizationID gid.GID `json:"organization_id"`
 	// IdentityID BINDS THE TWO LEGS TO ONE HUMAN and IS re-checked on the
 	// callback: the session cookie on the callback must belong to this identity
 	// or the request is 401'd with nothing claimed. It binds the human, NOT the
@@ -61,7 +62,7 @@ type InstallState struct {
 	// organization can mint a state, hand the vendor's own install link to an
 	// administrator of an unrelated tenant, and capture that tenant on a wholly
 	// GENUINE vendor token.
-	IdentityID string `json:"identity_id"`
+	IdentityID gid.GID `json:"identity_id"`
 	// Nonce makes each minted state string unique, which is what lets the
 	// single-use claim ledger key on its digest. Two tabs are therefore two
 	// claims, which is why row dedupe needs its own lock (see
@@ -74,8 +75,8 @@ type InstallState struct {
 func NewInstallState(
 	secret string,
 	provider string,
-	organizationID string,
-	identityID string,
+	organizationID gid.GID,
+	identityID gid.GID,
 ) (string, error) {
 	nonce, err := uuid.NewV7()
 	if err != nil {

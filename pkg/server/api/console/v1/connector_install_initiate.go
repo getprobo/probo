@@ -125,8 +125,8 @@ func handleConnectorInstallInitiate(
 		state, err := connector.NewInstallState(
 			installStateKey,
 			string(p),
-			organizationID.String(),
-			identity.ID.String(),
+			organizationID,
+			identity.ID,
 		)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot mint connector install state", log.Error(err))

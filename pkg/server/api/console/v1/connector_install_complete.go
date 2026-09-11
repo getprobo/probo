@@ -203,19 +203,7 @@ func handleConnectorInstallComplete(
 			return
 		}
 
-		organizationID, err := gid.ParseGID(payload.Data.OrganizationID)
-		if err != nil {
-			logger.WarnCtx(
-				ctx,
-				"rejecting connector install callback with an unparseable organization",
-				log.String("provider", string(p)),
-				log.String("path", r.URL.Path),
-			)
-			httpserver.RenderError(w, http.StatusBadRequest, errInstallInvalidCallback)
-
-			return
-		}
-
+		organizationID := payload.Data.OrganizationID
 		scope := coredata.NewScopeFromObjectID(organizationID)
 
 		// The state is spendable only by the human it was minted for. Verifying
@@ -229,7 +217,7 @@ func handleConnectorInstallComplete(
 		// One opaque answer for "no cookie" and "wrong identity" alike, and
 		// never the identity GIDs in the log.
 		identity := authn.IdentityFromContext(ctx)
-		if identity == nil || identity.ID.String() != payload.Data.IdentityID {
+		if identity == nil || identity.ID != payload.Data.IdentityID {
 			logger.WarnCtx(
 				ctx,
 				"rejecting connector install callback carrying no matching identity",

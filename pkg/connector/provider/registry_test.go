@@ -879,12 +879,12 @@ func TestRegistry_ManagedConnectorReady(t *testing.T) {
 	})
 }
 
-// TestRegistry_ManagedAPIKeyFormReady pins the one rule three surfaces used to
-// answer separately: a provider whose connect path is an app install is
-// connected by the redirect, so it never reports an API-key dialog — not even
-// fully configured. Crisp is that provider, so "configured" and "offers the
-// dialog" must come apart here.
-func TestRegistry_ManagedAPIKeyFormReady(t *testing.T) {
+// TestCrispOffersNoAPIKeyForm pins the rule the catalog resolver and the
+// settings-reach-a-dialog invariant both read: a provider whose connect path is
+// an app install never reports an API-key dialog, not even fully configured.
+// Crisp is that provider, so "configured" and "offers the dialog" have to come
+// apart here.
+func TestCrispOffersNoAPIKeyForm(t *testing.T) {
 	t.Parallel()
 
 	r := provider.NewBuiltinRegistry()
@@ -892,15 +892,14 @@ func TestRegistry_ManagedAPIKeyFormReady(t *testing.T) {
 	r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "plugin-id")
 
 	require.True(t, r.ManagedConnectorReady(coredata.ConnectorProviderCrisp))
-	assert.False(
-		t,
-		r.ManagedAPIKeyFormReady(coredata.ConnectorProviderCrisp),
-		"an install provider is connected by the redirect, never by the API-key dialog",
-	)
 
 	reg, ok := r.Get(coredata.ConnectorProviderCrisp)
 	require.True(t, ok)
-	assert.False(t, reg.OffersAPIKeyForm())
+	assert.False(
+		t,
+		reg.OffersAPIKeyForm(),
+		"an install provider is connected by the redirect, never by the API-key dialog",
+	)
 }
 
 func TestRegistry_InstallURL(t *testing.T) {
