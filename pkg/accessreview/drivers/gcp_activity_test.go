@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -405,6 +406,48 @@ func TestEnrichGCPIdentities_DegradesWhenActivityDenied(t *testing.T) {
 	}
 
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, records[2].AuthMethod)
+}
+
+func TestEnrichGCPIdentities_KeepsMFAAfterActivityTimeout(t *testing.T) {
+	t.Parallel()
+
+	rec := newGCPRecorder(t, "testdata/gcp_mfa")
+	directory := newVCRClient(rec, "")
+	session := cloudgcp.NewSessionFromToken(
+		vcrGCPProjectNumber,
+		vcrGCPAccessToken,
+		cloudgcp.WithHTTPClient(
+			&http.Client{
+				Transport: roundTripFunc(
+					func(req *http.Request) (*http.Response, error) {
+						if req.URL.Host == "admin.googleapis.com" {
+							return directory.Transport.RoundTrip(req)
+						}
+
+						<-req.Context().Done()
+
+						return nil, req.Context().Err()
+					},
+				),
+			},
+		),
+	)
+	records := gcpTestRecords()
+
+	err := enrichGCPIdentitiesWithTimeouts(
+		context.Background(),
+		session,
+		records,
+		time.Millisecond,
+		time.Second,
+	)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
+
+	assert.Nil(t, records[0].LastLogin)
+	assert.Equal(t, coredata.MFAStatusEnabled, records[0].MFAStatus)
+	assert.Equal(t, coredata.MFAStatusUnknown, records[1].MFAStatus)
+	assert.Equal(t, coredata.MFAStatusUnknown, records[2].MFAStatus)
 }
 
 func TestEnrichGCPIdentities_FailsOnCancel(t *testing.T) {

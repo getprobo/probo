@@ -40,5 +40,8 @@
       "installViaTerraform": "Installer via Terraform",
       "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
     }
+  },
+  "gcpLastLoginCallout": {
+    "lastLoginNotice": "Le connecteur GCP ne trouve pas toujours la dernière connexion pour une campagne. Le champ dernière connexion peut rester vide. La <link>documentation GCP</link> contient plus d’informations."
   }
 }
