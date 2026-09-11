@@ -397,12 +397,23 @@ type InstallConfig struct {
 	//
 	// The callback's single-use claim turns this classification into a
 	// customer-visible outcome, so it must be total and explicit — BURN or
-	// RELEASE, never whatever the error string happens to say. TERMINAL (burn):
-	// a refused proof, a missing proof parameter, a malformed tenant id, a
-	// 401/403 on Probo's own app credential, and a 404 saying the app is not
-	// installed on that tenant. RETRYABLE (release): 429, any 5xx, any
-	// transport failure — and those alone get wrapped in
-	// ErrInstallVerificationTransient.
+	// RELEASE, never whatever the error string happens to say.
+	//
+	// The dividing line is whether the CUSTOMER could ever succeed by trying
+	// again inside their window, not whose fault it is.
+	//
+	// TERMINAL (burn): a refused proof, a missing proof parameter, a malformed
+	// tenant id, a 404 saying the app is not installed on that tenant, and any
+	// other 4xx describing the request itself. Retrying reproduces it exactly,
+	// and burning is what holds a forgery to one attempt.
+	//
+	// RETRYABLE (release, wrapped in ErrInstallVerificationTransient): 429, any
+	// 5xx, any transport failure, AND a 401/403 on Probo's own app credential.
+	// That last one looks like a hard failure but is not the customer's to fix
+	// — a token mid-rotation or a half-propagated deploy is something an
+	// operator can correct inside the ten-minute window, and it can never be
+	// reached by a forged proof, which is compared rather than rejected by the
+	// vendor.
 	Verify func(ctx context.Context, c *http.Client, appID string, q url.Values) (resourceID string, err error)
 }
 

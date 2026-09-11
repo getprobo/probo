@@ -276,8 +276,23 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 
 		expanded := strings.Replace(reg.Endpoints.Install, installAppIDPlaceholder, "app-id", 1)
-		if _, err := url.Parse(expanded); err != nil {
+
+		installURL, err := url.Parse(expanded)
+		if err != nil {
 			return fmt.Errorf("cannot register connector provider %q: Endpoints.Install is not a URL once expanded: %w", reg.Provider, err)
+		}
+
+		// url.Parse accepts a relative reference and any scheme, so parsing
+		// alone would let a hostless or javascript: template through and the
+		// initiate handler would redirect the customer to Probo's own origin,
+		// or worse. The destination is a vendor's install page; it is always
+		// absolute and always https.
+		if installURL.Scheme != "https" || installURL.Host == "" {
+			return fmt.Errorf(
+				"cannot register connector provider %q: Endpoints.Install must expand to an absolute https URL, got %q",
+				reg.Provider,
+				expanded,
+			)
 		}
 
 		// The install redirect is the only way in, so an extra-settings list

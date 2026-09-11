@@ -443,6 +443,30 @@ func TestRegistry_Register(t *testing.T) {
 			})
 		}
 
+		// url.Parse accepts a relative reference and any scheme, so parsing
+		// alone is not enough: a hostless template would send the customer
+		// back into Probo's own origin rather than out to the vendor.
+		for name, template := range map[string]string{
+			"a relative reference": "/initiate/plugin/%s/",
+			"no host":              "https:///initiate/plugin/%s/",
+			"plain http":           "http://app.crisp.chat/initiate/plugin/%s/",
+			"a javascript scheme":  "javascript:alert(%s)",
+		} {
+			t.Run("install endpoint that is "+name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: template},
+					APIKey:      managedAPIKey(),
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "absolute https URL")
+			})
+		}
+
 		// The redirect is the only way in, so these would render nowhere and
 		// the completion path would persist only the resource id — the
 		// customer's values dropped without a word.
