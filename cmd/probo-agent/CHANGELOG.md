@@ -5,6 +5,21 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.1-rc.1] - 2026-09-11
+
+### Fixed
+
+- Windows enrollment no longer trusts a user-forged
+  `ProgramData\Probo\run\enrolled` marker file. Production paths now
+  require a SYSTEM or Administrators owner, and `Probo`, `run`, and
+  `agent` directories are created with a protected DACL so standard
+  users cannot write to them.
+- Windows agent state directories under `%ProgramData%\Probo` now trust
+  the Administrators group (not just SYSTEM), set it as owner on create,
+  rewrite child DACLs, and re-secure the directory before token exchange
+  and when loading state — closing a gap where UAC enroll or an
+  inherited ACE could block or weaken protection.
+
 ## [0.7.0] - 2026-09-11
 
 ### Added
