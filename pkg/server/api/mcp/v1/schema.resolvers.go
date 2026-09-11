@@ -9598,3 +9598,36 @@ func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 		DeletedTaskCommentID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) GetEvidenceFileUrlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetEvidenceFileUrlInput) (*mcp.CallToolResult, types.GetEvidenceFileUrlOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionEvidenceList)
+	if err != nil {
+		return nil, types.GetEvidenceFileUrlOutput{}, err
+	}
+
+	evidence, err := r.proboSvc.Evidences.Get(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetEvidenceFileUrlOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load evidence for file URL", log.Error(err))
+
+		return nil, types.GetEvidenceFileUrlOutput{}, fmt.Errorf("internal server error")
+	}
+
+	if evidence.EvidenceFileId == nil {
+		return nil, types.GetEvidenceFileUrlOutput{}, fmt.Errorf("evidence does not have an attached file")
+	}
+
+	fileURL, err := r.proboSvc.Files.GenerateFileURL(ctx, scope, *evidence.EvidenceFileId, 15*time.Minute)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot generate evidence file URL", log.Error(err))
+
+		return nil, types.GetEvidenceFileUrlOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetEvidenceFileUrlOutput{
+		URL: fileURL,
+	}, nil
+}
