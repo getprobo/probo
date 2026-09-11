@@ -18,31 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build darwin
+//go:build !darwin && !windows
 
-package elevate
+package update
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
-
-func TestRunElevatedInstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
-
-	err := RunElevatedInstall(
-		"/Library/Probo/probo-agent",
-		"https://example.com",
-		"token",
-		"/var/lib/probo-agent",
-	)
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
-}
-
-func TestRunElevatedUninstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
-
-	err := RunElevatedUninstall("/Library/Probo/probo-agent", "/var/lib/probo-agent")
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
+func lockDownReplacedBinary(string) error {
+	return nil
 }

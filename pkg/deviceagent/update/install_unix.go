@@ -42,25 +42,27 @@ func replaceBinary(dst, src string) error {
 		return fmt.Errorf("cannot chmod new binary: %w", err)
 	}
 
-	if err := os.Rename(src, dst); err == nil {
-		return nil
+	if err := os.Rename(src, dst); err != nil {
+		// Cross-filesystem fallback: copy into <dst>.new, fsync,
+		// then rename within the destination directory.
+		staging := dst + ".new"
+		if copyErr := copyFile(src, staging); copyErr != nil {
+			return copyErr
+		}
+
+		if err := os.Chmod(staging, 0o755); err != nil {
+			_ = os.Remove(staging)
+			return fmt.Errorf("cannot chmod staged binary: %w", err)
+		}
+
+		if err := os.Rename(staging, dst); err != nil {
+			_ = os.Remove(staging)
+			return fmt.Errorf("cannot atomically replace %s: %w", dst, err)
+		}
 	}
 
-	// Cross-filesystem fallback: copy into <dst>.new, fsync,
-	// then rename within the destination directory.
-	staging := dst + ".new"
-	if err := copyFile(src, staging); err != nil {
+	if err := lockDownReplacedBinary(dst); err != nil {
 		return err
-	}
-
-	if err := os.Chmod(staging, 0o755); err != nil {
-		_ = os.Remove(staging)
-		return fmt.Errorf("cannot chmod staged binary: %w", err)
-	}
-
-	if err := os.Rename(staging, dst); err != nil {
-		_ = os.Remove(staging)
-		return fmt.Errorf("cannot atomically replace %s: %w", dst, err)
 	}
 
 	return nil

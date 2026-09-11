@@ -20,29 +20,37 @@
 
 //go:build darwin
 
-package elevate
+package service
 
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/deviceagent"
 )
 
-func TestRunElevatedInstallRequiresPrivilegedHelper(t *testing.T) {
+func TestInstall_RejectsNonCanonicalExePath(t *testing.T) {
 	t.Parallel()
 
-	err := RunElevatedInstall(
-		"/Library/Probo/probo-agent",
-		"https://example.com",
-		"token",
-		"/var/lib/probo-agent",
+	err := Install(
+		Config{
+			ExePath: "/usr/local/bin/probo-agent",
+			Dir:     "/var/lib/probo-agent",
+		},
 	)
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), deviceagent.DefaultExecutablePath())
 }
 
-func TestRunElevatedUninstallRequiresPrivilegedHelper(t *testing.T) {
+func TestInstall_RejectsEmptyExePath(t *testing.T) {
 	t.Parallel()
 
-	err := RunElevatedUninstall("/Library/Probo/probo-agent", "/var/lib/probo-agent")
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
+	err := Install(
+		Config{
+			Dir: "/var/lib/probo-agent",
+		},
+	)
+	require.Error(t, err)
+	assert.Equal(t, "executable path is required", err.Error())
 }
