@@ -514,83 +514,68 @@ func TestDeleteConnector(t *testing.T) {
 	assert.Equal(t, connectorID, deleteResult.DeleteConnector.DeletedConnectorID)
 }
 
-// TestCrispVerificationCode exercises the crispVerificationCode query end to end
-// through the live schema and authorization stack. The code is a deterministic
-// HMAC bound to (organization, website), so the query needs only the managed
-// token secret (always set) and organization authorization — no Crisp
-// credentials — and asserts the code's shape, determinism, org-binding, and the
-// INVALID / FORBIDDEN error paths.
-func TestCrispVerificationCode(t *testing.T) {
+// TestCrispConnectsByAppInstall pins the connect path Crisp actually offers,
+// through the live schema. The provider is a managed API key AND an app
+// install, and those two must not both surface: the redirect is the only way in
+// (its API-key dialog would have no fields and would create a connector with no
+// website id), so installSupported is true exactly where apiKeyManaged and
+// apiKeySupported are false.
+//
+// It is in the catalog at all only because the e2e probod configures the plugin
+// token and plugin id; without both, Crisp ships deactivated and is absent.
+func TestCrispConnectsByAppInstall(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	orgID := owner.GetOrganizationID().String()
 
 	const query = `
-		query($organizationId: ID!, $websiteId: String!) {
-			crispVerificationCode(organizationId: $organizationId, websiteId: $websiteId)
+		query {
+			accessReviewDrivers {
+				provider
+				apiKeySupported
+				apiKeyManaged
+				installSupported
+				apiKeyExtraSettings {
+					key
+				}
+			}
 		}
 	`
 
-	getCode := func(t *testing.T, client *testutil.Client, org, website string) string {
-		t.Helper()
-
-		var result struct {
-			CrispVerificationCode string `json:"crispVerificationCode"`
-		}
-
-		err := client.Execute(query, map[string]any{
-			"organizationId": org,
-			"websiteId":      website,
-		}, &result)
-		require.NoError(t, err)
-
-		return result.CrispVerificationCode
+	var result struct {
+		AccessReviewDrivers []struct {
+			Provider            string `json:"provider"`
+			APIKeySupported     bool   `json:"apiKeySupported"`
+			APIKeyManaged       bool   `json:"apiKeyManaged"`
+			InstallSupported    bool   `json:"installSupported"`
+			APIKeyExtraSettings []struct {
+				Key string `json:"key"`
+			} `json:"apiKeyExtraSettings"`
+		} `json:"accessReviewDrivers"`
 	}
 
-	const website = "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+	require.NoError(t, owner.Execute(query, nil, &result))
 
-	t.Run("owner gets a 12-char base32 code, deterministic per input", func(t *testing.T) {
-		t.Parallel()
+	crispFound := false
 
-		code := getCode(t, owner, orgID, website)
-		assert.Regexp(t, "^[A-Z2-7]{12}$", code)
+	for _, driver := range result.AccessReviewDrivers {
+		if driver.Provider != "CRISP" {
+			assert.Falsef(
+				t,
+				driver.InstallSupported,
+				"provider %q reports an install path; crisp is the only one",
+				driver.Provider,
+			)
 
-		// The same inputs re-derive the same code; nothing is stored.
-		assert.Equal(t, code, getCode(t, owner, orgID, website))
+			continue
+		}
 
-		// A different website under the same organization yields a different code.
-		assert.NotEqual(t, code, getCode(t, owner, orgID, "99999999-0000-0000-0000-000000000000"))
-	})
+		crispFound = true
 
-	t.Run("code is organization-bound", func(t *testing.T) {
-		t.Parallel()
+		assert.True(t, driver.InstallSupported, "crisp connects by app install")
+		assert.False(t, driver.APIKeyManaged, "an install provider must not also offer the API-key dialog")
+		assert.False(t, driver.APIKeySupported, "the customer pastes no crisp key")
+		assert.Empty(t, driver.APIKeyExtraSettings, "the ceremony supplies the website id, not a form")
+	}
 
-		otherOwner := testutil.NewClient(t, testutil.RoleOwner)
-
-		mine := getCode(t, owner, orgID, website)
-		theirs := getCode(t, otherOwner, otherOwner.GetOrganizationID().String(), website)
-		assert.NotEqual(t, mine, theirs, "same website under different organizations must not share a code")
-	})
-
-	t.Run("blank websiteId is rejected as INVALID", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := owner.Do(query, map[string]any{
-			"organizationId": orgID,
-			"websiteId":      "   ",
-		})
-		testutil.RequireErrorCode(t, err, "INVALID", "blank websiteId must return INVALID not INTERNAL")
-	})
-
-	t.Run("viewer cannot read the verification code", func(t *testing.T) {
-		t.Parallel()
-
-		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-		_, err := viewer.Do(query, map[string]any{
-			"organizationId": viewer.GetOrganizationID().String(),
-			"websiteId":      website,
-		})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to read the crisp verification code")
-	})
+	assert.True(t, crispFound, "crisp is configured in the e2e probod and must be in the catalog")
 }

@@ -305,6 +305,136 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByOrganizationIDProviderAndSettingForUpdate loads the connector in
+// organizationID for provider whose settings carry settingValue at settingKey,
+// locking the row for the caller's transaction. It is the idempotency lookup for
+// an app-install callback: the vendor tenant id is the ceremony's durable
+// output, so a repeat install of the same tenant must find its existing row
+// rather than add a second.
+//
+// It deliberately tolerates duplicates. The (organization_id, provider,
+// protocol) unique index was dropped in 20260819T142937Z and the retired API-key
+// create path took a customer-typed website id, so an organization may ALREADY
+// hold two rows for one tenant. The query therefore orders and takes one row
+// instead of asserting there is exactly one: pgx.CollectExactlyOneRow -- the
+// house pattern for a singular loader -- returns ErrTooManyRows on exactly that
+// pre-existing data, which would turn a tolerated duplicate into a 500 on every
+// re-install of that tenant.
+//
+// The (created_at, id) tiebreak is what makes the choice deterministic: every
+// caller converges on the same, oldest row, so two concurrent completions cannot
+// each adopt a different duplicate and diverge.
+//
+// Callers must already hold the advisory lock from LockConnectorInstallResource:
+// FOR UPDATE on zero rows locks nothing, so this loader alone does not serialize
+// two concurrent first installs of the same tenant.
+//
+// It does not decrypt the connection. Returns ErrResourceNotFound when there is
+// no such connector.
+func (c *Connector) LoadByOrganizationIDProviderAndSettingForUpdate(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+	settingKey string,
+	settingValue string,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND provider = @provider
+    AND settings ->> @setting_key = @setting_value
+ORDER BY
+    created_at, id
+LIMIT 1
+FOR UPDATE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        provider,
+		"setting_key":     settingKey,
+		"setting_value":   settingValue,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	loadedConnector, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Connector])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect connector row: %w", err)
+	}
+
+	*c = loadedConnector
+
+	return nil
+}
+
+// LockConnectorInstallResource serializes concurrent install completions that
+// target the same (organization, provider, vendor tenant id) for the rest of the
+// transaction. It must be taken BEFORE the find-or-create load: two states are
+// two distinct claim rows, and FOR UPDATE on a not-yet-existing row locks
+// nothing, so without it two tabs both miss and both insert.
+//
+// resourceID must be the canonical spelling of the vendor tenant id: two
+// spellings take two different locks and defeat the mechanism.
+func LockConnectorInstallResource(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+	resourceID string,
+) error {
+	// hashtext is int4, so unrelated keys can collide; a collision costs two
+	// installs a serialization, never correctness. The namespace prefix keeps
+	// this key space clear of BusinessFunction.Insert's, which hashes a bare
+	// organization id.
+	q := `
+SELECT pg_advisory_xact_lock(
+    hashtext(
+        'connector-install:'
+        || @organization_id::text
+        || ':' || @provider::text
+        || ':' || @resource_id::text
+    )
+)
+`
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        provider,
+		"resource_id":     resourceID,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot acquire connector install advisory lock: %w", err)
+	}
+
+	return nil
+}
+
 func (c *Connector) Delete(
 	ctx context.Context,
 	conn pg.Tx,

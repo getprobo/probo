@@ -628,11 +628,13 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 	// Marketplace plugin token (the verbatim "identifier:key" pair) shared
 	// across all customer connections, and each connection carries only a
 	// Website ID. The plugin ID is a separate value (the token's Basic
-	// identifier is not the plugin ID) required by the per-website plugin API
-	// that verifies website ownership at connect time. Both must be set to
-	// activate the connector; until then it stays hidden from the driver
-	// catalog, so it ships deactivated and activates the moment Crisp
-	// validates the production plugin and both values are configured.
+	// identifier is not the plugin ID) with two consumers: the install redirect
+	// interpolates it into the vendor URL the customer is sent to, and the
+	// per-website plugin API that verifies website ownership takes it on the way
+	// back. Both must be set to activate the connector; until then it stays
+	// hidden from the driver catalog and both install legs answer 404, so it
+	// ships deactivated and activates the moment Crisp validates the production
+	// plugin and both values are configured.
 	crispPluginToken := b.resolver.getEnv("PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN")
 
 	crispPluginID := b.resolver.getEnv("PROBOD_CONNECTOR_CRISP_PLUGIN_ID")

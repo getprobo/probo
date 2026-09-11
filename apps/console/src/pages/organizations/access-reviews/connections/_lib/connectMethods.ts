@@ -23,7 +23,7 @@ import type {
   ConnectorProvider,
 } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
 
-export type ConnectMethod = ConnectorProtocol | "CLIENT_CREDENTIALS";
+export type ConnectMethod = ConnectorProtocol | "CLIENT_CREDENTIALS" | "INSTALL";
 
 interface ConnectMethodSupport {
   configuredProtocols: ReadonlyArray<ConnectorProtocol>;
@@ -31,11 +31,13 @@ interface ConnectMethodSupport {
   apiKeyManaged: boolean;
   clientCredentialsSupported: boolean;
   workloadIdentitySupported: boolean;
+  installSupported: boolean;
 }
 
 const connectMethodPreference: ReadonlyArray<ConnectMethod> = [
   "WORKLOAD_IDENTITY",
   "GITHUB_APP",
+  "INSTALL",
   "OAUTH2",
   "API_KEY",
   "CLIENT_CREDENTIALS",
@@ -47,6 +49,7 @@ export function connectMethods({
   apiKeyManaged,
   clientCredentialsSupported,
   workloadIdentitySupported,
+  installSupported,
 }: ConnectMethodSupport): ReadonlyArray<ConnectMethod> {
   const supportedMethods = new Set<ConnectMethod>(
     configuredProtocols.filter(
@@ -62,6 +65,9 @@ export function connectMethods({
   }
   if (workloadIdentitySupported) {
     supportedMethods.add("WORKLOAD_IDENTITY");
+  }
+  if (installSupported) {
+    supportedMethods.add("INSTALL");
   }
 
   return connectMethodPreference.filter(method => supportedMethods.has(method));

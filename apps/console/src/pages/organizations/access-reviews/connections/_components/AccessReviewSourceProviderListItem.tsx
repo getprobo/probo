@@ -38,6 +38,7 @@ import {
 } from "../../dialogs/_components/OAuthExtraDialog";
 import {
   connectOAuthProvider,
+  connectProviderInstall,
   connectProviderProtocol,
 } from "../../dialogs/_lib/connectorSettings";
 import {
@@ -56,6 +57,7 @@ const connectMethodActionLabelKey: Record<ConnectMethod, string> = {
     "addAccessReviewSourceDialog.actions.connectWithWorkloadIdentity",
   CLIENT_CREDENTIALS:
     "addAccessReviewSourceDialog.actions.connectWithClientCredentials",
+  INSTALL: "addAccessReviewSourceDialog.actions.connectWithAppInstall",
 };
 
 export const accessReviewSourceProviderListItemFragment = graphql`
@@ -68,6 +70,7 @@ export const accessReviewSourceProviderListItemFragment = graphql`
     apiKeyManaged
     clientCredentialsSupported
     workloadIdentitySupported
+    installSupported
     oauth2Scopes
     ...APIKeyConnectorDialog_provider
     ...ClientCredentialsConnectorDialog_provider
@@ -114,6 +117,7 @@ export function AccessReviewSourceProviderListItem({
     apiKeyManaged: provider.apiKeyManaged,
     clientCredentialsSupported: provider.clientCredentialsSupported,
     workloadIdentitySupported: provider.workloadIdentitySupported,
+    installSupported: provider.installSupported,
   });
 
   const connectWithOAuth = () => {
@@ -147,6 +151,9 @@ export function AccessReviewSourceProviderListItem({
           provider.provider,
           method,
         );
+        break;
+      case "INSTALL":
+        connectProviderInstall(organizationId, provider.provider);
         break;
     }
   };

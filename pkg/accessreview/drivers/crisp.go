@@ -32,30 +32,44 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// ErrCrispPluginNotSubscribed is returned by GetCrispSubscriptionSettings when
-// Crisp answers 404: the plugin is not subscribed to the given website, so no
-// per-website settings exist yet. It is an expected verification state (the
-// customer has not installed/configured the plugin on that website) rather than
-// a failure, and callers distinguish it with errors.Is.
+// ErrCrispPluginNotSubscribed is returned by GetCrispSubscription when Crisp
+// answers 404: the plugin is not subscribed to the given website, so no
+// subscription exists yet. It is an expected verification state (the customer
+// has not installed the plugin on that website) rather than a failure, and
+// callers distinguish it with errors.Is.
 var ErrCrispPluginNotSubscribed = errors.New("crisp plugin not subscribed to website")
 
-// CrispSubscriptionSettings is the schema-defined, per-website configuration of
-// the Probo Crisp plugin. Only the field Probo relies on for ownership
-// verification is modeled; unknown schema properties are ignored on decode.
-type CrispSubscriptionSettings struct {
-	ProboVerificationCode string `json:"probo_verification_code"`
+// CrispSubscription is the Probo plugin's subscription to one Crisp website.
+// Only the field the install callback verifies against is modeled.
+type CrispSubscription struct {
+	// Token is the per-(website, plugin) secret Crisp also hands the browser
+	// on the install callback. Reading it back server-side with Probo's own
+	// plugin credential is what makes that callback verifiable.
+	Token string `json:"token"`
 }
 
-// crispSubscriptionSettingsResponse is the envelope of
-// GET /v1/plugins/subscription/{website_id}/{plugin_id}/settings. The active
-// per-website configuration lives at data.settings; data itself also carries
-// subscription metadata (ids, secret token, JSONSchema, form/callback URLs)
-// that verification does not need.
-type crispSubscriptionSettingsResponse struct {
-	Error bool `json:"error"`
-	Data  struct {
-		Settings CrispSubscriptionSettings `json:"settings"`
-	} `json:"data"`
+// CrispStatusError carries the HTTP status of a non-2xx Crisp response so a
+// caller can classify it. GetCrispSubscription returns it for every non-2xx
+// other than 404 (which stays ErrCrispPluginNotSubscribed), because the install
+// callback has to tell a terminal 401/403 from a retryable 429/5xx: the first
+// burns the customer's single-use state, the second releases it.
+type CrispStatusError struct {
+	Operation string
+	Code      int
+}
+
+func (e *CrispStatusError) Error() string {
+	return fmt.Sprintf("cannot fetch crisp %s: unexpected status %d", e.Operation, e.Code)
+}
+
+// crispSubscriptionResponse is the envelope of
+// GET /v1/plugins/subscription/{website_id}/{plugin_id}/settings. Despite the
+// path, data is the subscription itself (ids, secret token, JSONSchema,
+// form/callback URLs); the schema-defined per-website configuration sits one
+// level down at data.settings, which verification does not need.
+type crispSubscriptionResponse struct {
+	Error bool              `json:"error"`
+	Data  CrispSubscription `json:"data"`
 }
 
 const (
@@ -68,9 +82,9 @@ const (
 )
 
 // crispDefaultBaseURL is the Crisp REST API root. It backs only the exported
-// GetCrispSubscriptionSettings, which the create-connector resolver calls with
-// no registration — and therefore no Endpoints — in scope. The driver and the
-// name resolver go through their injected baseURL instead.
+// GetCrispSubscription, which the install callback calls with no registration —
+// and therefore no Endpoints — in scope. The driver and the name resolver go
+// through their injected baseURL instead.
 const crispDefaultBaseURL = "https://api.crisp.chat/v1"
 
 // CrispDriver lists the operators (dashboard agents) of a single Crisp website.
@@ -184,24 +198,27 @@ func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 	return records, nil
 }
 
-// GetCrispSubscriptionSettings reads the Probo plugin's per-website
-// subscription settings so the create-connector resolver can verify website
-// ownership (matching probo_verification_code). The httpClient must already
+// GetCrispSubscription reads the Probo plugin's subscription to a website so
+// the install callback can verify that the browser-supplied token is the one
+// Crisp issued for that (website, plugin) pair. The httpClient must already
 // attach the plugin Basic credential (identifier:key); this helper only sets
 // the Accept and X-Crisp-Tier headers, mirroring ListAccounts. A 404 (plugin
-// not subscribed to the website) is reported as ErrCrispPluginNotSubscribed so
-// callers can message it distinctly from a hard failure.
-func GetCrispSubscriptionSettings(
+// not subscribed to the website) is reported as ErrCrispPluginNotSubscribed;
+// every other non-2xx becomes a *CrispStatusError so the caller can tell a
+// terminal 401/403 from a retryable 429/5xx.
+func GetCrispSubscription(
 	ctx context.Context,
 	httpClient *http.Client,
 	websiteID string,
 	pluginID string,
-) (*CrispSubscriptionSettings, error) {
+) (*CrispSubscription, error) {
+	const operation = "subscription settings"
+
 	httpResp, err := crispGet(
 		ctx,
 		httpClient,
 		crispDefaultBaseURL,
-		"subscription settings",
+		operation,
 		"plugins", "subscription",
 		url.PathEscape(websiteID),
 		url.PathEscape(pluginID),
@@ -218,10 +235,10 @@ func GetCrispSubscriptionSettings(
 	}
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot fetch crisp subscription settings: unexpected status %d", httpResp.StatusCode)
+		return nil, &CrispStatusError{Operation: operation, Code: httpResp.StatusCode}
 	}
 
-	var resp crispSubscriptionSettingsResponse
+	var resp crispSubscriptionResponse
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return nil, fmt.Errorf("cannot decode crisp subscription settings response: %w", err)
 	}
@@ -230,7 +247,7 @@ func GetCrispSubscriptionSettings(
 		return nil, fmt.Errorf("cannot fetch crisp subscription settings: crisp reported an error")
 	}
 
-	return &resp.Data.Settings, nil
+	return &resp.Data, nil
 }
 
 // crispGet issues an authenticated GET against the Crisp API for the given path

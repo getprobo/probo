@@ -89,9 +89,6 @@ export function mapAPIKeyExtraSettingToField(
     case "SEGMENT":
       if (settingKey === "region") return "segmentRegion";
       break;
-    case "CRISP":
-      if (settingKey === "websiteId") return "crispWebsiteId";
-      break;
   }
   return null;
 }
@@ -280,6 +277,33 @@ export function buildConnectorInitiateURL(
     `/organizations/${organizationId}/access-reviews/connections`,
   );
   return url.toString();
+}
+
+// buildConnectorInstallInitiateURL builds the start-install URL for a provider
+// connected by installing Probo's app at the vendor. No continue parameter: the
+// vendor redirects to Probo's own callback, which rebuilds the connections URL
+// server-side.
+export function buildConnectorInstallInitiateURL(
+  organizationId: string,
+  provider: string,
+): string {
+  const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
+  const url = new URL("/api/console/v1/connectors/install/initiate", baseURL);
+  url.searchParams.append("organization_id", organizationId);
+  url.searchParams.append("provider", provider);
+  return url.toString();
+}
+
+// connectProviderInstall navigates the browser to the install ceremony. The
+// customer proves control of the vendor tenant there, so no value is collected
+// in Probo first.
+export function connectProviderInstall(
+  organizationId: string,
+  provider: string,
+) {
+  window.location.assign(
+    buildConnectorInstallInitiateURL(organizationId, provider),
+  );
 }
 
 // connectProviderProtocol builds the connector-initiate URL for any configured

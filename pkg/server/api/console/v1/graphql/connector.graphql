@@ -166,10 +166,11 @@ type ConnectorProviderInfo {
     apiKeySupported: Boolean!
     """
     apiKeyManaged is true when the provider connects with a Probo-supplied
-    API key (Model B, e.g. Crisp's marketplace plugin token) that the
-    operator has configured. The customer supplies only the extra settings
-    (e.g. a Website ID), not the key. False until the key is configured,
-    which keeps such a provider out of the catalog.
+    API key (Model B) that the operator has configured, through the API-key
+    form: the customer supplies only the extra settings, not the key. False
+    until the key is configured, which keeps such a provider out of the
+    catalog, and false for a managed provider whose connect path is an app
+    install (installSupported), which has no form at all.
     """
     apiKeyManaged: Boolean!
     clientCredentialsSupported: Boolean!
@@ -208,6 +209,14 @@ type ConnectorProviderInfo {
     provider has no workload-identity path.
     """
     workloadIdentityExtraSettings: [ConnectorProviderSettingInfo!]!
+    """
+    installSupported is true when this provider is connected by installing
+    Probo's app at the vendor: the client redirects to the install ceremony
+    instead of rendering a credential form, and the vendor tenant is proven
+    server-side on the way back. False until the operator has configured the
+    Probo-held credentials the ceremony needs.
+    """
+    installSupported: Boolean!
 }
 
 type AWSConnectorSetup {
@@ -367,7 +376,6 @@ input CreateAPIKeyConnectorInput {
     neonOrganizationId: String
     langfuseBaseUrl: String
     scalewayOrganizationId: String
-    crispWebsiteId: String
     segmentRegion: String
     authentikBaseUrl: String
 }

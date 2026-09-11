@@ -79,10 +79,10 @@ func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorP
 // newAPIKeyConnection builds an API-key connection for provider, filling the auth
 // presentation (header, basic-auth mode, scheme) from the provider registry and
 // using key as the credential. Both CreateAPIKeyConnector (the persisted
-// connection) and verifyCrispOwnership (the ownership-check client) construct
-// their connection through it, so the verification client authenticates exactly
-// as the persisted connector will: a new auth flag cannot be added to one path
-// and silently missed on the other.
+// connection) and the pre-write validation clients (resolveTallySettings) build
+// their connection through it, so a key accepted at validation time
+// authenticates exactly as the persisted connector will: a new auth flag cannot
+// be added to one path and silently missed on the other.
 func (r *Resolver) newAPIKeyConnection(provider coredata.ConnectorProvider, key string) *connector.APIKeyConnection {
 	return r.providerRegistry.NewAPIKeyConnection(provider, key)
 }
@@ -146,84 +146,6 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 	}
 
 	return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: user.OrganizationID})
-}
-
-// crispSettingsFetcher reads a Crisp plugin's per-website subscription settings.
-// It matches drivers.GetCrispSubscriptionSettings: verifyCrispOwnership injects
-// the real fetch, and tests substitute a fake so the branch wiring (the security
-// polarity and the Invalid-versus-Internal error mapping) is exercised without a
-// live Crisp API.
-type crispSettingsFetcher func(ctx context.Context, httpClient *http.Client, websiteID, pluginID string) (*drivers.CrispSubscriptionSettings, error)
-
-// verifyCrispOwnership proves the connecting organization controls the Crisp
-// website before a connection is created (the #1b ownership check). It reads the
-// Probo plugin's per-website settings through the managed plugin token and
-// requires probo_verification_code to equal the code Probo showed for this exact
-// (organization, website) pair. Because the code is bound to both, one
-// organization cannot bind another organization's website, and only someone with
-// dashboard access to the website could have written the setting. It runs only
-// for Crisp/managed providers; nothing is persisted before it returns, so a
-// failed check creates no row. Returned Invalid errors are surfaced to the
-// client and contain only guidance, never the code or the token.
-func (r *Resolver) verifyCrispOwnership(ctx context.Context, input types.CreateAPIKeyConnectorInput) error {
-	return r.verifyCrispOwnershipWith(ctx, input, drivers.GetCrispSubscriptionSettings)
-}
-
-// verifyCrispOwnershipWith is verifyCrispOwnership with the settings fetch
-// injected, so its branch wiring can be unit-tested without reaching the live
-// Crisp API. verifyCrispOwnership passes the real
-// drivers.GetCrispSubscriptionSettings.
-func (r *Resolver) verifyCrispOwnershipWith(ctx context.Context, input types.CreateAPIKeyConnectorInput, fetch crispSettingsFetcher) error {
-	if input.CrispWebsiteID == nil || strings.TrimSpace(*input.CrispWebsiteID) == "" {
-		return gqlutils.Invalidf(ctx, "crispWebsiteId is required")
-	}
-
-	websiteID := strings.TrimSpace(*input.CrispWebsiteID)
-
-	// The managed plugin token gates the connector's visibility, so it is set
-	// here; treat its absence as an internal error rather than client input.
-	managedKey, ok := r.providerRegistry.ManagedAPIKey(input.Provider)
-	if !ok {
-		r.logger.ErrorCtx(ctx, "crisp managed api key not configured")
-
-		return gqlutils.Internal(ctx)
-	}
-
-	// The plugin ID is a separate managed value the per-website plugin API
-	// needs; the bootstrap requires it alongside the token, so its absence is a
-	// deployment misconfiguration.
-	pluginID, ok := r.providerRegistry.ManagedResourceID(input.Provider)
-	if !ok {
-		r.logger.ErrorCtx(ctx, "crisp plugin id not configured")
-
-		return gqlutils.Internal(ctx)
-	}
-
-	conn := r.newAPIKeyConnection(input.Provider, managedKey)
-
-	httpClient, err := conn.Client(ctx)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot build crisp verification client", log.Error(err))
-
-		return gqlutils.Internal(ctx)
-	}
-
-	settings, err := fetch(ctx, httpClient, websiteID, pluginID)
-
-	switch {
-	case errors.Is(err, drivers.ErrCrispPluginNotSubscribed):
-		return gqlutils.Invalidf(ctx, "install and configure the Probo plugin on this Crisp website, then retry")
-	case err != nil:
-		r.logger.ErrorCtx(ctx, "cannot read crisp subscription settings", log.Error(err))
-
-		return gqlutils.Internal(ctx)
-	}
-
-	if !verifyCrispVerificationCode(r.tokenSecret, input.OrganizationID.String(), websiteID, settings.ProboVerificationCode) {
-		return gqlutils.Invalidf(ctx, "verification code mismatch: paste the code shown in Probo into the plugin settings, then retry")
-	}
-
-	return nil
 }
 
 // apiKeyConnectorSettings marshals the provider-specific extra settings
@@ -419,21 +341,6 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.SegmentConnectorSettings{BaseURL: baseURL})
-	case coredata.ConnectorProviderCrisp:
-		websiteID := ""
-		if input.CrispWebsiteID != nil {
-			websiteID = strings.TrimSpace(*input.CrispWebsiteID)
-		}
-
-		if websiteID == "" {
-			return nil, fmt.Errorf("cannot create crisp connector: crispWebsiteId is required")
-		}
-
-		// Persist the same trimmed value that verifyCrispOwnership proved and the
-		// crispVerificationCode query minted the code against, so the stored,
-		// verified, and displayed website are identical (a padded value would
-		// verify then break the driver's URL).
-		return json.Marshal(&coredata.CrispConnectorSettings{WebsiteID: websiteID})
 	}
 
 	return nil, nil

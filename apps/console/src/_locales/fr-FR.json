@@ -3038,6 +3038,7 @@
       "connectWithApiKey": "Clé API",
       "connectWithClientCredentials": "Identifiants client",
       "connectWithWorkloadIdentity": "Identité de charge de travail",
+      "connectWithAppInstall": "Installation de l’application",
       "chooseAnotherMethod": "Choisir une autre méthode de connexion",
       "open": "Ouvrir"
     },
@@ -3107,26 +3108,14 @@
     "apiKeyDescription": "Saisissez la clé API de {{provider}} pour le connecter en tant que source d’accès.",
     "apiKey": "Clé API",
     "messages": {
-      "connectionFailed": "Connexion échouée",
-      "copyFailed": "Échec de la copie",
-      "copied": "Copié dans le presse-papiers"
+      "connectionFailed": "Connexion échouée"
     },
     "errors": {
-      "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres et votre code de vérification, puis réessayez.",
+      "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres, puis réessayez.",
       "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
-      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}",
-      "copy": "Copiez le code de vérification manuellement.",
-      "generateCode": "Impossible de générer un code de vérification. Vérifiez l’identifiant du site et réessayez."
-    },
-    "verificationCode": {
-      "label": "Code de vérification",
-      "description": "Collez ce code dans les paramètres du plugin Probo pour ce site dans votre tableau de bord Crisp, puis cliquez sur Connecter. Cela prouve que vous contrôlez ce site.",
-      "enterWebsiteId": "Saisissez l’identifiant de votre site ci-dessus pour obtenir votre code de vérification.",
-      "generating": "Génération du code..."
+      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}"
     },
     "actions": {
-      "copy": "Copier",
-      "retry": "Réessayer",
       "connect": "Connecter",
       "connecting": "Connexion..."
     }

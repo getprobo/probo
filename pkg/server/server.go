@@ -97,11 +97,14 @@ type Config struct {
 	ITAM                    *itam.Service
 	Cookie                  securecookie.Config
 	TokenSecret             string
-	ConnectorRegistry       *connector.Registry
-	ProviderRegistry        *provider.Registry
-	CustomDomainCname       string
-	GraphQLLimits           gqlutils.Limits
-	Logger                  *log.Logger
+	// InstallStateKey signs the app-install state tokens the connector install
+	// ceremony carries across the vendor.
+	InstallStateKey   string
+	ConnectorRegistry *connector.Registry
+	ProviderRegistry  *provider.Registry
+	CustomDomainCname string
+	GraphQLLimits     gqlutils.Limits
+	Logger            *log.Logger
 
 	// IdentityFederationIssuer serves the outbound OIDC documents. It is nil when the
 	// identity federation issuer is disabled, in which case no /federation route exists.
@@ -157,6 +160,7 @@ func NewServer(cfg Config) (*Server, error) {
 		ITAM:                     cfg.ITAM,
 		Cookie:                   cfg.Cookie,
 		TokenSecret:              cfg.TokenSecret,
+		InstallStateKey:          cfg.InstallStateKey,
 		ConnectorRegistry:        cfg.ConnectorRegistry,
 		ProviderRegistry:         cfg.ProviderRegistry,
 		CustomDomainCname:        cfg.CustomDomainCname,

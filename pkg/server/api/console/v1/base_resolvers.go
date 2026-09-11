@@ -701,7 +701,11 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		// such a provider ships deactivated. Gating on full readiness keeps a
 		// half-configured provider out of the catalog rather than surfacing it
 		// and failing at connect time.
-		apiKeyManaged := r.providerRegistry.ManagedConnectorReady(provider)
+		//
+		// A provider with an install ceremony is connected by the redirect, not
+		// by the API-key dialog; ManagedAPIKeyFormReady owns that rule.
+		installReady := reg.SupportsInstall() && r.providerRegistry.ManagedConnectorReady(provider)
+		apiKeyManaged := r.providerRegistry.ManagedAPIKeyFormReady(provider)
 
 		// WIF is a connect path only when this deployment can mint federation
 		// tokens. AWS has no other path, so it stays hidden until then.
@@ -711,7 +715,8 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			!apiKeySupported &&
 			!clientCredentialsSupported &&
 			!apiKeyManaged &&
-			!workloadIdentityReady {
+			!workloadIdentityReady &&
+			!installReady {
 			continue
 		}
 
@@ -743,6 +748,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			APIKeyFormat:                   connectorAPIKeyFormat(reg),
 			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings()),
 			WorkloadIdentitySupported:      workloadIdentityReady,
+			InstallSupported:               installReady,
 			WorkloadIdentityExtraSettings:  connectorProviderSettingInfos(reg.WorkloadIdentityExtraSettings()),
 		})
 	}
@@ -803,25 +809,6 @@ func (r *queryResolver) GCPConnectorSetup(ctx context.Context, organizationID gi
 	}
 
 	return newGCPConnectorSetup(setup), nil
-}
-
-// CrispVerificationCode is the resolver for the crispVerificationCode field. It
-// returns the deterministic ownership-verification code the customer must paste
-// into the Probo plugin's per-website settings in their Crisp dashboard before
-// connecting that website. Authorized against the organization with the same
-// action as the create mutation because the code is organization-bound. This is
-// a UI-only helper; MCP/CLI/n8n are intentionally not extended.
-func (r *queryResolver) CrispVerificationCode(ctx context.Context, organizationID gid.GID, websiteID string) (string, error) {
-	if _, err := r.authorize(ctx, organizationID, probo.ActionConnectorCreate); err != nil {
-		return "", err
-	}
-
-	websiteID = strings.TrimSpace(websiteID)
-	if websiteID == "" {
-		return "", gqlutils.Invalidf(ctx, "websiteId is required")
-	}
-
-	return computeCrispVerificationCode(r.tokenSecret, organizationID.String(), websiteID), nil
 }
 
 // ProbotIdentityBindPreview is the resolver for the probotIdentityBindPreview field.
