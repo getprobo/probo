@@ -21,33 +21,50 @@
 package deviceagent
 
 import (
+	"fmt"
 	"os"
-	"path/filepath"
 )
 
-func windowsProgramData() string {
-	programData := os.Getenv("ProgramData")
-	if programData == "" {
-		return `C:\ProgramData`
+type secureDirKind int
+
+const (
+	secureDirRoot secureDirKind = iota
+	secureDirRun
+	secureDirAgent
+)
+
+func ensureSecureRunDir(runDir string) error {
+	if runDir == "" {
+		runDir = DefaultEnrollmentRunDir()
 	}
 
-	return programData
+	if err := ensureProtectedWindowsTree(runDir, secureDirRun); err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(runDir, EnrollmentRunDirMode); err != nil {
+		return fmt.Errorf("cannot create enrollment run dir: %w", err)
+	}
+
+	if err := os.Chmod(runDir, EnrollmentRunDirMode); err != nil {
+		return fmt.Errorf("cannot set enrollment run dir permissions: %w", err)
+	}
+
+	return nil
 }
 
-// DefaultProgramDataRoot returns %ProgramData%\Probo, the parent of the
-// agent keystore and the public enrollment run directory.
-func DefaultProgramDataRoot() string {
-	return filepath.Join(windowsProgramData(), "Probo")
-}
+func ensureSecureAgentDir(dir string) error {
+	if dir == "" {
+		dir = DefaultConfigDir()
+	}
 
-// DefaultConfigDir returns the directory under which the agent's config
-// and keystore live on Windows.
-func DefaultConfigDir() string {
-	return filepath.Join(DefaultProgramDataRoot(), "agent")
-}
+	if err := ensureProtectedWindowsTree(dir, secureDirAgent); err != nil {
+		return err
+	}
 
-// DefaultEnrollmentRunDir returns the runtime directory for the public
-// enrollment marker and enrolling.lock on Windows.
-func DefaultEnrollmentRunDir() string {
-	return filepath.Join(DefaultProgramDataRoot(), "run")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return fmt.Errorf("cannot create agent data dir: %w", err)
+	}
+
+	return nil
 }

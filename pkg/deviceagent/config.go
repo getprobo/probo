@@ -102,8 +102,8 @@ func SaveConfig(dir string, cfg *Config) error {
 		dir = DefaultConfigDir()
 	}
 
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return fmt.Errorf("cannot create config dir: %w", err)
+	if err := ensureSecureAgentDir(dir); err != nil {
+		return err
 	}
 
 	cfg.applyDefaults()

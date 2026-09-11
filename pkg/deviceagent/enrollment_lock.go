@@ -53,12 +53,8 @@ func EnrollmentLockPath(configDir string) string {
 func AcquireEnrollmentLock(configDir string) (release func(), err error) {
 	runDir := EnrollmentRunDir(configDir)
 
-	if err := os.MkdirAll(runDir, EnrollmentRunDirMode); err != nil {
-		return nil, fmt.Errorf("cannot create enrollment run dir: %w", err)
-	}
-
-	if err := os.Chmod(runDir, EnrollmentRunDirMode); err != nil {
-		return nil, fmt.Errorf("cannot set enrollment run dir permissions: %w", err)
+	if err := ensureSecureRunDir(runDir); err != nil {
+		return nil, err
 	}
 
 	path := EnrollmentLockPath(configDir)

@@ -18,36 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//go:build !windows
+
 package deviceagent
 
-import (
-	"os"
-	"path/filepath"
-)
-
-func windowsProgramData() string {
-	programData := os.Getenv("ProgramData")
-	if programData == "" {
-		return `C:\ProgramData`
-	}
-
-	return programData
+func ensureProtectedWindowsTree(string, secureDirKind) error {
+	return nil
 }
 
-// DefaultProgramDataRoot returns %ProgramData%\Probo, the parent of the
-// agent keystore and the public enrollment run directory.
-func DefaultProgramDataRoot() string {
-	return filepath.Join(windowsProgramData(), "Probo")
-}
-
-// DefaultConfigDir returns the directory under which the agent's config
-// and keystore live on Windows.
-func DefaultConfigDir() string {
-	return filepath.Join(DefaultProgramDataRoot(), "agent")
-}
-
-// DefaultEnrollmentRunDir returns the runtime directory for the public
-// enrollment marker and enrolling.lock on Windows.
-func DefaultEnrollmentRunDir() string {
-	return filepath.Join(DefaultProgramDataRoot(), "run")
+func isTrustedEnrollmentMarker(string) (bool, error) {
+	return true, nil
 }
