@@ -5,6 +5,16 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.0] - 2026-09-11
+
+### Added
+
+- Tags of the form `probo-agent/vX.Y.Z-rc.N` now produce a GitHub
+  prerelease, with installer versions stripped to `X.Y.Z`. Hosts that
+  set `allow_prereleases` (install flag, MDM, or `config.json`) follow
+  those RCs; everyone else stays on the last stable, so a test fleet can
+  exercise a real signed build before it reaches every enrolled host.
+
 ### Fixed
 
 - Browser enrollment (`probo://` deep links) asks the user to confirm the
