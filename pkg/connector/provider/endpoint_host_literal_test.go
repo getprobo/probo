@@ -21,6 +21,7 @@
 package provider_test
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -168,6 +169,15 @@ func TestNoEndpointHostLiteralsOutsideOwningFiles(t *testing.T) {
 
 	declarers, overridable := endpointHosts(t, r)
 	require.NotEmpty(t, overridable, "registry declared no overridable endpoint hosts, the scan would be vacuous")
+	// Endpoints.Install is the only templated field, so it is the only one a
+	// refactor can silently drop from the list above without breaking a parse.
+	// Pin that the scan still sees the host it contributes.
+	require.Contains(
+		t,
+		declarers["app.crisp.chat"],
+		coredata.ConnectorProviderCrisp,
+		"Endpoints.Install no longer reaches endpointHosts, so the scan covers no install endpoint",
+	)
 
 	scopes := knownOAuth2Scopes(r)
 
@@ -365,6 +375,7 @@ func endpointHosts(t *testing.T, r *provider.Registry) (declarers, overridable m
 			reg.Endpoints.Probe,
 			reg.Endpoints.Identity,
 			reg.Endpoints.APIBase,
+			expandEndpointTemplate(reg.Endpoints.Install),
 		} {
 			if raw == "" {
 				continue
@@ -393,6 +404,24 @@ func endpointHosts(t *testing.T, r *provider.Registry) (declarers, overridable m
 	}
 
 	return declarers, overridable
+}
+
+// endpointHostPlaceholderAppID stands in for the deployment's app id so a
+// templated endpoint can be parsed for its host. url.Parse rejects a bare "%s"
+// ("invalid URL escape"), and this scan parses before it checks
+// EndpointOverrideUnsupported, so an unexpanded template fails the test for
+// every provider -- exempt ones included.
+const endpointHostPlaceholderAppID = "00000000-0000-0000-0000-000000000000"
+
+// expandEndpointTemplate fills the app-id placeholder of a templated endpoint.
+// It is deliberately a constant and never operator config: the scan only needs
+// the host, and a real app id has no business in a test fixture.
+func expandEndpointTemplate(raw string) string {
+	if !strings.Contains(raw, "%s") {
+		return raw
+	}
+
+	return fmt.Sprintf(raw, endpointHostPlaceholderAppID)
 }
 
 // knownOAuth2Scopes collects every scope string the registry declares, so the

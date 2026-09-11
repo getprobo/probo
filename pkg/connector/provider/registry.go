@@ -239,6 +239,33 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
+	// The same pairing rule as OAuth2 and Endpoints.Auth, for the same reason:
+	// a nil Install must mean "no install path" rather than "an install path
+	// whose metadata took its defaults", or a provider added without the block
+	// would ship a redirect nothing can verify.
+	if reg.Install == nil {
+		if reg.Endpoints.Install != "" {
+			return fmt.Errorf("cannot register connector provider %q: Endpoints.Install requires an Install block", reg.Provider)
+		}
+	} else {
+		if reg.Endpoints.Install == "" {
+			return fmt.Errorf("cannot register connector provider %q: Install requires Endpoints.Install", reg.Provider)
+		}
+
+		if reg.Install.Verify == nil || reg.Install.StateParam == "" || reg.Install.SettingsResourceKey == "" {
+			return fmt.Errorf("cannot register connector provider %q: Install requires Verify, StateParam and SettingsResourceKey", reg.Provider)
+		}
+
+		// The ceremony yields a tenant id bound to Probo's own app credential,
+		// so the provider must hold a Probo-supplied key and the app id the
+		// initiate URL interpolates. A customer-pasted key would have nothing
+		// to verify against, and the console would offer both a redirect and a
+		// key dialog.
+		if !reg.IsManagedAPIKey() || !reg.APIKey.Managed.RequiresResourceID {
+			return fmt.Errorf("cannot register connector provider %q: Install requires a managed API key with RequiresResourceID", reg.Provider)
+		}
+	}
+
 	// A settings list for a path the provider does not offer is now
 	// unrepresentable: each list lives inside the block that offers it.
 	//
@@ -372,6 +399,39 @@ func (r *Registry) NewAPIKeyConnection(
 	return conn
 }
 
+// InstallURL builds the vendor page the customer is sent to in order to install
+// Probo's app, interpolating this deployment's app id (Crisp's plugin ID) into
+// Endpoints.Install and attaching the signed state under the provider's own
+// echo parameter. The app id comes from operator config, never from a request,
+// which is what makes interpolating it straight into the URL safe.
+func (r *Registry) InstallURL(p coredata.ConnectorProvider, state string) (string, error) {
+	reg, ok := r.Get(p)
+	if !ok {
+		return "", fmt.Errorf("cannot build install URL: unknown connector provider %q", p)
+	}
+
+	if !reg.SupportsInstall() {
+		return "", fmt.Errorf("cannot build install URL: connector provider %q has no install path", p)
+	}
+
+	appID, ok := r.ManagedResourceID(p)
+	if !ok {
+		return "", fmt.Errorf("cannot build install URL: connector provider %q has no managed resource id configured", p)
+	}
+
+	// Endpoints.Install is a %s template, so it only becomes parseable here.
+	u, err := url.Parse(fmt.Sprintf(reg.Endpoints.Install, appID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build install URL for connector provider %q: %w", p, err)
+	}
+
+	q := u.Query()
+	q.Set(reg.Install.StateParam, state)
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
+}
+
 // ValidateAPIKey checks a customer-pasted key against the shape its provider
 // declares, if it declares one. A provider with no KeyFormat, or one whose key
 // Probo supplies itself, accepts anything here and lets the connection check
@@ -475,6 +535,19 @@ func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
 	}
 
 	return true
+}
+
+// ManagedAPIKeyFormReady reports whether this deployment can connect p through
+// the managed API-key dialog: the Probo-held credential is configured AND that
+// dialog is a path the customer can reach at all. It is what the catalog
+// reports as apiKeyManaged.
+func (r *Registry) ManagedAPIKeyFormReady(p coredata.ConnectorProvider) bool {
+	reg, ok := r.Get(p)
+	if !ok {
+		return false
+	}
+
+	return reg.OffersAPIKeyForm() && r.ManagedConnectorReady(p)
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review

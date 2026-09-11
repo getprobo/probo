@@ -22,7 +22,9 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"net/url"
 	"regexp"
 
 	"go.gearno.de/kit/log"
@@ -87,6 +89,19 @@ type Endpoints struct {
 	// — the NewDriver closure resolves those, with
 	// pkg/accessreview/drivers/posthog.go as the reference implementation.
 	APIBase string
+
+	// Install is the vendor page a customer is sent to in order to install
+	// Probo's marketplace app, written as a %s TEMPLATE for this deployment's
+	// app id (Crisp's plugin id). That makes it the ONE endpoint field that is
+	// not a parseable URL as written — url.Parse rejects a bare %s with
+	// `invalid URL escape` — so anything reading it, tests included, must
+	// expand the template before parsing.
+	//
+	// Like Auth, it is frequently a DIFFERENT host from APIBase
+	// (app.crisp.chat vs api.crisp.chat) and must never be derived from it,
+	// which is also why it stays out of Register's Probe/APIBase/Identity
+	// host-agreement check. Empty for every provider with no install path.
+	Install string
 }
 
 // Registration is the per-provider metadata + factory bundle. Each
@@ -134,6 +149,20 @@ type Registration struct {
 	// WorkloadIdentity is the connect path for a provider reached by federated
 	// workload identity. Nil for every provider that uses a stored credential.
 	WorkloadIdentity *WorkloadIdentityConfig
+
+	// Install is the app-install connect path: Probo redirects the customer to
+	// the vendor, the customer installs Probo's marketplace app there, and the
+	// vendor redirects the browser back with a proof Probo verifies
+	// server-side before binding the result to an organization. Non-nil for
+	// exactly those providers that offer one — Register enforces the agreement
+	// with Endpoints.Install, exactly as it does for OAuth2 and Endpoints.Auth.
+	//
+	// Orthogonal to the credential blocks: this says how a connector is
+	// ACQUIRED, not how its credential is held. Crisp pairs Install with
+	// APIKey.Managed, because what the ceremony yields is a vendor tenant id
+	// bound to Probo's own plugin token — the customer never holds a
+	// credential at all.
+	Install *InstallConfig
 
 	// BuildProbeURL derives a per-connector probe URL when the API host or
 	// path depends on connector settings (e.g. a customer subdomain or
@@ -326,6 +355,57 @@ type ClientCredentialsConfig struct {
 	ExtraSettings []ExtraSetting
 }
 
+// ErrInstallVerificationTransient marks an install verification that failed for
+// a reason a retry could fix (429, 5xx, transport). The callback releases its
+// single-use claim on this and burns it on anything else, so a vendor blip does
+// not cost the customer their ten-minute window while a forged proof still
+// spends its state exactly once.
+var ErrInstallVerificationTransient = errors.New("install verification temporarily unavailable")
+
+// InstallConfig is the app-install connect path of a provider.
+type InstallConfig struct {
+	// StateParam names the callback parameter the vendor echoes Probo's signed
+	// state back in (Crisp: "payload", echoed byte-identical). The handler must
+	// find the state before it can trust anything else, so this one parameter
+	// name cannot live inside Verify.
+	StateParam string
+
+	// SettingsResourceKey is the JSON key, inside the settings this ceremony
+	// persists, that carries the vendor tenant id (Crisp: "website_id"). It is
+	// the ceremony's durable output, the idempotency key, and part of the
+	// advisory-lock key, so Verify MUST return it in one canonical spelling.
+	//
+	// The settings row is built from this key and Verify's resourceID by
+	// (*ConnectorService).CompleteInstall, never by the provider. The
+	// idempotency lookup reads `settings ->> SettingsResourceKey` back and the
+	// advisory lock keys on resourceID; a provider free to marshal its own
+	// settings could put a different value under that key, and every
+	// re-install would then insert another row instead of finding the first.
+	SettingsResourceKey string
+
+	// Verify proves the browser really came from the vendor's own dashboard,
+	// using Probo's app credential (already on c) and appID — this deployment's
+	// app id at the vendor. It receives the whole callback query rather than
+	// named parameters because vendors disagree on the shape of the proof:
+	// Crisp names one token, others sign the entire query.
+	//
+	// It returns the verified tenant id. That id MUST be canonical — one vendor
+	// tenant must map to exactly one string, or the same tenant binds twice
+	// (see the uuid.Parse round-trip in crisp.go). It must compare secrets in
+	// constant time and validate the tenant id's shape before it can reach a
+	// URL or the database.
+	//
+	// The callback's single-use claim turns this classification into a
+	// customer-visible outcome, so it must be total and explicit — BURN or
+	// RELEASE, never whatever the error string happens to say. TERMINAL (burn):
+	// a refused proof, a missing proof parameter, a malformed tenant id, a
+	// 401/403 on Probo's own app credential, and a 404 saying the app is not
+	// installed on that tenant. RETRYABLE (release): 429, any 5xx, any
+	// transport failure — and those alone get wrapped in
+	// ErrInstallVerificationTransient.
+	Verify func(ctx context.Context, c *http.Client, appID string, q url.Values) (resourceID string, err error)
+}
+
 // OAuth2Config is the OAuth2 connect path of a provider: everything the
 // authorization-code flow needs beyond the Auth and Token endpoints, which live
 // in Endpoints because a deployment can override them.
@@ -445,9 +525,9 @@ type WorkloadIdentityConfig struct {
 	ExtraSettings []ExtraSetting
 }
 
-// The three Supports* predicates below are derived from the presence of a
-// connect path rather than declared beside it, so a flag can never disagree with
-// the block it describes.
+// The Supports* predicates below are derived from the presence of a connect
+// path rather than declared beside it, so a flag can never disagree with the
+// block it describes.
 
 // SupportsWorkloadIdentity reports whether this provider is reached by federated
 // workload identity rather than by a stored credential.
@@ -470,10 +550,29 @@ func (r *Registration) SupportsClientCredentials() bool {
 	return r.ClientCredentials != nil
 }
 
+// SupportsInstall reports whether this provider is connected by installing
+// Probo's app at the vendor.
+func (r *Registration) SupportsInstall() bool {
+	return r.Install != nil
+}
+
 // IsManagedAPIKey reports whether Probo, rather than the customer, supplies this
 // provider's API key.
 func (r *Registration) IsManagedAPIKey() bool {
 	return r.APIKey != nil && r.APIKey.Managed != nil
+}
+
+// OffersAPIKeyForm reports whether the API-key dialog is a connect path the
+// customer can actually reach for this provider, and is the single definition
+// of that rule — the catalog resolver, the settings-reach-a-dialog invariant
+// and the console row all answer it from here.
+//
+// A provider with an install ceremony is connected by the redirect, so its
+// API-key dialog has no entry point and (its extra settings being empty by
+// construction) no fields to render either. Managed-key providers are the only
+// ones this can exclude: a customer-pasted key is always a form.
+func (r *Registration) OffersAPIKeyForm() bool {
+	return r.SupportsAPIKey() || (r.IsManagedAPIKey() && !r.SupportsInstall())
 }
 
 // APIKeyExtraSettings returns the API-key dialog's settings fields, or nil when

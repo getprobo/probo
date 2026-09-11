@@ -504,7 +504,7 @@ func TestEndpointOverrideRejectedForUnsupportedProviders(t *testing.T) {
 		{
 			provider: coredata.ConnectorProviderCrisp,
 			override: provider.Endpoints{APIBase: "https://sandbox.example.com"},
-			wantErr:  "GetCrispSubscriptionSettings",
+			wantErr:  "GetCrispSubscription",
 		},
 		{
 			provider: coredata.ConnectorProviderPostHog,
