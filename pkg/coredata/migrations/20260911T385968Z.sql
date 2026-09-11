@@ -32,12 +32,19 @@
 -- separate mechanism -- an advisory lock inside CompleteInstall's transaction --
 -- because it has to hold over a row that does not exist yet.
 --
--- Structurally identical to slackbot_install_state_claims (20260812T163251Z):
--- both are written by coredata.InstallStateClaim, which differs only in the
--- table it targets. They stay separate tables so one retention sweep never
--- touches the other's rows. state_digest is a SHA-256 of the whole signed state
--- token, so the raw state -- which carries the organization and identity GIDs
--- -- is never at rest here.
+-- THIS IS THE LEDGER FOR EVERY CONNECTOR APP-INSTALL CEREMONY. A provider
+-- gaining an Install block gets single-use semantics here, for free and without
+-- a migration: the service layer claims and burns through
+-- coredata.NewConnectorInstallStateClaim on every install provider, so there is
+-- no seam at which a new one could end up with a ledger of its own.
+--
+-- slackbot_install_state_claims (20260812T163251Z) is structurally identical and
+-- stays separate on purpose. Slack's install is its own feature with its own
+-- lifecycle and its own retention; the two share the coredata.InstallStateClaim
+-- mechanism but never a table, and merging them is explicitly not a goal.
+--
+-- state_digest is a SHA-256 of the whole signed state token, so the raw state --
+-- which carries the organization and identity GIDs -- is never at rest here.
 CREATE TABLE connector_install_state_claims (
     state_digest BYTEA PRIMARY KEY,
     tenant_id TEXT NOT NULL,

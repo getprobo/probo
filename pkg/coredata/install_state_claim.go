@@ -40,8 +40,15 @@ import (
 // from under itself and run a second time.
 const InstallStateStaleAfter = 2 * time.Minute
 
-// The two ceremonies keep separate ledgers so one retention sweep never touches
-// the other's rows.
+// Two ledgers, deliberately.
+//
+// connectorInstallStateClaimTable is THE table for connector app installs:
+// every provider with an Install block claims and burns here, so a new one
+// needs no migration and has no way to acquire a ledger of its own.
+//
+// slackbotInstallStateClaimTable belongs to Slack's install alone. It is
+// structurally identical and shares this mechanism, but Slack's install is its
+// own feature with its own lifecycle and retention; the two are not converging.
 const (
 	connectorInstallStateClaimTable = "connector_install_state_claims"
 	slackbotInstallStateClaimTable  = "slackbot_install_state_claims"
@@ -70,8 +77,13 @@ type InstallStateClaim struct {
 }
 
 // NewConnectorInstallStateClaim derives the ledger entry for an access-review
-// connector install state. Only the digest is kept: the raw state carries the
-// organization and identity GIDs and has no business at rest.
+// connector install state. It serves EVERY install provider, present and
+// future — (*ConnectorService) claims, releases and burns through it without
+// consulting the provider, so single-use semantics are not something a new
+// provider has to remember to opt into.
+//
+// Only the digest is kept: the raw state carries the organization and identity
+// GIDs and has no business at rest.
 func NewConnectorInstallStateClaim(
 	organizationID gid.GID,
 	state string,
@@ -85,7 +97,8 @@ func NewConnectorInstallStateClaim(
 }
 
 // NewSlackbotInstallStateClaim derives the ledger entry for a Slack app install
-// state.
+// state, in Slack's own table. Nothing but Slack's install should call it: a
+// connector install belongs in NewConnectorInstallStateClaim.
 func NewSlackbotInstallStateClaim(
 	organizationID gid.GID,
 	state string,
