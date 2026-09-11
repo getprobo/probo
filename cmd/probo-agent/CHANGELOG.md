@@ -5,6 +5,12 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Windows no longer flashes a console window when Explorer starts the
+  tray at logon. The agent is linked as a GUI-subsystem binary and
+  attaches to an existing console only for CLI commands.
+
 ## [0.7.1-rc.1] - 2026-09-11
 
 ### Fixed

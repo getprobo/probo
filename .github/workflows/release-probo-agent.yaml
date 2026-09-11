@@ -103,7 +103,7 @@ jobs:
           $Version = $env:GITHUB_REF_NAME -replace '^.*\/v', ''
           $Arch = "${{ matrix.goarch }}"
           New-Item -ItemType Directory -Force -Path dist, archives | Out-Null
-          $ldflags = "-s -w -X 'main.version=$Version'"
+          $ldflags = "-s -w -H windowsgui -X 'main.version=$Version'"
           go run ./cmd/probo-agent/installer/windows/mkicon `
             -png ./pkg/deviceagent/tray/icon_color.png `
             -syso "./cmd/probo-agent/rsrc_windows_${Arch}.syso" `

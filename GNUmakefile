@@ -128,6 +128,9 @@ PROBO_AGENT_CGO=	0
 ifeq ($(PROBO_AGENT_TARGET_OS),darwin)
 PROBO_AGENT_CGO=	1
 endif
+ifeq ($(PROBO_AGENT_TARGET_OS),windows)
+PROBO_AGENT_LDFLAGS=	-ldflags "-H windowsgui -X 'main.version=$(PROBO_AGENT_VERSION)'"
+endif
 
 ifdef WITH_APPS
 GENERATED += relay
