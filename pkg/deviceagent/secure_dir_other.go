@@ -25,7 +25,3 @@ package deviceagent
 func ensureProtectedWindowsTree(string, secureDirKind) error {
 	return nil
 }
-
-func isTrustedEnrollmentMarker(string) (bool, error) {
-	return true, nil
-}

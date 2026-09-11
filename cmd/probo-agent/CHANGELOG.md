@@ -24,6 +24,10 @@ documented in this file.
 - API calls to `us.probo.com` and `eu.probo.com` require a pinned Probo
   leaf key. A Probo certificate key change fails enroll and heartbeats
   until the agent is updated. Self-hosted servers are unchanged.
+- Windows agent state under `%ProgramData%\Probo\agent` uses an explicit
+  DACL for SYSTEM and Administrators. A standard user cannot read
+  `agent.key` or replace `config.json`. A user-owned or junction squat
+  is refused, and existing files are re-ACL'd when the service starts.
 
 ## [0.6.6] - 2026-09-10
 

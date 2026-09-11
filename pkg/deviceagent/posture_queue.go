@@ -89,8 +89,8 @@ func savePendingPostureBatches(dir string, batches []pendingPostureBatch) error 
 		return nil
 	}
 
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return fmt.Errorf("cannot create pending posture dir: %w", err)
+	if err := ensureSecureAgentDir(dir); err != nil {
+		return err
 	}
 
 	data, err := json.MarshalIndent(batches, "", "  ")

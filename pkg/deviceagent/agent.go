@@ -153,6 +153,10 @@ func (a *Agent) ConfigureDevice(
 
 // LoadLocalState loads persisted config and API key.
 func (a *Agent) LoadLocalState() error {
+	if err := ensureSecureAgentDir(a.Dir); err != nil {
+		return err
+	}
+
 	cfg, err := LoadConfig(a.Dir)
 	if err != nil {
 		return err

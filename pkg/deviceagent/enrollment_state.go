@@ -63,11 +63,10 @@ func enrollmentMarkerPath(runDir string) string {
 	return filepath.Join(runDir, EnrollmentMarkerName)
 }
 
-// IsEnrolled reports whether runDir contains a trusted enrollment marker.
-// On Windows production paths the marker must be owned by SYSTEM or
-// Administrators; a user-created file is ignored so install proceeds.
+// IsEnrolled reports whether runDir contains an enrollment marker.
 func IsEnrolled(runDir string) (bool, error) {
 	path := enrollmentMarkerPath(runDir)
+
 	_, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -75,11 +74,6 @@ func IsEnrolled(runDir string) (bool, error) {
 		}
 
 		return false, fmt.Errorf("cannot stat enrollment marker: %w", err)
-	}
-
-	trusted, err := isTrustedEnrollmentMarker(path)
-	if err != nil || !trusted {
-		return false, nil
 	}
 
 	return true, nil

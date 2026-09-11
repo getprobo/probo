@@ -67,8 +67,8 @@ func loadCheckMemory(dir string) (checkMemory, error) {
 
 func saveCheckMemory(dir string, memory checkMemory) error {
 	path := checkMemoryPath(dir)
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return fmt.Errorf("cannot create check memory dir: %w", err)
+	if err := ensureSecureAgentDir(filepath.Dir(path)); err != nil {
+		return err
 	}
 
 	data, err := json.MarshalIndent(memory, "", "  ")

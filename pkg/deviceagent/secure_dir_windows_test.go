@@ -49,6 +49,23 @@ func TestIsTrustedWindowsSID(t *testing.T) {
 	assert.True(t, isTrustedWindowsSID(adminSID))
 	assert.False(t, isTrustedWindowsSID(usersSID))
 	assert.False(t, isTrustedWindowsSID(worldSID))
+
+	token, err := windows.OpenCurrentProcessToken()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = token.Close() })
+
+	tokenUser, err := token.GetTokenUser()
+	require.NoError(t, err)
+	require.NotNil(t, tokenUser.User.Sid)
+
+	userSID := tokenUser.User.Sid
+	if userSID.IsWellKnown(windows.WinLocalSystemSid) ||
+		userSID.IsWellKnown(windows.WinBuiltinAdministratorsSid) {
+		assert.True(t, isTrustedWindowsSID(userSID))
+		return
+	}
+
+	assert.Equal(t, sidIsLocalAdministrator(userSID), isTrustedWindowsSID(userSID))
 }
 
 func TestIsPathUnderWindowsRoot(t *testing.T) {
@@ -119,6 +136,48 @@ func TestEnsureWindowsProtectedDir_RejectsUntrustedOwner(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not owned by SYSTEM or Administrators")
+}
+
+func TestEnsureWindowsProtectedDir_RewritesChildFileDACL(t *testing.T) {
+	t.Parallel()
+
+	dir := filepath.Join(t.TempDir(), "agent")
+	require.NoError(t, os.Mkdir(dir, 0o700))
+
+	child := filepath.Join(dir, "agent.key")
+	require.NoError(t, os.WriteFile(child, []byte("secret\n"), 0o600))
+
+	trusted, err := isTrustedWindowsOwner(dir)
+	require.NoError(t, err)
+	if !trusted {
+		t.Skip("owner is not SYSTEM or Administrators")
+	}
+
+	require.NoError(t, ensureWindowsProtectedDir(dir, secureDirAgent))
+
+	sids, err := daclSIDSet(child)
+	require.NoError(t, err)
+
+	usersSID, err := windows.CreateWellKnownSid(windows.WinBuiltinUsersSid)
+	require.NoError(t, err)
+	assert.False(t, sids[usersSID.String()])
+	assert.True(t, daclIsProtected(t, child))
+}
+
+func TestEnsureProtectedWindowsTree_IgnoresNonProgramDataPath(t *testing.T) {
+	t.Parallel()
+
+	dir := filepath.Join(t.TempDir(), "agent")
+	require.NoError(t, os.Mkdir(dir, 0o700))
+
+	before, err := daclSIDSet(dir)
+	require.NoError(t, err)
+
+	require.NoError(t, ensureProtectedWindowsTree(dir, secureDirAgent))
+
+	after, err := daclSIDSet(dir)
+	require.NoError(t, err)
+	assert.Equal(t, before, after)
 }
 
 func TestEnsureWindowsProtectedDir_RejectsReparsePoint(t *testing.T) {
