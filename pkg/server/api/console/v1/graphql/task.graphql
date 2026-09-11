@@ -50,6 +50,7 @@ type Task implements Node {
     rank: Int!
     timeEstimate: TimeSpan
     deadline: Datetime
+    recurrenceInterval: TimeSpan
     assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
@@ -107,6 +108,7 @@ input CreateTaskInput {
     timeEstimate: TimeSpan
     assignedToId: ID
     deadline: Datetime
+    recurrenceInterval: TimeSpan
 }
 
 input UpdateTaskInput {
@@ -120,6 +122,7 @@ input UpdateTaskInput {
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
     measureId: ID @goField(omittable: true)
+    recurrenceInterval: TimeSpan @goField(omittable: true)
 }
 
 input DeleteTaskInput {
@@ -132,6 +135,7 @@ type CreateTaskPayload {
 
 type UpdateTaskPayload {
     task: Task!
+    nextTaskEdge: TaskEdge
 }
 
 type DeleteTaskPayload {

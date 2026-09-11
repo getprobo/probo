@@ -32,15 +32,16 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 	task, err := r.probo.Tasks.Create(
 		ctx, scope,
 		probo.CreateTaskRequest{
-			MeasureID:      input.MeasureID,
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Content:        input.Content,
-			State:          input.State,
-			Priority:       input.Priority,
-			TimeEstimate:   input.TimeEstimate,
-			AssignedToID:   input.AssignedToID,
-			Deadline:       input.Deadline,
+			MeasureID:          input.MeasureID,
+			OrganizationID:     input.OrganizationID,
+			Name:               input.Name,
+			Content:            input.Content,
+			State:              input.State,
+			Priority:           input.Priority,
+			TimeEstimate:       input.TimeEstimate,
+			AssignedToID:       input.AssignedToID,
+			Deadline:           input.Deadline,
+			RecurrenceInterval: input.RecurrenceInterval,
 		},
 	)
 	if err != nil {
@@ -73,19 +74,20 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		return nil, err
 	}
 
-	task, err := r.probo.Tasks.Update(
+	result, err := r.probo.Tasks.Update(
 		ctx, scope,
 		probo.UpdateTaskRequest{
-			TaskID:       input.TaskID,
-			Name:         input.Name,
-			Content:      gqlutils.UnwrapOmittable(input.Content),
-			State:        input.State,
-			Priority:     input.Priority,
-			Rank:         input.Rank,
-			TimeEstimate: gqlutils.UnwrapOmittable(input.TimeEstimate),
-			Deadline:     gqlutils.UnwrapOmittable(input.Deadline),
-			AssignedToID: gqlutils.UnwrapOmittable(input.AssignedToID),
-			MeasureID:    gqlutils.UnwrapOmittable(input.MeasureID),
+			TaskID:             input.TaskID,
+			Name:               input.Name,
+			Content:            gqlutils.UnwrapOmittable(input.Content),
+			State:              input.State,
+			Priority:           input.Priority,
+			Rank:               input.Rank,
+			TimeEstimate:       gqlutils.UnwrapOmittable(input.TimeEstimate),
+			Deadline:           gqlutils.UnwrapOmittable(input.Deadline),
+			AssignedToID:       gqlutils.UnwrapOmittable(input.AssignedToID),
+			MeasureID:          gqlutils.UnwrapOmittable(input.MeasureID),
+			RecurrenceInterval: gqlutils.UnwrapOmittable(input.RecurrenceInterval),
 		},
 	)
 	if err != nil {
@@ -102,9 +104,14 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateTaskPayload{
-		Task: types.NewTask(task),
-	}, nil
+	payload := &types.UpdateTaskPayload{
+		Task: types.NewTask(result.Task),
+	}
+	if result.NextTask != nil {
+		payload.NextTaskEdge = types.NewTaskEdge(result.NextTask, coredata.TaskOrderFieldCreatedAt)
+	}
+
+	return payload, nil
 }
 
 // DeleteTask is the resolver for the deleteTask field.

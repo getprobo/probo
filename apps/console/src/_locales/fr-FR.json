@@ -1154,6 +1154,9 @@
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",
       "delete": "Supprimer"
+    },
+    "recurringBadge": {
+      "tooltip": "Se répète avec un intervalle de {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {

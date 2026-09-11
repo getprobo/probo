@@ -38,6 +38,7 @@ import { graphql, useFragment } from "react-relay";
 import type { TaskPropertiesSection_task$key } from "#/__generated__/core/TaskPropertiesSection_task.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { taskRecurrenceDurationUnits } from "../_lib/taskDuration";
 import type { TaskPriority, TaskState } from "../_lib/taskState";
 import {
   taskPriorities,
@@ -58,6 +59,7 @@ const taskPropertiesSectionFragment = graphql`
     priority
     timeEstimate
     deadline
+    recurrenceInterval
     createdAt
     updatedAt
     canUpdate: permission(action: "core:task:update")
@@ -95,18 +97,22 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
       measureId?: string | null;
       timeEstimate?: string | null;
       deadline?: string | null;
+      recurrenceInterval?: string | null;
     },
+    silent = false,
   ) {
-    return updateTask({
+    const result = updateTask({
       variables: {
         input: {
           taskId: task.id,
           ...input,
         },
       },
-    }).catch(() => {
+    }, silent ? { successMessage: "" } : undefined);
+    void result.catch(() => {
       // Error toast is already shown by useMutation.
     });
+    return result;
   }
 
   return (
@@ -257,8 +263,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
             ? (
                 <TaskDurationField
                   value={task.timeEstimate ?? null}
-                  disabled={isUpdating}
-                  onValueChange={timeEstimate => save({ timeEstimate })}
+                  onValueChange={timeEstimate => save({ timeEstimate }, true)}
                 />
               )
             : (
@@ -281,6 +286,10 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                     if (next === current) {
                       return;
                     }
+                    if (!deadline && task.recurrenceInterval) {
+                      void save({ deadline, recurrenceInterval: null });
+                      return;
+                    }
                     void save({ deadline });
                   }}
                 />
@@ -295,6 +304,32 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                 )
               : (
                   <Text size={2} color="faint">{empty}</Text>
+                )}
+        </PropertyRow>
+        <PropertyRow label={t("detailsPage.fields.recurrence")}>
+          {task.canUpdate
+            ? (
+                <TaskDurationField
+                  value={task.recurrenceInterval ?? null}
+                  disabled={!task.deadline && !task.recurrenceInterval}
+                  defaultValue="P7D"
+                  units={taskRecurrenceDurationUnits}
+                  addLabel={t("detailsPage.actions.addRecurrence")}
+                  addTitle={!task.deadline
+                    ? t("detailsPage.hints.recurrenceNeedsDeadline")
+                    : undefined}
+                  clearLabel={t("detailsPage.actions.clearRecurrence")}
+                  amountAriaLabel={t("detailsPage.fields.recurrence")}
+                  unitAriaLabel={t("detailsPage.fields.recurrenceUnit")}
+                  onValueChange={recurrenceInterval => save({ recurrenceInterval }, true)}
+                />
+              )
+            : task.recurrenceInterval
+              ? (
+                  <Text size={2}>{formatDuration(task.recurrenceInterval, tApp)}</Text>
+                )
+              : (
+                  <Text size={2} color="faint">{t("detailsPage.doesNotRepeat")}</Text>
                 )}
         </PropertyRow>
         <PropertyRow label={t("detailsPage.fields.createdAt")}>

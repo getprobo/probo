@@ -6992,6 +6992,12 @@ components:
             - type: "null"
               description: No deadline
           description: Deadline
+        recurrence_interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -7091,6 +7097,9 @@ components:
           type: string
           format: date-time
           description: Deadline
+        recurrence_interval:
+          $ref: "#/components/schemas/TimeSpan"
+          description: Recurrence interval (requires deadline to be set)
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -7163,6 +7172,13 @@ components:
               description: No deadline
           description: Deadline
           go.probo.inc/mcpgen/omittable: true
+        recurrence_interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval
+          go.probo.inc/mcpgen/omittable: true
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -7187,6 +7203,9 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
+        next_task:
+          $ref: "#/components/schemas/Task"
+          description: Next occurrence created when a recurring task is marked done
 
     AssignTaskInput:
       type: object

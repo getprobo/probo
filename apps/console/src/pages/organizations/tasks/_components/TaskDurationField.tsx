@@ -36,14 +36,15 @@ import {
   stringifyTaskDuration,
   taskDurationsEqual,
   type TaskDurationUnit,
-  taskDurationUnits,
+  taskEstimateDurationUnits,
 } from "../_lib/taskDuration";
-import { useSerializedFieldSave } from "../_lib/useSerializedFieldSave";
+import { useDebouncedSerializedFieldSave } from "../_lib/useSerializedFieldSave";
 import { taskDurationField } from "../variants";
 
 const durationFieldAttr = "data-task-duration-field";
 const durationPopupAttr = "data-task-duration-popup";
 const clearedDuration = "";
+const durationSaveDelayMs = 400;
 
 function isFocusInsideDurationField(event: FocusEvent<HTMLElement>) {
   const next = event.relatedTarget;
@@ -61,12 +62,26 @@ interface TaskDurationFieldProps {
   value: string | null;
   disabled?: boolean;
   onValueChange: (value: string | null) => void | Promise<unknown>;
+  defaultValue?: string;
+  addLabel?: string;
+  clearLabel?: string;
+  amountAriaLabel?: string;
+  unitAriaLabel?: string;
+  addTitle?: string;
+  units?: readonly TaskDurationUnit[];
 }
 
 export function TaskDurationField({
   value,
   disabled,
   onValueChange,
+  defaultValue = "PT1H",
+  addLabel,
+  clearLabel,
+  amountAriaLabel,
+  unitAriaLabel,
+  addTitle,
+  units = taskEstimateDurationUnits,
 }: TaskDurationFieldProps) {
   const { t } = useTranslation("organizations/tasks");
   const { root } = taskDurationField();
@@ -75,10 +90,21 @@ export function TaskDurationField({
     parsed ? String(parsed.amount) : "",
   );
   const [savedValue, setSavedValue] = useState(value);
-  const persist = useSerializedFieldSave(async (encoded) => {
-    await onValueChange(encoded === clearedDuration ? null : encoded);
-  });
+  const persistDebounced = useDebouncedSerializedFieldSave(async (encoded) => {
+    try {
+      await onValueChange(encoded === clearedDuration ? null : encoded);
+    } catch {
+      const failedAmount = encoded === clearedDuration
+        ? ""
+        : String(parseTaskDuration(encoded)?.amount ?? "");
+      const restoredAmount = value
+        ? String(parseTaskDuration(value)?.amount ?? "")
+        : "";
+      setAmountDraft(current => (current === failedAmount ? restoredAmount : current));
+    }
+  }, durationSaveDelayMs);
   const unit = parsed?.unit ?? "H";
+  const availableUnits = units.includes(unit) ? units : [...units, unit];
   const savedAmount = parsed ? String(parsed.amount) : "";
 
   if (value !== savedValue) {
@@ -92,45 +118,58 @@ export function TaskDurationField({
     }
   }
 
-  function commit(next: string | null) {
-    if (next != null && value != null && taskDurationsEqual(next, value)) {
-      setAmountDraft(savedAmount);
-      return;
-    }
-    if (next === value) {
+  function persistIfChanged(next: string | null, immediate = false) {
+    if (
+      (next != null && value != null && taskDurationsEqual(next, value))
+      || next === value
+    ) {
+      persistDebounced.cancel();
       return;
     }
 
-    setAmountDraft(savedAmount);
-    void persist(next ?? clearedDuration);
+    const encoded = next ?? clearedDuration;
+    persistDebounced.schedule(encoded);
+    if (immediate) {
+      persistDebounced.flush();
+    }
   }
 
-  function commitAmount(nextUnit: TaskDurationUnit) {
-    if (amountDraft.trim() === "") {
-      if (!value) {
-        return;
-      }
-      commit(null);
-      return;
+  function encodedAmount(amountText: string, nextUnit: TaskDurationUnit) {
+    if (amountText.trim() === "") {
+      return undefined;
     }
 
-    const amount = parseTaskDurationAmount(amountDraft);
+    const amount = parseTaskDurationAmount(amountText);
     if (amount == null) {
-      setAmountDraft(savedAmount);
-      return;
+      return undefined;
     }
 
-    const next = stringifyTaskDuration(amount, nextUnit);
+    return stringifyTaskDuration(amount, nextUnit);
+  }
+
+  function saveAmount(amountText: string, nextUnit: TaskDurationUnit, immediate = false) {
+    if (amountText.trim() === "") {
+      if (!immediate) {
+        return false;
+      }
+      if (!value || parseTaskDuration(value) == null) {
+        return false;
+      }
+      persistIfChanged(null, true);
+      return true;
+    }
+
+    const next = encodedAmount(amountText, nextUnit);
     if (next == null) {
-      setAmountDraft(savedAmount);
-      return;
+      return false;
     }
 
-    commit(next);
+    persistIfChanged(next, immediate);
+    return true;
   }
 
   if (!value) {
-    return (
+    const addButton = (
       <Button
         type="button"
         size={1}
@@ -138,13 +177,20 @@ export function TaskDurationField({
         color="neutral"
         iconStart={<PlusIcon />}
         disabled={disabled}
+        title={addTitle}
         onClick={() => {
-          void persist("PT1H");
+          persistIfChanged(defaultValue, true);
         }}
       >
-        {t("detailsPage.actions.addEstimate")}
+        {addLabel ?? t("detailsPage.actions.addEstimate")}
       </Button>
     );
+
+    if (disabled && addTitle) {
+      return <span title={addTitle}>{addButton}</span>;
+    }
+
+    return addButton;
   }
 
   return (
@@ -156,15 +202,28 @@ export function TaskDurationField({
         step={1}
         value={amountDraft}
         disabled={disabled}
-        aria-label={t("detailsPage.fields.timeEstimate")}
+        aria-label={amountAriaLabel ?? t("detailsPage.fields.timeEstimate")}
         onChange={(event) => {
           setAmountDraft(event.currentTarget.value);
+          saveAmount(event.currentTarget.value, unit);
         }}
-        onBlur={(event) => {
-          if (isFocusInsideDurationField(event)) {
+        onValueChange={(next: string) => {
+          setAmountDraft(next);
+          saveAmount(next, unit);
+        }}
+        onBlur={() => {
+          if (!saveAmount(amountDraft, unit, true)) {
+            setAmountDraft(savedAmount);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter") {
             return;
           }
-          commitAmount(unit);
+          event.preventDefault();
+          if (!saveAmount(amountDraft, unit, true)) {
+            setAmountDraft(savedAmount);
+          }
         }}
       />
       <Select
@@ -174,23 +233,23 @@ export function TaskDurationField({
           if (next == null) {
             return;
           }
-          commitAmount(next);
+          saveAmount(amountDraft, next, true);
         }}
         onOpenChange={(open, details) => {
           if (open || details.reason === "item-press") {
             return;
           }
-          commitAmount(unit);
+          saveAmount(amountDraft, unit, true);
         }}
       >
         <SelectTrigger
           size={1}
-          aria-label={t("detailsPage.fields.timeEstimateUnit")}
+          aria-label={unitAriaLabel ?? t("detailsPage.fields.timeEstimateUnit")}
           onBlur={(event) => {
             if (isFocusInsideDurationField(event)) {
               return;
             }
-            commitAmount(unit);
+            saveAmount(amountDraft, unit, true);
           }}
         >
           {(selected: TaskDurationUnit | null) =>
@@ -199,7 +258,7 @@ export function TaskDurationField({
               : t("detailsPage.duration.H")}
         </SelectTrigger>
         <SelectPopup data-task-duration-popup="">
-          {taskDurationUnits.map(item => (
+          {availableUnits.map(item => (
             <SelectItem key={item} value={item}>
               {t(`detailsPage.duration.${item}`)}
             </SelectItem>
@@ -212,9 +271,9 @@ export function TaskDurationField({
         variant="ghost"
         color="neutral"
         disabled={disabled}
-        aria-label={t("detailsPage.actions.clearEstimate")}
+        aria-label={clearLabel ?? t("detailsPage.actions.clearEstimate")}
         onClick={() => {
-          commit(null);
+          persistIfChanged(null, true);
         }}
       >
         <XIcon aria-hidden />

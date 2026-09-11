@@ -722,7 +722,10 @@
       "state": "Drag and drop to reorder tasks"
     },
     "deleteConfirmation": "Are you sure you want to delete this task?",
-    "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" }
+    "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" },
+    "recurringBadge": {
+      "tooltip": "Repeats every {{interval}}"
+    }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Delete Reference",

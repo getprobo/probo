@@ -2139,15 +2139,16 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	task, err := svc.Tasks.Create(
 		ctx, scope,
 		probo.CreateTaskRequest{
-			OrganizationID: input.OrganizationID,
-			MeasureID:      input.MeasureID,
-			Name:           input.Name,
-			Content:        content,
-			State:          input.State,
-			Priority:       priority,
-			TimeEstimate:   input.TimeEstimate,
-			Deadline:       input.Deadline,
-			AssignedToID:   input.AssignedToID,
+			OrganizationID:     input.OrganizationID,
+			MeasureID:          input.MeasureID,
+			Name:               input.Name,
+			Content:            content,
+			State:              input.State,
+			Priority:           priority,
+			TimeEstimate:       input.TimeEstimate,
+			Deadline:           input.Deadline,
+			AssignedToID:       input.AssignedToID,
+			RecurrenceInterval: input.RecurrenceInterval,
 		},
 	)
 	if err != nil {
@@ -2172,28 +2173,34 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
-	task, err := svc.Tasks.Update(
+	result, err := svc.Tasks.Update(
 		ctx, scope,
 		probo.UpdateTaskRequest{
-			TaskID:       input.ID,
-			Name:         input.Name,
-			Content:      content,
-			State:        input.State,
-			Priority:     input.Priority,
-			Rank:         input.Rank,
-			TimeEstimate: UnwrapOmittable(input.TimeEstimate),
-			Deadline:     UnwrapOmittable(input.Deadline),
-			AssignedToID: UnwrapOmittable(input.AssignedToID),
-			MeasureID:    UnwrapOmittable(input.MeasureID),
+			TaskID:             input.ID,
+			Name:               input.Name,
+			Content:            content,
+			State:              input.State,
+			Priority:           input.Priority,
+			Rank:               input.Rank,
+			TimeEstimate:       UnwrapOmittable(input.TimeEstimate),
+			Deadline:           UnwrapOmittable(input.Deadline),
+			AssignedToID:       UnwrapOmittable(input.AssignedToID),
+			MeasureID:          UnwrapOmittable(input.MeasureID),
+			RecurrenceInterval: UnwrapOmittable(input.RecurrenceInterval),
 		},
 	)
 	if err != nil {
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
 	}
 
-	return nil, types.UpdateTaskOutput{
-		Task: types.NewTask(task),
-	}, nil
+	output := types.UpdateTaskOutput{
+		Task: types.NewTask(result.Task),
+	}
+	if result.NextTask != nil {
+		output.NextTask = types.NewTask(result.NextTask)
+	}
+
+	return nil, output, nil
 }
 
 func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error) {
