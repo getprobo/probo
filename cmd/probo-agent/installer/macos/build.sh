@@ -5,8 +5,10 @@
 #
 # Required arguments:
 #   --binary  PATH    Path to a compiled probo-agent fat binary.
-#   --version VER     Agent version, e.g. 0.1.0. Defaults to the
-#                     content of cmd/probo-agent/VERSION.
+#   --version VER     Agent version, e.g. 0.1.0 or 0.1.0-rc.1.
+#                     Defaults to cmd/probo-agent/VERSION. The .pkg
+#                     filename keeps the full string; pkgbuild and
+#                     CFBundleVersion strip -rc.N (Apple wants X.Y.Z).
 #   --output  PATH    Output .pkg path. Defaults to
 #                     dist/probo-agent_${VER}_darwin.pkg.
 #
@@ -116,8 +118,14 @@ if [ "${has_arm64}" != true ] || [ "${has_x86_64}" != true ]; then
 fi
 
 if [ -z "${VERSION}" ]; then
-  VERSION="$(cat "${REPO_ROOT}/cmd/probo-agent/VERSION")"
+  VERSION="$(tr -d '[:space:]' <"${REPO_ROOT}/cmd/probo-agent/VERSION")"
 fi
+if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
+  echo "error: version must look like X.Y.Z or X.Y.Z-rc.N (got '${VERSION}')" >&2
+  exit 2
+fi
+# pkgbuild / CFBundleVersion require period-separated integers.
+INSTALLER_VERSION="${VERSION%%-*}"
 if [ -z "${OUTPUT}" ]; then
   mkdir -p "${REPO_ROOT}/dist"
   OUTPUT="${REPO_ROOT}/dist/probo-agent_${VERSION}_darwin.pkg"
@@ -259,6 +267,7 @@ build_probo_agent_app() {
 
   sed \
     -e "s|@@VERSION@@|${VERSION}|g" \
+    -e "s|@@INSTALLER_VERSION@@|${INSTALLER_VERSION}|g" \
     -e "s|@@CLIENT_DESIGNATED_REQUIREMENT@@|$(client_requirement)|g" \
     "${ENROLL_UI_DIR}/HelperTool/Info.plist.tmpl" >"${helper_info_plist}"
 
@@ -332,6 +341,7 @@ build_probo_agent_app() {
 
   sed \
     -e "s|@@VERSION@@|${VERSION}|g" \
+    -e "s|@@INSTALLER_VERSION@@|${INSTALLER_VERSION}|g" \
     -e "s|@@HELPER_DESIGNATED_REQUIREMENT@@|${helper_requirement}|g" \
     "${ENROLL_UI_DIR}/Info.plist.tmpl" >"${plist}"
 
@@ -438,7 +448,7 @@ pkgbuild \
   --root "${PAYLOAD}" \
   --scripts "${SCRIPTS}" \
   --identifier "${IDENTIFIER}" \
-  --version "${VERSION}" \
+  --version "${INSTALLER_VERSION}" \
   --install-location "/" \
   "${COMPONENT_PKG}"
 
@@ -447,6 +457,7 @@ rewrite_component_bom "${COMPONENT_PKG}"
 DISTRIBUTION="${STAGE}/Distribution.xml"
 sed \
   -e "s|@@VERSION@@|${VERSION}|g" \
+  -e "s|@@INSTALLER_VERSION@@|${INSTALLER_VERSION}|g" \
   -e "s|@@IDENTIFIER@@|${IDENTIFIER}|g" \
   "${SCRIPT_DIR}/Distribution.xml.tmpl" >"${DISTRIBUTION}"
 

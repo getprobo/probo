@@ -197,6 +197,7 @@ func (a *Agent) Run(ctx context.Context) error {
 		log.Duration("posture_interval", a.cfg.PostureInterval),
 		log.Duration("host_info_refresh_interval", hostInfoRefreshInterval),
 		log.Bool("auto_update_enabled", a.autoUpdateEnabled()),
+		log.Bool("allow_prereleases", a.cfg.AllowPrereleases),
 		log.Duration("update_interval", a.cfg.UpdateInterval),
 	)
 

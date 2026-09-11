@@ -96,6 +96,10 @@ type (
 		// probo-agent release workflow.
 		Verifier Verifier
 
+		// AllowPrereleases includes GitHub prerelease tags when
+		// choosing an update. Production hosts leave this false.
+		AllowPrereleases bool
+
 		// GOOS/GOARCH override the values used to compute the
 		// archive name. They default to runtime.GOOS/GOARCH and
 		// exist for tests.
@@ -150,7 +154,14 @@ func (j *jsonTimestamp) UnmarshalJSON(b []byte) error {
 // sigstoreCacheDir is the on-disk directory used to cache Sigstore
 // TUF metadata for cosign bundle verification. It MUST be writable by
 // the agent. A typical value is `<agent state dir>/sigstore-cache`.
-func New(currentVersion, exePath, userAgent, sigstoreCacheDir string, logger *log.Logger) *Updater {
+func New(
+	currentVersion string,
+	exePath string,
+	userAgent string,
+	sigstoreCacheDir string,
+	allowPrereleases bool,
+	logger *log.Logger,
+) *Updater {
 	if logger == nil {
 		logger = log.NewLogger(log.WithName("agent-update"))
 	}
@@ -166,6 +177,7 @@ func New(currentVersion, exePath, userAgent, sigstoreCacheDir string, logger *lo
 		Logger:           logger,
 		HTTP:             defaultHTTPClient(logger),
 		SigstoreCacheDir: sigstoreCacheDir,
+		AllowPrereleases: allowPrereleases,
 		GOOS:             runtime.GOOS,
 		GOARCH:           runtime.GOARCH,
 	}
@@ -201,7 +213,11 @@ func (u *Updater) CheckLatest(ctx context.Context) (*Release, error) {
 
 	for i := range releases {
 		rel := &releases[i]
-		if rel.Draft || rel.Prerelease {
+		if rel.Draft {
+			continue
+		}
+
+		if rel.Prerelease && !u.AllowPrereleases {
 			continue
 		}
 

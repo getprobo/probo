@@ -3,10 +3,21 @@
 After confirming commits below, follow the
 [common steps](./README.md#3-common-steps-every-track).
 
+## Stable or RC
+
+This track can ship a GitHub prerelease for fleet testing. **Ask the
+user before bumping the version: stable release, or RC (`-rc.N`)?**
+Do not assume stable. Other tracks have no RC path — do not ask this
+for them.
+
+If they choose RC, follow [RC release](#rc-release) instead of a
+plain `X.Y.Z` bump.
+
 ## Track facts
 
 - **Tag pattern**: `probo-agent/v*`
-- **Version source**: `cmd/probo-agent/VERSION` (single `X.Y.Z` line)
+- **Version source**: `cmd/probo-agent/VERSION` (single `X.Y.Z` or
+  `X.Y.Z-rc.N` line)
 - **Version bump**: Edit `cmd/probo-agent/VERSION` directly
 - **Changelog**: `cmd/probo-agent/CHANGELOG.md`
 - **Files to stage**: `cmd/probo-agent/VERSION`, `cmd/probo-agent/CHANGELOG.md`
@@ -21,6 +32,35 @@ git log $(git describe --tags --abbrev=0 --match='probo-agent/v*')..HEAD --oneli
 ```
 
 If empty or non-user-facing only, do not release this track.
+
+## RC release
+
+Only this track supports RCs. Form is **`probo-agent/vX.Y.Z-rc.N`**
+only (`N` is a positive integer: `-rc.1`, then `-rc.2`). No `alpha`,
+`beta`, or undotted `rc1`.
+
+1. Decide `X.Y.Z` the same way as a stable bump (PATCH vs MINOR).
+2. If no RC exists for that `X.Y.Z`, use `-rc.1`. If `vX.Y.Z-rc.N`
+   already exists, use `-rc.(N+1)`.
+3. Set `cmd/probo-agent/VERSION` to `X.Y.Z-rc.N`.
+4. Changelog heading: `## [X.Y.Z-rc.N] - YYYY-MM-DD`.
+5. Commit subject and annotated tag: `probo-agent/vX.Y.Z-rc.N`.
+6. Push the commit, then the tag **alone**. The workflow marks the
+   GitHub Release as a prerelease when the tag contains `-rc.`.
+
+Promoting to stable later: drop `-rc.N`, reuse the same `X.Y.Z`, and
+add a new changelog heading `## [X.Y.Z]`.
+
+Installer `ProductVersion` / `pkgbuild --version` / `CFBundleVersion`
+strip `-rc.N` to `X.Y.Z`. Filenames, `ldflags`, and
+`CFBundleShortVersionString` keep the full string. MSI/PKG upgrade
+from an RC to the matching stable may be treated as the same product
+version — use auto-update (zip/tar) or uninstall first.
+
+Production auto-update ignores GitHub prereleases. Test-fleet hosts
+set `allow_prereleases: true` in `config.json` (or install with
+`--allow-prereleases` / `PROBO_ALLOW_PRERELEASES=true`) and restart
+the service.
 
 ## Build
 
@@ -273,6 +313,7 @@ Environment variables:
 | `PROBO_SERVER_URL` | Probo server base URL (skip interactive prompt) |
 | `PROBO_ENROLLMENT_TOKEN` | One-shot enrollment token (skip interactive prompt) |
 | `PROBO_NO_AUTO_UPDATE` | Set to `true` to pass `--no-auto-update` |
+| `PROBO_ALLOW_PRERELEASES` | Set to `true` to pass `--allow-prereleases` |
 
 Never pass the enrollment token in the curl URL.
 

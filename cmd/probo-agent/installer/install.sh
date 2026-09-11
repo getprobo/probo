@@ -33,6 +33,7 @@
 #   PROBO_SERVER_URL               Probo server base URL
 #   PROBO_ENROLLMENT_TOKEN         One-shot enrollment token
 #   PROBO_NO_AUTO_UPDATE           Set to true to pass --no-auto-update
+#   PROBO_ALLOW_PRERELEASES        Set to true to pass --allow-prereleases
 #
 # Never pass the enrollment token in the curl URL.
 
@@ -55,6 +56,7 @@ SERVER_URL="${PROBO_SERVER_URL:-}"
 ENROLLMENT_TOKEN="${PROBO_ENROLLMENT_TOKEN:-}"
 STATE_DIR="${PROBO_AGENT_STATE_DIR:-}"
 NO_AUTO_UPDATE="${PROBO_NO_AUTO_UPDATE:-}"
+ALLOW_PRERELEASES="${PROBO_ALLOW_PRERELEASES:-}"
 SKIP_SERVICE=false
 
 die() {
@@ -91,6 +93,7 @@ Environment variables:
   PROBO_SERVER_URL                    Probo server base URL
   PROBO_ENROLLMENT_TOKEN              One-shot enrollment token
   PROBO_NO_AUTO_UPDATE                Set to true to disable auto-update
+  PROBO_ALLOW_PRERELEASES             Set to true to allow prerelease auto-updates
 EOF
 }
 
@@ -271,6 +274,10 @@ parse_args() {
         NO_AUTO_UPDATE=true
         shift
         ;;
+      --allow-prereleases)
+        ALLOW_PRERELEASES=true
+        shift
+        ;;
       --skip-service)
         SKIP_SERVICE=true
         shift
@@ -298,6 +305,9 @@ run_agent_install() {
   fi
   case "$NO_AUTO_UPDATE" in
     1 | true | TRUE | yes | YES) set -- "$@" --no-auto-update ;;
+  esac
+  case "$ALLOW_PRERELEASES" in
+    1 | true | TRUE | yes | YES) set -- "$@" --allow-prereleases ;;
   esac
   case "$SKIP_SERVICE" in
     1 | true | TRUE | yes | YES) set -- "$@" --skip-service ;;

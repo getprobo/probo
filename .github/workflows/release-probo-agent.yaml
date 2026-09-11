@@ -365,7 +365,7 @@ jobs:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
           PRERELEASE_FLAG=""
-          if echo "${GITHUB_REF_NAME}" | grep -qE '(alpha|beta|rc)'; then
+          if echo "${GITHUB_REF_NAME}" | grep -qE -- '-rc\.'; then
             PRERELEASE_FLAG="--prerelease"
           fi
 

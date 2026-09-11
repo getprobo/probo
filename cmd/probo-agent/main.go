@@ -252,7 +252,7 @@ func reportIfAlreadyEnrolled(dir string) (bool, error) {
 //
 // dir is the agent state directory, used to host the Sigstore TUF
 // metadata cache for cosign bundle verification.
-func newUpdater(logger *log.Logger, dir string) *update.Updater {
+func newUpdater(logger *log.Logger, dir string, allowPrereleases bool) *update.Updater {
 	exePath, err := os.Executable()
 	if err != nil || exePath == "" {
 		return nil
@@ -263,6 +263,7 @@ func newUpdater(logger *log.Logger, dir string) *update.Updater {
 		exePath,
 		fmt.Sprintf("probo-agent/%s", version),
 		filepath.Join(dir, "sigstore-cache"),
+		allowPrereleases,
 		logger,
 	)
 }
@@ -285,10 +286,11 @@ func newAgentLogger() *log.Logger {
 
 func newInstallCmd() *cobra.Command {
 	var (
-		serverURL       string
-		enrollmentToken string
-		skipService     bool
-		noAutoUpdate    bool
+		serverURL        string
+		enrollmentToken  string
+		skipService      bool
+		noAutoUpdate     bool
+		allowPrereleases bool
 	)
 
 	cmd := &cobra.Command{
@@ -351,12 +353,18 @@ func newInstallCmd() *cobra.Command {
 			fmt.Printf("Configured device %s (heartbeat %ds, posture %ds)\n",
 				resp.DeviceID, resp.HeartbeatSeconds, resp.PostureSeconds)
 
-			if noAutoUpdate {
-				if err := persistAutoUpdate(dir, false); err != nil {
-					return fmt.Errorf("cannot persist auto-update preference: %w", err)
+			if noAutoUpdate || allowPrereleases {
+				if err := persistInstallFlags(dir, noAutoUpdate, allowPrereleases); err != nil {
+					return fmt.Errorf("cannot persist install flags: %w", err)
 				}
 
-				fmt.Println("Auto-update disabled.")
+				if noAutoUpdate {
+					fmt.Println("Auto-update disabled.")
+				}
+
+				if allowPrereleases {
+					fmt.Println("Prerelease auto-updates enabled.")
+				}
 			}
 
 			if skipService {
@@ -395,6 +403,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&enrollmentToken, "enrollment-token", "", "one-shot enrollment token issued when the device was created")
 	cmd.Flags().BoolVar(&skipService, "skip-service", false, "register the device but do not install the OS service")
 	cmd.Flags().BoolVar(&noAutoUpdate, "no-auto-update", false, "disable automatic upgrades of the agent binary")
+	cmd.Flags().BoolVar(&allowPrereleases, "allow-prereleases", false, "allow automatic upgrades onto GitHub prereleases")
 
 	return cmd
 }
@@ -411,15 +420,21 @@ func clearEnrollmentMarkerOnSetupFailure(dir string, setupErr error) error {
 	return setupErr
 }
 
-// persistAutoUpdate flips the UpdatesDisabled flag in the agent's
-// on-disk config without disturbing other fields.
-func persistAutoUpdate(dir string, enabled bool) error {
+// persistInstallFlags writes install-time update preferences into the
+// agent's on-disk config without disturbing other fields.
+func persistInstallFlags(dir string, updatesDisabled, allowPrereleases bool) error {
 	cfg, err := deviceagent.LoadConfig(dir)
 	if err != nil {
 		return err
 	}
 
-	cfg.UpdatesDisabled = !enabled
+	if updatesDisabled {
+		cfg.UpdatesDisabled = true
+	}
+
+	if allowPrereleases {
+		cfg.AllowPrereleases = true
+	}
 
 	return deviceagent.SaveConfig(dir, cfg)
 }
@@ -469,9 +484,14 @@ func newRunCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := resolveDir(cmd)
 
+			cfg, err := deviceagent.LoadConfig(dir)
+			if err != nil {
+				return fmt.Errorf("cannot load config: %w", err)
+			}
+
 			logger := newAgentLogger()
 			agent := deviceagent.New(dir, version, logger)
-			agent.Updater = newUpdater(logger, dir)
+			agent.Updater = newUpdater(logger, dir, cfg.AllowPrereleases)
 
 			run := func(ctx context.Context) error {
 				err := agent.Run(ctx)
@@ -522,6 +542,7 @@ func newStatusCmd() *cobra.Command {
 			fmt.Printf("Posture interval:     %s\n", cfg.PostureInterval)
 			fmt.Printf("Update interval:      %s\n", cfg.UpdateInterval)
 			fmt.Printf("Auto-update enabled:  %v\n", !cfg.UpdatesDisabled)
+			fmt.Printf("Allow prereleases:    %v\n", cfg.AllowPrereleases)
 			fmt.Printf("API key on disk:      %v\n", haveKey)
 			fmt.Printf("Config directory:     %s\n", dir)
 
@@ -585,7 +606,12 @@ func newUpdateCmd() *cobra.Command {
 			dir := resolveDir(cmd)
 			logger := newAgentLogger()
 
-			updater := newUpdater(logger, dir)
+			cfg, err := deviceagent.LoadConfig(dir)
+			if err != nil {
+				return fmt.Errorf("cannot load config: %w", err)
+			}
+
+			updater := newUpdater(logger, dir, cfg.AllowPrereleases)
 			if updater == nil {
 				return errors.New("cannot resolve current executable path")
 			}

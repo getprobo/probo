@@ -35,7 +35,9 @@
   Path to probo-agent.exe.
 
 .PARAMETER Version
-  Product version (X.Y.Z). Defaults to cmd/probo-agent/VERSION.
+  Agent version (X.Y.Z or X.Y.Z-rc.N). Defaults to
+  cmd/probo-agent/VERSION. The MSI filename keeps the full string;
+  WiX ProductVersion strips -rc.N because MSI requires X.Y.Z.
 
 .PARAMETER Arch
   Target architecture: amd64, x86_64, x64, or arm64.
@@ -79,9 +81,11 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
     $Version = (Get-Content -LiteralPath $VersionFile -Raw).Trim()
 }
 
-if ($Version -notmatch '^\d+\.\d+\.\d+') {
-    throw "error: version must look like X.Y.Z (got '$Version')"
+if ($Version -notmatch '^\d+\.\d+\.\d+(-rc\.\d+)?$') {
+    throw "error: version must look like X.Y.Z or X.Y.Z-rc.N (got '$Version')"
 }
+
+$ProductVersion = ($Version -replace '-rc\.\d+$', '')
 
 switch ($Arch) {
     { $_ -in @("amd64", "x86_64", "x64") } {
@@ -150,7 +154,7 @@ if (-not (Test-Path -LiteralPath $IconPng)) {
 $ProductIcon = Join-Path ([System.IO.Path]::GetTempPath()) "probo-agent-icon-$PID.ico"
 $ProductIconArg = $ProductIcon.Replace('\', '/')
 
-Write-Host "Building MSI: binary=$Binary arch=$WixArch version=$Version output=$Output"
+Write-Host "Building MSI: binary=$Binary arch=$WixArch version=$Version product=$ProductVersion output=$Output"
 
 try {
     Push-Location $RepoRoot
@@ -168,7 +172,7 @@ try {
     & wix build `
         -arch $WixArch `
         -ext WixToolset.UI.wixext `
-        -d "Version=$Version" `
+        -d "Version=$ProductVersion" `
         -d "AgentExe=$Binary" `
         -d "LicenseRtf=$LicenseRtfArg" `
         -d "ProductIcon=$ProductIconArg" `

@@ -62,6 +62,7 @@ type (
 		PostureInterval   time.Duration `json:"posture_interval,omitempty"`
 		UpdateInterval    time.Duration `json:"update_interval,omitempty"`
 		UpdatesDisabled   bool          `json:"updates_disabled,omitempty"`
+		AllowPrereleases  bool          `json:"allow_prereleases,omitempty"`
 	}
 )
 

@@ -151,6 +151,7 @@ restart_existing_daemon() {
 #   PROBO_SERVER_URL=https://your-probo-host.example.com
 #   PROBO_ENROLLMENT_TOKEN=<enrollment-token>
 #   PROBO_NO_AUTO_UPDATE=true
+#   PROBO_ALLOW_PRERELEASES=true
 #
 # Parse KEY=VALUE lines without sourcing or eval so a crafted conf
 # file cannot execute arbitrary shell as root.
@@ -169,6 +170,7 @@ if [ -f "${CONF_FILE}" ]; then
     CONF_SERVER=""
     CONF_ENROLLMENT_TOKEN=""
     CONF_NOUPDATE=""
+    CONF_ALLOW_PRERELEASES=""
     while IFS= read -r line || [ -n "$line" ]; do
         line="${line%%#*}"
         line="${line#"${line%%[![:space:]]*}"}"
@@ -184,6 +186,9 @@ if [ -f "${CONF_FILE}" ]; then
                 ;;
             PROBO_NO_AUTO_UPDATE=*)
                 CONF_NOUPDATE="$(strip_conf_value "${line#PROBO_NO_AUTO_UPDATE=}")"
+                ;;
+            PROBO_ALLOW_PRERELEASES=*)
+                CONF_ALLOW_PRERELEASES="$(strip_conf_value "${line#PROBO_ALLOW_PRERELEASES=}")"
                 ;;
         esac
     done < "${CONF_FILE}"
@@ -201,6 +206,9 @@ if [ -f "${CONF_FILE}" ]; then
         )
         case "${CONF_NOUPDATE}" in
             1|true|TRUE|yes|YES) INSTALL_ARGS+=(--no-auto-update) ;;
+        esac
+        case "${CONF_ALLOW_PRERELEASES}" in
+            1|true|TRUE|yes|YES) INSTALL_ARGS+=(--allow-prereleases) ;;
         esac
 
         if "${BINARY}" "${INSTALL_ARGS[@]}"; then
