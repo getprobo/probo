@@ -18,31 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tray
+//go:build windows
 
-import "strings"
+package main
 
-const (
-	// NOTE: Remove agentExeBaseName after all supported installs run the
-	// tray from probo-agentw.exe.
-	agentExeBaseName    = "probo-agent.exe"
-	agentGUIExeBaseName = "probo-agentw.exe"
-)
+import "path/filepath"
 
-func shouldStopInteractiveAgentProcess(
-	baseName string,
-	pid uint32,
-	selfPID uint32,
-	sessionID uint32,
-) bool {
-	if pid == selfPID {
-		return false
+func consoleExecutablePath(exePath string) string {
+	name := "probo-agent"
+	if filepath.Ext(exePath) != "" {
+		name += ".exe"
 	}
 
-	if sessionID == 0 {
-		return false
-	}
-
-	return strings.EqualFold(baseName, agentExeBaseName) ||
-		strings.EqualFold(baseName, agentGUIExeBaseName)
+	return filepath.Join(filepath.Dir(exePath), name)
 }

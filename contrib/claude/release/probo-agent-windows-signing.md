@@ -3,8 +3,9 @@
 This guide walks through everything needed before the first
 Authenticode-signed Windows release. The release workflow
 (`.github/workflows/release-probo-agent.yaml`) builds on `windows-latest`,
-signs `probo-agent.exe` and the MSI with **Azure Artifact Signing**
-(formerly Trusted Signing), then publishes zip + MSI.
+signs `probo-agent.exe`, `probo-agentw.exe`, and the MSI with
+**Azure Artifact Signing** (formerly Trusted Signing). Then it
+publishes the zip and MSI files.
 
 Official Microsoft docs:
 
@@ -260,7 +261,7 @@ Endpoint **must** match the account’s region.
    `probo-agent/vX.Y.Z-rc.N`.
 3. Watch **Release probo-agent** → **windows (amd64)** / **windows (arm64)**:
    - Azure login succeeds (OIDC)
-   - Sign `probo-agent.exe` succeeds
+   - Executable signing succeeds
    - WiX MSI build succeeds
    - Sign MSI succeeds
 4. Download an MSI / unzip the Windows archive and check

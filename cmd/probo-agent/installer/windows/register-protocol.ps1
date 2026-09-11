@@ -14,11 +14,11 @@
 
 [CmdletBinding()]
 param(
-    [string]$AgentPath = "$env:ProgramFiles\Probo\probo-agent.exe"
+    [string]$AgentPath = "$env:ProgramFiles\Probo\probo-agentw.exe"
 )
 
 if (-not (Test-Path -LiteralPath $AgentPath)) {
-    throw "probo-agent executable not found at $AgentPath"
+    throw "probo-agent GUI executable not found at $AgentPath"
 }
 
 $protocolRoot = "HKCU:\Software\Classes\probo"

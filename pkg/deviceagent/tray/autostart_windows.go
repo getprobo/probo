@@ -25,6 +25,8 @@ package tray
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"golang.org/x/sys/windows/registry"
 )
@@ -35,30 +37,62 @@ const (
 )
 
 func RegisterAutoStart(exePath string, runDir string) error {
+	guiExePath, err := registerAutoStart(exePath, runDir)
+	if err != nil {
+		return err
+	}
+
+	startTrayBestEffort(guiExePath, runDir)
+
+	return nil
+}
+
+// RefreshAutoStart updates the Run entry without starting another tray process.
+// NOTE: Remove this function with the Run-entry migration after all
+// supported installs register probo-agentw.exe.
+func RefreshAutoStart(exePath string, runDir string) error {
+	_, err := registerAutoStart(exePath, runDir)
+
+	return err
+}
+
+func registerAutoStart(exePath string, runDir string) (string, error) {
 	if exePath == "" {
-		return fmt.Errorf("executable path is required")
+		return "", fmt.Errorf("executable path is required")
 	}
 
 	if runDir == "" {
-		return fmt.Errorf("enrollment run directory is required")
+		return "", fmt.Errorf("enrollment run directory is required")
+	}
+
+	guiExePath := guiExecutablePath(exePath)
+	if _, err := os.Stat(guiExePath); err != nil {
+		return "", fmt.Errorf("cannot access GUI executable %s: %w", guiExePath, err)
 	}
 
 	// HKLM Run is the machine-wide equivalent of /Library/LaunchAgents:
 	// every interactive user gets the tray at logon, including after an
 	// MSI install that had no GUI session yet.
-	command := trayRunCommand(exePath, runDir)
+	command := trayRunCommand(guiExePath, runDir)
 
 	if err := setMachineRunValue(command); err != nil {
-		return err
+		return "", err
 	}
 
-	startTrayBestEffort(exePath, runDir)
-
-	return nil
+	return guiExePath, nil
 }
 
 func trayRunCommand(exePath string, runDir string) string {
 	return fmt.Sprintf(`"%s" tray --run-dir "%s"`, exePath, runDir)
+}
+
+func guiExecutablePath(exePath string) string {
+	name := "probo-agentw"
+	if filepath.Ext(exePath) != "" {
+		name = agentGUIExeBaseName
+	}
+
+	return filepath.Join(filepath.Dir(exePath), name)
 }
 
 func UnregisterAutoStart() error {

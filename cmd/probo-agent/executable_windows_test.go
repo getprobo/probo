@@ -18,31 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tray
+//go:build windows
 
-import "strings"
+package main
 
-const (
-	// NOTE: Remove agentExeBaseName after all supported installs run the
-	// tray from probo-agentw.exe.
-	agentExeBaseName    = "probo-agent.exe"
-	agentGUIExeBaseName = "probo-agentw.exe"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func shouldStopInteractiveAgentProcess(
-	baseName string,
-	pid uint32,
-	selfPID uint32,
-	sessionID uint32,
-) bool {
-	if pid == selfPID {
-		return false
-	}
+func TestConsoleExecutablePath_ReturnsSiblingExecutable(t *testing.T) {
+	t.Parallel()
 
-	if sessionID == 0 {
-		return false
-	}
-
-	return strings.EqualFold(baseName, agentExeBaseName) ||
-		strings.EqualFold(baseName, agentGUIExeBaseName)
+	assert.Equal(
+		t,
+		`C:\Program Files\Probo\probo-agent.exe`,
+		consoleExecutablePath(`C:\Program Files\Probo\probo-agentw.exe`),
+	)
+	assert.Equal(
+		t,
+		`C:\dev\probo-agent`,
+		consoleExecutablePath(`C:\dev\probo-agentw`),
+	)
+	assert.Equal(
+		t,
+		`C:\Program Files\Probo\probo-agent.exe`,
+		consoleExecutablePath(`C:\Program Files\Probo\probo-agent.exe.old`),
+	)
 }

@@ -61,6 +61,7 @@ PROBOD_LDFLAGS=          -ldflags "-X 'main.version=$(PROBOD_VERSION)' -X 'main.
 PROBOD_BOOTSTRAP_LDFLAGS=-ldflags "-X 'main.version=$(PROBOD_BOOTSTRAP_VERSION)'"
 PROBOCTL_LDFLAGS=        -ldflags "-X 'main.version=$(PROBOCTL_VERSION)'"
 PROBO_AGENT_LDFLAGS=     -ldflags "-X 'main.version=$(PROBO_AGENT_VERSION)'"
+PROBO_AGENT_GUI_LDFLAGS= -ldflags "-H windowsgui -X 'main.version=$(PROBO_AGENT_VERSION)'"
 
 GCFLAGS=	-gcflags="-e"
 
@@ -124,9 +125,14 @@ PROBO_AGENT_BIN=	bin/probo-agent
 PROBO_AGENT_SRC=	./cmd/probo-agent
 # Menu bar / tray enrollment is macOS and Windows; only macOS needs CGO.
 PROBO_AGENT_TARGET_OS=	$(if $(GOOS),$(GOOS),$(shell $(GO) env GOOS))
+PROBO_AGENT_BINS=	$(PROBO_AGENT_BIN)
 PROBO_AGENT_CGO=	0
 ifeq ($(PROBO_AGENT_TARGET_OS),darwin)
 PROBO_AGENT_CGO=	1
+endif
+ifeq ($(PROBO_AGENT_TARGET_OS),windows)
+PROBO_AGENT_GUI_BIN=	bin/probo-agentw
+PROBO_AGENT_BINS+=	$(PROBO_AGENT_GUI_BIN)
 endif
 
 ifdef WITH_APPS
@@ -266,7 +272,7 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
 .PHONY: build
-build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap bin/proboctl $(PROBO_AGENT_BIN)
+build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap bin/proboctl $(PROBO_AGENT_BINS)
 
 CFG_DEV_OAUTH2_KEY       = cfg/.dev-oauth2-signing-key.pem
 CFG_DEV_IDENTITY_FEDERATION_KEY   = cfg/.dev-identity-federation-signing-key.pem
@@ -393,6 +399,13 @@ bin/proboctl:
 $(PROBO_AGENT_BIN): CGO_ENABLED=$(PROBO_AGENT_CGO)
 $(PROBO_AGENT_BIN):
 	$(GO_BUILD) $(PROBO_AGENT_LDFLAGS) -o $(PROBO_AGENT_BIN) $(PROBO_AGENT_SRC)
+
+ifneq ($(PROBO_AGENT_GUI_BIN),)
+.PHONY: $(PROBO_AGENT_GUI_BIN)
+$(PROBO_AGENT_GUI_BIN): CGO_ENABLED=0
+$(PROBO_AGENT_GUI_BIN):
+	$(GO_BUILD) $(PROBO_AGENT_GUI_LDFLAGS) -o $(PROBO_AGENT_GUI_BIN) $(PROBO_AGENT_SRC)
+endif
 
 .PHONY: @probo/emails
 @probo/emails:

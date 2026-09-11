@@ -30,7 +30,7 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
-      - name: "Build binary"
+      - name: "Build binaries"
         env:
           CGO_ENABLED: "0"
           GOOS: "${{ matrix.goos }}"
@@ -104,6 +104,7 @@ jobs:
           $Arch = "${{ matrix.goarch }}"
           New-Item -ItemType Directory -Force -Path dist, archives | Out-Null
           $ldflags = "-s -w -X 'main.version=$Version'"
+          $guiLdflags = "-s -w -H windowsgui -X 'main.version=$Version'"
           go run ./cmd/probo-agent/installer/windows/mkicon `
             -png ./pkg/deviceagent/tray/icon_color.png `
             -syso "./cmd/probo-agent/rsrc_windows_${Arch}.syso" `
@@ -113,19 +114,23 @@ jobs:
           $env:GOARCH = $Arch
           go build -ldflags $ldflags -gcflags="-e" -o dist/probo-agent.exe ./cmd/probo-agent
           if ($LASTEXITCODE -ne 0) { throw "go build failed" }
+          go build -ldflags $guiLdflags -gcflags="-e" -o dist/probo-agentw.exe ./cmd/probo-agent
+          if ($LASTEXITCODE -ne 0) { throw "GUI go build failed" }
       - name: "Azure login"
         uses: "azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c" # v3.0.2
         with:
           client-id: "${{ secrets.AZURE_CLIENT_ID }}"
           tenant-id: "${{ secrets.AZURE_TENANT_ID }}"
           subscription-id: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-      - name: "Sign probo-agent.exe"
+      - name: "Sign Windows executables"
         uses: "azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82" # v2.0.0
         with:
           endpoint: "${{ vars.AZURE_TRUSTED_SIGNING_ENDPOINT }}"
           signing-account-name: "${{ vars.AZURE_TRUSTED_SIGNING_ACCOUNT }}"
           certificate-profile-name: "${{ vars.AZURE_TRUSTED_SIGNING_PROFILE }}"
-          files: "${{ github.workspace }}/dist/probo-agent.exe"
+          files: |
+            ${{ github.workspace }}/dist/probo-agent.exe
+            ${{ github.workspace }}/dist/probo-agentw.exe
           file-digest: "SHA256"
           timestamp-rfc3161: "http://timestamp.acs.microsoft.com"
           timestamp-digest: "SHA256"
@@ -142,6 +147,7 @@ jobs:
           $Msi = Join-Path $PWD "archives/probo-agent_${Version}_windows_${ArchLabel}.msi"
           & ./cmd/probo-agent/installer/windows/build.ps1 `
             -Binary ./dist/probo-agent.exe `
+            -GUIBinary ./dist/probo-agentw.exe `
             -Version $Version `
             -Arch "${{ matrix.wix_arch }}" `
             -Output $Msi
@@ -167,7 +173,7 @@ jobs:
           $StagingRoot = Join-Path $PWD "staging"
           $Staging = Join-Path $StagingRoot $AgentDir
           New-Item -ItemType Directory -Force -Path $Staging, archives | Out-Null
-          Copy-Item dist/probo-agent.exe $Staging/
+          Copy-Item dist/probo-agent.exe, dist/probo-agentw.exe $Staging/
           Copy-Item README.md, LICENSE $Staging/
           if (Test-Path cmd/probo-agent/CHANGELOG.md) {
             Copy-Item cmd/probo-agent/CHANGELOG.md $Staging/

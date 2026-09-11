@@ -25,14 +25,17 @@
   Build the Probo Agent Windows MSI with WiX.
 
 .DESCRIPTION
-  Packages a pre-built probo-agent.exe into
+  Packages pre-built probo-agent.exe and probo-agentw.exe into
   probo-agent_<version>_windows_<arch>.msi. Prefer passing an
-  Authenticode-signed binary so the nested exe remains signed.
+  Authenticode-signed binary pair so the nested exes remain signed.
 
   Requires the WiX CLI (`wix`) on PATH (dotnet tool install --global wix).
 
 .PARAMETER Binary
   Path to probo-agent.exe.
+
+.PARAMETER GUIBinary
+  Path to probo-agentw.exe.
 
 .PARAMETER Version
   Agent version (X.Y.Z or X.Y.Z-rc.N). Defaults to
@@ -50,6 +53,9 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Binary,
+
+    [Parameter(Mandatory = $true)]
+    [string]$GUIBinary,
 
     [string]$Version = "",
 
@@ -71,7 +77,12 @@ if (-not (Test-Path -LiteralPath $Binary)) {
     throw "error: --binary / -Binary path not found: $Binary"
 }
 
+if (-not (Test-Path -LiteralPath $GUIBinary)) {
+    throw "error: --gui-binary / -GUIBinary path not found: $GUIBinary"
+}
+
 $Binary = (Resolve-Path -LiteralPath $Binary).Path
+$GUIBinary = (Resolve-Path -LiteralPath $GUIBinary).Path
 
 if ([string]::IsNullOrWhiteSpace($Version)) {
     $VersionFile = Join-Path $RepoRoot "cmd\probo-agent\VERSION"
@@ -154,7 +165,7 @@ if (-not (Test-Path -LiteralPath $IconPng)) {
 $ProductIcon = Join-Path ([System.IO.Path]::GetTempPath()) "probo-agent-icon-$PID.ico"
 $ProductIconArg = $ProductIcon.Replace('\', '/')
 
-Write-Host "Building MSI: binary=$Binary arch=$WixArch version=$Version product=$ProductVersion output=$Output"
+Write-Host "Building MSI: binary=$Binary guiBinary=$GUIBinary arch=$WixArch version=$Version product=$ProductVersion output=$Output"
 
 try {
     Push-Location $RepoRoot
@@ -174,6 +185,7 @@ try {
         -ext WixToolset.UI.wixext `
         -d "Version=$ProductVersion" `
         -d "AgentExe=$Binary" `
+        -d "GUIAgentExe=$GUIBinary" `
         -d "LicenseRtf=$LicenseRtfArg" `
         -d "ProductIcon=$ProductIconArg" `
         -o $Output `

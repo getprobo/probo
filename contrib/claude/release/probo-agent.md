@@ -197,22 +197,24 @@ export APPLE_ID_PASSWORD="app-specific-password"
 ### Windows MSI (MDM / GUI install)
 
 Release builds use `cmd/probo-agent/installer/windows/build.ps1` (WiX)
-on `windows-latest`. The MSI installs `probo-agent.exe` under
-`C:\Program Files\Probo\` and registers a machine-wide `probo://`
-handler (HKLM). It does **not** create the Windows service — enrollment
-(`probo-agent install` / deep link) still owns `sc.exe create`, same
-idea as the macOS LaunchDaemon-after-enroll flow.
+on `windows-latest`. The MSI installs `probo-agent.exe` and
+`probo-agentw.exe` under `C:\Program Files\Probo\`. The console binary
+is for CLI commands and the Windows service. The GUI-subsystem binary
+is for the tray and the machine-wide `probo://` handler (HKLM). The MSI
+does **not** create the Windows service — enrollment (`probo-agent
+install` / deep link) still owns `sc.exe create`, same idea as the
+macOS LaunchDaemon-after-enroll flow.
 
 Published assets per arch:
 
 | Artifact | Role |
 |----------|------|
 | `probo-agent_*_windows_*.msi` | Initial install (double-click or `msiexec /i … /qn`); self-contained (embedded CAB) |
-| `probo-agent_Windows_*.zip` | Auto-update only (unchanged updater contract) |
+| `probo-agent_Windows_*.zip` | Auto-update archive containing both executables |
 
-Both the nested `probo-agent.exe` and the MSI are Authenticode-signed
-with **Azure Trusted Signing** before upload. Local unsigned MSI builds
-(no signing) are fine for layout testing:
+Both nested executables and the MSI are Authenticode-signed with
+**Azure Trusted Signing** before upload. Local unsigned MSI builds (no
+signing) are fine for layout testing:
 
 ```powershell
 # Requires: go, and `dotnet tool install --global wix`
@@ -223,20 +225,26 @@ go run ./cmd/probo-agent/installer/windows/mkicon `
   -syso ./cmd/probo-agent/rsrc_windows_amd64.syso `
   -arch amd64
 go build -ldflags "-X 'main.version=$Version'" -o dist/probo-agent.exe ./cmd/probo-agent
+go build -ldflags "-H windowsgui -X 'main.version=$Version'" -o dist/probo-agentw.exe ./cmd/probo-agent
 ./cmd/probo-agent/installer/windows/build.ps1 `
   -Binary dist/probo-agent.exe `
+  -GUIBinary dist/probo-agentw.exe `
   -Version $Version `
   -Arch amd64
 ```
 
-`mkicon` must run before `go build` so the `.syso` is linked into the
-exe (Explorer, Task Manager). The MSI build runs `mkicon` again for
+`probo-agent.exe` keeps the console PE subsystem so `install` /
+`collect` / `status` / `uninstall` block the shell and propagate
+`ERRORLEVEL`. `probo-agentw.exe` uses the GUI subsystem so Explorer
+does not create a console for tray or deeplink launches. `mkicon` must
+run before both builds so the `.syso` is linked into each exe
+(Explorer, Task Manager). The MSI build runs `mkicon` again for
 `ARPPRODUCTICON` (Settings > Apps). Generated `.syso` files are
 gitignored.
 
 For per-user protocol registration without the MSI (dev machines),
 `cmd/probo-agent/installer/windows/register-protocol.ps1` still writes
-an HKCU handler pointing at `%ProgramFiles%\Probo\probo-agent.exe`.
+an HKCU handler pointing at `%ProgramFiles%\Probo\probo-agentw.exe`.
 
 ### Azure Trusted Signing (GitHub)
 

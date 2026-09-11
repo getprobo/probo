@@ -18,31 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tray
+//go:build !windows
 
-import "strings"
+package main
 
-const (
-	// NOTE: Remove agentExeBaseName after all supported installs run the
-	// tray from probo-agentw.exe.
-	agentExeBaseName    = "probo-agent.exe"
-	agentGUIExeBaseName = "probo-agentw.exe"
-)
-
-func shouldStopInteractiveAgentProcess(
-	baseName string,
-	pid uint32,
-	selfPID uint32,
-	sessionID uint32,
-) bool {
-	if pid == selfPID {
-		return false
-	}
-
-	if sessionID == 0 {
-		return false
-	}
-
-	return strings.EqualFold(baseName, agentExeBaseName) ||
-		strings.EqualFold(baseName, agentGUIExeBaseName)
+// NOTE: Remove with refreshTrayRegistration after all supported installs
+// register probo-agentw.exe.
+func refreshTrayAutoStart(_ string, _ string) error {
+	return nil
 }

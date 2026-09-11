@@ -36,12 +36,31 @@ const (
 	maxExtractedFileSize = 200 * 1024 * 1024 // 200 MiB hard cap per file
 )
 
-// extractBinary extracts the agent binary at
-// `<ArchiveDir>/<BinaryName>` from archivePath into workDir and
-// returns the absolute path of the written binary.
 func extractBinary(archivePath string, layout AssetLayout, workDir string) (string, error) {
-	wantPath := path.Join(layout.ArchiveDir, layout.BinaryName)
-	dest := filepath.Join(workDir, "probo-agent.new")
+	return extractArchiveBinary(
+		archivePath,
+		layout,
+		layout.BinaryName,
+		filepath.Join(workDir, "probo-agent.new"),
+	)
+}
+
+func extractGUIBinary(archivePath string, layout AssetLayout, workDir string) (string, error) {
+	return extractArchiveBinary(
+		archivePath,
+		layout,
+		layout.GUIBinaryName,
+		filepath.Join(workDir, "probo-agentw.new"),
+	)
+}
+
+func extractArchiveBinary(
+	archivePath string,
+	layout AssetLayout,
+	binaryName string,
+	dest string,
+) (string, error) {
+	wantPath := path.Join(layout.ArchiveDir, binaryName)
 
 	if layout.IsZip {
 		if err := extractZipFile(archivePath, wantPath, dest); err != nil {

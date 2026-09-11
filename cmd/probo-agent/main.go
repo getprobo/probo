@@ -176,6 +176,7 @@ func newEnrollURLCmd() *cobra.Command {
 				return fmt.Errorf("cannot resolve current executable path: %w", err)
 			}
 
+			exePath = consoleExecutablePath(exePath)
 			if err := elevate.RunElevatedInstall(exePath, serverURL, enrollmentToken, dir); err != nil {
 				return fmt.Errorf("cannot start elevated enrollment install: %w", err)
 			}
@@ -258,6 +259,8 @@ func newUpdater(logger *log.Logger, dir string, allowPrereleases bool) *update.U
 		return nil
 	}
 
+	exePath = consoleExecutablePath(exePath)
+
 	return update.New(
 		version,
 		exePath,
@@ -266,6 +269,20 @@ func newUpdater(logger *log.Logger, dir string, allowPrereleases bool) *update.U
 		allowPrereleases,
 		logger,
 	)
+}
+
+// NOTE: Remove this Run-entry migration after all supported installs
+// register probo-agentw.exe.
+func refreshTrayRegistration(ctx context.Context, logger *log.Logger, dir string) {
+	exePath, err := os.Executable()
+	if err == nil {
+		exePath = consoleExecutablePath(exePath)
+		err = refreshTrayAutoStart(exePath, deviceagent.EnrollmentRunDir(dir))
+	}
+
+	if err != nil {
+		logger.WarnCtx(ctx, "cannot refresh tray auto-start", log.Error(err))
+	}
 }
 
 func resolveDir(cmd *cobra.Command) string {
@@ -525,7 +542,26 @@ func newRunCmd() *cobra.Command {
 			}
 
 			if isSvc {
-				return service.RunWindowsService(service.DefaultWindowsName, run)
+				serviceRun := func(ctx context.Context) error {
+					// NOTE: Remove this repair after all supported installs
+					// include probo-agentw.exe.
+					if agent.Updater != nil {
+						repairCtx, cancel := context.WithTimeout(ctx, time.Minute)
+						err := agent.Updater.EnsureGUIBinary(repairCtx)
+
+						cancel()
+
+						if err != nil {
+							logger.WarnCtx(ctx, "cannot install GUI agent binary", log.Error(err))
+						}
+					}
+
+					refreshTrayRegistration(ctx, logger, dir)
+
+					return run(ctx)
+				}
+
+				return service.RunWindowsService(service.DefaultWindowsName, serviceRun)
 			}
 
 			ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
@@ -656,6 +692,7 @@ func newUpdateCmd() *cobra.Command {
 				return fmt.Errorf("cannot apply update: %w", err)
 			}
 
+			refreshTrayRegistration(ctx, logger, dir)
 			fmt.Printf("Installed probo-agent %s. Restart the service to use it.\n", rel.Version)
 
 			return nil

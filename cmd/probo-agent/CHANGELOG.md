@@ -5,6 +5,13 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Windows no longer flashes a console window when Explorer starts the
+  tray at logon. The installer now includes `probo-agent.exe` for CLI
+  and service use, and `probo-agentw.exe` for tray and deeplink use.
+  Thus, shells wait for CLI commands and propagate `ERRORLEVEL`.
+
 ## [0.7.1-rc.1] - 2026-09-11
 
 ### Fixed
