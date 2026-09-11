@@ -420,6 +420,51 @@ func TestRegistry_Register(t *testing.T) {
 			})
 		}
 
+		// Endpoints.Install is the one endpoint that is not a URL until it is
+		// expanded, so nothing downstream would catch a bad template: the
+		// customer would simply land on a vendor page with no app id, or with
+		// a literal placeholder left in.
+		for name, template := range map[string]string{
+			"no placeholder":   "https://app.crisp.chat/initiate/plugin/",
+			"two placeholders": "https://app.crisp.chat/initiate/plugin/%s/%s/",
+		} {
+			t.Run("install endpoint with "+name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: template},
+					APIKey:      managedAPIKey(),
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "exactly one %s placeholder")
+			})
+		}
+
+		// The redirect is the only way in, so these would render nowhere and
+		// the completion path would persist only the resource id — the
+		// customer's values dropped without a word.
+		t.Run("extra settings with no dialog to collect them", func(t *testing.T) {
+			t.Parallel()
+
+			apiKey := managedAPIKey()
+			apiKey.ExtraSettings = []provider.ExtraSetting{
+				{Key: "workspace", Label: "Workspace"},
+			}
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderCrisp,
+				DisplayName: "Crisp",
+				Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+				APIKey:      apiKey,
+				Install:     installConfig(),
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "no dialog to collect")
+		})
+
 		// A customer-pasted key has nothing to verify the vendor's proof
 		// against, and no app id for the redirect to interpolate.
 		for name, apiKey := range map[string]*provider.APIKeyConfig{

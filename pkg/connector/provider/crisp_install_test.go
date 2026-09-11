@@ -195,12 +195,12 @@ func TestCrispInstallVerify_Terminal(t *testing.T) {
 		assert.NotErrorIs(t, err, provider.ErrInstallVerificationTransient)
 	})
 
-	// 401/403 mean Probo's own plugin credential is wrong, revoked or
-	// cross-wired with the plugin id. A retry makes the identical request.
+	// Every 4xx that is not about Probo's own credential is a request this
+	// code would keep making identically.
 	for name, status := range map[string]int{
-		"401 on Probo's own credential": http.StatusUnauthorized,
-		"403 on Probo's own credential": http.StatusForbidden,
-		"400 bad request":               http.StatusBadRequest,
+		"400 bad request":   http.StatusBadRequest,
+		"409 conflict":      http.StatusConflict,
+		"422 unprocessable": http.StatusUnprocessableEntity,
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -260,12 +260,18 @@ func TestCrispInstallVerify_Terminal(t *testing.T) {
 func TestCrispInstallVerify_Transient(t *testing.T) {
 	t.Parallel()
 
+	// 401/403 are Crisp refusing PROBO's plugin credential, never the
+	// customer's proof, so they release too: the customer cannot fix a token
+	// mid-rotation, and burning their state over it would cost them a ceremony
+	// they completed correctly.
 	for name, status := range map[string]int{
-		"429 rate limited":   http.StatusTooManyRequests,
-		"500 vendor fault":   http.StatusInternalServerError,
-		"502 bad gateway":    http.StatusBadGateway,
-		"503 unavailable":    http.StatusServiceUnavailable,
-		"504 vendor timeout": http.StatusGatewayTimeout,
+		"429 rate limited":              http.StatusTooManyRequests,
+		"500 vendor fault":              http.StatusInternalServerError,
+		"502 bad gateway":               http.StatusBadGateway,
+		"503 unavailable":               http.StatusServiceUnavailable,
+		"504 vendor timeout":            http.StatusGatewayTimeout,
+		"401 on Probo's own credential": http.StatusUnauthorized,
+		"403 on Probo's own credential": http.StatusForbidden,
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

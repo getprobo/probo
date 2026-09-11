@@ -66,24 +66,69 @@ const (
 	installMessageInternal     = "Something went wrong while finishing the installation. Please try again."
 )
 
-// installAuthorizationFailure maps an authorizer error onto the answer it
-// deserves. Authorize reports a policy denial and a Postgres failure through the
-// same return, so answering 403 for both would hide an outage behind a
-// permissions message and tell the caller a decision was taken that never was.
-func installAuthorizationFailure(err error) (int, error) {
+// installAuthorizationDenied reports whether the authorizer refused the caller,
+// as opposed to failing to reach a decision at all. Authorize returns both
+// through the same error, and they deserve opposite answers: a refusal is the
+// caller's answer, while a Postgres failure reported as 403 would hide an
+// outage behind a permissions message and claim a decision was taken that never
+// was.
+//
+// Every refusal it can reach the caller with is enumerated here. They collapse
+// to one opaque 403 rather than 401/403/404 apiece: this route is public, so
+// which check refused — and whether the organization even exists — is exactly
+// what a prober would like to learn.
+func installAuthorizationDenied(err error) bool {
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return true
+	}
+
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*iam.ErrSessionExpired](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		return true
+	}
+
+	return false
+}
+
+// installAuthorizationFailure maps an authorizer error onto the answer it
+// deserves.
+func installAuthorizationFailure(err error) (int, error) {
+	if installAuthorizationDenied(err) {
 		return http.StatusForbidden, errInstallForbiddenCallback
 	}
 
 	return http.StatusInternalServerError, errInstallInternal
 }
 
-// installVerificationTimeout bounds the outbound verification, which runs while
-// the single-use claim is held. It MUST stay well under
-// coredata.InstallStateStaleAfter: a verification still running once its claim
-// turns stale would be reclaimed from under itself and run a second time
-// against the vendor. Pinned by TestInstallVerificationTimeoutFitsClaimWindow.
-const installVerificationTimeout = 30 * time.Second
+// installClaimedWorkTimeout bounds EVERYTHING done while the single-use claim
+// is held — the vendor call, the second authorization and the write — not just
+// the vendor call. A claim untouched for longer than
+// coredata.InstallStateStaleAfter is reclaimable by the next request, so any
+// step that could outlive that window would be reclaimed from under itself and
+// the ceremony would run twice. Bounding only the slowest step is not enough:
+// the deadline has to cover their sum.
+//
+// Pinned by TestInstallClaimedWorkFitsClaimWindow.
+const installClaimedWorkTimeout = 30 * time.Second
 
 // handleConnectorInstallComplete finishes an app-install ceremony: the vendor
 // top-level-redirects the customer's browser here with Probo's signed state and
@@ -251,6 +296,16 @@ func handleConnectorInstallComplete(
 		// with it still held would answer the customer's own retry with
 		// "already completed", which is the one thing that is definitely false.
 		//
+		// One deadline covers everything done under the claim, not just the
+		// vendor call: the claim turns reclaimable once it has gone untouched
+		// for coredata.InstallStateStaleAfter, so it is the SUM of the steps
+		// below that has to stay inside that window. The ledger transitions
+		// deliberately keep using ctx, since context.WithoutCancel drops this
+		// deadline and they must outlive it.
+		//
+		claimedCtx, cancelClaimed := context.WithTimeout(ctx, installClaimedWorkTimeout)
+		defer cancelClaimed()
+
 		// Verify with the same credential the persisted connector will use, so
 		// what the ceremony proves is what the driver can later do.
 		managedKey, _ := providerRegistry.ManagedAPIKey(p)
@@ -266,10 +321,7 @@ func handleConnectorInstallComplete(
 			return
 		}
 
-		verifyCtx, cancel := context.WithTimeout(ctx, installVerificationTimeout)
-		defer cancel()
-
-		resourceID, err := reg.Install.Verify(verifyCtx, httpClient, appID, r.URL.Query())
+		resourceID, err := reg.Install.Verify(claimedCtx, httpClient, appID, r.URL.Query())
 		if err != nil {
 			// Transient failures release the claim so the customer's remaining
 			// window still works; everything else burns it, so a forged proof
@@ -307,7 +359,7 @@ func handleConnectorInstallComplete(
 		// insert. The residual window shrinks to the microseconds between here
 		// and the transaction, from however long the vendor took to reply.
 		if _, err := iamSvc.Authorizer.Authorize(
-			ctx,
+			claimedCtx,
 			iam.AuthorizeParams{
 				Principal: identity.ID,
 				Resource:  organizationID,
@@ -320,7 +372,7 @@ func handleConnectorInstallComplete(
 			// correctly.
 			message := installMessageNotPermitted
 
-			if _, denied := errors.AsType[*iam.ErrInsufficientPermissions](err); denied {
+			if installAuthorizationDenied(err) {
 				burnInstallState(ctx, logger, proboSvc, scope, organizationID, state, processingToken)
 			} else {
 				releaseInstallState(ctx, logger, proboSvc, scope, organizationID, state, processingToken)
@@ -343,7 +395,7 @@ func handleConnectorInstallComplete(
 		// The key is empty by design: (*provider.Registry).APIKeyFor substitutes
 		// the Probo-held key at every use, so anything stored here is discarded.
 		cnnctr, err := proboSvc.Connectors.CompleteInstall(
-			ctx,
+			claimedCtx,
 			scope,
 			probo.CompleteConnectorInstallRequest{
 				OrganizationID:  organizationID,

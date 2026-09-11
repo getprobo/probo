@@ -40,20 +40,20 @@ import (
 	"go.probo.inc/probo/pkg/saferedirect"
 )
 
-// TestInstallVerificationTimeoutFitsClaimWindow pins the ordering the whole
-// single-use design rests on. The callback holds a claim across the outbound
-// verification; a claim untouched for longer than InstallStateStaleAfter is
-// reclaimable by the next request. If the verification could outlive that
-// window, a customer's own refresh would reclaim the claim from under the
-// in-flight request and both would verify, then both would try to persist.
-func TestInstallVerificationTimeoutFitsClaimWindow(t *testing.T) {
+// TestInstallClaimedWorkFitsClaimWindow pins the ordering the whole single-use
+// design rests on. The callback holds a claim across the vendor call, the
+// second authorization and the write; a claim untouched for longer than
+// InstallStateStaleAfter is reclaimable by the next request. If that work could
+// outlive the window, a customer's own refresh would reclaim the claim from
+// under the in-flight request and the ceremony would run twice.
+func TestInstallClaimedWorkFitsClaimWindow(t *testing.T) {
 	t.Parallel()
 
 	assert.Less(
 		t,
-		installVerificationTimeout,
+		installClaimedWorkTimeout,
 		coredata.InstallStateStaleAfter,
-		"a verification that can outlive its claim would be reclaimed mid-flight and run twice",
+		"work that can outlive its claim would be reclaimed mid-flight and run twice",
 	)
 }
 

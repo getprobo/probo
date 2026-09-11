@@ -130,11 +130,21 @@ func crispRegistration() *Registration {
 						case statusErr.Code == http.StatusTooManyRequests,
 							statusErr.Code >= 500:
 							return "", fmt.Errorf("%w: %w", ErrInstallVerificationTransient, err)
+						case statusErr.Code == http.StatusUnauthorized,
+							statusErr.Code == http.StatusForbidden:
+							// Crisp rejecting PROBO's plugin credential, not the
+							// customer's proof: a token mid-rotation, a
+							// half-propagated deploy, a plugin id cross-wired
+							// with another environment's key. The customer can
+							// do nothing about it and did nothing wrong, and an
+							// operator can often fix it inside their ten-minute
+							// window, so releasing costs nothing. It cannot help
+							// a forgery either: a forged proof reaches the
+							// comparison, never a 401.
+							return "", fmt.Errorf("%w: %w", ErrInstallVerificationTransient, err)
 						default:
-							// 401/403 mean Probo's own plugin credential is
-							// wrong, revoked or cross-wired with the plugin id;
-							// every other 4xx is a request this code will keep
-							// making identically. Terminal in both cases.
+							// Every other 4xx is a request this code would keep
+							// making identically. Terminal.
 							return "", err
 						}
 					}

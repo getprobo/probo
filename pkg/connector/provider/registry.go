@@ -65,6 +65,11 @@ type Registry struct {
 	managedResourceIDs map[coredata.ConnectorProvider]string
 }
 
+// installAppIDPlaceholder is what Endpoints.Install carries in place of this
+// deployment's app id. It is substituted literally rather than formatted, so a
+// vendor URL containing a percent-encoded literal survives intact.
+const installAppIDPlaceholder = "%s"
+
 // NewRegistry returns an empty *Registry. Production code uses
 // NewBuiltinRegistry; tests and specialised callers can construct an
 // empty Registry and register only the providers they need.
@@ -256,6 +261,32 @@ func (r *Registry) Register(reg *Registration) error {
 			return fmt.Errorf("cannot register connector provider %q: Install requires Verify, StateParam and SettingsResourceKey", reg.Provider)
 		}
 
+		// The template is the one endpoint that is not a URL until it is
+		// expanded, so nothing else would catch a missing or doubled
+		// placeholder: InstallURL would silently redirect the customer to a
+		// vendor page with no app id, or with a literal one left in. Expand it
+		// with a stand-in here and parse the result, so a malformed template
+		// fails at startup rather than mid-ceremony.
+		if strings.Count(reg.Endpoints.Install, installAppIDPlaceholder) != 1 {
+			return fmt.Errorf(
+				"cannot register connector provider %q: Endpoints.Install must contain exactly one %s placeholder for the app id",
+				reg.Provider,
+				installAppIDPlaceholder,
+			)
+		}
+
+		expanded := strings.Replace(reg.Endpoints.Install, installAppIDPlaceholder, "app-id", 1)
+		if _, err := url.Parse(expanded); err != nil {
+			return fmt.Errorf("cannot register connector provider %q: Endpoints.Install is not a URL once expanded: %w", reg.Provider, err)
+		}
+
+		// The install redirect is the only way in, so an extra-settings list
+		// here would render nowhere and CompleteInstall would persist only the
+		// resource id — the customer's values dropped without a word.
+		if len(reg.APIKeyExtraSettings()) > 0 {
+			return fmt.Errorf("cannot register connector provider %q: Install has no dialog to collect APIKey.ExtraSettings", reg.Provider)
+		}
+
 		// The ceremony yields a tenant id bound to Probo's own app credential,
 		// so the provider must hold a Probo-supplied key and the app id the
 		// initiate URL interpolates. A customer-pasted key would have nothing
@@ -420,7 +451,18 @@ func (r *Registry) InstallURL(p coredata.ConnectorProvider, state string) (strin
 	}
 
 	// Endpoints.Install is a %s template, so it only becomes parseable here.
-	u, err := url.Parse(fmt.Sprintf(reg.Endpoints.Install, appID))
+	//
+	// Substituted, not formatted: a vendor URL may legitimately carry a
+	// percent-encoded literal, which fmt.Sprintf would read as a verb and
+	// mangle. The app id is path-escaped because it lands in a path segment —
+	// operator config, not request input, but a stray slash would still move
+	// the URL rather than fail loudly.
+	u, err := url.Parse(strings.Replace(
+		reg.Endpoints.Install,
+		installAppIDPlaceholder,
+		url.PathEscape(appID),
+		1,
+	))
 	if err != nil {
 		return "", fmt.Errorf("cannot build install URL for connector provider %q: %w", p, err)
 	}

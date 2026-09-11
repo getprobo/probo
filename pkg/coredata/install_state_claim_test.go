@@ -34,7 +34,11 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const installStateClaimStaleAfter = 5 * time.Minute
+// installStateClaimStaleAfter is the PRODUCTION window, not a test-local one:
+// binding to it is what makes a future tuning of the constant show up here
+// rather than pass silently against a window nothing runs under. The offsets
+// below are derived from it for the same reason.
+const installStateClaimStaleAfter = coredata.InstallStateStaleAfter
 
 // installStateClaimLedgers is every ledger the shared primitive writes to. The
 // two differ only by table, so the contract below is asserted against both
@@ -142,7 +146,7 @@ func TestInstallStateClaim_ProcessingLifecycle(t *testing.T) {
 							tx,
 							scope,
 							"00000000-0000-7000-8000-000000000002",
-							now.Add(time.Minute),
+							now.Add(installStateClaimStaleAfter/2),
 							installStateClaimStaleAfter,
 						)
 
@@ -164,7 +168,7 @@ func TestInstallStateClaim_ProcessingLifecycle(t *testing.T) {
 							tx,
 							scope,
 							"00000000-0000-7000-8000-000000000003",
-							now.Add(6*time.Minute),
+							now.Add(installStateClaimStaleAfter+time.Second),
 							installStateClaimStaleAfter,
 						)
 						if err != nil {
@@ -180,7 +184,7 @@ func TestInstallStateClaim_ProcessingLifecycle(t *testing.T) {
 							tx,
 							scope,
 							"00000000-0000-7000-8000-000000000003",
-							now.Add(6*time.Minute),
+							now.Add(installStateClaimStaleAfter+time.Second),
 						)
 					},
 				),
@@ -199,7 +203,7 @@ func TestInstallStateClaim_ProcessingLifecycle(t *testing.T) {
 							tx,
 							scope,
 							"00000000-0000-7000-8000-000000000004",
-							now.Add(20*time.Minute),
+							now.Add(10*installStateClaimStaleAfter),
 							installStateClaimStaleAfter,
 						)
 
@@ -254,7 +258,7 @@ func TestInstallStateClaim_ProcessingLifecycle(t *testing.T) {
 							tx,
 							scope,
 							"00000000-0000-7000-8000-000000000006",
-							now.Add(time.Minute),
+							now.Add(installStateClaimStaleAfter/2),
 							installStateClaimStaleAfter,
 						)
 
@@ -336,7 +340,7 @@ func TestInstallStateClaim_RejectsForeignTenant(t *testing.T) {
 							"00000000-0000-7000-8000-00000000000b",
 							// Well past the stale window: staleness must not be
 							// what saves us here.
-							now.Add(time.Hour),
+							now.Add(10*installStateClaimStaleAfter),
 							installStateClaimStaleAfter,
 						)
 
@@ -360,7 +364,7 @@ func TestInstallStateClaim_RejectsForeignTenant(t *testing.T) {
 							tx,
 							ownerScope,
 							"00000000-0000-7000-8000-00000000000d",
-							now.Add(time.Hour),
+							now.Add(10*installStateClaimStaleAfter),
 							installStateClaimStaleAfter,
 						)
 
@@ -418,7 +422,7 @@ func TestInstallStateClaim_RejectsForeignTenant(t *testing.T) {
 							tx,
 							ownerScope,
 							"00000000-0000-7000-8000-00000000000c",
-							now.Add(time.Minute),
+							now.Add(installStateClaimStaleAfter/2),
 							installStateClaimStaleAfter,
 						)
 

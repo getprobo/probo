@@ -333,7 +333,7 @@ LIMIT 1;
 // no such connector.
 func (c *Connector) LoadByOrganizationIDProviderAndSettingForUpdate(
 	ctx context.Context,
-	conn pg.Querier,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	provider ConnectorProvider,
