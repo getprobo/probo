@@ -25,7 +25,9 @@ final class Helper: NSObject, ProboAgentHelperProtocol, NSXPCListenerDelegate {
     ) {
         let trimmedServer = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedToken = enrollmentToken.trimmingCharacters(in: .whitespacesAndNewlines)
-        let dir = configDir.trimmingCharacters(in: .whitespacesAndNewlines)
+        // configDir stays on the XPC protocol for ABI compatibility; the helper
+        // always pins --dir (see below) and never honors the caller's value.
+        _ = configDir
 
         guard !trimmedServer.isEmpty, !trimmedToken.isEmpty else {
             reply(1, "server URL and enrollment token are required")
@@ -35,13 +37,12 @@ final class Helper: NSObject, ProboAgentHelperProtocol, NSXPCListenerDelegate {
         // Pass the token via env rather than argv so it does not show up in
         // process listings (ps / Activity Monitor). Install already accepts
         // PROBO_ENROLLMENT_TOKEN when --enrollment-token is omitted.
-        var args = [
+        // Pin --dir so a replaced preflight binary cannot choose the state tree.
+        let args = [
             "install",
             "--server", trimmedServer,
+            "--dir", ProboAgentHelperConstants.defaultConfigDir,
         ]
-        if !dir.isEmpty {
-            args.append(contentsOf: ["--dir", dir])
-        }
 
         var environment = ProcessInfo.processInfo.environment
         environment["PROBO_ENROLLMENT_TOKEN"] = trimmedToken
@@ -73,6 +74,12 @@ final class Helper: NSObject, ProboAgentHelperProtocol, NSXPCListenerDelegate {
     }
 
     private func runAgent(args: [String], environment: [String: String]? = nil) -> CommandResult {
+        do {
+            try AgentAuth.verify()
+        } catch {
+            return CommandResult(exitCode: 1, output: error.localizedDescription)
+        }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: ProboAgentHelperConstants.agentExecutablePath)
         process.arguments = args

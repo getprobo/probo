@@ -25,7 +25,6 @@ VERSION=		$(shell cat VERSION)
 STATE_DIR=		$(HOME)/.local/share/probo-agent-dev
 CACHE_ROOT=		$(HOME)/.cache/probo-agent-dev
 DEV_TAG=		probo-agent/dev
-BINARY=			/usr/local/bin/probo-agent
 RELEASE_DIR=		$(CACHE_ROOT)/release/$(DEV_TAG)
 INSTALL_SCRIPT=		installer/install.sh
 MACOS_BUILD_SCRIPT=	installer/macos/build.sh
@@ -38,12 +37,16 @@ UNAME_M:=		$(shell uname -m)
 
 ifeq ($(UNAME_S),Darwin)
 OS_LABEL=	Darwin
+BINARY=		/Library/Probo/probo-agent
 else ifeq ($(UNAME_S),Linux)
 OS_LABEL=	Linux
+BINARY=		/usr/local/bin/probo-agent
 else ifeq ($(UNAME_S),FreeBSD)
 OS_LABEL=	Freebsd
+BINARY=		/usr/local/bin/probo-agent
 else
 OS_LABEL=
+BINARY=		/usr/local/bin/probo-agent
 endif
 
 ifeq ($(UNAME_M),x86_64)
@@ -128,8 +131,8 @@ clean: uninstall clean-build ## uninstall + wipe build caches
 clean-build: ## Wipe local build caches (no sudo)
 	$(RMRF) "$(STATE_DIR)" "$(CACHE_ROOT)" "$(ENROLL_UI_BUILD)"
 	-$(RMRF) "$(PKG)" "$(FAT_BINARY)" "$(THIN_ARM64)" "$(THIN_AMD64)"
-	@# Native binary under /usr/local is owned by root after install; leave it
-	@# to `uninstall`. Never remove it here without sudo.
+	@# Native binary under /Library/Probo or /usr/local is owned by root
+	@# after install; leave it to `uninstall`. Never remove it here without sudo.
 
 # --- macOS PKG ---------------------------------------------------------------
 

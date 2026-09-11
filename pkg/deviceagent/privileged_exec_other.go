@@ -18,31 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build darwin
+//go:build !darwin
 
-package elevate
+package deviceagent
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
-
-func TestRunElevatedInstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
-
-	err := RunElevatedInstall(
-		"/Library/Probo/probo-agent",
-		"https://example.com",
-		"token",
-		"/var/lib/probo-agent",
-	)
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
-}
-
-func TestRunElevatedUninstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
-
-	err := RunElevatedUninstall("/Library/Probo/probo-agent", "/var/lib/probo-agent")
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
+// EnsurePrivilegedExecutable is a no-op off Darwin. The process keeps
+// the path it was started from.
+func EnsurePrivilegedExecutable(src string) (string, error) {
+	return src, nil
 }

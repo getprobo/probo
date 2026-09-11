@@ -38,7 +38,7 @@ func TestParseCodeSigningIdentity(t *testing.T) {
 		{
 			name: "developer id signed binary",
 			out: "" +
-				"Executable=/usr/local/bin/probo-agent\n" +
+				"Executable=/Library/Probo/probo-agent\n" +
 				"Identifier=com.probo.agent\n" +
 				"Format=Mach-O thin (arm64)\n" +
 				"TeamIdentifier=ABCD123456\n",

@@ -377,6 +377,14 @@ func newInstallCmd() *cobra.Command {
 				return fmt.Errorf("cannot resolve current executable path: %w", err)
 			}
 
+			exePath, err = deviceagent.EnsurePrivilegedExecutable(exePath)
+			if err != nil {
+				return clearEnrollmentMarkerOnSetupFailure(
+					dir,
+					fmt.Errorf("cannot install privileged executable: %w", err),
+				)
+			}
+
 			if err := service.Install(
 				service.Config{
 					ExePath: exePath,
@@ -492,6 +500,15 @@ func newRunCmd() *cobra.Command {
 			logger := newAgentLogger()
 			agent := deviceagent.New(dir, version, logger)
 			agent.Updater = newUpdater(logger, dir, cfg.AllowPrereleases)
+
+			exePath, err := os.Executable()
+			if err != nil {
+				return fmt.Errorf("cannot resolve current executable path: %w", err)
+			}
+
+			if err := migratePrivilegedDaemon(exePath, dir); err != nil {
+				return err
+			}
 
 			run := func(ctx context.Context) error {
 				err := agent.Run(ctx)

@@ -145,10 +145,11 @@ cmd/probo-agent/installer/macos/build.sh \
   --version "$(cat cmd/probo-agent/VERSION)"
 ```
 
-PKG postinstall runs `probo-agent setup-tray` (LaunchAgent persist and
-start), registers `probo://`, and installs the privileged helper
-(`com.probo.agent.helper`) under `/Library/PrivilegedHelperTools` as
-root. The only admin authentication is the normal macOS Installer
+The PKG payload installs the agent at `/Library/Probo/probo-agent`
+(root:wheel, 0755). PKG postinstall runs `probo-agent setup-tray`
+(LaunchAgent persist and start), registers `probo://`, and installs the
+privileged helper (`com.probo.agent.helper`) under
+`/Library/PrivilegedHelperTools` as root. The only admin authentication is the normal macOS Installer
 prompt for the PKG itself. The LaunchDaemon for `probo-agent run` is
 created only after enrollment (`probo-agent install`, deep link, or MDM
 `/tmp/probo-agent.conf`).
@@ -298,9 +299,10 @@ anchors trust to the script the user already obtained, rather than a
 co-downloaded `checksums.txt`. Post-install upgrades still use cosign
 bundle verification via the agent auto-update path.
 
-The script installs the binary to `/usr/local/bin/probo-agent`, then runs
-`probo-agent install` to enroll and start the OS service. Agent state defaults
-to `/var/lib/probo-agent` (override with `--dir` or `PROBO_AGENT_STATE_DIR`).
+The script installs the binary to `/Library/Probo/probo-agent` on macOS, or
+`/usr/local/bin/probo-agent` on Linux and FreeBSD, then runs `probo-agent
+install` to enroll and start the OS service. Agent state defaults to
+`/var/lib/probo-agent` (override with `--dir` or `PROBO_AGENT_STATE_DIR`).
 
 Environment variables:
 

@@ -17,7 +17,9 @@
 set -u
 
 LOG_FILE="/var/log/probo-agent-install.log"
-BINARY="/usr/local/bin/probo-agent"
+PROBO_DIR="/Library/Probo"
+BINARY="${PROBO_DIR}/probo-agent"
+LEGACY_BINARY="/usr/local/bin/probo-agent"
 STATE_DIR="/var/lib/probo-agent"
 RUN_DIR="/var/run/probo-agent"
 CONF_FILE="/tmp/probo-agent.conf"
@@ -40,6 +42,12 @@ if [ ! -x "${BINARY}" ]; then
     echo "error: expected binary not found at ${BINARY}"
     exit 1
 fi
+
+mkdir -p "${PROBO_DIR}"
+chown root:wheel "${PROBO_DIR}"
+chmod 0755 "${PROBO_DIR}"
+chown root:wheel "${BINARY}"
+chmod 0755 "${BINARY}"
 
 mkdir -p "${STATE_DIR}"
 chown root:wheel "${STATE_DIR}"
@@ -130,6 +138,20 @@ EOF
 # Restart a previously enrolled LaunchDaemon after upgrades. Preinstall
 # boots it out so the binary can be replaced; without /tmp/probo-agent.conf
 # enrollment is skipped and nothing else would load it again.
+retarget_existing_daemon() {
+    if [ ! -f "${DAEMON_PLIST}" ]; then
+        return 0
+    fi
+
+    if ! /usr/libexec/PlistBuddy -c "Set :ProgramArguments:0 ${BINARY}" "${DAEMON_PLIST}"; then
+        echo "error: cannot retarget LaunchDaemon to ${BINARY}"
+        return 1
+    fi
+
+    echo "Retargeted LaunchDaemon to ${BINARY}."
+    return 0
+}
+
 restart_existing_daemon() {
     if [ ! -f "${DAEMON_PLIST}" ]; then
         return 0
@@ -230,6 +252,13 @@ if ! install_privileged_helper; then
     echo "error: privileged helper installation failed; browser enrollment will not work."
     exit 1
 fi
+
+if ! retarget_existing_daemon; then
+    echo "error: cannot migrate LaunchDaemon off ${LEGACY_BINARY}."
+    exit 1
+fi
+
+rm -f "${LEGACY_BINARY}"
 
 restart_existing_daemon
 

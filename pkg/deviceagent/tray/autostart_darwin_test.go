@@ -93,7 +93,7 @@ func TestLaunchAgentIsCurrent(t *testing.T) {
 	t.Parallel()
 
 	const (
-		exePath = "/usr/local/bin/probo-agent"
+		exePath = "/Library/Probo/probo-agent"
 		runDir  = "/var/run/probo-agent"
 	)
 

@@ -4,7 +4,8 @@
 #
 # Downloads the matching GitHub Release binary, verifies its sha256
 # checksum (embedded in this script at release time), installs to
-# /usr/local/bin, then enrolls the device.
+# /Library/Probo/probo-agent on Darwin or /usr/local/bin/probo-agent
+# on Linux and FreeBSD, then enrolls the device.
 #
 # Usage:
 #
@@ -147,6 +148,11 @@ detect_platform() {
 
   archive_dir="probo-agent_${os_label}_${arch_label}"
   archive_name="${archive_dir}.tar.gz"
+
+  case "$os" in
+    Darwin) BINARY_PATH="/Library/Probo/probo-agent" ;;
+    *) BINARY_PATH="/usr/local/bin/probo-agent" ;;
+  esac
 }
 
 sha256_file() {
@@ -343,7 +349,18 @@ main() {
     die "archive did not contain probo-agent binary"
   fi
 
+  binary_dir="$(dirname "$BINARY_PATH")"
+  mkdir -p "$binary_dir"
+  if [ "$(uname -s)" = Darwin ]; then
+    chown root:wheel "$binary_dir"
+    chmod 0755 "$binary_dir"
+  fi
+
   install -m 0755 "${workdir}/${archive_dir}/probo-agent" "$BINARY_PATH"
+  if [ "$(uname -s)" = Darwin ]; then
+    chown root:wheel "$BINARY_PATH"
+    chmod 0755 "$BINARY_PATH"
+  fi
   printf 'Installed %s\n' "$BINARY_PATH"
 
   prompt_server_url

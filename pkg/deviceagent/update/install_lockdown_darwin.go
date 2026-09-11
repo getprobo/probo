@@ -20,29 +20,25 @@
 
 //go:build darwin
 
-package elevate
+package update
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
+	"fmt"
+	"os"
 )
 
-func TestRunElevatedInstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
+func lockDownReplacedBinary(path string) error {
+	if os.Geteuid() != 0 {
+		return nil
+	}
 
-	err := RunElevatedInstall(
-		"/Library/Probo/probo-agent",
-		"https://example.com",
-		"token",
-		"/var/lib/probo-agent",
-	)
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
-}
+	if err := os.Chown(path, 0, 0); err != nil {
+		return fmt.Errorf("cannot chown replaced binary: %w", err)
+	}
 
-func TestRunElevatedUninstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
+	if err := os.Chmod(path, 0o755); err != nil {
+		return fmt.Errorf("cannot chmod replaced binary: %w", err)
+	}
 
-	err := RunElevatedUninstall("/Library/Probo/probo-agent", "/var/lib/probo-agent")
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
+	return nil
 }
