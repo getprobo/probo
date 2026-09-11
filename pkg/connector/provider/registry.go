@@ -287,7 +287,10 @@ func (r *Registry) Register(reg *Registration) error {
 		// initiate handler would redirect the customer to Probo's own origin,
 		// or worse. The destination is a vendor's install page; it is always
 		// absolute and always https.
-		if installURL.Scheme != "https" || installURL.Host == "" {
+		//
+		// Hostname(), not Host: a port-only authority ("https://:8080/") has a
+		// non-empty Host and no host at all.
+		if installURL.Scheme != "https" || installURL.Hostname() == "" {
 			return fmt.Errorf(
 				"cannot register connector provider %q: Endpoints.Install must expand to an absolute https URL, got %q",
 				reg.Provider,

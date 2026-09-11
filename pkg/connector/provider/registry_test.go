@@ -449,8 +449,10 @@ func TestRegistry_Register(t *testing.T) {
 		for name, template := range map[string]string{
 			"a relative reference": "/initiate/plugin/%s/",
 			"no host":              "https:///initiate/plugin/%s/",
-			"plain http":           "http://app.crisp.chat/initiate/plugin/%s/",
-			"a javascript scheme":  "javascript:alert(%s)",
+			// A port-only authority has a non-empty Host and no host at all.
+			"a port with no host": "https://:8080/initiate/plugin/%s/",
+			"plain http":          "http://app.crisp.chat/initiate/plugin/%s/",
+			"a javascript scheme": "javascript:alert(%s)",
 		} {
 			t.Run("install endpoint that is "+name, func(t *testing.T) {
 				t.Parallel()
