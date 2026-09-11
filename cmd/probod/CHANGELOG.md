@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.287.0] - 2026-09-11
+
+### Added
+
+- Findings can now be linked to specific audits: audit-specific finding
+  references are exposed via GraphQL, with a two-step linking flow in
+  finding details that displays linked audits with their report
+  references and supports unlinking them in place
+- Spanish employee portal translations
+
+### Fixed
+
+- OAuth2 protected-resource matching accepts a resource that differs from
+  an advertised one only by the root trailing slash, scoped to http(s)
+  resources as RFC 3986 section 6.2.3 defines
+- Task comments are now deleted before the organization cascade, fixing
+  organization deletion failing because task comments blocked deleting
+  the underlying membership profiles
+
 ## [0.286.0] - 2026-09-10
 
 ### Added
