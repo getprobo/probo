@@ -403,10 +403,10 @@ trap 'rm -rf "${STAGE}"' EXIT
 PAYLOAD="${STAGE}/payload"
 SCRIPTS="${STAGE}/scripts"
 RESOURCES="${STAGE}/Resources"
-mkdir -p "${PAYLOAD}/usr/local/bin" "${SCRIPTS}" "${RESOURCES}"
+mkdir -p "${PAYLOAD}/Library/Probo" "${SCRIPTS}" "${RESOURCES}"
 
-install -m 0755 "${BINARY}" "${PAYLOAD}/usr/local/bin/probo-agent"
-codesign_runtime "${PAYLOAD}/usr/local/bin/probo-agent" "com.probo.agent"
+install -m 0755 "${BINARY}" "${PAYLOAD}/Library/Probo/probo-agent"
+codesign_runtime "${PAYLOAD}/Library/Probo/probo-agent" "com.probo.agent"
 
 mkdir -p "${PAYLOAD}/Applications"
 build_probo_agent_app "${PAYLOAD}/Applications"

@@ -29,7 +29,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"text/template"
+
+	"go.probo.inc/probo/pkg/deviceagent"
 )
 
 const (
@@ -94,6 +97,16 @@ func removePrivilegedHelper() error {
 
 // Install writes and boots the launchd plist.
 func Install(cfg Config) error {
+	if err := WritePlist(cfg); err != nil {
+		return err
+	}
+
+	return reloadNow()
+}
+
+// WritePlist renders the LaunchDaemon plist without touching launchd.
+// Use this when the running daemon cannot boot itself out.
+func WritePlist(cfg Config) error {
 	if cfg.ExePath == "" {
 		return errors.New("executable path is required")
 	}
@@ -104,6 +117,10 @@ func Install(cfg Config) error {
 
 	if cfg.Label == "" {
 		cfg.Label = DefaultLabel
+	}
+
+	if !deviceagent.IsCanonicalExecutable(cfg.ExePath) {
+		return fmt.Errorf("executable path must be %s", deviceagent.DefaultExecutablePath())
 	}
 
 	if err := os.MkdirAll(filepath.Dir(plistPath), 0o755); err != nil {
@@ -121,10 +138,33 @@ func Install(cfg Config) error {
 		return fmt.Errorf("cannot render plist: %w", err)
 	}
 
+	return nil
+}
+
+func reloadNow() error {
 	// `bootout` first keeps install idempotent.
 	_ = exec.Command("launchctl", "bootout", "system", plistPath).Run()
 	if out, err := exec.Command("launchctl", "bootstrap", "system", plistPath).CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run launchctl bootstrap: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+
+	return nil
+}
+
+// ScheduleReload bootouts and bootstraps the agent LaunchDaemon from a
+// detached process so a running daemon can change its own Program path.
+func ScheduleReload() error {
+	script := "sleep 1; /bin/launchctl bootout system " + plistPath +
+		"; /bin/launchctl bootstrap system " + plistPath
+	cmd := exec.Command("/bin/sh", "-c", script)
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("cannot schedule launchd reload: %w", err)
+	}
+
+	if err := cmd.Process.Release(); err != nil {
+		return fmt.Errorf("cannot detach launchd reload: %w", err)
 	}
 
 	return nil
@@ -143,5 +183,25 @@ func Uninstall(cfg Config) error {
 		return fmt.Errorf("cannot remove privileged helper: %w", err)
 	}
 
+	if err := deviceagent.RemovePrivilegedExecutable(); err != nil {
+		return fmt.Errorf("cannot remove privileged executable: %w", err)
+	}
+
 	return nil
+}
+
+// InstalledExePath returns ProgramArguments[0] from the agent LaunchDaemon
+// plist, or "" when the plist is missing or unreadable.
+func InstalledExePath() string {
+	out, err := exec.Command(
+		"/usr/libexec/PlistBuddy",
+		"-c",
+		"Print :ProgramArguments:0",
+		plistPath,
+	).Output()
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(out))
 }

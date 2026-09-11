@@ -20,29 +20,23 @@
 
 //go:build darwin
 
-package elevate
+package deviceagent
 
-import (
-	"testing"
+import "path/filepath"
 
-	"github.com/stretchr/testify/require"
+const (
+	privilegedExecutableDir  = "/Library/Probo"
+	privilegedExecutableName = "probo-agent"
+	legacyExecutablePath     = "/usr/local/bin/probo-agent"
 )
 
-func TestRunElevatedInstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
-
-	err := RunElevatedInstall(
-		"/Library/Probo/probo-agent",
-		"https://example.com",
-		"token",
-		"/var/lib/probo-agent",
-	)
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
+// DefaultExecutablePath is the root-owned Darwin install location used by
+// the privileged helper and the LaunchDaemon.
+func DefaultExecutablePath() string {
+	return filepath.Join(privilegedExecutableDir, privilegedExecutableName)
 }
 
-func TestRunElevatedUninstallRequiresPrivilegedHelper(t *testing.T) {
-	t.Parallel()
-
-	err := RunElevatedUninstall("/Library/Probo/probo-agent", "/var/lib/probo-agent")
-	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
+// LegacyExecutablePath is the pre-relocation Darwin install location.
+func LegacyExecutablePath() string {
+	return legacyExecutablePath
 }

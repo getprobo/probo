@@ -32,6 +32,11 @@ documented in this file.
 
 ### Fixed
 
+- On macOS the agent binary lives at `/Library/Probo/probo-agent`. The
+  privileged helper and LaunchDaemon no longer exec `/usr/local/bin/probo-agent`,
+  which is user-writable on many Homebrew machines. The helper checks the
+  Team ID and identifier before it runs the binary. An upgrade moves an
+  existing daemon off the old path.
 - Browser enrollment (`probo://` deep links) asks the user to confirm the
   server URL before a privileged install, except when TLS presents a
   pinned Probo leaf public key. Cancel leaves the device unenrolled.
