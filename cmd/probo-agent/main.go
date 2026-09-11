@@ -68,6 +68,8 @@ func init() {
 }
 
 func main() {
+	bindParentConsole()
+
 	// Best-effort cleanup of a previous-version binary left aside by
 	// a Windows self-update. No-op on Unix.
 	if exe, err := os.Executable(); err == nil {

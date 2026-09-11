@@ -221,17 +221,18 @@ go run ./cmd/probo-agent/installer/windows/mkicon `
   -png ./pkg/deviceagent/tray/icon_color.png `
   -syso ./cmd/probo-agent/rsrc_windows_amd64.syso `
   -arch amd64
-go build -ldflags "-X 'main.version=$Version'" -o dist/probo-agent.exe ./cmd/probo-agent
+go build -ldflags "-H windowsgui -X 'main.version=$Version'" -o dist/probo-agent.exe ./cmd/probo-agent
 ./cmd/probo-agent/installer/windows/build.ps1 `
   -Binary dist/probo-agent.exe `
   -Version $Version `
   -Arch amd64
 ```
 
-`mkicon` must run before `go build` so the `.syso` is linked into the
-exe (Explorer, Task Manager). The MSI build runs `mkicon` again for
-`ARPPRODUCTICON` (Settings > Apps). Generated `.syso` files are
-gitignored.
+`-H windowsgui` keeps Explorer from flashing a console when the HKLM
+Run key starts the tray. `mkicon` must run before `go build` so the
+`.syso` is linked into the exe (Explorer, Task Manager). The MSI
+build runs `mkicon` again for `ARPPRODUCTICON` (Settings > Apps).
+Generated `.syso` files are gitignored.
 
 For per-user protocol registration without the MSI (dev machines),
 `cmd/probo-agent/installer/windows/register-protocol.ps1` still writes
