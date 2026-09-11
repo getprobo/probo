@@ -878,8 +878,8 @@ posture_evidence() {
       ;;
     WINDOWS:SCREEN_LOCK)
       case "$status" in
-        PASS) jq -nc '{backend:"hkey_users",users:{"S-1-5-21-1004336348-1177238915-682003330-1001":"1"}}' ;;
-        FAIL) jq -nc '{backend:"hkey_users",users:{"S-1-5-21-1004336348-1177238915-682003330-1001":"0"}}' ;;
+        PASS) jq -nc '{backend:"machine_inactivity_limit",screen_lock_enforced:true,policy:{InactivityTimeoutSecs:"900",MaxInactivityTimeDeviceLock:"",ScreenSaverIsSecure:"",ScreenSaveActive:"",ScreenSaveTimeOut:""}}' ;;
+        FAIL) jq -nc '{backend:"hkey_users",screen_lock_enforced:false,users:{"S-1-5-21-1004336348-1177238915-682003330-1001":"0::"}}' ;;
         *) jq -nc '{backend:"hkey_users",users:{},note:"no interactive user hives loaded"}' ;;
       esac
       ;;
@@ -901,7 +901,7 @@ posture_evidence() {
       case "$status" in
         PASS) jq -nc '{backend:"Get-NetFirewallProfile",raw:"Domain=True;Private=True;Public=True",profiles:{Domain:"True",Private:"True",Public:"True"}}' ;;
         FAIL) jq -nc '{backend:"Get-NetFirewallProfile",raw:"Domain=True;Private=True;Public=False",profiles:{Domain:"True",Private:"True",Public:"False"}}' ;;
-        *) jq -nc '{backend:"netsh",state_lines:[]}' ;;
+        *) jq -nc '{backend:"HNetCfg.FwPolicy2",degraded:true,primary_backend:"Get-NetFirewallProfile",primary_error:"command \"powershell.exe\" timed out after 10s: exit status 1",primary_timed_out:true,profiles:{}}' ;;
       esac
       ;;
     DARWIN:TIME_SYNC)
@@ -920,8 +920,8 @@ posture_evidence() {
       ;;
     WINDOWS:TIME_SYNC)
       case "$status" in
-        PASS) jq -nc '{backend:"w32time",w32time_status:"Running",w32time_type:"NTP",ntp_server:"time.windows.com,0x8"}' ;;
-        FAIL) jq -nc '{backend:"w32time",w32time_status:"Stopped",w32time_type:"NTP"}' ;;
+        PASS) jq -nc '{backend:"w32time",w32time_service_start:"3",w32time_type:"NTP",ntp_server:"time.windows.com,0x8"}' ;;
+        FAIL) jq -nc '{backend:"w32time",w32time_service_start:"4",w32time_type:"NTP"}' ;;
         *) jq -nc '{error:"exit status 0x80070426",stderr:""}' ;;
       esac
       ;;
@@ -959,9 +959,9 @@ posture_evidence() {
       ;;
     WINDOWS:AUTO_UPDATE)
       case "$status" in
-        PASS) jq -nc '{no_auto_update:"0",au_options:"4"}' ;;
-        FAIL) jq -nc '{no_auto_update:"",au_options:"2"}' ;;
-        *) jq -nc '{no_auto_update:"",au_options:"",wuauserv:""}' ;;
+        PASS) jq -nc '{no_auto_update:"0",au_options:"4",wuauserv_service_start:"2"}' ;;
+        FAIL) jq -nc '{no_auto_update:"",au_options:"2",wuauserv_service_start:"3"}' ;;
+        *) jq -nc '{no_auto_update:"",au_options:"",wuauserv_service_start:""}' ;;
       esac
       ;;
     DARWIN:PASSWORD_POLICY)

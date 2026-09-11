@@ -37,7 +37,7 @@ const (
 	EUConsoleURL = "https://" + EUConsoleHost
 )
 
-const DefaultServerURL = USConsoleURL
+const EnrollmentConfirmTitle = "Enroll this device?"
 
 func NormalizeServerURL(host string) (string, error) {
 	raw := strings.TrimSpace(host)
@@ -91,4 +91,41 @@ func ConsoleEnrollURL(serverURL string) (string, error) {
 	}
 
 	return enrollURL, nil
+}
+
+// IsProboServers reports whether serverURL is a US or EU Probo host.
+func IsProboServers(serverURL string) bool {
+	normalized, err := NormalizeServerURL(serverURL)
+	if err != nil {
+		return false
+	}
+
+	parsed, err := url.Parse(normalized)
+	if err != nil {
+		return false
+	}
+
+	host := strings.ToLower(parsed.Hostname())
+
+	return host == USConsoleHost || host == EUConsoleHost
+}
+
+// RequiresEnrollmentConfirm reports whether the browser-enrollment path
+// must show a native confirm dialog. Pinned Probo hosts skip it.
+func RequiresEnrollmentConfirm(trust EnrollmentTrust) bool {
+	return trust != TrustProboCloud
+}
+
+// EnrollmentConfirmMessage is the body of the browser-enrollment confirm dialog.
+func EnrollmentConfirmMessage(serverURL string, trust EnrollmentTrust) string {
+	message := fmt.Sprintf("This device will report to %s.", serverURL)
+
+	switch trust {
+	case TrustInsecure:
+		return message + "\n\nThis connection is not encrypted (http)."
+	case TrustUnknown:
+		return message + "\n\nCould not verify TLS for this server."
+	default:
+		return message + "\n\nThis is not a Probo server."
+	}
 }

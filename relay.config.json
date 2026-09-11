@@ -23,7 +23,7 @@
         "Datetime": "string",
         "GID": "string",
         "CursorKey": "string",
-        "Duration": "string",
+        "TimeSpan": "string",
         "BigInt": "number",
         "EmailAddr": "string"
       }
@@ -38,7 +38,7 @@
         "Datetime": "string",
         "GID": "string",
         "CursorKey": "string",
-        "Duration": "string",
+        "TimeSpan": "string",
         "BigInt": "number",
         "EmailAddr": "string",
         "OAuth2Scope": "string",
@@ -65,7 +65,7 @@
         "Datetime": "string",
         "GID": "string",
         "CursorKey": "string",
-        "Duration": "string",
+        "TimeSpan": "string",
         "BigInt": "number",
         "EmailAddr": "string"
       }
@@ -80,7 +80,7 @@
         "Datetime": "string",
         "GID": "string",
         "CursorKey": "string",
-        "Duration": "string",
+        "TimeSpan": "string",
         "BigInt": "number",
         "EmailAddr": "string",
         "OAuth2Scope": "string",

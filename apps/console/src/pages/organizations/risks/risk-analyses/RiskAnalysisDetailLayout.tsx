@@ -59,7 +59,6 @@ export const riskAnalysisDetailLayoutQuery = graphql`
           cols
         }
         createdAt
-        updatedAt
         ...RiskAnalysisActions_riskAnalysis
       }
     }
@@ -117,7 +116,7 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
       </PageHeader>
 
       <Card padded>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           <div>
             <div className="text-xs text-txt-tertiary font-semibold mb-1">
               {t("riskAnalysisDetailPage.fields.period")}
@@ -140,14 +139,6 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
             </div>
             <div className="text-sm text-txt-primary">
               {dateFormat(i18n.language, ra.createdAt)}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskAnalysisDetailPage.fields.updatedAt")}
-            </div>
-            <div className="text-sm text-txt-primary">
-              {dateFormat(i18n.language, ra.updatedAt)}
             </div>
           </div>
         </div>

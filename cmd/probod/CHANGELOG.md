@@ -4,6 +4,86 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.286.0] - 2026-09-10
+
+### Added
+
+- Device postures are stamped with a schema version and the observing agent's version, exposed via GraphQL, MCP, and the CLI; older agents fall back to their last heartbeat version so a rolling deploy keeps reporting
+
+## [0.285.0] - 2026-09-10
+
+### Added
+
+- Fifteen more connector providers declare a pasted-key prefix
+  (Anthropic, Brevo, Brex, Cal.com, ClickHouse Cloud, Dotfile,
+  Metabase, OpenAI, Qovery, Resend, SendGrid, Supabase, Tailscale,
+  Tally, UpCloud), so a truncated, wrong-kind, or otherwise malformed
+  key is rejected in the connect dialog instead of reaching the
+  provider
+
+### Changed
+
+- Task duration fields keep calendar months: GraphQL and MCP expose
+  `TimeSpan` instead of `Duration`, so `P1M` round-trips instead of
+  flattening to about 30 days
+
+### Fixed
+
+- Employee portal assume still runs when `ssoLoginURL` errors; that
+  field error no longer aborts the query before
+  `assumeOrganizationSession`
+
+## [0.284.0] - 2026-09-09
+
+### Added
+
+- Audit list shows the audit and validity periods as two compact date ranges instead of four separate columns, with guarded parsing so malformed or out-of-order dates render safely instead of crashing
+
+## [0.283.1] - 2026-09-09
+
+### Fixed
+
+- Windows time sync and auto-update postures reported by probo-agent 0.6.4 and
+  later no longer display as Unknown. The agent renamed the evidence it sends
+  for those checks when it moved from transient service state to service
+  configuration, and the reader still expected the old keys
+
+## [0.283.0] - 2026-09-09
+
+### Added
+
+- Search the document list by title, debounced and persisted in the URL
+
+### Fixed
+
+- OAuth dynamic client registration now accepts the standard `scope` field (a space-delimited string) in addition to `scopes`, so clients following RFC 7591 register successfully
+
+## [0.282.0] - 2026-09-08
+
+### Added
+
+- Identity avatars: upload a photo shown on people lists and owner cells without a profile page, stored as a public file with EXIF stripped; falls back to initials when none is uploaded
+
+### Changed
+
+- Remove the risk analysis last-updated timestamp from the frontend: it only reflected edits to the parent record, not to diagrams, scenarios, treatment-plan results, or measure status, so it was misleading
+
+### Fixed
+
+- MCP `ListCookieCategoriesTool` now honours the `exclude_kind` filter argument instead of ignoring it, so callers can enumerate all categories including `UNCATEGORISED`
+
+## [0.281.0] - 2026-09-07
+
+### Added
+
+- GCP access-review connector setup: `gcpConnectorSetup` query, create fields, and a dedicated console connect page for workload-identity federation
+- Task descriptions and comments use the same Tiptap rich text editor as documents, stored as JSONB content; comments speak markdown over MCP the same way document content does
+
+### Changed
+
+- GCP access-review activity driver reads only the `_Required` log bucket's `_AllLogs` view (`roles/logging.viewAccessor`) instead of project-wide `roles/logging.viewer`, so the impersonated token can no longer read application logs in `_Default`
+- GCP connectors recognize Sovereign Cloud de Confiance (S3NS) service accounts and dial `*.s3nsapis.fr` instead of public GCP
+
 ## [0.280.0] - 2026-09-07
 
 ### Added

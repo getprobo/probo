@@ -1026,6 +1026,10 @@ func deleteOrganizationDependencies(
 		return fmt.Errorf("cannot delete findings: %w", err)
 	}
 
+	if err := new(coredata.TaskComments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete task comments: %w", err)
+	}
+
 	// files.organization_id has no foreign key, so they cannot cascade
 	// from the organization delete.
 	if err := new(coredata.Files).SoftDeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {

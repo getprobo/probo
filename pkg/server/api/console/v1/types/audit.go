@@ -29,6 +29,12 @@ import (
 type (
 	AuditOrderBy OrderBy[coredata.AuditOrderField]
 
+	AuditEdge struct {
+		Cursor      page.CursorKey
+		ReferenceID *string
+		Node        *Audit
+	}
+
 	AuditConnection struct {
 		TotalCount int
 		Edges      []*AuditEdge
@@ -38,6 +44,40 @@ type (
 		ParentID gid.GID
 	}
 )
+
+func NewFindingAuditConnection(
+	p *page.Page[*coredata.Audit, coredata.AuditOrderField],
+	findingAudits coredata.FindingAudits,
+	parentType any,
+	parentID gid.GID,
+) *AuditConnection {
+	referenceIDs := make(map[gid.GID]string, len(findingAudits))
+	for _, findingAudit := range findingAudits {
+		referenceIDs[findingAudit.AuditID] = findingAudit.ReferenceID
+	}
+
+	edges := make([]*AuditEdge, len(p.Data))
+	for i, audit := range p.Data {
+		var referenceID *string
+		if value, ok := referenceIDs[audit.ID]; ok {
+			referenceID = &value
+		}
+
+		edges[i] = NewFindingAuditEdge(
+			audit,
+			p.Cursor.OrderBy.Field,
+			referenceID,
+		)
+	}
+
+	return &AuditConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+
+		Resolver: parentType,
+		ParentID: parentID,
+	}
+}
 
 func NewAuditConnection(
 	p *page.Page[*coredata.Audit, coredata.AuditOrderField],
@@ -55,6 +95,18 @@ func NewAuditConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+	}
+}
+
+func NewFindingAuditEdge(
+	a *coredata.Audit,
+	orderField coredata.AuditOrderField,
+	referenceID *string,
+) *AuditEdge {
+	return &AuditEdge{
+		Node:        NewAudit(a),
+		Cursor:      a.CursorKey(orderField),
+		ReferenceID: referenceID,
 	}
 }
 

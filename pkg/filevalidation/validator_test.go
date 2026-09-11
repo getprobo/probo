@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewValidator(t *testing.T) {
@@ -98,6 +100,29 @@ func TestNewValidator(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWithMimeTypes(t *testing.T) {
+	t.Parallel()
+
+	v := NewValidator(WithMimeTypes("image/jpeg", "image/png"))
+
+	assert.True(t, v.AllowedMimeTypes["image/jpeg"])
+	assert.True(t, v.AllowedMimeTypes["image/png"])
+	assert.Contains(t, v.AllowedExtensions, ".jpg")
+	assert.False(t, v.AllowedMimeTypes["image/webp"])
+	assert.False(t, v.AllowedMimeTypes["image/svg+xml"])
+}
+
+func TestWithMimeTypes_PanicsOnUnknown(t *testing.T) {
+	t.Parallel()
+
+	assert.Panics(
+		t,
+		func() {
+			NewValidator(WithMimeTypes("image/jpg"))
+		},
+	)
 }
 
 func TestWithMaxFileSize(t *testing.T) {

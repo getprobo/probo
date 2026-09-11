@@ -108,3 +108,83 @@ func TestConsoleEnrollURL(t *testing.T) {
 		})
 	}
 }
+
+func TestIsProboServers(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{name: "US console", input: USConsoleURL, want: true},
+		{name: "EU console", input: EUConsoleURL, want: true},
+		{name: "mixed-case US host", input: "HTTPS://US.Probo.Com", want: true},
+		{name: "bare EU host", input: "eu.probo.com", want: true},
+		{name: "self-hosted", input: "https://probo.example.com", want: false},
+		{name: "http self-hosted", input: "http://localhost:3000", want: false},
+		{name: "lookalike host", input: "https://us.probo.com.evil.example", want: false},
+		{name: "empty", input: "", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, IsProboServers(tt.input))
+			},
+		)
+	}
+}
+
+func TestRequiresEnrollmentConfirm(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, RequiresEnrollmentConfirm(TrustProboCloud))
+	assert.True(t, RequiresEnrollmentConfirm(TrustUnverified))
+	assert.True(t, RequiresEnrollmentConfirm(TrustInsecure))
+	assert.True(t, RequiresEnrollmentConfirm(TrustUnknown))
+}
+
+func TestEnrollmentConfirmMessage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		serverURL string
+		trust     EnrollmentTrust
+		want      string
+	}{
+		{
+			name:      "unverified host",
+			serverURL: "https://probo.example.com",
+			trust:     TrustUnverified,
+			want:      "This device will report to https://probo.example.com.\n\nThis is not a Probo server.",
+		},
+		{
+			name:      "cleartext http",
+			serverURL: "http://us.probo.com",
+			trust:     TrustInsecure,
+			want:      "This device will report to http://us.probo.com.\n\nThis connection is not encrypted (http).",
+		},
+		{
+			name:      "probe failed",
+			serverURL: USConsoleURL,
+			trust:     TrustUnknown,
+			want:      "This device will report to https://us.probo.com.\n\nCould not verify TLS for this server.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, EnrollmentConfirmMessage(tt.serverURL, tt.trust))
+			},
+		)
+	}
+}

@@ -247,6 +247,51 @@ func TestParseDevicePostureValue_ScreenLock(t *testing.T) {
 				},
 				wantKind: coredata.DevicePostureValueKindUnknown,
 			},
+			{
+				name:     "windows remembered screen lock after no user hives",
+				checkKey: "SCREEN_LOCK",
+				evidence: map[string]any{
+					"backend":                "hkey_users",
+					"users":                  map[string]any{},
+					"note":                   "no interactive user hives loaded",
+					"screen_lock_enforced":   true,
+					"remembered":             true,
+					"remembered_observed_at": "2026-09-09T12:00:00Z",
+				},
+				wantKind: coredata.DevicePostureValueKindOn,
+			},
+			{
+				name:     "windows machine inactivity limit enforces lock",
+				checkKey: "SCREEN_LOCK",
+				evidence: map[string]any{
+					"backend":              "machine_inactivity_limit",
+					"screen_lock_enforced": true,
+					"policy":               map[string]any{"InactivityTimeoutSecs": "900"},
+				},
+				wantKind: coredata.DevicePostureValueKindOn,
+			},
+			{
+				name:     "windows machine policy leaves the screensaver insecure",
+				checkKey: "SCREEN_LOCK",
+				evidence: map[string]any{
+					"backend":              "machine_policy",
+					"screen_lock_enforced": false,
+					"policy":               map[string]any{"ScreenSaverIsSecure": "0"},
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "windows per-user hives resolved by the agent",
+				checkKey: "SCREEN_LOCK",
+				evidence: map[string]any{
+					"backend":              "hkey_users",
+					"screen_lock_enforced": true,
+					"users": map[string]any{
+						"S-1-5-21-1004336348-1177238915-682003330-1001": "1:1:600",
+					},
+				},
+				wantKind: coredata.DevicePostureValueKindOn,
+			},
 		},
 	)
 }
@@ -273,6 +318,16 @@ func TestParseDevicePostureValue_Firewall(t *testing.T) {
 				evidence: map[string]any{
 					"backend":     "netsh",
 					"state_lines": []any{},
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
+				name:     "windows firewall COM fallback without profiles is unknown",
+				checkKey: "FIREWALL_ENABLED",
+				evidence: map[string]any{
+					"backend":  "HNetCfg.FwPolicy2",
+					"degraded": true,
+					"profiles": map[string]any{},
 				},
 				wantKind: coredata.DevicePostureValueKindUnknown,
 			},
@@ -342,6 +397,37 @@ func TestParseDevicePostureValue_TimeSync(t *testing.T) {
 					"backend":        "w32time",
 					"w32time_status": "Running",
 					"w32time_type":   "NoSync",
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "windows w32time trigger-start service with NTP is on",
+				checkKey: "TIME_SYNC",
+				evidence: map[string]any{
+					"backend":               "w32time",
+					"w32time_service_start": "3",
+					"w32time_type":          "NTP",
+					"ntp_server":            "time.windows.com,0x9",
+				},
+				wantKind: coredata.DevicePostureValueKindOn,
+			},
+			{
+				name:     "windows w32time disabled service is off",
+				checkKey: "TIME_SYNC",
+				evidence: map[string]any{
+					"backend":               "w32time",
+					"w32time_service_start": "4",
+					"w32time_type":          "NTP",
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "windows w32time automatic service with NoSync is off",
+				checkKey: "TIME_SYNC",
+				evidence: map[string]any{
+					"backend":               "w32time",
+					"w32time_service_start": "2",
+					"w32time_type":          "NoSync",
 				},
 				wantKind: coredata.DevicePostureValueKindOff,
 			},
@@ -513,6 +599,26 @@ func TestParseDevicePostureValue_PasswordPolicy(t *testing.T) {
 				wantNumber: new(8),
 			},
 			{
+				name:     "windows secedit and device lock still use min password length",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"backend":             "max",
+					"min_password_length": float64(6),
+					"raw":                 "MinDevicePasswordLength=6;MinimumPasswordLength=0",
+				},
+				wantKind:   coredata.DevicePostureValueKindMinPasswordLength,
+				wantNumber: new(6),
+			},
+			{
+				name:     "windows password policy probe failure is unknown",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"error":  "exit status 1",
+					"stderr": "Exception calling \"InvokeGet\"",
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
 				name:     "darwin pwpolicy without account policies",
 				checkKey: "PASSWORD_POLICY",
 				evidence: map[string]any{
@@ -654,11 +760,14 @@ type devicePostureAgreementCase struct {
 
 // passingKindByCheckKey is the state a passing check observed. Remote login is
 // the inverted one: a reachable SSH server is the finding, so PASS means OFF.
+// SCREEN_LOCK is absent on purpose: a passing macOS host reports a delay rather
+// than ON, so its value has no single passing kind to compare against.
 var passingKindByCheckKey = map[string]coredata.DevicePostureValueKind{
 	"FIREWALL_ENABLED":   coredata.DevicePostureValueKindOn,
 	"DISK_ENCRYPTION":    coredata.DevicePostureValueKindOn,
 	"TIME_SYNC":          coredata.DevicePostureValueKindOn,
 	"MALWARE_PROTECTION": coredata.DevicePostureValueKindOn,
+	"AUTO_UPDATE":        coredata.DevicePostureValueKindOn,
 	"REMOTE_LOGIN":       coredata.DevicePostureValueKindOff,
 }
 
@@ -894,6 +1003,60 @@ func TestParseDevicePostureValue_AgreesWithAgentStatus(t *testing.T) {
 				"w32time_type":   "NTP",
 			},
 			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "windows w32time trigger-start service",
+			checkKey: "TIME_SYNC",
+			evidence: map[string]any{
+				"backend":               "w32time",
+				"w32time_service_start": "3",
+				"w32time_type":          "NTP",
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
+		},
+		{
+			name:     "windows w32time disabled service",
+			checkKey: "TIME_SYNC",
+			evidence: map[string]any{
+				"backend":               "w32time",
+				"w32time_service_start": "4",
+				"w32time_type":          "NTP",
+			},
+			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "windows auto-update with no policy and a trigger-start service",
+			checkKey: "AUTO_UPDATE",
+			evidence: map[string]any{
+				"no_auto_update":         "",
+				"au_options":             "",
+				"wuauserv_service_start": "3",
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
+		},
+		{
+			name:     "windows auto-update with a disabled service",
+			checkKey: "AUTO_UPDATE",
+			evidence: map[string]any{
+				"no_auto_update":         "",
+				"au_options":             "",
+				"wuauserv_service_start": "4",
+			},
+			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "windows firewall through the COM fallback",
+			checkKey: "FIREWALL_ENABLED",
+			evidence: map[string]any{
+				"backend":  "HNetCfg.FwPolicy2",
+				"degraded": true,
+				"profiles": map[string]any{
+					"Domain":  "True",
+					"Private": "True",
+					"Public":  "True",
+				},
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
 		},
 		{
 			name:        "darwin network time on",

@@ -234,8 +234,12 @@ type AuditConnection
     pageInfo: PageInfo!
 }
 
-type AuditEdge {
+type AuditEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditEdge"
+    ) {
     cursor: CursorKey!
+    referenceId: String
     node: Audit!
 }
 

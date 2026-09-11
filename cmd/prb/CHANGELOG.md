@@ -4,6 +4,23 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.227.0] - 2026-09-10
+
+### Added
+
+- `device view` and `device list` show each posture's schema version and observing agent version
+
+## [0.226.0] - 2026-09-07
+
+### Added
+
+- `access-review source setup-gcp` returns the GCP connector setup values (issuer, audience, subject, suggested service account name, and Terraform snippet) needed to create the workload-identity role
+
+### Changed
+
+- `task comment create`/`update` and `task create`/`update` use `--content` instead of `--description`, accepting the same rich text formatting as documents
+- `access-review source create --gcp-service-account-email` and `--gcp-workload-identity-provider` accept Sovereign Cloud de Confiance (S3NS) service accounts and dial `*.s3nsapis.fr` instead of public GCP
+
 ## [0.225.0] - 2026-09-04
 
 ### Added

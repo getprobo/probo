@@ -35,16 +35,18 @@ import (
 
 type (
 	DevicePosture struct {
-		ID             gid.GID             `db:"id"`
-		TenantID       gid.TenantID        `db:"tenant_id"`
-		OrganizationID gid.GID             `db:"organization_id"`
-		DeviceID       gid.GID             `db:"device_id"`
-		CorrelationID  gid.GID             `db:"correlation_id"`
-		CheckKey       string              `db:"check_key"`
-		Status         DevicePostureStatus `db:"status"`
-		Evidence       json.RawMessage     `db:"evidence"`
-		ObservedAt     time.Time           `db:"observed_at"`
-		CreatedAt      time.Time           `db:"created_at"`
+		ID             gid.GID              `db:"id"`
+		TenantID       gid.TenantID         `db:"tenant_id"`
+		OrganizationID gid.GID              `db:"organization_id"`
+		DeviceID       gid.GID              `db:"device_id"`
+		CorrelationID  gid.GID              `db:"correlation_id"`
+		CheckKey       string               `db:"check_key"`
+		Status         DevicePostureStatus  `db:"status"`
+		Evidence       json.RawMessage      `db:"evidence"`
+		Version        DevicePostureVersion `db:"version"`
+		AgentVersion   string               `db:"agent_version"`
+		ObservedAt     time.Time            `db:"observed_at"`
+		CreatedAt      time.Time            `db:"created_at"`
 	}
 
 	DevicePostures []*DevicePosture
@@ -91,6 +93,8 @@ INSERT INTO device_postures (
     check_key,
     status,
     evidence,
+    version,
+    agent_version,
     observed_at,
     created_at
 ) VALUES (
@@ -102,6 +106,8 @@ INSERT INTO device_postures (
     @check_key,
     @status,
     @evidence,
+    @version,
+    @agent_version,
     @observed_at,
     @created_at
 )
@@ -115,6 +121,8 @@ INSERT INTO device_postures (
 		"check_key":       p.CheckKey,
 		"status":          p.Status,
 		"evidence":        evidence,
+		"version":         p.Version,
+		"agent_version":   p.AgentVersion,
 		"observed_at":     observedAt,
 		"created_at":      now,
 	}
@@ -163,6 +171,8 @@ WITH latest AS (
         check_key,
         status,
         evidence,
+        version,
+        agent_version,
         observed_at,
         created_at
     FROM
@@ -218,6 +228,8 @@ SELECT
     check_key,
     status,
     evidence,
+    version,
+    agent_version,
     observed_at,
     created_at
 FROM
@@ -277,6 +289,8 @@ SELECT
     check_key,
     status,
     evidence,
+    version,
+    agent_version,
     observed_at,
     created_at
 FROM

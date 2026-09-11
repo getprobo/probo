@@ -70,6 +70,10 @@ func unknown(ev map[string]any) Result {
 	return Result{Status: StatusUnknown, Evidence: ev}
 }
 
+func unknownRememberable(ev map[string]any) Result {
+	return Result{Status: StatusUnknown, Evidence: ev, Rememberable: true}
+}
+
 func notApplicable(ev map[string]any) Result {
 	return Result{Status: StatusNotApplicable, Evidence: ev}
 }

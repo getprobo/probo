@@ -22,7 +22,6 @@ package checks
 
 import (
 	"context"
-	"strconv"
 	"strings"
 )
 
@@ -84,23 +83,39 @@ func windowsDiskEncryption(ctx context.Context) Result {
 	return fail(ev)
 }
 
+// windowsScreenLockMachineScript reads every machine-wide lock source in one
+// invocation. Three separate calls would cost up to 30s against a 25s
+// per-check budget. Each source applies to all users and needs no loaded user
+// hive.
+const windowsScreenLockMachineScript = `` +
+	`$s = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -ErrorAction SilentlyContinue; ` +
+	`$d = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\DeviceLock' -ErrorAction SilentlyContinue; ` +
+	`$c = Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop' -ErrorAction SilentlyContinue; ` +
+	`"InactivityTimeoutSecs=$($s.InactivityTimeoutSecs);` +
+	`MaxInactivityTimeDeviceLock=$($d.MaxInactivityTimeDeviceLock);ScreenSaverIsSecure=$($c.ScreenSaverIsSecure);` +
+	`ScreenSaveActive=$($c.ScreenSaveActive);ScreenSaveTimeOut=$($c.ScreenSaveTimeOut)"`
+
+const windowsScreenLockUsersScript = `Get-ChildItem 'Registry::HKEY_USERS' | ` +
+	`Where-Object { $_.PSChildName -match '^(S-1-5-21-|S-1-12-1-)' -and $_.PSChildName -notmatch '_Classes$' } | ` +
+	`ForEach-Object { ` +
+	`  $path = "Registry::HKEY_USERS\$($_.PSChildName)\Control Panel\Desktop"; ` +
+	`  $key = Get-ItemProperty $path -ErrorAction SilentlyContinue; ` +
+	`  "$($_.PSChildName)=$($key.ScreenSaverIsSecure):$($key.ScreenSaveActive):$($key.ScreenSaveTimeOut)" ` +
+	`}`
+
 func windowsScreenLock(ctx context.Context) Result {
-	// HKCU resolves to the SYSTEM hive when the agent runs as LocalSystem,
-	// so we first look for a machine-wide policy and then enumerate every
-	// loaded interactive user hive under HKU.
-	machine := powershell(
-		ctx,
-		`(Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop' `+
-			`-ErrorAction SilentlyContinue).ScreenSaverIsSecure`,
-	)
+	// HKCU resolves to the SYSTEM hive when the agent runs as LocalSystem, so we
+	// exhaust machine-wide policy before enumerating loaded interactive hives.
+	machine := powershell(ctx, windowsScreenLockMachineScript)
 	if machine.Err == nil {
-		v := strings.TrimSpace(machine.Stdout)
-		if v != "" {
+		policy := parseWindowsJoinedPairs(machine.Stdout)
+		if source, on, known := windowsScreenLockOn(policy); known {
 			ev := map[string]any{
-				"backend":                "machine_policy",
-				"screen_saver_is_secure": v,
+				"backend":              source,
+				"policy":               policy,
+				"screen_lock_enforced": on,
 			}
-			if v == "1" {
+			if on {
 				return pass(ev)
 			}
 
@@ -108,21 +123,12 @@ func windowsScreenLock(ctx context.Context) Result {
 		}
 	}
 
-	users := powershell(
-		ctx,
-		`Get-ChildItem 'Registry::HKEY_USERS' | `+
-			`Where-Object { $_.PSChildName -match '^S-1-5-21-' } | `+
-			`ForEach-Object { `+
-			`  $path = "Registry::HKEY_USERS\$($_.PSChildName)\Control Panel\Desktop"; `+
-			`  $key = Get-ItemProperty $path -ErrorAction SilentlyContinue; `+
-			`  "$($_.PSChildName)=$($key.ScreenSaverIsSecure)" `+
-			`}`,
-	)
+	users := powershell(ctx, windowsScreenLockUsersScript)
 	if users.Err != nil {
 		return unknown(
 			map[string]any{
 				"backend":              "hkey_users",
-				"error":                users.Err.Error(),
+				"error":                errString(users.Err),
 				"stderr":               users.Stderr,
 				"machine_policy_error": errString(machine.Err),
 			},
@@ -133,58 +139,31 @@ func windowsScreenLock(ctx context.Context) Result {
 		"backend": "hkey_users",
 		"raw":     truncate(users.Stdout, 400),
 	}
-	users_, anyDisabled, anyEnabled := parseWindowsUserScreenLock(users.Stdout)
+	perUser, anyDisabled, anyEnabled := parseWindowsUserScreenLock(users.Stdout)
 
-	ev["users"] = users_
-	if len(users_) == 0 {
+	ev["users"] = perUser
+	if len(perUser) == 0 {
 		ev["note"] = "no interactive user hives loaded"
-		return unknown(ev)
+		return unknownRememberable(ev)
 	}
 
-	if anyEnabled && !anyDisabled {
+	enforced := anyEnabled && !anyDisabled
+	ev["screen_lock_enforced"] = enforced
+
+	if enforced {
 		return pass(ev)
 	}
 
 	return fail(ev)
 }
 
-// parseWindowsUserScreenLock parses one "SID=<value>" line per user from
-// the registry enumeration and reports whether each user has screen
-// saver locking enabled.
-func parseWindowsUserScreenLock(s string) (map[string]string, bool, bool) {
-	users := map[string]string{}
-
-	var anyEnabled, anyDisabled bool
-
-	for line := range strings.SplitSeq(s, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		idx := strings.LastIndex(line, "=")
-		if idx < 0 {
-			continue
-		}
-
-		sid := strings.TrimSpace(line[:idx])
-		value := strings.TrimSpace(line[idx+1:])
-
-		if sid == "" {
-			continue
-		}
-
-		users[sid] = value
-		switch value {
-		case "1":
-			anyEnabled = true
-		default:
-			anyDisabled = true
-		}
-	}
-
-	return users, anyDisabled, anyEnabled
-}
+// windowsFirewallCOMScript reads the effective profile state through
+// INetFwPolicy2, whose profile constants are 1 domain, 2 private and 4 public.
+// It needs no NetSecurity module load and returns booleans rather than the
+// localized prose that `netsh advfirewall` prints.
+const windowsFirewallCOMScript = `$ErrorActionPreference = 'Stop'; ` +
+	`$fw = New-Object -ComObject HNetCfg.FwPolicy2; ` +
+	`"Domain=$($fw.FirewallEnabled(1));Private=$($fw.FirewallEnabled(2));Public=$($fw.FirewallEnabled(4))"`
 
 func windowsFirewall(ctx context.Context) Result {
 	primary := powershell(
@@ -194,83 +173,64 @@ func windowsFirewall(ctx context.Context) Result {
 			`ForEach-Object { "$($_.Name)=$($_.Enabled)" }) -join ";"`,
 	)
 	if primary.Err == nil && strings.TrimSpace(primary.Stdout) != "" {
-		ev := map[string]any{
-			"backend": "Get-NetFirewallProfile",
-			"raw":     primary.Stdout,
-		}
-		profiles, allEnabled := parseWindowsFirewallProfiles(primary.Stdout)
-
-		ev["profiles"] = profiles
-		if allEnabled {
-			return pass(ev)
-		}
-
-		return fail(ev)
-	}
-
-	fallback := RunCommand(ctx, "netsh", "advfirewall", "show", "allprofiles", "state")
-	if fallback.Err != nil {
-		return unknown(
+		return windowsFirewallResult(
 			map[string]any{
-				"error":            errString(fallback.Err),
-				"stderr":           fallback.Stderr,
-				"powershell_error": errString(primary.Err),
+				"backend": "Get-NetFirewallProfile",
+				"raw":     primary.Stdout,
 			},
+			primary.Stdout,
 		)
 	}
 
 	ev := map[string]any{
-		"backend": "netsh",
-		"raw":     truncate(fallback.Stdout, 600),
+		"backend":         "HNetCfg.FwPolicy2",
+		"degraded":        true,
+		"primary_backend": "Get-NetFirewallProfile",
+		"primary_error":   errString(primary.Err),
 	}
-	stateLines, anyOff := parseNetshFirewallStates(fallback.Stdout)
+	if primary.TimedOut {
+		ev["primary_timed_out"] = true
+	}
 
-	ev["state_lines"] = stateLines
-	if len(stateLines) > 0 && !anyOff {
+	fallback := powershell(ctx, windowsFirewallCOMScript)
+	if fallback.Err != nil {
+		ev["error"] = errString(fallback.Err)
+		ev["stderr"] = fallback.Stderr
+
+		if fallback.TimedOut {
+			ev["timed_out"] = true
+		}
+
+		return unknown(ev)
+	}
+
+	ev["raw"] = fallback.Stdout
+
+	return windowsFirewallResult(ev, fallback.Stdout)
+}
+
+func windowsFirewallResult(ev map[string]any, raw string) Result {
+	profiles := parseWindowsJoinedPairs(raw)
+	ev["profiles"] = profiles
+
+	on, known := windowsFirewallOn(profiles)
+	if !known {
+		return unknown(ev)
+	}
+
+	if on {
 		return pass(ev)
 	}
 
 	return fail(ev)
 }
 
-// parseNetshFirewallStates extracts per-profile "State <ON|OFF>" lines
-// from `netsh advfirewall show allprofiles state`. It is whitespace- and
-// case-insensitive.
-func parseNetshFirewallStates(s string) ([]string, bool) {
-	var states []string
-
-	anyOff := false
-
-	for line := range strings.SplitSeq(s, "\n") {
-		trimmed := strings.TrimSpace(line)
-
-		lower := strings.ToLower(trimmed)
-		if !strings.HasPrefix(lower, "state") {
-			continue
-		}
-
-		fields := strings.Fields(lower)
-		if len(fields) < 2 {
-			continue
-		}
-
-		value := fields[len(fields)-1]
-
-		states = append(states, value)
-		if value != "on" {
-			anyOff = true
-		}
-	}
-
-	return states, anyOff
-}
-
 func windowsTimeSync(ctx context.Context) Result {
 	out := powershell(
 		ctx,
-		`$s = Get-Service w32time; `+
+		`$s = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time'; `+
 			`$p = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters'; `+
-			`"$($s.Status);$($p.Type);$($p.NtpServer)"`,
+			`"$($s.Start);$($p.Type);$($p.NtpServer)"`,
 	)
 	if out.Err != nil {
 		return unknown(
@@ -283,9 +243,9 @@ func windowsTimeSync(ctx context.Context) Result {
 
 	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 3)
 
-	var status, typ, ntpServer string
+	var serviceStart, typ, ntpServer string
 	if len(parts) >= 1 {
-		status = strings.TrimSpace(parts[0])
+		serviceStart = strings.TrimSpace(parts[0])
 	}
 
 	if len(parts) >= 2 {
@@ -297,19 +257,19 @@ func windowsTimeSync(ctx context.Context) Result {
 	}
 
 	ev := map[string]any{
-		"backend":        "w32time",
-		"w32time_status": status,
-		"w32time_type":   typ,
+		"backend":               "w32time",
+		"w32time_service_start": serviceStart,
+		"w32time_type":          typ,
 	}
 	if ntpServer != "" {
 		ev["ntp_server"] = ntpServer
 	}
 
-	if windowsTimeSyncOn(status, typ) {
+	if windowsTimeSyncOn(serviceStart, typ) {
 		return pass(ev)
 	}
 
-	if status == "" {
+	if serviceStart == "" {
 		return unknown(ev)
 	}
 
@@ -337,7 +297,8 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		ctx,
 		`$au = Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' `+
 			`-ErrorAction SilentlyContinue; `+
-			`"$($au.NoAutoUpdate);$($au.AUOptions)"`,
+			`$svc = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\wuauserv'; `+
+			`"$($au.NoAutoUpdate);$($au.AUOptions);$($svc.Start)"`,
 	)
 
 	ev := map[string]any{}
@@ -348,9 +309,9 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		return unknown(ev)
 	}
 
-	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 2)
+	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 3)
 
-	var noAutoUpdate, auOptions string
+	var noAutoUpdate, auOptions, serviceStart string
 	if len(parts) >= 1 {
 		noAutoUpdate = strings.TrimSpace(parts[0])
 	}
@@ -359,69 +320,73 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		auOptions = strings.TrimSpace(parts[1])
 	}
 
+	if len(parts) >= 3 {
+		serviceStart = strings.TrimSpace(parts[2])
+	}
+
 	ev["no_auto_update"] = noAutoUpdate
 	ev["au_options"] = auOptions
+	ev["wuauserv_service_start"] = serviceStart
 
-	// NoAutoUpdate=1 explicitly disables automatic updates via policy.
-	if noAutoUpdate == "1" {
-		return fail(ev)
-	}
-
-	// AUOptions semantics:
-	//   2 — notify before download (no auto-install)
-	//   3 — auto download, prompt to install
-	//   4 — auto download + auto install (target SOC posture)
-	//   5 — managed by local administrators
-	switch auOptions {
-	case "3", "4", "5":
-		return pass(ev)
-	case "2":
-		return fail(ev)
-	}
-
-	// No managed policy. The Windows Update service must at least be
-	// running for the OS default of auto-install to take effect.
-	svc := RunCommand(ctx, "sc.exe", "query", "wuauserv")
-	if svc.Err != nil {
-		ev["wuauserv_error"] = svc.Err.Error()
+	on, known := windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart)
+	if !known {
 		return unknown(ev)
 	}
 
-	if strings.Contains(svc.Stdout, "RUNNING") {
-		ev["wuauserv"] = "running"
+	if on {
 		return pass(ev)
 	}
-
-	ev["wuauserv"] = "stopped"
 
 	return fail(ev)
 }
 
+// ADSI MinPasswordLength is an IADsDomain property; WinNT://$COMPUTERNAME
+// throws DISP_E_UNKNOWNNAME on domain- and Entra-joined hosts.
+const windowsPasswordPolicyScript = `` +
+	`$d = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\DeviceLock' -ErrorAction SilentlyContinue; ` +
+	`$dir = Join-Path $env:TEMP ('probo-secpol-' + [guid]::NewGuid().Guid); ` +
+	`$sam = ''; ` +
+	`try { ` +
+	`  New-Item -ItemType Directory -Path $dir -Force | Out-Null; ` +
+	`  $cfg = Join-Path $dir 'secpol.inf'; ` +
+	`  secedit /export /cfg $cfg /areas SECURITYPOLICY | Out-Null; ` +
+	`  if (Test-Path -LiteralPath $cfg) { ` +
+	`    $sam = Get-Content -LiteralPath $cfg -Encoding Unicode -Raw ` +
+	`  } ` +
+	`} finally { ` +
+	`  Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue ` +
+	`}; ` +
+	`Write-Output "MinDevicePasswordLength=$($d.MinDevicePasswordLength)"; Write-Output $sam`
+
 func windowsPasswordPolicy(ctx context.Context) Result {
-	out := powershell(
-		ctx,
-		`([ADSI]"WinNT://$env:COMPUTERNAME").InvokeGet('MinPasswordLength')`,
-	)
+	out := powershell(ctx, windowsPasswordPolicyScript)
 	if out.Err != nil {
 		return unknown(
 			map[string]any{
-				"error":  out.Err.Error(),
+				"error":  errString(out.Err),
 				"stderr": out.Stderr,
 			},
 		)
 	}
 
-	minLen, err := strconv.Atoi(strings.TrimSpace(out.Stdout))
-	if err != nil {
-		return unknown(
-			map[string]any{
-				"error": "invalid MinPasswordLength",
-				"raw":   truncate(out.Stdout, 80),
-			},
-		)
+	header, inf, _ := strings.Cut(out.Stdout, "\n")
+	values := parseWindowsJoinedPairs(header)
+	minLen, backend, known := windowsPasswordPolicyOn(
+		inf,
+		values["MinDevicePasswordLength"],
+	)
+
+	ev := map[string]any{
+		"backend": backend,
+		"raw":     strings.TrimSpace(header),
+	}
+	if !known {
+		ev["error"] = "no password length from secedit or DeviceLock"
+
+		return unknown(ev)
 	}
 
-	ev := map[string]any{"min_password_length": minLen}
+	ev["min_password_length"] = minLen
 	if minLen > 0 {
 		return pass(ev)
 	}

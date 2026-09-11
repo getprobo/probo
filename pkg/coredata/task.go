@@ -33,24 +33,25 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/timespan"
 )
 
 type (
 	Task struct {
-		ID             gid.GID        `db:"id"`
-		OrganizationID gid.GID        `db:"organization_id"`
-		MeasureID      *gid.GID       `db:"measure_id"`
-		Name           string         `db:"name"`
-		Content        string         `db:"content"`
-		State          TaskState      `db:"state"`
-		Priority       TaskPriority   `db:"priority"`
-		ReferenceID    string         `db:"reference_id"`
-		TimeEstimate   *time.Duration `db:"time_estimate"`
-		AssignedToID   *gid.GID       `db:"assigned_to_profile_id"`
-		Deadline       *time.Time     `db:"deadline"`
-		Rank           int            `db:"rank"`
-		CreatedAt      time.Time      `db:"created_at"`
-		UpdatedAt      time.Time      `db:"updated_at"`
+		ID             gid.GID            `db:"id"`
+		OrganizationID gid.GID            `db:"organization_id"`
+		MeasureID      *gid.GID           `db:"measure_id"`
+		Name           string             `db:"name"`
+		Content        string             `db:"content"`
+		State          TaskState          `db:"state"`
+		Priority       TaskPriority       `db:"priority"`
+		ReferenceID    string             `db:"reference_id"`
+		TimeEstimate   *timespan.TimeSpan `db:"time_estimate"`
+		AssignedToID   *gid.GID           `db:"assigned_to_profile_id"`
+		Deadline       *time.Time         `db:"deadline"`
+		Rank           int                `db:"rank"`
+		CreatedAt      time.Time          `db:"created_at"`
+		UpdatedAt      time.Time          `db:"updated_at"`
 
 		// ordering only
 		PriorityRank int `db:"priority_rank"`

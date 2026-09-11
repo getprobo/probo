@@ -9,11 +9,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -148,6 +150,41 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 	}
 
 	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
+}
+
+// Avatar is the resolver for the avatar field.
+func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*types.File, error) {
+	if _, err := r.authorize(
+		ctx,
+		obj.ID,
+		iam.ActionMembershipProfileGet,
+		authz.WithSkipAssumptionCheck(),
+	); err != nil {
+		return nil, err
+	}
+
+	if obj.Identity == nil {
+		return nil, nil
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	identity, err := loaders.Identity.Load(ctx, obj.Identity.ID)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load profile identity", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if identity.AvatarFileID == nil {
+		return nil, nil
+	}
+
+	return r.loadFile(ctx, *identity.AvatarFileID)
 }
 
 // Identity is the resolver for the identity field.

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TrashIcon, UserIcon } from "@phosphor-icons/react";
+import { TrashIcon } from "@phosphor-icons/react";
 import { RichEditor } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
@@ -41,6 +41,10 @@ const taskCommentListItemFragment = graphql`
     createdAt
     owner {
       fullName
+      emailAddress
+      avatar {
+        downloadUrl
+      }
     }
     canUpdate: permission(action: "core:task-comment:update")
     canDelete: permission(action: "core:task-comment:delete")
@@ -58,7 +62,6 @@ export function TaskCommentListItem({ taskCommentKey }: TaskCommentListItemProps
   const comment = useFragment(taskCommentListItemFragment, taskCommentKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { root, header, meta, content } = taskCommentListItem();
-  const ownerInitial = comment.owner.fullName.charAt(0).toUpperCase();
   const createdAt = new Intl.DateTimeFormat(i18n.language, {
     year: "numeric",
     month: "short",
@@ -72,11 +75,11 @@ export function TaskCommentListItem({ taskCommentKey }: TaskCommentListItemProps
     <li className={root()}>
       <div className={header()}>
         <Avatar
+          name={comment.owner.fullName}
+          email={comment.owner.emailAddress}
+          src={comment.owner.avatar?.downloadUrl}
           size={2}
-          variant="soft"
-          color="gold"
           radius="full"
-          fallback={ownerInitial || <UserIcon />}
         />
         <div className={meta()}>
           <Text size={2} weight="medium">

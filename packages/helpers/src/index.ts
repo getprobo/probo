@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 export { objectKeys, objectEntries, cleanFormData } from "./object";
+export { avatarColor, avatarInitial } from "./avatar";
 export { sprintf, faviconUrl, slugify } from "./string";
 export {
   getCertificateProvisioningErrorMessage,

@@ -36,7 +36,7 @@ import (
 
 const (
 	hostInfoRefreshInterval = 6 * time.Hour
-	perCheckTimeout         = 15 * time.Second
+	perCheckTimeout         = 25 * time.Second
 
 	pendingFlushBackoffMin = 15 * time.Second
 	pendingFlushBackoffMax = 30 * time.Minute
@@ -65,6 +65,7 @@ type Agent struct {
 	revoked bool
 
 	collectHostInfo     func() HostInfo
+	checkSet            func() []checks.Check
 	hostInfo            HostInfo
 	hostInfoCollectedAt time.Time
 
@@ -89,7 +90,8 @@ func New(dir, version string, logger *log.Logger) *Agent {
 		collectHostInfo: func() HostInfo {
 			return CollectHostInfo()
 		},
-		now: time.Now,
+		checkSet: checks.All,
+		now:      time.Now,
 		randInt63n: func(n int64) int64 {
 			return rand.Int63n(n)
 		},
@@ -302,15 +304,19 @@ func (a *Agent) tryAutoUpdate(parent context.Context) bool {
 	return true
 }
 
-// CollectOnce executes checks without pushing results to the server.
-func (a *Agent) CollectOnce(ctx context.Context) []checks.Result {
+// CollectOnce executes checks without pushing results to the server. A
+// non-nil error means the run was cut short: the set may be incomplete, and a
+// check caught by the cancellation reports a failure of the shutdown rather
+// than of the host, so callers must not persist the results as a report.
+func (a *Agent) CollectOnce(ctx context.Context) ([]checks.Result, error) {
 	now := time.Now()
-	results := make([]checks.Result, 0)
+	all := a.checks()
+	results := make([]checks.Result, 0, len(all))
 
-	for _, c := range checks.All() {
+	for _, c := range all {
 		select {
 		case <-ctx.Done():
-			return results
+			return results, fmt.Errorf("cannot complete posture collection: %w", ctx.Err())
 		default:
 		}
 
@@ -330,7 +336,40 @@ func (a *Agent) CollectOnce(ctx context.Context) []checks.Result {
 		results = append(results, r)
 	}
 
+	// A check already running when the context ends still returns, so the loop
+	// can finish on its own with only that last result poisoned by the
+	// shutdown. Counting the results cannot catch it; the context can.
+	if err := ctx.Err(); err != nil {
+		return results, fmt.Errorf("cannot complete posture collection: %w", err)
+	}
+
+	return a.rememberChecks(ctx, results), nil
+}
+
+func (a *Agent) rememberChecks(ctx context.Context, results []checks.Result) []checks.Result {
+	memory, err := loadCheckMemory(a.Dir)
+	if err != nil {
+		a.Logger.WarnCtx(ctx, "cannot load check memory", log.Error(err))
+
+		// An unreadable file must not be replaced with a partial map.
+		return results
+	}
+
+	if applyCheckMemory(results, memory) {
+		if err := saveCheckMemory(a.Dir, memory); err != nil {
+			a.Logger.WarnCtx(ctx, "cannot persist check memory", log.Error(err))
+		}
+	}
+
 	return results
+}
+
+func (a *Agent) checks() []checks.Check {
+	if a.checkSet == nil {
+		return checks.All()
+	}
+
+	return a.checkSet()
 }
 
 // Unenroll asks the server to revoke this device. Local wipe is left to
@@ -415,7 +454,19 @@ func (a *Agent) doPostures(ctx context.Context) {
 
 	start := time.Now()
 
-	results := a.CollectOnce(ctx)
+	results, err := a.CollectOnce(ctx)
+	if err != nil {
+		a.Logger.WarnCtx(
+			ctx,
+			"discarding truncated posture run",
+			log.Error(err),
+			log.Int("collected_checks", len(results)),
+			log.Int("expected_checks", len(a.checks())),
+		)
+
+		return
+	}
+
 	if len(results) == 0 {
 		return
 	}
@@ -483,7 +534,10 @@ func (a *Agent) doPostures(ctx context.Context) {
 		return
 	}
 
-	if err := a.client.PushPostures(ctx, payload); err != nil {
+	if err := a.client.PushPostures(
+		ctx,
+		PosturesRequest{AgentVersion: a.Version, Results: payload},
+	); err != nil {
 		a.Logger.ErrorCtx(ctx, "posture push failed", log.Error(err))
 
 		if IsUnauthorized(err) {
@@ -491,7 +545,12 @@ func (a *Agent) doPostures(ctx context.Context) {
 			return
 		}
 
-		dropped, enqueueErr := enqueuePendingPostureBatch(a.Dir, payload, a.currentTime())
+		dropped, enqueueErr := enqueuePendingPostureBatch(
+			a.Dir,
+			a.Version,
+			payload,
+			a.currentTime(),
+		)
 		if enqueueErr != nil {
 			a.Logger.ErrorCtx(ctx, "cannot queue posture batch after failed push", log.Error(enqueueErr))
 			return
@@ -528,7 +587,10 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 	}
 
 	for i, batch := range batches {
-		if err := a.client.PushPostures(ctx, batch.Results); err != nil {
+		if err := a.client.PushPostures(
+			ctx,
+			PosturesRequest{AgentVersion: batch.AgentVersion, Results: batch.Results},
+		); err != nil {
 			if IsUnauthorized(err) {
 				a.handleUnauthorized()
 				return

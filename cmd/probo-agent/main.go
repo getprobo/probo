@@ -54,6 +54,19 @@ var version = "dev"
 // "failed" state on a normal self-update.
 const restartExitCode = 75
 
+// collectTimeout bounds the whole check set for a one-shot `collect`. Every
+// check can spend the agent's per-check budget, so this has to clear the full
+// set rather than a single probe.
+const collectTimeout = 5 * time.Minute
+
+// Cobra prints a "this is a command line tool" splash and exits 1 when the
+// parent process is explorer.exe. The shell is what launches the probo://
+// handler and the HKLM Run entry, so the splash would break both browser
+// enrollment and tray auto-start.
+func init() {
+	cobra.MousetrapHelpText = ""
+}
+
 func main() {
 	// Best-effort cleanup of a previous-version binary left aside by
 	// a Windows self-update. No-op on Unix.
@@ -122,7 +135,19 @@ func newEnrollURLCmd() *cobra.Command {
 					return fmt.Errorf("cannot check enrollment state: %w", err)
 				}
 
-				return writeEnrollPreflight(cmd.OutOrStdout(), serverURL, enrollmentToken, dir, enrolled)
+				trust := deviceagent.TrustUnknown
+				if !enrolled {
+					trust = deviceagent.ProbeEnrollmentTrust(cmd.Context(), serverURL)
+				}
+
+				return writeEnrollPreflight(
+					cmd.OutOrStdout(),
+					serverURL,
+					enrollmentToken,
+					dir,
+					enrolled,
+					trust,
+				)
 			}
 
 			already, err := reportIfAlreadyEnrolled(dir)
@@ -131,6 +156,10 @@ func newEnrollURLCmd() *cobra.Command {
 			}
 
 			if already {
+				return nil
+			}
+
+			if !confirmBrowserEnrollment(serverURL) {
 				return nil
 			}
 
@@ -167,18 +196,25 @@ type enrollPreflightResponse struct {
 	Token           string `json:"token"`
 	AlreadyEnrolled bool   `json:"alreadyEnrolled"`
 	ConfigDir       string `json:"configDir"`
+	Trust           string `json:"trust"`
+	ConfirmTitle    string `json:"confirmTitle"`
+	ConfirmMessage  string `json:"confirmMessage"`
 }
 
 func writeEnrollPreflight(
 	w io.Writer,
 	serverURL, enrollmentToken, dir string,
 	alreadyEnrolled bool,
+	trust deviceagent.EnrollmentTrust,
 ) error {
 	payload := enrollPreflightResponse{
 		Server:          serverURL,
 		Token:           enrollmentToken,
 		AlreadyEnrolled: alreadyEnrolled,
 		ConfigDir:       dir,
+		Trust:           string(trust),
+		ConfirmTitle:    deviceagent.EnrollmentConfirmTitle,
+		ConfirmMessage:  deviceagent.EnrollmentConfirmMessage(serverURL, trust),
 	}
 
 	out, err := json.Marshal(payload)
@@ -510,21 +546,26 @@ func newCollectCmd() *cobra.Command {
 				fmt.Println(dir)
 			}
 
-			ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(cmd.Context(), collectTimeout)
 			defer cancel()
 
 			agent := deviceagent.New(dir, version, newAgentLogger())
-			results := agent.CollectOnce(ctx)
+
+			results, collectErr := agent.CollectOnce(ctx)
 
 			if asJSON {
-				return json.NewEncoder(os.Stdout).Encode(results)
+				if err := json.NewEncoder(os.Stdout).Encode(results); err != nil {
+					return fmt.Errorf("cannot encode results: %w", err)
+				}
+
+				return collectErr
 			}
 
 			for _, r := range results {
 				fmt.Printf("%-20s %-15s %v\n", r.CheckKey, r.Status, r.Evidence)
 			}
 
-			return nil
+			return collectErr
 		},
 	}
 	cmd.Flags().BoolVar(&once, "once", true, "(default true) run the check set once and exit")

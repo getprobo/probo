@@ -152,9 +152,11 @@ func upsertTranslation(t *testing.T, c *testutil.Client, bannerID, language, tra
 func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 	t.Parallel()
 
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
 	t.Run("UpdateCookieBanner with all original values does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
 			"cookiePolicyUrl":   "https://example.com/cookies",
@@ -189,7 +191,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 
 	t.Run("UpdateCookieBanner with only name change does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		published := publishBanner(t, owner, bannerID)
@@ -225,7 +227,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 
 	t.Run("UpdateCookieCategory with all original values does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{
@@ -263,7 +265,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 
 	t.Run("ReorderCookieCategory with current rank does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{
@@ -299,7 +301,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		// Rank is admin-only metadata; the snapshot is sorted by
 		// (Kind weight, ID), so a rank change is invisible to visitors.
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{
@@ -333,7 +335,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 
 	t.Run("UpdateTrackerPattern on visible pattern with same value does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "visible-noop"})
@@ -370,9 +372,11 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 	t.Parallel()
 
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
 	t.Run("Update on excluded pattern does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-update"})
@@ -416,7 +420,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 
 	t.Run("Delete of excluded pattern does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-delete"})
@@ -448,7 +452,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 
 	t.Run("Move of excluded pattern does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryA := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-move-a"})
@@ -486,9 +490,11 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 	t.Parallel()
 
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
 	t.Run("re-upserting identical JSON does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 
@@ -506,7 +512,7 @@ func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 
 	t.Run("changing translation content does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 
@@ -523,7 +529,7 @@ func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 
 	t.Run("adding a new language does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		published := publishBanner(t, owner, bannerID)
@@ -566,9 +572,11 @@ func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, na
 func TestCookieBannerVersioning_DetectedCookiesNeverBump(t *testing.T) {
 	t.Parallel()
 
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
 	t.Run("reporting detected cookies does not bump version", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		published := publishBanner(t, owner, bannerID)
@@ -585,9 +593,11 @@ func TestCookieBannerVersioning_DetectedCookiesNeverBump(t *testing.T) {
 func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 	t.Parallel()
 
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
 	t.Run("UpdateCookieBanner consent change creates a new draft", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
 			"consentExpiryDays": 365,
@@ -618,7 +628,7 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 
 	t.Run("UpdateTrackerPattern description change on visible pattern creates a new draft", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "real-change"})

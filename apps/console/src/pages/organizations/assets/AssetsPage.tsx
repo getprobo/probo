@@ -82,6 +82,8 @@ const paginatedAssetsFragment = graphql`
             id
             # eslint-disable-next-line relay/unused-fields
             fullName
+            # eslint-disable-next-line relay/unused-fields
+            emailAddress
           }
           # eslint-disable-next-line relay/unused-fields
           thirdParties(first: 50) {

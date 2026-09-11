@@ -32,18 +32,21 @@ import (
 func TestCookieConsent_RBAC(t *testing.T) {
 	t.Parallel()
 
+	fixture := setupPublishedCookieBanner(t)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, fixture.Owner)
+
 	t.Run(
 		"viewer can list consent records",
 		func(t *testing.T) {
 			t.Parallel()
 
-			fixture := setupPublishedCookieBanner(t)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, fixture.Owner)
+			owner := fixture.Owner.ForTest(t)
+			viewer := viewer.ForTest(t)
 
 			visitorID := uniqueCookieBannerVisitorID()
 			created := postCookieConsent(
 				t,
-				fixture.Owner,
+				owner,
 				fixture,
 				visitorID,
 				"ACCEPT_ALL",
@@ -102,12 +105,12 @@ func TestCookieConsent_RBAC(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			fixture := setupPublishedCookieBanner(t)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, fixture.Owner)
+			owner := fixture.Owner.ForTest(t)
+			viewer := viewer.ForTest(t)
 
 			created := postCookieConsent(
 				t,
-				fixture.Owner,
+				owner,
 				fixture,
 				uniqueCookieBannerVisitorID(),
 				"REJECT_ALL",
@@ -146,12 +149,12 @@ func TestCookieConsent_RBAC(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			fixture := setupPublishedCookieBanner(t)
+			owner := fixture.Owner.ForTest(t)
 			otherOwner := testutil.NewClient(t, testutil.RoleOwner)
 
 			postCookieConsent(
 				t,
-				fixture.Owner,
+				owner,
 				fixture,
 				uniqueCookieBannerVisitorID(),
 				"ACCEPT_ALL",

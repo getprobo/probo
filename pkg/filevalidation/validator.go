@@ -114,6 +114,18 @@ type FileValidator struct {
 
 type Option func(v *FileValidator) *FileValidator
 
+func addFileType(v *FileValidator, fileType FileType) {
+	v.AllowedMimeTypes[fileType.MimeType] = true
+
+	for _, ext := range fileType.Extensions {
+		if v.AllowedExtensions[ext] == nil {
+			v.AllowedExtensions[ext] = []string{}
+		}
+
+		v.AllowedExtensions[ext] = append(v.AllowedExtensions[ext], fileType.MimeType)
+	}
+}
+
 func WithCategories(categories ...string) Option {
 	return func(v *FileValidator) *FileValidator {
 		v.Categories = categories
@@ -125,15 +137,42 @@ func WithCategories(categories ...string) Option {
 
 		for _, fileType := range FileTypes {
 			if categoryMap[fileType.Category] {
-				v.AllowedMimeTypes[fileType.MimeType] = true
-				for _, ext := range fileType.Extensions {
-					if v.AllowedExtensions[ext] == nil {
-						v.AllowedExtensions[ext] = []string{}
-					}
-
-					v.AllowedExtensions[ext] = append(v.AllowedExtensions[ext], fileType.MimeType)
-				}
+				addFileType(v, fileType)
 			}
+		}
+
+		return v
+	}
+}
+
+func WithMimeTypes(mimeTypes ...string) Option {
+	return func(v *FileValidator) *FileValidator {
+		wanted := make(map[string]bool, len(mimeTypes))
+		for _, mimeType := range mimeTypes {
+			wanted[mimeType] = true
+		}
+
+		found := make(map[string]bool, len(wanted))
+
+		for _, fileType := range FileTypes {
+			if !wanted[fileType.MimeType] {
+				continue
+			}
+
+			found[fileType.MimeType] = true
+			addFileType(v, fileType)
+		}
+
+		unknown := make([]string, 0, len(wanted))
+		for mimeType := range wanted {
+			if !found[mimeType] {
+				unknown = append(unknown, mimeType)
+			}
+		}
+
+		if len(unknown) > 0 {
+			slices.Sort(unknown)
+			panic("filevalidation: unknown MIME types: " + strings.Join(unknown, ", "))
 		}
 
 		return v

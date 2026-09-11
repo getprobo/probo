@@ -45,6 +45,7 @@ type (
 		EmailAddressVerified bool      `db:"email_address_verified"`
 		SAMLSubject          *string   `db:"saml_subject"`
 		Locale               *string   `db:"locale"`
+		AvatarFileID         *gid.GID  `db:"avatar_file_id"`
 		CreatedAt            time.Time `db:"created_at"`
 		UpdatedAt            time.Time `db:"updated_at"`
 	}
@@ -80,6 +81,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -125,6 +127,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -171,6 +174,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -268,6 +272,7 @@ INSERT INTO
         email_address_verified,
         saml_subject,
         locale,
+        avatar_file_id,
         created_at,
         updated_at
     )
@@ -279,6 +284,7 @@ VALUES (
     @email_address_verified,
     @saml_subject,
     @locale,
+    @avatar_file_id,
     @created_at,
     @updated_at
 )
@@ -291,6 +297,7 @@ VALUES (
 		"hashed_password":        i.HashedPassword,
 		"saml_subject":           i.SAMLSubject,
 		"locale":                 i.Locale,
+		"avatar_file_id":         i.AvatarFileID,
 		"created_at":             i.CreatedAt,
 		"updated_at":             i.UpdatedAt,
 		"email_address_verified": i.EmailAddressVerified,
@@ -324,6 +331,7 @@ SET
     saml_subject = @saml_subject,
     hashed_password = @hashed_password,
     locale = @locale,
+    avatar_file_id = @avatar_file_id,
     updated_at = @updated_at
 WHERE
     id = @identity_id
@@ -337,6 +345,7 @@ WHERE
 		"saml_subject":           i.SAMLSubject,
 		"hashed_password":        i.HashedPassword,
 		"locale":                 i.Locale,
+		"avatar_file_id":         i.AvatarFileID,
 		"updated_at":             i.UpdatedAt,
 	}
 
@@ -399,6 +408,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM
@@ -468,6 +478,7 @@ SELECT
     email_address_verified,
     saml_subject,
     locale,
+    avatar_file_id,
     created_at,
     updated_at
 FROM

@@ -25,6 +25,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  Field,
   IconMagnifyingGlass,
   IconPlusLarge,
   IconTrashCan,
@@ -93,8 +94,9 @@ type Props = {
   children: ReactNode;
   disabled?: boolean;
   linkedAudits?: { id: string }[];
-  onLink: (auditId: string) => void;
-  onUnlink: (auditId: string) => void;
+  referenceIdRequired?: boolean;
+  onLink: (auditId: string, referenceId?: string) => void;
+  onUnlink?: (auditId: string) => void;
 };
 
 export function LinkedAuditsDialog({ children, ...props }: Props) {
@@ -124,6 +126,8 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
     );
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const [referenceId, setReferenceId] = useState("");
+  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
   const audits = useMemo(
     () => data.audits?.edges?.map(edge => edge.node) ?? [],
     [data.audits],
@@ -133,10 +137,89 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
   }, [props.linkedAudits]);
 
   const filteredAudits = useMemo(() => {
-    return audits.filter(audit =>
-      (audit.name || "").toLowerCase().includes(search.toLowerCase()),
-    );
+    const normalizedSearch = search.toLowerCase();
+
+    return audits.filter((audit) => {
+      return (audit.name || "").toLowerCase().includes(normalizedSearch)
+        || (audit.framework?.name || "")
+          .toLowerCase()
+          .includes(normalizedSearch);
+    });
   }, [audits, search]);
+  const selectedAudit = audits.find(audit => audit.id === selectedAuditId);
+
+  function onSelectAudit(auditId: string) {
+    if (props.referenceIdRequired) {
+      setReferenceId("");
+      setSelectedAuditId(auditId);
+      return;
+    }
+
+    props.onLink(auditId);
+  }
+
+  function onLink() {
+    if (!selectedAudit) {
+      return;
+    }
+
+    props.onLink(selectedAudit.id, referenceId.trim());
+    setReferenceId("");
+    setSelectedAuditId(null);
+  }
+
+  if (selectedAudit && props.referenceIdRequired) {
+    return (
+      <div className="space-y-5 px-6 py-5">
+        <div className="flex items-center gap-4 rounded-lg border border-border-low bg-subtle p-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="font-medium">{selectedAudit.framework?.name}</div>
+            {selectedAudit.name && (
+              <div className="text-sm text-txt-secondary">
+                {selectedAudit.name}
+              </div>
+            )}
+          </div>
+          <Badge color={getAuditStateVariant(selectedAudit.state)}>
+            {selectedAudit.state.replace(/_/g, " ")}
+          </Badge>
+        </div>
+        <Field
+          label={t("linkedAuditsDialog.referenceIdLabel")}
+          help={t("linkedAuditsDialog.referenceIdDescription")}
+          name="auditReference"
+        >
+          <Input
+            autoFocus
+            id="auditReference"
+            name="auditReference"
+            required
+            value={referenceId}
+            placeholder={t("linkedAuditsDialog.referenceIdPlaceholder")}
+            onValueChange={setReferenceId}
+          />
+        </Field>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setReferenceId("");
+              setSelectedAuditId(null);
+            }}
+          >
+            {t("linkedAuditsDialog.actions.back")}
+          </Button>
+          <Button
+            disabled={props.disabled || !referenceId.trim()}
+            icon={IconPlusLarge}
+            onClick={onLink}
+          >
+            {t("linkedAuditsDialog.actions.confirmLink")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -148,12 +231,17 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
         />
       </div>
       <div className="divide-y divide-border-low">
+        {filteredAudits.length === 0 && (
+          <div className="px-6 py-10 text-center text-sm text-txt-secondary">
+            {t("linkedAuditsDialog.empty")}
+          </div>
+        )}
         {filteredAudits.map(audit => (
           <AuditRow
             key={audit.id}
             audit={audit}
             linkedAudits={linkedIds}
-            onLink={props.onLink}
+            onLink={onSelectAudit}
             onUnlink={props.onUnlink}
             disabled={props.disabled}
           />
@@ -176,7 +264,7 @@ type RowProps = {
   linkedAudits: Set<string>;
   disabled?: boolean;
   onLink: (auditId: string) => void;
-  onUnlink: (auditId: string) => void;
+  onUnlink?: (auditId: string) => void;
 };
 
 function AuditRow(props: RowProps) {
@@ -185,11 +273,11 @@ function AuditRow(props: RowProps) {
   const isLinked = props.linkedAudits.has(props.audit.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
   const IconComponent = isLinked ? IconTrashCan : IconPlusLarge;
+  const disabled = props.disabled || (isLinked && !props.onUnlink);
 
   return (
-    <button
-      className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full h-[100px]"
-      onClick={() => onClick(props.audit.id)}
+    <div
+      className="py-4 flex items-center gap-4 px-6 w-full h-[100px]"
     >
       <div className="flex flex-col items-start gap-1">
         <div className="font-medium">{props.audit.framework?.name}</div>
@@ -201,19 +289,16 @@ function AuditRow(props: RowProps) {
         {props.audit.state.replace(/_/g, " ")}
       </Badge>
       <Button
-        disabled={props.disabled}
+        disabled={disabled}
         className="ml-auto"
         variant={isLinked ? "secondary" : "primary"}
-        asChild
+        icon={IconComponent}
+        onClick={() => onClick?.(props.audit.id)}
       >
-        <span>
-          <IconComponent size={16} />
-          {" "}
-          {isLinked
-            ? t("linkedAuditsDialog.actions.unlink")
-            : t("linkedAuditsDialog.actions.link")}
-        </span>
+        {isLinked
+          ? t("linkedAuditsDialog.actions.unlink")
+          : t("linkedAuditsDialog.actions.link")}
       </Button>
-    </button>
+    </div>
   );
 }

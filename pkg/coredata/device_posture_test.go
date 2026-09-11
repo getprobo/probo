@@ -120,6 +120,8 @@ func insertDevicePosture(
 		CorrelationID:  gid.New(fx.scope.GetTenantID(), coredata.DevicePostureReportEntityType),
 		CheckKey:       checkKey,
 		Status:         status,
+		Version:        coredata.DevicePostureVersionV1,
+		AgentVersion:   "0.1",
 		ObservedAt:     observedAt,
 		CreatedAt:      observedAt,
 	}

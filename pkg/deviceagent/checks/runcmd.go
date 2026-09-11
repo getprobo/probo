@@ -23,6 +23,7 @@ package checks
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -33,15 +34,17 @@ import (
 	"time"
 )
 
-const defaultCommandTimeout = 5 * time.Second
+const defaultCommandTimeout = 10 * time.Second
 
 var commandExistsCache sync.Map
 
 // CmdResult captures the basic outcome of an OS subcommand.
 type CmdResult struct {
-	Stdout string
-	Stderr string
-	Err    error
+	Stdout   string
+	Stderr   string
+	Err      error
+	TimedOut bool
+	Canceled bool
 }
 
 // RunCommand executes a command and returns trimmed stdout/stderr.
@@ -64,11 +67,35 @@ func RunCommand(ctx context.Context, name string, args ...string) CmdResult {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 
-	return CmdResult{
+	result := CmdResult{
 		Stdout: strings.TrimSpace(stdout.String()),
 		Stderr: strings.TrimSpace(stderr.String()),
 		Err:    err,
 	}
+	if err == nil {
+		return result
+	}
+
+	// A killed process only reports a non-zero exit status, so the context is
+	// the sole witness to whether we stopped it and why.
+	switch {
+	case errors.Is(ctx.Err(), context.Canceled):
+		result.Canceled = true
+		result.Err = fmt.Errorf("command %q canceled: %w", name, err)
+	case errors.Is(ctx.Err(), context.DeadlineExceeded):
+		result.TimedOut = true
+		result.Err = fmt.Errorf("command %q stopped by the check deadline: %w", name, err)
+	case errors.Is(cmdCtx.Err(), context.DeadlineExceeded):
+		result.TimedOut = true
+		result.Err = fmt.Errorf(
+			"command %q timed out after %s: %w",
+			name,
+			defaultCommandTimeout,
+			err,
+		)
+	}
+
+	return result
 }
 
 // CommandExists reports whether `cmd` exists at expected absolute path(s).

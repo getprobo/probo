@@ -24,6 +24,9 @@ package tray
 
 import (
 	"fmt"
+
+	"go.probo.inc/probo/pkg/deviceagent/win32"
+	"golang.org/x/sys/windows"
 )
 
 func showAbout(version string) {
@@ -31,9 +34,17 @@ func showAbout(version string) {
 		"Version %s\r\n\r\nReports device posture to your Probo workspace.",
 		version,
 	)
-	nativeMessageBox("Probo Device Posture Agent", message, mbOK|mbIconInformation)
+	_, _ = win32.MessageBox(
+		"Probo Device Posture Agent",
+		message,
+		windows.MB_OK|windows.MB_ICONINFORMATION,
+	)
 }
 
 func showEnrollmentError(message string) {
-	nativeMessageBox("Probo Device Posture Agent", message, mbOK|mbIconError)
+	_, _ = win32.MessageBox(
+		"Probo Device Posture Agent",
+		message,
+		windows.MB_OK|windows.MB_ICONERROR,
+	)
 }

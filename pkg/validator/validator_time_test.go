@@ -23,6 +23,8 @@ package validator
 import (
 	"testing"
 	"time"
+
+	"go.probo.inc/probo/pkg/timespan"
 )
 
 func TestAfter(t *testing.T) {
@@ -106,36 +108,36 @@ func TestRangeDuration(t *testing.T) {
 	maxDuration := 1 * time.Hour
 
 	t.Run("duration within range", func(t *testing.T) {
-		duration := 30 * time.Minute
+		span := timespan.FromDuration(30 * time.Minute)
 
-		err := RangeDuration(minDuration, maxDuration)(&duration)
+		err := RangeDuration(minDuration, maxDuration)(&span)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
 		}
 	})
 
 	t.Run("duration at minimum", func(t *testing.T) {
-		duration := 10 * time.Minute
+		span := timespan.FromDuration(10 * time.Minute)
 
-		err := RangeDuration(minDuration, maxDuration)(&duration)
+		err := RangeDuration(minDuration, maxDuration)(&span)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
 		}
 	})
 
 	t.Run("duration at maximum", func(t *testing.T) {
-		duration := 1 * time.Hour
+		span := timespan.FromDuration(1 * time.Hour)
 
-		err := RangeDuration(minDuration, maxDuration)(&duration)
+		err := RangeDuration(minDuration, maxDuration)(&span)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
 		}
 	})
 
 	t.Run("duration below minimum", func(t *testing.T) {
-		duration := 5 * time.Minute
+		span := timespan.FromDuration(5 * time.Minute)
 
-		err := RangeDuration(minDuration, maxDuration)(&duration)
+		err := RangeDuration(minDuration, maxDuration)(&span)
 		if err == nil {
 			t.Fatal("expected validation error")
 		} else if err.Code != ErrorCodeOutOfRange {
@@ -144,9 +146,9 @@ func TestRangeDuration(t *testing.T) {
 	})
 
 	t.Run("duration above maximum", func(t *testing.T) {
-		duration := 2 * time.Hour
+		span := timespan.FromDuration(2 * time.Hour)
 
-		err := RangeDuration(minDuration, maxDuration)(&duration)
+		err := RangeDuration(minDuration, maxDuration)(&span)
 		if err == nil {
 			t.Fatal("expected validation error")
 		} else if err.Code != ErrorCodeOutOfRange {
@@ -155,11 +157,86 @@ func TestRangeDuration(t *testing.T) {
 	})
 
 	t.Run("nil pointer", func(t *testing.T) {
-		var duration *time.Duration
+		var span *timespan.TimeSpan
 
-		err := RangeDuration(minDuration, maxDuration)(duration)
+		err := RangeDuration(minDuration, maxDuration)(span)
 		if err != nil {
 			t.Errorf("expected no error for nil, got: %v", err)
+		}
+	})
+
+	t.Run("calendar month above maximum", func(t *testing.T) {
+		span := timespan.TimeSpan{Months: 1}
+
+		err := RangeDuration(minDuration, maxDuration)(&span)
+		if err == nil {
+			t.Fatal("expected validation error")
+		} else if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
+		}
+	})
+
+	t.Run("calendar month within range", func(t *testing.T) {
+		span := timespan.TimeSpan{Months: 1}
+
+		err := RangeDuration(0, 1000*time.Hour)(&span)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("two calendar months above maximum", func(t *testing.T) {
+		span := timespan.TimeSpan{Months: 2}
+
+		err := RangeDuration(0, 1000*time.Hour)(&span)
+		if err == nil {
+			t.Fatal("expected validation error")
+		} else if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
+		}
+	})
+
+	t.Run("overflowing clock days above maximum", func(t *testing.T) {
+		span := timespan.TimeSpan{Days: 213504}
+
+		err := RangeDuration(0, 1000*time.Hour)(&span)
+		if err == nil {
+			t.Fatal("expected validation error")
+		} else if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
+		}
+	})
+
+	t.Run("zero below nanosecond minimum", func(t *testing.T) {
+		span := timespan.Zero
+
+		err := RangeDuration(time.Nanosecond, time.Hour)(&span)
+		if err == nil {
+			t.Fatal("expected validation error")
+		} else if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
+		}
+	})
+
+	t.Run("microsecond below leftover-nanosecond minimum", func(t *testing.T) {
+		span := timespan.FromDuration(time.Microsecond)
+
+		err := RangeDuration(time.Microsecond+time.Nanosecond, time.Hour)(&span)
+		if err == nil {
+			t.Fatal("expected validation error")
+		} else if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
+		}
+	})
+
+	t.Run("microsecond above leftover-nanosecond maximum", func(t *testing.T) {
+		span := timespan.FromDuration(time.Microsecond)
+
+		err := RangeDuration(0, time.Microsecond-time.Nanosecond)(&span)
+		if err == nil {
+			t.Fatal("expected validation error")
+		} else if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
 }

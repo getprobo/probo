@@ -10,10 +10,10 @@ components:
       format: string
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/mail.Addr
 
-    Duration:
+    TimeSpan:
       type: string
-      description: A duration
-      go.probo.inc/mcpgen/type: time.Duration
+      description: An ISO-8601 duration
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/timespan.TimeSpan
 
     OrderDirection:
       type: string
@@ -3329,6 +3329,13 @@ components:
         - WINDOWS
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePlatform
 
+    DevicePostureVersion:
+      type: string
+      description: Server schema version that produced this posture row (v1, v2, ...).
+      enum:
+        - v1
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePostureVersion
+
     DevicePostureStatus:
       type: string
       description: Posture check verdict. PASS and FAIL are compliance outcomes; UNKNOWN means the agent could not determine a result; NOT_APPLICABLE means the check does not apply on this host or platform (for example no screen-lock tool on a headless Linux host).
@@ -3402,6 +3409,8 @@ components:
         - check_key
         - status
         - value
+        - version
+        - agent_version
         - observed_at
       properties:
         id:
@@ -3419,6 +3428,12 @@ components:
         value:
           $ref: "#/components/schemas/DevicePostureValue"
           description: Observed posture value for this check_key; use value.kind to interpret value.text and value.number.
+        version:
+          $ref: "#/components/schemas/DevicePostureVersion"
+          description: Server schema version that produced this posture row.
+        agent_version:
+          type: string
+          description: Agent version that observed this posture.
         observed_at:
           type: string
           format: date-time
@@ -6965,7 +6980,7 @@ components:
           description: Task rank within state
         time_estimate:
           anyOf:
-            - $ref: "#/components/schemas/Duration"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
               description: No time estimate
           description: Time estimate
@@ -7070,7 +7085,7 @@ components:
           type: string
           description: Task content in markdown format
         time_estimate:
-          $ref: "#/components/schemas/Duration"
+          $ref: "#/components/schemas/TimeSpan"
           description: Time estimate
         deadline:
           type: string
@@ -7134,7 +7149,7 @@ components:
           description: Task rank within state
         time_estimate:
           anyOf:
-            - $ref: "#/components/schemas/Duration"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
               description: No time estimate
           description: Time estimate
@@ -12916,7 +12931,7 @@ components:
           properties:
             exclude_kind:
               $ref: "#/components/schemas/CookieCategoryKind"
-              description: Exclude categories of this kind. Defaults to UNCATEGORISED when omitted.
+              description: Exclude categories of this kind. UNCATEGORISED is excluded when no filter object is given; pass an empty filter object to exclude nothing.
 
     ListCookieCategoriesOutput:
       type: object

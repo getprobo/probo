@@ -217,20 +217,23 @@ func TestResolveAPIKeyConnectorCredential(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	// Sentry declares no key shape, so it is what exercises the pass-through
+	// branch: anything non-empty is the customer's to get wrong. Giving Sentry
+	// a shape one day fails these two, which is where to look.
 	t.Run("non-managed requires a key", func(t *testing.T) {
 		t.Parallel()
 
-		_, errNil := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderTally, nil)
+		_, errNil := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderSentry, nil)
 		require.EqualError(t, errNil, "apiKey is required")
 
-		_, errEmpty := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderTally, &empty)
+		_, errEmpty := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderSentry, &empty)
 		require.EqualError(t, errEmpty, "apiKey is required")
 	})
 
 	t.Run("non-managed returns the client key", func(t *testing.T) {
 		t.Parallel()
 
-		key, err := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderTally, &clientKey)
+		key, err := configured.resolveAPIKeyConnectorCredential(coredata.ConnectorProviderSentry, &clientKey)
 		require.NoError(t, err)
 		assert.Equal(t, "customer-key", key)
 	})

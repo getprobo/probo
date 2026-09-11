@@ -23,7 +23,7 @@ package types
 import "go.probo.inc/probo/pkg/coredata"
 
 func NewIdentity(identity *coredata.Identity) *Identity {
-	return &Identity{
+	obj := &Identity{
 		ID:            identity.ID,
 		Email:         identity.EmailAddress,
 		FullName:      identity.FullName,
@@ -31,4 +31,10 @@ func NewIdentity(identity *coredata.Identity) *Identity {
 		CreatedAt:     identity.CreatedAt,
 		UpdatedAt:     identity.UpdatedAt,
 	}
+
+	if identity.AvatarFileID != nil {
+		obj.Avatar = &File{ID: *identity.AvatarFileID}
+	}
+
+	return obj
 }

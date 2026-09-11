@@ -36,7 +36,8 @@ func dotfileRegistration() *Registration {
 		DisplayName:      "Dotfile",
 		DocumentationURL: accessReviewDocsURL("dotfile"),
 		APIKey: &APIKeyConfig{
-			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "X-DOTFILE-API-KEY"},
+			Auth:      APIKeyAuth{Mode: APIKeyAuthHeader, Name: "X-DOTFILE-API-KEY"},
+			KeyFormat: apiKeyPrefix("dotkey.", "dotkey.…"),
 		},
 		// Dotfile authenticates with the API key in the X-DOTFILE-API-KEY
 		// header rather than Authorization: Bearer. APIKeyHeader makes the

@@ -114,8 +114,10 @@ func (r *Registry) Register(reg *Registration) error {
 	}
 
 	// A key format describes what the customer pastes, so a Probo-held key has
-	// nothing to describe, and an example that its own pattern rejects would
-	// tell the customer to paste what the check then refuses.
+	// nothing to describe; a pattern not written with a leading ^ would pass a
+	// key with anything in front of it, since ValidateAPIKey matches
+	// unanchored; and an example its own pattern rejects would tell the
+	// customer to paste what the check then refuses.
 	if reg.APIKey != nil && reg.APIKey.KeyFormat != nil {
 		if reg.IsManagedAPIKey() {
 			return fmt.Errorf("cannot register connector provider %q: a managed API key has no customer-supplied key to shape", reg.Provider)
@@ -124,6 +126,14 @@ func (r *Registry) Register(reg *Registration) error {
 		format := reg.APIKey.KeyFormat
 		if format.Pattern == nil || format.Example == "" {
 			return fmt.Errorf("cannot register connector provider %q: KeyFormat needs both a Pattern and an Example", reg.Provider)
+		}
+
+		// The pattern's source, not its language: an anchored pattern can
+		// still absorb what precedes it, as ClickHouse's separator-only shape
+		// does. What this catches is the omission that matters, and it rules
+		// out \A along with it, which the browser cannot read.
+		if !strings.HasPrefix(format.Pattern.String(), "^") {
+			return fmt.Errorf("cannot register connector provider %q: KeyFormat pattern must be written starting with ^", reg.Provider)
 		}
 
 		if !format.Pattern.MatchString(format.Example) {

@@ -34,7 +34,9 @@ func calComRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderCalCom,
 		DisplayName:      "Cal.com",
 		DocumentationURL: accessReviewDocsURL("calcom"),
-		APIKey:           &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			KeyFormat: apiKeyPrefix("cal_", "cal_live_…"),
+		},
 		Endpoints: Endpoints{
 			Auth:    "https://app.cal.com/auth/oauth2/authorize",
 			Token:   "https://api.cal.com/v2/auth/oauth2/token",

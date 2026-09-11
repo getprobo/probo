@@ -190,9 +190,10 @@ func TestAccessReviewDrivers(t *testing.T) {
 	assert.Nil(t, docURLByProvider["SENTRY"], "SENTRY has no doc page, documentationUrl must be null")
 
 	// apiKeyFormat is what the connect dialog checks the pasted key against and
-	// shows as its placeholder, so it has to reach the client. Langfuse is the
-	// only provider declaring one; Sentry carries the null case, on the same
-	// Contains-first reasoning as the doc URL above.
+	// shows as its placeholder, so it has to reach the client. Langfuse pins
+	// that projection; the per-provider shapes belong to the registry's own
+	// tests. Sentry carries the null case, on the same Contains-first reasoning
+	// as the doc URL above.
 	require.Contains(t, keyFormatByProvider, "LANGFUSE")
 
 	if format := keyFormatByProvider["LANGFUSE"]; assert.NotNil(t, format) {
@@ -256,7 +257,7 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": orgID,
 			"provider":       "BREX",
-			"apiKey":         "test-key-123",
+			"apiKey":         "bxt_test-key-123",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -481,7 +482,7 @@ func TestDeleteConnector(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": orgID,
 			"provider":       "BREX",
-			"apiKey":         "key-to-delete",
+			"apiKey":         "bxt_key-to-delete",
 		},
 	}, &createResult)
 	require.NoError(t, err)

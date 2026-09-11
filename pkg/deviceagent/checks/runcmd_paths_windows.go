@@ -27,7 +27,6 @@ import (
 )
 
 var windowsCommandPaths = map[string][]string{
-	"netsh":      {`%s\System32\netsh.exe`},
 	"powershell": {`%s\System32\WindowsPowerShell\v1.0\powershell.exe`},
 	"sc":         {`%s\System32\sc.exe`},
 }

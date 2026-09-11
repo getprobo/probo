@@ -18,42 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build windows
-
-package tray
+package timespan
 
 import (
-	"unsafe"
+	"errors"
+	"fmt"
+	"io"
+	"strconv"
 
-	"golang.org/x/sys/windows"
+	"github.com/99designs/gqlgen/graphql"
+	"go.probo.inc/probo/pkg/timespan"
 )
 
-const (
-	mbOK              = 0x00000000
-	mbIconInformation = 0x00000040
-	mbIconError       = 0x00000010
-)
+type TimeSpanScalar = timespan.TimeSpan
 
-var (
-	modUser32       = windows.NewLazySystemDLL("user32.dll")
-	procMessageBoxW = modUser32.NewProc("MessageBoxW")
-)
-
-func nativeMessageBox(title, message string, flags uint32) {
-	titleUTF16, err := windows.UTF16PtrFromString(title)
-	if err != nil {
-		return
-	}
-
-	messageUTF16, err := windows.UTF16PtrFromString(message)
-	if err != nil {
-		return
-	}
-
-	_, _, _ = procMessageBoxW.Call(
-		0,
-		uintptr(unsafe.Pointer(messageUTF16)),
-		uintptr(unsafe.Pointer(titleUTF16)),
-		uintptr(flags),
+func MarshalTimeSpanScalar(ts timespan.TimeSpan) graphql.Marshaler {
+	return graphql.WriterFunc(
+		func(w io.Writer) {
+			_, _ = w.Write([]byte(strconv.Quote(ts.String())))
+		},
 	)
+}
+
+func UnmarshalTimeSpanScalar(v any) (timespan.TimeSpan, error) {
+	s, ok := v.(string)
+	if !ok {
+		return timespan.Zero, errors.New("must be a string")
+	}
+
+	parsed, err := timespan.Parse(s)
+	if err != nil {
+		return timespan.Zero, fmt.Errorf("cannot parse timespan: %w", err)
+	}
+
+	return parsed, nil
 }

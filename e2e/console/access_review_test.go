@@ -1665,8 +1665,8 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 		return ids
 	}
 
-	firstConnector := createConnector("test-key-brex-a")
-	secondConnector := createConnector("test-key-brex-b")
+	firstConnector := createConnector("bxt_test-key-brex-a")
+	secondConnector := createConnector("bxt_test-key-brex-b")
 	require.NotEqual(t, firstConnector, secondConnector)
 
 	firstSource, firstCreated := createSource("Brex A", firstConnector)
@@ -1740,7 +1740,7 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 
 	// Relinking a source to a fresh connector deletes the abandoned one:
 	// the relink removed its only owner.
-	thirdConnector := createConnector("test-key-brex-c")
+	thirdConnector := createConnector("bxt_test-key-brex-c")
 
 	err = owner.Execute(updateQuery, map[string]any{
 		"input": map[string]any{

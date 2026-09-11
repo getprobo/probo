@@ -212,7 +212,7 @@
     "none": "None"
   },
   "documentList": {
-    "filters": { "allSources": "All sources", "allTypes": "All types", "allClassifications": "All classifications" },
+    "filters": { "searchPlaceholder": "Search documents by title...", "allSources": "All sources", "allTypes": "All types", "allClassifications": "All classifications" },
     "writeModes": { "authored": "Authored", "generated": "Generated" },
     "documentTypes": {
       "other": "Other",
@@ -316,11 +316,12 @@
     "status": { "open": "Open", "in_progress": "In progress", "closed": "Closed", "risk_accepted": "Risk accepted", "mitigated": "Mitigated", "false_positive": "False positive" },
     "priority": { "low": "Low", "medium": "Medium", "high": "High" },
     "messages": { "successTitle": "Success", "deleted": "Finding deleted successfully", "updated": "Finding updated successfully" },
-    "errors": { "title": "Error", "delete": "Failed to delete finding", "update": "Failed to update finding" },
+    "errors": { "title": "Error", "delete": "Failed to delete finding", "update": "Failed to update finding", "linkAudit": "Failed to link audit", "unlinkAudit": "Failed to unlink audit" },
     "deleteConfirmation": "This will permanently delete the finding {{referenceId}}. This action cannot be undone.",
     "fields": { "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "acceptedRisk": "Accepted risk", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
     "placeholders": { "description": "Enter description", "source": "Enter source", "rootCause": "Enter root cause", "correctiveAction": "Enter corrective action", "effectivenessCheck": "Enter effectiveness check details" },
-    "actions": { "delete": "Delete", "updating": "Updating...", "update": "Update" }
+    "actions": { "delete": "Delete", "updating": "Updating...", "update": "Update" },
+    "audits": { "title": "Linked audits", "referenceId": "Audit reference", "link": "Link audit", "empty": "No audits linked", "loadMore": "Load more audits", "loading": "Loading..." }
   },
   "findingsPage": {
     "pageTitle": "Findings",
@@ -444,8 +445,14 @@
   "linkedAuditsDialog": {
     "title": "Link audits",
     "searchPlaceholder": "Search audits...",
+    "referenceIdLabel": "Audit reference",
+    "referenceIdDescription": "Enter the reference used for this finding in the audit report.",
+    "referenceIdPlaceholder": "Enter the report reference",
+    "empty": "No audits match your search.",
     "actions": {
+      "back": "Back",
       "close": "Close",
+      "confirmLink": "Link audit",
       "link": "Link",
       "unlink": "Unlink"
     }
@@ -1312,6 +1319,13 @@
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "oauthTokens": "OAuth tokens", "help": "Help", "logout": "Logout" }
   },
+  "editAvatar": {
+    "title": "Profile photo",
+    "description": "Upload a public photo.",
+    "messages": { "updated": "Profile photo updated.", "removed": "Profile photo removed." },
+    "errors": { "update": "Failed to update profile photo", "remove": "Failed to remove profile photo", "invalidFile": "Use a JPEG or PNG under 5 MB." },
+    "actions": { "upload": "Upload photo", "replace": "Replace photo", "remove": "Remove photo", "close": "Close", "change": "Change profile photo" }
+  },
   "newOAuthTokenPage": {
     "pageTitle": "New OAuth token",
     "breadcrumb": "New token",
@@ -2106,9 +2120,19 @@
     },
     "dropzoneOverlay": "Drop a PDF to create an audit with a report",
     "actions": { "addAudit": "Add audit", "delete": "Delete" },
-    "columns": { "name": "Name", "framework": "Framework", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "report": "Report" },
+    "columns": { "name": "Name", "framework": "Framework", "state": "State", "auditPeriod": "Audit period", "validityPeriod": "Validity period", "report": "Report" },
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
-    "row": { "untitled": "Untitled", "unknownFramework": "Unknown Framework", "notSet": "Not set", "uploaded": "Uploaded", "notUploaded": "Not uploaded" }
+    "row": {
+      "untitled": "Untitled",
+      "unknownFramework": "Unknown Framework",
+      "notSet": "Not set",
+      "uploaded": "Uploaded",
+      "notUploaded": "Not uploaded",
+      "period": {
+        "from": "From {{date}}",
+        "until": "Until {{date}}"
+      }
+    }
   },
   "createAuditDialog": {
     "breadcrumb": { "audits": "Audits", "newAudit": "New Audit" },
@@ -2455,7 +2479,7 @@
     "deleteConfirmation": "This will permanently delete this risk analysis and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
     "actions": { "fork": "Fork", "edit": "Edit", "delete": "Delete", "showMore": "Show more" },
     "details": "Details",
-    "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at", "updatedAt": "Updated at" },
+    "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at" },
     "diagrams": "Diagrams",
     "treatmentPlans": "Risks and Treatment Plans",
     "emptyDiagrams": "No diagrams yet. Create a diagram to start defining nodes, processes, and threats.",

@@ -905,3 +905,142 @@ func TestTask_OmittableDeadline(t *testing.T) {
 		assert.Nil(t, result.UpdateTask.Task.Deadline)
 	})
 }
+
+func TestTask_TimeEstimate(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).
+		WithName("Task Time Estimate Test").
+		Create()
+
+	const createQuery = `
+		mutation CreateTask($input: CreateTaskInput!) {
+			createTask(input: $input) {
+				taskEdge {
+					node {
+						id
+						timeEstimate
+					}
+				}
+			}
+		}
+	`
+
+	var createResult struct {
+		CreateTask struct {
+			TaskEdge struct {
+				Node struct {
+					ID           string  `json:"id"`
+					TimeEstimate *string `json:"timeEstimate"`
+				} `json:"node"`
+			} `json:"taskEdge"`
+		} `json:"createTask"`
+	}
+
+	err := owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"measureId":      measureID,
+			"name":           factory.SafeName("Estimate"),
+			"priority":       "MEDIUM",
+			"timeEstimate":   "PT1H",
+		},
+	}, &createResult)
+	require.NoError(t, err)
+	require.NotNil(t, createResult.CreateTask.TaskEdge.Node.TimeEstimate)
+	assert.Equal(t, "PT1H", *createResult.CreateTask.TaskEdge.Node.TimeEstimate)
+
+	taskID := createResult.CreateTask.TaskEdge.Node.ID
+
+	const updateQuery = `
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
+				task {
+					id
+					timeEstimate
+				}
+			}
+		}
+	`
+
+	var updateResult struct {
+		UpdateTask struct {
+			Task struct {
+				ID           string  `json:"id"`
+				TimeEstimate *string `json:"timeEstimate"`
+			} `json:"task"`
+		} `json:"updateTask"`
+	}
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"taskId":       taskID,
+			"timeEstimate": "P1M",
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	require.NotNil(t, updateResult.UpdateTask.Task.TimeEstimate)
+	assert.Equal(t, "P1M", *updateResult.UpdateTask.Task.TimeEstimate)
+
+	const getQuery = `
+		query GetTask($id: ID!) {
+			node(id: $id) {
+				... on Task {
+					id
+					timeEstimate
+				}
+			}
+		}
+	`
+
+	var getResult struct {
+		Node struct {
+			ID           string  `json:"id"`
+			TimeEstimate *string `json:"timeEstimate"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(getQuery, map[string]any{"id": taskID}, &getResult)
+	require.NoError(t, err)
+	require.NotNil(t, getResult.Node.TimeEstimate)
+	assert.Equal(t, "P1M", *getResult.Node.TimeEstimate)
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"taskId":       taskID,
+			"timeEstimate": nil,
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	assert.Nil(t, updateResult.UpdateTask.Task.TimeEstimate)
+
+	t.Run("rejects two calendar months", func(t *testing.T) {
+		t.Parallel()
+
+		err := owner.ExecuteShouldFail(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"measureId":      measureID,
+				"name":           factory.SafeName("Overlong estimate"),
+				"priority":       "MEDIUM",
+				"timeEstimate":   "P2M",
+			},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("rejects incomplete duration", func(t *testing.T) {
+		t.Parallel()
+
+		err := owner.ExecuteShouldFail(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"measureId":      measureID,
+				"name":           factory.SafeName("Incomplete estimate"),
+				"priority":       "MEDIUM",
+				"timeEstimate":   "P1YT",
+			},
+		})
+		require.Error(t, err)
+	})
+}

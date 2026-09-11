@@ -382,7 +382,7 @@ func TestSCIMConfiguration_RefusesSourceHeldConnector(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": orgID,
 			"provider":       "BREX",
-			"apiKey":         "test-key-brex-scim-refusal",
+			"apiKey":         "bxt_test-key-brex-scim-refusal",
 		},
 	}, &connectorResult)
 	require.NoError(t, err)

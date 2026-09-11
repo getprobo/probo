@@ -6,6 +6,9 @@ public struct EnrollPreflightResult: Decodable {
     public let token: String
     public let alreadyEnrolled: Bool
     public let configDir: String
+    public let trust: String
+    public let confirmTitle: String
+    public let confirmMessage: String
 }
 
 public enum EnrollmentFlow {

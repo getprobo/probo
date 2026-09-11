@@ -21,16 +21,21 @@
 package iam
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/imageutil"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/securetoken"
@@ -64,6 +69,10 @@ type (
 		FullName string `json:"fullName"`
 	}
 
+	UpdateAvatarRequest struct {
+		File UploadedFile
+	}
+
 	UpdateLocaleRequest struct {
 		Locale string `json:"locale"`
 	}
@@ -77,6 +86,20 @@ var SupportedIdentityLocales = []string{
 
 const (
 	TokenTypeEmailConfirmation = "email_confirmation"
+
+	// JPEG and PNG only.
+	maxAvatarFileSize = 5 << 20
+	// 512 covers 3× display of ~96px menu avatars.
+	avatarMaxEdge = 512
+)
+
+var (
+	avatarValidator = filevalidation.NewValidator(
+		filevalidation.WithMimeTypes(imageutil.ContentTypeJPEG, imageutil.ContentTypePNG),
+		filevalidation.WithMaxFileSize(maxAvatarFileSize),
+	)
+
+	errAvatarTooLarge = errors.New("avatar file exceeds maximum size")
 )
 
 func NewAccountService(svc *Service) *AccountService {
@@ -101,6 +124,21 @@ func (req *UpdateIdentityRequest) Validate() error {
 	return v.Error()
 }
 
+func (req *UpdateAvatarRequest) Validate() error {
+	if err := avatarValidator.Validate(req.File.Filename, req.File.ContentType, req.File.Size); err != nil {
+		return validator.ValidationErrors{
+			&validator.ValidationError{
+				Field:   "file",
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: err.Error(),
+				Value:   req.File.Filename,
+			},
+		}
+	}
+
+	return nil
+}
+
 func (req UpdateLocaleRequest) Validate() error {
 	v := validator.New()
 
@@ -113,6 +151,19 @@ func (req UpdateLocaleRequest) Validate() error {
 	)
 
 	return v.Error()
+}
+
+func readAvatarBytes(r io.Reader) ([]byte, error) {
+	payload, err := io.ReadAll(io.LimitReader(r, maxAvatarFileSize+1))
+	if err != nil {
+		return nil, fmt.Errorf("cannot read avatar file: %w", err)
+	}
+
+	if int64(len(payload)) > maxAvatarFileSize {
+		return nil, errAvatarTooLarge
+	}
+
+	return payload, nil
 }
 
 func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req *ChangeEmailRequest) error {
@@ -475,6 +526,213 @@ func (s AccountService) UpdateIdentity(ctx context.Context, identityID gid.GID, 
 			}
 
 			identity.FullName = req.FullName
+			identity.UpdatedAt = time.Now()
+
+			if err := identity.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity, nil
+}
+
+func (s AccountService) GetIdentitiesByIDs(
+	ctx context.Context,
+	identityIDs []gid.GID,
+) (coredata.Identities, error) {
+	var identities coredata.Identities
+
+	if len(identityIDs) == 0 {
+		return identities, nil
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := identities.LoadByIDs(ctx, conn, identityIDs); err != nil {
+				return fmt.Errorf("cannot load identities: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return identities, nil
+}
+
+func (s AccountService) GetFilesByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	fileIDs ...gid.GID,
+) (coredata.Files, error) {
+	var files coredata.Files
+
+	if len(fileIDs) == 0 {
+		return files, nil
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := files.LoadActiveByIDs(ctx, conn, scope, fileIDs); err != nil {
+				return fmt.Errorf("cannot load files: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func (s AccountService) UpdateAvatar(
+	ctx context.Context,
+	identityID gid.GID,
+	req *UpdateAvatarRequest,
+) (*coredata.Identity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	payload, err := readAvatarBytes(req.File.Content)
+	if err != nil {
+		return nil, validator.ValidationErrors{
+			&validator.ValidationError{
+				Field:   "file",
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: err.Error(),
+				Value:   req.File.Filename,
+			},
+		}
+	}
+
+	normalized, err := imageutil.Downscale(bytes.NewReader(payload), avatarMaxEdge)
+	if err != nil {
+		return nil, validator.ValidationErrors{
+			&validator.ValidationError{
+				Field:   "file",
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: err.Error(),
+				Value:   req.File.Filename,
+			},
+		}
+	}
+
+	now := time.Now()
+	fileID := gid.New(gid.NilTenant, coredata.FileEntityType)
+	objectKey := uuid.MustNewV7()
+	scope := coredata.NewScope(gid.NilTenant)
+
+	avatarFile := &coredata.File{
+		ID:             fileID,
+		OrganizationID: gid.Nil,
+		BucketName:     s.bucket,
+		MimeType:       normalized.ContentType,
+		FileName:       req.File.Filename,
+		FileKey:        objectKey.String(),
+		FileSize:       int64(len(normalized.Bytes)),
+		Visibility:     coredata.FileVisibilityPublic,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	fileSize, err := s.fm.PutFile(
+		ctx,
+		avatarFile,
+		bytes.NewReader(normalized.Bytes),
+		map[string]string{
+			"file-id":     fileID.String(),
+			"identity-id": identityID.String(),
+			"type":        "identity-avatar",
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload avatar file: %w", err)
+	}
+
+	avatarFile.FileSize = fileSize
+
+	identity := &coredata.Identity{}
+
+	err = s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewIdentityNotFoundError(identityID)
+				}
+
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			if err := avatarFile.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert avatar file: %w", err)
+			}
+
+			if identity.AvatarFileID != nil {
+				previous := coredata.File{ID: *identity.AvatarFileID}
+				if err := previous.SoftDelete(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot soft-delete previous avatar file: %w", err)
+				}
+			}
+
+			identity.AvatarFileID = &avatarFile.ID
+			identity.UpdatedAt = now
+
+			if err := identity.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity, nil
+}
+
+func (s AccountService) DeleteAvatar(
+	ctx context.Context,
+	identityID gid.GID,
+) (*coredata.Identity, error) {
+	identity := &coredata.Identity{}
+	scope := coredata.NewScope(gid.NilTenant)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewIdentityNotFoundError(identityID)
+				}
+
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			if identity.AvatarFileID == nil {
+				return nil
+			}
+
+			previous := coredata.File{ID: *identity.AvatarFileID}
+			if err := previous.SoftDelete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot soft-delete avatar file: %w", err)
+			}
+
+			identity.AvatarFileID = nil
 			identity.UpdatedAt = time.Now()
 
 			if err := identity.Update(ctx, tx); err != nil {

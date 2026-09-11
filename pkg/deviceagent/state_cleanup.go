@@ -41,6 +41,9 @@ var stateCleanupNames = []string{
 	KeyFileName + ".old",
 	pendingPosturesFileName,
 	pendingPosturesFileName + ".tmp",
+	checkMemoryFileName,
+	checkMemoryFileName + ".tmp",
+	checkMemoryFileName + ".old",
 }
 
 // RemoveLocalState removes allowlisted state/run files and sigstore-cache.

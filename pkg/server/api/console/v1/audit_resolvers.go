@@ -326,7 +326,23 @@ func (r *findingResolver) Audits(ctx context.Context, obj *types.Finding, first 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewAuditConnection(p, r, obj.ID), nil
+	auditIDs := make([]gid.GID, len(p.Data))
+	for i, audit := range p.Data {
+		auditIDs[i] = audit.ID
+	}
+
+	findingAudits, err := r.probo.Findings.ListAuditMappings(
+		ctx,
+		scope,
+		obj.ID,
+		auditIDs,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list finding audit mappings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFindingAuditConnection(p, findingAudits, r, obj.ID), nil
 }
 
 // Owner is the resolver for the owner field.
@@ -689,7 +705,13 @@ func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input 
 		return nil, err
 	}
 
-	finding, audit, err := r.probo.Findings.CreateAuditMapping(ctx, scope, input.FindingID, input.AuditID, input.ReferenceID)
+	finding, audit, findingAudit, err := r.probo.Findings.CreateAuditMapping(
+		ctx,
+		scope,
+		input.FindingID,
+		input.AuditID,
+		input.ReferenceID,
+	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create finding audit mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -697,7 +719,11 @@ func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input 
 
 	return &types.CreateFindingAuditMappingPayload{
 		FindingEdge: types.NewFindingEdge(finding, coredata.FindingOrderFieldCreatedAt),
-		AuditEdge:   types.NewAuditEdge(audit, coredata.AuditOrderFieldCreatedAt),
+		AuditEdge: types.NewFindingAuditEdge(
+			audit,
+			coredata.AuditOrderFieldCreatedAt,
+			&findingAudit.ReferenceID,
+		),
 	}, nil
 }
 
