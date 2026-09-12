@@ -28,6 +28,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -61,6 +62,7 @@ import (
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
+	githubsecretscanning_v1 "go.probo.inc/probo/pkg/server/api/githubsecretscanning/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -123,15 +125,16 @@ type (
 	}
 
 	Server struct {
-		cfg                 Config
-		csrf                *http.CrossOriginProtection
-		consoleHandler      http.Handler
-		cookieBannerHandler http.Handler
-		filesHandler        http.Handler
-		mcpHandler          http.Handler
-		slackHandler        http.Handler
-		connectHandler      http.Handler
-		agentHandler        http.Handler
+		cfg                   Config
+		csrf                  *http.CrossOriginProtection
+		consoleHandler        http.Handler
+		cookieBannerHandler   http.Handler
+		filesHandler          http.Handler
+		mcpHandler            http.Handler
+		slackHandler          http.Handler
+		connectHandler        http.Handler
+		agentHandler          http.Handler
+		secretScanningHandler http.Handler
 	}
 )
 
@@ -220,6 +223,20 @@ func NewServer(cfg Config) (*Server, error) {
 	csrf.AddInsecureBypassPattern("POST /mcp/v1/{rest...}")
 	csrf.AddInsecureBypassPattern("DELETE /mcp/v1")
 	csrf.AddInsecureBypassPattern("DELETE /mcp/v1/{rest...}")
+
+	secretScanningLogger := cfg.Logger.Named("github-secret-scanning.v1")
+	keyProvider := githubsecretscanning_v1.NewGitHubKeyProvider(
+		httpclient.DefaultPooledClient(
+			httpclient.WithLogger(secretScanningLogger),
+			httpclient.WithSSRFProtection(),
+		),
+	)
+	secretScanningHandler := githubsecretscanning_v1.NewMux(
+		secretScanningLogger,
+		cfg.IAM.OAuth2ServerService,
+		keyProvider,
+	)
+	csrf.AddInsecureBypassPattern("POST /github-secret-scanning/v1/alerts")
 
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := httpserver.LoggerFromContext(r.Context())
@@ -341,6 +358,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("agent.v1"),
 			cfg.ITAM,
 		),
+		secretScanningHandler: secretScanningHandler,
 	}, nil
 }
 
@@ -376,6 +394,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Agent API should never be called from a browser; mount it outside
 	// to avoid CORS headers being set on it.
 	router.Mount("/agent/v1", http.StripPrefix("/agent/v1", s.agentHandler))
+
+	router.Mount(
+		"/github-secret-scanning/v1",
+		http.StripPrefix("/github-secret-scanning/v1", s.secretScanningHandler),
+	)
 
 	router.Group(func(r chi.Router) {
 		r.Use(cors.Handler(corsOpts))
