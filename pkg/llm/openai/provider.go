@@ -121,7 +121,10 @@ func NewProvider(apiKey string, opts ...Option) *Provider {
 }
 
 func (p *Provider) ChatCompletion(ctx context.Context, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
-	params := buildParams(req)
+	params, err := buildParams(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build OpenAI response parameters: %w", err)
+	}
 
 	response, err := p.client.Responses.New(ctx, params)
 	if err != nil {
@@ -136,7 +139,11 @@ func (p *Provider) ChatCompletion(ctx context.Context, req *llm.ChatCompletionRe
 }
 
 func (p *Provider) ChatCompletionStream(ctx context.Context, req *llm.ChatCompletionRequest) (llm.ChatCompletionStream, error) {
-	params := buildParams(req)
+	params, err := buildParams(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build OpenAI response parameters: %w", err)
+	}
+
 	stream := p.client.Responses.NewStreaming(ctx, params)
 
 	return &openaiStream{
@@ -145,7 +152,11 @@ func (p *Provider) ChatCompletionStream(ctx context.Context, req *llm.ChatComple
 	}, nil
 }
 
-func buildParams(req *llm.ChatCompletionRequest) responses.ResponseNewParams {
+func buildParams(req *llm.ChatCompletionRequest) (responses.ResponseNewParams, error) {
+	if len(req.StopSequences) > 0 {
+		return responses.ResponseNewParams{}, errors.New("stop sequences are not supported by OpenAI Responses API")
+	}
+
 	params := responses.ResponseNewParams{
 		Input: responses.ResponseNewParamsInputUnion{
 			OfInputItemList: buildInput(req.Messages),
@@ -193,7 +204,7 @@ func buildParams(req *llm.ChatCompletionRequest) responses.ResponseNewParams {
 		}
 	}
 
-	return params
+	return params, nil
 }
 
 func buildInput(messages []llm.Message) responses.ResponseInputParam {
@@ -285,6 +296,7 @@ func buildTools(tools []llm.Tool) []responses.ToolUnionParam {
 		if t.Description != "" {
 			tool.OfFunction.Description = param.NewOpt(t.Description)
 		}
+
 		out[i] = tool
 	}
 
@@ -327,6 +339,7 @@ func buildResponseFormat(rf *llm.ResponseFormat) responses.ResponseFormatTextCon
 	case llm.ResponseFormatJSONSchema:
 		if rf.JSONSchema != nil {
 			var schema map[string]any
+
 			_ = json.Unmarshal(rf.JSONSchema.Schema, &schema)
 
 			format := responses.ResponseFormatTextJSONSchemaConfigParam{
@@ -410,6 +423,7 @@ func buildFilePart(part llm.FilePart) responses.ResponseInputContentUnionParam {
 			Detail:   responses.ResponseInputImageDetailAuto,
 			ImageURL: param.NewOpt(dataURL),
 		}
+
 		return responses.ResponseInputContentUnionParam{OfInputImage: &image}
 	}
 
@@ -417,6 +431,7 @@ func buildFilePart(part llm.FilePart) responses.ResponseInputContentUnionParam {
 		FileData: param.NewOpt(dataURL),
 		Filename: param.NewOpt(part.Filename),
 	}
+
 	return responses.ResponseInputContentUnionParam{OfInputFile: &file}
 }
 
@@ -489,6 +504,7 @@ func (s *openaiStream) Next() bool {
 		}
 
 		s.current = event
+
 		return true
 	}
 

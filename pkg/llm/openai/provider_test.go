@@ -37,6 +37,7 @@ func TestProvider_UsesResponsesEndpoint(t *testing.T) {
 	t.Parallel()
 
 	var requestBody map[string]any
+
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -209,6 +210,42 @@ func TestProvider_UsesResponsesEndpoint(t *testing.T) {
 		t,
 		"data:application/pdf;base64,cGRm",
 		userContent[2].(map[string]any)["file_data"],
+	)
+}
+
+func TestProvider_RejectsStopSequences(t *testing.T) {
+	t.Parallel()
+
+	req := &llm.ChatCompletionRequest{
+		Model:         "gpt-4o",
+		StopSequences: []string{"STOP"},
+	}
+	provider := &Provider{}
+
+	t.Run(
+		"chat completion",
+		func(t *testing.T) {
+			t.Parallel()
+
+			response, err := provider.ChatCompletion(context.Background(), req)
+
+			require.Error(t, err)
+			assert.Nil(t, response)
+			assert.ErrorContains(t, err, "stop sequences are not supported by OpenAI Responses API")
+		},
+	)
+
+	t.Run(
+		"streaming chat completion",
+		func(t *testing.T) {
+			t.Parallel()
+
+			stream, err := provider.ChatCompletionStream(context.Background(), req)
+
+			require.Error(t, err)
+			assert.Nil(t, stream)
+			assert.ErrorContains(t, err, "stop sequences are not supported by OpenAI Responses API")
+		},
 	)
 }
 
