@@ -51,3 +51,78 @@ interactions:
         status: 200 OK
         code: 200
         duration: 100ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":[{"id":"00000000-0000-4000-8000-0000000000b1","createdAt":"2026-06-01T09:00:00Z","updatedAt":"2026-06-01T09:00:00Z","name":"ci-deployer","email":"ci-deployer@example.com","status":"active","orgId":"00000000-0000-4000-8000-0000000000aa"},{"id":"00000000-0000-4000-8000-0000000000b2","createdAt":"2026-06-02T09:00:00Z","updatedAt":"2026-06-02T09:00:00Z","name":"revoked-bot","email":"revoked-bot@example.com","status":"revoked","orgId":"00000000-0000-4000-8000-0000000000aa"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-8000-0000000000b1
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":{"id":"00000000-0000-4000-8000-0000000000b1","name":"ci-deployer","email":"ci-deployer@example.com","status":"active","orgId":"00000000-0000-4000-8000-0000000000aa","serviceAccountRoles":[{"id":"00000000-0000-4000-8000-0000000000c1","serviceAccountId":"00000000-0000-4000-8000-0000000000b1","roleId":"00000000-0000-4000-8000-0000000000d1","role":{"id":"00000000-0000-4000-8000-0000000000d1","name":"signoz-admin"}}]}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-8000-0000000000b2
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":{"id":"00000000-0000-4000-8000-0000000000b2","name":"revoked-bot","email":"revoked-bot@example.com","status":"revoked","orgId":"00000000-0000-4000-8000-0000000000aa","serviceAccountRoles":[{"id":"00000000-0000-4000-8000-0000000000c2","serviceAccountId":"00000000-0000-4000-8000-0000000000b2","roleId":"00000000-0000-4000-8000-0000000000d2","role":{"id":"00000000-0000-4000-8000-0000000000d2","name":"signoz-viewer"}}]}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
