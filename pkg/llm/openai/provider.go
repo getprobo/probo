@@ -22,11 +22,11 @@ package openai
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +35,7 @@ import (
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/packages/ssestream"
+	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared"
 	"go.probo.inc/probo/pkg/llm"
 )
@@ -122,33 +123,39 @@ func NewProvider(apiKey string, opts ...Option) *Provider {
 func (p *Provider) ChatCompletion(ctx context.Context, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
 	params := buildParams(req)
 
-	completion, err := p.client.Chat.Completions.New(ctx, params)
+	response, err := p.client.Responses.New(ctx, params)
 	if err != nil {
 		return nil, mapError(err)
 	}
 
-	return mapResponse(completion), nil
+	if response.Status == responses.ResponseStatusFailed {
+		return nil, fmt.Errorf("cannot complete OpenAI response: %s", response.Error.Message)
+	}
+
+	return mapResponse(response), nil
 }
 
 func (p *Provider) ChatCompletionStream(ctx context.Context, req *llm.ChatCompletionRequest) (llm.ChatCompletionStream, error) {
 	params := buildParams(req)
-	params.StreamOptions = openai.ChatCompletionStreamOptionsParam{
-		IncludeUsage: param.NewOpt(true),
-	}
+	stream := p.client.Responses.NewStreaming(ctx, params)
 
-	stream := p.client.Chat.Completions.NewStreaming(ctx, params)
-
-	return &openaiStream{stream: stream}, nil
+	return &openaiStream{
+		stream:      stream,
+		toolIndexes: make(map[int64]int),
+	}, nil
 }
 
-func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams {
-	params := openai.ChatCompletionNewParams{
-		Model:    openai.ChatModel(req.Model),
-		Messages: buildMessages(req.Messages),
+func buildParams(req *llm.ChatCompletionRequest) responses.ResponseNewParams {
+	params := responses.ResponseNewParams{
+		Input: responses.ResponseNewParamsInputUnion{
+			OfInputItemList: buildInput(req.Messages),
+		},
+		Model: shared.ResponsesModel(req.Model),
+		Store: param.NewOpt(false),
 	}
 
 	if req.MaxTokens != nil {
-		params.MaxCompletionTokens = param.NewOpt(int64(*req.MaxTokens))
+		params.MaxOutputTokens = param.NewOpt(int64(*req.MaxTokens))
 	}
 
 	if req.Temperature != nil {
@@ -157,20 +164,6 @@ func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams 
 
 	if req.TopP != nil {
 		params.TopP = param.NewOpt(*req.TopP)
-	}
-
-	if req.FrequencyPenalty != nil {
-		params.FrequencyPenalty = param.NewOpt(*req.FrequencyPenalty)
-	}
-
-	if req.PresencePenalty != nil {
-		params.PresencePenalty = param.NewOpt(*req.PresencePenalty)
-	}
-
-	if len(req.StopSequences) > 0 {
-		params.Stop = openai.ChatCompletionNewParamsStopUnion{
-			OfStringArray: req.StopSequences,
-		}
 	}
 
 	if len(req.Tools) > 0 {
@@ -186,205 +179,255 @@ func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams 
 	}
 
 	if req.ResponseFormat != nil {
-		params.ResponseFormat = buildResponseFormat(req.ResponseFormat)
+		params.Text.Format = buildResponseFormat(req.ResponseFormat)
 	}
 
 	if req.Thinking != nil && req.Thinking.Enabled && isReasoningModel(req.Model) {
 		switch {
 		case req.Thinking.BudgetTokens <= 1024:
-			params.ReasoningEffort = shared.ReasoningEffortLow
+			params.Reasoning.Effort = shared.ReasoningEffortLow
 		case req.Thinking.BudgetTokens <= 8192:
-			params.ReasoningEffort = shared.ReasoningEffortMedium
+			params.Reasoning.Effort = shared.ReasoningEffortMedium
 		default:
-			params.ReasoningEffort = shared.ReasoningEffortHigh
+			params.Reasoning.Effort = shared.ReasoningEffortHigh
 		}
 	}
 
 	return params
 }
 
-func buildMessages(messages []llm.Message) []openai.ChatCompletionMessageParamUnion {
-	out := make([]openai.ChatCompletionMessageParamUnion, 0, len(messages))
+func buildInput(messages []llm.Message) responses.ResponseInputParam {
+	input := make(responses.ResponseInputParam, 0, len(messages))
 
 	for _, msg := range messages {
 		switch msg.Role {
 		case llm.RoleSystem:
-			out = append(out, openai.SystemMessage(msg.Text()))
+			input = append(
+				input,
+				responses.ResponseInputItemParamOfMessage(
+					msg.Text(),
+					responses.EasyInputMessageRoleSystem,
+				),
+			)
 		case llm.RoleUser:
-			parts := make([]openai.ChatCompletionContentPartUnionParam, 0, len(msg.Parts))
-			for _, p := range msg.Parts {
-				switch p := p.(type) {
-				case llm.TextPart:
-					parts = append(parts, openai.TextContentPart(p.Text))
-				case llm.ImagePart:
-					parts = append(
-						parts,
-						openai.ImageContentPart(
-							openai.ChatCompletionContentPartImageImageURLParam{
-								URL: p.URL,
-							},
-						),
-					)
-				case llm.FilePart:
-					parts = append(parts, buildFilePart(p))
-				}
-			}
-
-			out = append(out, openai.UserMessage(parts))
+			input = append(
+				input,
+				responses.ResponseInputItemParamOfMessage(
+					buildUserContent(msg.Parts),
+					responses.EasyInputMessageRoleUser,
+				),
+			)
 		case llm.RoleAssistant:
-			m := openai.ChatCompletionAssistantMessageParam{
-				Content: openai.ChatCompletionAssistantMessageParamContentUnion{
-					OfString: param.NewOpt(msg.Text()),
-				},
-			}
-			if len(msg.ToolCalls) > 0 {
-				m.ToolCalls = make([]openai.ChatCompletionMessageToolCallParam, len(msg.ToolCalls))
-				for i, tc := range msg.ToolCalls {
-					m.ToolCalls[i] = openai.ChatCompletionMessageToolCallParam{
-						ID: tc.ID,
-						Function: openai.ChatCompletionMessageToolCallFunctionParam{
-							Name:      tc.Function.Name,
-							Arguments: tc.Function.Arguments,
-						},
-					}
-				}
+			if text := msg.Text(); text != "" {
+				input = append(
+					input,
+					responses.ResponseInputItemParamOfMessage(
+						text,
+						responses.EasyInputMessageRoleAssistant,
+					),
+				)
 			}
 
-			out = append(out, openai.ChatCompletionMessageParamUnion{OfAssistant: &m})
+			for _, tc := range msg.ToolCalls {
+				input = append(
+					input,
+					responses.ResponseInputItemParamOfFunctionCall(
+						tc.Function.Arguments,
+						tc.ID,
+						tc.Function.Name,
+					),
+				)
+			}
 		case llm.RoleTool:
-			out = append(out, openai.ToolMessage(msg.Text(), msg.ToolCallID))
+			input = append(
+				input,
+				responses.ResponseInputItemParamOfFunctionCallOutput(
+					msg.ToolCallID,
+					msg.Text(),
+				),
+			)
 		}
 	}
 
-	return out
+	return input
 }
 
-func buildTools(tools []llm.Tool) []openai.ChatCompletionToolParam {
-	out := make([]openai.ChatCompletionToolParam, len(tools))
-	for i, t := range tools {
-		fn := shared.FunctionDefinitionParam{
-			Name:        t.Name,
-			Description: param.NewOpt(t.Description),
-			Strict:      param.NewOpt(true),
-		}
-		if t.Parameters != nil {
-			var params shared.FunctionParameters
-			if err := json.Unmarshal(t.Parameters, &params); err == nil {
-				fn.Parameters = params
+func buildUserContent(parts []llm.Part) responses.ResponseInputMessageContentListParam {
+	content := make(responses.ResponseInputMessageContentListParam, 0, len(parts))
+
+	for _, part := range parts {
+		switch part := part.(type) {
+		case llm.TextPart:
+			content = append(content, responses.ResponseInputContentParamOfInputText(part.Text))
+		case llm.ImagePart:
+			image := responses.ResponseInputImageParam{
+				Detail:   responses.ResponseInputImageDetailAuto,
+				ImageURL: param.NewOpt(part.URL),
 			}
+			content = append(content, responses.ResponseInputContentUnionParam{OfInputImage: &image})
+		case llm.FilePart:
+			content = append(content, buildFilePart(part))
+		}
+	}
+
+	return content
+}
+
+func buildTools(tools []llm.Tool) []responses.ToolUnionParam {
+	out := make([]responses.ToolUnionParam, len(tools))
+	for i, t := range tools {
+		var parameters map[string]any
+		if t.Parameters != nil {
+			_ = json.Unmarshal(t.Parameters, &parameters)
 		}
 
-		out[i] = openai.ChatCompletionToolParam{Function: fn}
+		tool := responses.ToolParamOfFunction(t.Name, parameters, true)
+		if t.Description != "" {
+			tool.OfFunction.Description = param.NewOpt(t.Description)
+		}
+		out[i] = tool
 	}
 
 	return out
 }
 
-func buildToolChoice(tc *llm.ToolChoice) openai.ChatCompletionToolChoiceOptionUnionParam {
+func buildToolChoice(tc *llm.ToolChoice) responses.ResponseNewParamsToolChoiceUnion {
 	switch tc.Type {
 	case llm.ToolChoiceAuto:
-		return openai.ChatCompletionToolChoiceOptionUnionParam{
-			OfAuto: param.NewOpt(string(openai.ChatCompletionToolChoiceOptionAutoAuto)),
+		return responses.ResponseNewParamsToolChoiceUnion{
+			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsAuto),
 		}
 	case llm.ToolChoiceNone:
-		return openai.ChatCompletionToolChoiceOptionUnionParam{
-			OfAuto: param.NewOpt(string(openai.ChatCompletionToolChoiceOptionAutoNone)),
+		return responses.ResponseNewParamsToolChoiceUnion{
+			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsNone),
 		}
 	case llm.ToolChoiceRequired:
-		return openai.ChatCompletionToolChoiceOptionUnionParam{
-			OfAuto: param.NewOpt(string(openai.ChatCompletionToolChoiceOptionAutoRequired)),
+		return responses.ResponseNewParamsToolChoiceUnion{
+			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsRequired),
 		}
 	case llm.ToolChoiceFunction:
-		return openai.ChatCompletionToolChoiceOptionParamOfChatCompletionNamedToolChoice(
-			openai.ChatCompletionNamedToolChoiceFunctionParam{Name: tc.Function},
-		)
+		return responses.ResponseNewParamsToolChoiceUnion{
+			OfFunctionTool: &responses.ToolChoiceFunctionParam{Name: tc.Function},
+		}
 	default:
-		return openai.ChatCompletionToolChoiceOptionUnionParam{}
+		return responses.ResponseNewParamsToolChoiceUnion{}
 	}
 }
 
-func buildResponseFormat(rf *llm.ResponseFormat) openai.ChatCompletionNewParamsResponseFormatUnion {
+func buildResponseFormat(rf *llm.ResponseFormat) responses.ResponseFormatTextConfigUnionParam {
 	switch rf.Type {
 	case llm.ResponseFormatText:
-		return openai.ChatCompletionNewParamsResponseFormatUnion{
+		return responses.ResponseFormatTextConfigUnionParam{
 			OfText: &shared.ResponseFormatTextParam{},
 		}
 	case llm.ResponseFormatJSONObject:
-		return openai.ChatCompletionNewParamsResponseFormatUnion{
+		return responses.ResponseFormatTextConfigUnionParam{
 			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
 		}
 	case llm.ResponseFormatJSONSchema:
 		if rf.JSONSchema != nil {
-			schema := shared.ResponseFormatJSONSchemaJSONSchemaParam{
+			var schema map[string]any
+			_ = json.Unmarshal(rf.JSONSchema.Schema, &schema)
+
+			format := responses.ResponseFormatTextJSONSchemaConfigParam{
 				Name:   rf.JSONSchema.Name,
 				Strict: param.NewOpt(rf.JSONSchema.Strict),
+				Schema: schema,
 			}
 			if rf.JSONSchema.Description != "" {
-				schema.Description = param.NewOpt(rf.JSONSchema.Description)
+				format.Description = param.NewOpt(rf.JSONSchema.Description)
 			}
 
-			if rf.JSONSchema.Schema != nil {
-				schema.Schema = rf.JSONSchema.Schema
-			}
-
-			return openai.ChatCompletionNewParamsResponseFormatUnion{
-				OfJSONSchema: &shared.ResponseFormatJSONSchemaParam{JSONSchema: schema},
+			return responses.ResponseFormatTextConfigUnionParam{
+				OfJSONSchema: &format,
 			}
 		}
 
-		return openai.ChatCompletionNewParamsResponseFormatUnion{}
+		return responses.ResponseFormatTextConfigUnionParam{}
 	default:
-		return openai.ChatCompletionNewParamsResponseFormatUnion{}
+		return responses.ResponseFormatTextConfigUnionParam{}
 	}
 }
 
-func mapResponse(c *openai.ChatCompletion) *llm.ChatCompletionResponse {
+func mapResponse(response *responses.Response) *llm.ChatCompletionResponse {
 	resp := &llm.ChatCompletionResponse{
-		Model: c.Model,
-		Usage: llm.Usage{
-			InputTokens:  int(c.Usage.PromptTokens),
-			OutputTokens: int(c.Usage.CompletionTokens),
+		Model: string(response.Model),
+		Message: llm.Message{
+			Role:  llm.RoleAssistant,
+			Parts: []llm.Part{llm.TextPart{Text: response.OutputText()}},
 		},
+		Usage: llm.Usage{
+			InputTokens:  int(response.Usage.InputTokens),
+			OutputTokens: int(response.Usage.OutputTokens),
+		},
+		FinishReason: mapFinishReason(response),
 	}
 
-	if len(c.Choices) > 0 {
-		choice := c.Choices[0]
-		resp.FinishReason = mapFinishReason(choice.FinishReason)
-
-		resp.Message = llm.Message{
-			Role:  llm.RoleAssistant,
-			Parts: []llm.Part{llm.TextPart{Text: choice.Message.Content}},
-		}
-		if len(choice.Message.ToolCalls) > 0 {
-			resp.Message.ToolCalls = make([]llm.ToolCall, len(choice.Message.ToolCalls))
-			for i, tc := range choice.Message.ToolCalls {
-				resp.Message.ToolCalls[i] = llm.ToolCall{
-					ID: tc.ID,
+	for _, output := range response.Output {
+		if output.Type == "function_call" {
+			resp.Message.ToolCalls = append(
+				resp.Message.ToolCalls,
+				llm.ToolCall{
+					ID: output.CallID,
 					Function: llm.FunctionCall{
-						Name:      tc.Function.Name,
-						Arguments: tc.Function.Arguments,
+						Name:      output.Name,
+						Arguments: output.Arguments,
 					},
-				}
-			}
+				},
+			)
 		}
 	}
 
 	return resp
 }
 
-func mapFinishReason(reason string) llm.FinishReason {
-	switch reason {
-	case "stop":
-		return llm.FinishReasonStop
-	case "tool_calls":
-		return llm.FinishReasonToolCalls
-	case "length":
+func mapFinishReason(response *responses.Response) llm.FinishReason {
+	if response.IncompleteDetails.Reason == "max_output_tokens" {
 		return llm.FinishReasonLength
-	case "content_filter":
-		return llm.FinishReasonContentFilter
-	default:
-		return llm.FinishReasonStop
 	}
+
+	if response.IncompleteDetails.Reason == "content_filter" {
+		return llm.FinishReasonContentFilter
+	}
+
+	for _, output := range response.Output {
+		if output.Type == "function_call" {
+			return llm.FinishReasonToolCalls
+		}
+	}
+
+	return llm.FinishReasonStop
+}
+
+func buildFilePart(part llm.FilePart) responses.ResponseInputContentUnionParam {
+	dataURL := (&url.URL{
+		Scheme: "data",
+		Opaque: part.MimeType + ";base64," + part.Data,
+	}).String()
+
+	if strings.HasPrefix(part.MimeType, "image/") {
+		image := responses.ResponseInputImageParam{
+			Detail:   responses.ResponseInputImageDetailAuto,
+			ImageURL: param.NewOpt(dataURL),
+		}
+		return responses.ResponseInputContentUnionParam{OfInputImage: &image}
+	}
+
+	file := responses.ResponseInputFileParam{
+		FileData: param.NewOpt(dataURL),
+		Filename: param.NewOpt(part.Filename),
+	}
+	return responses.ResponseInputContentUnionParam{OfInputFile: &file}
+}
+
+func isReasoningModel(model string) bool {
+	for _, prefix := range []string{"o1", "o3", "o4", "gpt-5"} {
+		if model == prefix || strings.HasPrefix(model, prefix+"-") || strings.HasPrefix(model, prefix+".") {
+			return true
+		}
+	}
+
+	return false
 }
 
 func mapError(err error) error {
@@ -431,21 +474,25 @@ func parseRetryAfter(resp *http.Response) time.Duration {
 	return 0
 }
 
-// openaiStream adapts an OpenAI SSE stream to our ChatCompletionStream interface.
 type openaiStream struct {
-	stream  *ssestream.Stream[openai.ChatCompletionChunk]
-	current llm.ChatCompletionStreamEvent
+	stream      *ssestream.Stream[responses.ResponseStreamEventUnion]
+	current     llm.ChatCompletionStreamEvent
+	toolIndexes map[int64]int
+	err         error
 }
 
 func (s *openaiStream) Next() bool {
-	if !s.stream.Next() {
-		return false
+	for s.stream.Next() {
+		event, ok := s.mapEvent(s.stream.Current())
+		if !ok {
+			continue
+		}
+
+		s.current = event
+		return true
 	}
 
-	chunk := s.stream.Current()
-	s.current = mapChunkToEvent(&chunk)
-
-	return true
+	return false
 }
 
 func (s *openaiStream) Event() llm.ChatCompletionStreamEvent {
@@ -453,6 +500,10 @@ func (s *openaiStream) Event() llm.ChatCompletionStreamEvent {
 }
 
 func (s *openaiStream) Err() error {
+	if s.err != nil {
+		return s.err
+	}
+
 	err := s.stream.Err()
 	if err != nil {
 		return mapError(err)
@@ -465,79 +516,75 @@ func (s *openaiStream) Close() error {
 	return s.stream.Close()
 }
 
-func mapChunkToEvent(chunk *openai.ChatCompletionChunk) llm.ChatCompletionStreamEvent {
-	event := llm.ChatCompletionStreamEvent{
-		Model: chunk.Model,
-	}
-
-	if chunk.Usage.PromptTokens > 0 || chunk.Usage.CompletionTokens > 0 {
-		usage := llm.Usage{
-			InputTokens:  int(chunk.Usage.PromptTokens),
-			OutputTokens: int(chunk.Usage.CompletionTokens),
-		}
-		event.Usage = &usage
-	}
-
-	if len(chunk.Choices) > 0 {
-		choice := chunk.Choices[0]
-		delta := choice.Delta
-
-		event.Delta.Content = delta.Content
-
-		if len(delta.ToolCalls) > 0 {
-			event.Delta.ToolCalls = make([]llm.ToolCallDelta, len(delta.ToolCalls))
-			for i, tc := range delta.ToolCalls {
-				event.Delta.ToolCalls[i] = llm.ToolCallDelta{
-					Index:     int(tc.Index),
-					ID:        tc.ID,
-					Name:      tc.Function.Name,
-					Arguments: tc.Function.Arguments,
-				}
-			}
+func (s *openaiStream) mapEvent(raw responses.ResponseStreamEventUnion) (llm.ChatCompletionStreamEvent, bool) {
+	switch event := raw.AsAny().(type) {
+	case responses.ResponseCreatedEvent:
+		return llm.ChatCompletionStreamEvent{
+			Model: string(event.Response.Model),
+		}, true
+	case responses.ResponseTextDeltaEvent:
+		return llm.ChatCompletionStreamEvent{
+			Delta: llm.MessageDelta{Content: event.Delta},
+		}, true
+	case responses.ResponseOutputItemAddedEvent:
+		if event.Item.Type != "function_call" {
+			return llm.ChatCompletionStreamEvent{}, false
 		}
 
-		if choice.FinishReason != "" {
-			fr := mapFinishReason(choice.FinishReason)
-			event.FinishReason = &fr
-		}
-	}
+		toolIndex := len(s.toolIndexes)
+		s.toolIndexes[event.OutputIndex] = toolIndex
 
-	return event
-}
-
-// isReasoningModel returns true for OpenAI models that support
-// reasoning_effort (o1, o3-mini, o3, and their dated variants).
-func isReasoningModel(model string) bool {
-	for _, prefix := range []string{"o1", "o3"} {
-		if model == prefix || strings.HasPrefix(model, prefix+"-") {
-			return true
-		}
-	}
-
-	return false
-}
-
-func buildFilePart(p llm.FilePart) openai.ChatCompletionContentPartUnionParam {
-	switch {
-	case strings.HasPrefix(p.MimeType, "image/"):
-		return openai.ImageContentPart(
-			openai.ChatCompletionContentPartImageImageURLParam{
-				URL: fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data),
+		return llm.ChatCompletionStreamEvent{
+			Delta: llm.MessageDelta{
+				ToolCalls: []llm.ToolCallDelta{
+					{
+						Index: toolIndex,
+						ID:    event.Item.CallID,
+						Name:  event.Item.Name,
+					},
+				},
 			},
-		)
-	case strings.HasPrefix(p.MimeType, "text/"):
-		decoded, err := base64.StdEncoding.DecodeString(p.Data)
-		if err != nil {
-			return openai.TextContentPart(fmt.Sprintf("[file: %s, type: %s, error decoding content]", p.Filename, p.MimeType))
+		}, true
+	case responses.ResponseFunctionCallArgumentsDeltaEvent:
+		toolIndex, ok := s.toolIndexes[event.OutputIndex]
+		if !ok {
+			return llm.ChatCompletionStreamEvent{}, false
 		}
 
-		return openai.TextContentPart(fmt.Sprintf("File: %s\n\n%s", p.Filename, string(decoded)))
+		return llm.ChatCompletionStreamEvent{
+			Delta: llm.MessageDelta{
+				ToolCalls: []llm.ToolCallDelta{
+					{
+						Index:     toolIndex,
+						Arguments: event.Delta,
+					},
+				},
+			},
+		}, true
+	case responses.ResponseCompletedEvent:
+		return finalStreamEvent(&event.Response), true
+	case responses.ResponseIncompleteEvent:
+		return finalStreamEvent(&event.Response), true
+	case responses.ResponseErrorEvent:
+		s.err = fmt.Errorf("cannot stream OpenAI response: %s", event.Message)
+		return llm.ChatCompletionStreamEvent{}, false
+	case responses.ResponseFailedEvent:
+		s.err = fmt.Errorf("cannot stream OpenAI response: %s", event.Response.Error.Message)
+		return llm.ChatCompletionStreamEvent{}, false
 	default:
-		return openai.FileContentPart(
-			openai.ChatCompletionContentPartFileFileParam{
-				FileData: param.NewOpt(fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data)),
-				Filename: param.NewOpt(p.Filename),
-			},
-		)
+		return llm.ChatCompletionStreamEvent{}, false
+	}
+}
+
+func finalStreamEvent(response *responses.Response) llm.ChatCompletionStreamEvent {
+	finishReason := mapFinishReason(response)
+
+	return llm.ChatCompletionStreamEvent{
+		Model: string(response.Model),
+		Usage: &llm.Usage{
+			InputTokens:  int(response.Usage.InputTokens),
+			OutputTokens: int(response.Usage.OutputTokens),
+		},
+		FinishReason: &finishReason,
 	}
 }
