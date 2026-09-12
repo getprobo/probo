@@ -206,3 +206,22 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 
 	return nil, fmt.Errorf("internal server error")
 }
+
+func (r *Resolver) serviceAccountToolError(
+	ctx context.Context,
+	err error,
+	operation string,
+	notFoundMessage string,
+) error {
+	switch {
+	case errors.Is(err, coredata.ErrResourceNotFound):
+		return errors.New(notFoundMessage)
+	case errors.Is(err, iam.ErrInvalidServiceAccountInput):
+		return errors.New("invalid input")
+	case errors.Is(err, iam.ErrServiceAccountDisabled):
+		return errors.New("service account is disabled")
+	default:
+		r.logger.ErrorCtx(ctx, "cannot "+operation, log.Error(err))
+		return errors.New("internal server error")
+	}
+}

@@ -10760,7 +10760,7 @@ components:
           description: ID of the actor who performed the action
         actor_type:
           type: string
-          enum: [USER, API_KEY, SYSTEM]
+          enum: [USER, API_KEY, SERVICE_ACCOUNT, SYSTEM]
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogActorType
           description: Type of actor
         action:
@@ -15687,6 +15687,361 @@ components:
         deleted_compliance_portal_framework_id:
           $ref: "#/components/schemas/GID"
 
+    OAuth2Scope:
+      type: string
+      description: OAuth2 scope string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.OAuth2Scope
+
+    ServiceAccountOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ServiceAccountOrderField
+
+    ServiceAccountOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ServiceAccountOrderField"
+          description: Service account order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Service account order direction
+
+    ServiceAccount:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - scopes
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Service account name
+        description:
+          type: ["string", "null"]
+          description: Service account description
+        scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/OAuth2Scope"
+          description: Maximum OAuth2 scopes available to credentials
+        disabled_at:
+          type: ["string", "null"]
+          format: date-time
+          description: Disable timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListServiceAccountsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/ServiceAccountOrderBy"
+          description: Service account order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListServiceAccountsOutput:
+      type: object
+      required:
+        - service_accounts
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        service_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceAccount"
+
+    GetServiceAccountInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+
+    GetServiceAccountOutput:
+      type: object
+      required:
+        - service_account
+      properties:
+        service_account:
+          $ref: "#/components/schemas/ServiceAccount"
+
+    CreateServiceAccountInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - scopes
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Service account name
+        description:
+          type: ["string", "null"]
+          description: Service account description
+        scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/OAuth2Scope"
+          description: Maximum OAuth2 scopes available to credentials
+
+    CreateServiceAccountOutput:
+      type: object
+      required:
+        - service_account
+      properties:
+        service_account:
+          $ref: "#/components/schemas/ServiceAccount"
+
+    UpdateServiceAccountInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+        name:
+          type: string
+          description: Service account name
+        description:
+          type: ["string", "null"]
+          description: Service account description
+          go.probo.inc/mcpgen/omittable: true
+        scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/OAuth2Scope"
+          description: Maximum OAuth2 scopes available to credentials
+
+    UpdateServiceAccountOutput:
+      type: object
+      required:
+        - service_account
+      properties:
+        service_account:
+          $ref: "#/components/schemas/ServiceAccount"
+
+    DisableServiceAccountInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+
+    DisableServiceAccountOutput:
+      type: object
+      required:
+        - service_account
+      properties:
+        service_account:
+          $ref: "#/components/schemas/ServiceAccount"
+
+    DeleteServiceAccountInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+
+    DeleteServiceAccountOutput:
+      type: object
+      required:
+        - deleted_service_account_id
+      properties:
+        deleted_service_account_id:
+          $ref: "#/components/schemas/GID"
+
+    ServiceAccountCredentialOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ServiceAccountCredentialOrderField
+
+    ServiceAccountCredentialOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ServiceAccountCredentialOrderField"
+          description: Service account credential order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Service account credential order direction
+
+    ServiceAccountCredential:
+      type: object
+      required:
+        - id
+        - service_account_id
+        - name
+        - scopes
+        - expires_at
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Service account credential ID
+        service_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+        name:
+          type: string
+          description: Service account credential name
+        scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/OAuth2Scope"
+          description: OAuth2 scopes granted to the credential
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+        last_used_at:
+          type: ["string", "null"]
+          format: date-time
+          description: Last use timestamp
+        revoked_at:
+          type: ["string", "null"]
+          format: date-time
+          description: Revocation timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    ListServiceAccountCredentialsInput:
+      type: object
+      required:
+        - service_account_id
+      properties:
+        service_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+        order_by:
+          $ref: "#/components/schemas/ServiceAccountCredentialOrderBy"
+          description: Service account credential order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListServiceAccountCredentialsOutput:
+      type: object
+      required:
+        - service_account_credentials
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        service_account_credentials:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceAccountCredential"
+
+    CreateServiceAccountCredentialInput:
+      type: object
+      required:
+        - service_account_id
+        - name
+        - scopes
+        - expires_at
+      properties:
+        service_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+        name:
+          type: string
+          description: Service account credential name
+        scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/OAuth2Scope"
+          description: OAuth2 scopes granted to the credential
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+
+    CreateServiceAccountCredentialOutput:
+      type: object
+      required:
+        - service_account_credential
+        - token
+      properties:
+        service_account_credential:
+          $ref: "#/components/schemas/ServiceAccountCredential"
+        token:
+          type: string
+          description: Raw credential token shown only once
+
+    RevokeServiceAccountCredentialInput:
+      type: object
+      required:
+        - service_account_id
+        - service_account_credential_id
+      properties:
+        service_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Service account ID
+        service_account_credential_id:
+          $ref: "#/components/schemas/GID"
+          description: Service account credential ID
+
+    RevokeServiceAccountCredentialOutput:
+      type: object
+      required:
+        - service_account_credential
+      properties:
+        service_account_credential:
+          $ref: "#/components/schemas/ServiceAccountCredential"
+
 tools:
   - name: listOrganizations
     title: List Organizations
@@ -19972,3 +20327,111 @@ tools:
       $ref: "#/components/schemas/DeleteCompliancePortalFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteCompliancePortalFrameworkOutput"
+  - name: listServiceAccounts
+    title: List Service Accounts
+    description: List service accounts for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListServiceAccountsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListServiceAccountsOutput"
+  - name: getServiceAccount
+    title: Get Service Account
+    description: Get a service account by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetServiceAccountInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetServiceAccountOutput"
+  - name: createServiceAccount
+    title: Create Service Account
+    description: Create a service account for an organization
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateServiceAccountInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateServiceAccountOutput"
+  - name: updateServiceAccount
+    title: Update Service Account
+    description: Update a service account
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateServiceAccountInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateServiceAccountOutput"
+  - name: disableServiceAccount
+    title: Disable Service Account
+    description: Disable a service account
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DisableServiceAccountInput"
+    outputSchema:
+      $ref: "#/components/schemas/DisableServiceAccountOutput"
+  - name: deleteServiceAccount
+    title: Delete Service Account
+    description: Delete a service account and revoke its credentials
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteServiceAccountInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteServiceAccountOutput"
+  - name: listServiceAccountCredentials
+    title: List Service Account Credentials
+    description: List credentials for a service account
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListServiceAccountCredentialsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListServiceAccountCredentialsOutput"
+  - name: createServiceAccountCredential
+    title: Create Service Account Credential
+    description: Create a credential and return its raw token once
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateServiceAccountCredentialInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateServiceAccountCredentialOutput"
+  - name: revokeServiceAccountCredential
+    title: Revoke Service Account Credential
+    description: Revoke a service account credential
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RevokeServiceAccountCredentialInput"
+    outputSchema:
+      $ref: "#/components/schemas/RevokeServiceAccountCredentialOutput"

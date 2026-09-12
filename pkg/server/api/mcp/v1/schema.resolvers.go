@@ -9665,3 +9665,266 @@ func (r *Resolver) GetTaskActivityTool(ctx context.Context, req *mcp.CallToolReq
 		TaskActivity: types.NewTaskActivity(taskActivity),
 	}, nil
 }
+
+func (r *Resolver) ListServiceAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListServiceAccountsInput) (*mcp.CallToolResult, types.ListServiceAccountsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, iam.ActionServiceAccountList)
+	if err != nil {
+		return nil, types.ListServiceAccountsOutput{}, err
+	}
+
+	orderBy := page.OrderBy[coredata.ServiceAccountOrderField]{
+		Field:     coredata.ServiceAccountOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		orderBy = page.OrderBy[coredata.ServiceAccountOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	accounts, err := r.iamSvc.ServiceAccounts.List(
+		ctx,
+		scope,
+		input.OrganizationID,
+		types.NewCursor(input.Size, input.Cursor, orderBy),
+	)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"list service accounts",
+			"organization not found",
+		)
+		return nil, types.ListServiceAccountsOutput{}, err
+	}
+
+	return nil, types.NewListServiceAccountsOutput(accounts), nil
+}
+
+func (r *Resolver) GetServiceAccountTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetServiceAccountInput) (*mcp.CallToolResult, types.GetServiceAccountOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, iam.ActionServiceAccountGet)
+	if err != nil {
+		return nil, types.GetServiceAccountOutput{}, err
+	}
+
+	account, err := r.iamSvc.ServiceAccounts.Get(ctx, scope, input.ID)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"get service account",
+			"service account not found",
+		)
+		return nil, types.GetServiceAccountOutput{}, err
+	}
+
+	return nil, types.GetServiceAccountOutput{
+		ServiceAccount: types.NewServiceAccount(account),
+	}, nil
+}
+
+func (r *Resolver) CreateServiceAccountTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateServiceAccountInput) (*mcp.CallToolResult, types.CreateServiceAccountOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, iam.ActionServiceAccountCreate)
+	if err != nil {
+		return nil, types.CreateServiceAccountOutput{}, err
+	}
+
+	account, err := r.iamSvc.ServiceAccounts.Create(
+		ctx,
+		scope,
+		iam.CreateServiceAccountRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Scopes:         coredata.OAuth2Scopes(input.Scopes),
+		},
+	)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"create service account",
+			"organization not found",
+		)
+		return nil, types.CreateServiceAccountOutput{}, err
+	}
+
+	return nil, types.CreateServiceAccountOutput{
+		ServiceAccount: types.NewServiceAccount(account),
+	}, nil
+}
+
+func (r *Resolver) UpdateServiceAccountTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateServiceAccountInput) (*mcp.CallToolResult, types.UpdateServiceAccountOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, iam.ActionServiceAccountUpdate)
+	if err != nil {
+		return nil, types.UpdateServiceAccountOutput{}, err
+	}
+
+	var scopes *coredata.OAuth2Scopes
+	if input.Scopes != nil {
+		scopes = new(coredata.OAuth2Scopes(input.Scopes))
+	}
+
+	account, err := r.iamSvc.ServiceAccounts.Update(
+		ctx,
+		scope,
+		input.ID,
+		iam.UpdateServiceAccountRequest{
+			Name:        input.Name,
+			Description: UnwrapOmittable(input.Description),
+			Scopes:      scopes,
+		},
+	)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"update service account",
+			"service account not found",
+		)
+		return nil, types.UpdateServiceAccountOutput{}, err
+	}
+
+	return nil, types.UpdateServiceAccountOutput{
+		ServiceAccount: types.NewServiceAccount(account),
+	}, nil
+}
+
+func (r *Resolver) DisableServiceAccountTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DisableServiceAccountInput) (*mcp.CallToolResult, types.DisableServiceAccountOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, iam.ActionServiceAccountDisable)
+	if err != nil {
+		return nil, types.DisableServiceAccountOutput{}, err
+	}
+
+	account, err := r.iamSvc.ServiceAccounts.Disable(ctx, scope, input.ID)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"disable service account",
+			"service account not found",
+		)
+		return nil, types.DisableServiceAccountOutput{}, err
+	}
+
+	return nil, types.DisableServiceAccountOutput{
+		ServiceAccount: types.NewServiceAccount(account),
+	}, nil
+}
+
+func (r *Resolver) DeleteServiceAccountTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteServiceAccountInput) (*mcp.CallToolResult, types.DeleteServiceAccountOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, iam.ActionServiceAccountDelete)
+	if err != nil {
+		return nil, types.DeleteServiceAccountOutput{}, err
+	}
+
+	if err := r.iamSvc.ServiceAccounts.Delete(ctx, scope, input.ID); err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"delete service account",
+			"service account not found",
+		)
+		return nil, types.DeleteServiceAccountOutput{}, err
+	}
+
+	return nil, types.DeleteServiceAccountOutput{
+		DeletedServiceAccountID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListServiceAccountCredentialsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListServiceAccountCredentialsInput) (*mcp.CallToolResult, types.ListServiceAccountCredentialsOutput, error) {
+	scope, err := r.Authorize(ctx, input.ServiceAccountID, iam.ActionServiceAccountCredentialList)
+	if err != nil {
+		return nil, types.ListServiceAccountCredentialsOutput{}, err
+	}
+
+	orderBy := page.OrderBy[coredata.ServiceAccountCredentialOrderField]{
+		Field:     coredata.ServiceAccountCredentialOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		orderBy = page.OrderBy[coredata.ServiceAccountCredentialOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	credentials, err := r.iamSvc.ServiceAccounts.ListCredentials(
+		ctx,
+		scope,
+		input.ServiceAccountID,
+		types.NewCursor(input.Size, input.Cursor, orderBy),
+	)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"list service account credentials",
+			"service account not found",
+		)
+		return nil, types.ListServiceAccountCredentialsOutput{}, err
+	}
+
+	return nil, types.NewListServiceAccountCredentialsOutput(credentials), nil
+}
+
+func (r *Resolver) CreateServiceAccountCredentialTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateServiceAccountCredentialInput) (*mcp.CallToolResult, types.CreateServiceAccountCredentialOutput, error) {
+	scope, err := r.Authorize(ctx, input.ServiceAccountID, iam.ActionServiceAccountCredentialCreate)
+	if err != nil {
+		return nil, types.CreateServiceAccountCredentialOutput{}, err
+	}
+
+	credential, token, err := r.iamSvc.ServiceAccounts.CreateCredential(
+		ctx,
+		scope,
+		iam.CreateServiceAccountCredentialRequest{
+			ServiceAccountID: input.ServiceAccountID,
+			Name:             input.Name,
+			Scopes:           coredata.OAuth2Scopes(input.Scopes),
+			ExpiresAt:        input.ExpiresAt,
+		},
+	)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"create service account credential",
+			"service account not found",
+		)
+		return nil, types.CreateServiceAccountCredentialOutput{}, err
+	}
+
+	return nil, types.CreateServiceAccountCredentialOutput{
+		ServiceAccountCredential: types.NewServiceAccountCredential(credential),
+		Token:                    token,
+	}, nil
+}
+
+func (r *Resolver) RevokeServiceAccountCredentialTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RevokeServiceAccountCredentialInput) (*mcp.CallToolResult, types.RevokeServiceAccountCredentialOutput, error) {
+	scope, err := r.Authorize(ctx, input.ServiceAccountCredentialID, iam.ActionServiceAccountCredentialRevoke)
+	if err != nil {
+		return nil, types.RevokeServiceAccountCredentialOutput{}, err
+	}
+
+	credential, err := r.iamSvc.ServiceAccounts.RevokeCredential(
+		ctx,
+		scope,
+		input.ServiceAccountID,
+		input.ServiceAccountCredentialID,
+	)
+	if err != nil {
+		err = r.serviceAccountToolError(
+			ctx,
+			err,
+			"revoke service account credential",
+			"service account credential not found",
+		)
+		return nil, types.RevokeServiceAccountCredentialOutput{}, err
+	}
+
+	return nil, types.RevokeServiceAccountCredentialOutput{
+		ServiceAccountCredential: types.NewServiceAccountCredential(credential),
+	}, nil
+}
