@@ -223,9 +223,6 @@ func TestNewCmdServiceAccount_DestructiveCommandsRequireConfirmation(t *testing.
 	}
 
 	for name, args := range testCases {
-		name := name
-		args := args
-
 		t.Run(
 			name,
 			func(t *testing.T) {
