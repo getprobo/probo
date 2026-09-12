@@ -238,6 +238,13 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		WithSID("full-scim-bridge-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
+	policy.Allow(
+		"iam:service-account:*",
+		"iam:service-account-credential:*",
+	).
+		WithSID("full-service-account-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
 	// Full access to audit log entries (scoped to own organization)
 	policy.Allow(
 		ActionAuditLogEntryGet,

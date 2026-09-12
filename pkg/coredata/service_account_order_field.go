@@ -23,60 +23,54 @@ package coredata
 import (
 	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
-type AuditLogActorType string
+type ServiceAccountOrderField string
 
 const (
-	AuditLogActorTypeUser           AuditLogActorType = "USER"
-	AuditLogActorTypeAPIKey         AuditLogActorType = "API_KEY"
-	AuditLogActorTypeServiceAccount AuditLogActorType = "SERVICE_ACCOUNT"
-	AuditLogActorTypeSystem         AuditLogActorType = "SYSTEM"
+	ServiceAccountOrderFieldCreatedAt ServiceAccountOrderField = "CREATED_AT"
+	ServiceAccountOrderFieldName      ServiceAccountOrderField = "NAME"
 )
 
 var (
-	_ fmt.Stringer             = AuditLogActorType("")
-	_ encoding.TextMarshaler   = AuditLogActorType("")
-	_ encoding.TextUnmarshaler = (*AuditLogActorType)(nil)
+	_ page.OrderField          = ServiceAccountOrderField("")
+	_ fmt.Stringer             = ServiceAccountOrderField("")
+	_ encoding.TextMarshaler   = ServiceAccountOrderField("")
+	_ encoding.TextUnmarshaler = (*ServiceAccountOrderField)(nil)
 )
 
-func AuditLogActorTypes() []AuditLogActorType {
-	return []AuditLogActorType{
-		AuditLogActorTypeUser,
-		AuditLogActorTypeAPIKey,
-		AuditLogActorTypeServiceAccount,
-		AuditLogActorTypeSystem,
+func ServiceAccountOrderFields() []ServiceAccountOrderField {
+	return []ServiceAccountOrderField{
+		ServiceAccountOrderFieldCreatedAt,
+		ServiceAccountOrderFieldName,
 	}
 }
 
-func (v AuditLogActorType) IsValid() bool {
-	switch v {
-	case
-		AuditLogActorTypeUser,
-		AuditLogActorTypeAPIKey,
-		AuditLogActorTypeServiceAccount,
-		AuditLogActorTypeSystem:
-		return true
-	}
-
-	return false
+func (v ServiceAccountOrderField) IsValid() bool {
+	return isValidOrderField(v, ServiceAccountOrderFields())
 }
 
-func (v AuditLogActorType) String() string {
+func (v ServiceAccountOrderField) String() string {
 	return string(v)
 }
 
-func (v AuditLogActorType) MarshalText() ([]byte, error) {
+func (v ServiceAccountOrderField) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *AuditLogActorType) UnmarshalText(text []byte) error {
-	val := AuditLogActorType(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AuditLogActorType value: %q", string(text))
+func (v *ServiceAccountOrderField) UnmarshalText(text []byte) error {
+	return unmarshalOrderField(v, text, ServiceAccountOrderFields())
+}
+
+func (f ServiceAccountOrderField) Column() string {
+	switch f {
+	case ServiceAccountOrderFieldCreatedAt:
+		return "created_at"
+	case ServiceAccountOrderFieldName:
+		return "name"
 	}
 
-	*v = val
-
-	return nil
+	panic(fmt.Sprintf("unsupported order by: %s", f))
 }

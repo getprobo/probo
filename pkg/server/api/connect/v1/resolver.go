@@ -94,6 +94,7 @@ func NewMux(
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
+	serviceAccountMiddleware := authn.NewServiceAccountMiddleware(svc)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
 	graphqlHandler := NewGraphQLHandler(
 		svc,
@@ -111,6 +112,7 @@ func NewMux(
 		sessionMiddleware,
 		apiKeyMiddleware,
 		oauth2Middleware,
+		serviceAccountMiddleware,
 	)
 
 	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost)

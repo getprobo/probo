@@ -18,51 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package authn
+package iam
 
 import (
-	"net/http"
+	"context"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/v2/gqlerror"
-	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/bearertoken"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				ctx := r.Context()
+type serviceAccountCredentialContextKey struct{}
 
-				if PrincipalIDFromContext(ctx) == gid.Nil {
-					if bearertoken.IsAttempt(r.Header.Get("Authorization")) {
-						bearertoken.SetBearerInvalidToken(w, baseURL)
-					} else {
-						bearertoken.SetBearerUnauthenticated(w, baseURL)
-					}
+func ContextWithServiceAccountCredential(
+	ctx context.Context,
+	credential *coredata.ServiceAccountCredential,
+) context.Context {
+	return context.WithValue(ctx, serviceAccountCredentialContextKey{}, credential)
+}
 
-					httpserver.RenderJSON(
-						w,
-						http.StatusUnauthorized,
-						&graphql.Response{
-							Errors: gqlerror.List{
-								gqlutils.Unauthenticatedf(
-									r.Context(),
-									"authentication is required to access this resource",
-								),
-							},
-						},
-					)
+func ServiceAccountCredentialFromContext(ctx context.Context) (*coredata.ServiceAccountCredential, bool) {
+	credential, ok := ctx.Value(serviceAccountCredentialContextKey{}).(*coredata.ServiceAccountCredential)
 
-					return
-				}
-
-				next.ServeHTTP(w, r)
-			},
-		)
-	}
+	return credential, ok
 }

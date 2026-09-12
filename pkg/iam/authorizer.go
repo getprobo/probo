@@ -97,6 +97,23 @@ type Authorizer struct {
 	logger        *log.Logger
 }
 
+var serviceAccountPrincipalPolicy = policy.NewPolicy(
+	"iam:service-account-principal",
+	"Service Account Principal",
+	policy.Deny(
+		"iam:service-account:*",
+		"iam:service-account-credential:*",
+	).WithSID("deny-service-account-management"),
+	policy.Allow("*").
+		WithSID("allow-scoped-organization-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+)
+
+func isSupportedPrincipalType(entityType uint16) bool {
+	return entityType == coredata.IdentityEntityType ||
+		entityType == coredata.ServiceAccountEntityType
+}
+
 // NewAuthorizer creates a new Authorizer instance.
 func NewAuthorizer(pgClient *pg.Client, logger *log.Logger, scopeRegistry *oauth2scope.Registry) *Authorizer {
 	return &Authorizer{
@@ -118,6 +135,23 @@ func (a *Authorizer) checkOAuth2Scope(
 	principal gid.GID,
 	action Action,
 ) error {
+	if principal.EntityType() == coredata.ServiceAccountEntityType {
+		credential, ok := ServiceAccountCredentialFromContext(ctx)
+		if !ok ||
+			credential.ServiceAccountID != principal ||
+			a.scopeRegistry == nil ||
+			!a.scopeRegistry.Allows(credential.Scopes, action) {
+			var scopes []coredata.OAuth2Scope
+			if a.scopeRegistry != nil {
+				scopes = a.scopeRegistry.ScopesForAction(action)
+			}
+
+			return NewInsufficientOAuth2ScopeError(principal, scopes...)
+		}
+
+		return nil
+	}
+
 	accessToken, ok := oauth2.AccessTokenFromContext(ctx)
 	if !ok {
 		return nil
@@ -154,7 +188,7 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) (*co
 // AuthorizeBatch checks whether the principal is allowed to perform the action
 // on all provided resources.
 func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchParams) (*coredata.Scope, error) {
-	if params.Principal.EntityType() != coredata.IdentityEntityType {
+	if !isSupportedPrincipalType(params.Principal.EntityType()) {
 		return nil, NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
@@ -230,7 +264,7 @@ func (a *Authorizer) AuthorizeMulti(
 	ctx context.Context,
 	params AuthorizeMultiParams,
 ) (*coredata.Scope, []error, error) {
-	if params.Principal.EntityType() != coredata.IdentityEntityType {
+	if !isSupportedPrincipalType(params.Principal.EntityType()) {
 		return nil, nil, NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
@@ -409,45 +443,42 @@ func (a *Authorizer) evaluateMultiInTx(
 		}
 	}
 
-	membership, err := a.loadMembership(ctx, tx, params.Principal, resourceOrgID)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("cannot load memberships for principal: %w", err)
-	}
+	var (
+		assumptionErr        error
+		role                 string
+		scopedPrincipalAttrs policy.Attributes
+	)
 
-	// The assumption check is a property of (principal, membership, session),
-	// so it only runs once even though SkipAssumptionCheck is per-item.
-	// On failure, ErrAssumptionRequired is recorded only against items that
-	// did not opt out.
-	var assumptionErr error
-
-	if requiresAssumptionCheck {
-		err := a.checkAssumption(
-			ctx,
-			tx,
-			params.Principal,
-			params.Session,
-			membership,
-			false,
-		)
+	if params.Principal.EntityType() == coredata.IdentityEntityType {
+		membership, err := a.loadMembership(ctx, tx, params.Principal, resourceOrgID)
 		if err != nil {
-			if _, ok := errors.AsType[*ErrAssumptionRequired](err); !ok {
-				return nil, nil, nil, err
-			}
-
-			assumptionErr = err
+			return nil, nil, nil, fmt.Errorf("cannot load memberships for principal: %w", err)
 		}
-	}
 
-	var role string
-	if membership != nil {
-		role = membership.Role.String()
-	}
+		if requiresAssumptionCheck {
+			err := a.checkAssumption(
+				ctx,
+				tx,
+				params.Principal,
+				params.Session,
+				membership,
+				false,
+			)
+			if err != nil {
+				if _, ok := errors.AsType[*ErrAssumptionRequired](err); !ok {
+					return nil, nil, nil, err
+				}
 
-	var scopedPrincipalAttrs policy.Attributes
-	if membership != nil && role != "" {
-		scopedPrincipalAttrs = policy.Attributes{
-			"organization_id": membership.OrganizationID.String(),
-			"role":            membership.Role.String(),
+				assumptionErr = err
+			}
+		}
+
+		if membership != nil {
+			role = membership.Role.String()
+			scopedPrincipalAttrs = policy.Attributes{
+				"organization_id": membership.OrganizationID.String(),
+				"role":            role,
+			}
 		}
 	}
 
@@ -460,7 +491,7 @@ func (a *Authorizer) evaluateMultiInTx(
 		principalAttrs["session_id"] = params.Session.String()
 	}
 
-	policies := a.buildPoliciesForRole(role)
+	policies := a.buildPoliciesForPrincipal(params.Principal, role)
 
 	decisions := make([]error, len(params.Items))
 	itemAttrs := make([]policy.Attributes, len(params.Items))
@@ -747,6 +778,14 @@ func (a *Authorizer) buildPrincipalAttributes(
 	return attrs, nil
 }
 
+func (a *Authorizer) buildPoliciesForPrincipal(principal gid.GID, role string) []*policy.Policy {
+	if principal.EntityType() == coredata.ServiceAccountEntityType {
+		return []*policy.Policy{serviceAccountPrincipalPolicy}
+	}
+
+	return a.buildPoliciesForRole(role)
+}
+
 func (a *Authorizer) buildPoliciesForRole(role string) []*policy.Policy {
 	policies := append([]*policy.Policy{}, a.policySet.IdentityScopedPolicies...)
 
@@ -839,7 +878,9 @@ func (a *Authorizer) buildAuditLogEntry(
 	}
 
 	var actorType coredata.AuditLogActorType
-	if params.Session != nil {
+	if params.Principal.EntityType() == coredata.ServiceAccountEntityType {
+		actorType = coredata.AuditLogActorTypeServiceAccount
+	} else if params.Session != nil {
 		actorType = coredata.AuditLogActorTypeUser
 	} else {
 		actorType = coredata.AuditLogActorTypeAPIKey

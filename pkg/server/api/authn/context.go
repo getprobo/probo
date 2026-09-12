@@ -24,6 +24,7 @@ import (
 	"context"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -31,10 +32,11 @@ type (
 )
 
 var (
-	identityContextKey  = &ctxKey{name: "identity"}
-	sessionContextKey   = &ctxKey{name: "session"}
-	apiKeyContextKey    = &ctxKey{name: "api_key"}
-	compliancePortalKey = &ctxKey{name: "compliance_portal"}
+	identityContextKey       = &ctxKey{name: "identity"}
+	serviceAccountContextKey = &ctxKey{name: "service_account"}
+	sessionContextKey        = &ctxKey{name: "session"}
+	apiKeyContextKey         = &ctxKey{name: "api_key"}
+	compliancePortalKey      = &ctxKey{name: "compliance_portal"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {
@@ -53,6 +55,27 @@ func IdentityFromContext(ctx context.Context) *coredata.Identity {
 
 func ContextWithIdentity(ctx context.Context, identity *coredata.Identity) context.Context {
 	return context.WithValue(ctx, identityContextKey, identity)
+}
+
+func ServiceAccountFromContext(ctx context.Context) *coredata.ServiceAccount {
+	serviceAccount, _ := ctx.Value(serviceAccountContextKey).(*coredata.ServiceAccount)
+	return serviceAccount
+}
+
+func ContextWithServiceAccount(ctx context.Context, serviceAccount *coredata.ServiceAccount) context.Context {
+	return context.WithValue(ctx, serviceAccountContextKey, serviceAccount)
+}
+
+func PrincipalIDFromContext(ctx context.Context) gid.GID {
+	if identity := IdentityFromContext(ctx); identity != nil {
+		return identity.ID
+	}
+
+	if serviceAccount := ServiceAccountFromContext(ctx); serviceAccount != nil {
+		return serviceAccount.ID
+	}
+
+	return gid.Nil
 }
 
 func APIKeyFromContext(ctx context.Context) *coredata.PersonalAPIKey {

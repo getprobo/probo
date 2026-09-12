@@ -23,45 +23,46 @@ package authn
 import (
 	"net/http"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/baseurl"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/iam"
 )
 
-func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Handler) http.Handler {
+func NewServiceAccountMiddleware(svc *iam.Service) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
-
-				if PrincipalIDFromContext(ctx) == gid.Nil {
-					if bearertoken.IsAttempt(r.Header.Get("Authorization")) {
-						bearertoken.SetBearerInvalidToken(w, baseURL)
-					} else {
-						bearertoken.SetBearerUnauthenticated(w, baseURL)
-					}
-
-					httpserver.RenderJSON(
-						w,
-						http.StatusUnauthorized,
-						&graphql.Response{
-							Errors: gqlerror.List{
-								gqlutils.Unauthenticatedf(
-									r.Context(),
-									"authentication is required to access this resource",
-								),
-							},
-						},
-					)
-
+				if PrincipalIDFromContext(ctx) != gid.Nil {
+					next.ServeHTTP(w, r)
 					return
 				}
 
-				next.ServeHTTP(w, r)
+				token, err := bearertoken.Parse(r.Header.Get("Authorization"))
+				if err != nil {
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				account, credential, err := svc.ServiceAccounts.Authenticate(ctx, token)
+				if err != nil {
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				ctx = ContextWithServiceAccount(ctx, account)
+				ctx = iam.ContextWithServiceAccountCredential(ctx, credential)
+
+				httpserver.LoggerFromContext(ctx).InfoCtx(
+					ctx,
+					"service account authenticated",
+					log.String("service_account_id", account.ID.String()),
+					log.String("credential_id", credential.ID.String()),
+				)
+
+				next.ServeHTTP(w, r.WithContext(ctx))
 			},
 		)
 	}

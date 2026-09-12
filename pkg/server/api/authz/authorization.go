@@ -87,11 +87,10 @@ func NewAuthorizeFunc(
 		action iam.Action,
 		options ...AuthorizeFuncOption,
 	) (*coredata.Scope, error) {
-		identity := authn.IdentityFromContext(ctx)
 		session := authn.SessionFromContext(ctx)
 
 		params := iam.AuthorizeParams{
-			Principal:          identity.ID,
+			Principal:          authn.PrincipalIDFromContext(ctx),
 			Resource:           objectID,
 			Action:             action,
 			ResourceAttributes: make(map[string]string),
@@ -141,11 +140,10 @@ func NewBatchAuthorizeFunc(
 		objectIDs []gid.GID,
 		options ...BatchAuthorizeFuncOption,
 	) (*coredata.Scope, error) {
-		identity := authn.IdentityFromContext(ctx)
 		session := authn.SessionFromContext(ctx)
 
 		params := iam.AuthorizeBatchParams{
-			Principal:          identity.ID,
+			Principal:          authn.PrincipalIDFromContext(ctx),
 			Action:             action,
 			Resources:          objectIDs,
 			ResourceAttributes: make(map[string]string),

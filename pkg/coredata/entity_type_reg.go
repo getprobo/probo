@@ -163,6 +163,8 @@ const (
 	CommonGVLVendorEntityType                        uint16 = 131
 	TaskCommentEntityType                            uint16 = 132
 	TaskActivityEntityType                           uint16 = 133
+	ServiceAccountEntityType                         uint16 = 134
+	ServiceAccountCredentialEntityType               uint16 = 135
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -415,6 +417,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TaskComment{ID: id}, true
 	case TaskActivityEntityType:
 		return &TaskActivity{ID: id}, true
+	case ServiceAccountEntityType:
+		return &ServiceAccount{ID: id}, true
+	case ServiceAccountCredentialEntityType:
+		return &ServiceAccountCredential{ID: id}, true
 	default:
 		return nil, false
 	}

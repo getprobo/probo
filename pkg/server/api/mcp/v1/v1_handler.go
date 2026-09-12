@@ -114,6 +114,7 @@ func NewMux(
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
+	r.Use(authn.NewServiceAccountMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 	r.Handle("/", handler)
 

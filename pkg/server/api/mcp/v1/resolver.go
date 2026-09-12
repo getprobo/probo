@@ -124,10 +124,8 @@ func omittableMarkdownToProseMirrorJSON(field **string) (**string, error) {
 }
 
 func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action, opts ...authz.AuthorizeFuncOption) (*coredata.Scope, error) {
-	identity := authn.IdentityFromContext(ctx)
-
 	params := iam.AuthorizeParams{
-		Principal:          identity.ID,
+		Principal:          authn.PrincipalIDFromContext(ctx),
 		Resource:           entityID,
 		Action:             action,
 		ResourceAttributes: make(map[string]string),
@@ -164,12 +162,10 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 }
 
 func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, action iam.Action) (*coredata.Scope, error) {
-	identity := authn.IdentityFromContext(ctx)
-
 	scope, err := r.iamSvc.Authorizer.AuthorizeBatch(
 		ctx,
 		iam.AuthorizeBatchParams{
-			Principal: identity.ID,
+			Principal: authn.PrincipalIDFromContext(ctx),
 			Resources: entityIDs,
 			Action:    action,
 		},
