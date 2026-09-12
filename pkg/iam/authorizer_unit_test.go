@@ -284,6 +284,7 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 	tenantID := gid.NewTenantID()
 	orgID := gid.New(tenantID, coredata.OrganizationEntityType)
 	principalID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
+	serviceAccountID := gid.New(tenantID, coredata.ServiceAccountEntityType)
 	resourceID := gid.New(tenantID, coredata.FrameworkEntityType)
 	sessionID := gid.New(gid.NilTenant, coredata.SessionEntityType)
 
@@ -355,6 +356,18 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 				"organization_id": orgID.String(),
 			},
 			wantActorType: coredata.AuditLogActorTypeAPIKey,
+		},
+		{
+			name: "service account principal sets service account actor type",
+			params: AuthorizeParams{
+				Principal: serviceAccountID,
+				Resource:  resourceID,
+				Action:    "core:framework:get",
+			},
+			resourceAttrs: policy.Attributes{
+				"organization_id": orgID.String(),
+			},
+			wantActorType: coredata.AuditLogActorTypeServiceAccount,
 		},
 	}
 

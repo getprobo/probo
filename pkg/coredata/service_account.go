@@ -223,6 +223,37 @@ WHERE %s
 	return nil
 }
 
+func (ss *ServiceAccounts) LoadByIDs(ctx context.Context, conn pg.Querier, ids []gid.GID) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    name,
+    description,
+    scopes,
+    disabled_at,
+    deleted_at,
+    created_at,
+    updated_at
+FROM iam_service_accounts
+WHERE id = ANY(@ids)
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"ids": ids})
+	if err != nil {
+		return fmt.Errorf("cannot query service accounts by IDs: %w", err)
+	}
+
+	accounts, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ServiceAccount])
+	if err != nil {
+		return fmt.Errorf("cannot collect service accounts by IDs: %w", err)
+	}
+
+	*ss = accounts
+
+	return nil
+}
+
 func (ss *ServiceAccounts) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
