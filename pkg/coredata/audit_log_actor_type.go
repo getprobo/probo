@@ -28,9 +28,10 @@ import (
 type AuditLogActorType string
 
 const (
-	AuditLogActorTypeUser   AuditLogActorType = "USER"
-	AuditLogActorTypeAPIKey AuditLogActorType = "API_KEY"
-	AuditLogActorTypeSystem AuditLogActorType = "SYSTEM"
+	AuditLogActorTypeUser           AuditLogActorType = "USER"
+	AuditLogActorTypeAPIKey         AuditLogActorType = "API_KEY"
+	AuditLogActorTypeServiceAccount AuditLogActorType = "SERVICE_ACCOUNT"
+	AuditLogActorTypeSystem         AuditLogActorType = "SYSTEM"
 )
 
 var (
@@ -43,6 +44,7 @@ func AuditLogActorTypes() []AuditLogActorType {
 	return []AuditLogActorType{
 		AuditLogActorTypeUser,
 		AuditLogActorTypeAPIKey,
+		AuditLogActorTypeServiceAccount,
 		AuditLogActorTypeSystem,
 	}
 }
@@ -52,6 +54,7 @@ func (v AuditLogActorType) IsValid() bool {
 	case
 		AuditLogActorTypeUser,
 		AuditLogActorTypeAPIKey,
+		AuditLogActorTypeServiceAccount,
 		AuditLogActorTypeSystem:
 		return true
 	}

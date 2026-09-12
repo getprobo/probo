@@ -34,6 +34,14 @@ type Organization implements Node {
     filter: AuditLogEntryFilter
   ): AuditLogEntryConnection! @goField(forceResolver: true)
 
+  serviceAccounts(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ServiceAccountOrder
+  ): ServiceAccountConnection! @goField(forceResolver: true)
+
   viewer: Profile @goField(forceResolver: true)
 
   permission(action: String!, attributes: Map): Boolean!

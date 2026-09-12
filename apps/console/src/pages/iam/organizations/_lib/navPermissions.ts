@@ -31,6 +31,7 @@ export const navPermissionsFragment = graphql`
     canListRiskAnalyses: permission(action: "risk-management:risk-analysis:list")
     canListFrameworks: permission(action: "core:framework:list")
     canListMembers: permission(action: "iam:membership:list")
+    canListServiceAccounts: permission(action: "iam:service-account:list")
     canListThirdParties: permission(action: "core:thirdParty:list")
     canListDocuments: permission(action: "core:document:list")
     canListAssets: permission(action: "core:asset:list")

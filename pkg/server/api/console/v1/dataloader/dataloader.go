@@ -770,9 +770,9 @@ func (f *batchFetcher) fetchAuthorizes(
 	ctx context.Context,
 	keys []AuthorizeKey,
 ) (map[AuthorizeKey]AuthorizeResult, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, fmt.Errorf("cannot authorize without an identity in context")
+	principalID := authn.PrincipalIDFromContext(ctx)
+	if principalID == gid.Nil {
+		return nil, fmt.Errorf("cannot authorize without a principal in context")
 	}
 
 	session := authn.SessionFromContext(ctx)
@@ -794,7 +794,7 @@ func (f *batchFetcher) fetchAuthorizes(
 	}
 
 	multiParams := iam.AuthorizeMultiParams{
-		Principal: identity.ID,
+		Principal: principalID,
 		Items:     items,
 	}
 	if session != nil {
@@ -803,7 +803,7 @@ func (f *batchFetcher) fetchAuthorizes(
 
 	scope, decisions, err := f.iam.Authorizer.AuthorizeMulti(ctx, multiParams)
 	if err != nil {
-		return f.fetchAuthorizesIndividually(ctx, keys, identity.ID, session)
+		return f.fetchAuthorizesIndividually(ctx, keys, principalID, session)
 	}
 
 	result := make(map[AuthorizeKey]AuthorizeResult, len(keys))

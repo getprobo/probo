@@ -56,6 +56,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/risk"
 	riskanalysis "go.probo.inc/probo/pkg/cmd/risk-analysis"
 	"go.probo.inc/probo/pkg/cmd/scim"
+	serviceaccount "go.probo.inc/probo/pkg/cmd/service-account"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/task"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt"
@@ -134,6 +135,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(riskanalysis.NewCmdRiskAnalysis(f))
 	cmd.AddCommand(resourcealias.NewCmdResourceAlias(f))
 	cmd.AddCommand(scim.NewCmdScim(f))
+	cmd.AddCommand(serviceaccount.NewCmdServiceAccount(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))
 	cmd.AddCommand(treatmentplan.NewCmdTreatmentPlan(f))
