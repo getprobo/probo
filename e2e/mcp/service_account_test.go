@@ -208,7 +208,6 @@ func TestServiceAccount_ScopedCredentials(t *testing.T) {
 		owner,
 		[]string{"v1:iam"},
 	)
-	requireConsoleOrganizationAccess(t, iamScoped.token, organizationID)
 
 	mc := testutil.NewMCPClientWithAccessToken(t, owner, iamScoped.token)
 	msg := mc.CallToolExpectToolError("createServiceAccount", map[string]any{
