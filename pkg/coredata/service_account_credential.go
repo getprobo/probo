@@ -252,6 +252,31 @@ WHERE %s
 	return nil
 }
 
+func (cs *ServiceAccountCredentials) CountByServiceAccountID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	serviceAccountID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM iam_service_account_credentials
+WHERE %s
+    AND service_account_id = @service_account_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"service_account_id": serviceAccountID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count service account credentials: %w", err)
+	}
+
+	return count, nil
+}
+
 func (c *ServiceAccountCredential) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
 INSERT INTO iam_service_account_credentials (

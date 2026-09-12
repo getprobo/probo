@@ -104,6 +104,9 @@ var serviceAccountPrincipalPolicy = policy.NewPolicy(
 		"iam:service-account:*",
 		"iam:service-account-credential:*",
 	).WithSID("deny-service-account-management"),
+	policy.Deny("*").
+		WithSID("deny-disabled-service-account").
+		When(policy.Equals("principal.disabled", "true")),
 	policy.Allow("*").
 		WithSID("allow-scoped-organization-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),

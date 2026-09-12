@@ -67,10 +67,9 @@ func (s *ServiceAccount) AuthorizationAttributes(
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
 	q := `
-SELECT id, organization_id
+SELECT id, organization_id, disabled_at IS NOT NULL
 FROM iam_service_accounts
 WHERE id = ANY(@resource_ids::text[])
-    AND disabled_at IS NULL
     AND deleted_at IS NULL
 `
 
@@ -82,12 +81,19 @@ WHERE id = ANY(@resource_ids::text[])
 
 	attrsByID := make(policy.AttributesByID, len(resourceIDs))
 	for rows.Next() {
-		var id, organizationID gid.GID
-		if err := rows.Scan(&id, &organizationID); err != nil {
+		var (
+			id             gid.GID
+			organizationID gid.GID
+			disabled       bool
+		)
+		if err := rows.Scan(&id, &organizationID, &disabled); err != nil {
 			return nil, fmt.Errorf("cannot scan service account authorization attributes: %w", err)
 		}
 
-		attrsByID[id] = policy.Attributes{"organization_id": organizationID.String()}
+		attrsByID[id] = policy.Attributes{
+			"disabled":        fmt.Sprintf("%t", disabled),
+			"organization_id": organizationID.String(),
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate service account authorization attributes: %w", err)
@@ -215,6 +221,32 @@ WHERE %s
 	*ss = accounts
 
 	return nil
+}
+
+func (ss *ServiceAccounts) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM iam_service_accounts
+WHERE %s
+    AND organization_id = @organization_id
+    AND deleted_at IS NULL
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count service accounts: %w", err)
+	}
+
+	return count, nil
 }
 
 func (s *ServiceAccount) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {

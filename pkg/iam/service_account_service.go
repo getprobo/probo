@@ -67,6 +67,11 @@ const (
 	serviceAccountTokenByteLength      = 32
 )
 
+var (
+	ErrInvalidServiceAccountInput = errors.New("invalid service account input")
+	ErrServiceAccountDisabled     = errors.New("service account is disabled")
+)
+
 func NewServiceAccountService(svc *Service) *ServiceAccountService {
 	return &ServiceAccountService{Service: svc}
 }
@@ -116,13 +121,13 @@ func (s *ServiceAccountService) Create(
 ) (*coredata.ServiceAccount, error) {
 	req.Name = strings.TrimSpace(req.Name)
 	if err := validateServiceAccountName(req.Name); err != nil {
-		return nil, fmt.Errorf("invalid service account: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 	}
 	if err := validateServiceAccountDescription(req.Description); err != nil {
-		return nil, fmt.Errorf("invalid service account: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 	}
 	if err := s.validateScopes(req.Scopes); err != nil {
-		return nil, fmt.Errorf("invalid service account: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 	}
 
 	now := time.Now()
@@ -202,6 +207,31 @@ func (s *ServiceAccountService) List(
 	return page.NewPage(accounts, cursor), nil
 }
 
+func (s *ServiceAccountService) Count(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	var count int
+	if err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			accounts := coredata.ServiceAccounts{}
+			var err error
+			count, err = accounts.CountByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot count service accounts: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *ServiceAccountService) Update(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -212,17 +242,17 @@ func (s *ServiceAccountService) Update(
 		trimmed := strings.TrimSpace(*req.Name)
 		req.Name = &trimmed
 		if err := validateServiceAccountName(trimmed); err != nil {
-			return nil, fmt.Errorf("invalid service account: %w", err)
+			return nil, fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 		}
 	}
 	if req.Description != nil {
 		if err := validateServiceAccountDescription(*req.Description); err != nil {
-			return nil, fmt.Errorf("invalid service account: %w", err)
+			return nil, fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 		}
 	}
 	if req.Scopes != nil {
 		if err := s.validateScopes(*req.Scopes); err != nil {
-			return nil, fmt.Errorf("invalid service account: %w", err)
+			return nil, fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 		}
 	}
 
@@ -340,13 +370,13 @@ func (s *ServiceAccountService) CreateCredential(
 ) (*coredata.ServiceAccountCredential, string, error) {
 	req.Name = strings.TrimSpace(req.Name)
 	if err := validateServiceAccountName(req.Name); err != nil {
-		return nil, "", fmt.Errorf("invalid service account credential: %w", err)
+		return nil, "", fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 	}
 	if !req.ExpiresAt.After(time.Now()) {
-		return nil, "", fmt.Errorf("invalid service account credential: expires_at must be in the future")
+		return nil, "", fmt.Errorf("%w: expires_at must be in the future", ErrInvalidServiceAccountInput)
 	}
 	if err := s.validateScopes(req.Scopes); err != nil {
-		return nil, "", fmt.Errorf("invalid service account credential: %w", err)
+		return nil, "", fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 	}
 
 	rawToken, err := cryptorand.HexString(serviceAccountTokenByteLength)
@@ -363,10 +393,10 @@ func (s *ServiceAccountService) CreateCredential(
 				return fmt.Errorf("cannot load service account: %w", err)
 			}
 			if account.DisabledAt != nil {
-				return fmt.Errorf("service account is disabled")
+				return ErrServiceAccountDisabled
 			}
 			if err := validateServiceAccountCredentialScopes(account.Scopes, req.Scopes); err != nil {
-				return fmt.Errorf("cannot validate service account credential scopes: %w", err)
+				return fmt.Errorf("%w: %w", ErrInvalidServiceAccountInput, err)
 			}
 
 			now := time.Now()
@@ -422,6 +452,53 @@ func (s *ServiceAccountService) ListCredentials(
 	}
 
 	return page.NewPage(credentials, cursor), nil
+}
+
+func (s *ServiceAccountService) GetCredential(
+	ctx context.Context,
+	scope coredata.Scoper,
+	id gid.GID,
+) (*coredata.ServiceAccountCredential, error) {
+	credential := &coredata.ServiceAccountCredential{}
+	if err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := credential.LoadByID(ctx, conn, scope, id); err != nil {
+				return fmt.Errorf("cannot load service account credential: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return credential, nil
+}
+
+func (s *ServiceAccountService) CountCredentials(
+	ctx context.Context,
+	scope coredata.Scoper,
+	serviceAccountID gid.GID,
+) (int, error) {
+	var count int
+	if err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			credentials := coredata.ServiceAccountCredentials{}
+			var err error
+			count, err = credentials.CountByServiceAccountID(ctx, conn, scope, serviceAccountID)
+			if err != nil {
+				return fmt.Errorf("cannot count service account credentials: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s *ServiceAccountService) RevokeCredential(
