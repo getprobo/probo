@@ -215,12 +215,12 @@ func TestServiceAccount_ScopedCredentials(t *testing.T) {
 		"name":            factory.SafeName("Nested service account"),
 		"scopes":          []string{"v1:iam"},
 	})
-	assert.Contains(t, strings.ToLower(msg), "insufficient permissions")
+	assert.Contains(t, strings.ToLower(msg), "permission denied")
 
 	msg = mc.CallToolExpectToolError("disableServiceAccount", map[string]any{
 		"id": managedTarget.accountID,
 	})
-	assert.Contains(t, strings.ToLower(msg), "insufficient permissions")
+	assert.Contains(t, strings.ToLower(msg), "permission denied")
 	requireConsoleOrganizationAccess(t, managedTarget.token, organizationID)
 
 	disableServiceAccount(t, owner, iamScoped.accountID)
