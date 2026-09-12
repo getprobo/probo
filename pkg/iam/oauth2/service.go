@@ -2158,7 +2158,7 @@ func (s *Service) CreateManualAccessToken(
 		return "", nil, NewError(ErrInvalidScope, WithDescription(err.Error()))
 	}
 
-	tokenValue := rand.MustHexString(tokenByteLength)
+	tokenValue := newManualAccessToken(s.baseURL)
 
 	accessToken := &coredata.OAuth2AccessToken{
 		ID:          gid.New(req.IdentityID.TenantID(), coredata.OAuth2AccessTokenEntityType),
@@ -2186,4 +2186,70 @@ func (s *Service) CreateManualAccessToken(
 	}
 
 	return tokenValue, accessToken, nil
+}
+
+func (s *Service) SecretScanningTokenType() string {
+	_, tokenType := cloudManualAccessTokenFormat(s.baseURL)
+
+	return tokenType
+}
+
+func (s *Service) RevokeLeakedManualAccessToken(ctx context.Context, tokenValue string) (bool, error) {
+	if !isValidManualAccessToken(s.baseURL, tokenValue) {
+		return false, nil
+	}
+
+	var revoked bool
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			accessToken := &coredata.OAuth2AccessToken{}
+			if err := accessToken.LoadByHashedValueForUpdate(ctx, tx, hash.SHA256String(tokenValue)); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load leaked oauth2 access token: %w", err)
+			}
+
+			if accessToken.ClientID != nil {
+				return nil
+			}
+
+			identity := &coredata.Identity{}
+			if err := identity.LoadByID(ctx, tx, accessToken.IdentityID); err != nil {
+				return fmt.Errorf("cannot load leaked token identity: %w", err)
+			}
+
+			if err := accessToken.Delete(ctx, tx); err != nil {
+				return fmt.Errorf("cannot revoke leaked oauth2 access token: %w", err)
+			}
+
+			textBody := fmt.Sprintf(
+				"We revoked your Probo API token %q because GitHub detected it in a public location. Create a replacement token before using the API again.",
+				accessToken.Name,
+			)
+			email := coredata.NewEmail(
+				identity.FullName,
+				identity.EmailAddress,
+				"Your Probo API token was revoked",
+				textBody,
+				nil,
+				nil,
+			)
+			if err := email.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot queue leaked token notification: %w", err)
+			}
+
+			revoked = true
+
+			return nil
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return revoked, nil
 }
