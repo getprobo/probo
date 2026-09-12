@@ -38,7 +38,7 @@ import (
 	"go.gearno.de/kit/log"
 )
 
-const testTokenType = "probo_cloud_api_token_us"
+const testTokenType = "probo_api_token"
 
 type (
 	staticKeyProvider struct {
@@ -70,14 +70,14 @@ func (r *recordingRevoker) RevokeLeakedManualAccessToken(_ context.Context, toke
 func TestHandler_AcceptsSignedAlerts(t *testing.T) {
 	t.Parallel()
 
-	const body = `[{"token":"prb_a1u_example","type":"probo_cloud_api_token_us","url":"https://github.com/example/repo","source":"content"}]`
+	const body = `[{"token":"prb_a1_example","type":"probo_api_token","url":"https://github.com/example/repo","source":"content"}]`
 
 	privateKey := newTestPrivateKey(t)
 	revoker := &recordingRevoker{tokenType: testTokenType}
 	response := serveAlert(t, body, privateKey, revoker)
 
 	assert.Equal(t, http.StatusOK, response.Code)
-	assert.Equal(t, []string{"prb_a1u_example"}, revoker.tokens)
+	assert.Equal(t, []string{"prb_a1_example"}, revoker.tokens)
 	assert.JSONEq(t, `{"accepted":true}`, response.Body.String())
 }
 
@@ -179,7 +179,7 @@ func TestHandler_ReturnsUnavailableWhenKeysCannotBeLoaded(t *testing.T) {
 func TestHandler_ReturnsErrorWhenRevocationFails(t *testing.T) {
 	t.Parallel()
 
-	const body = `[{"token":"prb_a1u_example","type":"probo_cloud_api_token_us","url":"","source":"content"}]`
+	const body = `[{"token":"prb_a1_example","type":"probo_api_token","url":"","source":"content"}]`
 
 	privateKey := newTestPrivateKey(t)
 	revoker := &recordingRevoker{
@@ -189,7 +189,7 @@ func TestHandler_ReturnsErrorWhenRevocationFails(t *testing.T) {
 	response := serveAlert(t, body, privateKey, revoker)
 
 	assert.Equal(t, http.StatusInternalServerError, response.Code)
-	assert.Equal(t, []string{"prb_a1u_example"}, revoker.tokens)
+	assert.Equal(t, []string{"prb_a1_example"}, revoker.tokens)
 }
 
 func serveAlert(

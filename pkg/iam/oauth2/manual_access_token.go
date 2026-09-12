@@ -22,49 +22,37 @@ package oauth2
 
 import (
 	"hash/crc32"
-	"net/url"
 	"strings"
 
 	"go.probo.inc/probo/pkg/crypto/rand"
-	"go.probo.inc/probo/pkg/uri"
 )
 
 const (
 	base62Alphabet            = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	cloudTokenRandomLength    = 32
-	cloudTokenChecksumLength  = 6
-	cloudUSAPITokenPrefix     = "prb_a1u_"
-	cloudEUAPITokenPrefix     = "prb_a1e_"
-	cloudUSSecretScanningType = "probo_cloud_api_token_us"
-	cloudEUSecretScanningType = "probo_cloud_api_token_eu"
-	cloudUSHostname           = "us.probo.com"
-	cloudEUHostname           = "eu.probo.com"
+	manualTokenRandomLength   = 32
+	manualTokenChecksumLength = 6
+	manualAPITokenPrefix      = "prb_a1_"
+	secretScanningTokenType   = "probo_api_token"
 )
 
-func newManualAccessToken(baseURL uri.URI) string {
-	prefix, _ := cloudManualAccessTokenFormat(baseURL)
-	if prefix == "" {
-		return rand.MustHexString(tokenByteLength)
-	}
+func newManualAccessToken() string {
+	randomValue := rand.MustStringFromAlphabet(base62Alphabet, manualTokenRandomLength)
 
-	randomValue := rand.MustStringFromAlphabet(base62Alphabet, cloudTokenRandomLength)
-
-	return prefix + randomValue + encodeBase62Checksum(crc32.ChecksumIEEE([]byte(randomValue)))
+	return manualAPITokenPrefix + randomValue + encodeBase62Checksum(crc32.ChecksumIEEE([]byte(randomValue)))
 }
 
-func isValidManualAccessToken(baseURL uri.URI, token string) bool {
-	prefix, _ := cloudManualAccessTokenFormat(baseURL)
-	if prefix == "" || !strings.HasPrefix(token, prefix) {
+func isValidManualAccessToken(token string) bool {
+	if !strings.HasPrefix(token, manualAPITokenPrefix) {
 		return false
 	}
 
-	body := strings.TrimPrefix(token, prefix)
-	if len(body) != cloudTokenRandomLength+cloudTokenChecksumLength {
+	body := strings.TrimPrefix(token, manualAPITokenPrefix)
+	if len(body) != manualTokenRandomLength+manualTokenChecksumLength {
 		return false
 	}
 
-	randomValue := body[:cloudTokenRandomLength]
-	checksum := body[cloudTokenRandomLength:]
+	randomValue := body[:manualTokenRandomLength]
+	checksum := body[manualTokenRandomLength:]
 
 	for _, value := range randomValue + checksum {
 		if !strings.ContainsRune(base62Alphabet, value) {
@@ -77,24 +65,8 @@ func isValidManualAccessToken(baseURL uri.URI, token string) bool {
 	return checksum == expected
 }
 
-func cloudManualAccessTokenFormat(baseURL uri.URI) (string, string) {
-	parsed, err := url.Parse(baseURL.String())
-	if err != nil {
-		return "", ""
-	}
-
-	switch strings.ToLower(parsed.Hostname()) {
-	case cloudUSHostname:
-		return cloudUSAPITokenPrefix, cloudUSSecretScanningType
-	case cloudEUHostname:
-		return cloudEUAPITokenPrefix, cloudEUSecretScanningType
-	default:
-		return "", ""
-	}
-}
-
 func encodeBase62Checksum(value uint32) string {
-	encoded := [cloudTokenChecksumLength]byte{}
+	encoded := [manualTokenChecksumLength]byte{}
 
 	for i := len(encoded) - 1; i >= 0; i-- {
 		encoded[i] = base62Alphabet[value%uint32(len(base62Alphabet))]

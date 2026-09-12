@@ -2158,7 +2158,7 @@ func (s *Service) CreateManualAccessToken(
 		return "", nil, NewError(ErrInvalidScope, WithDescription(err.Error()))
 	}
 
-	tokenValue := newManualAccessToken(s.baseURL)
+	tokenValue := newManualAccessToken()
 
 	accessToken := &coredata.OAuth2AccessToken{
 		ID:          gid.New(req.IdentityID.TenantID(), coredata.OAuth2AccessTokenEntityType),
@@ -2189,13 +2189,11 @@ func (s *Service) CreateManualAccessToken(
 }
 
 func (s *Service) SecretScanningTokenType() string {
-	_, tokenType := cloudManualAccessTokenFormat(s.baseURL)
-
-	return tokenType
+	return secretScanningTokenType
 }
 
 func (s *Service) RevokeLeakedManualAccessToken(ctx context.Context, tokenValue string) (bool, error) {
-	if !isValidManualAccessToken(s.baseURL, tokenValue) {
+	if !isValidManualAccessToken(tokenValue) {
 		return false, nil
 	}
 

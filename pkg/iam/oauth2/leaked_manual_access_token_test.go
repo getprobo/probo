@@ -46,7 +46,7 @@ func TestRevokeLeakedManualAccessToken_RevokesAndNotifiesOnce(t *testing.T) {
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	baseURL := uri.URI("https://us.probo.com")
-	tokenValue := newManualAccessToken(baseURL)
+	tokenValue := newManualAccessToken()
 	identityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
 	tokenID := gid.New(identityID.TenantID(), coredata.OAuth2AccessTokenEntityType)
 	emailAddress, err := mail.ParseAddr(fmt.Sprintf("%s@example.com", identityID))
@@ -123,7 +123,7 @@ func TestRevokeLeakedManualAccessToken_RevokesAndNotifiesOnce(t *testing.T) {
 	assert.Equal(t, 1, countNotificationEmails(t, pgClient, emailAddress.String()))
 }
 
-func TestRevokeLeakedManualAccessToken_IgnoresSelfHostedToken(t *testing.T) {
+func TestRevokeLeakedManualAccessToken_IgnoresLegacyToken(t *testing.T) {
 	t.Parallel()
 
 	service := NewService(nil, nil, "https://probo.example.com", log.NewLogger())

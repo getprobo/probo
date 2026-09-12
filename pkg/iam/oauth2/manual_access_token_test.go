@@ -27,70 +27,33 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/uri"
+	"go.gearno.de/kit/log"
 )
 
-func TestNewManualAccessToken_CloudFormat(t *testing.T) {
+func TestNewManualAccessToken_Format(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name      string
-		baseURL   uri.URI
-		prefix    string
-		tokenType string
-	}{
-		{
-			name:      "US cloud",
-			baseURL:   "https://us.probo.com",
-			prefix:    cloudUSAPITokenPrefix,
-			tokenType: cloudUSSecretScanningType,
-		},
-		{
-			name:      "EU cloud",
-			baseURL:   "https://eu.probo.com",
-			prefix:    cloudEUAPITokenPrefix,
-			tokenType: cloudEUSecretScanningType,
-		},
-	}
+	token := newManualAccessToken()
 
-	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				t.Parallel()
-
-				token := newManualAccessToken(tt.baseURL)
-				prefix, tokenType := cloudManualAccessTokenFormat(tt.baseURL)
-
-				assert.Equal(t, tt.prefix, prefix)
-				assert.Equal(t, tt.tokenType, tokenType)
-				assert.Len(t, token, len(tt.prefix)+cloudTokenRandomLength+cloudTokenChecksumLength)
-				assert.True(t, strings.HasPrefix(token, tt.prefix))
-				assert.True(t, isValidManualAccessToken(tt.baseURL, token))
-			},
-		)
-	}
+	assert.Len(t, token, len(manualAPITokenPrefix)+manualTokenRandomLength+manualTokenChecksumLength)
+	assert.True(t, strings.HasPrefix(token, manualAPITokenPrefix))
+	assert.True(t, isValidManualAccessToken(token))
 }
 
-func TestNewManualAccessToken_SelfHostedLegacyFormat(t *testing.T) {
+func TestService_SecretScanningTokenTypeIsDeploymentIndependent(t *testing.T) {
 	t.Parallel()
 
-	baseURL := uri.URI("https://probo.example.com")
-	token := newManualAccessToken(baseURL)
-	prefix, tokenType := cloudManualAccessTokenFormat(baseURL)
+	first := NewService(nil, nil, "https://first.example.com", log.NewLogger())
+	second := NewService(nil, nil, "https://second.example.com", log.NewLogger())
 
-	assert.Empty(t, prefix)
-	assert.Empty(t, tokenType)
-	assert.Len(t, token, tokenByteLength*2)
-	assert.Regexp(t, "^[0-9a-f]{64}$", token)
-	assert.False(t, isValidManualAccessToken(baseURL, token))
+	assert.Equal(t, secretScanningTokenType, first.SecretScanningTokenType())
+	assert.Equal(t, first.SecretScanningTokenType(), second.SecretScanningTokenType())
 }
 
 func TestIsValidManualAccessToken_RejectsAlteredToken(t *testing.T) {
 	t.Parallel()
 
-	baseURL := uri.URI("https://us.probo.com")
-	token := newManualAccessToken(baseURL)
+	token := newManualAccessToken()
 	last := token[len(token)-1]
 	replacement := byte('0')
 	if last == replacement {
@@ -99,9 +62,12 @@ func TestIsValidManualAccessToken_RejectsAlteredToken(t *testing.T) {
 
 	altered := token[:len(token)-1] + string(replacement)
 
-	assert.False(t, isValidManualAccessToken(baseURL, altered))
-	assert.False(t, isValidManualAccessToken("https://eu.probo.com", token))
-	assert.False(t, isValidManualAccessToken(baseURL, token+"0"))
+	assert.False(t, isValidManualAccessToken(altered))
+	assert.False(t, isValidManualAccessToken(token+"0"))
+	assert.False(
+		t,
+		isValidManualAccessToken("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+	)
 }
 
 func TestEncodeBase62Checksum_GitHubReferenceValue(t *testing.T) {

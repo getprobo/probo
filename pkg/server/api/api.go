@@ -224,22 +224,19 @@ func NewServer(cfg Config) (*Server, error) {
 	csrf.AddInsecureBypassPattern("DELETE /mcp/v1")
 	csrf.AddInsecureBypassPattern("DELETE /mcp/v1/{rest...}")
 
-	var secretScanningHandler http.Handler
-	if cfg.IAM.OAuth2ServerService.SecretScanningTokenType() != "" {
-		secretScanningLogger := cfg.Logger.Named("github-secret-scanning.v1")
-		keyProvider := githubsecretscanning_v1.NewGitHubKeyProvider(
-			httpclient.DefaultPooledClient(
-				httpclient.WithLogger(secretScanningLogger),
-				httpclient.WithSSRFProtection(),
-			),
-		)
-		secretScanningHandler = githubsecretscanning_v1.NewMux(
-			secretScanningLogger,
-			cfg.IAM.OAuth2ServerService,
-			keyProvider,
-		)
-		csrf.AddInsecureBypassPattern("POST /github-secret-scanning/v1/alerts")
-	}
+	secretScanningLogger := cfg.Logger.Named("github-secret-scanning.v1")
+	keyProvider := githubsecretscanning_v1.NewGitHubKeyProvider(
+		httpclient.DefaultPooledClient(
+			httpclient.WithLogger(secretScanningLogger),
+			httpclient.WithSSRFProtection(),
+		),
+	)
+	secretScanningHandler := githubsecretscanning_v1.NewMux(
+		secretScanningLogger,
+		cfg.IAM.OAuth2ServerService,
+		keyProvider,
+	)
+	csrf.AddInsecureBypassPattern("POST /github-secret-scanning/v1/alerts")
 
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := httpserver.LoggerFromContext(r.Context())
@@ -398,12 +395,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// to avoid CORS headers being set on it.
 	router.Mount("/agent/v1", http.StripPrefix("/agent/v1", s.agentHandler))
 
-	if s.secretScanningHandler != nil {
-		router.Mount(
-			"/github-secret-scanning/v1",
-			http.StripPrefix("/github-secret-scanning/v1", s.secretScanningHandler),
-		)
-	}
+	router.Mount(
+		"/github-secret-scanning/v1",
+		http.StripPrefix("/github-secret-scanning/v1", s.secretScanningHandler),
+	)
 
 	router.Group(func(r chi.Router) {
 		r.Use(cors.Handler(corsOpts))
