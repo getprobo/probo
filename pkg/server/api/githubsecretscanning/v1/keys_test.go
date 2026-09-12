@@ -79,6 +79,8 @@ func TestGitHubKeyProvider_RejectsUnknownKey(t *testing.T) {
 	provider := NewGitHubKeyProvider(client)
 
 	_, err := provider.PublicKey(context.Background(), "missing-key")
+	assert.ErrorIs(t, err, ErrPublicKeyNotFound)
+	_, err = provider.PublicKey(context.Background(), "missing-key")
 
 	assert.ErrorIs(t, err, ErrPublicKeyNotFound)
 	assert.Equal(t, 1, client.calls)

@@ -23,6 +23,7 @@ package githubsecretscanning_v1
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -36,8 +37,9 @@ import (
 )
 
 const (
-	publicKeyCacheDuration = time.Hour
-	maxPublicKeyBodyBytes  = 1 << 20
+	publicKeyCacheDuration    = time.Hour
+	unknownKeyRefreshInterval = time.Minute
+	maxPublicKeyBodyBytes     = 1 << 20
 )
 
 type (
@@ -50,10 +52,11 @@ type (
 	}
 
 	GitHubKeyProvider struct {
-		httpClient HTTPClient
-		mu         sync.Mutex
-		keys       map[string]*ecdsa.PublicKey
-		expiresAt  time.Time
+		httpClient  HTTPClient
+		mu          sync.Mutex
+		keys        map[string]*ecdsa.PublicKey
+		expiresAt   time.Time
+		refreshedAt time.Time
 	}
 
 	publicKeyResponse struct {
@@ -81,8 +84,15 @@ func (p *GitHubKeyProvider) PublicKey(ctx context.Context, identifier string) (*
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if key, ok := p.keys[identifier]; ok && time.Now().Before(p.expiresAt) {
+	now := time.Now()
+	if key, ok := p.keys[identifier]; ok && now.Before(p.expiresAt) {
 		return key, nil
+	}
+
+	if _, ok := p.keys[identifier]; !ok &&
+		!p.refreshedAt.IsZero() &&
+		now.Sub(p.refreshedAt) < unknownKeyRefreshInterval {
+		return nil, ErrPublicKeyNotFound
 	}
 
 	if err := p.refresh(ctx); err != nil {
@@ -138,7 +148,8 @@ func (p *GitHubKeyProvider) refresh(ctx context.Context) error {
 	}
 
 	p.keys = keys
-	p.expiresAt = time.Now().Add(publicKeyCacheDuration)
+	p.refreshedAt = time.Now()
+	p.expiresAt = p.refreshedAt.Add(publicKeyCacheDuration)
 
 	return nil
 }
@@ -157,6 +168,9 @@ func parsePublicKey(value string) (*ecdsa.PublicKey, error) {
 	ecdsaKey, ok := key.(*ecdsa.PublicKey)
 	if !ok {
 		return nil, errors.New("public key is not ECDSA")
+	}
+	if ecdsaKey.Curve != elliptic.P256() {
+		return nil, errors.New("public key is not P-256")
 	}
 
 	return ecdsaKey, nil
