@@ -1,0 +1,103 @@
+{
+  "page": {
+    "title": "Comptes de service",
+    "description": "Gérez les identités non humaines et leurs identifiants d’API."
+  },
+  "columns": {
+    "name": "Nom",
+    "status": "Statut",
+    "scopes": "Portées",
+    "createdAt": "Créé le",
+    "actions": "Actions"
+  },
+  "actions": {
+    "create": "Créer un compte de service",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "disable": "Désactiver",
+    "delete": "Supprimer",
+    "credentials": "Identifiants",
+    "revoke": "Révoquer",
+    "loadMore": "Afficher plus",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "cancel": "Annuler",
+    "done": "Terminé",
+    "copy": "Copier",
+    "copied": "Copié"
+  },
+  "empty": {
+    "title": "Aucun compte de service",
+    "description": "Créez un compte de service pour les intégrations et l’automatisation."
+  },
+  "fields": {
+    "name": "Nom",
+    "description": "Description",
+    "scopes": "Portées",
+    "credentialName": "Nom de l’identifiant",
+    "expiresAt": "Date d’expiration"
+  },
+  "create": {
+    "title": "Créer un compte de service"
+  },
+  "update": {
+    "title": "Modifier le compte de service"
+  },
+  "disable": {
+    "title": "Désactiver le compte de service",
+    "description": "Désactiver « {{name}} » ? Ses identifiants ne pourront plus s’authentifier."
+  },
+  "delete": {
+    "title": "Supprimer le compte de service",
+    "description": "Supprimer définitivement « {{name}} » et tous ses identifiants ? Cette action est irréversible."
+  },
+  "credentials": {
+    "title": "Identifiants",
+    "titleWithName": "Identifiants de {{name}}",
+    "listTitle": "Identifiants émis",
+    "create": "Créer un identifiant",
+    "createTitle": "Nouvel identifiant",
+    "revokeTitle": "Révoquer l’identifiant",
+    "revokeDescription": "Révoquer « {{name}} » ? Tout client qui l’utilise perdra immédiatement son accès.",
+    "empty": "Aucun identifiant n’a été émis.",
+    "columns": {
+      "name": "Nom",
+      "status": "Statut",
+      "expiresAt": "Expiration",
+      "lastUsedAt": "Dernière utilisation"
+    }
+  },
+  "token": {
+    "title": "Identifiant créé",
+    "warning": "Copiez ce jeton maintenant. Il ne sera plus affiché.",
+    "description": "La fermeture de cette fenêtre retire définitivement le jeton de cet écran."
+  },
+  "status": {
+    "active": "Actif",
+    "disabled": "Désactivé",
+    "revoked": "Révoqué"
+  },
+  "values": {
+    "never": "Jamais",
+    "moreScopes": "+{{count}} autres"
+  },
+  "validation": {
+    "scopeRequired": "Sélectionnez au moins une portée."
+  },
+  "messages": {
+    "created": "Compte de service créé.",
+    "updated": "Compte de service mis à jour.",
+    "disabled": "Compte de service désactivé.",
+    "deleted": "Compte de service supprimé.",
+    "credentialCreated": "Identifiant créé.",
+    "credentialRevoked": "Identifiant révoqué."
+  },
+  "errors": {
+    "create": "Impossible de créer le compte de service",
+    "update": "Impossible de mettre à jour le compte de service",
+    "disable": "Impossible de désactiver le compte de service",
+    "delete": "Impossible de supprimer le compte de service",
+    "createCredential": "Impossible de créer l’identifiant",
+    "revokeCredential": "Impossible de révoquer l’identifiant"
+  }
+}
