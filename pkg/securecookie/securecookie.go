@@ -139,12 +139,12 @@ func Verify(signedValue, secret string) (string, error) {
 		return "", fmt.Errorf("secret cannot be empty")
 	}
 
-	parts := strings.Split(signedValue, ".")
-	if len(parts) != 2 {
+	idx := strings.LastIndex(signedValue, ".")
+	if idx < 0 {
 		return "", fmt.Errorf("invalid signed value format")
 	}
 
-	value := parts[0]
+	value := signedValue[:idx]
 
 	expectedSignedValue, err := Sign(value, secret)
 	if err != nil {
