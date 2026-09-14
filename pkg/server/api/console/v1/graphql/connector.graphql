@@ -58,6 +58,10 @@ enum ConnectorProvider
     MONDAY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMonday")
     METABASE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMetabase")
+    MONGODB_ATLAS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMongoDBAtlas"
+        )
     TAILSCALE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTailscale")
     ANTHROPIC
@@ -220,6 +224,16 @@ type ConnectorProviderInfo {
     client cannot render one path's settings on the other.
     """
     clientCredentialsExtraSettings: [ConnectorProviderSettingInfo!]!
+    """
+    clientCredentialsTokenUrl is the token endpoint this provider pins, for the
+    connect form to omit the Token URL field entirely. Null when the token host
+    follows a per-connection setting (1Password, whose host follows its region),
+    which is the only case where the customer has a value to supply. When it is
+    set the create mutation uses it and ignores whatever the client sends, so a
+    form that renders the field anyway is asking for something that cannot take
+    effect.
+    """
+    clientCredentialsTokenUrl: String
     """
     workloadIdentitySupported is true when this provider connects by federating
     a Probo-issued OIDC token into the customer's cloud account, and this
@@ -423,7 +437,13 @@ input CreateClientCredentialsConnectorInput {
     provider: ConnectorProvider!
     clientId: String!
     clientSecret: String!
-    tokenUrl: String!
+    """
+    Token endpoint for the client-credentials exchange. Optional: a provider
+    that declares a constant token endpoint pins it server-side and ignores any
+    value sent here. Required only for a provider whose token host follows a
+    per-connection setting, and then it must be an absolute https URL.
+    """
+    tokenUrl: String
     scope: String
     onePasswordAccountId: String
     onePasswordRegion: String

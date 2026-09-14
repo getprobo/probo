@@ -123,3 +123,117 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 	})
 	require.Error(t, err)
 }
+
+// TestClientCredentialsTokenURL pins which endpoint a client-credentials
+// connector POSTs its client secret to. The decision is split between a
+// provider that fixes the endpoint and one that cannot, and getting it wrong
+// either sends a credential to a client-supplied address or refuses a connect
+// the customer has no way to complete.
+func TestClientCredentialsTokenURL(t *testing.T) {
+	t.Parallel()
+
+	registry := provider.NewBuiltinRegistry()
+
+	supplied := func(s string) *string { return &s }
+
+	t.Run("a pinning provider ignores what the client sends", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := clientCredentialsTokenURL(
+			registry,
+			coredata.ConnectorProviderMongoDBAtlas,
+			supplied("https://attacker.example/token"),
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
+	})
+
+	t.Run("a pinning provider needs nothing from the client", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := clientCredentialsTokenURL(registry, coredata.ConnectorProviderMongoDBAtlas, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
+	})
+
+	// 1Password declares no Endpoints.Token: its token host follows the region
+	// the customer picks, so the value still comes from the form.
+	t.Run("a non-pinning provider keeps taking the input", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := clientCredentialsTokenURL(
+			registry,
+			coredata.ConnectorProviderOnePassword,
+			supplied("https://api.1password.eu/v1beta1/users/oauth2/token"),
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "https://api.1password.eu/v1beta1/users/oauth2/token", got)
+	})
+
+	// An unregistered provider has no registration to consult, so there is no
+	// basis for honouring a client-supplied endpoint either.
+	t.Run("an unknown provider is rejected outright", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := clientCredentialsTokenURL(
+			provider.NewRegistry(),
+			coredata.ConnectorProviderMongoDBAtlas,
+			supplied("https://cloud.mongodb.com/api/oauth/token"),
+		)
+		assert.Error(t, err)
+	})
+
+	t.Run("a non-pinning provider rejects a missing or unusable URL", func(t *testing.T) {
+		t.Parallel()
+
+		for _, tc := range []struct {
+			name     string
+			supplied *string
+		}{
+			{name: "absent", supplied: nil},
+			{name: "blank", supplied: supplied("   ")},
+			{name: "not a URL", supplied: supplied("not-a-url")},
+			{name: "relative", supplied: supplied("/token")},
+			// Host is non-empty here but carries only a port, so the exchange
+			// could never reach it.
+			{name: "port-only authority", supplied: supplied("https://:443/token")},
+			{name: "port-only authority, no path", supplied: supplied("https://:443")},
+			// A client secret must not travel in cleartext, whatever the host.
+			{name: "plaintext http", supplied: supplied("http://api.1password.com/token")},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				_, err := clientCredentialsTokenURL(
+					registry,
+					coredata.ConnectorProviderOnePassword,
+					tc.supplied,
+				)
+				assert.Error(t, err)
+			})
+		}
+	})
+}
+
+// TestPinnedClientCredentialsTokenURL covers the value the connect form reads
+// to decide whether to render a Token URL field at all, so the form and the
+// mutation cannot disagree about who supplies it.
+func TestPinnedClientCredentialsTokenURL(t *testing.T) {
+	t.Parallel()
+
+	registry := provider.NewBuiltinRegistry()
+
+	atlas, ok := registry.Get(coredata.ConnectorProviderMongoDBAtlas)
+	require.True(t, ok)
+	assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", pinnedClientCredentialsTokenURL(atlas))
+
+	onePassword, ok := registry.Get(coredata.ConnectorProviderOnePassword)
+	require.True(t, ok)
+	assert.Empty(t, pinnedClientCredentialsTokenURL(onePassword))
+
+	// A provider with no client-credentials path pins nothing, whatever its
+	// registration happens to declare.
+	slack, ok := registry.Get(coredata.ConnectorProviderSlack)
+	require.True(t, ok)
+	assert.Empty(t, pinnedClientCredentialsTokenURL(slack))
+}

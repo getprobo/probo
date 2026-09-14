@@ -153,11 +153,16 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		return nil, err
 	}
 
+	tokenURL, err := clientCredentialsTokenURL(r.providerRegistry, input.Provider, input.TokenURL)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
 	oauth2Conn := &connector.OAuth2Connection{
 		GrantType:    connector.OAuth2GrantTypeClientCredentials,
 		ClientID:     input.ClientID,
 		ClientSecret: input.ClientSecret,
-		TokenURL:     input.TokenURL,
+		TokenURL:     tokenURL,
 	}
 
 	if input.Scope != nil {

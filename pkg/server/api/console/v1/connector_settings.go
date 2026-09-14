@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -408,4 +409,58 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 	}
 
 	return nil, nil
+}
+
+// pinnedClientCredentialsTokenURL returns the token endpoint a provider fixes
+// at compile time, or "" when its token host varies per connection and only
+// the customer can supply it.
+func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
+	if reg == nil || !reg.SupportsClientCredentials() {
+		return ""
+	}
+
+	return reg.Endpoints.Token
+}
+
+// clientCredentialsTokenURL decides which token endpoint a client-credentials
+// connector will POST its client secret to.
+//
+// A provider that pins one wins outright and the client-supplied value is
+// discarded: the server already knows the URL and the customer has no way to
+// know a better one. Only a provider whose token host varies per connection
+// falls back to the input, and that value is checked to be an absolute https
+// URL first — it is the address a client secret is sent to, and nothing else
+// in the request constrains it.
+func clientCredentialsTokenURL(
+	registry *provider.Registry,
+	p coredata.ConnectorProvider,
+	supplied *string,
+) (string, error) {
+	// An unregistered provider has no registration to consult, so there is no
+	// basis for deciding whether it pins an endpoint. Trusting client input
+	// here would let an unknown provider name a token endpoint freely.
+	reg, ok := registry.Get(p)
+	if !ok {
+		return "", fmt.Errorf("unknown connector provider")
+	}
+
+	if pinned := pinnedClientCredentialsTokenURL(reg); pinned != "" {
+		return pinned, nil
+	}
+
+	if supplied == nil || strings.TrimSpace(*supplied) == "" {
+		return "", fmt.Errorf("tokenUrl is required for this provider")
+	}
+
+	tokenURL := strings.TrimSpace(*supplied)
+
+	// Hostname() rather than Host: "https://:443/token" parses with a non-empty
+	// Host that carries only a port, which would persist a token endpoint the
+	// exchange can never reach.
+	parsed, err := url.Parse(tokenURL)
+	if err != nil || parsed.Scheme != "https" || parsed.Hostname() == "" {
+		return "", fmt.Errorf("tokenUrl must be an absolute https URL")
+	}
+
+	return tokenURL, nil
 }
