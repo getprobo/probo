@@ -42,9 +42,8 @@ func oauthClientBrandingFromIAM(
 	branding *oauth2.ClientBranding,
 ) (*types.OAuthClientBranding, error) {
 	result := &types.OAuthClientBranding{
-		Name:               branding.Name,
-		ClientURL:          branding.ClientURL,
-		IsCompliancePortal: branding.IsCompliancePortal,
+		Name:      branding.Name,
+		ClientURL: branding.ClientURL,
 	}
 
 	if branding.LogoURL != nil {

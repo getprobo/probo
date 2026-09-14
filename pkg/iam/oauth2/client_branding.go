@@ -9,7 +9,7 @@
 // AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
 // INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
 package oauth2
@@ -22,10 +22,9 @@ import (
 )
 
 type ClientBranding struct {
-	Name               string
-	ClientURL          *string
-	LogoURL            *string
-	IsCompliancePortal bool
+	Name      string
+	ClientURL *string
+	LogoURL   *string
 }
 
 func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*ClientBranding, error) {
@@ -33,7 +32,7 @@ func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*Clie
 		return nil, nil
 	}
 
-	client, allowance, err := s.resolveClientWithAllowance(ctx, nil, clientIDRaw)
+	client, err := s.resolveClient(ctx, nil, clientIDRaw)
 	if err != nil {
 		if _, ok := errors.AsType[*OAuth2Error](err); ok {
 			return nil, nil
@@ -42,14 +41,7 @@ func (s *Service) ClientBranding(ctx context.Context, clientIDRaw string) (*Clie
 		return nil, err
 	}
 
-	branding := ClientBrandingFromClient(client)
-	if branding == nil {
-		return nil, nil
-	}
-
-	branding.IsCompliancePortal = allowance.SkipsConsent()
-
-	return branding, nil
+	return ClientBrandingFromClient(client), nil
 }
 
 func ClientBrandingFromClient(client *coredata.OAuth2Client) *ClientBranding {

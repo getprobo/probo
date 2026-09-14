@@ -29,7 +29,10 @@ import { graphql } from "relay-runtime";
 
 import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
-import { isOAuthAuthorizeContinueUrl } from "#/lib/buildAuthorizeContinueURL";
+import {
+  isCompliancePortalSource,
+  isOAuthAuthorizeContinueUrl,
+} from "#/lib/buildAuthorizeContinueURL";
 
 import { CreateAccountFooter } from "./_components/CreateAccountFooter";
 import { Divider } from "./_components/Divider";
@@ -39,7 +42,7 @@ import { OIDCButton } from "./_components/OIDCButton";
 
 export const signInPageQuery = graphql`
   query SignInPageQuery($clientId: String) {
-    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
+    ...CreateAccountFooterFragment
     oidcProviders {
       ...OIDCButtonFragment
     }
@@ -47,7 +50,6 @@ export const signInPageQuery = graphql`
       name
       clientURL
       logoUrl
-      isCompliancePortal
     }
   }
 `;
@@ -123,7 +125,7 @@ export default function SignInPage(props: Props) {
           </>
         )}
 
-        {!clientBranding?.isCompliancePortal && (
+        {!isCompliancePortalSource(searchParams) && (
           <Text align="center" size={2} className="block">
             <Link
               to={{ pathname: "/auth/password-login", search: location.search }}

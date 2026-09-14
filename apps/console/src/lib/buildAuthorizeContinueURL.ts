@@ -14,6 +14,9 @@
 
 const oauth2AuthorizePathSuffix = "/oauth2/authorize";
 
+export const COMPLIANCE_PORTAL_SOURCE_PARAM = "source";
+export const COMPLIANCE_PORTAL_SOURCE_VALUE = "compliance-portal";
+
 function parseContinueUrl(continueParam: string | null): URL | null {
   if (!continueParam) {
     return null;
@@ -26,20 +29,34 @@ function parseContinueUrl(continueParam: string | null): URL | null {
   }
 }
 
-export function isOAuthAuthorizeContinueUrl(continueParam: string | null): boolean {
-  const url = parseContinueUrl(continueParam);
-  if (!url) {
-    return false;
-  }
-
+function isOAuthAuthorizeUrl(url: URL): boolean {
   return url.pathname.endsWith(oauth2AuthorizePathSuffix);
 }
 
+export function isOAuthAuthorizeContinueUrl(continueParam: string | null): boolean {
+  const url = parseContinueUrl(continueParam);
+  return url !== null && isOAuthAuthorizeUrl(url);
+}
+
+// client_id is only meaningful on the OAuth authorize continue URL.
 export function clientIdFromContinueUrl(continueParam: string | null): string | null {
   const url = parseContinueUrl(continueParam);
-  if (!url) {
+  if (!url || !isOAuthAuthorizeUrl(url)) {
     return null;
   }
 
   return url.searchParams.get("client_id");
+}
+
+export function isCompliancePortalSource(searchParams: URLSearchParams): boolean {
+  if (searchParams.get(COMPLIANCE_PORTAL_SOURCE_PARAM) === COMPLIANCE_PORTAL_SOURCE_VALUE) {
+    return true;
+  }
+
+  const url = parseContinueUrl(searchParams.get("continue"));
+  if (!url || !isOAuthAuthorizeUrl(url)) {
+    return false;
+  }
+
+  return url.searchParams.get(COMPLIANCE_PORTAL_SOURCE_PARAM) === COMPLIANCE_PORTAL_SOURCE_VALUE;
 }

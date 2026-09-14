@@ -26,21 +26,17 @@ import { graphql } from "relay-runtime";
 
 import type { CreateAccountFooterFragment$key } from "#/__generated__/iam/CreateAccountFooterFragment.graphql";
 import type { CreateAccountFooterQuery } from "#/__generated__/iam/CreateAccountFooterQuery.graphql";
-import { clientIdFromContinueUrl } from "#/lib/buildAuthorizeContinueURL";
+import { isCompliancePortalSource } from "#/lib/buildAuthorizeContinueURL";
 
 const createAccountFooterFragment = graphql`
-  fragment CreateAccountFooterFragment on Query
-  @argumentDefinitions(clientId: { type: "String" }) {
+  fragment CreateAccountFooterFragment on Query {
     signUpEnabled
-    oauthClientBranding(clientId: $clientId) {
-      isCompliancePortal
-    }
   }
 `;
 
 const createAccountFooterQuery = graphql`
-  query CreateAccountFooterQuery($clientId: String) {
-    ...CreateAccountFooterFragment @arguments(clientId: $clientId)
+  query CreateAccountFooterQuery {
+    ...CreateAccountFooterFragment
   }
 `;
 
@@ -56,12 +52,10 @@ export function CreateAccountFooter({
   label,
 }: CreateAccountFooterProps) {
   const location = useLocation();
-  const { signUpEnabled, oauthClientBranding } = useFragment(
-    createAccountFooterFragment,
-    queryKey,
-  );
+  const [searchParams] = useSearchParams();
+  const { signUpEnabled } = useFragment(createAccountFooterFragment, queryKey);
 
-  if (!signUpEnabled || oauthClientBranding?.isCompliancePortal) {
+  if (!signUpEnabled || isCompliancePortalSource(searchParams)) {
     return null;
   }
 
@@ -80,11 +74,9 @@ export function CreateAccountFooterLazy({
   prefix,
   label,
 }: Pick<CreateAccountFooterProps, "prefix" | "label">) {
-  const [searchParams] = useSearchParams();
-  const clientId = clientIdFromContinueUrl(searchParams.get("continue"));
   const data = useLazyLoadQuery<CreateAccountFooterQuery>(
     createAccountFooterQuery,
-    { clientId },
+    {},
   );
 
   return <CreateAccountFooter queryKey={data} prefix={prefix} label={label} />;
