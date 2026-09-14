@@ -42,6 +42,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// clientCredentialsTokenTimeout bounds the token exchange. The callers reach
+// it on a worker context with no deadline of its own, so an unbounded exchange
+// is an unbounded worker.
+const clientCredentialsTokenTimeout = 30 * time.Second
+
 // NOTE: the OAuth2 state token (and, for PKCE providers, the code verifier)
 // is keyed by stateSalt(). Public clients (CIMD, no client_secret) set
 // StateSigningKey to a server-side derived key; confidential clients fall
@@ -722,17 +727,28 @@ func (c *OAuth2Connection) Client(ctx context.Context) (*http.Client, error) {
 // are refused. Hardcoded provider hosts on public IPs are
 // unaffected.
 func (c *OAuth2Connection) ClientWithOptions(ctx context.Context, opts ...httpclient.Option) (*http.Client, error) {
-	opts = append(opts, httpclient.WithSSRFProtection())
-	transport := &oauth2Transport{
-		token:      c.AccessToken,
-		tokenType:  c.TokenType,
-		underlying: httpclient.DefaultPooledTransport(opts...),
-	}
-	client := &http.Client{
-		Transport: transport,
+	// A client-credentials connection stores no access token: it mints one per
+	// use. Returning the stored (empty) token here would 401 every request.
+	if c.GrantType == OAuth2GrantTypeClientCredentials {
+		return c.clientCredentialsClient(ctx, opts...)
 	}
 
-	return client, nil
+	return c.staticTokenClient(opts...), nil
+}
+
+// staticTokenClient returns a client bearing the access token the connection
+// already holds. Kept separate so the client-credentials cached-token path can
+// reuse it without recursing back through ClientWithOptions.
+func (c *OAuth2Connection) staticTokenClient(opts ...httpclient.Option) *http.Client {
+	opts = append(opts, httpclient.WithSSRFProtection())
+
+	return &http.Client{
+		Transport: &oauth2Transport{
+			token:      c.AccessToken,
+			tokenType:  c.TokenType,
+			underlying: httpclient.DefaultPooledTransport(opts...),
+		},
+	}
 }
 
 // RefreshableClient returns an HTTP client that automatically refreshes the token when expired.
@@ -834,7 +850,7 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...httpclient.Option) (*http.Client, error) {
 	// If we have a valid token that hasn't expired, reuse it
 	if c.AccessToken != "" && !c.ExpiresAt.IsZero() && c.ExpiresAt.After(time.Now()) {
-		return c.ClientWithOptions(ctx, opts...)
+		return c.staticTokenClient(opts...), nil
 	}
 
 	// TokenURL is stored from customer-supplied connector settings;
@@ -865,6 +881,9 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 	httpClient := &http.Client{
 		Transport: httpclient.DefaultPooledTransport(opts...),
+		// The callers run on a worker context with no deadline, so an
+		// unbounded exchange holds a worker slot and its database connection.
+		Timeout: clientCredentialsTokenTimeout,
 	}
 
 	resp, err := httpClient.Do(req)
@@ -874,13 +893,16 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("client credentials token response status: %d", resp.StatusCode)
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read client credentials token response body: %w", err)
+	}
+
+	// RetrieveError is the shape accessreview.IsProviderVerdict recognises: a
+	// refused exchange is the provider's verdict on the customer's credential,
+	// and an untyped error here is charged to Probo instead.
+	if resp.StatusCode != http.StatusOK {
+		return nil, &oauth2.RetrieveError{Response: resp, Body: body}
 	}
 
 	var rawToken struct {
@@ -905,13 +927,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 		c.ExpiresAt = time.Now().Add(time.Duration(rawToken.ExpiresIn) * time.Second)
 	}
 
-	return &http.Client{
-		Transport: &oauth2Transport{
-			token:      c.AccessToken,
-			tokenType:  c.TokenType,
-			underlying: httpclient.DefaultPooledTransport(opts...),
-		},
-	}, nil
+	return c.staticTokenClient(opts...), nil
 }
 
 func (c OAuth2Connection) MarshalJSON() ([]byte, error) {

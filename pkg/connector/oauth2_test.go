@@ -37,6 +37,7 @@ import (
 	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/statelesstoken"
+	"golang.org/x/oauth2"
 )
 
 func TestBuildTokenRequest_PostForm(t *testing.T) {
@@ -258,6 +259,118 @@ func TestClientCredentialsClient(t *testing.T) {
 	// ExpiresAt should be approximately now + 1 hour
 	expectedExpiry := beforeRequest.Add(1 * time.Hour)
 	assert.WithinDuration(t, expectedExpiry, conn.ExpiresAt, 5*time.Second)
+}
+
+// TestClientWithOptions_ClientCredentialsMintsToken pins the entry point the
+// access-review engine actually reaches. oauthClient only calls
+// RefreshableClient when the deployment holds operator OAuth2 config for the
+// provider, and a provider whose credential is customer-supplied
+// (1Password, MongoDB Atlas) never has any — so it lands on the plain
+// Client(). That used to hand back a transport carrying the connection's
+// stored access token, which for client credentials is the empty string, and
+// every request 401'd. The older tests here missed it by calling
+// clientCredentialsClient directly.
+func TestClientWithOptions_ClientCredentialsMintsToken(t *testing.T) {
+	t.Parallel()
+
+	var gotAuthorization string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/token" {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"minted-token","expires_in":3600,"token_type":"Bearer"}`))
+
+			return
+		}
+
+		gotAuthorization = r.Header.Get("Authorization")
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	conn := &OAuth2Connection{
+		GrantType:    OAuth2GrantTypeClientCredentials,
+		ClientID:     "cc-client-id",
+		ClientSecret: "cc-client-secret",
+		TokenURL:     server.URL + "/token",
+	}
+
+	// httptest binds to loopback, which the SSRF-protected default transport
+	// refuses; relax just for this test.
+	client, err := conn.ClientWithOptions(context.Background(), httpclient.WithSSRFAllowLoopback())
+	require.NoError(t, err)
+
+	resp, err := client.Get(server.URL + "/api")
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, "Bearer minted-token", gotAuthorization)
+	assert.Equal(t, "minted-token", conn.AccessToken)
+}
+
+// TestClientWithOptions_AuthorizationCodeKeepsStoredToken is the other half of
+// the branch above: a grant type that stores its token must keep using it
+// rather than being sent through a token exchange it has no credentials for.
+func TestClientWithOptions_AuthorizationCodeKeepsStoredToken(t *testing.T) {
+	t.Parallel()
+
+	var gotAuthorization string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuthorization = r.Header.Get("Authorization")
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	conn := &OAuth2Connection{
+		GrantType:   OAuth2GrantTypeAuthorizationCode,
+		AccessToken: "stored-token",
+		TokenType:   "Bearer",
+	}
+
+	client, err := conn.ClientWithOptions(context.Background(), httpclient.WithSSRFAllowLoopback())
+	require.NoError(t, err)
+
+	resp, err := client.Get(server.URL)
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, "Bearer stored-token", gotAuthorization)
+}
+
+// TestClientWithOptions_ClientCredentialsRejectionIsProviderVerdict pins the
+// error TYPE, not just the failure. accessreview.IsProviderVerdict recognises
+// *oauth2.RetrieveError as the provider's answer; an untyped error here is
+// charged to Probo's error budget and logged at ERROR with full detail
+// instead. An expired client secret is the first thing every
+// client-credentials customer hits, and Atlas forces one within 365 days.
+func TestClientWithOptions_ClientCredentialsRejectionIsProviderVerdict(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"invalid_client","error_description":"The provided credentials are not valid"}`))
+	}))
+	defer server.Close()
+
+	conn := &OAuth2Connection{
+		GrantType:    OAuth2GrantTypeClientCredentials,
+		ClientID:     "cc-client-id",
+		ClientSecret: "expired-secret",
+		TokenURL:     server.URL,
+	}
+
+	_, err := conn.ClientWithOptions(context.Background(), httpclient.WithSSRFAllowLoopback())
+	require.Error(t, err)
+
+	var retrieveErr *oauth2.RetrieveError
+	require.ErrorAs(t, err, &retrieveErr)
+	assert.Equal(t, http.StatusUnauthorized, retrieveErr.Response.StatusCode)
 }
 
 func TestClientCredentialsClient_ReusesValidToken(t *testing.T) {
