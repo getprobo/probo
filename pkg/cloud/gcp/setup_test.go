@@ -60,6 +60,12 @@ func TestBuildConnectorSetup(t *testing.T) {
 		assert.Contains(t, setup.TerraformSnippet, "service_account_name")
 		assert.Contains(t, setup.TerraformSnippet, strconv.Quote(cloudgcp.DefaultServiceAccountName))
 		assert.Contains(t, setup.TerraformSnippet, cloudgcp.DefaultTerraformModuleSource)
+		assert.Contains(t, setup.TerraformBulkSnippet, strconv.Quote(issuer))
+		assert.Contains(t, setup.TerraformBulkSnippet, strconv.Quote(subject))
+		assert.Contains(t, setup.TerraformBulkSnippet, "for_each")
+		assert.Contains(t, setup.TerraformBulkSnippet, "var.project_ids")
+		assert.Contains(t, setup.TerraformBulkSnippet, "output \"connectors\"")
+		assert.Contains(t, setup.TerraformBulkSnippet, cloudgcp.DefaultTerraformModuleSource)
 	})
 
 	t.Run("omits the snippet when the module source is empty", func(t *testing.T) {
@@ -74,6 +80,7 @@ func TestBuildConnectorSetup(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Empty(t, setup.TerraformSnippet)
+		assert.Empty(t, setup.TerraformBulkSnippet)
 	})
 
 	t.Run("refuses a missing issuer", func(t *testing.T) {

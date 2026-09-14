@@ -2,8 +2,12 @@
   "createGcpAccessReviewSourcePage": {
     "pageTitle": "Connect GCP",
     "title": "Connect GCP",
-    "description": "Deploy the audit service account. Then enter the provider resource and the service account email.",
+    "description": "Deploy the audit service account. Connect one project, or paste Terraform output for several.",
     "permissionDenied": "You do not have permission to create access sources.",
+    "modes": {
+      "single": "One project",
+      "bulk": "Bulk mode"
+    },
     "fields": {
       "workloadIdentityProvider": "Workload identity provider",
       "serviceAccountEmail": "Service account email",
@@ -11,7 +15,10 @@
       "audience": "Audience",
       "subject": "Subject",
       "workloadIdentityProviderPlaceholder": "projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
-      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com"
+      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com",
+      "terraformOutput": "Terraform output",
+      "terraformOutputHelp": "Paste the JSON from terraform output -json connectors.",
+      "terraformOutputPlaceholder": "{\n  \"my-project\": {\n    \"workload_identity_provider\": \"projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo\",\n    \"service_account_email\": \"probo-audit@my-project.iam.gserviceaccount.com\"\n  }\n}"
     },
     "messages": {
       "copyFailed": "Copy failed",
@@ -22,7 +29,10 @@
       "copiedTerraform": "Terraform snippet copied.",
       "error": "Error",
       "success": "Success",
-      "created": "Access source created successfully."
+      "created": "Access source created successfully.",
+      "createdCount_one": "Created {{count}} access source.",
+      "createdCount_other": "Created {{count}} access sources.",
+      "partialCreated": "Created {{created}} of {{total}}. Failed: {{failed}}."
     },
     "errors": {
       "workloadIdentityProvider": "Enter a valid workload identity provider resource.",
@@ -31,11 +41,19 @@
       "disconnected": "Probo could not impersonate the audit service account. Confirm that the module is applied in this project and that the issuer and subject match the values shown during setup.",
       "delete": "Could not delete the connector. Try again.",
       "source": "Failed to create access source",
-      "copy": "Copy the value manually."
+      "copy": "Copy the value manually.",
+      "invalidJson": "Paste valid JSON from terraform output -json connectors.",
+      "invalidShape": "The JSON must be a map of project id to workload_identity_provider and service_account_email.",
+      "terraformEntry": "Project {{projectId}} has an invalid provider resource or service account email.",
+      "tooMany": "Connect at most 100 projects at a time.",
+      "bulkFailed": "Could not create any GCP access sources. Check the installs and try again."
     },
     "actions": {
       "copy": "Copy",
       "connect": "Connect",
+      "connectCount_one": "Connect {{count}} project",
+      "connectCount_other": "Connect {{count}} projects",
+      "connecting": "Connecting…",
       "back": "Back",
       "installViaTerraform": "Install via Terraform",
       "chooseAnotherInstallMethod": "Choose another install method"

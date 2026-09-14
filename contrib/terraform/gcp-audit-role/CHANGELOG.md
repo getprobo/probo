@@ -5,6 +5,13 @@ be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Document a caller-side `for_each` over a list of project ids so one
+  apply can install the module in each project. Paste
+  `terraform output -json connectors` into Bulk mode on Connect
+  GCP. Probo still creates one connector per project.
+
 ## [0.2.0] - 2026-09-07
 
 ### Added

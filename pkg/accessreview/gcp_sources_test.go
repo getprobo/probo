@@ -18,49 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+package accessreview_test
 
-export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReviewSource'],
-				operation: ['setupGcp'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
-];
+import (
+	"context"
+	"testing"
 
-export async function execute(
-	this: IExecuteFunctions,
-	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+)
 
-	const query = `
-		query GcpConnectorSetup($organizationId: ID!) {
-			gcpConnectorSetup(organizationId: $organizationId) {
-				issuer
-				audience
-				subject
-				suggestedServiceAccountName
-				terraformSnippet
-				terraformBulkSnippet
-			}
-		}
-	`;
+func TestCreateGCPSources_Empty(t *testing.T) {
+	t.Parallel()
 
-	const responseData = await proboApiRequest.call(this, query, { organizationId });
+	_, _, err := (*accessreview.Service)(nil).CreateGCPSources(
+		context.Background(),
+		nil,
+		gid.New(gid.NewTenantID(), coredata.OrganizationEntityType),
+		nil,
+	)
+	require.ErrorIs(t, err, accessreview.ErrGCPSourcesEmpty)
+}
 
-	return {
-		json: responseData,
-		pairedItem: { item: itemIndex },
-	};
+func TestCreateGCPSources_TooMany(t *testing.T) {
+	t.Parallel()
+
+	projects := make([]accessreview.GCPSourceProject, accessreview.MaxGCPSourceProjects+1)
+	_, _, err := (*accessreview.Service)(nil).CreateGCPSources(
+		context.Background(),
+		nil,
+		gid.New(gid.NewTenantID(), coredata.OrganizationEntityType),
+		projects,
+	)
+	require.ErrorIs(t, err, accessreview.ErrGCPSourcesTooMany)
+	assert.Contains(t, err.Error(), "100")
 }

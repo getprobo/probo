@@ -64,3 +64,30 @@ export function prependCreatedSourceEdge(
 
   ConnectionHandler.insertEdgeBefore(connection, edge);
 }
+
+export function prependCreatedGcpSourceEdges(
+  store: RecordSourceSelectorProxy,
+  connectionId: string,
+) {
+  const payload = store.getRootField("createGcpAccessReviewSources");
+  const connection = store.get(connectionId);
+  if (!payload || !connection) return;
+
+  const edges = payload.getLinkedRecords("accessReviewSourceEdges") ?? [];
+  const existing = connection.getLinkedRecords("edges") ?? [];
+  const existingIds = new Set(
+    existing
+      .map(edge => edge?.getLinkedRecord("node")?.getDataID())
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  for (const edge of [...edges].reverse()) {
+    const nodeId = edge?.getLinkedRecord("node")?.getDataID();
+    if (!edge || !nodeId || existingIds.has(nodeId)) {
+      continue;
+    }
+
+    ConnectionHandler.insertEdgeBefore(connection, edge);
+    existingIds.add(nodeId);
+  }
+}

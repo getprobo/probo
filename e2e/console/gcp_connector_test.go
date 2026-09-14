@@ -45,6 +45,7 @@ const gcpConnectorSetupQuery = `
 			subject
 			suggestedServiceAccountName
 			terraformSnippet
+			terraformBulkSnippet
 		}
 	}
 `
@@ -79,6 +80,7 @@ type gcpConnectorSetupResult struct {
 		Subject                     string `json:"subject"`
 		SuggestedServiceAccountName string `json:"suggestedServiceAccountName"`
 		TerraformSnippet            string `json:"terraformSnippet"`
+		TerraformBulkSnippet        string `json:"terraformBulkSnippet"`
 	} `json:"gcpConnectorSetup"`
 }
 
@@ -103,6 +105,12 @@ func TestGCPConnectorSetup(t *testing.T) {
 	assert.Contains(t, setup.TerraformSnippet, setup.Subject)
 	assert.Contains(t, setup.TerraformSnippet, cloudgcp.DefaultTerraformModuleSource)
 	assert.Contains(t, setup.TerraformSnippet, cloudgcp.DefaultServiceAccountName)
+	assert.Contains(t, setup.TerraformBulkSnippet, setup.Issuer)
+	assert.Contains(t, setup.TerraformBulkSnippet, setup.Subject)
+	assert.Contains(t, setup.TerraformBulkSnippet, "for_each")
+	assert.Contains(t, setup.TerraformBulkSnippet, "var.project_ids")
+	assert.Contains(t, setup.TerraformBulkSnippet, "output \"connectors\"")
+	assert.Contains(t, setup.TerraformBulkSnippet, cloudgcp.DefaultTerraformModuleSource)
 }
 
 func TestCreateGCPWorkloadIdentityConnector(t *testing.T) {
@@ -312,4 +320,142 @@ func TestGCPConnector_TenantIsolation(t *testing.T) {
 		}, &organizationConnectorStatusResult{})
 		testutil.RequireForbiddenError(t, err, "org B should not read org A's connector status")
 	})
+}
+
+const createGcpAccessReviewSourcesMutation = `
+	mutation($input: CreateGcpAccessReviewSourcesInput!) {
+		createGcpAccessReviewSources(input: $input) {
+			accessReviewSourceEdges {
+				node {
+					id
+					name
+				}
+			}
+			failures {
+				index
+				projectId
+				reason
+			}
+		}
+	}
+`
+
+type createGcpAccessReviewSourcesResult struct {
+	CreateGcpAccessReviewSources struct {
+		AccessReviewSourceEdges []struct {
+			Node struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"node"`
+		} `json:"accessReviewSourceEdges"`
+		Failures []struct {
+			Index     int     `json:"index"`
+			ProjectID *string `json:"projectId"`
+			Reason    string  `json:"reason"`
+		} `json:"failures"`
+	} `json:"createGcpAccessReviewSources"`
+}
+
+func TestCreateGcpAccessReviewSources(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	bogusProvider := "projects/alice/locations/global/workloadIdentityPools/probo-pool/providers/probo"
+
+	resp, err := owner.Do(createGcpAccessReviewSourcesMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"projects": []map[string]any{
+				{
+					"projectId":                   "invalid-project",
+					"gcpWorkloadIdentityProvider": bogusProvider,
+					"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
+				},
+				{
+					"projectId":                   "example-project",
+					"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
+					"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	var result createGcpAccessReviewSourcesResult
+	require.NoError(t, json.Unmarshal(resp.Data, &result))
+
+	payload := result.CreateGcpAccessReviewSources
+	assert.Empty(t, payload.AccessReviewSourceEdges)
+	require.Len(t, payload.Failures, 2)
+	assert.Equal(t, 0, payload.Failures[0].Index)
+	assert.Equal(t, "INVALID", payload.Failures[0].Reason)
+	assert.Equal(t, 1, payload.Failures[1].Index)
+	assert.Equal(t, "DISCONNECTED", payload.Failures[1].Reason)
+
+	if payload.Failures[0].ProjectID != nil {
+		assert.Equal(t, "invalid-project", *payload.Failures[0].ProjectID)
+	}
+
+	if payload.Failures[1].ProjectID != nil {
+		assert.Equal(t, "example-project", *payload.Failures[1].ProjectID)
+	}
+
+	body := resp.DataString()
+	assert.NotContains(t, body, bogusProvider)
+	assert.NotContains(t, body, "alice")
+	assert.NotContains(t, body, gcpFixtureProviderResource)
+	assert.NotContains(t, body, gcpFixtureServiceAccount)
+	assert.NotContains(t, strings.ToLower(body), "permissiondenied")
+	assert.NotContains(t, strings.ToLower(body), "accessdenied")
+}
+
+func TestCreateGcpAccessReviewSources_Empty(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	err := owner.Execute(createGcpAccessReviewSourcesMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"projects":       []map[string]any{},
+		},
+	}, &createGcpAccessReviewSourcesResult{})
+	testutil.RequireErrorCode(t, err, "INVALID")
+}
+
+func TestCreateGcpAccessReviewSources_RBAC(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	err := viewer.Execute(createGcpAccessReviewSourcesMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"projects": []map[string]any{
+				{
+					"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
+					"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
+				},
+			},
+		},
+	}, &createGcpAccessReviewSourcesResult{})
+	testutil.RequireForbiddenError(t, err, "viewer should not be able to bulk create gcp access sources")
+}
+
+func TestCreateGcpAccessReviewSources_TenantIsolation(t *testing.T) {
+	t.Parallel()
+	org1 := testutil.NewClient(t, testutil.RoleOwner)
+	org2 := testutil.NewClient(t, testutil.RoleOwner)
+
+	err := org2.Execute(createGcpAccessReviewSourcesMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": org1.GetOrganizationID().String(),
+			"projects": []map[string]any{
+				{
+					"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
+					"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
+				},
+			},
+		},
+	}, &createGcpAccessReviewSourcesResult{})
+	testutil.RequireForbiddenError(t, err, "org B should not bulk create gcp access sources in org A")
 }

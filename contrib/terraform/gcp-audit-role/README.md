@@ -67,6 +67,94 @@ output "probo_service_account_email" {
 Give Probo the `workload_identity_provider` and `service_account_email`
 outputs when you create the connector.
 
+## Covering a list of projects
+
+This module covers **one project**. Organization-wide rollout is the
+caller's responsibility. Probo reviews only the connected project: create
+one connector per project from the outputs below.
+
+Use one provider alias per project. Enable the APIs in each project
+before or with this apply.
+
+```hcl
+variable "probo_issuer_url" {
+  type = string
+}
+
+variable "probo_subject" {
+  type = string
+}
+
+variable "project_ids" {
+  type = set(string)
+}
+
+provider "google" {}
+
+provider "google" {
+  alias    = "project"
+  for_each = var.project_ids
+  project  = each.value
+}
+
+locals {
+  required_services = toset([
+    "iam.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "sts.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "logging.googleapis.com",
+  ])
+}
+
+resource "google_project_service" "required" {
+  for_each = {
+    for pair in setproduct(var.project_ids, local.required_services) :
+    "${pair[0]}/${pair[1]}" => {
+      project = pair[0]
+      service = pair[1]
+    }
+  }
+
+  project            = each.value.project
+  service            = each.value.service
+  disable_on_destroy = false
+}
+
+module "probo_audit" {
+  for_each = var.project_ids
+  source   = "getprobo/audit-role/gcp"
+  version  = "0.2.0"
+
+  providers = {
+    google = google.project[each.key]
+  }
+
+  probo_issuer_url     = var.probo_issuer_url
+  probo_subject        = var.probo_subject
+  service_account_name = "probo-audit"
+
+  depends_on = [google_project_service.required]
+}
+
+output "connectors" {
+  value = {
+    for project_id, inst in module.probo_audit :
+    project_id => {
+      workload_identity_provider = inst.workload_identity_provider
+      service_account_email      = inst.service_account_email
+    }
+  }
+}
+```
+
+`terraform output -json connectors` is a map keyed by project id. Paste
+it into **Bulk mode** on Connect GCP. Probo creates one connector
+and access source per project.
+
+`for_each` covers the projects in `project_ids` when you apply. Projects
+added later need another apply.
+
 ## Optional: MFA for human users
 
 Human identities on the project are Google Workspace or Cloud Identity

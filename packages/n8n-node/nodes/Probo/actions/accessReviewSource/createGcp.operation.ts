@@ -29,11 +29,26 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['accessReviewSource'],
-				operation: ['setupGcp'],
+				operation: ['createGcp'],
 			},
 		},
 		default: '',
 		description: 'The ID of the organization',
+		required: true,
+	},
+	{
+		displayName: 'Projects',
+		name: 'projects',
+		type: 'json',
+		displayOptions: {
+			show: {
+				resource: ['accessReviewSource'],
+				operation: ['createGcp'],
+			},
+		},
+		default: '[]',
+		description:
+			'JSON array of projects. Each item needs gcpWorkloadIdentityProvider and gcpServiceAccountEmail. Optional projectId names the source.',
 		required: true,
 	},
 ];
@@ -43,21 +58,34 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const projects = this.getNodeParameter('projects', itemIndex) as unknown;
 
 	const query = `
-		query GcpConnectorSetup($organizationId: ID!) {
-			gcpConnectorSetup(organizationId: $organizationId) {
-				issuer
-				audience
-				subject
-				suggestedServiceAccountName
-				terraformSnippet
-				terraformBulkSnippet
+		mutation CreateGcpAccessReviewSources($input: CreateGcpAccessReviewSourcesInput!) {
+			createGcpAccessReviewSources(input: $input) {
+				accessReviewSourceEdges {
+					node {
+						id
+						name
+						connectorId
+						createdAt
+					}
+				}
+				failures {
+					index
+					projectId
+					reason
+				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { organizationId });
+	const responseData = await proboApiRequest.call(this, query, {
+		input: {
+			organizationId,
+			projects,
+		},
+	});
 
 	return {
 		json: responseData,
