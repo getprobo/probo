@@ -536,6 +536,8 @@ type CompliancePortalEdge {
 
 type CompliancePortalAccess implements Node {
     id: ID!
+    state: CompliancePortalAccessState!
+    authenticatedAt: Datetime
     ndaSignature: ElectronicSignature @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!

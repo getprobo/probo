@@ -1488,6 +1488,7 @@ func (r *mutationResolver) UpdateCompliancePortalAccess(ctx context.Context, inp
 		ctx, scope,
 		&management.UpdateAccessRequest{
 			ID:                           input.ID,
+			State:                        input.State,
 			DocumentAccesses:             documentAccesses,
 			ReportAccesses:               reportAccesses,
 			CompliancePortalFileAccesses: fileAccesses,

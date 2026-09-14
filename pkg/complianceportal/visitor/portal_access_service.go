@@ -150,6 +150,10 @@ func (s *Service) RequestPortalAccess(
 				return fmt.Errorf("cannot load compliance page membership: %w", err)
 			}
 
+			if access.State != coredata.CompliancePortalAccessStateActive {
+				return ErrUserInactive
+			}
+
 			existingAccesses, err := page.LoadAll(
 				ctx,
 				page.OrderBy[coredata.CompliancePortalDocumentAccessOrderField]{
@@ -373,8 +377,7 @@ func (s *Service) GetPortalDocumentAccess(
 		func(ctx context.Context, conn pg.Querier) error {
 			access := &coredata.CompliancePortalAccess{}
 
-			err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
-			if err != nil {
+			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
 				}
@@ -382,21 +385,13 @@ func (s *Service) GetPortalDocumentAccess(
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, access.OrganizationID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrUserNotFound
-				}
-			}
-
-			if profile.State != coredata.ProfileStateActive {
+			if access.State != coredata.CompliancePortalAccessStateActive {
 				return ErrUserInactive
 			}
 
 			documentAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			err = documentAccess.LoadByCompliancePortalAccessIDAndDocumentID(ctx, conn, scope, access.ID, documentID)
-			if err != nil {
+			if err := documentAccess.LoadByCompliancePortalAccessIDAndDocumentID(ctx, conn, scope, access.ID, documentID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
 				}
@@ -428,8 +423,7 @@ func (s *Service) GetPortalReportFileAccess(
 		func(ctx context.Context, conn pg.Querier) error {
 			access := &coredata.CompliancePortalAccess{}
 
-			err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
-			if err != nil {
+			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
 				}
@@ -437,21 +431,13 @@ func (s *Service) GetPortalReportFileAccess(
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, access.OrganizationID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrUserNotFound
-				}
-			}
-
-			if profile.State != coredata.ProfileStateActive {
+			if access.State != coredata.CompliancePortalAccessStateActive {
 				return ErrUserInactive
 			}
 
 			reportAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			err = reportAccess.LoadByCompliancePortalAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID)
-			if err != nil {
+			if err := reportAccess.LoadByCompliancePortalAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
 				}
@@ -483,8 +469,7 @@ func (s *Service) GetPortalFileAccess(
 		func(ctx context.Context, conn pg.Querier) error {
 			access := &coredata.CompliancePortalAccess{}
 
-			err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
-			if err != nil {
+			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
 				}
@@ -492,21 +477,13 @@ func (s *Service) GetPortalFileAccess(
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, access.OrganizationID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrUserNotFound
-				}
-			}
-
-			if profile.State != coredata.ProfileStateActive {
+			if access.State != coredata.CompliancePortalAccessStateActive {
 				return ErrUserInactive
 			}
 
 			fileAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			err = fileAccess.LoadByCompliancePortalAccessIDAndCompliancePortalFileID(ctx, conn, scope, access.ID, compliancePortalFileID)
-			if err != nil {
+			if err := fileAccess.LoadByCompliancePortalAccessIDAndCompliancePortalFileID(ctx, conn, scope, access.ID, compliancePortalFileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
 				}
@@ -590,6 +567,10 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
+			if access.State != coredata.CompliancePortalAccessStateActive {
+				return ErrUserInactive
+			}
+
 			profile := &coredata.MembershipProfile{}
 			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, identity.ID, access.OrganizationID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -597,10 +578,6 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 				}
 
 				return fmt.Errorf("cannot load profile: %w", err)
-			}
-
-			if profile.State != coredata.ProfileStateActive {
-				return ErrUserInactive
 			}
 
 			now := time.Now()

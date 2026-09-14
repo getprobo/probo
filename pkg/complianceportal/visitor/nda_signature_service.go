@@ -100,5 +100,9 @@ func (s *Service) authorizePortalNDASignature(
 		return esign.ErrSignatureAccessDenied
 	}
 
+	if access.State != coredata.CompliancePortalAccessStateActive {
+		return esign.ErrSignatureAccessDenied
+	}
+
 	return nil
 }

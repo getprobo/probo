@@ -50,6 +50,7 @@ type (
 
 	UpdateAccessRequest struct {
 		ID                           gid.GID
+		State                        *coredata.CompliancePortalAccessState
 		DocumentAccesses             []UpdateDocumentAccessRequest
 		ReportAccesses               []UpdateDocumentAccessRequest
 		CompliancePortalFileAccesses []UpdateDocumentAccessRequest
@@ -436,6 +437,16 @@ func (s *Service) UpdateAccess(
 
 			if err := access.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance page access: %w", err)
+			}
+
+			if req.State != nil && *req.State != access.State {
+				access.State = *req.State
+				access.UpdatedAt = time.Now()
+				if err := access.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update compliance portal access state: %w", err)
+				}
+
+				compliancePortalAcessActivated = *req.State == coredata.CompliancePortalAccessStateActive
 			}
 
 			var tcdas coredata.CompliancePortalDocumentAccesses

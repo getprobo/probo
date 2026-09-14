@@ -51,10 +51,12 @@ func NewCompliancePortalAccessEdge(tca *coredata.CompliancePortalAccess, orderBy
 
 func NewCompliancePortalAccess(tca *coredata.CompliancePortalAccess) *CompliancePortalAccess {
 	return &CompliancePortalAccess{
-		ID:             tca.ID,
-		OrganizationID: tca.OrganizationID,
-		IdentityID:     tca.IdentityID,
-		CreatedAt:      tca.CreatedAt,
-		UpdatedAt:      tca.UpdatedAt,
+		ID:              tca.ID,
+		OrganizationID:  tca.OrganizationID,
+		IdentityID:      tca.IdentityID,
+		State:           tca.State,
+		AuthenticatedAt: tca.AuthenticatedAt,
+		CreatedAt:       tca.CreatedAt,
+		UpdatedAt:       tca.UpdatedAt,
 	}
 }

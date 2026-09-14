@@ -37,15 +37,17 @@ import (
 
 type (
 	CompliancePortalAccess struct {
-		ID                    gid.GID      `db:"id"`
-		OrganizationID        gid.GID      `db:"organization_id"`
-		TenantID              gid.TenantID `db:"tenant_id"`
-		IdentityID            gid.GID      `db:"identity_id"`
-		CompliancePortalID    gid.GID      `db:"compliance_portal_id"`
-		ElectronicSignatureID *gid.GID     `db:"electronic_signature_id"`
-		CreatedAt             time.Time    `db:"created_at"`
-		UpdatedAt             time.Time    `db:"updated_at"`
-		PendingRequestCount   int          `db:"-"`
+		ID                    gid.GID                     `db:"id"`
+		OrganizationID        gid.GID                     `db:"organization_id"`
+		TenantID              gid.TenantID                `db:"tenant_id"`
+		IdentityID            gid.GID                     `db:"identity_id"`
+		CompliancePortalID    gid.GID                     `db:"compliance_portal_id"`
+		ElectronicSignatureID *gid.GID                    `db:"electronic_signature_id"`
+		State                 CompliancePortalAccessState `db:"state"`
+		AuthenticatedAt       *time.Time                  `db:"authenticated_at"`
+		CreatedAt             time.Time                   `db:"created_at"`
+		UpdatedAt             time.Time                   `db:"updated_at"`
+		PendingRequestCount   int                         `db:"-"`
 	}
 
 	CompliancePortalAccesses []*CompliancePortalAccess
@@ -120,6 +122,8 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 FROM
@@ -169,6 +173,8 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 FROM
@@ -221,6 +227,8 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 FROM
@@ -268,6 +276,8 @@ INSERT INTO cp_accesses (
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -277,6 +287,8 @@ INSERT INTO cp_accesses (
 	@identity_id,
 	@compliance_portal_id,
 	@electronic_signature_id,
+	@state,
+	@authenticated_at,
 	@created_at,
 	@updated_at
 )
@@ -289,6 +301,8 @@ INSERT INTO cp_accesses (
 		"identity_id":             tca.IdentityID,
 		"compliance_portal_id":    tca.CompliancePortalID,
 		"electronic_signature_id": tca.ElectronicSignatureID,
+		"state":                   tca.State,
+		"authenticated_at":        tca.AuthenticatedAt,
 		"created_at":              tca.CreatedAt,
 		"updated_at":              tca.UpdatedAt,
 	}
@@ -315,7 +329,9 @@ func (tca *CompliancePortalAccess) Update(
 	q := `
 UPDATE cp_accesses SET
 	updated_at = @updated_at,
-	electronic_signature_id = @electronic_signature_id
+	electronic_signature_id = @electronic_signature_id,
+	state = @state,
+	authenticated_at = @authenticated_at
 WHERE
 	%s
 	AND id = @id
@@ -327,12 +343,18 @@ WHERE
 		"id":                      tca.ID,
 		"updated_at":              tca.UpdatedAt,
 		"electronic_signature_id": tca.ElectronicSignatureID,
+		"state":                   tca.State,
+		"authenticated_at":        tca.AuthenticatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update compliance portal access: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil
@@ -381,6 +403,8 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at,
 	(

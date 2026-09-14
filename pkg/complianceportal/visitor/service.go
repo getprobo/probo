@@ -354,6 +354,8 @@ func (s *Service) ProvisionPortalMember(
 					TenantID:           scope.GetTenantID(),
 					IdentityID:         identityID,
 					CompliancePortalID: compliancePageID,
+					State:              coredata.CompliancePortalAccessStateActive,
+					AuthenticatedAt:    &now,
 					CreatedAt:          now,
 					UpdatedAt:          now,
 				}
@@ -385,6 +387,12 @@ func (s *Service) ProvisionPortalMember(
 
 				if err := access.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert compliance page access: %w", err)
+				}
+			} else if access.AuthenticatedAt == nil {
+				access.AuthenticatedAt = &now
+				access.UpdatedAt = now
+				if err := access.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot record access authentication: %w", err)
 				}
 			}
 
