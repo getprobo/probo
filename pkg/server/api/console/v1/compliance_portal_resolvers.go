@@ -326,6 +326,31 @@ func (r *compliancePortalResolver) CustomLinks(ctx context.Context, obj *types.C
 	return types.NewComplianceCustomLinkConnection(result), nil
 }
 
+// MemberCandidates is the resolver for the memberCandidates field.
+func (r *compliancePortalResolver) MemberCandidates(ctx context.Context, obj *types.CompliancePortal, query string) ([]*types.Profile, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	profiles, err := r.management.ListMemberCandidates(ctx, scope, obj.ID, query)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal member candidates", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.Profile, len(profiles))
+	for i, profile := range profiles {
+		result[i] = types.NewProfile(profile)
+	}
+
+	return result, nil
+}
+
 // CompliancePortalFiles is the resolver for the compliancePortalFiles field.
 func (r *compliancePortalResolver) CompliancePortalFiles(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalFileOrderField]) (*types.CompliancePortalFileConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileList)
@@ -1450,6 +1475,49 @@ func (r *mutationResolver) UpdateCompliancePortalBrand(ctx context.Context, inpu
 	}, nil
 }
 
+// CreateCompliancePortalAccess is the resolver for the createCompliancePortalAccess field.
+func (r *mutationResolver) CreateCompliancePortalAccess(ctx context.Context, input types.CreateCompliancePortalAccessInput) (*types.CreateCompliancePortalAccessPayload, error) {
+	scope, err := r.authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalAccessCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.management.CreateAccess(
+		ctx,
+		scope,
+		&management.CreateAccessRequest{
+			CompliancePortalID:      input.CompliancePortalID,
+			ProfileID:               input.ProfileID,
+			Email:                   input.Email,
+			DocumentIDs:             input.Documents,
+			ReportFileIDs:           input.Reports,
+			CompliancePortalFileIDs: input.CompliancePortalFiles,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, gqlutils.Conflictf(ctx, "visitor already has access to this portal")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.CreateCompliancePortalAccessPayload{
+		CompliancePortalAccessEdge: types.NewCompliancePortalAccessEdge(
+			access,
+			coredata.CompliancePortalAccessOrderFieldCreatedAt,
+		),
+	}, nil
+}
+
 // UpdateCompliancePortalAccess is the resolver for the updateCompliancePortalAccess field.
 func (r *mutationResolver) UpdateCompliancePortalAccess(ctx context.Context, input types.UpdateCompliancePortalAccessInput) (*types.UpdateCompliancePortalAccessPayload, error) {
 	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
@@ -1535,6 +1603,60 @@ func (r *mutationResolver) UpdateCompliancePortalAccess(ctx context.Context, inp
 		Documents:              documents,
 		Audits:                 audits,
 		CompliancePortalFiles:  compliancePortalFiles,
+	}, nil
+}
+
+// DeactivateCompliancePortalAccess is the resolver for the deactivateCompliancePortalAccess field.
+func (r *mutationResolver) DeactivateCompliancePortalAccess(ctx context.Context, input types.DeactivateCompliancePortalAccessInput) (*types.DeactivateCompliancePortalAccessPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.management.DeactivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot deactivate compliance portal access", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeactivateCompliancePortalAccessPayload{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+	}, nil
+}
+
+// ActivateCompliancePortalAccess is the resolver for the activateCompliancePortalAccess field.
+func (r *mutationResolver) ActivateCompliancePortalAccess(ctx context.Context, input types.ActivateCompliancePortalAccessInput) (*types.ActivateCompliancePortalAccessPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.management.ActivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot activate compliance portal access", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ActivateCompliancePortalAccessPayload{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
 	}, nil
 }
 

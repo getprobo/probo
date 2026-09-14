@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
@@ -34,6 +36,7 @@ import { CompliancePortalAccessList } from "./_components/CompliancePortalAccess
 import { CompliancePortalAccessListSearch } from "./_components/CompliancePortalAccessListSearch";
 import { CompliancePortalAccessListSort } from "./_components/CompliancePortalAccessListSort";
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
+import { InviteVisitorDialog } from "./_components/InviteVisitorDialog";
 import { accessSection, visitorsPage } from "./variants";
 
 export const compliancePortalVisitorsPageQuery = graphql`
@@ -41,8 +44,10 @@ export const compliancePortalVisitorsPageQuery = graphql`
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
+        id
         canGetNDA: permission(action: "compliance-portal:portal:get-nda")
         canListAccesses: permission(action: "compliance-portal:portal-access:list")
+        canCreateAccess: permission(action: "compliance-portal:portal-access:create")
         ...CompliancePortalNDASectionFragment
       }
     }
@@ -57,7 +62,7 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
   const { t } = useTranslation("organizations/compliance-portals");
   const title = t("visitorsPage.title");
   usePageTitle(title);
-  const { root, intro, tools } = accessSection();
+  const { root, intro, tools, actions } = accessSection();
 
   const { compliancePortal } = usePreloadedQuery<CompliancePortalVisitorsPageQuery>(
     compliancePortalVisitorsPageQuery,
@@ -85,7 +90,16 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
             </Text>
             <div className={tools()}>
               <CompliancePortalAccessListSearch />
-              <CompliancePortalAccessListSort />
+              <div className={actions()}>
+                <CompliancePortalAccessListSort />
+                {compliancePortal.canCreateAccess && (
+                  <InviteVisitorDialog compliancePortalId={compliancePortal.id}>
+                    <Button size={2} color="neutral" highContrast iconStart={<PlusIcon />}>
+                      {t("inviteVisitorDialog.actions.open")}
+                    </Button>
+                  </InviteVisitorDialog>
+                )}
+              </div>
             </div>
           </div>
           <Suspense fallback={<ListSkeleton count={4} />}>

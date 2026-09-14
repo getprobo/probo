@@ -9698,3 +9698,104 @@ func (r *Resolver) GetTaskActivityTool(ctx context.Context, req *mcp.CallToolReq
 		TaskActivity: types.NewTaskActivity(taskActivity),
 	}, nil
 }
+
+func (r *Resolver) CreateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCompliancePortalAccessInput) (*mcp.CallToolResult, types.CreateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalAccessCreate)
+	if err != nil {
+		return nil, types.CreateCompliancePortalAccessOutput{}, err
+	}
+
+	var email *mail.Addr
+	if input.Email != nil && *input.Email != "" {
+		parsed, err := mail.ParseAddr(*input.Email)
+		if err != nil {
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("invalid email")
+		}
+
+		email = &parsed
+	}
+
+	access, err := r.management.CreateAccess(
+		ctx,
+		scope,
+		&management.CreateAccessRequest{
+			CompliancePortalID:      input.CompliancePortalID,
+			ProfileID:               input.ProfileID,
+			Email:                   email,
+			DocumentIDs:             input.DocumentIds,
+			ReportFileIDs:           input.ReportIds,
+			CompliancePortalFileIDs: input.CompliancePortalFileIds,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		case errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("visitor already has access to this portal")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.CreateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	return nil, types.CreateCompliancePortalAccessOutput{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+	}, nil
+}
+
+func (r *Resolver) DeactivateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateCompliancePortalAccessInput) (*mcp.CallToolResult, types.DeactivateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, types.DeactivateCompliancePortalAccessOutput{}, err
+	}
+
+	access, err := r.management.DeactivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.DeactivateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot deactivate compliance portal access", log.Error(err))
+			return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	return nil, types.DeactivateCompliancePortalAccessOutput{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+	}, nil
+}
+
+func (r *Resolver) ActivateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ActivateCompliancePortalAccessInput) (*mcp.CallToolResult, types.ActivateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, types.ActivateCompliancePortalAccessOutput{}, err
+	}
+
+	access, err := r.management.ActivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.ActivateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot activate compliance portal access", log.Error(err))
+			return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	return nil, types.ActivateCompliancePortalAccessOutput{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+	}, nil
+}

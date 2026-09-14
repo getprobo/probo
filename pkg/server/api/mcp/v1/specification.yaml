@@ -11504,6 +11504,102 @@ components:
         compliance_portal:
           $ref: "#/components/schemas/CompliancePortal"
 
+    CreateCompliancePortalAccessInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Existing organization profile ID. Provide exactly one of profile_id or email.
+        email:
+          type: string
+          description: Visitor email address. Provide exactly one of profile_id or email.
+        document_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Document IDs to grant immediately
+        report_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Report file IDs to grant immediately
+        compliance_portal_file_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Compliance portal file IDs to grant immediately
+
+    CreateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    DeactivateCompliancePortalAccessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+
+    DeactivateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    ActivateCompliancePortalAccessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+
+    ActivateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    CompliancePortalAccess:
+      type: object
+      required:
+        - id
+        - state
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        state:
+          type: string
+        authenticated_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
     GetCompliancePortalInput:
       type: object
       required:
@@ -18482,6 +18578,42 @@ tools:
       $ref: "#/components/schemas/CreateCompliancePortalInput"
     outputSchema:
       $ref: "#/components/schemas/CreateCompliancePortalOutput"
+  - name: createCompliancePortalAccess
+    title: Create Compliance Portal Access
+    description: Invite a visitor to a compliance portal by profile ID or email
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalAccessOutput"
+  - name: deactivateCompliancePortalAccess
+    title: Deactivate Compliance Portal Access
+    description: Deactivate a compliance portal visitor. Grants stay; protected reads and requests fail until reactivation.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeactivateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeactivateCompliancePortalAccessOutput"
+  - name: activateCompliancePortalAccess
+    title: Activate Compliance Portal Access
+    description: Activate a deactivated compliance portal visitor
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ActivateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/ActivateCompliancePortalAccessOutput"
   - name: getCompliancePortal
     title: Get Compliance Portal
     description: Get a compliance portal by ID

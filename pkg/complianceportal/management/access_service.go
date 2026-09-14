@@ -27,10 +27,13 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bot"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -39,8 +42,12 @@ import (
 
 type (
 	CreateAccessRequest struct {
-		CompliancePortalID gid.GID
-		IdentityID         gid.GID
+		CompliancePortalID      gid.GID
+		ProfileID               *gid.GID
+		Email                   *mail.Addr
+		DocumentIDs             []gid.GID
+		ReportFileIDs           []gid.GID
+		CompliancePortalFileIDs []gid.GID
 	}
 
 	UpdateDocumentAccessRequest struct {
@@ -77,6 +84,58 @@ func (utcar *UpdateAccessRequest) Validate() error {
 
 	for i, reportAccess := range utcar.CompliancePortalFileAccesses {
 		v.Check(reportAccess.ID, fmt.Sprintf("compliancePortalFileAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.CompliancePortalFileEntityType))
+	}
+
+	return v.Error()
+}
+
+func (req *CreateAccessRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(
+		req.CompliancePortalID,
+		"compliancePortalId",
+		validator.Required(),
+		validator.GID(coredata.CompliancePortalEntityType),
+	)
+
+	hasProfile := req.ProfileID != nil
+	hasEmail := req.Email != nil
+
+	switch {
+	case hasProfile == hasEmail:
+		v.Check("", "email", validator.Required())
+	case hasProfile:
+		v.Check(*req.ProfileID, "profileId", validator.GID(coredata.MembershipProfileEntityType))
+	case hasEmail:
+		v.Check(*req.Email, "email", validator.NotEmpty())
+	}
+
+	for i, documentID := range req.DocumentIDs {
+		v.Check(
+			documentID,
+			fmt.Sprintf("documents[%d]", i),
+			validator.Required(),
+			validator.GID(coredata.DocumentEntityType),
+		)
+	}
+
+	for i, reportFileID := range req.ReportFileIDs {
+		v.Check(
+			reportFileID,
+			fmt.Sprintf("reports[%d]", i),
+			validator.Required(),
+			validator.GID(coredata.FileEntityType),
+		)
+	}
+
+	for i, fileID := range req.CompliancePortalFileIDs {
+		v.Check(
+			fileID,
+			fmt.Sprintf("compliancePortalFiles[%d]", i),
+			validator.Required(),
+			validator.GID(coredata.CompliancePortalFileEntityType),
+		)
 	}
 
 	return v.Error()
@@ -136,6 +195,57 @@ func (s *Service) ListAccesses(
 	return page.NewPage(accesses, cursor), nil
 }
 
+func (s *Service) ListMemberCandidates(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	query string,
+) ([]*coredata.MembershipProfile, error) {
+	var profiles coredata.MembershipProfiles
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			portal := &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, compliancePortalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
+			}
+
+			filter := coredata.NewMembershipProfileFilter(nil).
+				WithMembership().
+				WithoutCompliancePortalID(compliancePortalID)
+
+			if query != "" {
+				filter = filter.WithQuery(&query)
+			}
+
+			cursor := page.NewCursor(
+				MemberCandidateLimit,
+				nil,
+				page.Head,
+				page.OrderBy[coredata.MembershipProfileOrderField]{
+					Field:     coredata.MembershipProfileOrderFieldFullName,
+					Direction: page.OrderDirectionAsc,
+				},
+			)
+
+			return profiles.LoadByOrganizationID(
+				ctx,
+				conn,
+				scope,
+				portal.OrganizationID,
+				cursor,
+				filter,
+			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
+}
+
 func (s *Service) GetAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -154,6 +264,147 @@ func (s *Service) GetAccess(
 	}
 
 	return &access, nil
+}
+
+func (s *Service) CreateAccess(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req *CreateAccessRequest,
+) (*coredata.CompliancePortalAccess, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	if s.auth == nil {
+		return nil, fmt.Errorf("auth service is required")
+	}
+
+	var access *coredata.CompliancePortalAccess
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			now := time.Now()
+			compliancePortal := &coredata.CompliancePortal{}
+
+			if err := compliancePortal.LoadByID(ctx, tx, scope, req.CompliancePortalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
+			}
+
+			identity, profile, err := s.resolveAccessIdentity(
+				ctx,
+				tx,
+				scope,
+				compliancePortal,
+				req,
+				now,
+			)
+			if err != nil {
+				return err
+			}
+
+			existing := &coredata.CompliancePortalAccess{}
+			err = existing.LoadByCompliancePortalIDAndIdentityID(
+				ctx,
+				tx,
+				scope,
+				compliancePortal.ID,
+				identity.ID,
+			)
+			if err == nil {
+				return coredata.ErrResourceAlreadyExists
+			}
+
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load compliance portal access: %w", err)
+			}
+
+			access = &coredata.CompliancePortalAccess{
+				ID:                 gid.New(scope.GetTenantID(), coredata.CompliancePortalAccessEntityType),
+				OrganizationID:     compliancePortal.OrganizationID,
+				TenantID:           scope.GetTenantID(),
+				IdentityID:         identity.ID,
+				CompliancePortalID: compliancePortal.ID,
+				State:              coredata.CompliancePortalAccessStateActive,
+				CreatedAt:          now,
+				UpdatedAt:          now,
+			}
+
+			if compliancePortal.NonDisclosureAgreementFileID != nil && s.esign != nil {
+				sig, err := s.esign.CreateSignature(
+					ctx,
+					tx,
+					&esign.CreateSignatureRequest{
+						OrganizationID: access.OrganizationID,
+						DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
+						FileID:         *compliancePortal.NonDisclosureAgreementFileID,
+						SignerEmail:    identity.EmailAddress,
+						ConsentText:    ndaConsentText(ref.UnrefOrZero(compliancePortal.Email)),
+					},
+				)
+				if err != nil {
+					return fmt.Errorf("cannot create pending signature: %w", err)
+				}
+
+				access.ElectronicSignatureID = &sig.ID
+			}
+
+			if err := access.Insert(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return err
+				}
+
+				return fmt.Errorf("cannot insert compliance portal access: %w", err)
+			}
+
+			if err := s.grantCreatedAccessTargets(ctx, tx, scope, access, req); err != nil {
+				return err
+			}
+
+			if err := s.sendInviteEmail(
+				ctx,
+				scope,
+				tx,
+				compliancePortal,
+				access,
+				identity,
+				profile,
+			); err != nil {
+				return fmt.Errorf("cannot send invite email: %w", err)
+			}
+
+			if len(req.DocumentIDs) > 0 ||
+				len(req.ReportFileIDs) > 0 ||
+				len(req.CompliancePortalFileIDs) > 0 {
+				if _, err := s.bot.EnqueueMessage(
+					ctx,
+					tx,
+					scope,
+					bot.MessageParams{
+						OrganizationID: access.OrganizationID,
+						Capability:     portal.AccessCapability,
+						MessageType:    portal.AccessMessageType,
+						Attributes: map[string]any{
+							portal.AccessIDAttribute: access.ID.String(),
+						},
+						SubjectNamespace: portal.AccessSubjectNamespace,
+						SubjectKey:       access.ID.String(),
+						EventKey:         createAccessEventKey(req),
+						Purpose:          coredata.BotMessagePurposeUpdate,
+					},
+				); err != nil {
+					return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return access, nil
 }
 
 func (s *Service) ListAccessResources(
@@ -599,6 +850,40 @@ func (s *Service) UpdateAccess(
 	return access, nil
 }
 
+func (s *Service) DeactivateAccess(
+	ctx context.Context,
+	scope coredata.Scoper,
+	id gid.GID,
+) (*coredata.CompliancePortalAccess, error) {
+	state := coredata.CompliancePortalAccessStateDeactivated
+
+	return s.UpdateAccess(
+		ctx,
+		scope,
+		&UpdateAccessRequest{
+			ID:    id,
+			State: &state,
+		},
+	)
+}
+
+func (s *Service) ActivateAccess(
+	ctx context.Context,
+	scope coredata.Scoper,
+	id gid.GID,
+) (*coredata.CompliancePortalAccess, error) {
+	state := coredata.CompliancePortalAccessStateActive
+
+	return s.UpdateAccess(
+		ctx,
+		scope,
+		&UpdateAccessRequest{
+			ID:    id,
+			State: &state,
+		},
+	)
+}
+
 func (s *Service) DeleteAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -756,6 +1041,379 @@ func (s *Service) sendAccessEmail(
 
 	if err := accessEmail.Insert(ctx, tx); err != nil {
 		return fmt.Errorf("cannot insert access email: %w", err)
+	}
+
+	return nil
+}
+
+func ndaConsentText(contactEmail string) string {
+	if contactEmail == "" {
+		contactEmail = defaultNDAContactEmail
+	}
+
+	return fmt.Sprintf(
+		"By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact %s.",
+		contactEmail,
+	)
+}
+
+func createAccessEventKey(req *CreateAccessRequest) string {
+	components := make(
+		[]string,
+		0,
+		len(req.DocumentIDs)+len(req.ReportFileIDs)+len(req.CompliancePortalFileIDs),
+	)
+
+	for _, id := range req.DocumentIDs {
+		components = append(components, fmt.Sprintf("document:%s:GRANTED", id))
+	}
+
+	for _, id := range req.ReportFileIDs {
+		components = append(components, fmt.Sprintf("report:%s:GRANTED", id))
+	}
+
+	for _, id := range req.CompliancePortalFileIDs {
+		components = append(components, fmt.Sprintf("file:%s:GRANTED", id))
+	}
+
+	return bot.StableEventKey("management-create", components...)
+}
+
+func (s *Service) resolveAccessIdentity(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	compliancePortal *coredata.CompliancePortal,
+	req *CreateAccessRequest,
+	now time.Time,
+) (*coredata.Identity, *coredata.MembershipProfile, error) {
+	if req.ProfileID != nil {
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByID(ctx, tx, scope, *req.ProfileID); err != nil {
+			return nil, nil, fmt.Errorf("cannot load profile: %w", err)
+		}
+
+		if profile.OrganizationID != compliancePortal.OrganizationID {
+			return nil, nil, coredata.ErrResourceNotFound
+		}
+
+		identity := &coredata.Identity{}
+		if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
+			return nil, nil, fmt.Errorf("cannot load identity: %w", err)
+		}
+
+		return identity, profile, nil
+	}
+
+	identity, err := findOrCreateIdentity(ctx, tx, *req.Email, now)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	profile, err := findOrCreateVisitorProfile(
+		ctx,
+		tx,
+		scope,
+		identity,
+		compliancePortal.OrganizationID,
+		now,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return identity, profile, nil
+}
+
+func findOrCreateIdentity(
+	ctx context.Context,
+	tx pg.Tx,
+	email mail.Addr,
+	now time.Time,
+) (*coredata.Identity, error) {
+	identity := &coredata.Identity{}
+
+	err := identity.LoadByEmail(ctx, tx, email)
+	if err == nil {
+		return identity, nil
+	}
+
+	if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load identity: %w", err)
+	}
+
+	identity = &coredata.Identity{
+		ID:           gid.New(gid.NilTenant, coredata.IdentityEntityType),
+		EmailAddress: email,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	if err := identity.Insert(ctx, tx); err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			if err := identity.LoadByEmail(ctx, tx, email); err != nil {
+				return nil, fmt.Errorf("cannot load identity after conflict: %w", err)
+			}
+
+			return identity, nil
+		}
+
+		return nil, fmt.Errorf("cannot insert identity: %w", err)
+	}
+
+	return identity, nil
+}
+
+func findOrCreateVisitorProfile(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	identity *coredata.Identity,
+	organizationID gid.GID,
+	now time.Time,
+) (*coredata.MembershipProfile, error) {
+	profile := &coredata.MembershipProfile{}
+
+	err := profile.LoadByIdentityIDAndOrganizationID(
+		ctx,
+		tx,
+		scope,
+		identity.ID,
+		organizationID,
+	)
+	if err == nil {
+		return profile, nil
+	}
+
+	if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load profile: %w", err)
+	}
+
+	profile = &coredata.MembershipProfile{
+		ID:             gid.New(scope.GetTenantID(), coredata.MembershipProfileEntityType),
+		IdentityID:     identity.ID,
+		OrganizationID: organizationID,
+		EmailAddress:   identity.EmailAddress,
+		Source:         coredata.ProfileSourceManual,
+		State:          coredata.ProfileStateActive,
+		ActivatedAt:    &now,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	if err := profile.Insert(ctx, tx); err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				scope,
+				identity.ID,
+				organizationID,
+			); err != nil {
+				return nil, fmt.Errorf("cannot load profile after conflict: %w", err)
+			}
+
+			return profile, nil
+		}
+
+		return nil, fmt.Errorf("cannot insert profile: %w", err)
+	}
+
+	return profile, nil
+}
+
+func (s *Service) grantCreatedAccessTargets(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	access *coredata.CompliancePortalAccess,
+	req *CreateAccessRequest,
+) error {
+	var tcdas coredata.CompliancePortalDocumentAccesses
+
+	if len(req.DocumentIDs) > 0 {
+		documentData := make([]coredata.UpsertCompliancePortalDocumentAccessesData, 0, len(req.DocumentIDs))
+		for _, documentID := range req.DocumentIDs {
+			documentData = append(documentData, coredata.UpsertCompliancePortalDocumentAccessesData{
+				ID:     documentID,
+				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+			})
+		}
+
+		if err := validatePortalAccessTargets(
+			ctx,
+			tx,
+			scope,
+			access.CompliancePortalID,
+			req.DocumentIDs,
+			nil,
+			nil,
+		); err != nil {
+			return err
+		}
+
+		if err := tcdas.UpsertDocumentAccesses(
+			ctx,
+			tx,
+			scope,
+			access.OrganizationID,
+			access.ID,
+			documentData,
+		); err != nil {
+			return fmt.Errorf("cannot upsert document accesses: %w", err)
+		}
+	}
+
+	if len(req.ReportFileIDs) > 0 {
+		reportData := make([]coredata.UpsertCompliancePortalDocumentAccessesData, 0, len(req.ReportFileIDs))
+		for _, reportFileID := range req.ReportFileIDs {
+			reportData = append(reportData, coredata.UpsertCompliancePortalDocumentAccessesData{
+				ID:     reportFileID,
+				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+			})
+		}
+
+		if err := validatePortalAccessTargets(
+			ctx,
+			tx,
+			scope,
+			access.CompliancePortalID,
+			nil,
+			req.ReportFileIDs,
+			nil,
+		); err != nil {
+			return err
+		}
+
+		if err := tcdas.UpsertReportFileAccesses(
+			ctx,
+			tx,
+			scope,
+			access.OrganizationID,
+			access.ID,
+			reportData,
+		); err != nil {
+			return fmt.Errorf("cannot upsert report accesses: %w", err)
+		}
+	}
+
+	if len(req.CompliancePortalFileIDs) > 0 {
+		fileData := make([]coredata.UpsertCompliancePortalDocumentAccessesData, 0, len(req.CompliancePortalFileIDs))
+		for _, fileID := range req.CompliancePortalFileIDs {
+			fileData = append(fileData, coredata.UpsertCompliancePortalDocumentAccessesData{
+				ID:     fileID,
+				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+			})
+		}
+
+		if err := validatePortalAccessTargets(
+			ctx,
+			tx,
+			scope,
+			access.CompliancePortalID,
+			nil,
+			nil,
+			req.CompliancePortalFileIDs,
+		); err != nil {
+			return err
+		}
+
+		if err := tcdas.UpsertCompliancePortalFileAccesses(
+			ctx,
+			tx,
+			scope,
+			access.OrganizationID,
+			access.ID,
+			fileData,
+		); err != nil {
+			return fmt.Errorf("cannot upsert compliance page file accesses: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) sendInviteEmail(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tx pg.Tx,
+	compliancePortal *coredata.CompliancePortal,
+	access *coredata.CompliancePortalAccess,
+	identity *coredata.Identity,
+	profile *coredata.MembershipProfile,
+) error {
+	organization := &coredata.Organization{}
+	if err := organization.LoadByID(ctx, tx, scope, access.OrganizationID); err != nil {
+		return fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	publicURL, err := s.PublicURLForCompliancePortal(ctx, tx, scope, compliancePortal)
+	if err != nil {
+		return fmt.Errorf("cannot resolve public url: %w", err)
+	}
+
+	portalBase, err := baseurl.Parse(publicURL)
+	if err != nil {
+		return fmt.Errorf("cannot parse portal url: %w", err)
+	}
+
+	continueURL, err := portalBase.AppendPath("/initiate").WithQuery("continue", "/").String()
+	if err != nil {
+		return fmt.Errorf("cannot build continue url: %w", err)
+	}
+
+	tokenString, validity, err := s.auth.NewCompliancePortalInviteToken(access.ID, continueURL)
+	if err != nil {
+		return err
+	}
+
+	consoleBase, err := baseurl.Parse(s.baseURL)
+	if err != nil {
+		return fmt.Errorf("cannot parse console url: %w", err)
+	}
+
+	inviteURL, err := consoleBase.AppendPath("/auth/compliance-portal-invite").
+		WithQuery("token", tokenString).
+		String()
+	if err != nil {
+		return fmt.Errorf("cannot build invite url: %w", err)
+	}
+
+	emailPresenterCfg, err := s.EmailPresenterConfig(ctx, scope, access.CompliancePortalID)
+	if err != nil {
+		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
+	}
+
+	fullName := profile.FullName
+	if fullName == "" {
+		fullName = identity.EmailAddress.Username()
+	}
+
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
+
+	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalInvite(
+		ctx,
+		organization.Name,
+		inviteURL,
+		validity,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot render compliance portal invite email: %w", err)
+	}
+
+	inviteEmail := coredata.NewEmail(
+		fullName,
+		identity.EmailAddress,
+		subject,
+		textBody,
+		htmlBody,
+		&coredata.EmailOptions{
+			SenderName: new(organization.Name),
+		},
+	)
+
+	if err := inviteEmail.Insert(ctx, tx); err != nil {
+		return fmt.Errorf("cannot insert invite email: %w", err)
 	}
 
 	return nil

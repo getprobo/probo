@@ -107,8 +107,9 @@ const (
 	subjectDocumentSigning                        = "Action Required – Please review and sign %s compliance documents"
 	subjectDocumentExport                         = "Your document export is ready"
 	subjectFrameworkExport                        = "Your framework export is ready"
-	subjectCompliancePortalAccess                 = "Compliance Page Access Invitation - %s"
-	subjectCompliancePortalDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
+	subjectCompliancePortalAccess                 = "Compliance Portal Access Invitation - %s"
+	subjectCompliancePortalInvite                 = "Invitation to %s's compliance portal"
+	subjectCompliancePortalDocumentAccessRejected = "Compliance Portal Document Access Rejected - %s"
 	subjectMagicLink                              = "Connect to %s"
 	subjectMailingListSubscription                = "%s – Confirm Your Compliance Updates Subscription"
 	subjectMailingListUnsubscription              = "%s – You've been unsubscribed"
@@ -134,6 +135,8 @@ var (
 	frameworkExportTextTemplate                        = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/framework-export.txt.tmpl"))
 	compliancePortalAccessHTMLTemplate                 = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-access.html.tmpl"))
 	compliancePortalAccessTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-access.txt.tmpl"))
+	compliancePortalInviteHTMLTemplate                 = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-invite.html.tmpl"))
+	compliancePortalInviteTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-invite.txt.tmpl"))
 	compliancePortalDocumentAccessRejectedHTMLTemplate = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-document-access-rejected.html.tmpl"))
 	compliancePortalDocumentAccessRejectedTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-document-access-rejected.txt.tmpl"))
 	magicLinkHTMLTemplate                              = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/magic-link.html.tmpl"))
@@ -386,6 +389,39 @@ func (p *Presenter) RenderCompliancePortalAccess(ctx context.Context, organizati
 	textBody, htmlBody, err = renderEmail(compliancePortalAccessTextTemplate, compliancePortalAccessHTMLTemplate, data)
 
 	return fmt.Sprintf(subjectCompliancePortalAccess, organizationName), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderCompliancePortalInvite(
+	ctx context.Context,
+	organizationName string,
+	inviteURL string,
+	tokenDuration time.Duration,
+) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	durationInDays := int(tokenDuration.Hours() / 24)
+	if durationInDays < 1 {
+		durationInDays = 1
+	}
+
+	data := struct {
+		*CommonVariables
+		OrganizationName string
+		InviteURL        string
+		DurationInDays   int
+	}{
+		CommonVariables:  vars,
+		OrganizationName: organizationName,
+		InviteURL:        inviteURL,
+		DurationInDays:   durationInDays,
+	}
+
+	textBody, htmlBody, err = renderEmail(compliancePortalInviteTextTemplate, compliancePortalInviteHTMLTemplate, data)
+
+	return fmt.Sprintf(subjectCompliancePortalInvite, organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderCompliancePortalDocumentAccessRejected(

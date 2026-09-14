@@ -58,21 +58,40 @@
     "description": "Permettez aux visiteurs de soumettre des demandes de droits sur le portail."
   },
   "accessPage": {
-    "description": "Votre portail est public. Les personnes qui se connectent pour demander des documents ou accepter un NDA apparaissent ici."
+    "description": "Invitez des personnes sur le portail, ou attendez qu’elles se connectent pour demander des documents ou accepter un NDA."
   },
   "visitorPage": {
     "back": "Visiteurs",
-    "joinedOn": "Inscrit le {{date}}",
+    "invited": "Invité",
+    "visitedOn": "Visité le {{date}}",
+    "deactivated": "Désactivé",
+    "deactivatedCallout": "Ce visiteur ne peut pas demander ni utiliser les documents protégés tant qu’il n’est pas réactivé. Les autorisations restent attribuées, mais sont sans effet jusqu’à la réactivation.",
+    "actions": {
+      "deactivate": "Désactiver",
+      "activate": "Activer"
+    },
+    "deactivate": {
+      "title": "Désactiver le visiteur ?",
+      "description": "Il perdra l’accès aux documents, rapports et fichiers protégés jusqu’à ce que vous le réactiviez. Les autorisations restent attribuées, mais sont sans effet jusqu’à la réactivation.",
+      "actions": {
+        "cancel": "Annuler",
+        "confirm": "Désactiver"
+      }
+    },
     "messages": {
-      "updated": "Accès mis à jour"
+      "updated": "Accès mis à jour",
+      "deactivated": "Visiteur désactivé",
+      "activated": "Visiteur activé"
     },
     "errors": {
-      "update": "Échec de la mise à jour de l’accès"
+      "update": "Échec de la mise à jour de l’accès",
+      "deactivate": "Échec de la désactivation du visiteur",
+      "activate": "Échec de l’activation du visiteur"
     }
   },
   "accessList": {
     "empty": "Aucun visiteur pour le moment",
-    "emptyDescription": "Les personnes qui se connectent sur votre portail apparaîtront ici.",
+    "emptyDescription": "Invitez des personnes ou attendez qu’elles se connectent sur votre portail.",
     "emptyFiltered": "Aucun visiteur correspondant",
     "emptyFilteredDescription": "Essayez un autre nom ou e-mail, ou effacez la recherche.",
     "search": {
@@ -90,6 +109,9 @@
     }
   },
   "accessListItem": {
+    "invited": "Invité",
+    "visitedOn": "Visité le {{date}}",
+    "deactivated": "Désactivé",
     "requested_one": "Examiner {{count}} demande",
     "requested_other": "Examiner {{count}} demandes",
     "nda": {
@@ -100,6 +122,20 @@
     },
     "actions": {
       "open": "Ouvrir le visiteur"
+    }
+  },
+  "inviteVisitorDialog": {
+    "title": "Ajouter un visiteur",
+    "searchPlaceholder": "Rechercher une personne ou saisir un e-mail",
+    "inviteEmail": "Inviter {{email}}",
+    "actions": {
+      "open": "Ajouter un visiteur"
+    },
+    "messages": {
+      "created": "Visiteur invité"
+    },
+    "errors": {
+      "create": "Échec de l’invitation du visiteur"
     }
   },
   "documentAccessList": {

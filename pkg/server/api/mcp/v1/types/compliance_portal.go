@@ -48,6 +48,16 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	}
 }
 
+func NewCompliancePortalAccess(access *coredata.CompliancePortalAccess) *CompliancePortalAccess {
+	return &CompliancePortalAccess{
+		ID:              access.ID,
+		State:           access.State.String(),
+		AuthenticatedAt: access.AuthenticatedAt,
+		CreatedAt:       access.CreatedAt,
+		UpdatedAt:       access.UpdatedAt,
+	}
+}
+
 func NewListCompliancePortalsOutput(
 	portals []*CompliancePortal,
 	p *page.Page[*coredata.CompliancePortal, coredata.CompliancePortalOrderField],

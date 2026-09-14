@@ -31,7 +31,7 @@ import { ndaSection, visitorsPageSkeleton } from "./variants";
 
 export function CompliancePortalVisitorsPageSkeleton() {
   const { root: headerRoot, titleRow } = compliancePortalPageHeader();
-  const { root, section, intro, tools, search } = visitorsPageSkeleton();
+  const { root, section, intro, tools, search, actions } = visitorsPageSkeleton();
   const { grid } = ndaSection();
 
   return (
@@ -57,7 +57,10 @@ export function CompliancePortalVisitorsPageSkeleton() {
             <div className={search()}>
               <TextFieldSkeleton />
             </div>
-            <ButtonSkeleton size={2} className="w-36" />
+            <div className={actions()}>
+              <ButtonSkeleton size={2} className="w-36" />
+              <ButtonSkeleton size={2} className="w-28" />
+            </div>
           </div>
         </div>
         <ListSkeleton count={4} />

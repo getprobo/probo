@@ -123,6 +123,14 @@ func NewMux(
 		allowedRedirectHost,
 	)
 
+	compliancePortalInviteHandler := NewCompliancePortalInviteHandler(
+		svc,
+		baseURL,
+		cookieConfig,
+		logger,
+		allowedRedirectHost,
+	)
+
 	oauth2Handler := NewOAuth2Handler(
 		svc,
 		cookieConfig,
@@ -140,6 +148,9 @@ func NewMux(
 	r.Post("/magic-link/send", magicLinkHandler.SendHandler)
 	r.Get("/magic-link/verify", magicLinkHandler.ConfirmRedirectHandler)
 	r.Post("/magic-link/verify", magicLinkHandler.VerifyHandler)
+
+	r.Get("/compliance-portal-invite/verify", compliancePortalInviteHandler.ConfirmRedirectHandler)
+	r.Post("/compliance-portal-invite/verify", compliancePortalInviteHandler.VerifyHandler)
 
 	// SCIM 2.0 endpoints - these use their own bearer token authentication
 	scimServer := NewSCIMServer(scimHandler)

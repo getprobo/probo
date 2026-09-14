@@ -19,7 +19,10 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as activateAccessOp from './activateAccess.operation';
 import * as createOp from './create.operation';
+import * as createAccessOp from './createAccess.operation';
+import * as deactivateAccessOp from './deactivateAccess.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
@@ -59,10 +62,22 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Activate Access',
+				value: 'activateAccess',
+				description: 'Activate a deactivated compliance portal visitor',
+				action: 'Activate a compliance portal access',
+			},
+			{
 				name: 'Create',
 				value: 'create',
 				description: 'Create a new compliance portal',
 				action: 'Create a compliance portal',
+			},
+			{
+				name: 'Create Access',
+				value: 'createAccess',
+				description: 'Invite a visitor to a compliance portal',
+				action: 'Create a compliance portal access',
 			},
 			{
 				name: 'Create Commitment',
@@ -87,6 +102,12 @@ export const description: INodeProperties[] = [
 				value: 'createReference',
 				description: 'Create a new compliance portal reference',
 				action: 'Create a compliance portal reference',
+			},
+			{
+				name: 'Deactivate Access',
+				value: 'deactivateAccess',
+				description: 'Deactivate a compliance portal visitor',
+				action: 'Deactivate a compliance portal access',
 			},
 			{
 				name: 'Delete',
@@ -217,7 +238,10 @@ export const description: INodeProperties[] = [
 		],
 		default: 'get',
 	},
+	...activateAccessOp.description,
 	...createOp.description,
+	...createAccessOp.description,
+	...deactivateAccessOp.description,
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
@@ -246,7 +270,10 @@ export const description: INodeProperties[] = [
 ];
 
 export {
+	activateAccessOp as activateAccess,
 	createOp as create,
+	createAccessOp as createAccess,
+	deactivateAccessOp as deactivateAccess,
 	deleteOp as delete,
 	getOp as get,
 	getAllOp as getAll,

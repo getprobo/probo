@@ -1,0 +1,12 @@
+Probo
+
+Hi {{.RecipientFullName}},
+
+You have been invited to access {{.OrganizationName}}'s compliance page. Open this link to sign in:
+
+{{.InviteURL}}
+
+This invitation expires in {{.DurationInDays}} days.
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

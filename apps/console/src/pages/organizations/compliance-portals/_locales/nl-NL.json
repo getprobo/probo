@@ -40,17 +40,40 @@
     "description": "Laat bezoekers verzoeken om betrokkenenrechten indienen."
   },
   "accessPage": {
-    "description": "Uw pagina is openbaar. Personen die zich aanmelden om documenten aan te vragen of een NDA te accepteren, verschijnen hier."
+    "description": "Nodig mensen uit voor het portaal, of wacht tot ze zich aanmelden om documenten aan te vragen of een NDA te accepteren."
   },
   "visitorPage": {
     "back": "Bezoekers",
-    "joinedOn": "Aangemeld op {{date}}",
-    "messages": { "updated": "Toegang bijgewerkt" },
-    "errors": { "update": "Bijwerken van toegang mislukt" }
+    "invited": "Uitgenodigd",
+    "visitedOn": "Bezocht op {{date}}",
+    "deactivated": "Gedeactiveerd",
+    "deactivatedCallout": "Deze bezoeker kan geen beschermde documenten aanvragen of gebruiken totdat deze opnieuw wordt geactiveerd. Toegewezen toekenningen blijven staan, maar hebben tot die tijd geen effect.",
+    "actions": {
+      "deactivate": "Deactiveren",
+      "activate": "Activeren"
+    },
+    "deactivate": {
+      "title": "Bezoeker deactiveren?",
+      "description": "Ze verliezen toegang tot beschermde documenten, rapporten en bestanden totdat u ze opnieuw activeert. Toegewezen toekenningen blijven staan, maar hebben tot die tijd geen effect.",
+      "actions": {
+        "cancel": "Annuleren",
+        "confirm": "Deactiveren"
+      }
+    },
+    "messages": {
+      "updated": "Toegang bijgewerkt",
+      "deactivated": "Bezoeker gedeactiveerd",
+      "activated": "Bezoeker geactiveerd"
+    },
+    "errors": {
+      "update": "Bijwerken van toegang mislukt",
+      "deactivate": "Deactiveren van bezoeker mislukt",
+      "activate": "Activeren van bezoeker mislukt"
+    }
   },
   "accessList": {
     "empty": "Nog geen bezoekers",
-    "emptyDescription": "Personen die zich op uw portal aanmelden, verschijnen hier.",
+    "emptyDescription": "Nodig mensen uit of wacht tot ze zich op uw portal aanmelden.",
     "emptyFiltered": "Geen overeenkomende bezoekers",
     "emptyFilteredDescription": "Probeer een andere naam of e-mailadres, of wis de zoekopdracht.",
     "search": {
@@ -65,6 +88,9 @@
     "actions": { "showMore": "Meer weergeven", "clearSearch": "Zoekopdracht wissen" }
   },
   "accessListItem": {
+    "invited": "Uitgenodigd",
+    "visitedOn": "Bezocht {{date}}",
+    "deactivated": "Gedeactiveerd",
     "requested_one": "Bekijk {{count}} aanvraag",
     "requested_other": "Bekijk {{count}} aanvragen",
     "nda": {
@@ -74,6 +100,20 @@
       "failed": "NDA mislukt"
     },
     "actions": { "open": "Bezoeker openen" }
+  },
+  "inviteVisitorDialog": {
+    "title": "Bezoeker toevoegen",
+    "searchPlaceholder": "Zoek mensen of typ een e-mailadres",
+    "inviteEmail": "Nodig {{email}} uit",
+    "actions": {
+      "open": "Bezoeker toevoegen"
+    },
+    "messages": {
+      "created": "Bezoeker uitgenodigd"
+    },
+    "errors": {
+      "create": "Uitnodigen van bezoeker mislukt"
+    }
   },
   "documentAccessList": {
     "title": "Beperkte documenttoegang",

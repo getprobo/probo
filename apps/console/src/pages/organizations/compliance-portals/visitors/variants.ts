@@ -31,6 +31,7 @@ export const visitorsPageSkeleton = tv({
     intro: "flex flex-col gap-3",
     tools: "flex w-full items-center justify-between gap-2",
     search: "w-60 max-sm:min-w-0 max-sm:flex-1",
+    actions: "flex shrink-0 items-center gap-2",
   },
 });
 
@@ -68,6 +69,7 @@ export const accessSection = tv({
     intro: "flex flex-col gap-3",
     tools: "flex w-full items-center justify-between gap-2",
     search: "w-60 max-sm:min-w-0 max-sm:flex-1",
+    actions: "flex shrink-0 items-center gap-2",
     sort: "shrink-0",
     more: "flex justify-center",
     results: "transition-opacity",
@@ -115,6 +117,8 @@ export const visitorPage = tv({
     person: "flex items-center gap-5 px-5 py-4",
     identity: "flex min-w-0 flex-1 flex-col justify-center gap-1",
     joined: "px-5 py-4",
+    actions: "flex flex-col gap-3 px-5 py-4",
+    callout: "col-span-3 max-lg:col-span-1",
   },
 });
 
@@ -137,6 +141,19 @@ export const electronicSignatureSection = tv({
     trigger: "shrink-0",
     event: "min-w-0",
     timestamp: "shrink-0 whitespace-nowrap tabular-nums",
+  },
+});
+
+export const inviteVisitorDialog = tv({
+  slots: {
+    body: "flex flex-col gap-3",
+    item: "relative hover:bg-sand-2",
+    hit: "absolute inset-0 z-0 outline-none focus-visible:bg-sand-2",
+    row: "relative z-1 flex min-w-0 flex-1 items-center gap-4 pointer-events-none",
+    avatar: "shrink-0",
+    name: "min-w-0 truncate",
+    email: "min-w-0 truncate",
+    invite: "relative z-1 flex min-w-0 flex-1 items-center gap-3 pointer-events-none [&_svg]:size-4",
   },
 });
 

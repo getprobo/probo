@@ -6002,6 +6002,12 @@
     "description": "Klik op doorgaan om het inloggen te voltooien.",
     "actions": { "continue": "Doorgaan" }
   },
+  "compliancePortalInvitePage": {
+    "pageTitle": "Compliancepagina openen",
+    "title": "Compliancepagina openen",
+    "description": "Klik op doorgaan om in te loggen en de compliancepagina te openen.",
+    "actions": { "continue": "Doorgaan" }
+  },
   "magicLinkForm": {
     "errors": {
       "send": "Kan magic link niet verzenden"

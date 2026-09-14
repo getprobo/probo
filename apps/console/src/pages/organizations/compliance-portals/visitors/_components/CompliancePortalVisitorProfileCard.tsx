@@ -24,21 +24,44 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Separator } from "@probo/ui/src/v2/Separator/Separator";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
+import type { CompliancePortalVisitorProfileCard_access$key } from "#/__generated__/core/CompliancePortalVisitorProfileCard_access.graphql";
+
+import { visitorDisplayName, visitorVisitStatus } from "../_lib/visitorIdentity";
 import { visitorPage } from "../variants";
 
+const fragment = graphql`
+  fragment CompliancePortalVisitorProfileCard_access on CompliancePortalAccess {
+    state
+    authenticatedAt
+    profile {
+      fullName
+      emailAddress
+    }
+  }
+`;
+
+interface CompliancePortalVisitorProfileCardProps {
+  accessKey: CompliancePortalVisitorProfileCard_access$key;
+  children?: ReactNode;
+}
+
 export function CompliancePortalVisitorProfileCard({
-  fullName,
-  emailAddress,
-  createdAt,
-}: {
-  fullName: string;
-  emailAddress: string;
-  createdAt: string;
-}) {
+  accessKey,
+  children,
+}: CompliancePortalVisitorProfileCardProps) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
-  const { profile, person, identity, joined } = visitorPage();
+  const { profile, person, identity, joined, actions } = visitorPage();
+  const access = useFragment(fragment, accessKey);
+  const displayName = visitorDisplayName(
+    access.profile.fullName,
+    access.profile.emailAddress,
+  );
+  const visitStatus = visitorVisitStatus(access.state, access.authenticatedAt);
 
   return (
     <Card variant="ghost" size={2} padding="none" className={profile()}>
@@ -47,23 +70,37 @@ export function CompliancePortalVisitorProfileCard({
           size={5}
           variant="soft"
           color="gold"
-          fallback={fullName.charAt(0).toUpperCase() || "?"}
+          fallback={displayName.charAt(0).toUpperCase() || "?"}
         />
         <div className={identity()}>
           <Heading level={2} size={4} weight="medium" highContrast className="truncate">
-            {fullName}
+            {displayName}
           </Heading>
           <Text size={2} color="gold" className="truncate">
-            {emailAddress}
+            {access.profile.emailAddress}
           </Text>
         </div>
       </div>
       <Separator />
       <div className={joined()}>
         <Text size={1} color="faint">
-          {t("visitorPage.joinedOn", { date: dateFormat(i18n.language, createdAt) })}
+          {visitStatus === "deactivated"
+            ? t("visitorPage.deactivated")
+            : visitStatus === "invited"
+              ? t("visitorPage.invited")
+              : t("visitorPage.visitedOn", {
+                  date: dateFormat(i18n.language, access.authenticatedAt),
+                })}
         </Text>
       </div>
+      {children != null && (
+        <>
+          <Separator />
+          <div className={actions()}>
+            {children}
+          </div>
+        </>
+      )}
     </Card>
   );
 }
