@@ -4,6 +4,44 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.288.0] - 2026-09-14
+
+### Added
+
+- Access review connectors for Attio, ElevenLabs, New Relic, Retool and
+  Twingate: each is connected with an API key bound to a single
+  workspace, organization or network, so none of them asks for a
+  tenant picker
+- Crisp is now connected by installing the Probo app from Crisp rather
+  than pasting a code: Probo redirects to Crisp, the customer picks a
+  website, and Probo verifies the returned subscription token
+  server-side against its own plugin credential. The connector stays
+  hidden until an operator sets `PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN`
+  and `PROBOD_CONNECTOR_CRISP_PLUGIN_ID`
+- Task details gain an activity tab listing field-level changes
+  newest-first, with the same list exposed on GraphQL, MCP, the CLI
+  and n8n
+- Google and Microsoft sign-in accept personal accounts when the
+  continue URL is a compliance-portal authorize request; console SSO
+  stays enterprise-only
+
+### Changed
+
+- Sign-in hides Create account and password login for compliance-portal
+  visitors, who sign in with a magic link, and hides register links on
+  instances where signup is disabled
+- Brand lime is a theme-aware token, so washes no longer stay neon in
+  dark mode
+
+### Fixed
+
+- Crisp access reviews no longer list the Marketplace sandbox member as
+  a second account for the workspace owner, and report each operator's
+  two-factor state instead of leaving it unknown
+- A connector sync no longer fails when a GraphQL provider answers a
+  recoverable error: the retried request body is rewound instead of
+  being resent empty
+
 ## [0.287.0] - 2026-09-11
 
 ### Added
