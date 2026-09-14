@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.228.0] - 2026-09-14
+
+### Added
+
+- `task activity list` and `task activity view`, listing a task's
+  field-level changes newest-first
+
 ## [0.227.0] - 2026-09-10
 
 ### Added
