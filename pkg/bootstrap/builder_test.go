@@ -855,6 +855,29 @@ func TestBuilder_Build_VercelConnector(t *testing.T) {
 	assert.Equal(t, "probo-app", raw.IntegrationSlug)
 }
 
+func TestBuilder_Build_LinearWebhookSecret(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_LINEAR_CLIENT_ID"] = "linear-client-id"
+	env["PROBOD_CONNECTOR_LINEAR_CLIENT_SECRET"] = "linear-client-secret"
+	env["PROBOD_CONNECTOR_LINEAR_WEBHOOK_SECRET"] = "linear-webhook-secret"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = testSigningKeyPEM()
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	c := cfg.Probod.Connectors[0]
+	assert.Equal(t, "LINEAR", c.Provider)
+	assert.Equal(t, "oauth2", string(c.Protocol))
+	raw := c.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+	assert.Equal(t, "linear-client-id", raw.ClientID)
+	assert.Equal(t, "linear-client-secret", raw.ClientSecret)
+	assert.Equal(t, "linear-webhook-secret", cfg.Probod.GetLinearWebhookSecret())
+}
+
 func TestBuilder_Build_SlackConnector(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"

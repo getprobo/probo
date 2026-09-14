@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/tasksync"
 )
 
 const (
@@ -120,6 +121,7 @@ type (
 		GeneratedDocuments                    *GeneratedDocumentService
 		Files                                 *FileService
 		LogExports                            ExportService
+		TaskSync                              *tasksync.Service
 	}
 )
 
@@ -140,6 +142,7 @@ func NewService(
 	esignService *esign.Service,
 	connectorRegistry *connector.Registry,
 	invitationTokenValidity time.Duration,
+	linearAPIBaseURL string,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -235,6 +238,14 @@ func NewService(
 	svc.GeneratedDocuments = &GeneratedDocumentService{svc: svc}
 	svc.Files = &FileService{svc: svc}
 	svc.LogExports = iamService.LogExports
+	svc.TaskSync = tasksync.NewService(
+		pgClient,
+		encryptionKey,
+		connectorRegistry,
+		baseURL,
+		linearAPIBaseURL,
+		logger,
+	)
 
 	return svc, nil
 }

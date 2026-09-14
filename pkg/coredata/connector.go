@@ -435,6 +435,63 @@ SELECT pg_advisory_xact_lock(
 	return nil
 }
 
+func (c *Connector) LoadByOrganizationIDAndProvider(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+	encryptionKey cipher.EncryptionKey,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND provider = @provider
+ORDER BY
+    updated_at DESC,
+    id DESC
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        provider,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	loadedConnector, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Connector])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect connector row: %w", err)
+	}
+
+	*c = loadedConnector
+
+	return c.LoadByID(ctx, conn, scope, c.ID, encryptionKey)
+}
+
 func (c *Connector) Delete(
 	ctx context.Context,
 	conn pg.Tx,

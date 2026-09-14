@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/tasksync"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -135,6 +136,71 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 	return &types.DeleteTaskPayload{
 		DeletedTaskID: input.TaskID,
+	}, nil
+}
+
+// PublishTaskToLinear is the resolver for the publishTaskToLinear field.
+func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.PublishTaskToLinearInput) (*types.PublishTaskToLinearPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := r.probo.TaskSync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked):
+			return nil, gqlutils.Conflict(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	task, err := r.probo.Tasks.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishTaskToLinearPayload{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+// UnlinkTaskExternal is the resolver for the unlinkTaskExternal field.
+func (r *mutationResolver) UnlinkTaskExternal(ctx context.Context, input types.UnlinkTaskExternalInput) (*types.UnlinkTaskExternalPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.probo.TaskSync.Unlink(ctx, scope, input.TaskID); err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, tasksync.ErrTaskNotLinked):
+			return nil, gqlutils.NotFound(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	task, err := r.probo.Tasks.Get(ctx, scope, input.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UnlinkTaskExternalPayload{
+		Task: types.NewTask(task),
 	}, nil
 }
 
@@ -300,6 +366,27 @@ func (r *taskResolver) Activities(ctx context.Context, obj *types.Task, first *i
 	}
 
 	return types.NewTaskActivityConnection(page, r, obj.ID), nil
+}
+
+// ExternalLink is the resolver for the externalLink field.
+func (r *taskResolver) ExternalLink(ctx context.Context, obj *types.Task) (*types.TaskExternalLink, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskGet)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := r.probo.TaskSync.GetLinkByTaskID(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskExternalLink(link), nil
 }
 
 // Permission is the resolver for the permission field.

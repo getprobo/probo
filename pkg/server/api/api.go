@@ -62,6 +62,7 @@ import (
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
+	linear_v1 "go.probo.inc/probo/pkg/server/api/linear/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -116,6 +117,7 @@ type (
 		AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 		GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 		AzureConnectorInstall    cloudazure.ConnectorInstallConfig
+		LinearWebhookSecret      string
 	}
 
 	MCPConfig struct {
@@ -132,6 +134,7 @@ type (
 		filesHandler        http.Handler
 		mcpHandler          http.Handler
 		slackHandler        http.Handler
+		linearHandler       http.Handler
 		connectHandler      http.Handler
 		agentHandler        http.Handler
 	}
@@ -200,6 +203,10 @@ func NewServer(cfg Config) (*Server, error) {
 	// The SAML Assertion Consumer Service endpoint receives cross-origin
 	// POSTs from external identity providers by design.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
+
+	// Linear webhooks are signed POSTs from Linear's servers. Authentication
+	// is HMAC, not cookies, so CSRF does not apply.
+	csrf.AddInsecureBypassPattern("POST /linear/v1/webhooks")
 
 	// The cookie banner API is called cross-origin from customer websites
 	// by the JS SDK. CORS is handled by the cookie banner middleware.
@@ -325,6 +332,11 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Slackbot,
 			cfg.SlackbotInstallations,
 		),
+		linearHandler: linear_v1.NewMux(
+			cfg.Logger.Named("linear.v1"),
+			cfg.Probo.TaskSync,
+			cfg.LinearWebhookSecret,
+		),
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),
 			cfg.IAM,
@@ -388,6 +400,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
 		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+		r.Mount("/linear/v1", http.StripPrefix("/linear/v1", s.linearHandler))
 	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)

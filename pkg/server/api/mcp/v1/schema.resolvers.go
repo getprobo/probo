@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/tasksync"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -2114,7 +2115,7 @@ func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	}
 
 	return nil, types.GetTaskOutput{
-		Task: types.NewTask(task),
+		Task: r.taskWithExternalLink(ctx, scope, task),
 	}, nil
 }
 
@@ -9671,4 +9672,115 @@ func (r *Resolver) GetTaskActivityTool(ctx context.Context, req *mcp.CallToolReq
 	return nil, types.GetTaskActivityOutput{
 		TaskActivity: types.NewTaskActivity(taskActivity),
 	}, nil
+}
+
+func (r *Resolver) ListLinearTeamsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListLinearTeamsInput) (*mcp.CallToolResult, types.ListLinearTeamsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListLinearTeamsOutput{}, err
+	}
+
+	teams, err := r.proboSvc.TaskSync.ListLinearTeams(ctx, scope, input.OrganizationID)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
+			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+			return nil, types.ListLinearTeamsOutput{Teams: []*types.LinearTeam{}}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Linear teams", log.Error(err))
+
+		return nil, types.ListLinearTeamsOutput{}, fmt.Errorf("internal error")
+	}
+
+	result := make([]*types.LinearTeam, 0, len(teams))
+	for _, team := range teams {
+		result = append(result, &types.LinearTeam{
+			ID:   team.ID,
+			Name: team.Name,
+			Key:  team.Key,
+		})
+	}
+
+	return nil, types.ListLinearTeamsOutput{Teams: result}, nil
+}
+
+func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishTaskToLinearInput) (*mcp.CallToolResult, types.PublishTaskToLinearOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.PublishTaskToLinearOutput{}, err
+	}
+
+	link, err := r.proboSvc.TaskSync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task not found")
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	task, err := r.proboSvc.Tasks.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishTaskToLinearOutput{
+		Task: r.taskWithExternalLink(ctx, scope, task),
+	}, nil
+}
+
+func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkTaskExternalInput) (*mcp.CallToolResult, types.UnlinkTaskExternalOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.UnlinkTaskExternalOutput{}, err
+	}
+
+	if err := r.proboSvc.TaskSync.Unlink(ctx, scope, input.TaskID); err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound), errors.Is(err, tasksync.ErrTaskNotLinked):
+			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("task is not linked to an external issue")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
+			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	task, err := r.proboSvc.Tasks.Get(ctx, scope, input.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
+		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.UnlinkTaskExternalOutput{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+func (r *Resolver) taskWithExternalLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) *types.Task {
+	result := types.NewTask(task)
+	if r.proboSvc.TaskSync == nil {
+		return result
+	}
+
+	link, err := r.proboSvc.TaskSync.GetLinkByTaskID(ctx, scope, task.ID)
+	if err != nil {
+		return result
+	}
+
+	result.ExternalLink = types.NewTaskExternalLink(link)
+
+	return result
 }

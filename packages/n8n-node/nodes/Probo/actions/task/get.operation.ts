@@ -55,6 +55,12 @@ export async function execute(
 					priority
 					timeEstimate
 					deadline
+					externalLink {
+						provider
+						identifier
+						url
+						origin
+					}
 					createdAt
 					updatedAt
 				}

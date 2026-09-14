@@ -163,6 +163,8 @@ const (
 	CommonGVLVendorEntityType                        uint16 = 131
 	TaskCommentEntityType                            uint16 = 132
 	TaskActivityEntityType                           uint16 = 133
+	TaskSyncJobEntityType                            uint16 = 134
+	_                                                uint16 = 135 // LinearWebhookEventEntityType - removed
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -415,6 +417,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TaskComment{ID: id}, true
 	case TaskActivityEntityType:
 		return &TaskActivity{ID: id}, true
+	case TaskSyncJobEntityType:
+		return &TaskSyncJob{ID: id}, true
 	default:
 		return nil, false
 	}

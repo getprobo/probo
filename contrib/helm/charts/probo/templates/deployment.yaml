@@ -630,6 +630,25 @@ spec:
                   name: {{ include "probo.fullname" $ }}
                   key: connector-github-app-private-key
             {{- end }}
+            {{- if eq .name "linear" }}
+            - name: PROBOD_CONNECTOR_LINEAR_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-client-id
+            - name: PROBOD_CONNECTOR_LINEAR_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-client-secret
+            {{- if .config.webhookSecret }}
+            - name: PROBOD_CONNECTOR_LINEAR_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-webhook-secret
+            {{- end }}
+            {{- end }}
             {{- end }}
           ports:
             - name: http
