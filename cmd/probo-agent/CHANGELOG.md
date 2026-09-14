@@ -5,6 +5,30 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.1] - 2026-09-14
+
+### Fixed
+
+- macOS installs that still ran the privileged daemon from
+  `/usr/local/bin/probo-agent` now migrate themselves to
+  `/Library/Probo/probo-agent` on next run: the launchd plist, tray
+  autostart entry, and Team ID/identifier check are rewritten, the
+  service reloads, and the legacy binary is removed.
+- Windows no longer flashes a console window when Explorer starts the
+  tray at logon. The installer now includes `probo-agent.exe` for CLI
+  and service use, and `probo-agentw.exe` for tray and deeplink use.
+  Thus, shells wait for CLI commands and propagate `ERRORLEVEL`.
+- Windows enrollment no longer trusts a user-forged
+  `ProgramData\Probo\run\enrolled` marker file. Production paths now
+  require a SYSTEM or Administrators owner, and `Probo`, `run`, and
+  `agent` directories are created with a protected DACL so standard
+  users cannot write to them.
+- Windows agent state directories under `%ProgramData%\Probo` now trust
+  the Administrators group (not just SYSTEM), set it as owner on create,
+  rewrite child DACLs, and re-secure the directory before token exchange
+  and when loading state — closing a gap where UAC enroll or an
+  inherited ACE could block or weaken protection.
+
 ## [0.7.1-rc.2] - 2026-09-14
 
 ### Fixed
