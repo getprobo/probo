@@ -61,6 +61,7 @@ import { Mercury } from "./Mercury";
 import { Metabase } from "./Metabase";
 import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
+import { MongoDB } from "./MongoDB";
 import { Neon } from "./Neon";
 import { Netlify } from "./Netlify";
 import { NewRelic } from "./NewRelic";
@@ -138,6 +139,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   MICROSOFT: Microsoft,
   MICROSOFT_365: Microsoft,
   MONDAY: Monday,
+  MONGODB_ATLAS: MongoDB,
   NEON: Neon,
   NETLIFY: Netlify,
   NEW_RELIC: NewRelic,
