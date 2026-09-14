@@ -1,0 +1,328 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.mongodb.com
+        headers:
+            Accept:
+                - application/vnd.atlas.2025-02-19+json
+        url: https://cloud.mongodb.com/api/atlas/v2/orgs
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 254
+        uncompressed: true
+        body: '{"links":[{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs?pageNum=1\u0026itemsPerPage=100","rel":"self"}],"results":[{"id":"000000000000000000000001","isDeleted":false,"name":"Example Organization","skipDefaultAlertsSettings":false}],"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/vnd.atlas.2023-01-01+json;charset=utf-8
+            Date:
+                - Mon, 14 Sep 2026 22:14:01 GMT
+            Ratelimit-Limit:
+                - "300"
+            Ratelimit-Remaining:
+                - "299"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - mdbws
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains;
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Upstream-Service-Time:
+                - "69"
+            X-Frame-Options:
+                - DENY
+            X-Mongodb-Service-Version:
+                - gitHash=786f08a8b001ebff544b934de1ec7ea3dd43823f; versionString=v20260909
+            X-Permitted-Cross-Domain-Policies:
+                - none
+        status: 200 OK
+        code: 200
+        duration: 400.220917ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.mongodb.com
+        form:
+            itemsPerPage:
+                - "500"
+            orgMembershipStatuses:
+                - ACTIVE
+                - PENDING
+            pageNum:
+                - "1"
+        headers:
+            Accept:
+                - application/vnd.atlas.2025-02-19+json
+        url: https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/users?itemsPerPage=500&orgMembershipStatuses=ACTIVE&orgMembershipStatuses=PENDING&pageNum=1
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 615
+        uncompressed: true
+        body: '{"links":[{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/users?orgMembershipStatuses=ACTIVE\u0026orgMembershipStatuses=PENDING\u0026pageNum=1\u0026itemsPerPage=500","rel":"self"}],"results":[{"country":"","createdAt":"2026-09-14T10:06:54Z","firstName":"Member","id":"000000000000000000000101","lastAuth":"2026-09-14T10:07:31Z","lastName":"One","mobileNumber":"","orgMembershipStatus":"ACTIVE","roles":{"groupRoleAssignments":[{"groupId":"000000000000000000000301","groupRoles":["GROUP_OWNER"]}],"orgRoles":["ORG_OWNER"]},"teamIds":[],"username":"member1@example.com"}],"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/vnd.atlas.2025-02-19+json;charset=utf-8
+            Date:
+                - Mon, 14 Sep 2026 22:14:02 GMT
+            Ratelimit-Limit:
+                - "500"
+            Ratelimit-Remaining:
+                - "499"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - mdbws
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains;
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Upstream-Service-Time:
+                - "82"
+            X-Frame-Options:
+                - DENY
+            X-Mongodb-Service-Version:
+                - gitHash=786f08a8b001ebff544b934de1ec7ea3dd43823f; versionString=v20260909
+            X-Permitted-Cross-Domain-Policies:
+                - none
+        status: 200 OK
+        code: 200
+        duration: 182.33375ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.mongodb.com
+        form:
+            itemsPerPage:
+                - "500"
+            orgMembershipStatuses:
+                - ACTIVE
+                - PENDING
+            pageNum:
+                - "2"
+        headers:
+            Accept:
+                - application/vnd.atlas.2025-02-19+json
+        url: https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/users?itemsPerPage=500&orgMembershipStatuses=ACTIVE&orgMembershipStatuses=PENDING&pageNum=2
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 443
+        uncompressed: true
+        body: '{"links":[{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/users?orgMembershipStatuses=ACTIVE\u0026orgMembershipStatuses=PENDING\u0026pageNum=2\u0026itemsPerPage=500","rel":"self"},{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/users?orgMembershipStatuses=ACTIVE\u0026orgMembershipStatuses=PENDING\u0026itemsPerPage=500\u0026pageNum=1","rel":"previous"}],"results":[],"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/vnd.atlas.2025-02-19+json;charset=utf-8
+            Date:
+                - Mon, 14 Sep 2026 22:14:02 GMT
+            Ratelimit-Limit:
+                - "500"
+            Ratelimit-Remaining:
+                - "498"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - mdbws
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains;
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Upstream-Service-Time:
+                - "63"
+            X-Frame-Options:
+                - DENY
+            X-Mongodb-Service-Version:
+                - gitHash=786f08a8b001ebff544b934de1ec7ea3dd43823f; versionString=v20260909
+            X-Permitted-Cross-Domain-Policies:
+                - none
+        status: 200 OK
+        code: 200
+        duration: 165.069375ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.mongodb.com
+        form:
+            itemsPerPage:
+                - "500"
+            pageNum:
+                - "1"
+        headers:
+            Accept:
+                - application/vnd.atlas.2025-02-19+json
+        url: https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/serviceAccounts?itemsPerPage=500&pageNum=1
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 592
+        uncompressed: true
+        body: '{"links":[{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/serviceAccounts?pageNum=1\u0026itemsPerPage=500","rel":"self"}],"results":[{"clientId":"mdb_sa_id_000000000000000000000201","createdAt":"2026-01-01T00:00:00Z","description":"Example service account","isSystemManaged":false,"name":"example-service-account","owner":null,"roles":["ORG_READ_ONLY"],"secrets":[{"createdAt":"2026-01-01T00:00:00Z","expiresAt":"2027-01-01T00:00:00Z","id":"000000000000000000000202","lastUsedAt":"2026-01-02T03:04:05Z","maskedSecretValue":"mdb_sa_sk_...0000"}]}],"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/vnd.atlas.2024-08-05+json;charset=utf-8
+            Date:
+                - Mon, 14 Sep 2026 22:14:02 GMT
+            Ratelimit-Limit:
+                - "500"
+            Ratelimit-Remaining:
+                - "499"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - mdbws
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains;
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Upstream-Service-Time:
+                - "81"
+            X-Frame-Options:
+                - DENY
+            X-Mongodb-Service-Version:
+                - gitHash=786f08a8b001ebff544b934de1ec7ea3dd43823f; versionString=v20260909
+            X-Permitted-Cross-Domain-Policies:
+                - none
+        status: 200 OK
+        code: 200
+        duration: 183.3405ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.mongodb.com
+        form:
+            itemsPerPage:
+                - "500"
+            pageNum:
+                - "2"
+        headers:
+            Accept:
+                - application/vnd.atlas.2025-02-19+json
+        url: https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/serviceAccounts?itemsPerPage=500&pageNum=2
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 325
+        uncompressed: true
+        body: '{"links":[{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/serviceAccounts?pageNum=2\u0026itemsPerPage=500","rel":"self"},{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/serviceAccounts?itemsPerPage=500\u0026pageNum=1","rel":"previous"}],"results":[],"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/vnd.atlas.2024-08-05+json;charset=utf-8
+            Date:
+                - Mon, 14 Sep 2026 22:14:02 GMT
+            Ratelimit-Limit:
+                - "500"
+            Ratelimit-Remaining:
+                - "498"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - mdbws
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains;
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Upstream-Service-Time:
+                - "68"
+            X-Frame-Options:
+                - DENY
+            X-Mongodb-Service-Version:
+                - gitHash=786f08a8b001ebff544b934de1ec7ea3dd43823f; versionString=v20260909
+            X-Permitted-Cross-Domain-Policies:
+                - none
+        status: 200 OK
+        code: 200
+        duration: 173.456375ms
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.mongodb.com
+        form:
+            itemsPerPage:
+                - "500"
+            pageNum:
+                - "1"
+        headers:
+            Accept:
+                - application/vnd.atlas.2025-02-19+json
+        url: https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/apiKeys?itemsPerPage=500&pageNum=1
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 172
+        uncompressed: true
+        body: '{"links":[{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs/000000000000000000000001/apiKeys?pageNum=1\u0026itemsPerPage=500","rel":"self"}],"results":[],"totalCount":0}'
+        headers:
+            Content-Type:
+                - application/vnd.atlas.2023-01-01+json;charset=utf-8
+            Date:
+                - Mon, 14 Sep 2026 22:14:02 GMT
+            Ratelimit-Limit:
+                - "500"
+            Ratelimit-Remaining:
+                - "499"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - mdbws
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains;
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Upstream-Service-Time:
+                - "68"
+            X-Frame-Options:
+                - DENY
+            X-Mongodb-Service-Version:
+                - gitHash=786f08a8b001ebff544b934de1ec7ea3dd43823f; versionString=v20260909
+            X-Permitted-Cross-Domain-Policies:
+                - none
+        status: 200 OK
+        code: 200
+        duration: 173.609ms

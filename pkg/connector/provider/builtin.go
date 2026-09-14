@@ -95,6 +95,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		metabaseRegistration(),
 		microsoft365Registration(),
 		mondayRegistration(),
+		mongoDBAtlasRegistration(),
 		neonRegistration(),
 		netlifyRegistration(),
 		newRelicRegistration(),

@@ -38,6 +38,7 @@ export { Mercury } from "./Mercury";
 export { Metabase } from "./Metabase";
 export { Microsoft } from "./Microsoft";
 export { Monday } from "./Monday";
+export { MongoDB } from "./MongoDB";
 export { Neon } from "./Neon";
 export { Netlify } from "./Netlify";
 export { NewRelic } from "./NewRelic";
