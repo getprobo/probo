@@ -74,6 +74,18 @@ export function CreateAccountFooterLazy({
   prefix,
   label,
 }: Pick<CreateAccountFooterProps, "prefix" | "label">) {
+  const [searchParams] = useSearchParams();
+  if (isCompliancePortalSource(searchParams)) {
+    return null;
+  }
+
+  return <CreateAccountSignUpQuery prefix={prefix} label={label} />;
+}
+
+function CreateAccountSignUpQuery({
+  prefix,
+  label,
+}: Pick<CreateAccountFooterProps, "prefix" | "label">) {
   const data = useLazyLoadQuery<CreateAccountFooterQuery>(
     createAccountFooterQuery,
     {},
