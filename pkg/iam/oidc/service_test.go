@@ -162,54 +162,65 @@ func TestValidateIDTokenClaims_PersonalAccounts(t *testing.T) {
 	})
 }
 
-func TestAllowsPersonalAccounts(t *testing.T) {
+func TestPortalAuthorizeStateID(t *testing.T) {
 	t.Parallel()
 
 	cimdClientID := "https://trust.example.com/.well-known/oauth-client-metadata"
+	stateID := "portal-oauth-state"
 
 	tests := []struct {
 		name        string
 		continueURL string
-		want        bool
+		wantState   string
+		wantOK      bool
 	}{
 		{
-			name: "authorize plus cimd plus source",
+			name: "authorize plus cimd plus source plus state",
 			continueURL: "/api/connect/v1/oauth2/authorize?client_id=" +
 				url.QueryEscape(cimdClientID) +
-				"&source=compliance-portal",
-			want: true,
+				"&source=compliance-portal&state=" +
+				url.QueryEscape(stateID),
+			wantState: stateID,
+			wantOK:    true,
 		},
 		{
-			name: "absolute authorize plus cimd plus source",
+			name: "absolute authorize plus cimd plus source plus state",
 			continueURL: "https://auth.example.com/api/connect/v1/oauth2/authorize?client_id=" +
 				url.QueryEscape(cimdClientID) +
-				"&source=compliance-portal",
-			want: true,
+				"&source=compliance-portal&state=" +
+				url.QueryEscape(stateID),
+			wantState: stateID,
+			wantOK:    true,
 		},
 		{
 			name:        "authorize plus gid client",
-			continueURL: "/api/connect/v1/oauth2/authorize?client_id=gid://probo/oauth2_client/abc&source=compliance-portal",
-			want:        false,
+			continueURL: "/api/connect/v1/oauth2/authorize?client_id=gid://probo/oauth2_client/abc&source=compliance-portal&state=" + url.QueryEscape(stateID),
+			wantOK:      false,
 		},
 		{
 			name:        "overview path",
 			continueURL: "/overview",
-			want:        false,
+			wantOK:      false,
 		},
 		{
 			name:        "path suffix lookalike",
-			continueURL: "/evil/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID) + "&source=compliance-portal",
-			want:        false,
+			continueURL: "/evil/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID) + "&source=compliance-portal&state=" + url.QueryEscape(stateID),
+			wantOK:      false,
 		},
 		{
 			name:        "authorize plus cimd without source",
-			continueURL: "/api/connect/v1/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID),
-			want:        false,
+			continueURL: "/api/connect/v1/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID) + "&state=" + url.QueryEscape(stateID),
+			wantOK:      false,
+		},
+		{
+			name:        "authorize plus cimd plus source without state",
+			continueURL: "/api/connect/v1/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID) + "&source=compliance-portal",
+			wantOK:      false,
 		},
 		{
 			name:        "login page source alone",
 			continueURL: "/auth/login?source=compliance-portal",
-			want:        false,
+			wantOK:      false,
 		},
 	}
 
@@ -219,7 +230,9 @@ func TestAllowsPersonalAccounts(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				assert.Equal(t, tt.want, allowsPersonalAccounts(tt.continueURL))
+				gotState, ok := portalAuthorizeStateID(tt.continueURL)
+				assert.Equal(t, tt.wantOK, ok)
+				assert.Equal(t, tt.wantState, gotState)
 			},
 		)
 	}

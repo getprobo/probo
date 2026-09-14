@@ -494,7 +494,7 @@ func (s *Service) HandleCallback(
 	if err := validateIDTokenClaims(
 		info,
 		claims,
-		allowsPersonalAccounts(oidcState.ContinueURL),
+		s.allowsPersonalAccounts(ctx, oidcState.ContinueURL),
 	); err != nil {
 		return nil, oidcState.ContinueURL, nil, err
 	}

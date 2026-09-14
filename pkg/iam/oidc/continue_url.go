@@ -21,8 +21,11 @@
 package oidc
 
 import (
+	"context"
 	"net/url"
 
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
 	iamoauth2 "go.probo.inc/probo/pkg/iam/oauth2"
 )
 
@@ -32,23 +35,58 @@ const (
 	signInSourceCompliancePortal = "compliance-portal"
 )
 
-// allowsPersonalAccounts reports whether this OIDC login is finishing a
-// compliance-portal authorize request. Console continue URLs, GID clients,
-// and connector CIMD clients must not open the personal-account exception.
-func allowsPersonalAccounts(continueURL string) bool {
+// portalAuthorizeStateID returns the authorize `state` when continueURL is a
+// Connect authorize request for a CIMD client stamped as a compliance-portal
+// sign-in. Console paths, GID clients, and connector CIMD clients fail.
+func portalAuthorizeStateID(continueURL string) (string, bool) {
 	parsed, err := url.Parse(continueURL)
 	if err != nil {
-		return false
+		return "", false
 	}
 
 	if parsed.Path != oauth2AuthorizePath {
-		return false
+		return "", false
 	}
 
 	query := parsed.Query()
 	if query.Get(signInSourceQueryKey) != signInSourceCompliancePortal {
+		return "", false
+	}
+
+	if !iamoauth2.IsCIMDClientID(query.Get("client_id")) {
+		return "", false
+	}
+
+	stateID := query.Get("state")
+	if stateID == "" {
+		return "", false
+	}
+
+	return stateID, true
+}
+
+// allowsPersonalAccounts reports whether this OIDC login is finishing a
+// compliance-portal authorize. The continue URL must look like a portal
+// authorize request and its `state` must be a COMPLIANCE_PORTAL oidc state
+// (created by portal /initiate), so a crafted console `continue` query
+// cannot open the personal-account exception.
+func (s *Service) allowsPersonalAccounts(ctx context.Context, continueURL string) bool {
+	stateID, ok := portalAuthorizeStateID(continueURL)
+	if !ok {
 		return false
 	}
 
-	return iamoauth2.IsCIMDClientID(query.Get("client_id"))
+	var portalState coredata.OIDCState
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return portalState.LoadByID(ctx, conn, stateID)
+		},
+	)
+	if err != nil {
+		return false
+	}
+
+	return portalState.Provider == coredata.OIDCProviderCompliancePortal
 }
