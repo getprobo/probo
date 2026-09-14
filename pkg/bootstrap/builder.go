@@ -601,6 +601,21 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		)
 	}
 
+	if webhookSecret := b.resolver.getEnv("PROBOD_CONNECTOR_LINEAR_WEBHOOK_SECRET"); webhookSecret != "" {
+		for i := range cfg.Probod.Connectors {
+			if cfg.Probod.Connectors[i].Provider != "LINEAR" {
+				continue
+			}
+
+			cfg.Probod.Connectors[i].RawSettings = map[string]any{
+				"webhook-secret": webhookSecret,
+			}
+			cfg.Probod.Connectors[i].Settings = map[string]any{
+				"webhook-secret": webhookSecret,
+			}
+		}
+	}
+
 	// Vercel needs the operator-supplied integration slug to resolve the
 	// templated AuthURL ("https://vercel.com/integrations/{integration_slug}/new").
 	if vercelClientID := b.resolver.getEnv("PROBOD_CONNECTOR_VERCEL_CLIENT_ID"); vercelClientID != "" {

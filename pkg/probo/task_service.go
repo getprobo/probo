@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/tasksync"
 	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -594,6 +595,25 @@ func (s TaskService) Update(
 				return fmt.Errorf("cannot record task update events: %w", err)
 			}
 
+			if s.svc.TaskSync != nil && syncedTaskFieldsChanged(
+				oldTask.Name,
+				oldTask.Content,
+				oldTask.State,
+				oldTask.Priority,
+				oldTask.Deadline,
+				task,
+			) {
+				if err := s.svc.TaskSync.EnqueueOutbound(
+					ctx,
+					conn,
+					scope,
+					task.ID,
+					tasksync.SyncActionUpdate,
+				); err != nil {
+					return fmt.Errorf("cannot enqueue task sync: %w", err)
+				}
+			}
+
 			return nil
 		},
 	)
@@ -616,6 +636,18 @@ func (s TaskService) Delete(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			if s.svc.TaskSync != nil {
+				if err := s.svc.TaskSync.EnqueueOutbound(
+					ctx,
+					conn,
+					scope,
+					taskID,
+					tasksync.SyncActionCancel,
+				); err != nil {
+					return fmt.Errorf("cannot enqueue task sync: %w", err)
+				}
+			}
+
 			return task.Delete(ctx, conn, scope)
 		},
 	)
@@ -722,4 +754,23 @@ func (s TaskService) ListForMeasureID(
 	}
 
 	return page.NewPage(tasks, cursor), nil
+}
+
+func syncedTaskFieldsChanged(
+	oldName string,
+	oldContent string,
+	oldState coredata.TaskState,
+	oldPriority coredata.TaskPriority,
+	oldDeadline *time.Time,
+	task *coredata.Task,
+) bool {
+	if task.Name != oldName || task.Content != oldContent || task.State != oldState || task.Priority != oldPriority {
+		return true
+	}
+
+	if oldDeadline == nil || task.Deadline == nil {
+		return oldDeadline != task.Deadline
+	}
+
+	return !oldDeadline.Equal(*task.Deadline)
 }

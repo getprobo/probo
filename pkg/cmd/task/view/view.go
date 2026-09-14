@@ -42,6 +42,12 @@ query($id: ID!) {
       priority
       timeEstimate
       deadline
+      externalLink {
+        provider
+        identifier
+        url
+        origin
+      }
       createdAt
       updatedAt
     }
@@ -59,8 +65,14 @@ type viewResponse struct {
 		Priority     string  `json:"priority"`
 		TimeEstimate *string `json:"timeEstimate"`
 		Deadline     *string `json:"deadline"`
-		CreatedAt    string  `json:"createdAt"`
-		UpdatedAt    string  `json:"updatedAt"`
+		ExternalLink *struct {
+			Provider   string `json:"provider"`
+			Identifier string `json:"identifier"`
+			URL        string `json:"url"`
+			Origin     string `json:"origin"`
+		} `json:"externalLink"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -146,6 +158,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if t.Deadline != nil && *t.Deadline != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Deadline:"), *t.Deadline)
+			}
+
+			if t.ExternalLink != nil {
+				_, _ = fmt.Fprintf(
+					out,
+					"%s%s (%s)\n",
+					label.Render("External:"),
+					t.ExternalLink.Identifier,
+					t.ExternalLink.URL,
+				)
 			}
 
 			_, _ = fmt.Fprintln(out)

@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/tasksync"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -544,6 +545,37 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 	}
 
 	return types.NewConnectors(connectors), nil
+}
+
+// LinearTeams is the resolver for the linearTeams field.
+func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organization) ([]*types.LinearTeam, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	teams, err := r.probo.TaskSync.ListLinearTeams(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
+			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+			return []*types.LinearTeam{}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Linear teams", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.LinearTeam, 0, len(teams))
+	for _, team := range teams {
+		result = append(result, &types.LinearTeam{
+			ID:   team.ID,
+			Name: team.Name,
+			Key:  team.Key,
+		})
+	}
+
+	return result, nil
 }
 
 // SlackbotAvailable is the resolver for the slackbotAvailable field.
