@@ -24,6 +24,9 @@ import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as listLinearTeamsOp from './listLinearTeams.operation';
+import * as publishToLinearOp from './publishToLinear.operation';
+import * as unlinkExternalOp from './unlinkExternal.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -62,6 +65,24 @@ export const description: INodeProperties[] = [
 				action: 'Get many tasks',
 			},
 			{
+				name: 'List Linear Teams',
+				value: 'listLinearTeams',
+				description: 'List Linear teams for an organization',
+				action: 'List linear teams',
+			},
+			{
+				name: 'Publish To Linear',
+				value: 'publishToLinear',
+				description: 'Publish a task to Linear',
+				action: 'Publish a task to linear',
+			},
+			{
+				name: 'Unlink External',
+				value: 'unlinkExternal',
+				description: 'Unlink a task from its external issue',
+				action: 'Unlink a task external issue',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing task',
@@ -75,6 +96,18 @@ export const description: INodeProperties[] = [
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...listLinearTeamsOp.description,
+	...publishToLinearOp.description,
+	...unlinkExternalOp.description,
 ];
 
-export { createOp as create, updateOp as update, deleteOp as delete, getOp as get, getAllOp as getAll };
+export {
+	createOp as create,
+	updateOp as update,
+	deleteOp as delete,
+	getOp as get,
+	getAllOp as getAll,
+	listLinearTeamsOp as listLinearTeams,
+	publishToLinearOp as publishToLinear,
+	unlinkExternalOp as unlinkExternal,
+};

@@ -51,6 +51,15 @@ func NewTask(t *coredata.Task) *Task {
 	}
 }
 
+func NewTaskExternalLink(link *coredata.TaskExternalLink) *TaskExternalLink {
+	return &TaskExternalLink{
+		Provider:   string(link.Provider),
+		Identifier: link.ExternalIdentifier,
+		URL:        link.ExternalURL,
+		Origin:     link.Origin,
+	}
+}
+
 func NewListMeasureTasksOutput(taskPage *page.Page[*coredata.Task, coredata.TaskOrderField]) ListMeasureTasksOutput {
 	tasks := make([]*Task, 0, len(taskPage.Data))
 	for _, v := range taskPage.Data {

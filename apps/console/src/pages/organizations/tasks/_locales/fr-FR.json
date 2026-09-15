@@ -11,6 +11,7 @@
       "state": "État",
       "priority": "Priorité",
       "assignedTo": "Assigné à",
+      "linear": "Linear",
       "measure": "Mesure",
       "timeEstimate": "Estimation de temps",
       "timeEstimateUnit": "Unité d'estimation",
@@ -64,6 +65,21 @@
     "messages": {
       "updated": "Tâche mise à jour avec succès.",
       "deleted": "Tâche supprimée avec succès."
+    },
+    "linear": {
+      "connect": "Connecter Linear",
+      "reconnect": "Reconnecter Linear",
+      "publish": "Publier",
+      "unlink": "Dissocier",
+      "team": "Équipe Linear",
+      "chooseTeam": "Choisir une équipe",
+      "published": "Tâche publiée sur Linear.",
+      "unlinked": "Issue Linear dissociée.",
+      "errors": {
+        "publish": "Échec de la publication vers Linear",
+        "unlink": "Échec de la dissociation de l'issue Linear",
+        "load": "Impossible d'afficher Linear"
+      }
     },
     "errors": {
       "delete": "Échec de la suppression de la tâche",
@@ -128,6 +144,27 @@
         "timeEstimateChanged": "{{actor}} a changé l'estimation de {{oldValue}} à {{newValue}}",
         "timeEstimateRemoved": "{{actor}} a retiré l'estimation"
       }
+    }
+  },
+  "settingsDialog": {
+    "trigger": "Paramètres",
+    "title": "Paramètres",
+    "integrations": {
+      "title": "Intégrations des tâches",
+      "description": "Connectez des outils pour publier les tâches et les synchroniser."
+    },
+    "linear": {
+      "name": "Linear",
+      "description": "Publiez une tâche sur Linear et synchronisez le nom, le contenu, l'état, la priorité et l'échéance."
+    },
+    "status": {
+      "connected": "Connecté",
+      "notConnected": "Non connecté"
+    },
+    "actions": {
+      "connect": "Connecter",
+      "reconnect": "Reconnecter",
+      "close": "Fermer"
     }
   },
   "createDialog": {

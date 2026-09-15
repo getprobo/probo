@@ -105,6 +105,26 @@ type ConnectorConfigAPIKey struct {
 	ResourceID string `json:"resource-id,omitempty"`
 }
 
+func (c *Config) GetLinearWebhookSecret() string {
+	for _, conn := range c.Connectors {
+		if conn.Provider == "LINEAR" {
+			if settings, ok := conn.Settings.(map[string]any); ok {
+				if secret, ok := settings["webhook-secret"].(string); ok {
+					return secret
+				}
+			}
+
+			if settings, ok := conn.RawSettings.(map[string]any); ok {
+				if secret, ok := settings["webhook-secret"].(string); ok {
+					return secret
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
 func (c *Config) GetSlackSigningSecret() string {
 	if c.Notifications.Slack.SigningSecret != "" {
 		return c.Notifications.Slack.SigningSecret

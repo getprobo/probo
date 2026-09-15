@@ -365,8 +365,11 @@ func generateConfig(opts configOptions) (string, error) {
 		// Connector catalog. No test completes this external OAuth flow, but
 		// one deterministic configured protocol lets catalog tests assert the
 		// configuredProtocols migration rather than ambient deployment state.
-		"PROBOD_CONNECTOR_GITHUB_CLIENT_ID":     "e2e-github-client-id",
-		"PROBOD_CONNECTOR_GITHUB_CLIENT_SECRET": "e2e-github-client-secret",
+		"PROBOD_CONNECTOR_GITHUB_CLIENT_ID":      "e2e-github-client-id",
+		"PROBOD_CONNECTOR_GITHUB_CLIENT_SECRET":  "e2e-github-client-secret",
+		"PROBOD_CONNECTOR_LINEAR_CLIENT_ID":      "e2e-linear-client-id",
+		"PROBOD_CONNECTOR_LINEAR_CLIENT_SECRET":  "e2e-linear-client-secret",
+		"PROBOD_CONNECTOR_LINEAR_WEBHOOK_SECRET": "e2e-linear-webhook-secret",
 
 		// Crisp is the only app-install provider, and it stays out of the
 		// catalog entirely until BOTH of these are set. Configuring it here is

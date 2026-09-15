@@ -94,6 +94,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/tasksync"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -406,6 +407,17 @@ func (impl *Implm) Run(
 	}
 
 	slackAPIBaseURL := slackRegistration.Endpoints.APIBase
+
+	// Task sync talks to Linear with the token the LINEAR connector row
+	// minted, so it follows that registration's APIBase rather than pin
+	// api.linear.app, or an override would send a sandbox-issued token to
+	// the real vendor.
+	linearRegistration, ok := providerRegistry.Get(coredata.ConnectorProviderLinear)
+	if !ok {
+		return fmt.Errorf("cannot configure linear task sync: no linear connector provider registered")
+	}
+
+	linearAPIBaseURL := linearRegistration.Endpoints.APIBase
 
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
@@ -777,6 +789,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		linearAPIBaseURL,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -985,6 +998,7 @@ func (impl *Implm) Run(
 			AzureConnectorInstall: cloudazure.ConnectorInstallConfig{
 				TerraformModuleSource: impl.cfg.IdentityFederation.AzureTerraformModuleSource,
 			},
+			LinearWebhookSecret: impl.cfg.GetLinearWebhookSecret(),
 		},
 	)
 	if err != nil {
@@ -1261,6 +1275,44 @@ func (impl *Implm) Run(
 		func() {
 			if err := impl.runExportJob(exportJobExporterCtx, proboService, l.Named("export-job-exporter")); err != nil {
 				cancel(fmt.Errorf("export job exporter crashed: %w", err))
+			}
+		},
+	)
+
+	taskSyncOutboundWorker := tasksync.NewOutboundWorker(
+		proboService.TaskSync,
+		l.Named("task-sync-outbound"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	taskSyncOutboundWorkerCtx, stopTaskSyncOutboundWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := taskSyncOutboundWorker.Run(taskSyncOutboundWorkerCtx); err != nil {
+				cancel(fmt.Errorf("task sync outbound worker crashed: %w", err))
+			}
+		},
+	)
+
+	linearWebhookWorker := tasksync.NewWebhookWorker(
+		proboService.TaskSync,
+		l.Named("linear-webhook"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	linearWebhookWorkerCtx, stopLinearWebhookWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := linearWebhookWorker.Run(linearWebhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("linear webhook worker crashed: %w", err))
 			}
 		},
 	)
@@ -1587,6 +1639,8 @@ func (impl *Implm) Run(
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
+	stopTaskSyncOutboundWorker()
+	stopLinearWebhookWorker()
 	stopDocumentPDFWorker()
 	stopDocumentApprovalQuorumPDFWorker()
 	stopDocumentNotification()

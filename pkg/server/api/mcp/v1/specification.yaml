@@ -7013,6 +7013,113 @@ components:
           type: string
           format: date-time
           description: Update timestamp
+        external_link:
+          anyOf:
+            - $ref: "#/components/schemas/TaskExternalLink"
+            - type: "null"
+          description: Linked external issue
+
+    TaskExternalLinkOrigin:
+      type: string
+      enum:
+        - PROBO
+        - LINEAR
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskExternalLinkOrigin
+
+    TaskExternalLink:
+      type: object
+      required:
+        - provider
+        - identifier
+        - url
+        - origin
+      properties:
+        provider:
+          type: string
+          description: External provider
+        identifier:
+          type: string
+          description: Provider issue identifier
+        url:
+          type: string
+          description: Provider issue URL
+        origin:
+          $ref: "#/components/schemas/TaskExternalLinkOrigin"
+          description: Which side created the link
+
+    LinearTeam:
+      type: object
+      required:
+        - id
+        - name
+        - key
+      properties:
+        id:
+          type: string
+          description: Linear team ID
+        name:
+          type: string
+          description: Linear team name
+        key:
+          type: string
+          description: Linear team key
+
+    ListLinearTeamsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    ListLinearTeamsOutput:
+      type: object
+      required:
+        - teams
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinearTeam"
+
+    PublishTaskToLinearInput:
+      type: object
+      required:
+        - task_id
+        - team_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        team_id:
+          type: string
+          description: Linear team ID
+
+    PublishTaskToLinearOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    UnlinkTaskExternalInput:
+      type: object
+      required:
+        - task_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    UnlinkTaskExternalOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
 
     ListTasksInput:
       type: object
@@ -17291,6 +17398,42 @@ tools:
       $ref: "#/components/schemas/DeleteTaskInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTaskOutput"
+  - name: listLinearTeams
+    title: List Linear Teams
+    description: List Linear teams for publishing a task
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListLinearTeamsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListLinearTeamsOutput"
+  - name: publishTaskToLinear
+    title: Publish Task To Linear
+    description: Publish a Probo task as a Linear issue
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/PublishTaskToLinearInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishTaskToLinearOutput"
+  - name: unlinkTaskExternal
+    title: Unlink Task External
+    description: Unlink a task from its external issue
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkTaskExternalInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkTaskExternalOutput"
   - name: listTaskComments
     title: List Task Comments
     description: List comments for a task, oldest first

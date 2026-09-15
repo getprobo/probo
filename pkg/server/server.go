@@ -113,6 +113,7 @@ type Config struct {
 	AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 	GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 	AzureConnectorInstall    cloudazure.ConnectorInstallConfig
+	LinearWebhookSecret      string
 }
 
 type Server struct {
@@ -172,6 +173,7 @@ func NewServer(cfg Config) (*Server, error) {
 		AWSConnectorInstall:      cfg.AWSConnectorInstall,
 		GCPConnectorInstall:      cfg.GCPConnectorInstall,
 		AzureConnectorInstall:    cfg.AzureConnectorInstall,
+		LinearWebhookSecret:      cfg.LinearWebhookSecret,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

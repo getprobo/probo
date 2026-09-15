@@ -11,6 +11,7 @@
       "state": "State",
       "priority": "Priority",
       "assignedTo": "Assigned to",
+      "linear": "Linear",
       "measure": "Measure",
       "timeEstimate": "Time estimate",
       "timeEstimateUnit": "Time estimate unit",
@@ -64,6 +65,21 @@
     "messages": {
       "updated": "Task updated successfully.",
       "deleted": "Task deleted successfully."
+    },
+    "linear": {
+      "connect": "Connect Linear",
+      "reconnect": "Reconnect Linear",
+      "publish": "Publish",
+      "unlink": "Unlink",
+      "team": "Linear team",
+      "chooseTeam": "Choose a team",
+      "published": "Task published to Linear.",
+      "unlinked": "Linear issue unlinked.",
+      "errors": {
+        "publish": "Failed to publish task to Linear",
+        "unlink": "Failed to unlink Linear issue",
+        "load": "Could not display Linear"
+      }
     },
     "errors": {
       "delete": "Failed to delete task",
@@ -128,6 +144,27 @@
         "timeEstimateChanged": "{{actor}} changed the time estimate from {{oldValue}} to {{newValue}}",
         "timeEstimateRemoved": "{{actor}} removed the time estimate"
       }
+    }
+  },
+  "settingsDialog": {
+    "trigger": "Settings",
+    "title": "Settings",
+    "integrations": {
+      "title": "Task integrations",
+      "description": "Connect tools to publish tasks and keep them in sync."
+    },
+    "linear": {
+      "name": "Linear",
+      "description": "Publish a task to Linear and sync name, content, state, priority, and deadline."
+    },
+    "status": {
+      "connected": "Connected",
+      "notConnected": "Not connected"
+    },
+    "actions": {
+      "connect": "Connect",
+      "reconnect": "Reconnect",
+      "close": "Close"
     }
   },
   "createDialog": {

@@ -70,8 +70,12 @@ type (
 		// RegisteredScopes mirrors the provider registration's
 		// OAuth2Scopes. It is authoritative for an ExclusiveScopes
 		// provider, whose authorize request must carry exactly the set
-		// the app is registered for.
+		// the app is registered for. A first-time connect with no
+		// explicit scopes also falls back to this set.
 		RegisteredScopes []string
+		// ScopeSeparator joins scopes on the authorize URL. Empty means
+		// a single space (RFC 6749 §3.3). Linear requires a comma.
+		ScopeSeparator string
 		// RequiresPKCE enables RFC 7636 PKCE (S256). When true,
 		// InitiateWithState generates a verifier, persists it in the
 		// OAuth2State, and adds code_challenge / code_challenge_method
@@ -211,11 +215,25 @@ func (c *OAuth2Connector) effectiveScopes(opts InitiateOptions) []string {
 		return opts.Scopes
 	}
 
-	if len(opts.GrantedScopes) == 0 {
-		return opts.Scopes
+	requested := opts.Scopes
+	if len(requested) == 0 {
+		requested = c.RegisteredScopes
 	}
 
-	return UnionScopes(opts.GrantedScopes, opts.Scopes)
+	if len(opts.GrantedScopes) == 0 {
+		return requested
+	}
+
+	return UnionScopes(opts.GrantedScopes, requested)
+}
+
+func (c *OAuth2Connector) joinAuthorizeScopes(scopes []string) string {
+	sep := c.ScopeSeparator
+	if sep == "" {
+		sep = " "
+	}
+
+	return strings.Join(scopes, sep)
 }
 
 func (c *OAuth2Connector) Initiate(
@@ -296,7 +314,7 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("response_type", "code")
 
 	if len(scopes) > 0 {
-		authCodeQuery.Set("scope", strings.Join(scopes, " "))
+		authCodeQuery.Set("scope", c.joinAuthorizeScopes(scopes))
 	}
 
 	if c.RequiresPKCE {

@@ -381,6 +381,14 @@ probo:
           CHANGE_ME_GITHUB_APP_PRIVATE_KEY
           -----END RSA PRIVATE KEY-----
 
+    - name: "linear"
+      type: "oauth2"
+      config:
+        clientId: "CHANGE_ME_LINEAR_CLIENT_ID"
+        clientSecret: "CHANGE_ME_LINEAR_CLIENT_SECRET"
+        # Linear OAuth app webhook signing secret for POST /api/linear/v1/webhooks
+        webhookSecret: "CHANGE_ME_LINEAR_WEBHOOK_SECRET"
+
   # Slack connector endpointToken (Enterprise Grid / private API gateway) is
   # secret material. Set it in values; the chart mounts it via secretKeyRef.
   # Do not put it in a ConfigMap or a plain Deployment env value.
