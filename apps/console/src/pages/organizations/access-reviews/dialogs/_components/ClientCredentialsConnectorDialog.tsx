@@ -48,6 +48,7 @@ const clientCredentialsConnectorDialogFragment = graphql`
   fragment ClientCredentialsConnectorDialog_provider on ConnectorProviderInfo {
     provider
     displayName
+    clientCredentialsTokenUrl
     clientCredentialsExtraSettings {
       key
       label
@@ -120,7 +121,13 @@ export function ClientCredentialsConnectorDialog({
   }, [dialogRef, provider]);
 
   const connectClientCredentialsProvider = () => {
-    if (!provider || !clientId.trim() || !clientSecret.trim() || !tokenUrl.trim()) {
+    if (!provider || !clientId.trim() || !clientSecret.trim()) {
+      return;
+    }
+
+    // A provider that pins its token endpoint renders no field for it, and the
+    // server ignores the value regardless: sending null keeps the two honest.
+    if (!provider.clientCredentialsTokenUrl && !tokenUrl.trim()) {
       return;
     }
 
@@ -145,7 +152,7 @@ export function ClientCredentialsConnectorDialog({
           provider: provider.provider,
           clientId: clientId.trim(),
           clientSecret: clientSecret.trim(),
-          tokenUrl: tokenUrl.trim(),
+          tokenUrl: provider.clientCredentialsTokenUrl ? null : tokenUrl.trim(),
           scope: scope.trim() || null,
           ...extraFields,
         },
@@ -238,12 +245,14 @@ export function ClientCredentialsConnectorDialog({
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientSecret(e.target.value)}
             required
           />
-          <Field
-            label={t("clientCredentialsConnectorDialog.fields.tokenUrl")}
-            value={tokenUrl}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTokenUrl(e.target.value)}
-            required
-          />
+          {!provider?.clientCredentialsTokenUrl && (
+            <Field
+              label={t("clientCredentialsConnectorDialog.fields.tokenUrl")}
+              value={tokenUrl}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTokenUrl(e.target.value)}
+              required
+            />
+          )}
           <Field
             label={t("clientCredentialsConnectorDialog.fields.scope")}
             value={scope}
@@ -297,7 +306,7 @@ export function ClientCredentialsConnectorDialog({
               isConnectingClientCredentials
               || !clientId.trim()
               || !clientSecret.trim()
-              || !tokenUrl.trim()
+              || (!provider?.clientCredentialsTokenUrl && !tokenUrl.trim())
               || !clientCredentialsExtraSettingsValid
             }
           >

@@ -1,0 +1,52 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.mongodb.com
+        headers:
+            Accept:
+                - application/vnd.atlas.2025-02-19+json
+        url: https://cloud.mongodb.com/api/atlas/v2/orgs
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 254
+        uncompressed: true
+        body: '{"links":[{"href":"https://cloud.mongodb.com/api/atlas/v2/orgs?pageNum=1\u0026itemsPerPage=100","rel":"self"}],"results":[{"id":"000000000000000000000001","isDeleted":false,"name":"Example Organization","skipDefaultAlertsSettings":false}],"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/vnd.atlas.2023-01-01+json;charset=utf-8
+            Date:
+                - Mon, 14 Sep 2026 22:14:01 GMT
+            Ratelimit-Limit:
+                - "300"
+            Ratelimit-Remaining:
+                - "298"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - mdbws
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains;
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Upstream-Service-Time:
+                - "73"
+            X-Frame-Options:
+                - DENY
+            X-Mongodb-Service-Version:
+                - gitHash=786f08a8b001ebff544b934de1ec7ea3dd43823f; versionString=v20260909
+            X-Permitted-Cross-Domain-Policies:
+                - none
+        status: 200 OK
+        code: 200
+        duration: 402.453084ms

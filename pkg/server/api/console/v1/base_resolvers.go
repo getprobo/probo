@@ -740,6 +740,14 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			documentationURL = new(reg.DocumentationURL)
 		}
 
+		// A provider that pins its token endpoint leaves the connect form
+		// nothing to ask for, and the create mutation ignores the field
+		// regardless.
+		var clientCredentialsTokenURL *string
+		if pinned := pinnedClientCredentialsTokenURL(reg); pinned != "" {
+			clientCredentialsTokenURL = new(pinned)
+		}
+
 		// The two settings lists are surfaced separately, never merged: a
 		// provider offering both connect paths (1Password) needs different
 		// fields on each, so a client that saw one flat list would render the
@@ -757,6 +765,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings()),
 			APIKeyFormat:                   connectorAPIKeyFormat(reg),
 			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings()),
+			ClientCredentialsTokenURL:      clientCredentialsTokenURL,
 			WorkloadIdentitySupported:      workloadIdentityReady,
 			InstallSupported:               installReady,
 			WorkloadIdentityExtraSettings:  connectorProviderSettingInfos(reg.WorkloadIdentityExtraSettings()),

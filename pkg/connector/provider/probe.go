@@ -760,6 +760,35 @@ func probeAnthropic(
 	return doProbeRequest(httpClient, req)
 }
 
+// probeMongoDBAtlas lists the organizations the service account reaches, the
+// same call the driver and the name resolver open with.
+//
+// The closure exists for the versioned Accept header. Without it Atlas answers
+// 406, which doProbeRequest does not reject, so a healthy verdict would rest on
+// a content-negotiation failure rather than on having reached anything. A
+// revoked credential still surfaces as 401 either way, since Atlas
+// authenticates before it negotiates content.
+func probeMongoDBAtlas(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+	ep Endpoints,
+) error {
+	endpoint, err := url.JoinPath(ep.APIBase, "orgs")
+	if err != nil {
+		return fmt.Errorf("cannot build mongodb atlas probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", drivers.MongoDBAtlasAcceptHeader)
+
+	return doProbeRequest(httpClient, req)
+}
+
 func probeHeroku(
 	ctx context.Context,
 	httpClient *http.Client,

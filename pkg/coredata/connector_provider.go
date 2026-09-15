@@ -64,6 +64,7 @@ const (
 	ConnectorProviderVercel          ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday          ConnectorProvider = "MONDAY"
 	ConnectorProviderMetabase        ConnectorProvider = "METABASE"
+	ConnectorProviderMongoDBAtlas    ConnectorProvider = "MONGODB_ATLAS"
 	ConnectorProviderTailscale       ConnectorProvider = "TAILSCALE"
 	ConnectorProviderAnthropic       ConnectorProvider = "ANTHROPIC"
 	ConnectorProviderCursor          ConnectorProvider = "CURSOR"
@@ -145,6 +146,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
+		ConnectorProviderMongoDBAtlas,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
 		ConnectorProviderCursor,
@@ -223,6 +225,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
+		ConnectorProviderMongoDBAtlas,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
 		ConnectorProviderCursor,
