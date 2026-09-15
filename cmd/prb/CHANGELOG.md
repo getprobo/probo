@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.229.0] - 2026-09-15
+
+### Added
+
+- `compliance-portal access create` (alias `visitor`) adds a portal visitor by member or email; `compliance-portal access deactivate`/`activate` toggle access without revoking grants
+- `access-review source create` accepts `--azure-tenant-id`, `--azure-client-id`, `--azure-subscription-id`, and `--azure-environment` to connect an Azure workload-identity subscription
+- `task create`/`update` accept `--recurrence-interval` (an ISO-8601 duration, requires `--deadline`); completing a recurring task clones the next occurrence
+
 ## [0.228.0] - 2026-09-14
 
 ### Added
