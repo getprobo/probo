@@ -159,7 +159,7 @@ LIMIT 1;
 }
 
 // LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent grant
-// updates serialize new-grant email detection.
+// and management updates take the access row before child mutations.
 func (tca *CompliancePortalAccess) LoadByIDForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
@@ -237,6 +237,65 @@ WHERE
 	AND compliance_portal_id = @compliance_portal_id
 	AND identity_id = @identity_id
 LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_id": compliancePortalID,
+		"identity_id":          identityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal access: %w", err)
+	}
+
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal access: %w", err)
+	}
+
+	*tca = access
+
+	return nil
+}
+
+// LoadByCompliancePortalIDAndIdentityIDForUpdate is
+// LoadByCompliancePortalIDAndIdentityID under FOR UPDATE so grant and
+// management updates take the access row before child mutations.
+func (tca *CompliancePortalAccess) LoadByCompliancePortalIDAndIdentityIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	identityID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	identity_id,
+	compliance_portal_id,
+	electronic_signature_id,
+	state,
+	authenticated_at,
+	created_at,
+	updated_at
+FROM
+	cp_accesses
+WHERE
+	%s
+	AND compliance_portal_id = @compliance_portal_id
+	AND identity_id = @identity_id
+LIMIT 1
+FOR UPDATE;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

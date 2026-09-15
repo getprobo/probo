@@ -563,7 +563,13 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 			}
 
 			access := &coredata.CompliancePortalAccess{}
-			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, compliancePage.ID, identity.ID); err != nil {
+			if err := access.LoadByCompliancePortalIDAndIdentityIDForUpdate(
+				ctx,
+				tx,
+				scope,
+				compliancePage.ID,
+				identity.ID,
+			); err != nil {
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
