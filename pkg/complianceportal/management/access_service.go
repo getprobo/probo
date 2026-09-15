@@ -180,6 +180,7 @@ func (s *Service) enqueueAccessBotUpdateIfPosted(
 	eventKey string,
 ) error {
 	var subject coredata.BotThreadSubject
+
 	err := subject.LoadBySubject(
 		ctx,
 		tx,
@@ -191,6 +192,7 @@ func (s *Service) enqueueAccessBotUpdateIfPosted(
 	if errors.Is(err, coredata.ErrResourceNotFound) {
 		return nil
 	}
+
 	if err != nil {
 		return fmt.Errorf("cannot load compliance portal bot thread: %w", err)
 	}
