@@ -4,6 +4,8 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.22.0] - 2026-09-15
+
 ### Added
 
 - `probo.identityFederation.azureTerraformModuleSource` Helm value, used to
