@@ -71,6 +71,7 @@ type RiskTemplate = {
 const formRiskFragment = graphql`
   fragment FormRiskDialog_risk on Risk {
     id
+    referenceId
     name
     category
     description

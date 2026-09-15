@@ -49,6 +49,7 @@ const risksQuery = graphql`
           edges {
             node {
               id
+              referenceId
               name
               category
               description
@@ -104,7 +105,8 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
     return risks.filter(
       risk =>
         (category === null || risk.category === category)
-        && (risk.name.toLowerCase().includes(search.toLowerCase())
+        && (risk.referenceId.toLowerCase().includes(search.toLowerCase())
+          || risk.name.toLowerCase().includes(search.toLowerCase())
           || risk.description?.toLowerCase().includes(search.toLowerCase())),
     );
   }, [risks, search, category]);
@@ -154,6 +156,7 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
 type RowProps = {
   risk: {
     name: string;
+    referenceId: string;
     category: string;
     id: string;
     description?: string | null;
@@ -176,7 +179,12 @@ function RiskRow(props: RowProps) {
       className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full"
       onClick={() => onClick(props.risk.id)}
     >
-      <div className="text-left">{props.risk.name}</div>
+      <div className="text-left">
+        <span className="font-mono text-sm text-txt-secondary mr-2">
+          {props.risk.referenceId}
+        </span>
+        {props.risk.name}
+      </div>
       <Badge variant="neutral">{props.risk.category}</Badge>
       <Button
         disabled={props.disabled}

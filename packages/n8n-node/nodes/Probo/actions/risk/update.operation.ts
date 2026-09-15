@@ -199,6 +199,7 @@ export async function execute(
 			updateRisk(input: $input) {
 				risk {
 					id
+					referenceId
 					name
 					description
 					category

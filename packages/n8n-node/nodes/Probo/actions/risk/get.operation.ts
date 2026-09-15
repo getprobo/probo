@@ -49,6 +49,7 @@ export async function execute(
 			node(id: $riskId) {
 				... on Risk {
 					id
+					referenceId
 					name
 					description
 					category

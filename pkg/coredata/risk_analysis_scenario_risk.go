@@ -193,6 +193,7 @@ WITH linked_risks AS (
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,

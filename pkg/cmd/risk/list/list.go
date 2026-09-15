@@ -40,6 +40,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
         edges {
           node {
             id
+            referenceId
             name
             category
             treatment
@@ -67,6 +68,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
         edges {
           node {
             id
+            referenceId
             name
             category
             treatment
@@ -86,6 +88,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
 
 type risk struct {
 	ID                string  `json:"id"`
+	ReferenceID       string  `json:"referenceId"`
 	Name              string  `json:"name"`
 	Category          string  `json:"category"`
 	Treatment         *string `json:"treatment"`
@@ -166,7 +169,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrderBy != "" {
-				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "NAME", "CATEGORY", "TREATMENT", "INHERENT_RISK_SCORE", "RESIDUAL_RISK_SCORE"}); err != nil {
+				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "REFERENCE_ID", "NAME", "CATEGORY", "TREATMENT", "INHERENT_RISK_SCORE", "RESIDUAL_RISK_SCORE"}); err != nil {
 					return err
 				}
 
@@ -227,6 +230,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			for _, r := range risks {
 				rows = append(rows, []string{
 					r.ID,
+					r.ReferenceID,
 					r.Name,
 					r.Category,
 					formatOptionalString(r.Treatment),
@@ -235,7 +239,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "CATEGORY", "TREATMENT", "INHERENT", "RESIDUAL").Rows(rows...)
+			t := cmdutil.NewTable("ID", "REFERENCE", "NAME", "CATEGORY", "TREATMENT", "INHERENT", "RESIDUAL").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
@@ -255,7 +259,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagRiskAnalysis, "risk-analysis", "", "List unplanned scenario-linked risks on a risk analysis")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of risks to list")
-	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME, CATEGORY, TREATMENT, INHERENT_RISK_SCORE, RESIDUAL_RISK_SCORE)")
+	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, REFERENCE_ID, NAME, CATEGORY, TREATMENT, INHERENT_RISK_SCORE, RESIDUAL_RISK_SCORE)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter risks by search query")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

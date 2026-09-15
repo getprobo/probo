@@ -1840,6 +1840,7 @@ components:
         - CREATED_AT
         - UPDATED_AT
         - NAME
+        - REFERENCE_ID
         - CATEGORY
         - TREATMENT
         - INHERENT_RISK_SCORE
@@ -1874,6 +1875,7 @@ components:
       required:
         - id
         - organization_id
+        - reference_id
         - name
         - category
         - note
@@ -1886,6 +1888,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        reference_id:
+          type: string
+          description: Organization-scoped display ID (RSK-001)
         name:
           type: string
           description: Risk name
