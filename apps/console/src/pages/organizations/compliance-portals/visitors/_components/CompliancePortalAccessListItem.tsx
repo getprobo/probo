@@ -132,8 +132,8 @@ export function CompliancePortalAccessListItem({
         <Text size={1} color={visitorVisitStatusTone(visitStatus)} className={joined()}>
           {visitStatus === "deactivated"
             ? t("accessListItem.deactivated")
-            : visitStatus === "invited"
-              ? t("accessListItem.invited")
+            : visitStatus === "notVisited"
+              ? t("accessListItem.notVisited")
               : t("accessListItem.visitedOn", {
                   date: dateFormat(i18n.language, access.authenticatedAt),
                 })}

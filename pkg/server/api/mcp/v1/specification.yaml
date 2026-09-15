@@ -18587,7 +18587,7 @@ tools:
       $ref: "#/components/schemas/CreateCompliancePortalOutput"
   - name: createCompliancePortalAccess
     title: Create Compliance Portal Access
-    description: Invite a visitor to a compliance portal by profile ID or email
+    description: Add a visitor to a compliance portal by profile ID or email
     hints:
       readonly: false
       destructive: false

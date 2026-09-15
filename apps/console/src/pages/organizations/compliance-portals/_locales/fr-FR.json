@@ -58,11 +58,11 @@
     "description": "Permettez aux visiteurs de soumettre des demandes de droits sur le portail."
   },
   "accessPage": {
-    "description": "Invitez des personnes sur le portail, ou attendez qu’elles se connectent pour demander des documents ou accepter un NDA."
+    "description": "Ajoutez des personnes au portail, ou attendez qu’elles se connectent pour demander des documents ou accepter un NDA."
   },
   "visitorPage": {
     "back": "Visiteurs",
-    "invited": "Invité",
+    "notVisited": "Non visité",
     "visitedOn": "Visité le {{date}}",
     "deactivated": "Désactivé",
     "deactivatedCallout": "Ce visiteur ne peut pas demander ni utiliser les documents protégés tant qu’il n’est pas réactivé. Les autorisations restent attribuées, mais sont sans effet jusqu’à la réactivation.",
@@ -91,7 +91,7 @@
   },
   "accessList": {
     "empty": "Aucun visiteur pour le moment",
-    "emptyDescription": "Invitez des personnes ou attendez qu’elles se connectent sur votre portail.",
+    "emptyDescription": "Ajoutez des personnes ou attendez qu’elles se connectent sur votre portail.",
     "emptyFiltered": "Aucun visiteur correspondant",
     "emptyFilteredDescription": "Essayez un autre nom ou e-mail, ou effacez la recherche.",
     "search": {
@@ -109,7 +109,7 @@
     }
   },
   "accessListItem": {
-    "invited": "Invité",
+    "notVisited": "Non visité",
     "visitedOn": "Visité le {{date}}",
     "deactivated": "Désactivé",
     "requested_one": "Examiner {{count}} demande",
@@ -124,18 +124,18 @@
       "open": "Ouvrir le visiteur"
     }
   },
-  "inviteVisitorDialog": {
+  "addVisitorDialog": {
     "title": "Ajouter un visiteur",
     "searchPlaceholder": "Rechercher une personne ou saisir un e-mail",
-    "inviteEmail": "Inviter {{email}}",
+    "addEmail": "Ajouter {{email}}",
     "actions": {
       "open": "Ajouter un visiteur"
     },
     "messages": {
-      "created": "Visiteur invité"
+      "created": "Visiteur ajouté"
     },
     "errors": {
-      "create": "Échec de l’invitation du visiteur"
+      "create": "Échec de l’ajout du visiteur"
     }
   },
   "documentAccessList": {

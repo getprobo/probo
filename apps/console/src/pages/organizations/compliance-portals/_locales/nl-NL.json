@@ -40,11 +40,11 @@
     "description": "Laat bezoekers verzoeken om betrokkenenrechten indienen."
   },
   "accessPage": {
-    "description": "Nodig mensen uit voor het portaal, of wacht tot ze zich aanmelden om documenten aan te vragen of een NDA te accepteren."
+    "description": "Voeg mensen toe aan het portaal, of wacht tot ze zich aanmelden om documenten aan te vragen of een NDA te accepteren."
   },
   "visitorPage": {
     "back": "Bezoekers",
-    "invited": "Uitgenodigd",
+    "notVisited": "Niet bezocht",
     "visitedOn": "Bezocht op {{date}}",
     "deactivated": "Gedeactiveerd",
     "deactivatedCallout": "Deze bezoeker kan geen beschermde documenten aanvragen of gebruiken totdat deze opnieuw wordt geactiveerd. Toegewezen toekenningen blijven staan, maar hebben tot die tijd geen effect.",
@@ -73,7 +73,7 @@
   },
   "accessList": {
     "empty": "Nog geen bezoekers",
-    "emptyDescription": "Nodig mensen uit of wacht tot ze zich op uw portal aanmelden.",
+    "emptyDescription": "Voeg mensen toe of wacht tot ze zich op uw portal aanmelden.",
     "emptyFiltered": "Geen overeenkomende bezoekers",
     "emptyFilteredDescription": "Probeer een andere naam of e-mailadres, of wis de zoekopdracht.",
     "search": {
@@ -88,7 +88,7 @@
     "actions": { "showMore": "Meer weergeven", "clearSearch": "Zoekopdracht wissen" }
   },
   "accessListItem": {
-    "invited": "Uitgenodigd",
+    "notVisited": "Niet bezocht",
     "visitedOn": "Bezocht {{date}}",
     "deactivated": "Gedeactiveerd",
     "requested_one": "Bekijk {{count}} aanvraag",
@@ -101,18 +101,18 @@
     },
     "actions": { "open": "Bezoeker openen" }
   },
-  "inviteVisitorDialog": {
+  "addVisitorDialog": {
     "title": "Bezoeker toevoegen",
     "searchPlaceholder": "Zoek mensen of typ een e-mailadres",
-    "inviteEmail": "Nodig {{email}} uit",
+    "addEmail": "Voeg {{email}} toe",
     "actions": {
       "open": "Bezoeker toevoegen"
     },
     "messages": {
-      "created": "Bezoeker uitgenodigd"
+      "created": "Bezoeker toegevoegd"
     },
     "errors": {
-      "create": "Uitnodigen van bezoeker mislukt"
+      "create": "Toevoegen van bezoeker mislukt"
     }
   },
   "documentAccessList": {

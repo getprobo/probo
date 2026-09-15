@@ -76,12 +76,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Invite a visitor to a compliance portal",
+		Short: "Add a visitor to a compliance portal",
 		Args:  cobra.NoArgs,
-		Example: `  # Invite by email
+		Example: `  # Add by email
   prb compliance-portal access create --portal PORTAL_ID --email visitor@example.com
 
-  # Invite an existing organization member
+  # Add an existing organization member
   prb compliance-portal visitor create --portal PORTAL_ID --profile PROFILE_ID`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

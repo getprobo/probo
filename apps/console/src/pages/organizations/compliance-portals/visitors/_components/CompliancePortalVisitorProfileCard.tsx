@@ -86,8 +86,8 @@ export function CompliancePortalVisitorProfileCard({
         <Text size={1} color="faint">
           {visitStatus === "deactivated"
             ? t("visitorPage.deactivated")
-            : visitStatus === "invited"
-              ? t("visitorPage.invited")
+            : visitStatus === "notVisited"
+              ? t("visitorPage.notVisited")
               : t("visitorPage.visitedOn", {
                   date: dateFormat(i18n.language, access.authenticatedAt),
                 })}

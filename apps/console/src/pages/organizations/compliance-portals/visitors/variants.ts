@@ -144,7 +144,7 @@ export const electronicSignatureSection = tv({
   },
 });
 
-export const inviteVisitorDialog = tv({
+export const addVisitorDialog = tv({
   slots: {
     body: "flex flex-col gap-3",
     item: "relative hover:bg-sand-2",
@@ -153,7 +153,7 @@ export const inviteVisitorDialog = tv({
     avatar: "shrink-0",
     name: "min-w-0 truncate",
     email: "min-w-0 truncate",
-    invite: "relative z-1 flex min-w-0 flex-1 items-center gap-3 pointer-events-none [&_svg]:size-4",
+    addEmail: "relative z-1 flex min-w-0 flex-1 items-center gap-3 pointer-events-none [&_svg]:size-4",
   },
 });
 

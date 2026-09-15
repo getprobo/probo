@@ -37,21 +37,21 @@ import { useNavigate } from "react-router";
 import { ConnectionHandler } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
-import type { InviteVisitorComboboxQuery } from "#/__generated__/core/InviteVisitorComboboxQuery.graphql";
-import type { InviteVisitorDialogCreateMutation } from "#/__generated__/core/InviteVisitorDialogCreateMutation.graphql";
+import type { AddVisitorComboboxQuery } from "#/__generated__/core/AddVisitorComboboxQuery.graphql";
+import type { AddVisitorDialogCreateMutation } from "#/__generated__/core/AddVisitorDialogCreateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { useAccessListFilters } from "../_lib/useAccessListFilters";
-import { inviteVisitorDialog } from "../variants";
+import { addVisitorDialog } from "../variants";
 
 import {
-  type InviteVisitorCandidate,
-  InviteVisitorCombobox,
-  inviteVisitorComboboxQuery,
-} from "./InviteVisitorCombobox";
+  type AddVisitorCandidate,
+  AddVisitorCombobox,
+  addVisitorComboboxQuery,
+} from "./AddVisitorCombobox";
 
 const createAccessMutation = graphql`
-  mutation InviteVisitorDialogCreateMutation(
+  mutation AddVisitorDialogCreateMutation(
     $input: CreateCompliancePortalAccessInput!
     $connections: [ID!]!
   ) {
@@ -71,30 +71,30 @@ function isLikelyEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-export interface InviteVisitorDialogProps {
+export interface AddVisitorDialogProps {
   children: ReactElement;
   compliancePortalId: string;
 }
 
-export function InviteVisitorDialog({
+export function AddVisitorDialog({
   children,
   compliancePortalId,
-}: InviteVisitorDialogProps) {
+}: AddVisitorDialogProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const navigate = useNavigate();
   const { order, query, sort } = useAccessListFilters();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [queryRef, loadQuery]
-    = useQueryLoader<InviteVisitorComboboxQuery>(inviteVisitorComboboxQuery);
-  const [createAccess, isCreating] = useMutation<InviteVisitorDialogCreateMutation>(
+    = useQueryLoader<AddVisitorComboboxQuery>(addVisitorComboboxQuery);
+  const [createAccess, isCreating] = useMutation<AddVisitorDialogCreateMutation>(
     createAccessMutation,
     {
-      successMessage: t("inviteVisitorDialog.messages.created"),
-      errorToast: t("inviteVisitorDialog.errors.create"),
+      successMessage: t("addVisitorDialog.messages.created"),
+      errorToast: t("addVisitorDialog.errors.create"),
     },
   );
-  const { body, item, hit, invite } = inviteVisitorDialog();
+  const { body, item, hit, addEmail } = addVisitorDialog();
   const connectionId = ConnectionHandler.getConnectionID(
     compliancePortalId,
     "CompliancePortalAccessList_accesses",
@@ -114,7 +114,7 @@ export function InviteVisitorDialog({
     500,
   );
 
-  async function inviteVisitor(input: { profileId?: string; email?: string }) {
+  async function addVisitor(input: { profileId?: string; email?: string }) {
     if (isCreating) {
       return;
     }
@@ -139,12 +139,12 @@ export function InviteVisitorDialog({
     }
   }
 
-  function handleSelectCandidate(candidate: InviteVisitorCandidate) {
-    void inviteVisitor({ profileId: candidate.id });
+  function handleSelectCandidate(candidate: AddVisitorCandidate) {
+    void addVisitor({ profileId: candidate.id });
   }
 
-  function handleInviteEmail(email: string) {
-    void inviteVisitor({ email });
+  function handleAddEmail(email: string) {
+    void addVisitor({ email });
   }
 
   function handleSearch(query: string) {
@@ -164,46 +164,46 @@ export function InviteVisitorDialog({
 
   const trimmedQuery = searchQuery.trim();
   const canSearch = trimmedQuery.length >= 2;
-  const showInviteEmail = isLikelyEmail(trimmedQuery);
+  const showAddEmail = isLikelyEmail(trimmedQuery);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={children} />
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>{t("inviteVisitorDialog.title")}</DialogTitle>
+          <DialogTitle>{t("addVisitorDialog.title")}</DialogTitle>
         </DialogHeader>
         <DialogBody className={body()}>
           <TextField
             icon={<MagnifyingGlassIcon />}
             value={searchQuery}
             onValueChange={handleSearch}
-            placeholder={t("inviteVisitorDialog.searchPlaceholder")}
-            aria-label={t("inviteVisitorDialog.searchPlaceholder")}
+            placeholder={t("addVisitorDialog.searchPlaceholder")}
+            aria-label={t("addVisitorDialog.searchPlaceholder")}
           />
           {canSearch && queryRef != null && queryRef.variables.query === trimmedQuery && (
             <Suspense fallback={<ListSkeleton count={3} />}>
-              <InviteVisitorCombobox
+              <AddVisitorCombobox
                 queryRef={queryRef}
                 onSelect={handleSelectCandidate}
               />
             </Suspense>
           )}
-          {showInviteEmail && (
+          {showAddEmail && (
             <List>
               <ListItem className={item()}>
                 <button
                   type="button"
                   className={hit()}
-                  aria-label={t("inviteVisitorDialog.inviteEmail", { email: trimmedQuery })}
+                  aria-label={t("addVisitorDialog.addEmail", { email: trimmedQuery })}
                   onClick={() => {
-                    handleInviteEmail(trimmedQuery);
+                    handleAddEmail(trimmedQuery);
                   }}
                 />
-                <div className={invite()}>
+                <div className={addEmail()}>
                   <PlusIcon aria-hidden />
                   <Text size={2} weight="medium" color="neutral" highContrast>
-                    {t("inviteVisitorDialog.inviteEmail", { email: trimmedQuery })}
+                    {t("addVisitorDialog.addEmail", { email: trimmedQuery })}
                   </Text>
                 </div>
               </ListItem>

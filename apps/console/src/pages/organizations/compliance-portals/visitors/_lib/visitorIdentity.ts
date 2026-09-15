@@ -29,7 +29,7 @@ export function visitorDisplayName(fullName: string, emailAddress: string): stri
 
 export type VisitorAccessState = "ACTIVE" | "DEACTIVATED";
 
-export type VisitorVisitStatus = "deactivated" | "invited" | "visited";
+export type VisitorVisitStatus = "deactivated" | "notVisited" | "visited";
 
 export function visitorVisitStatusTone(
   status: VisitorVisitStatus,
@@ -37,7 +37,7 @@ export function visitorVisitStatusTone(
   switch (status) {
     case "deactivated":
       return "red";
-    case "invited":
+    case "notVisited":
       return "amber";
     case "visited":
       return "faint";
@@ -53,7 +53,7 @@ export function visitorVisitStatus(
   }
 
   if (authenticatedAt == null) {
-    return "invited";
+    return "notVisited";
   }
 
   return "visited";

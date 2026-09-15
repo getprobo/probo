@@ -32,11 +32,11 @@ import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/Com
 
 import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
+import { AddVisitorDialog } from "./_components/AddVisitorDialog";
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
 import { CompliancePortalAccessListSearch } from "./_components/CompliancePortalAccessListSearch";
 import { CompliancePortalAccessListSort } from "./_components/CompliancePortalAccessListSort";
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
-import { InviteVisitorDialog } from "./_components/InviteVisitorDialog";
 import { accessSection, visitorsPage } from "./variants";
 
 export const compliancePortalVisitorsPageQuery = graphql`
@@ -93,11 +93,11 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
               <div className={actions()}>
                 <CompliancePortalAccessListSort />
                 {compliancePortal.canCreateAccess && (
-                  <InviteVisitorDialog compliancePortalId={compliancePortal.id}>
+                  <AddVisitorDialog compliancePortalId={compliancePortal.id}>
                     <Button size={2} color="neutral" highContrast iconStart={<PlusIcon />}>
-                      {t("inviteVisitorDialog.actions.open")}
+                      {t("addVisitorDialog.actions.open")}
                     </Button>
-                  </InviteVisitorDialog>
+                  </AddVisitorDialog>
                 )}
               </div>
             </div>

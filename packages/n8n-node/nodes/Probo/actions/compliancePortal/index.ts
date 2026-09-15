@@ -76,7 +76,7 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Create Access',
 				value: 'createAccess',
-				description: 'Invite a visitor to a compliance portal',
+				description: 'Add a visitor to a compliance portal',
 				action: 'Create a compliance portal access',
 			},
 			{

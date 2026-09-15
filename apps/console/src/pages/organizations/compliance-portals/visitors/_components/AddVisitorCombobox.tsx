@@ -26,13 +26,13 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
-import type { InviteVisitorComboboxQuery } from "#/__generated__/core/InviteVisitorComboboxQuery.graphql";
+import type { AddVisitorComboboxQuery } from "#/__generated__/core/AddVisitorComboboxQuery.graphql";
 
 import { visitorDisplayName } from "../_lib/visitorIdentity";
-import { inviteVisitorDialog } from "../variants";
+import { addVisitorDialog } from "../variants";
 
-export const inviteVisitorComboboxQuery = graphql`
-  query InviteVisitorComboboxQuery($compliancePortalId: ID!, $query: String!) {
+export const addVisitorComboboxQuery = graphql`
+  query AddVisitorComboboxQuery($compliancePortalId: ID!, $query: String!) {
     node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
@@ -46,23 +46,23 @@ export const inviteVisitorComboboxQuery = graphql`
   }
 `;
 
-export interface InviteVisitorCandidate {
+export interface AddVisitorCandidate {
   id: string;
   fullName: string;
   emailAddress: string;
 }
 
-interface InviteVisitorComboboxProps {
-  queryRef: PreloadedQuery<InviteVisitorComboboxQuery>;
-  onSelect: (candidate: InviteVisitorCandidate) => void;
+interface AddVisitorComboboxProps {
+  queryRef: PreloadedQuery<AddVisitorComboboxQuery>;
+  onSelect: (candidate: AddVisitorCandidate) => void;
 }
 
-export function InviteVisitorCombobox({
+export function AddVisitorCombobox({
   queryRef,
   onSelect,
-}: InviteVisitorComboboxProps) {
-  const data = usePreloadedQuery<InviteVisitorComboboxQuery>(
-    inviteVisitorComboboxQuery,
+}: AddVisitorComboboxProps) {
+  const data = usePreloadedQuery<AddVisitorComboboxQuery>(
+    addVisitorComboboxQuery,
     queryRef,
   );
   if (data.node?.__typename !== "CompliancePortal") {
@@ -74,7 +74,7 @@ export function InviteVisitorCombobox({
     return null;
   }
 
-  const { item, hit, row, avatar, name, email } = inviteVisitorDialog();
+  const { item, hit, row, avatar, name, email } = addVisitorDialog();
 
   return (
     <List>

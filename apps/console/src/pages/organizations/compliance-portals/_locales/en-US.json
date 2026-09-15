@@ -58,11 +58,11 @@
     "description": "Let visitors submit data subject rights requests on the portal."
   },
   "accessPage": {
-    "description": "Invite people to the portal, or wait for them to sign in to request documents or accept an NDA."
+    "description": "Add people to the portal, or wait for them to sign in to request documents or accept an NDA."
   },
   "visitorPage": {
     "back": "Visitors",
-    "invited": "Invited",
+    "notVisited": "Not visited",
     "visitedOn": "Visited on {{date}}",
     "deactivated": "Deactivated",
     "deactivatedCallout": "This visitor cannot request or use protected documents until they are reactivated. Assigned grants stay in place but have no effect until then.",
@@ -91,7 +91,7 @@
   },
   "accessList": {
     "empty": "No visitors yet",
-    "emptyDescription": "Invite people or wait for them to sign in on your portal.",
+    "emptyDescription": "Add people or wait for them to sign in on your portal.",
     "emptyFiltered": "No matching visitors",
     "emptyFilteredDescription": "Try a different name or email, or clear the search.",
     "search": {
@@ -109,7 +109,7 @@
     }
   },
   "accessListItem": {
-    "invited": "Invited",
+    "notVisited": "Not visited",
     "visitedOn": "Visited {{date}}",
     "deactivated": "Deactivated",
     "requested_one": "Review {{count}} request",
@@ -124,18 +124,18 @@
       "open": "Open visitor"
     }
   },
-  "inviteVisitorDialog": {
+  "addVisitorDialog": {
     "title": "Add visitor",
     "searchPlaceholder": "Search people or type an email",
-    "inviteEmail": "Invite {{email}}",
+    "addEmail": "Add {{email}}",
     "actions": {
       "open": "Add visitor"
     },
     "messages": {
-      "created": "Visitor invited"
+      "created": "Visitor added"
     },
     "errors": {
-      "create": "Failed to invite visitor"
+      "create": "Failed to add visitor"
     }
   },
   "documentAccessList": {
