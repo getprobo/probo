@@ -82,7 +82,7 @@ export function InviteVisitorDialog({
 }: InviteVisitorDialogProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const navigate = useNavigate();
-  const { order, query } = useAccessListFilters();
+  const { order, query, sort } = useAccessListFilters();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [queryRef, loadQuery]
@@ -126,7 +126,7 @@ export function InviteVisitorDialog({
             compliancePortalId,
             ...input,
           },
-          connections: [connectionId],
+          connections: query === "" && sort === "joined" ? [connectionId] : [],
         },
       });
       const accessId

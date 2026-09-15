@@ -57,27 +57,43 @@ func TestCreateAccessGrantsTargets(t *testing.T) {
 	)
 }
 
-func TestUpdateAccessGrantsTargets(t *testing.T) {
+func TestUpdateAccessNewlyGrantsTargets(t *testing.T) {
 	t.Parallel()
 
 	documentID := gid.New(gid.NilTenant, coredata.DocumentEntityType)
+	req := &UpdateAccessRequest{
+		DocumentAccesses: []UpdateDocumentAccessRequest{
+			{
+				ID:     documentID,
+				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+			},
+		},
+	}
 
 	t.Run(
-		"granted document",
+		"new grant",
 		func(t *testing.T) {
 			t.Parallel()
 
 			assert.True(
 				t,
-				updateAccessGrantsTargets(
-					&UpdateAccessRequest{
-						DocumentAccesses: []UpdateDocumentAccessRequest{
-							{
-								ID:     documentID,
-								Status: coredata.CompliancePortalDocumentAccessStatusGranted,
-							},
-						},
-					},
+				updateAccessNewlyGrantsTargets(req, nil, nil, nil),
+			)
+		},
+	)
+
+	t.Run(
+		"already granted",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(
+				t,
+				updateAccessNewlyGrantsTargets(
+					req,
+					map[gid.GID]struct{}{documentID: {}},
+					nil,
+					nil,
 				),
 			)
 		},
@@ -90,7 +106,7 @@ func TestUpdateAccessGrantsTargets(t *testing.T) {
 
 			assert.False(
 				t,
-				updateAccessGrantsTargets(
+				updateAccessNewlyGrantsTargets(
 					&UpdateAccessRequest{
 						DocumentAccesses: []UpdateDocumentAccessRequest{
 							{
@@ -99,6 +115,9 @@ func TestUpdateAccessGrantsTargets(t *testing.T) {
 							},
 						},
 					},
+					nil,
+					nil,
+					nil,
 				),
 			)
 		},

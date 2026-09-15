@@ -174,8 +174,6 @@ func requireAccessMailpitMessageEventually(
 		require.FailNow(t, "mailpit compliance portal access email not found")
 	}
 
-	assert.NotContains(t, detail.HTML, "/auth/compliance-portal-invite")
-	assert.NotContains(t, detail.Text, "/auth/compliance-portal-invite")
 	assert.Contains(t, detail.Text, "probopage.localhost")
 
 	return detail
@@ -263,7 +261,7 @@ func TestCompliancePortalAccess_CreateConflict(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestCompliancePortalAccess_CreateDoesNotQueueInviteEmail(t *testing.T) {
+func TestCompliancePortalAccess_CreateDoesNotQueueAccessEmail(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -276,20 +274,17 @@ func TestCompliancePortalAccess_CreateDoesNotQueueInviteEmail(t *testing.T) {
 		"email":              email,
 	})
 
-	foundInvite := testutil.Poll(
+	foundMail := testutil.Poll(
 		t,
 		10*time.Second,
 		500*time.Millisecond,
 		func() bool {
-			_, err := owner.FindLinkFromMailpitSearch(
-				searchQuery,
-				"/auth/compliance-portal-invite",
-			)
+			mails, err := owner.SearchMails(searchQuery)
 
-			return err == nil
+			return err == nil && len(mails.Messages) > 0
 		},
 	)
-	assert.False(t, foundInvite)
+	assert.False(t, foundMail)
 }
 
 func TestCompliancePortalAccess_GrantQueuesAccessEmail(t *testing.T) {

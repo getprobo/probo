@@ -689,6 +689,12 @@ func (s *Service) UpdateAccess(
 
 			var tcdas coredata.CompliancePortalDocumentAccesses
 
+			var (
+				grantedDocumentIDs = map[gid.GID]struct{}{}
+				grantedReportIDs   = map[gid.GID]struct{}{}
+				grantedFileIDs     = map[gid.GID]struct{}{}
+			)
+
 			if len(req.DocumentAccesses) > 0 {
 				var documentData []coredata.UpsertCompliancePortalDocumentAccessesData
 
@@ -701,6 +707,24 @@ func (s *Service) UpdateAccess(
 
 					documentIDs = append(documentIDs, d.ID)
 				}
+
+				var existing coredata.CompliancePortalDocumentAccesses
+				if err := existing.LoadByCompliancePortalAccessIDAndDocumentIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					documentIDs,
+				); err != nil {
+					return fmt.Errorf("cannot load existing document accesses: %w", err)
+				}
+
+				grantedDocumentIDs = grantedTargetIDs(
+					existing,
+					func(row *coredata.CompliancePortalDocumentAccess) *gid.GID {
+						return row.DocumentID
+					},
+				)
 
 				documents := &coredata.Documents{}
 				if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil {
@@ -737,6 +761,24 @@ func (s *Service) UpdateAccess(
 					reportIDs = append(reportIDs, d.ID)
 				}
 
+				var existing coredata.CompliancePortalDocumentAccesses
+				if err := existing.LoadByCompliancePortalAccessIDAndReportFileIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					reportIDs,
+				); err != nil {
+					return fmt.Errorf("cannot load existing report accesses: %w", err)
+				}
+
+				grantedReportIDs = grantedTargetIDs(
+					existing,
+					func(row *coredata.CompliancePortalDocumentAccess) *gid.GID {
+						return row.ReportFileID
+					},
+				)
+
 				files := &coredata.Files{}
 				if err := files.LoadByIDs(ctx, tx, scope, reportIDs); err != nil {
 					return fmt.Errorf("cannot load report files: %w", err)
@@ -772,6 +814,24 @@ func (s *Service) UpdateAccess(
 					compliancePortalFileIDs = append(compliancePortalFileIDs, d.ID)
 				}
 
+				var existing coredata.CompliancePortalDocumentAccesses
+				if err := existing.LoadByCompliancePortalAccessIDAndCompliancePortalFileIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					compliancePortalFileIDs,
+				); err != nil {
+					return fmt.Errorf("cannot load existing compliance portal file accesses: %w", err)
+				}
+
+				grantedFileIDs = grantedTargetIDs(
+					existing,
+					func(row *coredata.CompliancePortalDocumentAccess) *gid.GID {
+						return row.CompliancePortalFileID
+					},
+				)
+
 				compliancePortalFiles := &coredata.CompliancePortalFiles{}
 				if err := compliancePortalFiles.LoadByIDs(ctx, tx, scope, compliancePortalFileIDs); err != nil {
 					return fmt.Errorf("cannot load compliance page files: %w", err)
@@ -794,7 +854,14 @@ func (s *Service) UpdateAccess(
 				}
 			}
 
-			if compliancePortalAcessActivated || updateAccessGrantsTargets(req) {
+			newlyGranted := updateAccessNewlyGrantsTargets(
+				req,
+				grantedDocumentIDs,
+				grantedReportIDs,
+				grantedFileIDs,
+			)
+			if compliancePortalAcessActivated ||
+				(access.State == coredata.CompliancePortalAccessStateActive && newlyGranted) {
 				if err := s.sendAccessEmail(ctx, scope, tx, access); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
@@ -1050,26 +1117,53 @@ func createAccessGrantsTargets(req *CreateAccessRequest) bool {
 		len(req.CompliancePortalFileIDs) > 0
 }
 
-func updateAccessGrantsTargets(req *UpdateAccessRequest) bool {
-	for _, d := range req.DocumentAccesses {
-		if d.Status == coredata.CompliancePortalDocumentAccessStatusGranted {
-			return true
+func grantedTargetIDs(
+	accesses coredata.CompliancePortalDocumentAccesses,
+	idOf func(*coredata.CompliancePortalDocumentAccess) *gid.GID,
+) map[gid.GID]struct{} {
+	ids := make(map[gid.GID]struct{}, len(accesses))
+	for _, access := range accesses {
+		if access.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
+			continue
 		}
+
+		id := idOf(access)
+		if id == nil {
+			continue
+		}
+
+		ids[*id] = struct{}{}
 	}
 
-	for _, d := range req.ReportAccesses {
-		if d.Status == coredata.CompliancePortalDocumentAccessStatusGranted {
-			return true
-		}
-	}
+	return ids
+}
 
-	for _, d := range req.CompliancePortalFileAccesses {
-		if d.Status == coredata.CompliancePortalDocumentAccessStatusGranted {
+func requestsNewGrant(
+	updates []UpdateDocumentAccessRequest,
+	alreadyGranted map[gid.GID]struct{},
+) bool {
+	for _, update := range updates {
+		if update.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
+			continue
+		}
+
+		if _, exists := alreadyGranted[update.ID]; !exists {
 			return true
 		}
 	}
 
 	return false
+}
+
+func updateAccessNewlyGrantsTargets(
+	req *UpdateAccessRequest,
+	grantedDocumentIDs map[gid.GID]struct{},
+	grantedReportIDs map[gid.GID]struct{},
+	grantedFileIDs map[gid.GID]struct{},
+) bool {
+	return requestsNewGrant(req.DocumentAccesses, grantedDocumentIDs) ||
+		requestsNewGrant(req.ReportAccesses, grantedReportIDs) ||
+		requestsNewGrant(req.CompliancePortalFileAccesses, grantedFileIDs)
 }
 
 func createAccessEventKey(req *CreateAccessRequest) string {
