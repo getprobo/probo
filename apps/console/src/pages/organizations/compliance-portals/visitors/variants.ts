@@ -144,16 +144,29 @@ export const electronicSignatureSection = tv({
   },
 });
 
-export const addVisitorDialog = tv({
+export const addVisitorPopover = tv({
   slots: {
-    body: "flex flex-col gap-3",
-    item: "relative hover:bg-sand-2",
-    hit: "absolute inset-0 z-0 outline-none focus-visible:bg-sand-2",
-    row: "relative z-1 flex min-w-0 flex-1 items-center gap-4 pointer-events-none",
+    body: "flex flex-col gap-2",
+    results: "flex flex-col transition-opacity empty:hidden",
+    item: [
+      "group flex w-full cursor-pointer items-center gap-2 rounded-2 text-left outline-none select-none",
+      "px-3 py-1.5 text-2 text-sand-12",
+      "hover:bg-gold-9 hover:text-white",
+      "focus-visible:bg-gold-9 focus-visible:text-white",
+    ],
+    empty: "px-3 py-1 text-1 font-medium text-sand-11",
     avatar: "shrink-0",
-    name: "min-w-0 truncate",
-    email: "min-w-0 truncate",
-    addEmail: "relative z-1 flex min-w-0 flex-1 items-center gap-3 pointer-events-none [&_svg]:size-4",
+    identity: "flex min-w-0 flex-1 flex-col items-start text-left",
+    name: "min-w-0 truncate font-medium",
+    email: "min-w-0 truncate text-1 text-sand-11 group-hover:text-inherit group-focus-visible:text-inherit",
+    icon: "size-4 shrink-0 [&_svg]:size-4",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
   },
 });
 

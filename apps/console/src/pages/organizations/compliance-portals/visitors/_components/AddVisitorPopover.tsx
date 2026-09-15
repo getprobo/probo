@@ -18,19 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
-import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
-import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
-import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
-import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
-import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
-import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
+import { PlusIcon, UserIcon } from "@phosphor-icons/react";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
-import { List } from "@probo/ui/src/v2/List/List";
-import { ListItem } from "@probo/ui/src/v2/List/ListItem";
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type ReactElement, Suspense, useCallback, useState } from "react";
+import { Popover } from "@probo/ui/src/v2/Popover/Popover";
+import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
+import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
+import { type ReactElement, useCallback, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useQueryLoader } from "react-relay";
 import { useNavigate } from "react-router";
@@ -38,11 +31,11 @@ import { ConnectionHandler } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
 import type { AddVisitorComboboxQuery } from "#/__generated__/core/AddVisitorComboboxQuery.graphql";
-import type { AddVisitorDialogCreateMutation } from "#/__generated__/core/AddVisitorDialogCreateMutation.graphql";
+import type { AddVisitorPopoverCreateMutation } from "#/__generated__/core/AddVisitorPopoverCreateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { useAccessListFilters } from "../_lib/useAccessListFilters";
-import { addVisitorDialog } from "../variants";
+import { addVisitorPopover } from "../variants";
 
 import {
   type AddVisitorCandidate,
@@ -51,7 +44,7 @@ import {
 } from "./AddVisitorCombobox";
 
 const createAccessMutation = graphql`
-  mutation AddVisitorDialogCreateMutation(
+  mutation AddVisitorPopoverCreateMutation(
     $input: CreateCompliancePortalAccessInput!
     $connections: [ID!]!
   ) {
@@ -71,30 +64,31 @@ function isLikelyEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-export interface AddVisitorDialogProps {
+export interface AddVisitorPopoverProps {
   children: ReactElement;
   compliancePortalId: string;
 }
 
-export function AddVisitorDialog({
+export function AddVisitorPopover({
   children,
   compliancePortalId,
-}: AddVisitorDialogProps) {
+}: AddVisitorPopoverProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const navigate = useNavigate();
   const { order, query, sort } = useAccessListFilters();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [queryRef, loadQuery]
+  const [isPending, startTransition] = useTransition();
+  const [queryRef, loadQuery, disposeQuery]
     = useQueryLoader<AddVisitorComboboxQuery>(addVisitorComboboxQuery);
-  const [createAccess, isCreating] = useMutation<AddVisitorDialogCreateMutation>(
+  const [createAccess, isCreating] = useMutation<AddVisitorPopoverCreateMutation>(
     createAccessMutation,
     {
       successMessage: t("addVisitorDialog.messages.created"),
       errorToast: t("addVisitorDialog.errors.create"),
     },
   );
-  const { body, item, hit, addEmail } = addVisitorDialog();
+  const { body, results, item, name, icon } = addVisitorPopover({ pending: isPending });
   const connectionId = ConnectionHandler.getConnectionID(
     compliancePortalId,
     "CompliancePortalAccessList_accesses",
@@ -107,7 +101,12 @@ export function AddVisitorDialog({
   const debouncedLoadQuery = useDebounceCallback(
     useCallback(
       (query: string) => {
-        loadQuery({ compliancePortalId, query });
+        startTransition(() => {
+          loadQuery(
+            { compliancePortalId, query },
+            { fetchPolicy: "store-or-network" },
+          );
+        });
       },
       [compliancePortalId, loadQuery],
     ),
@@ -133,6 +132,7 @@ export function AddVisitorDialog({
         = response.createCompliancePortalAccess.compliancePortalAccessEdge.node.id;
       setOpen(false);
       setSearchQuery("");
+      disposeQuery();
       void navigate(accessId);
     } catch {
       // Error toast is already shown by useMutation.
@@ -159,6 +159,7 @@ export function AddVisitorDialog({
     setOpen(nextOpen);
     if (!nextOpen) {
       setSearchQuery("");
+      disposeQuery();
     }
   }
 
@@ -167,50 +168,49 @@ export function AddVisitorDialog({
   const showAddEmail = isLikelyEmail(trimmedQuery);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={children} />
-      <DialogPopup>
-        <DialogHeader>
-          <DialogTitle>{t("addVisitorDialog.title")}</DialogTitle>
-        </DialogHeader>
-        <DialogBody className={body()}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal>
+      <PopoverTrigger render={children} />
+      <PopoverPopup
+        side="bottom"
+        align="end"
+        className="w-80 p-2"
+        aria-label={t("addVisitorDialog.title")}
+      >
+        <div className={body()}>
           <TextField
-            icon={<MagnifyingGlassIcon />}
+            size={1}
+            icon={<UserIcon />}
             value={searchQuery}
             onValueChange={handleSearch}
             placeholder={t("addVisitorDialog.searchPlaceholder")}
             aria-label={t("addVisitorDialog.searchPlaceholder")}
           />
-          {canSearch && queryRef != null && queryRef.variables.query === trimmedQuery && (
-            <Suspense fallback={<ListSkeleton count={3} />}>
+          {canSearch && queryRef != null && (
+            <div className={results()} aria-busy={isPending}>
               <AddVisitorCombobox
                 queryRef={queryRef}
                 onSelect={handleSelectCandidate}
+                showEmpty={!showAddEmail}
               />
-            </Suspense>
+            </div>
           )}
           {showAddEmail && (
-            <List>
-              <ListItem className={item()}>
-                <button
-                  type="button"
-                  className={hit()}
-                  aria-label={t("addVisitorDialog.addEmail", { email: trimmedQuery })}
-                  onClick={() => {
-                    handleAddEmail(trimmedQuery);
-                  }}
-                />
-                <div className={addEmail()}>
-                  <PlusIcon aria-hidden />
-                  <Text size={2} weight="medium" color="neutral" highContrast>
-                    {t("addVisitorDialog.addEmail", { email: trimmedQuery })}
-                  </Text>
-                </div>
-              </ListItem>
-            </List>
+            <button
+              type="button"
+              className={item()}
+              aria-label={t("addVisitorDialog.addEmail", { email: trimmedQuery })}
+              onClick={() => {
+                handleAddEmail(trimmedQuery);
+              }}
+            >
+              <PlusIcon className={icon()} aria-hidden />
+              <span className={name()}>
+                {t("addVisitorDialog.addEmail", { email: trimmedQuery })}
+              </span>
+            </button>
           )}
-        </DialogBody>
-      </DialogPopup>
-    </Dialog>
+        </div>
+      </PopoverPopup>
+    </Popover>
   );
 }

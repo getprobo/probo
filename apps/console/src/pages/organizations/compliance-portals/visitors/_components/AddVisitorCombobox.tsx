@@ -19,17 +19,14 @@
 // SOFTWARE.
 
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { List } from "@probo/ui/src/v2/List/List";
-import { ListItem } from "@probo/ui/src/v2/List/ListItem";
-import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
-import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
 import type { AddVisitorComboboxQuery } from "#/__generated__/core/AddVisitorComboboxQuery.graphql";
 
 import { visitorDisplayName } from "../_lib/visitorIdentity";
-import { addVisitorDialog } from "../variants";
+import { addVisitorPopover } from "../variants";
 
 export const addVisitorComboboxQuery = graphql`
   query AddVisitorComboboxQuery($compliancePortalId: ID!, $query: String!) {
@@ -55,12 +52,15 @@ export interface AddVisitorCandidate {
 interface AddVisitorComboboxProps {
   queryRef: PreloadedQuery<AddVisitorComboboxQuery>;
   onSelect: (candidate: AddVisitorCandidate) => void;
+  showEmpty?: boolean;
 }
 
 export function AddVisitorCombobox({
   queryRef,
   onSelect,
+  showEmpty = true,
 }: AddVisitorComboboxProps) {
+  const { t } = useTranslation("organizations/compliance-portals");
   const data = usePreloadedQuery<AddVisitorComboboxQuery>(
     addVisitorComboboxQuery,
     queryRef,
@@ -69,15 +69,18 @@ export function AddVisitorCombobox({
     return null;
   }
 
+  const { item, empty, avatar, identity, name, email } = addVisitorPopover();
   const candidates = data.node.memberCandidates;
   if (candidates.length === 0) {
-    return null;
+    if (!showEmpty) {
+      return null;
+    }
+
+    return <p className={empty()}>{t("addVisitorDialog.empty")}</p>;
   }
 
-  const { item, hit, row, avatar, name, email } = addVisitorDialog();
-
   return (
-    <List>
+    <>
       {candidates.map((candidate) => {
         const displayName = visitorDisplayName(
           candidate.fullName,
@@ -85,41 +88,32 @@ export function AddVisitorCombobox({
         );
 
         return (
-          <ListItem key={candidate.id} className={item()}>
-            <button
-              type="button"
-              className={hit()}
-              aria-label={displayName}
-              onClick={() => {
-                onSelect({
-                  id: candidate.id,
-                  fullName: candidate.fullName,
-                  emailAddress: candidate.emailAddress,
-                });
-              }}
+          <button
+            key={candidate.id}
+            type="button"
+            className={item()}
+            onClick={() => {
+              onSelect({
+                id: candidate.id,
+                fullName: candidate.fullName,
+                emailAddress: candidate.emailAddress,
+              });
+            }}
+          >
+            <Avatar
+              size={2}
+              variant="soft"
+              color="gold"
+              className={avatar()}
+              fallback={displayName.charAt(0).toUpperCase() || "?"}
             />
-            <div className={row()}>
-              <Avatar
-                size={3}
-                variant="soft"
-                color="gold"
-                className={avatar()}
-                fallback={displayName.charAt(0).toUpperCase() || "?"}
-              />
-              <ListItemContent>
-                <Text size={2} weight="medium" color="neutral" highContrast className={name()}>
-                  {displayName}
-                </Text>
-                {candidate.fullName.trim() !== "" && (
-                  <Text size={1} color="gold" className={email()}>
-                    {candidate.emailAddress}
-                  </Text>
-                )}
-              </ListItemContent>
-            </div>
-          </ListItem>
+            <span className={identity()}>
+              <span className={name()}>{displayName}</span>
+              <span className={email()}>{candidate.emailAddress}</span>
+            </span>
+          </button>
         );
       })}
-    </List>
+    </>
   );
 }

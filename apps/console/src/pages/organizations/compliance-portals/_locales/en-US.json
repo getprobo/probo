@@ -128,6 +128,7 @@
     "title": "Add visitor",
     "searchPlaceholder": "Search people or type an email",
     "addEmail": "Add {{email}}",
+    "empty": "No matching people",
     "actions": {
       "open": "Add visitor"
     },

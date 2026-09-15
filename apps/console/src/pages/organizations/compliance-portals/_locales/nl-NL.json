@@ -105,6 +105,7 @@
     "title": "Bezoeker toevoegen",
     "searchPlaceholder": "Zoek mensen of typ een e-mailadres",
     "addEmail": "Voeg {{email}} toe",
+    "empty": "Geen overeenkomende mensen",
     "actions": {
       "open": "Bezoeker toevoegen"
     },

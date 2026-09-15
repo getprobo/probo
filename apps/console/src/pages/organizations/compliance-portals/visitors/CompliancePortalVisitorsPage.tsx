@@ -32,7 +32,7 @@ import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/Com
 
 import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
-import { AddVisitorDialog } from "./_components/AddVisitorDialog";
+import { AddVisitorPopover } from "./_components/AddVisitorPopover";
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
 import { CompliancePortalAccessListSearch } from "./_components/CompliancePortalAccessListSearch";
 import { CompliancePortalAccessListSort } from "./_components/CompliancePortalAccessListSort";
@@ -93,11 +93,11 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
               <div className={actions()}>
                 <CompliancePortalAccessListSort />
                 {compliancePortal.canCreateAccess && (
-                  <AddVisitorDialog compliancePortalId={compliancePortal.id}>
+                  <AddVisitorPopover compliancePortalId={compliancePortal.id}>
                     <Button size={2} color="neutral" highContrast iconStart={<PlusIcon />}>
                       {t("addVisitorDialog.actions.open")}
                     </Button>
-                  </AddVisitorDialog>
+                  </AddVisitorPopover>
                 )}
               </div>
             </div>
