@@ -140,6 +140,22 @@ If your site manages Consent Mode itself (for example through an existing GTM se
 
 The attribute accepts `"true"`/`"false"`; any other value logs a warning and keeps the integration enabled. Programmatic use of `CookieBannerClient` takes the same switch as an option: `integrations: [{ name: "gcm", enabled: false }]`. Disabling covers all of it — the eager deny-all default, the discovery-mode grant-all, and per-consent updates.
 
+## Global Privacy Control
+
+When a visitor's browser sends [Global Privacy Control](https://globalprivacycontrol.org/), the SDK applies an opt-out and records it as a consent decision: a visitor id in `localStorage`, the consent cookie, and a consent record sent to Probo. That happens even when no banner UI is mounted, which is surprising for a detection-only embed, and it means a second consent record exists for sites that already have their own.
+
+`gpc-record="false"` stops the SDK persisting and transmitting that decision:
+
+```html
+<!-- Script tag -->
+<script src="..." data-banner-id="..." data-base-url="..." data-gpc-record="false"></script>
+
+<!-- Themed or headless components -->
+<probo-cookie-banner banner-id="..." base-url="..." gpc-record="false"></probo-cookie-banner>
+```
+
+**GPC is still honoured.** The opt-out is applied in the page exactly as before — non-necessary categories are denied, blocked resources stay blocked, and integrations are updated — so the flag cannot be used to ignore a GPC signal. What it removes is the record of it: no visitor id, no cookie, no consent record. Programmatic equivalent: `gpcRecord: false`.
+
 ## Key Features
 
 - **Multi-regulation compliance** — Supports opt-in (GDPR, ePrivacy) and opt-out (CCPA/CPRA) consent modes, Global Privacy Control (GPC) detection, and per-category cookie controls. Under CCPA the banner starts closed; the settings link (“Your Privacy Choices” + official icon) opens the Privacy Choices panel with sale/sharing opt-out and an SPI rights statement.

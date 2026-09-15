@@ -18,27 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export type { ConsentIntegration } from "./integration";
-export { GoogleConsentModeIntegration } from "./gcm";
-
-import { resolveBooleanAttribute } from "../attributes";
-import type { IntegrationConfig } from "../types";
-import type { ConsentIntegration } from "./integration";
-import { GoogleConsentModeIntegration } from "./gcm";
-
-export function createDefaultIntegrations(
-  configs?: IntegrationConfig[],
-): ConsentIntegration[] {
-  const gcm = configs?.find((config) => config.name === "gcm");
-  if (gcm?.enabled === false) {
-    return [];
+export function resolveBooleanAttribute(
+  value: string | null,
+  attribute: string,
+): boolean {
+  if (value == null) {
+    return true;
   }
 
-  return [
-    new GoogleConsentModeIntegration(),
-  ];
-}
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") {
+    return true;
+  }
+  if (normalized === "false") {
+    return false;
+  }
 
-export function resolveGcmEnabled(value: string | null): boolean {
-  return resolveBooleanAttribute(value, "gcm-enabled");
+  console.warn(
+    `[probo] invalid ${attribute} value "${value}": expected "true" or "false", falling back to enabled`,
+  );
+  return true;
 }
