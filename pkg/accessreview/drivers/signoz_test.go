@@ -48,7 +48,7 @@ func TestSigNozDriver(t *testing.T) {
 
 	records, err := NewSigNozDriver(client, baseURL).ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.Len(t, records, 5) // the no-email user is skipped
+	require.Len(t, records, 7) // 5 users (the no-email one is skipped) + 2 service accounts
 
 	// ADMIN role -> admin.
 	assert.Equal(t, "admin@example.com", records[0].Email)
@@ -84,6 +84,27 @@ func TestSigNozDriver(t *testing.T) {
 	assert.Equal(t, []string{"Editor"}, records[4].Roles)
 	require.NotNil(t, records[4].Active)
 	assert.False(t, *records[4].Active)
+
+	// Service account with signoz-admin -> admin, API-key auth method.
+	assert.Equal(t, "ci-deployer@example.com", records[5].Email)
+	assert.Equal(t, "ci-deployer", records[5].FullName)
+	assert.Equal(t, []string{"Admin"}, records[5].Roles)
+	assert.Equal(t, new(true), records[5].IsAdmin)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, records[5].AccountType)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodAPIKey, records[5].AuthMethod)
+	assert.Equal(t, coredata.MFAStatusUnknown, records[5].MFAStatus)
+	assert.Equal(t, "00000000-0000-4000-8000-0000000000b1", records[5].ExternalID)
+	require.NotNil(t, records[5].Active)
+	assert.True(t, *records[5].Active)
+	require.NotNil(t, records[5].CreatedAt)
+
+	// revoked -> inactive, and not admin.
+	assert.Equal(t, "revoked-bot@example.com", records[6].Email)
+	assert.Equal(t, []string{"Viewer"}, records[6].Roles)
+	assert.Equal(t, new(false), records[6].IsAdmin)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, records[6].AccountType)
+	require.NotNil(t, records[6].Active)
+	assert.False(t, *records[6].Active)
 
 	name, err := NewSigNozNameResolver(client, baseURL).ResolveInstanceName(context.Background())
 	require.NoError(t, err)
@@ -191,4 +212,35 @@ func TestSigNozNameResolver(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, name)
 	})
+}
+
+func TestSigNozDriverKeepsUsersWhenServiceAccountsDenied(t *testing.T) {
+	t.Parallel()
+
+	rec := newRecorder(t, "testdata/signoz_service_accounts_denied", "SIGNOZ_API_KEY")
+	client := newVCRClientWithHeader(rec, "SIGNOZ-API-KEY", os.Getenv("SIGNOZ_API_KEY"))
+
+	records, err := NewSigNozDriver(client, "https://signoz.example.com").ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+
+	assert.Equal(t, "admin@example.com", records[0].Email)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, records[0].AccountType)
+}
+
+func TestSigNozDriverLeavesAdminUnknownWhenRolesDenied(t *testing.T) {
+	t.Parallel()
+
+	rec := newRecorder(t, "testdata/signoz_service_account_roles_denied", "SIGNOZ_API_KEY")
+	client := newVCRClientWithHeader(rec, "SIGNOZ-API-KEY", os.Getenv("SIGNOZ_API_KEY"))
+
+	records, err := NewSigNozDriver(client, "https://signoz.example.com").ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 2)
+
+	serviceAccount := records[1]
+	assert.Equal(t, "ci-deployer@example.com", serviceAccount.Email)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, serviceAccount.AccountType)
+	assert.Nil(t, serviceAccount.Roles)
+	assert.Nil(t, serviceAccount.IsAdmin)
 }
