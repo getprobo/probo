@@ -2,8 +2,12 @@
   "createGcpAccessReviewSourcePage": {
     "pageTitle": "GCP verbinden",
     "title": "GCP verbinden",
-    "description": "Implementeer het audit-serviceaccount. Voer daarna de providerresource en het e-mailadres van het serviceaccount in.",
+    "description": "Implementeer het audit-serviceaccount. Verbind één project, of plak Terraform-uitvoer voor meerdere.",
     "permissionDenied": "U heeft geen rechten om toegangsbronnen aan te maken.",
+    "modes": {
+      "single": "Eén project",
+      "bulk": "Bulkmodus"
+    },
     "fields": {
       "workloadIdentityProvider": "Workload Identity-provider",
       "serviceAccountEmail": "E-mailadres van serviceaccount",
@@ -11,7 +15,10 @@
       "audience": "Audience",
       "subject": "Subject",
       "workloadIdentityProviderPlaceholder": "projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
-      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com"
+      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com",
+      "terraformOutput": "Terraform-uitvoer",
+      "terraformOutputHelp": "Plak de JSON van terraform output -json connectors.",
+      "terraformOutputPlaceholder": "{\n  \"my-project\": {\n    \"workload_identity_provider\": \"projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo\",\n    \"service_account_email\": \"probo-audit@my-project.iam.gserviceaccount.com\"\n  }\n}"
     },
     "messages": {
       "copyFailed": "Kopiëren mislukt",
@@ -22,7 +29,10 @@
       "copiedTerraform": "Terraform-fragment gekopieerd.",
       "error": "Fout",
       "success": "Succes",
-      "created": "Toegangsbron succesvol aangemaakt."
+      "created": "Toegangsbron succesvol aangemaakt.",
+      "createdCount_one": "{{count}} toegangsbron aangemaakt.",
+      "createdCount_other": "{{count}} toegangsbronnen aangemaakt.",
+      "partialCreated": "{{created}} van {{total}} aangemaakt. Mislukt: {{failed}}."
     },
     "errors": {
       "workloadIdentityProvider": "Voer een geldige Workload Identity-providerresource in.",
@@ -31,11 +41,19 @@
       "disconnected": "Probo kon het audit-serviceaccount niet impersoneren. Controleer of de module in dit project is toegepast en of de issuer en het subject overeenkomen met de waarden die tijdens de installatie zijn getoond.",
       "delete": "Kan de connector niet verwijderen. Probeer het opnieuw.",
       "source": "Aanmaken van toegangsbron mislukt",
-      "copy": "Kopieer de waarde handmatig."
+      "copy": "Kopieer de waarde handmatig.",
+      "invalidJson": "Plak geldige JSON van terraform output -json connectors.",
+      "invalidShape": "De JSON moet een map zijn van project-id naar workload_identity_provider en service_account_email.",
+      "terraformEntry": "Project {{projectId}} heeft een ongeldige providerresource of serviceaccount-e-mail.",
+      "tooMany": "Verbind maximaal 100 projecten tegelijk.",
+      "bulkFailed": "Kon geen GCP-toegangsbronnen aanmaken. Controleer de installaties en probeer het opnieuw."
     },
     "actions": {
       "copy": "Kopiëren",
       "connect": "Verbinden",
+      "connectCount_one": "{{count}} project verbinden",
+      "connectCount_other": "{{count}} projecten verbinden",
+      "connecting": "Verbinden…",
       "back": "Terug",
       "installViaTerraform": "Installeren via Terraform",
       "chooseAnotherInstallMethod": "Kies een andere installatiemethode"

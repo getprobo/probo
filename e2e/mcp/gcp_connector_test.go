@@ -49,6 +49,7 @@ func TestMCP_GCPConnector(t *testing.T) {
 			Subject                     string `json:"subject"`
 			SuggestedServiceAccountName string `json:"suggested_service_account_name"`
 			TerraformSnippet            string `json:"terraform_snippet"`
+			TerraformBulkSnippet        string `json:"terraform_bulk_snippet"`
 		} `json:"setup"`
 	}
 	mc.CallToolInto("gcpConnectorSetup", map[string]any{
@@ -61,6 +62,11 @@ func TestMCP_GCPConnector(t *testing.T) {
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, setupResult.Setup.Issuer)
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, cloudgcp.DefaultTerraformModuleSource)
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, cloudgcp.DefaultServiceAccountName)
+	assert.Contains(t, setupResult.Setup.TerraformBulkSnippet, setupResult.Setup.Issuer)
+	assert.Contains(t, setupResult.Setup.TerraformBulkSnippet, "for_each")
+	assert.Contains(t, setupResult.Setup.TerraformBulkSnippet, "var.project_ids")
+	assert.Contains(t, setupResult.Setup.TerraformBulkSnippet, "output \"connectors\"")
+	assert.Contains(t, setupResult.Setup.TerraformBulkSnippet, cloudgcp.DefaultTerraformModuleSource)
 
 	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":                orgID,

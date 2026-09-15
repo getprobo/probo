@@ -2,8 +2,12 @@
   "createGcpAccessReviewSourcePage": {
     "pageTitle": "Connecter GCP",
     "title": "Connecter GCP",
-    "description": "Déployez le compte de service d’audit. Saisissez ensuite la ressource du fournisseur et l’e-mail du compte de service.",
+    "description": "Déployez le compte de service d’audit. Connectez un projet, ou collez la sortie Terraform pour plusieurs.",
     "permissionDenied": "Vous n’avez pas la permission de créer des sources d’accès.",
+    "modes": {
+      "single": "Un projet",
+      "bulk": "Mode groupé"
+    },
     "fields": {
       "workloadIdentityProvider": "Fournisseur d’identité de charge de travail",
       "serviceAccountEmail": "E-mail du compte de service",
@@ -11,7 +15,10 @@
       "audience": "Audience",
       "subject": "Sujet",
       "workloadIdentityProviderPlaceholder": "projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
-      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com"
+      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com",
+      "terraformOutput": "Sortie Terraform",
+      "terraformOutputHelp": "Collez le JSON de terraform output -json connectors.",
+      "terraformOutputPlaceholder": "{\n  \"my-project\": {\n    \"workload_identity_provider\": \"projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo\",\n    \"service_account_email\": \"probo-audit@my-project.iam.gserviceaccount.com\"\n  }\n}"
     },
     "messages": {
       "copyFailed": "Échec de la copie",
@@ -22,7 +29,10 @@
       "copiedTerraform": "Extrait Terraform copié.",
       "error": "Erreur",
       "success": "Succès",
-      "created": "Source d’accès créée avec succès."
+      "created": "Source d’accès créée avec succès.",
+      "createdCount_one": "{{count}} source d’accès créée.",
+      "createdCount_other": "{{count}} sources d’accès créées.",
+      "partialCreated": "{{created}} sur {{total}} créées. Échecs : {{failed}}."
     },
     "errors": {
       "workloadIdentityProvider": "Saisissez une ressource de fournisseur d’identité de charge de travail valide.",
@@ -31,11 +41,19 @@
       "disconnected": "Probo n’a pas pu usurper le compte de service d’audit. Vérifiez que le module est appliqué dans ce projet et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration.",
       "delete": "Impossible de supprimer le connecteur. Réessayez.",
       "source": "Échec de la création de la source d’accès",
-      "copy": "Copiez la valeur manuellement."
+      "copy": "Copiez la valeur manuellement.",
+      "invalidJson": "Collez un JSON valide issu de terraform output -json connectors.",
+      "invalidShape": "Le JSON doit être une correspondance d’identifiant de projet vers workload_identity_provider et service_account_email.",
+      "terraformEntry": "Le projet {{projectId}} a une ressource de fournisseur ou un e-mail de compte de service invalide.",
+      "tooMany": "Connectez au plus 100 projets à la fois.",
+      "bulkFailed": "Impossible de créer des sources d’accès GCP. Vérifiez les installations, puis réessayez."
     },
     "actions": {
       "copy": "Copier",
       "connect": "Connecter",
+      "connectCount_one": "Connecter {{count}} projet",
+      "connectCount_other": "Connecter {{count}} projets",
+      "connecting": "Connexion…",
       "back": "Retour",
       "installViaTerraform": "Installer via Terraform",
       "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"

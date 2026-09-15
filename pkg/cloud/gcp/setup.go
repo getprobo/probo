@@ -52,6 +52,7 @@ type (
 		Subject                     string
 		SuggestedServiceAccountName string
 		TerraformSnippet            string
+		TerraformBulkSnippet        string
 	}
 
 	// ConnectorInstallConfig is the deployment-supplied install artifact used
@@ -87,6 +88,7 @@ func BuildConnectorSetup(in ConnectorSetupInput) (ConnectorSetup, error) {
 		Subject:                     in.Subject,
 		SuggestedServiceAccountName: DefaultServiceAccountName,
 		TerraformSnippet:            terraformSnippet(in.TerraformModuleSource, in.IssuerURL, in.Subject),
+		TerraformBulkSnippet:        terraformBulkSnippet(in.TerraformModuleSource, in.IssuerURL, in.Subject),
 	}, nil
 }
 
@@ -135,6 +137,74 @@ func terraformSnippet(moduleSource, issuerURL, subject string) string {
 	b.WriteString("  service_account_name = ")
 	b.WriteString(strconv.Quote(DefaultServiceAccountName))
 	b.WriteString("\n")
+	b.WriteString("}\n")
+
+	return b.String()
+}
+
+func terraformBulkSnippet(moduleSource, issuerURL, subject string) string {
+	if moduleSource == "" {
+		return ""
+	}
+
+	var b strings.Builder
+	b.WriteString("variable \"project_ids\" {\n")
+	b.WriteString("  type = set(string)\n")
+	b.WriteString("}\n\n")
+	b.WriteString("provider \"google\" {}\n\n")
+	b.WriteString("provider \"google\" {\n")
+	b.WriteString("  alias    = \"project\"\n")
+	b.WriteString("  for_each = var.project_ids\n")
+	b.WriteString("  project  = each.value\n")
+	b.WriteString("}\n\n")
+	b.WriteString("locals {\n")
+	b.WriteString("  required_services = toset([\n")
+	b.WriteString("    \"iam.googleapis.com\",\n")
+	b.WriteString("    \"cloudresourcemanager.googleapis.com\",\n")
+	b.WriteString("    \"sts.googleapis.com\",\n")
+	b.WriteString("    \"iamcredentials.googleapis.com\",\n")
+	b.WriteString("    \"logging.googleapis.com\",\n")
+	b.WriteString("  ])\n")
+	b.WriteString("}\n\n")
+	b.WriteString("resource \"google_project_service\" \"required\" {\n")
+	b.WriteString("  for_each = {\n")
+	b.WriteString("    for pair in setproduct(var.project_ids, local.required_services) :\n")
+	b.WriteString("    \"${pair[0]}/${pair[1]}\" => {\n")
+	b.WriteString("      project = pair[0]\n")
+	b.WriteString("      service = pair[1]\n")
+	b.WriteString("    }\n")
+	b.WriteString("  }\n\n")
+	b.WriteString("  project            = each.value.project\n")
+	b.WriteString("  service            = each.value.service\n")
+	b.WriteString("  disable_on_destroy = false\n")
+	b.WriteString("}\n\n")
+	b.WriteString("module \"probo_audit\" {\n")
+	b.WriteString("  for_each = var.project_ids\n")
+	b.WriteString("  source   = ")
+	b.WriteString(strconv.Quote(moduleSource))
+	b.WriteString("\n\n")
+	b.WriteString("  providers = {\n")
+	b.WriteString("    google = google.project[each.key]\n")
+	b.WriteString("  }\n\n")
+	b.WriteString("  probo_issuer_url     = ")
+	b.WriteString(strconv.Quote(issuerURL))
+	b.WriteString("\n")
+	b.WriteString("  probo_subject        = ")
+	b.WriteString(strconv.Quote(subject))
+	b.WriteString("\n")
+	b.WriteString("  service_account_name = ")
+	b.WriteString(strconv.Quote(DefaultServiceAccountName))
+	b.WriteString("\n\n")
+	b.WriteString("  depends_on = [google_project_service.required]\n")
+	b.WriteString("}\n\n")
+	b.WriteString("output \"connectors\" {\n")
+	b.WriteString("  value = {\n")
+	b.WriteString("    for project_id, inst in module.probo_audit :\n")
+	b.WriteString("    project_id => {\n")
+	b.WriteString("      workload_identity_provider = inst.workload_identity_provider\n")
+	b.WriteString("      service_account_email      = inst.service_account_email\n")
+	b.WriteString("    }\n")
+	b.WriteString("  }\n")
 	b.WriteString("}\n")
 
 	return b.String()

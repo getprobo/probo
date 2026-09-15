@@ -37,6 +37,7 @@ query($organizationId: ID!) {
     subject
     suggestedServiceAccountName
     terraformSnippet
+    terraformBulkSnippet
   }
 }
 `
@@ -48,6 +49,7 @@ type setupResponse struct {
 		Subject                     string `json:"subject"`
 		SuggestedServiceAccountName string `json:"suggestedServiceAccountName"`
 		TerraformSnippet            string `json:"terraformSnippet"`
+		TerraformBulkSnippet        string `json:"terraformBulkSnippet"`
 	} `json:"gcpConnectorSetup"`
 }
 

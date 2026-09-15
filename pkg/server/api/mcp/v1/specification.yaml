@@ -10289,6 +10289,7 @@ components:
         - subject
         - suggested_service_account_name
         - terraform_snippet
+        - terraform_bulk_snippet
       properties:
         issuer:
           type: string
@@ -10305,6 +10306,9 @@ components:
         terraform_snippet:
           type: string
           description: Terraform module block with issuer, subject and service account name filled
+        terraform_bulk_snippet:
+          type: string
+          description: Terraform for_each over project ids with issuer, subject and a connectors output filled
 
     GCPConnectorSetupMCPInput:
       type: object

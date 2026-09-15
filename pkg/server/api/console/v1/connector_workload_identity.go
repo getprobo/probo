@@ -51,6 +51,7 @@ func newGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *types.GCPConnectorSetu
 		Subject:                     setup.Subject,
 		SuggestedServiceAccountName: setup.SuggestedServiceAccountName,
 		TerraformSnippet:            setup.TerraformSnippet,
+		TerraformBulkSnippet:        setup.TerraformBulkSnippet,
 	}
 }
 

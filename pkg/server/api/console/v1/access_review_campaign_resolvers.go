@@ -683,6 +683,77 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 	}, nil
 }
 
+// CreateGCPAccessReviewSources is the resolver for the createGcpAccessReviewSources field.
+func (r *mutationResolver) CreateGCPAccessReviewSources(ctx context.Context, input types.CreateGCPAccessReviewSourcesInput) (*types.CreateGCPAccessReviewSourcesPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := r.authorize(ctx, input.OrganizationID, accessreview.ActionSourceCreate); err != nil {
+		return nil, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+	}
+
+	projects := make([]accessreview.GCPSourceProject, 0, len(input.Projects))
+	for _, project := range input.Projects {
+		if project == nil {
+			continue
+		}
+
+		projectID := ""
+		if project.ProjectID != nil {
+			projectID = *project.ProjectID
+		}
+
+		projects = append(projects, accessreview.GCPSourceProject{
+			ProjectID:                projectID,
+			WorkloadIdentityProvider: project.GCPWorkloadIdentityProvider,
+			ServiceAccountEmail:      project.GCPServiceAccountEmail,
+		})
+	}
+
+	sources, failures, err := r.accessReview.CreateGCPSources(
+		ctx,
+		scope,
+		input.OrganizationID,
+		projects,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, accessreview.ErrGCPSourcesEmpty),
+			errors.Is(err, accessreview.ErrGCPSourcesTooMany):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot create gcp access sources", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	edges := make([]*types.AccessReviewSourceEdge, len(sources))
+	for i, source := range sources {
+		edges[i] = types.NewAccessReviewSourceEdge(source, coredata.AccessReviewSourceOrderFieldCreatedAt)
+	}
+
+	gqlFailures := make([]*types.GCPAccessReviewSourceFailure, len(failures))
+	for i, failure := range failures {
+		gqlFailures[i] = &types.GCPAccessReviewSourceFailure{
+			Index:     failure.Index,
+			ProjectID: failure.ProjectID,
+			Reason:    types.GCPAccessReviewSourceFailureReason(failure.Reason),
+		}
+	}
+
+	return &types.CreateGCPAccessReviewSourcesPayload{
+		AccessReviewSourceEdges: edges,
+		Failures:                gqlFailures,
+	}, nil
+}
+
 // UpdateAccessReviewSource is the resolver for the updateAccessReviewSource field.
 func (r *mutationResolver) UpdateAccessReviewSource(ctx context.Context, input types.UpdateAccessReviewSourceInput) (*types.UpdateAccessReviewSourcePayload, error) {
 	scope, err := r.authorize(ctx, input.AccessReviewSourceID, accessreview.ActionSourceUpdate)

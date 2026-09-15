@@ -20,6 +20,7 @@
 
 import type { INodeProperties } from 'n8n-workflow';
 import * as createOp from './create.operation';
+import * as createGcpOp from './createGcp.operation';
 import * as getAllOp from './getAll.operation';
 import * as setupAwsOp from './setupAws.operation';
 import * as setupGcpOp from './setupGcp.operation';
@@ -43,6 +44,12 @@ export const description: INodeProperties[] = [
 				action: 'Create an access review source',
 			},
 			{
+				name: 'Create GCP',
+				value: 'createGcp',
+				description: 'Create GCP access sources for many projects',
+				action: 'Create GCP access review sources',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many access review sources',
@@ -64,6 +71,7 @@ export const description: INodeProperties[] = [
 		default: 'getAll',
 	},
 	...createOp.description,
+	...createGcpOp.description,
 	...getAllOp.description,
 	...setupAwsOp.description,
 	...setupGcpOp.description,
@@ -71,6 +79,7 @@ export const description: INodeProperties[] = [
 
 export {
 	createOp as create,
+	createGcpOp as createGcp,
 	getAllOp as getAll,
 	setupAwsOp as setupAws,
 	setupGcpOp as setupGcp,

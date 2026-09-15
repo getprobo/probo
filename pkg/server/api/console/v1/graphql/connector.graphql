@@ -257,6 +257,7 @@ type GCPConnectorSetup {
     subject: String!
     suggestedServiceAccountName: String!
     terraformSnippet: String!
+    terraformBulkSnippet: String!
 }
 
 type ConnectorProviderSettingInfo {

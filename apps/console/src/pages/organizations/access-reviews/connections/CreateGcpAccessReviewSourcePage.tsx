@@ -23,12 +23,16 @@ import {
   Button,
   Card,
   Field,
+  IconListStack,
   IconSquareBehindSquare2,
   Input,
   PageHeader,
   useToast,
 } from "@probo/ui";
-import { type ChangeEvent, useState } from "react";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { type ChangeEvent, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
@@ -36,6 +40,7 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { CreateGcpAccessReviewSourcePageCreateMutation } from "#/__generated__/core/CreateGcpAccessReviewSourcePageCreateMutation.graphql";
+import type { CreateGcpAccessReviewSourcePageCreateSourcesMutation } from "#/__generated__/core/CreateGcpAccessReviewSourcePageCreateSourcesMutation.graphql";
 import type { CreateGcpAccessReviewSourcePageDeleteMutation } from "#/__generated__/core/CreateGcpAccessReviewSourcePageDeleteMutation.graphql";
 import type { CreateGcpAccessReviewSourcePageQuery } from "#/__generated__/core/CreateGcpAccessReviewSourcePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -51,7 +56,11 @@ import {
   isGCPServiceAccountEmail,
   isGCPWorkloadIdentityProvider,
 } from "../dialogs/_lib/connectorSettings";
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
+import { createAccessReviewSourceMutation, prependCreatedGcpSourceEdges, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
+
+import {
+  parseGcpTerraformConnectors,
+} from "./_lib/parseGcpTerraformConnectors";
 
 export const createGcpAccessReviewSourcePageQuery = graphql`
   query CreateGcpAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -60,6 +69,7 @@ export const createGcpAccessReviewSourcePageQuery = graphql`
       audience
       subject
       terraformSnippet
+      terraformBulkSnippet
     }
     accessReviewDrivers {
       provider
@@ -100,6 +110,32 @@ const deleteConnectorMutation = graphql`
   }
 `;
 
+const createGcpAccessReviewSourcesMutation = graphql`
+  mutation CreateGcpAccessReviewSourcePageCreateSourcesMutation(
+    $input: CreateGcpAccessReviewSourcesInput!
+  ) {
+    createGcpAccessReviewSources(input: $input) {
+      accessReviewSourceEdges {
+        node {
+          id
+          name
+          connectorId
+          createdAt
+          ...AccessReviewSourceListItem_source
+        }
+      }
+      failures {
+        index
+        projectId
+        reason
+      }
+    }
+  }
+`;
+
+type ConnectMode = "single" | "bulk";
+type ConnectOneResult = "connected" | "disconnected" | "failed";
+
 interface CreateGcpAccessReviewSourcePageProps {
   queryRef: PreloadedQuery<CreateGcpAccessReviewSourcePageQuery>;
 }
@@ -111,8 +147,10 @@ export function CreateGcpAccessReviewSourcePage({
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
+  const [mode, setMode] = useState<ConnectMode>("single");
   const [providerResource, setProviderResource] = useState("");
   const [serviceAccountEmail, setServiceAccountEmail] = useState("");
+  const [terraformJson, setTerraformJson] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   usePageTitle(t("createGcpAccessReviewSourcePage.pageTitle"));
@@ -147,6 +185,14 @@ export function CreateGcpAccessReviewSourcePage({
   const [createAccessReviewSource] = useMutation<
     accessReviewSourceMutationsCreateMutation
   >(createAccessReviewSourceMutation);
+  const [createGcpAccessReviewSources] = useMutation<
+    CreateGcpAccessReviewSourcePageCreateSourcesMutation
+  >(createGcpAccessReviewSourcesMutation);
+
+  const parsedTerraform = useMemo(
+    () => parseGcpTerraformConnectors(terraformJson),
+    [terraformJson],
+  );
 
   if (!organization.canCreateSource) {
     return (
@@ -190,14 +236,49 @@ export function CreateGcpAccessReviewSourcePage({
   const providerInvalid = providerResource.trim() !== "" && !providerValid;
   const emailValid = isGCPServiceAccountEmail(serviceAccountEmail);
   const emailInvalid = serviceAccountEmail.trim() !== "" && !emailValid;
-  const formValid = providerValid && emailValid;
-
-  const onSubmit = async () => {
-    if (!formValid) {
-      return;
+  const terraformTouched = terraformJson.trim() !== "";
+  const terraformError = (() => {
+    if (!terraformTouched) {
+      return undefined;
     }
 
-    setIsCreating(true);
+    if (parsedTerraform.ok) {
+      if (parsedTerraform.connectors.length > 100) {
+        return t("createGcpAccessReviewSourcePage.errors.tooMany");
+      }
+
+      return undefined;
+    }
+
+    if (parsedTerraform.error === "invalidEntry") {
+      return t("createGcpAccessReviewSourcePage.errors.terraformEntry", {
+        projectId: parsedTerraform.projectId,
+      });
+    }
+
+    return t(`createGcpAccessReviewSourcePage.errors.${parsedTerraform.error}`);
+  })();
+  const bulkConnectors = parsedTerraform.ok ? parsedTerraform.connectors : [];
+  const tooManyProjects = bulkConnectors.length > 100;
+  const formValid = mode === "single"
+    ? providerValid && emailValid
+    : parsedTerraform.ok && !tooManyProjects;
+
+  const connectOne = async (
+    workloadIdentityProvider: string,
+    serviceAccountEmailValue: string,
+    sourceName: string,
+    notifyErrors: boolean,
+  ): Promise<ConnectOneResult> => {
+    const createErrorToast = notifyErrors
+      ? t("createGcpAccessReviewSourcePage.errors.create")
+      : false;
+    const sourceErrorToast = notifyErrors
+      ? t("createGcpAccessReviewSourcePage.errors.source")
+      : false;
+    const deleteErrorToast = notifyErrors
+      ? t("createGcpAccessReviewSourcePage.errors.delete")
+      : false;
 
     try {
       const created = await createWorkloadIdentityConnector(
@@ -206,12 +287,12 @@ export function CreateGcpAccessReviewSourcePage({
             input: {
               organizationId,
               provider: "GCP",
-              gcpWorkloadIdentityProvider: providerResource.trim(),
-              gcpServiceAccountEmail: serviceAccountEmail.trim(),
+              gcpWorkloadIdentityProvider: workloadIdentityProvider,
+              gcpServiceAccountEmail: serviceAccountEmailValue,
             },
           },
         },
-        { errorToast: t("createGcpAccessReviewSourcePage.errors.create") },
+        { errorToast: createErrorToast },
       );
       const { id: connectorId, connectionStatus }
         = created.createWorkloadIdentityConnector.connector;
@@ -219,19 +300,12 @@ export function CreateGcpAccessReviewSourcePage({
       const discardConnector = () =>
         deleteConnector(
           { variables: { input: { connectorId } } },
-          { errorToast: t("createGcpAccessReviewSourcePage.errors.delete") },
+          { errorToast: deleteErrorToast },
         );
 
       if (connectionStatus !== "CONNECTED") {
-        toast({
-          title: t("createGcpAccessReviewSourcePage.messages.error"),
-          description: t(
-            "createGcpAccessReviewSourcePage.errors.disconnected",
-          ),
-          variant: "error",
-        });
         await discardConnector();
-        return;
+        return "disconnected";
       }
 
       try {
@@ -241,10 +315,7 @@ export function CreateGcpAccessReviewSourcePage({
               input: {
                 organizationId,
                 connectorId,
-                name: gcpAccessReviewSourceName(
-                  gcpDriver.displayName,
-                  providerResource,
-                ),
+                name: sourceName,
                 csvData: null,
               },
             },
@@ -254,10 +325,46 @@ export function CreateGcpAccessReviewSourcePage({
               }
             },
           },
-          { errorToast: t("createGcpAccessReviewSourcePage.errors.source") },
+          { errorToast: sourceErrorToast },
         );
       } catch {
         await discardConnector();
+        return "failed";
+      }
+
+      return "connected";
+    } catch {
+      return "failed";
+    }
+  };
+
+  const onSubmitSingle = async () => {
+    if (!formValid) {
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      const result = await connectOne(
+        providerResource.trim(),
+        serviceAccountEmail.trim(),
+        gcpAccessReviewSourceName(gcpDriver.displayName, providerResource),
+        true,
+      );
+
+      if (result === "disconnected") {
+        toast({
+          title: t("createGcpAccessReviewSourcePage.messages.error"),
+          description: t(
+            "createGcpAccessReviewSourcePage.errors.disconnected",
+          ),
+          variant: "error",
+        });
+        return;
+      }
+
+      if (result !== "connected") {
         return;
       }
 
@@ -267,25 +374,119 @@ export function CreateGcpAccessReviewSourcePage({
         variant: "success",
       });
       void navigate(`/organizations/${organizationId}/access-reviews/connections`);
-    } catch {
-      return;
     } finally {
       setIsCreating(false);
     }
   };
 
+  const onSubmitBulk = async () => {
+    if (!parsedTerraform.ok || parsedTerraform.connectors.length > 100) {
+      return;
+    }
+
+    const connectors = parsedTerraform.connectors;
+    setIsCreating(true);
+
+    try {
+      const result = await createGcpAccessReviewSources(
+        {
+          variables: {
+            input: {
+              organizationId,
+              projects: connectors.map(connector => ({
+                projectId: connector.projectId,
+                gcpWorkloadIdentityProvider: connector.workloadIdentityProvider,
+                gcpServiceAccountEmail: connector.serviceAccountEmail,
+              })),
+            },
+          },
+          updater: (store) => {
+            if (connectionId) {
+              prependCreatedGcpSourceEdges(store, connectionId);
+            }
+          },
+        },
+        { errorToast: t("createGcpAccessReviewSourcePage.errors.bulkFailed") },
+      );
+
+      const createdCount
+        = result.createGcpAccessReviewSources.accessReviewSourceEdges.length;
+      const failed = result.createGcpAccessReviewSources.failures.map((failure) => {
+        if (failure.projectId) {
+          return failure.projectId;
+        }
+
+        const connector = connectors[failure.index];
+        return connector?.projectId ?? String(failure.index + 1);
+      });
+
+      if (createdCount === connectors.length) {
+        toast({
+          title: t("createGcpAccessReviewSourcePage.messages.success"),
+          description: t("createGcpAccessReviewSourcePage.messages.createdCount", {
+            count: createdCount,
+          }),
+          variant: "success",
+        });
+        void navigate(`/organizations/${organizationId}/access-reviews/connections`);
+        return;
+      }
+
+      toast({
+        title: t("createGcpAccessReviewSourcePage.messages.error"),
+        description: createdCount === 0
+          ? t("createGcpAccessReviewSourcePage.errors.bulkFailed")
+          : t("createGcpAccessReviewSourcePage.messages.partialCreated", {
+              created: createdCount,
+              total: connectors.length,
+              failed: failed.join(", "),
+            }),
+        variant: "error",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const onSubmit = () => {
+    if (mode === "bulk") {
+      void onSubmitBulk();
+      return;
+    }
+
+    void onSubmitSingle();
+  };
+
+  const terraformSnippetToCopy = mode === "bulk"
+    ? gcpConnectorSetup.terraformBulkSnippet
+    : gcpConnectorSetup.terraformSnippet;
+
   const installActions: ActionSplitButtonAction[] = [];
-  if (gcpConnectorSetup.terraformSnippet) {
+  if (terraformSnippetToCopy) {
     installActions.push({
       id: "terraform",
       label: t("createGcpAccessReviewSourcePage.actions.installViaTerraform"),
       onSelect: () =>
         copyValue(
-          gcpConnectorSetup.terraformSnippet,
+          terraformSnippetToCopy,
           "createGcpAccessReviewSourcePage.messages.copiedTerraform",
         ),
     });
   }
+
+  const submitLabel = (() => {
+    if (isCreating) {
+      return t("createGcpAccessReviewSourcePage.actions.connecting");
+    }
+
+    if (mode === "bulk" && bulkConnectors.length > 0) {
+      return t("createGcpAccessReviewSourcePage.actions.connectCount", {
+        count: bulkConnectors.length,
+      });
+    }
+
+    return t("createGcpAccessReviewSourcePage.actions.connect");
+  })();
 
   return (
     <div className="space-y-6">
@@ -293,60 +494,113 @@ export function CreateGcpAccessReviewSourcePage({
         title={t("createGcpAccessReviewSourcePage.title")}
         description={t("createGcpAccessReviewSourcePage.description")}
       >
-        {installActions.length > 0 && (
-          <ActionSplitButton
-            actions={installActions}
-            chooseAnotherMethodLabel={t(
-              "createGcpAccessReviewSourcePage.actions.chooseAnotherInstallMethod",
-            )}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {installActions.length > 0 && (
+            <ActionSplitButton
+              actions={installActions}
+              chooseAnotherMethodLabel={t(
+                "createGcpAccessReviewSourcePage.actions.chooseAnotherInstallMethod",
+              )}
+            />
+          )}
+          <Tooltip>
+            <TooltipTrigger
+              render={(
+                <Button
+                  type="button"
+                  variant={mode === "bulk" ? "primary" : "secondary"}
+                  icon={IconListStack}
+                  aria-pressed={mode === "bulk"}
+                  aria-label={t("createGcpAccessReviewSourcePage.modes.bulk")}
+                  onClick={() => setMode(mode === "bulk" ? "single" : "bulk")}
+                />
+              )}
+            />
+            <TooltipPopup>
+              {t("createGcpAccessReviewSourcePage.modes.bulk")}
+            </TooltipPopup>
+          </Tooltip>
+        </div>
       </PageHeader>
 
       <Card padded>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            void onSubmit();
+            onSubmit();
           }}
           className="space-y-4"
         >
-          <Field
-            name="workloadIdentityProvider"
-            label={t(
-              "createGcpAccessReviewSourcePage.fields.workloadIdentityProvider",
-            )}
-            value={providerResource}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setProviderResource(e.target.value)}
-            required
-            placeholder={t(
-              "createGcpAccessReviewSourcePage.fields.workloadIdentityProviderPlaceholder",
-            )}
-            error={
-              providerInvalid
-                ? t("createGcpAccessReviewSourcePage.errors.workloadIdentityProvider")
-                : undefined
-            }
-          />
-          <Field
-            name="serviceAccountEmail"
-            label={t(
-              "createGcpAccessReviewSourcePage.fields.serviceAccountEmail",
-            )}
-            value={serviceAccountEmail}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setServiceAccountEmail(e.target.value)}
-            required
-            placeholder={t(
-              "createGcpAccessReviewSourcePage.fields.serviceAccountEmailPlaceholder",
-            )}
-            error={
-              emailInvalid
-                ? t("createGcpAccessReviewSourcePage.errors.serviceAccountEmail")
-                : undefined
-            }
-          />
+          {mode === "single"
+            ? (
+                <>
+                  <Field
+                    name="workloadIdentityProvider"
+                    label={t(
+                      "createGcpAccessReviewSourcePage.fields.workloadIdentityProvider",
+                    )}
+                    value={providerResource}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setProviderResource(e.target.value)}
+                    required
+                    placeholder={t(
+                      "createGcpAccessReviewSourcePage.fields.workloadIdentityProviderPlaceholder",
+                    )}
+                    error={
+                      providerInvalid
+                        ? t("createGcpAccessReviewSourcePage.errors.workloadIdentityProvider")
+                        : undefined
+                    }
+                  />
+                  <Field
+                    name="serviceAccountEmail"
+                    label={t(
+                      "createGcpAccessReviewSourcePage.fields.serviceAccountEmail",
+                    )}
+                    value={serviceAccountEmail}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setServiceAccountEmail(e.target.value)}
+                    required
+                    placeholder={t(
+                      "createGcpAccessReviewSourcePage.fields.serviceAccountEmailPlaceholder",
+                    )}
+                    error={
+                      emailInvalid
+                        ? t("createGcpAccessReviewSourcePage.errors.serviceAccountEmail")
+                        : undefined
+                    }
+                  />
+                </>
+              )
+            : (
+                <>
+                  <Field
+                    type="textarea"
+                    name="terraformOutput"
+                    label={t(
+                      "createGcpAccessReviewSourcePage.fields.terraformOutput",
+                    )}
+                    help={t(
+                      "createGcpAccessReviewSourcePage.fields.terraformOutputHelp",
+                    )}
+                    value={terraformJson}
+                    onValueChange={setTerraformJson}
+                    required
+                    rows={12}
+                    placeholder={t(
+                      "createGcpAccessReviewSourcePage.fields.terraformOutputPlaceholder",
+                    )}
+                    error={terraformError}
+                  />
+                  {bulkConnectors.length > 0 && (
+                    <ul className="text-txt-secondary text-sm list-disc pl-5">
+                      {bulkConnectors.map(connector => (
+                        <li key={connector.projectId}>{connector.projectId}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
           {(
             [
               {
@@ -407,7 +661,7 @@ export function CreateGcpAccessReviewSourcePage({
                 </Link>
               </Button>
               <Button disabled={!formValid || isCreating} type="submit">
-                {t("createGcpAccessReviewSourcePage.actions.connect")}
+                {submitLabel}
               </Button>
             </div>
           </div>

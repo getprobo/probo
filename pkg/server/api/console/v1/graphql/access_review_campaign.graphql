@@ -533,6 +533,9 @@ extend type Mutation {
     createAccessReviewSource(
         input: CreateAccessReviewSourceInput!
     ): CreateAccessReviewSourcePayload!
+    createGcpAccessReviewSources(
+        input: CreateGcpAccessReviewSourcesInput!
+    ): CreateGcpAccessReviewSourcesPayload!
     updateAccessReviewSource(
         input: UpdateAccessReviewSourceInput!
     ): UpdateAccessReviewSourcePayload!
@@ -592,6 +595,39 @@ type CreateAccessReviewSourcePayload {
     source is returned instead of a duplicate.
     """
     created: Boolean!
+}
+
+"""
+Creates one GCP workload-identity connector and access source per
+project. Invalid credentials and failed probes are reported in
+failures; other projects still succeed. At most 100 projects.
+"""
+input CreateGcpAccessReviewSourcesInput {
+    organizationId: ID!
+    projects: [GcpAccessReviewSourceProjectInput!]!
+}
+
+input GcpAccessReviewSourceProjectInput {
+    projectId: String
+    gcpWorkloadIdentityProvider: String!
+    gcpServiceAccountEmail: String!
+}
+
+enum GcpAccessReviewSourceFailureReason {
+    INVALID
+    DISCONNECTED
+    FAILED
+}
+
+type GcpAccessReviewSourceFailure {
+    index: Int!
+    projectId: String
+    reason: GcpAccessReviewSourceFailureReason!
+}
+
+type CreateGcpAccessReviewSourcesPayload {
+    accessReviewSourceEdges: [AccessReviewSourceEdge!]!
+    failures: [GcpAccessReviewSourceFailure!]!
 }
 
 input UpdateAccessReviewSourceInput {
