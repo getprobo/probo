@@ -53,8 +53,6 @@ type Query {
         @goField(forceResolver: true)
     gcpConnectorSetup(organizationId: ID!): GCPConnectorSetup!
         @goField(forceResolver: true)
-    crispVerificationCode(organizationId: ID!, websiteId: String!): String!
-        @goField(forceResolver: true)
     probotIdentityBindPreview(token: String!): ProbotIdentityBindPreview!
         @goField(forceResolver: true)
 }

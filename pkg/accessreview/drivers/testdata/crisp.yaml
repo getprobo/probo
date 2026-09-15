@@ -19,12 +19,39 @@ interactions:
         proto: HTTP/2.0
         proto_major: 2
         proto_minor: 0
-        content_length: -1
+        content_length: 397
         uncompressed: true
-        body: '{"error":false,"reason":"listed","data":[{"type":"member","details":{"user_id":"5c068745-c7da-4b59-89a0-1b67f3b0d6df","email":"alex@example.com","first_name":"Alex","last_name":"Martin","role":"owner","title":"Founder","availability":"online","has_token":false}},{"type":"member","details":{"user_id":"9a1f3c2e-6b4d-4f8a-bc11-7d2e9f0a1b22","email":"jordan@example.com","first_name":"Jordan","last_name":"Lee","role":"member","title":"Support Agent","availability":"away","has_token":false}}]}'
+        body: '{"data":[{"details":{"availability":"online","avatar":null,"email":"operator1@example.com","first_name":"Operator1","has_token":false,"last_name":"Number1","role":"owner","title":null,"user_id":"crisp-user-1"},"type":"operator"},{"details":{"email":"operator2@example.com","first_name":"Operator2","last_name":"Number2","user_id":"crisp-user-2"},"type":"sandbox"}],"error":false,"reason":"listed"}'
         headers:
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Bloom-Status:
+                - MISS
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - a38e3d68f8ce9ec0-CDG
+            Content-Length:
+                - "397"
             Content-Type:
                 - application/json
+            Date:
+                - Thu, 10 Sep 2026 11:54:46 GMT
+            Etag:
+                - W/"3665314ef6f72a02"
+            Request-Id:
+                - 6725b1f0-b2ec-4018-874a-e9aac3b877bf
+            Server:
+                - cloudflare
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - Accept-Encoding
+                - ETag
+            X-Content-Type-Options:
+                - nosniff
+            X-Crisp-Ray:
+                - (w/1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d) 10.133.11.19:3040
         status: 200 OK
         code: 200
-        duration: 100ms
+        duration: 241.948334ms

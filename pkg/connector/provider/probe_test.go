@@ -889,3 +889,290 @@ func TestDoProbeRequest_CredentialRejectionWinsOverMarkup(t *testing.T) {
 	require.ErrorAs(t, doProbeRequest(client, req), &rejected)
 	assert.Equal(t, http.StatusUnauthorized, rejected.StatusCode)
 }
+
+func TestBuildRetoolProbeURL(t *testing.T) {
+	t.Parallel()
+
+	endpoints := Endpoints{APIBase: "https://api.retool.com/api/v2"}
+
+	// Retool Cloud: the token routes to its own organization through the
+	// shared gateway, so an empty setting is the cloud case and the probe must
+	// compose from ep.APIBase rather than a literal — an APIBase override has
+	// to move the check along with the driver.
+	cloud := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, cloud.SetSettings(&coredata.RetoolConnectorSettings{}))
+
+	probeURL, err := buildRetoolProbeURL(cloud, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.retool.com/api/v2/users?limit=1", probeURL)
+
+	// Self-hosted: the instance origin plus Retool's own /api/v2 prefix.
+	selfHosted := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, selfHosted.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://retool.acme.internal",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(selfHosted, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL)
+
+	// Retool's own docs write a base URL as https://retool.example.com/api/v2,
+	// so the prefix arriving already attached is the likeliest paste of all.
+	// Appending unconditionally would build /api/v2/api/v2/users.
+	withPrefix := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, withPrefix.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://retool.acme.internal/api/v2",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(withPrefix, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL)
+
+	// A trailing slash is the shape a pasted URL arrives in and must not
+	// double up in the path.
+	trailing := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, trailing.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://retool.acme.internal/",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(trailing, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL)
+
+	// Shapes a person really does paste, each of which slipped past a plain
+	// suffix comparison: a dot segment kept the prefix and got a second one,
+	// and a bare "?" survived as ForceQuery and swallowed the prefix into the
+	// query string. Percent-encoding hides the same suffix from a raw compare.
+	for _, raw := range []string{
+		"https://retool.acme.internal/api/v2/.",
+		"https://retool.acme.internal/?",
+		"https://retool.acme.internal/api/%76%32",
+	} {
+		conn := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+		require.NoError(t, conn.SetSettings(&coredata.RetoolConnectorSettings{BaseURL: raw}))
+
+		probeURL, err := buildRetoolProbeURL(conn, endpoints)
+		require.NoErrorf(t, err, "%q", raw)
+		assert.Equalf(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL, "%q", raw)
+	}
+
+	// An instance served under a path of its own keeps that path.
+	subpath := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, subpath.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://acme.internal/retool",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(subpath, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.internal/retool/api/v2/users?limit=1", probeURL)
+
+	// A setting that is not an http(s) URL is refused rather than reaching one.
+	invalid := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, invalid.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "ftp://retool.acme.internal",
+	}))
+
+	_, err = buildRetoolProbeURL(invalid, endpoints)
+	require.Error(t, err)
+}
+
+func TestNewRelicEndpointFromSettings(t *testing.T) {
+	t.Parallel()
+
+	eu := &coredata.Connector{Provider: coredata.ConnectorProviderNewRelic}
+	require.NoError(t, eu.SetSettings(&coredata.NewRelicConnectorSettings{Region: "eu"}))
+
+	endpoint, err := newRelicEndpoint(eu)
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.eu.newrelic.com/graphql", endpoint)
+
+	// An unset region must not silently default to the US endpoint: an EU
+	// customer's key answers 403 there, which reads as a permissions problem
+	// rather than the misconfiguration it is.
+	missing := &coredata.Connector{Provider: coredata.ConnectorProviderNewRelic}
+	require.NoError(t, missing.SetSettings(&coredata.NewRelicConnectorSettings{}))
+
+	_, err = newRelicEndpoint(missing)
+	require.Error(t, err)
+}
+
+func TestTwingateEndpointFromSettings(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderTwingate}
+	require.NoError(t, conn.SetSettings(&coredata.TwingateConnectorSettings{Network: "acme"}))
+
+	endpoint, err := twingateEndpoint(conn)
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.twingate.com/api/graphql/", endpoint)
+
+	// The network becomes the host label, so a value that is not a DNS label
+	// is refused before it can reach a URL.
+	hostile := &coredata.Connector{Provider: coredata.ConnectorProviderTwingate}
+	require.NoError(t, hostile.SetSettings(&coredata.TwingateConnectorSettings{
+		Network: "acme.evil.example",
+	}))
+
+	_, err = twingateEndpoint(hostile)
+	require.Error(t, err)
+}
+
+// probeStubClient returns a client whose every request is answered by the
+// canned status and body, recording the request it saw.
+func probeStubClient(seen *[]*http.Request, status int, body string) *http.Client {
+	return &http.Client{
+		Transport: probeRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+			*seen = append(*seen, req)
+
+			return &http.Response{
+				StatusCode: status,
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}, nil
+		}),
+	}
+}
+
+func TestProbeElevenLabs(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderElevenLabs}
+	endpoints := Endpoints{APIBase: "https://api.elevenlabs.io/v1"}
+
+	// ElevenLabs refuses a key with 400 and an authentication_error body rather
+	// than 401. Without that status in the reject set the badge would stay
+	// green on a dead key, which is the whole reason this probe is a closure.
+	for _, status := range []int{
+		http.StatusBadRequest,
+		http.StatusUnauthorized,
+		http.StatusForbidden,
+	} {
+		var seen []*http.Request
+
+		client := probeStubClient(&seen, status, `{"detail":{"type":"authentication_error"}}`)
+
+		err := probeElevenLabs(t.Context(), client, conn, endpoints)
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "status %d should reject the credential, got %v", status, err)
+		assert.Equal(t, status, rejected.StatusCode)
+		// Only a 403 means the provider took the key and refused the call.
+		assert.Equal(t, status == http.StatusForbidden, rejected.OperationRefused)
+
+		require.Len(t, seen, 1)
+		assert.Equal(t, "https://api.elevenlabs.io/v1/workspace/members", seen[0].URL.String())
+	}
+
+	// A live key answers with the roster.
+	var seen []*http.Request
+
+	require.NoError(t, probeElevenLabs(t.Context(), probeStubClient(&seen, http.StatusOK, `[]`), conn, endpoints))
+	require.Len(t, seen, 1)
+}
+
+func TestProbeTwingate(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderTwingate}
+	require.NoError(t, conn.SetSettings(&coredata.TwingateConnectorSettings{Network: "acme"}))
+
+	// A dead token is the credential.
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden} {
+		var seen []*http.Request
+
+		err := probeTwingate(t.Context(), probeStubClient(&seen, status, `{}`), conn, Endpoints{})
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "status %d should reject the credential, got %v", status, err)
+		assert.Equal(t, status, rejected.StatusCode)
+
+		require.Len(t, seen, 1)
+		assert.Equal(t, "https://acme.twingate.com/api/graphql/", seen[0].URL.String())
+		assert.Equal(t, http.MethodPost, seen[0].Method)
+	}
+
+	// A network that does not exist answers 404, and that is the one thing the
+	// customer types that a credential check cannot vet. It must not report as
+	// a dead token, or they go and rotate a key that was fine.
+	var missingSeen []*http.Request
+
+	err := probeTwingate(
+		t.Context(),
+		probeStubClient(&missingSeen, http.StatusNotFound, `{"status":404}`),
+		conn,
+		Endpoints{},
+	)
+
+	notAPI, ok := errors.AsType[*NotAnAPIEndpointError](err)
+	require.Truef(t, ok, "a 404 should report a wrong endpoint, got %v", err)
+	assert.Equal(t, http.StatusNotFound, notAPI.StatusCode)
+	assert.Contains(t, notAPI.Error(), "network name")
+
+	_, isCredential := errors.AsType[*CredentialRejectedError](err)
+	assert.False(t, isCredential, "a wrong network must not read as a rejected credential")
+
+	// Twingate answers a refused query with 200 and an errors array, which the
+	// status alone cannot show: a token that authenticates but cannot read the
+	// roster would otherwise probe healthy and fail every campaign after.
+	var refusedSeen []*http.Request
+
+	err = probeTwingate(
+		t.Context(),
+		probeStubClient(&refusedSeen, http.StatusOK, `{"data":null,"errors":[{"message":"x"}]}`),
+		conn,
+		Endpoints{},
+	)
+
+	rejected, ok := errors.AsType[*CredentialRejectedError](err)
+	require.Truef(t, ok, "a graphql errors array should reject, got %v", err)
+	assert.True(t, rejected.OperationRefused)
+
+	var seen []*http.Request
+
+	body := `{"data":{"users":{"edges":[]}}}`
+	require.NoError(t, probeTwingate(t.Context(), probeStubClient(&seen, http.StatusOK, body), conn, Endpoints{}))
+	require.Len(t, seen, 1)
+}
+
+func TestProbeNewRelic(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderNewRelic}
+	require.NoError(t, conn.SetSettings(&coredata.NewRelicConnectorSettings{Region: "eu"}))
+
+	// Any live user key can answer a trivial query, but reading the roster
+	// needs organization user management, which NerdGraph refuses with 200 and
+	// an errors array. Reported as the operation being refused: the key is
+	// good, the role is not, and those are fixed differently.
+	var seen []*http.Request
+
+	err := probeNewRelic(
+		t.Context(),
+		probeStubClient(&seen, http.StatusOK, `{"data":{"actor":{"organization":null}},"errors":[{"message":"x"}]}`),
+		conn,
+		Endpoints{},
+	)
+
+	rejected, ok := errors.AsType[*CredentialRejectedError](err)
+	require.Truef(t, ok, "a graphql errors array should reject, got %v", err)
+	assert.True(t, rejected.OperationRefused)
+
+	require.Len(t, seen, 1)
+	// The region setting, not a fixed host: a key from the other region is
+	// answered with 403 there.
+	assert.Equal(t, "https://api.eu.newrelic.com/graphql", seen[0].URL.String())
+
+	// A dead key is refused outright.
+	var deadSeen []*http.Request
+
+	err = probeNewRelic(t.Context(), probeStubClient(&deadSeen, http.StatusUnauthorized, `{}`), conn, Endpoints{})
+	rejected, ok = errors.AsType[*CredentialRejectedError](err)
+	require.True(t, ok)
+	assert.Equal(t, http.StatusUnauthorized, rejected.StatusCode)
+
+	// A key that can read the roster passes.
+	var okSeen []*http.Request
+
+	body := `{"data":{"actor":{"organization":{"userManagement":{"authenticationDomains":{"nextCursor":null}}}}}}`
+	require.NoError(t, probeNewRelic(t.Context(), probeStubClient(&okSeen, http.StatusOK, body), conn, Endpoints{}))
+}

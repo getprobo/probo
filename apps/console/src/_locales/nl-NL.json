@@ -3042,6 +3042,7 @@
       "connectWithApiKey": "API-sleutel",
       "connectWithClientCredentials": "Clientreferenties",
       "connectWithWorkloadIdentity": "Workload-identiteit",
+      "connectWithAppInstall": "App-installatie",
       "chooseAnotherMethod": "Kies een andere verbindingsmethode",
       "open": "Open"
     },
@@ -3111,26 +3112,14 @@
     "apiKeyDescription": "Voer de API-sleutel voor {{provider}} in om deze te verbinden als toegangsbron.",
     "apiKey": "API-sleutel",
     "messages": {
-      "connectionFailed": "Verbinding mislukt",
-      "copyFailed": "Kopiëren mislukt",
-      "copied": "Gekopieerd naar klembord"
+      "connectionFailed": "Verbinding mislukt"
     },
     "errors": {
-      "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en verificatiecode en probeer het opnieuw.",
+      "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en probeer het opnieuw.",
       "apiKeyConnect": "Verbinden met provider mislukt. Controleer uw API-sleutel en probeer het opnieuw.",
-      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}",
-      "copy": "Kopieer de verificatiecode handmatig.",
-      "generateCode": "Kan geen verificatiecode genereren. Controleer de Website-ID en probeer het opnieuw."
-    },
-    "verificationCode": {
-      "label": "Verificatiecode",
-      "description": "Plak deze code in de Probo-pluginsinstellingen voor deze website in uw Crisp-dashboard en klik vervolgens op Verbinden. Dit bewijst dat u zeggenschap heeft over deze website.",
-      "enterWebsiteId": "Voer hierboven uw Website-ID in om uw verificatiecode te krijgen.",
-      "generating": "Code genereren..."
+      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}"
     },
     "actions": {
-      "copy": "Kopiëren",
-      "retry": "Opnieuw proberen",
       "connect": "Verbinden",
       "connecting": "Verbinden..."
     }

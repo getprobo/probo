@@ -31,12 +31,11 @@ import {
 } from "@probo/ui";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useFragment, useMutation, useRelayEnvironment } from "react-relay";
-import { fetchQuery, graphql } from "relay-runtime";
+import { useFragment, useMutation } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { APIKeyConnectorDialog_provider$key } from "#/__generated__/core/APIKeyConnectorDialog_provider.graphql";
 import type { APIKeyConnectorDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/APIKeyConnectorDialogCreateAPIKeyConnectorMutation.graphql";
-import type { APIKeyConnectorDialogCrispVerificationCodeQuery } from "#/__generated__/core/APIKeyConnectorDialogCrispVerificationCodeQuery.graphql";
 
 import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
 import {
@@ -82,25 +81,6 @@ const createAPIKeyConnectorMutation = graphql`
   }
 `;
 
-// Crisp (a managed provider) proves website ownership before connecting: Probo
-// derives a per-(organization, website) code the customer pastes into the plugin
-// settings in their Crisp dashboard. The code depends on the typed Website ID,
-// so it is fetched on demand rather than carried on ConnectorProviderInfo.
-const crispVerificationCodeQuery = graphql`
-  query APIKeyConnectorDialogCrispVerificationCodeQuery(
-    $organizationId: ID!
-    $websiteId: String!
-  ) {
-    crispVerificationCode(organizationId: $organizationId, websiteId: $websiteId)
-  }
-`;
-
-type CrispCodeState = {
-  websiteId: string;
-  status: "loading" | "ok" | "error";
-  code: string;
-};
-
 type Props = {
   providerKey: APIKeyConnectorDialog_provider$key | null;
   organizationId: string;
@@ -120,7 +100,6 @@ export function APIKeyConnectorDialog({
   const { toast } = useToast();
   const provider = useFragment(apiKeyConnectorDialogFragment, providerKey);
   const dialogRef = useDialogRef();
-  const environment = useRelayEnvironment();
 
   const [apiKeyValue, setApiKeyValue] = useState("");
   // The shape check is shown once the customer has left the field or tried to
@@ -129,8 +108,6 @@ export function APIKeyConnectorDialog({
   const [apiKeyBlurred, setApiKeyBlurred] = useState(false);
   const [extraSettingValues, setExtraSettingValues] = useState<Record<string, string>>({});
   const [isConnectingAPIKey, setIsConnectingAPIKey] = useState(false);
-  const [crispCode, setCrispCode] = useState<CrispCodeState | null>(null);
-  const [crispRetry, setCrispRetry] = useState(0);
 
   const [createAPIKeyConnector]
     = useMutation<APIKeyConnectorDialogCreateAPIKeyConnectorMutation>(
@@ -151,64 +128,6 @@ export function APIKeyConnectorDialog({
       dialogRef.current?.open();
     }
   }, [dialogRef, provider]);
-
-  const isCrispManaged
-    = provider?.provider === "CRISP" && !!provider.apiKeyManaged;
-  const crispWebsiteId = extraSettingValues.websiteId?.trim() ?? "";
-
-  // The fetch result is stored keyed by the Website ID it was minted for and
-  // read only while it still matches the current Website ID, so a slow response
-  // for a previous ID is ignored. crispVerificationCode is non-null only once a
-  // code has actually been minted (status "ok"); loading and error are distinct
-  // states so the UI shows progress or an actionable error, never a blank code.
-  const crispCodeState
-    = crispCode && crispCode.websiteId === crispWebsiteId ? crispCode : null;
-  const crispVerificationCode
-    = crispCodeState?.status === "ok" ? crispCodeState.code : null;
-
-  // Fetch the ownership-verification code once a Website ID is entered, debounced
-  // so it is not recomputed on every keystroke. The cleanup cancels a superseded
-  // request so a late response for a previous Website ID cannot clobber the
-  // current one, and crispRetry lets the user re-trigger a fetch after a failure.
-  useEffect(() => {
-    if (!isCrispManaged || !crispWebsiteId) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const handle = setTimeout(() => {
-      setCrispCode({ websiteId: crispWebsiteId, status: "loading", code: "" });
-
-      fetchQuery<APIKeyConnectorDialogCrispVerificationCodeQuery>(
-        environment,
-        crispVerificationCodeQuery,
-        { organizationId, websiteId: crispWebsiteId },
-      )
-        .toPromise()
-        .then((res) => {
-          if (cancelled) {
-            return;
-          }
-          const code = res?.crispVerificationCode ?? "";
-          setCrispCode({
-            websiteId: crispWebsiteId,
-            status: code ? "ok" : "error",
-            code,
-          });
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setCrispCode({ websiteId: crispWebsiteId, status: "error", code: "" });
-          }
-        });
-    }, 400);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(handle);
-    };
-  }, [environment, isCrispManaged, crispWebsiteId, organizationId, crispRetry]);
 
   // The provider states the shape it mints keys in; the server applies the
   // same rule at create, so this is what saves a round trip, not what enforces
@@ -232,9 +151,8 @@ export function APIKeyConnectorDialog({
     = !!apiKeyPattern && trimmedAPIKey !== "" && !apiKeyPattern.test(trimmedAPIKey);
 
   const connectAPIKeyProvider = () => {
-    // Managed providers (Model B, e.g. Crisp) supply no customer key: the
-    // server injects Probo's own credential, so only the extra settings
-    // are required.
+    // Managed providers (Model B) supply no customer key: the server injects
+    // Probo's own credential, so only the extra settings are required.
     if (!provider || (!provider.apiKeyManaged && !trimmedAPIKey)) {
       return;
     }
@@ -278,7 +196,6 @@ export function APIKeyConnectorDialog({
             setApiKeyValue("");
             setApiKeyBlurred(false);
             setExtraSettingValues({});
-            setCrispCode(null);
             dialogRef.current?.close();
             onClose();
           },
@@ -288,9 +205,9 @@ export function APIKeyConnectorDialog({
         setIsConnectingAPIKey(false);
         toast({
           title: t("apiKeyConnectorDialog.messages.connectionFailed"),
-          // Managed providers (e.g. Crisp) never show an API key field, so
-          // pointing the user at their key would be misleading; send them to
-          // the settings and verification step instead.
+          // Managed providers never show an API key field, so pointing the
+          // user at their key would be misleading; send them to the settings
+          // instead.
           description: provider.apiKeyManaged
             ? t("apiKeyConnectorDialog.errors.managedConnect")
             : t("apiKeyConnectorDialog.errors.apiKeyConnect"),
@@ -370,7 +287,6 @@ export function APIKeyConnectorDialog({
         setApiKeyValue("");
         setApiKeyBlurred(false);
         setExtraSettingValues({});
-        setCrispCode(null);
         setIsConnectingAPIKey(false);
         onClose();
       }}
@@ -416,89 +332,6 @@ export function APIKeyConnectorDialog({
             />
           )}
           {renderAPIKeyExtraSettings()}
-          {isCrispManaged && (
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">
-                {t("apiKeyConnectorDialog.verificationCode.label")}
-              </label>
-              <p className="text-txt-tertiary text-sm">
-                {t("apiKeyConnectorDialog.verificationCode.description")}
-              </p>
-              {!crispWebsiteId
-                ? (
-                    <p className="text-txt-tertiary text-sm">
-                      {t("apiKeyConnectorDialog.verificationCode.enterWebsiteId")}
-                    </p>
-                  )
-                : crispCodeState?.status === "ok"
-                  ? (
-                      <div className="flex items-center gap-2">
-                        <code className="rounded border border-border-solid bg-subtle px-2 py-1 font-mono text-sm">
-                          {crispCodeState.code}
-                        </code>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => {
-                            const onCopyFailure = () =>
-                              toast({
-                                title: t("apiKeyConnectorDialog.messages.copyFailed"),
-                                description: t("apiKeyConnectorDialog.errors.copy"),
-                                variant: "error",
-                              });
-
-                            // navigator.clipboard is undefined in an insecure
-                            // context or unsupported embedded browser, where
-                            // writeText throws synchronously before .then; guard
-                            // so the manual-copy toast still shows.
-                            if (!navigator.clipboard?.writeText) {
-                              onCopyFailure();
-                              return;
-                            }
-
-                            // Copying feeds the Crisp connect flow, so only
-                            // claim success once the write actually resolves.
-                            try {
-                              navigator.clipboard.writeText(crispCodeState.code).then(
-                                () =>
-                                  toast({
-                                    title: t("apiKeyConnectorDialog.messages.copied"),
-                                    description: t("apiKeyConnectorDialog.verificationCode.label"),
-                                    variant: "success",
-                                  }),
-                                onCopyFailure,
-                              );
-                            } catch {
-                              onCopyFailure();
-                            }
-                          }}
-                        >
-                          {t("apiKeyConnectorDialog.actions.copy")}
-                        </Button>
-                      </div>
-                    )
-                  : crispCodeState?.status === "error"
-                    ? (
-                        <div className="flex items-center gap-2">
-                          <p className="text-txt-danger text-sm">
-                            {t("apiKeyConnectorDialog.errors.generateCode")}
-                          </p>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setCrispRetry(n => n + 1)}
-                          >
-                            {t("apiKeyConnectorDialog.actions.retry")}
-                          </Button>
-                        </div>
-                      )
-                    : (
-                        <p className="text-txt-tertiary text-sm">
-                          {t("apiKeyConnectorDialog.verificationCode.generating")}
-                        </p>
-                      )}
-            </div>
-          )}
         </DialogContent>
         <DialogFooter
           start={
@@ -519,7 +352,6 @@ export function APIKeyConnectorDialog({
               || (!provider?.apiKeyManaged && !apiKeyValue.trim())
               || !apiKeyExtraSettingsValid
               || !postHogAPIKeyValid
-              || (isCrispManaged && !crispVerificationCode)
             }
           >
             {isConnectingAPIKey

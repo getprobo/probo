@@ -23,9 +23,11 @@ package probo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -33,6 +35,14 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+// ErrInstallStateAlreadyUsed is returned when an install callback replays a
+// state another request already claimed or completed. The vendor's proof stays
+// valid (unlike an OAuth code, which the vendor itself burns) and the
+// (organization_id, provider, protocol) unique index was dropped in
+// 20260819T142937Z, so without this a browser refresh or a link-preview
+// prefetch would create a second connector.
+var ErrInstallStateAlreadyUsed = errors.New("connector install state already used")
 
 type (
 	ConnectorService struct {
@@ -62,6 +72,27 @@ type (
 		// drives the driver's API host), so a reconnect must refresh it;
 		// empty leaves the existing settings intact.
 		RawSettings json.RawMessage
+	}
+
+	// CompleteConnectorInstallRequest carries the verified outcome of an
+	// app-install ceremony: the vendor tenant id the callback proved control
+	// of, and the single-use state claim that proof was spent against.
+	CompleteConnectorInstallRequest struct {
+		OrganizationID gid.GID
+		Provider       coredata.ConnectorProvider
+		// SettingsKey is the JSON key inside RawSettings carrying the vendor
+		// tenant id (provider.InstallConfig.SettingsResourceKey). It is what
+		// the idempotency lookup reads back out of settings.
+		SettingsKey string
+		// ResourceID is the CANONICALIZED vendor tenant id. A second spelling
+		// of the same tenant takes a different advisory lock and misses the
+		// idempotency lookup, so it would bind twice.
+		ResourceID string
+		Connection connector.Connection
+		// State and ProcessingToken identify the claim this completion burns,
+		// in the same transaction as the insert.
+		State           string
+		ProcessingToken string
 	}
 )
 
@@ -307,6 +338,190 @@ func (s *ConnectorService) Reconnect(
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot reconnect connector: %w", err)
+	}
+
+	return cnnctr, nil
+}
+
+// ClaimInstallState takes exclusive ownership of an app-install state for this
+// request and returns the processing token the later Release, Burn or Complete
+// must present. It runs before any outbound call to the vendor, so a replay
+// cannot race a legitimate completion. Returns ErrInstallStateAlreadyUsed when
+// the state is already held or already spent.
+func (s *ConnectorService) ClaimInstallState(
+	ctx context.Context, scope coredata.Scoper,
+	organizationID gid.GID,
+	state string,
+) (string, error) {
+	processingToken, err := uuid.NewV7()
+	if err != nil {
+		return "", fmt.Errorf("cannot generate connector install processing token: %w", err)
+	}
+
+	claim := coredata.NewConnectorInstallStateClaim(organizationID, state)
+	claimed := false
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var err error
+
+			claimed, err = claim.Claim(
+				ctx,
+				tx,
+				scope,
+				processingToken.String(),
+				time.Now(),
+				coredata.InstallStateStaleAfter,
+			)
+
+			return err
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot persist connector install state claim: %w", err)
+	}
+
+	if !claimed {
+		return "", ErrInstallStateAlreadyUsed
+	}
+
+	return processingToken.String(), nil
+}
+
+// ReleaseInstallState hands the state back unspent. It is the right answer only
+// to a failure a retry could fix, so a vendor blip does not cost the customer
+// the rest of their window.
+func (s *ConnectorService) ReleaseInstallState(
+	ctx context.Context, scope coredata.Scoper,
+	organizationID gid.GID,
+	state string,
+	processingToken string,
+) error {
+	claim := coredata.NewConnectorInstallStateClaim(organizationID, state)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return claim.Release(ctx, conn, scope, processingToken)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot release connector install state: %w", err)
+	}
+
+	return nil
+}
+
+// BurnInstallState spends the state without creating anything. It is what a
+// refused vendor proof costs: the same state cannot be presented twice, so a
+// forged callback gets exactly one attempt.
+func (s *ConnectorService) BurnInstallState(
+	ctx context.Context, scope coredata.Scoper,
+	organizationID gid.GID,
+	state string,
+	processingToken string,
+) error {
+	claim := coredata.NewConnectorInstallStateClaim(organizationID, state)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return claim.Complete(ctx, conn, scope, processingToken, time.Now())
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot burn connector install state: %w", err)
+	}
+
+	return nil
+}
+
+// CompleteInstall persists the connector an app-install ceremony yielded and
+// burns its state in one transaction: a crash between the two would otherwise
+// spend the customer's state and leave nothing to show for it.
+//
+// It is find-or-create on the vendor tenant id, so a customer re-installing the
+// same tenant lands on their existing connector instead of a second one.
+// Nothing is updated on the reuse path: the tenant id is the ceremony's only
+// durable output and it already matches.
+func (s *ConnectorService) CompleteInstall(
+	ctx context.Context, scope coredata.Scoper,
+	req CompleteConnectorInstallRequest,
+) (*coredata.Connector, error) {
+	claim := coredata.NewConnectorInstallStateClaim(req.OrganizationID, req.State)
+	cnnctr := &coredata.Connector{}
+
+	// Built here, never by the provider: LockConnectorInstallResource keys on
+	// ResourceID and the idempotency lookup reads settings ->> SettingsKey back
+	// out, so the two must be the same value. A provider returning its own
+	// marshalled settings could put something else under that key and every
+	// re-install would insert another row.
+	rawSettings, err := json.Marshal(map[string]string{req.SettingsKey: req.ResourceID})
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal connector install settings: %w", err)
+	}
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			// Before the load, not after: FOR UPDATE on a row that does not
+			// exist yet locks nothing, so two concurrent first installs of one
+			// tenant would both miss and both insert.
+			if err := coredata.LockConnectorInstallResource(
+				ctx,
+				tx,
+				req.OrganizationID,
+				req.Provider,
+				req.ResourceID,
+			); err != nil {
+				return err
+			}
+
+			err := cnnctr.LoadByOrganizationIDProviderAndSettingForUpdate(
+				ctx,
+				tx,
+				scope,
+				req.OrganizationID,
+				req.Provider,
+				req.SettingsKey,
+				req.ResourceID,
+			)
+
+			switch {
+			case err == nil:
+				// Reuse the existing row as-is.
+			case errors.Is(err, coredata.ErrResourceNotFound):
+				now := time.Now()
+
+				*cnnctr = coredata.Connector{
+					ID:             gid.New(scope.GetTenantID(), coredata.ConnectorEntityType),
+					OrganizationID: req.OrganizationID,
+					Provider:       req.Provider,
+					Protocol:       coredata.ConnectorProtocolAPIKey,
+					Connection:     req.Connection,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				cnnctr.RawSettings = rawSettings
+
+				if err := cnnctr.Insert(ctx, tx, scope, s.svc.encryptionKey); err != nil {
+					return fmt.Errorf("cannot create connector: %w", err)
+				}
+			default:
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			if err := claim.Complete(ctx, tx, scope, req.ProcessingToken, time.Now()); err != nil {
+				return fmt.Errorf("cannot complete connector install state: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return cnnctr, nil

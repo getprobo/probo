@@ -39,6 +39,14 @@ func TestShouldStopInteractiveAgentProcess(t *testing.T) {
 	}{
 		{
 			name:      "tray in user session",
+			baseName:  "probo-agentw.exe",
+			pid:       42,
+			selfPID:   1,
+			sessionID: 1,
+			want:      true,
+		},
+		{
+			name:      "legacy tray in user session",
 			baseName:  "probo-agent.exe",
 			pid:       42,
 			selfPID:   1,
@@ -71,7 +79,7 @@ func TestShouldStopInteractiveAgentProcess(t *testing.T) {
 		},
 		{
 			name:      "case insensitive exe name",
-			baseName:  "Probo-Agent.EXE",
+			baseName:  "Probo-AgentW.EXE",
 			pid:       42,
 			selfPID:   1,
 			sessionID: 2,

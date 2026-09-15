@@ -368,6 +368,13 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_CONNECTOR_GITHUB_CLIENT_ID":     "e2e-github-client-id",
 		"PROBOD_CONNECTOR_GITHUB_CLIENT_SECRET": "e2e-github-client-secret",
 
+		// Crisp is the only app-install provider, and it stays out of the
+		// catalog entirely until BOTH of these are set. Configuring it here is
+		// what lets the catalog test assert installSupported rather than
+		// asserting that an unconfigured provider is absent.
+		"PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN": "e2e-plugin-identifier:e2e-plugin-key",
+		"PROBOD_CONNECTOR_CRISP_PLUGIN_ID":    "e2e-crisp-plugin-id",
+
 		// Trust center. Compliance pages are served exclusively over this
 		// dedicated listener, addressed by Host/SNI. The managed base domain
 		// yields {slug}.probopage.localhost subdomains for pages without a

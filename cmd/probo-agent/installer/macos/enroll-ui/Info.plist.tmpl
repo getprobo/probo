@@ -6,7 +6,8 @@
 
   Placeholders are substituted by build.sh:
 
-    @@VERSION@@                        agent version, e.g. 0.1.0
+    @@VERSION@@                        agent version, e.g. 0.1.0 or 0.1.0-rc.1
+    @@INSTALLER_VERSION@@              X.Y.Z stripped of -rc.N (CFBundleVersion)
     @@HELPER_DESIGNATED_REQUIREMENT@@  codesign requirement for embedded helper
 -->
 <plist version="1.0">
@@ -28,7 +29,7 @@
     <key>CFBundleShortVersionString</key>
     <string>@@VERSION@@</string>
     <key>CFBundleVersion</key>
-    <string>@@VERSION@@</string>
+    <string>@@INSTALLER_VERSION@@</string>
     <key>LSMinimumSystemVersion</key>
     <string>11.0</string>
     <key>LSUIElement</key>

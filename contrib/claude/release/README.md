@@ -11,7 +11,7 @@ bump the version, write a changelog entry, commit, tag, push.
 | Server (`probod` group) | `probod/v*`                    | [probod.md](./probod.md)         |
 | `probod-bootstrap`      | `probod-bootstrap/v*`          | [probod-bootstrap.md](./probod-bootstrap.md) |
 | `proboctl`              | `proboctl/v*`                  | [proboctl.md](./proboctl.md)     |
-| `probo-agent`           | `probo-agent/v*`               | [probo-agent.md](./probo-agent.md) ([Windows signing setup](./probo-agent-windows-signing.md)) |
+| `probo-agent`           | `probo-agent/v*` (or `…-rc.N`) | [probo-agent.md](./probo-agent.md) ([Windows signing setup](./probo-agent-windows-signing.md); [RC](./probo-agent.md#rc-release)) |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
 | `@probo/skills`         | `@probo/skills/v*`             | [skills.md](./skills.md)           |
@@ -30,6 +30,10 @@ last tag.
 When the user asks for a release **for a specific track** (e.g. "release
 the CLI", "release probod"), open the corresponding entrypoint above and
 follow it.
+
+`probo-agent` is the only track that may ship an RC. When that track is
+in the release set, follow the ask in [probo-agent.md](./probo-agent.md)
+before bumping its version.
 
 Versions are SemVer in the **0.x** series. Never bump MAJOR.
 Bug fixes only -> bump PATCH; new features or non-breaking changes -> bump

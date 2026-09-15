@@ -30,7 +30,14 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const oauthStateTTL = 15 * time.Minute
+const (
+	oauthStateTTL = 15 * time.Minute
+
+	// SignInSourceQueryKey is copied from /initiate onto authorize and login
+	// so console can hide register and password for portal visitors.
+	SignInSourceQueryKey         = "source"
+	SignInSourceCompliancePortal = "compliance-portal"
+)
 
 type OAuthState struct {
 	ContinueURL  string
@@ -192,6 +199,7 @@ func buildAuthorizeURL(
 	q.Set("nonce", nonce)
 	q.Set("code_challenge", codeChallenge)
 	q.Set("code_challenge_method", "S256")
+	q.Set(SignInSourceQueryKey, SignInSourceCompliancePortal)
 	u.RawQuery = q.Encode()
 
 	return u.String(), nil

@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"go.probo.inc/probo/pkg/deviceagent/checks"
 	"golang.org/x/sys/windows"
@@ -65,7 +66,7 @@ func elevatedStartProcess(exePath string, args []string) string {
 	}
 
 	return fmt.Sprintf(
-		`$ErrorActionPreference = 'Stop'; $p = Start-Process -FilePath %s -ArgumentList @(%s) -Verb RunAs -Wait -PassThru; if ($null -eq $p) { exit 1 }; if ($p.ExitCode -ne 0) { exit $p.ExitCode }`,
+		`$ErrorActionPreference = 'Stop'; $p = Start-Process -FilePath %s -ArgumentList @(%s) -Verb RunAs -WindowStyle Hidden -Wait -PassThru; if ($null -eq $p) { exit 1 }; if ($p.ExitCode -ne 0) { exit $p.ExitCode }`,
 		"'"+escapePowerShellSingleQuoted(exePath)+"'",
 		strings.Join(argList, ","),
 	)
@@ -77,13 +78,18 @@ func runPowerShellCommand(script string) error {
 		return fmt.Errorf("command %q not available at expected absolute path", "powershell.exe")
 	}
 
-	out, err := exec.Command(
+	cmd := exec.Command(
 		candidates[0],
 		"-NoProfile",
 		"-NonInteractive",
 		"-Command",
 		script,
-	).CombinedOutput()
+	)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		CreationFlags: windows.CREATE_NO_WINDOW,
+	}
+
+	out, err := cmd.CombinedOutput()
 
 	return commandError(out, err)
 }

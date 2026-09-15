@@ -33,14 +33,34 @@ func TestTrayRunCommand_QuotesPaths(t *testing.T) {
 	t.Parallel()
 
 	got := trayRunCommand(
-		`C:\Program Files\Probo\probo-agent.exe`,
+		`C:\Program Files\Probo\probo-agentw.exe`,
 		`C:\ProgramData\Probo\run`,
 	)
 
 	assert.Equal(
 		t,
-		`"C:\Program Files\Probo\probo-agent.exe" tray --run-dir "C:\ProgramData\Probo\run"`,
+		`"C:\Program Files\Probo\probo-agentw.exe" tray --run-dir "C:\ProgramData\Probo\run"`,
 		got,
+	)
+}
+
+func TestGUIExecutablePath_ReturnsSiblingExecutable(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(
+		t,
+		`C:\Program Files\Probo\probo-agentw.exe`,
+		guiExecutablePath(`C:\Program Files\Probo\probo-agent.exe`),
+	)
+	assert.Equal(
+		t,
+		`C:\dev\probo-agentw`,
+		guiExecutablePath(`C:\dev\probo-agent`),
+	)
+	assert.Equal(
+		t,
+		`C:\Program Files\Probo\probo-agentw.exe`,
+		guiExecutablePath(`C:\Program Files\Probo\probo-agent.exe.old`),
 	)
 }
 

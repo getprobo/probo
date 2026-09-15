@@ -20,13 +20,14 @@
 
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { TabsSkeleton } from "@probo/ui/src/v2/Tabs/TabsSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { taskDetailsPageSkeleton } from "./variants";
 
 export function TaskDetailsPageSkeleton() {
-  const { root, header, titleRow, title, body, main, description, comments }
+  const { root, header, titleRow, title, body, main, description, engagement }
     = taskDetailsPageSkeleton();
 
   return (
@@ -45,8 +46,8 @@ export function TaskDetailsPageSkeleton() {
             <TextSkeleton size={2} className="w-5/6" />
             <TextSkeleton size={2} className="w-2/3" />
           </div>
-          <div className={comments()}>
-            <HeadingSkeleton size={4} className="w-32" />
+          <div className={engagement()}>
+            <TabsSkeleton count={2} />
             <ListSkeleton count={2} />
           </div>
         </div>

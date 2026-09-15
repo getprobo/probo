@@ -57,6 +57,10 @@ func LoadOrExchangeAPIKey(
 	}
 	defer release()
 
+	if err := ensureSecureAgentDir(dir); err != nil {
+		return "", fmt.Errorf("cannot prepare agent data dir: %w", err)
+	}
+
 	apiKey, err := LoadAPIKey(dir)
 	if err == nil {
 		if err := validatePersistedServerURL(dir, normalized); err != nil {

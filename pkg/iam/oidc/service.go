@@ -165,12 +165,13 @@ func (c *idTokenClaims) isEmailDomainOwnerVerified() bool {
 	return false
 }
 
-func validateIDTokenClaims(info *providerInfo, claims *idTokenClaims) error {
+func validateIDTokenClaims(info *providerInfo, claims *idTokenClaims, allowPersonal bool) error {
 	if claims.Email == "" {
 		return NewMissingEmailClaimError()
 	}
 
-	if !info.enterpriseChecker(claims) {
+	isEnterprise := info.enterpriseChecker(claims)
+	if !isEnterprise && !allowPersonal {
 		return NewPersonalAccountNotAllowedError()
 	}
 
@@ -178,7 +179,7 @@ func validateIDTokenClaims(info *providerInfo, claims *idTokenClaims) error {
 		return NewEmailNotVerifiedError()
 	}
 
-	if info.requireEmailDomainOwnerVerified && !claims.isEmailDomainOwnerVerified() {
+	if info.requireEmailDomainOwnerVerified && isEnterprise && !claims.isEmailDomainOwnerVerified() {
 		return NewEmailNotVerifiedError()
 	}
 
@@ -490,7 +491,11 @@ func (s *Service) HandleCallback(
 		return nil, oidcState.ContinueURL, nil, fmt.Errorf("cannot verify id token: %w", err)
 	}
 
-	if err := validateIDTokenClaims(info, claims); err != nil {
+	if err := validateIDTokenClaims(
+		info,
+		claims,
+		s.allowsPersonalAccounts(ctx, oidcState.ContinueURL),
+	); err != nil {
 		return nil, oidcState.ContinueURL, nil, err
 	}
 

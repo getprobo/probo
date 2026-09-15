@@ -40,7 +40,6 @@ import (
 
 const (
 	tokenRefreshLeeway        = time.Minute
-	installStateStaleAfter    = 5 * time.Minute
 	credentialPersistAttempts = 3
 )
 

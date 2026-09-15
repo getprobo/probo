@@ -91,6 +91,19 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		return nil, err
 	}
 
+	// A provider connected by installing Probo's app at the vendor is bound by
+	// the ceremony, which proves control of the vendor tenant server-side AND
+	// binds the result to the identity that started it. Accepting a tenant id
+	// here instead would let any member holding ActionConnectorCreate bind any
+	// tenant Probo's app can reach. This gate is also what makes CompleteInstall
+	// the single writer of install-provider connectors, which is what the
+	// advisory lock it takes relies on. Gated on the ceremony, not on
+	// IsManagedAPIKey: a future managed provider with no ceremony still belongs
+	// here.
+	if reg, ok := r.providerRegistry.Get(input.Provider); ok && reg.SupportsInstall() {
+		return nil, gqlutils.Invalidf(ctx, "%s is connected through its install flow, not with an API key", reg.DisplayName)
+	}
+
 	apiKey, err := r.resolveAPIKeyConnectorCredential(input.Provider, input.APIKey)
 	if err != nil {
 		return nil, gqlutils.Invalid(ctx, err)
@@ -120,16 +133,6 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 	}
 
 	req.RawSettings = raw
-
-	// Crisp (ManagedAPIKey) requires proof the organization controls the Crisp
-	// website before the connection is created; every other API-key provider is
-	// unaffected. Runs after settings validation and before any write, so a
-	// failed check leaves no row.
-	if input.Provider == coredata.ConnectorProviderCrisp {
-		if err := r.verifyCrispOwnership(ctx, input); err != nil {
-			return nil, err
-		}
-	}
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {

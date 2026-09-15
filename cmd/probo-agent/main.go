@@ -176,6 +176,7 @@ func newEnrollURLCmd() *cobra.Command {
 				return fmt.Errorf("cannot resolve current executable path: %w", err)
 			}
 
+			exePath = consoleExecutablePath(exePath)
 			if err := elevate.RunElevatedInstall(exePath, serverURL, enrollmentToken, dir); err != nil {
 				return fmt.Errorf("cannot start elevated enrollment install: %w", err)
 			}
@@ -252,19 +253,36 @@ func reportIfAlreadyEnrolled(dir string) (bool, error) {
 //
 // dir is the agent state directory, used to host the Sigstore TUF
 // metadata cache for cosign bundle verification.
-func newUpdater(logger *log.Logger, dir string) *update.Updater {
+func newUpdater(logger *log.Logger, dir string, allowPrereleases bool) *update.Updater {
 	exePath, err := os.Executable()
 	if err != nil || exePath == "" {
 		return nil
 	}
+
+	exePath = consoleExecutablePath(exePath)
 
 	return update.New(
 		version,
 		exePath,
 		fmt.Sprintf("probo-agent/%s", version),
 		filepath.Join(dir, "sigstore-cache"),
+		allowPrereleases,
 		logger,
 	)
+}
+
+// NOTE: Remove this Run-entry migration after all supported installs
+// register probo-agentw.exe.
+func refreshTrayRegistration(ctx context.Context, logger *log.Logger, dir string) {
+	exePath, err := os.Executable()
+	if err == nil {
+		exePath = consoleExecutablePath(exePath)
+		err = refreshTrayAutoStart(exePath, deviceagent.EnrollmentRunDir(dir))
+	}
+
+	if err != nil {
+		logger.WarnCtx(ctx, "cannot refresh tray auto-start", log.Error(err))
+	}
 }
 
 func resolveDir(cmd *cobra.Command) string {
@@ -285,10 +303,11 @@ func newAgentLogger() *log.Logger {
 
 func newInstallCmd() *cobra.Command {
 	var (
-		serverURL       string
-		enrollmentToken string
-		skipService     bool
-		noAutoUpdate    bool
+		serverURL        string
+		enrollmentToken  string
+		skipService      bool
+		noAutoUpdate     bool
+		allowPrereleases bool
 	)
 
 	cmd := &cobra.Command{
@@ -351,12 +370,18 @@ func newInstallCmd() *cobra.Command {
 			fmt.Printf("Configured device %s (heartbeat %ds, posture %ds)\n",
 				resp.DeviceID, resp.HeartbeatSeconds, resp.PostureSeconds)
 
-			if noAutoUpdate {
-				if err := persistAutoUpdate(dir, false); err != nil {
-					return fmt.Errorf("cannot persist auto-update preference: %w", err)
+			if noAutoUpdate || allowPrereleases {
+				if err := persistInstallFlags(dir, noAutoUpdate, allowPrereleases); err != nil {
+					return fmt.Errorf("cannot persist install flags: %w", err)
 				}
 
-				fmt.Println("Auto-update disabled.")
+				if noAutoUpdate {
+					fmt.Println("Auto-update disabled.")
+				}
+
+				if allowPrereleases {
+					fmt.Println("Prerelease auto-updates enabled.")
+				}
 			}
 
 			if skipService {
@@ -367,6 +392,14 @@ func newInstallCmd() *cobra.Command {
 			exePath, err := os.Executable()
 			if err != nil {
 				return fmt.Errorf("cannot resolve current executable path: %w", err)
+			}
+
+			exePath, err = deviceagent.EnsurePrivilegedExecutable(exePath)
+			if err != nil {
+				return clearEnrollmentMarkerOnSetupFailure(
+					dir,
+					fmt.Errorf("cannot install privileged executable: %w", err),
+				)
 			}
 
 			if err := service.Install(
@@ -395,6 +428,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&enrollmentToken, "enrollment-token", "", "one-shot enrollment token issued when the device was created")
 	cmd.Flags().BoolVar(&skipService, "skip-service", false, "register the device but do not install the OS service")
 	cmd.Flags().BoolVar(&noAutoUpdate, "no-auto-update", false, "disable automatic upgrades of the agent binary")
+	cmd.Flags().BoolVar(&allowPrereleases, "allow-prereleases", false, "allow automatic upgrades onto GitHub prereleases")
 
 	return cmd
 }
@@ -411,15 +445,21 @@ func clearEnrollmentMarkerOnSetupFailure(dir string, setupErr error) error {
 	return setupErr
 }
 
-// persistAutoUpdate flips the UpdatesDisabled flag in the agent's
-// on-disk config without disturbing other fields.
-func persistAutoUpdate(dir string, enabled bool) error {
+// persistInstallFlags writes install-time update preferences into the
+// agent's on-disk config without disturbing other fields.
+func persistInstallFlags(dir string, updatesDisabled, allowPrereleases bool) error {
 	cfg, err := deviceagent.LoadConfig(dir)
 	if err != nil {
 		return err
 	}
 
-	cfg.UpdatesDisabled = !enabled
+	if updatesDisabled {
+		cfg.UpdatesDisabled = true
+	}
+
+	if allowPrereleases {
+		cfg.AllowPrereleases = true
+	}
 
 	return deviceagent.SaveConfig(dir, cfg)
 }
@@ -469,9 +509,23 @@ func newRunCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := resolveDir(cmd)
 
+			cfg, err := deviceagent.LoadConfig(dir)
+			if err != nil {
+				return fmt.Errorf("cannot load config: %w", err)
+			}
+
 			logger := newAgentLogger()
 			agent := deviceagent.New(dir, version, logger)
-			agent.Updater = newUpdater(logger, dir)
+			agent.Updater = newUpdater(logger, dir, cfg.AllowPrereleases)
+
+			exePath, err := os.Executable()
+			if err != nil {
+				return fmt.Errorf("cannot resolve current executable path: %w", err)
+			}
+
+			if err := migratePrivilegedDaemon(exePath, dir); err != nil {
+				return err
+			}
 
 			run := func(ctx context.Context) error {
 				err := agent.Run(ctx)
@@ -488,7 +542,26 @@ func newRunCmd() *cobra.Command {
 			}
 
 			if isSvc {
-				return service.RunWindowsService(service.DefaultWindowsName, run)
+				serviceRun := func(ctx context.Context) error {
+					// NOTE: Remove this repair after all supported installs
+					// include probo-agentw.exe.
+					if agent.Updater != nil {
+						repairCtx, cancel := context.WithTimeout(ctx, time.Minute)
+						err := agent.Updater.EnsureGUIBinary(repairCtx)
+
+						cancel()
+
+						if err != nil {
+							logger.WarnCtx(ctx, "cannot install GUI agent binary", log.Error(err))
+						}
+					}
+
+					refreshTrayRegistration(ctx, logger, dir)
+
+					return run(ctx)
+				}
+
+				return service.RunWindowsService(service.DefaultWindowsName, serviceRun)
 			}
 
 			ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
@@ -522,6 +595,7 @@ func newStatusCmd() *cobra.Command {
 			fmt.Printf("Posture interval:     %s\n", cfg.PostureInterval)
 			fmt.Printf("Update interval:      %s\n", cfg.UpdateInterval)
 			fmt.Printf("Auto-update enabled:  %v\n", !cfg.UpdatesDisabled)
+			fmt.Printf("Allow prereleases:    %v\n", cfg.AllowPrereleases)
 			fmt.Printf("API key on disk:      %v\n", haveKey)
 			fmt.Printf("Config directory:     %s\n", dir)
 
@@ -585,7 +659,12 @@ func newUpdateCmd() *cobra.Command {
 			dir := resolveDir(cmd)
 			logger := newAgentLogger()
 
-			updater := newUpdater(logger, dir)
+			cfg, err := deviceagent.LoadConfig(dir)
+			if err != nil {
+				return fmt.Errorf("cannot load config: %w", err)
+			}
+
+			updater := newUpdater(logger, dir, cfg.AllowPrereleases)
 			if updater == nil {
 				return errors.New("cannot resolve current executable path")
 			}
@@ -613,6 +692,7 @@ func newUpdateCmd() *cobra.Command {
 				return fmt.Errorf("cannot apply update: %w", err)
 			}
 
+			refreshTrayRegistration(ctx, logger, dir)
 			fmt.Printf("Installed probo-agent %s. Restart the service to use it.\n", rel.Version)
 
 			return nil

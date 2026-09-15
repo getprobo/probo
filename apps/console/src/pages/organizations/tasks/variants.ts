@@ -41,7 +41,14 @@ export const taskDetailsPageSkeleton = tv({
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]",
     main: "flex min-w-0 flex-col gap-6",
     description: "flex flex-col gap-2",
-    comments: "flex flex-col gap-3",
+    engagement: "flex flex-col gap-4",
+  },
+});
+
+export const taskEngagementSection = tv({
+  slots: {
+    root: "flex min-w-0 flex-col gap-4",
+    panel: "min-w-0",
   },
 });
 
@@ -79,10 +86,8 @@ export const taskDurationField = tv({
 export const taskCommentsSection = tv({
   slots: {
     root: "flex min-w-0 flex-col gap-3",
-    header: "flex items-center justify-between gap-3",
     actions: "flex justify-end",
     list: "flex flex-col gap-4",
-    titleSkeleton: "w-32",
     itemSkeleton: "h-24 animate-pulse rounded-2 bg-sand-3",
   },
 });

@@ -23,6 +23,7 @@ package provider_test
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"regexp"
 	"testing"
 
@@ -128,7 +129,7 @@ func TestEveryProviderSettingsReachADialog(t *testing.T) {
 			if len(reg.APIKeyExtraSettings()) > 0 {
 				assert.Truef(
 					t,
-					reg.SupportsAPIKey() || reg.IsManagedAPIKey(),
+					reg.OffersAPIKeyForm(),
 					"provider %q declares APIKeyExtraSettings but offers no API-key path",
 					reg.Provider,
 				)
@@ -344,6 +345,175 @@ func TestRegistry_Register(t *testing.T) {
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "OAuth2 requires Endpoints.Auth, BuildAuthURL or BuildAuthURLForSite")
 		})
+	})
+
+	// Same pairing rule as OAuth2/Endpoints.Auth above, plus the two things an
+	// install ceremony cannot work without: something to verify the vendor's
+	// proof against, and Probo's own app credential to verify it with.
+	t.Run("Install block and Endpoints.Install imply each other", func(t *testing.T) {
+		t.Parallel()
+
+		installConfig := func() *provider.InstallConfig {
+			return &provider.InstallConfig{
+				StateParam:          "payload",
+				SettingsResourceKey: "website_id",
+				Verify: func(context.Context, *http.Client, string, url.Values) (string, error) {
+					return "", nil
+				},
+			}
+		}
+
+		managedAPIKey := func() *provider.APIKeyConfig {
+			return &provider.APIKeyConfig{
+				Managed: &provider.ManagedAPIKey{RequiresResourceID: true},
+			}
+		}
+
+		t.Run("endpoint without block", func(t *testing.T) {
+			t.Parallel()
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderCrisp,
+				DisplayName: "Crisp",
+				Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "Endpoints.Install requires an Install block")
+		})
+
+		t.Run("block without endpoint", func(t *testing.T) {
+			t.Parallel()
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderCrisp,
+				DisplayName: "Crisp",
+				APIKey:      managedAPIKey(),
+				Install:     installConfig(),
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "Install requires Endpoints.Install")
+		})
+
+		// Each of these leaves the callback with nothing to do: no proof to
+		// check, no parameter to find the state in, or no key to file the
+		// verified tenant id under.
+		for name, mutate := range map[string]func(*provider.InstallConfig){
+			"no Verify":              func(c *provider.InstallConfig) { c.Verify = nil },
+			"no StateParam":          func(c *provider.InstallConfig) { c.StateParam = "" },
+			"no SettingsResourceKey": func(c *provider.InstallConfig) { c.SettingsResourceKey = "" },
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				cfg := installConfig()
+				mutate(cfg)
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+					APIKey:      managedAPIKey(),
+					Install:     cfg,
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "Install requires Verify, StateParam and SettingsResourceKey")
+			})
+		}
+
+		// Endpoints.Install is the one endpoint that is not a URL until it is
+		// expanded, so nothing downstream would catch a bad template: the
+		// customer would simply land on a vendor page with no app id, or with
+		// a literal placeholder left in.
+		for name, template := range map[string]string{
+			"no placeholder":   "https://app.crisp.chat/initiate/plugin/",
+			"two placeholders": "https://app.crisp.chat/initiate/plugin/%s/%s/",
+		} {
+			t.Run("install endpoint with "+name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: template},
+					APIKey:      managedAPIKey(),
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "exactly one %s placeholder")
+			})
+		}
+
+		// url.Parse accepts a relative reference and any scheme, so parsing
+		// alone is not enough: a hostless template would send the customer
+		// back into Probo's own origin rather than out to the vendor.
+		for name, template := range map[string]string{
+			"a relative reference": "/initiate/plugin/%s/",
+			"no host":              "https:///initiate/plugin/%s/",
+			// A port-only authority has a non-empty Host and no host at all.
+			"a port with no host": "https://:8080/initiate/plugin/%s/",
+			"plain http":          "http://app.crisp.chat/initiate/plugin/%s/",
+			"a javascript scheme": "javascript:alert(%s)",
+		} {
+			t.Run("install endpoint that is "+name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: template},
+					APIKey:      managedAPIKey(),
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "absolute https URL")
+			})
+		}
+
+		// The redirect is the only way in, so these would render nowhere and
+		// the completion path would persist only the resource id — the
+		// customer's values dropped without a word.
+		t.Run("extra settings with no dialog to collect them", func(t *testing.T) {
+			t.Parallel()
+
+			apiKey := managedAPIKey()
+			apiKey.ExtraSettings = []provider.ExtraSetting{
+				{Key: "workspace", Label: "Workspace"},
+			}
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderCrisp,
+				DisplayName: "Crisp",
+				Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+				APIKey:      apiKey,
+				Install:     installConfig(),
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "no dialog to collect")
+		})
+
+		// A customer-pasted key has nothing to verify the vendor's proof
+		// against, and no app id for the redirect to interpolate.
+		for name, apiKey := range map[string]*provider.APIKeyConfig{
+			"no API-key block at all": nil,
+			"a customer-pasted key":   {},
+			"a managed key with no resource id": {
+				Managed: &provider.ManagedAPIKey{},
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+					APIKey:      apiKey,
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "Install requires a managed API key with RequiresResourceID")
+			})
+		}
 	})
 
 	// The two "a settings list needs the path that renders it" rules this
@@ -706,6 +876,72 @@ func TestRegistry_ManagedConnectorReady(t *testing.T) {
 		r := provider.NewBuiltinRegistry()
 		r.SetManagedAPIKey(coredata.ConnectorProviderTally, "some-key")
 		assert.False(t, r.ManagedConnectorReady(coredata.ConnectorProviderTally))
+	})
+}
+
+// TestCrispOffersNoAPIKeyForm pins the rule the catalog resolver and the
+// settings-reach-a-dialog invariant both read: a provider whose connect path is
+// an app install never reports an API-key dialog, not even fully configured.
+// Crisp is that provider, so "configured" and "offers the dialog" have to come
+// apart here.
+func TestCrispOffersNoAPIKeyForm(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
+	r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "plugin-id")
+
+	require.True(t, r.ManagedConnectorReady(coredata.ConnectorProviderCrisp))
+
+	reg, ok := r.Get(coredata.ConnectorProviderCrisp)
+	require.True(t, ok)
+	assert.False(
+		t,
+		reg.OffersAPIKeyForm(),
+		"an install provider is connected by the redirect, never by the API-key dialog",
+	)
+}
+
+func TestRegistry_InstallURL(t *testing.T) {
+	t.Parallel()
+
+	t.Run("interpolates the app id and attaches the state", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewBuiltinRegistry()
+		r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
+		r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "plugin-id")
+
+		raw, err := r.InstallURL(coredata.ConnectorProviderCrisp, "signed.state")
+		require.NoError(t, err)
+
+		u, err := url.Parse(raw)
+		require.NoError(t, err)
+		assert.Equal(t, "https", u.Scheme)
+		assert.Equal(t, "app.crisp.chat", u.Host)
+		assert.Equal(t, "/initiate/plugin/plugin-id/", u.Path)
+
+		// Crisp echoes this parameter back byte-identically; the callback finds
+		// the state under the same name.
+		assert.Equal(t, "signed.state", u.Query().Get("payload"))
+	})
+
+	// Without the app id there is no URL to build: Endpoints.Install is a %s
+	// template, so the deployment's plugin id is what makes it a real address.
+	t.Run("refuses a provider with no managed resource id", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := provider.NewBuiltinRegistry().InstallURL(coredata.ConnectorProviderCrisp, "signed.state")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no managed resource id configured")
+	})
+
+	t.Run("refuses a provider with no install path", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := provider.NewBuiltinRegistry().InstallURL(coredata.ConnectorProviderSlack, "signed.state")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "has no install path")
 	})
 }
 

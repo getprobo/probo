@@ -71,6 +71,14 @@ type Task implements Node {
         orderBy: TaskCommentOrder
     ): TaskCommentConnection! @goField(forceResolver: true)
 
+    activities(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskActivityOrder
+    ): TaskActivityConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 

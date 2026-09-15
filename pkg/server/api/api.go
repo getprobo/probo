@@ -101,11 +101,14 @@ type (
 		ITAM                    *itam.Service
 		Cookie                  securecookie.Config
 		TokenSecret             string
-		ConnectorRegistry       *connector.Registry
-		ProviderRegistry        *provider.Registry
-		CustomDomainCname       string
-		GraphQLLimits           gqlutils.Limits
-		Logger                  *log.Logger
+		// InstallStateKey signs the app-install state tokens the connector
+		// install ceremony carries across the vendor.
+		InstallStateKey   string
+		ConnectorRegistry *connector.Registry
+		ProviderRegistry  *provider.Registry
+		CustomDomainCname string
+		GraphQLLimits     gqlutils.Limits
+		Logger            *log.Logger
 
 		// IdentityFederationIssuer is nil when identity federation is disabled.
 		IdentityFederationIssuer *identityfederation.Issuer
@@ -259,6 +262,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.Cookie,
 			cfg.TokenSecret,
+			cfg.InstallStateKey,
 			cfg.ConnectorRegistry,
 			cfg.ProviderRegistry,
 			cfg.File,

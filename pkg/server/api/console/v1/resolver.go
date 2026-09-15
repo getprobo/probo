@@ -95,7 +95,6 @@ type (
 		fileManager             *filemanager.Service
 		baseURL                 *baseurl.BaseURL
 		customDomainCname       string
-		tokenSecret             string
 		identityFederation      *identityfederation.Issuer
 		awsConnectorInstall     cloudaws.ConnectorInstallConfig
 		gcpConnectorInstall     cloudgcp.ConnectorInstallConfig
@@ -120,6 +119,7 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
+	installStateKey string,
 	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
 	fileManagerSvc *filemanager.Service,
@@ -155,7 +155,6 @@ func NewMux(
 		connectorRegistry,
 		providerRegistry,
 		customDomainCname,
-		tokenSecret,
 		logger,
 		thirdPartySvc,
 		riskManagementSvc,
@@ -200,6 +199,11 @@ func NewMux(
 		)
 
 		r.Get(
+			"/connectors/install/initiate",
+			handleConnectorInstallInitiate(logger, iamSvc, providerRegistry, installStateKey),
+		)
+
+		r.Get(
 			"/connectors/complete",
 			handleConnectorComplete(
 				logger,
@@ -229,6 +233,40 @@ func NewMux(
 				logger,
 				iamSvc,
 				slackbotInstallations,
+			),
+		)
+	})
+
+	// Public in the sense that the vendor top-level-redirects the customer's
+	// browser here carrying no Probo credentials of its own, so the full auth
+	// group above -- API key, OAuth2 access token, identity presence,
+	// membership -- cannot gate it. NewSessionMiddleware is mounted alone
+	// because it is the one middleware that is non-blocking when no cookie is
+	// present: it hands the request straight to the next handler, attaching an
+	// identity only when a valid session cookie rides along.
+	//
+	// It must NEVER be paired with NewIdentityPresenceMiddleware here: that one
+	// redirects or rejects an anonymous request, which would turn a legitimate
+	// SameSite-blocked callback into a redirect loop instead of the explicit
+	// 401 the handler renders.
+	//
+	// The handler then requires that attached identity to be the SAME identity
+	// the state was minted for, and re-authorizes it against the organization:
+	// a valid session is neither a live permission nor, on its own, a right to
+	// bind a vendor tenant to any organization.
+	r.Group(func(r chi.Router) {
+		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+
+		r.Get(
+			"/connectors/install/{provider}/complete",
+			handleConnectorInstallComplete(
+				logger,
+				iamSvc,
+				baseURL,
+				proboSvc,
+				providerRegistry,
+				installStateKey,
+				safeRedirect,
 			),
 		)
 	})

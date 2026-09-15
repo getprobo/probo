@@ -23,6 +23,7 @@ import { useState } from "react";
 import { Tabs } from "./Tabs";
 import { TabsIndicator } from "./TabsIndicator";
 import { TabsList } from "./TabsList";
+import { TabsPanel } from "./TabsPanel";
 import { TabsSkeleton } from "./TabsSkeleton";
 import { TabsTab } from "./TabsTab";
 
@@ -62,6 +63,28 @@ export function Controlled() {
         {value}
       </span>
     </div>
+  );
+}
+
+export function WithPanels() {
+  return (
+    <Tabs defaultValue="all">
+      <TabsList>
+        <TabsTab value="all">All</TabsTab>
+        <TabsTab value="public">Public</TabsTab>
+        <TabsTab value="private">Private</TabsTab>
+        <TabsIndicator />
+      </TabsList>
+      <TabsPanel value="all" keepMounted>
+        All panel
+      </TabsPanel>
+      <TabsPanel value="public">
+        Public panel
+      </TabsPanel>
+      <TabsPanel value="private">
+        Private panel
+      </TabsPanel>
+    </Tabs>
   );
 }
 

@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
@@ -145,9 +146,13 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		}
 
 		loginURL := h.baseURL.WithPath("/auth/login").
-			WithQuery("continue", continueURL).
-			MustString()
-		http.Redirect(w, r, loginURL, http.StatusFound)
+			WithQuery("continue", continueURL)
+
+		if source := r.URL.Query().Get(visitor.SignInSourceQueryKey); source == visitor.SignInSourceCompliancePortal {
+			loginURL = loginURL.WithQuery(visitor.SignInSourceQueryKey, source)
+		}
+
+		http.Redirect(w, r, loginURL.MustString(), http.StatusFound)
 
 		return
 	}

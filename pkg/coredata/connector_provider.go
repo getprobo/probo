@@ -97,6 +97,11 @@ const (
 	ConnectorProviderCalendly        ConnectorProvider = "CALENDLY"
 	ConnectorProviderAWS             ConnectorProvider = "AWS"
 	ConnectorProviderGCP             ConnectorProvider = "GCP"
+	ConnectorProviderElevenLabs      ConnectorProvider = "ELEVENLABS"
+	ConnectorProviderNewRelic        ConnectorProvider = "NEW_RELIC"
+	ConnectorProviderRetool          ConnectorProvider = "RETOOL"
+	ConnectorProviderTwingate        ConnectorProvider = "TWINGATE"
+	ConnectorProviderAttio           ConnectorProvider = "ATTIO"
 )
 
 var (
@@ -172,6 +177,11 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderCalendly,
 		ConnectorProviderAWS,
 		ConnectorProviderGCP,
+		ConnectorProviderElevenLabs,
+		ConnectorProviderNewRelic,
+		ConnectorProviderRetool,
+		ConnectorProviderTwingate,
+		ConnectorProviderAttio,
 	}
 }
 
@@ -243,7 +253,12 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderCalCom,
 		ConnectorProviderCalendly,
 		ConnectorProviderAWS,
-		ConnectorProviderGCP:
+		ConnectorProviderGCP,
+		ConnectorProviderElevenLabs,
+		ConnectorProviderNewRelic,
+		ConnectorProviderRetool,
+		ConnectorProviderTwingate,
+		ConnectorProviderAttio:
 		return true
 	}
 

@@ -1,0 +1,56 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.attio.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.attio.com/v2/workspace_members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 327
+        uncompressed: true
+        body: '{"data":[{"access_level":"admin","avatar_url":"https://example.com/avatar/1.png","created_at":"2026-09-10T09:49:19.753000000Z","email_address":"member1@example.com","first_name":"Member","id":{"workspace_id":"14beef7a-0000-4000-8000-000000000001","workspace_member_id":"50cf242c-0000-4000-8000-000000000001"},"last_name":"1"}]}'
+        headers:
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - x-attio-client,x-attio-execution-id,x-attio-platform,x-attio-platform-version,x-attio-record-query-score,x-attio-app-installation-bundle-id,x-attio-locale,WWW-Authenticate
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - a38d9f259c65d121-CDG
+            Content-Length:
+                - "327"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 10 Sep 2026 10:06:44 GMT
+            Server:
+                - cloudflare
+            Strict-Transport-Security:
+                - max-age=7776000; includeSubDomains; preload
+            Vary:
+                - Origin
+            Via:
+                - 1.1 google
+            X-Accurate-At:
+                - "2026-09-10T10:06:44.148759000Z"
+            X-Attio-Execution-Id:
+                - 40e0e00f-5a8c-48dd-8606-e230f4bfd935
+            X-Frame-Options:
+                - DENY
+        status: 200 OK
+        code: 200
+        duration: 147.202541ms

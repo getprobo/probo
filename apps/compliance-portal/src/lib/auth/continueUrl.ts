@@ -114,9 +114,16 @@ export function gateRedirectPath(
 // Sends the browser to the OAuth entry point, carrying a validated continue URL
 // so the user returns to the portal (and any deferred access request resumes)
 // after sign-in.
+export const COMPLIANCE_PORTAL_SOURCE_PARAM = "source";
+export const COMPLIANCE_PORTAL_SOURCE_VALUE = "compliance-portal";
+
 export function redirectToInitiate(continueTo: string): void {
   const initiateURL = new URL("/initiate", window.location.origin);
   initiateURL.searchParams.set("continue", getSafeContinueUrl(continueTo));
+  initiateURL.searchParams.set(
+    COMPLIANCE_PORTAL_SOURCE_PARAM,
+    COMPLIANCE_PORTAL_SOURCE_VALUE,
+  );
   window.location.href = initiateURL.toString();
 }
 

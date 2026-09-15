@@ -2136,6 +2136,8 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
+	identity := authn.IdentityFromContext(ctx)
+
 	task, err := svc.Tasks.Create(
 		ctx, scope,
 		probo.CreateTaskRequest{
@@ -2148,6 +2150,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 			TimeEstimate:   input.TimeEstimate,
 			Deadline:       input.Deadline,
 			AssignedToID:   input.AssignedToID,
+			IdentityID:     &identity.ID,
 		},
 	)
 	if err != nil {
@@ -2172,6 +2175,8 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
+	identity := authn.IdentityFromContext(ctx)
+
 	task, err := svc.Tasks.Update(
 		ctx, scope,
 		probo.UpdateTaskRequest{
@@ -2185,6 +2190,7 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 			Deadline:     UnwrapOmittable(input.Deadline),
 			AssignedToID: UnwrapOmittable(input.AssignedToID),
 			MeasureID:    UnwrapOmittable(input.MeasureID),
+			IdentityID:   &identity.ID,
 		},
 	)
 	if err != nil {
@@ -2204,7 +2210,9 @@ func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	svc := r.proboSvc
 
-	task, err := svc.Tasks.Assign(ctx, scope, input.ID, input.AssignedToID)
+	identity := authn.IdentityFromContext(ctx)
+
+	task, err := svc.Tasks.Assign(ctx, scope, input.ID, input.AssignedToID, &identity.ID)
 	if err != nil {
 		return nil, types.AssignTaskOutput{}, fmt.Errorf("failed to assign task: %w", err)
 	}
@@ -2222,7 +2230,9 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 
 	svc := r.proboSvc
 
-	task, err := svc.Tasks.Unassign(ctx, scope, input.ID)
+	identity := authn.IdentityFromContext(ctx)
+
+	task, err := svc.Tasks.Unassign(ctx, scope, input.ID, &identity.ID)
 	if err != nil {
 		return nil, types.UnassignTaskOutput{}, fmt.Errorf("failed to unassign task: %w", err)
 	}
@@ -9602,5 +9612,56 @@ func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 
 	return nil, types.DeleteTaskCommentOutput{
 		DeletedTaskCommentID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListTaskActivitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTaskActivitiesInput) (*mcp.CallToolResult, types.ListTaskActivitiesOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskActivityList)
+	if err != nil {
+		return nil, types.ListTaskActivitiesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskActivityOrderField]{
+		Field:     coredata.TaskActivityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskActivityOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	activityPage, err := r.proboSvc.TaskActivities.ListForTaskID(ctx, scope, input.TaskID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task activities", log.Error(err))
+		return nil, types.ListTaskActivitiesOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListTaskActivitiesOutput(activityPage), nil
+}
+
+func (r *Resolver) GetTaskActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskActivityInput) (*mcp.CallToolResult, types.GetTaskActivityOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskActivityGet)
+	if err != nil {
+		return nil, types.GetTaskActivityOutput{}, err
+	}
+
+	taskActivity, err := r.proboSvc.TaskActivities.Get(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetTaskActivityOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get task activity", log.Error(err))
+
+		return nil, types.GetTaskActivityOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetTaskActivityOutput{
+		TaskActivity: types.NewTaskActivity(taskActivity),
 	}, nil
 }

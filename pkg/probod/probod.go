@@ -568,6 +568,7 @@ func (impl *Implm) Run(
 	// explicitly (already registered from impl.cfg.Connectors above) are
 	// left untouched.
 	connectorStateKey := connector.DeriveConnectorStateKey(activeSigningKeyPEM)
+	installStateKey := connector.DeriveInstallStateKey(activeSigningKeyPEM)
 	cimdClientID := baseURL.WithPath(connector.CIMDMetadataPath).MustString()
 
 	for _, reg := range providerRegistry.PublicClients() {
@@ -968,6 +969,7 @@ func (impl *Implm) Run(
 			},
 			CustomDomainCname:        impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:              impl.cfg.Auth.Cookie.Secret,
+			InstallStateKey:          installStateKey,
 			Logger:                   l.Named("http.server"),
 			Cookie:                   authCookie,
 			IdentityFederationIssuer: identityFederationIssuer,

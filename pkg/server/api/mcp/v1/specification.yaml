@@ -7415,6 +7415,150 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted task comment ID
 
+    TaskActivityType:
+      type: string
+      enum:
+        - CREATED
+        - UPDATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityType
+
+    TaskActivityField:
+      type: string
+      enum:
+        - NAME
+        - DESCRIPTION
+        - STATE
+        - PRIORITY
+        - ASSIGNED_TO
+        - MEASURE
+        - DEADLINE
+        - TIME_ESTIMATE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityField
+
+    TaskActivityOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityOrderField
+
+    TaskActivityOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TaskActivityOrderField"
+          description: Task activity order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Task activity order direction
+
+    TaskActivity:
+      type: object
+      required:
+        - id
+        - organization_id
+        - task_id
+        - activity_type
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task activity ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        actor_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Actor membership profile ID
+            - type: "null"
+              description: No actor
+          description: Actor membership profile ID
+        activity_type:
+          $ref: "#/components/schemas/TaskActivityType"
+          description: Task activity type
+        field:
+          anyOf:
+            - $ref: "#/components/schemas/TaskActivityField"
+              description: Changed field
+            - type: "null"
+              description: No field
+          description: Changed field
+        old_value:
+          anyOf:
+            - type: string
+              description: Previous value
+            - type: "null"
+              description: No previous value
+          description: Previous value
+        new_value:
+          anyOf:
+            - type: string
+              description: New value
+            - type: "null"
+              description: No new value
+          description: New value
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    ListTaskActivitiesInput:
+      type: object
+      required:
+        - task_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        order_by:
+          $ref: "#/components/schemas/TaskActivityOrderBy"
+          description: Task activity order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTaskActivitiesOutput:
+      type: object
+      required:
+        - task_activities
+      properties:
+        task_activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskActivity"
+          description: List of task activities
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetTaskActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task activity ID
+
+    GetTaskActivityOutput:
+      type: object
+      required:
+        - task_activity
+      properties:
+        task_activity:
+          $ref: "#/components/schemas/TaskActivity"
+
     DocumentType:
       type: string
       enum:
@@ -17188,6 +17332,30 @@ tools:
       $ref: "#/components/schemas/DeleteTaskCommentInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTaskCommentOutput"
+  - name: listTaskActivities
+    title: List Task Activities
+    description: List activities for a task, newest first
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTaskActivitiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTaskActivitiesOutput"
+  - name: getTaskActivity
+    title: Get Task Activity
+    description: Get a task activity by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetTaskActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTaskActivityOutput"
   - name: listDocuments
     title: List Documents
     description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.

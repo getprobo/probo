@@ -5,8 +5,76 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.1] - 2026-09-14
+
 ### Fixed
 
+- macOS installs that still ran the privileged daemon from
+  `/usr/local/bin/probo-agent` now migrate themselves to
+  `/Library/Probo/probo-agent` on next run: the launchd plist, tray
+  autostart entry, and Team ID/identifier check are rewritten, the
+  service reloads, and the legacy binary is removed.
+- Windows no longer flashes a console window when Explorer starts the
+  tray at logon. The installer now includes `probo-agent.exe` for CLI
+  and service use, and `probo-agentw.exe` for tray and deeplink use.
+  Thus, shells wait for CLI commands and propagate `ERRORLEVEL`.
+- Windows enrollment no longer trusts a user-forged
+  `ProgramData\Probo\run\enrolled` marker file. Production paths now
+  require a SYSTEM or Administrators owner, and `Probo`, `run`, and
+  `agent` directories are created with a protected DACL so standard
+  users cannot write to them.
+- Windows agent state directories under `%ProgramData%\Probo` now trust
+  the Administrators group (not just SYSTEM), set it as owner on create,
+  rewrite child DACLs, and re-secure the directory before token exchange
+  and when loading state — closing a gap where UAC enroll or an
+  inherited ACE could block or weaken protection.
+
+## [0.7.1-rc.2] - 2026-09-14
+
+### Fixed
+
+- macOS installs that still ran the privileged daemon from
+  `/usr/local/bin/probo-agent` now migrate themselves to
+  `/Library/Probo/probo-agent` on next run: the launchd plist, tray
+  autostart entry, and Team ID/identifier check are rewritten, the
+  service reloads, and the legacy binary is removed.
+- Windows no longer flashes a console window when Explorer starts the
+  tray at logon. The installer now includes `probo-agent.exe` for CLI
+  and service use, and `probo-agentw.exe` for tray and deeplink use.
+  Thus, shells wait for CLI commands and propagate `ERRORLEVEL`.
+
+## [0.7.1-rc.1] - 2026-09-11
+
+### Fixed
+
+- Windows enrollment no longer trusts a user-forged
+  `ProgramData\Probo\run\enrolled` marker file. Production paths now
+  require a SYSTEM or Administrators owner, and `Probo`, `run`, and
+  `agent` directories are created with a protected DACL so standard
+  users cannot write to them.
+- Windows agent state directories under `%ProgramData%\Probo` now trust
+  the Administrators group (not just SYSTEM), set it as owner on create,
+  rewrite child DACLs, and re-secure the directory before token exchange
+  and when loading state — closing a gap where UAC enroll or an
+  inherited ACE could block or weaken protection.
+
+## [0.7.0] - 2026-09-11
+
+### Added
+
+- Tags of the form `probo-agent/vX.Y.Z-rc.N` now produce a GitHub
+  prerelease, with installer versions stripped to `X.Y.Z`. Hosts that
+  set `allow_prereleases` (install flag, MDM, or `config.json`) follow
+  those RCs; everyone else stays on the last stable, so a test fleet can
+  exercise a real signed build before it reaches every enrolled host.
+
+### Fixed
+
+- On macOS the agent binary lives at `/Library/Probo/probo-agent`. The
+  privileged helper and LaunchDaemon no longer exec `/usr/local/bin/probo-agent`,
+  which is user-writable on many Homebrew machines. The helper checks the
+  Team ID and identifier before it runs the binary. An upgrade moves an
+  existing daemon off the old path.
 - Browser enrollment (`probo://` deep links) asks the user to confirm the
   server URL before a privileged install, except when TLS presents a
   pinned Probo leaf public key. Cancel leaves the device unenrolled.
@@ -14,6 +82,10 @@ documented in this file.
 - API calls to `us.probo.com` and `eu.probo.com` require a pinned Probo
   leaf key. A Probo certificate key change fails enroll and heartbeats
   until the agent is updated. Self-hosted servers are unchanged.
+- Windows agent state under `%ProgramData%\Probo\agent` uses an explicit
+  DACL for SYSTEM and Administrators. A standard user cannot read
+  `agent.key` or replace `config.json`. A user-owned or junction squat
+  is refused, and existing files are re-ACL'd when the service starts.
 
 ## [0.6.6] - 2026-09-10
 

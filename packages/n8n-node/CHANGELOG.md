@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.229.0] - 2026-09-14
+
+### Added
+
+- Task Activity resource with `Get` and `Get All` actions, listing a
+  task's field-level changes newest-first
+
 ## [0.228.0] - 2026-09-10
 
 ### Added

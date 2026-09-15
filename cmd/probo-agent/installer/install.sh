@@ -4,7 +4,8 @@
 #
 # Downloads the matching GitHub Release binary, verifies its sha256
 # checksum (embedded in this script at release time), installs to
-# /usr/local/bin, then enrolls the device.
+# /Library/Probo/probo-agent on Darwin or /usr/local/bin/probo-agent
+# on Linux and FreeBSD, then enrolls the device.
 #
 # Usage:
 #
@@ -33,6 +34,7 @@
 #   PROBO_SERVER_URL               Probo server base URL
 #   PROBO_ENROLLMENT_TOKEN         One-shot enrollment token
 #   PROBO_NO_AUTO_UPDATE           Set to true to pass --no-auto-update
+#   PROBO_ALLOW_PRERELEASES        Set to true to pass --allow-prereleases
 #
 # Never pass the enrollment token in the curl URL.
 
@@ -55,6 +57,7 @@ SERVER_URL="${PROBO_SERVER_URL:-}"
 ENROLLMENT_TOKEN="${PROBO_ENROLLMENT_TOKEN:-}"
 STATE_DIR="${PROBO_AGENT_STATE_DIR:-}"
 NO_AUTO_UPDATE="${PROBO_NO_AUTO_UPDATE:-}"
+ALLOW_PRERELEASES="${PROBO_ALLOW_PRERELEASES:-}"
 SKIP_SERVICE=false
 
 die() {
@@ -91,6 +94,7 @@ Environment variables:
   PROBO_SERVER_URL                    Probo server base URL
   PROBO_ENROLLMENT_TOKEN              One-shot enrollment token
   PROBO_NO_AUTO_UPDATE                Set to true to disable auto-update
+  PROBO_ALLOW_PRERELEASES             Set to true to allow prerelease auto-updates
 EOF
 }
 
@@ -144,6 +148,11 @@ detect_platform() {
 
   archive_dir="probo-agent_${os_label}_${arch_label}"
   archive_name="${archive_dir}.tar.gz"
+
+  case "$os" in
+    Darwin) BINARY_PATH="/Library/Probo/probo-agent" ;;
+    *) BINARY_PATH="/usr/local/bin/probo-agent" ;;
+  esac
 }
 
 sha256_file() {
@@ -271,6 +280,10 @@ parse_args() {
         NO_AUTO_UPDATE=true
         shift
         ;;
+      --allow-prereleases)
+        ALLOW_PRERELEASES=true
+        shift
+        ;;
       --skip-service)
         SKIP_SERVICE=true
         shift
@@ -298,6 +311,9 @@ run_agent_install() {
   fi
   case "$NO_AUTO_UPDATE" in
     1 | true | TRUE | yes | YES) set -- "$@" --no-auto-update ;;
+  esac
+  case "$ALLOW_PRERELEASES" in
+    1 | true | TRUE | yes | YES) set -- "$@" --allow-prereleases ;;
   esac
   case "$SKIP_SERVICE" in
     1 | true | TRUE | yes | YES) set -- "$@" --skip-service ;;
@@ -333,7 +349,18 @@ main() {
     die "archive did not contain probo-agent binary"
   fi
 
+  binary_dir="$(dirname "$BINARY_PATH")"
+  mkdir -p "$binary_dir"
+  if [ "$(uname -s)" = Darwin ]; then
+    chown root:wheel "$binary_dir"
+    chmod 0755 "$binary_dir"
+  fi
+
   install -m 0755 "${workdir}/${archive_dir}/probo-agent" "$BINARY_PATH"
+  if [ "$(uname -s)" = Darwin ]; then
+    chown root:wheel "$BINARY_PATH"
+    chmod 0755 "$BINARY_PATH"
+  fi
   printf 'Installed %s\n' "$BINARY_PATH"
 
   prompt_server_url

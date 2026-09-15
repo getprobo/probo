@@ -65,6 +65,11 @@ type Registry struct {
 	managedResourceIDs map[coredata.ConnectorProvider]string
 }
 
+// installAppIDPlaceholder is what Endpoints.Install carries in place of this
+// deployment's app id. It is substituted literally rather than formatted, so a
+// vendor URL containing a percent-encoded literal survives intact.
+const installAppIDPlaceholder = "%s"
+
 // NewRegistry returns an empty *Registry. Production code uses
 // NewBuiltinRegistry; tests and specialised callers can construct an
 // empty Registry and register only the providers they need.
@@ -239,6 +244,77 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
+	// The same pairing rule as OAuth2 and Endpoints.Auth, for the same reason:
+	// a nil Install must mean "no install path" rather than "an install path
+	// whose metadata took its defaults", or a provider added without the block
+	// would ship a redirect nothing can verify.
+	if reg.Install == nil {
+		if reg.Endpoints.Install != "" {
+			return fmt.Errorf("cannot register connector provider %q: Endpoints.Install requires an Install block", reg.Provider)
+		}
+	} else {
+		if reg.Endpoints.Install == "" {
+			return fmt.Errorf("cannot register connector provider %q: Install requires Endpoints.Install", reg.Provider)
+		}
+
+		if reg.Install.Verify == nil || reg.Install.StateParam == "" || reg.Install.SettingsResourceKey == "" {
+			return fmt.Errorf("cannot register connector provider %q: Install requires Verify, StateParam and SettingsResourceKey", reg.Provider)
+		}
+
+		// The template is the one endpoint that is not a URL until it is
+		// expanded, so nothing else would catch a missing or doubled
+		// placeholder: InstallURL would silently redirect the customer to a
+		// vendor page with no app id, or with a literal one left in. Expand it
+		// with a stand-in here and parse the result, so a malformed template
+		// fails at startup rather than mid-ceremony.
+		if strings.Count(reg.Endpoints.Install, installAppIDPlaceholder) != 1 {
+			return fmt.Errorf(
+				"cannot register connector provider %q: Endpoints.Install must contain exactly one %s placeholder for the app id",
+				reg.Provider,
+				installAppIDPlaceholder,
+			)
+		}
+
+		expanded := strings.Replace(reg.Endpoints.Install, installAppIDPlaceholder, "app-id", 1)
+
+		installURL, err := url.Parse(expanded)
+		if err != nil {
+			return fmt.Errorf("cannot register connector provider %q: Endpoints.Install is not a URL once expanded: %w", reg.Provider, err)
+		}
+
+		// url.Parse accepts a relative reference and any scheme, so parsing
+		// alone would let a hostless or javascript: template through and the
+		// initiate handler would redirect the customer to Probo's own origin,
+		// or worse. The destination is a vendor's install page; it is always
+		// absolute and always https.
+		//
+		// Hostname(), not Host: a port-only authority ("https://:8080/") has a
+		// non-empty Host and no host at all.
+		if installURL.Scheme != "https" || installURL.Hostname() == "" {
+			return fmt.Errorf(
+				"cannot register connector provider %q: Endpoints.Install must expand to an absolute https URL, got %q",
+				reg.Provider,
+				expanded,
+			)
+		}
+
+		// The install redirect is the only way in, so an extra-settings list
+		// here would render nowhere and CompleteInstall would persist only the
+		// resource id — the customer's values dropped without a word.
+		if len(reg.APIKeyExtraSettings()) > 0 {
+			return fmt.Errorf("cannot register connector provider %q: Install has no dialog to collect APIKey.ExtraSettings", reg.Provider)
+		}
+
+		// The ceremony yields a tenant id bound to Probo's own app credential,
+		// so the provider must hold a Probo-supplied key and the app id the
+		// initiate URL interpolates. A customer-pasted key would have nothing
+		// to verify against, and the console would offer both a redirect and a
+		// key dialog.
+		if !reg.IsManagedAPIKey() || !reg.APIKey.Managed.RequiresResourceID {
+			return fmt.Errorf("cannot register connector provider %q: Install requires a managed API key with RequiresResourceID", reg.Provider)
+		}
+	}
+
 	// A settings list for a path the provider does not offer is now
 	// unrepresentable: each list lives inside the block that offers it.
 	//
@@ -370,6 +446,50 @@ func (r *Registry) NewAPIKeyConnection(
 	}
 
 	return conn
+}
+
+// InstallURL builds the vendor page the customer is sent to in order to install
+// Probo's app, interpolating this deployment's app id (Crisp's plugin ID) into
+// Endpoints.Install and attaching the signed state under the provider's own
+// echo parameter. The app id comes from operator config, never from a request,
+// which is what makes interpolating it straight into the URL safe.
+func (r *Registry) InstallURL(p coredata.ConnectorProvider, state string) (string, error) {
+	reg, ok := r.Get(p)
+	if !ok {
+		return "", fmt.Errorf("cannot build install URL: unknown connector provider %q", p)
+	}
+
+	if !reg.SupportsInstall() {
+		return "", fmt.Errorf("cannot build install URL: connector provider %q has no install path", p)
+	}
+
+	appID, ok := r.ManagedResourceID(p)
+	if !ok {
+		return "", fmt.Errorf("cannot build install URL: connector provider %q has no managed resource id configured", p)
+	}
+
+	// Endpoints.Install is a %s template, so it only becomes parseable here.
+	//
+	// Substituted, not formatted: a vendor URL may legitimately carry a
+	// percent-encoded literal, which fmt.Sprintf would read as a verb and
+	// mangle. The app id is path-escaped because it lands in a path segment —
+	// operator config, not request input, but a stray slash would still move
+	// the URL rather than fail loudly.
+	u, err := url.Parse(strings.Replace(
+		reg.Endpoints.Install,
+		installAppIDPlaceholder,
+		url.PathEscape(appID),
+		1,
+	))
+	if err != nil {
+		return "", fmt.Errorf("cannot build install URL for connector provider %q: %w", p, err)
+	}
+
+	q := u.Query()
+	q.Set(reg.Install.StateParam, state)
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
 }
 
 // ValidateAPIKey checks a customer-pasted key against the shape its provider

@@ -23,6 +23,10 @@ package identityfederation
 const (
 	// AudienceAWS is the audience AWS STS requires on a web identity token.
 	AudienceAWS = "sts.amazonaws.com"
+
+	// AudienceAzure is the audience Entra requires on a federated identity
+	// credential used as a client assertion.
+	AudienceAzure = "api://AzureADTokenExchange"
 )
 
 type (

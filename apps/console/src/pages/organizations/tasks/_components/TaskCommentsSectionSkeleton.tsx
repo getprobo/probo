@@ -18,20 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-
 import { taskCommentsSection } from "../variants";
 
 export function TaskCommentsSectionSkeleton() {
-  const { root, header, list, titleSkeleton, itemSkeleton } = taskCommentsSection();
+  const { root, list, itemSkeleton } = taskCommentsSection();
 
   return (
     <div className={root()}>
-      <div className={header()}>
-        <div className={titleSkeleton()}>
-          <HeadingSkeleton size={4} />
-        </div>
-      </div>
       <div className={list()}>
         <div className={itemSkeleton()} />
         <div className={itemSkeleton()} />

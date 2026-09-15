@@ -583,6 +583,14 @@ func DeriveConnectorStateKey(serverSecret string) string {
 	return deriveHMACKey(serverSecret, "probo/connector/oauth2-state-key")
 }
 
+// DeriveInstallStateKey derives the HMAC key signing app-install state tokens
+// from the active OAuth2 server signing key. Same rotation caveat as
+// DeriveConnectorStateKey: a state in flight inside the TTL fails validation
+// across a rotation and the customer must retry.
+func DeriveInstallStateKey(serverSecret string) string {
+	return deriveHMACKey(serverSecret, "probo/connector/install-state-key")
+}
+
 func basicAuthHeader(clientID, clientSecret string) string {
 	credentials := clientID + ":" + clientSecret
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))

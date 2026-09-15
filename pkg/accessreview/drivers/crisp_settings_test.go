@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetCrispSubscriptionSettings(t *testing.T) {
+func TestGetCrispSubscription(t *testing.T) {
 	t.Parallel()
 
 	const (
@@ -39,44 +39,44 @@ func TestGetCrispSubscriptionSettings(t *testing.T) {
 		pluginID  = "e979a1c3-2c41-4e93-a8ed-410ace27318e"
 	)
 
-	t.Run("200 returns the verification code from data.settings", func(t *testing.T) {
+	t.Run("200 returns the subscription token", func(t *testing.T) {
 		t.Parallel()
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// The plugin subscription-settings endpoint is plugins (plural)
-			// with both website_id and plugin_id in the path.
+			// The plugin subscription endpoint is plugins (plural) with both
+			// website_id and plugin_id in the path.
 			assert.Equal(t, http.MethodGet, r.Method)
 			assert.Equal(t, "/v1/plugins/subscription/"+websiteID+"/"+pluginID+"/settings", r.URL.Path)
 			assert.Equal(t, "plugin", r.Header.Get("X-Crisp-Tier"))
 
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"error":false,"reason":"resolved","data":{"plugin_id":"` + pluginID + `","settings":{"probo_verification_code":"ABC234DEF567"}}}`))
+			_, _ = w.Write([]byte(`{"error":false,"reason":"resolved","data":{"plugin_id":"` + pluginID + `","token":"s3cr3t-token","settings":{}}}`))
 		}))
 		defer srv.Close()
 
 		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-		settings, err := GetCrispSubscriptionSettings(context.Background(), client, websiteID, pluginID)
+		sub, err := GetCrispSubscription(context.Background(), client, websiteID, pluginID)
 		require.NoError(t, err)
-		require.NotNil(t, settings)
-		assert.Equal(t, "ABC234DEF567", settings.ProboVerificationCode)
+		require.NotNil(t, sub)
+		assert.Equal(t, "s3cr3t-token", sub.Token)
 	})
 
-	t.Run("200 without the code returns empty (mismatch handled by caller)", func(t *testing.T) {
+	t.Run("200 without a token returns empty (mismatch handled by caller)", func(t *testing.T) {
 		t.Parallel()
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"error":false,"data":{"settings":{}}}`))
+			_, _ = w.Write([]byte(`{"error":false,"data":{}}`))
 		}))
 		defer srv.Close()
 
 		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-		settings, err := GetCrispSubscriptionSettings(context.Background(), client, websiteID, pluginID)
+		sub, err := GetCrispSubscription(context.Background(), client, websiteID, pluginID)
 		require.NoError(t, err)
-		require.NotNil(t, settings)
-		assert.Empty(t, settings.ProboVerificationCode)
+		require.NotNil(t, sub)
+		assert.Empty(t, sub.Token)
 	})
 
 	t.Run("404 reports the plugin is not subscribed", func(t *testing.T) {
@@ -90,12 +90,12 @@ func TestGetCrispSubscriptionSettings(t *testing.T) {
 
 		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-		settings, err := GetCrispSubscriptionSettings(context.Background(), client, websiteID, pluginID)
+		sub, err := GetCrispSubscription(context.Background(), client, websiteID, pluginID)
 		require.ErrorIs(t, err, ErrCrispPluginNotSubscribed)
-		assert.Nil(t, settings)
+		assert.Nil(t, sub)
 	})
 
-	t.Run("non-2xx returns an error", func(t *testing.T) {
+	t.Run("non-2xx returns a typed status error", func(t *testing.T) {
 		t.Parallel()
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -106,10 +106,36 @@ func TestGetCrispSubscriptionSettings(t *testing.T) {
 
 		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-		settings, err := GetCrispSubscriptionSettings(context.Background(), client, websiteID, pluginID)
+		sub, err := GetCrispSubscription(context.Background(), client, websiteID, pluginID)
 		require.Error(t, err)
 		assert.False(t, errors.Is(err, ErrCrispPluginNotSubscribed))
-		assert.Nil(t, settings)
+		assert.Nil(t, sub)
+
+		statusErr, ok := errors.AsType[*CrispStatusError](err)
+		require.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, statusErr.Code)
+	})
+
+	// The install callback must classify this one as terminal; without the
+	// typed status it is indistinguishable from the retryable 500 above.
+	t.Run("401 returns a typed status error", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":true,"reason":"not_authorized"}`))
+		}))
+		defer srv.Close()
+
+		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+		sub, err := GetCrispSubscription(context.Background(), client, websiteID, pluginID)
+		require.Error(t, err)
+		assert.Nil(t, sub)
+
+		statusErr, ok := errors.AsType[*CrispStatusError](err)
+		require.True(t, ok)
+		assert.Equal(t, http.StatusUnauthorized, statusErr.Code)
 	})
 
 	t.Run("2xx with error:true returns an error", func(t *testing.T) {
@@ -123,8 +149,12 @@ func TestGetCrispSubscriptionSettings(t *testing.T) {
 
 		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-		settings, err := GetCrispSubscriptionSettings(context.Background(), client, websiteID, pluginID)
+		sub, err := GetCrispSubscription(context.Background(), client, websiteID, pluginID)
 		require.Error(t, err)
-		assert.Nil(t, settings)
+		assert.Nil(t, sub)
+
+		// No status to classify, so the callback treats it as transient.
+		_, ok := errors.AsType[*CrispStatusError](err)
+		assert.False(t, ok)
 	})
 }
