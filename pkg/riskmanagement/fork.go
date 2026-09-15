@@ -40,10 +40,15 @@ func (s *Service) Fork(
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
+	description, err := optionalDocumentJSON(req.Description)
+	if err != nil {
+		return nil, fmt.Errorf("cannot sanitize description: %w", err)
+	}
+
 	now := time.Now()
 	forked := &coredata.RiskAnalysis{}
 
-	err := s.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			source := &coredata.RiskAnalysis{}
@@ -55,7 +60,7 @@ func (s *Service) Fork(
 				ID:             gid.New(scope.GetTenantID(), coredata.RiskAnalysisEntityType),
 				OrganizationID: source.OrganizationID,
 				Name:           req.Name,
-				Description:    req.Description,
+				Description:    description,
 				MatrixRows:     source.MatrixRows,
 				MatrixCols:     source.MatrixCols,
 				CreatedAt:      now,

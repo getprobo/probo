@@ -41,6 +41,8 @@ import { NotFoundError } from "#/lib/relay/errors";
 
 import { formatMatrixSize } from "./_components/matrixSize";
 import { RiskAnalysisActions } from "./_components/RiskAnalysisActions";
+import { RiskAnalysisDescriptionSection } from "./_components/RiskAnalysisDescriptionSection";
+import { riskAnalysisDetailSummary } from "./variants";
 
 export const riskAnalysisDetailLayoutQuery = graphql`
   query RiskAnalysisDetailLayoutQuery($riskAnalysisId: ID!) {
@@ -49,7 +51,6 @@ export const riskAnalysisDetailLayoutQuery = graphql`
       ... on RiskAnalysis {
         id
         name
-        description
         period {
           start
           end
@@ -60,6 +61,7 @@ export const riskAnalysisDetailLayoutQuery = graphql`
         }
         createdAt
         ...RiskAnalysisActions_riskAnalysis
+        ...RiskAnalysisDescriptionSection_riskAnalysis
       }
     }
   }
@@ -101,10 +103,11 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
   const periodLabel = ra.period
     ? `${ra.period.start ? dateFormat(i18n.language, ra.period.start) : "—"} – ${ra.period.end ? dateFormat(i18n.language, ra.period.end) : "—"}`
     : "—";
+  const { body, meta, label, value } = riskAnalysisDetailSummary();
 
   return (
     <div className="space-y-6">
-      <PageHeader title={ra.name} description={ra.description}>
+      <PageHeader title={ra.name}>
         <RiskAnalysisActions
           riskAnalysisKey={ra}
           connectionId={listConnectionId}
@@ -116,29 +119,32 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
       </PageHeader>
 
       <Card padded>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskAnalysisDetailPage.fields.period")}
+        <div className={body()}>
+          <RiskAnalysisDescriptionSection riskAnalysisKey={ra} />
+          <div className={meta()}>
+            <div>
+              <div className={label()}>
+                {t("riskAnalysisDetailPage.fields.period")}
+              </div>
+              <div className={value()}>
+                {periodLabel}
+              </div>
             </div>
-            <div className="text-sm text-txt-primary">
-              {periodLabel}
+            <div>
+              <div className={label()}>
+                {t("riskAnalysisDetailPage.fields.matrixSize")}
+              </div>
+              <div className={value()}>
+                {formatMatrixSize(ra.matrixSize.rows, ra.matrixSize.cols)}
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskAnalysisDetailPage.fields.matrixSize")}
-            </div>
-            <div className="text-sm text-txt-primary">
-              {formatMatrixSize(ra.matrixSize.rows, ra.matrixSize.cols)}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {t("riskAnalysisDetailPage.fields.createdAt")}
-            </div>
-            <div className="text-sm text-txt-primary">
-              {dateFormat(i18n.language, ra.createdAt)}
+            <div>
+              <div className={label()}>
+                {t("riskAnalysisDetailPage.fields.createdAt")}
+              </div>
+              <div className={value()}>
+                {dateFormat(i18n.language, ra.createdAt)}
+              </div>
             </div>
           </div>
         </div>

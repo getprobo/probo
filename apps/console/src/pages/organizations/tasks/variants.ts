@@ -70,13 +70,6 @@ export const taskNameField = tv({
   },
 });
 
-export const taskDescriptionSection = tv({
-  slots: {
-    root: "min-w-0",
-    editor: "min-h-40",
-  },
-});
-
 export const taskDurationField = tv({
   slots: {
     root: "grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-2",

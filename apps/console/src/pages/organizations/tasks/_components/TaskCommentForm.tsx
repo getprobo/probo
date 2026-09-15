@@ -25,7 +25,11 @@ import { Field } from "@probo/ui/src/v2/form/Field";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { isRichEditorContentEmpty, richEditorContentTextLength } from "../_lib/richEditorContent";
+import {
+  isRichEditorContentEmpty,
+  richEditorContentTextLength,
+} from "#/pages/organizations/_lib/richEditorContent";
+
 import { taskCommentMaxLength } from "../_lib/taskCommentMaxLength";
 import { useCreateTaskComment } from "../_lib/useCreateTaskComment";
 import { taskCommentEditor, taskCommentForm } from "../variants";

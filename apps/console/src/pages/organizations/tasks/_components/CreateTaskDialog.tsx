@@ -39,7 +39,8 @@ import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { isRichEditorContentEmpty } from "../_lib/richEditorContent";
+import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
+
 import type { TaskPriority, TaskState } from "../_lib/taskState";
 import {
   taskPriorities,

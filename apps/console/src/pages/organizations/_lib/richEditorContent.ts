@@ -126,3 +126,33 @@ export function richEditorContentTextLength(content: string): number {
 
   return jsonContentTextLength(parsed);
 }
+
+function collectPlainText(node: JSONContent): string {
+  if (node.type === "text") {
+    return node.text ?? "";
+  }
+
+  if (node.type === "hardBreak" || node.type === "horizontalRule") {
+    return "\n";
+  }
+
+  const inner = (node.content ?? []).map(collectPlainText).join("");
+
+  switch (node.type) {
+    case "paragraph":
+    case "heading":
+    case "codeBlock":
+      return `${inner}\n`;
+    default:
+      return inner;
+  }
+}
+
+export function richEditorContentPlainText(content: string): string {
+  const parsed = parseDoc(content);
+  if (parsed == null) {
+    return "";
+  }
+
+  return collectPlainText(parsed).replace(/\n+$/, "");
+}

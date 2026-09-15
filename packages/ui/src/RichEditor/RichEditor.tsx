@@ -34,7 +34,7 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect } from "react";
+import { type ComponentProps, useCallback, useEffect, useLayoutEffect } from "react";
 import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu/BlockMenu";
@@ -43,7 +43,7 @@ import { CodeBlockExtension } from "./CodeBlockExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
-import { PlaceholderExtension } from "./PlaceholderExtension";
+import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
@@ -63,7 +63,6 @@ const extensions = [
   CodeBlockExtension,
   LinkExtension,
   SlashCommandExtension,
-  PlaceholderExtension,
   Blockquote,
   BulletList,
   OrderedList,
@@ -80,6 +79,7 @@ const extensions = [
     table: { resizable: true },
   }),
   MarkdownPasteExtension,
+  PlaceholderExtension,
 ];
 
 const richEditorVariants = tv({
@@ -95,6 +95,7 @@ const richEditorVariants = tv({
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
+  placeholder?: string;
   onChangeContent?: (content: string) => void;
 };
 
@@ -115,6 +116,7 @@ export function RichEditor(props: RichEditorProps) {
     className,
     content,
     disabled = false,
+    placeholder,
     onChangeContent,
     ...divProps
   } = props;
@@ -141,6 +143,14 @@ export function RichEditor(props: RichEditorProps) {
     content: parseContent(content),
     onUpdate: handleUpdate,
   });
+
+  useLayoutEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    setPlaceholder(editor, placeholder);
+  }, [editor, placeholder]);
 
   useEffect(() => {
     if (!editor) {

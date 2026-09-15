@@ -426,14 +426,14 @@ func TestRiskAnalysis_Update(t *testing.T) {
 		"input": map[string]any{
 			"id":          raID,
 			"name":        "Updated",
-			"description": "New description",
+			"description": factory.ProseMirrorPlainText("New description"),
 		},
 	}, &result)
 
 	require.NoError(t, err)
 	assert.Equal(t, "Updated", result.UpdateRiskAnalysis.RiskAnalysis.Name)
 	require.NotNil(t, result.UpdateRiskAnalysis.RiskAnalysis.Description)
-	assert.Equal(t, "New description", *result.UpdateRiskAnalysis.RiskAnalysis.Description)
+	factory.AssertProseMirrorPlainText(t, "New description", *result.UpdateRiskAnalysis.RiskAnalysis.Description)
 	assert.Equal(t, 5, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Rows)
 	assert.Equal(t, 5, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Cols)
 }

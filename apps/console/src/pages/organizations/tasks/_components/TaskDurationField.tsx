@@ -30,6 +30,8 @@ import type { FocusEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useSerializedFieldSave";
+
 import {
   parseTaskDuration,
   parseTaskDurationAmount,
@@ -38,7 +40,6 @@ import {
   type TaskDurationUnit,
   taskEstimateDurationUnits,
 } from "../_lib/taskDuration";
-import { useDebouncedSerializedFieldSave } from "../_lib/useSerializedFieldSave";
 import { taskDurationField } from "../variants";
 
 const durationFieldAttr = "data-task-duration-field";

@@ -20,43 +20,43 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-type RequestedSave = {
-  id: number;
-  value: string;
-  save: (value: string) => Promise<void>;
-};
-
 export function useSerializedFieldSave(
   save: (value: string) => Promise<void>,
 ) {
-  const [queued, setQueued] = useState<RequestedSave | null>(null);
-  const [inFlightId, setInFlightId] = useState<number | null>(null);
-
-  if (queued != null && inFlightId == null) {
-    setInFlightId(queued.id);
-  }
+  const saveRef = useRef(save);
+  const pendingRef = useRef<string | null>(null);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
-    if (inFlightId == null || queued == null || queued.id !== inFlightId) {
-      return;
-    }
-
-    const { id, value, save: persistValue } = queued;
-    void persistValue(value)
-      .finally(() => {
-        setInFlightId(current => (current === id ? null : current));
-        setQueued(current => (current?.id === id ? null : current));
-      })
-      .catch(() => undefined);
-  }, [inFlightId, queued]);
+    saveRef.current = save;
+  }, [save]);
 
   return useCallback((value: string) => {
-    setQueued(current => ({
-      id: (current?.id ?? 0) + 1,
-      value,
-      save,
-    }));
-  }, [save]);
+    pendingRef.current = value;
+
+    function pump() {
+      if (inFlightRef.current) {
+        return;
+      }
+
+      const next = pendingRef.current;
+      if (next == null) {
+        return;
+      }
+
+      pendingRef.current = null;
+      inFlightRef.current = true;
+
+      void saveRef.current(next)
+        .catch(() => undefined)
+        .finally(() => {
+          inFlightRef.current = false;
+          pump();
+        });
+    }
+
+    pump();
+  }, []);
 }
 
 export function useDebouncedSerializedFieldSave(
@@ -64,15 +64,17 @@ export function useDebouncedSerializedFieldSave(
   delayMs: number,
 ) {
   const persist = useSerializedFieldSave(save);
+  const persistRef = useRef(persist);
   const [pending, setPending] = useState<string | null>(null);
-  const pendingSave = useRef<{
-    value: string;
-    save: (value: string) => Promise<void>;
-  } | null>(null);
+  const pendingSave = useRef<{ value: string } | null>(null);
+
+  useEffect(() => {
+    persistRef.current = persist;
+  }, [persist]);
 
   useLayoutEffect(() => {
-    pendingSave.current = pending == null ? null : { value: pending, save };
-  }, [pending, save]);
+    pendingSave.current = pending == null ? null : { value: pending };
+  }, [pending]);
 
   useEffect(() => {
     return () => {
@@ -81,7 +83,7 @@ export function useDebouncedSerializedFieldSave(
         return;
       }
 
-      void queued.save(queued.value).catch(() => undefined);
+      persistRef.current(queued.value);
     };
   }, []);
 
@@ -101,7 +103,7 @@ export function useDebouncedSerializedFieldSave(
   }, [delayMs, pending, persist]);
 
   function schedule(value: string) {
-    pendingSave.current = { value, save };
+    pendingSave.current = { value };
     setPending(value);
   }
 

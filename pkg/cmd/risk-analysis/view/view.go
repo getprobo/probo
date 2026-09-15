@@ -167,7 +167,14 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
 
 			if r.Description != nil && *r.Description != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)
+				description, err := cmdutil.FormatRichText(*r.Description)
+				if err != nil {
+					return fmt.Errorf("cannot format description: %w", err)
+				}
+
+				if description != "" {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), description)
+				}
 			}
 
 			if r.Period != nil {

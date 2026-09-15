@@ -4614,7 +4614,9 @@
       "error": "Fout"
     },
     "errors": {
-      "delete": "Verwijderen van risicobeoordeling mislukt"
+      "delete": "Verwijderen van risicobeoordeling mislukt",
+      "update": "Bijwerken van risicobeoordeling mislukt",
+      "content": "Deze beschrijving kon niet worden weergegeven"
     },
     "deleteConfirmation": "Hiermee worden deze risicobeoordeling en alle bijbehorende diagrammen, nodes, processen en dreigingen permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
@@ -4624,10 +4626,12 @@
       "showMore": "Meer tonen"
     },
     "details": "Details",
+    "noDescription": "Geen beschrijving",
     "fields": {
       "period": "Periode",
       "matrixSize": "Matrixgrootte",
-      "createdAt": "Aangemaakt op"
+      "createdAt": "Aangemaakt op",
+      "description": "Beschrijving"
     },
     "diagrams": "Diagrammen",
     "treatmentPlans": "Risico's en behandelplannen",

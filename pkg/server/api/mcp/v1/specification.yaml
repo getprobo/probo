@@ -14496,6 +14496,7 @@ components:
           type:
             - string
             - "null"
+          description: Risk analysis description in markdown (converted from stored ProseMirror JSON)
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
@@ -14757,7 +14758,7 @@ components:
           description: Risk analysis name
         description:
           type: string
-          description: Risk analysis description
+          description: Risk analysis description in markdown format
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
@@ -14786,7 +14787,7 @@ components:
           description: Risk analysis name
         description:
           type: ["string", "null"]
-          description: Risk analysis description
+          description: Risk analysis description in markdown format
           go.probo.inc/mcpgen/omittable: true
         period:
           $ref: "#/components/schemas/Period"
@@ -14832,7 +14833,7 @@ components:
           description: Forked risk analysis name
         description:
           type: string
-          description: Forked risk analysis description
+          description: Forked risk analysis description in markdown format
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period (not copied from the source)

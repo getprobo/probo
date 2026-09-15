@@ -25,10 +25,10 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskCommentEditor_taskComment$key } from "#/__generated__/core/TaskCommentEditor_taskComment.graphql";
+import { richEditorContentTextLength } from "#/pages/organizations/_lib/richEditorContent";
+import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useSerializedFieldSave";
 
-import { richEditorContentTextLength } from "../_lib/richEditorContent";
 import { taskCommentMaxLength } from "../_lib/taskCommentMaxLength";
-import { useDebouncedSerializedFieldSave } from "../_lib/useSerializedFieldSave";
 import { useUpdateTaskComment } from "../_lib/useUpdateTaskComment";
 import { taskCommentEditor } from "../variants";
 

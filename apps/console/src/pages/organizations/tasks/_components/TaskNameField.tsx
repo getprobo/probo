@@ -24,8 +24,8 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskNameField_task$key } from "#/__generated__/core/TaskNameField_task.graphql";
+import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useSerializedFieldSave";
 
-import { useDebouncedSerializedFieldSave } from "../_lib/useSerializedFieldSave";
 import { useUpdateTask } from "../_lib/useUpdateTask";
 import { taskNameField } from "../variants";
 

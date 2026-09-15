@@ -18,21 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { RichEditor } from "@probo/ui";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type ErrorInfo, type ReactNode, useCallback, useState } from "react";
+import { type ErrorInfo, type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskDescriptionSection_task$key } from "#/__generated__/core/TaskDescriptionSection_task.graphql";
+import { RichDescriptionEditor } from "#/pages/organizations/_components/RichDescriptionEditor";
 
-import { isRichEditorContentEmpty } from "../_lib/richEditorContent";
-import { useDebouncedSerializedFieldSave } from "../_lib/useSerializedFieldSave";
 import { useUpdateTask } from "../_lib/useUpdateTask";
-import { taskDescriptionSection } from "../variants";
-
-const taskDescriptionSaveDelayMs = 1000;
 
 const taskDescriptionSectionFragment = graphql`
   fragment TaskDescriptionSection_task on Task {
@@ -48,10 +43,6 @@ interface TaskDescriptionSectionProps {
   onError?: (error: unknown, info: ErrorInfo) => void;
 }
 
-function normalizeContent(value: string) {
-  return isRichEditorContentEmpty(value) ? "" : value;
-}
-
 function TaskDescriptionSectionContent({
   taskKey,
 }: {
@@ -60,95 +51,28 @@ function TaskDescriptionSectionContent({
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskDescriptionSectionFragment, taskKey);
   const [updateTask] = useUpdateTask();
-  const saved = task.content;
-  const [draft, setDraft] = useState(saved);
-  const [savedContent, setSavedContent] = useState(saved);
-  const [dirty, setDirty] = useState(false);
-  const [editorGeneration, setEditorGeneration] = useState(0);
-
-  if (saved !== savedContent) {
-    setSavedContent(saved);
-    if (!dirty) {
-      setDraft(saved);
-      setEditorGeneration(generation => generation + 1);
-    }
-  }
-
-  const persist = useCallback(
-    async (value: string) => {
-      const next = normalizeContent(value);
-
-      try {
-        await updateTask(
-          {
-            variables: {
-              input: {
-                taskId: task.id,
-                content: next || null,
-              },
-            },
+  const save = useCallback(
+    async (content: string | null) => {
+      await updateTask({
+        variables: {
+          input: {
+            taskId: task.id,
+            content,
           },
-        );
-        setDraft((current) => {
-          if (current === value || normalizeContent(current) === next) {
-            setDirty(false);
-            return next;
-          }
-          return current;
-        });
-      } catch {
-        setDraft((current) => {
-          if (normalizeContent(current) === next) {
-            setDirty(false);
-            setEditorGeneration(generation => generation + 1);
-            return saved;
-          }
-          return current;
-        });
-      }
+        },
+      });
     },
-    [saved, task.id, updateTask],
+    [task.id, updateTask],
   );
-  const persistDebounced = useDebouncedSerializedFieldSave(
-    persist,
-    taskDescriptionSaveDelayMs,
-  );
-  const { root, editor } = taskDescriptionSection();
 
   return (
-    <div className={root()}>
-      {task.canUpdate
-        ? (
-            <RichEditor
-              key={editorGeneration}
-              className={editor()}
-              content={draft}
-              aria-label={t("detailsPage.fields.description")}
-              onChangeContent={(next) => {
-                setDirty(true);
-                setDraft(next);
-                persistDebounced.schedule(next);
-              }}
-              onBlur={() => {
-                persistDebounced.flush();
-              }}
-            />
-          )
-        : isRichEditorContentEmpty(saved)
-          ? (
-              <Text size={2} color="faint">
-                {t("detailsPage.noDescription")}
-              </Text>
-            )
-          : (
-              <RichEditor
-                className={editor()}
-                content={saved}
-                disabled
-                aria-label={t("detailsPage.fields.description")}
-              />
-            )}
-    </div>
+    <RichDescriptionEditor
+      saved={task.content}
+      canUpdate={task.canUpdate}
+      ariaLabel={t("detailsPage.fields.description")}
+      emptyLabel={t("detailsPage.noDescription")}
+      save={save}
+    />
   );
 }
 
