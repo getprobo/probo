@@ -228,5 +228,54 @@
       "consentExpiryDays": "Expiration du consentement (jours)"
     },
     "actions": { "creating": "Création...", "create": "Créer la bannière" }
+  },
+  "tcfPage": {
+    "title": "Fournisseurs TCF",
+    "description": "Choisissez les fournisseurs de la Global Vendor List IAB que cette bannière divulgue.",
+    "searchPlaceholder": "Rechercher",
+    "stats": {
+      "vendors": "Fournisseurs",
+      "catalog": "Catalogue",
+      "draft": "brouillon",
+      "live": "en ligne",
+      "gvl": "GVL",
+      "tcfPolicy": "Politique TCF",
+      "empty": "—",
+      "version": "v{{version}}",
+      "catalogTotal_one": "{{count}} fournisseur",
+      "catalogTotal_other": "{{count}} fournisseurs",
+      "unpublishedAdded_one": "{{count}} fournisseur à ajouter",
+      "unpublishedAdded_other": "{{count}} fournisseurs à ajouter",
+      "unpublishedRemoved_one": "{{count}} fournisseur à retirer",
+      "unpublishedRemoved_other": "{{count}} fournisseurs à retirer",
+      "unpublishedChanged": "{{added}} à ajouter, {{removed}} à retirer",
+      "unpublishedNever": "Pas encore publié"
+    },
+    "emptyCatalog": "Aucun fournisseur GVL n’est encore importé. Exécutez gvl-import pour remplir le catalogue.",
+    "emptyFiltered": "Aucun fournisseur correspondant",
+    "emptyFilteredDescription": "Essayez un autre nom, identifiant IAB ou filtre d’appartenance.",
+    "filter": {
+      "label": "Appartenance du fournisseur",
+      "all": "Tous les fournisseurs",
+      "on": "Sur cette bannière",
+      "off": "Hors de cette bannière"
+    },
+    "previous": "Préc.",
+    "next": "Suiv.",
+    "noUpdatePermission": "Vous n’avez pas l’autorisation de modifier les fournisseurs TCF.",
+    "iabVendorId": "IAB {{id}}",
+    "policy": "Politique de confidentialité",
+    "notFound": "Page introuvable",
+    "actions": {
+      "clearSearch": "Effacer les filtres",
+      "add": "Ajouter",
+      "remove": "Retirer",
+      "addVendor": "Ajouter {{name}} à cette bannière",
+      "removeVendor": "Retirer {{name}} de cette bannière"
+    },
+    "errors": {
+      "add": "Échec de l’ajout du fournisseur",
+      "remove": "Échec de la suppression du fournisseur"
+    }
   }
 }

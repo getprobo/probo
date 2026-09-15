@@ -228,5 +228,54 @@
       "consentExpiryDays": "Vervaltermijn toestemming (dagen)"
     },
     "actions": { "creating": "Bezig met aanmaken...", "create": "Banner aanmaken" }
+  },
+  "tcfPage": {
+    "title": "TCF-leveranciers",
+    "description": "Kies welke IAB Global Vendor List-leveranciers deze banner bekendmaakt.",
+    "searchPlaceholder": "Leveranciers zoeken",
+    "stats": {
+      "vendors": "Leveranciers",
+      "catalog": "Catalogus",
+      "draft": "concept",
+      "live": "live",
+      "gvl": "GVL",
+      "tcfPolicy": "TCF-beleid",
+      "empty": "—",
+      "version": "v{{version}}",
+      "catalogTotal_one": "{{count}} leverancier",
+      "catalogTotal_other": "{{count}} leveranciers",
+      "unpublishedAdded_one": "{{count}} leverancier toe te voegen",
+      "unpublishedAdded_other": "{{count}} leveranciers toe te voegen",
+      "unpublishedRemoved_one": "{{count}} leverancier te verwijderen",
+      "unpublishedRemoved_other": "{{count}} leveranciers te verwijderen",
+      "unpublishedChanged": "{{added}} toe te voegen, {{removed}} te verwijderen",
+      "unpublishedNever": "Nog niet gepubliceerd"
+    },
+    "emptyCatalog": "Er zijn nog geen GVL-leveranciers geïmporteerd. Voer gvl-import uit om de catalogus te vullen.",
+    "emptyFiltered": "Geen overeenkomende leveranciers",
+    "emptyFilteredDescription": "Probeer een andere naam, IAB-leveranciers-ID of lidmaatschapsfilter.",
+    "filter": {
+      "label": "Leverancierslidmaatschap",
+      "all": "Alle leveranciers",
+      "on": "Op deze banner",
+      "off": "Niet op deze banner"
+    },
+    "previous": "Vorige",
+    "next": "Volgende",
+    "noUpdatePermission": "Je hebt geen toestemming om TCF-leveranciers te wijzigen.",
+    "iabVendorId": "IAB {{id}}",
+    "policy": "Privacybeleid",
+    "notFound": "Pagina niet gevonden",
+    "actions": {
+      "clearSearch": "Filters wissen",
+      "add": "Toevoegen",
+      "remove": "Verwijderen",
+      "addVendor": "{{name}} toevoegen aan deze banner",
+      "removeVendor": "{{name}} verwijderen van deze banner"
+    },
+    "errors": {
+      "add": "Leverancier toevoegen mislukt",
+      "remove": "Leverancier verwijderen mislukt"
+    }
   }
 }

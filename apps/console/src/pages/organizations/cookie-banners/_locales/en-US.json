@@ -228,5 +228,54 @@
       "consentExpiryDays": "Consent expiry (days)"
     },
     "actions": { "creating": "Creating...", "create": "Create banner" }
+  },
+  "tcfPage": {
+    "title": "TCF vendors",
+    "description": "Choose which IAB Global Vendor List vendors this banner discloses.",
+    "searchPlaceholder": "Search vendors",
+    "stats": {
+      "vendors": "Vendors",
+      "catalog": "Catalog",
+      "draft": "draft",
+      "live": "live",
+      "gvl": "GVL",
+      "tcfPolicy": "TCF policy",
+      "empty": "—",
+      "version": "v{{version}}",
+      "catalogTotal_one": "{{count}} vendor",
+      "catalogTotal_other": "{{count}} vendors",
+      "unpublishedAdded_one": "{{count}} vendor to add",
+      "unpublishedAdded_other": "{{count}} vendors to add",
+      "unpublishedRemoved_one": "{{count}} vendor to remove",
+      "unpublishedRemoved_other": "{{count}} vendors to remove",
+      "unpublishedChanged": "{{added}} to add, {{removed}} to remove",
+      "unpublishedNever": "Not published yet"
+    },
+    "emptyCatalog": "No GVL vendors are imported yet. Run gvl-import to fill the catalog.",
+    "emptyFiltered": "No matching vendors",
+    "emptyFilteredDescription": "Try a different name, IAB vendor ID, or membership filter.",
+    "filter": {
+      "label": "Vendor membership",
+      "all": "All vendors",
+      "on": "On this banner",
+      "off": "Not on this banner"
+    },
+    "previous": "Prev",
+    "next": "Next",
+    "noUpdatePermission": "You do not have permission to change TCF vendors.",
+    "iabVendorId": "IAB {{id}}",
+    "policy": "Privacy policy",
+    "notFound": "Page not found",
+    "actions": {
+      "clearSearch": "Clear filters",
+      "add": "Add",
+      "remove": "Remove",
+      "addVendor": "Add {{name}} to this banner",
+      "removeVendor": "Remove {{name}} from this banner"
+    },
+    "errors": {
+      "add": "Failed to add vendor",
+      "remove": "Failed to remove vendor"
+    }
   }
 }
