@@ -34,6 +34,9 @@ export const cookieBannerSwitcherValueQuery = graphql`
       ... on CookieBanner {
         id
         name
+        capabilities {
+          tcf
+        }
         organization {
           id
         }
@@ -48,6 +51,9 @@ export const cookieBannerSwitcherValueQuery = graphql`
             node {
               id
               name
+              capabilities {
+                tcf
+              }
             }
           }
         }

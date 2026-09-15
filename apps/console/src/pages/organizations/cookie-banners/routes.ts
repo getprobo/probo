@@ -24,6 +24,8 @@ import type { AppRoute } from "@probo/routes";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { CookieBannerTCFPageSkeleton } from "./tcf/CookieBannerTCFPageSkeleton";
+
 export const cookieBannerRoutes = [
   {
     path: "cookie-banners/new",
@@ -76,6 +78,11 @@ export const cookieBannerRoutes = [
         path: "trail",
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
+      },
+      {
+        path: "tcf",
+        Fallback: CookieBannerTCFPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/tcf/CookieBannerTCFPageLoader")),
       },
     ],
   },

@@ -228,5 +228,35 @@
       "consentExpiryDays": "Vervaltermijn toestemming (dagen)"
     },
     "actions": { "creating": "Bezig met aanmaken...", "create": "Banner aanmaken" }
+  },
+  "tcfPage": {
+    "title": "TCF-leveranciers",
+    "description": "Kies welke IAB Global Vendor List-leveranciers deze banner bekendmaakt.",
+    "vendorCount_one": "{{count}} leverancier geselecteerd",
+    "vendorCount_other": "{{count}} leveranciers geselecteerd",
+    "catalogCount_one": "{{count}} leverancier in de catalogus",
+    "catalogCount_other": "{{count}} leveranciers in de catalogus",
+    "searchPlaceholder": "Leveranciers zoeken",
+    "emptyCatalog": "Er zijn nog geen GVL-leveranciers geïmporteerd. Voer gvl-import uit om de catalogus te vullen.",
+    "emptySearch": "Geen leveranciers komen overeen met deze zoekopdracht.",
+    "emptyFiltered": "Geen overeenkomende leveranciers",
+    "emptyFilteredDescription": "Probeer een andere naam of IAB-leveranciers-ID, of wis de zoekopdracht.",
+    "previous": "Vorige",
+    "next": "Volgende",
+    "noUpdatePermission": "Je hebt geen toestemming om TCF-leveranciers te wijzigen.",
+    "iabVendorId": "IAB {{id}}",
+    "policy": "Privacybeleid",
+    "notFound": "Pagina niet gevonden",
+    "actions": {
+      "clearSearch": "Zoekopdracht wissen",
+      "add": "Toevoegen",
+      "remove": "Verwijderen",
+      "addVendor": "{{name}} toevoegen aan deze banner",
+      "removeVendor": "{{name}} verwijderen van deze banner"
+    },
+    "errors": {
+      "add": "Leverancier toevoegen mislukt",
+      "remove": "Leverancier verwijderen mislukt"
+    }
   }
 }

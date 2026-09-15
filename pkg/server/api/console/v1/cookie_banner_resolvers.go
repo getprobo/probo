@@ -360,6 +360,38 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 	return out, nil
 }
 
+// GvlVendors is the resolver for the gvlVendors field.
+func (r *cookieBannerResolver) GvlVendors(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CommonGVLVendorOrderBy) (*types.CommonGVLVendorConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CommonGVLVendorOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	vendors, err := r.cookieBanner.ListCookieBannerGVLVendors(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner gvl vendors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(vendors, cursor)
+	parentID := obj.ID
+
+	return types.NewCommonGVLVendorConnection(p, r, &parentID, nil), nil
+}
+
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
 func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy, filter *types.TrackerResourceFilter) (*types.TrackerResourceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList)
@@ -1406,6 +1438,97 @@ func (r *mutationResolver) MoveTrackerResourceToCategory(ctx context.Context, in
 	return &types.MoveTrackerResourceToCategoryPayload{
 		TrackerResource: types.NewTrackerResourceNode(result.TrackerResource),
 		CookieBanner:    types.NewCookieBanner(result.Banner),
+	}, nil
+}
+
+// AddCookieBannerGVLVendor is the resolver for the addCookieBannerGVLVendor field.
+func (r *mutationResolver) AddCookieBannerGVLVendor(ctx context.Context, input types.AddCookieBannerGVLVendorInput) (*types.AddCookieBannerGVLVendorPayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	vendor, err := r.cookieBanner.AddCookieBannerGVLVendor(
+		ctx,
+		scope,
+		cookiebanner.AddCookieBannerGVLVendorRequest{
+			CookieBannerID: input.CookieBannerID,
+			IABVendorID:    input.IabVendorID,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrGVLVendorNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrGVLVendorDeleted):
+			return nil, gqlutils.Invalidf(ctx, "gvl vendor has been deleted from the catalog")
+		case errors.Is(err, cookiebanner.ErrTCFNotEnabled):
+			return nil, gqlutils.Invalidf(ctx, "tcf is not enabled for this cookie banner")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot add cookie banner gvl vendor", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.AddCookieBannerGVLVendorPayload{
+		CommonGVLVendor: types.NewCommonGVLVendor(vendor),
+		CookieBanner:    types.NewCookieBanner(banner),
+	}, nil
+}
+
+// RemoveCookieBannerGVLVendor is the resolver for the removeCookieBannerGVLVendor field.
+func (r *mutationResolver) RemoveCookieBannerGVLVendor(ctx context.Context, input types.RemoveCookieBannerGVLVendorInput) (*types.RemoveCookieBannerGVLVendorPayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.cookieBanner.RemoveCookieBannerGVLVendor(
+		ctx,
+		scope,
+		cookiebanner.RemoveCookieBannerGVLVendorRequest{
+			CookieBannerID: input.CookieBannerID,
+			IABVendorID:    input.IabVendorID,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrTCFNotEnabled):
+			return nil, gqlutils.Invalidf(ctx, "tcf is not enabled for this cookie banner")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot remove cookie banner gvl vendor", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RemoveCookieBannerGVLVendorPayload{
+		CookieBanner: types.NewCookieBanner(banner),
 	}, nil
 }
 
