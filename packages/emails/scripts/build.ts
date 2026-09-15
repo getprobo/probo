@@ -33,7 +33,6 @@ import FrameworkExport from "../src/FrameworkExport";
 import Invitation from "../src/Invitation";
 import PasswordReset from "../src/PasswordReset";
 import CompliancePortalAccess from "../src/CompliancePortalAccess";
-import CompliancePortalInvite from "../src/CompliancePortalInvite";
 import CompliancePortalDocumentAccessRejected from "../src/CompliancePortalDocumentAccessRejected";
 import ElectronicSignatureCertificate from "../src/ElectronicSignatureCertificate";
 import MailingListSubscription from "../src/MailingListSubscription";
@@ -81,10 +80,6 @@ const templates: TemplateConfig[] = [
   {
     name: "compliance-portal-access",
     render: () => CompliancePortalAccess(),
-  },
-  {
-    name: "compliance-portal-invite",
-    render: () => CompliancePortalInvite(),
   },
   {
     name: "compliance-portal-document-access-rejected",

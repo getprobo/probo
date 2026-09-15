@@ -93,12 +93,6 @@ const routes = [
         Component: lazy(() => import("./pages/iam/auth/MagicLinkPage")),
       },
       {
-        path: "compliance-portal-invite",
-        Component: lazy(
-          () => import("./pages/iam/auth/CompliancePortalInvitePage"),
-        ),
-      },
-      {
         path: "resend-verification-email",
         Component: lazy(
           () => import("./pages/iam/auth/ResendVerificationEmailPage"),

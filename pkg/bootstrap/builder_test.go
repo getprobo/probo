@@ -283,7 +283,6 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 3600, cfg.Probod.Auth.InvitationConfirmationTokenValidity)
 	assert.Equal(t, 3600, cfg.Probod.Auth.PasswordResetTokenValidity)
 	assert.Equal(t, 900, cfg.Probod.Auth.MagicLinkTokenValidity)
-	assert.Equal(t, 604800, cfg.Probod.Auth.CompliancePortalInviteTokenValidity)
 	assert.Equal(t, 3600, cfg.Probod.Auth.EmailConfirmationTokenValidity)
 	assert.Empty(t, cfg.Probod.Auth.Cookie.Name)
 	assert.Empty(t, cfg.Probod.Auth.Cookie.Domain)
@@ -447,7 +446,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_AUTH_INVITATION_TOKEN_VALIDITY"] = "7200"
 	env["PROBOD_AUTH_PASSWORD_RESET_TOKEN_VALIDITY"] = "1800"
 	env["PROBOD_AUTH_MAGIC_LINK_TOKEN_VALIDITY"] = "600"
-	env["PROBOD_AUTH_COMPLIANCE_PORTAL_INVITE_TOKEN_VALIDITY"] = "1209600"
 	env["PROBOD_AUTH_EMAIL_CONFIRMATION_TOKEN_VALIDITY"] = "43200"
 	env["PROBOD_AUTH_COOKIE_DOMAIN"] = ".example.com"
 	env["PROBOD_AUTH_COOKIE_DURATION"] = "48"
@@ -600,7 +598,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 7200, cfg.Probod.Auth.InvitationConfirmationTokenValidity)
 	assert.Equal(t, 1800, cfg.Probod.Auth.PasswordResetTokenValidity)
 	assert.Equal(t, 600, cfg.Probod.Auth.MagicLinkTokenValidity)
-	assert.Equal(t, 1209600, cfg.Probod.Auth.CompliancePortalInviteTokenValidity)
 	assert.Equal(t, 43200, cfg.Probod.Auth.EmailConfirmationTokenValidity)
 	assert.Equal(t, ".example.com", cfg.Probod.Auth.Cookie.Domain)
 	assert.Equal(t, 48, cfg.Probod.Auth.Cookie.Duration)

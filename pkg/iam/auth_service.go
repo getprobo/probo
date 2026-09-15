@@ -79,18 +79,12 @@ type (
 		Email    mail.Addr `json:"email"`
 		Continue *string   `json:"continue"`
 	}
-
-	CompliancePortalInviteData struct {
-		AccessID gid.GID `json:"access_id"`
-		Continue string  `json:"continue"`
-	}
 )
 
 const (
 	TokenTypeOrganizationInvitation = "organization_invitation"
 	TokenTypePasswordReset          = "password_reset"
 	TokenTypeMagicLink              = "magic_link"
-	TokenTypeCompliancePortalInvite = "compliance_portal_invite"
 
 	magicLinkDefaultSenderName = "Probo"
 )
@@ -756,114 +750,6 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 	}
 
 	return identity, session, payload.Data.Continue, nil
-}
-
-func (s AuthService) NewCompliancePortalInviteToken(
-	accessID gid.GID,
-	continueURL string,
-) (string, time.Duration, error) {
-	tokenString, err := statelesstoken.NewToken(
-		s.tokenSecret,
-		TokenTypeCompliancePortalInvite,
-		s.compliancePortalInviteTokenValidity,
-		CompliancePortalInviteData{
-			AccessID: accessID,
-			Continue: continueURL,
-		},
-	)
-	if err != nil {
-		return "", 0, fmt.Errorf("cannot generate compliance portal invite token: %w", err)
-	}
-
-	return tokenString, s.compliancePortalInviteTokenValidity, nil
-}
-
-func (s AuthService) CompliancePortalInviteContinueFromToken(tokenString string) (*string, error) {
-	payload, err := statelesstoken.ValidateTokenAllowExpired[CompliancePortalInviteData](
-		s.tokenSecret,
-		TokenTypeCompliancePortalInvite,
-		tokenString,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if payload.Data.Continue == "" {
-		return nil, nil
-	}
-
-	return &payload.Data.Continue, nil
-}
-
-func (s AuthService) OpenSessionWithCompliancePortalInvite(
-	ctx context.Context,
-	tokenString string,
-) (*coredata.Identity, *coredata.Session, *string, error) {
-	var (
-		now      = time.Now()
-		session  = &coredata.Session{}
-		identity = &coredata.Identity{}
-	)
-
-	payload, err := statelesstoken.ValidateToken[CompliancePortalInviteData](
-		s.tokenSecret,
-		TokenTypeCompliancePortalInvite,
-		tokenString,
-	)
-	if err != nil {
-		if _, ok := errors.AsType[*statelesstoken.ErrExpiredToken](err); ok {
-			return nil, nil, nil, NewExpiredTokenError()
-		}
-
-		return nil, nil, nil, NewInvalidTokenError()
-	}
-
-	if err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(payload.Data.AccessID)
-			access := &coredata.CompliancePortalAccess{}
-
-			if err := access.LoadByID(ctx, tx, scope, payload.Data.AccessID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewInvalidTokenError()
-				}
-
-				return fmt.Errorf("cannot load compliance portal access: %w", err)
-			}
-
-			if access.State != coredata.CompliancePortalAccessStateActive {
-				return NewInvalidTokenError()
-			}
-
-			if err := identity.LoadByID(ctx, tx, access.IdentityID); err != nil {
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			if !identity.EmailAddressVerified {
-				identity.EmailAddressVerified = true
-				identity.UpdatedAt = now
-
-				if err := identity.Update(ctx, tx); err != nil {
-					return fmt.Errorf("cannot update identity: %w", err)
-				}
-			}
-
-			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodMagicLink, s.sessionDuration)
-
-			if err := session.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert session: %w", err)
-			}
-
-			return nil
-		},
-	); err != nil {
-		return nil, nil, nil, err
-	}
-
-	continueURL := payload.Data.Continue
-
-	return identity, session, &continueURL, nil
 }
 
 func HashToken(token string) []byte {

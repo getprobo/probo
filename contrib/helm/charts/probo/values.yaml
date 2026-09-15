@@ -276,8 +276,6 @@ probo:
     # access is unaffected). Invited people keep normal access.
     disableSignup: false
     invitationTokenValidity: 3600
-    # Compliance portal visitor invite token validity in seconds (default: 604800 = 7 days)
-    compliancePortalInviteTokenValidity: 604800
     # Email confirmation token validity in seconds (default: 3600 = 1 hour)
     emailConfirmationTokenValidity: 3600
     cookieName: "SSID"

@@ -3154,12 +3154,6 @@
     "description": "Click continue to finish signing in.",
     "actions": { "continue": "Continue" }
   },
-  "compliancePortalInvitePage": {
-    "pageTitle": "Open compliance page",
-    "title": "Open compliance page",
-    "description": "Click continue to sign in and open the compliance page.",
-    "actions": { "continue": "Continue" }
-  },
   "magicLinkForm": {
     "errors": { "send": "Cannot send magic link" },
     "messages": { "sent": "Magic link sent!" },

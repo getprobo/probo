@@ -28,7 +28,6 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
-	"go.probo.inc/probo/pkg/iam"
 )
 
 const (
@@ -54,7 +53,6 @@ type (
 		logger        *log.Logger
 		bot           *bot.Service
 		esign         *esign.Service
-		auth          *iam.AuthService
 		fileValidator *filevalidation.FileValidator
 	}
 
@@ -85,7 +83,6 @@ func NewService(
 	certManagerService *certmanager.Service,
 	botService *bot.Service,
 	esignService *esign.Service,
-	authService *iam.AuthService,
 	logger *log.Logger,
 ) *Service {
 	return &Service{
@@ -99,7 +96,6 @@ func NewService(
 		logger:      logger,
 		bot:         botService,
 		esign:       esignService,
-		auth:        authService,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(
 				filevalidation.CategoryData,

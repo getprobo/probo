@@ -6009,12 +6009,6 @@
     "description": "Cliquez sur continuer pour terminer la connexion.",
     "actions": { "continue": "Continuer" }
   },
-  "compliancePortalInvitePage": {
-    "pageTitle": "Ouvrir la page de conformité",
-    "title": "Ouvrir la page de conformité",
-    "description": "Cliquez sur continuer pour vous connecter et ouvrir la page de conformité.",
-    "actions": { "continue": "Continuer" }
-  },
   "magicLinkForm": {
     "errors": {
       "send": "Impossible d’envoyer le lien magique"

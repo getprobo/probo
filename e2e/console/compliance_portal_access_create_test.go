@@ -133,17 +133,21 @@ func listMemberCandidateIDs(
 	return ids
 }
 
-func requireInviteMailpitURLEventually(
+func requireAccessMailpitMessageEventually(
 	t *testing.T,
 	client *testutil.Client,
 	recipientEmail string,
-) string {
+) *testutil.MailpitMessageDetail {
 	t.Helper()
 
+	expectedSubject := fmt.Sprintf(
+		"Compliance Portal Access Invitation - %s",
+		queryOrganizationName(t, client),
+	)
 	searchQuery := fmt.Sprintf("to:%s", recipientEmail)
 
 	var (
-		linkURL string
+		detail  *testutil.MailpitMessageDetail
 		lastErr error
 	)
 
@@ -152,23 +156,29 @@ func requireInviteMailpitURLEventually(
 		90*time.Second,
 		500*time.Millisecond,
 		func() bool {
-			linkURL, lastErr = client.FindLinkFromMailpitSearch(
+			detail, lastErr = client.FindMailpitMessage(
 				searchQuery,
-				"/auth/compliance-portal-invite",
+				func(message *testutil.MailpitMessageDetail) bool {
+					return message.Subject == expectedSubject
+				},
 			)
 
-			return lastErr == nil && linkURL != ""
+			return lastErr == nil && detail != nil
 		},
 	)
 	if !ok {
 		if lastErr != nil {
-			t.Logf("last mailpit invite search did not find a matching link: %v", lastErr)
+			t.Logf("last mailpit access search did not find a matching message: %v", lastErr)
 		}
 
-		require.FailNow(t, "mailpit compliance portal invite link not found")
+		require.FailNow(t, "mailpit compliance portal access email not found")
 	}
 
-	return linkURL
+	assert.NotContains(t, detail.HTML, "/auth/compliance-portal-invite")
+	assert.NotContains(t, detail.Text, "/auth/compliance-portal-invite")
+	assert.Contains(t, detail.Text, "probopage.localhost")
+
+	return detail
 }
 
 func TestCompliancePortalAccess_CreateByProfileID(t *testing.T) {
@@ -253,20 +263,71 @@ func TestCompliancePortalAccess_CreateConflict(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestCompliancePortalAccess_CreateQueuesInviteEmail(t *testing.T) {
+func TestCompliancePortalAccess_CreateDoesNotQueueInviteEmail(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	compliancePortalID := compliancePortalID(t, owner)
 	email := factory.SafeEmail()
+	searchQuery := fmt.Sprintf("to:%s", email)
 
 	createCompliancePortalAccess(t, owner, map[string]any{
 		"compliancePortalId": compliancePortalID,
 		"email":              email,
 	})
 
-	linkURL := requireInviteMailpitURLEventually(t, owner, email)
-	assert.Contains(t, linkURL, "/auth/compliance-portal-invite")
+	foundInvite := testutil.Poll(
+		t,
+		10*time.Second,
+		500*time.Millisecond,
+		func() bool {
+			_, err := owner.FindLinkFromMailpitSearch(
+				searchQuery,
+				"/auth/compliance-portal-invite",
+			)
+
+			return err == nil
+		},
+	)
+	assert.False(t, foundInvite)
+}
+
+func TestCompliancePortalAccess_GrantQueuesAccessEmail(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	compliancePortalID := compliancePortalID(t, owner)
+	email := factory.SafeEmail()
+	documentID := factory.NewDocument(owner).WithTitle("Visitor grant email").Create()
+	publishDocumentMinor(t, owner, documentID)
+	restrictCompliancePortalDocument(t, owner, compliancePortalID, documentID)
+
+	node := createCompliancePortalAccess(t, owner, map[string]any{
+		"compliancePortalId": compliancePortalID,
+		"email":              email,
+	})
+
+	grantDocumentAccess(t, owner, node.ID, documentID)
+	requireAccessMailpitMessageEventually(t, owner, email)
+}
+
+func TestCompliancePortalAccess_CreateWithDocumentQueuesAccessEmail(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	compliancePortalID := compliancePortalID(t, owner)
+	email := factory.SafeEmail()
+	documentID := factory.NewDocument(owner).WithTitle("Visitor create grant email").Create()
+	publishDocumentMinor(t, owner, documentID)
+	restrictCompliancePortalDocument(t, owner, compliancePortalID, documentID)
+
+	createCompliancePortalAccess(t, owner, map[string]any{
+		"compliancePortalId": compliancePortalID,
+		"email":              email,
+		"documents":          []string{documentID},
+	})
+
+	requireAccessMailpitMessageEventually(t, owner, email)
 }
 
 func TestCompliancePortalAccess_CreateDeactivatedEmployee(t *testing.T) {

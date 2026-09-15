@@ -108,7 +108,6 @@ const (
 	subjectDocumentExport                         = "Your document export is ready"
 	subjectFrameworkExport                        = "Your framework export is ready"
 	subjectCompliancePortalAccess                 = "Compliance Portal Access Invitation - %s"
-	subjectCompliancePortalInvite                 = "Invitation to %s's compliance portal"
 	subjectCompliancePortalDocumentAccessRejected = "Compliance Portal Document Access Rejected - %s"
 	subjectMagicLink                              = "Connect to %s"
 	subjectMailingListSubscription                = "%s – Confirm Your Compliance Updates Subscription"
@@ -135,8 +134,6 @@ var (
 	frameworkExportTextTemplate                        = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/framework-export.txt.tmpl"))
 	compliancePortalAccessHTMLTemplate                 = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-access.html.tmpl"))
 	compliancePortalAccessTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-access.txt.tmpl"))
-	compliancePortalInviteHTMLTemplate                 = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-invite.html.tmpl"))
-	compliancePortalInviteTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-invite.txt.tmpl"))
 	compliancePortalDocumentAccessRejectedHTMLTemplate = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-document-access-rejected.html.tmpl"))
 	compliancePortalDocumentAccessRejectedTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-document-access-rejected.txt.tmpl"))
 	magicLinkHTMLTemplate                              = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/magic-link.html.tmpl"))
@@ -389,52 +386,6 @@ func (p *Presenter) RenderCompliancePortalAccess(ctx context.Context, organizati
 	textBody, htmlBody, err = renderEmail(compliancePortalAccessTextTemplate, compliancePortalAccessHTMLTemplate, data)
 
 	return fmt.Sprintf(subjectCompliancePortalAccess, organizationName), textBody, htmlBody, err
-}
-
-func (p *Presenter) RenderCompliancePortalInvite(
-	ctx context.Context,
-	organizationName string,
-	inviteURL string,
-	tokenDuration time.Duration,
-) (subject string, textBody string, htmlBody *string, err error) {
-	vars, err := p.getCommonVariables()
-	if err != nil {
-		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
-	}
-
-	data := struct {
-		*CommonVariables
-		OrganizationName string
-		InviteURL        string
-		Duration         string
-	}{
-		CommonVariables:  vars,
-		OrganizationName: organizationName,
-		InviteURL:        inviteURL,
-		Duration:         inviteExpiryDuration(tokenDuration),
-	}
-
-	textBody, htmlBody, err = renderEmail(compliancePortalInviteTextTemplate, compliancePortalInviteHTMLTemplate, data)
-
-	return fmt.Sprintf(subjectCompliancePortalInvite, organizationName), textBody, htmlBody, err
-}
-
-func inviteExpiryDuration(tokenDuration time.Duration) string {
-	hours := max(int(tokenDuration.Hours()), 1)
-	if hours < 24 {
-		if hours == 1 {
-			return "1 hour"
-		}
-
-		return fmt.Sprintf("%d hours", hours)
-	}
-
-	days := hours / 24
-	if days == 1 {
-		return "1 day"
-	}
-
-	return fmt.Sprintf("%d days", days)
 }
 
 func (p *Presenter) RenderCompliancePortalDocumentAccessRejected(

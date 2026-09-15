@@ -29,7 +29,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bot"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
@@ -275,10 +274,6 @@ func (s *Service) CreateAccess(
 		return nil, err
 	}
 
-	if s.auth == nil {
-		return nil, fmt.Errorf("auth service is required")
-	}
-
 	var access *coredata.CompliancePortalAccess
 
 	err := s.pg.WithTx(
@@ -291,7 +286,7 @@ func (s *Service) CreateAccess(
 				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			identity, profile, err := s.resolveAccessIdentity(
+			identity, _, err := s.resolveAccessIdentity(
 				ctx,
 				tx,
 				scope,
@@ -362,21 +357,11 @@ func (s *Service) CreateAccess(
 				return err
 			}
 
-			if err := s.sendInviteEmail(
-				ctx,
-				scope,
-				tx,
-				compliancePortal,
-				access,
-				identity,
-				profile,
-			); err != nil {
-				return fmt.Errorf("cannot send invite email: %w", err)
-			}
+			if createAccessGrantsTargets(req) {
+				if err := s.sendAccessEmail(ctx, scope, tx, access); err != nil {
+					return fmt.Errorf("cannot send access email: %w", err)
+				}
 
-			if len(req.DocumentIDs) > 0 ||
-				len(req.ReportFileIDs) > 0 ||
-				len(req.CompliancePortalFileIDs) > 0 {
 				if _, err := s.bot.EnqueueMessage(
 					ctx,
 					tx,
@@ -809,7 +794,7 @@ func (s *Service) UpdateAccess(
 				}
 			}
 
-			if compliancePortalAcessActivated {
+			if compliancePortalAcessActivated || updateAccessGrantsTargets(req) {
 				if err := s.sendAccessEmail(ctx, scope, tx, access); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
@@ -1057,6 +1042,34 @@ func NDAConsentText(contactEmail string) string {
 		"By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact %s.",
 		contactEmail,
 	)
+}
+
+func createAccessGrantsTargets(req *CreateAccessRequest) bool {
+	return len(req.DocumentIDs) > 0 ||
+		len(req.ReportFileIDs) > 0 ||
+		len(req.CompliancePortalFileIDs) > 0
+}
+
+func updateAccessGrantsTargets(req *UpdateAccessRequest) bool {
+	for _, d := range req.DocumentAccesses {
+		if d.Status == coredata.CompliancePortalDocumentAccessStatusGranted {
+			return true
+		}
+	}
+
+	for _, d := range req.ReportAccesses {
+		if d.Status == coredata.CompliancePortalDocumentAccessStatusGranted {
+			return true
+		}
+	}
+
+	for _, d := range req.CompliancePortalFileAccesses {
+		if d.Status == coredata.CompliancePortalDocumentAccessStatusGranted {
+			return true
+		}
+	}
+
+	return false
 }
 
 func createAccessEventKey(req *CreateAccessRequest) string {
@@ -1342,92 +1355,6 @@ func (s *Service) grantCreatedAccessTargets(
 		); err != nil {
 			return fmt.Errorf("cannot upsert compliance page file accesses: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func (s *Service) sendInviteEmail(
-	ctx context.Context,
-	scope coredata.Scoper,
-	tx pg.Tx,
-	compliancePortal *coredata.CompliancePortal,
-	access *coredata.CompliancePortalAccess,
-	identity *coredata.Identity,
-	profile *coredata.MembershipProfile,
-) error {
-	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, scope, access.OrganizationID); err != nil {
-		return fmt.Errorf("cannot load organization: %w", err)
-	}
-
-	publicURL, err := s.PublicURLForCompliancePortal(ctx, tx, scope, compliancePortal)
-	if err != nil {
-		return fmt.Errorf("cannot resolve public url: %w", err)
-	}
-
-	portalBase, err := baseurl.Parse(publicURL)
-	if err != nil {
-		return fmt.Errorf("cannot parse portal url: %w", err)
-	}
-
-	continueURL, err := portalBase.AppendPath("/initiate").WithQuery("continue", "/").String()
-	if err != nil {
-		return fmt.Errorf("cannot build continue url: %w", err)
-	}
-
-	tokenString, validity, err := s.auth.NewCompliancePortalInviteToken(access.ID, continueURL)
-	if err != nil {
-		return err
-	}
-
-	consoleBase, err := baseurl.Parse(s.baseURL)
-	if err != nil {
-		return fmt.Errorf("cannot parse console url: %w", err)
-	}
-
-	inviteURL, err := consoleBase.AppendPath("/auth/compliance-portal-invite").
-		WithQuery("token", tokenString).
-		String()
-	if err != nil {
-		return fmt.Errorf("cannot build invite url: %w", err)
-	}
-
-	emailPresenterCfg, err := s.EmailPresenterConfig(ctx, scope, access.CompliancePortalID)
-	if err != nil {
-		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
-	}
-
-	fullName := profile.FullName
-	if fullName == "" {
-		fullName = identity.EmailAddress.Username()
-	}
-
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
-
-	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalInvite(
-		ctx,
-		organization.Name,
-		inviteURL,
-		validity,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot render compliance portal invite email: %w", err)
-	}
-
-	inviteEmail := coredata.NewEmail(
-		fullName,
-		identity.EmailAddress,
-		subject,
-		textBody,
-		htmlBody,
-		&coredata.EmailOptions{
-			SenderName: new(organization.Name),
-		},
-	)
-
-	if err := inviteEmail.Insert(ctx, tx); err != nil {
-		return fmt.Errorf("cannot insert invite email: %w", err)
 	}
 
 	return nil
