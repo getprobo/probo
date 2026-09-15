@@ -295,6 +295,48 @@ func TestCompliancePortalAccess_CreateDoesNotQueueAccessEmail(t *testing.T) {
 	assert.False(t, foundMail)
 }
 
+func TestCompliancePortalAccess_ActivateDoesNotQueueAccessEmail(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	compliancePortalID := compliancePortalID(t, owner)
+	email := factory.SafeEmail()
+	searchQuery := fmt.Sprintf("to:%s", email)
+	documentID := factory.NewDocument(owner).WithTitle("Visitor activate no email").Create()
+	publishDocumentMinor(t, owner, documentID)
+	restrictCompliancePortalDocument(t, owner, compliancePortalID, documentID)
+
+	node := createCompliancePortalAccess(t, owner, map[string]any{
+		"compliancePortalId": compliancePortalID,
+		"email":              email,
+		"documents":          []string{documentID},
+	})
+	requireAccessMailpitMessageEventually(t, owner, email)
+
+	assert.Equal(t, "DEACTIVATED", deactivateCompliancePortalAccess(t, owner, node.ID))
+	assert.Equal(t, "ACTIVE", activateCompliancePortalAccess(t, owner, node.ID))
+
+	var lastErr error
+
+	foundSecondMail := testutil.Poll(
+		t,
+		10*time.Second,
+		500*time.Millisecond,
+		func() bool {
+			mails, err := owner.SearchMails(searchQuery)
+			lastErr = err
+
+			return err == nil && len(mails.Messages) > 1
+		},
+	)
+	if lastErr != nil {
+		t.Logf("last mailpit search failed: %v", lastErr)
+	}
+
+	require.NoError(t, lastErr)
+	assert.False(t, foundSecondMail)
+}
+
 func TestCompliancePortalAccess_GrantQueuesAccessEmail(t *testing.T) {
 	t.Parallel()
 

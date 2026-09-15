@@ -172,6 +172,52 @@ func managementAccessEventKey(req *UpdateAccessRequest) string {
 	return bot.StableEventKey("management-update", components...)
 }
 
+func (s *Service) enqueueAccessBotUpdateIfPosted(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	access *coredata.CompliancePortalAccess,
+	eventKey string,
+) error {
+	var subject coredata.BotThreadSubject
+	err := subject.LoadBySubject(
+		ctx,
+		tx,
+		scope,
+		access.OrganizationID,
+		portal.AccessSubjectNamespace,
+		access.ID.String(),
+	)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("cannot load compliance portal bot thread: %w", err)
+	}
+
+	if _, err := s.bot.EnqueueMessage(
+		ctx,
+		tx,
+		scope,
+		bot.MessageParams{
+			OrganizationID: access.OrganizationID,
+			Capability:     portal.AccessCapability,
+			MessageType:    portal.AccessMessageType,
+			Attributes: map[string]any{
+				portal.AccessIDAttribute: access.ID.String(),
+			},
+			SubjectNamespace: portal.AccessSubjectNamespace,
+			SubjectKey:       access.ID.String(),
+			EventKey:         eventKey,
+			Purpose:          coredata.BotMessagePurposeUpdate,
+		},
+	); err != nil {
+		return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) ListAccesses(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -360,26 +406,6 @@ func (s *Service) CreateAccess(
 			if createAccessGrantsTargets(req) {
 				if err := s.sendAccessEmail(ctx, scope, tx, access); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
-				}
-
-				if _, err := s.bot.EnqueueMessage(
-					ctx,
-					tx,
-					scope,
-					bot.MessageParams{
-						OrganizationID: access.OrganizationID,
-						Capability:     portal.AccessCapability,
-						MessageType:    portal.AccessMessageType,
-						Attributes: map[string]any{
-							portal.AccessIDAttribute: access.ID.String(),
-						},
-						SubjectNamespace: portal.AccessSubjectNamespace,
-						SubjectKey:       access.ID.String(),
-						EventKey:         createAccessEventKey(req),
-						Purpose:          coredata.BotMessagePurposeUpdate,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
 				}
 			}
 
@@ -860,8 +886,7 @@ func (s *Service) UpdateAccess(
 				grantedReportIDs,
 				grantedFileIDs,
 			)
-			if compliancePortalAcessActivated ||
-				(access.State == coredata.CompliancePortalAccessStateActive && newlyGranted) {
+			if access.State == coredata.CompliancePortalAccessStateActive && newlyGranted {
 				if err := s.sendAccessEmail(ctx, scope, tx, access); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
@@ -873,24 +898,14 @@ func (s *Service) UpdateAccess(
 				len(req.CompliancePortalFileAccesses) > 0
 
 			if shouldRefreshBotMessage {
-				if _, err := s.bot.EnqueueMessage(
+				if err := s.enqueueAccessBotUpdateIfPosted(
 					ctx,
 					tx,
 					scope,
-					bot.MessageParams{
-						OrganizationID: access.OrganizationID,
-						Capability:     portal.AccessCapability,
-						MessageType:    portal.AccessMessageType,
-						Attributes: map[string]any{
-							portal.AccessIDAttribute: access.ID.String(),
-						},
-						SubjectNamespace: portal.AccessSubjectNamespace,
-						SubjectKey:       access.ID.String(),
-						EventKey:         managementAccessEventKey(req),
-						Purpose:          coredata.BotMessagePurposeUpdate,
-					},
+					access,
+					managementAccessEventKey(req),
 				); err != nil {
-					return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
+					return err
 				}
 			}
 
@@ -1164,28 +1179,6 @@ func updateAccessNewlyGrantsTargets(
 	return requestsNewGrant(req.DocumentAccesses, grantedDocumentIDs) ||
 		requestsNewGrant(req.ReportAccesses, grantedReportIDs) ||
 		requestsNewGrant(req.CompliancePortalFileAccesses, grantedFileIDs)
-}
-
-func createAccessEventKey(req *CreateAccessRequest) string {
-	components := make(
-		[]string,
-		0,
-		len(req.DocumentIDs)+len(req.ReportFileIDs)+len(req.CompliancePortalFileIDs),
-	)
-
-	for _, id := range req.DocumentIDs {
-		components = append(components, fmt.Sprintf("document:%s:GRANTED", id))
-	}
-
-	for _, id := range req.ReportFileIDs {
-		components = append(components, fmt.Sprintf("report:%s:GRANTED", id))
-	}
-
-	for _, id := range req.CompliancePortalFileIDs {
-		components = append(components, fmt.Sprintf("file:%s:GRANTED", id))
-	}
-
-	return bot.StableEventKey("management-create", components...)
 }
 
 func (s *Service) resolveAccessIdentity(
