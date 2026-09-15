@@ -48,6 +48,14 @@ type Query {
     node(id: ID!): Node!
     viewer: Viewer!
     commonThirdParties(name: String!): [CommonThirdParty!]!
+    commonGVLVendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CommonGVLVendorOrder
+        filter: CommonGVLVendorFilter
+    ): CommonGVLVendorConnection!
     accessReviewDrivers: [ConnectorProviderInfo!]! @goField(forceResolver: true)
     awsConnectorSetup(organizationId: ID!): AWSConnectorSetup!
         @goField(forceResolver: true)

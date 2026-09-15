@@ -29,6 +29,10 @@ import * as deactivateOp from './deactivate.operation';
 import * as publishOp from './publish.operation';
 import * as regeneratePolicyOp from './regeneratePolicy.operation';
 import * as translateOp from './translate.operation';
+import * as listGVLCatalogOp from './listGVLCatalog.operation';
+import * as listGVLVendorsOp from './listGVLVendors.operation';
+import * as addGVLVendorOp from './addGVLVendor.operation';
+import * as removeGVLVendorOp from './removeGVLVendor.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -102,6 +106,30 @@ export const description: INodeProperties[] = [
 				description: 'Update an existing cookie banner',
 				action: 'Update a cookie banner',
 			},
+			{
+				name: 'List GVL Catalog',
+				value: 'listGVLCatalog',
+				description: 'List IAB GVL vendors from the global catalog',
+				action: 'List GVL catalog vendors',
+			},
+			{
+				name: 'List GVL Vendors',
+				value: 'listGVLVendors',
+				description: 'List IAB GVL vendors selected on a cookie banner',
+				action: 'List cookie banner GVL vendors',
+			},
+			{
+				name: 'Add GVL Vendor',
+				value: 'addGVLVendor',
+				description: 'Add an IAB GVL vendor to a cookie banner',
+				action: 'Add a GVL vendor',
+			},
+			{
+				name: 'Remove GVL Vendor',
+				value: 'removeGVLVendor',
+				description: 'Remove an IAB GVL vendor from a cookie banner',
+				action: 'Remove a GVL vendor',
+			},
 		],
 		default: 'create',
 	},
@@ -115,6 +143,10 @@ export const description: INodeProperties[] = [
 	...publishOp.description,
 	...regeneratePolicyOp.description,
 	...translateOp.description,
+	...listGVLCatalogOp.description,
+	...listGVLVendorsOp.description,
+	...addGVLVendorOp.description,
+	...removeGVLVendorOp.description,
 ];
 
 export {
@@ -128,4 +160,8 @@ export {
 	publishOp as publish,
 	regeneratePolicyOp as regeneratePolicy,
 	translateOp as translate,
+	listGVLCatalogOp as listGVLCatalog,
+	listGVLVendorsOp as listGVLVendors,
+	addGVLVendorOp as addGVLVendor,
+	removeGVLVendorOp as removeGVLVendor,
 };

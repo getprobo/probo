@@ -191,6 +191,14 @@ type CookieBanner implements Node {
     linkedThirdParties: [TrackerPatternThirdPartyLink!]!
         @goField(forceResolver: true)
 
+    gvlVendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CommonGVLVendorOrder
+    ): CommonGVLVendorConnection @goField(forceResolver: true)
+
     uncategorisedTrackerResources(
         first: Int
         after: CursorKey
@@ -687,6 +695,12 @@ extend type Mutation {
     moveTrackerResourceToCategory(
         input: MoveTrackerResourceToCategoryInput!
     ): MoveTrackerResourceToCategoryPayload!
+    addCookieBannerGVLVendor(
+        input: AddCookieBannerGVLVendorInput!
+    ): AddCookieBannerGVLVendorPayload!
+    removeCookieBannerGVLVendor(
+        input: RemoveCookieBannerGVLVendorInput!
+    ): RemoveCookieBannerGVLVendorPayload!
 }
 
 input CreateCookieBannerInput {
@@ -905,5 +919,24 @@ type DeleteTrackerResourcePayload {
 
 type MoveTrackerResourceToCategoryPayload {
     trackerResource: TrackerResource!
+    cookieBanner: CookieBanner!
+}
+
+input AddCookieBannerGVLVendorInput {
+    cookieBannerId: ID!
+    iabVendorId: Int!
+}
+
+input RemoveCookieBannerGVLVendorInput {
+    cookieBannerId: ID!
+    iabVendorId: Int!
+}
+
+type AddCookieBannerGVLVendorPayload {
+    commonGVLVendor: CommonGVLVendor!
+    cookieBanner: CookieBanner!
+}
+
+type RemoveCookieBannerGVLVendorPayload {
     cookieBanner: CookieBanner!
 }
