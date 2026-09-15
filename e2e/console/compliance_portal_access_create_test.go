@@ -274,16 +274,24 @@ func TestCompliancePortalAccess_CreateDoesNotQueueAccessEmail(t *testing.T) {
 		"email":              email,
 	})
 
+	var lastErr error
+
 	foundMail := testutil.Poll(
 		t,
 		10*time.Second,
 		500*time.Millisecond,
 		func() bool {
 			mails, err := owner.SearchMails(searchQuery)
+			lastErr = err
 
 			return err == nil && len(mails.Messages) > 0
 		},
 	)
+	if lastErr != nil {
+		t.Logf("last mailpit search failed: %v", lastErr)
+	}
+
+	require.NoError(t, lastErr)
 	assert.False(t, foundMail)
 }
 

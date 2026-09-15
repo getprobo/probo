@@ -61,39 +61,148 @@ func TestUpdateAccessNewlyGrantsTargets(t *testing.T) {
 	t.Parallel()
 
 	documentID := gid.New(gid.NilTenant, coredata.DocumentEntityType)
-	req := &UpdateAccessRequest{
-		DocumentAccesses: []UpdateDocumentAccessRequest{
-			{
-				ID:     documentID,
-				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
-			},
-		},
-	}
+	reportID := gid.New(gid.NilTenant, coredata.FileEntityType)
+	fileID := gid.New(gid.NilTenant, coredata.CompliancePortalFileEntityType)
 
 	t.Run(
-		"new grant",
+		"new document grant",
 		func(t *testing.T) {
 			t.Parallel()
 
 			assert.True(
 				t,
-				updateAccessNewlyGrantsTargets(req, nil, nil, nil),
+				updateAccessNewlyGrantsTargets(
+					&UpdateAccessRequest{
+						DocumentAccesses: []UpdateDocumentAccessRequest{
+							{
+								ID:     documentID,
+								Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+							},
+						},
+					},
+					nil,
+					nil,
+					nil,
+				),
 			)
 		},
 	)
 
 	t.Run(
-		"already granted",
+		"already granted document",
 		func(t *testing.T) {
 			t.Parallel()
 
 			assert.False(
 				t,
 				updateAccessNewlyGrantsTargets(
-					req,
+					&UpdateAccessRequest{
+						DocumentAccesses: []UpdateDocumentAccessRequest{
+							{
+								ID:     documentID,
+								Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+							},
+						},
+					},
 					map[gid.GID]struct{}{documentID: {}},
 					nil,
 					nil,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"new report grant",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(
+				t,
+				updateAccessNewlyGrantsTargets(
+					&UpdateAccessRequest{
+						ReportAccesses: []UpdateDocumentAccessRequest{
+							{
+								ID:     reportID,
+								Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+							},
+						},
+					},
+					nil,
+					nil,
+					nil,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"already granted report",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(
+				t,
+				updateAccessNewlyGrantsTargets(
+					&UpdateAccessRequest{
+						ReportAccesses: []UpdateDocumentAccessRequest{
+							{
+								ID:     reportID,
+								Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+							},
+						},
+					},
+					nil,
+					map[gid.GID]struct{}{reportID: {}},
+					nil,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"new file grant",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(
+				t,
+				updateAccessNewlyGrantsTargets(
+					&UpdateAccessRequest{
+						CompliancePortalFileAccesses: []UpdateDocumentAccessRequest{
+							{
+								ID:     fileID,
+								Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+							},
+						},
+					},
+					nil,
+					nil,
+					nil,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"already granted file",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(
+				t,
+				updateAccessNewlyGrantsTargets(
+					&UpdateAccessRequest{
+						CompliancePortalFileAccesses: []UpdateDocumentAccessRequest{
+							{
+								ID:     fileID,
+								Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+							},
+						},
+					},
+					nil,
+					nil,
+					map[gid.GID]struct{}{fileID: {}},
 				),
 			)
 		},

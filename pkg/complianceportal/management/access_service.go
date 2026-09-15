@@ -672,7 +672,7 @@ func (s *Service) UpdateAccess(
 		func(ctx context.Context, tx pg.Tx) error {
 			access = &coredata.CompliancePortalAccess{}
 
-			if err := access.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := access.LoadByIDForUpdate(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 

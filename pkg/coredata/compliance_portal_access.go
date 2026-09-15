@@ -158,6 +158,59 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent grant
+// updates serialize new-grant email detection.
+func (tca *CompliancePortalAccess) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	accessID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	identity_id,
+	compliance_portal_id,
+	electronic_signature_id,
+	state,
+	authenticated_at,
+	created_at,
+	updated_at
+FROM
+	cp_accesses
+WHERE
+	%s
+	AND id = @access_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_id": accessID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal access: %w", err)
+	}
+
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal access: %w", err)
+	}
+
+	*tca = access
+
+	return nil
+}
+
 func (tca *CompliancePortalAccess) LoadByCompliancePortalIDAndIdentityID(
 	ctx context.Context,
 	conn pg.Querier,
