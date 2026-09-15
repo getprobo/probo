@@ -43,6 +43,7 @@ export type NavPermission
     | "canListRiskAnalyses"
     | "canListFrameworks"
     | "canListMembers"
+    | "canListServiceAccounts"
     | "canListThirdParties"
     | "canListDocuments"
     | "canListAssets"

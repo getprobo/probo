@@ -1,0 +1,103 @@
+{
+  "page": {
+    "title": "Service accounts",
+    "description": "Manage non-human identities and their API credentials."
+  },
+  "columns": {
+    "name": "Name",
+    "status": "Status",
+    "scopes": "Scopes",
+    "createdAt": "Created",
+    "actions": "Actions"
+  },
+  "actions": {
+    "create": "Create service account",
+    "edit": "Edit",
+    "save": "Save",
+    "disable": "Disable",
+    "delete": "Delete",
+    "credentials": "Credentials",
+    "revoke": "Revoke",
+    "loadMore": "Load more",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "cancel": "Cancel",
+    "done": "Done",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "empty": {
+    "title": "No service accounts",
+    "description": "Create a service account for integrations and automation."
+  },
+  "fields": {
+    "name": "Name",
+    "description": "Description",
+    "scopes": "Scopes",
+    "credentialName": "Credential name",
+    "expiresAt": "Expires on"
+  },
+  "create": {
+    "title": "Create service account"
+  },
+  "update": {
+    "title": "Edit service account"
+  },
+  "disable": {
+    "title": "Disable service account",
+    "description": "Disable “{{name}}”? Its credentials will no longer authenticate."
+  },
+  "delete": {
+    "title": "Delete service account",
+    "description": "Permanently delete “{{name}}” and all of its credentials? This cannot be undone."
+  },
+  "credentials": {
+    "title": "Credentials",
+    "titleWithName": "Credentials for {{name}}",
+    "listTitle": "Issued credentials",
+    "create": "Create credential",
+    "createTitle": "New credential",
+    "revokeTitle": "Revoke credential",
+    "revokeDescription": "Revoke “{{name}}”? Any client using it will immediately lose access.",
+    "empty": "No credentials have been issued.",
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "expiresAt": "Expires",
+      "lastUsedAt": "Last used"
+    }
+  },
+  "token": {
+    "title": "Credential created",
+    "warning": "Copy this token now. It will not be shown again.",
+    "description": "Closing this dialog permanently removes the token from this screen."
+  },
+  "status": {
+    "active": "Active",
+    "disabled": "Disabled",
+    "revoked": "Revoked"
+  },
+  "values": {
+    "never": "Never",
+    "moreScopes": "+{{count}} more"
+  },
+  "validation": {
+    "scopeRequired": "Select at least one scope."
+  },
+  "messages": {
+    "created": "Service account created.",
+    "updated": "Service account updated.",
+    "disabled": "Service account disabled.",
+    "deleted": "Service account deleted.",
+    "credentialCreated": "Credential created.",
+    "credentialRevoked": "Credential revoked."
+  },
+  "errors": {
+    "create": "Could not create the service account",
+    "update": "Could not update the service account",
+    "disable": "Could not disable the service account",
+    "delete": "Could not delete the service account",
+    "createCredential": "Could not create the credential",
+    "revokeCredential": "Could not revoke the credential"
+  }
+}

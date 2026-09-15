@@ -42,6 +42,7 @@ const settingsNavPanelQuery = graphql`
         canConnectSlack: permission(action: "core:connector:initiate")
         canUninstallSlack: permission(action: "core:connector:delete")
         canListMembers: permission(action: "iam:membership:list")
+        canListServiceAccounts: permission(action: "iam:service-account:list")
         canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
       }
     }
@@ -69,6 +70,7 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
     throw new Error("invalid type for organization node");
   }
   const showIam = organization.canListMembers
+    || organization.canListServiceAccounts
     || organization.canUpdateOrganization
     || organization.canListAuditLogEntries;
   const showSlackBot = slackbotAvailable
@@ -106,6 +108,12 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
             <NavPanelItem
               label={t("nav.users")}
               to={navHref(organizationId, group, "people")}
+            />
+          )}
+          {organization.canListServiceAccounts && (
+            <NavPanelItem
+              label={t("nav.serviceAccounts")}
+              to={navHref(organizationId, group, "service-accounts")}
             />
           )}
           {organization.canUpdateOrganization && (

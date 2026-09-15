@@ -103,6 +103,19 @@ const (
 	ActionOAuth2AccessTokenList   = "iam:oauth2-access-token:list"
 	ActionOAuth2AccessTokenDelete = "iam:oauth2-access-token:delete"
 
+	// Service Account actions
+	ActionServiceAccountCreate  = "iam:service-account:create"
+	ActionServiceAccountGet     = "iam:service-account:get"
+	ActionServiceAccountList    = "iam:service-account:list"
+	ActionServiceAccountUpdate  = "iam:service-account:update"
+	ActionServiceAccountDisable = "iam:service-account:disable"
+	ActionServiceAccountDelete  = "iam:service-account:delete"
+
+	// Service Account Credential actions
+	ActionServiceAccountCredentialCreate = "iam:service-account-credential:create"
+	ActionServiceAccountCredentialList   = "iam:service-account-credential:list"
+	ActionServiceAccountCredentialRevoke = "iam:service-account-credential:revoke"
+
 	// Audit log entry actions
 	ActionAuditLogEntryGet  = "iam:audit-log-entry:get"
 	ActionAuditLogEntryList = "iam:audit-log-entry:list"

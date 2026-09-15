@@ -396,6 +396,41 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
 }
 
+// ServiceAccounts is the resolver for the serviceAccounts field.
+func (r *organizationResolver) ServiceAccounts(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ServiceAccountOrderBy) (*types.ServiceAccountConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, iam.ActionServiceAccountList)
+	if err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ServiceAccountConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ServiceAccountOrderField]{
+		Field:     coredata.ServiceAccountOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ServiceAccountOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	c := cursor.NewCursor(first, after, last, before, pageOrderBy)
+	p, err := r.iam.ServiceAccounts.List(ctx, scope, obj.ID, c)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list service accounts", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewServiceAccountConnection(p, r, obj.ID), nil
+}
+
 // Viewer is the resolver for the viewer field.
 func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organization) (*types.Profile, error) {
 	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {

@@ -2198,6 +2198,7 @@
     "frameworks": "Référentiels",
     "iam": "IAM",
     "users": "Utilisateurs",
+    "serviceAccounts": "Comptes de service",
     "authProvisioning": "Auth. et provisionnement",
     "auditLog": "Journal d’audit",
     "allThirdParties": "Tous les tiers",

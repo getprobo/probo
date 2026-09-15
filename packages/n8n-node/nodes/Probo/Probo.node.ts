@@ -224,6 +224,11 @@ export class Probo implements INodeType {
 						description: 'Manage risk analyses',
 					},
 					{
+						name: 'Service Account',
+						value: 'serviceAccount',
+						description: 'Manage service accounts and credentials',
+					},
+					{
 						name: 'Statement of Applicability',
 						value: 'statementOfApplicability',
 						description: 'Manage statements of applicability',

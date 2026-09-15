@@ -248,6 +248,7 @@ func loadAuditLogActorExportInfo(
 ) (map[gid.GID]auditLogActorExportInfo, error) {
 	identityIDs := make([]gid.GID, 0)
 	apiKeyIDs := make([]gid.GID, 0)
+	serviceAccountIDs := make([]gid.GID, 0)
 
 	for _, entry := range entries {
 		switch entry.ActorType {
@@ -255,6 +256,8 @@ func loadAuditLogActorExportInfo(
 			identityIDs = append(identityIDs, entry.ActorID)
 		case coredata.AuditLogActorTypeAPIKey:
 			apiKeyIDs = append(apiKeyIDs, entry.ActorID)
+		case coredata.AuditLogActorTypeServiceAccount:
+			serviceAccountIDs = append(serviceAccountIDs, entry.ActorID)
 		case coredata.AuditLogActorTypeSystem:
 		default:
 		}
@@ -282,6 +285,17 @@ func loadAuditLogActorExportInfo(
 	for _, apiKey := range apiKeys {
 		result[apiKey.ID] = auditLogActorExportInfo{
 			name: apiKey.Name,
+		}
+	}
+
+	var serviceAccounts coredata.ServiceAccounts
+	if err := serviceAccounts.LoadByIDs(ctx, conn, serviceAccountIDs); err != nil {
+		return nil, fmt.Errorf("cannot load audit log actor service accounts: %w", err)
+	}
+
+	for _, serviceAccount := range serviceAccounts {
+		result[serviceAccount.ID] = auditLogActorExportInfo{
+			name: serviceAccount.Name,
 		}
 	}
 

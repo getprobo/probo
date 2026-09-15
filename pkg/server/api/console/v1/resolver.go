@@ -175,6 +175,7 @@ func NewMux(
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
+		r.Use(authn.NewServiceAccountMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Use(newMembershipAccessMiddleware(iamSvc, logger))
 		r.Use(dataloader.NewMiddleware(

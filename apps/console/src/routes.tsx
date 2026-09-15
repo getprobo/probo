@@ -35,6 +35,7 @@ import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading
 import { auditLogRoutes } from "./pages/iam/organizations/audit-log/routes";
 import { authRoutes } from "./pages/iam/organizations/auth/routes";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
+import { serviceAccountRoutes } from "./pages/iam/organizations/service-accounts/routes";
 import { accessReviewRoutes } from "./pages/organizations/access-reviews/routes";
 import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
 import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/routes";
@@ -339,6 +340,7 @@ const routes = [
                 ),
               },
               ...peopleRoutes,
+              ...serviceAccountRoutes,
               ...authRoutes,
               ...auditLogRoutes,
             ],

@@ -1,0 +1,103 @@
+{
+  "page": {
+    "title": "Serviceaccounts",
+    "description": "Beheer niet-menselijke identiteiten en hun API-referenties."
+  },
+  "columns": {
+    "name": "Naam",
+    "status": "Status",
+    "scopes": "Scopes",
+    "createdAt": "Aangemaakt",
+    "actions": "Acties"
+  },
+  "actions": {
+    "create": "Serviceaccount maken",
+    "edit": "Bewerken",
+    "save": "Opslaan",
+    "disable": "Uitschakelen",
+    "delete": "Verwijderen",
+    "credentials": "Referenties",
+    "revoke": "Intrekken",
+    "loadMore": "Meer laden",
+    "selectAll": "Alles selecteren",
+    "deselectAll": "Alles deselecteren",
+    "cancel": "Annuleren",
+    "done": "Klaar",
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd"
+  },
+  "empty": {
+    "title": "Geen serviceaccounts",
+    "description": "Maak een serviceaccount voor integraties en automatisering."
+  },
+  "fields": {
+    "name": "Naam",
+    "description": "Beschrijving",
+    "scopes": "Scopes",
+    "credentialName": "Naam van referentie",
+    "expiresAt": "Vervaldatum"
+  },
+  "create": {
+    "title": "Serviceaccount maken"
+  },
+  "update": {
+    "title": "Serviceaccount bewerken"
+  },
+  "disable": {
+    "title": "Serviceaccount uitschakelen",
+    "description": "‘{{name}}’ uitschakelen? De referenties kunnen daarna niet meer authenticeren."
+  },
+  "delete": {
+    "title": "Serviceaccount verwijderen",
+    "description": "‘{{name}}’ en alle referenties permanent verwijderen? Dit kan niet ongedaan worden gemaakt."
+  },
+  "credentials": {
+    "title": "Referenties",
+    "titleWithName": "Referenties voor {{name}}",
+    "listTitle": "Uitgegeven referenties",
+    "create": "Referentie maken",
+    "createTitle": "Nieuwe referentie",
+    "revokeTitle": "Referentie intrekken",
+    "revokeDescription": "‘{{name}}’ intrekken? Elke client die deze gebruikt, verliest onmiddellijk de toegang.",
+    "empty": "Er zijn geen referenties uitgegeven.",
+    "columns": {
+      "name": "Naam",
+      "status": "Status",
+      "expiresAt": "Vervalt",
+      "lastUsedAt": "Laatst gebruikt"
+    }
+  },
+  "token": {
+    "title": "Referentie gemaakt",
+    "warning": "Kopieer dit token nu. Het wordt niet opnieuw getoond.",
+    "description": "Als je dit venster sluit, verdwijnt het token permanent van dit scherm."
+  },
+  "status": {
+    "active": "Actief",
+    "disabled": "Uitgeschakeld",
+    "revoked": "Ingetrokken"
+  },
+  "values": {
+    "never": "Nooit",
+    "moreScopes": "+{{count}} meer"
+  },
+  "validation": {
+    "scopeRequired": "Selecteer ten minste één scope."
+  },
+  "messages": {
+    "created": "Serviceaccount gemaakt.",
+    "updated": "Serviceaccount bijgewerkt.",
+    "disabled": "Serviceaccount uitgeschakeld.",
+    "deleted": "Serviceaccount verwijderd.",
+    "credentialCreated": "Referentie gemaakt.",
+    "credentialRevoked": "Referentie ingetrokken."
+  },
+  "errors": {
+    "create": "Het serviceaccount kon niet worden gemaakt",
+    "update": "Het serviceaccount kon niet worden bijgewerkt",
+    "disable": "Het serviceaccount kon niet worden uitgeschakeld",
+    "delete": "Het serviceaccount kon niet worden verwijderd",
+    "createCredential": "De referentie kon niet worden gemaakt",
+    "revokeCredential": "De referentie kon niet worden ingetrokken"
+  }
+}

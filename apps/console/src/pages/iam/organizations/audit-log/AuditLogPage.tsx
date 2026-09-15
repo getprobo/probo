@@ -127,6 +127,8 @@ function ActorTypeBadge({ type }: { type: string }) {
       return <Badge variant="info" size="sm">{type}</Badge>;
     case "API_KEY":
       return <Badge variant="warning" size="sm">{type}</Badge>;
+    case "SERVICE_ACCOUNT":
+      return <Badge variant="success" size="sm">{type}</Badge>;
     case "SYSTEM":
       return <Badge variant="neutral" size="sm">{type}</Badge>;
     default:

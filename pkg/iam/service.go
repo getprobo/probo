@@ -78,6 +78,7 @@ type (
 		OIDCService         *oidc.Service
 		SCIMService         *scim.Service
 		APIKeyService       *APIKeyService
+		ServiceAccounts     *ServiceAccountService
 		OAuth2ServerService *oauth2.Service
 		Authorizer          *Authorizer
 		OAuth2ScopeRegistry *oauth2scope.Registry
@@ -185,6 +186,7 @@ func NewService(
 	svc.APIKeyService = NewAPIKeyService(svc)
 
 	svc.OAuth2ScopeRegistry = cfg.OAuth2ScopeRegistry
+	svc.ServiceAccounts = NewServiceAccountService(svc)
 
 	svc.Authorizer = NewAuthorizer(
 		pgClient,

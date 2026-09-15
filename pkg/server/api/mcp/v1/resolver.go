@@ -124,10 +124,8 @@ func omittableMarkdownToProseMirrorJSON(field **string) (**string, error) {
 }
 
 func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action, opts ...authz.AuthorizeFuncOption) (*coredata.Scope, error) {
-	identity := authn.IdentityFromContext(ctx)
-
 	params := iam.AuthorizeParams{
-		Principal:          identity.ID,
+		Principal:          authn.PrincipalIDFromContext(ctx),
 		Resource:           entityID,
 		Action:             action,
 		ResourceAttributes: make(map[string]string),
@@ -164,12 +162,10 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 }
 
 func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, action iam.Action) (*coredata.Scope, error) {
-	identity := authn.IdentityFromContext(ctx)
-
 	scope, err := r.iamSvc.Authorizer.AuthorizeBatch(
 		ctx,
 		iam.AuthorizeBatchParams{
-			Principal: identity.ID,
+			Principal: authn.PrincipalIDFromContext(ctx),
 			Resources: entityIDs,
 			Action:    action,
 		},
@@ -209,4 +205,23 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 	r.logger.ErrorCtx(ctx, "cannot batch authorize MCP request", log.Error(err))
 
 	return nil, fmt.Errorf("internal server error")
+}
+
+func (r *Resolver) serviceAccountToolError(
+	ctx context.Context,
+	err error,
+	operation string,
+	notFoundMessage string,
+) error {
+	switch {
+	case errors.Is(err, coredata.ErrResourceNotFound):
+		return errors.New(notFoundMessage)
+	case errors.Is(err, iam.ErrInvalidServiceAccountInput):
+		return errors.New("invalid input")
+	case errors.Is(err, iam.ErrServiceAccountDisabled):
+		return errors.New("service account is disabled")
+	default:
+		r.logger.ErrorCtx(ctx, "cannot "+operation, log.Error(err))
+		return errors.New("internal server error")
+	}
 }

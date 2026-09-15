@@ -1,0 +1,119 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+import { proboConnectApiRequest } from '../../GenericFunctions';
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Service Account ID',
+		name: 'serviceAccountId',
+		type: 'string',
+		displayOptions: { show: { resource: ['serviceAccount'], operation: ['update'] } },
+		default: '',
+		description: 'The ID of the service account',
+		required: true,
+	},
+	{
+		displayName: 'Update Fields',
+		name: 'updateFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: { show: { resource: ['serviceAccount'], operation: ['update'] } },
+		options: [
+			{
+				displayName: 'Description',
+				name: 'description',
+				type: 'string',
+				default: '',
+				description: 'The service account description; leave empty to clear it',
+			},
+			{
+				displayName: 'Name',
+				name: 'name',
+				type: 'string',
+				default: '',
+				description: 'The service account name',
+			},
+			{
+				displayName: 'Scopes',
+				name: 'scopes',
+				type: 'string',
+				default: '',
+				description: 'Comma-separated OAuth2 scopes',
+			},
+		],
+	},
+];
+
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const serviceAccountId = this.getNodeParameter('serviceAccountId', itemIndex) as string;
+	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
+		description?: string;
+		name?: string;
+		scopes?: string;
+	};
+	const input: IDataObject = { serviceAccountId };
+	if (updateFields.description !== undefined) {
+		input.description = updateFields.description === '' ? null : updateFields.description;
+	}
+	if (updateFields.name !== undefined) {
+		input.name = updateFields.name;
+	}
+	if (updateFields.scopes !== undefined) {
+		input.scopes = updateFields.scopes
+			.split(',')
+			.map((scope) => scope.trim())
+			.filter(Boolean);
+	}
+
+	const query = `
+		mutation UpdateServiceAccount($input: UpdateServiceAccountInput!) {
+			updateServiceAccount(input: $input) {
+				serviceAccount {
+					id
+					organizationId
+					name
+					description
+					scopes
+					disabledAt
+					createdAt
+					updatedAt
+				}
+			}
+		}
+	`;
+
+	const responseData = await proboConnectApiRequest.call(this, query, { input });
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
+}

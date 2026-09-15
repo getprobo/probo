@@ -2198,6 +2198,7 @@
     "frameworks": "Frameworks",
     "iam": "IAM",
     "users": "Gebruikers",
+    "serviceAccounts": "Serviceaccounts",
     "authProvisioning": "Auth & provisioning",
     "auditLog": "Auditlogboek",
     "allThirdParties": "Alle derde partijen",

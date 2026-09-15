@@ -29,6 +29,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	var (
 		loadNode func(ctx context.Context, id gid.GID) (types.Node, error)
 		action   string
+		scope    *coredata.Scope
 	)
 
 	switch id.EntityType() {
@@ -152,11 +153,33 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewSCIMEvent(scimEvent), nil
 		}
+	case coredata.ServiceAccountEntityType:
+		action = iam.ActionServiceAccountGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			account, err := r.iam.ServiceAccounts.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewServiceAccount(account), nil
+		}
+	case coredata.ServiceAccountCredentialEntityType:
+		action = iam.ActionServiceAccountCredentialList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			credential, err := r.iam.ServiceAccounts.GetCredential(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewServiceAccountCredential(credential), nil
+		}
 	default:
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
 	}
 
-	if _, err := r.authorize(ctx, id, action); err != nil {
+	var err error
+	scope, err = r.authorize(ctx, id, action)
+	if err != nil {
 		return nil, err
 	}
 
@@ -184,6 +207,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		if _, ok := errors.AsType[*iam.ErrInvitationNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 		}
 
 		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {

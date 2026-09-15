@@ -1404,6 +1404,7 @@
     "frameworks": "Frameworks",
     "iam": "IAM",
     "users": "Users",
+    "serviceAccounts": "Service accounts",
     "authProvisioning": "Auth & Provisioning",
     "auditLog": "Audit Log",
     "allThirdParties": "All Third Parties",
