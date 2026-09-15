@@ -153,6 +153,7 @@ export const addVisitorPopover = tv({
       "px-3 py-1.5 text-2 text-sand-12",
       "hover:bg-gold-9 hover:text-white",
       "focus-visible:bg-gold-9 focus-visible:text-white",
+      "disabled:pointer-events-none disabled:hover:bg-transparent disabled:hover:text-sand-12",
     ],
     empty: "px-3 py-1 text-1 font-medium text-sand-11",
     avatar: "shrink-0",

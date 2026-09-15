@@ -53,12 +53,14 @@ interface AddVisitorComboboxProps {
   queryRef: PreloadedQuery<AddVisitorComboboxQuery>;
   onSelect: (candidate: AddVisitorCandidate) => void;
   showEmpty?: boolean;
+  disabled?: boolean;
 }
 
 export function AddVisitorCombobox({
   queryRef,
   onSelect,
   showEmpty = true,
+  disabled = false,
 }: AddVisitorComboboxProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const data = usePreloadedQuery<AddVisitorComboboxQuery>(
@@ -92,6 +94,7 @@ export function AddVisitorCombobox({
             key={candidate.id}
             type="button"
             className={item()}
+            disabled={disabled}
             onClick={() => {
               onSelect({
                 id: candidate.id,
@@ -109,7 +112,9 @@ export function AddVisitorCombobox({
             />
             <span className={identity()}>
               <span className={name()}>{displayName}</span>
-              <span className={email()}>{candidate.emailAddress}</span>
+              {candidate.fullName.trim() !== "" && (
+                <span className={email()}>{candidate.emailAddress}</span>
+              )}
             </span>
           </button>
         );

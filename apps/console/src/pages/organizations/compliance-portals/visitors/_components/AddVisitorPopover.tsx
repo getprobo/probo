@@ -88,7 +88,13 @@ export function AddVisitorPopover({
       errorToast: t("addVisitorDialog.errors.create"),
     },
   );
-  const { body, results, item, name, icon } = addVisitorPopover({ pending: isPending });
+  const trimmedQuery = searchQuery.trim();
+  const resultsAreCurrent
+    = queryRef != null && queryRef.variables.query === trimmedQuery;
+  const resultsDisabled = isPending || !resultsAreCurrent;
+  const { body, results, item, name, icon } = addVisitorPopover({
+    pending: resultsDisabled,
+  });
   const connectionId = ConnectionHandler.getConnectionID(
     compliancePortalId,
     "CompliancePortalAccessList_accesses",
@@ -140,6 +146,10 @@ export function AddVisitorPopover({
   }
 
   function handleSelectCandidate(candidate: AddVisitorCandidate) {
+    if (resultsDisabled) {
+      return;
+    }
+
     void addVisitor({ profileId: candidate.id });
   }
 
@@ -163,7 +173,6 @@ export function AddVisitorPopover({
     }
   }
 
-  const trimmedQuery = searchQuery.trim();
   const canSearch = trimmedQuery.length >= 2;
   const showAddEmail = isLikelyEmail(trimmedQuery);
 
@@ -186,11 +195,12 @@ export function AddVisitorPopover({
             aria-label={t("addVisitorDialog.searchPlaceholder")}
           />
           {canSearch && queryRef != null && (
-            <div className={results()} aria-busy={isPending}>
+            <div className={results()} aria-busy={resultsDisabled}>
               <AddVisitorCombobox
                 queryRef={queryRef}
                 onSelect={handleSelectCandidate}
                 showEmpty={!showAddEmail}
+                disabled={resultsDisabled}
               />
             </div>
           )}
