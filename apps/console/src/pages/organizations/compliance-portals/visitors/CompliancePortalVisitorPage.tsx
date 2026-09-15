@@ -126,27 +126,31 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
       )}
       <div className={hero()}>
         <CompliancePortalVisitorProfileCard accessKey={access}>
-          {canUpdate && access.state === "ACTIVE" && (
-            <DeactivateVisitorDialog accessId={access.id}>
-              <Button
-                variant="soft"
-                color="red"
-                iconStart={<UserMinusIcon />}
-              >
-                {t("visitorPage.actions.deactivate")}
-              </Button>
-            </DeactivateVisitorDialog>
-          )}
-          {canUpdate && access.state === "DEACTIVATED" && (
-            <Button
-              variant="solid"
-              color="green"
-              iconStart={<UserPlusIcon />}
-              loading={isActivating}
-              onClick={handleActivate}
-            >
-              {t("visitorPage.actions.activate")}
-            </Button>
+          {canUpdate && (
+            <>
+              {access.state === "ACTIVE" && (
+                <DeactivateVisitorDialog accessId={access.id}>
+                  <Button
+                    variant="soft"
+                    color="red"
+                    iconStart={<UserMinusIcon />}
+                  >
+                    {t("visitorPage.actions.deactivate")}
+                  </Button>
+                </DeactivateVisitorDialog>
+              )}
+              {access.state === "DEACTIVATED" && (
+                <Button
+                  variant="solid"
+                  color="green"
+                  iconStart={<UserPlusIcon />}
+                  loading={isActivating}
+                  onClick={handleActivate}
+                >
+                  {t("visitorPage.actions.activate")}
+                </Button>
+              )}
+            </>
           )}
         </CompliancePortalVisitorProfileCard>
         {access.ndaSignature != null && (

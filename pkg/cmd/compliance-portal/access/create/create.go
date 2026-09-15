@@ -77,6 +77,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Invite a visitor to a compliance portal",
+		Args:  cobra.NoArgs,
 		Example: `  # Invite by email
   prb compliance-portal access create --portal PORTAL_ID --email visitor@example.com
 

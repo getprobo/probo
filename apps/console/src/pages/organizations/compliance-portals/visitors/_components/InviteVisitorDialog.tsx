@@ -34,12 +34,14 @@ import { type ReactElement, Suspense, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useQueryLoader } from "react-relay";
 import { useNavigate } from "react-router";
+import { ConnectionHandler } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
 import type { InviteVisitorComboboxQuery } from "#/__generated__/core/InviteVisitorComboboxQuery.graphql";
 import type { InviteVisitorDialogCreateMutation } from "#/__generated__/core/InviteVisitorDialogCreateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { useAccessListFilters } from "../_lib/useAccessListFilters";
 import { inviteVisitorDialog } from "../variants";
 
 import {
@@ -49,11 +51,16 @@ import {
 } from "./InviteVisitorCombobox";
 
 const createAccessMutation = graphql`
-  mutation InviteVisitorDialogCreateMutation($input: CreateCompliancePortalAccessInput!) {
+  mutation InviteVisitorDialogCreateMutation(
+    $input: CreateCompliancePortalAccessInput!
+    $connections: [ID!]!
+  ) {
     createCompliancePortalAccess(input: $input) {
-      compliancePortalAccessEdge {
+      compliancePortalAccessEdge @prependEdge(connections: $connections) {
+        cursor
         node {
           id
+          ...CompliancePortalAccessListItemFragment
         }
       }
     }
@@ -75,6 +82,7 @@ export function InviteVisitorDialog({
 }: InviteVisitorDialogProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const navigate = useNavigate();
+  const { order, query } = useAccessListFilters();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [queryRef, loadQuery]
@@ -87,6 +95,14 @@ export function InviteVisitorDialog({
     },
   );
   const { body, item, hit, invite } = inviteVisitorDialog();
+  const connectionId = ConnectionHandler.getConnectionID(
+    compliancePortalId,
+    "CompliancePortalAccessList_accesses",
+    {
+      orderBy: order,
+      filter: { query },
+    },
+  );
 
   const debouncedLoadQuery = useDebounceCallback(
     useCallback(
@@ -110,6 +126,7 @@ export function InviteVisitorDialog({
             compliancePortalId,
             ...input,
           },
+          connections: [connectionId],
         },
       });
       const accessId
@@ -164,7 +181,7 @@ export function InviteVisitorDialog({
             placeholder={t("inviteVisitorDialog.searchPlaceholder")}
             aria-label={t("inviteVisitorDialog.searchPlaceholder")}
           />
-          {canSearch && queryRef != null && (
+          {canSearch && queryRef != null && queryRef.variables.query === trimmedQuery && (
             <Suspense fallback={<ListSkeleton count={3} />}>
               <InviteVisitorCombobox
                 queryRef={queryRef}

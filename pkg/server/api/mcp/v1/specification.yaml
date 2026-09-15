@@ -11576,6 +11576,13 @@ components:
         compliance_portal_access:
           $ref: "#/components/schemas/CompliancePortalAccess"
 
+    CompliancePortalAccessState:
+      type: string
+      enum:
+        - ACTIVE
+        - DEACTIVATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalAccessState
+
     CompliancePortalAccess:
       type: object
       required:
@@ -11587,7 +11594,7 @@ components:
         id:
           $ref: "#/components/schemas/GID"
         state:
-          type: string
+          $ref: "#/components/schemas/CompliancePortalAccessState"
         authenticated_at:
           type:
             - string

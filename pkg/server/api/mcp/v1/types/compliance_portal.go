@@ -51,7 +51,7 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 func NewCompliancePortalAccess(access *coredata.CompliancePortalAccess) *CompliancePortalAccess {
 	return &CompliancePortalAccess{
 		ID:              access.ID,
-		State:           access.State.String(),
+		State:           access.State,
 		AuthenticatedAt: access.AuthenticatedAt,
 		CreatedAt:       access.CreatedAt,
 		UpdatedAt:       access.UpdatedAt,

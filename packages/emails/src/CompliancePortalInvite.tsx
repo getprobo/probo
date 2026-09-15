@@ -29,23 +29,23 @@ import EmailLayout, {
 export const CompliancePortalInvite = () => {
   return (
     <EmailLayout
-      subject={`Invitation to ${"{{.OrganizationName}}"}'s compliance page`}
+      subject={`Invitation to ${"{{.OrganizationName}}"}'s compliance portal`}
     >
       <Text style={bodyText}>
         You have been invited to access{" "}
-        <strong>{"{{.OrganizationName}}"}</strong>'s compliance page. Click the
+        <strong>{"{{.OrganizationName}}"}</strong>'s compliance portal. Click the
         button below to sign in:
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={"{{.InviteURL}}"}>
-          Open compliance page
+          Open compliance portal
         </Button>
       </Section>
 
       <Section style={expiryBox}>
         <Text style={expiryText}>
-          {"This invitation expires in {{.DurationInDays}} days."}
+          {"This invitation expires in {{.Duration}}."}
         </Text>
       </Section>
     </EmailLayout>

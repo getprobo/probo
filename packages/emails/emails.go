@@ -402,23 +402,39 @@ func (p *Presenter) RenderCompliancePortalInvite(
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
-	durationInDays := max(int(tokenDuration.Hours()/24), 1)
-
 	data := struct {
 		*CommonVariables
 		OrganizationName string
 		InviteURL        string
-		DurationInDays   int
+		Duration         string
 	}{
 		CommonVariables:  vars,
 		OrganizationName: organizationName,
 		InviteURL:        inviteURL,
-		DurationInDays:   durationInDays,
+		Duration:         inviteExpiryDuration(tokenDuration),
 	}
 
 	textBody, htmlBody, err = renderEmail(compliancePortalInviteTextTemplate, compliancePortalInviteHTMLTemplate, data)
 
 	return fmt.Sprintf(subjectCompliancePortalInvite, organizationName), textBody, htmlBody, err
+}
+
+func inviteExpiryDuration(tokenDuration time.Duration) string {
+	hours := max(int(tokenDuration.Hours()), 1)
+	if hours < 24 {
+		if hours == 1 {
+			return "1 hour"
+		}
+
+		return fmt.Sprintf("%d hours", hours)
+	}
+
+	days := hours / 24
+	if days == 1 {
+		return "1 day"
+	}
+
+	return fmt.Sprintf("%d days", days)
 }
 
 func (p *Presenter) RenderCompliancePortalDocumentAccessRejected(

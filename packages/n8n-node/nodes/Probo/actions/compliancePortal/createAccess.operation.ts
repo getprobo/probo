@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -133,6 +134,16 @@ export async function execute(
 	const compliancePortalFileIds = stringList(
 		this.getNodeParameter('compliancePortalFileIds', itemIndex, []),
 	);
+
+	const hasProfileId = profileId !== '';
+	const hasEmail = email !== '';
+	if (hasProfileId === hasEmail) {
+		throw new NodeOperationError(
+			this.getNode(),
+			'Provide exactly one of Profile ID or Email',
+			{ itemIndex },
+		);
+	}
 
 	const query = `
 		mutation CreateCompliancePortalAccess($input: CreateCompliancePortalAccessInput!) {

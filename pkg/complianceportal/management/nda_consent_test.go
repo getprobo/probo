@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package visitor
+package management
 
 import (
 	"testing"
@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNdaConsentText(t *testing.T) {
+func TestNDAConsentText(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
@@ -34,7 +34,7 @@ func TestNdaConsentText(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			text := ndaConsentText("compliance@acme.com")
+			text := NDAConsentText("compliance@acme.com")
 
 			assert.Contains(t, text, "please contact compliance@acme.com.")
 			assert.NotContains(t, text, DefaultNDAContactEmail)
@@ -46,7 +46,7 @@ func TestNdaConsentText(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			text := ndaConsentText("")
+			text := NDAConsentText("")
 
 			assert.Contains(t, text, "please contact "+DefaultNDAContactEmail+".")
 		},
@@ -59,7 +59,7 @@ func TestNdaConsentText(t *testing.T) {
 
 			const previousDefault = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact security@probo.com."
 
-			assert.Equal(t, previousDefault, ndaConsentText(""))
+			assert.Equal(t, previousDefault, NDAConsentText(""))
 		},
 	)
 }

@@ -340,7 +340,7 @@ func (s *Service) CreateAccess(
 						DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 						FileID:         *compliancePortal.NonDisclosureAgreementFileID,
 						SignerEmail:    identity.EmailAddress,
-						ConsentText:    ndaConsentText(ref.UnrefOrZero(compliancePortal.Email)),
+						ConsentText:    NDAConsentText(ref.UnrefOrZero(compliancePortal.Email)),
 					},
 				)
 				if err != nil {
@@ -1048,9 +1048,9 @@ func (s *Service) sendAccessEmail(
 	return nil
 }
 
-func ndaConsentText(contactEmail string) string {
+func NDAConsentText(contactEmail string) string {
 	if contactEmail == "" {
-		contactEmail = defaultNDAContactEmail
+		contactEmail = DefaultNDAContactEmail
 	}
 
 	return fmt.Sprintf(
@@ -1151,8 +1151,14 @@ func findOrCreateIdentity(
 		UpdatedAt:    now,
 	}
 
-	if err := identity.Insert(ctx, tx); err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+	insertErr := tx.Savepoint(
+		ctx,
+		func(ctx context.Context, sp pg.Tx) error {
+			return identity.Insert(ctx, sp)
+		},
+	)
+	if insertErr != nil {
+		if errors.Is(insertErr, coredata.ErrResourceAlreadyExists) {
 			if err := identity.LoadByEmail(ctx, tx, email); err != nil {
 				return nil, fmt.Errorf("cannot load identity after conflict: %w", err)
 			}
@@ -1160,7 +1166,7 @@ func findOrCreateIdentity(
 			return identity, nil
 		}
 
-		return nil, fmt.Errorf("cannot insert identity: %w", err)
+		return nil, fmt.Errorf("cannot insert identity: %w", insertErr)
 	}
 
 	return identity, nil
@@ -1203,8 +1209,14 @@ func findOrCreateVisitorProfile(
 		UpdatedAt:      now,
 	}
 
-	if err := profile.Insert(ctx, tx); err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+	insertErr := tx.Savepoint(
+		ctx,
+		func(ctx context.Context, sp pg.Tx) error {
+			return profile.Insert(ctx, sp)
+		},
+	)
+	if insertErr != nil {
+		if errors.Is(insertErr, coredata.ErrResourceAlreadyExists) {
 			if err := profile.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				tx,
@@ -1218,7 +1230,7 @@ func findOrCreateVisitorProfile(
 			return profile, nil
 		}
 
-		return nil, fmt.Errorf("cannot insert profile: %w", err)
+		return nil, fmt.Errorf("cannot insert profile: %w", insertErr)
 	}
 
 	return profile, nil

@@ -42,19 +42,6 @@ import (
 	"go.probo.inc/probo/pkg/resourcealias"
 )
 
-const DefaultNDAContactEmail = "security@probo.com"
-
-func ndaConsentText(contactEmail string) string {
-	if contactEmail == "" {
-		contactEmail = DefaultNDAContactEmail
-	}
-
-	return fmt.Sprintf(
-		"By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact %s.",
-		contactEmail,
-	)
-}
-
 type (
 	// Service is the visitor-facing compliance portal service. It exposes the
 	// public read operations for the compliance page and its related resources as
@@ -373,7 +360,7 @@ func (s *Service) ProvisionPortalMember(
 							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 							FileID:         *compliancePage.NonDisclosureAgreementFileID,
 							SignerEmail:    identity.EmailAddress,
-							ConsentText:    ndaConsentText(ref.UnrefOrZero(compliancePage.Email)),
+							ConsentText:    management.NDAConsentText(ref.UnrefOrZero(compliancePage.Email)),
 						},
 					)
 					if err != nil {

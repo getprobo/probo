@@ -93,14 +93,16 @@ export function CompliancePortalVisitorProfileCard({
                 })}
         </Text>
       </div>
-      {children != null && (
-        <>
-          <Separator />
-          <div className={actions()}>
-            {children}
-          </div>
-        </>
-      )}
+      {children
+        ? (
+            <>
+              <Separator />
+              <div className={actions()}>
+                {children}
+              </div>
+            </>
+          )
+        : null}
     </Card>
   );
 }

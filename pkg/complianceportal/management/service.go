@@ -36,7 +36,7 @@ const (
 	TitleMaxLength         = 1000
 	ContentMaxLength       = 5000
 	MemberCandidateLimit   = 20
-	defaultNDAContactEmail = "security@probo.com"
+	DefaultNDAContactEmail = "security@probo.com"
 )
 
 type (
