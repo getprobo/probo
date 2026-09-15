@@ -145,25 +145,14 @@ WHERE
 
 type (
 	Risk struct {
-		ID                 gid.GID        `db:"id"`
-		OrganizationID     gid.GID        `db:"organization_id"`
-		Name               string         `db:"name"`
-		Description        *string        `db:"description"`
-		Category           string         `db:"category"`
-		Treatment          *RiskTreatment `db:"treatment"`
-		Note               string         `db:"note"`
-		OwnerID            *gid.GID       `db:"owner_profile_id"`
-		InherentLikelihood *int           `db:"inherent_likelihood"`
-		InherentImpact     *int           `db:"inherent_impact"`
-		InherentRiskScore  *int           `db:"inherent_risk_score"`
-		ResidualLikelihood *int           `db:"residual_likelihood"`
-		ResidualImpact     *int           `db:"residual_impact"`
-		ResidualRiskScore  *int           `db:"residual_risk_score"`
-		CreatedAt          time.Time      `db:"created_at"`
-		UpdatedAt          time.Time      `db:"updated_at"`
-
-		// Ordering only
-		OwnerFullName *string `db:"owner_full_name"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		Name           string    `db:"name"`
+		Description    *string   `db:"description"`
+		Category       string    `db:"category"`
+		Note           string    `db:"note"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	Risks []*Risk
@@ -177,14 +166,6 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 		return page.CursorKey{ID: r.ID, Value: r.Name}
 	case RiskOrderFieldCategory:
 		return page.CursorKey{ID: r.ID, Value: r.Category}
-	case RiskOrderFieldTreatment:
-		return page.CursorKey{ID: r.ID, Value: r.Treatment}
-	case RiskOrderFieldInherentRiskScore:
-		return page.CursorKey{ID: r.ID, Value: r.InherentRiskScore}
-	case RiskOrderFieldResidualRiskScore:
-		return page.CursorKey{ID: r.ID, Value: r.ResidualRiskScore}
-	case RiskOrderFieldOwnerFullName:
-		return page.CursorKey{ID: r.ID, Value: r.OwnerFullName}
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -289,16 +270,7 @@ WITH rsks AS (
 		r.name,
 		r.description,
 		r.category,
-		r.owner_profile_id,
-		p.full_name as owner_full_name,
-		r.treatment,
 		r.note,
-		r.inherent_likelihood,
-		r.inherent_impact,
-		r.inherent_risk_score,
-		r.residual_likelihood,
-		r.residual_impact,
-		r.residual_risk_score,
 		r.search_vector,
 		r.created_at,
 		r.updated_at
@@ -306,8 +278,6 @@ WITH rsks AS (
 		risks r
 	INNER JOIN
 		risks_measures rm ON r.id = rm.risk_id
-	LEFT JOIN
-		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
 )
@@ -317,16 +287,7 @@ SELECT
 	name,
 	description,
 	category,
-	owner_profile_id,
-	owner_full_name,
-	treatment,
 	note,
-	inherent_likelihood,
-	inherent_impact,
-	inherent_risk_score,
-	residual_likelihood,
-	residual_impact,
-	residual_risk_score,
 	created_at,
 	updated_at
 FROM
@@ -404,24 +365,13 @@ WITH rsks AS (
 		r.organization_id,
 		r.name,
 		r.description,
-		r.owner_profile_id,
-		p.full_name as owner_full_name,
-		r.treatment,
 		r.note,
-		r.inherent_likelihood,
-		r.inherent_impact,
-		r.inherent_risk_score,
-		r.residual_likelihood,
-		r.residual_impact,
-		r.residual_risk_score,
 		r.category,
 		r.search_vector,
 		r.created_at,
 		r.updated_at
 	FROM
 		risks r
-	LEFT JOIN
-		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		r.organization_id = @organization_id
 )
@@ -430,16 +380,7 @@ SELECT
 	organization_id,
 	name,
 	description,
-	owner_profile_id,
-	owner_full_name,
-	treatment,
 	note,
-	inherent_likelihood,
-	inherent_impact,
-	inherent_risk_score,
-	residual_likelihood,
-	residual_impact,
-	residual_risk_score,
 	category,
 	created_at,
 	updated_at
@@ -484,16 +425,7 @@ SELECT
 	name,
 	description,
 	category,
-	owner_profile_id,
-	NULL as owner_full_name,
-	treatment,
 	note,
-	inherent_likelihood,
-	inherent_impact,
-	inherent_risk_score,
-	residual_likelihood,
-	residual_impact,
-	residual_risk_score,
 	created_at,
 	updated_at
 FROM risks
@@ -538,16 +470,7 @@ SELECT
 	name,
 	description,
 	category,
-	owner_profile_id,
-	NULL as owner_full_name,
-	treatment,
 	note,
-	inherent_likelihood,
-	inherent_impact,
-	inherent_risk_score,
-	residual_likelihood,
-	residual_impact,
-	residual_risk_score,
 	created_at,
 	updated_at
 FROM risks
@@ -633,15 +556,6 @@ SELECT
 	name,
 	description,
 	category,
-	treatment,
-	inherent_likelihood,
-	inherent_impact,
-	inherent_risk_score,
-	residual_likelihood,
-	residual_impact,
-	residual_risk_score,
-	owner_profile_id,
-	NULL AS owner_full_name,
 	note,
 	created_at,
 	updated_at
@@ -681,26 +595,20 @@ func (r *Risk) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO risks (id, tenant_id, organization_id, name, description, category, owner_profile_id, treatment, note, inherent_likelihood, inherent_impact, residual_likelihood, residual_impact, created_at, updated_at)
-VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owner_profile_id, @treatment, @note, @inherent_likelihood, @inherent_impact, @residual_likelihood, @residual_impact, @created_at, @updated_at)
+INSERT INTO risks (id, tenant_id, organization_id, name, description, category, note, created_at, updated_at)
+VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @note, @created_at, @updated_at)
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                  r.ID,
-		"tenant_id":           scope.GetTenantID(),
-		"organization_id":     r.OrganizationID,
-		"name":                r.Name,
-		"description":         r.Description,
-		"category":            r.Category,
-		"owner_profile_id":    r.OwnerID,
-		"treatment":           r.Treatment,
-		"note":                r.Note,
-		"inherent_likelihood": r.InherentLikelihood,
-		"inherent_impact":     r.InherentImpact,
-		"residual_likelihood": r.ResidualLikelihood,
-		"residual_impact":     r.ResidualImpact,
-		"created_at":          r.CreatedAt,
-		"updated_at":          r.UpdatedAt,
+		"id":              r.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": r.OrganizationID,
+		"name":            r.Name,
+		"description":     r.Description,
+		"category":        r.Category,
+		"note":            r.Note,
+		"created_at":      r.CreatedAt,
+		"updated_at":      r.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -718,41 +626,25 @@ UPDATE risks
 SET
 	name = @name,
 	description = @description,
-	owner_profile_id = @owner_profile_id,
-	treatment = @treatment,
-	inherent_likelihood = @inherent_likelihood,
-	inherent_impact = @inherent_impact,
-	residual_likelihood = @residual_likelihood,
-	residual_impact = @residual_impact,
 	category = @category,
 	note = @note,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @risk_id
-RETURNING inherent_risk_score, residual_risk_score
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"risk_id":             r.ID,
-		"name":                r.Name,
-		"description":         r.Description,
-		"category":            r.Category,
-		"owner_profile_id":    r.OwnerID,
-		"treatment":           r.Treatment,
-		"note":                r.Note,
-		"inherent_likelihood": r.InherentLikelihood,
-		"inherent_impact":     r.InherentImpact,
-		"residual_likelihood": r.ResidualLikelihood,
-		"residual_impact":     r.ResidualImpact,
-		"updated_at":          r.UpdatedAt,
+		"risk_id":     r.ID,
+		"name":        r.Name,
+		"description": r.Description,
+		"category":    r.Category,
+		"note":        r.Note,
+		"updated_at":  r.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	err := conn.QueryRow(ctx, q, args).Scan(
-		&r.InherentRiskScore,
-		&r.ResidualRiskScore,
-	)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update risk: %w", err)
 	}

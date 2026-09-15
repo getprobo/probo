@@ -65,74 +65,6 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Treatment',
-		name: 'treatment',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['create'],
-			},
-		},
-		options: [
-			{
-				name: 'Mitigated',
-				value: 'MITIGATED',
-			},
-			{
-				name: 'Accepted',
-				value: 'ACCEPTED',
-			},
-			{
-				name: 'Avoided',
-				value: 'AVOIDED',
-			},
-			{
-				name: 'Transferred',
-				value: 'TRANSFERRED',
-			},
-		],
-		default: 'MITIGATED',
-		description: 'The treatment strategy for the risk',
-		required: true,
-	},
-	{
-		displayName: 'Initial Likelihood',
-		name: 'inherentLikelihood',
-		type: 'number',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['create'],
-			},
-		},
-		typeOptions: {
-			minValue: 1,
-			maxValue: 5,
-		},
-		default: 1,
-		description: 'The initial likelihood of the risk (1-5)',
-		required: true,
-	},
-	{
-		displayName: 'Initial Impact',
-		name: 'inherentImpact',
-		type: 'number',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['create'],
-			},
-		},
-		typeOptions: {
-			minValue: 1,
-			maxValue: 5,
-		},
-		default: 1,
-		description: 'The initial impact of the risk (1-5)',
-		required: true,
-	},
-	{
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
@@ -159,35 +91,6 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'Additional notes about the risk',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the person who owns this risk',
-			},
-			{
-				displayName: 'Residual Impact',
-				name: 'residualImpact',
-				type: 'number',
-				typeOptions: {
-					minValue: 1,
-					maxValue: 5,
-				},
-				default: 1,
-				description: 'The residual impact of the risk (1-5)',
-			},
-			{
-				displayName: 'Residual Likelihood',
-				name: 'residualLikelihood',
-				type: 'number',
-				typeOptions: {
-					minValue: 1,
-					maxValue: 5,
-				},
-				default: 1,
-				description: 'The residual likelihood of the risk (1-5)',
-			},
 		],
 	},
 ];
@@ -199,14 +102,8 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const category = this.getNodeParameter('category', itemIndex) as string;
-	const treatment = this.getNodeParameter('treatment', itemIndex) as string;
-	const inherentLikelihood = this.getNodeParameter('inherentLikelihood', itemIndex) as number;
-	const inherentImpact = this.getNodeParameter('inherentImpact', itemIndex) as number;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		description?: string;
-		ownerId?: string;
-		residualLikelihood?: number;
-		residualImpact?: number;
 		note?: string;
 	};
 
@@ -219,13 +116,6 @@ export async function execute(
 						name
 						description
 						category
-						treatment
-						inherentLikelihood
-						inherentImpact
-						inherentRiskScore
-						residualLikelihood
-						residualImpact
-						residualRiskScore
 						note
 						createdAt
 						updatedAt
@@ -239,14 +129,8 @@ export async function execute(
 		organizationId,
 		name,
 		category,
-		treatment,
-		inherentLikelihood,
-		inherentImpact,
 	};
 	if (additionalFields.description) input.description = additionalFields.description;
-	if (additionalFields.ownerId) input.ownerId = additionalFields.ownerId;
-	if (additionalFields.residualLikelihood !== undefined) input.residualLikelihood = additionalFields.residualLikelihood;
-	if (additionalFields.residualImpact !== undefined) input.residualImpact = additionalFields.residualImpact;
 	if (additionalFields.note) input.note = additionalFields.note;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
