@@ -23,6 +23,7 @@ package list
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -188,7 +189,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			for _, r := range riskAnalyses {
 				desc := ""
 				if r.Description != nil {
-					desc = *r.Description
+					formatted, err := cmdutil.FormatRichText(*r.Description)
+					if err != nil {
+						return fmt.Errorf("cannot format description: %w", err)
+					}
+
+					desc = strings.ReplaceAll(formatted, "\n", " ")
 				}
 
 				periodStart := ""

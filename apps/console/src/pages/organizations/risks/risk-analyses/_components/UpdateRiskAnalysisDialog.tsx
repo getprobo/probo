@@ -27,15 +27,19 @@ import {
   DialogFooter,
   Field,
   Input,
+  RichEditor,
   useDialogRef,
 } from "@probo/ui";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { UpdateRiskAnalysisDialog_riskAnalysis$key } from "#/__generated__/core/UpdateRiskAnalysisDialog_riskAnalysis.graphql";
 import type { UpdateRiskAnalysisDialogMutation } from "#/__generated__/core/UpdateRiskAnalysisDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+
+import { isRichEditorContentEmpty } from "../_lib/richEditorContent";
+import { riskAnalysisDescriptionField } from "../variants";
 
 export const updateRiskAnalysisDialogFragment = graphql`
   fragment UpdateRiskAnalysisDialog_riskAnalysis on RiskAnalysis {
@@ -91,7 +95,7 @@ export function UpdateRiskAnalysisDialog({
   const { t } = useTranslation();
   const riskAnalysis = useFragment(updateRiskAnalysisDialogFragment, riskAnalysisKey);
   const [updateRiskAnalysis, isUpdating] = useMutation<UpdateRiskAnalysisDialogMutation>(updateMutation);
-  const { register, handleSubmit, formState } = useForm<FormData>({
+  const { register, handleSubmit, control, formState } = useForm<FormData>({
     values: {
       name: riskAnalysis.name,
       description: riskAnalysis.description ?? "",
@@ -107,7 +111,7 @@ export function UpdateRiskAnalysisDialog({
           input: {
             id: riskAnalysis.id,
             name: data.name,
-            description: data.description || null,
+            description: isRichEditorContentEmpty(data.description) ? null : data.description,
             period: {
               start: formatDatetime(data.periodStart) ?? null,
               end: formatDatetime(data.periodEnd) ?? null,
@@ -123,7 +127,7 @@ export function UpdateRiskAnalysisDialog({
 
   return (
     <Dialog
-      className="max-w-lg"
+      className="max-w-2xl"
       ref={dialogRef}
       title={(
         <Breadcrumb
@@ -143,13 +147,21 @@ export function UpdateRiskAnalysisDialog({
             error={formState.errors.name?.message}
             placeholder={t("updateRiskAnalysisDialog.placeholders.name")}
           />
-          <Field
-            label={t("updateRiskAnalysisDialog.fields.description")}
-            {...register("description")}
-            type="textarea"
-            rows={3}
-            placeholder={t("updateRiskAnalysisDialog.placeholders.description")}
-          />
+          <Field label={t("updateRiskAnalysisDialog.fields.description")}>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field }) => (
+                <RichEditor
+                  className={riskAnalysisDescriptionField().editor()}
+                  content={field.value}
+                  disabled={isUpdating}
+                  aria-label={t("updateRiskAnalysisDialog.fields.description")}
+                  onChangeContent={field.onChange}
+                />
+              )}
+            />
+          </Field>
           <Field
             label={t("updateRiskAnalysisDialog.fields.periodStart")}
             error={formState.errors.periodStart?.message}

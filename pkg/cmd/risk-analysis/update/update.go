@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const updateMutation = `
@@ -111,7 +112,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("description") {
-				input["description"] = flagDescription
+				if flagDescription == "" {
+					input["description"] = nil
+				} else {
+					input["description"] = prosemirror.FromPlainText(flagDescription)
+				}
 			}
 
 			if cmd.Flags().Changed("period-start") || cmd.Flags().Changed("period-end") {

@@ -29,6 +29,7 @@ import { graphql, useFragment } from "react-relay";
 import type { RiskAnalysisListItem_riskAnalysis$key } from "#/__generated__/core/RiskAnalysisListItem_riskAnalysis.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { richEditorContentPlainText } from "../_lib/richEditorContent";
 import { formatMatrixSize } from "./matrixSize";
 import { RiskAnalysisActions } from "./RiskAnalysisActions";
 
@@ -62,6 +63,7 @@ export function RiskAnalysisListItem({
   const { i18n } = useTranslation();
   const organizationId = useOrganizationId();
   const riskAnalysis = useFragment(riskAnalysisListItemFragment, riskAnalysisKey);
+  const descriptionText = richEditorContentPlainText(riskAnalysis.description ?? "");
 
   return (
     <Tr
@@ -71,8 +73,8 @@ export function RiskAnalysisListItem({
         {riskAnalysis.name}
       </Td>
       <Td className="min-w-64 w-full text-txt-secondary">
-        <span className="line-clamp-2" title={riskAnalysis.description ?? undefined}>
-          {riskAnalysis.description || "—"}
+        <span className="line-clamp-2" title={descriptionText || undefined}>
+          {descriptionText || "—"}
         </span>
       </Td>
       <Td className="whitespace-nowrap text-txt-secondary">

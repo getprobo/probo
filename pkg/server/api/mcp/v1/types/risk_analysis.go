@@ -21,16 +21,23 @@
 package types
 
 import (
+	"fmt"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 )
 
 func NewRiskAnalysis(ra *coredata.RiskAnalysis) *RiskAnalysis {
+	description, err := optionalRichTextToMarkdown(ra.Description)
+	if err != nil {
+		panic(fmt.Errorf("cannot convert risk analysis description to markdown: %w", err))
+	}
+
 	return &RiskAnalysis{
 		ID:             ra.ID,
 		OrganizationID: ra.OrganizationID,
 		Name:           ra.Name,
-		Description:    ra.Description,
+		Description:    description,
 		Period:         NewPeriod(ra.PeriodStart, ra.PeriodEnd),
 		MatrixSize:     NewMatrixSize(ra.MatrixRows, ra.MatrixCols),
 		CreatedAt:      ra.CreatedAt,

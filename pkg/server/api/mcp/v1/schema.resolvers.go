@@ -6608,10 +6608,15 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		}
 	}
 
+	description, err := optionalMarkdownToProseMirrorJSON(input.Description)
+	if err != nil {
+		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAnalysisRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
-		Description:    input.Description,
+		Description:    description,
 		Period:         period,
 		MatrixSize:     matrixSize,
 	})
@@ -6638,10 +6643,15 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
+	description, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Description))
+	if err != nil {
+		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAnalysisRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: UnwrapOmittable(input.Description),
+		Description: description,
 		Period:      period,
 	})
 	if err != nil {
@@ -6698,13 +6708,18 @@ func (r *Resolver) ForkRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRe
 		}
 	}
 
+	description, err := optionalMarkdownToProseMirrorJSON(input.Description)
+	if err != nil {
+		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
 	ra, err := r.riskManagement.Fork(
 		ctx,
 		scope,
 		riskmanagement.ForkRiskAnalysisRequest{
 			RiskAnalysisID: input.ID,
 			Name:           input.Name,
-			Description:    input.Description,
+			Description:    description,
 			Period:         period,
 		},
 	)

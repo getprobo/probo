@@ -343,6 +343,17 @@ export function withPlainTextContent(value: IDataObject): IDataObject {
 	};
 }
 
+export function withPlainTextDescription(value: IDataObject): IDataObject {
+	if (typeof value.description !== 'string') {
+		return value;
+	}
+
+	return {
+		...value,
+		description: proseMirrorJSONToPlainText(value.description),
+	};
+}
+
 export function toPeriod(
 	start?: string | null,
 	end?: string | null,
