@@ -62,6 +62,7 @@ func deactivateCompliancePortalAccess(t *testing.T, client *testutil.Client, acc
 			} `json:"compliancePortalAccess"`
 		} `json:"deactivateCompliancePortalAccess"`
 	}
+
 	err := client.Execute(deactivateCompliancePortalAccessMutation, map[string]any{
 		"input": map[string]any{"id": accessID},
 	}, &result)
@@ -81,6 +82,7 @@ func activateCompliancePortalAccess(t *testing.T, client *testutil.Client, acces
 			} `json:"compliancePortalAccess"`
 		} `json:"activateCompliancePortalAccess"`
 	}
+
 	err := client.Execute(activateCompliancePortalAccessMutation, map[string]any{
 		"input": map[string]any{"id": accessID},
 	}, &result)

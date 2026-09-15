@@ -9706,6 +9706,7 @@ func (r *Resolver) CreateCompliancePortalAccessTool(ctx context.Context, req *mc
 	}
 
 	var email *mail.Addr
+
 	if input.Email != nil && *input.Email != "" {
 		parsed, err := mail.ParseAddr(*input.Email)
 		if err != nil {
@@ -9739,6 +9740,7 @@ func (r *Resolver) CreateCompliancePortalAccessTool(ctx context.Context, req *mc
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
+
 			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
 		}
 	}
@@ -9765,6 +9767,7 @@ func (r *Resolver) DeactivateCompliancePortalAccessTool(ctx context.Context, req
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot deactivate compliance portal access", log.Error(err))
+
 			return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
 		}
 	}
@@ -9791,6 +9794,7 @@ func (r *Resolver) ActivateCompliancePortalAccessTool(ctx context.Context, req *
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot activate compliance portal access", log.Error(err))
+
 			return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
 		}
 	}

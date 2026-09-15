@@ -304,6 +304,7 @@ func (s *Service) CreateAccess(
 			}
 
 			existing := &coredata.CompliancePortalAccess{}
+
 			err = existing.LoadByCompliancePortalIDAndIdentityID(
 				ctx,
 				tx,
@@ -692,6 +693,7 @@ func (s *Service) UpdateAccess(
 
 			if req.State != nil && *req.State != access.State {
 				access.State = *req.State
+
 				access.UpdatedAt = time.Now()
 				if err := access.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update compliance portal access state: %w", err)

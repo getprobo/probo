@@ -340,6 +340,7 @@ func (r *compliancePortalResolver) MemberCandidates(ctx context.Context, obj *ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal member candidates", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1506,6 +1507,7 @@ func (r *mutationResolver) CreateCompliancePortalAccess(ctx context.Context, inp
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 	}

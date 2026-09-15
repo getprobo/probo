@@ -390,6 +390,7 @@ func (s *Service) ProvisionPortalMember(
 				}
 			} else if access.AuthenticatedAt == nil {
 				access.AuthenticatedAt = &now
+
 				access.UpdatedAt = now
 				if err := access.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot record access authentication: %w", err)

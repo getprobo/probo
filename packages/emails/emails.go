@@ -402,10 +402,7 @@ func (p *Presenter) RenderCompliancePortalInvite(
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
-	durationInDays := int(tokenDuration.Hours() / 24)
-	if durationInDays < 1 {
-		durationInDays = 1
-	}
+	durationInDays := max(int(tokenDuration.Hours()/24), 1)
 
 	data := struct {
 		*CommonVariables

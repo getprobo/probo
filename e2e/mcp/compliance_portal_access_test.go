@@ -149,6 +149,7 @@ func TestMCP_DeactivateCompliancePortalAccessTenantIsolation(t *testing.T) {
 	org1CompliancePortalID := mcpCompliancePortalID(t, org1Owner)
 
 	org1MCP := testutil.NewMCPClient(t, org1Owner)
+
 	var created struct {
 		CompliancePortalAccess mcpCompliancePortalAccess `json:"compliance_portal_access"`
 	}

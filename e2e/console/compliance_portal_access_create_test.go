@@ -91,11 +91,13 @@ func createCompliancePortalAccess(
 	t.Helper()
 
 	var result createCompliancePortalAccessResult
+
 	err := client.Execute(createCompliancePortalAccessMutation, map[string]any{"input": input}, &result)
 	require.NoError(t, err)
 
 	node := result.CreateCompliancePortalAccess.CompliancePortalAccessEdge.Node
 	require.NotEmpty(t, node.ID)
+
 	return node
 }
 
@@ -154,6 +156,7 @@ func requireInviteMailpitURLEventually(
 				searchQuery,
 				"/auth/compliance-portal-invite",
 			)
+
 			return lastErr == nil && linkURL != ""
 		},
 	)

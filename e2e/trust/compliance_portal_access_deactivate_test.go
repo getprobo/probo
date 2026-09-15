@@ -119,6 +119,7 @@ func TestCompliancePortal_DeactivateBlocksRequestAndGrantedGet(t *testing.T) {
 	assertVisitorFileGet(t, visitor, trustHost, fileID, true, "GRANTED")
 
 	var result requestAccessesResult
+
 	err = visitor.ExecuteTrust(trustHost, requestAccessesMutation, map[string]any{
 		"input": map[string]any{
 			"documentIds":             []string{documentID},
@@ -168,6 +169,7 @@ func lookupVisitorAccessID(
 			} `json:"accesses"`
 		} `json:"node"`
 	}
+
 	err := owner.Execute(query, map[string]any{"id": compliancePortalID}, &result)
 	require.NoError(t, err)
 
@@ -178,6 +180,7 @@ func lookupVisitorAccessID(
 	}
 
 	require.FailNowf(t, "visitor access not found", "email %s", email)
+
 	return ""
 }
 
@@ -290,6 +293,7 @@ func assertVisitorDocumentGet(
 			} `json:"access"`
 		} `json:"node"`
 	}
+
 	err := visitor.ExecuteTrust(trustHost, visitorDocumentGetQuery, map[string]any{
 		"id": documentID,
 	}, &result)
@@ -318,6 +322,7 @@ func assertVisitorFileGet(
 			} `json:"access"`
 		} `json:"node"`
 	}
+
 	err := visitor.ExecuteTrust(trustHost, visitorFileGetQuery, map[string]any{
 		"id": fileID,
 	}, &result)
