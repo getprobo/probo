@@ -19,7 +19,7 @@ bump the version, write a changelog entry, commit, tag, push.
 | CloudFormation (`aws-audit-role`) | `cloudformation-aws-audit-role/v*` | [cloudformation-aws-audit-role.md](./cloudformation-aws-audit-role.md) |
 | Terraform (`aws-audit-role`) | `terraform-aws-audit-role/v*` | [terraform-aws-audit-role.md](./terraform-aws-audit-role.md) |
 | Terraform (`gcp-audit-role`) | `terraform-gcp-audit-role/v*` | [terraform-gcp-audit-role.md](./terraform-gcp-audit-role.md) |
-| Terraform (`azure-audit-role`) | `terraform-azure-audit-role/v*` | [terraform-azure-audit-role.md](./terraform-azure-audit-role.md) |
+| Terraform (`azurerm-audit-role`) | `terraform-azurerm-audit-role/v*` | [terraform-azurerm-audit-role.md](./terraform-azurerm-audit-role.md) |
 
 When the user asks for a release **without specifying a track**, follow
 [Step 1](#1-decide-which-tracks-to-release) below to detect which tracks
@@ -105,9 +105,9 @@ git log $(git describe --tags --abbrev=0 --match='terraform-aws-audit-role/v*' 2
 git log $(git describe --tags --abbrev=0 --match='terraform-gcp-audit-role/v*' 2>/dev/null)..HEAD --oneline \
   -- contrib/terraform/gcp-audit-role
 
-# terraform azure-audit-role
-git log $(git describe --tags --abbrev=0 --match='terraform-azure-audit-role/v*' 2>/dev/null)..HEAD --oneline \
-  -- contrib/terraform/azure-audit-role
+# terraform azurerm-audit-role
+git log $(git describe --tags --abbrev=0 --match='terraform-azurerm-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/terraform/azurerm-audit-role
 ```
 
 If `git describe` fails because the track has no tag yet, the empty range

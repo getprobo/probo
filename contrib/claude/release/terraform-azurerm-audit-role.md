@@ -1,25 +1,25 @@
-# Release Terraform (`azure-audit-role`)
+# Release Terraform (`azurerm-audit-role`)
 
 After confirming commits below, follow the
 [common steps](./README.md#3-common-steps-every-track).
 
 ## Track facts
 
-- **Tag pattern**: `terraform-azure-audit-role/v*`
-- **Version source**: `contrib/terraform/azure-audit-role/VERSION` (single
+- **Tag pattern**: `terraform-azurerm-audit-role/v*`
+- **Version source**: `contrib/terraform/azurerm-audit-role/VERSION` (single
   `X.Y.Z` line)
-- **Version bump**: Edit `contrib/terraform/azure-audit-role/VERSION` directly
-- **Changelog**: `contrib/terraform/azure-audit-role/CHANGELOG.md`
-- **Files to stage**: `contrib/terraform/azure-audit-role/VERSION`,
-  `contrib/terraform/azure-audit-role/CHANGELOG.md`
-- **Workflow**: `.github/workflows/release-terraform-azure-audit-role.yaml`
-- **Path filter**: `contrib/terraform/azure-audit-role`
+- **Version bump**: Edit `contrib/terraform/azurerm-audit-role/VERSION` directly
+- **Changelog**: `contrib/terraform/azurerm-audit-role/CHANGELOG.md`
+- **Files to stage**: `contrib/terraform/azurerm-audit-role/VERSION`,
+  `contrib/terraform/azurerm-audit-role/CHANGELOG.md`
+- **Workflow**: `.github/workflows/release-terraform-azurerm-audit-role.yaml`
+- **Path filter**: `contrib/terraform/azurerm-audit-role`
 
 ## Detect commits
 
 ```shell
-git log $(git describe --tags --abbrev=0 --match='terraform-azure-audit-role/v*' 2>/dev/null)..HEAD --oneline \
-  -- contrib/terraform/azure-audit-role
+git log $(git describe --tags --abbrev=0 --match='terraform-azurerm-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/terraform/azurerm-audit-role
 ```
 
 If `git describe` fails (no tag yet), the empty range lists every commit
@@ -50,7 +50,7 @@ Consumers can also pin a Git source:
 source = "github.com/getprobo/terraform-azurerm-audit-role?ref=v0.1.0"
 
 # Monorepo subdirectory
-source = "github.com/getprobo/probo//contrib/terraform/azure-audit-role?ref=terraform-azure-audit-role/v0.1.0"
+source = "github.com/getprobo/probo//contrib/terraform/azurerm-audit-role?ref=terraform-azurerm-audit-role/v0.1.0"
 ```
 
 Connecting `getprobo/terraform-azurerm-audit-role` to the public Terraform

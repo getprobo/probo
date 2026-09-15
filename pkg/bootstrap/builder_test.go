@@ -1077,7 +1077,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	env["PROBOD_IDENTITY_FEDERATION_CLOUDFORMATION_TEMPLATE_URL"] = "https://example.com/audit-role.yaml"
 	env["PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE"] = "example/terraform-aws-audit-role"
 	env["PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE"] = "example/terraform-gcp-audit-role"
-	env["PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE"] = "example/terraform-azure-audit-role"
+	env["PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE"] = "example/terraform-azurerm-audit-role"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -1087,7 +1087,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	assert.Equal(t, "https://example.com/audit-role.yaml", cfg.Probod.IdentityFederation.CloudFormationTemplateURL)
 	assert.Equal(t, "example/terraform-aws-audit-role", cfg.Probod.IdentityFederation.TerraformModuleSource)
 	assert.Equal(t, "example/terraform-gcp-audit-role", cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
-	assert.Equal(t, "example/terraform-azure-audit-role", cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
+	assert.Equal(t, "example/terraform-azurerm-audit-role", cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
 }
 
 func TestBuilder_Build_IdentityFederationDisabledSkipsSigningKey(t *testing.T) {
