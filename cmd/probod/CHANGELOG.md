@@ -4,6 +4,35 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.289.0] - 2026-09-15
+
+### Added
+
+- Azure access-review connector: reviews RBAC assignments for one
+  subscription via workload identity, enriches last login and MFA from
+  Entra ID (Premium P1/P2), and is exposed on every surface (console,
+  GraphQL, MCP, CLI) alongside a Terraform `azurerm` audit-role module
+  for a portable install
+- Tasks accept a recurrence interval (an ISO-8601 duration); completing
+  a recurring task clones the next occurrence and carries the interval
+  forward
+- Operators can add compliance-portal visitors by member or email, and
+  deactivate/reactivate them without revoking grants
+
+### Changed
+
+- Compliance-portal access is gated on the visitor's own access state
+  instead of org-membership state, so deactivating an employee no
+  longer locks them out of visitor grants
+- Adding or reactivating a visitor sends a grant email (the same
+  portal-URL mail used for Slack grants) exactly once, only while the
+  visitor is active and newly granted
+- Console wording changed from Invite to Add throughout (console, CLI,
+  n8n, MCP); visitors who have not signed in show as "not visited"
+- The add-visitor flow is a popover instead of a dialog, with stable
+  typeahead results while typing and no empty state when adding by
+  email
+
 ## [0.288.0] - 2026-09-14
 
 ### Added
