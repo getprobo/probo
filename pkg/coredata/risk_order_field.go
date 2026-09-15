@@ -34,6 +34,7 @@ type (
 const (
 	RiskOrderFieldCreatedAt         RiskOrderField = "CREATED_AT"
 	RiskOrderFieldUpdatedAt         RiskOrderField = "UPDATED_AT"
+	RiskOrderFieldReferenceID       RiskOrderField = "REFERENCE_ID"
 	RiskOrderFieldName              RiskOrderField = "NAME"
 	RiskOrderFieldCategory          RiskOrderField = "CATEGORY"
 	RiskOrderFieldTreatment         RiskOrderField = "TREATMENT"
@@ -53,6 +54,7 @@ func RiskOrderFields() []RiskOrderField {
 	return []RiskOrderField{
 		RiskOrderFieldCreatedAt,
 		RiskOrderFieldUpdatedAt,
+		RiskOrderFieldReferenceID,
 		RiskOrderFieldName,
 		RiskOrderFieldCategory,
 		RiskOrderFieldTreatment,

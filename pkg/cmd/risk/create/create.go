@@ -36,6 +36,7 @@ mutation($input: CreateRiskInput!) {
     riskEdge {
       node {
         id
+        referenceId
         name
         category
         treatment
@@ -56,6 +57,7 @@ type createResponse struct {
 		RiskEdge struct {
 			Node struct {
 				ID                 string `json:"id"`
+				ReferenceID        string `json:"referenceId"`
 				Name               string `json:"name"`
 				Category           string `json:"category"`
 				Treatment          string `json:"treatment"`
@@ -215,7 +217,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			r := resp.CreateRisk.RiskEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Created risk %s (%s)\n",
+				"Created risk %s %s (%s)\n",
+				r.ReferenceID,
 				r.ID,
 				r.Name,
 			)

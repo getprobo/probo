@@ -48,6 +48,7 @@ export const riskDetailLayoutQuery = graphql`
     node(id: $riskId) {
       __typename
       ... on Risk {
+        referenceId
         name
         description
         measuresInfo: measures(first: 0) {
@@ -111,7 +112,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
 
   const [deleteRisk] = useMutation<RiskDetailLayoutDeleteMutation>(deleteRiskMutation);
 
-  usePageTitle(risk.name);
+  usePageTitle(`${risk.referenceId} ${risk.name}`);
   const confirm = useConfirm();
 
   const onDelete = () => {
@@ -137,7 +138,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
           });
         }),
       {
-        message: t("riskDetailLayout.deleteConfirmation", { name: risk.name }),
+        message: t("riskDetailLayout.deleteConfirmation", { name: risk.name, referenceId: risk.referenceId }),
       },
     );
   };
@@ -179,7 +180,15 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
         </div>
       </div>
 
-      <PageHeader title={risk.name} description={risk.description} />
+      <PageHeader
+        title={(
+          <span className="flex items-baseline gap-3">
+            <span className="font-mono text-txt-secondary">{risk.referenceId}</span>
+            <span>{risk.name}</span>
+          </span>
+        )}
+        description={risk.description}
+      />
       <Tabs>
         <TabLink to={`${baseTabUrl}/overview`}>{t("riskDetailLayout.tabs.overview")}</TabLink>
         <TabLink to={`${baseTabUrl}/measures`}>

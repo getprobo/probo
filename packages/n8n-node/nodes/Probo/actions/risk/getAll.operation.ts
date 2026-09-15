@@ -23,6 +23,7 @@ import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 const riskNodeFields = `
 	id
+	referenceId
 	name
 	description
 	category
@@ -125,6 +126,7 @@ export const description: INodeProperties[] = [
 			{ name: 'Inherent Risk Score', value: 'INHERENT_RISK_SCORE' },
 			{ name: 'Name', value: 'NAME' },
 			{ name: 'None', value: '' },
+			{ name: 'Reference ID', value: 'REFERENCE_ID' },
 			{ name: 'Residual Risk Score', value: 'RESIDUAL_RISK_SCORE' },
 			{ name: 'Treatment', value: 'TREATMENT' },
 		],

@@ -23,6 +23,10 @@ enum RiskOrderField
             value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldUpdatedAt"
         )
     NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldName")
+    REFERENCE_ID
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldReferenceID"
+        )
     CATEGORY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCategory")
     TREATMENT
@@ -57,6 +61,7 @@ input RiskFilter {
 
 type Risk implements Node {
     id: ID!
+    referenceId: String!
     name: String!
     description: String
     category: String!

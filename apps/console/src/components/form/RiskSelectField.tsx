@@ -34,6 +34,7 @@ import { usePaginatedRisks } from "#/hooks/graph/usePaginatedRisks";
 type SelectedRisk = {
   id: string;
   name: string;
+  referenceId?: string;
 };
 
 type Props<
@@ -150,7 +151,9 @@ function RiskSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
             ref={field.ref}
             onBlur={field.onBlur}
             placeholder={t("riskSelectField.placeholder")}
-            value={search || selected?.name || ""}
+            value={search || (selected
+              ? [selected.referenceId, selected.name].filter(Boolean).join(" ")
+              : "")}
             onSearch={handleSearch}
             disabled={disabled}
           >
@@ -170,11 +173,14 @@ function RiskSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
                 key={risk.id}
                 onClick={() => {
                   field.onChange(risk.id);
-                  setSearch(risk.name);
+                  setSearch(`${risk.referenceId} ${risk.name}`);
                 }}
               >
                 <div className="space-y-1 text-start min-w-0">
                   <div className="max-w-75 ellipsis overflow-hidden whitespace-pre-wrap">
+                    <span className="font-mono text-sm text-txt-secondary mr-2">
+                      {risk.referenceId}
+                    </span>
                     {risk.name}
                   </div>
                   {risk.category && (

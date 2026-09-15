@@ -38,8 +38,9 @@ func TestMCP_Risk_CRUD(t *testing.T) {
 	// Create
 	var addResult struct {
 		Risk struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
+			ID          string `json:"id"`
+			ReferenceID string `json:"reference_id"`
+			Name        string `json:"name"`
 		} `json:"risk"`
 	}
 	mc.CallToolInto("addRisk", map[string]any{
@@ -51,6 +52,7 @@ func TestMCP_Risk_CRUD(t *testing.T) {
 		"inherent_impact":     2,
 	}, &addResult)
 	require.NotEmpty(t, addResult.Risk.ID)
+	assert.Regexp(t, `^RSK-\d{3,}$`, addResult.Risk.ReferenceID)
 
 	// Get
 	var getResult struct {

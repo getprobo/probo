@@ -36,6 +36,7 @@ query($id: ID!) {
     __typename
     ... on Risk {
       id
+      referenceId
       name
       description
       category
@@ -58,6 +59,7 @@ type viewResponse struct {
 	Node *struct {
 		Typename           string  `json:"__typename"`
 		ID                 string  `json:"id"`
+		ReferenceID        string  `json:"referenceId"`
 		Name               string  `json:"name"`
 		Description        *string `json:"description"`
 		Category           string  `json:"category"`
@@ -138,6 +140,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Reference ID:"), r.ReferenceID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), r.Category)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Treatment:"), formatOptionalString(r.Treatment))
 

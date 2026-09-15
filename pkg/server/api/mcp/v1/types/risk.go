@@ -29,6 +29,7 @@ func NewRisk(r *coredata.Risk) *Risk {
 	return &Risk{
 		ID:                 r.ID,
 		OrganizationID:     r.OrganizationID,
+		ReferenceID:        r.ReferenceID,
 		Name:               r.Name,
 		Description:        r.Description,
 		Category:           r.Category,
