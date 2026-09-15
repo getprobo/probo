@@ -4,6 +4,17 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.230.0] - 2026-09-15
+
+### Added
+
+- Compliance Portal Access `Create` action, to add a portal visitor by member or email
+- `Recurrence Interval` on Task `Create`/`Update`, an ISO-8601 duration (requires a deadline); `Update` also gets `Clear Recurrence`
+
+### Changed
+
+- Compliance Portal Access actions and labels say Add instead of Invite
+
 ## [0.229.0] - 2026-09-14
 
 ### Added
