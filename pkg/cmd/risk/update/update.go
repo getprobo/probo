@@ -34,6 +34,7 @@ mutation($input: UpdateRiskInput!) {
   updateRisk(input: $input) {
     risk {
       id
+      referenceId
       name
       category
       treatment
@@ -48,6 +49,7 @@ type updateResponse struct {
 	UpdateRisk struct {
 		Risk struct {
 			ID                string `json:"id"`
+			ReferenceID       string `json:"referenceId"`
 			Name              string `json:"name"`
 			Category          string `json:"category"`
 			Treatment         string `json:"treatment"`
@@ -162,7 +164,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			r := resp.UpdateRisk.Risk
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Updated risk %s (%s)\n",
+				"Updated risk %s %s (%s)\n",
+				r.ReferenceID,
 				r.ID,
 				r.Name,
 			)

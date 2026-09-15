@@ -59,6 +59,7 @@ const risksFragment = graphql`
       edges {
         node {
           id
+          referenceId
           name
           category
           description

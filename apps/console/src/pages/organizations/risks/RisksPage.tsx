@@ -91,6 +91,7 @@ const risksFragment = graphql`
       edges {
         node {
           id
+          referenceId
           name
           inherentLikelihood
           inherentImpact
@@ -165,6 +166,7 @@ export default function RisksPage(props: RisksPageProps) {
         order: {
           direction: order.direction as "ASC" | "DESC",
           field: order.field as
+          | "REFERENCE_ID"
           | "NAME"
           | "CATEGORY"
           | "TREATMENT"
@@ -245,6 +247,7 @@ export default function RisksPage(props: RisksPageProps) {
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
+            <SortableTh field="REFERENCE_ID">{t("risksPage.columns.referenceId")}</SortableTh>
             <SortableTh field="NAME">{t("risksPage.columns.name")}</SortableTh>
             <SortableTh field="CATEGORY">{t("risksPage.columns.category")}</SortableTh>
             <SortableTh field="TREATMENT">{t("risksPage.columns.treatment")}</SortableTh>

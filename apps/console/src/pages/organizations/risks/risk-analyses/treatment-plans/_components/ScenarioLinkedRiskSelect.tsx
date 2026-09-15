@@ -67,6 +67,7 @@ const analysisFragment = graphql`
       edges {
         node {
           id
+          referenceId
           name
           category
         }
@@ -151,7 +152,7 @@ export function ScenarioLinkedRiskSelect<
               ref={field.ref}
               onBlur={field.onBlur}
               placeholder={t("createTreatmentPlanDialog.placeholders.risk")}
-              value={search || selected?.name || ""}
+              value={search || (selected ? `${selected.referenceId} ${selected.name}` : "")}
               onSearch={(query) => {
                 setSearch(query);
                 refetchSearch(query);
@@ -162,11 +163,14 @@ export function ScenarioLinkedRiskSelect<
                   key={risk.id}
                   onClick={() => {
                     field.onChange(risk.id);
-                    setSearch(risk.name);
+                    setSearch(`${risk.referenceId} ${risk.name}`);
                   }}
                 >
                   <div className="space-y-1 text-start min-w-0">
                     <div className="max-w-75 ellipsis overflow-hidden whitespace-pre-wrap">
+                      <span className="font-mono text-sm text-txt-secondary mr-2">
+                        {risk.referenceId}
+                      </span>
                       {risk.name}
                     </div>
                     {risk.category && (

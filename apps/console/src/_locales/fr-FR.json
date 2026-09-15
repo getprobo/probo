@@ -1089,6 +1089,7 @@
   },
   "linkedRisksCard": {
     "columns": {
+      "referenceId": "ID de référence",
       "name": "Nom",
       "initialRisk": "Risque initial",
       "residualRisk": "Risque résiduel"
@@ -4442,7 +4443,7 @@
     }
   },
   "riskDetailLayout": {
-    "deleteConfirmation": "Cette action supprimera définitivement le risque « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible.",
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer"
@@ -4465,6 +4466,7 @@
       "newRisk": "Nouveau risque"
     },
     "columns": {
+      "referenceId": "ID de référence",
       "name": "Nom du risque",
       "category": "Catégorie",
       "treatment": "Traitement",
@@ -4581,7 +4583,7 @@
     "errors": {
       "delete": "Échec de la suppression du risque"
     },
-    "deleteConfirmation": "Cette action supprimera définitivement le risque « {{name}} ». Elle est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible.",
     "treatments": {
       "mitigated": "Atténuer",
       "accepted": "Accepter",

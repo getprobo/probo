@@ -147,6 +147,7 @@ type (
 	Risk struct {
 		ID                 gid.GID        `db:"id"`
 		OrganizationID     gid.GID        `db:"organization_id"`
+		ReferenceID        string         `db:"reference_id"`
 		Name               string         `db:"name"`
 		Description        *string        `db:"description"`
 		Category           string         `db:"category"`
@@ -173,6 +174,8 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	switch orderBy {
 	case RiskOrderFieldCreatedAt:
 		return page.CursorKey{ID: r.ID, Value: r.CreatedAt}
+	case RiskOrderFieldReferenceID:
+		return page.CursorKey{ID: r.ID, Value: r.ReferenceID}
 	case RiskOrderFieldName:
 		return page.CursorKey{ID: r.ID, Value: r.Name}
 	case RiskOrderFieldCategory:
@@ -286,6 +289,7 @@ WITH rsks AS (
 		r.id,
 		r.tenant_id,
 		r.organization_id,
+		r.reference_id,
 		r.name,
 		r.description,
 		r.category,
@@ -314,6 +318,7 @@ WITH rsks AS (
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -402,6 +407,7 @@ WITH rsks AS (
 		r.id,
 		r.tenant_id,
 		r.organization_id,
+		r.reference_id,
 		r.name,
 		r.description,
 		r.owner_profile_id,
@@ -428,6 +434,7 @@ WITH rsks AS (
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	owner_profile_id,
@@ -481,6 +488,7 @@ func (r *Risk) LoadByID(
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -535,6 +543,7 @@ func (r *Risks) LoadByIDs(
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -630,6 +639,7 @@ func (r *Risks) LoadByRiskIDs(
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -680,9 +690,64 @@ func (r *Risk) Insert(
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	lockQuery := `SELECT pg_advisory_xact_lock(hashtext(@organization_id::text))`
+
+	lockArgs := pgx.StrictNamedArgs{
+		"organization_id": r.OrganizationID,
+	}
+
+	if _, err := conn.Exec(ctx, lockQuery, lockArgs); err != nil {
+		return fmt.Errorf("cannot acquire advisory lock: %w", err)
+	}
+
 	q := `
-INSERT INTO risks (id, tenant_id, organization_id, name, description, category, owner_profile_id, treatment, note, inherent_likelihood, inherent_impact, residual_likelihood, residual_impact, created_at, updated_at)
-VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owner_profile_id, @treatment, @note, @inherent_likelihood, @inherent_impact, @residual_likelihood, @residual_impact, @created_at, @updated_at)
+WITH next_ref AS (
+	SELECT
+		COALESCE(
+			MAX(CAST(SUBSTRING(reference_id FROM 5) AS INTEGER)),
+			0
+		) + 1 AS next_num
+	FROM risks
+	WHERE organization_id = @organization_id
+		AND reference_id ~ '^RSK-[0-9]+$'
+)
+INSERT INTO risks (
+	id,
+	tenant_id,
+	organization_id,
+	reference_id,
+	name,
+	description,
+	category,
+	owner_profile_id,
+	treatment,
+	note,
+	inherent_likelihood,
+	inherent_impact,
+	residual_likelihood,
+	residual_impact,
+	created_at,
+	updated_at
+)
+SELECT
+	@id,
+	@tenant_id,
+	@organization_id,
+	'RSK-' || LPAD(next_ref.next_num::TEXT, 3, '0'),
+	@name,
+	@description,
+	@category,
+	@owner_profile_id,
+	@treatment,
+	@note,
+	@inherent_likelihood,
+	@inherent_impact,
+	@residual_likelihood,
+	@residual_impact,
+	@created_at,
+	@updated_at
+FROM next_ref
+RETURNING reference_id
 `
 
 	args := pgx.StrictNamedArgs{
@@ -703,9 +768,18 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owne
 		"updated_at":          r.UpdatedAt,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
+	err := conn.QueryRow(ctx, q, args).Scan(&r.ReferenceID)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "risks_organization_id_reference_id_key" {
+				return ErrResourceAlreadyExists
+			}
+		}
 
-	return err
+		return fmt.Errorf("cannot insert risk: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Risk) Update(

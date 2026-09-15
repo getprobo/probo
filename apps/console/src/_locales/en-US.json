@@ -689,6 +689,7 @@
   },
   "linkedRisksCard": {
     "columns": {
+      "referenceId": "Reference ID",
       "name": "Name",
       "initialRisk": "Initial Risk",
       "residualRisk": "Residual Risk"
@@ -2420,14 +2421,14 @@
     "actions": { "creating": "Creating...", "create": "Create Request" }
   },
   "riskDetailLayout": {
-    "deleteConfirmation": "This will permanently delete the risk \"{{name}}\". This action cannot be undone.",
+    "deleteConfirmation": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This action cannot be undone.",
     "actions": { "edit": "Edit", "delete": "Delete" },
     "tabs": { "overview": "Overview", "measures": "Measures", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
   },
   "risksPage": {
     "description": "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
     "actions": { "document": "Document", "publish": "Publish", "newRisk": "New Risk" },
-    "columns": { "name": "Risk name", "category": "Category", "treatment": "Treatment", "initialRisk": "Initial Risk", "residualRisk": "Residual Risk", "owner": "Owner" }
+    "columns": { "referenceId": "Reference ID", "name": "Risk name", "category": "Category", "treatment": "Treatment", "initialRisk": "Initial Risk", "residualRisk": "Residual Risk", "owner": "Owner" }
   },
   "riskOverviewPage": {
     "emptyScores": "Scores are set on a treatment plan in a risk analysis.",
@@ -2465,7 +2466,7 @@
   "riskRow": {
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk" },
-    "deleteConfirmation": "This will permanently delete the risk \"{{name}}\". This action cannot be undone.",
+    "deleteConfirmation": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This action cannot be undone.",
     "treatments": { "mitigated": "Mitigate", "accepted": "Accept", "transferred": "Transfer", "avoided": "Avoid", "unknown": "Unknown" },
     "unassigned": "Unassigned",
     "actions": { "edit": "Edit", "delete": "Delete" }

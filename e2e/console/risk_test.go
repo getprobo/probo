@@ -41,6 +41,7 @@ func TestRisk_Create(t *testing.T) {
 					riskEdge {
 						node {
 							id
+							referenceId
 							name
 							category
 							treatment
@@ -57,6 +58,7 @@ func TestRisk_Create(t *testing.T) {
 				RiskEdge struct {
 					Node struct {
 						ID                 string `json:"id"`
+						ReferenceID        string `json:"referenceId"`
 						Name               string `json:"name"`
 						Category           string `json:"category"`
 						Treatment          string `json:"treatment"`
@@ -82,6 +84,7 @@ func TestRisk_Create(t *testing.T) {
 
 		risk := result.CreateRisk.RiskEdge.Node
 		assert.NotEmpty(t, risk.ID)
+		assert.Regexp(t, `^RSK-\d{3,}$`, risk.ReferenceID)
 		assert.Equal(t, "Data Breach Risk", risk.Name)
 		assert.Equal(t, "SECURITY", risk.Category)
 		assert.Equal(t, "MITIGATED", risk.Treatment)
@@ -96,6 +99,7 @@ func TestRisk_Create(t *testing.T) {
 					riskEdge {
 						node {
 							id
+							referenceId
 							name
 							category
 							treatment
@@ -116,11 +120,12 @@ func TestRisk_Create(t *testing.T) {
 			CreateRisk struct {
 				RiskEdge struct {
 					Node struct {
-						ID        string  `json:"id"`
-						Name      string  `json:"name"`
-						Category  string  `json:"category"`
-						Treatment *string `json:"treatment"`
-						Owner     *struct {
+						ID          string  `json:"id"`
+						ReferenceID string  `json:"referenceId"`
+						Name        string  `json:"name"`
+						Category    string  `json:"category"`
+						Treatment   *string `json:"treatment"`
+						Owner       *struct {
 							ID string `json:"id"`
 						} `json:"owner"`
 						InherentLikelihood *int `json:"inherentLikelihood"`
@@ -145,6 +150,7 @@ func TestRisk_Create(t *testing.T) {
 
 		risk := result.CreateRisk.RiskEdge.Node
 		assert.NotEmpty(t, risk.ID)
+		assert.Regexp(t, `^RSK-\d{3,}$`, risk.ReferenceID)
 		assert.Equal(t, "Catalog Risk", risk.Name)
 		assert.Equal(t, "SECURITY", risk.Category)
 		assert.Nil(t, risk.Treatment)
@@ -316,6 +322,51 @@ func TestRisk_Delete(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 	assert.Equal(t, riskID, result.DeleteRisk.DeletedRiskID)
+}
+
+func TestRisk_ReferenceID(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	query := `
+		mutation CreateRisk($input: CreateRiskInput!) {
+			createRisk(input: $input) {
+				riskEdge {
+					node {
+						referenceId
+					}
+				}
+			}
+		}
+	`
+
+	create := func(name string) string {
+		t.Helper()
+
+		var result struct {
+			CreateRisk struct {
+				RiskEdge struct {
+					Node struct {
+						ReferenceID string `json:"referenceId"`
+					} `json:"node"`
+				} `json:"riskEdge"`
+			} `json:"createRisk"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           name,
+				"category":       "SECURITY",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		return result.CreateRisk.RiskEdge.Node.ReferenceID
+	}
+
+	assert.Equal(t, "RSK-001", create("First sequential risk"))
+	assert.Equal(t, "RSK-002", create("Second sequential risk"))
 }
 
 func TestRisk_List(t *testing.T) {
