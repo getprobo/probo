@@ -57,16 +57,15 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg   string
-		flagName  string
-		flagOwner string
+		flagOrg  string
+		flagName string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new statement of applicability",
 		Example: `  # Create a statement of applicability
-  prb soa create --name "ISO 27001 SoA" --owner PROFILE_ID`,
+  prb soa create --name "ISO 27001 SoA"`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -98,7 +97,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			input := map[string]any{
 				"organizationId": flagOrg,
 				"name":           flagName,
-				"ownerId":        flagOwner,
 			}
 
 			data, err := client.Do(
@@ -128,10 +126,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Name (required)")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (required)")
 
 	_ = cmd.MarkFlagRequired("name")
-	_ = cmd.MarkFlagRequired("owner")
 
 	return cmd
 }

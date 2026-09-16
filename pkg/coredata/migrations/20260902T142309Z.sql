@@ -80,6 +80,3 @@ ALTER TABLE tasks
 
 ALTER TABLE task_comments
     ALTER COLUMN content SET NOT NULL;
-
--- TODO: drop tasks.description later
--- TODO: drop task_comments.description later

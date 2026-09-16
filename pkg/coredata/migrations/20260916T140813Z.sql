@@ -18,29 +18,6 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE TYPE document_version_orientation AS ENUM ('PORTRAIT', 'LANDSCAPE');
-
-CREATE TYPE document_write_mode AS ENUM ('AUTHORED', 'GENERATED');
-
-ALTER TABLE document_versions
-    ADD COLUMN orientation document_version_orientation DEFAULT 'PORTRAIT';
-
-ALTER TABLE document_versions
-    ALTER COLUMN orientation DROP DEFAULT;
-
-ALTER TABLE documents
-    ADD COLUMN write_mode document_write_mode NOT NULL DEFAULT 'AUTHORED';
-
-ALTER TABLE documents
-    ALTER COLUMN write_mode DROP DEFAULT;
-
-ALTER TYPE document_type ADD VALUE 'STATEMENT_OF_APPLICABILITY';
-
-ALTER TYPE electronic_signature_document_type ADD VALUE 'STATEMENT_OF_APPLICABILITY';
-
+-- Owner moved onto the linked document in 20260410T120000Z.
 ALTER TABLE statements_of_applicability
-    ADD COLUMN document_id TEXT UNIQUE REFERENCES documents(id) ON DELETE SET NULL;
-
-ALTER TABLE statements_of_applicability
-    ALTER COLUMN owner_profile_id DROP NOT NULL;
-
+    DROP COLUMN owner_profile_id;
