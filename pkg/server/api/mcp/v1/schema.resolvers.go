@@ -5722,13 +5722,22 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 
 	out := types.NewCookieBanner(banner)
 
-	published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
-	if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {
-		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
-	}
+	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
+		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
+		if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {
+			return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+		}
 
-	if published != nil {
-		out.PublishedVersion = types.NewCookieBannerVersion(published)
+		if published != nil {
+			version, err := types.NewCookieBannerVersion(published)
+			if err != nil {
+				return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+			}
+
+			out.PublishedVersion = version
+		}
+	} else if err.Error() != "permission denied" {
+		return nil, types.GetCookieBannerOutput{}, err
 	}
 
 	return nil, types.GetCookieBannerOutput{CookieBanner: out}, nil
@@ -6111,7 +6120,12 @@ func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.
 		return nil, types.PublishCookieBannerVersionOutput{}, fmt.Errorf("cannot publish cookie banner version: %w", err)
 	}
 
-	return nil, types.PublishCookieBannerVersionOutput{CookieBannerVersion: types.NewCookieBannerVersion(version)}, nil
+	mapped, err := types.NewCookieBannerVersion(version)
+	if err != nil {
+		return nil, types.PublishCookieBannerVersionOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishCookieBannerVersionOutput{CookieBannerVersion: mapped}, nil
 }
 
 func (r *Resolver) RegenerateCookieBannerTrackerPolicyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RegenerateCookieBannerTrackerPolicyInput) (*mcp.CallToolResult, types.RegenerateCookieBannerTrackerPolicyOutput, error) {
@@ -6143,7 +6157,12 @@ func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.Ca
 
 	p := page.NewPage(versions, cursor)
 
-	return nil, types.NewListCookieBannerVersionsOutput(p), nil
+	out, err := types.NewListCookieBannerVersionsOutput(p)
+	if err != nil {
+		return nil, types.ListCookieBannerVersionsOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, out, nil
 }
 
 func (r *Resolver) UpsertCookieBannerTranslationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpsertCookieBannerTranslationInput) (*mcp.CallToolResult, types.UpsertCookieBannerTranslationOutput, error) {

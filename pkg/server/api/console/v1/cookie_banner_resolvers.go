@@ -419,6 +419,22 @@ func (r *cookieBannerResolver) GvlVendors(ctx context.Context, obj *types.Cookie
 	return types.NewCommonGVLVendorConnection(p, r, &parentID, nil), nil
 }
 
+// GvlVendorIds is the resolver for the gvlVendorIds field.
+func (r *cookieBannerResolver) GvlVendorIds(ctx context.Context, obj *types.CookieBanner) ([]int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := r.cookieBanner.ListCookieBannerGVLVendorIDs(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner gvl vendor ids", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return ids, nil
+}
+
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
 func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy, filter *types.TrackerResourceFilter) (*types.TrackerResourceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList)

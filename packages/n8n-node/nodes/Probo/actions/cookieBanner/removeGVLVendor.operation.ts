@@ -40,6 +40,9 @@ export const description: INodeProperties[] = [
 		displayName: 'IAB Vendor ID',
 		name: 'iabVendorId',
 		type: 'number',
+		typeOptions: {
+			minValue: 1,
+		},
 		displayOptions: {
 			show: {
 				resource: ['cookieBanner'],

@@ -55,13 +55,22 @@ export default function CookieBannerTCFPageLoader() {
     }
   }, [loadQuery, cookieBannerId]);
 
-  if (!queryRef) {
+  if (cookieBannerId == null) {
+    throw new Error(":cookieBannerId missing in route params");
+  }
+
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.cookieBannerId === cookieBannerId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <CookieBannerTCFPageSkeleton />;
   }
 
   return (
     <Suspense fallback={<CookieBannerTCFPageSkeleton />}>
-      <CookieBannerTCFPage queryRef={queryRef} />
+      <CookieBannerTCFPage key={cookieBannerId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

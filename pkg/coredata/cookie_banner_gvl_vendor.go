@@ -42,11 +42,9 @@ type (
 	CookieBannerGVLVendors []*CookieBannerGVLVendor
 )
 
-// Upsert links a cookie banner to a GVL vendor. The organization_id stored
-// in the junction row is derived from the cookie_banners table inside the
-// INSERT, so a caller cannot place the mapping into a different organization
-// than the banner actually belongs to. Idempotent: re-linking an existing
-// pair is a no-op.
+// Upsert links a cookie banner to a GVL vendor. The caller must set
+// OrganizationID from the already-loaded banner. Idempotent: re-linking
+// an existing pair is a no-op.
 func (l CookieBannerGVLVendor) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
@@ -61,23 +59,20 @@ INSERT INTO
         tenant_id,
         created_at
     )
-SELECT
+VALUES (
     @cookie_banner_id,
     @iab_vendor_id,
-    b.organization_id,
+    @organization_id,
     @tenant_id,
     @created_at
-FROM
-    cookie_banners b
-WHERE
-    b.id = @cookie_banner_id
-    AND b.tenant_id = @tenant_id
+)
 ON CONFLICT (cookie_banner_id, iab_vendor_id) DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": l.CookieBannerID,
 		"iab_vendor_id":    l.IABVendorID,
+		"organization_id":  l.OrganizationID,
 		"tenant_id":        scope.GetTenantID(),
 		"created_at":       l.CreatedAt,
 	}

@@ -46,13 +46,7 @@ const cookieBannerFragment = graphql`
   fragment GVLVendorList_cookieBanner on CookieBanner {
     id
     canUpdate: permission(action: "core:cookie-banner:update")
-    gvlVendors(first: 500) {
-      edges {
-        node {
-          iabVendorId
-        }
-      }
-    }
+    gvlVendorIds
   }
 `;
 
@@ -94,14 +88,8 @@ const addVendorMutation = graphql`
   mutation GVLVendorListAddMutation($input: AddCookieBannerGVLVendorInput!) {
     addCookieBannerGVLVendor(input: $input) {
       cookieBanner {
-        gvlVendors(first: 500) {
-          totalCount
-          edges {
-            node {
-              iabVendorId
-            }
-          }
-        }
+        id
+        gvlVendorIds
       }
     }
   }
@@ -111,14 +99,8 @@ const removeVendorMutation = graphql`
   mutation GVLVendorListRemoveMutation($input: RemoveCookieBannerGVLVendorInput!) {
     removeCookieBannerGVLVendor(input: $input) {
       cookieBanner {
-        gvlVendors(first: 500) {
-          totalCount
-          edges {
-            node {
-              iabVendorId
-            }
-          }
-        }
+        id
+        gvlVendorIds
       }
     }
   }
@@ -144,8 +126,14 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
   >(catalogFragment, queryKey);
 
   const refetchCatalog = useCallback((variables: CursorPaginationVariables) => {
-    refetch(variables, { fetchPolicy: "store-or-network" });
-  }, [refetch]);
+    refetch(
+      {
+        ...variables,
+        filter: gvlVendorGraphqlFilter(query, membership, banner.id),
+      },
+      { fetchPolicy: "store-or-network" },
+    );
+  }, [banner.id, membership, query, refetch]);
 
   const refetchCatalogFromStart = useCallback((
     fetchPolicy: "store-or-network" | "network-only",
@@ -186,9 +174,7 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
     errorToast: t("tcfPage.errors.remove"),
   });
 
-  const selectedIDs = new Set(
-    (banner.gvlVendors?.edges ?? []).map(edge => edge.node.iabVendorId),
-  );
+  const selectedIDs = new Set(banner.gvlVendorIds);
   const catalogEdges = catalog.commonGVLVendors.edges;
   const isPending = isSearchPending || isPagePending;
   const { results, pager } = tcfSection({ pending: isPending });

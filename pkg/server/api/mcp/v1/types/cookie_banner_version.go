@@ -25,10 +25,15 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewCookieBannerVersion(v *coredata.CookieBannerVersion) *CookieBannerVersion {
-	count := 0
-	if snapshot, err := v.GetSnapshot(); err == nil {
-		count = len(snapshot.IABVendorIDs)
+func NewCookieBannerVersion(v *coredata.CookieBannerVersion) (*CookieBannerVersion, error) {
+	snapshot, err := v.GetSnapshot()
+	if err != nil {
+		return nil, err
+	}
+
+	ids := snapshot.IABVendorIDs
+	if ids == nil {
+		ids = []int{}
 	}
 
 	return &CookieBannerVersion{
@@ -36,16 +41,22 @@ func NewCookieBannerVersion(v *coredata.CookieBannerVersion) *CookieBannerVersio
 		CookieBannerID: v.CookieBannerID,
 		Version:        v.Version,
 		State:          CookieBannerVersionState(v.State),
-		GvlVendorCount: count,
+		GvlVendorCount: len(ids),
+		GvlVendorIds:   ids,
 		CreatedAt:      v.CreatedAt,
 		UpdatedAt:      v.UpdatedAt,
-	}
+	}, nil
 }
 
-func NewListCookieBannerVersionsOutput(p *page.Page[*coredata.CookieBannerVersion, coredata.CookieBannerVersionOrderField]) ListCookieBannerVersionsOutput {
+func NewListCookieBannerVersionsOutput(p *page.Page[*coredata.CookieBannerVersion, coredata.CookieBannerVersionOrderField]) (ListCookieBannerVersionsOutput, error) {
 	versions := make([]*CookieBannerVersion, 0, len(p.Data))
 	for _, v := range p.Data {
-		versions = append(versions, NewCookieBannerVersion(v))
+		mapped, err := NewCookieBannerVersion(v)
+		if err != nil {
+			return ListCookieBannerVersionsOutput{}, err
+		}
+
+		versions = append(versions, mapped)
 	}
 
 	var nextCursor *page.CursorKey
@@ -58,5 +69,5 @@ func NewListCookieBannerVersionsOutput(p *page.Page[*coredata.CookieBannerVersio
 	return ListCookieBannerVersionsOutput{
 		NextCursor:           nextCursor,
 		CookieBannerVersions: versions,
-	}
+	}, nil
 }

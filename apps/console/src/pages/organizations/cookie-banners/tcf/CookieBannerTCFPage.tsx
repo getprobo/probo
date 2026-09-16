@@ -66,8 +66,8 @@ export function CookieBannerTCFPage({ queryRef }: CookieBannerTCFPageProps) {
   usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerTCFPageQuery>(cookieBannerTCFPageQuery, queryRef);
 
-  if (data.node.__typename !== "CookieBanner") {
-    throw new Error("invalid type for node");
+  if (data.node?.__typename !== "CookieBanner") {
+    throw new NotFoundError(t("tcfPage.notFound"));
   }
 
   if (!data.node.capabilities.tcf) {

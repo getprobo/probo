@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -39,6 +40,7 @@ query($id: ID!) {
         version
         state
         gvlVendorCount
+        gvlVendorIds
         createdAt
         updatedAt
       }
@@ -52,6 +54,7 @@ type versionInfo struct {
 	Version        int    `json:"version"`
 	State          string `json:"state"`
 	GvlVendorCount int    `json:"gvlVendorCount"`
+	GvlVendorIds   []int  `json:"gvlVendorIds"`
 	CreatedAt      string `json:"createdAt"`
 	UpdatedAt      string `json:"updatedAt"`
 }
@@ -111,16 +114,22 @@ func NewCmdPublishedVersion(f *cmdutil.Factory) *cobra.Command {
 				return cmdutil.PrintJSON(f.IOStreams.Out, v)
 			}
 
+			ids := make([]string, 0, len(v.GvlVendorIds))
+			for _, id := range v.GvlVendorIds {
+				ids = append(ids, strconv.Itoa(id))
+			}
+
 			rows := [][]string{
 				{
 					v.ID,
 					strconv.Itoa(v.Version),
 					v.State,
 					strconv.Itoa(v.GvlVendorCount),
+					strings.Join(ids, ","),
 					cmdutil.FormatTime(v.CreatedAt),
 				},
 			}
-			t := cmdutil.NewTable("ID", "VERSION", "STATE", "GVL VENDORS", "CREATED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "VERSION", "STATE", "GVL VENDORS", "GVL VENDOR IDS", "CREATED").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			return nil

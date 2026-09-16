@@ -21,7 +21,7 @@
 CREATE TABLE cookie_banner_gvl_vendors (
     cookie_banner_id TEXT NOT NULL REFERENCES cookie_banners(id) ON DELETE CASCADE,
     iab_vendor_id INTEGER NOT NULL REFERENCES common_gvl_vendors(iab_vendor_id),
-    organization_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     tenant_id TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     PRIMARY KEY (cookie_banner_id, iab_vendor_id)

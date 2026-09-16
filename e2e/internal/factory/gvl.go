@@ -46,10 +46,19 @@ func SeedCommonGVLVendor(t *testing.T, name string, deleted bool) (iabVendorID i
 	snapshotID := gid.New(tenantID, coredata.CommonGVLSnapshotEntityType)
 	vendorID := gid.New(tenantID, coredata.CommonGVLVendorEntityType)
 
-	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+	err := client.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		// The real GVL uses low vendor ids, so start well above them to keep
 		// seeded vendors distinguishable from any imported catalog rows.
+		// Advisory lock makes concurrent CREATE SEQUENCE IF NOT EXISTS safe
+		// across parallel tests sharing the database.
 		_, err := conn.Exec(ctx, `
+SELECT pg_advisory_xact_lock(hashtext('e2e_gvl_seq'))
+`)
+		if err != nil {
+			return err
+		}
+
+		_, err = conn.Exec(ctx, `
 CREATE SEQUENCE IF NOT EXISTS e2e_gvl_seq START WITH 10000001
 `)
 		if err != nil {

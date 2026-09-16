@@ -310,8 +310,9 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 			query($id: ID!) {
 				node(id: $id) {
 					... on CookieBanner {
+						gvlVendorIds
 						gvlVendors(first: 1) { totalCount }
-						publishedVersion { gvlVendorCount }
+						publishedVersion { gvlVendorCount gvlVendorIds }
 					}
 				}
 			}
@@ -319,17 +320,20 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 		var beforePublish struct {
 			Node struct {
-				GVLVendors struct {
+				GvlVendorIds []int `json:"gvlVendorIds"`
+				GVLVendors   struct {
 					TotalCount int `json:"totalCount"`
 				} `json:"gvlVendors"`
 				PublishedVersion *struct {
-					GvlVendorCount int `json:"gvlVendorCount"`
+					GvlVendorCount int   `json:"gvlVendorCount"`
+					GvlVendorIds   []int `json:"gvlVendorIds"`
 				} `json:"publishedVersion"`
 			} `json:"node"`
 		}
 
 		err = owner.Execute(statsQuery, map[string]any{"id": bannerID}, &beforePublish)
 		require.NoError(t, err)
+		assert.Equal(t, []int{firstID}, beforePublish.Node.GvlVendorIds)
 		assert.Equal(t, 1, beforePublish.Node.GVLVendors.TotalCount)
 		assert.Nil(t, beforePublish.Node.PublishedVersion)
 
@@ -346,20 +350,24 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 		var afterDraft struct {
 			Node struct {
-				GVLVendors struct {
+				GvlVendorIds []int `json:"gvlVendorIds"`
+				GVLVendors   struct {
 					TotalCount int `json:"totalCount"`
 				} `json:"gvlVendors"`
 				PublishedVersion *struct {
-					GvlVendorCount int `json:"gvlVendorCount"`
+					GvlVendorCount int   `json:"gvlVendorCount"`
+					GvlVendorIds   []int `json:"gvlVendorIds"`
 				} `json:"publishedVersion"`
 			} `json:"node"`
 		}
 
 		err = owner.Execute(statsQuery, map[string]any{"id": bannerID}, &afterDraft)
 		require.NoError(t, err)
+		assert.ElementsMatch(t, []int{firstID, secondID}, afterDraft.Node.GvlVendorIds)
 		assert.Equal(t, 2, afterDraft.Node.GVLVendors.TotalCount)
 		require.NotNil(t, afterDraft.Node.PublishedVersion)
 		assert.Equal(t, 1, afterDraft.Node.PublishedVersion.GvlVendorCount)
+		assert.Equal(t, []int{firstID}, afterDraft.Node.PublishedVersion.GvlVendorIds)
 	})
 
 	t.Run("rejects add when tcf is off but still allows remove", func(t *testing.T) {

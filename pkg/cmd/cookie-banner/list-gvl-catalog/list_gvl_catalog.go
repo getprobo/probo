@@ -73,6 +73,9 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
 			}
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
 
 			cfg, err := f.Config()
 			if err != nil {
@@ -98,6 +101,10 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagMembership != "" {
+				if err := cmdutil.ValidateEnum("membership", flagMembership, []string{"ON_BANNER", "NOT_ON_BANNER"}); err != nil {
+					return err
+				}
+
 				if flagCookieBannerID == "" {
 					return fmt.Errorf("--cookie-banner-id is required with --membership")
 				}

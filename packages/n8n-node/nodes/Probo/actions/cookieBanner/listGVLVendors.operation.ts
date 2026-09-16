@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -79,6 +80,7 @@ export async function execute(
 	const query = `
 		query ListCookieBannerGVLVendors($cookieBannerId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $cookieBannerId) {
+				__typename
 				... on CookieBanner {
 					gvlVendors(first: $first, after: $after) {
 						edges {
@@ -106,7 +108,25 @@ export async function execute(
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.gvlVendors as IDataObject | undefined;
+			if (!node) {
+				throw new NodeOperationError(
+					this.getNode(),
+					`Cookie banner ${cookieBannerId} not found`,
+				);
+			}
+			if (node.__typename !== 'CookieBanner') {
+				throw new NodeOperationError(
+					this.getNode(),
+					`Expected CookieBanner node, got ${String(node.__typename)}`,
+				);
+			}
+			if (node.gvlVendors == null) {
+				throw new NodeOperationError(
+					this.getNode(),
+					`Cookie banner ${cookieBannerId} has no GVL vendors connection`,
+				);
+			}
+			return node.gvlVendors as IDataObject;
 		},
 		returnAll,
 		limit,

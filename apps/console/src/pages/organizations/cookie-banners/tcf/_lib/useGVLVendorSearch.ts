@@ -27,9 +27,22 @@ const SEARCH_DEBOUNCE_MS = 300;
 // Owns the debounced search input. Mount this in exactly one component (the
 // search field) — it is the single writer of the `q` URL param.
 export function useGVLVendorSearch(): [string, (value: string) => void] {
-  const { query, setQuery } = useGVLVendorFilters();
+  const { query, membership, setQuery } = useGVLVendorFilters();
   const [input, setInput] = useState(query);
   const lastCommittedRef = useRef(query);
+
+  useEffect(() => {
+    if (query === "" && membership === "all") {
+      lastCommittedRef.current = "";
+      setInput("");
+      return;
+    }
+
+    if (query !== lastCommittedRef.current) {
+      lastCommittedRef.current = query;
+      setInput(query);
+    }
+  }, [membership, query]);
 
   useEffect(() => {
     if (input === query) {
@@ -43,13 +56,6 @@ export function useGVLVendorSearch(): [string, (value: string) => void] {
 
     return () => clearTimeout(handle);
   }, [input, query, setQuery]);
-
-  useEffect(() => {
-    if (query !== lastCommittedRef.current) {
-      lastCommittedRef.current = query;
-      setInput(query);
-    }
-  }, [query]);
 
   return [input, setInput];
 }

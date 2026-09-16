@@ -13126,6 +13126,7 @@ components:
         - version
         - state
         - gvl_vendor_count
+        - gvl_vendor_ids
         - created_at
         - updated_at
       properties:
@@ -13153,6 +13154,11 @@ components:
         gvl_vendor_count:
           type: integer
           description: Number of IAB GVL vendors snapshotted on this version
+        gvl_vendor_ids:
+          type: array
+          items:
+            type: integer
+          description: IAB GVL vendor IDs snapshotted on this version
 
     CookieBannerTranslation:
       type: object

@@ -75,6 +75,9 @@ func NewCmdListGVLVendors(f *cmdutil.Factory) *cobra.Command {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
 			}
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
 
 			cfg, err := f.Config()
 			if err != nil {

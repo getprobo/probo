@@ -40,7 +40,7 @@ export function gvlVendorGraphqlFilter(
   membership: GVLVendorMembership,
   cookieBannerId: string,
 ) {
-  const trimmedQuery = query || null;
+  const trimmedQuery = query.trim() || null;
   const graphqlMembership = membership === "all" ? null : graphqlMemberships[membership];
   if (trimmedQuery == null && graphqlMembership == null) {
     return null;

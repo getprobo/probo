@@ -65,6 +65,7 @@ export async function execute(
 						version
 						state
 						gvlVendorCount
+						gvlVendorIds
 					}
 				}
 			}

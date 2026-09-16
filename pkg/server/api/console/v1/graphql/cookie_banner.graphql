@@ -200,6 +200,8 @@ type CookieBanner implements Node {
         orderBy: CommonGVLVendorOrder
     ): CommonGVLVendorConnection @goField(forceResolver: true)
 
+    gvlVendorIds: [Int!]! @goField(forceResolver: true)
+
     uncategorisedTrackerResources(
         first: Int
         after: CursorKey

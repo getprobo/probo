@@ -975,6 +975,34 @@ func (s *Service) ListCookieBannerGVLVendors(
 	return vendors, nil
 }
 
+func (s *Service) ListCookieBannerGVLVendorIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) ([]int, error) {
+	var ids []int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var links coredata.CookieBannerGVLVendors
+			loaded, err := links.LoadIABVendorIDsByCookieBannerID(ctx, conn, scope, bannerID)
+			if err != nil {
+				return fmt.Errorf("cannot list cookie banner gvl vendor ids: %w", err)
+			}
+
+			ids = loaded
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
 func (s *Service) CountCookieBannerGVLVendors(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -1046,6 +1074,7 @@ func (s *Service) AddCookieBannerGVLVendor(
 			link := coredata.CookieBannerGVLVendor{
 				CookieBannerID: banner.ID,
 				IABVendorID:    vendor.IABVendorID,
+				OrganizationID: banner.OrganizationID,
 				CreatedAt:      time.Now(),
 			}
 
