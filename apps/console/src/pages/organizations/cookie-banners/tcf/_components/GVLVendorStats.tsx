@@ -198,12 +198,12 @@ function StatTile({ title, entries, children }: StatTileProps) {
   );
 }
 
-type VendorStatus =
-  | { kind: "synced" }
-  | { kind: "never" }
-  | { kind: "added"; count: number }
-  | { kind: "removed"; count: number }
-  | { kind: "changed"; added: number; removed: number };
+type VendorStatus
+  = | { kind: "synced" }
+    | { kind: "never" }
+    | { kind: "added"; count: number }
+    | { kind: "removed"; count: number }
+    | { kind: "changed"; added: number; removed: number };
 
 /**
  * Compares the draft and published vendor sets by id rather than by size, so a
