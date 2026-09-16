@@ -4,6 +4,8 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.23.0] - 2026-09-16
+
 ### Removed
 
 - Tracker-pattern to org-third-party linking (the mapping worker, import,
