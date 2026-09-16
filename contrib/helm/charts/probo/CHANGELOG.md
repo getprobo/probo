@@ -4,6 +4,12 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.24.0] - 2026-09-16
+
+### Changed
+
+- Default `appVersion` is now `0.290.0`
+
 ## [0.23.0] - 2026-09-16
 
 ### Removed
