@@ -65,10 +65,10 @@
     "actions": { "save": "Save", "cancel": "Cancel" }
   },
   "trackerPatternRow": {
-    "messages": { "successTitle": "Success", "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved", "thirdPartyImported": "Third party imported", "cookieUpdated": "Cookie updated" },
-    "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie", "importThirdParty": "Failed to import third party" },
+    "messages": { "successTitle": "Success", "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved", "cookieUpdated": "Cookie updated" },
+    "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "actions": { "edit": "Edit", "importThirdParties": "Import to third parties", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
+    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistent" },

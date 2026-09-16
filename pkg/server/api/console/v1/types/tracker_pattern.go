@@ -34,12 +34,8 @@ type (
 	// TrackerPattern is the Go model bound to the GraphQL TrackerPattern
 	// type via @goModel. The first block contains the fields gqlgen
 	// fulfills directly from the model; resolver-only fields
-	// (cookieCategory, detectedTrackers, thirdParty, commonThirdParty,
-	// attribution, detectedCount, permission) are populated by the resolver.
-	//
-	// ThirdPartyID is not exposed in GraphQL — it is a foreign-key
-	// handle the resolver uses to load the linked org-scoped third
-	// party without re-querying coredata.
+	// (cookieCategory, detectedTrackers, commonThirdParty, attribution,
+	// detectedCount, permission) are populated by the resolver.
 	//
 	// CommonTrackerPatternID is exposed directly as the
 	// commonTrackerPatternId field: a non-null value indicates the
@@ -64,7 +60,6 @@ type (
 		DetectedCount    int                        `json:"detectedCount"`
 		Permission       bool                       `json:"permission"`
 
-		ThirdPartyID           *gid.GID `json:"-"`
 		CommonTrackerPatternID *gid.GID `json:"commonTrackerPatternId,omitempty"`
 	}
 
@@ -149,7 +144,6 @@ func NewTrackerPatternNode(tp *coredata.TrackerPattern) *TrackerPattern {
 		LastMatchedAt:          tp.LastMatchedAt,
 		CreatedAt:              tp.CreatedAt,
 		UpdatedAt:              tp.UpdatedAt,
-		ThirdPartyID:           tp.ThirdPartyID,
 		CommonTrackerPatternID: tp.CommonTrackerPatternID,
 	}
 }

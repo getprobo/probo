@@ -302,17 +302,6 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
 						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
 					},
-					ThirdPartyDisambiguation: probodconfig.LLMAgentConfig{
-						Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER", ""),
-						ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME", ""),
-						// The disambiguation agent emits a single id plus a
-						// short rationale, but the budget must leave headroom
-						// for reasoning models whose reasoning tokens count
-						// against max_tokens; too small a budget truncates the
-						// JSON.
-						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE"),
-						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS", 4096)),
-					},
 					TrackerMapping: probodconfig.LLMAgentConfig{
 						Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_MAPPING_PROVIDER", ""),
 						ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
@@ -383,12 +372,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				MaxConcurrency: b.resolver.getEnvIntOrDefault("PROBOD_THIRD_PARTY_VETTING_MAX_CONCURRENCY", 1),
 			},
 			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
-				Interval:                   b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_INTERVAL", 10),
-				MaxConcurrency:             b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_MAX_CONCURRENCY", 3),
-				StaleAfter:                 b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_STALE_AFTER", 600),
-				AgentTimeout:               b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_AGENT_TIMEOUT", 45),
-				AgentMaxTurns:              b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_AGENT_MAX_TURNS", 10),
-				DisambiguationAgentTimeout: b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT", 45),
+				Interval:       b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_INTERVAL", 10),
+				MaxConcurrency: b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_MAX_CONCURRENCY", 3),
+				StaleAfter:     b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_STALE_AFTER", 600),
+				AgentTimeout:   b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:  b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_AGENT_MAX_TURNS", 10),
 			},
 			CommonPatternEnrichmentWorker: probodconfig.CommonPatternEnrichmentWorkerConfig{
 				Interval:       b.resolver.getEnvIntOrDefault("PROBOD_COMMON_PATTERN_ENRICHMENT_INTERVAL", 10),

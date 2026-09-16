@@ -85,15 +85,8 @@ const trackersFragment = graphql`
     thirdPartyId: { type: "ID", defaultValue: null }
   ) {
     linkedThirdParties {
-      __typename
-      ... on ThirdParty {
-        id
-        name
-      }
-      ... on CommonThirdParty {
-        id
-        name
-      }
+      id
+      name
     }
     trackerPatterns(
       first: $first
@@ -147,11 +140,7 @@ export default function CookieBannerTrackersPage({
 
   const connectionId = fragmentData.trackerPatterns.__id;
   const patterns = fragmentData.trackerPatterns.edges.map(edge => edge.node) ?? [];
-  const linkedThirdParties = (fragmentData.linkedThirdParties ?? []).filter(
-    (party): party is Extract<typeof party, { id: string; name: string }> =>
-      party.__typename === "ThirdParty"
-      || party.__typename === "CommonThirdParty",
-  );
+  const linkedThirdParties = fragmentData.linkedThirdParties ?? [];
 
   const categories = data.node.__typename === "CookieBanner"
     ? data.node.categories.edges.map(edge => edge.node)

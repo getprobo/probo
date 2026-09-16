@@ -266,14 +266,11 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 		coredataFilter = coredataFilter.WithQuery(filter.Query).WithSource(filter.Source).WithTrackerType(filter.TrackerType)
 
 		if filter.ThirdPartyID != nil {
-			switch filter.ThirdPartyID.EntityType() {
-			case coredata.ThirdPartyEntityType:
-				coredataFilter = coredataFilter.WithThirdPartyID(filter.ThirdPartyID)
-			case coredata.CommonThirdPartyEntityType:
-				coredataFilter = coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID)
-			default:
-				return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a ThirdParty or CommonThirdParty")
+			if filter.ThirdPartyID.EntityType() != coredata.CommonThirdPartyEntityType {
+				return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a CommonThirdParty")
 			}
+
+			coredataFilter = coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID)
 		}
 	}
 
@@ -290,24 +287,12 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 
 // LinkedThirdParties is the resolver for the linkedThirdParties field.
 //
-// Aggregates the deduped union of third parties linked to the banner's
-// tracker patterns: the org-scoped ThirdParty values reached through
-// the direct foreign key, plus the global CommonThirdParty values
-// reached indirectly through CommonTrackerPattern. The two sources are
-// independent, so a tracker pattern that has both ThirdPartyID and
-// CommonTrackerPatternID contributes the org-scoped link only — the
-// commonThirdParty resolver follows the same priority and we want the
-// banner-level filter to mirror it.
-func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *types.CookieBanner) ([]types.TrackerPatternThirdPartyLink, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+// Aggregates the deduped catalog third parties linked to the banner's
+// tracker patterns through CommonTrackerPattern.
+func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *types.CookieBanner) ([]*types.CommonThirdParty, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList)
 	if err != nil {
 		return nil, err
-	}
-
-	thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list banner third party links", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
 	}
 
 	commonPatternIDs, err := r.cookieBanner.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, scope, obj.ID)
@@ -316,72 +301,49 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	out := make([]types.TrackerPatternThirdPartyLink, 0, len(thirdPartyIDs)+len(commonPatternIDs))
-	loaders := dataloader.FromContext(ctx)
-
-	if len(thirdPartyIDs) > 0 {
-		tps, loadErr := loaders.ThirdParty.LoadAll(ctx, thirdPartyIDs)
-
-		var loadErrs dataloadgen.ErrorSlice
-		if loadErr != nil && !errors.As(loadErr, &loadErrs) {
-			r.logger.ErrorCtx(ctx, "cannot get third parties", log.Error(loadErr))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		for i, tp := range tps {
-			if loadErrs != nil && loadErrs[i] != nil {
-				if errors.Is(loadErrs[i], coredata.ErrResourceNotFound) || errors.Is(loadErrs[i], dataloadgen.ErrNotFound) {
-					continue
-				}
-
-				r.logger.ErrorCtx(ctx, "cannot get third party", log.Error(loadErrs[i]))
-
-				return nil, gqlutils.Internal(ctx)
-			}
-
-			out = append(out, types.NewThirdParty(tp))
-		}
+	if len(commonPatternIDs) == 0 {
+		return []*types.CommonThirdParty{}, nil
 	}
 
-	if len(commonPatternIDs) > 0 {
-		identity := authn.IdentityFromContext(ctx)
-		if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
-			return nil, err
+	identity := authn.IdentityFromContext(ctx)
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+		return nil, err
+	}
+
+	patterns, err := r.cookieBanner.GetCommonTrackerPatternsByIDs(ctx, commonPatternIDs...)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get common tracker patterns", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	seen := make(map[gid.GID]struct{}, len(patterns))
+	commonThirdPartyIDs := make([]gid.GID, 0, len(patterns))
+	for _, p := range patterns {
+		if p.CommonThirdPartyID == nil {
+			continue
 		}
 
-		patterns, err := r.cookieBanner.GetCommonTrackerPatternsByIDs(ctx, commonPatternIDs...)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot get common tracker patterns", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+		if _, ok := seen[*p.CommonThirdPartyID]; ok {
+			continue
 		}
 
-		seen := make(map[gid.GID]struct{}, len(patterns))
+		seen[*p.CommonThirdPartyID] = struct{}{}
+		commonThirdPartyIDs = append(commonThirdPartyIDs, *p.CommonThirdPartyID)
+	}
 
-		commonThirdPartyIDs := make([]gid.GID, 0, len(patterns))
-		for _, p := range patterns {
-			if p.CommonThirdPartyID == nil {
-				continue
-			}
+	if len(commonThirdPartyIDs) == 0 {
+		return []*types.CommonThirdParty{}, nil
+	}
 
-			if _, ok := seen[*p.CommonThirdPartyID]; ok {
-				continue
-			}
+	parties, err := r.thirdParty.GetCommonThirdPartiesByIDs(ctx, commonThirdPartyIDs...)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get common third parties", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
 
-			seen[*p.CommonThirdPartyID] = struct{}{}
-			commonThirdPartyIDs = append(commonThirdPartyIDs, *p.CommonThirdPartyID)
-		}
-
-		if len(commonThirdPartyIDs) > 0 {
-			parties, err := r.thirdParty.GetCommonThirdPartiesByIDs(ctx, commonThirdPartyIDs...)
-			if err != nil {
-				r.logger.ErrorCtx(ctx, "cannot get common third parties", log.Error(err))
-				return nil, gqlutils.Internal(ctx)
-			}
-
-			for _, p := range parties {
-				out = append(out, types.NewCommonThirdParty(p))
-			}
-		}
+	out := make([]*types.CommonThirdParty, 0, len(parties))
+	for _, p := range parties {
+		out = append(out, types.NewCommonThirdParty(p))
 	}
 
 	return out, nil
@@ -1659,39 +1621,9 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	return count, nil
 }
 
-// ThirdParty is the resolver for the thirdParty field.
-func (r *trackerPatternResolver) ThirdParty(ctx context.Context, obj *types.TrackerPattern) (*types.ThirdParty, error) {
-	if obj.ThirdPartyID == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, *obj.ThirdPartyID, probo.ActionThirdPartyGet); err != nil {
-		return nil, err
-	}
-
-	loaders := dataloader.FromContext(ctx)
-
-	tp, err := loaders.ThirdParty.Load(ctx, *obj.ThirdPartyID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get tracker pattern third party", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewThirdParty(tp), nil
-}
-
 // CommonThirdParty is the resolver for the commonThirdParty field.
-//
-// The org-scoped thirdParty takes priority: when ThirdPartyID is set we
-// short-circuit to nil so the chained common-tracker-pattern lookup is
-// never paid for.
 func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *types.TrackerPattern) (*types.CommonThirdParty, error) {
-	if obj.ThirdPartyID != nil || obj.CommonTrackerPatternID == nil {
+	if obj.CommonTrackerPatternID == nil {
 		return nil, nil
 	}
 

@@ -66,7 +66,6 @@ This applies in two shapes:
    that owns the domain, named `<purpose>_agent.go`.
 
    ```
-   pkg/thirdparty/disambiguation_agent.go   -- catalog→org ThirdParty matcher
    pkg/vetting/sub_agent.go                  -- generic vetting sub-agent
    ```
 

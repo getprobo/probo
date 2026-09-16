@@ -4,6 +4,12 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+### Removed
+
+- `thirdPartyDisambiguation` agent config slot and
+  `trackerMappingWorker.disambiguationAgentTimeout` (the mapping worker no
+  longer links org third parties)
+
 ## [0.22.0] - 2026-09-15
 
 ### Added

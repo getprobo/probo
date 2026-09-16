@@ -706,14 +706,8 @@ func (s ThirdPartyService) Create(
 // ImportFromCommon creates an org ThirdParty seeded from the global
 // CommonThirdParty catalog entry, or returns the existing one when the
 // organization already imported it (idempotent on the
-// (organization_id, common_third_party_id) pair). It then backfills
-// tracker_patterns.third_party_id for the organization's unlinked
-// patterns whose catalog row resolves to the same common third party, so
-// the trackers UI and tracker-policy document surface the managed vendor
-// instead of the catalog entry. The backfill runs on both the create and
-// reuse paths because new patterns may have been detected since a prior
-// import; it only touches patterns with no existing link. Returns the
-// org ThirdParty and whether it was newly created.
+// (organization_id, common_third_party_id) pair). Returns the org
+// ThirdParty and whether it was newly created.
 func (s ThirdPartyService) ImportFromCommon(
 	ctx context.Context, scope coredata.Scoper,
 	req ImportThirdPartyFromCommonRequest,
@@ -803,18 +797,6 @@ func (s ThirdPartyService) ImportFromCommon(
 				}
 			default:
 				return fmt.Errorf("cannot load third party by common id: %w", err)
-			}
-
-			var patterns coredata.TrackerPatterns
-			if err := patterns.LinkThirdPartyByCommonThirdPartyID(
-				ctx,
-				conn,
-				scope,
-				organization.ID,
-				req.CommonThirdPartyID,
-				thirdParty.ID,
-			); err != nil {
-				return fmt.Errorf("cannot link tracker patterns to imported third party: %w", err)
 			}
 
 			return nil

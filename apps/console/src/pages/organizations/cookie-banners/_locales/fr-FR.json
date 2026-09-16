@@ -65,10 +65,10 @@
     "actions": { "save": "Enregistrer", "cancel": "Annuler" }
   },
   "trackerPatternRow": {
-    "messages": { "successTitle": "Succès", "cookieDeleted": "Cookie supprimé", "cookieMoved": "Cookie déplacé", "thirdPartyImported": "Tiers importé", "cookieUpdated": "Cookie mis à jour" },
-    "errors": { "title": "Erreur", "deleteCookie": "Échec de la suppression du cookie", "moveCookie": "Échec du déplacement du cookie", "updateCookie": "Échec de la mise à jour du cookie", "importThirdParty": "Échec de l’importation du tiers" },
+    "messages": { "successTitle": "Succès", "cookieDeleted": "Cookie supprimé", "cookieMoved": "Cookie déplacé", "cookieUpdated": "Cookie mis à jour" },
+    "errors": { "title": "Erreur", "deleteCookie": "Échec de la suppression du cookie", "moveCookie": "Échec du déplacement du cookie", "updateCookie": "Échec de la mise à jour du cookie" },
     "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
-    "actions": { "edit": "Modifier", "importThirdParties": "Importer vers les tiers", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
+    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistant" },

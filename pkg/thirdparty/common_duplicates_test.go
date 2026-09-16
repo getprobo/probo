@@ -479,3 +479,30 @@ func TestFindDuplicates_RejectsNaNThreshold(t *testing.T) {
 
 	assert.Empty(t, FindDuplicates(unrelated, math.NaN()))
 }
+
+func TestStripCorporateSuffixes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{name: "llc suffix", in: "google llc", want: "google"},
+		{name: "comma inc", in: "stripe, inc", want: "stripe"},
+		{name: "inc dot", in: "meta inc.", want: "meta"},
+		{name: "ltd", in: "deepmind ltd", want: "deepmind"},
+		{name: "gmbh", in: "n8n gmbh", want: "n8n"},
+		{name: "no suffix", in: "cloudflare", want: "cloudflare"},
+		{name: "trailing space", in: "github  inc", want: "github"},
+		{name: "only one suffix stripped", in: "foo inc llc", want: "foo inc"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, stripCorporateSuffixes(tt.in))
+		})
+	}
+}

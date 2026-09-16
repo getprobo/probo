@@ -337,11 +337,10 @@ func TestResetStaleMappings(t *testing.T) {
 // TestRequestMappingForUnmappedByInitiatorDomains pins the new-domain
 // re-map cascade: when a vendor gains owned domains, only still-unmapped
 // org patterns whose detected trackers share one of those domains are
-// re-armed. A pattern already linked to a vendor (via a catalog row that
-// carries a common_third_party_id, or via third_party_id), an
-// extension-sourced pattern, and a pattern whose trackers were seen on a
-// different domain are all left untouched. An empty domain set is a
-// no-op.
+// re-armed. A pattern already linked to a vendor via a catalog row that
+// carries a common_third_party_id, an extension-sourced pattern, and a
+// pattern whose trackers were seen on a different domain are all left
+// untouched. An empty domain set is a no-op.
 func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	t.Parallel()
 
@@ -389,29 +388,10 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	}
 	insertCommonTrackerPattern(t, ctx, client, linkedCommon)
 
-	// An org third party for the third_party_id-linked pattern.
-	orgThirdPartyID := gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType)
-	orgThirdParty := coredata.ThirdParty{
-		ID:             orgThirdPartyID,
-		OrganizationID: fx.organizationID,
-		Name:           "Org Vendor",
-		Category:       coredata.ThirdPartyCategoryAnalytics,
-		Certifications: []string{},
-		Countries:      coredata.CountryCodes{},
-		Level:          1,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return orgThirdParty.Insert(ctx, tx, fx.scope)
-	}))
-
 	newPattern := func(
 		pattern string,
 		source coredata.CookieSource,
 		commonID *gid.GID,
-		thirdPartyID *gid.GID,
 	) *coredata.TrackerPattern {
 		src := source
 		tp := &coredata.TrackerPattern{
@@ -420,7 +400,6 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 			CookieBannerID:         fx.cookieBannerID,
 			CookieCategoryID:       fx.cookieCategoryID,
 			CommonTrackerPatternID: commonID,
-			ThirdPartyID:           thirdPartyID,
 			TrackerType:            coredata.TrackerTypeCookie,
 			Pattern:                pattern,
 			MatchType:              coredata.TrackerPatternMatchTypeExact,
@@ -459,15 +438,13 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 		}))
 	}
 
-	unmapped := newPattern("unmapped", coredata.CookieSourceScript, nil, nil)
-	catalogLinked := newPattern("catalog_linked", coredata.CookieSourceScript, &linkedCommon.ID, nil)
-	thirdPartyLinked := newPattern("third_party_linked", coredata.CookieSourceScript, nil, &orgThirdPartyID)
-	extension := newPattern("extension", coredata.CookieSourceExtension, nil, nil)
-	otherDomainPattern := newPattern("other_domain", coredata.CookieSourceScript, nil, nil)
+	unmapped := newPattern("unmapped", coredata.CookieSourceScript, nil)
+	catalogLinked := newPattern("catalog_linked", coredata.CookieSourceScript, &linkedCommon.ID)
+	extension := newPattern("extension", coredata.CookieSourceExtension, nil)
+	otherDomainPattern := newPattern("other_domain", coredata.CookieSourceScript, nil)
 
 	seedDetectedTracker(unmapped.ID, "unmapped_id", vendorDomain)
 	seedDetectedTracker(catalogLinked.ID, "catalog_linked_id", vendorDomain)
-	seedDetectedTracker(thirdPartyLinked.ID, "third_party_linked_id", vendorDomain)
 	seedDetectedTracker(extension.ID, "extension_id", vendorDomain)
 	seedDetectedTracker(otherDomainPattern.ID, "other_domain_id", otherDomain)
 
@@ -497,7 +474,6 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 
 	assert.NotNil(t, load(unmapped.ID).MappingRequestedAt, "unmapped pattern sharing the domain must be re-armed")
 	assert.Nil(t, load(catalogLinked.ID).MappingRequestedAt, "pattern linked to a vendor via the catalog must be left alone")
-	assert.Nil(t, load(thirdPartyLinked.ID).MappingRequestedAt, "pattern linked to an org third party must be left alone")
 	assert.Nil(t, load(extension.ID).MappingRequestedAt, "extension-sourced pattern must be skipped")
 	assert.Nil(t, load(otherDomainPattern.ID).MappingRequestedAt, "pattern seen on a different domain must not be re-armed")
 

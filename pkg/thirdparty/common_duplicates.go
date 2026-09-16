@@ -540,3 +540,52 @@ func enrichmentFieldResolved(status string) bool {
 		return false
 	}
 }
+
+// corporateSuffixes are the legal-form noise words stripped when
+// comparing third-party names. The list is intentionally short and
+// conservative: matching "Foo Inc" to "Foo" is safe, but stripping
+// "Group" or "Services" would over-match unrelated entries.
+//
+// Order matters: stripCorporateSuffixes returns on the first match,
+// so longer / comma-prefixed forms must come before their shorter
+// siblings (", inc." before " inc.", which itself comes before " inc").
+var corporateSuffixes = []string{
+	" incorporated",
+	" corporation",
+	", inc.",
+	", inc",
+	" l.l.c.",
+	" s.a.s.",
+	" inc.",
+	" inc",
+	" llc",
+	" ltd.",
+	" ltd",
+	" limited",
+	" gmbh",
+	" s.a.",
+	" sas",
+	" sa",
+	" ag",
+	" plc",
+	" corp.",
+	" corp",
+	" co.",
+	" co",
+	" b.v.",
+	" bv",
+}
+
+// stripCorporateSuffixes removes a single trailing legal-form suffix
+// from a lowercased name. Only one suffix is stripped to avoid
+// mangling names that happen to end in two stop-words (e.g. "Foo Inc
+// LLC" → "Foo Inc", not "Foo").
+func stripCorporateSuffixes(lowerName string) string {
+	for _, s := range corporateSuffixes {
+		if before, ok := strings.CutSuffix(lowerName, s); ok {
+			return strings.TrimSpace(before)
+		}
+	}
+
+	return lowerName
+}

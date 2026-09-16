@@ -3156,12 +3156,12 @@ func (s *Service) MoveTrackerPatternToCategory(
 
 			// A manual move is the user's signal that this is a
 			// real tracker. Enqueue the tracker-mapping worker so
-			// it can promote the pattern to an org ThirdParty (or
-			// link an existing one) — never EXTENSION-sourced
-			// patterns, and never patterns we already promoted.
-			// SetMappingRequested is idempotent: it short-circuits
-			// when mapping_requested_at is already non-NULL.
-			if pattern.ThirdPartyID == nil &&
+			// it can resolve the catalog vendor — never
+			// EXTENSION-sourced patterns, and never patterns
+			// already linked to a catalog row. SetMappingRequested
+			// is idempotent: it short-circuits when
+			// mapping_requested_at is already non-NULL.
+			if pattern.CommonTrackerPatternID == nil &&
 				(pattern.Source == nil || *pattern.Source != coredata.CookieSourceExtension) {
 				if err := pattern.SetMappingRequested(ctx, tx); err != nil {
 					return fmt.Errorf("cannot enqueue tracker mapping after move: %w", err)
@@ -3270,41 +3270,6 @@ func (s *Service) GetCommonTrackerPatternsByIDs(
 	}
 
 	return patterns, nil
-}
-
-// LoadDistinctThirdPartyIDsByCookieBannerID returns the distinct
-// org-scoped third-party IDs referenced by tracker patterns of the
-// banner. The companion
-// LoadDistinctCommonTrackerPatternIDsByCookieBannerID covers the
-// indirect mapping through common_tracker_patterns.
-func (s *Service) LoadDistinctThirdPartyIDsByCookieBannerID(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-) ([]gid.GID, error) {
-	var ids []gid.GID
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var (
-				patterns coredata.TrackerPatterns
-				err      error
-			)
-
-			ids, err = patterns.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
-			if err != nil {
-				return fmt.Errorf("cannot load distinct third party ids: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return ids, nil
 }
 
 func (s *Service) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(

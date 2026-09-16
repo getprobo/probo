@@ -337,12 +337,6 @@ func printMergeResult(
 
 	_, _ = fmt.Fprintf(
 		out,
-		"  org patterns:       %d relinked to the managed third party\n",
-		result.OrgTrackerPatternsRelinked,
-	)
-
-	_, _ = fmt.Fprintf(
-		out,
 		"  org third parties:  %d repointed, %d skipped (organization already links the winner)\n",
 		result.ThirdPartiesRepointed,
 		len(result.ThirdPartiesSkipped),

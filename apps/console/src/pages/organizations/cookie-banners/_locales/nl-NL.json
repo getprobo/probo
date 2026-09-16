@@ -65,10 +65,10 @@
     "actions": { "save": "Opslaan", "cancel": "Annuleren" }
   },
   "trackerPatternRow": {
-    "messages": { "successTitle": "Gelukt", "cookieDeleted": "Cookie verwijderd", "cookieMoved": "Cookie verplaatst", "thirdPartyImported": "Derde partij geïmporteerd", "cookieUpdated": "Cookie bijgewerkt" },
-    "errors": { "title": "Fout", "deleteCookie": "Cookie verwijderen mislukt", "moveCookie": "Cookie verplaatsen mislukt", "updateCookie": "Cookie bijwerken mislukt", "importThirdParty": "Derde partij importeren mislukt" },
+    "messages": { "successTitle": "Gelukt", "cookieDeleted": "Cookie verwijderd", "cookieMoved": "Cookie verplaatst", "cookieUpdated": "Cookie bijgewerkt" },
+    "errors": { "title": "Fout", "deleteCookie": "Cookie verwijderen mislukt", "moveCookie": "Cookie verplaatsen mislukt", "updateCookie": "Cookie bijwerken mislukt" },
     "deleteConfirmation": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
-    "actions": { "edit": "Bewerken", "importThirdParties": "Importeren naar derde partijen", "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen" },
+    "actions": { "edit": "Bewerken", "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "duration": { "session": "Sessie", "persistent": "Permanent" },
