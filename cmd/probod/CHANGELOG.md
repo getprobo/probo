@@ -4,6 +4,55 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.290.0] - 2026-09-16
+
+### Added
+
+- Operators can choose which IAB Global Vendor List vendors a TCF-capable
+  cookie banner discloses. The catalog is paginated and searchable, the
+  selected set is stored per banner, and it is exposed on the console,
+  GraphQL, MCP, CLI, and n8n
+- The TCF page shows draft versus published vendor counts and can list only
+  the vendors already on the banner, via a membership filter
+- Risks get an immutable org-scoped `RSK-001` reference ID, matching
+  findings, so they can be identified in lists and APIs without the GID
+
+### Changed
+
+- Compliance-portal visitors are identity-only: invite and self-provision
+  create an identity and portal access rather than a People profile, so
+  visitors no longer mix into org members
+- The compliance-portal visitors list loads with the page query instead of a
+  nested lazy query, so the request starts in the loader
+- Magic links are verified with a same-origin fetch that returns JSON and
+  navigates in the page, instead of a native form POST blocked by
+  `form-action 'self'`
+- Federation tokens set `nbf` a minute behind `iat`, so a verifier whose
+  clock lags the issuer cannot reject a just-minted assertion
+- Tracker patterns no longer link to an org third party; catalog
+  identification is the sole vendor path
+
+### Removed
+
+- Common-catalog origin badges on the tracker list and detail views
+
+### Fixed
+
+- The Visitors page no longer fails for NDA-only users: the access list is
+  resolved only once list permission is known
+- The TCF draft badge compares vendor ID sets rather than counts, so
+  removals and one-for-one swaps are reported correctly instead of reading
+  as pending additions or as synced
+- GVL vendors can be removed from a banner with TCF turned off, which
+  previously stranded linked rows that no API could delete
+- A lone `cookieBannerId` in the GVL filter is rejected instead of being
+  silently dropped and returning the unfiltered global catalog
+- Failed GVL vendor add/remove mutations no longer raise an unhandled
+  rejection alongside the error toast
+- Tracker policy vendor URL collapse sorts by ID, so the kept
+  privacy-policy link is stable across regenerates when two catalog records
+  share a name
+
 ## [0.289.0] - 2026-09-15
 
 ### Added
