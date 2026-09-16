@@ -74,6 +74,7 @@ func TestCollapseTrackerPolicyThirdParties_BackfillsEmptyPrivacyPolicyURL(t *tes
 
 func gidWithSuffix(suffix byte) gid.GID {
 	var id gid.GID
+
 	id[len(id)-1] = suffix
 
 	return id
