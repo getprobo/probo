@@ -30,9 +30,11 @@ import (
 )
 
 type mcpCompliancePortalAccess struct {
-	ID    string  `json:"id"`
-	State string  `json:"state"`
-	Auth  *string `json:"authenticated_at"`
+	ID       string  `json:"id"`
+	State    string  `json:"state"`
+	Email    string  `json:"email"`
+	FullName string  `json:"full_name"`
+	Auth     *string `json:"authenticated_at"`
 }
 
 func TestMCP_CreateCompliancePortalAccess(t *testing.T) {
@@ -53,6 +55,8 @@ func TestMCP_CreateCompliancePortalAccess(t *testing.T) {
 
 	assert.NotEmpty(t, result.CompliancePortalAccess.ID)
 	assert.Equal(t, "ACTIVE", result.CompliancePortalAccess.State)
+	assert.Equal(t, email, result.CompliancePortalAccess.Email)
+	assert.Empty(t, result.CompliancePortalAccess.FullName)
 	assert.Nil(t, result.CompliancePortalAccess.Auth)
 
 	errText := mc.CallToolExpectToolError("createCompliancePortalAccess", map[string]any{

@@ -334,7 +334,7 @@ func (s *Service) CreateAccess(
 				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			identity, _, err := s.resolveAccessIdentity(
+			identity, err := s.resolveAccessIdentity(
 				ctx,
 				tx,
 				scope,
@@ -1076,15 +1076,9 @@ func (s *Service) sendAccessEmail(
 		return fmt.Errorf("cannot update compliance page access with expiration: %w", err)
 	}
 
-	profile := &coredata.MembershipProfile{}
-	if err := profile.LoadByIdentityIDAndOrganizationID(
-		ctx,
-		tx,
-		scope,
-		access.IdentityID,
-		access.OrganizationID,
-	); err != nil {
-		return fmt.Errorf("cannot load profile: %w", err)
+	identity := &coredata.Identity{}
+	if err := identity.LoadByID(ctx, tx, access.IdentityID); err != nil {
+		return fmt.Errorf("cannot load identity: %w", err)
 	}
 
 	emailPresenterCfg, err := s.EmailPresenterConfig(ctx, scope, access.CompliancePortalID)
@@ -1092,7 +1086,7 @@ func (s *Service) sendAccessEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalAccess(ctx, organization.Name)
 	if err != nil {
@@ -1100,8 +1094,8 @@ func (s *Service) sendAccessEmail(
 	}
 
 	accessEmail := coredata.NewEmail(
-		profile.FullName,
-		profile.EmailAddress,
+		identity.FullName,
+		identity.EmailAddress,
 		subject,
 		textBody,
 		htmlBody,
@@ -1190,43 +1184,26 @@ func (s *Service) resolveAccessIdentity(
 	compliancePortal *coredata.CompliancePortal,
 	req *CreateAccessRequest,
 	now time.Time,
-) (*coredata.Identity, *coredata.MembershipProfile, error) {
+) (*coredata.Identity, error) {
 	if req.ProfileID != nil {
 		profile := &coredata.MembershipProfile{}
 		if err := profile.LoadByID(ctx, tx, scope, *req.ProfileID); err != nil {
-			return nil, nil, fmt.Errorf("cannot load profile: %w", err)
+			return nil, fmt.Errorf("cannot load profile: %w", err)
 		}
 
 		if profile.OrganizationID != compliancePortal.OrganizationID {
-			return nil, nil, coredata.ErrResourceNotFound
+			return nil, coredata.ErrResourceNotFound
 		}
 
 		identity := &coredata.Identity{}
 		if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
-			return nil, nil, fmt.Errorf("cannot load identity: %w", err)
+			return nil, fmt.Errorf("cannot load identity: %w", err)
 		}
 
-		return identity, profile, nil
+		return identity, nil
 	}
 
-	identity, err := findOrCreateIdentity(ctx, tx, *req.Email, now)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	profile, err := findOrCreateVisitorProfile(
-		ctx,
-		tx,
-		scope,
-		identity,
-		compliancePortal.OrganizationID,
-		now,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return identity, profile, nil
+	return findOrCreateIdentity(ctx, tx, *req.Email, now)
 }
 
 func findOrCreateIdentity(
@@ -1272,70 +1249,6 @@ func findOrCreateIdentity(
 	}
 
 	return identity, nil
-}
-
-func findOrCreateVisitorProfile(
-	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	identity *coredata.Identity,
-	organizationID gid.GID,
-	now time.Time,
-) (*coredata.MembershipProfile, error) {
-	profile := &coredata.MembershipProfile{}
-
-	err := profile.LoadByIdentityIDAndOrganizationID(
-		ctx,
-		tx,
-		scope,
-		identity.ID,
-		organizationID,
-	)
-	if err == nil {
-		return profile, nil
-	}
-
-	if !errors.Is(err, coredata.ErrResourceNotFound) {
-		return nil, fmt.Errorf("cannot load profile: %w", err)
-	}
-
-	profile = &coredata.MembershipProfile{
-		ID:             gid.New(scope.GetTenantID(), coredata.MembershipProfileEntityType),
-		IdentityID:     identity.ID,
-		OrganizationID: organizationID,
-		EmailAddress:   identity.EmailAddress,
-		Source:         coredata.ProfileSourceManual,
-		State:          coredata.ProfileStateActive,
-		ActivatedAt:    &now,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	insertErr := tx.Savepoint(
-		ctx,
-		func(ctx context.Context, sp pg.Tx) error {
-			return profile.Insert(ctx, sp)
-		},
-	)
-	if insertErr != nil {
-		if errors.Is(insertErr, coredata.ErrResourceAlreadyExists) {
-			if err := profile.LoadByIdentityIDAndOrganizationID(
-				ctx,
-				tx,
-				scope,
-				identity.ID,
-				organizationID,
-			); err != nil {
-				return nil, fmt.Errorf("cannot load profile after conflict: %w", err)
-			}
-
-			return profile, nil
-		}
-
-		return nil, fmt.Errorf("cannot insert profile: %w", insertErr)
-	}
-
-	return profile, nil
 }
 
 func (s *Service) grantCreatedAccessTargets(

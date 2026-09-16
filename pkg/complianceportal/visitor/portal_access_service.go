@@ -577,15 +577,6 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 				return ErrUserInactive
 			}
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, identity.ID, access.OrganizationID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrUserNotFound
-				}
-
-				return fmt.Errorf("cannot load profile: %w", err)
-			}
-
 			now := time.Now()
 			shouldSendEmail := false
 
@@ -614,7 +605,7 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 			}
 
 			if shouldSendEmail {
-				if err := s.sendPortalAccessEmail(ctx, tx, scope, access, profile); err != nil {
+				if err := s.sendPortalAccessEmail(ctx, tx, scope, access, identity); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
 
@@ -649,7 +640,7 @@ func (s *Service) sendPortalAccessEmail(
 	tx pg.Tx,
 	scope coredata.Scoper,
 	access *coredata.CompliancePortalAccess,
-	profile *coredata.MembershipProfile,
+	identity *coredata.Identity,
 ) error {
 	organization := &coredata.Organization{}
 	if err := organization.LoadByID(ctx, tx, scope, access.OrganizationID); err != nil {
@@ -668,7 +659,7 @@ func (s *Service) sendPortalAccessEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalAccess(ctx, organization.Name)
 	if err != nil {
@@ -676,8 +667,8 @@ func (s *Service) sendPortalAccessEmail(
 	}
 
 	accessEmail := coredata.NewEmail(
-		profile.FullName,
-		profile.EmailAddress,
+		identity.FullName,
+		identity.EmailAddress,
 		subject,
 		textBody,
 		htmlBody,
@@ -759,11 +750,6 @@ func (s *Service) RejectOrRevokePortalAccessByIDsIdempotently(
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, identity.ID, access.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load profile: %w", err)
-			}
-
 			shouldSendEmail := false
 			now := time.Now()
 
@@ -792,7 +778,7 @@ func (s *Service) RejectOrRevokePortalAccessByIDsIdempotently(
 			}
 
 			if shouldSendEmail {
-				if err := s.sendPortalDocumentAccessRejectedEmail(ctx, tx, scope, access, profile, documentIDs, reportIDs, fileIDs); err != nil {
+				if err := s.sendPortalDocumentAccessRejectedEmail(ctx, tx, scope, access, identity, documentIDs, reportIDs, fileIDs); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
 
@@ -827,7 +813,7 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 	tx pg.Tx,
 	scope coredata.Scoper,
 	access *coredata.CompliancePortalAccess,
-	profile *coredata.MembershipProfile,
+	identity *coredata.Identity,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
 	fileIDs []gid.GID,
@@ -877,7 +863,7 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalDocumentAccessRejected(
 		ctx,
@@ -889,8 +875,8 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 	}
 
 	accessEmail := coredata.NewEmail(
-		profile.FullName,
-		profile.EmailAddress,
+		identity.FullName,
+		identity.EmailAddress,
 		subject,
 		textBody,
 		htmlBody,

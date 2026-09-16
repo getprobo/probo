@@ -15,7 +15,6 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
@@ -533,24 +532,24 @@ func (r *compliancePortalAccessResolver) ActiveCount(ctx context.Context, obj *t
 	return count, nil
 }
 
-// Profile is the resolver for the profile field.
-func (r *compliancePortalAccessResolver) Profile(ctx context.Context, obj *types.CompliancePortalAccess) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+// Identity is the resolver for the identity field.
+func (r *compliancePortalAccessResolver) Identity(ctx context.Context, obj *types.CompliancePortalAccess) (*types.CompliancePortalAccessIdentity, error) {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet); err != nil {
 		return nil, err
 	}
 
-	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, obj.IdentityID, obj.OrganizationID)
+	loaders := dataloader.FromContext(ctx)
+
+	identity, err := loaders.Identity.Load(ctx, obj.IdentityID)
 	if err != nil {
-		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-
+		r.logger.ErrorCtx(ctx, "cannot load identity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProfile(profile), nil
+	return &types.CompliancePortalAccessIdentity{
+		Email:    identity.EmailAddress,
+		FullName: identity.FullName,
+	}, nil
 }
 
 // Resources is the resolver for the resources field.

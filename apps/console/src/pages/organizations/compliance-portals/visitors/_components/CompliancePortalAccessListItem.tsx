@@ -41,9 +41,9 @@ const fragment = graphql`
     id
     state
     authenticatedAt
-    profile {
+    identity {
       fullName
-      emailAddress
+      email
     }
     pendingRequestCount
     ndaSignature {
@@ -77,8 +77,8 @@ export function CompliancePortalAccessListItem({
   } = accessListItem();
   const ndaStatus = access.ndaSignature?.status;
   const displayName = visitorDisplayName(
-    access.profile.fullName,
-    access.profile.emailAddress,
+    access.identity.fullName,
+    access.identity.email,
   );
   const visitStatus = visitorVisitStatus(access.state, access.authenticatedAt);
 
@@ -104,7 +104,7 @@ export function CompliancePortalAccessListItem({
                 {displayName}
               </Text>
               <Text size={1} color="gold" className={email()}>
-                {access.profile.emailAddress}
+                {access.identity.email}
               </Text>
             </ListItemContent>
           </div>

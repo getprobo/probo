@@ -9775,8 +9775,15 @@ func (r *Resolver) CreateCompliancePortalAccessTool(ctx context.Context, req *mc
 		}
 	}
 
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.CreateCompliancePortalAccessOutput{
-		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+		CompliancePortalAccess: out,
 	}, nil
 }
 
@@ -9802,8 +9809,15 @@ func (r *Resolver) DeactivateCompliancePortalAccessTool(ctx context.Context, req
 		}
 	}
 
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.DeactivateCompliancePortalAccessOutput{
-		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+		CompliancePortalAccess: out,
 	}, nil
 }
 
@@ -9829,8 +9843,15 @@ func (r *Resolver) ActivateCompliancePortalAccessTool(ctx context.Context, req *
 		}
 	}
 
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.ActivateCompliancePortalAccessOutput{
-		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+		CompliancePortalAccess: out,
 	}, nil
 }
 

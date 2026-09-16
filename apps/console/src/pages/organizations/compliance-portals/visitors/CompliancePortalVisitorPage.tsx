@@ -51,9 +51,9 @@ export const compliancePortalVisitorPageQuery = graphql`
         state
         canGet: permission(action: "compliance-portal:portal-access:get")
         canUpdate: permission(action: "compliance-portal:portal-access:update")
-        profile {
+        identity {
           fullName
-          emailAddress
+          email
         }
         ndaSignature {
           ...ElectronicSignatureSectionFragment
@@ -101,8 +101,8 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
   const access = data.access;
   const canUpdate = access.canUpdate;
   const displayName = visitorDisplayName(
-    access.profile.fullName,
-    access.profile.emailAddress,
+    access.identity.fullName,
+    access.identity.email,
   );
   usePageTitle(displayName);
 

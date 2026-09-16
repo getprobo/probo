@@ -38,9 +38,9 @@ const fragment = graphql`
   fragment CompliancePortalVisitorProfileCard_access on CompliancePortalAccess {
     state
     authenticatedAt
-    profile {
+    identity {
       fullName
-      emailAddress
+      email
     }
   }
 `;
@@ -58,8 +58,8 @@ export function CompliancePortalVisitorProfileCard({
   const { profile, person, identity, joined, actions } = visitorPage();
   const access = useFragment(fragment, accessKey);
   const displayName = visitorDisplayName(
-    access.profile.fullName,
-    access.profile.emailAddress,
+    access.identity.fullName,
+    access.identity.email,
   );
   const visitStatus = visitorVisitStatus(access.state, access.authenticatedAt);
 
@@ -77,7 +77,7 @@ export function CompliancePortalVisitorProfileCard({
             {displayName}
           </Heading>
           <Text size={2} color="gold" className="truncate">
-            {access.profile.emailAddress}
+            {access.identity.email}
           </Text>
         </div>
       </div>

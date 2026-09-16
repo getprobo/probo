@@ -38,9 +38,9 @@ mutation($input: CreateCompliancePortalAccessInput!) {
         id
         state
         authenticatedAt
-        profile {
+        identity {
           fullName
-          emailAddress
+          email
         }
       }
     }
@@ -55,10 +55,10 @@ type createResponse struct {
 				ID              string  `json:"id"`
 				State           string  `json:"state"`
 				AuthenticatedAt *string `json:"authenticatedAt"`
-				Profile         struct {
-					FullName     string `json:"fullName"`
-					EmailAddress string `json:"emailAddress"`
-				} `json:"profile"`
+				Identity        struct {
+					FullName string `json:"fullName"`
+					Email    string `json:"email"`
+				} `json:"identity"`
 			} `json:"node"`
 		} `json:"compliancePortalAccessEdge"`
 	} `json:"createCompliancePortalAccess"`
@@ -158,7 +158,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				f.IOStreams.Out,
 				"Created visitor access %s (%s)\n",
 				n.ID,
-				n.Profile.EmailAddress,
+				n.Identity.Email,
 			)
 
 			return nil

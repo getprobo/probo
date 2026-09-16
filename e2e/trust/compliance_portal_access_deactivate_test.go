@@ -77,6 +77,7 @@ func TestCompliancePortal_DeactivateBlocksRequestAndGrantedGet(t *testing.T) {
 	trustHost := lookupTrustHost(t, owner, compliancePortalID)
 
 	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
+	assert.NotContains(t, listProfileEmails(t, owner, visitor.GetEmail()), visitor.GetEmail())
 	accessID := lookupVisitorAccessID(t, owner, compliancePortalID, visitor.GetEmail())
 
 	grantVisitorDocumentAccess(t, owner, accessID, documentID)
@@ -130,6 +131,59 @@ func TestCompliancePortal_DeactivateBlocksRequestAndGrantedGet(t *testing.T) {
 	require.NoError(t, err, "reactivated visitor must be able to request access")
 }
 
+func listProfileEmails(
+	t *testing.T,
+	client *testutil.Client,
+	query string,
+) []string {
+	t.Helper()
+
+	const profilesQuery = `
+		query($id: ID!, $query: String!) {
+			node(id: $id) {
+				... on Organization {
+					profiles(first: 20, filter: { query: $query }) {
+						edges {
+							node {
+								emailAddress
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						EmailAddress string `json:"emailAddress"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(
+		profilesQuery,
+		map[string]any{
+			"id":    client.GetOrganizationID().String(),
+			"query": query,
+		},
+		&result,
+	)
+	require.NoError(t, err)
+
+	emails := make([]string, 0, len(result.Node.Profiles.Edges))
+	for _, edge := range result.Node.Profiles.Edges {
+		emails = append(emails, edge.Node.EmailAddress)
+	}
+
+	return emails
+}
+
 func lookupVisitorAccessID(
 	t *testing.T,
 	owner *testutil.Client,
@@ -146,7 +200,7 @@ func lookupVisitorAccessID(
 						edges {
 							node {
 								id
-								profile { emailAddress }
+								identity { email }
 							}
 						}
 					}
@@ -160,10 +214,10 @@ func lookupVisitorAccessID(
 			Accesses struct {
 				Edges []struct {
 					Node struct {
-						ID      string `json:"id"`
-						Profile struct {
-							EmailAddress string `json:"emailAddress"`
-						} `json:"profile"`
+						ID       string `json:"id"`
+						Identity struct {
+							Email string `json:"email"`
+						} `json:"identity"`
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"accesses"`
@@ -174,7 +228,7 @@ func lookupVisitorAccessID(
 	require.NoError(t, err)
 
 	for _, edge := range result.Node.Accesses.Edges {
-		if edge.Node.Profile.EmailAddress == email {
+		if edge.Node.Identity.Email == email {
 			return edge.Node.ID
 		}
 	}

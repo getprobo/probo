@@ -53,12 +53,10 @@ func (f *CompliancePortalAccessFilter) SQLFragment() string {
 		WHEN @filter_query::text IS NOT NULL AND @filter_query::text <> '' THEN
 			EXISTS (
 				SELECT 1
-				FROM iam_membership_profiles p
-				INNER JOIN identities i ON i.id = p.identity_id
-				WHERE p.identity_id = cp_accesses.identity_id
-					AND p.organization_id = cp_accesses.organization_id
+				FROM identities i
+				WHERE i.id = cp_accesses.identity_id
 					AND (
-						p.full_name ILIKE '%' || @filter_query || '%' ESCAPE '\'
+						i.full_name ILIKE '%' || @filter_query || '%' ESCAPE '\'
 						OR i.email_address ILIKE '%' || @filter_query || '%' ESCAPE '\'
 					)
 			)

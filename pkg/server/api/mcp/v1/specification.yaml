@@ -11593,6 +11593,8 @@ components:
       required:
         - id
         - state
+        - email
+        - full_name
         - created_at
         - updated_at
       properties:
@@ -11600,6 +11602,10 @@ components:
           $ref: "#/components/schemas/GID"
         state:
           $ref: "#/components/schemas/CompliancePortalAccessState"
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+        full_name:
+          type: string
         authenticated_at:
           type:
             - string

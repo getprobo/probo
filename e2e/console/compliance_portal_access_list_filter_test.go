@@ -57,7 +57,6 @@ func TestCompliancePortalAccess_ListFilter(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	otherVisitor := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 	compliancePortalID := compliancePortalID(t, owner)
-	organizationID := owner.GetOrganizationID()
 
 	now := time.Now().UTC()
 	matchedAccessID := seedCompliancePortalAccessForIdentity(
@@ -76,8 +75,8 @@ func TestCompliancePortalAccess_ListFilter(t *testing.T) {
 	)
 
 	matchedName := factory.SafeName("ZebraVisitor")
-	setMembershipProfileFullName(t, organizationID, owner.GetUserID(), matchedName)
-	setMembershipProfileFullName(t, organizationID, otherVisitor.GetUserID(), "")
+	setIdentityFullName(t, owner.GetUserID(), matchedName)
+	setIdentityFullName(t, otherVisitor.GetUserID(), "")
 
 	t.Run(
 		"omitting filter returns both visitors",
@@ -151,9 +150,8 @@ func listFilteredAccessIDs(
 	return ids
 }
 
-func setMembershipProfileFullName(
+func setIdentityFullName(
 	t *testing.T,
-	organizationID gid.GID,
 	identityID gid.GID,
 	fullName string,
 ) {
@@ -168,25 +166,23 @@ func setMembershipProfileFullName(
 			tag, err := conn.Exec(
 				ctx,
 				`
-					UPDATE iam_membership_profiles
+					UPDATE identities
 					SET full_name = $1
-					WHERE identity_id = $2
-					AND organization_id = $3
+					WHERE id = $2
 				`,
 				fullName,
 				identityID.String(),
-				organizationID.String(),
 			)
 			if err != nil {
 				return err
 			}
 
 			if tag.RowsAffected() != 1 {
-				return fmt.Errorf("expected 1 profile update, got %d", tag.RowsAffected())
+				return fmt.Errorf("expected 1 identity update, got %d", tag.RowsAffected())
 			}
 
 			return nil
 		},
 	)
-	require.NoError(t, err, "test setup: cannot set membership profile full name")
+	require.NoError(t, err, "test setup: cannot set identity full name")
 }

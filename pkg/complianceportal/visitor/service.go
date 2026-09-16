@@ -384,36 +384,6 @@ func (s *Service) ProvisionPortalMember(
 				}
 			}
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(access.ID),
-				identityID,
-				access.OrganizationID,
-			); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load profile: %w", err)
-				}
-
-				profile = &coredata.MembershipProfile{
-					ID:             gid.New(access.TenantID, coredata.MembershipProfileEntityType),
-					IdentityID:     identityID,
-					OrganizationID: access.OrganizationID,
-					EmailAddress:   identity.EmailAddress,
-					Source:         coredata.ProfileSourceManual,
-					State:          coredata.ProfileStateActive,
-					ActivatedAt:    &now,
-					FullName:       identity.FullName,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := profile.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
-				}
-			}
-
 			return nil
 		},
 	)

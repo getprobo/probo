@@ -39,10 +39,9 @@ const createCompliancePortalAccessMutation = `
 					id
 					state
 					authenticatedAt
-					profile {
-						id
+					identity {
 						fullName
-						emailAddress
+						email
 					}
 				}
 			}
@@ -68,11 +67,10 @@ type compliancePortalAccessNode struct {
 	ID              string  `json:"id"`
 	State           string  `json:"state"`
 	AuthenticatedAt *string `json:"authenticatedAt"`
-	Profile         struct {
-		ID           string `json:"id"`
-		FullName     string `json:"fullName"`
-		EmailAddress string `json:"emailAddress"`
-	} `json:"profile"`
+	Identity        struct {
+		FullName string `json:"fullName"`
+		Email    string `json:"email"`
+	} `json:"identity"`
 }
 
 type createCompliancePortalAccessResult struct {
@@ -133,6 +131,59 @@ func listMemberCandidateIDs(
 	return ids
 }
 
+func listProfileEmails(
+	t *testing.T,
+	client *testutil.Client,
+	query string,
+) []string {
+	t.Helper()
+
+	const profilesQuery = `
+		query($id: ID!, $query: String!) {
+			node(id: $id) {
+				... on Organization {
+					profiles(first: 20, filter: { query: $query }) {
+						edges {
+							node {
+								emailAddress
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						EmailAddress string `json:"emailAddress"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(
+		profilesQuery,
+		map[string]any{
+			"id":    client.GetOrganizationID().String(),
+			"query": query,
+		},
+		&result,
+	)
+	require.NoError(t, err)
+
+	emails := make([]string, 0, len(result.Node.Profiles.Edges))
+	for _, edge := range result.Node.Profiles.Edges {
+		emails = append(emails, edge.Node.EmailAddress)
+	}
+
+	return emails
+}
+
 func requireAccessMailpitMessageEventually(
 	t *testing.T,
 	client *testutil.Client,
@@ -185,8 +236,10 @@ func TestCompliancePortalAccess_CreateByProfileID(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	compliancePortalID := compliancePortalID(t, owner)
 	fullName := factory.SafeName("PortalVisitor")
+	email := factory.SafeEmail()
 	profileID := factory.CreateUser(owner, factory.Attrs{
-		"fullName": fullName,
+		"fullName":     fullName,
+		"emailAddress": email,
 	})
 
 	node := createCompliancePortalAccess(t, owner, map[string]any{
@@ -196,8 +249,8 @@ func TestCompliancePortalAccess_CreateByProfileID(t *testing.T) {
 
 	assert.Equal(t, "ACTIVE", node.State)
 	assert.Nil(t, node.AuthenticatedAt)
-	assert.Equal(t, profileID, node.Profile.ID)
-	assert.Equal(t, fullName, node.Profile.FullName)
+	assert.Equal(t, email, node.Identity.Email)
+	assert.Equal(t, fullName, node.Identity.FullName)
 }
 
 func TestCompliancePortalAccess_CreateByNewEmail(t *testing.T) {
@@ -214,18 +267,19 @@ func TestCompliancePortalAccess_CreateByNewEmail(t *testing.T) {
 
 	assert.Equal(t, "ACTIVE", node.State)
 	assert.Nil(t, node.AuthenticatedAt)
-	assert.Equal(t, email, node.Profile.EmailAddress)
-	assert.Empty(t, node.Profile.FullName)
+	assert.Equal(t, email, node.Identity.Email)
+	assert.Empty(t, node.Identity.FullName)
+	assert.NotContains(t, listProfileEmails(t, owner, email), email)
 }
 
-func TestCompliancePortalAccess_CreateUpsertsExistingProfile(t *testing.T) {
+func TestCompliancePortalAccess_CreateByExistingMemberEmail(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	compliancePortalID := compliancePortalID(t, owner)
 	email := factory.SafeEmail()
 	fullName := factory.SafeName("ExistingVisitor")
-	profileID := factory.CreateUser(owner, factory.Attrs{
+	factory.CreateUser(owner, factory.Attrs{
 		"emailAddress": email,
 		"fullName":     fullName,
 	})
@@ -235,9 +289,9 @@ func TestCompliancePortalAccess_CreateUpsertsExistingProfile(t *testing.T) {
 		"email":              email,
 	})
 
-	assert.Equal(t, profileID, node.Profile.ID)
-	assert.Equal(t, fullName, node.Profile.FullName)
-	assert.Equal(t, email, node.Profile.EmailAddress)
+	assert.Equal(t, fullName, node.Identity.FullName)
+	assert.Equal(t, email, node.Identity.Email)
+	assert.Contains(t, listProfileEmails(t, owner, email), email)
 }
 
 func TestCompliancePortalAccess_CreateConflict(t *testing.T) {
@@ -393,7 +447,7 @@ func TestCompliancePortalAccess_CreateDeactivatedEmployee(t *testing.T) {
 		"profileId":          profileID,
 	})
 
-	assert.Equal(t, profileID, node.Profile.ID)
+	assert.Equal(t, employee.GetEmail(), node.Identity.Email)
 	assert.Equal(t, "ACTIVE", node.State)
 	assert.Nil(t, node.AuthenticatedAt)
 }

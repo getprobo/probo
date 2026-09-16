@@ -10,10 +10,8 @@ import (
 	"errors"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/validator"
@@ -24,46 +22,6 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
-	}
-
-	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
-
-	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, compliancePage.OrganizationID)
-	if err != nil {
-		// External trust-center visitors have no organization profile; only
-		// their identity needs updating.
-		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); !ok {
-			r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		profile = nil
-	}
-
-	// The identity and profile full names are validated by different rules.
-	// Validate the profile update up front so it cannot fail after the
-	// identity has already been mutated, keeping the two in sync.
-	var updateUserRequest *iam.UpdateUserRequest
-	if profile != nil && profile.Source == coredata.ProfileSourceManual {
-		updateUserRequest = &iam.UpdateUserRequest{
-			ID:                       profile.ID,
-			FullName:                 input.FullName,
-			AdditionalEmailAddresses: profile.AdditionalEmailAddresses,
-			Kind:                     profile.Kind,
-			Position:                 profile.Position,
-			ContractStartDate:        &profile.ContractStartDate,
-			ContractEndDate:          &profile.ContractEndDate,
-		}
-
-		if err := updateUserRequest.Validate(); err != nil {
-			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-			}
-
-			r.logger.ErrorCtx(ctx, "cannot validate profile update", log.Error(err))
-
-			return nil, gqlutils.Internal(ctx)
-		}
 	}
 
 	if _, err := r.iam.AccountService.UpdateIdentity(
@@ -80,18 +38,6 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
-	}
-
-	if updateUserRequest != nil {
-		if _, err := r.iam.OrganizationService.UpdateUser(ctx, updateUserRequest); err != nil {
-			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-			}
-
-			r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
-
-			return nil, gqlutils.Internal(ctx)
-		}
 	}
 
 	return &types.UpdateFullNamePayload{Success: true}, nil

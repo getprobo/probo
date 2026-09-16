@@ -155,6 +155,10 @@ export async function execute(
 						authenticatedAt
 						createdAt
 						updatedAt
+						identity {
+							fullName
+							email
+						}
 					}
 				}
 			}

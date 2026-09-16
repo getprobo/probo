@@ -51,6 +51,7 @@ import (
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -211,4 +212,16 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 	r.logger.ErrorCtx(ctx, "cannot batch authorize MCP request", log.Error(err))
 
 	return nil, fmt.Errorf("internal server error")
+}
+
+func (r *Resolver) compliancePortalAccessWithIdentity(
+	ctx context.Context,
+	access *coredata.CompliancePortalAccess,
+) (*types.CompliancePortalAccess, error) {
+	identity, err := r.iamSvc.AccountService.GetIdentity(ctx, access.IdentityID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load identity: %w", err)
+	}
+
+	return types.NewCompliancePortalAccess(access, identity), nil
 }
