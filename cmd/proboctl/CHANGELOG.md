@@ -4,6 +4,13 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.13.0] - 2026-09-16
+
+### Removed
+
+- `common-third-party merge` no longer reports relinked org tracker
+  patterns, since patterns no longer link to an org third party
+
 ## [0.12.0] - 2026-08-25
 
 ### Added
