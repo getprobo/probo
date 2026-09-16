@@ -20,51 +20,40 @@
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { List } from "@probo/ui/src/v2/List/List";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import { useParams } from "react-router";
+import { graphql, usePaginationFragment } from "react-relay";
 
-import type { CompliancePortalAccessListFragment$key } from "#/__generated__/core/CompliancePortalAccessListFragment.graphql";
-import type { CompliancePortalAccessListQuery } from "#/__generated__/core/CompliancePortalAccessListQuery.graphql";
-import type { CompliancePortalAccessListRootQuery } from "#/__generated__/core/CompliancePortalAccessListRootQuery.graphql";
+import type { CompliancePortalAccessList_compliancePortal$key } from "#/__generated__/core/CompliancePortalAccessList_compliancePortal.graphql";
+import type { CompliancePortalAccessListRefetchQuery } from "#/__generated__/core/CompliancePortalAccessListRefetchQuery.graphql";
 
-import { useAccessListFilters } from "../_lib/useAccessListFilters";
+import {
+  accessListGraphqlVariables,
+  useAccessListFilters,
+} from "../_lib/useAccessListFilters";
 import { accessSection } from "../variants";
 
 import { CompliancePortalAccessListEmpty } from "./CompliancePortalAccessListEmpty";
 import { CompliancePortalAccessListItem } from "./CompliancePortalAccessListItem";
 
-const accessListQuery = graphql`
-  query CompliancePortalAccessListRootQuery(
-    $compliancePortalId: ID!
-    $order: CompliancePortalAccessOrder
-    $filter: CompliancePortalAccessFilter
-  ) {
-    node(id: $compliancePortalId) {
-      __typename
-      ... on CompliancePortal {
-        ...CompliancePortalAccessListFragment @arguments(order: $order, filter: $filter)
-      }
-    }
-  }
-`;
-
 const fragment = graphql`
-  fragment CompliancePortalAccessListFragment on CompliancePortal
+  fragment CompliancePortalAccessList_compliancePortal on CompliancePortal
   @argumentDefinitions(
-    first: { type: Int, defaultValue: 50 }
-    after: { type: CursorKey, defaultValue: null }
-    order: { type: CompliancePortalAccessOrder, defaultValue: { field: PENDING_REQUEST_COUNT, direction: DESC } }
-    filter: { type: CompliancePortalAccessFilter, defaultValue: null }
+    first: { type: "Int", defaultValue: 50 }
+    after: { type: "CursorKey", defaultValue: null }
+    order: {
+      type: "CompliancePortalAccessOrder"
+      defaultValue: { field: PENDING_REQUEST_COUNT, direction: DESC }
+    }
+    filter: { type: "CompliancePortalAccessFilter", defaultValue: null }
   )
-  @refetchable(queryName: "CompliancePortalAccessListQuery") {
+  @refetchable(queryName: "CompliancePortalAccessListRefetchQuery") {
     accesses(
       first: $first
       after: $after
       orderBy: $order
       filter: $filter
-    ) @connection(key: "CompliancePortalAccessList_accesses" filters: ["orderBy", "filter"]) {
+    ) @connection(key: "CompliancePortalAccessList_accesses", filters: ["orderBy", "filter"]) {
       pageInfo {
         hasNextPage
         hasPreviousPage
@@ -81,36 +70,28 @@ const fragment = graphql`
   }
 `;
 
-export function CompliancePortalAccessList() {
+interface CompliancePortalAccessListProps {
+  compliancePortalKey: CompliancePortalAccessList_compliancePortal$key;
+}
+
+export function CompliancePortalAccessList({
+  compliancePortalKey,
+}: CompliancePortalAccessListProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const { order, query } = useAccessListFilters();
-  const [queryVars] = useState({
-    order,
-    filter: { query },
-  });
   const [isPending, startTransition] = useTransition();
   const { more, results } = accessSection({ pending: isPending });
   const skipFirstRefetch = useRef(true);
-  const { node } = useLazyLoadQuery<CompliancePortalAccessListRootQuery>(
-    accessListQuery,
-    {
-      compliancePortalId: compliancePortalId ?? "",
-      order: queryVars.order,
-      filter: queryVars.filter,
-    },
-  );
-  const portalKey = node?.__typename === "CompliancePortal" ? node : null;
   const {
     data,
     hasNext,
     loadNext,
     isLoadingNext,
     refetch,
-  } = usePaginationFragment<CompliancePortalAccessListQuery, CompliancePortalAccessListFragment$key>(
-    fragment,
-    portalKey,
-  );
+  } = usePaginationFragment<
+    CompliancePortalAccessListRefetchQuery,
+    CompliancePortalAccessList_compliancePortal$key
+  >(fragment, compliancePortalKey);
 
   useEffect(() => {
     if (skipFirstRefetch.current) {
@@ -119,13 +100,9 @@ export function CompliancePortalAccessList() {
     }
 
     startTransition(() => {
-      refetch({ order, filter: { query } }, { fetchPolicy: "store-or-network" });
+      refetch(accessListGraphqlVariables(order, query), { fetchPolicy: "store-or-network" });
     });
   }, [order, query, refetch]);
-
-  if (compliancePortalId == null || data == null) {
-    throw new Error("invalid type for node");
-  }
 
   const { accesses } = data;
 

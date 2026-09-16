@@ -29,6 +29,7 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/CompliancePortalVisitorsPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
@@ -40,7 +41,11 @@ import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASec
 import { accessSection, visitorsPage } from "./variants";
 
 export const compliancePortalVisitorsPageQuery = graphql`
-  query CompliancePortalVisitorsPageQuery($compliancePortalId: ID!) {
+  query CompliancePortalVisitorsPageQuery(
+    $compliancePortalId: ID!
+    $order: CompliancePortalAccessOrder
+    $filter: CompliancePortalAccessFilter
+  ) {
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
@@ -49,6 +54,7 @@ export const compliancePortalVisitorsPageQuery = graphql`
         canListAccesses: permission(action: "compliance-portal:portal-access:list")
         canCreateAccess: permission(action: "compliance-portal:portal-access:create")
         ...CompliancePortalNDASectionFragment
+        ...CompliancePortalAccessList_compliancePortal @arguments(order: $order, filter: $filter)
       }
     }
   }
@@ -69,7 +75,7 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
     queryRef,
   );
   if (compliancePortal.__typename !== "CompliancePortal") {
-    throw new Error("invalid type for node");
+    throw new NotFoundError("Compliance portal not found");
   }
 
   return (
@@ -103,7 +109,7 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
             </div>
           </div>
           <Suspense fallback={<ListSkeleton count={4} />}>
-            <CompliancePortalAccessList />
+            <CompliancePortalAccessList compliancePortalKey={compliancePortal} />
           </Suspense>
         </section>
       )}
