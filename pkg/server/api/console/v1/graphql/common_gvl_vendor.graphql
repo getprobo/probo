@@ -63,10 +63,7 @@ input CommonGVLVendorFilter
     membership: CommonGVLVendorMembership
 }
 
-type CommonGVLCatalog
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CommonGVLCatalog"
-    ) {
+type CommonGVLCatalog {
     vendorListVersion: Int
     tcfPolicyVersion: Int
 }

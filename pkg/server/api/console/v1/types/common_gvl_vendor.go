@@ -45,11 +45,6 @@ type (
 		ParentID *gid.GID
 		Filter   *coredata.CommonGVLVendorFilter
 	}
-
-	CommonGVLCatalog struct {
-		VendorListVersion *int
-		TcfPolicyVersion  *int
-	}
 )
 
 func NewCommonGVLCatalog(c *cookiebanner.CommonGVLCatalog) *CommonGVLCatalog {
