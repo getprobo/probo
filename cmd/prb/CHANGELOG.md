@@ -4,6 +4,24 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.230.0] - 2026-09-16
+
+### Added
+
+- `cookie-banner list-gvl-catalog`, `list-gvl-vendors`, `get-gvl-catalog`,
+  `add-gvl-vendor`, and `remove-gvl-vendor` manage which IAB Global Vendor
+  List vendors a TCF-capable banner discloses
+- `cookie-banner published-version` shows a banner's published version,
+  including its GVL vendor count
+- `risk list`/`view`/`create`/`update` show the org-scoped `RSK-001`
+  reference ID; `risk list` gains a `REFERENCE` column and accepts
+  `--order-by REFERENCE_ID`
+
+### Removed
+
+- `soa create --owner` and `soa update --owner`: statements of
+  applicability no longer carry an owner
+
 ## [0.229.0] - 2026-09-15
 
 ### Added
