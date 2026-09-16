@@ -29,7 +29,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/tasksync/linear"
+	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
 type webhookEnqueuer interface {

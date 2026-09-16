@@ -67,6 +67,7 @@ import (
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -101,6 +102,7 @@ type (
 		ThirdParty              *thirdparty.Service
 		RiskManagement          *riskmanagement.Service
 		ITAM                    *itam.Service
+		Task                    *task.Service
 		Cookie                  securecookie.Config
 		TokenSecret             string
 		// InstallStateKey signs the app-install state tokens the connector
@@ -145,6 +147,7 @@ var (
 	ErrMissingIAMService     = errors.New("server configuration requires a valid iam.Service instance")
 	ErrMissingSlackService   = errors.New("server configuration requires a valid slack.Service instance")
 	ErrMissingITAMService    = errors.New("server configuration requires a valid itam.Service instance")
+	ErrMissingTaskService    = errors.New("server configuration requires a valid task.Service instance")
 	ErrMissingMailmanService = errors.New("server configuration requires a valid mailman.Service instance")
 )
 
@@ -187,6 +190,10 @@ func NewServer(cfg Config) (*Server, error) {
 
 	if cfg.ITAM == nil {
 		return nil, ErrMissingITAMService
+	}
+
+	if cfg.Task == nil {
+		return nil, ErrMissingTaskService
 	}
 
 	if cfg.Mailman == nil {
@@ -285,6 +292,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ComplianceMessages,
 			cfg.GraphQLLimits,
 			cfg.ITAM,
+			cfg.Task,
 			cfg.IdentityFederationIssuer,
 			cfg.AWSConnectorInstall,
 			cfg.GCPConnectorInstall,
@@ -316,6 +324,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.RiskManagement,
 			cfg.ITAM,
+			cfg.Task,
 			cfg.Mailman,
 			cfg.TokenSecret,
 			cfg.File,
@@ -334,7 +343,7 @@ func NewServer(cfg Config) (*Server, error) {
 		),
 		linearHandler: linear_v1.NewMux(
 			cfg.Logger.Named("linear.v1"),
-			cfg.Probo.TaskSync,
+			cfg.Task.Sync,
 			cfg.LinearWebhookSecret,
 		),
 		connectHandler: connect_v1.NewMux(

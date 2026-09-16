@@ -59,6 +59,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -92,6 +93,7 @@ type (
 		riskManagement          *riskmanagement.Service
 		thirdParty              *thirdparty.Service
 		itam                    *itam.Service
+		task                    *task.Service
 		logger                  *log.Logger
 		fileManager             *filemanager.Service
 		baseURL                 *baseurl.BaseURL
@@ -135,6 +137,7 @@ func NewMux(
 	complianceMessages ComplianceMessages,
 	graphqlLimits gqlutils.Limits,
 	itamSvc *itam.Service,
+	taskSvc *task.Service,
 	identityFederation *identityfederation.Issuer,
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
@@ -165,6 +168,7 @@ func NewMux(
 		baseURL,
 		graphqlLimits,
 		itamSvc,
+		taskSvc,
 		probotIdentityBindings,
 		slackbotInstallations,
 		botDeliveryDestinations,
@@ -188,6 +192,7 @@ func NewMux(
 			thirdPartySvc,
 			managementSvc,
 			riskManagementSvc,
+			taskSvc,
 		))
 
 		r.Handle("/graphql", graphqlHandler)

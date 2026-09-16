@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package task
 
 import (
 	"context"
@@ -30,19 +30,13 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type (
-	TaskActivityService struct {
-		svc *Service
-	}
-)
-
-func (s TaskActivityService) Get(
+func (s *Service) GetActivity(
 	ctx context.Context, scope coredata.Scoper,
 	taskActivityID gid.GID,
 ) (*coredata.TaskActivity, error) {
 	taskActivity := &coredata.TaskActivity{}
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := taskActivity.LoadByID(ctx, conn, scope, taskActivityID); err != nil {
@@ -59,14 +53,14 @@ func (s TaskActivityService) Get(
 	return taskActivity, nil
 }
 
-func (s TaskActivityService) ListForTaskID(
+func (s *Service) ListActivitiesForTaskID(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 	cursor *page.Cursor[coredata.TaskActivityOrderField],
 ) (*page.Page[*coredata.TaskActivity, coredata.TaskActivityOrderField], error) {
 	var taskActivities coredata.TaskActivities
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := taskActivities.LoadByTaskID(ctx, conn, scope, taskID, cursor); err != nil {
@@ -83,13 +77,13 @@ func (s TaskActivityService) ListForTaskID(
 	return page.NewPage(taskActivities, cursor), nil
 }
 
-func (s TaskActivityService) CountForTaskID(
+func (s *Service) CountActivitiesForTaskID(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			taskActivities := coredata.TaskActivities{}

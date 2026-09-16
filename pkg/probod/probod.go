@@ -94,7 +94,8 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
-	"go.probo.inc/probo/pkg/tasksync"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -612,7 +613,8 @@ func (impl *Implm) Run(
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings).
-		Register(riskmanagement.OAuth2ScopeMappings)
+		Register(riskmanagement.OAuth2ScopeMappings).
+		Register(task.OAuth2ScopeMappings)
 
 	var acmeService *certmanager.ACMEService
 
@@ -790,7 +792,6 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		linearAPIBaseURL,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -840,9 +841,19 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(task.PolicySet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
+
+	taskService := task.NewService(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		baseURL.String(),
+		linearAPIBaseURL,
+		l.Named("task"),
+	)
 
 	itamService := itam.NewService(
 		pgClient,
@@ -965,6 +976,7 @@ func (impl *Implm) Run(
 			ThirdParty:              thirdPartyService,
 			RiskManagement:          riskManagementService,
 			ITAM:                    itamService,
+			Task:                    taskService,
 			Slack:                   slackService,
 			BotDeliveryDestinations: slackMessages,
 			ComplianceMessages:      complianceMessages,
@@ -1281,7 +1293,7 @@ func (impl *Implm) Run(
 	)
 
 	taskSyncOutboundWorker := tasksync.NewOutboundWorker(
-		proboService.TaskSync,
+		taskService.Sync,
 		l.Named("task-sync-outbound"),
 		worker.WithInterval(time.Second),
 		worker.WithRegisterer(r),
@@ -1300,7 +1312,7 @@ func (impl *Implm) Run(
 	)
 
 	linearWebhookWorker := tasksync.NewWebhookWorker(
-		proboService.TaskSync,
+		taskService.Sync,
 		l.Named("linear-webhook"),
 		worker.WithInterval(time.Second),
 		worker.WithRegisterer(r),

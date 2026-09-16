@@ -30,7 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/tasksync/linear"
+	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
 type webhookHandler struct {

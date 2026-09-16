@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 )
 
 // Node is the resolver for the node field.
@@ -81,9 +82,9 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewMeasure(measure), nil
 		}
 	case coredata.TaskEntityType:
-		action = probo.ActionTaskGet
+		action = task.ActionTaskGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			task, err := r.probo.Tasks.Get(ctx, scope, id)
+			task, err := r.task.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -91,9 +92,9 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewTask(task), nil
 		}
 	case coredata.TaskCommentEntityType:
-		action = probo.ActionTaskCommentGet
+		action = task.ActionTaskCommentGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			taskComment, err := r.probo.TaskComments.Get(ctx, scope, id)
+			taskComment, err := r.task.GetComment(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -101,9 +102,9 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewTaskComment(taskComment), nil
 		}
 	case coredata.TaskActivityEntityType:
-		action = probo.ActionTaskActivityGet
+		action = task.ActionTaskActivityGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			taskActivity, err := r.probo.TaskActivities.Get(ctx, scope, id)
+			taskActivity, err := r.task.GetActivity(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}

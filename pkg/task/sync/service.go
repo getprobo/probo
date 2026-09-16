@@ -35,7 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/tasksync/linear"
+	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
 type (

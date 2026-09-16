@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/tasksync/linear"
+	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
 func TestTaskStateToLinearType(t *testing.T) {

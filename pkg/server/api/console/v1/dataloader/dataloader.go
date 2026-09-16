@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -131,6 +132,7 @@ type (
 		thirdParty       *thirdparty.Service
 		compliancePortal *management.Service
 		riskManagement   *riskmanagement.Service
+		task             *task.Service
 	}
 )
 
@@ -147,6 +149,7 @@ func NewMiddleware(
 	thirdPartySvc *thirdparty.Service,
 	compliancePortalSvc *management.Service,
 	riskManagementSvc *riskmanagement.Service,
+	taskSvc *task.Service,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -158,6 +161,7 @@ func NewMiddleware(
 					thirdParty:       thirdPartySvc,
 					compliancePortal: compliancePortalSvc,
 					riskManagement:   riskManagementSvc,
+					task:             taskSvc,
 				}
 				loaders := f.newLoaders()
 				ctx := context.WithValue(r.Context(), loadersKey, loaders)
@@ -641,7 +645,7 @@ func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[g
 func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Task, error) {
 	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	tasks, err := f.probo.Tasks.GetByIDs(ctx, scope, keys...)
+	tasks, err := f.task.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load tasks: %w", err)
 	}

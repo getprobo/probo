@@ -17,6 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -52,7 +53,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 		return nil, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.Task.ID, probo.ActionTaskGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Task.ID, task.ActionTaskGet); err != nil {
 		return nil, err
 	}
 

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package task
 
 import (
 	"context"
@@ -27,23 +27,56 @@ import (
 	"time"
 
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
-	"go.probo.inc/probo/pkg/tasksync"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
 )
 
-const richTextMaxJSONBytes = 64 << 10
+const (
+	TitleMaxLength   = 1000
+	ContentMaxLength = 5000
+
+	richTextMaxJSONBytes  = 64 << 10
+	maxRecurrenceInterval = 10 * 365 * 24 * time.Hour
+)
+
+type Service struct {
+	pg     *pg.Client
+	logger *log.Logger
+	Sync   *tasksync.Service
+}
+
+func NewService(
+	pgClient *pg.Client,
+	encryptionKey cipher.EncryptionKey,
+	connectorRegistry *connector.Registry,
+	baseURL string,
+	linearAPIBaseURL string,
+	logger *log.Logger,
+) *Service {
+	return &Service{
+		pg:     pgClient,
+		logger: logger,
+		Sync: tasksync.NewService(
+			pgClient,
+			encryptionKey,
+			connectorRegistry,
+			baseURL,
+			linearAPIBaseURL,
+			logger,
+		),
+	}
+}
 
 type (
-	TaskService struct {
-		svc *Service
-	}
-
 	CreateTaskRequest struct {
 		OrganizationID     gid.GID
 		MeasureID          *gid.GID
@@ -78,8 +111,6 @@ type (
 		NextTask *coredata.Task
 	}
 )
-
-const maxRecurrenceInterval = 10 * 365 * 24 * time.Hour
 
 func (ctr *CreateTaskRequest) Validate() error {
 	v := validator.New()
@@ -159,7 +190,7 @@ func (utr *UpdateTaskRequest) Validate() error {
 	return v.Error()
 }
 
-func (s TaskService) Create(
+func (s *Service) Create(
 	ctx context.Context, scope coredata.Scoper,
 	req CreateTaskRequest,
 ) (*coredata.Task, error) {
@@ -202,7 +233,7 @@ func (s TaskService) Create(
 		UpdatedAt:      now,
 	}
 
-	err = s.svc.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if req.MeasureID != nil {
@@ -223,7 +254,7 @@ func (s TaskService) Create(
 				return fmt.Errorf("cannot insert task: %w", err)
 			}
 
-			actorID, err := resolveTaskActivityActorID(
+			actorID, err := ResolveActivityActorID(
 				ctx,
 				conn,
 				scope,
@@ -234,7 +265,7 @@ func (s TaskService) Create(
 				return fmt.Errorf("cannot resolve task activity actor: %w", err)
 			}
 
-			if err := insertTaskCreatedActivity(ctx, conn, scope, task, actorID, now); err != nil {
+			if err := InsertCreatedActivity(ctx, conn, scope, task, actorID, now); err != nil {
 				return fmt.Errorf("cannot record task created event: %w", err)
 			}
 
@@ -248,13 +279,13 @@ func (s TaskService) Create(
 	return task, nil
 }
 
-func (s TaskService) Get(
+func (s *Service) Get(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 ) (*coredata.Task, error) {
 	task := &coredata.Task{}
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			return task.LoadByID(ctx, conn, scope, taskID)
@@ -267,13 +298,13 @@ func (s TaskService) Get(
 	return task, nil
 }
 
-func (s TaskService) GetByIDs(
+func (s *Service) GetByIDs(
 	ctx context.Context, scope coredata.Scoper,
 	taskIDs ...gid.GID,
 ) (coredata.Tasks, error) {
 	var tasks coredata.Tasks
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := tasks.LoadByIDs(
@@ -295,7 +326,7 @@ func (s TaskService) GetByIDs(
 	return tasks, nil
 }
 
-func (s TaskService) Assign(
+func (s *Service) Assign(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 	assignedToID gid.GID,
@@ -303,7 +334,7 @@ func (s TaskService) Assign(
 ) (*coredata.Task, error) {
 	task := &coredata.Task{ID: taskID}
 
-	err := s.svc.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := task.LoadByID(ctx, conn, scope, taskID); err != nil {
@@ -333,7 +364,7 @@ func (s TaskService) Assign(
 				return fmt.Errorf("cannot assign task %q to %q: %w", taskID, assignedToID, err)
 			}
 
-			actorID, err := resolveTaskActivityActorID(
+			actorID, err := ResolveActivityActorID(
 				ctx,
 				conn,
 				scope,
@@ -344,7 +375,7 @@ func (s TaskService) Assign(
 				return fmt.Errorf("cannot resolve task activity actor: %w", err)
 			}
 
-			if err := insertTaskFieldActivity(
+			if err := insertFieldActivity(
 				ctx,
 				conn,
 				scope,
@@ -368,14 +399,14 @@ func (s TaskService) Assign(
 	return task, nil
 }
 
-func (s TaskService) Unassign(
+func (s *Service) Unassign(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 	identityID *gid.GID,
 ) (*coredata.Task, error) {
 	task := &coredata.Task{}
 
-	err := s.svc.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := task.LoadByID(ctx, conn, scope, taskID); err != nil {
@@ -399,7 +430,7 @@ func (s TaskService) Unassign(
 				return fmt.Errorf("cannot unassign task %q: %w", taskID, err)
 			}
 
-			actorID, err := resolveTaskActivityActorID(
+			actorID, err := ResolveActivityActorID(
 				ctx,
 				conn,
 				scope,
@@ -410,7 +441,7 @@ func (s TaskService) Unassign(
 				return fmt.Errorf("cannot resolve task activity actor: %w", err)
 			}
 
-			if err := insertTaskFieldActivity(
+			if err := insertFieldActivity(
 				ctx,
 				conn,
 				scope,
@@ -434,7 +465,7 @@ func (s TaskService) Unassign(
 	return task, nil
 }
 
-func (s TaskService) Update(
+func (s *Service) Update(
 	ctx context.Context, scope coredata.Scoper,
 	req UpdateTaskRequest,
 ) (*UpdateTaskResult, error) {
@@ -446,7 +477,7 @@ func (s TaskService) Update(
 
 	var nextTask *coredata.Task
 
-	err := s.svc.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := task.LoadByIDForUpdate(ctx, conn, scope, req.TaskID); err != nil {
@@ -572,7 +603,7 @@ func (s TaskService) Update(
 				}
 			}
 
-			actorID, err := resolveTaskActivityActorID(
+			actorID, err := ResolveActivityActorID(
 				ctx,
 				conn,
 				scope,
@@ -583,7 +614,7 @@ func (s TaskService) Update(
 				return fmt.Errorf("cannot resolve task activity actor: %w", err)
 			}
 
-			if err := insertTaskUpdateActivities(
+			if err := InsertUpdateActivities(
 				ctx,
 				conn,
 				scope,
@@ -595,7 +626,7 @@ func (s TaskService) Update(
 				return fmt.Errorf("cannot record task update events: %w", err)
 			}
 
-			if s.svc.TaskSync != nil && syncedTaskFieldsChanged(
+			if s.Sync != nil && syncedTaskFieldsChanged(
 				oldTask.Name,
 				oldTask.Content,
 				oldTask.State,
@@ -603,7 +634,7 @@ func (s TaskService) Update(
 				oldTask.Deadline,
 				task,
 			) {
-				if err := s.svc.TaskSync.EnqueueOutbound(
+				if err := s.Sync.EnqueueOutbound(
 					ctx,
 					conn,
 					scope,
@@ -627,17 +658,17 @@ func (s TaskService) Update(
 	}, nil
 }
 
-func (s TaskService) Delete(
+func (s *Service) Delete(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 ) error {
 	task := &coredata.Task{ID: taskID}
 
-	err := s.svc.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if s.svc.TaskSync != nil {
-				if err := s.svc.TaskSync.EnqueueOutbound(
+			if s.Sync != nil {
+				if err := s.Sync.EnqueueOutbound(
 					ctx,
 					conn,
 					scope,
@@ -658,13 +689,13 @@ func (s TaskService) Delete(
 	return nil
 }
 
-func (s TaskService) CountForOrganizationID(
+func (s *Service) CountForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
@@ -684,14 +715,14 @@ func (s TaskService) CountForOrganizationID(
 	return count, nil
 }
 
-func (s TaskService) ListForOrganizationID(
+func (s *Service) ListForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.TaskOrderField],
 ) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
 	var tasks coredata.Tasks
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			return tasks.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
@@ -704,13 +735,13 @@ func (s TaskService) ListForOrganizationID(
 	return page.NewPage(tasks, cursor), nil
 }
 
-func (s TaskService) CountForMeasureID(
+func (s *Service) CountForMeasureID(
 	ctx context.Context, scope coredata.Scoper,
 	measureID gid.GID,
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
@@ -730,14 +761,14 @@ func (s TaskService) CountForMeasureID(
 	return count, nil
 }
 
-func (s TaskService) ListForMeasureID(
+func (s *Service) ListForMeasureID(
 	ctx context.Context, scope coredata.Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[coredata.TaskOrderField],
 ) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
 	var tasks coredata.Tasks
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			return tasks.LoadByMeasureID(

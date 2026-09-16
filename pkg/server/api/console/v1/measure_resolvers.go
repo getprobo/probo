@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -55,7 +56,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 // Tasks is the resolver for the tasks field.
 func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskList)
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskList)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,7 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Tasks.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	page, err := r.task.ListForMeasureID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

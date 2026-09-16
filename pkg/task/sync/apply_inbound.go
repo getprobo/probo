@@ -28,7 +28,7 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/tasksync/linear"
+	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
 func (s *Service) ApplyInboundIssue(

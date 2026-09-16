@@ -52,6 +52,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -70,6 +71,7 @@ type Resolver struct {
 	cookieBanner          *cookiebanner.Service
 	riskManagement        *riskmanagement.Service
 	itamSvc               *itam.Service
+	task                  *task.Service
 	mailman               *mailman.Service
 	logger                *log.Logger
 	fileManager           *filemanager.Service

@@ -27,7 +27,6 @@ import (
 
 var (
 	organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
-	ownerCondition        = policy.Equals("principal.id", "resource.owner_id")
 )
 
 // OwnerPolicy defines permissions for organization owners.
@@ -66,9 +65,6 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionFrameworkGet, ActionFrameworkList,
 		ActionControlGet, ActionControlList,
 		ActionMeasureGet, ActionMeasureList,
-		ActionTaskGet, ActionTaskList,
-		ActionTaskCommentGet, ActionTaskCommentList,
-		ActionTaskActivityGet, ActionTaskActivityList,
 		ActionEvidenceList,
 		ActionDocumentGet, ActionDocumentList,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
@@ -171,21 +167,6 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("employee-document-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
-
-// TaskCommentOwnershipPolicy is attached to owner, admin, and viewer so
-// permission(action:) on a comment matches mutation authorization: only the
-// author can update; the author can delete; owner/admin still delete any
-// comment through core:* on their role policy.
-var TaskCommentOwnershipPolicy = policy.NewPolicy(
-	"probo:task-comment-ownership",
-	"Task Comment Ownership",
-	policy.Deny(ActionTaskCommentUpdate).
-		WithSID("deny-update-others-task-comments").
-		When(policy.NotEquals("principal.id", "resource.owner_id")),
-	policy.Allow(ActionTaskCommentUpdate, ActionTaskCommentDelete).
-		WithSID("manage-own-task-comment").
-		When(organizationCondition, ownerCondition),
-).WithDescription("Authors can update and delete their own task comments; nobody else can update them")
 
 // CommonThirdPartyCatalogPolicy grants every authenticated identity
 // read access to the global common third-party catalog. The catalog is
@@ -292,9 +273,9 @@ var CompliancePortalAccessManagerPolicy = policy.NewPolicy(
 // ProboPolicySet returns the PolicySet for the probo service.
 func ProboPolicySet() *iam.PolicySet {
 	return iam.NewPolicySet().
-		AddRolePolicy("OWNER", OwnerPolicy, TaskCommentOwnershipPolicy).
-		AddRolePolicy("ADMIN", AdminPolicy, TaskCommentOwnershipPolicy).
-		AddRolePolicy("VIEWER", ViewerPolicy, TaskCommentOwnershipPolicy).
+		AddRolePolicy("OWNER", OwnerPolicy).
+		AddRolePolicy("ADMIN", AdminPolicy).
+		AddRolePolicy("VIEWER", ViewerPolicy).
 		AddRolePolicy("AUDITOR", AuditorPolicy).
 		AddRolePolicy("EMPLOYEE", EmployeePolicy).
 		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", CompliancePortalManagerPolicy).
