@@ -169,12 +169,7 @@ export function TrackerPatternPropertiesSection({
       </PropertyRow>
       <PropertyRow label={t("trackerProperties.properties.thirdParty")}>
         {pattern.commonThirdParty
-          ? (
-              <div className="flex items-center gap-2">
-                <Badge variant="info">{t("trackerProperties.commonCatalog")}</Badge>
-                <span className="text-sm">{pattern.commonThirdParty.name}</span>
-              </div>
-            )
+          ? <span className="text-sm">{pattern.commonThirdParty.name}</span>
           : <TrackerAttributionLabel attribution={pattern.attribution} />}
       </PropertyRow>
       <PropertyRow label={t("trackerProperties.properties.maxAge")}>
@@ -191,7 +186,6 @@ export function TrackerPatternPropertiesSection({
             {pattern.commonTrackerPatternId
               ? (
                   <div className="flex items-center gap-2">
-                    <Badge variant="info">{t("trackerProperties.commonCatalog")}</Badge>
                     <span className="font-mono text-xs text-txt-tertiary">{pattern.commonTrackerPatternId}</span>
                     <button
                       type="button"

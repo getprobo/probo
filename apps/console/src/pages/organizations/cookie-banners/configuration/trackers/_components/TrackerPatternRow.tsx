@@ -326,12 +326,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       </Td>
       <Td>
         {pattern.commonThirdParty
-          ? (
-              <div>
-                <Badge variant="info">{t("trackerPatternRow.commonCatalog")}</Badge>
-                <span className="truncate">{pattern.commonThirdParty.name}</span>
-              </div>
-            )
+          ? <span className="truncate">{pattern.commonThirdParty.name}</span>
           : <TrackerAttributionLabel attribution={pattern.attribution} />}
       </Td>
       <Td>

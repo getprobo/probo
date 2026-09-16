@@ -71,8 +71,7 @@
     "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
-    "duration": { "session": "Session", "persistent": "Persistent" },
-    "commonCatalog": "Common catalog"
+    "duration": { "session": "Session", "persistent": "Persistent" }
   },
   "trackerProperties": {
     "messages": { "successTitle": "Success", "moved": "Cookie moved", "copiedTitle": "Copied", "idCopied": "Common tracker ID copied to clipboard" },
@@ -81,7 +80,7 @@
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
-    "commonCatalog": "Common catalog", "manual": "Manual", "boolean": { "yes": "Yes", "no": "No" }
+    "manual": "Manual", "boolean": { "yes": "Yes", "no": "No" }
   },
   "detectedTrackersSection": {
     "title": "Detected trackers",
