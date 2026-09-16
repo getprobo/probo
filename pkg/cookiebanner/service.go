@@ -3157,12 +3157,29 @@ func (s *Service) MoveTrackerPatternToCategory(
 			// A manual move is the user's signal that this is a
 			// real tracker. Enqueue the tracker-mapping worker so
 			// it can resolve the catalog vendor — never
-			// EXTENSION-sourced patterns, and never patterns
-			// already linked to a catalog row. SetMappingRequested
+			// EXTENSION-sourced patterns, and never patterns whose
+			// catalog row already has a vendor or a terminal
+			// attribution. An unmatched / undetermined catalog
+			// link is not resolved: sibling and domain signals
+			// still need a chance to backfill. SetMappingRequested
 			// is idempotent: it short-circuits when
 			// mapping_requested_at is already non-NULL.
-			if pattern.CommonTrackerPatternID == nil &&
-				(pattern.Source == nil || *pattern.Source != coredata.CookieSourceExtension) {
+			shouldEnqueueMapping := pattern.Source == nil ||
+				*pattern.Source != coredata.CookieSourceExtension
+
+			if shouldEnqueueMapping && pattern.CommonTrackerPatternID != nil {
+				var commonPattern coredata.CommonTrackerPattern
+				if err := commonPattern.LoadByID(ctx, tx, *pattern.CommonTrackerPatternID); err != nil {
+					if !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load common tracker pattern: %w", err)
+					}
+				} else if commonPattern.Attribution.IsTerminal() ||
+					commonPattern.CommonThirdPartyID != nil {
+					shouldEnqueueMapping = false
+				}
+			}
+
+			if shouldEnqueueMapping {
 				if err := pattern.SetMappingRequested(ctx, tx); err != nil {
 					return fmt.Errorf("cannot enqueue tracker mapping after move: %w", err)
 				}

@@ -317,6 +317,7 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 	}
 
 	seen := make(map[gid.GID]struct{}, len(patterns))
+
 	commonThirdPartyIDs := make([]gid.GID, 0, len(patterns))
 	for _, p := range patterns {
 		if p.CommonThirdPartyID == nil {

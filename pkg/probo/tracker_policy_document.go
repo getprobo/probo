@@ -306,16 +306,35 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 
 	rows := make([]docgen.TrackerPolicyThirdParty, 0, len(commonParties))
 
+	// Distinct catalog records can share a display name (different legal
+	// entities, or leftover duplicates). Collapse those to one policy
+	// row so the generated document does not list the same vendor twice.
+	// When the kept row left privacy-policy empty, a later duplicate
+	// backfills it.
+	rowIndexByName := make(map[string]int, len(commonParties))
+
 	for _, cp := range commonParties {
+		name := strings.TrimSpace(cp.Name)
+
 		privacyPolicyURL := ""
 		if cp.PrivacyPolicyURL != nil {
-			privacyPolicyURL = *cp.PrivacyPolicyURL
+			privacyPolicyURL = strings.TrimSpace(*cp.PrivacyPolicyURL)
 		}
 
+		key := strings.ToLower(name)
+		if idx, ok := rowIndexByName[key]; ok {
+			if rows[idx].PrivacyPolicyURL == "" {
+				rows[idx].PrivacyPolicyURL = privacyPolicyURL
+			}
+
+			continue
+		}
+
+		rowIndexByName[key] = len(rows)
 		rows = append(rows, docgen.TrackerPolicyThirdParty{
-			Name:             strings.TrimSpace(cp.Name),
+			Name:             name,
 			Description:      "",
-			PrivacyPolicyURL: strings.TrimSpace(privacyPolicyURL),
+			PrivacyPolicyURL: privacyPolicyURL,
 		})
 	}
 
