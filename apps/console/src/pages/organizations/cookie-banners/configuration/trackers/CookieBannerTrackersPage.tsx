@@ -139,8 +139,8 @@ export default function CookieBannerTrackersPage({
   >(trackersFragment, data.node);
 
   const connectionId = fragmentData.trackerPatterns.__id;
-  const patterns = fragmentData.trackerPatterns.edges.map(edge => edge.node) ?? [];
-  const linkedThirdParties = fragmentData.linkedThirdParties ?? [];
+  const patterns = fragmentData.trackerPatterns.edges.map(edge => edge.node);
+  const linkedThirdParties = fragmentData.linkedThirdParties;
 
   const categories = data.node.__typename === "CookieBanner"
     ? data.node.categories.edges.map(edge => edge.node)
