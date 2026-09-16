@@ -79,7 +79,7 @@ func respondAuthRedirect(w http.ResponseWriter, r *http.Request, redirectURL str
 }
 
 func acceptsJSON(accept string) bool {
-	for _, value := range strings.Split(accept, ",") {
+	for value := range strings.SplitSeq(accept, ",") {
 		mediaType, params, err := mime.ParseMediaType(value)
 		if err != nil {
 			continue

@@ -1083,6 +1083,7 @@ func (s *Service) sendAccessEmail(
 
 	recipientName := identity.FullName
 	profile := &coredata.MembershipProfile{}
+
 	err := profile.LoadByIdentityIDAndOrganizationID(
 		ctx,
 		tx,

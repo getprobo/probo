@@ -137,6 +137,7 @@ func AssertTimesOrderedDescending(t *testing.T, times []time.Time, fieldName str
 
 func AssertEqualEmail(t *testing.T, got, want string) {
 	t.Helper()
+
 	if got != want {
 		t.Fatal("email mismatch")
 	}
@@ -144,6 +145,7 @@ func AssertEqualEmail(t *testing.T, got, want string) {
 
 func AssertEmailPresent(t *testing.T, emails []string, email string) {
 	t.Helper()
+
 	if !slices.Contains(emails, email) {
 		t.Fatal("email missing")
 	}
@@ -151,6 +153,7 @@ func AssertEmailPresent(t *testing.T, emails []string, email string) {
 
 func AssertEmailAbsent(t *testing.T, emails []string, email string) {
 	t.Helper()
+
 	if slices.Contains(emails, email) {
 		t.Fatal("email unexpectedly present")
 	}
