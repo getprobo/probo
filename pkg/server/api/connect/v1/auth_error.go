@@ -23,6 +23,9 @@ package connect_v1
 import (
 	"net/http"
 	"net/url"
+	"strings"
+
+	"go.gearno.de/kit/httpserver"
 )
 
 const (
@@ -34,6 +37,10 @@ const (
 	authErrorMagicLinkAlreadyUsed      = "magic_link_already_used"
 	authErrorMagicLinkInvalid          = "magic_link_invalid"
 )
+
+type authRedirectResponse struct {
+	RedirectURL string `json:"redirect_url"`
+}
 
 func redirectAuthError(w http.ResponseWriter, r *http.Request, code string, continueURL string) {
 	q := url.Values{}
@@ -48,5 +55,19 @@ func redirectAuthError(w http.ResponseWriter, r *http.Request, code string, cont
 		RawQuery: q.Encode(),
 	}
 
-	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+	respondAuthRedirect(w, r, redirectURL.String())
+}
+
+func respondAuthRedirect(w http.ResponseWriter, r *http.Request, redirectURL string) {
+	if strings.Contains(r.Header.Get("Accept"), "application/json") {
+		httpserver.RenderJSON(
+			w,
+			http.StatusOK,
+			authRedirectResponse{RedirectURL: redirectURL},
+		)
+
+		return
+	}
+
+	http.Redirect(w, r, redirectURL, http.StatusFound)
 }

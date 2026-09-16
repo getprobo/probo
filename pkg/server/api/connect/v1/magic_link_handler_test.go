@@ -15,6 +15,7 @@
 package connect_v1_test
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -162,6 +164,33 @@ func TestMagicLinkHandler_VerifyHandler_Validation(t *testing.T) {
 		assert.Equal(t, http.StatusFound, rec.Code)
 
 		location, err := url.Parse(rec.Header().Get("Location"))
+		assert.NoError(t, err)
+		assert.Equal(t, "/auth/error", location.Path)
+		assert.Equal(t, "magic_link_invalid", location.Query().Get("error"))
+	})
+
+	t.Run("returns json redirect when accepted", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/api/connect/v1/magic-link/verify",
+			strings.NewReader(url.Values{}.Encode()),
+		)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Accept", "application/json")
+
+		rec := httptest.NewRecorder()
+		handler.VerifyHandler(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var payload struct {
+			RedirectURL string `json:"redirect_url"`
+		}
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&payload))
+
+		location, err := url.Parse(payload.RedirectURL)
 		assert.NoError(t, err)
 		assert.Equal(t, "/auth/error", location.Path)
 		assert.Equal(t, "magic_link_invalid", location.Query().Get("error"))

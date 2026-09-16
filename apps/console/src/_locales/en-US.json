@@ -3154,6 +3154,7 @@
     "pageTitle": "Continue sign-in",
     "title": "Continue sign-in",
     "description": "Click continue to finish signing in.",
+    "errors": { "continue": "Cannot finish signing in" },
     "actions": { "continue": "Continue" }
   },
   "magicLinkForm": {

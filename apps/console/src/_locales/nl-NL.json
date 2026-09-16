@@ -6003,6 +6003,7 @@
     "pageTitle": "Doorgaan met inloggen",
     "title": "Doorgaan met inloggen",
     "description": "Klik op doorgaan om het inloggen te voltooien.",
+    "errors": { "continue": "Kan het inloggen niet voltooien" },
     "actions": { "continue": "Doorgaan" }
   },
   "magicLinkForm": {

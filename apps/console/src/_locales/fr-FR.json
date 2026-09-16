@@ -6010,6 +6010,7 @@
     "pageTitle": "Continuer la connexion",
     "title": "Continuer la connexion",
     "description": "Cliquez sur continuer pour terminer la connexion.",
+    "errors": { "continue": "Impossible de terminer la connexion" },
     "actions": { "continue": "Continuer" }
   },
   "magicLinkForm": {

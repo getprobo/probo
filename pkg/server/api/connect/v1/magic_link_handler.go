@@ -199,5 +199,5 @@ func (h *MagicLinkHandler) VerifyHandler(w http.ResponseWriter, r *http.Request)
 		redirectURL = *continueURL
 	}
 
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	respondAuthRedirect(w, r, redirectURL)
 }
