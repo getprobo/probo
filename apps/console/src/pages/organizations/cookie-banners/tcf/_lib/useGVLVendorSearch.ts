@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useGVLVendorFilters } from "./useGVLVendorFilters";
 
@@ -29,20 +29,20 @@ const SEARCH_DEBOUNCE_MS = 300;
 export function useGVLVendorSearch(): [string, (value: string) => void] {
   const { query, membership, setQuery } = useGVLVendorFilters();
   const [input, setInput] = useState(query);
-  const lastCommittedRef = useRef(query);
+  const [lastCommitted, setLastCommitted] = useState(query);
+  const [prevFilters, setPrevFilters] = useState({ query, membership });
 
-  useEffect(() => {
+  if (query !== prevFilters.query || membership !== prevFilters.membership) {
+    setPrevFilters({ query, membership });
+
     if (query === "" && membership === "all") {
-      lastCommittedRef.current = "";
+      setLastCommitted("");
       setInput("");
-      return;
-    }
-
-    if (query !== lastCommittedRef.current) {
-      lastCommittedRef.current = query;
+    } else if (query !== lastCommitted) {
+      setLastCommitted(query);
       setInput(query);
     }
-  }, [membership, query]);
+  }
 
   useEffect(() => {
     if (input === query) {
@@ -50,7 +50,7 @@ export function useGVLVendorSearch(): [string, (value: string) => void] {
     }
 
     const handle = setTimeout(() => {
-      lastCommittedRef.current = input;
+      setLastCommitted(input);
       setQuery(input);
     }, SEARCH_DEBOUNCE_MS);
 

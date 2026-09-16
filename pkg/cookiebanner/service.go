@@ -986,6 +986,7 @@ func (s *Service) ListCookieBannerGVLVendorIDs(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var links coredata.CookieBannerGVLVendors
+
 			loaded, err := links.LoadIABVendorIDsByCookieBannerID(ctx, conn, scope, bannerID)
 			if err != nil {
 				return fmt.Errorf("cannot list cookie banner gvl vendor ids: %w", err)
