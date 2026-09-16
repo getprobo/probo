@@ -304,16 +304,33 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 		return nil, fmt.Errorf("cannot load common third parties: %w", err)
 	}
 
-	rows := make([]docgen.TrackerPolicyThirdParty, 0, len(commonParties))
+	return collapseTrackerPolicyThirdParties(commonParties), nil
+}
 
-	// Distinct catalog records can share a display name (different legal
-	// entities, or leftover duplicates). Collapse those to one policy
-	// row so the generated document does not list the same vendor twice.
-	// When the kept row left privacy-policy empty, a later duplicate
-	// backfills it.
-	rowIndexByName := make(map[string]int, len(commonParties))
+// collapseTrackerPolicyThirdParties folds catalog vendors that share a
+// display name into one policy row. LoadByIDs has no ORDER BY, so the
+// input is sorted by ID first. First-wins (and empty-URL backfill) then
+// keeps the same name casing and privacy-policy link on every
+// regeneration, even when two records disagree.
+func collapseTrackerPolicyThirdParties(
+	parties coredata.CommonThirdParties,
+) []docgen.TrackerPolicyThirdParty {
+	if len(parties) == 0 {
+		return nil
+	}
 
-	for _, cp := range commonParties {
+	ordered := slices.Clone(parties)
+	slices.SortFunc(
+		ordered,
+		func(a, b *coredata.CommonThirdParty) int {
+			return bytes.Compare(a.ID[:], b.ID[:])
+		},
+	)
+
+	rows := make([]docgen.TrackerPolicyThirdParty, 0, len(ordered))
+	rowIndexByName := make(map[string]int, len(ordered))
+
+	for _, cp := range ordered {
 		name := strings.TrimSpace(cp.Name)
 
 		privacyPolicyURL := ""
@@ -338,22 +355,22 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 		})
 	}
 
-	// LoadByIDs returns rows in an unspecified order (no ORDER BY), so sort
-	// here to keep the generated policy document deterministic across
-	// regenerations.
-	slices.SortFunc(rows, func(a, b docgen.TrackerPolicyThirdParty) int {
-		if c := strings.Compare(a.Name, b.Name); c != 0 {
-			return c
-		}
+	slices.SortFunc(
+		rows,
+		func(a, b docgen.TrackerPolicyThirdParty) int {
+			if c := strings.Compare(a.Name, b.Name); c != 0 {
+				return c
+			}
 
-		if c := strings.Compare(a.Description, b.Description); c != 0 {
-			return c
-		}
+			if c := strings.Compare(a.Description, b.Description); c != 0 {
+				return c
+			}
 
-		return strings.Compare(a.PrivacyPolicyURL, b.PrivacyPolicyURL)
-	})
+			return strings.Compare(a.PrivacyPolicyURL, b.PrivacyPolicyURL)
+		},
+	)
 
-	return rows, nil
+	return rows
 }
 
 // trackerPurpose returns a table-safe purpose string for a tracker, falling
