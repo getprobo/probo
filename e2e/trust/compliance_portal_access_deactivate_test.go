@@ -77,7 +77,11 @@ func TestCompliancePortal_DeactivateBlocksRequestAndGrantedGet(t *testing.T) {
 	trustHost := lookupTrustHost(t, owner, compliancePortalID)
 
 	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
-	assert.NotContains(t, listProfileEmails(t, owner, visitor.GetEmail()), visitor.GetEmail())
+	testutil.AssertEmailAbsent(
+		t,
+		testutil.ListOrganizationProfileEmails(t, owner, visitor.GetEmail()),
+		visitor.GetEmail(),
+	)
 	accessID := lookupVisitorAccessID(t, owner, compliancePortalID, visitor.GetEmail())
 
 	grantVisitorDocumentAccess(t, owner, accessID, documentID)
@@ -129,59 +133,6 @@ func TestCompliancePortal_DeactivateBlocksRequestAndGrantedGet(t *testing.T) {
 		},
 	}, &result)
 	require.NoError(t, err, "reactivated visitor must be able to request access")
-}
-
-func listProfileEmails(
-	t *testing.T,
-	client *testutil.Client,
-	query string,
-) []string {
-	t.Helper()
-
-	const profilesQuery = `
-		query($id: ID!, $query: String!) {
-			node(id: $id) {
-				... on Organization {
-					profiles(first: 20, filter: { query: $query }) {
-						edges {
-							node {
-								emailAddress
-							}
-						}
-					}
-				}
-			}
-		}
-	`
-
-	var result struct {
-		Node struct {
-			Profiles struct {
-				Edges []struct {
-					Node struct {
-						EmailAddress string `json:"emailAddress"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"profiles"`
-		} `json:"node"`
-	}
-
-	err := client.Execute(
-		profilesQuery,
-		map[string]any{
-			"id":    client.GetOrganizationID().String(),
-			"query": query,
-		},
-		&result,
-	)
-	require.NoError(t, err)
-
-	emails := make([]string, 0, len(result.Node.Profiles.Edges))
-	for _, edge := range result.Node.Profiles.Edges {
-		emails = append(emails, edge.Node.EmailAddress)
-	}
-
-	return emails
 }
 
 func lookupVisitorAccessID(

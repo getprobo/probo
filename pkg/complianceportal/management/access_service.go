@@ -1081,12 +1081,27 @@ func (s *Service) sendAccessEmail(
 		return fmt.Errorf("cannot load identity: %w", err)
 	}
 
+	recipientName := identity.FullName
+	profile := &coredata.MembershipProfile{}
+	err := profile.LoadByIdentityIDAndOrganizationID(
+		ctx,
+		tx,
+		scope,
+		identity.ID,
+		organization.ID,
+	)
+	if err == nil {
+		recipientName = profile.FullName
+	} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("cannot load membership profile: %w", err)
+	}
+
 	emailPresenterCfg, err := s.EmailPresenterConfig(ctx, scope, access.CompliancePortalID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, recipientName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalAccess(ctx, organization.Name)
 	if err != nil {
@@ -1094,7 +1109,7 @@ func (s *Service) sendAccessEmail(
 	}
 
 	accessEmail := coredata.NewEmail(
-		identity.FullName,
+		recipientName,
 		identity.EmailAddress,
 		subject,
 		textBody,

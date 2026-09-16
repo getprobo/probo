@@ -21,9 +21,7 @@
 import { PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -41,11 +39,7 @@ import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASec
 import { accessSection, visitorsPage } from "./variants";
 
 export const compliancePortalVisitorsPageQuery = graphql`
-  query CompliancePortalVisitorsPageQuery(
-    $compliancePortalId: ID!
-    $order: CompliancePortalAccessOrder
-    $filter: CompliancePortalAccessFilter
-  ) {
+  query CompliancePortalVisitorsPageQuery($compliancePortalId: ID!) {
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
@@ -54,7 +48,6 @@ export const compliancePortalVisitorsPageQuery = graphql`
         canListAccesses: permission(action: "compliance-portal:portal-access:list")
         canCreateAccess: permission(action: "compliance-portal:portal-access:create")
         ...CompliancePortalNDASectionFragment
-        ...CompliancePortalAccessList_compliancePortal @arguments(order: $order, filter: $filter)
       }
     }
   }
@@ -108,9 +101,7 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
               </div>
             </div>
           </div>
-          <Suspense fallback={<ListSkeleton count={4} />}>
-            <CompliancePortalAccessList compliancePortalKey={compliancePortal} />
-          </Suspense>
+          <CompliancePortalAccessList />
         </section>
       )}
     </div>

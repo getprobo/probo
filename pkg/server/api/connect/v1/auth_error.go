@@ -21,11 +21,14 @@
 package connect_v1
 
 import (
+	"mime"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/server/httpx"
 )
 
 const (
@@ -59,7 +62,10 @@ func redirectAuthError(w http.ResponseWriter, r *http.Request, code string, cont
 }
 
 func respondAuthRedirect(w http.ResponseWriter, r *http.Request, redirectURL string) {
-	if strings.Contains(r.Header.Get("Accept"), "application/json") {
+	w.Header().Set("Vary", "Accept")
+	httpx.NoCache(w)
+
+	if acceptsJSON(r.Header.Get("Accept")) {
 		httpserver.RenderJSON(
 			w,
 			http.StatusOK,
@@ -70,4 +76,28 @@ func respondAuthRedirect(w http.ResponseWriter, r *http.Request, redirectURL str
 	}
 
 	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func acceptsJSON(accept string) bool {
+	for _, value := range strings.Split(accept, ",") {
+		mediaType, params, err := mime.ParseMediaType(value)
+		if err != nil {
+			continue
+		}
+
+		if mediaType != "application/json" {
+			continue
+		}
+
+		if q, ok := params["q"]; ok {
+			quality, parseErr := strconv.ParseFloat(q, 64)
+			if parseErr != nil || quality <= 0 {
+				continue
+			}
+		}
+
+		return true
+	}
+
+	return false
 }

@@ -20,12 +20,22 @@
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { List } from "@probo/ui/src/v2/List/List";
-import { useEffect, useRef, useTransition } from "react";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { Suspense, useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, usePaginationFragment } from "react-relay";
+import {
+  graphql,
+  type PreloadedQuery,
+  usePaginationFragment,
+  usePreloadedQuery,
+  useQueryLoader,
+} from "react-relay";
+import { useParams } from "react-router";
 
 import type { CompliancePortalAccessList_compliancePortal$key } from "#/__generated__/core/CompliancePortalAccessList_compliancePortal.graphql";
+import type { CompliancePortalAccessListQuery } from "#/__generated__/core/CompliancePortalAccessListQuery.graphql";
 import type { CompliancePortalAccessListRefetchQuery } from "#/__generated__/core/CompliancePortalAccessListRefetchQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import {
   accessListGraphqlVariables,
@@ -35,6 +45,21 @@ import { accessSection } from "../variants";
 
 import { CompliancePortalAccessListEmpty } from "./CompliancePortalAccessListEmpty";
 import { CompliancePortalAccessListItem } from "./CompliancePortalAccessListItem";
+
+const accessListQuery = graphql`
+  query CompliancePortalAccessListQuery(
+    $compliancePortalId: ID!
+    $order: CompliancePortalAccessOrder
+    $filter: CompliancePortalAccessFilter
+  ) {
+    node(id: $compliancePortalId) {
+      __typename
+      ... on CompliancePortal {
+        ...CompliancePortalAccessList_compliancePortal @arguments(order: $order, filter: $filter)
+      }
+    }
+  }
+`;
 
 const fragment = graphql`
   fragment CompliancePortalAccessList_compliancePortal on CompliancePortal
@@ -70,13 +95,70 @@ const fragment = graphql`
   }
 `;
 
-interface CompliancePortalAccessListProps {
-  compliancePortalKey: CompliancePortalAccessList_compliancePortal$key;
+export function CompliancePortalAccessList() {
+  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
+  const { order, query } = useAccessListFilters();
+  const filterRef = useRef(accessListGraphqlVariables(order, query));
+  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalAccessListQuery>(
+    accessListQuery,
+  );
+
+  useEffect(() => {
+    filterRef.current = accessListGraphqlVariables(order, query);
+  }, [order, query]);
+
+  useEffect(() => {
+    if (compliancePortalId == null) {
+      return;
+    }
+
+    loadQuery({
+      compliancePortalId,
+      ...filterRef.current,
+    });
+  }, [loadQuery, compliancePortalId]);
+
+  if (compliancePortalId == null) {
+    throw new Error(":compliancePortalId missing in route params");
+  }
+
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.compliancePortalId === compliancePortalId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <ListSkeleton count={4} />;
+  }
+
+  return (
+    <Suspense fallback={<ListSkeleton count={4} />}>
+      <AccessListContent queryRef={currentQueryRef} />
+    </Suspense>
+  );
 }
 
-export function CompliancePortalAccessList({
+function AccessListContent({
+  queryRef,
+}: {
+  queryRef: PreloadedQuery<CompliancePortalAccessListQuery>;
+}) {
+  const queryData = usePreloadedQuery<CompliancePortalAccessListQuery>(
+    accessListQuery,
+    queryRef,
+  );
+  if (queryData.node?.__typename !== "CompliancePortal") {
+    throw new NotFoundError("Compliance portal not found");
+  }
+
+  return <AccessListResults compliancePortalKey={queryData.node} />;
+}
+
+function AccessListResults({
   compliancePortalKey,
-}: CompliancePortalAccessListProps) {
+}: {
+  compliancePortalKey: CompliancePortalAccessList_compliancePortal$key;
+}) {
   const { t } = useTranslation("organizations/compliance-portals");
   const { order, query } = useAccessListFilters();
   const [isPending, startTransition] = useTransition();

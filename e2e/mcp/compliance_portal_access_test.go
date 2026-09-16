@@ -55,7 +55,7 @@ func TestMCP_CreateCompliancePortalAccess(t *testing.T) {
 
 	assert.NotEmpty(t, result.CompliancePortalAccess.ID)
 	assert.Equal(t, "ACTIVE", result.CompliancePortalAccess.State)
-	assert.Equal(t, email, result.CompliancePortalAccess.Email)
+	testutil.AssertEqualEmail(t, result.CompliancePortalAccess.Email, email)
 	assert.Empty(t, result.CompliancePortalAccess.FullName)
 	assert.Nil(t, result.CompliancePortalAccess.Auth)
 

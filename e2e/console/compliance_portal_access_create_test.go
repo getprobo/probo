@@ -131,59 +131,6 @@ func listMemberCandidateIDs(
 	return ids
 }
 
-func listProfileEmails(
-	t *testing.T,
-	client *testutil.Client,
-	query string,
-) []string {
-	t.Helper()
-
-	const profilesQuery = `
-		query($id: ID!, $query: String!) {
-			node(id: $id) {
-				... on Organization {
-					profiles(first: 20, filter: { query: $query }) {
-						edges {
-							node {
-								emailAddress
-							}
-						}
-					}
-				}
-			}
-		}
-	`
-
-	var result struct {
-		Node struct {
-			Profiles struct {
-				Edges []struct {
-					Node struct {
-						EmailAddress string `json:"emailAddress"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"profiles"`
-		} `json:"node"`
-	}
-
-	err := client.Execute(
-		profilesQuery,
-		map[string]any{
-			"id":    client.GetOrganizationID().String(),
-			"query": query,
-		},
-		&result,
-	)
-	require.NoError(t, err)
-
-	emails := make([]string, 0, len(result.Node.Profiles.Edges))
-	for _, edge := range result.Node.Profiles.Edges {
-		emails = append(emails, edge.Node.EmailAddress)
-	}
-
-	return emails
-}
-
 func requireAccessMailpitMessageEventually(
 	t *testing.T,
 	client *testutil.Client,
@@ -249,7 +196,7 @@ func TestCompliancePortalAccess_CreateByProfileID(t *testing.T) {
 
 	assert.Equal(t, "ACTIVE", node.State)
 	assert.Nil(t, node.AuthenticatedAt)
-	assert.Equal(t, email, node.Identity.Email)
+	testutil.AssertEqualEmail(t, node.Identity.Email, email)
 	assert.Equal(t, fullName, node.Identity.FullName)
 }
 
@@ -267,9 +214,9 @@ func TestCompliancePortalAccess_CreateByNewEmail(t *testing.T) {
 
 	assert.Equal(t, "ACTIVE", node.State)
 	assert.Nil(t, node.AuthenticatedAt)
-	assert.Equal(t, email, node.Identity.Email)
+	testutil.AssertEqualEmail(t, node.Identity.Email, email)
 	assert.Empty(t, node.Identity.FullName)
-	assert.NotContains(t, listProfileEmails(t, owner, email), email)
+	testutil.AssertEmailAbsent(t, testutil.ListOrganizationProfileEmails(t, owner, email), email)
 }
 
 func TestCompliancePortalAccess_CreateByExistingMemberEmail(t *testing.T) {
@@ -290,8 +237,8 @@ func TestCompliancePortalAccess_CreateByExistingMemberEmail(t *testing.T) {
 	})
 
 	assert.Equal(t, fullName, node.Identity.FullName)
-	assert.Equal(t, email, node.Identity.Email)
-	assert.Contains(t, listProfileEmails(t, owner, email), email)
+	testutil.AssertEqualEmail(t, node.Identity.Email, email)
+	testutil.AssertEmailPresent(t, testutil.ListOrganizationProfileEmails(t, owner, email), email)
 }
 
 func TestCompliancePortalAccess_CreateConflict(t *testing.T) {
