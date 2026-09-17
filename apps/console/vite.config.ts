@@ -86,6 +86,7 @@ function originFromURL(value: string): string {
 }
 
 const defaultFileOrigin = "http://localhost:8080";
+const defaultDevFileStorageOrigin = "http://127.0.0.1:8333";
 
 // Local downloadUrl hosts are minted on localhost:8080. VITE_API_URL
 // can point elsewhere (a leftover Lima IP), so img-src/connect-src
@@ -218,7 +219,10 @@ export default defineConfig(({ mode, command }) => {
   // Empty prefix: load non-VITE_ vars too (CSP app origin is Node-only).
   const env = loadEnv(mode, envDir, "");
   const appOrigin = appOriginFromEnv(env);
-  const fileStorageOrigin = fileStorageOriginFromEnv(env);
+  const configuredFileStorageOrigin = fileStorageOriginFromEnv(env);
+  const fileStorageOrigin
+    = configuredFileStorageOrigin
+      || (command === "serve" ? defaultDevFileStorageOrigin : "");
 
   return {
     // Expose CSP peer origins to the client for Markdown img allowlisting.

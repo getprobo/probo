@@ -57,7 +57,17 @@ export function CSVPreview({
 
     async function loadPreview() {
       try {
-        const response = await fetch(src, { signal: abortController.signal });
+        const requestURL = new URL(src, window.location.href);
+        if (
+          import.meta.env.DEV
+          && requestURL.pathname.startsWith("/api/files/v1/")
+        ) {
+          requestURL.protocol = window.location.protocol;
+          requestURL.host = window.location.host;
+        }
+        const response = await fetch(requestURL, {
+          signal: abortController.signal,
+        });
         if (!response.ok) {
           throw new Error(`CSV download failed: ${response.status}`);
         }
