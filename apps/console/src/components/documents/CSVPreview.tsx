@@ -57,6 +57,7 @@ export function CSVPreview({
   useEffect(() => {
     let activeParser: Parser | undefined;
     let cancelled = false;
+    let failed = false;
 
     const requestURL = new URL(src, window.location.href);
     if (
@@ -82,6 +83,7 @@ export function CSVPreview({
         }
 
         if (result.errors.length > 0) {
+          failed = true;
           parser.abort();
           setPreview({ status: "error" });
           return;
@@ -91,7 +93,7 @@ export function CSVPreview({
       },
       complete() {
         activeParser = undefined;
-        if (!cancelled) {
+        if (!cancelled && !failed) {
           setPreview({
             status: "ready",
             rows: rows.slice(0, MAX_PREVIEW_ROWS),
