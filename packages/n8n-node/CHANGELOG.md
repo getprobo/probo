@@ -4,6 +4,10 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Cookie Consent Record `Get` returns the optional IAB TCF string (`tc`)
+
 ## [0.233.0] - 2026-09-22
 
 ### Changed

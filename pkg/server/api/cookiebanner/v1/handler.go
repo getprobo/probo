@@ -173,6 +173,7 @@ type (
 		Version     int                          `json:"version"`
 		Action      coredata.CookieConsentAction `json:"action"`
 		ConsentData json.RawMessage              `json:"consent_data"`
+		TC          *string                      `json:"tc,omitempty"`
 	}
 
 	postConsentResponse struct {
@@ -215,6 +216,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		Regulation:       &regulation,
 		RegulationSource: regulationSource,
 		ConsentMode:      &cm,
+		TC:               body.TC,
 	}
 	if location != nil {
 		req.CountryCode = &location.CountryCode

@@ -4,6 +4,10 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `consent-record view` shows the optional IAB TCF string when present
+
 ## [0.232.0] - 2026-09-22
 
 ### Changed

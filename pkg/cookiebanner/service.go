@@ -39,7 +39,10 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-const MaxTrackerIdentifierLength = 255
+const (
+	MaxTrackerIdentifierLength = 255
+	MaxTCStringLength          = 16 * 1024
+)
 
 type Service struct {
 	pg           *pg.Client
@@ -116,6 +119,7 @@ type (
 		CountryCode      *coredata.CountryCode
 		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
+		TC               *string
 	}
 
 	DetectedCookie struct {
@@ -269,6 +273,7 @@ type (
 		Version     int                          `json:"version"`
 		Action      coredata.CookieConsentAction `json:"action"`
 		ConsentData json.RawMessage              `json:"consent_data"`
+		TC          *string                      `json:"tc,omitempty"`
 		CreatedAt   time.Time                    `json:"created_at"`
 	}
 
@@ -381,6 +386,7 @@ func (r *RecordConsentRequest) Validate() error {
 	v.Check(r.Version, "version", validator.Required(), validator.Min(1))
 	v.Check(r.VisitorID, "visitor_id", validator.Required(), validator.NotEmpty())
 	v.Check(r.Action, "action", validator.Required(), validator.OneOfSlice(coredata.CookieConsentActions()))
+	v.Check(r.TC, "tc", validator.MaxLen(MaxTCStringLength))
 
 	return v.Error()
 }
@@ -2512,6 +2518,7 @@ func (s *Service) GetVisitorConsent(
 				Version:     version.Version,
 				Action:      record.Action,
 				ConsentData: record.ConsentData,
+				TC:          record.TC,
 				CreatedAt:   record.CreatedAt,
 			}
 
@@ -2523,6 +2530,14 @@ func (s *Service) GetVisitorConsent(
 	}
 
 	return consent, nil
+}
+
+func optionalNonEmptyString(value *string) *string {
+	if value == nil || *value == "" {
+		return nil
+	}
+
+	return value
 }
 
 func (s *Service) RecordConsent(
@@ -2584,6 +2599,7 @@ func (s *Service) RecordConsent(
 				CountryCode:           req.CountryCode,
 				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
+				TC:                    optionalNonEmptyString(req.TC),
 				CreatedAt:             time.Now(),
 			}
 

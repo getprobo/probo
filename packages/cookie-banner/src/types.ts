@@ -158,6 +158,7 @@ export interface VisitorConsent {
   action: ConsentAction;
   consent_data: Record<string, boolean>;
   created_at: string;
+  tc?: string;
 }
 
 export interface ConsentRecord {

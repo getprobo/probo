@@ -195,7 +195,7 @@
   },
   "consentRecordPage": {
     "title": "Consent record",
-    "properties": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "userAgent": "User agent", "sdkVersion": "SDK version", "regulation": "Regulation", "regulationSource": "Regulation source", "country": "Country", "subdivision": "Subdivision", "date": "Date" },
+    "properties": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "userAgent": "User agent", "sdkVersion": "SDK version", "regulation": "Regulation", "regulationSource": "Regulation source", "country": "Country", "subdivision": "Subdivision", "tc": "TC string", "date": "Date" },
     "actions": { "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
     "consentData": "Consent data",
     "required": "(Required)",

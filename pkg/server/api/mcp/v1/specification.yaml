@@ -13263,6 +13263,11 @@ components:
             - string
             - "null"
           description: Visitor subdivision code (ISO 3166-2)
+        tc:
+          type:
+            - string
+            - "null"
+          description: IAB TCF consent string
         created_at:
           type: string
           format: date-time

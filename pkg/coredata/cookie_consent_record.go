@@ -52,6 +52,7 @@ type (
 		CountryCode           *CountryCode        `db:"country_code"`
 		SubdivisionCode       *SubdivisionCode    `db:"subdivision_code"`
 		ConsentMode           *CookieConsentMode  `db:"consent_mode"`
+		TC                    *string             `db:"tc"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
 
@@ -131,6 +132,7 @@ SELECT
 	country_code,
 	subdivision_code,
 	consent_mode,
+	tc,
 	created_at
 FROM
 	cookie_consent_records
@@ -220,6 +222,7 @@ INSERT INTO cookie_consent_records (
 	country_code,
 	subdivision_code,
 	consent_mode,
+	tc,
 	created_at
 ) VALUES (
 	@id,
@@ -238,6 +241,7 @@ INSERT INTO cookie_consent_records (
 	@country_code,
 	@subdivision_code,
 	@consent_mode,
+	@tc,
 	@created_at
 )
 `
@@ -259,6 +263,7 @@ INSERT INTO cookie_consent_records (
 		"country_code":             r.CountryCode,
 		"subdivision_code":         r.SubdivisionCode,
 		"consent_mode":             r.ConsentMode,
+		"tc":                       r.TC,
 		"created_at":               r.CreatedAt,
 	}
 
@@ -293,6 +298,7 @@ SELECT
 	country_code,
 	subdivision_code,
 	consent_mode,
+	tc,
 	created_at
 FROM
 	cookie_consent_records
@@ -349,6 +355,7 @@ SELECT
 	country_code,
 	subdivision_code,
 	consent_mode,
+	tc,
 	created_at
 FROM
 	cookie_consent_records
