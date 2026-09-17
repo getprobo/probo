@@ -1,6 +1,6 @@
 # Release
 
-The repository ships thirteen independently-versioned tracks. Each has its own
+The repository ships fourteen independently-versioned tracks. Each has its own
 version source, its own `CHANGELOG.md`, and its own tag pattern. Most have a
 release workflow that creates a GitHub Release. Cutting a release means:
 bump the version, write a changelog entry, commit, tag, push.
@@ -14,6 +14,7 @@ bump the version, write a changelog entry, commit, tag, push.
 | `probo-agent`           | `probo-agent/v*` (or `…-rc.N`) | [probo-agent.md](./probo-agent.md) ([Windows signing setup](./probo-agent-windows-signing.md); [RC](./probo-agent.md#rc-release)) |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
+| `@probo/cookie-banner-tcf` | `@probo/cookie-banner-tcf/v*` | [cookie-banner-tcf.md](./cookie-banner-tcf.md) |
 | `@probo/skills`         | `@probo/skills/v*`             | [skills.md](./skills.md)           |
 | Helm chart (`probo`)    | `helm/v*`                      | [helm.md](./helm.md)                   |
 | CloudFormation (`aws-audit-role`) | `cloudformation-aws-audit-role/v*` | [cloudformation-aws-audit-role.md](./cloudformation-aws-audit-role.md) |
@@ -84,6 +85,10 @@ git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..H
 # @probo/cookie-banner
 git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner/v*')..HEAD --oneline \
   -- packages/cookie-banner
+
+# @probo/cookie-banner-tcf
+git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner-tcf/v*')..HEAD --oneline \
+  -- packages/cookie-banner-tcf
 
 # @probo/skills
 git log $(git describe --tags --abbrev=0 --match='@probo/skills/v*')..HEAD --oneline \

@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { TCString } from "@iabtechlabtcf/core";
+import type { BannerConfig, TCFGVL } from "@probo/cookie-banner";
 import { describe, expect, it } from "vitest";
 
-import type { BannerConfig, TCFGVL } from "../types";
 import { TCF_CMP_ID, encodeTCString, gdprApplies } from "./encode";
 
 const vendorId = 52;

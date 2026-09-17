@@ -18,44 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { readFileSync } from "node:fs";
-import * as esbuild from "esbuild";
+import { bootThemedBanner } from "@probo/cookie-banner";
 
-const { version } = JSON.parse(readFileSync("./package.json", "utf-8"));
+import { installTCFStub, startTCF } from "./index";
 
-const shared = {
-  bundle: true,
-  target: "es2020",
-  define: {
-    __SDK_VERSION__: JSON.stringify(version),
-  },
-};
-
-await Promise.all([
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/index.ts"],
-    outfile: "dist/cookie-banner.mjs",
-    format: "esm",
-  }),
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/headless/index.ts"],
-    outfile: "dist/cookie-banner-headless.mjs",
-    format: "esm",
-  }),
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/consent.ts"],
-    outfile: "dist/cookie-banner-consent.mjs",
-    format: "esm",
-  }),
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/themed-banner/iife.ts"],
-    outfile: "dist/cookie-banner.iife.js",
-    format: "iife",
-    globalName: "ProboCookieBanner",
-    minify: true,
-  }),
-]);
+installTCFStub();
+startTCF();
+bootThemedBanner();

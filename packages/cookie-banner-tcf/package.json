@@ -1,26 +1,16 @@
 {
-  "name": "@probo/cookie-banner",
-  "version": "0.18.0",
-  "description": "Probo cookie consent banner SDK",
+  "name": "@probo/cookie-banner-tcf",
+  "version": "0.1.0",
+  "description": "IAB TCF 2.2 addon for the Probo cookie consent banner",
   "type": "module",
-  "main": "dist/cookie-banner.mjs",
-  "module": "dist/cookie-banner.mjs",
+  "main": "dist/cookie-banner-tcf.mjs",
+  "module": "dist/cookie-banner-tcf.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/cookie-banner.mjs",
-      "default": "./dist/cookie-banner.iife.js"
-    },
-    "./headless": {
-      "types": "./dist/headless/index.d.ts",
-      "import": "./dist/cookie-banner-headless.mjs",
-      "default": "./dist/cookie-banner-headless.mjs"
-    },
-    "./consent": {
-      "types": "./dist/consent.d.ts",
-      "import": "./dist/cookie-banner-consent.mjs",
-      "default": "./dist/cookie-banner-consent.mjs"
+      "import": "./dist/cookie-banner-tcf.mjs",
+      "default": "./dist/cookie-banner-tcf.iife.js"
     }
   },
   "scripts": {
@@ -41,13 +31,14 @@
     "cookie-banner",
     "cookie-consent",
     "gdpr",
-    "privacy",
+    "iab",
+    "tcf",
     "probo"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/getprobo/probo.git",
-    "directory": "packages/cookie-banner"
+    "directory": "packages/cookie-banner-tcf"
   },
   "bugs": {
     "url": "https://github.com/getprobo/probo/issues"
@@ -56,7 +47,15 @@
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "@probo/cookie-banner": ">=0.18.0"
+  },
+  "dependencies": {
+    "@iabtechlabtcf/cmpapi": "1.5.22",
+    "@iabtechlabtcf/core": "1.5.22"
+  },
   "devDependencies": {
+    "@probo/cookie-banner": "*",
     "esbuild": "^0.28.2",
     "typescript": "6.0.2",
     "vitest": "^4.1.11"
