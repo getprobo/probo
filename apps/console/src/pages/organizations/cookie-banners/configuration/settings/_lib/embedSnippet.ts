@@ -22,10 +22,10 @@
 const TCF_CMP_ID = 4095;
 const TCF_CMP_VERSION = 1;
 
-const DEFAULT_IIFE =
-  "https://cdn.jsdelivr.net/npm/@probo/cookie-banner/dist/cookie-banner.iife.js";
-const TCF_IIFE =
-  "https://cdn.jsdelivr.net/npm/@probo/cookie-banner-tcf/dist/cookie-banner-tcf.iife.js";
+const DEFAULT_IIFE
+  = "https://cdn.jsdelivr.net/npm/@probo/cookie-banner/dist/cookie-banner.iife.js";
+const TCF_IIFE
+  = "https://cdn.jsdelivr.net/npm/@probo/cookie-banner-tcf/dist/cookie-banner-tcf.iife.js";
 
 export function cookieBannerEmbedSnippet(input: {
   bannerId: string;

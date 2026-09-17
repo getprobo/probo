@@ -540,6 +540,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 				} `json:"cookieBanner"`
 			} `json:"updateCookieBanner"`
 		}
+
 		err = owner.Execute(updateMutation, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId":       bannerID,
@@ -565,7 +566,9 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/config", owner.BaseURL(), bannerID)
 		resp, err := owner.HTTPClient().Get(endpoint)
 		require.NoError(t, err)
+
 		defer func() { _ = resp.Body.Close() }()
+
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var config struct {

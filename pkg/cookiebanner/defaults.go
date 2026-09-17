@@ -20,6 +20,8 @@
 
 package cookiebanner
 
+import "maps"
+
 import "go.probo.inc/probo/pkg/coredata"
 
 var SupportedLanguages = []string{"en", "de", "es", "fr", "id", "it", "ja", "ko", "nl", "pl", "pt", "tr", "uk", "zh"}
@@ -797,8 +799,6 @@ func init() {
 			extras = tcfUIStringsByLanguage["en"]
 		}
 
-		for key, value := range extras {
-			ui[key] = value
-		}
+		maps.Copy(ui, extras)
 	}
 }

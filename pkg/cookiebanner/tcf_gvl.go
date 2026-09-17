@@ -134,30 +134,39 @@ func buildTCFGVL(
 				if raw := omitEmptyJSON(payload.Purposes); raw != nil {
 					gvl.Purposes = raw
 				}
+
 				if raw := omitEmptyJSON(payload.SpecialPurposes); raw != nil {
 					gvl.SpecialPurposes = raw
 				}
+
 				if raw := omitEmptyJSON(payload.Features); raw != nil {
 					gvl.Features = raw
 				}
+
 				if raw := omitEmptyJSON(payload.SpecialFeatures); raw != nil {
 					gvl.SpecialFeatures = raw
 				}
+
 				if raw := omitEmptyJSON(payload.Stacks); raw != nil {
 					gvl.Stacks = raw
 				}
+
 				if raw := omitEmptyJSON(payload.DataCategories); raw != nil {
 					gvl.DataCategories = raw
 				}
+
 				if payload.LastUpdated != "" {
 					gvl.LastUpdated = payload.LastUpdated
 				}
+
 				if payload.GVLSpecificationVersion != 0 {
 					gvl.GVLSpecificationVersion = payload.GVLSpecificationVersion
 				}
+
 				if payload.VendorListVersion != 0 {
 					gvl.VendorListVersion = payload.VendorListVersion
 				}
+
 				if payload.TCFPolicyVersion != 0 {
 					gvl.TCFPolicyVersion = payload.TCFPolicyVersion
 				}
