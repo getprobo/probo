@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Button, IconWarning, Spinner } from "@probo/ui";
-import Papa from "papaparse";
+import { parse } from "papaparse";
 import { useEffect, useState } from "react";
 
 const MAX_DATA_ROWS = 100;
@@ -32,10 +32,10 @@ interface CSVPreviewProps {
   truncatedMessage: string;
 }
 
-type PreviewState =
-  | { status: "loading" }
-  | { status: "error" }
-  | {
+type PreviewState
+  = | { status: "loading" }
+    | { status: "error" }
+    | {
       status: "ready";
       rows: string[][];
       truncated: boolean;
@@ -53,7 +53,6 @@ export function CSVPreview({
 
   useEffect(() => {
     const abortController = new AbortController();
-    setPreview({ status: "loading" });
 
     async function loadPreview() {
       try {
@@ -73,7 +72,7 @@ export function CSVPreview({
         }
 
         const text = await response.text();
-        const result = Papa.parse<string[]>(text, {
+        const result = parse<string[]>(text, {
           preview: MAX_DATA_ROWS + 1,
           skipEmptyLines: "greedy",
         });
@@ -101,6 +100,11 @@ export function CSVPreview({
     };
   }, [reloadKey, src]);
 
+  function retry() {
+    setPreview({ status: "loading" });
+    setReloadKey(key => key + 1);
+  }
+
   if (preview.status === "loading") {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -116,7 +120,7 @@ export function CSVPreview({
         <p className="text-txt-secondary text-center">{errorMessage}</p>
         <Button
           variant="secondary"
-          onClick={() => setReloadKey(key => key + 1)}
+          onClick={retry}
         >
           {retryLabel}
         </Button>
