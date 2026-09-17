@@ -3910,6 +3910,12 @@
     "errors": {
       "extractUrl": "URL uit URI-bestand extraheren mislukt"
     },
+    "csv": {
+      "empty": "Dit CSV-bestand is leeg.",
+      "error": "Het CSV-voorbeeld kan niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "truncated": "De eerste 100 gegevensrijen worden weergegeven."
+    },
     "previewUnavailable": "Voorbeeld niet beschikbaar voor dit bestandstype: {{mimeType}}",
     "actions": {
       "download": "Bestand downloaden"

@@ -34,6 +34,7 @@ import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 
 import type { EvidenceGraphFileQuery } from "#/__generated__/core/EvidenceGraphFileQuery.graphql";
+import { CSVPreview } from "#/components/documents/CSVPreview";
 import { PDFPreview } from "#/components/documents/PDFPreview";
 import { evidenceFileQuery } from "#/hooks/graph/EvidenceGraph";
 
@@ -99,6 +100,10 @@ function EvidencePreviewContent({
   const isUriFile
     = evidence.file?.mimeType === "text/uri-list"
       || evidence.file?.mimeType === "text/uri";
+  const isCSVFile
+    = evidence.file?.mimeType === "text/csv"
+      || evidence.file?.mimeType === "application/csv"
+      || evidence.file?.fileName.toLowerCase().endsWith(".csv");
   useEffect(() => {
     if (!isUriFile) {
       return;
@@ -164,6 +169,16 @@ function EvidencePreviewContent({
           name={evidence.file.fileName}
         />
       </div>
+    );
+  } else if (isCSVFile) {
+    preview = (
+      <CSVPreview
+        src={evidence.file.downloadUrl}
+        emptyMessage={t("evidencePreviewDialog.csv.empty")}
+        errorMessage={t("evidencePreviewDialog.csv.error")}
+        retryLabel={t("evidencePreviewDialog.csv.retry")}
+        truncatedMessage={t("evidencePreviewDialog.csv.truncated")}
+      />
     );
   } else {
     preview = (

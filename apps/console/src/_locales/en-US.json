@@ -2246,6 +2246,12 @@
     "breadcrumb": { "evidences": "Evidences" },
     "messages": { "error": "Error" },
     "errors": { "extractUrl": "Failed to extract URL from URI file" },
+    "csv": {
+      "empty": "This CSV file is empty.",
+      "error": "Unable to load the CSV preview.",
+      "retry": "Retry",
+      "truncated": "Showing the first 100 data rows."
+    },
     "previewUnavailable": "Preview not available for this file type: {{mimeType}}",
     "actions": { "download": "Download File" }
   },

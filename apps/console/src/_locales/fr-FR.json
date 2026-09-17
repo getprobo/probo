@@ -3910,6 +3910,12 @@
     "errors": {
       "extractUrl": "Échec de l’extraction de l’URL du fichier URI"
     },
+    "csv": {
+      "empty": "Ce fichier CSV est vide.",
+      "error": "Impossible de charger l’aperçu CSV.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 100 premières lignes de données."
+    },
     "previewUnavailable": "Aperçu non disponible pour ce type de fichier : {{mimeType}}",
     "actions": {
       "download": "Télécharger le fichier"
