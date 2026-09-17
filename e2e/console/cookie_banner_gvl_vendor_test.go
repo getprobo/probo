@@ -590,7 +590,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		require.NotNil(t, config.TCF.PolicyVersion)
 		assert.Equal(t, 5, *config.TCF.PolicyVersion)
 		require.NotNil(t, config.TCF.CmpID)
-		assert.Equal(t, 2, *config.TCF.CmpID)
+		assert.Equal(t, 4095, *config.TCF.CmpID)
 		require.NotNil(t, config.TCF.CmpVersion)
 		assert.Equal(t, 1, *config.TCF.CmpVersion)
 		assert.Equal(t, "FR", config.TCF.PublisherCC)

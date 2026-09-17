@@ -32,7 +32,7 @@ import (
 const (
 	// Placeholder until IAB Europe issues Probo a CMP ID. The official IAB
 	// libraries reject ids below 2, so 0 cannot be encoded or passed to CmpApi.
-	tcfCmpID                = 2
+	tcfCmpID                = 4095
 	tcfCmpVersion           = 1
 	tcfPublisherCC          = "AA"
 	tcfGVLSpecVersion       = 3
