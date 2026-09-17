@@ -59,7 +59,7 @@ export function CSVPreview({
         const requestURL = new URL(src, window.location.href);
         if (
           import.meta.env.DEV
-          && requestURL.pathname.startsWith("/api/files/v1/")
+            && requestURL.pathname.startsWith("/api/files/v1/")
         ) {
           requestURL.protocol = window.location.protocol;
           requestURL.host = window.location.host;
