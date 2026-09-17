@@ -135,6 +135,8 @@ export interface TCFGVLVendor {
   cookieRefresh?: boolean;
   usesNonCookieAccess?: boolean;
   cookieMaxAgeSeconds?: number | null;
+  dataDeclaration?: number[];
+  urls?: Array<{ langId?: string; privacy?: string; legIntClaim?: string }>;
 }
 
 export interface TCFVendor {

@@ -17,3 +17,6 @@ in this file.
   group purposes when the GVL includes them. Disclosure copy uses
   `data-text` keys. Save encodes those bits; accept still grants all
   disclosed vendors and reject grants none
+- Second layer discloses special purposes, features, and data categories
+  used by partners (no toggles), purpose illustrations, vendor cookie /
+  non-cookie storage, and http(s) privacy / legitimate-interest links

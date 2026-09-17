@@ -42,7 +42,18 @@ interface Named {
   id: number;
   name: string;
   description?: string;
+  illustrations?: string[];
 }
+
+interface VendorURL {
+  privacy?: string;
+  legIntClaim?: string;
+}
+
+type PanelVendor = TCFGVLVendor & {
+  urls?: VendorURL[];
+  dataDeclaration?: number[];
+};
 
 interface Stack extends Named {
   purposes: number[];
@@ -170,15 +181,18 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
                   .join("")}`
               : ""
           }
+          ${disclosureSection("Special purposes", usedSpecialPurposes(gvl))}
+          ${disclosureSection("Features", usedFeatures(gvl))}
           ${
             specialFeatures.length
               ? `<div class="section-title" data-text="tcf_section_special_features">Special features</div>${specialFeatures
                   .map((f) =>
-                    row(f.name, f.description, toggle("special-feature", f.id, "Opt-in")),
+                    row(f.name, namedBody(f), toggle("special-feature", f.id, "Opt-in")),
                   )
                   .join("")}`
               : ""
           }
+          ${disclosureSection("Data categories", usedDataCategories(gvl))}
           <div class="section-title" id="probo-tcf-vendors" data-text="tcf_section_partners">Partners</div>
           ${vendors.map((v) => vendorRow(v, purposeNames)).join("")}
           <div class="section-title" data-text="tcf_section_storage">Storage</div>
@@ -221,10 +235,10 @@ function purposeRow(purpose: Named, showLI: boolean): string {
     showLI ? toggle("purpose-li", purpose.id, "Legitimate interest") : "",
   ].join("");
 
-  return row(purpose.name, purpose.description, `<div class="toggle-group">${controls}</div>`);
+  return row(purpose.name, namedBody(purpose), `<div class="toggle-group">${controls}</div>`);
 }
 
-function vendorRow(vendor: TCFGVLVendor, purposeNames: Map<number, string>): string {
+function vendorRow(vendor: PanelVendor, purposeNames: Map<number, string>): string {
   const controls = [
     toggle("vendor-consent", vendor.id, "Consent"),
     vendor.legIntPurposes?.length
@@ -232,32 +246,116 @@ function vendorRow(vendor: TCFGVLVendor, purposeNames: Map<number, string>): str
       : "",
   ].join("");
 
-  return row(vendor.name, vendorDescription(vendor, purposeNames), `<div class="toggle-group">${controls}</div>`);
+  return row(vendor.name, vendorBody(vendor, purposeNames), `<div class="toggle-group">${controls}</div>`);
 }
 
-function vendorDescription(
-  vendor: TCFGVLVendor,
-  purposeNames: Map<number, string>,
-): string | undefined {
+function disclosureSection(title: string, items: Named[]): string {
+  if (!items.length) {
+    return "";
+  }
+
+  return `<div class="section-title">${esc(title)}</div>${items
+    .map((item) => row(item.name, namedBody(item), ""))
+    .join("")}`;
+}
+
+function namedBody(item: Named): string | undefined {
+  const parts = [item.description, ...(item.illustrations ?? [])]
+    .filter((part): part is string => !!part)
+    .map((part) => esc(part));
+  return parts.length ? parts.join(" ") : undefined;
+}
+
+function vendorBody(vendor: PanelVendor, purposeNames: Map<number, string>): string | undefined {
   const ids = [...new Set([...(vendor.purposes ?? []), ...(vendor.legIntPurposes ?? [])])];
   const names = ids
     .map((id) => purposeNames.get(id))
     .filter((name): name is string => !!name);
   const bits: string[] = [];
   if (names.length) {
-    bits.push(names.join(", "));
+    bits.push(esc(names.join(", ")));
   }
-  if (vendor.policyUrl) {
-    bits.push(`Privacy policy: ${vendor.policyUrl}`);
+  const storage = vendorStorage(vendor);
+  if (storage) {
+    bits.push(esc(storage));
+  }
+  const links = vendorLinks(vendor);
+  if (links) {
+    bits.push(links);
   }
   return bits.length ? bits.join(". ") : undefined;
 }
 
-function row(name: string, description: string | undefined, controls: string): string {
+function vendorStorage(vendor: PanelVendor): string | undefined {
+  const bits: string[] = [];
+  if (vendor.usesCookies) {
+    const age = formatCookieMaxAge(vendor.cookieMaxAgeSeconds);
+    bits.push(age ? `Cookies (up to ${age})` : "Cookies");
+  }
+  if (vendor.usesNonCookieAccess) {
+    bits.push("Non-cookie storage");
+  }
+  return bits.length ? bits.join(". ") : undefined;
+}
+
+function formatCookieMaxAge(seconds: number | null | undefined): string | undefined {
+  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) {
+    return undefined;
+  }
+  if (seconds === 0) {
+    return "session";
+  }
+  const days = Math.round(seconds / 86400);
+  if (days >= 1) {
+    return days === 1 ? "1 day" : `${days} days`;
+  }
+  const hours = Math.round(seconds / 3600);
+  if (hours >= 1) {
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+  return `${Math.round(seconds)} seconds`;
+}
+
+function vendorLinks(vendor: PanelVendor): string | undefined {
+  const first = vendor.urls?.[0];
+  const privacy = httpUrl(first?.privacy ?? vendor.policyUrl);
+  const claim = httpUrl(first?.legIntClaim);
+  const bits: string[] = [];
+  if (privacy) {
+    bits.push(policyAnchor(privacy, "Privacy policy"));
+  }
+  if (claim) {
+    bits.push(policyAnchor(claim, "Legitimate interest"));
+  }
+  return bits.length ? bits.join(". ") : undefined;
+}
+
+function policyAnchor(href: string, label: string): string {
+  return `<a class="btn-link" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
+}
+
+function httpUrl(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(value);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url.href;
+    }
+  } catch {
+    // Vendor-declared URLs that are not http(s) stay off the page.
+  }
+
+  return undefined;
+}
+
+function row(name: string, descriptionHtml: string | undefined, controls: string): string {
   return `<div class="category-header">
     <div class="category-info">
       <div class="category-name">${esc(name)}</div>
-      ${description ? `<div class="category-description">${esc(description)}</div>` : ""}
+      ${descriptionHtml ? `<div class="category-description">${descriptionHtml}</div>` : ""}
     </div>
     ${controls}
   </div>`;
@@ -280,7 +378,12 @@ function namedList(record: Record<string, unknown> | undefined): Named[] {
     if (!value || typeof value !== "object") {
       continue;
     }
-    const rec = value as { id?: unknown; name?: unknown; description?: unknown };
+    const rec = value as {
+      id?: unknown;
+      name?: unknown;
+      description?: unknown;
+      illustrations?: unknown;
+    };
     if (typeof rec.id !== "number" || typeof rec.name !== "string") {
       continue;
     }
@@ -288,6 +391,7 @@ function namedList(record: Record<string, unknown> | undefined): Named[] {
       id: rec.id,
       name: rec.name,
       description: typeof rec.description === "string" ? rec.description : undefined,
+      illustrations: stringList(rec.illustrations),
     });
   }
   return out.sort((a, b) => a.id - b.id);
@@ -331,14 +435,42 @@ function numberIDs(value: unknown): number[] {
   return value.filter((id): id is number => typeof id === "number" && Number.isInteger(id) && id > 0);
 }
 
-function usedSpecialFeatures(gvl: TCFGVL): Named[] {
+function stringList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const out = value.filter((item): item is string => typeof item === "string" && item.length > 0);
+  return out.length ? out : undefined;
+}
+
+function usedNamed(
+  catalog: Record<string, unknown> | undefined,
+  idsFromVendor: (vendor: PanelVendor) => number[] | undefined,
+  gvl: TCFGVL,
+): Named[] {
   const used = new Set<number>();
-  for (const vendor of Object.values(gvl.vendors)) {
-    for (const id of vendor.specialFeatures ?? []) {
+  for (const vendor of Object.values(gvl.vendors) as PanelVendor[]) {
+    for (const id of idsFromVendor(vendor) ?? []) {
       used.add(id);
     }
   }
-  return namedList(gvl.specialFeatures).filter((f) => used.has(f.id));
+  return namedList(catalog).filter((item) => used.has(item.id));
+}
+
+function usedSpecialFeatures(gvl: TCFGVL): Named[] {
+  return usedNamed(gvl.specialFeatures, (vendor) => vendor.specialFeatures, gvl);
+}
+
+function usedSpecialPurposes(gvl: TCFGVL): Named[] {
+  return usedNamed(gvl.specialPurposes, (vendor) => vendor.specialPurposes, gvl);
+}
+
+function usedFeatures(gvl: TCFGVL): Named[] {
+  return usedNamed(gvl.features, (vendor) => vendor.features, gvl);
+}
+
+function usedDataCategories(gvl: TCFGVL): Named[] {
+  return usedNamed(gvl.dataCategories, (vendor) => vendor.dataDeclaration, gvl);
 }
 
 function purposeLIIds(gvl: TCFGVL): Set<number> {
