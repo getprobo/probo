@@ -5,6 +5,10 @@ in this file.
 
 ## Unreleased
 
+### Changed
+
+- Encodes and reports IAB CMP ID 4095 instead of the placeholder 2
+
 ### Added
 
 - Encodes a TCF 2.3 string with `@iabtechlabtcf/core`, installs a `__tcfapi`

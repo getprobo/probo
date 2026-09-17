@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- TCF GET config emits CMP ID 4095 instead of the placeholder 2
+
 ### Added
 
 - Cookie banners store an IAB TCF publisher country of establishment

@@ -20,5 +20,5 @@
 
 // Placeholder until IAB Europe issues Probo a CMP ID. The official IAB
 // libraries reject ids below 2, so 0 cannot be encoded or passed to CmpApi.
-export const TCF_CMP_ID = 2;
+export const TCF_CMP_ID = 4095;
 export const TCF_CMP_VERSION = 1;
