@@ -73,9 +73,11 @@ export function CodeSnippets({ cookieBannerKey }: CodeSnippetsProps) {
   return (
     <div className="space-y-3">
       <h3 className="font-medium">{t("codeSnippets.title")}</h3>
-      {banner.capabilities.tcf ? (
-        <p className="text-sm text-txt-secondary">{t("codeSnippets.tcfNote")}</p>
-      ) : null}
+      {banner.capabilities.tcf
+        ? (
+            <p className="text-sm text-txt-secondary">{t("codeSnippets.tcfNote")}</p>
+          )
+        : null}
       <Card className="rounded-lg border">
         <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
           <Button variant="secondary" onClick={handleCopy}>

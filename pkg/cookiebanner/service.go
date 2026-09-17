@@ -317,10 +317,12 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 	v.Check(r.CookiePolicyURL, "cookie_policy_url", validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.DefaultLanguage, "default_language", validator.OneOfSlice(SupportedLanguages))
+
 	if r.PublisherCountryCode != nil {
 		code := strings.ToUpper(strings.TrimSpace(*r.PublisherCountryCode))
 		r.PublisherCountryCode = &code
 	}
+
 	v.Check(r.PublisherCountryCode, "publisher_country_code", publisherCountryCode())
 
 	return v.Error()
@@ -363,6 +365,7 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(r.Slug, "slug", validator.Slug(100))
 	v.Check(r.Description, "description", validator.SafeText(1000))
+
 	if r.TCFPurposeIDs != nil {
 		v.CheckEach(*r.TCFPurposeIDs, "tcf_purpose_ids", func(index int, item any) {
 			v.Check(item, fmt.Sprintf("tcf_purpose_ids.%d", index), validator.Min(1), validator.Max(11))
@@ -2324,9 +2327,11 @@ func attachTCFVendors(
 	cmpVersion := tcfCmpVersion
 	config.TCF.CmpID = &cmpID
 	config.TCF.CmpVersion = &cmpVersion
+
 	if publisherCC == "" {
 		publisherCC = tcfPublisherCC
 	}
+
 	config.TCF.PublisherCC = publisherCC
 
 	var snapshot *coredata.CommonGVLSnapshot

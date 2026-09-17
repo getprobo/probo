@@ -360,7 +360,9 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 	assert.Nil(t, recordNode.Node.TC)
 
 	visitorTC := uniqueCookieBannerVisitorID()
+
 	const tcString = "CPzqA4APzqA4AEsAAAENAwCAAAAAAAAAAAAAAAAAAAAA"
+
 	tcRecord := postCookieConsent(
 		t,
 		owner,
