@@ -174,6 +174,7 @@ function EvidencePreviewContent({
     preview = (
       <CSVPreview
         src={evidence.file.downloadUrl}
+        columnLabel={t("evidencePreviewDialog.csv.column")}
         emptyMessage={t("evidencePreviewDialog.csv.empty")}
         errorMessage={t("evidencePreviewDialog.csv.error")}
         retryLabel={t("evidencePreviewDialog.csv.retry")}

@@ -3911,6 +3911,7 @@
       "extractUrl": "Échec de l’extraction de l’URL du fichier URI"
     },
     "csv": {
+      "column": "Colonne",
       "empty": "Ce fichier CSV est vide.",
       "error": "Impossible de charger l’aperçu CSV.",
       "retry": "Réessayer",

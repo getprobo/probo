@@ -27,7 +27,7 @@ import { fileURLToPath, URL } from "node:url";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type ProxyOptions } from "vite";
 
 const require = createRequire(import.meta.url);
 
@@ -68,6 +68,61 @@ function proxyTo(target: string) {
     target,
     changeOrigin: true,
     ws: true,
+  };
+}
+
+const fileStorageProxyPath = "/__file-storage";
+const proxyBaseURL = new URL("http://vite.proxy");
+
+function apiProxyTo(
+  target: string,
+  fileStorageOrigin: string,
+): ProxyOptions {
+  return {
+    target,
+    changeOrigin: true,
+    configure(proxy) {
+      proxy.on("proxyRes", (proxyResponse) => {
+        const location = proxyResponse.headers.location;
+        if (!location || !URL.canParse(location)) {
+          return;
+        }
+
+        const redirectURL = new URL(location);
+        if (redirectURL.origin !== fileStorageOrigin) {
+          return;
+        }
+
+        const proxiedURL = new URL(fileStorageProxyPath, proxyBaseURL);
+        proxiedURL.pathname = [
+          fileStorageProxyPath,
+          redirectURL.pathname,
+        ].join("");
+        proxiedURL.search = redirectURL.search;
+        proxyResponse.headers.location = proxiedURL.href.slice(
+          proxyBaseURL.origin.length,
+        );
+      });
+    },
+  };
+}
+
+function fileStorageProxyTo(target: string): ProxyOptions {
+  return {
+    target,
+    changeOrigin: true,
+    rewrite(requestPath) {
+      const requestURL = new URL(requestPath, proxyBaseURL);
+      requestURL.pathname
+        = requestURL.pathname.slice(fileStorageProxyPath.length) || "/";
+      return requestURL.href.slice(proxyBaseURL.origin.length);
+    },
+    configure(proxy) {
+      proxy.on("proxyReq", (proxyRequest) => {
+        proxyRequest.removeHeader("authorization");
+        proxyRequest.removeHeader("cookie");
+      });
+    },
   };
 }
 
@@ -276,10 +331,13 @@ export default defineConfig(({ mode, command }) => {
         "Permissions-Policy": "microphone=(), camera=(), geolocation=()",
       },
       proxy: {
-        "/api": {
-          target: "http://localhost:8080",
-          changeOrigin: true,
-        },
+        "/api": apiProxyTo("http://localhost:8080", fileStorageOrigin),
+        ...(fileStorageOrigin
+          ? {
+              [fileStorageProxyPath]:
+                fileStorageProxyTo(fileStorageOrigin),
+            }
+          : {}),
         // Employee-portal Vite on 5175. Same-origin /employee-portal hrefs
         // then load that SPA's /employee-portal/@vite and assets from this
         // origin. Inverse of employee-portal proxying /auth and /me here.

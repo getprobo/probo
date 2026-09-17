@@ -2247,6 +2247,7 @@
     "messages": { "error": "Error" },
     "errors": { "extractUrl": "Failed to extract URL from URI file" },
     "csv": {
+      "column": "Column",
       "empty": "This CSV file is empty.",
       "error": "Unable to load the CSV preview.",
       "retry": "Retry",
