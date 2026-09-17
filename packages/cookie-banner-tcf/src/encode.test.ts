@@ -119,13 +119,13 @@ describe("gdprApplies", () => {
 
 describe("encodeTCString", () => {
   it("throws when tcf.gvl is missing", () => {
-    expect(() => encodeTCString(bannerConfig({ tcf: {} }), true)).toThrow(
+    expect(() => encodeTCString(bannerConfig({ tcf: {} }), "all")).toThrow(
       /tcf.gvl is missing/,
     );
   });
 
   it("encodes disclosed vendors on reject without granting consent", () => {
-    const encoded = encodeTCString(bannerConfig(), false);
+    const encoded = encodeTCString(bannerConfig(), "none");
     const decoded = TCString.decode(encoded);
 
     expect(decoded.cmpId).toBe(TCF_CMP_ID);
@@ -137,7 +137,7 @@ describe("encodeTCString", () => {
   });
 
   it("encodes vendor, purpose, and special-feature grants on accept", () => {
-    const encoded = encodeTCString(bannerConfig(), true);
+    const encoded = encodeTCString(bannerConfig(), "all");
     const decoded = TCString.decode(encoded);
 
     expect(decoded.vendorsDisclosed.has(vendorId)).toBe(true);

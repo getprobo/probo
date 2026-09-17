@@ -41,6 +41,8 @@ export function installTCFStub(): void {
           cmpLoaded: false,
           cmpStatus: "stub",
           displayStatus: "hidden",
+          // CMP JS API version. IAB did not bump this for TCF 2.3; the
+          // encoded string is 2.3 via the disclosed-vendors segment.
           apiVersion: "2.2",
           cmpId: TCF_CMP_ID,
           cmpVersion: TCF_CMP_VERSION,
