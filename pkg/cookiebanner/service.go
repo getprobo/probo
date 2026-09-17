@@ -215,11 +215,21 @@ type (
 		Layout                   Layout                                         `json:"layout"`
 		ShowBranding             bool                                           `json:"show_branding"`
 		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
-		TCFEnabled               bool                                           `json:"tcf_enabled"`
-		TCFVendors               []BannerTCFVendor                              `json:"tcf_vendors,omitempty"`
-		GVLVersion               *int                                           `json:"gvl_version,omitempty"`
+		TCF                      *BannerTCF                                     `json:"tcf,omitempty"`
 		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts                    map[string]string                              `json:"texts"`
+	}
+
+	// BannerTCF is omitted from GET config when the hidden TCF capability is
+	// off. Nested keys are our config; `gvl` is IAB vendor-list.json shape.
+	BannerTCF struct {
+		Vendors       []BannerTCFVendor `json:"vendors,omitempty"`
+		GVLVersion    *int              `json:"gvl_version,omitempty"`
+		PolicyVersion *int              `json:"policy_version,omitempty"`
+		CmpID         *int              `json:"cmp_id,omitempty"`
+		CmpVersion    *int              `json:"cmp_version,omitempty"`
+		PublisherCC   string            `json:"publisher_cc,omitempty"`
+		GVL           *BannerTCFGVL     `json:"gvl,omitempty"`
 	}
 
 	BannerTCFVendor struct {
@@ -229,6 +239,23 @@ type (
 		LegIntPurposes  []int32 `json:"leg_int_purposes"`
 		SpecialFeatures []int32 `json:"special_features"`
 		PolicyURL       *string `json:"policy_url,omitempty"`
+	}
+
+	// BannerTCFGVL is a vendor-list.json-shaped object with vendors reduced to
+	// the banner’s disclosed IAB IDs. Nested keys follow the IAB GVL schema
+	// (camelCase) so @iabtechlabtcf/core can construct a GVL from it.
+	BannerTCFGVL struct {
+		GVLSpecificationVersion int                        `json:"gvlSpecificationVersion"`
+		VendorListVersion       int                        `json:"vendorListVersion"`
+		TCFPolicyVersion        int                        `json:"tcfPolicyVersion"`
+		LastUpdated             string                     `json:"lastUpdated,omitempty"`
+		Purposes                json.RawMessage            `json:"purposes,omitempty"`
+		SpecialPurposes         json.RawMessage            `json:"specialPurposes,omitempty"`
+		Features                json.RawMessage            `json:"features,omitempty"`
+		SpecialFeatures         json.RawMessage            `json:"specialFeatures,omitempty"`
+		Stacks                  json.RawMessage            `json:"stacks,omitempty"`
+		DataCategories          json.RawMessage            `json:"dataCategories,omitempty"`
+		Vendors                 map[string]json.RawMessage `json:"vendors"`
 	}
 
 	UpsertCookieBannerTranslationRequest struct {
@@ -2223,6 +2250,11 @@ func buildBannerConfig(
 		privacyPolicyURL = *snapshot.PrivacyPolicyURL
 	}
 
+	var tcf *BannerTCF
+	if banner.Capabilities.TCF {
+		tcf = &BannerTCF{}
+	}
+
 	return &BannerConfig{
 		BannerID:                 banner.ID,
 		Version:                  version.Version,
@@ -2233,7 +2265,7 @@ func buildBannerConfig(
 		ConsentExpiryDays:        snapshot.ConsentExpiryDays,
 		ShowBranding:             banner.ShowBranding,
 		ResourceReportingEnabled: banner.Capabilities.ResourceReporting,
-		TCFEnabled:               banner.Capabilities.TCF,
+		TCF:                      tcf,
 		Categories:               categories,
 		Texts:                    texts,
 	}
@@ -2245,13 +2277,34 @@ func attachTCFVendors(
 	config *BannerConfig,
 	iabVendorIDs []int,
 ) error {
+	if config.TCF == nil {
+		config.TCF = &BannerTCF{}
+	}
+
+	cmpID := tcfCmpID
+	cmpVersion := tcfCmpVersion
+	config.TCF.CmpID = &cmpID
+	config.TCF.CmpVersion = &cmpVersion
+	config.TCF.PublisherCC = tcfPublisherCC
+
+	var snapshot *coredata.CommonGVLSnapshot
+
 	var state coredata.CommonGVLState
 	if err := state.Load(ctx, conn); err != nil {
 		if !errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot load common gvl state: %w", err)
 		}
-	} else {
-		config.GVLVersion = state.LatestVendorListVersion
+	} else if state.LatestVendorListVersion != nil {
+		config.TCF.GVLVersion = state.LatestVendorListVersion
+
+		var loaded coredata.CommonGVLSnapshot
+		if err := loaded.LoadByVendorListVersion(ctx, conn, *state.LatestVendorListVersion); err != nil {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load common gvl snapshot: %w", err)
+			}
+		} else {
+			snapshot = &loaded
+		}
 	}
 
 	var vendors coredata.CommonGVLVendors
@@ -2259,32 +2312,25 @@ func attachTCFVendors(
 		return fmt.Errorf("cannot load tcf vendors: %w", err)
 	}
 
-	config.TCFVendors = make([]BannerTCFVendor, 0, len(vendors))
+	config.TCF.Vendors = make([]BannerTCFVendor, 0, len(vendors))
 	for _, vendor := range vendors {
-		purposes := vendor.Purposes
-		if purposes == nil {
-			purposes = []int32{}
-		}
-
-		legIntPurposes := vendor.LegIntPurposes
-		if legIntPurposes == nil {
-			legIntPurposes = []int32{}
-		}
-
-		specialFeatures := vendor.SpecialFeatures
-		if specialFeatures == nil {
-			specialFeatures = []int32{}
-		}
-
-		config.TCFVendors = append(config.TCFVendors, BannerTCFVendor{
+		config.TCF.Vendors = append(config.TCF.Vendors, BannerTCFVendor{
 			IABVendorID:     vendor.IABVendorID,
 			Name:            vendor.Name,
-			Purposes:        purposes,
-			LegIntPurposes:  legIntPurposes,
-			SpecialFeatures: specialFeatures,
+			Purposes:        emptyInt32s(vendor.Purposes),
+			LegIntPurposes:  emptyInt32s(vendor.LegIntPurposes),
+			SpecialFeatures: emptyInt32s(vendor.SpecialFeatures),
 			PolicyURL:       vendor.PolicyURL,
 		})
 	}
+
+	config.TCF.GVL = buildTCFGVL(snapshot, vendors, iabVendorIDs)
+	if config.TCF.GVLVersion != nil && config.TCF.GVL.VendorListVersion == 0 {
+		config.TCF.GVL.VendorListVersion = *config.TCF.GVLVersion
+	}
+
+	policy := config.TCF.GVL.TCFPolicyVersion
+	config.TCF.PolicyVersion = &policy
 
 	return nil
 }
