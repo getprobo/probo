@@ -11,11 +11,9 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
   publisher-filtered IAB `gvl`) when the hidden capability is on; the key
   is omitted otherwise. This replaces the flat `tcf_enabled`,
   `tcf_vendors`, and `gvl_version` fields from 0.18.0
-- Optional `@probo/cookie-banner/tcf` export encodes a TCF 2.2 string with
-  `@iabtechlabtcf/core`, installs a `__tcfapi` stub, and starts
-  `@iabtechlabtcf/cmpapi`. The default IIFE stays IAB-free; a separate
-  `cookie-banner-tcf.iife.js` bundle includes the IAB libraries. Accept/reject
-  stores an optional `tc` field on `probo_consent`
+- Stores an optional `tc` field on `probo_consent` when a TCF runtime is
+  registered via `setTCFRuntime`. Encoding and `__tcfapi` live in
+  `@probo/cookie-banner-tcf` so this package stays IAB-free
 - Public addon API for layout and TCF plugins: `setLayoutRenderer`,
   `setTCFRuntime`, `bootThemedBanner`, and layout primitives (`floatingCard`,
   `esc`, `BRANDING`, `CLOSE_ICON`). The themed banner asks a registered

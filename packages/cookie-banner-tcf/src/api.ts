@@ -19,11 +19,11 @@
 // SOFTWARE.
 
 import { CmpApi } from "@iabtechlabtcf/cmpapi";
+import type { BannerConfig, ConsentAction } from "@probo/cookie-banner";
+import { setTCFRuntime } from "@probo/cookie-banner";
 
-import type { BannerConfig, ConsentAction } from "../types";
 import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
 import { encodeTCString, gdprApplies } from "./encode";
-import { setTCFRuntime } from "../addons";
 
 function tcfActive(config: BannerConfig): boolean {
   return !!config.tcf && gdprApplies(config) && !!config.tcf.gvl;

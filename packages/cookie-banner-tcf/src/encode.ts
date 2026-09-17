@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { GVL, TCModel, TCString, type VendorList } from "@iabtechlabtcf/core";
+import type { BannerConfig, BannerTCF } from "@probo/cookie-banner";
 
-import type { BannerConfig, BannerTCF } from "../types";
 import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
 
 export { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
