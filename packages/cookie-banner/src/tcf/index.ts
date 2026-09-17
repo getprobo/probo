@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { bootThemedBanner } from "./boot";
-
-bootThemedBanner();
+export { startTCF } from "./api";
+export { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
+export { encodeTCString, gdprApplies } from "./encode";
+export { installTCFStub } from "./stub";

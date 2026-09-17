@@ -18,6 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { bootThemedBanner } from "./boot";
+import type { BannerConfig, ConsentAction } from "../types";
 
-bootThemedBanner();
+export interface TCFRuntime {
+  onConfig(config: BannerConfig, existingTc?: string): void;
+  onConsent(action: ConsentAction, config: BannerConfig): string | undefined;
+}
+
+let runtime: TCFRuntime | null = null;
+
+export function setTCFRuntime(next: TCFRuntime): void {
+  runtime = next;
+}
+
+export function getTCFRuntime(): TCFRuntime | null {
+  return runtime;
+}

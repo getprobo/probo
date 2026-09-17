@@ -52,10 +52,25 @@ await Promise.all([
   }),
   esbuild.build({
     ...shared,
+    entryPoints: ["src/tcf/index.ts"],
+    outfile: "dist/cookie-banner-tcf.mjs",
+    format: "esm",
+    external: ["@iabtechlabtcf/core", "@iabtechlabtcf/cmpapi"],
+  }),
+  esbuild.build({
+    ...shared,
     entryPoints: ["src/themed-banner/iife.ts"],
     outfile: "dist/cookie-banner.iife.js",
     format: "iife",
     globalName: "ProboCookieBanner",
+    minify: true,
+  }),
+  esbuild.build({
+    ...shared,
+    entryPoints: ["src/themed-banner/iife-tcf.ts"],
+    outfile: "dist/cookie-banner-tcf.iife.js",
+    format: "iife",
+    globalName: "ProboCookieBannerTCF",
     minify: true,
   }),
 ]);

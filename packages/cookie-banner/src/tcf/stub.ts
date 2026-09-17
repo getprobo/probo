@@ -18,6 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { bootThemedBanner } from "./boot";
+import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
 
-bootThemedBanner();
+type TCFAPIStub = ((...args: unknown[]) => void) & { q: unknown[][] };
+
+export function installTCFStub(): void {
+  const w = window as Window & { __tcfapi?: TCFAPIStub };
+
+  if (typeof w.__tcfapi === "function") {
+    return;
+  }
+
+  const queue: unknown[][] = [];
+  const stub: TCFAPIStub = function stub(...args: unknown[]): void {
+    const command = args[0];
+    const callback = args[2];
+
+    if (command === "ping" && typeof callback === "function") {
+      (callback as (data: unknown, success: boolean) => void)(
+        {
+          gdprApplies: true,
+          cmpLoaded: false,
+          cmpStatus: "stub",
+          displayStatus: "hidden",
+          apiVersion: "2.2",
+          cmpId: TCF_CMP_ID,
+          cmpVersion: TCF_CMP_VERSION,
+        },
+        true,
+      );
+      return;
+    }
+
+    queue.push(args);
+  };
+  stub.q = queue;
+  w.__tcfapi = stub;
+}

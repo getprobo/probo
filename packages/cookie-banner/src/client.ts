@@ -23,7 +23,7 @@ import {
   observeAndActivate,
 } from "./activation";
 import { getConsent } from "./consent";
-import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
+import { COOKIE_NAME, getConsentCookie, setConsentCookie, type ConsentCookie } from "./cookie";
 import type { Detector } from "./detectors";
 import {
   CookieDetector,
@@ -41,6 +41,7 @@ import type { ConsentIntegration } from "./integrations";
 import { createDefaultIntegrations } from "./integrations";
 import { resolveLayout } from "./layout";
 import { enqueue, flush } from "./queue";
+import { getTCFRuntime } from "./tcf/runtime";
 import type {
   BannerConfig,
   ConsentAction,
@@ -151,6 +152,7 @@ export class CookieBannerClient {
         this._gpcApplied = cookie.action === "GPC";
         this.activate(cookie.data);
         getConsent()._setReady(cookie.data, true);
+        getTCFRuntime()?.onConfig(config, cookie.tc);
         void flush(this.bannerId);
         return;
       }
@@ -187,6 +189,8 @@ export class CookieBannerClient {
         this.consent = null;
       }
     }
+
+    getTCFRuntime()?.onConfig(config);
 
     if (!this.consent && this.gpcDetected) {
       const gpcData: Record<string, boolean> = {};
@@ -315,16 +319,19 @@ export class CookieBannerClient {
       created_at: "",
     };
 
-    setConsentCookie(
-      {
-        bid: this.bannerId,
-        v: cfg.version,
-        vid: visitorId,
-        action,
-        data: consentData,
-      },
-      cfg.consent_expiry_days,
-    );
+    const tc = getTCFRuntime()?.onConsent(action, cfg);
+    const cookie: ConsentCookie = {
+      bid: this.bannerId,
+      v: cfg.version,
+      vid: visitorId,
+      action,
+      data: consentData,
+    };
+    if (tc) {
+      cookie.tc = tc;
+    }
+
+    setConsentCookie(cookie, cfg.consent_expiry_days);
 
     this.activate(consentData);
     getConsent()._notify(consentData);

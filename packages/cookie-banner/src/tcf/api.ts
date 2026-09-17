@@ -18,6 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { bootThemedBanner } from "./boot";
+import { CmpApi } from "@iabtechlabtcf/cmpapi";
 
-bootThemedBanner();
+import type { BannerConfig, ConsentAction } from "../types";
+import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
+import { encodeTCString, gdprApplies } from "./encode";
+import { setTCFRuntime } from "./runtime";
+
+function tcfActive(config: BannerConfig): boolean {
+  return !!config.tcf && gdprApplies(config) && !!config.tcf.gvl;
+}
+
+function grantsTCF(action: ConsentAction): boolean {
+  return action === "ACCEPT_ALL";
+}
+
+export function startTCF(): void {
+  const cmpApi = new CmpApi(TCF_CMP_ID, TCF_CMP_VERSION, true);
+
+  setTCFRuntime({
+    onConfig(config, existingTc) {
+      if (!tcfActive(config)) {
+        cmpApi.update(null);
+        return;
+      }
+
+      if (existingTc) {
+        cmpApi.update(existingTc, false);
+        return;
+      }
+
+      cmpApi.update("", true);
+    },
+    onConsent(action, config) {
+      if (!tcfActive(config)) {
+        cmpApi.update(null);
+        return undefined;
+      }
+
+      const tc = encodeTCString(config, grantsTCF(action));
+      cmpApi.update(tc, false);
+      return tc;
+    },
+  });
+}
