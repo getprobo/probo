@@ -29,10 +29,9 @@ export function gdprApplies(config: BannerConfig): boolean {
   return config.regulation === "GDPR" || config.regulation === "UK_GDPR";
 }
 
-export function encodeTCString(
-  config: BannerConfig,
-  grant: boolean | TCFChoices,
-): string {
+export type TCFGrant = "all" | "none" | TCFChoices;
+
+export function encodeTCString(config: BannerConfig, grant: TCFGrant): string {
   const gvlJson = config.tcf?.gvl;
   if (!gvlJson) {
     throw new Error("cannot encode TC string: tcf.gvl is missing");
@@ -52,13 +51,13 @@ export function encodeTCString(
 
   tcModel.setAllVendorsDisclosed();
 
-  if (grant === true) {
+  if (grant === "all") {
     tcModel.setAllVendorConsents();
     tcModel.setAllPurposeConsents();
     tcModel.setAllPurposeLegitimateInterests();
     tcModel.setAllVendorLegitimateInterests();
     tcModel.setAllSpecialFeatureOptins();
-  } else if (grant !== false) {
+  } else if (grant !== "none") {
     applyChoices(tcModel, grant);
   }
 

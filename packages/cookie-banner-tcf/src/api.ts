@@ -23,7 +23,7 @@ import type { BannerConfig, ConsentAction, TCFChoices } from "@probo/cookie-bann
 import { setLayoutRenderer, setTCFRuntime } from "@probo/cookie-banner";
 
 import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
-import { encodeTCString, gdprApplies } from "./encode";
+import { encodeTCString, gdprApplies, type TCFGrant } from "./encode";
 import { renderTCFLayout, wireTCFLayout } from "./layout";
 import { setLastTCString } from "./session";
 
@@ -79,12 +79,12 @@ export function startTCF(): void {
 function grantForAction(
   action: ConsentAction,
   pending: TCFChoices | undefined,
-): boolean | TCFChoices {
+): TCFGrant {
   if (action === "ACCEPT_ALL") {
-    return true;
+    return "all";
   }
   if (action === "CUSTOMIZE" && pending) {
     return pending;
   }
-  return false;
+  return "none";
 }

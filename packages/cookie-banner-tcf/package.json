@@ -1,7 +1,7 @@
 {
   "name": "@probo/cookie-banner-tcf",
   "version": "0.1.0",
-  "description": "IAB TCF 2.2 addon for the Probo cookie consent banner",
+  "description": "IAB TCF 2.3 addon for the Probo cookie consent banner",
   "type": "module",
   "main": "dist/cookie-banner-tcf.mjs",
   "module": "dist/cookie-banner-tcf.mjs",

@@ -1,6 +1,6 @@
 # @probo/cookie-banner-tcf
 
-IAB Transparency and Consent Framework (TCF 2.2) addon for
+IAB Transparency and Consent Framework (TCF 2.3) addon for
 [`@probo/cookie-banner`](../cookie-banner). It owns the `__tcfapi` stub,
 `CmpApi`, TC-string encoder, and the TCF first and second layers.
 
