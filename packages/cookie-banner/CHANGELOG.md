@@ -16,6 +16,13 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
   `@iabtechlabtcf/cmpapi`. The default IIFE stays IAB-free; a separate
   `cookie-banner-tcf.iife.js` bundle includes the IAB libraries. Accept/reject
   stores an optional `tc` field on `probo_consent`
+- Public addon API for layout and TCF plugins: `setLayoutRenderer`,
+  `setTCFRuntime`, `bootThemedBanner`, and layout primitives (`floatingCard`,
+  `esc`, `BRANDING`, `CLOSE_ICON`). The themed banner asks a registered
+  renderer first and falls back to opt-in / opt-out / notice
+- `<probo-preference-panel>` requires only `probo-save-button`, so addons can
+  replace the category list. `.panel-body` and `.toggle-group` style the
+  replacement controls
 
 ## [0.18.0] - 2026-09-16
 

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { getLayoutRenderer } from "../addons";
 import { registerHeadlessComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import { resolveLayout } from "../layout";
@@ -29,10 +30,9 @@ import { renderOptIn } from "./variants/optin";
 import { renderOptOut } from "./variants/optout";
 
 // ProboThemedBanner is a thin dispatcher: it owns the shadow root and the data
-// root, then mounts the renderer matching the visitor's presentation once the
-// config is known. Each presentation's markup, wording, and behavior live in
-// its own renderer, so this component holds no per-variant branching beyond the
-// initial dispatch.
+// root, then mounts markup once the config is known. A registered layout
+// addon runs first; otherwise the built-in opt-in / opt-out / notice renderer
+// matching the visitor's presentation is used.
 export class ProboThemedBanner extends HTMLElement {
   private shadow: ShadowRoot;
   private scrollLock: ScrollLock;
@@ -89,7 +89,9 @@ export class ProboThemedBanner extends HTMLElement {
     const layout = resolveLayout(config);
     const position = this.getAttribute("position") ?? "bottom-left";
 
-    root.innerHTML = renderFor(layout.presentation, config, position);
+    const addon = getLayoutRenderer();
+    const addonMarkup = addon?.render(config, position) ?? null;
+    root.innerHTML = addonMarkup ?? renderFor(layout.presentation, config, position);
 
     applyTexts(this.shadow, config);
 
@@ -107,6 +109,8 @@ export class ProboThemedBanner extends HTMLElement {
     if (layout.presentation === "OPT_OUT") {
       this.wirePrivacyChoices(root);
     }
+
+    addon?.wire?.(root, this.shadow);
   }
 
   private wirePanel(root: ProboCookieBannerRoot): void {

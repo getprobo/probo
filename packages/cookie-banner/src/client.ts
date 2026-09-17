@@ -41,7 +41,7 @@ import type { ConsentIntegration } from "./integrations";
 import { createDefaultIntegrations } from "./integrations";
 import { resolveLayout } from "./layout";
 import { enqueue, flush } from "./queue";
-import { getTCFRuntime } from "./tcf/runtime";
+import { getTCFRuntime } from "./addons";
 import type {
   BannerConfig,
   ConsentAction,

@@ -18,31 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export {
-  getLayoutRenderer,
-  getTCFRuntime,
-  setLayoutRenderer,
-  setTCFRuntime,
-} from "../addons";
-export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "../addons";
-export { registerHeadlessComponents } from "../components";
-export { resolveBannerText, resolveLayout } from "../layout";
-export type {
-  BannerConfig,
-  BannerLayout,
-  BannerState,
-  BannerText,
-  Category,
-  ConsentAction,
-  ConsentRecord,
-  CookieItem,
-  LayoutButtons,
-  Presentation,
-  Regulation,
-  SettingsLinkStyle,
-  BannerTCF,
-  TCFGVL,
-  TCFGVLVendor,
-  TCFVendor,
-  VisitorConsent,
-} from "../types";
+import { afterEach, describe, expect, it } from "vitest";
+
+import type { BannerConfig } from "../types";
+import { getLayoutRenderer, setLayoutRenderer } from "./layout";
+
+const config = { tcf: { vendors: [] } } as unknown as BannerConfig;
+
+describe("setLayoutRenderer", () => {
+  afterEach(() => {
+    setLayoutRenderer(null);
+  });
+
+  it("returns addon markup when the renderer supplies it", () => {
+    setLayoutRenderer({
+      render: () => "<p>tcf</p>",
+    });
+    expect(getLayoutRenderer()?.render(config, "bottom-left")).toBe("<p>tcf</p>");
+  });
+
+  it("falls through when the renderer returns null", () => {
+    setLayoutRenderer({
+      render: () => null,
+    });
+    expect(getLayoutRenderer()?.render(config, "bottom-left")).toBeNull();
+  });
+});

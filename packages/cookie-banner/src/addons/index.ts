@@ -20,29 +20,8 @@
 
 export {
   getLayoutRenderer,
-  getTCFRuntime,
   setLayoutRenderer,
-  setTCFRuntime,
-} from "../addons";
-export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "../addons";
-export { registerHeadlessComponents } from "../components";
-export { resolveBannerText, resolveLayout } from "../layout";
-export type {
-  BannerConfig,
-  BannerLayout,
-  BannerState,
-  BannerText,
-  Category,
-  ConsentAction,
-  ConsentRecord,
-  CookieItem,
-  LayoutButtons,
-  Presentation,
-  Regulation,
-  SettingsLinkStyle,
-  BannerTCF,
-  TCFGVL,
-  TCFGVLVendor,
-  TCFVendor,
-  VisitorConsent,
-} from "../types";
+} from "./layout";
+export type { LayoutHost, LayoutRenderer } from "./layout";
+export { getTCFRuntime, setTCFRuntime } from "./tcf-runtime";
+export type { TCFChoices, TCFRuntime } from "./tcf-runtime";
