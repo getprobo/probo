@@ -51,10 +51,30 @@ const tcfGvl: TCFGVL = {
       id: 7,
       name: "Measure advertising performance",
       description: "Advertising performance can be measured.",
+      illustrations: ["How often an ad was shown can be measured."],
     },
   },
-  specialPurposes: {},
-  features: {},
+  specialPurposes: {
+    "1": {
+      id: 1,
+      name: "Ensure security, prevent and detect fraud, and fix errors",
+      description: "Your data can be used to protect against fraud.",
+    },
+  },
+  features: {
+    "1": {
+      id: 1,
+      name: "Match and combine data from other data sources",
+      description: "Information from offline sources can be combined.",
+    },
+  },
+  dataCategories: {
+    "1": {
+      id: 1,
+      name: "IP addresses",
+      description: "Your IP address can be used.",
+    },
+  },
   specialFeatures: {
     "1": {
       id: 1,
@@ -78,14 +98,21 @@ const tcfGvl: TCFGVL = {
       purposes: [1],
       legIntPurposes: [7],
       flexiblePurposes: [],
-      specialPurposes: [],
-      features: [],
+      specialPurposes: [1],
+      features: [1],
       specialFeatures: [1],
       policyUrl: "https://example.com/privacy",
       usesCookies: true,
       cookieMaxAgeSeconds: 86400,
       cookieRefresh: false,
-      usesNonCookieAccess: false,
+      usesNonCookieAccess: true,
+      dataDeclaration: [1],
+      urls: [
+        {
+          privacy: "https://example.com/privacy",
+          legIntClaim: "https://example.com/li",
+        },
+      ],
     },
   },
 };
@@ -145,6 +172,73 @@ describe("renderTCFLayout", () => {
     expect(html).toContain("Advertising");
     expect(html).toContain('data-tcf="purpose-li"');
     expect(html).toContain('data-text="tcf_disclosure_store"');
+    expect(html).toContain("How often an ad was shown can be measured.");
+    expect(html).toContain("Ensure security, prevent and detect fraud, and fix errors");
+    expect(html).toContain("Match and combine data from other data sources");
+    expect(html).toContain("IP addresses");
+    expect(html).toContain("Cookies (up to 1 day)");
+    expect(html).toContain("Non-cookie storage");
+    expect(html).toContain('href="https://example.com/privacy"');
+    expect(html).toContain('href="https://example.com/li"');
+    expect(html).toContain("Privacy policy");
+    expect(html).not.toContain("Privacy policy: https://example.com/privacy");
     expect(html).not.toContain("probo-category-list");
+  });
+
+  it("omits unused disclosure catalogs and rejects non-http policy URLs", () => {
+    const html = renderTCFLayout(
+      bannerConfig({
+        tcf: {
+          gvl: {
+            ...tcfGvl,
+            specialPurposes: {
+              "2": {
+                id: 2,
+                name: "Deliver and present advertising and content",
+                description: "Unused special purpose.",
+              },
+            },
+            features: {
+              "2": {
+                id: 2,
+                name: "Link different devices",
+                description: "Unused feature.",
+              },
+            },
+            dataCategories: {
+              "2": {
+                id: 2,
+                name: "Device characteristics",
+                description: "Unused category.",
+              },
+            },
+            vendors: {
+              [String(vendorId)]: {
+                ...tcfGvl.vendors[String(vendorId)],
+                specialPurposes: [],
+                features: [],
+                dataDeclaration: [],
+                usesCookies: false,
+                usesNonCookieAccess: false,
+                policyUrl: "javascript:alert(1)",
+                urls: [{ privacy: "javascript:alert(1)" }],
+              },
+            },
+          },
+          cmp_id: TCF_CMP_ID,
+          cmp_version: 1,
+          publisher_cc: "AA",
+          policy_version: 5,
+        },
+      }),
+      "bottom-left",
+    );
+
+    expect(html).not.toContain("Deliver and present advertising and content");
+    expect(html).not.toContain("Link different devices");
+    expect(html).not.toContain("Device characteristics");
+    expect(html).not.toContain("Cookies (up to");
+    expect(html).not.toContain("javascript:");
+    expect(html).not.toContain('href="javascript:');
   });
 });
