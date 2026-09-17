@@ -27,6 +27,8 @@ vi.mock("@probo/cookie-banner", () => ({
   esc: (s: string) => s.replace(/</g, "&lt;"),
   floatingCard: (_position: string, _aria: unknown, inner: string) => inner,
   getTCFRuntime: () => null,
+  interpolate: (template: string, vars: Record<string, string>) =>
+    template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? ""),
 }));
 
 import { TCF_CMP_ID } from "./constants";
@@ -45,6 +47,11 @@ const tcfGvl: TCFGVL = {
       name: "Store and/or access information on a device",
       description: "Cookies, device or similar online identifiers.",
     },
+    "7": {
+      id: 7,
+      name: "Measure advertising performance",
+      description: "Advertising performance can be measured.",
+    },
   },
   specialPurposes: {},
   features: {},
@@ -55,13 +62,21 @@ const tcfGvl: TCFGVL = {
       description: "Your precise geolocation data can be used.",
     },
   },
-  stacks: {},
+  stacks: {
+    "1": {
+      id: 1,
+      name: "Advertising",
+      description: "Advertising stack",
+      purposes: [7],
+      specialFeatures: [],
+    },
+  },
   vendors: {
     [String(vendorId)]: {
       id: vendorId,
       name: "Test Vendor",
       purposes: [1],
-      legIntPurposes: [],
+      legIntPurposes: [7],
       flexiblePurposes: [],
       specialPurposes: [],
       features: [],
@@ -127,6 +142,9 @@ describe("renderTCFLayout", () => {
     expect(html).toContain("View partners");
     expect(html).toContain("Test Vendor");
     expect(html).toContain("probo_consent cookie for 180 days");
+    expect(html).toContain("Advertising");
+    expect(html).toContain('data-tcf="purpose-li"');
+    expect(html).toContain('data-text="tcf_disclosure_store"');
     expect(html).not.toContain("probo-category-list");
   });
 });

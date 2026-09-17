@@ -63,6 +63,7 @@ type (
 		Kind            CookieCategoryKind `db:"kind"`
 		Rank            int                `db:"rank"`
 		GCMConsentTypes []string           `db:"gcm_consent_types"`
+		TCFPurposeIDs   []int              `db:"tcf_purpose_ids"`
 		PostHogConsent  bool               `db:"posthog_consent"`
 		CreatedAt       time.Time          `db:"created_at"`
 		UpdatedAt       time.Time          `db:"updated_at"`
@@ -223,6 +224,7 @@ SELECT
 	kind,
 	rank,
 	gcm_consent_types,
+	tcf_purpose_ids,
 	posthog_consent,
 	created_at,
 	updated_at
@@ -275,6 +277,7 @@ SELECT
 	kind,
 	rank,
 	gcm_consent_types,
+	tcf_purpose_ids,
 	posthog_consent,
 	created_at,
 	updated_at
@@ -328,6 +331,7 @@ SELECT
 	kind,
 	rank,
 	gcm_consent_types,
+	tcf_purpose_ids,
 	posthog_consent,
 	created_at,
 	updated_at
@@ -413,6 +417,7 @@ INSERT INTO cookie_categories (
 	kind,
 	rank,
 	gcm_consent_types,
+	tcf_purpose_ids,
 	posthog_consent,
 	created_at,
 	updated_at
@@ -427,6 +432,7 @@ INSERT INTO cookie_categories (
 	@kind,
 	@rank,
 	@gcm_consent_types,
+	@tcf_purpose_ids,
 	@posthog_consent,
 	@created_at,
 	@updated_at
@@ -444,6 +450,7 @@ INSERT INTO cookie_categories (
 		"kind":              c.Kind,
 		"rank":              c.Rank,
 		"gcm_consent_types": c.GCMConsentTypes,
+		"tcf_purpose_ids":   c.TCFPurposeIDs,
 		"posthog_consent":   c.PostHogConsent,
 		"created_at":        c.CreatedAt,
 		"updated_at":        c.UpdatedAt,
@@ -475,6 +482,7 @@ SET
 	slug = @slug,
 	description = @description,
 	gcm_consent_types = @gcm_consent_types,
+	tcf_purpose_ids = @tcf_purpose_ids,
 	posthog_consent = @posthog_consent,
 	updated_at = @updated_at
 WHERE
@@ -490,6 +498,7 @@ WHERE
 		"slug":              c.Slug,
 		"description":       c.Description,
 		"gcm_consent_types": c.GCMConsentTypes,
+		"tcf_purpose_ids":   c.TCFPurposeIDs,
 		"posthog_consent":   c.PostHogConsent,
 		"updated_at":        c.UpdatedAt,
 	}
@@ -641,6 +650,7 @@ SELECT
 	kind,
 	rank,
 	gcm_consent_types,
+	tcf_purpose_ids,
 	posthog_consent,
 	created_at,
 	updated_at

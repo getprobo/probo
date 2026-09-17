@@ -38,6 +38,7 @@ func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 		Kind:            CookieCategoryKind(c.Kind),
 		Rank:            c.Rank,
 		GcmConsentTypes: c.GCMConsentTypes,
+		TcfPurposeIds:   c.TCFPurposeIDs,
 		PosthogConsent:  posthogConsent,
 		CreatedAt:       c.CreatedAt,
 		UpdatedAt:       c.UpdatedAt,

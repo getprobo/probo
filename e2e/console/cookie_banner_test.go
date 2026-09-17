@@ -314,6 +314,7 @@ func TestCookieBanner_Update(t *testing.T) {
 					cookieBanner {
 						consentExpiryDays
 						defaultLanguage
+						publisherCountryCode
 					}
 				}
 			}
@@ -322,23 +323,26 @@ func TestCookieBanner_Update(t *testing.T) {
 		var result struct {
 			UpdateCookieBanner struct {
 				CookieBanner struct {
-					ConsentExpiryDays int    `json:"consentExpiryDays"`
-					DefaultLanguage   string `json:"defaultLanguage"`
+					ConsentExpiryDays    int    `json:"consentExpiryDays"`
+					DefaultLanguage      string `json:"defaultLanguage"`
+					PublisherCountryCode string `json:"publisherCountryCode"`
 				} `json:"cookieBanner"`
 			} `json:"updateCookieBanner"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"cookieBannerId":    bannerID,
-				"consentExpiryDays": 90,
-				"defaultLanguage":   "fr",
+				"cookieBannerId":       bannerID,
+				"consentExpiryDays":    90,
+				"defaultLanguage":      "fr",
+				"publisherCountryCode": "FR",
 			},
 		}, &result)
 
 		require.NoError(t, err)
 		assert.Equal(t, 90, result.UpdateCookieBanner.CookieBanner.ConsentExpiryDays)
 		assert.Equal(t, "fr", result.UpdateCookieBanner.CookieBanner.DefaultLanguage)
+		assert.Equal(t, "FR", result.UpdateCookieBanner.CookieBanner.PublisherCountryCode)
 	})
 
 	t.Run("disable resource reporting", func(t *testing.T) {

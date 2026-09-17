@@ -42,6 +42,7 @@ import { createDefaultIntegrations } from "./integrations";
 import { resolveLayout } from "./layout";
 import { enqueue, flush } from "./queue";
 import { getTCFRuntime } from "./addons";
+import { projectConsentFromTCF } from "./project-consent";
 import type {
   BannerConfig,
   ConsentAction,
@@ -51,6 +52,11 @@ import type {
   VisitorConsent,
 } from "./types";
 import { getOrCreateVisitorId, getVisitorId } from "./visitor";
+
+function tcfProjects(config: BannerConfig): boolean {
+  return !!config.tcf?.gvl &&
+    (config.regulation === "GDPR" || config.regulation === "UK_GDPR");
+}
 
 export type {
   BannerConfig,
@@ -151,8 +157,9 @@ export class CookieBannerClient {
           tc: cookie.tc,
         };
         this._gpcApplied = cookie.action === "GPC";
-        this.activate(cookie.data);
-        getConsent()._setReady(cookie.data, true);
+        const cookieData = this.projectedConsent(cookie.data, cookie.tc);
+        this.activate(cookieData);
+        getConsent()._setReady(cookieData, true);
         getTCFRuntime()?.onConfig(config, cookie.tc);
         void flush(this.bannerId);
         return;
@@ -185,8 +192,9 @@ export class CookieBannerClient {
           restored.tc = apiConsent.tc;
         }
         setConsentCookie(restored, config.consent_expiry_days);
-        this.activate(apiConsent.consent_data);
-        getConsent()._setReady(apiConsent.consent_data, true);
+        const restoredData = this.projectedConsent(apiConsent.consent_data, apiConsent.tc);
+        this.activate(restoredData);
+        getConsent()._setReady(restoredData, true);
         getTCFRuntime()?.onConfig(config, apiConsent.tc);
       } else {
         this.consent = null;
@@ -290,11 +298,14 @@ export class CookieBannerClient {
 
   customize(categories: Record<string, boolean>): void {
     const cfg = this.config;
-
-    const consentData: Record<string, boolean> = {};
-    for (const cat of cfg.categories) {
-      consentData[cat.slug] = cat.kind === "NECESSARY" || !!categories[cat.slug];
-    }
+    const consentData = tcfProjects(cfg) && getTCFRuntime()?.getPendingChoices
+      ? projectConsentFromTCF(cfg.categories, getTCFRuntime()?.getPendingChoices?.() ?? null)
+      : Object.fromEntries(
+          cfg.categories.map(cat => [
+            cat.slug,
+            cat.kind === "NECESSARY" || !!categories[cat.slug],
+          ]),
+        );
 
     this.recordConsent("CUSTOMIZE", consentData);
   }
@@ -363,6 +374,18 @@ export class CookieBannerClient {
     void fetchJSON<ConsentRecord>(url, { method: "POST", body })
       .then(() => void flush(this.bannerId))
       .catch(() => enqueue(this.bannerId, url.href, body));
+  }
+
+  private projectedConsent(
+    stored: Record<string, boolean>,
+    tc?: string,
+  ): Record<string, boolean> {
+    if (!tcfProjects(this.config) || !getTCFRuntime()?.decodeChoices) {
+      return stored;
+    }
+
+    const choices = tc ? getTCFRuntime()?.decodeChoices?.(tc) ?? null : null;
+    return projectConsentFromTCF(this.config.categories, choices);
   }
 
   private buildDefaultConsentData(): Record<string, boolean> {

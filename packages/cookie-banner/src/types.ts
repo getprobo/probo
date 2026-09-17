@@ -41,6 +41,7 @@ export interface Category {
   kind: string;
   cookies: CookieItem[];
   gcm_consent_types: string[];
+  tcf_purpose_ids?: number[];
   posthog_consent: boolean;
 }
 

@@ -27,6 +27,8 @@ export {
 export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "./addons";
 export { BRANDING, CLOSE_ICON } from "./html";
 export { resolveBannerText, resolveLayout } from "./layout";
+export { projectConsentFromTCF } from "./project-consent";
+export { interpolate } from "./i18n";
 export { registerCookieBanner } from "./themed-banner";
 export { bootThemedBanner } from "./themed-banner/boot";
 export { esc, floatingCard } from "./themed-banner/variants/shared";

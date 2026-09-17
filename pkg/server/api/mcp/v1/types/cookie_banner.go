@@ -34,19 +34,20 @@ func NewCookieBannerCapabilities(c coredata.CookieBannerCapabilities) *CookieBan
 
 func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 	return &CookieBanner{
-		ID:                b.ID,
-		OrganizationID:    b.OrganizationID,
-		Name:              b.Name,
-		Origin:            b.Origin,
-		State:             CookieBannerState(b.State),
-		PrivacyPolicyURL:  b.PrivacyPolicyURL,
-		CookiePolicyURL:   b.CookiePolicyURL,
-		ConsentExpiryDays: b.ConsentExpiryDays,
-		ShowBranding:      b.ShowBranding,
-		Capabilities:      NewCookieBannerCapabilities(b.Capabilities),
-		DefaultLanguage:   b.DefaultLanguage,
-		CreatedAt:         b.CreatedAt,
-		UpdatedAt:         b.UpdatedAt,
+		ID:                   b.ID,
+		OrganizationID:       b.OrganizationID,
+		Name:                 b.Name,
+		Origin:               b.Origin,
+		State:                CookieBannerState(b.State),
+		PrivacyPolicyURL:     b.PrivacyPolicyURL,
+		CookiePolicyURL:      b.CookiePolicyURL,
+		ConsentExpiryDays:    b.ConsentExpiryDays,
+		ShowBranding:         b.ShowBranding,
+		Capabilities:         NewCookieBannerCapabilities(b.Capabilities),
+		DefaultLanguage:      b.DefaultLanguage,
+		PublisherCountryCode: b.PublisherCountryCode,
+		CreatedAt:            b.CreatedAt,
+		UpdatedAt:            b.UpdatedAt,
 	}
 }
 

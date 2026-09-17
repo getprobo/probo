@@ -57,9 +57,10 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName        string
-		flagSlug        string
-		flagDescription string
+		flagName          string
+		flagSlug          string
+		flagDescription   string
+		flagTCFPurposeIDs []int
 	)
 
 	cmd := &cobra.Command{
@@ -99,6 +100,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["description"] = flagDescription
 			}
 
+			if cmd.Flags().Changed("tcf-purpose-ids") {
+				input["tcfPurposeIds"] = flagTCFPurposeIDs
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -123,6 +128,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Category name")
 	cmd.Flags().StringVar(&flagSlug, "slug", "", "Category slug")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Category description")
+	cmd.Flags().IntSliceVar(&flagTCFPurposeIDs, "tcf-purpose-ids", nil, "IAB TCF purpose IDs required for this category")
 
 	return cmd
 }

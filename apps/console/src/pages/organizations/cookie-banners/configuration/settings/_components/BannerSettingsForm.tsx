@@ -37,6 +37,7 @@ const bannerSettingsFormFragment = graphql`
     privacyPolicyUrl
     consentExpiryDays
     defaultLanguage
+    publisherCountryCode
     capabilities {
       resourceReporting
     }
@@ -53,6 +54,7 @@ const updateBannerMutation = graphql`
         privacyPolicyUrl
         consentExpiryDays
         defaultLanguage
+        publisherCountryCode
         capabilities {
           resourceReporting
         }
@@ -72,6 +74,7 @@ interface BannerSettingsFormValues {
   privacyPolicyUrl: string;
   consentExpiryDays: string;
   defaultLanguage: string;
+  publisherCountryCode: string;
   resourceReportingEnabled: boolean;
 }
 
@@ -94,6 +97,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
       privacyPolicyUrl: banner.privacyPolicyUrl ?? "",
       consentExpiryDays: String(banner.consentExpiryDays),
       defaultLanguage: banner.defaultLanguage,
+      publisherCountryCode: banner.publisherCountryCode,
       resourceReportingEnabled: banner.capabilities.resourceReporting,
     },
   });
@@ -108,6 +112,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           privacyPolicyUrl: data.privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(data.consentExpiryDays, 10),
           defaultLanguage: data.defaultLanguage,
+          publisherCountryCode: data.publisherCountryCode,
           capabilities: { resourceReporting: data.resourceReportingEnabled },
         },
       },
@@ -167,6 +172,19 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
                 )}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("bannerSettingsForm.fields.publisherCountryCode")}</Label>
+            <p className="text-sm text-txt-tertiary">
+              {t("bannerSettingsForm.fields.publisherCountryCodeHelp")}
+            </p>
+            <Input
+              {...register("publisherCountryCode")}
+              maxLength={2}
+              className="uppercase"
+              placeholder="AA"
+            />
           </div>
 
           <div className="flex items-start justify-between gap-4">

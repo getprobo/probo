@@ -110,6 +110,11 @@ func buildSnapshot(
 			gcmConsentTypes = []string{}
 		}
 
+		tcfPurposeIDs := c.TCFPurposeIDs
+		if tcfPurposeIDs == nil {
+			tcfPurposeIDs = []int{}
+		}
+
 		snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
 			Name:            c.Name,
 			Slug:            c.Slug,
@@ -117,6 +122,7 @@ func buildSnapshot(
 			Kind:            c.Kind,
 			Cookies:         cookies,
 			GCMConsentTypes: gcmConsentTypes,
+			TCFPurposeIDs:   tcfPurposeIDs,
 			PostHogConsent:  c.PostHogConsent,
 		}
 	}

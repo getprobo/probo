@@ -72,13 +72,14 @@ type (
 	}
 
 	UpdateCookieBannerRequest struct {
-		CookieBannerID    gid.GID
-		Name              *string
-		PrivacyPolicyURL  *string
-		CookiePolicyURL   *string
-		ConsentExpiryDays *int
-		DefaultLanguage   *string
-		Capabilities      *coredata.CookieBannerCapabilitiesPatch
+		CookieBannerID       gid.GID
+		Name                 *string
+		PrivacyPolicyURL     *string
+		CookiePolicyURL      *string
+		ConsentExpiryDays    *int
+		DefaultLanguage      *string
+		PublisherCountryCode *string
+		Capabilities         *coredata.CookieBannerCapabilitiesPatch
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -87,6 +88,7 @@ type (
 		Slug             *string
 		Description      *string
 		GCMConsentTypes  *[]string
+		TCFPurposeIDs    *[]int
 		PostHogConsent   *bool
 	}
 
@@ -315,6 +317,11 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 	v.Check(r.CookiePolicyURL, "cookie_policy_url", validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.DefaultLanguage, "default_language", validator.OneOfSlice(SupportedLanguages))
+	if r.PublisherCountryCode != nil {
+		code := strings.ToUpper(strings.TrimSpace(*r.PublisherCountryCode))
+		r.PublisherCountryCode = &code
+	}
+	v.Check(r.PublisherCountryCode, "publisher_country_code", publisherCountryCode())
 
 	return v.Error()
 }
@@ -356,6 +363,11 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(r.Slug, "slug", validator.Slug(100))
 	v.Check(r.Description, "description", validator.SafeText(1000))
+	if r.TCFPurposeIDs != nil {
+		v.CheckEach(*r.TCFPurposeIDs, "tcf_purpose_ids", func(index int, item any) {
+			v.Check(item, fmt.Sprintf("tcf_purpose_ids.%d", index), validator.Min(1), validator.Max(11))
+		})
+	}
 
 	return v.Error()
 }
@@ -707,19 +719,20 @@ func (s *Service) CreateCookieBanner(
 			now := time.Now()
 
 			banner = &coredata.CookieBanner{
-				ID:                gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
-				OrganizationID:    req.OrganizationID,
-				Name:              req.Name,
-				Origin:            CanonicalizeOrigin(req.Origin),
-				State:             coredata.CookieBannerStateActive,
-				PrivacyPolicyURL:  req.PrivacyPolicyURL,
-				CookiePolicyURL:   req.CookiePolicyURL,
-				ConsentExpiryDays: req.ConsentExpiryDays,
-				ShowBranding:      s.showBranding,
-				Capabilities:      coredata.DefaultCookieBannerCapabilities(),
-				DefaultLanguage:   "en",
-				CreatedAt:         now,
-				UpdatedAt:         now,
+				ID:                   gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
+				OrganizationID:       req.OrganizationID,
+				Name:                 req.Name,
+				Origin:               CanonicalizeOrigin(req.Origin),
+				State:                coredata.CookieBannerStateActive,
+				PrivacyPolicyURL:     req.PrivacyPolicyURL,
+				CookiePolicyURL:      req.CookiePolicyURL,
+				ConsentExpiryDays:    req.ConsentExpiryDays,
+				ShowBranding:         s.showBranding,
+				Capabilities:         coredata.DefaultCookieBannerCapabilities(),
+				DefaultLanguage:      "en",
+				PublisherCountryCode: tcfPublisherCC,
+				CreatedAt:            now,
+				UpdatedAt:            now,
 			}
 
 			if err := banner.Insert(ctx, tx, scope); err != nil {
@@ -737,6 +750,11 @@ func (s *Service) CreateCookieBanner(
 					gcmConsentTypes = []string{}
 				}
 
+				tcfPurposeIDs := dc.TCFPurposeIDs
+				if tcfPurposeIDs == nil {
+					tcfPurposeIDs = []int{}
+				}
+
 				category := &coredata.CookieCategory{
 					ID:              gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
 					OrganizationID:  banner.OrganizationID,
@@ -747,6 +765,7 @@ func (s *Service) CreateCookieBanner(
 					Kind:            dc.Kind,
 					Rank:            dc.Rank,
 					GCMConsentTypes: gcmConsentTypes,
+					TCFPurposeIDs:   tcfPurposeIDs,
 					PostHogConsent:  dc.PostHogConsent,
 					CreatedAt:       now,
 					UpdatedAt:       now,
@@ -1280,12 +1299,13 @@ func (s *Service) UpdateCookieBanner(
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
+			publisherCCChanged := req.PublisherCountryCode != nil && *req.PublisherCountryCode != banner.PublisherCountryCode
 			capabilitiesChanged := req.Capabilities != nil &&
 				req.Capabilities.Apply(banner.Capabilities) != banner.Capabilities
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
-			if !nameChanged && !snapshotChanged && !capabilitiesChanged {
+			if !nameChanged && !snapshotChanged && !capabilitiesChanged && !publisherCCChanged {
 				return nil
 			}
 
@@ -1307,6 +1327,10 @@ func (s *Service) UpdateCookieBanner(
 
 			if req.DefaultLanguage != nil {
 				banner.DefaultLanguage = *req.DefaultLanguage
+			}
+
+			if req.PublisherCountryCode != nil {
+				banner.PublisherCountryCode = *req.PublisherCountryCode
 			}
 
 			if req.Capabilities != nil {
@@ -1571,6 +1595,7 @@ func (s *Service) CreateCookieCategory(
 				Kind:            coredata.CookieCategoryKindNormal,
 				Rank:            req.Rank,
 				GCMConsentTypes: []string{},
+				TCFPurposeIDs:   []int{},
 				CreatedAt:       now,
 				UpdatedAt:       now,
 			}
@@ -1732,9 +1757,10 @@ func (s *Service) UpdateCookieCategory(
 			slugChanged := req.Slug != nil && *req.Slug != category.Slug
 			descChanged := req.Description != nil && *req.Description != category.Description
 			gcmChanged := req.GCMConsentTypes != nil && !slices.Equal(*req.GCMConsentTypes, category.GCMConsentTypes)
+			tcfChanged := req.TCFPurposeIDs != nil && !slices.Equal(*req.TCFPurposeIDs, category.TCFPurposeIDs)
 			posthogChanged := req.PostHogConsent != nil && *req.PostHogConsent != category.PostHogConsent
 
-			if !nameChanged && !slugChanged && !descChanged && !gcmChanged && !posthogChanged {
+			if !nameChanged && !slugChanged && !descChanged && !gcmChanged && !tcfChanged && !posthogChanged {
 				return nil
 			}
 
@@ -1752,6 +1778,10 @@ func (s *Service) UpdateCookieCategory(
 
 			if req.GCMConsentTypes != nil {
 				category.GCMConsentTypes = *req.GCMConsentTypes
+			}
+
+			if req.TCFPurposeIDs != nil {
+				category.TCFPurposeIDs = *req.TCFPurposeIDs
 			}
 
 			if posthogChanged {
@@ -2168,7 +2198,7 @@ func (s *Service) GetActiveBannerConfig(
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
 			if banner.Capabilities.TCF {
-				if err := attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs); err != nil {
+				if err := attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
 					return err
 				}
 			}
@@ -2251,6 +2281,8 @@ func buildBannerConfig(
 		}
 	}
 
+	mergeTCFTexts(resolvedLang, texts)
+
 	var privacyPolicyURL string
 	if snapshot.PrivacyPolicyURL != nil {
 		privacyPolicyURL = *snapshot.PrivacyPolicyURL
@@ -2282,6 +2314,7 @@ func attachTCFVendors(
 	conn pg.Querier,
 	config *BannerConfig,
 	iabVendorIDs []int,
+	publisherCC string,
 ) error {
 	if config.TCF == nil {
 		config.TCF = &BannerTCF{}
@@ -2291,7 +2324,10 @@ func attachTCFVendors(
 	cmpVersion := tcfCmpVersion
 	config.TCF.CmpID = &cmpID
 	config.TCF.CmpVersion = &cmpVersion
-	config.TCF.PublisherCC = tcfPublisherCC
+	if publisherCC == "" {
+		publisherCC = tcfPublisherCC
+	}
+	config.TCF.PublisherCC = publisherCC
 
 	var snapshot *coredata.CommonGVLSnapshot
 

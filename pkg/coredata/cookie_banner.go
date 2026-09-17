@@ -48,6 +48,7 @@ type (
 		ShowBranding                bool                     `db:"show_branding"`
 		Capabilities                CookieBannerCapabilities `db:"capabilities"`
 		DefaultLanguage             string                   `db:"default_language"`
+		PublisherCountryCode        string                   `db:"publisher_country_code"`
 		PatternAnalysisRequestedAt  *time.Time               `db:"pattern_analysis_requested_at"`
 		PolicyDocumentID            *gid.GID                 `db:"policy_document_id"`
 		PolicyGenerationRequestedAt *time.Time               `db:"policy_generation_requested_at"`
@@ -125,6 +126,7 @@ SELECT
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,
@@ -180,6 +182,7 @@ SELECT
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,
@@ -236,6 +239,7 @@ SELECT
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,
@@ -296,6 +300,7 @@ SELECT
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,
@@ -353,6 +358,7 @@ SELECT
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,
@@ -442,6 +448,7 @@ INSERT INTO cookie_banners (
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,
@@ -460,6 +467,7 @@ INSERT INTO cookie_banners (
 	@show_branding,
 	@capabilities,
 	@default_language,
+	@publisher_country_code,
 	@pattern_analysis_requested_at,
 	@policy_document_id,
 	@policy_generation_requested_at,
@@ -481,6 +489,7 @@ INSERT INTO cookie_banners (
 		"show_branding":                  b.ShowBranding,
 		"capabilities":                   b.Capabilities,
 		"default_language":               b.DefaultLanguage,
+		"publisher_country_code":         b.PublisherCountryCode,
 		"pattern_analysis_requested_at":  b.PatternAnalysisRequestedAt,
 		"policy_document_id":             b.PolicyDocumentID,
 		"policy_generation_requested_at": b.PolicyGenerationRequestedAt,
@@ -518,6 +527,7 @@ SET
 	show_branding = @show_branding,
 	capabilities = @capabilities,
 	default_language = @default_language,
+	publisher_country_code = @publisher_country_code,
 	policy_document_id = @policy_document_id,
 	updated_at = @updated_at
 WHERE
@@ -528,17 +538,18 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                  b.ID,
-		"name":                b.Name,
-		"state":               b.State,
-		"privacy_policy_url":  b.PrivacyPolicyURL,
-		"cookie_policy_url":   b.CookiePolicyURL,
-		"consent_expiry_days": b.ConsentExpiryDays,
-		"show_branding":       b.ShowBranding,
-		"capabilities":        b.Capabilities,
-		"default_language":    b.DefaultLanguage,
-		"policy_document_id":  b.PolicyDocumentID,
-		"updated_at":          b.UpdatedAt,
+		"id":                     b.ID,
+		"name":                   b.Name,
+		"state":                  b.State,
+		"privacy_policy_url":     b.PrivacyPolicyURL,
+		"cookie_policy_url":      b.CookiePolicyURL,
+		"consent_expiry_days":    b.ConsentExpiryDays,
+		"show_branding":          b.ShowBranding,
+		"capabilities":           b.Capabilities,
+		"default_language":       b.DefaultLanguage,
+		"publisher_country_code": b.PublisherCountryCode,
+		"policy_document_id":     b.PolicyDocumentID,
+		"updated_at":             b.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -641,6 +652,7 @@ SELECT
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,
@@ -735,6 +747,7 @@ SELECT
 	show_branding,
 	capabilities,
 	default_language,
+	publisher_country_code,
 	pattern_analysis_requested_at,
 	policy_document_id,
 	policy_generation_requested_at,

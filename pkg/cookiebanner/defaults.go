@@ -31,6 +31,7 @@ var defaultCategories = []struct {
 	Kind            coredata.CookieCategoryKind
 	Rank            int
 	GCMConsentTypes []string
+	TCFPurposeIDs   []int
 	PostHogConsent  bool
 }{
 	{
@@ -40,6 +41,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNecessary,
 		Rank:            0,
 		GCMConsentTypes: []string{"security_storage"},
+		TCFPurposeIDs:   []int{},
 		PostHogConsent:  false,
 	},
 	{
@@ -49,6 +51,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNormal,
 		Rank:            1,
 		GCMConsentTypes: []string{"analytics_storage"},
+		TCFPurposeIDs:   []int{1, 7, 8, 9, 10},
 		PostHogConsent:  true,
 	},
 	{
@@ -58,6 +61,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNormal,
 		Rank:            2,
 		GCMConsentTypes: []string{"ad_storage", "ad_user_data", "ad_personalization"},
+		TCFPurposeIDs:   []int{1, 3, 4},
 		PostHogConsent:  false,
 	},
 	{
@@ -67,6 +71,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNormal,
 		Rank:            3,
 		GCMConsentTypes: []string{"functionality_storage", "personalization_storage"},
+		TCFPurposeIDs:   []int{},
 		PostHogConsent:  false,
 	},
 	{
@@ -76,6 +81,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindUncategorised,
 		Rank:            4,
 		GCMConsentTypes: nil,
+		TCFPurposeIDs:   []int{},
 		PostHogConsent:  false,
 	},
 }
@@ -696,4 +702,103 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_notice": "Este sitio utiliza cookies para mejorar su experiencia. {{cookie_policy_link}}",
 		"button_dismiss":            "Entendido",
 	},
+}
+
+var tcfUIStringsByLanguage = map[string]map[string]string{
+	"en": {
+		"tcf_disclosure_store":         "This site stores and/or accesses information on a device and processes personal data.",
+		"tcf_label_purposes":           "Purposes",
+		"tcf_label_special_features":   "Special features",
+		"tcf_disclosure_partners":      "We work with {{partners}}.",
+		"tcf_partner_one":              "{{count}} partner",
+		"tcf_partners":                 "{{count}} partners",
+		"tcf_view_partners":            "View partners",
+		"tcf_section_purposes":         "Purposes",
+		"tcf_section_special_features": "Special features",
+		"tcf_section_partners":         "Partners",
+		"tcf_section_storage":          "Storage",
+		"tcf_storage":                  "Your choices are stored in the probo_consent cookie for {{days}} days.",
+	},
+	"fr": {
+		"tcf_disclosure_store":         "Ce site stocke et/ou accède à des informations sur un appareil et traite des données personnelles.",
+		"tcf_label_purposes":           "Finalités",
+		"tcf_label_special_features":   "Fonctionnalités spéciales",
+		"tcf_disclosure_partners":      "Nous travaillons avec {{partners}}.",
+		"tcf_partner_one":              "{{count}} partenaire",
+		"tcf_partners":                 "{{count}} partenaires",
+		"tcf_view_partners":            "Voir les partenaires",
+		"tcf_section_purposes":         "Finalités",
+		"tcf_section_special_features": "Fonctionnalités spéciales",
+		"tcf_section_partners":         "Partenaires",
+		"tcf_section_storage":          "Stockage",
+		"tcf_storage":                  "Vos choix sont stockés dans le cookie probo_consent pendant {{days}} jours.",
+	},
+	"de": {
+		"tcf_disclosure_store":         "Diese Website speichert und/oder greift auf Informationen auf einem Gerät zu und verarbeitet personenbezogene Daten.",
+		"tcf_label_purposes":           "Zwecke",
+		"tcf_label_special_features":   "Besondere Funktionen",
+		"tcf_disclosure_partners":      "Wir arbeiten mit {{partners}}.",
+		"tcf_partner_one":              "{{count}} Partner",
+		"tcf_partners":                 "{{count}} Partner",
+		"tcf_view_partners":            "Partner anzeigen",
+		"tcf_section_purposes":         "Zwecke",
+		"tcf_section_special_features": "Besondere Funktionen",
+		"tcf_section_partners":         "Partner",
+		"tcf_section_storage":          "Speicherung",
+		"tcf_storage":                  "Ihre Auswahl wird {{days}} Tage im Cookie probo_consent gespeichert.",
+	},
+	"es": {
+		"tcf_disclosure_store":         "Este sitio almacena y/o accede a información en un dispositivo y trata datos personales.",
+		"tcf_label_purposes":           "Finalidades",
+		"tcf_label_special_features":   "Características especiales",
+		"tcf_disclosure_partners":      "Trabajamos con {{partners}}.",
+		"tcf_partner_one":              "{{count}} socio",
+		"tcf_partners":                 "{{count}} socios",
+		"tcf_view_partners":            "Ver socios",
+		"tcf_section_purposes":         "Finalidades",
+		"tcf_section_special_features": "Características especiales",
+		"tcf_section_partners":         "Socios",
+		"tcf_section_storage":          "Almacenamiento",
+		"tcf_storage":                  "Sus elecciones se almacenan en la cookie probo_consent durante {{days}} días.",
+	},
+	"nl": {
+		"tcf_disclosure_store":         "Deze site slaat informatie op een apparaat op en/of opent die, en verwerkt persoonsgegevens.",
+		"tcf_label_purposes":           "Doeleinden",
+		"tcf_label_special_features":   "Speciale functies",
+		"tcf_disclosure_partners":      "Wij werken samen met {{partners}}.",
+		"tcf_partner_one":              "{{count}} partner",
+		"tcf_partners":                 "{{count}} partners",
+		"tcf_view_partners":            "Partners bekijken",
+		"tcf_section_purposes":         "Doeleinden",
+		"tcf_section_special_features": "Speciale functies",
+		"tcf_section_partners":         "Partners",
+		"tcf_section_storage":          "Opslag",
+		"tcf_storage":                  "Uw keuzes worden {{days}} dagen bewaard in de cookie probo_consent.",
+	},
+}
+
+func mergeTCFTexts(lang string, texts map[string]string) {
+	extras := tcfUIStringsByLanguage[lang]
+	if extras == nil {
+		extras = tcfUIStringsByLanguage["en"]
+	}
+
+	for key, value := range extras {
+		if texts[key] == "" {
+			texts[key] = value
+		}
+	}
+}
+
+func init() {
+	for lang, ui := range defaultUIStringsByLanguage {
+		extras := tcfUIStringsByLanguage[lang]
+		if extras == nil {
+			extras = tcfUIStringsByLanguage["en"]
+		}
+
+		for key, value := range extras {
+			ui[key] = value
+		}
+	}
 }

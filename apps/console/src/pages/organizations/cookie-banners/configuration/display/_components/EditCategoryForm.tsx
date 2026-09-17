@@ -32,11 +32,14 @@ const GCM_CONSENT_TYPES = [
   "security_storage",
 ] as const;
 
+const TCF_PURPOSE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
+
 interface CategoryFormValues {
   name: string;
   slug: string;
   description: string;
   gcmConsentTypes: string[];
+  tcfPurposeIds: number[];
   posthogConsent: boolean;
 }
 
@@ -46,9 +49,10 @@ interface EditCategoryFormProps {
   description: string;
   kind: string;
   gcmConsentTypes: string[];
+  tcfPurposeIds: number[];
   posthogConsent: boolean;
   isUpdating: boolean;
-  onSave: (name: string, slug: string, description: string, gcmConsentTypes: string[], posthogConsent: boolean) => void;
+  onSave: (name: string, slug: string, description: string, gcmConsentTypes: string[], tcfPurposeIds: number[], posthogConsent: boolean) => void;
   onCancel: () => void;
 }
 
@@ -58,6 +62,7 @@ export function EditCategoryForm({
   description,
   kind,
   gcmConsentTypes,
+  tcfPurposeIds,
   posthogConsent,
   isUpdating,
   onSave,
@@ -71,12 +76,13 @@ export function EditCategoryForm({
       slug,
       description,
       gcmConsentTypes,
+      tcfPurposeIds,
       posthogConsent,
     },
   });
 
   const onSubmit = (data: CategoryFormValues) => {
-    onSave(data.name, data.slug, data.description, data.gcmConsentTypes, data.posthogConsent);
+    onSave(data.name, data.slug, data.description, data.gcmConsentTypes, data.tcfPurposeIds, data.posthogConsent);
   };
 
   return (
@@ -126,6 +132,43 @@ export function EditCategoryForm({
                       className="rounded"
                     />
                     <code className="font-mono">{type}</code>
+                  </label>
+                ))}
+              </>
+            )}
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-sm font-medium">
+          {t("editCategoryForm.tcfPurposes.title")}
+        </label>
+        <p className="text-xs text-muted-foreground mb-2">
+          {t("editCategoryForm.tcfPurposes.description")}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Controller
+            name="tcfPurposeIds"
+            control={control}
+            render={({ field }) => (
+              <>
+                {TCF_PURPOSE_IDS.map(id => (
+                  <label
+                    key={id}
+                    className="flex items-center gap-1.5 text-xs cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={field.value.includes(id)}
+                      onChange={() => {
+                        const next = field.value.includes(id)
+                          ? field.value.filter(value => value !== id)
+                          : [...field.value, id].sort((a, b) => a - b);
+                        field.onChange(next);
+                      }}
+                      className="rounded"
+                    />
+                    <code className="font-mono">{id}</code>
                   </label>
                 ))}
               </>
