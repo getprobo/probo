@@ -18,8 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { startTCF } from "./api";
-export { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
-export { encodeTCString, gdprApplies } from "./encode";
-export { renderTCFLayout } from "./layout";
-export { installTCFStub } from "./stub";
+let lastTc: string | undefined;
+
+export function setLastTCString(tc: string | undefined): void {
+  lastTc = tc;
+}
+
+export function getLastTCString(): string | undefined {
+  return lastTc;
+}

@@ -19,30 +19,36 @@
 // SOFTWARE.
 
 import { CmpApi } from "@iabtechlabtcf/cmpapi";
-import type { BannerConfig, ConsentAction } from "@probo/cookie-banner";
-import { setTCFRuntime } from "@probo/cookie-banner";
+import type { BannerConfig, ConsentAction, TCFChoices } from "@probo/cookie-banner";
+import { setLayoutRenderer, setTCFRuntime } from "@probo/cookie-banner";
 
 import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
 import { encodeTCString, gdprApplies } from "./encode";
+import { renderTCFLayout, wireTCFLayout } from "./layout";
+import { setLastTCString } from "./session";
 
 function tcfActive(config: BannerConfig): boolean {
   return !!config.tcf && gdprApplies(config) && !!config.tcf.gvl;
 }
 
-function grantsTCF(action: ConsentAction): boolean {
-  return action === "ACCEPT_ALL";
-}
-
 export function startTCF(): void {
   const cmpApi = new CmpApi(TCF_CMP_ID, TCF_CMP_VERSION, true);
+  let pending: TCFChoices | undefined;
+
+  setLayoutRenderer({
+    render: renderTCFLayout,
+    wire: wireTCFLayout,
+  });
 
   setTCFRuntime({
     onConfig(config, existingTc) {
       if (!tcfActive(config)) {
+        setLastTCString(undefined);
         cmpApi.update(null);
         return;
       }
 
+      setLastTCString(existingTc);
       if (existingTc) {
         cmpApi.update(existingTc, false);
         return;
@@ -50,15 +56,35 @@ export function startTCF(): void {
 
       cmpApi.update("", true);
     },
+    setPendingChoices(choices) {
+      pending = choices;
+    },
     onConsent(action, config) {
       if (!tcfActive(config)) {
+        setLastTCString(undefined);
         cmpApi.update(null);
         return undefined;
       }
 
-      const tc = encodeTCString(config, grantsTCF(action));
+      const grant = grantForAction(action, pending);
+      pending = undefined;
+      const tc = encodeTCString(config, grant);
+      setLastTCString(tc);
       cmpApi.update(tc, false);
       return tc;
     },
   });
+}
+
+function grantForAction(
+  action: ConsentAction,
+  pending: TCFChoices | undefined,
+): boolean | TCFChoices {
+  if (action === "ACCEPT_ALL") {
+    return true;
+  }
+  if (action === "CUSTOMIZE" && pending) {
+    return pending;
+  }
+  return false;
 }

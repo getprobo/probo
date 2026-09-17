@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { GVL, TCModel, TCString, type VendorList } from "@iabtechlabtcf/core";
-import type { BannerConfig, BannerTCF } from "@probo/cookie-banner";
+import type { BannerConfig, BannerTCF, TCFChoices } from "@probo/cookie-banner";
 
 import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
 
@@ -29,7 +29,10 @@ export function gdprApplies(config: BannerConfig): boolean {
   return config.regulation === "GDPR" || config.regulation === "UK_GDPR";
 }
 
-export function encodeTCString(config: BannerConfig, granted: boolean): string {
+export function encodeTCString(
+  config: BannerConfig,
+  grant: boolean | TCFChoices,
+): string {
   const gvlJson = config.tcf?.gvl;
   if (!gvlJson) {
     throw new Error("cannot encode TC string: tcf.gvl is missing");
@@ -49,15 +52,25 @@ export function encodeTCString(config: BannerConfig, granted: boolean): string {
 
   tcModel.setAllVendorsDisclosed();
 
-  if (granted) {
+  if (grant === true) {
     tcModel.setAllVendorConsents();
     tcModel.setAllPurposeConsents();
     tcModel.setAllPurposeLegitimateInterests();
     tcModel.setAllVendorLegitimateInterests();
     tcModel.setAllSpecialFeatureOptins();
+  } else if (grant !== false) {
+    applyChoices(tcModel, grant);
   }
 
   return TCString.encode(tcModel);
+}
+
+function applyChoices(tcModel: TCModel, choices: TCFChoices): void {
+  tcModel.purposeConsents.set(choices.purposeConsents);
+  tcModel.purposeLegitimateInterests.set(choices.purposeLegitimateInterests);
+  tcModel.vendorConsents.set(choices.vendorConsents);
+  tcModel.vendorLegitimateInterests.set(choices.vendorLegitimateInterests);
+  tcModel.specialFeatureOptins.set(choices.specialFeatureOptins);
 }
 
 function resolvedCmpID(cmpId: number | undefined): number {

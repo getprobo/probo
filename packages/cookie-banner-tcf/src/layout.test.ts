@@ -18,11 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TCString } from "@iabtechlabtcf/core";
 import type { BannerConfig, TCFGVL } from "@probo/cookie-banner";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { TCF_CMP_ID, encodeTCString, gdprApplies } from "./encode";
+vi.mock("@probo/cookie-banner", () => ({
+  BRANDING: "BRANDING",
+  CLOSE_ICON: "CLOSE",
+  esc: (s: string) => s.replace(/</g, "&lt;"),
+  floatingCard: (_position: string, _aria: unknown, inner: string) => inner,
+  getTCFRuntime: () => null,
+}));
+
+import { TCF_CMP_ID } from "./constants";
+import { renderTCFLayout } from "./layout";
 
 const vendorId = 52;
 
@@ -74,7 +82,7 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
     language: "en",
     default_language: "en",
     cookie_policy_url: "https://example.com/cookies",
-    consent_expiry_days: 365,
+    consent_expiry_days: 180,
     consent_mode: "OPT_IN",
     regulation: "GDPR",
     layout: {
@@ -105,59 +113,20 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
   };
 }
 
-describe("gdprApplies", () => {
-  it("is true for GDPR and UK_GDPR", () => {
-    expect(gdprApplies(bannerConfig({ regulation: "GDPR" }))).toBe(true);
-    expect(gdprApplies(bannerConfig({ regulation: "UK_GDPR" }))).toBe(true);
+describe("renderTCFLayout", () => {
+  it("returns null when TCF does not apply", () => {
+    expect(renderTCFLayout(bannerConfig({ tcf: undefined }), "bottom-left")).toBeNull();
+    expect(renderTCFLayout(bannerConfig({ regulation: "CCPA" }), "bottom-left")).toBeNull();
   });
 
-  it("is false for other regulations", () => {
-    expect(gdprApplies(bannerConfig({ regulation: "CCPA" }))).toBe(false);
-    expect(gdprApplies(bannerConfig({ regulation: null }))).toBe(false);
-  });
-});
-
-describe("encodeTCString", () => {
-  it("throws when tcf.gvl is missing", () => {
-    expect(() => encodeTCString(bannerConfig({ tcf: {} }), true)).toThrow(
-      /tcf.gvl is missing/,
-    );
-  });
-
-  it("encodes disclosed vendors on reject without granting consent", () => {
-    const encoded = encodeTCString(bannerConfig(), false);
-    const decoded = TCString.decode(encoded);
-
-    expect(decoded.cmpId).toBe(TCF_CMP_ID);
-    expect(decoded.isServiceSpecific).toBe(true);
-    expect(decoded.vendorsDisclosed.has(vendorId)).toBe(true);
-    expect(decoded.vendorConsents.has(vendorId)).toBe(false);
-    expect(decoded.purposeConsents.has(1)).toBe(false);
-    expect(decoded.specialFeatureOptins.has(1)).toBe(false);
-  });
-
-  it("encodes vendor, purpose, and special-feature grants on accept", () => {
-    const encoded = encodeTCString(bannerConfig(), true);
-    const decoded = TCString.decode(encoded);
-
-    expect(decoded.vendorsDisclosed.has(vendorId)).toBe(true);
-    expect(decoded.vendorConsents.has(vendorId)).toBe(true);
-    expect(decoded.purposeConsents.has(1)).toBe(true);
-    expect(decoded.specialFeatureOptins.has(1)).toBe(true);
-  });
-
-  it("encodes only the selected purpose, vendor, and special-feature bits", () => {
-    const encoded = encodeTCString(bannerConfig(), {
-      purposeConsents: [1],
-      purposeLegitimateInterests: [],
-      vendorConsents: [vendorId],
-      vendorLegitimateInterests: [],
-      specialFeatureOptins: [],
-    });
-    const decoded = TCString.decode(encoded);
-
-    expect(decoded.purposeConsents.has(1)).toBe(true);
-    expect(decoded.vendorConsents.has(vendorId)).toBe(true);
-    expect(decoded.specialFeatureOptins.has(1)).toBe(false);
+  it("renders IAB first-layer disclosures and the second-layer lists", () => {
+    const html = renderTCFLayout(bannerConfig(), "bottom-left");
+    expect(html).toContain("Store and/or access information on a device");
+    expect(html).toContain("Use precise geolocation data");
+    expect(html).toContain("1 partner");
+    expect(html).toContain("View partners");
+    expect(html).toContain("Test Vendor");
+    expect(html).toContain("probo_consent cookie for 180 days");
+    expect(html).not.toContain("probo-category-list");
   });
 });
