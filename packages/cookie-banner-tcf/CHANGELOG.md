@@ -12,6 +12,8 @@ in this file.
   in place of the default banner IIFE when the hidden TCF capability is on.
   Accept/reject stores an optional `tc` field on `probo_consent`
 - GDPR TCF first layer lists store/access, purposes, special features, and
-  partner count; the second layer lets visitors toggle purposes, special
-  features, and per-vendor consent/legitimate interest. Save encodes those
-  bits; accept still grants all disclosed vendors and reject grants none
+  partner count; the second layer lets visitors toggle purposes, purpose
+  legitimate interest, special features, and per-vendor consent/LI. Stacks
+  group purposes when the GVL includes them. Disclosure copy uses
+  `data-text` keys. Save encodes those bits; accept still grants all
+  disclosed vendors and reject grants none

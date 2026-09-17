@@ -62,6 +62,7 @@ type (
 		Kind            CookieCategoryKind `json:"kind"`
 		Cookies         CookieItems        `json:"cookies"`
 		GCMConsentTypes []string           `json:"gcm_consent_types"`
+		TCFPurposeIDs   []int              `json:"tcf_purpose_ids"`
 		PostHogConsent  bool               `json:"posthog_consent"`
 	}
 

@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { CmpApi } from "@iabtechlabtcf/cmpapi";
+import { TCString } from "@iabtechlabtcf/core";
 import type { BannerConfig, ConsentAction, TCFChoices } from "@probo/cookie-banner";
 import { setLayoutRenderer, setTCFRuntime } from "@probo/cookie-banner";
 
@@ -59,6 +60,12 @@ export function startTCF(): void {
     setPendingChoices(choices) {
       pending = choices;
     },
+    getPendingChoices() {
+      return pending;
+    },
+    decodeChoices(tc) {
+      return decodeTCChoices(tc);
+    },
     onConsent(action, config) {
       if (!tcfActive(config)) {
         setLastTCString(undefined);
@@ -87,4 +94,29 @@ function grantForAction(
     return pending;
   }
   return "none";
+}
+
+function decodeTCChoices(tc: string): TCFChoices | null {
+  try {
+    const model = TCString.decode(tc);
+    return {
+      purposeConsents: vectorIds(model.purposeConsents),
+      purposeLegitimateInterests: vectorIds(model.purposeLegitimateInterests),
+      vendorConsents: vectorIds(model.vendorConsents),
+      vendorLegitimateInterests: vectorIds(model.vendorLegitimateInterests),
+      specialFeatureOptins: vectorIds(model.specialFeatureOptins),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function vectorIds(vector: { maxId: number; has(id: number): boolean }): number[] {
+  const ids: number[] = [];
+  for (let id = 1; id <= vector.maxId; id++) {
+    if (vector.has(id)) {
+      ids.push(id);
+    }
+  }
+  return ids;
 }

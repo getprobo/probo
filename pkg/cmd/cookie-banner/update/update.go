@@ -56,6 +56,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagPrivacyPolicyUrl         string
 		flagConsentExpiry            int
 		flagDefaultLanguage          string
+		flagPublisherCountryCode     string
 		flagResourceReportingEnabled bool
 	)
 
@@ -104,6 +105,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["defaultLanguage"] = flagDefaultLanguage
 			}
 
+			if cmd.Flags().Changed("publisher-country-code") {
+				input["publisherCountryCode"] = flagPublisherCountryCode
+			}
+
 			if cmd.Flags().Changed("resource-reporting-enabled") {
 				input["capabilities"] = map[string]any{
 					"resourceReporting": flagResourceReportingEnabled,
@@ -136,6 +141,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagPrivacyPolicyUrl, "privacy-policy-url", "", "Privacy policy URL")
 	cmd.Flags().IntVar(&flagConsentExpiry, "consent-expiry-days", 0, "Days until consent expires")
 	cmd.Flags().StringVar(&flagDefaultLanguage, "default-language", "", "Default language code")
+	cmd.Flags().StringVar(&flagPublisherCountryCode, "publisher-country-code", "", "IAB TCF publisher country (ISO 3166-1 alpha-2, or AA)")
 	cmd.Flags().BoolVar(&flagResourceReportingEnabled, "resource-reporting-enabled", true, "Whether the SDK reports detected resources")
 
 	return cmd

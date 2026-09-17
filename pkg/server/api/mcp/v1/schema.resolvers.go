@@ -5791,6 +5791,10 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		updateReq.DefaultLanguage = *v
 	}
 
+	if v := UnwrapOmittable(input.PublisherCountryCode); v != nil && *v != nil {
+		updateReq.PublisherCountryCode = *v
+	}
+
 	if v := UnwrapOmittable(input.Capabilities); v != nil && *v != nil {
 		updateReq.Capabilities = &coredata.CookieBannerCapabilitiesPatch{
 			ResourceReporting: (*v).ResourceReporting,
@@ -5920,6 +5924,10 @@ func (r *Resolver) UpdateCookieCategoryTool(ctx context.Context, req *mcp.CallTo
 
 	if v := UnwrapOmittable(input.Description); v != nil && *v != nil {
 		updateReq.Description = *v
+	}
+
+	if v := UnwrapOmittable(input.TcfPurposeIds); v != nil && *v != nil {
+		updateReq.TCFPurposeIDs = optionalIntSlice(*v)
 	}
 
 	category, err := r.cookieBanner.UpdateCookieCategory(ctx, scope, updateReq)

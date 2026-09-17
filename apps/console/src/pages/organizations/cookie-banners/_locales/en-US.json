@@ -118,6 +118,8 @@
       "privacyPolicyUrl": "Privacy policy URL",
       "consentExpiryDays": "Consent expiry (days)",
       "defaultLanguage": "Default language",
+      "publisherCountryCode": "Publisher country",
+      "publisherCountryCodeHelp": "IAB TCF country of establishment (ISO 3166-1 alpha-2). Use AA if unspecified.",
       "resourceReportingEnabled": "Resource reporting",
       "resourceReportingEnabledHelp": "When enabled, the banner SDK detects and reports third-party scripts, iframes, and other resources."
     },
@@ -157,6 +159,7 @@
   "editCategoryForm": {
     "fields": { "namePlaceholder": "Category name", "slugPlaceholder": "Category slug", "descriptionPlaceholder": "Category description" },
     "googleConsentMode": { "title": "Google Consent Mode", "description": "Select the Google Consent Mode signals this category controls." },
+    "tcfPurposes": { "title": "TCF purposes", "description": "When TCF is on, this category is granted only if every selected purpose is consented or under legitimate interest." },
     "posthog": { "title": "PostHog", "description": "Control PostHog tracking consent based on this category.", "checkbox": "Opt in/out of PostHog tracking" },
     "actions": { "saving": "Saving...", "save": "Save", "cancel": "Cancel" }
   },
@@ -165,7 +168,7 @@
     "errors": { "title": "Error", "updateCategory": "Failed to update category", "duplicateCookie": "A cookie with this name already exists in this banner", "addCookie": "Failed to add cookie", "updateCookie": "Failed to update cookie", "deleteCookie": "Failed to delete cookie", "deleteCategory": "Failed to delete category", "reorder": "Failed to reorder", "moveCookie": "Failed to move cookie" },
     "deleteCookieConfirmation": "Are you sure you want to delete \"{{name}}\"?",
     "deleteCategoryConfirmation": "Are you sure you want to delete the category \"{{name}}\"? Any cookies in this category will be moved to Uncategorised.",
-    "required": "Required", "blockHint": "Block elements until consent is given:", "googleConsentMode": "Google Consent Mode:", "posthog": "PostHog:", "trackingConsent": "Tracking consent",
+    "required": "Required", "blockHint": "Block elements until consent is given:", "googleConsentMode": "Google Consent Mode:", "tcfPurposes": "TCF purposes:", "posthog": "PostHog:", "trackingConsent": "Tracking consent",
     "columns": { "name": "Name", "type": "Type", "duration": "Duration" },
     "actions": { "edit": "Edit", "delete": "Delete", "include": "Include", "exclude": "Exclude", "addCookie": "Add cookie" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },

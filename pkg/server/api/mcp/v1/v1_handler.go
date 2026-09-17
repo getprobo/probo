@@ -135,6 +135,28 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 	return &value
 }
 
+func optionalIntSlice(values *[]any) *[]int {
+	if values == nil {
+		return nil
+	}
+
+	ids := make([]int, 0, len(*values))
+	for _, item := range *values {
+		switch n := item.(type) {
+		case int:
+			ids = append(ids, n)
+		case int32:
+			ids = append(ids, int(n))
+		case int64:
+			ids = append(ids, int(n))
+		case float64:
+			ids = append(ids, int(n))
+		}
+	}
+
+	return &ids
+}
+
 func optionalPtr[T any](value *T) **T {
 	if value == nil {
 		return nil

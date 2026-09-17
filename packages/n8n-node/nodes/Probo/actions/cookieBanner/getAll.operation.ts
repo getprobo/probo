@@ -93,6 +93,7 @@ export async function execute(
 								showBranding
 								capabilities { resourceReporting }
 								defaultLanguage
+								publisherCountryCode
 								createdAt
 								updatedAt
 							}

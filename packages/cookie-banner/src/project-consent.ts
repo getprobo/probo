@@ -18,30 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerConfig, ConsentAction } from "../types";
+import type { TCFChoices } from "./addons/tcf-runtime";
+import type { Category } from "./types";
 
-export interface TCFChoices {
-  purposeConsents: number[];
-  purposeLegitimateInterests: number[];
-  vendorConsents: number[];
-  vendorLegitimateInterests: number[];
-  specialFeatureOptins: number[];
-}
+export function projectConsentFromTCF(
+  categories: Category[],
+  choices: Pick<TCFChoices, "purposeConsents" | "purposeLegitimateInterests"> | null,
+): Record<string, boolean> {
+  const granted = new Set<number>([
+    ...(choices?.purposeConsents ?? []),
+    ...(choices?.purposeLegitimateInterests ?? []),
+  ]);
 
-export interface TCFRuntime {
-  onConfig(config: BannerConfig, existingTc?: string): void;
-  onConsent(action: ConsentAction, config: BannerConfig): string | undefined;
-  setPendingChoices?(choices: TCFChoices): void;
-  getPendingChoices?(): TCFChoices | undefined;
-  decodeChoices?(tc: string): TCFChoices | null;
-}
+  const consentData: Record<string, boolean> = {};
+  for (const cat of categories) {
+    if (cat.kind === "NECESSARY") {
+      consentData[cat.slug] = true;
+      continue;
+    }
 
-let runtime: TCFRuntime | null = null;
+    const ids = cat.tcf_purpose_ids ?? [];
+    consentData[cat.slug] = ids.length > 0 && ids.every(id => granted.has(id));
+  }
 
-export function setTCFRuntime(next: TCFRuntime): void {
-  runtime = next;
-}
-
-export function getTCFRuntime(): TCFRuntime | null {
-  return runtime;
+  return consentData;
 }

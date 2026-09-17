@@ -525,6 +525,30 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		}, new(map[string]any))
 		require.NoError(t, err)
 
+		const updateMutation = `
+			mutation($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) {
+					cookieBanner { publisherCountryCode }
+				}
+			}
+		`
+
+		var updated struct {
+			UpdateCookieBanner struct {
+				CookieBanner struct {
+					PublisherCountryCode string `json:"publisherCountryCode"`
+				} `json:"cookieBanner"`
+			} `json:"updateCookieBanner"`
+		}
+		err = owner.Execute(updateMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId":       bannerID,
+				"publisherCountryCode": "FR",
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Equal(t, "FR", updated.UpdateCookieBanner.CookieBanner.PublisherCountryCode)
+
 		const publishMutation = `
 			mutation($input: PublishCookieBannerVersionInput!) {
 				publishCookieBannerVersion(input: $input) {
@@ -569,7 +593,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		assert.Equal(t, 2, *config.TCF.CmpID)
 		require.NotNil(t, config.TCF.CmpVersion)
 		assert.Equal(t, 1, *config.TCF.CmpVersion)
-		assert.Equal(t, "AA", config.TCF.PublisherCC)
+		assert.Equal(t, "FR", config.TCF.PublisherCC)
 		require.NotNil(t, config.TCF.GVL)
 		require.Contains(t, config.TCF.GVL.Vendors, strconv.Itoa(iabVendorID))
 	})

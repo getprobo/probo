@@ -90,6 +90,7 @@ export async function execute(
 								kind
 								rank
 								gcmConsentTypes
+								tcfPurposeIds
 								posthogConsent
 								createdAt
 								updatedAt

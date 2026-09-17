@@ -23,8 +23,10 @@ package cookiebanner
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
@@ -36,6 +38,36 @@ const (
 	tcfGVLSpecVersion       = 3
 	tcfDefaultPolicyVersion = 5
 )
+
+func publisherCountryCode() validator.ValidatorFunc {
+	return func(value any) *validator.ValidationError {
+		if value == nil {
+			return nil
+		}
+
+		code, ok := value.(string)
+		if !ok {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: "must be a string",
+			}
+		}
+
+		code = strings.ToUpper(strings.TrimSpace(code))
+		if code == tcfPublisherCC {
+			return nil
+		}
+
+		if code == string(coredata.CountryCodeGlobal) || !coredata.CountryCode(code).IsValid() {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: "must be AA or an ISO 3166-1 alpha-2 country code",
+			}
+		}
+
+		return nil
+	}
+}
 
 type gvlPayload struct {
 	GVLSpecificationVersion int                        `json:"gvlSpecificationVersion"`

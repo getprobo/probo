@@ -32,6 +32,7 @@ import {
   esc,
   floatingCard,
   getTCFRuntime,
+  interpolate,
 } from "@probo/cookie-banner";
 
 import { gdprApplies } from "./encode";
@@ -43,13 +44,18 @@ interface Named {
   description?: string;
 }
 
+interface Stack extends Named {
+  purposes: number[];
+  specialFeatures: number[];
+}
+
 export function renderTCFLayout(config: BannerConfig, position: string): string | null {
   const gvl = config.tcf?.gvl;
   if (!gvl || !gdprApplies(config)) {
     return null;
   }
 
-  return renderBanner(gvl, position) + renderPanel(config, gvl, position);
+  return renderBanner(config, gvl, position) + renderPanel(config, gvl, position);
 }
 
 export function wireTCFLayout(root: LayoutHost, host: ShadowRoot): void {
@@ -73,7 +79,7 @@ export function wireTCFLayout(root: LayoutHost, host: ShadowRoot): void {
         return;
       }
       getTCFRuntime()?.setPendingChoices?.(
-        collectChoices(host, root.bannerConfig),
+        collectChoices(host),
       );
     },
     true,
@@ -85,21 +91,28 @@ export function wireTCFLayout(root: LayoutHost, host: ShadowRoot): void {
   });
 }
 
-function renderBanner(gvl: TCFGVL, position: string): string {
+function renderBanner(config: BannerConfig, gvl: TCFGVL, position: string): string {
   const purposes = namedList(gvl.purposes);
   const specialFeatures = usedSpecialFeatures(gvl);
   const vendorCount = Object.keys(gvl.vendors).length;
-  const partnerLabel = vendorCount === 1 ? "1 partner" : `${vendorCount} partners`;
+  const partnerLabel = interpolate(
+    text(
+      config,
+      vendorCount === 1 ? "tcf_partner_one" : "tcf_partners",
+      vendorCount === 1 ? "{{count}} partner" : "{{count}} partners",
+    ),
+    { count: String(vendorCount) },
+  );
 
   const extras = [
-    `<p class="description">This site stores and/or accesses information on a device and processes personal data.</p>`,
+    `<p class="description" data-text="tcf_disclosure_store">This site stores and/or accesses information on a device and processes personal data.</p>`,
     purposes.length
-      ? `<p class="description">Purposes: ${esc(purposes.map((p) => p.name).join(", "))}.</p>`
+      ? `<p class="description"><span data-text="tcf_label_purposes">Purposes</span>: ${esc(purposes.map((p) => p.name).join(", "))}.</p>`
       : "",
     specialFeatures.length
-      ? `<p class="description">Special features: ${esc(specialFeatures.map((f) => f.name).join(", "))}.</p>`
+      ? `<p class="description"><span data-text="tcf_label_special_features">Special features</span>: ${esc(specialFeatures.map((f) => f.name).join(", "))}.</p>`
       : "",
-    `<p class="description">We work with ${esc(partnerLabel)}. <button type="button" class="btn-link" data-action="open-vendors">View partners</button></p>`,
+    `<p class="description">${esc(text(config, "tcf_disclosure_partners", "We work with {{partners}}.", { partners: partnerLabel }))} <button type="button" class="btn-link" data-action="open-vendors" data-text="tcf_view_partners">View partners</button></p>`,
   ].join("");
 
   return `
@@ -126,7 +139,12 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
   const specialFeatures = usedSpecialFeatures(gvl);
   const vendors = Object.values(gvl.vendors).sort((a, b) => a.id - b.id);
   const purposeNames = new Map(purposes.map((p) => [p.id, p.name]));
-  const days = config.consent_expiry_days;
+  const liPurposeIDs = purposeLIIds(gvl);
+  const { stacks, ungrouped } = groupPurposes(gvl, purposes);
+  const storageCopy = interpolate(
+    text(config, "tcf_storage", "Your choices are stored in the probo_consent cookie for {{days}} days."),
+    { days: String(config.consent_expiry_days) },
+  );
 
   return `
     <probo-preference-panel>
@@ -144,21 +162,27 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
           <p class="description" id="probo-panel-desc" data-text="panel_description"></p>
         </div>
         <div class="panel-body">
-          <div class="section-title">Purposes</div>
-          ${purposes.map((p) => row(p.name, p.description, toggle("purpose-consent", p.id, "Consent"))).join("")}
+          ${stacks.map((stack) => stackSection(stack, purposes, liPurposeIDs)).join("")}
+          ${
+            ungrouped.length
+              ? `<div class="section-title" data-text="tcf_section_purposes">Purposes</div>${ungrouped
+                  .map((p) => purposeRow(p, liPurposeIDs.has(p.id)))
+                  .join("")}`
+              : ""
+          }
           ${
             specialFeatures.length
-              ? `<div class="section-title">Special features</div>${specialFeatures
+              ? `<div class="section-title" data-text="tcf_section_special_features">Special features</div>${specialFeatures
                   .map((f) =>
                     row(f.name, f.description, toggle("special-feature", f.id, "Opt-in")),
                   )
                   .join("")}`
               : ""
           }
-          <div class="section-title" id="probo-tcf-vendors">Partners</div>
+          <div class="section-title" id="probo-tcf-vendors" data-text="tcf_section_partners">Partners</div>
           ${vendors.map((v) => vendorRow(v, purposeNames)).join("")}
-          <div class="section-title">Storage</div>
-          <p class="description" style="padding: 0 24px 16px">Your choices are stored in the probo_consent cookie for ${days} days.</p>
+          <div class="section-title" data-text="tcf_section_storage">Storage</div>
+          <p class="description" style="padding: 0 24px 16px">${esc(storageCopy)}</p>
         </div>
         <div class="footer">
           <div class="buttons">
@@ -172,6 +196,32 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
         </div>`,
       )}
     </probo-preference-panel>`;
+}
+
+function stackSection(stack: Stack, purposes: Named[], liPurposeIDs: Set<number>): string {
+  const purposeByID = new Map(purposes.map((p) => [p.id, p]));
+  const rows = stack.purposes
+    .map((id) => purposeByID.get(id))
+    .filter((p): p is Named => !!p)
+    .map((p) => purposeRow(p, liPurposeIDs.has(p.id)))
+    .join("");
+
+  if (!rows) {
+    return "";
+  }
+
+  return `<div class="section-title">${esc(stack.name)}</div>${
+    stack.description ? `<p class="description" style="padding: 0 24px 8px">${esc(stack.description)}</p>` : ""
+  }${rows}`;
+}
+
+function purposeRow(purpose: Named, showLI: boolean): string {
+  const controls = [
+    toggle("purpose-consent", purpose.id, "Consent"),
+    showLI ? toggle("purpose-li", purpose.id, "Legitimate interest") : "",
+  ].join("");
+
+  return row(purpose.name, purpose.description, `<div class="toggle-group">${controls}</div>`);
 }
 
 function vendorRow(vendor: TCFGVLVendor, purposeNames: Map<number, string>): string {
@@ -243,6 +293,44 @@ function namedList(record: Record<string, unknown> | undefined): Named[] {
   return out.sort((a, b) => a.id - b.id);
 }
 
+function stackList(record: Record<string, unknown> | undefined): Stack[] {
+  if (!record) {
+    return [];
+  }
+
+  const out: Stack[] = [];
+  for (const value of Object.values(record)) {
+    if (!value || typeof value !== "object") {
+      continue;
+    }
+    const rec = value as {
+      id?: unknown;
+      name?: unknown;
+      description?: unknown;
+      purposes?: unknown;
+      specialFeatures?: unknown;
+    };
+    if (typeof rec.id !== "number" || typeof rec.name !== "string") {
+      continue;
+    }
+    out.push({
+      id: rec.id,
+      name: rec.name,
+      description: typeof rec.description === "string" ? rec.description : undefined,
+      purposes: numberIDs(rec.purposes),
+      specialFeatures: numberIDs(rec.specialFeatures),
+    });
+  }
+  return out.sort((a, b) => a.id - b.id);
+}
+
+function numberIDs(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((id): id is number => typeof id === "number" && Number.isInteger(id) && id > 0);
+}
+
 function usedSpecialFeatures(gvl: TCFGVL): Named[] {
   const used = new Set<number>();
   for (const vendor of Object.values(gvl.vendors)) {
@@ -253,31 +341,45 @@ function usedSpecialFeatures(gvl: TCFGVL): Named[] {
   return namedList(gvl.specialFeatures).filter((f) => used.has(f.id));
 }
 
-function collectChoices(host: ParentNode, config: BannerConfig): TCFChoices {
-  const vendorLegitimateInterests = checkedIds(host, '[data-tcf="vendor-li"]');
+function purposeLIIds(gvl: TCFGVL): Set<number> {
+  const ids = new Set<number>();
+  for (const vendor of Object.values(gvl.vendors)) {
+    for (const id of vendor.legIntPurposes ?? []) {
+      ids.add(id);
+    }
+  }
+  return ids;
+}
+
+function groupPurposes(gvl: TCFGVL, purposes: Named[]): { stacks: Stack[]; ungrouped: Named[] } {
+  const assigned = new Set<number>();
+  const stacks: Stack[] = [];
+
+  for (const stack of stackList(gvl.stacks)) {
+    const purposeIDs = stack.purposes.filter((id) => purposes.some((p) => p.id === id) && !assigned.has(id));
+    if (!purposeIDs.length) {
+      continue;
+    }
+    for (const id of purposeIDs) {
+      assigned.add(id);
+    }
+    stacks.push({ ...stack, purposes: purposeIDs });
+  }
+
   return {
-    purposeConsents: checkedIds(host, '[data-tcf="purpose-consent"]'),
-    purposeLegitimateInterests: purposeLIFromVendors(config, vendorLegitimateInterests),
-    vendorConsents: checkedIds(host, '[data-tcf="vendor-consent"]'),
-    vendorLegitimateInterests,
-    specialFeatureOptins: checkedIds(host, '[data-tcf="special-feature"]'),
+    stacks,
+    ungrouped: purposes.filter((p) => !assigned.has(p.id)),
   };
 }
 
-function purposeLIFromVendors(config: BannerConfig, vendorIds: number[]): number[] {
-  const vendors = config.tcf?.gvl?.vendors;
-  if (!vendors) {
-    return [];
-  }
-
-  const ids = new Set<number>();
-  for (const vendorId of vendorIds) {
-    const vendor = vendors[String(vendorId)];
-    for (const purposeId of vendor?.legIntPurposes ?? []) {
-      ids.add(purposeId);
-    }
-  }
-  return [...ids].sort((a, b) => a - b);
+function collectChoices(host: ParentNode): TCFChoices {
+  return {
+    purposeConsents: checkedIds(host, '[data-tcf="purpose-consent"]'),
+    purposeLegitimateInterests: checkedIds(host, '[data-tcf="purpose-li"]'),
+    vendorConsents: checkedIds(host, '[data-tcf="vendor-consent"]'),
+    vendorLegitimateInterests: checkedIds(host, '[data-tcf="vendor-li"]'),
+    specialFeatureOptins: checkedIds(host, '[data-tcf="special-feature"]'),
+  };
 }
 
 function checkedIds(host: ParentNode, selector: string): number[] {
@@ -301,6 +403,9 @@ function applyLastTC(host: ParentNode): void {
         case "purpose-consent":
           input.checked = model.purposeConsents.has(id);
           break;
+        case "purpose-li":
+          input.checked = model.purposeLegitimateInterests.has(id);
+          break;
         case "special-feature":
           input.checked = model.specialFeatureOptins.has(id);
           break;
@@ -317,4 +422,14 @@ function applyLastTC(host: ParentNode): void {
   } catch {
     // Leave the panel at its default (all off) if the stored string is unreadable.
   }
+}
+
+function text(
+  config: BannerConfig,
+  key: string,
+  fallback: string,
+  vars?: Record<string, string>,
+): string {
+  const raw = config.texts?.[key] || fallback;
+  return vars ? interpolate(raw, vars) : raw;
 }

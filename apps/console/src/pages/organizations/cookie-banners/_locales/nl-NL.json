@@ -118,6 +118,8 @@
       "privacyPolicyUrl": "URL privacybeleid",
       "consentExpiryDays": "Vervaltermijn toestemming (dagen)",
       "defaultLanguage": "Standaardtaal",
+      "publisherCountryCode": "Uitgeversland",
+      "publisherCountryCodeHelp": "IAB TCF-vestigingsland (ISO 3166-1 alpha-2). Gebruik AA als het onbekend is.",
       "resourceReportingEnabled": "Resource-rapportage",
       "resourceReportingEnabledHelp": "Indien ingeschakeld detecteert en rapporteert de banner-SDK scripts van derden, iframes en andere resources."
     },
@@ -157,6 +159,7 @@
   "editCategoryForm": {
     "fields": { "namePlaceholder": "Categorienaam", "slugPlaceholder": "Categorie-slug", "descriptionPlaceholder": "Categoriebeschrijving" },
     "googleConsentMode": { "title": "Google Consent Mode", "description": "Selecteer de Google Consent Mode-signalen die deze categorie regelt." },
+    "tcfPurposes": { "title": "TCF-doeleinden", "description": "Als TCF aan staat, wordt deze categorie alleen verleend wanneer elk geselecteerd doel consent of gerechtvaardigd belang heeft." },
     "posthog": { "title": "PostHog", "description": "Bepaal de PostHog-trackingtoestemming op basis van deze categorie.", "checkbox": "PostHog-tracking in-/uitschakelen" },
     "actions": { "saving": "Bezig met opslaan...", "save": "Opslaan", "cancel": "Annuleren" }
   },
@@ -165,7 +168,7 @@
     "errors": { "title": "Fout", "updateCategory": "Categorie bijwerken mislukt", "duplicateCookie": "Er bestaat al een cookie met deze naam in deze banner", "addCookie": "Cookie toevoegen mislukt", "updateCookie": "Cookie bijwerken mislukt", "deleteCookie": "Cookie verwijderen mislukt", "deleteCategory": "Categorie verwijderen mislukt", "reorder": "Herordenen mislukt", "moveCookie": "Cookie verplaatsen mislukt" },
     "deleteCookieConfirmation": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
     "deleteCategoryConfirmation": "Weet u zeker dat u de categorie \"{{name}}\" wilt verwijderen? Alle cookies in deze categorie worden verplaatst naar Niet-gecategoriseerd.",
-    "required": "Verplicht", "blockHint": "Elementen blokkeren totdat toestemming is gegeven:", "googleConsentMode": "Google Consent Mode:", "posthog": "PostHog:", "trackingConsent": "Trackingtoestemming",
+    "required": "Verplicht", "blockHint": "Elementen blokkeren totdat toestemming is gegeven:", "googleConsentMode": "Google Consent Mode:", "tcfPurposes": "TCF-doeleinden:", "posthog": "PostHog:", "trackingConsent": "Trackingtoestemming",
     "columns": { "name": "Naam", "type": "Type", "duration": "Duur" },
     "actions": { "edit": "Bewerken", "delete": "Verwijderen", "include": "Opnemen", "exclude": "Uitsluiten", "addCookie": "Cookie toevoegen" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
