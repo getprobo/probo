@@ -4,6 +4,19 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+### Added
+
+- Published banner config nests TCF under `tcf` (`vendors`, `gvl_version`,
+  `policy_version`, `cmp_id`, `cmp_version`, `publisher_cc`, and a
+  publisher-filtered IAB `gvl`) when the hidden capability is on; the key
+  is omitted otherwise. This replaces the flat `tcf_enabled`,
+  `tcf_vendors`, and `gvl_version` fields from 0.18.0
+- Optional `@probo/cookie-banner/tcf` export encodes a TCF 2.2 string with
+  `@iabtechlabtcf/core`, installs a `__tcfapi` stub, and starts
+  `@iabtechlabtcf/cmpapi`. The default IIFE stays IAB-free; a separate
+  `cookie-banner-tcf.iife.js` bundle includes the IAB libraries. Accept/reject
+  stores an optional `tc` field on `probo_consent`
+
 ## [0.18.0] - 2026-09-16
 
 ### Added

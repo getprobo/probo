@@ -21,6 +21,10 @@
       "types": "./dist/consent.d.ts",
       "import": "./dist/cookie-banner-consent.mjs",
       "default": "./dist/cookie-banner-consent.mjs"
+    },
+    "./tcf": {
+      "types": "./dist/tcf/index.d.ts",
+      "import": "./dist/cookie-banner-tcf.mjs"
     }
   },
   "scripts": {
@@ -56,7 +60,21 @@
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "@iabtechlabtcf/cmpapi": "^1.5.22",
+    "@iabtechlabtcf/core": "^1.5.22"
+  },
+  "peerDependenciesMeta": {
+    "@iabtechlabtcf/cmpapi": {
+      "optional": true
+    },
+    "@iabtechlabtcf/core": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@iabtechlabtcf/cmpapi": "1.5.22",
+    "@iabtechlabtcf/core": "1.5.22",
     "esbuild": "^0.28.2",
     "typescript": "6.0.2",
     "vitest": "^4.1.11"

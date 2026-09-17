@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { installTCFStub, startTCF } from "../tcf";
 import { bootThemedBanner } from "./boot";
 
+installTCFStub();
+startTCF();
 bootThemedBanner();
