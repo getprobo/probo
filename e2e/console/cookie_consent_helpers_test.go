@@ -209,6 +209,7 @@ type postConsentRequest struct {
 	Version     int             `json:"version"`
 	Action      string          `json:"action"`
 	ConsentData json.RawMessage `json:"consent_data"`
+	TC          *string         `json:"tc,omitempty"`
 }
 
 type postConsentResponseBody struct {
@@ -225,15 +226,21 @@ func postCookieConsent(
 	visitorID string,
 	action string,
 	consentData json.RawMessage,
+	tc ...string,
 ) postConsentResponseBody {
 	t.Helper()
 
-	body, err := json.Marshal(postConsentRequest{
+	req := postConsentRequest{
 		VisitorID:   visitorID,
 		Version:     fixture.Version,
 		Action:      action,
 		ConsentData: consentData,
-	})
+	}
+	if len(tc) > 0 {
+		req.TC = &tc[0]
+	}
+
+	body, err := json.Marshal(req)
 	require.NoError(t, err)
 
 	const ua = "Probo-CookieBanner-E2E/1.0"

@@ -98,6 +98,7 @@ func NewCookieConsentRecord(r *coredata.CookieConsentRecord) *CookieConsentRecor
 		RegulationSource: r.RegulationSource,
 		CountryCode:      r.CountryCode,
 		SubdivisionCode:  subdivisionCode,
+		Tc:               r.TC,
 		CreatedAt:        r.CreatedAt,
 	}
 }

@@ -148,6 +148,7 @@ export class CookieBannerClient {
           action: cookie.action,
           consent_data: cookie.data,
           created_at: "",
+          tc: cookie.tc,
         };
         this._gpcApplied = cookie.action === "GPC";
         this.activate(cookie.data);
@@ -173,24 +174,27 @@ export class CookieBannerClient {
       if (apiConsent && apiConsent.version === config.version) {
         this.consent = apiConsent;
         this._gpcApplied = apiConsent.action === "GPC";
-        setConsentCookie(
-          {
-            bid: this.bannerId,
-            v: apiConsent.version,
-            vid: apiConsent.visitor_id,
-            action: apiConsent.action,
-            data: apiConsent.consent_data,
-          },
-          config.consent_expiry_days,
-        );
+        const restored: ConsentCookie = {
+          bid: this.bannerId,
+          v: apiConsent.version,
+          vid: apiConsent.visitor_id,
+          action: apiConsent.action,
+          data: apiConsent.consent_data,
+        };
+        if (apiConsent.tc) {
+          restored.tc = apiConsent.tc;
+        }
+        setConsentCookie(restored, config.consent_expiry_days);
         this.activate(apiConsent.consent_data);
         getConsent()._setReady(apiConsent.consent_data, true);
+        getTCFRuntime()?.onConfig(config, apiConsent.tc);
       } else {
         this.consent = null;
+        getTCFRuntime()?.onConfig(config);
       }
+    } else {
+      getTCFRuntime()?.onConfig(config);
     }
-
-    getTCFRuntime()?.onConfig(config);
 
     if (!this.consent && this.gpcDetected) {
       const gpcData: Record<string, boolean> = {};
@@ -311,6 +315,8 @@ export class CookieBannerClient {
     const cfg = this.config;
     const visitorId = this.ensureVisitorId();
 
+    const tc = getTCFRuntime()?.onConsent(action, cfg);
+
     this.consent = {
       visitor_id: visitorId,
       version: cfg.version,
@@ -318,8 +324,10 @@ export class CookieBannerClient {
       consent_data: consentData,
       created_at: "",
     };
+    if (tc) {
+      this.consent.tc = tc;
+    }
 
-    const tc = getTCFRuntime()?.onConsent(action, cfg);
     const cookie: ConsentCookie = {
       bid: this.bannerId,
       v: cfg.version,
@@ -337,12 +345,21 @@ export class CookieBannerClient {
     getConsent()._notify(consentData);
 
     const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
-    const body = {
+    const body: {
+      visitor_id: string;
+      version: number;
+      action: ConsentAction;
+      consent_data: Record<string, boolean>;
+      tc?: string;
+    } = {
       visitor_id: visitorId,
       version: cfg.version,
       action,
       consent_data: consentData,
     };
+    if (tc) {
+      body.tc = tc;
+    }
     void fetchJSON<ConsentRecord>(url, { method: "POST", body })
       .then(() => void flush(this.bannerId))
       .catch(() => enqueue(this.bannerId, url.href, body));

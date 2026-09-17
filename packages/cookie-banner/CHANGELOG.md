@@ -14,6 +14,9 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 - Stores an optional `tc` field on `probo_consent` when a TCF runtime is
   registered via `setTCFRuntime`. Encoding and `__tcfapi` live in
   `@probo/cookie-banner-tcf` so this package stays IAB-free
+- Posts `tc` with consent records and restores it from GET visitor consent
+  onto `probo_consent` and `getTCFRuntime()?.onConfig` so returning visitors
+  keep `__tcfapi` after a cookie miss
 - Public addon API for layout and TCF plugins: `setLayoutRenderer`,
   `setTCFRuntime`, `bootThemedBanner`, and layout primitives (`floatingCard`,
   `esc`, `BRANDING`, `CLOSE_ICON`). The themed banner asks a registered

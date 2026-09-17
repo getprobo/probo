@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- Cookie consent records persist an optional IAB TCF string (`tc`) from
+  the public cookie-banner API, return it on GET visitor consent, and
+  expose it on GraphQL, MCP, CLI, n8n, and the console record detail page
+
 ## [0.291.0] - 2026-09-18
 
 ### Added
