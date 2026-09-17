@@ -30,6 +30,7 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+          go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goos }}-${{ matrix.goarch }}"
       - name: "Build binaries"
         env:
           CGO_ENABLED: "0"
@@ -88,6 +89,7 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+          go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goarch }}"
       - name: "Install WiX"
         shell: "pwsh"
         run: |

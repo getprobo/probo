@@ -73,6 +73,7 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+          go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goos }}-${{ matrix.goarch }}"
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
           name: "frontend-apps"

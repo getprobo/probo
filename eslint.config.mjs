@@ -135,7 +135,11 @@ export default defineConfig([
     extends: [configs.languageOptions.node],
   },
   {
-    files: ["packages/ui/tailwind.config.js"],
+    // CommonJS Node. configs.base still lints these files.
+    files: [
+      "packages/ui/tailwind.config.js",
+      ".github/actions/**/*.js",
+    ],
     extends: [configs.languageOptions.node],
     languageOptions: {
       sourceType: "commonjs",

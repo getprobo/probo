@@ -35,6 +35,7 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+          go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goos }}-${{ matrix.goarch }}"
       - name: "Build binary"
         env:
           CGO_ENABLED: "0"
