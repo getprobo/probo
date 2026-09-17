@@ -7,6 +7,9 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 ### Changed
 
 - TCF GET config emits CMP ID 4095 instead of the placeholder 2
+- Cookie banner settings show the IAB `__tcfapi` stub and the TCF IIFE
+  when the hidden TCF capability is on; non-TCF banners keep the default
+  snippet
 
 ### Added
 

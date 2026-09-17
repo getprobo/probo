@@ -105,7 +105,8 @@
     "messages": { "copiedTitle": "Gekopieerd", "copied": "Code gekopieerd naar klembord" },
     "errors": { "title": "Fout", "copy": "Kopiëren naar klembord mislukt" },
     "actions": { "copy": "Kopiëren" },
-    "documentation": "Op zoek naar ES-module- of headless-integratie? <link>Bekijk onze documentatie voor gedetailleerde integratiehandleidingen.</link>"
+    "documentation": "Op zoek naar ES-module- of headless-integratie? <link>Bekijk onze documentatie voor gedetailleerde integratiehandleidingen.</link>",
+    "tcfNote": "Dit banner gebruikt het IAB TCF-script. Plaats de snippet zo hoog mogelijk op de pagina zodat partners kunnen wachten tot de SDK is geladen."
   },
   "bannerSettingsForm": {
     "title": "Instellingen",

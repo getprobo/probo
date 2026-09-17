@@ -105,7 +105,8 @@
     "messages": { "copiedTitle": "Copié", "copied": "Code copié dans le presse-papiers" },
     "errors": { "title": "Erreur", "copy": "Échec de la copie dans le presse-papiers" },
     "actions": { "copy": "Copier" },
-    "documentation": "Vous recherchez une intégration de module ES ou headless ? <link>Consultez notre documentation pour des guides d’intégration détaillés.</link>"
+    "documentation": "Vous recherchez une intégration de module ES ou headless ? <link>Consultez notre documentation pour des guides d’intégration détaillés.</link>",
+    "tcfNote": "Cette bannière utilise le script IAB TCF. Placez l’extrait le plus haut possible dans la page pour que les partenaires puissent mettre leurs appels en file avant le chargement du SDK."
   },
   "bannerSettingsForm": {
     "title": "Paramètres",
