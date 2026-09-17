@@ -18,19 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerConfig, ConsentAction } from "../types";
+import type { BannerConfig, BannerState } from "../types";
 
-export interface TCFRuntime {
-  onConfig(config: BannerConfig, existingTc?: string): void;
-  onConsent(action: ConsentAction, config: BannerConfig): string | undefined;
+export interface LayoutHost {
+  bannerConfig: BannerConfig;
+  consentDraft: Record<string, boolean>;
+  setState(state: BannerState): void;
+  client: {
+    customize(categories: Record<string, boolean>): void;
+  };
 }
 
-let runtime: TCFRuntime | null = null;
-
-export function setTCFRuntime(next: TCFRuntime): void {
-  runtime = next;
+export interface LayoutRenderer {
+  render(config: BannerConfig, position: string): string | null;
+  wire?(root: LayoutHost, host: ShadowRoot): void;
 }
 
-export function getTCFRuntime(): TCFRuntime | null {
-  return runtime;
+let renderer: LayoutRenderer | null = null;
+
+export function setLayoutRenderer(next: LayoutRenderer | null): void {
+  renderer = next;
+}
+
+export function getLayoutRenderer(): LayoutRenderer | null {
+  return renderer;
 }

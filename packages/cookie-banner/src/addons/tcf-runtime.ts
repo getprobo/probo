@@ -18,31 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export {
-  getLayoutRenderer,
-  getTCFRuntime,
-  setLayoutRenderer,
-  setTCFRuntime,
-} from "../addons";
-export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "../addons";
-export { registerHeadlessComponents } from "../components";
-export { resolveBannerText, resolveLayout } from "../layout";
-export type {
-  BannerConfig,
-  BannerLayout,
-  BannerState,
-  BannerText,
-  Category,
-  ConsentAction,
-  ConsentRecord,
-  CookieItem,
-  LayoutButtons,
-  Presentation,
-  Regulation,
-  SettingsLinkStyle,
-  BannerTCF,
-  TCFGVL,
-  TCFGVLVendor,
-  TCFVendor,
-  VisitorConsent,
-} from "../types";
+import type { BannerConfig, ConsentAction } from "../types";
+
+export interface TCFChoices {
+  purposeConsents: number[];
+  purposeLegitimateInterests: number[];
+  vendorConsents: number[];
+  vendorLegitimateInterests: number[];
+  specialFeatureOptins: number[];
+}
+
+export interface TCFRuntime {
+  onConfig(config: BannerConfig, existingTc?: string): void;
+  onConsent(action: ConsentAction, config: BannerConfig): string | undefined;
+  setPendingChoices?(choices: TCFChoices): void;
+}
+
+let runtime: TCFRuntime | null = null;
+
+export function setTCFRuntime(next: TCFRuntime): void {
+  runtime = next;
+}
+
+export function getTCFRuntime(): TCFRuntime | null {
+  return runtime;
+}
