@@ -33,6 +33,9 @@ export type {
   Presentation,
   Regulation,
   SettingsLinkStyle,
+  BannerTCF,
+  TCFGVL,
+  TCFGVLVendor,
   TCFVendor,
   VisitorConsent,
 } from "./types";

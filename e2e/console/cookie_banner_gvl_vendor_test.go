@@ -21,6 +21,10 @@
 package console_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -493,5 +497,80 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 			},
 		}, new(map[string]any))
 		testutil.RequireErrorCode(t, err, "INVALID")
+	})
+
+	t.Run("published config nests tcf for selected vendors", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		bannerID := factory.CreateCookieBanner(owner)
+		factory.EnableCookieBannerTCF(t, bannerID)
+
+		iabVendorID, version := factory.SeedCommonGVLVendor(t, "Config GVL Vendor", false)
+		factory.SeedCommonGVLCatalogState(t, version)
+
+		const addMutation = `
+			mutation($input: AddCookieBannerGVLVendorInput!) {
+				addCookieBannerGVLVendor(input: $input) {
+					cookieBanner { id }
+				}
+			}
+		`
+
+		err := owner.Execute(addMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"iabVendorId":    iabVendorID,
+			},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		const publishMutation = `
+			mutation($input: PublishCookieBannerVersionInput!) {
+				publishCookieBannerVersion(input: $input) {
+					cookieBannerVersion { version state }
+				}
+			}
+		`
+
+		err = owner.Execute(publishMutation, map[string]any{
+			"input": map[string]any{"cookieBannerId": bannerID},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/config", owner.BaseURL(), bannerID)
+		resp, err := owner.HTTPClient().Get(endpoint)
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var config struct {
+			TCF *struct {
+				GVLVersion    *int   `json:"gvl_version"`
+				PolicyVersion *int   `json:"policy_version"`
+				CmpID         *int   `json:"cmp_id"`
+				CmpVersion    *int   `json:"cmp_version"`
+				PublisherCC   string `json:"publisher_cc"`
+				GVL           *struct {
+					VendorListVersion int                        `json:"vendorListVersion"`
+					TCFPolicyVersion  int                        `json:"tcfPolicyVersion"`
+					Vendors           map[string]json.RawMessage `json:"vendors"`
+				} `json:"gvl"`
+			} `json:"tcf"`
+		}
+
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(&config))
+		require.NotNil(t, config.TCF)
+		require.NotNil(t, config.TCF.GVLVersion)
+		assert.Equal(t, version, *config.TCF.GVLVersion)
+		require.NotNil(t, config.TCF.PolicyVersion)
+		assert.Equal(t, 5, *config.TCF.PolicyVersion)
+		require.NotNil(t, config.TCF.CmpID)
+		assert.Equal(t, 2, *config.TCF.CmpID)
+		require.NotNil(t, config.TCF.CmpVersion)
+		assert.Equal(t, 1, *config.TCF.CmpVersion)
+		assert.Equal(t, "AA", config.TCF.PublisherCC)
+		require.NotNil(t, config.TCF.GVL)
+		require.Contains(t, config.TCF.GVL.Vendors, strconv.Itoa(iabVendorID))
 	})
 }

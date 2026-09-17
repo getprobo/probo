@@ -363,7 +363,7 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 		}
 
 		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
-		assert.True(t, config.TCFEnabled)
+		require.NotNil(t, config.TCF)
 	})
 
 	t.Run("defaults to disabled", func(t *testing.T) {
@@ -375,6 +375,6 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 		}
 
 		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
-		assert.False(t, config.TCFEnabled)
+		assert.Nil(t, config.TCF)
 	})
 }
