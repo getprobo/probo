@@ -105,7 +105,8 @@
     "messages": { "copiedTitle": "Copied", "copied": "Code copied to clipboard" },
     "errors": { "title": "Error", "copy": "Failed to copy to clipboard" },
     "actions": { "copy": "Copy" },
-    "documentation": "Looking for ES module or headless integration? <link>See our documentation for detailed integration guides.</link>"
+    "documentation": "Looking for ES module or headless integration? <link>See our documentation for detailed integration guides.</link>",
+    "tcfNote": "This banner uses the IAB TCF script. Place the snippet as high in the page as possible so vendors can queue before the SDK loads."
   },
   "bannerSettingsForm": {
     "title": "Settings",
