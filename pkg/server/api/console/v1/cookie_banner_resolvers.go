@@ -25,6 +25,15 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// TcfCmpID is the resolver for the tcfCmpId field.
+func (r *cookieBannerResolver) TcfCmpID(ctx context.Context, obj *types.CookieBanner) (int, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
+		return 0, err
+	}
+
+	return r.cookieBanner.TCFCmpID(), nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.CookieBanner) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {

@@ -43,12 +43,14 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 	ukGDPR := RegulationUKGDPR
 	ccpa := RegulationCCPA
 	wrongCmpID := mintTCString(tcCookieVersion, 2, true)
+	customCmpID := mintTCString(tcCookieVersion, 123, true)
 
 	tests := []struct {
 		name       string
 		tcfEnabled bool
 		regulation *Regulation
 		tc         *string
+		cmpID      int
 		wantField  string
 		wantCode   validator.ErrorCode
 	}{
@@ -117,6 +119,22 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 			tc:         new(validTCStringV23),
 		},
 		{
+			name:       "accepts a string minted for a custom cmp id",
+			tcfEnabled: true,
+			regulation: &gdpr,
+			cmpID:      123,
+			tc:         &customCmpID,
+		},
+		{
+			name:       "rejects the default cmp id when the instance uses another",
+			tcfEnabled: true,
+			regulation: &gdpr,
+			cmpID:      123,
+			tc:         new(validTCStringV23),
+			wantField:  "tc",
+			wantCode:   validator.ErrorCodeInvalidFormat,
+		},
+		{
 			name:       "accepts a 2.3 string for ccpa when present",
 			tcfEnabled: true,
 			regulation: &ccpa,
@@ -130,7 +148,7 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				err := validateConsentTC(tt.tcfEnabled, tt.regulation, tt.tc)
+				err := validateConsentTC(tt.tcfEnabled, tt.regulation, tt.tc, tt.cmpID)
 				if tt.wantField == "" {
 					assert.NoError(t, err)
 					return
@@ -152,7 +170,7 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 func TestParseTCString_AcceptsEncoderFixture(t *testing.T) {
 	t.Parallel()
 
-	assert.NoError(t, parseTCString(validTCStringV23))
+	assert.NoError(t, parseTCString(validTCStringV23, DefaultTCFCmpID))
 }
 
 func mintTCString(version, cmpID uint, disclosed bool) string {

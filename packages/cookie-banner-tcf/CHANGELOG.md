@@ -7,6 +7,10 @@ in this file.
 
 ### Changed
 
+- `CmpApi` and TC encode require `config.tcf.cmp_id` and
+  `config.tcf.cmp_version` from GET config. The `__tcfapi` stub omits
+  those fields until the CMP loads. The SDK no longer hardcodes CMP ID
+  or version
 - `__tcfapi` `displayStatus` follows the banner UI: `visible` while the
   first layer, preferences, or privacy choices are open, `hidden` when
   they close, and `disabled` when TCF is inactive

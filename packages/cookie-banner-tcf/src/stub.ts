@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
-
 type TCFAPIStub = ((...args: unknown[]) => void) & { q: unknown[][] };
 
 export function installTCFStub(): void {
@@ -44,8 +42,6 @@ export function installTCFStub(): void {
           // CMP JS API version. IAB did not bump this for TCF 2.3; the
           // encoded string is 2.3 via the disclosed-vendors segment.
           apiVersion: "2.2",
-          cmpId: TCF_CMP_ID,
-          cmpVersion: TCF_CMP_VERSION,
         },
         true,
       );

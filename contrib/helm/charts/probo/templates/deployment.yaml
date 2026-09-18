@@ -71,6 +71,8 @@ spec:
               value: {{ include "probo.chrome.addr" . | quote }}
             - name: PROBOD_BRANDING
               value: {{ .Values.probo.branding | quote }}
+            - name: PROBOD_COOKIE_BANNER_TCF_CMP_ID
+              value: {{ .Values.probo.cookieBanner.tcfCmpId | default 4095 | quote }}
             - name: PROBOD_TRUST_CENTER_TLS_MODE
               value: {{ .Values.probo.trustCenter.tlsMode | quote }}
             # API Configuration

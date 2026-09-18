@@ -15,7 +15,8 @@ with TCF disclosures and a purpose/vendor panel.
 ## Script tag (IIFE)
 
 Place the stub as high in the page as possible so vendors can queue before
-the SDK loads. Keep `cmpId` in sync with `TCF_CMP_ID`.
+the SDK loads. Stub ping omits `cmpId` and `cmpVersion`; those come from
+GET config once `CmpApi` starts.
 
 The stub must **run** before ad/vendor tags. Inline is the usual IAB shape
 because the parser executes it immediately (no download). It does not have
@@ -48,9 +49,7 @@ If CSP blocks inline scripts, either:
         cmpLoaded: false,
         cmpStatus: "stub",
         displayStatus: "hidden",
-        apiVersion: "2.2",
-        cmpId: 4095,
-        cmpVersion: 1
+        apiVersion: "2.2"
       }, true);
       return;
     }

@@ -83,6 +83,7 @@ type (
 		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
 		ESign         ESignConfig         `json:"esign,omitzero"`
 		Branding      bool                `json:"branding"`
+		CookieBanner  CookieBannerConfig  `json:"cookie-banner"`
 		Slackbot      SlackbotConfig      `json:"slackbot,omitzero"`
 	}
 

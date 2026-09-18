@@ -395,6 +395,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				MaxAttempts:         b.resolver.getEnvIntOrDefault("PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS", 3),
 			},
 			Branding: b.resolver.getEnvBoolOrDefault("PROBOD_BRANDING", true),
+			CookieBanner: probodconfig.CookieBannerConfig{
+				TCFCMPID: b.resolver.getEnvIntOrDefault("PROBOD_COOKIE_BANNER_TCF_CMP_ID", 4095),
+			},
 			Slackbot: probodconfig.SlackbotConfig{
 				Enabled:       b.resolver.getEnvBoolOrDefault("PROBOD_SLACKBOT_ENABLED", false),
 				SigningSecret: b.resolver.getEnv("PROBOD_SLACKBOT_SIGNING_SECRET"),
@@ -403,6 +406,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				RedirectURI:   b.resolver.getEnv("PROBOD_SLACKBOT_REDIRECT_URI"),
 			},
 		},
+	}
+
+	if err := validateCookieBannerTCFCmpID(cfg.Probod.CookieBanner.TCFCMPID); err != nil {
+		return nil, err
 	}
 
 	if slackClientID := b.resolver.getEnv("PROBOD_CONNECTOR_SLACK_CLIENT_ID"); slackClientID != "" {
@@ -812,6 +819,14 @@ func (b *Builder) validateRequired() error {
 		}
 
 		return fmt.Errorf("missing required environment variables:\n  - %s", strings.Join(missing, "\n  - "))
+	}
+
+	return nil
+}
+
+func validateCookieBannerTCFCmpID(id int) error {
+	if id < 2 || id > 4095 {
+		return fmt.Errorf("PROBOD_COOKIE_BANNER_TCF_CMP_ID must be between 2 and 4095")
 	}
 
 	return nil

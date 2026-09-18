@@ -18,10 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Keep in sync with packages/cookie-banner-tcf/src/constants.ts
-const TCF_CMP_ID = 4095;
-const TCF_CMP_VERSION = 1;
-
 const DEFAULT_IIFE
   = "https://cdn.jsdelivr.net/npm/@probo/cookie-banner/dist/cookie-banner.iife.js";
 const TCF_IIFE
@@ -63,9 +59,7 @@ function tcfStubSnippet(): string {
         cmpLoaded: false,
         cmpStatus: "stub",
         displayStatus: "hidden",
-        apiVersion: "2.2",
-        cmpId: ${TCF_CMP_ID},
-        cmpVersion: ${TCF_CMP_VERSION}
+        apiVersion: "2.2"
       }, true);
       return;
     }

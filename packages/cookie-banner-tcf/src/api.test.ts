@@ -22,16 +22,20 @@ import type { BannerConfig, TCFGVL, TCFRuntime } from "@probo/cookie-banner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { startTCF } from "./api";
-import { TCF_CMP_ID } from "./constants";
 import { setLastTCString } from "./session";
 
-const { update, runtimeHolder } = vi.hoisted(() => ({
+const { update, runtimeHolder, cmpApiCtor } = vi.hoisted(() => ({
   update: vi.fn(),
   runtimeHolder: { current: null as TCFRuntime | null },
+  cmpApiCtor: vi.fn(),
 }));
 
 vi.mock("@iabtechlabtcf/cmpapi", () => ({
   CmpApi: class {
+    constructor(cmpId: number, cmpVersion: number, gdprApplies: boolean) {
+      cmpApiCtor(cmpId, cmpVersion, gdprApplies);
+    }
+
     update = update;
   },
 }));
@@ -96,7 +100,7 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
     resource_reporting_enabled: false,
     tcf: {
       gvl: tcfGvl,
-      cmp_id: TCF_CMP_ID,
+      cmp_id: 4095,
       cmp_version: 1,
       publisher_cc: "AA",
       policy_version: 5,
@@ -110,6 +114,7 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
 describe("startTCF displayStatus", () => {
   beforeEach(() => {
     update.mockReset();
+    cmpApiCtor.mockReset();
     setLastTCString(undefined);
     startTCF();
   });
@@ -148,5 +153,38 @@ describe("startTCF displayStatus", () => {
 
     runtime?.onUIVisible?.(true);
     expect(update).not.toHaveBeenCalled();
+    expect(cmpApiCtor).not.toHaveBeenCalled();
+  });
+
+  it("constructs CmpApi with the instance cmp_id", () => {
+    const runtime = runtimeHolder.current;
+
+    runtime?.onConfig(bannerConfig({
+      tcf: {
+        gvl: tcfGvl,
+        cmp_id: 123,
+        cmp_version: 1,
+        publisher_cc: "AA",
+        policy_version: 5,
+      },
+    }));
+
+    expect(cmpApiCtor).toHaveBeenCalledWith(123, 1, true);
+  });
+
+  it("throws when TCF is active without cmp_id", () => {
+    const runtime = runtimeHolder.current;
+
+    expect(() => runtime?.onConfig(bannerConfig({ tcf: { gvl: tcfGvl } }))).toThrow(
+      /tcf.cmp_id is missing or invalid/,
+    );
+  });
+
+  it("throws when TCF is active without cmp_version", () => {
+    const runtime = runtimeHolder.current;
+
+    expect(() =>
+      runtime?.onConfig(bannerConfig({ tcf: { gvl: tcfGvl, cmp_id: 4095 } })),
+    ).toThrow(/tcf.cmp_version is missing or invalid/);
   });
 });

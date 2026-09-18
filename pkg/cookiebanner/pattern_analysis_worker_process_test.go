@@ -228,7 +228,7 @@ func newGlobInCategory(
 
 func newTestHandler(client *pg.Client) *patternAnalysisHandler {
 	return &patternAnalysisHandler{
-		svc:    NewService(client, false),
+		svc:    NewService(client, false, 0),
 		pg:     client,
 		logger: log.NewLogger(log.WithOutput(io.Discard)),
 	}
@@ -553,7 +553,7 @@ func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
 		return existingGlob.Insert(ctx, tx, fx.scope)
 	}))
 
-	svc := NewService(client, false)
+	svc := NewService(client, false, 0)
 
 	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 		Cookies: []DetectedCookie{

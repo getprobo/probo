@@ -31,7 +31,6 @@ vi.mock("@probo/cookie-banner", () => ({
     template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? ""),
 }));
 
-import { TCF_CMP_ID } from "./constants";
 import { renderTCFLayout } from "./layout";
 
 const vendorId = 52;
@@ -144,7 +143,7 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
     resource_reporting_enabled: false,
     tcf: {
       gvl: tcfGvl,
-      cmp_id: TCF_CMP_ID,
+      cmp_id: 4095,
       cmp_version: 1,
       publisher_cc: "AA",
       policy_version: 5,
@@ -225,7 +224,7 @@ describe("renderTCFLayout", () => {
               },
             },
           },
-          cmp_id: TCF_CMP_ID,
+          cmp_id: 4095,
           cmp_version: 1,
           publisher_cc: "AA",
           policy_version: 5,

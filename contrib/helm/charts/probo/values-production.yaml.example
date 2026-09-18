@@ -97,6 +97,12 @@ probo:
   # Must match your ingress hostname
   baseUrl: "probo.example.com"
 
+  # IAB TCF CMP ID. 4095 is a placeholder until IAB Europe issues a
+  # registered ID. Self-hosted instances that register their own CMP
+  # must set this to that ID.
+  cookieBanner:
+    tcfCmpId: 4095
+
   # REQUIRED: Generate with: openssl rand -base64 32
   encryptionKey: "CHANGE_ME_ENCRYPTION_KEY"
 

@@ -223,6 +223,9 @@ func New() *Implm {
 				TSAURL: "http://timestamp.digicert.com",
 			},
 			Branding: true,
+			CookieBanner: CookieBannerConfig{
+				TCFCMPID: 4095,
+			},
 			EvidenceDescriber: EvidenceDescriberConfig{
 				Interval:       10,
 				StaleAfter:     300,
@@ -755,7 +758,11 @@ func (impl *Implm) Run(
 		l,
 	)
 
-	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
+	cookieBannerService := cookiebanner.NewService(
+		pgClient,
+		impl.cfg.Branding,
+		impl.cfg.CookieBanner.TCFCMPID,
+	)
 
 	proboService, err := probo.NewService(
 		ctx,

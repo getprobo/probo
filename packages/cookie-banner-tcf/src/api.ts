@@ -23,8 +23,13 @@ import { TCString } from "@iabtechlabtcf/core";
 import type { BannerConfig, ConsentAction, TCFChoices } from "@probo/cookie-banner";
 import { setLayoutRenderer, setTCFRuntime } from "@probo/cookie-banner";
 
-import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
-import { encodeTCString, gdprApplies, type TCFGrant } from "./encode";
+import {
+  encodeTCString,
+  gdprApplies,
+  requireCmpID,
+  requireCmpVersion,
+  type TCFGrant,
+} from "./encode";
 import { renderTCFLayout, wireTCFLayout } from "./layout";
 import { getLastTCString, setLastTCString } from "./session";
 
@@ -33,9 +38,17 @@ function tcfActive(config: BannerConfig): boolean {
 }
 
 export function startTCF(): void {
-  const cmpApi = new CmpApi(TCF_CMP_ID, TCF_CMP_VERSION, true);
+  let cmpApi: CmpApi | undefined;
   let pending: TCFChoices | undefined;
   let active = false;
+
+  function ensureCmpApi(cmpId?: number, cmpVersion?: number): CmpApi {
+    if (!cmpApi) {
+      cmpApi = new CmpApi(requireCmpID(cmpId), requireCmpVersion(cmpVersion), true);
+    }
+
+    return cmpApi;
+  }
 
   setLayoutRenderer({
     render: renderTCFLayout,
@@ -47,20 +60,22 @@ export function startTCF(): void {
       active = tcfActive(config);
       if (!active) {
         setLastTCString(undefined);
-        cmpApi.update(null);
+        cmpApi?.update(null);
         return;
       }
+
+      const api = ensureCmpApi(config.tcf?.cmp_id, config.tcf?.cmp_version);
 
       setLastTCString(existingTc);
       if (existingTc) {
-        cmpApi.update(existingTc, false);
+        api.update(existingTc, false);
         return;
       }
 
-      cmpApi.update("", true);
+      api.update("", true);
     },
     onUIVisible(visible) {
-      if (!active) {
+      if (!active || !cmpApi) {
         return;
       }
 
@@ -79,15 +94,17 @@ export function startTCF(): void {
       active = tcfActive(config);
       if (!active) {
         setLastTCString(undefined);
-        cmpApi.update(null);
+        cmpApi?.update(null);
         return undefined;
       }
+
+      const api = ensureCmpApi(config.tcf?.cmp_id, config.tcf?.cmp_version);
 
       const grant = grantForAction(action, pending);
       pending = undefined;
       const tc = encodeTCString(config, grant);
       setLastTCString(tc);
-      cmpApi.update(tc, false);
+      api.update(tc, false);
       return tc;
     },
   });

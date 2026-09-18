@@ -18,7 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Placeholder until IAB Europe issues Probo a CMP ID. The official IAB
-// libraries reject ids below 2, so 0 cannot be encoded or passed to CmpApi.
-export const TCF_CMP_ID = 4095;
-export const TCF_CMP_VERSION = 1;
+package probodconfig
+
+// CookieBannerConfig is instance-wide cookie banner settings.
+type CookieBannerConfig struct {
+	// TCFCMPID is the IAB TCF CMP ID encoded in consent strings and
+	// reported on __tcfapi. 4095 is a placeholder until IAB Europe
+	// issues Probo a registered ID. Self-hosted instances that
+	// register their own CMP must set this to that ID. Valid IAB CMP
+	// IDs are 2–4095.
+	TCFCMPID int `json:"tcf-cmp-id"`
+}

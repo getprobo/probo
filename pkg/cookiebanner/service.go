@@ -47,10 +47,27 @@ const (
 type Service struct {
 	pg           *pg.Client
 	showBranding bool
+	tcfCmpID     int
 }
 
-func NewService(pgClient *pg.Client, showBranding bool) *Service {
-	return &Service{pg: pgClient, showBranding: showBranding}
+func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
+	return &Service{
+		pg:           pgClient,
+		showBranding: showBranding,
+		tcfCmpID:     normalizeTCFCmpID(tcfCmpID),
+	}
+}
+
+func (s *Service) TCFCmpID() int {
+	return s.tcfCmpID
+}
+
+func normalizeTCFCmpID(id int) int {
+	if id < 2 || id > 4095 {
+		return DefaultTCFCmpID
+	}
+
+	return id
 }
 
 type (
@@ -2202,7 +2219,7 @@ func (s *Service) GetActiveBannerConfig(
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
 			if banner.Capabilities.TCF && tcfServesGVL(regulation) {
-				if err := attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
+				if err := s.attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
 					return err
 				}
 			}
@@ -2307,7 +2324,7 @@ func buildBannerConfig(
 	}
 }
 
-func attachTCFVendors(
+func (s *Service) attachTCFVendors(
 	ctx context.Context,
 	conn pg.Querier,
 	config *BannerConfig,
@@ -2318,7 +2335,7 @@ func attachTCFVendors(
 		config.TCF = &BannerTCF{}
 	}
 
-	cmpID := tcfCmpID
+	cmpID := s.tcfCmpID
 	cmpVersion := tcfCmpVersion
 	config.TCF.CmpID = &cmpID
 	config.TCF.CmpVersion = &cmpVersion
@@ -2619,7 +2636,7 @@ func (s *Service) RecordConsent(
 				return ErrVersionNotPublished
 			}
 
-			if err := validateConsentTC(banner.Capabilities.TCF, req.Regulation, req.TC); err != nil {
+			if err := validateConsentTC(banner.Capabilities.TCF, req.Regulation, req.TC, s.tcfCmpID); err != nil {
 				return fmt.Errorf("invalid request: %w", err)
 			}
 
