@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.232.0] - 2026-09-18
+
+### Changed
+
+- Risk Analysis `Create`, `Fork`, `Update`, `Get`, and `Get Many`
+  treat `description` as plaintext (converted to ProseMirror JSON on
+  write), matching Task operations
+
 ## [0.231.0] - 2026-09-16
 
 ### Added
