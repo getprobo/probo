@@ -147,6 +147,11 @@ type CookieBanner implements Node {
     capabilities: CookieBannerCapabilities!
     defaultLanguage: String!
     publisherCountryCode: String!
+    """
+    IAB TCF CMP ID for this instance, from probod config. 4095 is a
+    placeholder until IAB Europe issues a registered ID.
+    """
+    tcfCmpId: Int! @goField(forceResolver: true)
 
     organization: Organization @goField(forceResolver: true)
 

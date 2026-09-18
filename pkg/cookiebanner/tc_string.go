@@ -40,7 +40,7 @@ const (
 
 var errInvalidTCString = errors.New("invalid tc string")
 
-func validateConsentTC(tcfEnabled bool, regulation *Regulation, tc *string) error {
+func validateConsentTC(tcfEnabled bool, regulation *Regulation, tc *string, cmpID int) error {
 	v := validator.New()
 
 	if !tcfEnabled {
@@ -56,7 +56,7 @@ func validateConsentTC(tcfEnabled bool, regulation *Regulation, tc *string) erro
 	}
 
 	if optionalNonEmptyString(tc) != nil {
-		v.Check(tc, "tc", tcfStringFormat())
+		v.Check(tc, "tc", tcfStringFormat(normalizeTCFCmpID(cmpID)))
 	}
 
 	return v.Error()
@@ -87,7 +87,7 @@ func tcForbiddenWhenDisabled() validator.ValidatorFunc {
 	}
 }
 
-func tcfStringFormat() validator.ValidatorFunc {
+func tcfStringFormat(cmpID int) validator.ValidatorFunc {
 	return func(value any) *validator.ValidationError {
 		if value == nil {
 			return nil
@@ -101,7 +101,7 @@ func tcfStringFormat() validator.ValidatorFunc {
 			}
 		}
 
-		if err := parseTCString(encoded); err != nil {
+		if err := parseTCString(encoded, cmpID); err != nil {
 			return &validator.ValidationError{
 				Code:    validator.ErrorCodeInvalidFormat,
 				Message: "must be a valid TCF 2.3 consent string",
@@ -112,7 +112,7 @@ func tcfStringFormat() validator.ValidatorFunc {
 	}
 }
 
-func parseTCString(encoded string) error {
+func parseTCString(encoded string, expectedCmpID int) error {
 	encoded = strings.TrimSpace(encoded)
 	if encoded == "" {
 		return errInvalidTCString
@@ -129,7 +129,7 @@ func parseTCString(encoded string) error {
 		return errInvalidTCString
 	}
 
-	if cmpID != tcfCmpID {
+	if cmpID != uint(normalizeTCFCmpID(expectedCmpID)) {
 		return errInvalidTCString
 	}
 

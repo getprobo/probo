@@ -137,6 +137,7 @@ export async function execute(
 						capabilities { resourceReporting }
 						defaultLanguage
 						publisherCountryCode
+						tcfCmpId
 						createdAt
 						updatedAt
 					}

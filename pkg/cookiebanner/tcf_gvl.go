@@ -30,9 +30,10 @@ import (
 )
 
 const (
+	// DefaultTCFCmpID is used when probod config omits a CMP ID.
 	// Placeholder until IAB Europe issues Probo a CMP ID. The official IAB
 	// libraries reject ids below 2, so 0 cannot be encoded or passed to CmpApi.
-	tcfCmpID                = 4095
+	DefaultTCFCmpID         = 4095
 	tcfCmpVersion           = 1
 	tcfPublisherCC          = "AA"
 	tcfGVLSpecVersion       = 3

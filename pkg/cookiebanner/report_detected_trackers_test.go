@@ -45,7 +45,7 @@ func TestReportDetectedTrackers_SkipsOversizedIdentifier(t *testing.T) {
 	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
-	svc := NewService(client, false)
+	svc := NewService(client, false, 0)
 
 	normalCookie := "_ga"
 	oversizedKey := strings.Repeat("a", MaxTrackerIdentifierLength+1)
@@ -157,7 +157,7 @@ func TestReportDetectedTrackers_AcceptsMaxLengthIdentifier(t *testing.T) {
 	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
-	svc := NewService(client, false)
+	svc := NewService(client, false, 0)
 
 	maxLenKey := strings.Repeat("b", MaxTrackerIdentifierLength)
 	source := coredata.CookieSourceScript
@@ -207,7 +207,7 @@ func TestReportDetectedTrackers_ResourceReportingDisabled(t *testing.T) {
 	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
-	svc := NewService(client, false)
+	svc := NewService(client, false, 0)
 
 	_, err := svc.UpdateCookieBanner(
 		ctx,
@@ -287,7 +287,7 @@ func TestReportDetectedTrackers_ResourceReportingEnabled(t *testing.T) {
 	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
-	svc := NewService(client, false)
+	svc := NewService(client, false, 0)
 
 	require.NoError(
 		t,

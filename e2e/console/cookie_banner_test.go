@@ -52,6 +52,7 @@ func TestCookieBanner_Create(t *testing.T) {
 								resourceReporting
 							}
 							defaultLanguage
+							tcfCmpId
 							createdAt
 							updatedAt
 						}
@@ -78,6 +79,7 @@ func TestCookieBanner_Create(t *testing.T) {
 							ResourceReporting bool `json:"resourceReporting"`
 						} `json:"capabilities"`
 						DefaultLanguage string `json:"defaultLanguage"`
+						TcfCmpId        int    `json:"tcfCmpId"`
 						CreatedAt       string `json:"createdAt"`
 						UpdatedAt       string `json:"updatedAt"`
 					} `json:"node"`
@@ -105,6 +107,7 @@ func TestCookieBanner_Create(t *testing.T) {
 		assert.Equal(t, 365, node.ConsentExpiryDays)
 		assert.True(t, node.Capabilities.ResourceReporting)
 		assert.Equal(t, "en", node.DefaultLanguage)
+		assert.Equal(t, 4095, node.TcfCmpId)
 		assert.NotEmpty(t, node.CreatedAt)
 		assert.NotEmpty(t, node.UpdatedAt)
 	})

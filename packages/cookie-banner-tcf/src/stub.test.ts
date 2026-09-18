@@ -20,7 +20,6 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
 import { installTCFStub } from "./stub";
 
 type TCFAPIStub = ((...args: unknown[]) => void) & { q: unknown[][] };
@@ -46,14 +45,13 @@ describe("installTCFStub", () => {
     w.__tcfapi?.("ping", 2, (data: unknown) => {
       ping = data as typeof ping;
     });
-    expect(ping).toEqual(
-      expect.objectContaining({
-        cmpStatus: "stub",
-        cmpLoaded: false,
-        cmpId: TCF_CMP_ID,
-        cmpVersion: TCF_CMP_VERSION,
-      }),
-    );
+    expect(ping).toEqual({
+      gdprApplies: true,
+      cmpLoaded: false,
+      cmpStatus: "stub",
+      displayStatus: "hidden",
+      apiVersion: "2.2",
+    });
 
     const listener = (): void => {};
     w.__tcfapi?.("addEventListener", 2, listener);

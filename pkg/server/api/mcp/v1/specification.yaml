@@ -12705,6 +12705,7 @@ components:
         - capabilities
         - default_language
         - publisher_country_code
+        - tcf_cmp_id
         - created_at
         - updated_at
       properties:
@@ -12747,6 +12748,9 @@ components:
         publisher_country_code:
           type: string
           description: IAB TCF publisher country of establishment (ISO 3166-1 alpha-2, or AA)
+        tcf_cmp_id:
+          type: integer
+          description: IAB TCF CMP ID used by this instance (placeholder 4095 until IAB issues a registered ID)
         created_at:
           type: string
           format: date-time

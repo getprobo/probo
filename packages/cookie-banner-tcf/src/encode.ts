@@ -21,10 +21,6 @@
 import { GVL, TCModel, TCString, type VendorList } from "@iabtechlabtcf/core";
 import type { BannerConfig, BannerTCF, TCFChoices } from "@probo/cookie-banner";
 
-import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
-
-export { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
-
 export function gdprApplies(config: BannerConfig): boolean {
   return config.regulation === "GDPR" || config.regulation === "UK_GDPR";
 }
@@ -40,8 +36,8 @@ export function encodeTCString(config: BannerConfig, grant: TCFGrant): string {
   const tcf = config.tcf;
   const gvl = new GVL(vendorListForEncode(gvlJson));
   const tcModel = new TCModel(gvl);
-  tcModel.cmpId = resolvedCmpID(tcf?.cmp_id);
-  tcModel.cmpVersion = tcf?.cmp_version ?? TCF_CMP_VERSION;
+  tcModel.cmpId = requireCmpID(tcf?.cmp_id);
+  tcModel.cmpVersion = requireCmpVersion(tcf?.cmp_version);
   tcModel.isServiceSpecific = true;
   tcModel.consentScreen = 1;
   tcModel.publisherCountryCode = tcf?.publisher_cc ?? "AA";
@@ -72,12 +68,20 @@ function applyChoices(tcModel: TCModel, choices: TCFChoices): void {
   tcModel.specialFeatureOptins.set(choices.specialFeatureOptins);
 }
 
-function resolvedCmpID(cmpId: number | undefined): number {
-  if (cmpId !== undefined && cmpId > 1) {
+export function requireCmpID(cmpId: number | undefined): number {
+  if (cmpId !== undefined && cmpId > 1 && cmpId <= 4095) {
     return cmpId;
   }
 
-  return TCF_CMP_ID;
+  throw new Error("tcf.cmp_id is missing or invalid");
+}
+
+export function requireCmpVersion(cmpVersion: number | undefined): number {
+  if (cmpVersion !== undefined && cmpVersion >= 1) {
+    return cmpVersion;
+  }
+
+  throw new Error("tcf.cmp_version is missing or invalid");
 }
 
 function vendorListForEncode(gvl: NonNullable<BannerTCF["gvl"]>): VendorList {

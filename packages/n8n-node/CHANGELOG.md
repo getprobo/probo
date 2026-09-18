@@ -6,6 +6,7 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ### Added
 
+- Cookie Banner `Get`/`Update` expose `tcfCmpId`
 - Cookie Banner `Get`/`Update` expose `publisherCountryCode`
 - Cookie Category `Get`/`Update` expose `tcfPurposeIds`
 - Cookie Consent Record `Get` returns the optional IAB TCF string (`tc`)

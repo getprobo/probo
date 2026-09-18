@@ -6,6 +6,9 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Changed
 
+- Cookie banner TCF CMP ID comes from probod config
+  (`cookie-banner.tcf-cmp-id` / `PROBOD_COOKIE_BANNER_TCF_CMP_ID`,
+  default 4095) so self-hosted instances can use their own IAB ID
 - TCF GET config includes the GVL catalog only when the request is GDPR
   or UK GDPR
 - Public cookie-banner consent POST rejects a `tc` that is not a TCF 2.3

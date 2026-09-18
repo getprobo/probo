@@ -22,7 +22,7 @@ import { TCString } from "@iabtechlabtcf/core";
 import type { BannerConfig, TCFGVL } from "@probo/cookie-banner";
 import { describe, expect, it } from "vitest";
 
-import { TCF_CMP_ID, encodeTCString, gdprApplies } from "./encode";
+import { encodeTCString, gdprApplies } from "./encode";
 
 const vendorId = 52;
 
@@ -94,7 +94,7 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
     resource_reporting_enabled: false,
     tcf: {
       gvl: tcfGvl,
-      cmp_id: TCF_CMP_ID,
+      cmp_id: 4095,
       cmp_version: 1,
       publisher_cc: "AA",
       policy_version: 5,
@@ -124,11 +124,24 @@ describe("encodeTCString", () => {
     );
   });
 
+  it("throws when tcf.cmp_id is missing", () => {
+    expect(() => encodeTCString(bannerConfig({ tcf: { gvl: tcfGvl } }), "all")).toThrow(
+      /tcf.cmp_id is missing or invalid/,
+    );
+  });
+
+  it("throws when tcf.cmp_version is missing", () => {
+    expect(() =>
+      encodeTCString(bannerConfig({ tcf: { gvl: tcfGvl, cmp_id: 4095 } }), "all"),
+    ).toThrow(/tcf.cmp_version is missing or invalid/);
+  });
+
   it("encodes disclosed vendors on reject without granting consent", () => {
     const encoded = encodeTCString(bannerConfig(), "none");
     const decoded = TCString.decode(encoded);
 
-    expect(decoded.cmpId).toBe(TCF_CMP_ID);
+    expect(decoded.cmpId).toBe(4095);
+    expect(decoded.cmpVersion).toBe(1);
     expect(decoded.isServiceSpecific).toBe(true);
     expect(decoded.vendorsDisclosed.has(vendorId)).toBe(true);
     expect(decoded.vendorConsents.has(vendorId)).toBe(false);

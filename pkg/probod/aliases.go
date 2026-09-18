@@ -74,6 +74,7 @@ type (
 	ITAMConfig                 = probodconfig.ITAMConfig
 	SlackConfig                = probodconfig.SlackConfig
 	SlackbotConfig             = probodconfig.SlackbotConfig
+	CookieBannerConfig         = probodconfig.CookieBannerConfig
 )
 
 const (
