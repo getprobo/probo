@@ -28,7 +28,7 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalNDACard_compliancePortal$key } from "#/__generated__/core/CompliancePortalNDACard_compliancePortal.graphql";
-import { CompliancePortalTonedCard } from "#/pages/organizations/compliance-portals/_components/CompliancePortalTonedCard";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 import { type NdaUploadError, useNdaDropzone } from "../_lib/useNdaDropzone";
 import { ndaCard } from "../variants";
@@ -84,7 +84,7 @@ export function CompliancePortalNDACard({
       : t("ndaSection.dropHint");
 
   return (
-    <CompliancePortalTonedCard
+    <TonedCard
       {...getRootProps({ className: frame() })}
       tone={tone}
       icon={hasFile
@@ -155,6 +155,6 @@ export function CompliancePortalNDACard({
           </Button>
         </div>
       )}
-    </CompliancePortalTonedCard>
+    </TonedCard>
   );
 }

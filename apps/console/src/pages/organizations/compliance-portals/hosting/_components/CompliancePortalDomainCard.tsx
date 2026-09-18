@@ -29,7 +29,7 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalDomainCardFragment$key } from "#/__generated__/core/CompliancePortalDomainCardFragment.graphql";
-import { tonedCard } from "#/pages/organizations/compliance-portals/_lib/tonedCard";
+import { tonedCard } from "#/components/TonedCard/variants";
 
 import {
   customDomainCardTone,
