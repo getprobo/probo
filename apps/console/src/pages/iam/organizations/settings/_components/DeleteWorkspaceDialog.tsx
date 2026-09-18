@@ -35,8 +35,7 @@ import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
 import type { DeleteWorkspaceDialogMutation } from "#/__generated__/iam/DeleteWorkspaceDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
@@ -44,7 +43,6 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { deleteWorkspaceDialog } from "../variants";
 
 const SETTINGS_NS = "iam/organizations/settings";
-const MEMBERSHIPS_PROFILES_CONNECTION = "MembershipsPage_profiles";
 
 const deleteOrganizationMutation = graphql`
   mutation DeleteWorkspaceDialogMutation($input: DeleteOrganizationInput!) {
@@ -66,7 +64,6 @@ export function DeleteWorkspaceDialog({
   children,
 }: DeleteWorkspaceDialogProps) {
   const { t } = useTranslation(SETTINGS_NS);
-  const navigate = useNavigate();
   const { form, fields } = deleteWorkspaceDialog();
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -98,33 +95,9 @@ export function DeleteWorkspaceDialog({
       variables: {
         input: { organizationId },
       },
-      updater(store) {
-        const payload = store.getRootField("deleteOrganization");
-        const deletedOrganizationId = payload?.getValue("deletedOrganizationId");
-        const viewer = store.getRoot().getLinkedRecord("viewer");
-        if (viewer == null || typeof deletedOrganizationId !== "string") {
-          return;
-        }
-        const connection = ConnectionHandler.getConnection(
-          viewer,
-          MEMBERSHIPS_PROFILES_CONNECTION,
-        );
-        if (connection == null) {
-          return;
-        }
-        const edges = connection.getLinkedRecords("edges") ?? [];
-        for (const edge of edges) {
-          const node = edge?.getLinkedRecord("node");
-          const organization = node?.getLinkedRecord("organization");
-          if (organization?.getDataID() === deletedOrganizationId && node != null) {
-            ConnectionHandler.deleteNode(connection, node.getDataID());
-          }
-        }
-      },
     }).then(
       () => {
-        handleOpenChange(false);
-        void navigate("/", { replace: true });
+        window.location.replace(new URL("/", window.location.origin));
       },
       () => {
         // Error toast is already shown by useMutation.
