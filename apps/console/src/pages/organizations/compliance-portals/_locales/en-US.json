@@ -908,6 +908,10 @@
       "fileTooLarge": {
         "title": "File size too large",
         "description": "Please upload a file smaller than 10MB."
+      },
+      "tooManyFiles": {
+        "title": "Too many files",
+        "description": "Please upload one PDF at a time."
       }
     }
   },

@@ -32,6 +32,10 @@
       "fileTooLarge": {
         "title": "Bestand te groot",
         "description": "Upload een afbeelding kleiner dan 5 MB."
+      },
+      "tooManyFiles": {
+        "title": "Te veel bestanden",
+        "description": "Upload één afbeelding tegelijk."
       }
     },
     "deleteHorizontalLogo": {
@@ -54,7 +58,7 @@
   },
   "deleteWorkspaceDialog": {
     "title": "Werkruimte verwijderen",
-    "description": "Hiermee wordt {{organizationName}} en alle bijbehorende gegevens permanent verwijderd.",
+    "description": "Hiermee worden {{organizationName}} en alle bijbehorende gegevens permanent verwijderd.",
     "warning": "Dit kan niet ongedaan worden gemaakt.",
     "confirmationLabel": "Typ \"{{organizationName}}\" om te bevestigen:",
     "confirmationMismatch": "De naam komt niet overeen.",

@@ -510,7 +510,8 @@
     },
     "errors": {
       "invalidFileType": { "title": "Bestandstype niet ondersteund", "description": "Upload een PDF-bestand." },
-      "fileTooLarge": { "title": "Bestand te groot", "description": "Upload een bestand kleiner dan 10 MB." }
+      "fileTooLarge": { "title": "Bestand te groot", "description": "Upload een bestand kleiner dan 10 MB." },
+      "tooManyFiles": { "title": "Te veel bestanden", "description": "Upload één PDF tegelijk." }
     }
   },
   "subprocessorsPage": {

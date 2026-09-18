@@ -32,6 +32,10 @@
       "fileTooLarge": {
         "title": "Fichier trop volumineux",
         "description": "Téléversez une image de moins de 5 Mo."
+      },
+      "tooManyFiles": {
+        "title": "Trop de fichiers",
+        "description": "Téléversez une seule image à la fois."
       }
     },
     "deleteHorizontalLogo": {

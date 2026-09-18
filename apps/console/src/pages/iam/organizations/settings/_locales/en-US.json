@@ -32,6 +32,10 @@
       "fileTooLarge": {
         "title": "File too large",
         "description": "Upload an image smaller than 5 MB."
+      },
+      "tooManyFiles": {
+        "title": "Too many files",
+        "description": "Upload one image at a time."
       }
     },
     "deleteHorizontalLogo": {

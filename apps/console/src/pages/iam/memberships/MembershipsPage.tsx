@@ -45,7 +45,7 @@ export const membershipsPageQuery = graphql`
         orderBy: { direction: ASC, field: ORGANIZATION_NAME }
         filter: { states: [ACTIVE] }
       )
-        @connection(key: "MembershipsPage_profiles")
+        @connection(key: "MembershipsPage_profiles", filters: [])
         @required(action: THROW) {
         edges @required(action: THROW) {
           node {
@@ -55,6 +55,7 @@ export const membershipsPageQuery = graphql`
             }
             ...OrganizationListItem_profile
             organization @required(action: THROW) {
+              id
               name
             }
           }

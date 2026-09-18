@@ -96,7 +96,7 @@ export function ImageDropzone({
   const showHint = filled && !disabled && !uploading && !isDragActive;
 
   return (
-    <div {...getRootProps({ "className": root(), "aria-label": placeholder })}>
+    <div {...getRootProps({ "className": root(), "role": "button", "aria-label": placeholder })}>
       <input {...getInputProps()} />
       {filled
         ? (

@@ -38,13 +38,18 @@ function WorkspaceSettingsPageQueryLoader() {
     loadQuery({ organizationId });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <WorkspaceSettingsPageSkeleton />;
   }
 
   return (
     <Suspense fallback={<WorkspaceSettingsPageSkeleton />}>
-      <WorkspaceSettingsPage queryRef={queryRef} />
+      <WorkspaceSettingsPage key={organizationId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

@@ -20,7 +20,7 @@
 
 import { type Accept, useDropzone } from "react-dropzone";
 
-export type FileDropzoneError = "invalidFileType" | "fileTooLarge";
+export type FileDropzoneError = "invalidFileType" | "fileTooLarge" | "tooManyFiles";
 
 export interface UseFileDropzoneOptions {
   disabled?: boolean;
@@ -52,7 +52,13 @@ export function useFileDropzone({
       const rejection = fileRejections[0];
       if (rejection != null) {
         const code = rejection.errors[0]?.code;
-        onReject(code === "file-too-large" ? "fileTooLarge" : "invalidFileType");
+        if (code === "file-too-large") {
+          onReject("fileTooLarge");
+        } else if (code === "too-many-files") {
+          onReject("tooManyFiles");
+        } else if (code === "file-invalid-type") {
+          onReject("invalidFileType");
+        }
         return;
       }
 
