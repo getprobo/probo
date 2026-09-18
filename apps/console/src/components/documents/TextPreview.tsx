@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { consoleMarkdownImageOrigins } from "#/lib/markdownImageOrigins";
 
 import { documentPreviewURL } from "./documentPreviewURL";
+import { readTextPreview } from "./readTextPreview";
 
 const MAX_PREVIEW_BYTES = 512 * 1024;
 
@@ -68,37 +69,10 @@ export function TextPreview({
           throw new Error(`Text download failed: ${response.status}`);
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let content = "";
-        let loadedBytes = 0;
-        let truncated = false;
-
-        while (true) {
-          const result = await reader.read();
-          if (result.done) {
-            break;
-          }
-
-          const remainingBytes = MAX_PREVIEW_BYTES - loadedBytes;
-          if (result.value.byteLength > remainingBytes) {
-            content += decoder.decode(
-              result.value.subarray(0, remainingBytes),
-              { stream: true },
-            );
-            truncated = true;
-            await reader.cancel();
-            break;
-          }
-
-          content += decoder.decode(result.value, { stream: true });
-          loadedBytes += result.value.byteLength;
-        }
-
-        content += decoder.decode();
-        if (truncated && content.endsWith("\uFFFD")) {
-          content = content.slice(0, -1);
-        }
+        const { content, truncated } = await readTextPreview(
+          response.body,
+          MAX_PREVIEW_BYTES,
+        );
 
         if (!abortController.signal.aborted) {
           setPreview({ status: "ready", content, truncated });
