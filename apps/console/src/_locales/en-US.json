@@ -680,13 +680,6 @@
     "unassigned": "Unassigned",
     "actions": { "close": "Close", "link": "Link", "unlink": "Unlink" }
   },
-  "deleteOrganizationDialog": {
-    "title": "Delete Organization",
-    "description": "This will permanently delete the organization {{organizationName}} and all its data.",
-    "warning": "This action cannot be undone.",
-    "confirmationLabel": "To confirm deletion, type \"{{organizationName}}\" below:",
-    "actions": { "delete": "Delete Organization", "deleting": "Deleting..." }
-  },
   "linkedRisksCard": {
     "columns": {
       "referenceId": "Reference ID",
@@ -1454,7 +1447,7 @@
     "cookieBannersDiscovery": "Discovery",
     "cookieBannersTrail": "Trail",
     "cookieBannersTCF": "TCF",
-    "organization": "Organization",
+    "workspaceSettings": "Workspace",
     "cookieBannerSwitcher": {
       "label": "Cookie banner",
       "select": "Select Banner",
@@ -1533,14 +1526,6 @@
       "errors": { "title": "Error", "request": "Failed to request audit log export" }
     }
   },
-  "generalSettingsPage": {
-    "messages": { "deleted": "Organization deleted successfully." },
-    "errors": { "delete": "Failed to delete organization" },
-    "dangerZone": {
-      "title": "Danger Zone",
-      "delete": { "title": "Delete Organization", "description": "Permanently delete this organization and all its data.", "warning": "This action cannot be undone.", "action": "Delete Organization" }
-    }
-  },
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "actions": { "addConfiguration": "Add Configuration" },
@@ -1608,14 +1593,6 @@
   "newSamlConfigurationForm": {
     "messages": { "created": "SAML configuration created successfully." },
     "errors": { "create": "Failed to create SAML configuration" }
-  },
-  "organizationForm": {
-    "title": "Organization details",
-    "messages": { "updated": "Organization updated successfully", "horizontalLogoDeleted": "Horizontal logo deleted successfully" },
-    "errors": { "update": "Failed to update organization", "deleteHorizontalLogo": "Failed to delete horizontal logo" },
-    "fields": { "logo": "Organization logo", "horizontalLogo": "Horizontal logo", "horizontalLogoDescription": "Upload a horizontal version of your logo for use in documents", "name": "Organization name" },
-    "actions": { "uploading": "Uploading...", "changeLogo": "Change logo", "changeHorizontalLogo": "Change horizontal logo", "uploadHorizontalLogo": "Upload horizontal logo", "deleteHorizontalLogo": "Delete horizontal logo", "deleting": "Deleting...", "delete": "Delete", "updating": "Updating...", "update": "Update Organization" },
-    "deleteHorizontalLogo": { "title": "Delete Horizontal Logo", "description": "Are you sure you want to delete the horizontal logo?", "warning": "This action cannot be undone." }
   },
   "samlConfigurationForm": {
     "sections": { "basic": "Basic Configuration", "identityProvider": "Identity Provider Configuration", "attributeMapping": "Attribute Mapping" },

@@ -1077,16 +1077,6 @@
       "unlink": "Ontkoppelen"
     }
   },
-  "deleteOrganizationDialog": {
-    "title": "Organisatie verwijderen",
-    "description": "Hiermee wordt de organisatie {{organizationName}} en alle bijbehorende gegevens permanent verwijderd.",
-    "warning": "Deze actie kan niet ongedaan worden gemaakt.",
-    "confirmationLabel": "Typ hieronder \"{{organizationName}}\" om verwijdering te bevestigen:",
-    "actions": {
-      "delete": "Organisatie verwijderen",
-      "deleting": "Verwijderen..."
-    }
-  },
   "linkedRisksCard": {
     "columns": {
       "referenceId": "Referentie-ID",
@@ -2190,7 +2180,7 @@
       "accessReview": "Toegangsbeoordeling",
       "settings": "Instellingen"
     },
-    "organization": "Organisatie",
+    "workspaceSettings": "Werkruimte",
     "context": "Context",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
@@ -2417,23 +2407,6 @@
       "errors": { "title": "Fout", "request": "Aanvragen van auditlogboekexport mislukt" }
     }
   },
-  "generalSettingsPage": {
-    "messages": {
-      "deleted": "Organisatie succesvol verwijderd."
-    },
-    "errors": {
-      "delete": "Verwijderen van organisatie mislukt"
-    },
-    "dangerZone": {
-      "title": "Gevarenzone",
-      "delete": {
-        "title": "Organisatie verwijderen",
-        "description": "Verwijder deze organisatie en alle bijbehorende gegevens permanent.",
-        "warning": "Deze actie kan niet ongedaan worden gemaakt.",
-        "action": "Organisatie verwijderen"
-      }
-    }
-  },
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "actions": { "addConfiguration": "Configuratie toevoegen" },
@@ -2580,39 +2553,6 @@
     },
     "errors": {
       "create": "Aanmaken van SAML-configuratie mislukt"
-    }
-  },
-  "organizationForm": {
-    "title": "Organisatiegegevens",
-    "messages": {
-      "updated": "Organisatie succesvol bijgewerkt",
-      "horizontalLogoDeleted": "Horizontaal logo succesvol verwijderd"
-    },
-    "errors": {
-      "update": "Bijwerken van organisatie mislukt",
-      "deleteHorizontalLogo": "Verwijderen van horizontaal logo mislukt"
-    },
-    "fields": {
-      "logo": "Organisatielogo",
-      "horizontalLogo": "Horizontaal logo",
-      "horizontalLogoDescription": "Upload een horizontale versie van uw logo voor gebruik in documenten",
-      "name": "Organisatienaam"
-    },
-    "actions": {
-      "uploading": "Uploaden...",
-      "changeLogo": "Logo wijzigen",
-      "changeHorizontalLogo": "Horizontaal logo wijzigen",
-      "uploadHorizontalLogo": "Horizontaal logo uploaden",
-      "deleteHorizontalLogo": "Horizontaal logo verwijderen",
-      "deleting": "Verwijderen...",
-      "delete": "Verwijderen",
-      "updating": "Bijwerken...",
-      "update": "Organisatie bijwerken"
-    },
-    "deleteHorizontalLogo": {
-      "title": "Horizontaal logo verwijderen",
-      "description": "Weet u zeker dat u het horizontale logo wilt verwijderen?",
-      "warning": "Deze actie kan niet ongedaan worden gemaakt."
     }
   },
   "samlConfigurationForm": {

@@ -154,25 +154,37 @@ const (
 	TitleMaxLength   = 1000
 	ContentMaxLength = 5000
 
+	maxOrganizationLogoFileSize = 5 << 20
+
 	DefaultAttributeEmail     = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
 	DefaultAttributeFirstname = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
 	DefaultAttributeLastname  = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
 	DefaultAttributeRole      = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"
 )
 
+var (
+	organizationLogoValidator = filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryImage),
+		filevalidation.WithMaxFileSize(maxOrganizationLogoFileSize),
+	)
+)
+
 func (req CreateOrganizationRequest) Validate() error {
 	v := validator.New()
-	fv := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryImage))
 
 	if req.LogoFile != nil {
-		err := fv.Validate(req.LogoFile.Filename, req.LogoFile.ContentType, req.LogoFile.Size)
+		err := organizationLogoValidator.Validate(req.LogoFile.Filename, req.LogoFile.ContentType, req.LogoFile.Size)
 		if err != nil {
 			return fmt.Errorf("invalid logo file: %w", err)
 		}
 	}
 
 	if req.HorizontalLogoFile != nil {
-		err := fv.Validate(req.HorizontalLogoFile.Filename, req.HorizontalLogoFile.ContentType, req.HorizontalLogoFile.Size)
+		err := organizationLogoValidator.Validate(
+			req.HorizontalLogoFile.Filename,
+			req.HorizontalLogoFile.ContentType,
+			req.HorizontalLogoFile.Size,
+		)
 		if err != nil {
 			return fmt.Errorf("invalid horizontal logo file: %w", err)
 		}
@@ -185,13 +197,16 @@ func (req CreateOrganizationRequest) Validate() error {
 
 func (req UpdateOrganizationRequest) Validate() error {
 	v := validator.New()
-	fv := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryImage))
 
 	v.Check(req.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(req.LogoFile, "logo_file", validator.NotEmpty())
 
 	if req.LogoFile != nil {
-		if err := fv.Validate(req.LogoFile.Filename, req.LogoFile.ContentType, req.LogoFile.Size); err != nil {
+		if err := organizationLogoValidator.Validate(
+			req.LogoFile.Filename,
+			req.LogoFile.ContentType,
+			req.LogoFile.Size,
+		); err != nil {
 			return fmt.Errorf("invalid logo file: %w", err)
 		}
 	}
@@ -199,7 +214,11 @@ func (req UpdateOrganizationRequest) Validate() error {
 	v.Check(req.HorizontalLogoFile, "horizontal_logo_file", validator.NotEmpty())
 
 	if req.HorizontalLogoFile != nil {
-		if err := fv.Validate(req.HorizontalLogoFile.Filename, req.HorizontalLogoFile.ContentType, req.HorizontalLogoFile.Size); err != nil {
+		if err := organizationLogoValidator.Validate(
+			req.HorizontalLogoFile.Filename,
+			req.HorizontalLogoFile.ContentType,
+			req.HorizontalLogoFile.Size,
+		); err != nil {
 			return fmt.Errorf("invalid horizontal logo file: %w", err)
 		}
 	}

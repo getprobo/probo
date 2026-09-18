@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,41 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { lazy } from "@probo/react-lazy";
 
-import type { GeneralSettingsPageQuery } from "#/__generated__/iam/GeneralSettingsPageQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import {
-  GeneralSettingsPage,
-  generalSettingsPageQuery,
-} from "./GeneralSettingsPage";
+import { WorkspaceSettingsPageSkeleton } from "./WorkspaceSettingsPageSkeleton";
 
-function GeneralSettingsPageQueryLoader() {
-  const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<GeneralSettingsPageQuery>(
-    generalSettingsPageQuery,
-  );
-
-  useEffect(() => {
-    loadQuery({
-      organizationId,
-    });
-  }, [loadQuery, organizationId]);
-
-  if (!queryRef) {
-    return null;
-  }
-
-  return <GeneralSettingsPage queryRef={queryRef} />;
-}
-
-export default function GeneralSettingsPageLoader() {
-  return (
-    <IAMRelayProvider>
-      <GeneralSettingsPageQueryLoader />
-    </IAMRelayProvider>
-  );
-}
+export const settingsRoutes = [
+  {
+    path: "general",
+    Fallback: WorkspaceSettingsPageSkeleton,
+    Component: lazy(
+      () => import("#/pages/iam/organizations/settings/WorkspaceSettingsPageLoader"),
+    ),
+  },
+  {
+    path: "webhooks",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("#/pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
+    ),
+  },
+];

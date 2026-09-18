@@ -1077,16 +1077,6 @@
       "unlink": "Dissocier"
     }
   },
-  "deleteOrganizationDialog": {
-    "title": "Supprimer l’organisation",
-    "description": "Cette action supprimera définitivement l’organisation {{organizationName}} et toutes ses données.",
-    "warning": "Cette action est irréversible.",
-    "confirmationLabel": "Pour confirmer la suppression, saisissez « {{organizationName}} » ci-dessous :",
-    "actions": {
-      "delete": "Supprimer l’organisation",
-      "deleting": "Suppression..."
-    }
-  },
   "linkedRisksCard": {
     "columns": {
       "referenceId": "ID de référence",
@@ -2190,7 +2180,7 @@
       "accessReview": "Revue d’accès",
       "settings": "Paramètres"
     },
-    "organization": "Organisation",
+    "workspaceSettings": "Espace de travail",
     "context": "Contexte",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
@@ -2417,23 +2407,6 @@
       "errors": { "title": "Erreur", "request": "Échec de la demande d'export du journal d'audit" }
     }
   },
-  "generalSettingsPage": {
-    "messages": {
-      "deleted": "Organisation supprimée avec succès."
-    },
-    "errors": {
-      "delete": "Échec de la suppression de l’organisation"
-    },
-    "dangerZone": {
-      "title": "Zone de danger",
-      "delete": {
-        "title": "Supprimer l’organisation",
-        "description": "Supprimer définitivement cette organisation et toutes ses données.",
-        "warning": "Cette action est irréversible.",
-        "action": "Supprimer l’organisation"
-      }
-    }
-  },
   "samlSsoPage": {
     "title": "Authentification unique SAML",
     "actions": { "addConfiguration": "Ajouter une configuration" },
@@ -2576,39 +2549,6 @@
     },
     "errors": {
       "create": "Échec de la création de la configuration SAML"
-    }
-  },
-  "organizationForm": {
-    "title": "Détails de l’organisation",
-    "messages": {
-      "updated": "Organisation mise à jour avec succès",
-      "horizontalLogoDeleted": "Logo horizontal supprimé avec succès"
-    },
-    "errors": {
-      "update": "Échec de la mise à jour de l’organisation",
-      "deleteHorizontalLogo": "Échec de la suppression du logo horizontal"
-    },
-    "fields": {
-      "logo": "Logo de l’organisation",
-      "horizontalLogo": "Logo horizontal",
-      "horizontalLogoDescription": "Téléversez une version horizontale de votre logo pour l’utiliser dans les documents",
-      "name": "Nom de l’organisation"
-    },
-    "actions": {
-      "uploading": "Téléversement...",
-      "changeLogo": "Changer le logo",
-      "changeHorizontalLogo": "Changer le logo horizontal",
-      "uploadHorizontalLogo": "Téléverser le logo horizontal",
-      "deleteHorizontalLogo": "Supprimer le logo horizontal",
-      "deleting": "Suppression...",
-      "delete": "Supprimer",
-      "updating": "Mise à jour...",
-      "update": "Mettre à jour l’organisation"
-    },
-    "deleteHorizontalLogo": {
-      "title": "Supprimer le logo horizontal",
-      "description": "Voulez-vous vraiment supprimer le logo horizontal ?",
-      "warning": "Cette action est irréversible."
     }
   },
   "samlConfigurationForm": {
