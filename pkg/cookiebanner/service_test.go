@@ -351,7 +351,7 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 	}
 	version := &coredata.CookieBannerVersion{Version: 1}
 
-	t.Run("follows the banner capability when enabled", func(t *testing.T) {
+	t.Run("leaves tcf unset until attach", func(t *testing.T) {
 		t.Parallel()
 
 		banner := &coredata.CookieBanner{
@@ -363,7 +363,8 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 		}
 
 		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
-		require.NotNil(t, config.TCF)
+		assert.Nil(t, config.TCF)
+		assert.True(t, config.ResourceReportingEnabled)
 	})
 
 	t.Run("defaults to disabled", func(t *testing.T) {
@@ -377,4 +378,30 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
 		assert.Nil(t, config.TCF)
 	})
+}
+
+func TestTCFServesGVL_Scenario(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		regulation Regulation
+		want       bool
+	}{
+		{name: "gdpr", regulation: RegulationGDPR, want: true},
+		{name: "uk gdpr", regulation: RegulationUKGDPR, want: true},
+		{name: "ccpa", regulation: RegulationCCPA, want: false},
+		{name: "none", regulation: RegulationNone, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, tcfServesGVL(tt.regulation))
+			},
+		)
+	}
 }

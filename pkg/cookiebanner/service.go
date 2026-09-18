@@ -227,7 +227,8 @@ type (
 	}
 
 	// BannerTCF is omitted from GET config when the hidden TCF capability is
-	// off. Nested keys are our config; `gvl` is IAB vendor-list.json shape.
+	// off, or when the request is not GDPR / UK GDPR. Nested keys are our
+	// config; `gvl` is IAB vendor-list.json shape.
 	BannerTCF struct {
 		Vendors       []BannerTCFVendor `json:"vendors,omitempty"`
 		GVLVersion    *int              `json:"gvl_version,omitempty"`
@@ -2200,7 +2201,7 @@ func (s *Service) GetActiveBannerConfig(
 			resolved := resolveTranslations(translations, categories)
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
-			if banner.Capabilities.TCF {
+			if banner.Capabilities.TCF && tcfServesGVL(regulation) {
 				if err := attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
 					return err
 				}
@@ -2291,11 +2292,6 @@ func buildBannerConfig(
 		privacyPolicyURL = *snapshot.PrivacyPolicyURL
 	}
 
-	var tcf *BannerTCF
-	if banner.Capabilities.TCF {
-		tcf = &BannerTCF{}
-	}
-
 	return &BannerConfig{
 		BannerID:                 banner.ID,
 		Version:                  version.Version,
@@ -2306,7 +2302,6 @@ func buildBannerConfig(
 		ConsentExpiryDays:        snapshot.ConsentExpiryDays,
 		ShowBranding:             banner.ShowBranding,
 		ResourceReportingEnabled: banner.Capabilities.ResourceReporting,
-		TCF:                      tcf,
 		Categories:               categories,
 		Texts:                    texts,
 	}

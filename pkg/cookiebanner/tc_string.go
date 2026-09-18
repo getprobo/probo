@@ -62,12 +62,16 @@ func validateConsentTC(tcfEnabled bool, regulation *Regulation, tc *string) erro
 	return v.Error()
 }
 
+func tcfServesGVL(regulation Regulation) bool {
+	return regulation == RegulationGDPR || regulation == RegulationUKGDPR
+}
+
 func tcfRequiresTC(regulation *Regulation) bool {
 	if regulation == nil {
 		return false
 	}
 
-	return *regulation == RegulationGDPR || *regulation == RegulationUKGDPR
+	return tcfServesGVL(*regulation)
 }
 
 func tcForbiddenWhenDisabled() validator.ValidatorFunc {

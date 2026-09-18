@@ -6,6 +6,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Changed
 
+- TCF GET config includes the GVL catalog only when the request is GDPR
+  or UK GDPR
 - Public cookie-banner consent POST rejects a `tc` that is not a TCF 2.3
   string from this CMP, and requires `tc` on TCF banners when the
   request is GDPR or UK GDPR
