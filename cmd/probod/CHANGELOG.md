@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- The compliance-portal Slack page explains that reviewers must run
+  `/probot login` before they can act on access requests from Slack
+
+### Fixed
+
+- Unbound Slack clickers see an ephemeral `/probot login` error again.
+  Block actions ignore the HTTP body, so the handler acknowledges Slack
+  and posts the prompt to `response_url` without waiting on delivery
+
 ## [0.290.0] - 2026-09-16
 
 ### Added

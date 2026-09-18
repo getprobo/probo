@@ -302,6 +302,10 @@
     "notInstalledTitle": "Slack-bot niet geïnstalleerd",
     "description": "Kies waar toegangsverzoeken voor deze compliancepagina naartoe worden gestuurd.",
     "notInstalled": "Installeer de Probo Slack-app via de organisatie-instellingen voordat u een kanaal kiest.",
+    "loginRequired": {
+      "title": "Slack-toegang vereist /probot login",
+      "description": "Elke reviewer moet <cmd>/probot login</cmd> in Slack uitvoeren om het Probo-account te koppelen voordat verzoeken via Slack kunnen worden behandeld."
+    },
     "channel": {
       "label": "Kanaal",
       "placeholder": "Selecteer kanaal",

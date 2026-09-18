@@ -519,6 +519,10 @@
     "notInstalledTitle": "Slack bot not installed",
     "description": "Choose where access requests for this compliance portal are sent.",
     "notInstalled": "Install the Probo Slack app from organization settings before choosing a channel.",
+    "loginRequired": {
+      "title": "Slack access requires /probot login",
+      "description": "Reviewers must run <cmd>/probot login</cmd> in Slack to link their Probo account before they can act on access requests."
+    },
     "channel": {
       "label": "Channel",
       "placeholder": "Select channel",

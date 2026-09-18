@@ -111,6 +111,15 @@ func (s *Service) SetBindPrompts(store *BindPromptService) {
 	s.bindPrompts = store
 }
 
+// SetHTTPClient is for tests; call it before the service handles requests.
+func (s *Service) SetHTTPClient(client *http.Client) {
+	if s == nil || client == nil {
+		return
+	}
+
+	s.httpClient = client
+}
+
 func (s *Service) InteractiveActorBound(
 	ctx context.Context,
 	payload InteractivePayload,

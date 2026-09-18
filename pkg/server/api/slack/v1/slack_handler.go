@@ -96,6 +96,17 @@ func SlackHandler(
 		}
 
 		if !bound {
+			if payload.ResponseURL != "" {
+				httpserver.RenderJSON(
+					w,
+					http.StatusOK,
+					slackchannel.InteractiveResponse{Success: true},
+				)
+				slackbot.ReplyUnboundInteractiveAsync(payload.ResponseURL)
+
+				return
+			}
+
 			httpserver.RenderJSON(
 				w,
 				http.StatusOK,
