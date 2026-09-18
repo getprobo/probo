@@ -22,10 +22,44 @@ export interface GraphQLError {
   message?: string;
   extensions?: {
     code?: string;
+    field?: string;
   };
   source?: {
-    errors?: Array<{ message: string; extensions?: { code?: string } }>;
+    errors?: Array<{ message: string; extensions?: { code?: string; field?: string } }>;
   };
+}
+
+export function graphqlErrorField(error: unknown): string | undefined {
+  if (error == null || typeof error !== "object" || !("extensions" in error)) {
+    return undefined;
+  }
+  const extensions = error.extensions;
+  if (extensions == null || typeof extensions !== "object" || !("field" in extensions)) {
+    return undefined;
+  }
+  return typeof extensions.field === "string" ? extensions.field : undefined;
+}
+
+function graphqlErrorMessage(error: unknown): string | undefined {
+  if (error == null || typeof error !== "object" || !("message" in error)) {
+    return undefined;
+  }
+  return typeof error.message === "string" ? error.message : undefined;
+}
+
+export function toFieldErrors(error: unknown): Record<string, string> | undefined {
+  const errors = Array.isArray(error) ? error : [error];
+  const fieldErrors: Record<string, string> = {};
+
+  for (const item of errors) {
+    const field = graphqlErrorField(item);
+    const message = graphqlErrorMessage(item);
+    if (field != null && message != null) {
+      fieldErrors[field] = message;
+    }
+  }
+
+  return Object.keys(fieldErrors).length > 0 ? fieldErrors : undefined;
 }
 
 export function formatError(title: string, error: GraphQLError | GraphQLError[]): string {

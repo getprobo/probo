@@ -20,6 +20,7 @@
 
 import { Form } from "@base-ui/react/form";
 import { TrashIcon } from "@phosphor-icons/react";
+import { toFieldErrors } from "@probo/helpers";
 import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
@@ -97,17 +98,6 @@ const deleteHorizontalLogoMutation = graphql`
     }
   }
 `;
-
-function graphqlErrorField(error: unknown): string | undefined {
-  if (error == null || typeof error !== "object" || !("extensions" in error)) {
-    return undefined;
-  }
-  const extensions = error.extensions;
-  if (extensions == null || typeof extensions !== "object" || !("field" in extensions)) {
-    return undefined;
-  }
-  return typeof extensions.field === "string" ? extensions.field : undefined;
-}
 
 interface WorkspaceIdentitySectionProps {
   organizationKey: WorkspaceIdentitySectionFragment$key;
@@ -246,9 +236,9 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
         },
       },
       onCompleted(_response, payloadErrors) {
-        const error = payloadErrors?.[0];
-        if (error != null && graphqlErrorField(error) === "name") {
-          setErrors({ name: error.message });
+        const fieldErrors = toFieldErrors(payloadErrors);
+        if (fieldErrors != null) {
+          setErrors(fieldErrors);
         }
       },
     }).then(

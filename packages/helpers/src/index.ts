@@ -126,7 +126,7 @@ export {
 } from "./duration";
 export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
 export { detectSocialName } from "./socialUrl";
-export { formatError, type GraphQLError } from "./error";
+export { formatError, graphqlErrorField, toFieldErrors, type GraphQLError } from "./error";
 export {
   Role,
   roles,
