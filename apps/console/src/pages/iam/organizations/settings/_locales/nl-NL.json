@@ -37,7 +37,6 @@
     "deleteHorizontalLogo": {
       "title": "Horizontaal logo verwijderen",
       "description": "Het horizontale logo van deze werkruimte verwijderen?",
-      "warning": "Dit kan niet ongedaan worden gemaakt.",
       "actions": {
         "cancel": "Annuleren",
         "confirm": "Verwijderen"

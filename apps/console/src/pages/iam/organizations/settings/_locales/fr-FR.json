@@ -37,7 +37,6 @@
     "deleteHorizontalLogo": {
       "title": "Supprimer le logo horizontal",
       "description": "Supprimer le logo horizontal de cet espace de travail ?",
-      "warning": "Cette action est irréversible.",
       "actions": {
         "cancel": "Annuler",
         "confirm": "Supprimer"

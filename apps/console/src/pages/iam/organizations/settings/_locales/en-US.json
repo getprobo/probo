@@ -37,7 +37,6 @@
     "deleteHorizontalLogo": {
       "title": "Remove horizontal logo",
       "description": "Remove the horizontal logo from this workspace?",
-      "warning": "This cannot be undone.",
       "actions": {
         "cancel": "Cancel",
         "confirm": "Remove"

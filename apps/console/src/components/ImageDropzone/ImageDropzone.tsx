@@ -29,14 +29,14 @@ import { useFileDropzone } from "#/lib/useFileDropzone";
 
 import { imageDropzone } from "./variants";
 
-export const imageDropzoneAccept = {
+const imageDropzoneAccept = {
   "image/jpeg": [".jpg", ".jpeg"],
   "image/png": [".png"],
   "image/svg+xml": [".svg"],
   "image/webp": [".webp"],
 };
 
-export const imageDropzoneMaxBytes = 5 * 1024 * 1024;
+const imageDropzoneMaxBytes = 5 * 1024 * 1024;
 
 export interface ImageDropzoneProps {
   src?: string | null;
