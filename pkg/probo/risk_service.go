@@ -524,6 +524,25 @@ func (s RiskService) Get(
 	return risk, nil
 }
 
+func (s RiskService) GetWithDeleted(
+	ctx context.Context, scope coredata.Scoper,
+	riskID gid.GID,
+) (*coredata.Risk, error) {
+	risk := &coredata.Risk{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return risk.LoadByIDWithDeleted(ctx, conn, scope, riskID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get risk: %w", err)
+	}
+
+	return risk, nil
+}
+
 func (s RiskService) GetByIDs(
 	ctx context.Context, scope coredata.Scoper,
 	riskIDs ...gid.GID,
@@ -658,12 +677,37 @@ func (s RiskService) Delete(
 	ctx context.Context, scope coredata.Scoper,
 	riskID gid.GID,
 ) error {
-	risk := &coredata.Risk{}
-
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return risk.Delete(ctx, tx, scope, riskID)
+			hasLivePlan, err := (&coredata.TreatmentPlan{}).ExistsByRiskID(ctx, tx, scope, riskID)
+			if err != nil {
+				return fmt.Errorf("cannot check treatment plans: %w", err)
+			}
+
+			if hasLivePlan {
+				return coredata.ErrResourceInUse
+			}
+
+			hasHistory, err := (&coredata.TreatmentPlanEvent{}).ExistsByRiskID(ctx, tx, scope, riskID)
+			if err != nil {
+				return fmt.Errorf("cannot check treatment plan events: %w", err)
+			}
+
+			risk := &coredata.Risk{}
+			if hasHistory {
+				if err := risk.SoftDelete(ctx, tx, scope, riskID); err != nil {
+					return fmt.Errorf("cannot soft delete risk: %w", err)
+				}
+
+				return nil
+			}
+
+			if err := risk.Delete(ctx, tx, scope, riskID); err != nil {
+				return fmt.Errorf("cannot delete risk: %w", err)
+			}
+
+			return nil
 		},
 	)
 }

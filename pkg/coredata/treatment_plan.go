@@ -398,6 +398,33 @@ WHERE %s
 	return count, nil
 }
 
+func (tp *TreatmentPlan) ExistsByRiskID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskID gid.GID,
+) (bool, error) {
+	q := `
+SELECT EXISTS (
+	SELECT 1
+	FROM treatment_plans
+	WHERE %s
+		AND risk_id = @risk_id
+)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_id": riskID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var exists bool
+	if err := conn.QueryRow(ctx, q, args).Scan(&exists); err != nil {
+		return false, fmt.Errorf("cannot check treatment plan existence: %w", err)
+	}
+
+	return exists, nil
+}
+
 func (tps *TreatmentPlans) LoadByRiskID(
 	ctx context.Context,
 	conn pg.Querier,
