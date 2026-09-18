@@ -223,6 +223,28 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 	}
 }
 
+func TestBuilder_Build_InvalidCookieBannerTCFCmpID(t *testing.T) {
+	t.Parallel()
+
+	for _, id := range []string{"1", "4096"} {
+		t.Run(
+			id,
+			func(t *testing.T) {
+				t.Parallel()
+
+				env := requiredEnv()
+				env["PROBOD_COOKIE_BANNER_TCF_CMP_ID"] = id
+
+				b := NewBuilder(NewResolver(mockEnv(env)))
+				_, err := b.Build()
+
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "PROBOD_COOKIE_BANNER_TCF_CMP_ID must be between 2 and 4095")
+			},
+		)
+	}
+}
+
 func TestBuilder_Build_InvalidCompliancePortalTLSMode(t *testing.T) {
 	t.Parallel()
 
@@ -403,6 +425,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	// Branding
 	assert.True(t, cfg.Probod.Branding)
 
+	// Cookie banner
+	assert.Equal(t, 4095, cfg.Probod.CookieBanner.TCFCMPID)
+
 	// No connectors by default
 	assert.Empty(t, cfg.Probod.Connectors)
 }
@@ -538,6 +563,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_ESIGN_TSA_URL"] = "http://custom.tsa.example.com"
 	// Branding
 	env["PROBOD_BRANDING"] = "false"
+	// Cookie banner
+	env["PROBOD_COOKIE_BANNER_TCF_CMP_ID"] = "123"
 	// Slackbot
 	env["PROBOD_SLACKBOT_ENABLED"] = "true"
 	env["PROBOD_SLACKBOT_SIGNING_SECRET"] = "slackbot-signing-secret"
@@ -689,6 +716,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "http://custom.tsa.example.com", cfg.Probod.ESign.TSAURL)
 	// Branding
 	assert.False(t, cfg.Probod.Branding)
+	// Cookie banner
+	assert.Equal(t, 123, cfg.Probod.CookieBanner.TCFCMPID)
 	// Slackbot
 	assert.True(t, cfg.Probod.Slackbot.Enabled)
 	assert.Equal(t, "slackbot-signing-secret", cfg.Probod.Slackbot.SigningSecret)

@@ -41,6 +41,7 @@ export interface Category {
   kind: string;
   cookies: CookieItem[];
   gcm_consent_types: string[];
+  tcf_purpose_ids?: number[];
   posthog_consent: boolean;
 }
 
@@ -91,11 +92,51 @@ export interface BannerConfig {
   layout: BannerLayout;
   show_branding: boolean;
   resource_reporting_enabled: boolean;
-  tcf_enabled?: boolean;
-  tcf_vendors?: TCFVendor[];
-  gvl_version?: number;
+  tcf?: BannerTCF;
   categories: Category[];
   texts: BannerTexts;
+}
+
+export interface BannerTCF {
+  vendors?: TCFVendor[];
+  gvl_version?: number;
+  policy_version?: number;
+  cmp_id?: number;
+  cmp_version?: number;
+  publisher_cc?: string;
+  gvl?: TCFGVL;
+}
+
+export interface TCFGVL {
+  gvlSpecificationVersion: number;
+  vendorListVersion: number;
+  tcfPolicyVersion: number;
+  lastUpdated?: string;
+  purposes?: Record<string, unknown>;
+  specialPurposes?: Record<string, unknown>;
+  features?: Record<string, unknown>;
+  specialFeatures?: Record<string, unknown>;
+  stacks?: Record<string, unknown>;
+  dataCategories?: Record<string, unknown>;
+  vendors: Record<string, TCFGVLVendor>;
+}
+
+export interface TCFGVLVendor {
+  id: number;
+  name: string;
+  purposes?: number[];
+  legIntPurposes?: number[];
+  flexiblePurposes?: number[];
+  specialPurposes?: number[];
+  features?: number[];
+  specialFeatures?: number[];
+  policyUrl?: string;
+  usesCookies?: boolean;
+  cookieRefresh?: boolean;
+  usesNonCookieAccess?: boolean;
+  cookieMaxAgeSeconds?: number | null;
+  dataDeclaration?: number[];
+  urls?: Array<{ langId?: string; privacy?: string; legIntClaim?: string }>;
 }
 
 export interface TCFVendor {
@@ -120,6 +161,7 @@ export interface VisitorConsent {
   action: ConsentAction;
   consent_data: Record<string, boolean>;
   created_at: string;
+  tc?: string;
 }
 
 export interface ConsentRecord {

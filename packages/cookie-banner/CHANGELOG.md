@@ -4,6 +4,31 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+### Added
+
+- Optional `TCFRuntime.onUIVisible` so a TCF addon can follow banner /
+  panel / privacy-choices open and close
+- `projectConsentFromTCF` maps TCF purpose consent/LI bits onto category
+  slugs (AND, fail-closed). Customize and TC restore use it when TCF is on
+- Published banner config nests TCF under `tcf` (`vendors`, `gvl_version`,
+  `policy_version`, `cmp_id`, `cmp_version`, `publisher_cc`, and a
+  publisher-filtered IAB `gvl`) when the hidden capability is on; the key
+  is omitted otherwise. This replaces the flat `tcf_enabled`,
+  `tcf_vendors`, and `gvl_version` fields from 0.18.0
+- Stores an optional `tc` field on `probo_consent` when a TCF runtime is
+  registered via `setTCFRuntime`. Encoding and `__tcfapi` live in
+  `@probo/cookie-banner-tcf` so this package stays IAB-free
+- Posts `tc` with consent records and restores it from GET visitor consent
+  onto `probo_consent` and `getTCFRuntime()?.onConfig` so returning visitors
+  keep `__tcfapi` after a cookie miss
+- Public addon API for layout and TCF plugins: `setLayoutRenderer`,
+  `setTCFRuntime`, `bootCookieBanner`, and layout primitives (`floatingCard`,
+  `esc`, `BRANDING`, `CLOSE_ICON`). The themed banner asks a registered
+  renderer first and falls back to opt-in / opt-out / notice
+- `<probo-preference-panel>` requires only `probo-save-button`, so addons can
+  replace the category list. `.panel-body` and `.toggle-group` style the
+  replacement controls
+
 ## [0.18.0] - 2026-09-16
 
 ### Added

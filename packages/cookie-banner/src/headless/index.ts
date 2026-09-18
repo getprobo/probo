@@ -18,6 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+export {
+  getLayoutRenderer,
+  getTCFRuntime,
+  setLayoutRenderer,
+  setTCFRuntime,
+} from "../addons";
+export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "../addons";
 export { registerHeadlessComponents } from "../components";
 export { resolveBannerText, resolveLayout } from "../layout";
 export type {
@@ -33,6 +40,9 @@ export type {
   Presentation,
   Regulation,
   SettingsLinkStyle,
+  BannerTCF,
+  TCFGVL,
+  TCFGVLVendor,
   TCFVendor,
   VisitorConsent,
 } from "../types";

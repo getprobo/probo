@@ -22,10 +22,7 @@ import { ProboElement } from "./base";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
 
-const REQUIRED_CHILDREN = [
-  "probo-category-list",
-  "probo-save-button",
-] as const;
+const REQUIRED_CHILDREN = ["probo-save-button"] as const;
 
 export class ProboPreferencePanel extends ProboElement {
   private root: ProboRootElement | null = null;

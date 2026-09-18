@@ -39,15 +39,35 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-const MaxTrackerIdentifierLength = 255
+const (
+	MaxTrackerIdentifierLength = 255
+	MaxTCStringLength          = 16 * 1024
+)
 
 type Service struct {
 	pg           *pg.Client
 	showBranding bool
+	tcfCmpID     int
 }
 
-func NewService(pgClient *pg.Client, showBranding bool) *Service {
-	return &Service{pg: pgClient, showBranding: showBranding}
+func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
+	return &Service{
+		pg:           pgClient,
+		showBranding: showBranding,
+		tcfCmpID:     normalizeTCFCmpID(tcfCmpID),
+	}
+}
+
+func (s *Service) TCFCmpID() int {
+	return s.tcfCmpID
+}
+
+func normalizeTCFCmpID(id int) int {
+	if id < 2 || id > 4095 {
+		return DefaultTCFCmpID
+	}
+
+	return id
 }
 
 type (
@@ -69,13 +89,14 @@ type (
 	}
 
 	UpdateCookieBannerRequest struct {
-		CookieBannerID    gid.GID
-		Name              *string
-		PrivacyPolicyURL  *string
-		CookiePolicyURL   *string
-		ConsentExpiryDays *int
-		DefaultLanguage   *string
-		Capabilities      *coredata.CookieBannerCapabilitiesPatch
+		CookieBannerID       gid.GID
+		Name                 *string
+		PrivacyPolicyURL     *string
+		CookiePolicyURL      *string
+		ConsentExpiryDays    *int
+		DefaultLanguage      *string
+		PublisherCountryCode *string
+		Capabilities         *coredata.CookieBannerCapabilitiesPatch
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -84,6 +105,7 @@ type (
 		Slug             *string
 		Description      *string
 		GCMConsentTypes  *[]string
+		TCFPurposeIDs    *[]int
 		PostHogConsent   *bool
 	}
 
@@ -116,6 +138,7 @@ type (
 		CountryCode      *coredata.CountryCode
 		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
+		TC               *string
 	}
 
 	DetectedCookie struct {
@@ -215,11 +238,22 @@ type (
 		Layout                   Layout                                         `json:"layout"`
 		ShowBranding             bool                                           `json:"show_branding"`
 		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
-		TCFEnabled               bool                                           `json:"tcf_enabled"`
-		TCFVendors               []BannerTCFVendor                              `json:"tcf_vendors,omitempty"`
-		GVLVersion               *int                                           `json:"gvl_version,omitempty"`
+		TCF                      *BannerTCF                                     `json:"tcf,omitempty"`
 		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts                    map[string]string                              `json:"texts"`
+	}
+
+	// BannerTCF is omitted from GET config when the hidden TCF capability is
+	// off, or when the request is not GDPR / UK GDPR. Nested keys are our
+	// config; `gvl` is IAB vendor-list.json shape.
+	BannerTCF struct {
+		Vendors       []BannerTCFVendor `json:"vendors,omitempty"`
+		GVLVersion    *int              `json:"gvl_version,omitempty"`
+		PolicyVersion *int              `json:"policy_version,omitempty"`
+		CmpID         *int              `json:"cmp_id,omitempty"`
+		CmpVersion    *int              `json:"cmp_version,omitempty"`
+		PublisherCC   string            `json:"publisher_cc,omitempty"`
+		GVL           *BannerTCFGVL     `json:"gvl,omitempty"`
 	}
 
 	BannerTCFVendor struct {
@@ -229,6 +263,23 @@ type (
 		LegIntPurposes  []int32 `json:"leg_int_purposes"`
 		SpecialFeatures []int32 `json:"special_features"`
 		PolicyURL       *string `json:"policy_url,omitempty"`
+	}
+
+	// BannerTCFGVL is a vendor-list.json-shaped object with vendors reduced to
+	// the banner’s disclosed IAB IDs. Nested keys follow the IAB GVL schema
+	// (camelCase) so @iabtechlabtcf/core can construct a GVL from it.
+	BannerTCFGVL struct {
+		GVLSpecificationVersion int                        `json:"gvlSpecificationVersion"`
+		VendorListVersion       int                        `json:"vendorListVersion"`
+		TCFPolicyVersion        int                        `json:"tcfPolicyVersion"`
+		LastUpdated             string                     `json:"lastUpdated,omitempty"`
+		Purposes                json.RawMessage            `json:"purposes,omitempty"`
+		SpecialPurposes         json.RawMessage            `json:"specialPurposes,omitempty"`
+		Features                json.RawMessage            `json:"features,omitempty"`
+		SpecialFeatures         json.RawMessage            `json:"specialFeatures,omitempty"`
+		Stacks                  json.RawMessage            `json:"stacks,omitempty"`
+		DataCategories          json.RawMessage            `json:"dataCategories,omitempty"`
+		Vendors                 map[string]json.RawMessage `json:"vendors"`
 	}
 
 	UpsertCookieBannerTranslationRequest struct {
@@ -242,6 +293,7 @@ type (
 		Version     int                          `json:"version"`
 		Action      coredata.CookieConsentAction `json:"action"`
 		ConsentData json.RawMessage              `json:"consent_data"`
+		TC          *string                      `json:"tc,omitempty"`
 		CreatedAt   time.Time                    `json:"created_at"`
 	}
 
@@ -284,6 +336,13 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.DefaultLanguage, "default_language", validator.OneOfSlice(SupportedLanguages))
 
+	if r.PublisherCountryCode != nil {
+		code := strings.ToUpper(strings.TrimSpace(*r.PublisherCountryCode))
+		r.PublisherCountryCode = &code
+	}
+
+	v.Check(r.PublisherCountryCode, "publisher_country_code", publisherCountryCode())
+
 	return v.Error()
 }
 
@@ -325,6 +384,12 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	v.Check(r.Slug, "slug", validator.Slug(100))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
+	if r.TCFPurposeIDs != nil {
+		v.CheckEach(*r.TCFPurposeIDs, "tcf_purpose_ids", func(index int, item any) {
+			v.Check(item, fmt.Sprintf("tcf_purpose_ids.%d", index), validator.Min(1), validator.Max(11))
+		})
+	}
+
 	return v.Error()
 }
 
@@ -354,6 +419,7 @@ func (r *RecordConsentRequest) Validate() error {
 	v.Check(r.Version, "version", validator.Required(), validator.Min(1))
 	v.Check(r.VisitorID, "visitor_id", validator.Required(), validator.NotEmpty())
 	v.Check(r.Action, "action", validator.Required(), validator.OneOfSlice(coredata.CookieConsentActions()))
+	v.Check(r.TC, "tc", validator.MaxLen(MaxTCStringLength))
 
 	return v.Error()
 }
@@ -674,19 +740,20 @@ func (s *Service) CreateCookieBanner(
 			now := time.Now()
 
 			banner = &coredata.CookieBanner{
-				ID:                gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
-				OrganizationID:    req.OrganizationID,
-				Name:              req.Name,
-				Origin:            CanonicalizeOrigin(req.Origin),
-				State:             coredata.CookieBannerStateActive,
-				PrivacyPolicyURL:  req.PrivacyPolicyURL,
-				CookiePolicyURL:   req.CookiePolicyURL,
-				ConsentExpiryDays: req.ConsentExpiryDays,
-				ShowBranding:      s.showBranding,
-				Capabilities:      coredata.DefaultCookieBannerCapabilities(),
-				DefaultLanguage:   "en",
-				CreatedAt:         now,
-				UpdatedAt:         now,
+				ID:                   gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
+				OrganizationID:       req.OrganizationID,
+				Name:                 req.Name,
+				Origin:               CanonicalizeOrigin(req.Origin),
+				State:                coredata.CookieBannerStateActive,
+				PrivacyPolicyURL:     req.PrivacyPolicyURL,
+				CookiePolicyURL:      req.CookiePolicyURL,
+				ConsentExpiryDays:    req.ConsentExpiryDays,
+				ShowBranding:         s.showBranding,
+				Capabilities:         coredata.DefaultCookieBannerCapabilities(),
+				DefaultLanguage:      "en",
+				PublisherCountryCode: tcfPublisherCC,
+				CreatedAt:            now,
+				UpdatedAt:            now,
 			}
 
 			if err := banner.Insert(ctx, tx, scope); err != nil {
@@ -704,6 +771,11 @@ func (s *Service) CreateCookieBanner(
 					gcmConsentTypes = []string{}
 				}
 
+				tcfPurposeIDs := dc.TCFPurposeIDs
+				if tcfPurposeIDs == nil {
+					tcfPurposeIDs = []int{}
+				}
+
 				category := &coredata.CookieCategory{
 					ID:              gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
 					OrganizationID:  banner.OrganizationID,
@@ -714,6 +786,7 @@ func (s *Service) CreateCookieBanner(
 					Kind:            dc.Kind,
 					Rank:            dc.Rank,
 					GCMConsentTypes: gcmConsentTypes,
+					TCFPurposeIDs:   tcfPurposeIDs,
 					PostHogConsent:  dc.PostHogConsent,
 					CreatedAt:       now,
 					UpdatedAt:       now,
@@ -1247,12 +1320,13 @@ func (s *Service) UpdateCookieBanner(
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
+			publisherCCChanged := req.PublisherCountryCode != nil && *req.PublisherCountryCode != banner.PublisherCountryCode
 			capabilitiesChanged := req.Capabilities != nil &&
 				req.Capabilities.Apply(banner.Capabilities) != banner.Capabilities
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
-			if !nameChanged && !snapshotChanged && !capabilitiesChanged {
+			if !nameChanged && !snapshotChanged && !capabilitiesChanged && !publisherCCChanged {
 				return nil
 			}
 
@@ -1274,6 +1348,10 @@ func (s *Service) UpdateCookieBanner(
 
 			if req.DefaultLanguage != nil {
 				banner.DefaultLanguage = *req.DefaultLanguage
+			}
+
+			if req.PublisherCountryCode != nil {
+				banner.PublisherCountryCode = *req.PublisherCountryCode
 			}
 
 			if req.Capabilities != nil {
@@ -1538,6 +1616,7 @@ func (s *Service) CreateCookieCategory(
 				Kind:            coredata.CookieCategoryKindNormal,
 				Rank:            req.Rank,
 				GCMConsentTypes: []string{},
+				TCFPurposeIDs:   []int{},
 				CreatedAt:       now,
 				UpdatedAt:       now,
 			}
@@ -1699,9 +1778,10 @@ func (s *Service) UpdateCookieCategory(
 			slugChanged := req.Slug != nil && *req.Slug != category.Slug
 			descChanged := req.Description != nil && *req.Description != category.Description
 			gcmChanged := req.GCMConsentTypes != nil && !slices.Equal(*req.GCMConsentTypes, category.GCMConsentTypes)
+			tcfChanged := req.TCFPurposeIDs != nil && !slices.Equal(*req.TCFPurposeIDs, category.TCFPurposeIDs)
 			posthogChanged := req.PostHogConsent != nil && *req.PostHogConsent != category.PostHogConsent
 
-			if !nameChanged && !slugChanged && !descChanged && !gcmChanged && !posthogChanged {
+			if !nameChanged && !slugChanged && !descChanged && !gcmChanged && !tcfChanged && !posthogChanged {
 				return nil
 			}
 
@@ -1719,6 +1799,10 @@ func (s *Service) UpdateCookieCategory(
 
 			if req.GCMConsentTypes != nil {
 				category.GCMConsentTypes = *req.GCMConsentTypes
+			}
+
+			if req.TCFPurposeIDs != nil {
+				category.TCFPurposeIDs = *req.TCFPurposeIDs
 			}
 
 			if posthogChanged {
@@ -2134,8 +2218,8 @@ func (s *Service) GetActiveBannerConfig(
 			resolved := resolveTranslations(translations, categories)
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
-			if banner.Capabilities.TCF {
-				if err := attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs); err != nil {
+			if banner.Capabilities.TCF && tcfServesGVL(regulation) {
+				if err := s.attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
 					return err
 				}
 			}
@@ -2218,6 +2302,8 @@ func buildBannerConfig(
 		}
 	}
 
+	mergeTCFTexts(resolvedLang, texts)
+
 	var privacyPolicyURL string
 	if snapshot.PrivacyPolicyURL != nil {
 		privacyPolicyURL = *snapshot.PrivacyPolicyURL
@@ -2233,25 +2319,51 @@ func buildBannerConfig(
 		ConsentExpiryDays:        snapshot.ConsentExpiryDays,
 		ShowBranding:             banner.ShowBranding,
 		ResourceReportingEnabled: banner.Capabilities.ResourceReporting,
-		TCFEnabled:               banner.Capabilities.TCF,
 		Categories:               categories,
 		Texts:                    texts,
 	}
 }
 
-func attachTCFVendors(
+func (s *Service) attachTCFVendors(
 	ctx context.Context,
 	conn pg.Querier,
 	config *BannerConfig,
 	iabVendorIDs []int,
+	publisherCC string,
 ) error {
+	if config.TCF == nil {
+		config.TCF = &BannerTCF{}
+	}
+
+	cmpID := s.tcfCmpID
+	cmpVersion := tcfCmpVersion
+	config.TCF.CmpID = &cmpID
+	config.TCF.CmpVersion = &cmpVersion
+
+	if publisherCC == "" {
+		publisherCC = tcfPublisherCC
+	}
+
+	config.TCF.PublisherCC = publisherCC
+
+	var snapshot *coredata.CommonGVLSnapshot
+
 	var state coredata.CommonGVLState
 	if err := state.Load(ctx, conn); err != nil {
 		if !errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot load common gvl state: %w", err)
 		}
-	} else {
-		config.GVLVersion = state.LatestVendorListVersion
+	} else if state.LatestVendorListVersion != nil {
+		config.TCF.GVLVersion = state.LatestVendorListVersion
+
+		var loaded coredata.CommonGVLSnapshot
+		if err := loaded.LoadByVendorListVersion(ctx, conn, *state.LatestVendorListVersion); err != nil {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load common gvl snapshot: %w", err)
+			}
+		} else {
+			snapshot = &loaded
+		}
 	}
 
 	var vendors coredata.CommonGVLVendors
@@ -2259,32 +2371,29 @@ func attachTCFVendors(
 		return fmt.Errorf("cannot load tcf vendors: %w", err)
 	}
 
-	config.TCFVendors = make([]BannerTCFVendor, 0, len(vendors))
+	config.TCF.Vendors = make([]BannerTCFVendor, 0, len(vendors))
 	for _, vendor := range vendors {
-		purposes := vendor.Purposes
-		if purposes == nil {
-			purposes = []int32{}
-		}
-
-		legIntPurposes := vendor.LegIntPurposes
-		if legIntPurposes == nil {
-			legIntPurposes = []int32{}
-		}
-
-		specialFeatures := vendor.SpecialFeatures
-		if specialFeatures == nil {
-			specialFeatures = []int32{}
-		}
-
-		config.TCFVendors = append(config.TCFVendors, BannerTCFVendor{
+		config.TCF.Vendors = append(config.TCF.Vendors, BannerTCFVendor{
 			IABVendorID:     vendor.IABVendorID,
 			Name:            vendor.Name,
-			Purposes:        purposes,
-			LegIntPurposes:  legIntPurposes,
-			SpecialFeatures: specialFeatures,
+			Purposes:        emptyInt32s(vendor.Purposes),
+			LegIntPurposes:  emptyInt32s(vendor.LegIntPurposes),
+			SpecialFeatures: emptyInt32s(vendor.SpecialFeatures),
 			PolicyURL:       vendor.PolicyURL,
 		})
 	}
+
+	if snapshot == nil {
+		return nil
+	}
+
+	config.TCF.GVL = buildTCFGVL(snapshot, vendors, iabVendorIDs)
+	if config.TCF.GVLVersion != nil && config.TCF.GVL.VendorListVersion == 0 {
+		config.TCF.GVL.VendorListVersion = *config.TCF.GVLVersion
+	}
+
+	policy := config.TCF.GVL.TCFPolicyVersion
+	config.TCF.PolicyVersion = &policy
 
 	return nil
 }
@@ -2466,6 +2575,7 @@ func (s *Service) GetVisitorConsent(
 				Version:     version.Version,
 				Action:      record.Action,
 				ConsentData: record.ConsentData,
+				TC:          record.TC,
 				CreatedAt:   record.CreatedAt,
 			}
 
@@ -2477,6 +2587,14 @@ func (s *Service) GetVisitorConsent(
 	}
 
 	return consent, nil
+}
+
+func optionalNonEmptyString(value *string) *string {
+	if value == nil || *value == "" {
+		return nil
+	}
+
+	return value
 }
 
 func (s *Service) RecordConsent(
@@ -2522,6 +2640,10 @@ func (s *Service) RecordConsent(
 				return ErrVersionNotPublished
 			}
 
+			if err := validateConsentTC(banner.Capabilities.TCF, req.Regulation, req.TC, s.tcfCmpID); err != nil {
+				return fmt.Errorf("invalid request: %w", err)
+			}
+
 			record = &coredata.CookieConsentRecord{
 				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
 				OrganizationID:        banner.OrganizationID,
@@ -2538,6 +2660,7 @@ func (s *Service) RecordConsent(
 				CountryCode:           req.CountryCode,
 				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
+				TC:                    optionalNonEmptyString(req.TC),
 				CreatedAt:             time.Now(),
 			}
 

@@ -105,7 +105,8 @@
     "messages": { "copiedTitle": "Copié", "copied": "Code copié dans le presse-papiers" },
     "errors": { "title": "Erreur", "copy": "Échec de la copie dans le presse-papiers" },
     "actions": { "copy": "Copier" },
-    "documentation": "Vous recherchez une intégration de module ES ou headless ? <link>Consultez notre documentation pour des guides d’intégration détaillés.</link>"
+    "documentation": "Vous recherchez une intégration de module ES ou headless ? <link>Consultez notre documentation pour des guides d’intégration détaillés.</link>",
+    "tcfNote": "Cette bannière utilise le script IAB TCF. Placez l’extrait le plus haut possible dans la page pour que les partenaires puissent mettre leurs appels en file avant le chargement du SDK."
   },
   "bannerSettingsForm": {
     "title": "Paramètres",
@@ -118,6 +119,8 @@
       "privacyPolicyUrl": "URL de la politique de confidentialité",
       "consentExpiryDays": "Expiration du consentement (jours)",
       "defaultLanguage": "Langue par défaut",
+      "publisherCountryCode": "Pays de l’éditeur",
+      "publisherCountryCodeHelp": "Pays d’établissement IAB TCF (ISO 3166-1 alpha-2). Utilisez AA s’il n’est pas précisé.",
       "resourceReportingEnabled": "Rapport de ressources",
       "resourceReportingEnabledHelp": "Lorsqu’il est activé, le SDK de la bannière détecte et signale les scripts tiers, iframes et autres ressources."
     },
@@ -157,6 +160,7 @@
   "editCategoryForm": {
     "fields": { "namePlaceholder": "Nom de la catégorie", "slugPlaceholder": "Identifiant de la catégorie", "descriptionPlaceholder": "Description de la catégorie" },
     "googleConsentMode": { "title": "Mode de consentement Google", "description": "Sélectionnez les signaux Google Consent Mode contrôlés par cette catégorie." },
+    "tcfPurposes": { "title": "Finalités TCF", "description": "Lorsque TCF est activé, cette catégorie n’est accordée que si chaque finalité sélectionnée est consentie ou couverte par un intérêt légitime." },
     "posthog": { "title": "PostHog", "description": "Contrôlez le consentement au suivi PostHog selon cette catégorie.", "checkbox": "Activer ou désactiver le suivi PostHog" },
     "actions": { "saving": "Enregistrement...", "save": "Enregistrer", "cancel": "Annuler" }
   },
@@ -165,7 +169,7 @@
     "errors": { "title": "Erreur", "updateCategory": "Échec de la mise à jour de la catégorie", "duplicateCookie": "Un cookie portant ce nom existe déjà dans cette bannière", "addCookie": "Échec de l’ajout du cookie", "updateCookie": "Échec de la mise à jour du cookie", "deleteCookie": "Échec de la suppression du cookie", "deleteCategory": "Échec de la suppression de la catégorie", "reorder": "Échec du réordonnancement", "moveCookie": "Échec du déplacement du cookie" },
     "deleteCookieConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
     "deleteCategoryConfirmation": "Voulez-vous vraiment supprimer la catégorie \"{{name}}\" ? Tous les cookies de cette catégorie seront déplacés vers Non catégorisé.",
-    "required": "Obligatoire", "blockHint": "Bloquer les éléments jusqu’à l’obtention du consentement :", "googleConsentMode": "Mode de consentement Google :", "posthog": "PostHog :", "trackingConsent": "Consentement au suivi",
+    "required": "Obligatoire", "blockHint": "Bloquer les éléments jusqu’à l’obtention du consentement :", "googleConsentMode": "Mode de consentement Google :", "tcfPurposes": "Finalités TCF :", "posthog": "PostHog :", "trackingConsent": "Consentement au suivi",
     "columns": { "name": "Nom", "type": "Type", "duration": "Durée" },
     "actions": { "edit": "Modifier", "delete": "Supprimer", "include": "Inclure", "exclude": "Exclure", "addCookie": "Ajouter un cookie" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
@@ -195,7 +199,7 @@
   },
   "consentRecordPage": {
     "title": "Enregistrement de consentement",
-    "properties": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "userAgent": "Agent utilisateur", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "regulationSource": "Source réglementaire", "country": "Pays", "subdivision": "Subdivision", "date": "Date" },
+    "properties": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "userAgent": "Agent utilisateur", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "regulationSource": "Source réglementaire", "country": "Pays", "subdivision": "Subdivision", "tc": "Chaîne TC", "date": "Date" },
     "actions": { "accept_all": "Tout accepter", "reject_all": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },
     "consentData": "Données de consentement",
     "required": "(Obligatoire)",

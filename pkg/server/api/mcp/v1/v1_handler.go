@@ -21,6 +21,8 @@
 package mcp_v1
 
 import (
+	"fmt"
+	"math"
 	"net/http"
 	"time"
 
@@ -133,6 +135,43 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 	value, _ := field.Value()
 
 	return &value
+}
+
+func optionalIntSlice(values *[]any) (*[]int, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	ids := make([]int, 0, len(*values))
+	for _, item := range *values {
+		n, err := intFromAny(item)
+		if err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, n)
+	}
+
+	return &ids, nil
+}
+
+func intFromAny(item any) (int, error) {
+	switch n := item.(type) {
+	case int:
+		return n, nil
+	case int32:
+		return int(n), nil
+	case int64:
+		return int(n), nil
+	case float64:
+		if n != math.Trunc(n) {
+			return 0, fmt.Errorf("tcf_purpose_ids must contain integers")
+		}
+
+		return int(n), nil
+	default:
+		return 0, fmt.Errorf("tcf_purpose_ids must contain integers")
+	}
 }
 
 func optionalPtr[T any](value *T) **T {

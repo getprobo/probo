@@ -114,6 +114,17 @@ func TestSnapshotsEqual(t *testing.T) {
 		assert.False(t, snapshotsEqual(a, b))
 	})
 
+	t.Run("differing TCFPurposeIDs order is not equal", func(t *testing.T) {
+		t.Parallel()
+
+		a := baseSnapshot()
+		a.Categories[0].TCFPurposeIDs = []int{1, 7, 8}
+		b := baseSnapshot()
+		b.Categories[0].TCFPurposeIDs = []int{7, 1, 8}
+
+		assert.False(t, snapshotsEqual(a, b))
+	})
+
 	t.Run("nil vs set PrivacyPolicyURL is not equal", func(t *testing.T) {
 		t.Parallel()
 
@@ -299,6 +310,21 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		assert.True(t, snapshotsEqual(a, b))
 		assert.Equal(t, []int{52, 755}, a.IABVendorIDs)
 	})
+
+	t.Run("nil TCFPurposeIDs equals an empty-slice snapshot", func(t *testing.T) {
+		t.Parallel()
+
+		nilIDs := mkCategories(0, 1, 2, 3)[:1]
+		emptyIDs := mkCategories(0, 1, 2, 3)[:1]
+		nilIDs[0].TCFPurposeIDs = nil
+		emptyIDs[0].TCFPurposeIDs = []int{}
+
+		a := buildSnapshot(banner, nilIDs, nil, nil)
+		b := buildSnapshot(banner, emptyIDs, nil, nil)
+
+		assert.Equal(t, []int{}, a.Categories[0].TCFPurposeIDs)
+		assert.True(t, snapshotsEqual(a, b))
+	})
 }
 
 func TestRecordConsentRequest_Validate(t *testing.T) {
@@ -339,7 +365,7 @@ func TestRecordConsentRequest_Validate(t *testing.T) {
 	})
 }
 
-func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
+func TestBuildBannerConfig_TCF(t *testing.T) {
 	t.Parallel()
 
 	tenant := gid.NewTenantID()
@@ -351,7 +377,7 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 	}
 	version := &coredata.CookieBannerVersion{Version: 1}
 
-	t.Run("follows the banner capability when enabled", func(t *testing.T) {
+	t.Run("leaves tcf unset until attach", func(t *testing.T) {
 		t.Parallel()
 
 		banner := &coredata.CookieBanner{
@@ -363,7 +389,8 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 		}
 
 		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
-		assert.True(t, config.TCFEnabled)
+		assert.Nil(t, config.TCF)
+		assert.True(t, config.ResourceReportingEnabled)
 	})
 
 	t.Run("defaults to disabled", func(t *testing.T) {
@@ -375,6 +402,32 @@ func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
 		}
 
 		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
-		assert.False(t, config.TCFEnabled)
+		assert.Nil(t, config.TCF)
 	})
+}
+
+func TestTCFServesGVL_Scenario(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		regulation Regulation
+		want       bool
+	}{
+		{name: "gdpr", regulation: RegulationGDPR, want: true},
+		{name: "uk gdpr", regulation: RegulationUKGDPR, want: true},
+		{name: "ccpa", regulation: RegulationCCPA, want: false},
+		{name: "none", regulation: RegulationNone, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, tcfServesGVL(tt.regulation))
+			},
+		)
+	}
 }

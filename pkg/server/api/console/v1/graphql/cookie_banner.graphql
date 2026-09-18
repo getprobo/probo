@@ -146,6 +146,12 @@ type CookieBanner implements Node {
     showBranding: Boolean!
     capabilities: CookieBannerCapabilities!
     defaultLanguage: String!
+    publisherCountryCode: String!
+    """
+    IAB TCF CMP ID for this instance, from probod config. 4095 is a
+    placeholder until IAB Europe issues a registered ID.
+    """
+    tcfCmpId: Int! @goField(forceResolver: true)
 
     organization: Organization @goField(forceResolver: true)
 
@@ -233,6 +239,7 @@ type CookieCategory implements Node {
     kind: CookieCategoryKind!
     rank: Int!
     gcmConsentTypes: [String!]!
+    tcfPurposeIds: [Int!]!
     posthogConsent: Boolean!
 
     trackerPatterns(
@@ -708,6 +715,7 @@ input UpdateCookieBannerInput {
     cookiePolicyUrl: String
     consentExpiryDays: Int
     defaultLanguage: String
+    publisherCountryCode: String
     capabilities: CookieBannerCapabilitiesInput
 }
 
@@ -745,6 +753,7 @@ input UpdateCookieCategoryInput {
     slug: String
     description: String
     gcmConsentTypes: [String!]
+    tcfPurposeIds: [Int!]
     posthogConsent: Boolean
 }
 

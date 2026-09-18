@@ -265,6 +265,13 @@ probo:
   # Show Probo branding
   branding: true
 
+  # Cookie banner instance settings
+  cookieBanner:
+    # IAB TCF CMP ID encoded in consent strings. 4095 is a placeholder
+    # until IAB Europe issues Probo a registered ID. Self-hosted
+    # instances that register their own CMP must set this to that ID.
+    tcfCmpId: 4095
+
   # Extra HTTP headers to add to responses
   extraHeaderFields: {}
 

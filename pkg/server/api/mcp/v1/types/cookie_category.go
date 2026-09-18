@@ -28,6 +28,11 @@ import (
 func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 	posthogConsent := &c.PostHogConsent
 
+	tcfPurposeIDs := c.TCFPurposeIDs
+	if tcfPurposeIDs == nil {
+		tcfPurposeIDs = []int{}
+	}
+
 	return &CookieCategory{
 		ID:              c.ID,
 		OrganizationID:  c.OrganizationID,
@@ -38,6 +43,7 @@ func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 		Kind:            CookieCategoryKind(c.Kind),
 		Rank:            c.Rank,
 		GcmConsentTypes: c.GCMConsentTypes,
+		TcfPurposeIds:   tcfPurposeIDs,
 		PosthogConsent:  posthogConsent,
 		CreatedAt:       c.CreatedAt,
 		UpdatedAt:       c.UpdatedAt,

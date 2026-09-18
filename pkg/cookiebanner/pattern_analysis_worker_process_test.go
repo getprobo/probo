@@ -61,18 +61,19 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
 	banner := coredata.CookieBanner{
-		ID:                bannerID,
-		OrganizationID:    organizationID,
-		Name:              "Worker Test Banner",
-		Origin:            "https://worker-test-" + bannerID.String() + ".example.com",
-		State:             coredata.CookieBannerStateActive,
-		CookiePolicyURL:   "https://worker-test.example.com/cookies",
-		ConsentExpiryDays: 180,
-		ShowBranding:      false,
-		Capabilities:      coredata.DefaultCookieBannerCapabilities(),
-		DefaultLanguage:   "en",
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:                   bannerID,
+		OrganizationID:       organizationID,
+		Name:                 "Worker Test Banner",
+		Origin:               "https://worker-test-" + bannerID.String() + ".example.com",
+		State:                coredata.CookieBannerStateActive,
+		CookiePolicyURL:      "https://worker-test.example.com/cookies",
+		ConsentExpiryDays:    180,
+		ShowBranding:         false,
+		Capabilities:         coredata.DefaultCookieBannerCapabilities(),
+		DefaultLanguage:      "en",
+		PublisherCountryCode: "AA",
+		CreatedAt:            now,
+		UpdatedAt:            now,
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -101,6 +102,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 			Kind:            coredata.CookieCategoryKindUncategorised,
 			Rank:            0,
 			GCMConsentTypes: []string{},
+			TCFPurposeIDs:   []int{},
 			PostHogConsent:  false,
 			CreatedAt:       now,
 			UpdatedAt:       now,
@@ -119,6 +121,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 			Kind:            coredata.CookieCategoryKindNormal,
 			Rank:            1,
 			GCMConsentTypes: []string{},
+			TCFPurposeIDs:   []int{},
 			PostHogConsent:  false,
 			CreatedAt:       now,
 			UpdatedAt:       now,
@@ -225,7 +228,7 @@ func newGlobInCategory(
 
 func newTestHandler(client *pg.Client) *patternAnalysisHandler {
 	return &patternAnalysisHandler{
-		svc:    NewService(client, false),
+		svc:    NewService(client, false, 0),
 		pg:     client,
 		logger: log.NewLogger(log.WithOutput(io.Discard)),
 	}
@@ -550,7 +553,7 @@ func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
 		return existingGlob.Insert(ctx, tx, fx.scope)
 	}))
 
-	svc := NewService(client, false)
+	svc := NewService(client, false, 0)
 
 	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 		Cookies: []DetectedCookie{

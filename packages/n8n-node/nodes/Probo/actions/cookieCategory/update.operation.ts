@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -89,6 +90,19 @@ export const description: INodeProperties[] = [
 		description: 'Comma-separated list of GCM consent types',
 	},
 	{
+		displayName: 'TCF Purpose IDs',
+		name: 'tcfPurposeIds',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['cookieCategory'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'Comma-separated IAB TCF purpose IDs required for this category',
+	},
+	{
 		displayName: 'PostHog Consent',
 		name: 'posthogConsent',
 		type: 'options',
@@ -126,6 +140,7 @@ export async function execute(
 	const slug = this.getNodeParameter('slug', itemIndex, '') as string;
 	const categoryDescription = this.getNodeParameter('categoryDescription', itemIndex, '') as string;
 	const gcmConsentTypes = this.getNodeParameter('gcmConsentTypes', itemIndex, '') as string;
+	const tcfPurposeIds = this.getNodeParameter('tcfPurposeIds', itemIndex, '') as string;
 	const posthogConsent = this.getNodeParameter('posthogConsent', itemIndex, '') as string;
 
 	const query = `
@@ -139,6 +154,7 @@ export async function execute(
 					kind
 					rank
 					gcmConsentTypes
+					tcfPurposeIds
 					posthogConsent
 					createdAt
 					updatedAt
@@ -160,6 +176,17 @@ export async function execute(
 			.split(',')
 			.map((s) => s.trim())
 			.filter((s) => s.length > 0);
+	}
+	if (tcfPurposeIds) {
+		const ids: number[] = [];
+		for (const token of tcfPurposeIds.split(',').map((s) => s.trim()).filter((s) => s.length > 0)) {
+			const id = Number.parseInt(token, 10);
+			if (!Number.isInteger(id) || String(id) !== token || id < 1 || id > 11) {
+				throw new NodeOperationError(this.getNode(), `Invalid TCF purpose ID: ${token}`);
+			}
+			ids.push(id);
+		}
+		input.tcfPurposeIds = ids;
 	}
 	if (posthogConsent) input.posthogConsent = posthogConsent === 'true';
 

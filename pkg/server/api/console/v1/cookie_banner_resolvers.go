@@ -25,6 +25,15 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// TcfCmpID is the resolver for the tcfCmpId field.
+func (r *cookieBannerResolver) TcfCmpID(ctx context.Context, obj *types.CookieBanner) (int, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
+		return 0, err
+	}
+
+	return r.cookieBanner.TCFCmpID(), nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.CookieBanner) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -727,13 +736,14 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 		ctx,
 		scope,
 		cookiebanner.UpdateCookieBannerRequest{
-			CookieBannerID:    input.CookieBannerID,
-			Name:              input.Name,
-			PrivacyPolicyURL:  input.PrivacyPolicyURL,
-			CookiePolicyURL:   input.CookiePolicyURL,
-			ConsentExpiryDays: input.ConsentExpiryDays,
-			DefaultLanguage:   input.DefaultLanguage,
-			Capabilities:      capabilities,
+			CookieBannerID:       input.CookieBannerID,
+			Name:                 input.Name,
+			PrivacyPolicyURL:     input.PrivacyPolicyURL,
+			CookiePolicyURL:      input.CookiePolicyURL,
+			ConsentExpiryDays:    input.ConsentExpiryDays,
+			DefaultLanguage:      input.DefaultLanguage,
+			PublisherCountryCode: input.PublisherCountryCode,
+			Capabilities:         capabilities,
 		},
 	)
 	if err != nil {
@@ -958,6 +968,11 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 		gcmConsentTypes = &input.GcmConsentTypes
 	}
 
+	var tcfPurposeIDs *[]int
+	if input.TcfPurposeIds != nil {
+		tcfPurposeIDs = &input.TcfPurposeIds
+	}
+
 	category, err := r.cookieBanner.UpdateCookieCategory(
 		ctx,
 		scope,
@@ -967,6 +982,7 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 			Slug:             input.Slug,
 			Description:      input.Description,
 			GCMConsentTypes:  gcmConsentTypes,
+			TCFPurposeIDs:    tcfPurposeIDs,
 			PostHogConsent:   input.PosthogConsent,
 		},
 	)

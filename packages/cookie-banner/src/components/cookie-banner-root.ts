@@ -18,12 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { getTCFRuntime } from "../addons";
 import { CookieBannerClient } from "../client";
 import { resolveGcmEnabled } from "../integrations";
 import { resolveLayout } from "../layout";
 import type { BannerConfig, BannerLayout, Regulation } from "../types";
 import { ProboElement } from "./base";
 import type { ProboState, ProboRootElement, ConsentDraft } from "./base";
+
+function uiVisible(state: ProboState): boolean {
+  return state === "banner" || state === "panel" || state === "privacy_choices";
+}
 
 export class ProboCookieBannerRoot extends ProboElement implements ProboRootElement {
   private _client: CookieBannerClient | null = null;
@@ -99,6 +104,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   setState(state: ProboState): void {
     const prev = this._state;
     this._state = state;
+    getTCFRuntime()?.onUIVisible?.(uiVisible(state));
     this.dispatchEvent(
       new CustomEvent("probo-state", {
         bubbles: true,

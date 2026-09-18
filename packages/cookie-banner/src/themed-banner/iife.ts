@@ -18,51 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getConsent } from "../consent";
-import { registerCookieBanner } from "./index";
+import { bootCookieBanner } from "./boot";
 
-registerCookieBanner();
-
-const w = window as unknown as Record<string, unknown>;
-if (!w.Probo) {
-  w.Probo = {};
-}
-(w.Probo as Record<string, unknown>).consent = getConsent();
-
-const script = document.currentScript as HTMLScriptElement | null;
-
-if (script) {
-  const bannerId = script.getAttribute("data-banner-id");
-  const baseUrl = script.getAttribute("data-base-url");
-
-  if (bannerId && baseUrl) {
-    const mount = (): void => {
-      const el = document.createElement("probo-cookie-banner");
-      el.setAttribute("banner-id", bannerId);
-      el.setAttribute("base-url", baseUrl);
-
-      const position = script.getAttribute("data-position");
-      if (position) {
-        el.setAttribute("position", position);
-      }
-
-      const lang = script.getAttribute("data-lang");
-      if (lang) {
-        el.setAttribute("lang", lang.split("-")[0].toLowerCase());
-      }
-
-      const gcm = script.getAttribute("data-gcm-enabled");
-      if (gcm) {
-        el.setAttribute("gcm-enabled", gcm);
-      }
-
-      document.body.appendChild(el);
-    };
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", mount);
-    } else {
-      mount();
-    }
-  }
-}
+bootCookieBanner();

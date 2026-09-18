@@ -21,6 +21,10 @@
 package console_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -251,6 +255,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 	t.Run("returns catalog versions", func(t *testing.T) {
 		t.Parallel()
+		factory.LockCommonGVLCatalog(t)
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		_, version := factory.SeedCommonGVLVendor(t, "Catalog Version Vendor", false)
@@ -494,4 +499,217 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		}, new(map[string]any))
 		testutil.RequireErrorCode(t, err, "INVALID")
 	})
+
+	t.Run("published config nests tcf for selected vendors", func(t *testing.T) {
+		t.Parallel()
+		factory.LockCommonGVLCatalog(t)
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		bannerID := factory.CreateCookieBanner(owner)
+		factory.EnableCookieBannerTCF(t, bannerID)
+
+		iabVendorID, version := factory.SeedCommonGVLVendor(t, "Config GVL Vendor", false)
+		factory.SeedCommonGVLCatalogState(t, version)
+
+		const addMutation = `
+			mutation($input: AddCookieBannerGVLVendorInput!) {
+				addCookieBannerGVLVendor(input: $input) {
+					cookieBanner { id }
+				}
+			}
+		`
+
+		err := owner.Execute(addMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"iabVendorId":    iabVendorID,
+			},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		const updateMutation = `
+			mutation($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) {
+					cookieBanner { publisherCountryCode }
+				}
+			}
+		`
+
+		var updated struct {
+			UpdateCookieBanner struct {
+				CookieBanner struct {
+					PublisherCountryCode string `json:"publisherCountryCode"`
+				} `json:"cookieBanner"`
+			} `json:"updateCookieBanner"`
+		}
+
+		err = owner.Execute(updateMutation, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId":       bannerID,
+				"publisherCountryCode": "FR",
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Equal(t, "FR", updated.UpdateCookieBanner.CookieBanner.PublisherCountryCode)
+
+		const publishMutation = `
+			mutation($input: PublishCookieBannerVersionInput!) {
+				publishCookieBannerVersion(input: $input) {
+					cookieBannerVersion { version state }
+				}
+			}
+		`
+
+		err = owner.Execute(publishMutation, map[string]any{
+			"input": map[string]any{"cookieBannerId": bannerID},
+		}, new(map[string]any))
+		require.NoError(t, err)
+
+		endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/config", owner.BaseURL(), bannerID)
+		resp, err := owner.HTTPClient().Get(endpoint)
+		require.NoError(t, err)
+
+		defer func() { _ = resp.Body.Close() }()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var config struct {
+			TCF *struct {
+				GVLVersion    *int   `json:"gvl_version"`
+				PolicyVersion *int   `json:"policy_version"`
+				CmpID         *int   `json:"cmp_id"`
+				CmpVersion    *int   `json:"cmp_version"`
+				PublisherCC   string `json:"publisher_cc"`
+				GVL           *struct {
+					VendorListVersion int                        `json:"vendorListVersion"`
+					TCFPolicyVersion  int                        `json:"tcfPolicyVersion"`
+					Vendors           map[string]json.RawMessage `json:"vendors"`
+				} `json:"gvl"`
+			} `json:"tcf"`
+		}
+
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(&config))
+		require.NotNil(t, config.TCF)
+		require.NotNil(t, config.TCF.GVLVersion)
+		assert.Equal(t, version, *config.TCF.GVLVersion)
+		require.NotNil(t, config.TCF.PolicyVersion)
+		assert.Equal(t, 5, *config.TCF.PolicyVersion)
+		require.NotNil(t, config.TCF.CmpID)
+		assert.Equal(t, 4095, *config.TCF.CmpID)
+		require.NotNil(t, config.TCF.CmpVersion)
+		assert.Equal(t, 1, *config.TCF.CmpVersion)
+		assert.Equal(t, "FR", config.TCF.PublisherCC)
+		require.NotNil(t, config.TCF.GVL)
+		require.Contains(t, config.TCF.GVL.Vendors, strconv.Itoa(iabVendorID))
+	})
+}
+
+func TestCookieBannerGVLVendor_ConsentTC(t *testing.T) {
+	t.Parallel()
+
+	fixture := setupPublishedTCFCookieBanner(t)
+	consentData := json.RawMessage(`{"necessary":true}`)
+
+	t.Run(
+		"persists a valid 2.3 string",
+		func(t *testing.T) {
+			t.Parallel()
+
+			visitorID := uniqueCookieBannerVisitorID()
+			created := postCookieConsent(
+				t,
+				fixture.Owner,
+				fixture,
+				visitorID,
+				"ACCEPT_ALL",
+				consentData,
+				validTCStringV23,
+			)
+			assert.Equal(t, visitorID, created.VisitorID)
+
+			resp := doCookieBannerHTTP(
+				t,
+				fixture.Owner,
+				cookieBannerHTTPOptions{
+					Method:     http.MethodGet,
+					BannerID:   fixture.BannerID,
+					Path:       []string{"consents", visitorID},
+					Origin:     fixture.Origin,
+					SDKVersion: cookieBannerE2ESDKVersion,
+				},
+			)
+			require.Equal(t, http.StatusOK, resp.StatusCode, "body: %s", string(resp.Body))
+
+			var got struct {
+				VisitorID string  `json:"visitor_id"`
+				TC        *string `json:"tc"`
+			}
+			require.NoError(t, json.Unmarshal(resp.Body, &got))
+			require.NotNil(t, got.TC)
+			assert.Equal(t, validTCStringV23, *got.TC)
+		},
+	)
+
+	t.Run(
+		"rejects a core-only string",
+		func(t *testing.T) {
+			t.Parallel()
+
+			body, err := json.Marshal(
+				postConsentRequest{
+					VisitorID:   uniqueCookieBannerVisitorID(),
+					Version:     fixture.Version,
+					Action:      "ACCEPT_ALL",
+					ConsentData: consentData,
+					TC:          new(coreOnlyTCString),
+				},
+			)
+			require.NoError(t, err)
+
+			resp := doCookieBannerHTTP(
+				t,
+				fixture.Owner,
+				cookieBannerHTTPOptions{
+					Method:     http.MethodPost,
+					BannerID:   fixture.BannerID,
+					Path:       []string{"consents"},
+					Origin:     fixture.Origin,
+					SDKVersion: cookieBannerE2ESDKVersion,
+					Body:       body,
+				},
+			)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		},
+	)
+
+	t.Run(
+		"rejects missing tc under gdpr",
+		func(t *testing.T) {
+			t.Parallel()
+
+			body, err := json.Marshal(
+				postConsentRequest{
+					VisitorID:   uniqueCookieBannerVisitorID(),
+					Version:     fixture.Version,
+					Action:      "ACCEPT_ALL",
+					ConsentData: consentData,
+				},
+			)
+			require.NoError(t, err)
+
+			resp := doCookieBannerHTTP(
+				t,
+				fixture.Owner,
+				cookieBannerHTTPOptions{
+					Method:     http.MethodPost,
+					BannerID:   fixture.BannerID,
+					Path:       []string{"consents"},
+					Origin:     fixture.Origin,
+					SDKVersion: cookieBannerE2ESDKVersion,
+					Body:       body,
+				},
+			)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		},
+	)
 }

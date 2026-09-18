@@ -35,9 +35,9 @@ npm install @probo/cookie-banner
 ```
 
 ```js
-import { registerThemedBanner } from "@probo/cookie-banner";
+import { registerCookieBanner } from "@probo/cookie-banner";
 
-registerThemedBanner();
+registerCookieBanner();
 ```
 
 ```html
@@ -152,6 +152,8 @@ The attribute accepts `"true"`/`"false"`; any other value logs a warning and kee
 ## Documentation
 
 Full documentation is available at **https://www.probo.com/docs/product/cookie-banner/overview**
+
+IAB TCF 2.3 support lives in [`@probo/cookie-banner-tcf`](../cookie-banner-tcf).
 
 ## License
 

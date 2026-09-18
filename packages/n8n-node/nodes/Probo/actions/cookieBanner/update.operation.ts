@@ -89,6 +89,19 @@ export const description: INodeProperties[] = [
 		description: 'The default language for the cookie banner',
 	},
 	{
+		displayName: 'Publisher Country Code',
+		name: 'publisherCountryCode',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['cookieBanner'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'IAB TCF publisher country of establishment (ISO 3166-1 alpha-2, or AA)',
+	},
+	{
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
@@ -129,6 +142,7 @@ export async function execute(
 	const cookiePolicyUrl = this.getNodeParameter('cookiePolicyUrl', itemIndex, '') as string;
 	const consentExpiryDays = this.getNodeParameter('consentExpiryDays', itemIndex, 0) as number;
 	const defaultLanguage = this.getNodeParameter('defaultLanguage', itemIndex, '') as string;
+	const publisherCountryCode = this.getNodeParameter('publisherCountryCode', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		privacyPolicyUrl?: string;
 		resourceReportingEnabled?: boolean;
@@ -148,6 +162,8 @@ export async function execute(
 					showBranding
 					capabilities { resourceReporting }
 					defaultLanguage
+					publisherCountryCode
+					tcfCmpId
 					createdAt
 					updatedAt
 				}
@@ -160,6 +176,7 @@ export async function execute(
 	if (cookiePolicyUrl) input.cookiePolicyUrl = cookiePolicyUrl;
 	if (consentExpiryDays) input.consentExpiryDays = consentExpiryDays;
 	if (defaultLanguage) input.defaultLanguage = defaultLanguage;
+	if (publisherCountryCode) input.publisherCountryCode = publisherCountryCode;
 	if (additionalFields.privacyPolicyUrl !== undefined) {
 		input.privacyPolicyUrl = additionalFields.privacyPolicyUrl === '' ? null : additionalFields.privacyPolicyUrl;
 	}

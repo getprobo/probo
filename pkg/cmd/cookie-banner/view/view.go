@@ -47,6 +47,8 @@ query($id: ID!) {
         resourceReporting
       }
       defaultLanguage
+      publisherCountryCode
+      tcfCmpId
       createdAt
       updatedAt
     }
@@ -68,9 +70,11 @@ type viewResponse struct {
 		Capabilities      struct {
 			ResourceReporting bool `json:"resourceReporting"`
 		} `json:"capabilities"`
-		DefaultLanguage string `json:"defaultLanguage"`
-		CreatedAt       string `json:"createdAt"`
-		UpdatedAt       string `json:"updatedAt"`
+		DefaultLanguage      string `json:"defaultLanguage"`
+		PublisherCountryCode string `json:"publisherCountryCode"`
+		TcfCmpId             int    `json:"tcfCmpId"`
+		CreatedAt            string `json:"createdAt"`
+		UpdatedAt            string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -134,6 +138,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), v.State)
 			_, _ = fmt.Fprintf(out, "%s%d days\n", label.Render("Consent Expiry:"), v.ConsentExpiryDays)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Default Language:"), v.DefaultLanguage)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Publisher Country:"), v.PublisherCountryCode)
+			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("TCF CMP ID:"), v.TcfCmpId)
 			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Resource Reporting:"), v.Capabilities.ResourceReporting)
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Cookie Policy:"), v.CookiePolicyUrl)

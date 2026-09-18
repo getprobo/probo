@@ -5706,7 +5706,7 @@ func (r *Resolver) ListCookieBannersTool(ctx context.Context, req *mcp.CallToolR
 
 	p := page.NewPage(banners, cursor)
 
-	return nil, types.NewListCookieBannersOutput(p), nil
+	return nil, types.NewListCookieBannersOutput(p, r.cookieBanner.TCFCmpID()), nil
 }
 
 func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerInput) (*mcp.CallToolResult, types.GetCookieBannerOutput, error) {
@@ -5720,7 +5720,7 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get cookie banner: %w", err)
 	}
 
-	out := types.NewCookieBanner(banner)
+	out := types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())
 
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
 		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
@@ -5761,7 +5761,7 @@ func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.AddCookieBannerOutput{}, fmt.Errorf("cannot create cookie banner: %w", err)
 	}
 
-	return nil, types.AddCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.AddCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCookieBannerInput) (*mcp.CallToolResult, types.UpdateCookieBannerOutput, error) {
@@ -5791,6 +5791,10 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		updateReq.DefaultLanguage = *v
 	}
 
+	if v := UnwrapOmittable(input.PublisherCountryCode); v != nil && *v != nil {
+		updateReq.PublisherCountryCode = *v
+	}
+
 	if v := UnwrapOmittable(input.Capabilities); v != nil && *v != nil {
 		updateReq.Capabilities = &coredata.CookieBannerCapabilitiesPatch{
 			ResourceReporting: (*v).ResourceReporting,
@@ -5802,7 +5806,7 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.UpdateCookieBannerOutput{}, fmt.Errorf("cannot update cookie banner: %w", err)
 	}
 
-	return nil, types.UpdateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.UpdateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) DeleteCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCookieBannerInput) (*mcp.CallToolResult, types.DeleteCookieBannerOutput, error) {
@@ -5829,7 +5833,7 @@ func (r *Resolver) ActivateCookieBannerTool(ctx context.Context, req *mcp.CallTo
 		return nil, types.ActivateCookieBannerOutput{}, fmt.Errorf("cannot activate cookie banner: %w", err)
 	}
 
-	return nil, types.ActivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.ActivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) DeactivateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateCookieBannerInput) (*mcp.CallToolResult, types.DeactivateCookieBannerOutput, error) {
@@ -5843,7 +5847,7 @@ func (r *Resolver) DeactivateCookieBannerTool(ctx context.Context, req *mcp.Call
 		return nil, types.DeactivateCookieBannerOutput{}, fmt.Errorf("cannot deactivate cookie banner: %w", err)
 	}
 
-	return nil, types.DeactivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.DeactivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieCategoriesInput) (*mcp.CallToolResult, types.ListCookieCategoriesOutput, error) {
@@ -5920,6 +5924,15 @@ func (r *Resolver) UpdateCookieCategoryTool(ctx context.Context, req *mcp.CallTo
 
 	if v := UnwrapOmittable(input.Description); v != nil && *v != nil {
 		updateReq.Description = *v
+	}
+
+	if v := UnwrapOmittable(input.TcfPurposeIds); v != nil && *v != nil {
+		ids, err := optionalIntSlice(*v)
+		if err != nil {
+			return nil, types.UpdateCookieCategoryOutput{}, err
+		}
+
+		updateReq.TCFPurposeIDs = ids
 	}
 
 	category, err := r.cookieBanner.UpdateCookieCategory(ctx, scope, updateReq)
@@ -6139,7 +6152,7 @@ func (r *Resolver) RegenerateCookieBannerTrackerPolicyTool(ctx context.Context, 
 		return nil, types.RegenerateCookieBannerTrackerPolicyOutput{}, fmt.Errorf("cannot regenerate cookie banner tracker policy: %w", err)
 	}
 
-	return nil, types.RegenerateCookieBannerTrackerPolicyOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.RegenerateCookieBannerTrackerPolicyOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerVersionsInput) (*mcp.CallToolResult, types.ListCookieBannerVersionsOutput, error) {
@@ -9969,7 +9982,7 @@ func (r *Resolver) AddCookieBannerGVLVendorTool(ctx context.Context, req *mcp.Ca
 
 	return nil, types.AddCookieBannerGVLVendorOutput{
 		CommonGvlVendor: types.NewCommonGVLVendor(vendor),
-		CookieBanner:    types.NewCookieBanner(banner),
+		CookieBanner:    types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID()),
 	}, nil
 }
 
@@ -10002,7 +10015,7 @@ func (r *Resolver) RemoveCookieBannerGVLVendorTool(ctx context.Context, req *mcp
 	}
 
 	return nil, types.RemoveCookieBannerGVLVendorOutput{
-		CookieBanner: types.NewCookieBanner(banner),
+		CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID()),
 	}, nil
 }
 

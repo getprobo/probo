@@ -64,6 +64,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
         countryCode
         subdivisionCode
         consentData
+        tc
         createdAt
       }
     }
@@ -170,6 +171,11 @@ export default function CookieBannerConsentRecordPage({
             {record.subdivisionCode || "-"}
           </span>
         </PropertyRow>
+        {record.tc && (
+          <PropertyRow label={t("consentRecordPage.properties.tc")}>
+            <span className="font-mono text-sm break-all">{record.tc}</span>
+          </PropertyRow>
+        )}
         <PropertyRow label={t("consentRecordPage.properties.date")}>
           <time dateTime={record.createdAt}>
             {dateFormat(i18n.language, record.createdAt)}

@@ -32,28 +32,33 @@ func NewCookieBannerCapabilities(c coredata.CookieBannerCapabilities) *CookieBan
 	}
 }
 
-func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
+func NewCookieBanner(b *coredata.CookieBanner, tcfCmpID int) *CookieBanner {
 	return &CookieBanner{
-		ID:                b.ID,
-		OrganizationID:    b.OrganizationID,
-		Name:              b.Name,
-		Origin:            b.Origin,
-		State:             CookieBannerState(b.State),
-		PrivacyPolicyURL:  b.PrivacyPolicyURL,
-		CookiePolicyURL:   b.CookiePolicyURL,
-		ConsentExpiryDays: b.ConsentExpiryDays,
-		ShowBranding:      b.ShowBranding,
-		Capabilities:      NewCookieBannerCapabilities(b.Capabilities),
-		DefaultLanguage:   b.DefaultLanguage,
-		CreatedAt:         b.CreatedAt,
-		UpdatedAt:         b.UpdatedAt,
+		ID:                   b.ID,
+		OrganizationID:       b.OrganizationID,
+		Name:                 b.Name,
+		Origin:               b.Origin,
+		State:                CookieBannerState(b.State),
+		PrivacyPolicyURL:     b.PrivacyPolicyURL,
+		CookiePolicyURL:      b.CookiePolicyURL,
+		ConsentExpiryDays:    b.ConsentExpiryDays,
+		ShowBranding:         b.ShowBranding,
+		Capabilities:         NewCookieBannerCapabilities(b.Capabilities),
+		DefaultLanguage:      b.DefaultLanguage,
+		PublisherCountryCode: b.PublisherCountryCode,
+		TcfCmpID:             tcfCmpID,
+		CreatedAt:            b.CreatedAt,
+		UpdatedAt:            b.UpdatedAt,
 	}
 }
 
-func NewListCookieBannersOutput(p *page.Page[*coredata.CookieBanner, coredata.CookieBannerOrderField]) ListCookieBannersOutput {
+func NewListCookieBannersOutput(
+	p *page.Page[*coredata.CookieBanner, coredata.CookieBannerOrderField],
+	tcfCmpID int,
+) ListCookieBannersOutput {
 	banners := make([]*CookieBanner, 0, len(p.Data))
 	for _, b := range p.Data {
-		banners = append(banners, NewCookieBanner(b))
+		banners = append(banners, NewCookieBanner(b, tcfCmpID))
 	}
 
 	var nextCursor *page.CursorKey
