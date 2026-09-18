@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
@@ -123,3 +124,113 @@ func marshalWorkloadIdentitySettings(settings any) ([]byte, error) {
 
 	return raw, nil
 }
+
+// OrganizationSettingsInput is the organization-connect form: one credential
+// for a whole cloud organization rather than a single account.
+type OrganizationSettingsInput struct {
+	Provider coredata.ConnectorProvider
+
+	// AWSRoleARN names the management account's role, which is where
+	// organizations:ListAccounts is granted. AWSMemberRoleName is the role
+	// the customer's StackSet created in every member; empty means the name
+	// the published template uses.
+	AWSRoleARN        string
+	AWSMemberRoleName string
+
+	// GCPParent is the Cloud Asset scope discovery and reads run under. It is
+	// the confinement boundary, so it is required: without it discovery would
+	// be every project the service account happens to see.
+	GCPWorkloadIdentityProvider string
+	GCPServiceAccountEmail      string
+	GCPParent                   string
+
+	// Azure names no subscription here: discovery is what finds them.
+	AzureTenantID    string
+	AzureClientID    string
+	AzureEnvironment string
+}
+
+// MarshalOrganizationSettings validates the organization-connect fields and
+// returns the JSON persisted on Connector.RawSettings.
+func MarshalOrganizationSettings(input OrganizationSettingsInput) ([]byte, error) {
+	switch input.Provider {
+	case coredata.ConnectorProviderAWS:
+		if input.AWSRoleARN == "" {
+			return nil, fmt.Errorf("awsRoleArn is required")
+		}
+
+		settings, err := cloudaws.NewConnectorSettings(input.AWSRoleARN)
+		if err != nil {
+			return nil, err
+		}
+
+		if input.AWSMemberRoleName != "" {
+			if !awsRoleNamePattern.MatchString(input.AWSMemberRoleName) {
+				return nil, fmt.Errorf("awsMemberRoleName is not a valid IAM role name")
+			}
+
+			settings.MemberRoleName = input.AWSMemberRoleName
+		}
+
+		return marshalWorkloadIdentitySettings(settings)
+	case coredata.ConnectorProviderGCP:
+		if input.GCPWorkloadIdentityProvider == "" || input.GCPServiceAccountEmail == "" {
+			return nil, fmt.Errorf("gcpWorkloadIdentityProvider and gcpServiceAccountEmail are required")
+		}
+
+		if !gcpParentPattern.MatchString(input.GCPParent) {
+			return nil, fmt.Errorf("gcpParent must be organizations/{number} or folders/{number}")
+		}
+
+		validated, err := cloudgcp.NewConnectorSettings(
+			input.GCPWorkloadIdentityProvider,
+			input.GCPServiceAccountEmail,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		settings := coredata.GCPConnectorSettings{
+			WorkloadIdentityProvider: validated.WorkloadIdentityProvider,
+			ServiceAccountEmail:      validated.ServiceAccountEmail,
+			Parent:                   input.GCPParent,
+		}
+
+		return marshalWorkloadIdentitySettings(settings)
+	case coredata.ConnectorProviderAzure:
+		if input.AzureTenantID == "" || input.AzureClientID == "" {
+			return nil, fmt.Errorf("azureTenantId and azureClientId are required")
+		}
+
+		validated, err := cloudazure.NewConnectorSettings(
+			input.AzureTenantID,
+			input.AzureClientID,
+			"",
+			input.AzureEnvironment,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		settings := coredata.AzureConnectorSettings{
+			TenantID:    validated.TenantID,
+			ClientID:    validated.ClientID,
+			Environment: string(validated.Environment),
+		}
+
+		return marshalWorkloadIdentitySettings(settings)
+	default:
+		return nil, fmt.Errorf("provider does not support organization install")
+	}
+}
+
+var (
+	// awsRoleNamePattern is the IAM role-name charset the CloudFormation and
+	// Terraform variables already constrain the member role to.
+	awsRoleNamePattern = regexp.MustCompile(`^[\w+=,.@-]{1,64}$`)
+
+	// gcpParentPattern is a Cloud Asset scope: an organization or a folder.
+	// A project is not accepted — scoping there reproduces exactly the
+	// project-only blind spot organization install exists to close.
+	gcpParentPattern = regexp.MustCompile(`^(organizations|folders)/[1-9][0-9]*$`)
+)

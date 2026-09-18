@@ -338,6 +338,8 @@ type AccessReviewSource implements Node {
     organization: Organization! @goField(forceResolver: true)
     connectorId: ID
     connector: Connector @goField(forceResolver: true)
+    connectorAccountId: ID
+    connectorAccount: ConnectorAccount @goField(forceResolver: true)
     name: String!
     csvData: String
     providerOrganizations: ProviderOrganizations! @goField(forceResolver: true)
@@ -580,6 +582,14 @@ extend type Mutation {
 input CreateAccessReviewSourceInput {
     organizationId: ID!
     connectorId: ID
+    """
+    connectorAccountId names which account of the connector to review. It is
+    required whenever connectorId is set, and stays nullable in the schema
+    only because a CSV source has neither — and because the existing
+    Connections flow omits it for one release, where the server resolves it
+    to the connector's sole account.
+    """
+    connectorAccountId: ID
     name: String!
     csvData: String
 }

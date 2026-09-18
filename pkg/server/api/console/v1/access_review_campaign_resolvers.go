@@ -438,6 +438,31 @@ func (r *accessReviewSourceResolver) Connector(ctx context.Context, obj *types.A
 	return types.NewConnector(connector), nil
 }
 
+// ConnectorAccount is the resolver for the connectorAccount field.
+func (r *accessReviewSourceResolver) ConnectorAccount(ctx context.Context, obj *types.AccessReviewSource) (*types.ConnectorAccount, error) {
+	if obj.ConnectorAccountID == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceGet)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := r.probo.ConnectorAccounts.Get(ctx, scope, *obj.ConnectorAccountID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get connector account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewConnectorAccount(account), nil
+}
+
 // ProviderOrganizations is the resolver for the providerOrganizations field.
 //
 // A failed listing is reported as UNAVAILABLE rather than surfaced as a
@@ -659,10 +684,11 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		ctx,
 		scope,
 		accessreview.CreateAccessReviewSourceRequest{
-			OrganizationID: input.OrganizationID,
-			ConnectorID:    input.ConnectorID,
-			Name:           input.Name,
-			CsvData:        input.CSVData,
+			OrganizationID:     input.OrganizationID,
+			ConnectorID:        input.ConnectorID,
+			ConnectorAccountID: input.ConnectorAccountID,
+			Name:               input.Name,
+			CsvData:            input.CSVData,
 		},
 	)
 	if err != nil {

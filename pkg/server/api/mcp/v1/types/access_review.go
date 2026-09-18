@@ -28,13 +28,14 @@ import (
 
 func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
 	return &AccessReviewSource{
-		ID:             s.ID,
-		OrganizationID: s.OrganizationID,
-		ConnectorID:    s.ConnectorID,
-		Name:           s.Name,
-		CsvData:        s.CsvData,
-		CreatedAt:      s.CreatedAt,
-		UpdatedAt:      s.UpdatedAt,
+		ID:                 s.ID,
+		OrganizationID:     s.OrganizationID,
+		ConnectorID:        s.ConnectorID,
+		ConnectorAccountID: s.ConnectorAccountID,
+		Name:               s.Name,
+		CsvData:            s.CsvData,
+		CreatedAt:          s.CreatedAt,
+		UpdatedAt:          s.UpdatedAt,
 	}
 }
 

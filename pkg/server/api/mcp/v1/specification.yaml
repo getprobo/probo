@@ -10086,6 +10086,11 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Connector ID
+        connector_account_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Connector account this source reviews
         name:
           type: string
           description: Access source name
@@ -10146,6 +10151,13 @@ components:
         connector_id:
           $ref: "#/components/schemas/GID"
           description: Connector ID (optional)
+        connector_account_id:
+          $ref: "#/components/schemas/GID"
+          description: >-
+            Connector account to review (optional). Required in effect
+            whenever connector_id is set and the connector covers more than
+            one account; with a single-account connector the server resolves
+            it.
         name:
           type: string
           description: Access source name
@@ -10477,6 +10489,203 @@ components:
       properties:
         connector:
           $ref: "#/components/schemas/Connector"
+    ConnectorAccount:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Connector account ID
+        external_account_id:
+          type:
+            - string
+            - "null"
+          description: >-
+            Identifier the vendor uses for this account. Null when the
+            credential is bound to a single tenant the vendor never names.
+        name:
+          type: string
+          description: Display name
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    DiscoveredConnectorAccount:
+      type: object
+      required:
+        - external_account_id
+        - name
+        - enabled
+      properties:
+        external_account_id:
+          type: string
+          description: Identifier the vendor uses for this account
+        name:
+          type: string
+          description: Display name reported by the vendor
+        enabled:
+          type: boolean
+          description: Whether this organization has already recorded the account
+    CreateOrganizationConnectorMCPInput:
+      type: object
+      required:
+        - organization_id
+        - provider
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        provider:
+          type: string
+          enum: ["AWS", "GCP", "AZURE"]
+          description: Cloud provider
+        aws_role_arn:
+          type: string
+          description: Management account role ARN (AWS)
+        aws_member_role_name:
+          type: string
+          description: Role name to assume in each member account (AWS, optional)
+        gcp_workload_identity_provider:
+          type: string
+          description: Workload identity provider resource (GCP)
+        gcp_service_account_email:
+          type: string
+          description: Service account to impersonate (GCP)
+        gcp_parent:
+          type: string
+          description: >-
+            Cloud Asset scope, organizations/{number} or folders/{number}
+            (GCP). Required: it is the confinement boundary for discovery.
+        azure_tenant_id:
+          type: string
+          description: Entra tenant ID (Azure)
+        azure_client_id:
+          type: string
+          description: Entra application ID (Azure)
+        azure_environment:
+          type: string
+          description: Azure environment (optional)
+    CreateOrganizationConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+        - discovered_accounts
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+        discovered_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveredConnectorAccount"
+    DiscoverConnectorAccountsMCPInput:
+      type: object
+      required:
+        - organization_id
+        - connector_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+    DiscoverConnectorAccountsMCPOutput:
+      type: object
+      required:
+        - discovered_accounts
+      properties:
+        discovered_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveredConnectorAccount"
+    EnableConnectorAccountsMCPInput:
+      type: object
+      required:
+        - organization_id
+        - connector_id
+        - accounts
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+        accounts:
+          type: array
+          items:
+            type: object
+            required:
+              - external_account_id
+            properties:
+              external_account_id:
+                type: string
+                description: Identifier the vendor uses for this account
+              name:
+                type: string
+                description: Display name (optional, defaults to the identifier)
+    EnableConnectorAccountsMCPOutput:
+      type: object
+      required:
+        - connector_accounts
+      properties:
+        connector_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorAccount"
+    DisableConnectorAccountMCPInput:
+      type: object
+      required:
+        - connector_account_id
+      properties:
+        connector_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector account ID
+    DisableConnectorAccountMCPOutput:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether the account was removed
+    ListConnectorAccountsMCPInput:
+      type: object
+      required:
+        - organization_id
+        - connector_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+    ListConnectorAccountsMCPOutput:
+      type: object
+      required:
+        - connector_accounts
+      properties:
+        connector_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorAccount"
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
 
     CreateAccessReviewCampaignMCPInput:
       type: object
@@ -18413,6 +18622,66 @@ tools:
       $ref: "#/components/schemas/AzureConnectorSetupMCPInput"
     outputSchema:
       $ref: "#/components/schemas/AzureConnectorSetupMCPOutput"
+  - name: createOrganizationConnector
+    title: Create Organization Connector
+    description: Connect one credential for a whole cloud organization and report the accounts it can reach
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/CreateOrganizationConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateOrganizationConnectorMCPOutput"
+  - name: discoverConnectorAccounts
+    title: Discover Connector Accounts
+    description: List the accounts a connector's credential can reach right now
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/DiscoverConnectorAccountsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/DiscoverConnectorAccountsMCPOutput"
+  - name: enableConnectorAccounts
+    title: Enable Connector Accounts
+    description: Record vendor accounts under a connector so modules can attach sources to them
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/EnableConnectorAccountsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/EnableConnectorAccountsMCPOutput"
+  - name: disableConnectorAccount
+    title: Disable Connector Account
+    description: Remove a connector account, refused while an access review source still reviews it
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DisableConnectorAccountMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/DisableConnectorAccountMCPOutput"
+  - name: listConnectorAccounts
+    title: List Connector Accounts
+    description: List the vendor accounts Probo has recorded for a connector
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListConnectorAccountsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListConnectorAccountsMCPOutput"
   - name: createWorkloadIdentityConnector
     title: Create Workload Identity Connector
     description: Create a workload-identity connector (AWS, GCP, or Azure) and report whether the audit identity can be assumed

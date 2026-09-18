@@ -221,6 +221,12 @@ type ConnectorProviderInfo {
     """
     clientCredentialsExtraSettings: [ConnectorProviderSettingInfo!]!
     """
+    organizationInstallSupported is true when this provider can be connected
+    once for a whole organization and have its accounts discovered, rather
+    than one connector per account.
+    """
+    organizationInstallSupported: Boolean!
+    """
     workloadIdentitySupported is true when this provider connects by federating
     a Probo-issued OIDC token into the customer's cloud account, and this
     deployment has the identity federation issuer enabled.
@@ -342,7 +348,88 @@ type Connector {
     provider as an access source, or null when no doc page exists yet.
     """
     documentationUrl: String @goField(forceResolver: true)
+    """
+    accounts are the vendor accounts Probo has recorded for this credential.
+    A standalone or SaaS connector has exactly one; an organization-wide
+    cloud credential has one per enabled account, and none until the first
+    is enabled.
+    """
+    accounts(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ConnectorAccountOrder
+    ): ConnectorAccountConnection! @goField(forceResolver: true)
+    """
+    discoveredAccounts asks the vendor which accounts this credential can
+    reach right now, so it costs one outbound call per read — the same
+    warning as connectionStatus. Empty for a provider with no
+    organization-wide install, which is most of them.
+    """
+    discoveredAccounts: [DiscoveredConnectorAccount!]! @goField(forceResolver: true)
     createdAt: Datetime!
+}
+
+"""
+ConnectorAccount is one vendor account a connector credential covers, as
+Probo has recorded it. Module sources attach to one of these, never to the
+connector alone.
+"""
+type ConnectorAccount implements Node {
+    id: ID!
+    """
+    externalAccountId is the identifier the vendor uses: an AWS account id, a
+    GCP project number, an Azure subscription, a GitHub organization login.
+    Null when the credential is bound to a single tenant the vendor never
+    names, which is most SaaS providers.
+    """
+    externalAccountId: String
+    name: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ConnectorAccountConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ConnectorAccountConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ConnectorAccountEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ConnectorAccountEdge {
+    cursor: CursorKey!
+    node: ConnectorAccount!
+}
+
+enum ConnectorAccountOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ConnectorAccountOrderField"
+    ) {
+    CREATED_AT
+    EXTERNAL_ACCOUNT_ID
+}
+
+input ConnectorAccountOrder {
+    direction: OrderDirection!
+    field: ConnectorAccountOrderField!
+}
+
+"""
+DiscoveredConnectorAccount is an account the credential can reach right now,
+as the vendor reports it. It is not a stored row: an account becomes a
+ConnectorAccount only once enableConnectorAccounts records it.
+"""
+type DiscoveredConnectorAccount {
+    externalAccountId: String!
+    name: String!
+    """
+    enabled is true when this organization has already recorded the account,
+    so a client can render a discover list without a second round trip.
+    """
+    enabled: Boolean!
 }
 
 type SlackConnection implements Node {
@@ -375,6 +462,15 @@ extend type Mutation {
     createWorkloadIdentityConnector(
         input: CreateWorkloadIdentityConnectorInput!
     ): CreateWorkloadIdentityConnectorPayload!
+    createOrganizationConnector(
+        input: CreateOrganizationConnectorInput!
+    ): CreateOrganizationConnectorPayload!
+    enableConnectorAccounts(
+        input: EnableConnectorAccountsInput!
+    ): EnableConnectorAccountsPayload!
+    disableConnectorAccount(
+        input: DisableConnectorAccountInput!
+    ): DisableConnectorAccountPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
     deleteSlackConnection(
         input: DeleteSlackConnectionInput!
@@ -447,6 +543,75 @@ input CreateWorkloadIdentityConnectorInput {
 
 type CreateWorkloadIdentityConnectorPayload {
     connector: Connector!
+}
+
+"""
+CreateOrganizationConnectorInput connects one credential for a whole cloud
+organization rather than a single account.
+
+It is a separate mutation from createWorkloadIdentityConnector rather than a
+flag on it, because the intent is what differs: the accounts of an
+organization credential come from discovery and the user's choice, not from
+the settings. Nothing about the stored connector row records which it was.
+"""
+input CreateOrganizationConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    """
+    awsRoleArn names the management account role. awsMemberRoleName is the
+    role the customer's StackSet created in every member account; omit it to
+    use the name the published template uses.
+    """
+    awsRoleArn: String
+    awsMemberRoleName: String
+    """
+    gcpParent is the Cloud Asset scope discovery and reads run under:
+    organizations/{number}, or folders/{number} for a partial install. It is
+    the confinement boundary, so it is required for GCP.
+    """
+    gcpWorkloadIdentityProvider: String
+    gcpServiceAccountEmail: String
+    gcpParent: String
+    """
+    An organization-wide Azure credential names no subscription: discovery is
+    what finds them.
+    """
+    azureTenantId: String
+    azureClientId: String
+    azureEnvironment: AzureEnvironment
+}
+
+type CreateOrganizationConnectorPayload {
+    connector: Connector!
+    """
+    discoveredAccounts is what the credential could reach at create time.
+    Empty when discovery failed, which does not fail the mutation: the
+    connector exists and discovery can be retried.
+    """
+    discoveredAccounts: [DiscoveredConnectorAccount!]!
+}
+
+input EnableConnectorAccountsInput {
+    organizationId: ID!
+    connectorId: ID!
+    accounts: [ConnectorAccountInput!]!
+}
+
+input ConnectorAccountInput {
+    externalAccountId: String!
+    name: String
+}
+
+type EnableConnectorAccountsPayload {
+    connectorAccountEdges: [ConnectorAccountEdge!]!
+}
+
+input DisableConnectorAccountInput {
+    connectorAccountId: ID!
+}
+
+type DisableConnectorAccountPayload {
+    deletedConnectorAccountId: ID!
 }
 
 input DeleteConnectorInput {

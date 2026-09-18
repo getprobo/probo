@@ -278,6 +278,12 @@ const (
 	ActionConnectorList   = "core:connector:list"
 	ActionConnectorDelete = "core:connector:delete"
 
+	// ActionConnectorDiscover asks the vendor which accounts the credential
+	// can reach. It is its own action rather than a read because it makes a
+	// live outbound call into the customer's cloud, so a role that may read
+	// Probo's own connector rows does not thereby get to talk to AWS.
+	ActionConnectorDiscover = "core:connector:discover"
+
 	// DataProtectionImpactAssessment actions
 	ActionDataProtectionImpactAssessmentList    = "core:data-protection-impact-assessment:list"
 	ActionDataProtectionImpactAssessmentGet     = "core:data-protection-impact-assessment:get"

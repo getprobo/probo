@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -690,6 +691,45 @@ func (s *Service) loadConnectorMetadata(
 	}
 
 	return dbConnector, nil
+}
+
+// DiscoverAccounts lists the accounts a connector's credential can reach
+// right now, by asking the provider.
+//
+// It lives here rather than in pkg/probo because openSession does, and a
+// second copy of that helper is exactly what this work exists to prevent.
+//
+// An empty list with no error means the provider has no organization-wide
+// install — the common case, and the honest answer for a credential that
+// covers one account by construction.
+func (s *Service) DiscoverAccounts(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) ([]cloud.Account, error) {
+	dbConnector, err := s.loadConfiguredConnector(ctx, scope, connectorID)
+	if err != nil {
+		return nil, err
+	}
+
+	reg, ok := s.providerRegistry.Get(dbConnector.Provider)
+	if !ok || !reg.SupportsOrganizationInstall() {
+		return nil, nil
+	}
+
+	// Discovery runs on the organization credential itself: the permission
+	// that backs it lives there, not in the accounts it finds.
+	session, err := openSession(ctx, s.federation, s.providerRegistry, dbConnector, "")
+	if err != nil {
+		return nil, err
+	}
+
+	accounts, err := reg.WorkloadIdentity.DiscoverAccounts(ctx, session, dbConnector)
+	if err != nil {
+		return nil, fmt.Errorf("cannot discover %s accounts: %w", dbConnector.Provider, err)
+	}
+
+	return accounts, nil
 }
 
 // ProbeConnector verifies the connector's credential is still accepted by the

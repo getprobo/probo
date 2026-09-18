@@ -104,6 +104,7 @@ type (
 		ThirdPartyDataPrivacyAgreements       *ThirdPartyDataPrivacyAgreementService
 		ThirdPartyServices                    *ThirdPartyServiceService
 		Connectors                            *ConnectorService
+		ConnectorAccounts                     *ConnectorAccountService
 		Assets                                *AssetService
 		Data                                  *DatumService
 		Audits                                *AuditService
@@ -219,6 +220,7 @@ func NewService(
 	svc.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: svc}
 	svc.ThirdPartyServices = &ThirdPartyServiceService{svc: svc}
 	svc.Connectors = &ConnectorService{svc: svc}
+	svc.ConnectorAccounts = &ConnectorAccountService{svc: svc}
 	svc.Assets = &AssetService{svc: svc}
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}

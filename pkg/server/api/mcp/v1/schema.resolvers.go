@@ -13,6 +13,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/accessreview"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
@@ -3836,10 +3837,11 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 	}
 
 	source, created, err := r.accessReview.EnsureSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
-		OrganizationID: input.OrganizationID,
-		ConnectorID:    input.ConnectorID,
-		Name:           input.Name,
-		CsvData:        input.CsvData,
+		OrganizationID:     input.OrganizationID,
+		ConnectorID:        input.ConnectorID,
+		ConnectorAccountID: input.ConnectorAccountID,
+		Name:               input.Name,
+		CsvData:            input.CsvData,
 	})
 	if err != nil {
 		return nil, types.CreateAccessReviewSourceOutput{}, fmt.Errorf("cannot create access source: %w", err)
@@ -10006,4 +10008,153 @@ func (r *Resolver) GetCommonGVLCatalogTool(ctx context.Context, req *mcp.CallToo
 	return nil, types.GetCommonGVLCatalogOutput{
 		CommonGvlCatalog: types.NewCommonGVLCatalog(catalog),
 	}, nil
+}
+
+// CreateOrganizationConnectorTool handles the createOrganizationConnector tool
+// Connect one credential for a whole cloud organization and report the accounts it can reach
+func (r *Resolver) CreateOrganizationConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateOrganizationConnectorInput) (*mcp.CallToolResult, types.CreateOrganizationConnectorOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, types.CreateOrganizationConnectorOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	raw, err := probo.MarshalOrganizationSettings(probo.OrganizationSettingsInput{
+		Provider:                    coredata.ConnectorProvider(input.Provider),
+		AWSRoleARN:                  ref.UnrefOrZero(input.AwsRoleArn),
+		AWSMemberRoleName:           ref.UnrefOrZero(input.AwsMemberRoleName),
+		GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GcpWorkloadIdentityProvider),
+		GCPServiceAccountEmail:      ref.UnrefOrZero(input.GcpServiceAccountEmail),
+		GCPParent:                   ref.UnrefOrZero(input.GcpParent),
+		AzureTenantID:               ref.UnrefOrZero(input.AzureTenantID),
+		AzureClientID:               ref.UnrefOrZero(input.AzureClientID),
+		AzureEnvironment:            ref.UnrefOrZero(input.AzureEnvironment),
+	})
+	if err != nil {
+		return nil, types.CreateOrganizationConnectorOutput{}, err
+	}
+
+	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       coredata.ConnectorProvider(input.Provider),
+		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+		Connection:     &connector.WorkloadIdentityConnection{},
+		RawSettings:    raw,
+		// The accounts of an organization credential come from discovery and
+		// the user's choice, not from its settings.
+		SkipImpliedAccount: true,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create organization connector", log.Error(err))
+
+		return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	// A discovery failure does not fail the create: the credential exists and
+	// the grant may simply not have propagated yet.
+	discovered, err := r.discoveredConnectorAccounts(ctx, scope, cnnctr.ID)
+	if err != nil {
+		r.logger.WarnCtx(ctx, "cannot discover accounts for new organization connector", log.Error(err))
+
+		discovered = []*types.DiscoveredConnectorAccount{}
+	}
+
+	return nil, types.CreateOrganizationConnectorOutput{
+		Connector:          types.NewConnector(cnnctr, r.connectorConnectionStatus(ctx, scope, cnnctr.ID)),
+		DiscoveredAccounts: discovered,
+	}, nil
+}
+
+// DiscoverConnectorAccountsTool handles the discoverConnectorAccounts tool
+// List the accounts a connector's credential can reach right now
+func (r *Resolver) DiscoverConnectorAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DiscoverConnectorAccountsInput) (*mcp.CallToolResult, types.DiscoverConnectorAccountsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorDiscover)
+	if err != nil {
+		return nil, types.DiscoverConnectorAccountsOutput{}, err
+	}
+
+	discovered, err := r.discoveredConnectorAccounts(ctx, scope, input.ConnectorID)
+	if err != nil {
+		return nil, types.DiscoverConnectorAccountsOutput{}, err
+	}
+
+	return nil, types.DiscoverConnectorAccountsOutput{DiscoveredAccounts: discovered}, nil
+}
+
+// EnableConnectorAccountsTool handles the enableConnectorAccounts tool
+// Record vendor accounts under a connector so modules can attach sources to them
+func (r *Resolver) EnableConnectorAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.EnableConnectorAccountsInput) (*mcp.CallToolResult, types.EnableConnectorAccountsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, types.EnableConnectorAccountsOutput{}, err
+	}
+
+	accounts := make([]probo.ConnectorAccountInput, 0, len(input.Accounts))
+	for _, account := range input.Accounts {
+		accounts = append(accounts, probo.ConnectorAccountInput{
+			ExternalAccountID: account.ExternalAccountID,
+			Name:              ref.UnrefOrZero(account.Name),
+		})
+	}
+
+	enabled, err := r.proboSvc.ConnectorAccounts.Enable(ctx, scope, probo.EnableConnectorAccountsRequest{
+		OrganizationID: input.OrganizationID,
+		ConnectorID:    input.ConnectorID,
+		Accounts:       accounts,
+	})
+	if err != nil {
+		return nil, types.EnableConnectorAccountsOutput{}, fmt.Errorf("cannot enable connector accounts: %w", err)
+	}
+
+	out := make([]*types.ConnectorAccount, 0, len(enabled))
+	for _, account := range enabled {
+		out = append(out, types.NewConnectorAccount(account))
+	}
+
+	return nil, types.EnableConnectorAccountsOutput{ConnectorAccounts: out}, nil
+}
+
+// DisableConnectorAccountTool handles the disableConnectorAccount tool
+// Remove a connector account, refused while an access review source still reviews it
+func (r *Resolver) DisableConnectorAccountTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DisableConnectorAccountInput) (*mcp.CallToolResult, types.DisableConnectorAccountOutput, error) {
+	scope, err := r.Authorize(ctx, input.ConnectorAccountID, probo.ActionConnectorDelete)
+	if err != nil {
+		return nil, types.DisableConnectorAccountOutput{}, err
+	}
+
+	if err := r.proboSvc.ConnectorAccounts.Disable(ctx, scope, probo.DisableConnectorAccountRequest{
+		ConnectorAccountID: input.ConnectorAccountID,
+	}); err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, types.DisableConnectorAccountOutput{}, coredata.ErrResourceInUse
+		}
+
+		return nil, types.DisableConnectorAccountOutput{}, fmt.Errorf("cannot disable connector account: %w", err)
+	}
+
+	return nil, types.DisableConnectorAccountOutput{Success: true}, nil
+}
+
+// ListConnectorAccountsTool handles the listConnectorAccounts tool
+// List the vendor accounts Probo has recorded for a connector
+func (r *Resolver) ListConnectorAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListConnectorAccountsInput) (*mcp.CallToolResult, types.ListConnectorAccountsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, types.ListConnectorAccountsOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.ConnectorAccountOrderField]{
+		Field:     coredata.ConnectorAccountOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	})
+
+	p, err := r.proboSvc.ConnectorAccounts.ListForConnectorID(ctx, scope, input.ConnectorID, cursor)
+	if err != nil {
+		return nil, types.ListConnectorAccountsOutput{}, fmt.Errorf("cannot list connector accounts: %w", err)
+	}
+
+	return nil, types.NewListConnectorAccountsOutput(p), nil
 }
