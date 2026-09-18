@@ -176,3 +176,40 @@ func TestNewSession_DoesNotReadADC(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, cloud.GCP, session.Cloud())
 }
+
+// TestNewSession_ProjectOverride covers the one thing that makes GCP
+// organization installs work: the listing scope moves to the member project
+// while the credentials stay on the hub. Without it every member project
+// reviews the hub instead of itself, and the review looks complete.
+func TestNewSession_ProjectOverride(t *testing.T) {
+	t.Parallel()
+
+	const (
+		hubProvider = "projects/42/locations/global/workloadIdentityPools/probo/providers/probo"
+		serviceAcct = "probo-audit@hub-project.iam.gserviceaccount.com"
+	)
+
+	t.Run("no override keeps the workload identity pool project", func(t *testing.T) {
+		t.Parallel()
+
+		session, err := cloudgcp.NewSession(testIssuer(t), testOrganizationID(), hubProvider, serviceAcct)
+		require.NoError(t, err)
+
+		assert.Equal(t, "42", session.AccountID())
+	})
+
+	t.Run("an override moves the account to the member project", func(t *testing.T) {
+		t.Parallel()
+
+		session, err := cloudgcp.NewSession(
+			testIssuer(t),
+			testOrganizationID(),
+			hubProvider,
+			serviceAcct,
+			cloudgcp.WithProjectOverride("987654321"),
+		)
+		require.NoError(t, err)
+
+		assert.Equal(t, "987654321", session.AccountID())
+	})
+}

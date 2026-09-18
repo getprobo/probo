@@ -48,10 +48,11 @@ func awsRegistration() *Registration {
 		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession:      newAWSSession,
-			NewDriver:       newAWSDriver,
-			Probe:           probeAWS,
-			NewNameResolver: newAWSNameResolver,
+			NewSession:       newAWSSession,
+			NewDriver:        newAWSDriver,
+			Probe:            probeAWS,
+			DiscoverAccounts: discoverAWSAccounts,
+			NewNameResolver:  newAWSNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "roleArn", Label: "Role ARN", Required: true},
 			},
@@ -84,10 +85,29 @@ func newAWSSession(
 	_ context.Context,
 	issuer *identityfederation.Issuer,
 	conn *coredata.Connector,
+	accountID string,
 ) (cloud.Session, error) {
 	settings, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](conn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read aws connector settings: %w", err)
+	}
+
+	// No override is needed on the session itself: AccountID and partition are
+	// both derived from the role ARN, so assuming the member's own role is the
+	// whole of what reaching a member account means.
+	if accountID != "" {
+		session, err := cloudaws.NewMemberSession(
+			issuer,
+			conn.OrganizationID,
+			settings.RoleARN,
+			settings.MemberRoleName,
+			accountID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return session, nil
 	}
 
 	session, err := cloudaws.NewSession(issuer, conn.OrganizationID, settings.RoleARN)

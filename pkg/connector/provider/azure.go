@@ -50,10 +50,11 @@ func azureRegistration() *Registration {
 		// no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the Azure SDK resolves its hosts from the session cloud configuration, not values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession:      newAzureSession,
-			NewDriver:       newAzureDriver,
-			Probe:           probeAzure,
-			NewNameResolver: newAzureNameResolver,
+			NewSession:       newAzureSession,
+			NewDriver:        newAzureDriver,
+			Probe:            probeAzure,
+			DiscoverAccounts: discoverAzureSubscriptions,
+			NewNameResolver:  newAzureNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "tenantId", Label: "Directory (tenant) ID", Required: true},
 				{Key: "clientId", Label: "Application (client) ID", Required: true},
@@ -74,10 +75,19 @@ func newAzureSession(
 	_ context.Context,
 	issuer *identityfederation.Issuer,
 	conn *coredata.Connector,
+	accountID string,
 ) (cloud.Session, error) {
 	settings, err := coredata.ConnectorSettings[coredata.AzureConnectorSettings](conn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read azure connector settings: %w", err)
+	}
+
+	// An organization connector stores no subscription, so the account the
+	// caller names is the only one there is; a standalone connector has no
+	// account to name and falls back to its settings.
+	subscriptionID := settings.SubscriptionID
+	if accountID != "" {
+		subscriptionID = accountID
 	}
 
 	session, err := cloudazure.NewSession(
@@ -85,7 +95,7 @@ func newAzureSession(
 		conn.OrganizationID,
 		settings.TenantID,
 		settings.ClientID,
-		settings.SubscriptionID,
+		subscriptionID,
 		cloudazure.Environment(settings.Environment),
 	)
 	if err != nil {

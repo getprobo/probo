@@ -104,7 +104,7 @@ func TestGCPNewSession(t *testing.T) {
 		},
 	)
 
-	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 	require.NoError(t, err)
 
 	assert.Equal(t, cloud.GCP, session.Cloud())
@@ -153,7 +153,7 @@ func TestGCPNewDriver(t *testing.T) {
 			},
 		)
 
-		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 		require.NoError(t, err)
 
 		driver, err := reg.WorkloadIdentity.NewDriver(
@@ -206,7 +206,7 @@ func TestGCPNewNameResolver(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 			require.NoError(t, err)
 
 			resolver := reg.WorkloadIdentity.NewNameResolver(

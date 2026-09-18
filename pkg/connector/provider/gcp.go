@@ -50,10 +50,11 @@ func gcpRegistration() *Registration {
 		// Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the GCP APIs resolve their own hosts, not values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession:      newGCPSession,
-			NewDriver:       newGCPDriver,
-			Probe:           probeGCP,
-			NewNameResolver: newGCPNameResolver,
+			NewSession:       newGCPSession,
+			NewDriver:        newGCPDriver,
+			Probe:            probeGCP,
+			DiscoverAccounts: discoverGCPProjects,
+			NewNameResolver:  newGCPNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "workloadIdentityProvider", Label: "Workload identity provider", Required: true},
 				{Key: "serviceAccountEmail", Label: "Service account email", Required: true},
@@ -73,17 +74,22 @@ func newGCPSession(
 	_ context.Context,
 	issuer *identityfederation.Issuer,
 	conn *coredata.Connector,
+	accountID string,
 ) (cloud.Session, error) {
 	settings, err := coredata.ConnectorSettings[coredata.GCPConnectorSettings](conn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read gcp connector settings: %w", err)
 	}
 
+	// Credentials stay on the hub project; only the listing scope moves. An
+	// empty accountID leaves the hub in place, which is the standalone
+	// connector.
 	session, err := cloudgcp.NewSession(
 		issuer,
 		conn.OrganizationID,
 		settings.WorkloadIdentityProvider,
 		settings.ServiceAccountEmail,
+		cloudgcp.WithProjectOverride(accountID),
 	)
 	if err != nil {
 		return nil, err

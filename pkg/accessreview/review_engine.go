@@ -243,7 +243,7 @@ func (s *Service) resolveDriver(
 	// lands in the default arm and fails loudly rather than fetching nothing.
 	switch conn := dbConnector.Connection.(type) {
 	case *connector.WorkloadIdentityConnection:
-		return s.newCloudDriver(ctx, reg, dbConnector)
+		return s.newCloudDriver(ctx, tx, scope, reg, dbConnector, source)
 
 	case connector.HTTPConnection:
 		return s.newHTTPDriver(ctx, tx, scope, reg, dbConnector, conn)
@@ -258,12 +258,26 @@ func (s *Service) resolveDriver(
 
 // newCloudDriver builds the driver for a workload identity connector from a
 // cloud session rather than an HTTP client.
+//
+// The session is opened on the account the source names. Drivers take no
+// account argument — they review session.AccountID() — so this is the one
+// call site where a forgotten account id does not fail loudly: it produces a
+// complete, plausible review of the wrong account, which somebody then signs
+// off.
 func (s *Service) newCloudDriver(
 	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
 	reg *provider.Registration,
 	dbConnector *coredata.Connector,
+	source *coredata.AccessReviewSource,
 ) (drivers.Driver, error) {
-	session, err := s.buildCloudSession(ctx, dbConnector)
+	accountID, err := connectorAccountExternalID(ctx, tx, scope, source.ConnectorAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := openSession(ctx, s.federation, s.providerRegistry, dbConnector, accountID)
 	if err != nil {
 		return nil, err
 	}

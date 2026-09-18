@@ -158,3 +158,37 @@ func TestNewSession_Validation(t *testing.T) {
 		})
 	}
 }
+
+// TestNewMemberSession covers the member ARN an organization install assumes
+// into. The partition is the property worth pinning: it comes from the
+// management ARN and never the literal "aws", so a GovCloud or China
+// organization does not silently build a commercial ARN and fail in STS with
+// an error naming neither the partition nor the account.
+func TestNewMemberSession(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name              string
+		managementRoleARN string
+		partition         string
+	}{
+		{"commercial", "arn:aws:iam::111111111111:role/ProboAudit", cloudaws.CommercialPartition},
+		{"govcloud", "arn:aws-us-gov:iam::111111111111:role/ProboAudit", cloudaws.GovPartition},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			session, err := cloudaws.NewMemberSession(
+				testIssuer(t),
+				testOrganizationID(),
+				tt.managementRoleARN,
+				"ProboAudit",
+				"222222222222",
+			)
+			require.NoError(t, err)
+
+			assert.Equal(t, "222222222222", session.AccountID(), "the session reaches the member, not the management account")
+			assert.Equal(t, tt.partition, session.Partition(), "partition comes from the management role ARN")
+		})
+	}
+}

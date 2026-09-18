@@ -104,7 +104,7 @@ func TestAzureNewSession(t *testing.T) {
 		},
 	)
 
-	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 	require.NoError(t, err)
 
 	assert.Equal(t, cloud.Azure, session.Cloud())
@@ -162,7 +162,7 @@ func TestAzureNewDriver(t *testing.T) {
 				},
 			)
 
-			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 			require.NoError(t, err)
 
 			driver, err := reg.WorkloadIdentity.NewDriver(
@@ -218,7 +218,7 @@ func TestAzureNewNameResolver(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 			require.NoError(t, err)
 
 			assert.NotNil(

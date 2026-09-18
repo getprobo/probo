@@ -498,16 +498,22 @@ type OAuth2Config struct {
 // configuration at all — the customer grants access in their own cloud account
 // — which is why the driver catalog admits it on the presence of this block.
 type WorkloadIdentityConfig struct {
-	// NewSession opens authenticated access to the cloud account this connector
-	// points at, by exchanging an assertion the issuer mints for the connector's
-	// organization. Which role, region and account to reach is per-provider
-	// knowledge read from the connector's settings, which is why it lives here
-	// rather than in a cross-cloud switch the access-review service would own.
+	// NewSession opens authenticated access to one cloud account this
+	// connector reaches, by exchanging an assertion the issuer mints for the
+	// connector's organization. Which role, region and account to reach is
+	// per-provider knowledge read from the connector's settings, which is why
+	// it lives here rather than in a cross-cloud switch the access-review
+	// service would own.
 	//
-	// The framework calls it once and hands the session to NewDriver, Probe,
-	// and NewNameResolver, mirroring how it hands one *http.Client to
-	// Registration.NewDriver and Registration.Probe. Required.
-	NewSession func(context.Context, *identityfederation.Issuer, *coredata.Connector) (cloud.Session, error)
+	// The trailing accountID selects which account. Empty means the account
+	// the connector's own settings imply, which is the only account a
+	// standalone connector has and is what every caller passes today.
+	//
+	// The framework calls it once per account and hands the session to
+	// NewDriver, Probe, DiscoverAccounts and NewNameResolver, mirroring how it
+	// hands one *http.Client to Registration.NewDriver and Registration.Probe.
+	// Required.
+	NewSession func(context.Context, *identityfederation.Issuer, *coredata.Connector, string) (cloud.Session, error)
 
 	// NewDriver builds the access-review driver from a cloud session rather
 	// than an *http.Client, because cloud SDK credentials sign requests the SDK
@@ -529,6 +535,18 @@ type WorkloadIdentityConfig struct {
 	// provider display name, matching a nil Registration.NewNameResolver.
 	NewNameResolver func(context.Context, cloud.Session, *coredata.Connector, *log.Logger) drivers.NameResolver
 
+	// DiscoverAccounts lists the accounts this connector's credential can
+	// reach, live. Nil means the provider has no organization-wide install,
+	// which is what SupportsOrganizationInstall reports — derived from the
+	// closure's presence rather than declared beside it, so a flag can never
+	// disagree with the block it describes.
+	//
+	// The session it is handed is the connector's own, opened with no
+	// account: discovery runs before any account is known, and the
+	// permission that backs it lives on the organization credential rather
+	// than in the accounts it finds.
+	DiscoverAccounts func(context.Context, cloud.Session, *coredata.Connector) ([]cloud.Account, error)
+
 	// ExtraSettings declares the per-provider settings fields the console's
 	// workload-identity connect dialog renders and submits, in render order.
 	// Empty when the provider needs none beyond the grant in the customer's
@@ -542,6 +560,13 @@ type WorkloadIdentityConfig struct {
 
 // SupportsWorkloadIdentity reports whether this provider is reached by federated
 // workload identity rather than by a stored credential.
+// SupportsOrganizationInstall reports whether this provider can be connected
+// once for a whole organization and have its accounts discovered, rather than
+// one connector per account.
+func (r *Registration) SupportsOrganizationInstall() bool {
+	return r.WorkloadIdentity != nil && r.WorkloadIdentity.DiscoverAccounts != nil
+}
+
 func (r *Registration) SupportsWorkloadIdentity() bool {
 	return r.WorkloadIdentity != nil
 }

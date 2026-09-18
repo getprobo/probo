@@ -110,6 +110,7 @@ func NewSession(
 	organizationID gid.GID,
 	providerResource string,
 	serviceAccountEmail string,
+	opts ...SessionOption,
 ) (*Session, error) {
 	parsed, err := parseProviderResource(providerResource)
 	if err != nil {
@@ -137,7 +138,11 @@ func NewSession(
 		accountID:           parsed.projectNumber,
 		universeDomain:      universe,
 	}
-	session.authorizedClient = authorizeSession(httpClient, session)
+	for _, opt := range opts {
+		opt(session)
+	}
+
+	session.authorizedClient = authorizeSession(session.httpClient, session)
 
 	return session, nil
 }
@@ -147,6 +152,26 @@ func NewSession(
 func WithHTTPClient(httpClient *http.Client) SessionOption {
 	return func(s *Session) {
 		s.httpClient = httpClient
+	}
+}
+
+// WithProjectOverride points the session's account at a project other than
+// the one hosting the workload identity pool.
+//
+// Credentials stay on the hub — the pool, the provider and the impersonated
+// service account are unchanged — and only the listing scope moves. Without
+// it every member project of an organization install would review the hub
+// project instead of itself.
+//
+// An empty projectNumber leaves the hub project in place, which is the
+// standalone connector's behaviour.
+func WithProjectOverride(projectNumber string) SessionOption {
+	return func(s *Session) {
+		if projectNumber == "" {
+			return
+		}
+
+		s.accountID = projectNumber
 	}
 }
 

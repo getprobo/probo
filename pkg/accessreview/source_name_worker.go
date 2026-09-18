@@ -30,7 +30,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
@@ -161,7 +160,14 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 			// default arm rather than falling through to the other kind.
 			switch conn := dbConnector.Connection.(type) {
 			case *connector.WorkloadIdentityConnection:
-				r, err := h.newCloudNameResolver(ctx, &dbConnector)
+				// Without the account, every source on one organization
+				// credential resolves to the same display name.
+				accountID, err := connectorAccountExternalID(ctx, tx, scope, source.ConnectorAccountID)
+				if err != nil {
+					return err
+				}
+
+				r, err := h.newCloudNameResolver(ctx, &dbConnector, accountID)
 				if err != nil {
 					return err
 				}
@@ -305,13 +311,14 @@ func (h *sourceNameHandler) markNameSynced(
 func (h *sourceNameHandler) newCloudNameResolver(
 	ctx context.Context,
 	dbConnector *coredata.Connector,
+	accountID string,
 ) (drivers.NameResolver, error) {
 	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
 	if !ok || reg.WorkloadIdentity == nil || reg.WorkloadIdentity.NewNameResolver == nil {
 		return nil, nil
 	}
 
-	session, err := h.buildCloudSession(ctx, dbConnector)
+	session, err := openSession(ctx, h.federation, h.providerRegistry, dbConnector, accountID)
 	if err != nil {
 		return nil, err
 	}
@@ -357,31 +364,4 @@ func (h *sourceNameHandler) newHTTPNameResolver(
 	}
 
 	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints), nil
-}
-
-func (h *sourceNameHandler) buildCloudSession(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-) (cloud.Session, error) {
-	if h.federation == nil {
-		return nil, fmt.Errorf(
-			"cannot reach %s connector: identity federation is not configured in this deployment",
-			dbConnector.Provider,
-		)
-	}
-
-	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
-	if !ok || reg.WorkloadIdentity == nil {
-		return nil, fmt.Errorf(
-			"cannot reach %s connector: provider offers no workload identity path",
-			dbConnector.Provider,
-		)
-	}
-
-	session, err := reg.WorkloadIdentity.NewSession(ctx, h.federation, dbConnector)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open cloud session for %s connector: %w", dbConnector.Provider, err)
-	}
-
-	return session, nil
 }

@@ -272,3 +272,35 @@ func TestNewSessionFromToken_WrongHost(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "Bearer arm-access-token", gotAuth)
 }
+
+// TestNewSession_OptionalSubscription covers the relaxation an organization
+// connector needs — it names no subscription, because discovery is what finds
+// them — and its bound, so the relaxation does not start accepting garbage.
+func TestNewSession_OptionalSubscription(t *testing.T) {
+	t.Parallel()
+
+	const (
+		tenantID = "00000000-0000-0000-0000-000000000001"
+		clientID = "00000000-0000-0000-0000-000000000002"
+	)
+
+	t.Run("an empty subscription builds a session with no account", func(t *testing.T) {
+		t.Parallel()
+
+		session, err := cloudazure.NewSession(
+			testIssuer(t), testOrganizationID(), tenantID, clientID, "", cloudazure.EnvironmentPublic,
+		)
+		require.NoError(t, err)
+
+		assert.Empty(t, session.AccountID())
+	})
+
+	t.Run("a malformed subscription is still refused", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := cloudazure.NewSession(
+			testIssuer(t), testOrganizationID(), tenantID, clientID, "not-a-guid", cloudazure.EnvironmentPublic,
+		)
+		require.Error(t, err)
+	})
+}

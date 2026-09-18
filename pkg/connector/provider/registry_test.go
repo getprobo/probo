@@ -42,6 +42,7 @@ func stubNewCloudSession(
 	context.Context,
 	*identityfederation.Issuer,
 	*coredata.Connector,
+	string,
 ) (cloud.Session, error) {
 	return nil, nil
 }

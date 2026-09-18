@@ -118,9 +118,14 @@ func NewSession(
 		return nil, fmt.Errorf("cannot open azure session: %w", err)
 	}
 
-	subscriptionID, err = parseGUID(subscriptionID, errInvalidSubscriptionID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open azure session: %w", err)
+	// An organization connector names no subscription: discovery is what
+	// finds them, and a per-account session supplies its own. Tenant and
+	// client stay required — without them there is nothing to federate.
+	if subscriptionID != "" {
+		subscriptionID, err = parseGUID(subscriptionID, errInvalidSubscriptionID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot open azure session: %w", err)
+		}
 	}
 
 	if environment == "" {

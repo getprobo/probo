@@ -147,7 +147,7 @@ func TestAWSNewNameResolver(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 			require.NoError(t, err)
 
 			resolver := reg.WorkloadIdentity.NewNameResolver(
@@ -172,7 +172,7 @@ func TestAWSNewSession(t *testing.T) {
 		RoleARN: "arn:aws:iam::123456789012:role/AuditorRole",
 	})
 
-	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 	require.NoError(t, err)
 
 	assert.Equal(t, cloud.AWS, session.Cloud())
@@ -214,7 +214,7 @@ func TestAWSNewDriver(t *testing.T) {
 			RoleARN: "arn:aws:iam::123456789012:role/ProboAudit",
 		})
 
-		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 		require.NoError(t, err)
 
 		driver, err := reg.WorkloadIdentity.NewDriver(

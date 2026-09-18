@@ -30,7 +30,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -713,7 +712,10 @@ func (s *Service) ProbeConnector(
 	// everything else returned here is Probo's own.
 	switch conn := dbConnector.Connection.(type) {
 	case *connector.WorkloadIdentityConnection:
-		session, err := s.buildCloudSession(ctx, dbConnector)
+		// The connector-level probe proves the credential itself, so it
+		// always opens the settings-implied account. Proving one member
+		// account reachable is the source-level probe, with that account.
+		session, err := openSession(ctx, s.federation, s.providerRegistry, dbConnector, "")
 		if err != nil {
 			return err
 		}
@@ -756,36 +758,6 @@ func (s *Service) ProbeConnector(
 			dbConnector.Provider,
 		)
 	}
-}
-
-// buildCloudSession opens authenticated access to the cloud account a workload
-// identity connector points at, delegating to the provider that knows which
-// role and region its settings name.
-func (s *Service) buildCloudSession(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-) (cloud.Session, error) {
-	if s.federation == nil {
-		return nil, fmt.Errorf(
-			"cannot reach %s connector: identity federation is not configured in this deployment",
-			dbConnector.Provider,
-		)
-	}
-
-	reg, ok := s.providerRegistry.Get(dbConnector.Provider)
-	if !ok || reg.WorkloadIdentity == nil {
-		return nil, fmt.Errorf(
-			"cannot reach %s connector: provider offers no workload identity path",
-			dbConnector.Provider,
-		)
-	}
-
-	session, err := reg.WorkloadIdentity.NewSession(ctx, s.federation, dbConnector)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open cloud session for %s connector: %w", dbConnector.Provider, err)
-	}
-
-	return session, nil
 }
 
 // ProviderOrganizations lists the orgs/workspaces the connector backing the
