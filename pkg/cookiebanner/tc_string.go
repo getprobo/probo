@@ -119,6 +119,7 @@ func parseTCString(encoded string) error {
 	}
 
 	segments := strings.Split(encoded, ".")
+
 	version, cmpID, err := parseTCCore(segments[0])
 	if err != nil {
 		return err
@@ -146,6 +147,7 @@ func parseTCCore(segment string) (uint, uint, error) {
 	}
 
 	r := bitReader{data: data}
+
 	version, err := r.read(tcCookieVersionBits)
 	if err != nil {
 		return 0, 0, err
@@ -171,6 +173,7 @@ func hasDisclosedVendorsSegment(segments []string) bool {
 		}
 
 		r := bitReader{data: data}
+
 		segmentType, err := r.read(tcSegmentTypeBits)
 		if err != nil {
 			continue

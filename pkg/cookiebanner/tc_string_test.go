@@ -140,6 +140,7 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 
 				validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
 				require.True(t, ok)
+
 				fieldErrors := validationErrors.ByField(tt.wantField)
 				require.NotEmpty(t, fieldErrors)
 				assert.Equal(t, tt.wantCode, fieldErrors[0].Code)
