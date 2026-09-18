@@ -22,7 +22,7 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
   onto `probo_consent` and `getTCFRuntime()?.onConfig` so returning visitors
   keep `__tcfapi` after a cookie miss
 - Public addon API for layout and TCF plugins: `setLayoutRenderer`,
-  `setTCFRuntime`, `bootThemedBanner`, and layout primitives (`floatingCard`,
+  `setTCFRuntime`, `bootCookieBanner`, and layout primitives (`floatingCard`,
   `esc`, `BRANDING`, `CLOSE_ICON`). The themed banner asks a registered
   renderer first and falls back to opt-in / opt-out / notice
 - `<probo-preference-panel>` requires only `probo-save-button`, so addons can

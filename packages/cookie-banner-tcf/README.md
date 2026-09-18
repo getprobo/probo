@@ -76,10 +76,25 @@ npm install @probo/cookie-banner @probo/cookie-banner-tcf
 ```
 
 ```js
-import { bootThemedBanner } from "@probo/cookie-banner";
+import { registerCookieBanner } from "@probo/cookie-banner";
 import { installTCFStub, startTCF } from "@probo/cookie-banner-tcf";
 
 installTCFStub();
 startTCF();
-bootThemedBanner();
+registerCookieBanner();
 ```
+
+```html
+<probo-cookie-banner
+  banner-id="YOUR_BANNER_ID"
+  base-url="https://your-probo-instance.com/api/cookie-banner/v1/"
+  position="bottom-left"
+></probo-cookie-banner>
+
+<probo-settings-link></probo-settings-link>
+```
+
+`bootCookieBanner()` is the IIFE entry: it registers the element and
+mounts from `document.currentScript`. That property is null in ES
+modules, so module callers must declare `<probo-cookie-banner>`
+themselves.

@@ -21,6 +21,8 @@
 import { getConsent } from "../consent";
 import { registerCookieBanner } from "./index";
 
+// IIFE-only: classic scripts expose document.currentScript. ES-module
+// callers must declare <probo-cookie-banner> after registerCookieBanner().
 export function bootFromCurrentScript(): void {
   const w = window as unknown as Record<string, unknown>;
   if (!w.Probo) {
@@ -71,7 +73,10 @@ export function bootFromCurrentScript(): void {
   }
 }
 
-export function bootThemedBanner(): void {
+// Registers the themed element and, for the classic IIFE only, mounts
+// it from the current script's data-* attributes. Module integrations
+// should call registerCookieBanner() and declare <probo-cookie-banner>.
+export function bootCookieBanner(): void {
   registerCookieBanner();
   bootFromCurrentScript();
 }

@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { bootThemedBanner } from "@probo/cookie-banner";
+import { bootCookieBanner } from "@probo/cookie-banner";
 
 import { installTCFStub, startTCF } from "./index";
 
 installTCFStub();
 startTCF();
-bootThemedBanner();
+bootCookieBanner();

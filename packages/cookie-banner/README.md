@@ -35,9 +35,9 @@ npm install @probo/cookie-banner
 ```
 
 ```js
-import { registerThemedBanner } from "@probo/cookie-banner";
+import { registerCookieBanner } from "@probo/cookie-banner";
 
-registerThemedBanner();
+registerCookieBanner();
 ```
 
 ```html
