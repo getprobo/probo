@@ -155,6 +155,7 @@ func (s *Service) ListLinearTeams(
 	}
 
 	batches := make([][]linear.Team, 0, len(accounts))
+
 	var listErr error
 
 	for _, account := range accounts {
@@ -383,6 +384,7 @@ func (s *Service) claimPendingLinearPublish(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			existing := &coredata.TaskExternalLink{}
+
 			err := existing.LoadByTaskIDForUpdate(ctx, tx, scope, task.ID)
 			if err == nil {
 				if isLinearPublishPending(existing) {

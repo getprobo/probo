@@ -27,6 +27,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -39,7 +40,10 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const e2eLinearWebhookSecret = "e2e-linear-webhook-secret"
+const (
+	e2eLinearWebhookSecret  = "e2e-linear-webhook-secret"
+	e2eLinearOrganizationID = "e2e-linear-org"
+)
 
 func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T) {
 	t.Parallel()
@@ -125,6 +129,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	status := postLinearWebhook(t, deliveryID, map[string]any{
 		"action":           "update",
 		"type":             "Issue",
+		"organizationId":   e2eLinearOrganizationID,
 		"webhookTimestamp": time.Now().UnixMilli(),
 		"actor":            map[string]any{"id": "linear-user-1"},
 		"data": map[string]any{
@@ -150,6 +155,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	duplicateStatus := postLinearWebhook(t, deliveryID, map[string]any{
 		"action":           "update",
 		"type":             "Issue",
+		"organizationId":   e2eLinearOrganizationID,
 		"webhookTimestamp": time.Now().UnixMilli(),
 		"actor":            map[string]any{"id": "linear-user-1"},
 		"data": map[string]any{
@@ -202,6 +208,11 @@ func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID
 
 	connectorID := gid.New(tenantID, coredata.ConnectorEntityType)
 
+	destination := fmt.Sprintf(
+		`{"team_id":"team-1","linear_organization_id":%q}`,
+		e2eLinearOrganizationID,
+	)
+
 	_, err = conn.Exec(ctx, `
 		INSERT INTO connectors (
 			id, tenant_id, organization_id, provider, protocol, settings, encrypted_connection, created_at, updated_at
@@ -218,10 +229,10 @@ func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID
 			remote_updated_at, metadata, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, 'LINEAR',
-			$5, 'ENG-1', 'https://linear.app/eng/issue/ENG-1', '{"team_id":"team-1"}', 'PROBO',
-			$6, '{"app_actor_id":"probo-app"}', $7, $7
+			$5, 'ENG-1', 'https://linear.app/eng/issue/ENG-1', $6, 'PROBO',
+			$7, '{"app_actor_id":"probo-app"}', $8, $8
 		)
-	`, parsedTaskID, tenantID, orgID, connectorID, externalID, now.Add(-time.Hour), now)
+	`, parsedTaskID, tenantID, orgID, connectorID, externalID, destination, now.Add(-time.Hour), now)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

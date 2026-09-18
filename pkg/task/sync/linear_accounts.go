@@ -78,6 +78,7 @@ func (s *Service) linearAccountsForOrganization(
 	}
 
 	accounts := make([]linearAccount, 0, len(metas))
+
 	var reconnectErr error
 
 	for _, meta := range metas {

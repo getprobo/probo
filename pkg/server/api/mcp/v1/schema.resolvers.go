@@ -2221,6 +2221,7 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 	output := types.UpdateTaskOutput{
 		Task: taskWithLink,
 	}
+
 	if result.NextTask != nil {
 		nextWithLink, err := r.taskWithExternalLink(ctx, scope, result.NextTask)
 		if err != nil {

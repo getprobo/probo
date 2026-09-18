@@ -79,6 +79,7 @@ func graphQLObjectVariables(req graphqlRequest) (map[string]any, error) {
 
 func writeJSON(w http.ResponseWriter, payload map[string]any) {
 	w.Header().Set("Content-Type", "application/json")
+
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -192,6 +193,7 @@ func TestClient_ListTeamsCreateAndUpdate(t *testing.T) {
 				)
 			default:
 				handlerErr = fmt.Errorf("cannot handle unexpected query %q", req.Query)
+
 				http.Error(w, "unexpected query", http.StatusBadRequest)
 			}
 		},
@@ -201,12 +203,14 @@ func TestClient_ListTeamsCreateAndUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	teams, err := client.ListTeams(ctx)
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	require.Len(t, teams, 1)
 	assert.Equal(t, "ENG", teams[0].Key)
 
 	states, err := client.ListWorkflowStates(ctx, "team-1")
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	require.Len(t, states, 1)
@@ -222,6 +226,7 @@ func TestClient_ListTeamsCreateAndUpdate(t *testing.T) {
 			Priority:    2,
 		},
 	)
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	assert.Equal(t, "ENG-1", issue.Identifier)
@@ -232,6 +237,7 @@ func TestClient_ListTeamsCreateAndUpdate(t *testing.T) {
 		"issue-1",
 		IssueUpdateInput{Title: &title},
 	)
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	assert.Equal(t, "Updated", updated.Title)
@@ -312,6 +318,7 @@ func TestClient_ListTeamsFollowsPages(t *testing.T) {
 	)
 
 	teams, err := NewClient(server.Client(), server.URL).ListTeams(context.Background())
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	require.Len(t, teams, 2)
@@ -369,6 +376,7 @@ func TestClient_ArchiveIssue(t *testing.T) {
 	)
 
 	err := NewClient(server.Client(), server.URL).ArchiveIssue(context.Background(), "issue-1")
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	assert.Contains(t, query, "TaskSyncLinearIssueArchive")
@@ -406,6 +414,7 @@ func TestClient_OrganizationID(t *testing.T) {
 
 	client := NewClient(server.Client(), server.URL)
 	id, err := client.OrganizationID(context.Background())
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	assert.Contains(t, query, "TaskSyncLinearOrganization")
@@ -466,6 +475,7 @@ func TestClient_UpdateIssueClearsDueDate(t *testing.T) {
 		"issue-1",
 		IssueUpdateInput{DueDateSet: true},
 	)
+
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	assert.Contains(t, query, "TaskSyncLinearIssueUpdate")

@@ -307,6 +307,7 @@ func (h *outboundHandler) startHeartbeat(
 
 	stop := make(chan struct{})
 	exited := make(chan struct{})
+
 	var once sync.Once
 
 	lease := coredata.TaskSyncJob{
