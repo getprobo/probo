@@ -601,3 +601,113 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		require.Contains(t, config.TCF.GVL.Vendors, strconv.Itoa(iabVendorID))
 	})
 }
+
+func TestCookieBannerGVLVendor_ConsentTC(t *testing.T) {
+	t.Parallel()
+
+	fixture := setupPublishedTCFCookieBanner(t)
+	consentData := json.RawMessage(`{"necessary":true}`)
+
+	t.Run(
+		"persists a valid 2.3 string",
+		func(t *testing.T) {
+			t.Parallel()
+
+			visitorID := uniqueCookieBannerVisitorID()
+			created := postCookieConsent(
+				t,
+				fixture.Owner,
+				fixture,
+				visitorID,
+				"ACCEPT_ALL",
+				consentData,
+				validTCStringV23,
+			)
+			assert.Equal(t, visitorID, created.VisitorID)
+
+			resp := doCookieBannerHTTP(
+				t,
+				fixture.Owner,
+				cookieBannerHTTPOptions{
+					Method:     http.MethodGet,
+					BannerID:   fixture.BannerID,
+					Path:       []string{"consents", visitorID},
+					Origin:     fixture.Origin,
+					SDKVersion: cookieBannerE2ESDKVersion,
+				},
+			)
+			require.Equal(t, http.StatusOK, resp.StatusCode, "body: %s", string(resp.Body))
+
+			var got struct {
+				VisitorID string  `json:"visitor_id"`
+				TC        *string `json:"tc"`
+			}
+			require.NoError(t, json.Unmarshal(resp.Body, &got))
+			require.NotNil(t, got.TC)
+			assert.Equal(t, validTCStringV23, *got.TC)
+		},
+	)
+
+	t.Run(
+		"rejects a core-only string",
+		func(t *testing.T) {
+			t.Parallel()
+
+			body, err := json.Marshal(
+				postConsentRequest{
+					VisitorID:   uniqueCookieBannerVisitorID(),
+					Version:     fixture.Version,
+					Action:      "ACCEPT_ALL",
+					ConsentData: consentData,
+					TC:          new(coreOnlyTCString),
+				},
+			)
+			require.NoError(t, err)
+
+			resp := doCookieBannerHTTP(
+				t,
+				fixture.Owner,
+				cookieBannerHTTPOptions{
+					Method:     http.MethodPost,
+					BannerID:   fixture.BannerID,
+					Path:       []string{"consents"},
+					Origin:     fixture.Origin,
+					SDKVersion: cookieBannerE2ESDKVersion,
+					Body:       body,
+				},
+			)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		},
+	)
+
+	t.Run(
+		"rejects missing tc under gdpr",
+		func(t *testing.T) {
+			t.Parallel()
+
+			body, err := json.Marshal(
+				postConsentRequest{
+					VisitorID:   uniqueCookieBannerVisitorID(),
+					Version:     fixture.Version,
+					Action:      "ACCEPT_ALL",
+					ConsentData: consentData,
+				},
+			)
+			require.NoError(t, err)
+
+			resp := doCookieBannerHTTP(
+				t,
+				fixture.Owner,
+				cookieBannerHTTPOptions{
+					Method:     http.MethodPost,
+					BannerID:   fixture.BannerID,
+					Path:       []string{"consents"},
+					Origin:     fixture.Origin,
+					SDKVersion: cookieBannerE2ESDKVersion,
+					Body:       body,
+				},
+			)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		},
+	)
+}

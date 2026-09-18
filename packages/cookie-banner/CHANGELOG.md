@@ -6,6 +6,8 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ### Added
 
+- Optional `TCFRuntime.onUIVisible` so a TCF addon can follow banner /
+  panel / privacy-choices open and close
 - `projectConsentFromTCF` maps TCF purpose consent/LI bits onto category
   slugs (AND, fail-closed). Customize and TC restore use it when TCF is on
 - Published banner config nests TCF under `tcf` (`vendors`, `gvl_version`,

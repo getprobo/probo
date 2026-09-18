@@ -359,51 +359,6 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 	assert.Equal(t, fixture.Version, recordNode.Node.CookieBannerVersion.Version)
 	assert.Nil(t, recordNode.Node.TC)
 
-	visitorTC := uniqueCookieBannerVisitorID()
-
-	const tcString = "CPzqA4APzqA4AEsAAAENAwCAAAAAAAAAAAAAAAAAAAAA"
-
-	tcRecord := postCookieConsent(
-		t,
-		owner,
-		fixture,
-		visitorTC,
-		"ACCEPT_ALL",
-		consentDataAccept,
-		tcString,
-	)
-
-	tcResp := doCookieBannerHTTP(
-		t,
-		owner,
-		cookieBannerHTTPOptions{
-			Method:     http.MethodGet,
-			BannerID:   fixture.BannerID,
-			Path:       []string{"consents", url.PathEscape(visitorTC)},
-			Origin:     fixture.Origin,
-			SDKVersion: cookieBannerE2ESDKVersion,
-		},
-	)
-	require.Equal(t, http.StatusOK, tcResp.StatusCode, "body: %s", string(tcResp.Body))
-	require.NoError(t, json.Unmarshal(tcResp.Body, &visitorConsent))
-	assert.Equal(t, visitorTC, visitorConsent.VisitorID)
-	assert.Equal(t, "ACCEPT_ALL", visitorConsent.Action)
-	require.NotNil(t, visitorConsent.TC)
-	assert.Equal(t, tcString, *visitorConsent.TC)
-
-	var tcNode struct {
-		Node *struct {
-			ID        string  `json:"id"`
-			VisitorID string  `json:"visitorId"`
-			TC        *string `json:"tc"`
-		} `json:"node"`
-	}
-	require.NoError(t, owner.Execute(recordNodeQuery, map[string]any{"id": tcRecord.ID}, &tcNode))
-	require.NotNil(t, tcNode.Node)
-	assert.Equal(t, visitorTC, tcNode.Node.VisitorID)
-	require.NotNil(t, tcNode.Node.TC)
-	assert.Equal(t, tcString, *tcNode.Node.TC)
-
 	t.Run(
 		"read-only config and consent roundtrip",
 		func(t *testing.T) {

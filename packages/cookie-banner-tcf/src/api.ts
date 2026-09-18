@@ -26,7 +26,7 @@ import { setLayoutRenderer, setTCFRuntime } from "@probo/cookie-banner";
 import { TCF_CMP_ID, TCF_CMP_VERSION } from "./constants";
 import { encodeTCString, gdprApplies, type TCFGrant } from "./encode";
 import { renderTCFLayout, wireTCFLayout } from "./layout";
-import { setLastTCString } from "./session";
+import { getLastTCString, setLastTCString } from "./session";
 
 function tcfActive(config: BannerConfig): boolean {
   return !!config.tcf && gdprApplies(config) && !!config.tcf.gvl;
@@ -35,6 +35,7 @@ function tcfActive(config: BannerConfig): boolean {
 export function startTCF(): void {
   const cmpApi = new CmpApi(TCF_CMP_ID, TCF_CMP_VERSION, true);
   let pending: TCFChoices | undefined;
+  let active = false;
 
   setLayoutRenderer({
     render: renderTCFLayout,
@@ -43,7 +44,8 @@ export function startTCF(): void {
 
   setTCFRuntime({
     onConfig(config, existingTc) {
-      if (!tcfActive(config)) {
+      active = tcfActive(config);
+      if (!active) {
         setLastTCString(undefined);
         cmpApi.update(null);
         return;
@@ -57,6 +59,13 @@ export function startTCF(): void {
 
       cmpApi.update("", true);
     },
+    onUIVisible(visible) {
+      if (!active) {
+        return;
+      }
+
+      cmpApi.update(getLastTCString() ?? "", visible);
+    },
     setPendingChoices(choices) {
       pending = choices;
     },
@@ -67,7 +76,8 @@ export function startTCF(): void {
       return decodeTCChoices(tc);
     },
     onConsent(action, config) {
-      if (!tcfActive(config)) {
+      active = tcfActive(config);
+      if (!active) {
         setLastTCString(undefined);
         cmpApi.update(null);
         return undefined;
