@@ -19,19 +19,88 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
+import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 
 export default function MagicLinkPage() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const token = searchParams.get("token")?.trim() ?? "";
 
   usePageTitle(t("magicLinkPage.pageTitle"));
+
+  async function handleContinue(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    const showContinueError = () => {
+      toast({
+        title: t("common.error"),
+        description: t("magicLinkPage.errors.continue"),
+        variant: "error",
+      });
+    };
+
+    try {
+      const body = new URLSearchParams();
+      body.set("token", token);
+
+      const url = new URL("/api/connect/v1/magic-link/verify", window.location.origin);
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/x-www-form-urlencoded",
+          },
+          credentials: "include",
+          body,
+        });
+      } catch {
+        showContinueError();
+        return;
+      }
+
+      if (!response.ok) {
+        showContinueError();
+        return;
+      }
+
+      let redirectURL = "";
+      try {
+        const payload: unknown = await response.json();
+        if (
+          payload !== null
+          && typeof payload === "object"
+          && "redirect_url" in payload
+          && typeof payload.redirect_url === "string"
+        ) {
+          redirectURL = payload.redirect_url;
+        }
+      } catch {
+        showContinueError();
+        return;
+      }
+
+      if (redirectURL === "") {
+        showContinueError();
+        return;
+      }
+
+      window.location.assign(new URL(redirectURL, window.location.origin).href);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="flex w-full flex-col gap-8">
@@ -59,11 +128,11 @@ export default function MagicLinkPage() {
           )
         : (
             <form
-              method="POST"
-              action="/api/connect/v1/magic-link/verify"
               className="flex flex-col"
+              onSubmit={(event) => {
+                void handleContinue(event);
+              }}
             >
-              <input type="hidden" name="token" value={token} />
               <Button
                 type="submit"
                 variant="solid"
@@ -71,6 +140,7 @@ export default function MagicLinkPage() {
                 highContrast
                 size={3}
                 className="w-full"
+                loading={isSubmitting}
               >
                 {t("magicLinkPage.actions.continue")}
               </Button>

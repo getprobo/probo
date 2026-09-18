@@ -29,9 +29,11 @@ import {
   IconPlusLarge,
   Input,
   Option,
+  RichEditor,
   useDialogRef,
 } from "@probo/ui";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
@@ -39,6 +41,9 @@ import type { CreateRiskAnalysisDialogCreateMutation } from "#/__generated__/cor
 import { ControlledField } from "#/components/form/ControlledField";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
+
+import { riskAnalysisDescriptionField } from "../variants";
 
 import {
   matrixSizeFromOption,
@@ -77,6 +82,7 @@ export function CreateRiskAnalysisDialog(props: {
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const [createRiskAnalysis, isCreating] = useMutation<CreateRiskAnalysisDialogCreateMutation>(createMutation);
+  const [editorKey, setEditorKey] = useState(0);
   const { register, handleSubmit, reset, control, formState } = useForm<FormData>({
     defaultValues: {
       name: "",
@@ -99,7 +105,7 @@ export function CreateRiskAnalysisDialog(props: {
           input: {
             organizationId,
             name: data.name,
-            description: data.description || null,
+            description: isRichEditorContentEmpty(data.description) ? null : data.description,
             period,
             matrixSize: matrixSizeFromOption(data.matrixSize),
           },
@@ -107,6 +113,7 @@ export function CreateRiskAnalysisDialog(props: {
         },
       });
       reset();
+      setEditorKey(key => key + 1);
       dialogRef.current?.close();
     } catch {
       // Error toast is handled by useMutation.
@@ -115,7 +122,7 @@ export function CreateRiskAnalysisDialog(props: {
 
   return (
     <Dialog
-      className="max-w-lg"
+      className="max-w-2xl"
       ref={dialogRef}
       trigger={(
         <Button icon={IconPlusLarge} variant="primary">
@@ -137,13 +144,23 @@ export function CreateRiskAnalysisDialog(props: {
             error={formState.errors.name?.message}
             placeholder={t("createRiskAnalysisDialog.placeholders.name")}
           />
-          <Field
-            label={t("createRiskAnalysisDialog.fields.description")}
-            {...register("description")}
-            type="textarea"
-            rows={3}
-            placeholder={t("createRiskAnalysisDialog.placeholders.description")}
-          />
+          <Field label={t("createRiskAnalysisDialog.fields.description")}>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field }) => (
+                <RichEditor
+                  key={editorKey}
+                  className={riskAnalysisDescriptionField().editor()}
+                  content={field.value}
+                  disabled={isCreating}
+                  placeholder={t("createRiskAnalysisDialog.placeholders.description")}
+                  aria-label={t("createRiskAnalysisDialog.fields.description")}
+                  onChangeContent={field.onChange}
+                />
+              )}
+            />
+          </Field>
           <ControlledField
             control={control}
             name="matrixSize"

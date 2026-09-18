@@ -1089,6 +1089,7 @@
   },
   "linkedRisksCard": {
     "columns": {
+      "referenceId": "Referentie-ID",
       "name": "Naam",
       "initialRisk": "Initieel risico",
       "residualRisk": "Restrisico"
@@ -1154,6 +1155,9 @@
       "moveToDone": "Verplaatsen naar Voltooid",
       "edit": "Bewerken",
       "delete": "Verwijderen"
+    },
+    "recurringBadge": {
+      "tooltip": "Herhaalt elke {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {
@@ -2243,6 +2247,7 @@
     "cookieBannersConfigure": "Configureren",
     "cookieBannersDiscovery": "Ontdekking",
     "cookieBannersTrail": "Logboek",
+    "cookieBannersTCF": "TCF",
     "cookieBannerSwitcher": {
       "label": "Cookiebanner",
       "select": "Selecteer banner",
@@ -3905,6 +3910,19 @@
     "errors": {
       "extractUrl": "URL uit URI-bestand extraheren mislukt"
     },
+    "csv": {
+      "column": "Kolom",
+      "empty": "Dit CSV-bestand is leeg.",
+      "error": "Het CSV-voorbeeld kan niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "truncated": "De eerste 100 gegevensrijen worden weergegeven."
+    },
+    "text": {
+      "empty": "Dit tekstbestand is leeg.",
+      "error": "Het tekstvoorbeeld kan niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "truncated": "De eerste 512 KB wordt weergegeven."
+    },
     "previewUnavailable": "Voorbeeld niet beschikbaar voor dit bestandstype: {{mimeType}}",
     "actions": {
       "download": "Bestand downloaden"
@@ -4429,7 +4447,7 @@
     }
   },
   "riskDetailLayout": {
-    "deleteConfirmation": "Hiermee wordt het risico \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "edit": "Bewerken",
       "delete": "Verwijderen"
@@ -4452,6 +4470,7 @@
       "newRisk": "Nieuw risico"
     },
     "columns": {
+      "referenceId": "Referentie-ID",
       "name": "Risiconaam",
       "category": "Categorie",
       "treatment": "Behandeling",
@@ -4568,7 +4587,7 @@
     "errors": {
       "delete": "Verwijderen van risico mislukt"
     },
-    "deleteConfirmation": "Hiermee wordt het risico \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "treatments": {
       "mitigated": "Beperken",
       "accepted": "Accepteren",
@@ -4595,7 +4614,9 @@
       "error": "Fout"
     },
     "errors": {
-      "delete": "Verwijderen van risicobeoordeling mislukt"
+      "delete": "Verwijderen van risicobeoordeling mislukt",
+      "update": "Bijwerken van risicobeoordeling mislukt",
+      "content": "Deze beschrijving kon niet worden weergegeven"
     },
     "deleteConfirmation": "Hiermee worden deze risicobeoordeling en alle bijbehorende diagrammen, nodes, processen en dreigingen permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
@@ -4605,10 +4626,12 @@
       "showMore": "Meer tonen"
     },
     "details": "Details",
+    "noDescription": "Geen beschrijving",
     "fields": {
       "period": "Periode",
       "matrixSize": "Matrixgrootte",
-      "createdAt": "Aangemaakt op"
+      "createdAt": "Aangemaakt op",
+      "description": "Beschrijving"
     },
     "diagrams": "Diagrammen",
     "treatmentPlans": "Risico's en behandelplannen",
@@ -5997,6 +6020,7 @@
     "pageTitle": "Doorgaan met inloggen",
     "title": "Doorgaan met inloggen",
     "description": "Klik op doorgaan om het inloggen te voltooien.",
+    "errors": { "continue": "Kan het inloggen niet voltooien" },
     "actions": { "continue": "Doorgaan" }
   },
   "magicLinkForm": {

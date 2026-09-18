@@ -18,18 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/CompliancePortalVisitorsPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
+import { AddVisitorPopover } from "./_components/AddVisitorPopover";
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
 import { CompliancePortalAccessListSearch } from "./_components/CompliancePortalAccessListSearch";
 import { CompliancePortalAccessListSort } from "./_components/CompliancePortalAccessListSort";
@@ -41,8 +43,10 @@ export const compliancePortalVisitorsPageQuery = graphql`
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
+        id
         canGetNDA: permission(action: "compliance-portal:portal:get-nda")
         canListAccesses: permission(action: "compliance-portal:portal-access:list")
+        canCreateAccess: permission(action: "compliance-portal:portal-access:create")
         ...CompliancePortalNDASectionFragment
       }
     }
@@ -57,14 +61,14 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
   const { t } = useTranslation("organizations/compliance-portals");
   const title = t("visitorsPage.title");
   usePageTitle(title);
-  const { root, intro, tools } = accessSection();
+  const { root, intro, tools, actions } = accessSection();
 
   const { compliancePortal } = usePreloadedQuery<CompliancePortalVisitorsPageQuery>(
     compliancePortalVisitorsPageQuery,
     queryRef,
   );
   if (compliancePortal.__typename !== "CompliancePortal") {
-    throw new Error("invalid type for node");
+    throw new NotFoundError("Compliance portal not found");
   }
 
   return (
@@ -85,12 +89,19 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
             </Text>
             <div className={tools()}>
               <CompliancePortalAccessListSearch />
-              <CompliancePortalAccessListSort />
+              <div className={actions()}>
+                <CompliancePortalAccessListSort />
+                {compliancePortal.canCreateAccess && (
+                  <AddVisitorPopover compliancePortalId={compliancePortal.id}>
+                    <Button size={2} color="neutral" highContrast iconStart={<PlusIcon />}>
+                      {t("addVisitorDialog.actions.open")}
+                    </Button>
+                  </AddVisitorPopover>
+                )}
+              </div>
             </div>
           </div>
-          <Suspense fallback={<ListSkeleton count={4} />}>
-            <CompliancePortalAccessList />
-          </Suspense>
+          <CompliancePortalAccessList />
         </section>
       )}
     </div>

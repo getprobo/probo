@@ -22,6 +22,7 @@ package types
 
 import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -54,5 +55,15 @@ func NewGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *GCPConnectorSetup {
 		Subject:                     setup.Subject,
 		SuggestedServiceAccountName: setup.SuggestedServiceAccountName,
 		TerraformSnippet:            setup.TerraformSnippet,
+	}
+}
+
+func NewAzureConnectorSetup(setup cloudazure.ConnectorSetup) *AzureConnectorSetup {
+	return &AzureConnectorSetup{
+		Issuer:                   setup.Issuer,
+		Audience:                 setup.Audience,
+		Subject:                  setup.Subject,
+		SuggestedApplicationName: setup.SuggestedApplicationName,
+		TerraformSnippet:         setup.TerraformSnippet,
 	}
 }

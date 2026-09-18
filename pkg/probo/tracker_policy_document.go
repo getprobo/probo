@@ -265,139 +265,112 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 ) ([]docgen.TrackerPolicyThirdParty, error) {
 	var patterns coredata.TrackerPatterns
 
-	thirdPartyIDs, err := patterns.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load distinct third party ids: %w", err)
-	}
-
-	var thirdParties coredata.ThirdParties
-	if len(thirdPartyIDs) > 0 {
-		if err := thirdParties.LoadByIDs(ctx, conn, scope, thirdPartyIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, fmt.Errorf("cannot load third parties: %w", err)
-		}
-	}
-
-	// Patterns not linked to an org ThirdParty still surface their catalog
-	// (CommonThirdParty) vendor, mirroring the banner's linkedThirdParties
-	// union, so the policy stays complete whether or not the vendor was
-	// imported into the org register.
 	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load distinct common tracker pattern ids: %w", err)
 	}
 
-	var commonParties coredata.CommonThirdParties
-
-	if len(commonPatternIDs) > 0 {
-		var commonPatterns coredata.CommonTrackerPatterns
-		if err := commonPatterns.LoadByIDs(ctx, conn, commonPatternIDs); err != nil {
-			return nil, fmt.Errorf("cannot load common tracker patterns: %w", err)
-		}
-
-		seen := make(map[gid.GID]struct{}, len(commonPatterns))
-		commonThirdPartyIDs := make([]gid.GID, 0, len(commonPatterns))
-
-		for _, cp := range commonPatterns {
-			if cp.CommonThirdPartyID == nil {
-				continue
-			}
-
-			if _, ok := seen[*cp.CommonThirdPartyID]; ok {
-				continue
-			}
-
-			seen[*cp.CommonThirdPartyID] = struct{}{}
-			commonThirdPartyIDs = append(commonThirdPartyIDs, *cp.CommonThirdPartyID)
-		}
-
-		if len(commonThirdPartyIDs) > 0 {
-			if err := commonParties.LoadByIDs(ctx, conn, commonThirdPartyIDs); err != nil {
-				return nil, fmt.Errorf("cannot load common third parties: %w", err)
-			}
-		}
-	}
-
-	if len(thirdParties) == 0 && len(commonParties) == 0 {
+	if len(commonPatternIDs) == 0 {
 		return nil, nil
 	}
 
-	rows := make([]docgen.TrackerPolicyThirdParty, 0, len(thirdParties)+len(commonParties))
+	var commonPatterns coredata.CommonTrackerPatterns
+	if err := commonPatterns.LoadByIDs(ctx, conn, commonPatternIDs); err != nil {
+		return nil, fmt.Errorf("cannot load common tracker patterns: %w", err)
+	}
 
-	// Dedupe by name so a vendor present both as an org third party (one
-	// pattern) and as a catalog entry (an unlinked pattern) is listed
-	// once. Org third parties are appended first, so their richer
-	// (user-editable) data wins for a shared name. When the kept row left a
-	// field empty (e.g. an org third party with no privacy policy URL), a
-	// later duplicate backfills it from the catalog so common-vendor
-	// metadata is not dropped.
-	rowIndexByName := make(map[string]int, len(thirdParties)+len(commonParties))
+	seen := make(map[gid.GID]struct{}, len(commonPatterns))
+	commonThirdPartyIDs := make([]gid.GID, 0, len(commonPatterns))
 
-	addRow := func(name, description, privacyPolicyURL string) {
-		name = strings.TrimSpace(name)
-		description = collapseWhitespace(description)
-		privacyPolicyURL = strings.TrimSpace(privacyPolicyURL)
+	for _, cp := range commonPatterns {
+		if cp.CommonThirdPartyID == nil {
+			continue
+		}
+
+		if _, ok := seen[*cp.CommonThirdPartyID]; ok {
+			continue
+		}
+
+		seen[*cp.CommonThirdPartyID] = struct{}{}
+		commonThirdPartyIDs = append(commonThirdPartyIDs, *cp.CommonThirdPartyID)
+	}
+
+	if len(commonThirdPartyIDs) == 0 {
+		return nil, nil
+	}
+
+	var commonParties coredata.CommonThirdParties
+	if err := commonParties.LoadByIDs(ctx, conn, commonThirdPartyIDs); err != nil {
+		return nil, fmt.Errorf("cannot load common third parties: %w", err)
+	}
+
+	return collapseTrackerPolicyThirdParties(commonParties), nil
+}
+
+// collapseTrackerPolicyThirdParties folds catalog vendors that share a
+// display name into one policy row. LoadByIDs has no ORDER BY, so the
+// input is sorted by ID first. First-wins (and empty-URL backfill) then
+// keeps the same name casing and privacy-policy link on every
+// regeneration, even when two records disagree.
+func collapseTrackerPolicyThirdParties(
+	parties coredata.CommonThirdParties,
+) []docgen.TrackerPolicyThirdParty {
+	if len(parties) == 0 {
+		return nil
+	}
+
+	ordered := slices.Clone(parties)
+	slices.SortFunc(
+		ordered,
+		func(a, b *coredata.CommonThirdParty) int {
+			return bytes.Compare(a.ID[:], b.ID[:])
+		},
+	)
+
+	rows := make([]docgen.TrackerPolicyThirdParty, 0, len(ordered))
+	rowIndexByName := make(map[string]int, len(ordered))
+
+	for _, cp := range ordered {
+		name := strings.TrimSpace(cp.Name)
+
+		privacyPolicyURL := ""
+		if cp.PrivacyPolicyURL != nil {
+			privacyPolicyURL = strings.TrimSpace(*cp.PrivacyPolicyURL)
+		}
 
 		key := strings.ToLower(name)
 		if idx, ok := rowIndexByName[key]; ok {
-			if rows[idx].Description == "" {
-				rows[idx].Description = description
-			}
-
 			if rows[idx].PrivacyPolicyURL == "" {
 				rows[idx].PrivacyPolicyURL = privacyPolicyURL
 			}
 
-			return
+			continue
 		}
 
 		rowIndexByName[key] = len(rows)
-
 		rows = append(rows, docgen.TrackerPolicyThirdParty{
 			Name:             name,
-			Description:      description,
+			Description:      "",
 			PrivacyPolicyURL: privacyPolicyURL,
 		})
 	}
 
-	for _, tp := range thirdParties {
-		description := ""
-		if tp.Description != nil {
-			description = *tp.Description
-		}
+	slices.SortFunc(
+		rows,
+		func(a, b docgen.TrackerPolicyThirdParty) int {
+			if c := strings.Compare(a.Name, b.Name); c != 0 {
+				return c
+			}
 
-		privacyPolicyURL := ""
-		if tp.PrivacyPolicyURL != nil {
-			privacyPolicyURL = *tp.PrivacyPolicyURL
-		}
+			if c := strings.Compare(a.Description, b.Description); c != 0 {
+				return c
+			}
 
-		addRow(tp.Name, description, privacyPolicyURL)
-	}
+			return strings.Compare(a.PrivacyPolicyURL, b.PrivacyPolicyURL)
+		},
+	)
 
-	for _, cp := range commonParties {
-		privacyPolicyURL := ""
-		if cp.PrivacyPolicyURL != nil {
-			privacyPolicyURL = *cp.PrivacyPolicyURL
-		}
-
-		addRow(cp.Name, "", privacyPolicyURL)
-	}
-
-	// LoadByIDs returns rows in an unspecified order (no ORDER BY), so sort
-	// here to keep the generated policy document deterministic across
-	// regenerations.
-	slices.SortFunc(rows, func(a, b docgen.TrackerPolicyThirdParty) int {
-		if c := strings.Compare(a.Name, b.Name); c != 0 {
-			return c
-		}
-
-		if c := strings.Compare(a.Description, b.Description); c != 0 {
-			return c
-		}
-
-		return strings.Compare(a.PrivacyPolicyURL, b.PrivacyPolicyURL)
-	})
-
-	return rows, nil
+	return rows
 }
 
 // trackerPurpose returns a table-safe purpose string for a tracker, falling

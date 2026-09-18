@@ -25,14 +25,17 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/certmanager"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 )
 
 const (
-	NameMaxLength    = 100
-	TitleMaxLength   = 1000
-	ContentMaxLength = 5000
+	NameMaxLength          = 100
+	TitleMaxLength         = 1000
+	ContentMaxLength       = 5000
+	MemberCandidateLimit   = 20
+	DefaultNDAContactEmail = "security@probo.com"
 )
 
 type (
@@ -49,6 +52,7 @@ type (
 		certManager   *certmanager.Service
 		logger        *log.Logger
 		bot           *bot.Service
+		esign         *esign.Service
 		fileValidator *filevalidation.FileValidator
 	}
 
@@ -78,6 +82,7 @@ func NewService(
 	fileManagerService *filemanager.Service,
 	certManagerService *certmanager.Service,
 	botService *bot.Service,
+	esignService *esign.Service,
 	logger *log.Logger,
 ) *Service {
 	return &Service{
@@ -90,6 +95,7 @@ func NewService(
 		certManager: certManagerService,
 		logger:      logger,
 		bot:         botService,
+		esign:       esignService,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(
 				filevalidation.CategoryData,

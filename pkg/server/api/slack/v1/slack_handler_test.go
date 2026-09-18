@@ -26,11 +26,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -107,6 +109,118 @@ func TestSlackInteractiveRejectsUnboundActor(t *testing.T) {
 	want, err := json.Marshal(slackchannel.UnboundInteractiveResponse())
 	require.NoError(t, err)
 	assert.JSONEq(t, string(want), response.Body.String())
+	assertNoInteractiveCommand(t, rawPayload)
+}
+
+func TestSlackInteractivePostsBindPromptForUnboundActor(t *testing.T) {
+	t.Parallel()
+
+	posted := make(chan bindPromptPost, 1)
+	inbox := newInteractiveInbox(t)
+	responseURL := "https://hooks.slack.com/actions/T123/1/abc"
+	rawPayload := uniqueInteractivePayloadWithResponseURL(t, responseURL)
+	slackbot := newInteractiveSlackbot(t, &stubInteractiveBindingGate{})
+	slackbot.SetHTTPClient(newBindPromptHTTPClient(t, posted))
+	response := performSlackAction(t, inbox, slackbot, rawPayload)
+
+	assert.Equal(t, http.StatusOK, response.Code)
+	assert.JSONEq(t, `{"success":true}`, response.Body.String())
+	assertNoInteractiveCommand(t, rawPayload)
+
+	select {
+	case post := <-posted:
+		assert.Equal(t, responseURL, post.URL)
+		assert.Equal(t, false, post.Body["replace_original"])
+		assert.Equal(t, slackchannel.SlashResponseTypeEphemeral, post.Body["response_type"])
+		assert.Equal(t, slackchannel.UnboundInteractiveResponse().Text, post.Body["text"])
+		assert.Contains(t, post.Body["text"], "/probot login")
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Slack bind prompt")
+	}
+}
+
+func TestSlackInteractiveAcknowledgesUnboundActorBeforeBindPrompt(t *testing.T) {
+	t.Parallel()
+
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
+
+	t.Cleanup(
+		func() {
+			select {
+			case <-release:
+			default:
+				close(release)
+			}
+		},
+	)
+
+	inbox := newInteractiveInbox(t)
+	rawPayload := uniqueInteractivePayloadWithResponseURL(
+		t,
+		"https://hooks.slack.com/actions/T123/1/abc",
+	)
+	slackbot := newInteractiveSlackbot(t, &stubInteractiveBindingGate{})
+	slackbot.SetHTTPClient(
+		&http.Client{
+			Transport: roundTripFunc(
+				func(req *http.Request) (*http.Response, error) {
+					if req.Body != nil {
+						_ = req.Body.Close()
+					}
+
+					select {
+					case started <- struct{}{}:
+					default:
+					}
+
+					<-release
+
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       http.NoBody,
+						Header:     make(http.Header),
+					}, nil
+				},
+			),
+		},
+	)
+
+	digest := sha256.Sum256([]byte(rawPayload))
+
+	t.Cleanup(func() { deleteInteractiveCommand(t, test.PGClient(t), digest[:]) })
+
+	body := url.Values{"payload": []string{rawPayload}}.Encode()
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/slack/v1/interactive",
+		strings.NewReader(body),
+	)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	response := httptest.NewRecorder()
+
+	done := make(chan struct{})
+
+	go func() {
+		SlackHandler(inbox, slackbot, log.NewLogger()).ServeHTTP(response, req)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handler blocked on bind prompt delivery")
+	}
+
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("bind prompt delivery did not start")
+	}
+
+	assert.Equal(t, http.StatusOK, response.Code)
+	assert.JSONEq(t, `{"success":true}`, response.Body.String())
 	assertNoInteractiveCommand(t, rawPayload)
 }
 
@@ -192,6 +306,54 @@ func newInteractiveSlackbot(
 	return slackchannel.NewService(bindings, nil, nil, log.NewLogger())
 }
 
+type (
+	bindPromptPost struct {
+		URL  string
+		Body map[string]any
+	}
+
+	roundTripFunc func(*http.Request) (*http.Response, error)
+)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func newBindPromptHTTPClient(t *testing.T, posted chan<- bindPromptPost) *http.Client {
+	t.Helper()
+
+	return &http.Client{
+		Transport: roundTripFunc(
+			func(req *http.Request) (*http.Response, error) {
+				if req.Body != nil {
+					defer func() { _ = req.Body.Close() }()
+				}
+
+				body, err := io.ReadAll(req.Body)
+				if err != nil {
+					return nil, err
+				}
+
+				var payload map[string]any
+				if err := json.Unmarshal(body, &payload); err != nil {
+					return nil, err
+				}
+
+				posted <- bindPromptPost{
+					URL:  req.URL.String(),
+					Body: payload,
+				}
+
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       http.NoBody,
+					Header:     make(http.Header),
+				}, nil
+			},
+		),
+	}
+}
+
 func performSlackAction(
 	t *testing.T,
 	inbox *slackchannel.InteractiveCommandInbox,
@@ -235,11 +397,24 @@ func newInteractiveInbox(t *testing.T) *slackchannel.InteractiveCommandInbox {
 func uniqueInteractivePayload(t *testing.T) string {
 	t.Helper()
 
+	return uniqueInteractivePayloadWithResponseURL(t, "")
+}
+
+func uniqueInteractivePayloadWithResponseURL(t *testing.T, responseURL string) string {
+	t.Helper()
+
 	id := gid.New(gid.NilTenant, coredata.SlackbotInteractiveCommandEntityType)
+	if responseURL == "" {
+		return fmt.Sprintf(
+			`{"team":{"id":"T-%s"},"user":{"id":"U123"},"container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"accept_all","action_ts":"123.789","value":"message-id"}]}`,
+			id,
+		)
+	}
 
 	return fmt.Sprintf(
-		`{"team":{"id":"T-%s"},"user":{"id":"U123"},"container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"accept_all","action_ts":"123.789","value":"message-id"}]}`,
+		`{"team":{"id":"T-%s"},"user":{"id":"U123"},"response_url":%q,"container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"accept_all","action_ts":"123.789","value":"message-id"}]}`,
 		id,
+		responseURL,
 	)
 }
 

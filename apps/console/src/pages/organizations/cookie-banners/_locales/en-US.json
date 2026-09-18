@@ -65,14 +65,13 @@
     "actions": { "save": "Save", "cancel": "Cancel" }
   },
   "trackerPatternRow": {
-    "messages": { "successTitle": "Success", "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved", "thirdPartyImported": "Third party imported", "cookieUpdated": "Cookie updated" },
-    "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie", "importThirdParty": "Failed to import third party" },
+    "messages": { "successTitle": "Success", "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved", "cookieUpdated": "Cookie updated" },
+    "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "actions": { "edit": "Edit", "importThirdParties": "Import to third parties", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
+    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
-    "duration": { "session": "Session", "persistent": "Persistent" },
-    "commonCatalog": "Common catalog"
+    "duration": { "session": "Session", "persistent": "Persistent" }
   },
   "trackerProperties": {
     "messages": { "successTitle": "Success", "moved": "Cookie moved", "copiedTitle": "Copied", "idCopied": "Common tracker ID copied to clipboard" },
@@ -81,7 +80,7 @@
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
-    "commonCatalog": "Common catalog", "manual": "Manual", "boolean": { "yes": "Yes", "no": "No" }
+    "manual": "Manual", "boolean": { "yes": "Yes", "no": "No" }
   },
   "detectedTrackersSection": {
     "title": "Detected trackers",
@@ -228,5 +227,54 @@
       "consentExpiryDays": "Consent expiry (days)"
     },
     "actions": { "creating": "Creating...", "create": "Create banner" }
+  },
+  "tcfPage": {
+    "title": "TCF vendors",
+    "description": "Choose which IAB Global Vendor List vendors this banner discloses.",
+    "searchPlaceholder": "Search vendors",
+    "stats": {
+      "vendors": "Vendors",
+      "catalog": "Catalog",
+      "draft": "draft",
+      "live": "live",
+      "gvl": "GVL",
+      "tcfPolicy": "TCF policy",
+      "empty": "—",
+      "version": "v{{version}}",
+      "catalogTotal_one": "{{count}} vendor",
+      "catalogTotal_other": "{{count}} vendors",
+      "unpublishedAdded_one": "{{count}} vendor to add",
+      "unpublishedAdded_other": "{{count}} vendors to add",
+      "unpublishedRemoved_one": "{{count}} vendor to remove",
+      "unpublishedRemoved_other": "{{count}} vendors to remove",
+      "unpublishedChanged": "{{added}} to add, {{removed}} to remove",
+      "unpublishedNever": "Not published yet"
+    },
+    "emptyCatalog": "No GVL vendors are imported yet. Run gvl-import to fill the catalog.",
+    "emptyFiltered": "No matching vendors",
+    "emptyFilteredDescription": "Try a different name, IAB vendor ID, or membership filter.",
+    "filter": {
+      "label": "Vendor membership",
+      "all": "All vendors",
+      "on": "On this banner",
+      "off": "Not on this banner"
+    },
+    "previous": "Prev",
+    "next": "Next",
+    "noUpdatePermission": "You do not have permission to change TCF vendors.",
+    "iabVendorId": "IAB {{id}}",
+    "policy": "Privacy policy",
+    "notFound": "Page not found",
+    "actions": {
+      "clearSearch": "Clear filters",
+      "add": "Add",
+      "remove": "Remove",
+      "addVendor": "Add {{name}} to this banner",
+      "removeVendor": "Remove {{name}} from this banner"
+    },
+    "errors": {
+      "add": "Failed to add vendor",
+      "remove": "Failed to remove vendor"
+    }
   }
 }

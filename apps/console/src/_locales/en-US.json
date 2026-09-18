@@ -689,6 +689,7 @@
   },
   "linkedRisksCard": {
     "columns": {
+      "referenceId": "Reference ID",
       "name": "Name",
       "initialRisk": "Initial Risk",
       "residualRisk": "Residual Risk"
@@ -722,7 +723,10 @@
       "state": "Drag and drop to reorder tasks"
     },
     "deleteConfirmation": "Are you sure you want to delete this task?",
-    "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" }
+    "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" },
+    "recurringBadge": {
+      "tooltip": "Repeats every {{interval}}"
+    }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Delete Reference",
@@ -1449,6 +1453,7 @@
     "cookieBannersConfigure": "Configure",
     "cookieBannersDiscovery": "Discovery",
     "cookieBannersTrail": "Trail",
+    "cookieBannersTCF": "TCF",
     "organization": "Organization",
     "cookieBannerSwitcher": {
       "label": "Cookie banner",
@@ -2241,6 +2246,19 @@
     "breadcrumb": { "evidences": "Evidences" },
     "messages": { "error": "Error" },
     "errors": { "extractUrl": "Failed to extract URL from URI file" },
+    "csv": {
+      "column": "Column",
+      "empty": "This CSV file is empty.",
+      "error": "Unable to load the CSV preview.",
+      "retry": "Retry",
+      "truncated": "Showing the first 100 data rows."
+    },
+    "text": {
+      "empty": "This text file is empty.",
+      "error": "Unable to load the text preview.",
+      "retry": "Retry",
+      "truncated": "Showing the first 512 KB."
+    },
     "previewUnavailable": "Preview not available for this file type: {{mimeType}}",
     "actions": { "download": "Download File" }
   },
@@ -2417,14 +2435,14 @@
     "actions": { "creating": "Creating...", "create": "Create Request" }
   },
   "riskDetailLayout": {
-    "deleteConfirmation": "This will permanently delete the risk \"{{name}}\". This action cannot be undone.",
+    "deleteConfirmation": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This action cannot be undone.",
     "actions": { "edit": "Edit", "delete": "Delete" },
     "tabs": { "overview": "Overview", "measures": "Measures", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
   },
   "risksPage": {
     "description": "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
     "actions": { "document": "Document", "publish": "Publish", "newRisk": "New Risk" },
-    "columns": { "name": "Risk name", "category": "Category", "treatment": "Treatment", "initialRisk": "Initial Risk", "residualRisk": "Residual Risk", "owner": "Owner" }
+    "columns": { "referenceId": "Reference ID", "name": "Risk name", "category": "Category", "treatment": "Treatment", "initialRisk": "Initial Risk", "residualRisk": "Residual Risk", "owner": "Owner" }
   },
   "riskOverviewPage": {
     "emptyScores": "Scores are set on a treatment plan in a risk analysis.",
@@ -2462,7 +2480,7 @@
   "riskRow": {
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk" },
-    "deleteConfirmation": "This will permanently delete the risk \"{{name}}\". This action cannot be undone.",
+    "deleteConfirmation": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This action cannot be undone.",
     "treatments": { "mitigated": "Mitigate", "accepted": "Accept", "transferred": "Transfer", "avoided": "Avoid", "unknown": "Unknown" },
     "unassigned": "Unassigned",
     "actions": { "edit": "Edit", "delete": "Delete" }
@@ -2474,11 +2492,12 @@
   "riskAnalysisDetailPage": {
     "title": "Risk Analysis",
     "messages": { "error": "Error" },
-    "errors": { "delete": "Failed to delete risk analysis" },
+    "errors": { "delete": "Failed to delete risk analysis", "update": "Failed to update risk analysis", "content": "Could not display this description" },
     "deleteConfirmation": "This will permanently delete this risk analysis and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
     "actions": { "fork": "Fork", "edit": "Edit", "delete": "Delete", "showMore": "Show more" },
     "details": "Details",
-    "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at" },
+    "noDescription": "No description",
+    "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at", "description": "Description" },
     "diagrams": "Diagrams",
     "treatmentPlans": "Risks and Treatment Plans",
     "emptyDiagrams": "No diagrams yet. Create a diagram to start defining nodes, processes, and threats.",
@@ -3149,6 +3168,7 @@
     "pageTitle": "Continue sign-in",
     "title": "Continue sign-in",
     "description": "Click continue to finish signing in.",
+    "errors": { "continue": "Cannot finish signing in" },
     "actions": { "continue": "Continue" }
   },
   "magicLinkForm": {

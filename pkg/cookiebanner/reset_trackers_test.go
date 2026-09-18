@@ -47,14 +47,12 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
 
-	thirdPartyID := seedThirdParty(t, ctx, client, fx, "Reset Vendor")
 	commonPatternID := seedCommonTrackerPattern(t, ctx, client, "ga_linked")
 
 	glob := newGlobInCategory(fx, "_ga_*", fx.uncategorisedID, coredata.CookieSourceScript, nil)
 
 	linkedExact := newExactPattern(fx, "linked_cookie", fx.uncategorisedID, coredata.CookieSourcePreExisting, nil)
 	linkedExact.CommonTrackerPatternID = &commonPatternID
-	linkedExact.ThirdPartyID = &thirdPartyID
 	linkedExact.Description = "stale description"
 
 	categorised := newExactPattern(fx, "categorised_cookie", fx.normalCategoryID, coredata.CookieSourceScript, nil)
@@ -117,7 +115,6 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 			require.Equal(t, coredata.TrackerPatternMatchTypeExact, exact.MatchType)
 			require.Equal(t, fx.uncategorisedID, exact.CookieCategoryID)
 			require.Nil(t, exact.CommonTrackerPatternID)
-			require.Nil(t, exact.ThirdPartyID)
 			require.NotNil(t, exact.MappingRequestedAt)
 
 			detections, err := page.LoadAll(
@@ -145,7 +142,6 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 		var survivor coredata.TrackerPattern
 		require.NoError(t, survivor.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "linked_cookie", nil))
 		require.Nil(t, survivor.CommonTrackerPatternID)
-		require.Nil(t, survivor.ThirdPartyID)
 		require.Empty(t, survivor.Description)
 		require.NotNil(t, survivor.MappingRequestedAt)
 

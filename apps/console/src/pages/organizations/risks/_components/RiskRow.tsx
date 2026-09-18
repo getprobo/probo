@@ -43,6 +43,7 @@ import { FormRiskDialog } from "./FormRiskDialog";
 const riskRowFragment = graphql`
   fragment RiskRow_risk on Risk {
     id
+    referenceId
     name
     category
     treatment
@@ -110,7 +111,7 @@ export function RiskRow(props: RiskRowProps) {
           });
         }),
       {
-        message: t("riskRow.deleteConfirmation", { name: risk.name }),
+        message: t("riskRow.deleteConfirmation", { name: risk.name, referenceId: risk.referenceId }),
       },
     );
   };
@@ -125,6 +126,9 @@ export function RiskRow(props: RiskRowProps) {
         connection={props.connectionId}
       />
       <Tr to={riskUrl}>
+        <Td>
+          <span className="font-mono text-sm">{risk.referenceId}</span>
+        </Td>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>
         <Td>

@@ -28,8 +28,8 @@ import (
 type CompliancePortalAccessState string
 
 const (
-	CompliancePortalAccessStateActive   CompliancePortalAccessState = "ACTIVE"
-	CompliancePortalAccessStateInactive CompliancePortalAccessState = "INACTIVE"
+	CompliancePortalAccessStateActive      CompliancePortalAccessState = "ACTIVE"
+	CompliancePortalAccessStateDeactivated CompliancePortalAccessState = "DEACTIVATED"
 )
 
 var (
@@ -41,7 +41,7 @@ var (
 func CompliancePortalAccessStates() []CompliancePortalAccessState {
 	return []CompliancePortalAccessState{
 		CompliancePortalAccessStateActive,
-		CompliancePortalAccessStateInactive,
+		CompliancePortalAccessStateDeactivated,
 	}
 }
 
@@ -49,7 +49,7 @@ func (v CompliancePortalAccessState) IsValid() bool {
 	switch v {
 	case
 		CompliancePortalAccessStateActive,
-		CompliancePortalAccessStateInactive:
+		CompliancePortalAccessStateDeactivated:
 		return true
 	}
 

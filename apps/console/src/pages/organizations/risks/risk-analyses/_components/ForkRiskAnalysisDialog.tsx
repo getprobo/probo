@@ -27,15 +27,19 @@ import {
   DialogFooter,
   Field,
   Input,
+  RichEditor,
   useDialogRef,
 } from "@probo/ui";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ForkRiskAnalysisDialog_riskAnalysis$key } from "#/__generated__/core/ForkRiskAnalysisDialog_riskAnalysis.graphql";
 import type { ForkRiskAnalysisDialogMutation } from "#/__generated__/core/ForkRiskAnalysisDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
+
+import { riskAnalysisDescriptionField } from "../variants";
 
 import { formatMatrixSize } from "./matrixSize";
 
@@ -90,7 +94,7 @@ export function ForkRiskAnalysisDialog({
   const dialogRef = dialogRefFromParent ?? localDialogRef;
   const riskAnalysis = useFragment(forkRiskAnalysisDialogFragment, riskAnalysisKey);
   const [forkRiskAnalysis, isForking] = useMutation<ForkRiskAnalysisDialogMutation>(forkMutation);
-  const { register, handleSubmit, formState } = useForm<FormData>({
+  const { register, handleSubmit, control, formState } = useForm<FormData>({
     values: {
       name: riskAnalysis.name,
       description: riskAnalysis.description ?? "",
@@ -115,7 +119,7 @@ export function ForkRiskAnalysisDialog({
           input: {
             riskAnalysisId: riskAnalysis.id,
             name: data.name,
-            description: data.description || null,
+            description: isRichEditorContentEmpty(data.description) ? null : data.description,
             period,
           },
           connections: [connectionId],
@@ -129,7 +133,7 @@ export function ForkRiskAnalysisDialog({
 
   return (
     <Dialog
-      className="max-w-lg"
+      className="max-w-2xl"
       ref={dialogRef}
       title={(
         <Breadcrumb
@@ -149,13 +153,22 @@ export function ForkRiskAnalysisDialog({
             error={formState.errors.name?.message}
             placeholder={t("forkRiskAnalysisDialog.placeholders.name")}
           />
-          <Field
-            label={t("forkRiskAnalysisDialog.fields.description")}
-            {...register("description")}
-            type="textarea"
-            rows={3}
-            placeholder={t("forkRiskAnalysisDialog.placeholders.description")}
-          />
+          <Field label={t("forkRiskAnalysisDialog.fields.description")}>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field }) => (
+                <RichEditor
+                  className={riskAnalysisDescriptionField().editor()}
+                  content={field.value}
+                  disabled={isForking}
+                  placeholder={t("forkRiskAnalysisDialog.placeholders.description")}
+                  aria-label={t("forkRiskAnalysisDialog.fields.description")}
+                  onChangeContent={field.onChange}
+                />
+              )}
+            />
+          </Field>
           <Field
             disabled
             label={t("forkRiskAnalysisDialog.fields.matrixSize")}

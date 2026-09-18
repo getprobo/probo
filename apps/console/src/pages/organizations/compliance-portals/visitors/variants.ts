@@ -31,6 +31,7 @@ export const visitorsPageSkeleton = tv({
     intro: "flex flex-col gap-3",
     tools: "flex w-full items-center justify-between gap-2",
     search: "w-60 max-sm:min-w-0 max-sm:flex-1",
+    actions: "flex shrink-0 items-center gap-2",
   },
 });
 
@@ -68,6 +69,7 @@ export const accessSection = tv({
     intro: "flex flex-col gap-3",
     tools: "flex w-full items-center justify-between gap-2",
     search: "w-60 max-sm:min-w-0 max-sm:flex-1",
+    actions: "flex shrink-0 items-center gap-2",
     sort: "shrink-0",
     more: "flex justify-center",
     results: "transition-opacity",
@@ -115,6 +117,8 @@ export const visitorPage = tv({
     person: "flex items-center gap-5 px-5 py-4",
     identity: "flex min-w-0 flex-1 flex-col justify-center gap-1",
     joined: "px-5 py-4",
+    actions: "flex flex-col gap-3 px-5 py-4",
+    callout: "col-span-3 max-lg:col-span-1",
   },
 });
 
@@ -137,6 +141,33 @@ export const electronicSignatureSection = tv({
     trigger: "shrink-0",
     event: "min-w-0",
     timestamp: "shrink-0 whitespace-nowrap tabular-nums",
+  },
+});
+
+export const addVisitorPopover = tv({
+  slots: {
+    body: "flex flex-col gap-2",
+    results: "flex flex-col transition-opacity empty:hidden",
+    item: [
+      "group flex w-full cursor-pointer items-center gap-2 rounded-2 text-left outline-none select-none",
+      "px-3 py-1.5 text-2 text-sand-12",
+      "hover:bg-gold-9 hover:text-white",
+      "focus-visible:bg-gold-9 focus-visible:text-white",
+      "disabled:pointer-events-none disabled:hover:bg-transparent disabled:hover:text-sand-12",
+    ],
+    empty: "px-3 py-1 text-1 font-medium text-sand-11",
+    avatar: "shrink-0",
+    identity: "flex min-w-0 flex-1 flex-col items-start text-left",
+    name: "min-w-0 truncate font-medium",
+    email: "min-w-0 truncate text-1 text-sand-11 group-hover:text-inherit group-focus-visible:text-inherit",
+    icon: "size-4 shrink-0 [&_svg]:size-4",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
   },
 });
 

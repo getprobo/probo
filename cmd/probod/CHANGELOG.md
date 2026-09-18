@@ -4,6 +4,95 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- The compliance-portal Slack page explains that reviewers must run
+  `/probot login` before they can act on access requests from Slack
+
+### Fixed
+
+- Unbound Slack clickers see an ephemeral `/probot login` error again.
+  Block actions ignore the HTTP body, so the handler acknowledges Slack
+  and posts the prompt to `response_url` without waiting on delivery
+
+## [0.290.0] - 2026-09-16
+
+### Added
+
+- Operators can choose which IAB Global Vendor List vendors a TCF-capable
+  cookie banner discloses. The catalog is paginated and searchable, the
+  selected set is stored per banner, and it is exposed on the console,
+  GraphQL, MCP, CLI, and n8n
+- The TCF page shows draft versus published vendor counts and can list only
+  the vendors already on the banner, via a membership filter
+- Risks get an immutable org-scoped `RSK-001` reference ID, matching
+  findings, so they can be identified in lists and APIs without the GID
+
+### Changed
+
+- Compliance-portal visitors are identity-only: invite and self-provision
+  create an identity and portal access rather than a People profile, so
+  visitors no longer mix into org members
+- The compliance-portal visitors list loads with the page query instead of a
+  nested lazy query, so the request starts in the loader
+- Magic links are verified with a same-origin fetch that returns JSON and
+  navigates in the page, instead of a native form POST blocked by
+  `form-action 'self'`
+- Federation tokens set `nbf` a minute behind `iat`, so a verifier whose
+  clock lags the issuer cannot reject a just-minted assertion
+- Tracker patterns no longer link to an org third party; catalog
+  identification is the sole vendor path
+
+### Removed
+
+- Common-catalog origin badges on the tracker list and detail views
+
+### Fixed
+
+- The Visitors page no longer fails for NDA-only users: the access list is
+  resolved only once list permission is known
+- The TCF draft badge compares vendor ID sets rather than counts, so
+  removals and one-for-one swaps are reported correctly instead of reading
+  as pending additions or as synced
+- GVL vendors can be removed from a banner with TCF turned off, which
+  previously stranded linked rows that no API could delete
+- A lone `cookieBannerId` in the GVL filter is rejected instead of being
+  silently dropped and returning the unfiltered global catalog
+- Failed GVL vendor add/remove mutations no longer raise an unhandled
+  rejection alongside the error toast
+- Tracker policy vendor URL collapse sorts by ID, so the kept
+  privacy-policy link is stable across regenerates when two catalog records
+  share a name
+
+## [0.289.0] - 2026-09-15
+
+### Added
+
+- Azure access-review connector: reviews RBAC assignments for one
+  subscription via workload identity, enriches last login and MFA from
+  Entra ID (Premium P1/P2), and is exposed on every surface (console,
+  GraphQL, MCP, CLI) alongside a Terraform `azurerm` audit-role module
+  for a portable install
+- Tasks accept a recurrence interval (an ISO-8601 duration); completing
+  a recurring task clones the next occurrence and carries the interval
+  forward
+- Operators can add compliance-portal visitors by member or email, and
+  deactivate/reactivate them without revoking grants
+
+### Changed
+
+- Compliance-portal access is gated on the visitor's own access state
+  instead of org-membership state, so deactivating an employee no
+  longer locks them out of visitor grants
+- Adding or reactivating a visitor sends a grant email (the same
+  portal-URL mail used for Slack grants) exactly once, only while the
+  visitor is active and newly granted
+- Console wording changed from Invite to Add throughout (console, CLI,
+  n8n, MCP); visitors who have not signed in show as "not visited"
+- The add-visitor flow is a popover instead of a dialog, with stable
+  typeahead results while typing and no empty state when adding by
+  email
+
 ## [0.288.0] - 2026-09-14
 
 ### Added

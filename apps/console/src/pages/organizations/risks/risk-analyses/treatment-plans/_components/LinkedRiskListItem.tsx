@@ -38,6 +38,7 @@ import { CreateTreatmentPlanDialog } from "./CreateTreatmentPlanDialog";
 export const linkedRiskListItemFragment = graphql`
   fragment LinkedRiskListItem_risk on Risk {
     id
+    referenceId
     name
     category
   }
@@ -74,6 +75,7 @@ export function LinkedRiskListItem({
       <Td className="font-medium">
         <div className="flex items-center gap-2">
           <span className="inline-block w-4 shrink-0" />
+          <span className="font-mono text-sm text-txt-secondary">{risk.referenceId}</span>
           {risk.name}
         </div>
       </Td>

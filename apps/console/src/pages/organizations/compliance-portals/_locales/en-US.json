@@ -58,21 +58,40 @@
     "description": "Let visitors submit data subject rights requests on the portal."
   },
   "accessPage": {
-    "description": "Your portal is public. People who sign in to request documents or accept an NDA appear here."
+    "description": "Add people to the portal, or wait for them to sign in to request documents or accept an NDA."
   },
   "visitorPage": {
     "back": "Visitors",
-    "joinedOn": "Joined on {{date}}",
+    "notVisited": "Not visited",
+    "visitedOn": "Visited on {{date}}",
+    "deactivated": "Deactivated",
+    "deactivatedCallout": "This visitor cannot request or use protected documents until they are reactivated. Assigned grants stay in place but have no effect until then.",
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate"
+    },
+    "deactivate": {
+      "title": "Deactivate visitor?",
+      "description": "They will lose access to protected documents, reports, and files until you reactivate them. Assigned grants stay in place but have no effect until then.",
+      "actions": {
+        "cancel": "Cancel",
+        "confirm": "Deactivate"
+      }
+    },
     "messages": {
-      "updated": "Access updated"
+      "updated": "Access updated",
+      "deactivated": "Visitor deactivated",
+      "activated": "Visitor activated"
     },
     "errors": {
-      "update": "Failed to update access"
+      "update": "Failed to update access",
+      "deactivate": "Failed to deactivate visitor",
+      "activate": "Failed to activate visitor"
     }
   },
   "accessList": {
     "empty": "No visitors yet",
-    "emptyDescription": "People who sign in on your portal will appear here.",
+    "emptyDescription": "Add people or wait for them to sign in on your portal.",
     "emptyFiltered": "No matching visitors",
     "emptyFilteredDescription": "Try a different name or email, or clear the search.",
     "search": {
@@ -90,6 +109,9 @@
     }
   },
   "accessListItem": {
+    "notVisited": "Not visited",
+    "visitedOn": "Visited {{date}}",
+    "deactivated": "Deactivated",
     "requested_one": "Review {{count}} request",
     "requested_other": "Review {{count}} requests",
     "nda": {
@@ -100,6 +122,21 @@
     },
     "actions": {
       "open": "Open visitor"
+    }
+  },
+  "addVisitorDialog": {
+    "title": "Add visitor",
+    "searchPlaceholder": "Search people or type an email",
+    "addEmail": "Add {{email}}",
+    "empty": "No matching people",
+    "actions": {
+      "open": "Add visitor"
+    },
+    "messages": {
+      "created": "Visitor added"
+    },
+    "errors": {
+      "create": "Failed to add visitor"
     }
   },
   "documentAccessList": {
@@ -482,6 +519,10 @@
     "notInstalledTitle": "Slack bot not installed",
     "description": "Choose where access requests for this compliance portal are sent.",
     "notInstalled": "Install the Probo Slack app from organization settings before choosing a channel.",
+    "loginRequired": {
+      "title": "Slack access requires /probot login",
+      "description": "Reviewers must run <cmd>/probot login</cmd> in Slack to link their Probo account before they can act on access requests."
+    },
     "channel": {
       "label": "Channel",
       "placeholder": "Select channel",

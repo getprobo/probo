@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 )
 
@@ -42,6 +43,7 @@ type (
 		query                      *string
 		role                       *MembershipRole
 		kind                       *string
+		withoutCompliancePortalID  *gid.GID
 	}
 )
 
@@ -104,6 +106,11 @@ func (f *MembershipProfileFilter) WithQuery(query *string) *MembershipProfileFil
 	return f
 }
 
+func (f *MembershipProfileFilter) WithoutCompliancePortalID(compliancePortalID gid.GID) *MembershipProfileFilter {
+	f.withoutCompliancePortalID = &compliancePortalID
+	return f
+}
+
 func (f *MembershipProfileFilter) Query() *string {
 	return f.query
 }
@@ -151,6 +158,7 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_query":                  filterQuery,
 		"filter_role":                   f.role,
 		"filter_kind":                   f.kind,
+		"without_compliance_portal_id":  f.withoutCompliancePortalID,
 	}
 }
 
@@ -246,6 +254,19 @@ AND (
 	CASE
 		WHEN @filter_kind::text IS NOT NULL AND @filter_kind::text <> '' THEN
 			p.kind = @filter_kind::text
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @without_compliance_portal_id::text IS NOT NULL THEN
+			NOT EXISTS (
+				SELECT 1
+				FROM cp_accesses a
+				WHERE
+					a.identity_id = p.identity_id
+					AND a.compliance_portal_id = @without_compliance_portal_id
+			)
 		ELSE TRUE
 	END
 )

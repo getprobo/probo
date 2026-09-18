@@ -4,6 +4,14 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.18.0] - 2026-09-16
+
+### Added
+
+- `BannerConfig` exposes the TCF fields `tcf_enabled`, `tcf_vendors`, and
+  `gvl_version`, plus a new exported `TCFVendor` type describing each
+  disclosed IAB Global Vendor List vendor
+
 ## [0.17.0] - 2026-08-25
 
 ### Changed

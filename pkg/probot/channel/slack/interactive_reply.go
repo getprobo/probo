@@ -28,10 +28,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 )
+
+const unboundInteractiveReplyTimeout = 10 * time.Second
 
 type (
 	InteractiveReply struct {
@@ -84,6 +87,28 @@ func (s *Service) ReplyInteractiveEphemeral(
 	}
 
 	return postInteractiveEphemeral(ctx, s.httpClient, responseURL, text)
+}
+
+func (s *Service) ReplyUnboundInteractiveAsync(responseURL string) {
+	if s == nil || responseURL == "" {
+		return
+	}
+
+	go s.replyUnboundInteractive(responseURL)
+}
+
+func (s *Service) replyUnboundInteractive(responseURL string) {
+	ctx, cancel := context.WithTimeout(context.Background(), unboundInteractiveReplyTimeout)
+	defer cancel()
+
+	err := s.ReplyInteractiveEphemeral(
+		ctx,
+		responseURL,
+		UnboundInteractiveResponse().Text,
+	)
+	if err != nil && s.logger != nil {
+		s.logger.ErrorCtx(ctx, "cannot post Slack bind prompt", log.Error(err))
+	}
 }
 
 func (p *responseURLPoster) PostEphemeralReply(

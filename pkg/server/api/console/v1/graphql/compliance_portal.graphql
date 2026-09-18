@@ -138,9 +138,9 @@ enum CompliancePortalAccessState
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessStateActive"
         )
-    INACTIVE
+    DEACTIVATED
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessStateInactive"
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessStateDeactivated"
         )
 }
 
@@ -484,6 +484,8 @@ type CompliancePortal implements Node {
         orderBy: ComplianceCustomLinkOrder
     ): ComplianceCustomLinkConnection! @goField(forceResolver: true)
 
+    memberCandidates(query: String!): [Profile!]! @goField(forceResolver: true)
+
     compliancePortalFiles(
         first: Int
         after: CursorKey
@@ -536,6 +538,8 @@ type CompliancePortalEdge {
 
 type CompliancePortalAccess implements Node {
     id: ID!
+    state: CompliancePortalAccessState!
+    authenticatedAt: Datetime
     ndaSignature: ElectronicSignature @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -544,7 +548,7 @@ type CompliancePortalAccess implements Node {
     organizationId: ID!
     identityID: ID!
 
-    profile: Profile! @goField(forceResolver: true)
+    identity: CompliancePortalAccessIdentity! @goField(forceResolver: true)
 
     resources(
         first: Int
@@ -575,6 +579,11 @@ type CompliancePortalAccessConnection {
 type CompliancePortalAccessEdge {
     cursor: CursorKey!
     node: CompliancePortalAccess!
+}
+
+type CompliancePortalAccessIdentity {
+    email: EmailAddr!
+    fullName: String!
 }
 
 type CompliancePortalAccessResource {
@@ -826,9 +835,18 @@ extend type Mutation {
     updateCompliancePortalBrand(
         input: UpdateCompliancePortalBrandInput!
     ): UpdateCompliancePortalBrandPayload!
+    createCompliancePortalAccess(
+        input: CreateCompliancePortalAccessInput!
+    ): CreateCompliancePortalAccessPayload!
     updateCompliancePortalAccess(
         input: UpdateCompliancePortalAccessInput!
     ): UpdateCompliancePortalAccessPayload!
+    deactivateCompliancePortalAccess(
+        input: DeactivateCompliancePortalAccessInput!
+    ): DeactivateCompliancePortalAccessPayload!
+    activateCompliancePortalAccess(
+        input: ActivateCompliancePortalAccessInput!
+    ): ActivateCompliancePortalAccessPayload!
     deleteCompliancePortalAccess(
         input: DeleteCompliancePortalAccessInput!
     ): DeleteCompliancePortalAccessPayload!
@@ -938,6 +956,15 @@ input UpdateCompliancePortalBrandInput {
     darkLogoFile: Upload @goField(omittable: true)
 }
 
+input CreateCompliancePortalAccessInput {
+    compliancePortalId: ID!
+    profileId: ID
+    email: EmailAddr
+    documents: [ID!]
+    reports: [ID!]
+    compliancePortalFiles: [ID!]
+}
+
 input CompliancePortalDocumentAccessInput {
     id: ID!
     status: CompliancePortalDocumentAccessStatus!
@@ -953,6 +980,14 @@ input UpdateCompliancePortalAccessInput {
 }
 
 input DeleteCompliancePortalAccessInput {
+    id: ID!
+}
+
+input DeactivateCompliancePortalAccessInput {
+    id: ID!
+}
+
+input ActivateCompliancePortalAccessInput {
     id: ID!
 }
 
@@ -1162,6 +1197,10 @@ type UpdateCompliancePortalBrandPayload {
     compliancePortal: CompliancePortal!
 }
 
+type CreateCompliancePortalAccessPayload {
+    compliancePortalAccessEdge: CompliancePortalAccessEdge!
+}
+
 type UpdateCompliancePortalAccessPayload {
     compliancePortalAccess: CompliancePortalAccess!
     documents: [Document!]!
@@ -1171,6 +1210,14 @@ type UpdateCompliancePortalAccessPayload {
 
 type DeleteCompliancePortalAccessPayload {
     deletedCompliancePortalAccessId: ID!
+}
+
+type DeactivateCompliancePortalAccessPayload {
+    compliancePortalAccess: CompliancePortalAccess!
+}
+
+type ActivateCompliancePortalAccessPayload {
+    compliancePortalAccess: CompliancePortalAccess!
 }
 
 type CreateCompliancePortalReferencePayload {

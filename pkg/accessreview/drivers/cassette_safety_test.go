@@ -72,6 +72,8 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 		"oauthapp.linear.app":    true,
 		"linear.linear.app":      true,
 		"intercom.io":            true,
+		// Synthetic Entra tenant used in hand-authored Azure cassettes.
+		"probo-azure.test": true,
 	}
 
 	matches, err := filepath.Glob("testdata/*.yaml")

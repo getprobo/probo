@@ -32,23 +32,29 @@ import { CompliancePortalVisitorsPageSkeleton } from "./CompliancePortalVisitors
 
 export default function CompliancePortalVisitorsPageLoader() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
+  if (compliancePortalId == null) {
+    throw new Error(":compliancePortalId missing in route params");
+  }
   const [queryRef, loadQuery] = useQueryLoader<CompliancePortalVisitorsPageQuery>(
     compliancePortalVisitorsPageQuery,
   );
 
   useEffect(() => {
-    if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
-    }
+    loadQuery({ compliancePortalId });
   }, [loadQuery, compliancePortalId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.compliancePortalId === compliancePortalId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <CompliancePortalVisitorsPageSkeleton />;
   }
 
   return (
     <Suspense fallback={<CompliancePortalVisitorsPageSkeleton />}>
-      <CompliancePortalVisitorsPage queryRef={queryRef} />
+      <CompliancePortalVisitorsPage key={compliancePortalId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

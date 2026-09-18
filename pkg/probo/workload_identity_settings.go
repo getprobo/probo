@@ -26,6 +26,7 @@ import (
 	"fmt"
 
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -39,6 +40,10 @@ type (
 		AWSRoleARN                  string
 		GCPWorkloadIdentityProvider string
 		GCPServiceAccountEmail      string
+		AzureTenantID               string
+		AzureClientID               string
+		AzureSubscriptionID         string
+		AzureEnvironment            cloudazure.Environment
 	}
 )
 
@@ -79,6 +84,29 @@ func MarshalWorkloadIdentitySettings(input WorkloadIdentitySettingsInput) ([]byt
 		settings := coredata.GCPConnectorSettings{
 			WorkloadIdentityProvider: validated.WorkloadIdentityProvider,
 			ServiceAccountEmail:      validated.ServiceAccountEmail,
+		}
+
+		return marshalWorkloadIdentitySettings(settings)
+	case coredata.ConnectorProviderAzure:
+		if input.AzureTenantID == "" || input.AzureClientID == "" || input.AzureSubscriptionID == "" {
+			return nil, fmt.Errorf("azureTenantId, azureClientId and azureSubscriptionId are required")
+		}
+
+		validated, err := cloudazure.NewConnectorSettings(
+			input.AzureTenantID,
+			input.AzureClientID,
+			input.AzureSubscriptionID,
+			string(input.AzureEnvironment),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		settings := coredata.AzureConnectorSettings{
+			TenantID:       validated.TenantID,
+			ClientID:       validated.ClientID,
+			SubscriptionID: validated.SubscriptionID,
+			Environment:    string(validated.Environment),
 		}
 
 		return marshalWorkloadIdentitySettings(settings)

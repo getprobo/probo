@@ -8,7 +8,7 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `make build`                 | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (does not include frontend apps and Relay)   |
 | `make build WITH_APPS=1`     | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (includes frontend apps, codegen, and Relay) |
-| `make test`                  | Run tests with race detection and coverage                                                             |
+| `make test`                  | Run tests with race detection and coverage (packages that contain tests only; excludes e2e)            |
 | `make test MODULE=./pkg/foo` | Run tests for a single module                                                                          |
 | `make test-verbose`          | Tests with verbose output                                                                              |
 | `make test-short`            | Short tests only                                                                                       |

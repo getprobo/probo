@@ -193,6 +193,10 @@ spec:
             - name: PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE
               value: {{ .Values.probo.identityFederation.gcpTerraformModuleSource | quote }}
             {{- end }}
+            {{- if .Values.probo.identityFederation.azureTerraformModuleSource }}
+            - name: PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE
+              value: {{ .Values.probo.identityFederation.azureTerraformModuleSource | quote }}
+            {{- end }}
             - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             - name: PROBOD_ITAM_DEVICE_ENROLLMENT_TOKEN_VALIDITY
@@ -363,23 +367,6 @@ spec:
             - name: PROBOD_THIRD_PARTY_VETTING_STALE_AFTER
               value: {{ .Values.probo.thirdPartyVettingWorker.staleAfter | quote }}
             {{- end }}
-            # Third-party Disambiguation Agent
-            {{- if .Values.probo.thirdPartyDisambiguation.provider }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER
-              value: {{ .Values.probo.thirdPartyDisambiguation.provider | quote }}
-            {{- end }}
-            {{- if .Values.probo.thirdPartyDisambiguation.modelName }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME
-              value: {{ .Values.probo.thirdPartyDisambiguation.modelName | quote }}
-            {{- end }}
-            {{- if .Values.probo.thirdPartyDisambiguation.temperature }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE
-              value: {{ .Values.probo.thirdPartyDisambiguation.temperature | quote }}
-            {{- end }}
-            {{- if .Values.probo.thirdPartyDisambiguation.maxTokens }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS
-              value: {{ .Values.probo.thirdPartyDisambiguation.maxTokens | quote }}
-            {{- end }}
             # Tracker Mapping Agent
             {{- if .Values.probo.trackerMapping.provider }}
             - name: PROBOD_AGENT_TRACKER_MAPPING_PROVIDER
@@ -434,10 +421,6 @@ spec:
             {{- if .Values.probo.trackerMappingWorker.agentMaxTurns }}
             - name: PROBOD_TRACKER_MAPPING_AGENT_MAX_TURNS
               value: {{ .Values.probo.trackerMappingWorker.agentMaxTurns | quote }}
-            {{- end }}
-            {{- if .Values.probo.trackerMappingWorker.disambiguationAgentTimeout }}
-            - name: PROBOD_TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT
-              value: {{ .Values.probo.trackerMappingWorker.disambiguationAgentTimeout | quote }}
             {{- end }}
             # Common Pattern Enrichment Worker
             {{- if .Values.probo.commonPatternEnrichmentWorker.interval }}

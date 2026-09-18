@@ -122,7 +122,7 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 				"input": map[string]any{
 					"riskAnalysisId": graph.assessmentID,
 					"name":           "Forked analysis",
-					"description":    "Forked description",
+					"description":    factory.ProseMirrorPlainText("Forked description"),
 				},
 			},
 			&result,
@@ -134,7 +134,7 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 		assert.NotEqual(t, graph.assessmentID, forkedID)
 		assert.Equal(t, "Forked analysis", result.ForkRiskAnalysis.RiskAnalysisEdge.Node.Name)
 		require.NotNil(t, result.ForkRiskAnalysis.RiskAnalysisEdge.Node.Description)
-		assert.Equal(t, "Forked description", *result.ForkRiskAnalysis.RiskAnalysisEdge.Node.Description)
+		factory.AssertProseMirrorPlainText(t, "Forked description", *result.ForkRiskAnalysis.RiskAnalysisEdge.Node.Description)
 		assert.Nil(t, result.ForkRiskAnalysis.RiskAnalysisEdge.Node.Period)
 		assert.Equal(t, 5, result.ForkRiskAnalysis.RiskAnalysisEdge.Node.MatrixSize.Rows)
 		assert.Equal(t, 5, result.ForkRiskAnalysis.RiskAnalysisEdge.Node.MatrixSize.Cols)

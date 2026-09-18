@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextDescription } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -117,7 +117,11 @@ export async function execute(
 
 	const input: Record<string, unknown> = { id: riskAnalysisId };
 	if (additionalFields.name) input.name = additionalFields.name;
-	if (additionalFields.description !== undefined) input.description = additionalFields.description === '' ? null : additionalFields.description;
+	if (additionalFields.description !== undefined) {
+		input.description = additionalFields.description === ''
+			? null
+			: plainTextToProseMirrorJSON(additionalFields.description);
+	}
 	if (additionalFields.periodStart || additionalFields.periodEnd) {
 		input.period = {
 			...(additionalFields.periodStart ? { start: additionalFields.periodStart } : {}),
@@ -130,6 +134,12 @@ export async function execute(
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
+	const data = responseData.data as IDataObject | undefined;
+	const payload = data?.updateRiskAnalysis as IDataObject | undefined;
+	const node = payload?.riskAnalysis as IDataObject | undefined;
+	if (payload && node) {
+		payload.riskAnalysis = withPlainTextDescription(node);
+	}
 
 	return {
 		json: responseData,

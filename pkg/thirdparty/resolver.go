@@ -87,8 +87,7 @@ func ResolveOrCreateCommonThirdParty(
 	// stripped: "OVHcloud US" is a distinct entity with its own DPA, and
 	// short forms are ambiguous ("Sky IT") in a way legal forms are not — the
 	// merge tooling surfaces those for a human instead. Products are not
-	// folded into their parent either: the disambiguation agent does that for
-	// an organization's vendor list, but "Google Analytics" and "Google Ads"
+	// folded into their parent either: "Google Analytics" and "Google Ads"
 	// are legitimately distinct catalog entries.
 	if strippedSlug := slug.Make(stripCorporateSuffixes(strings.ToLower(name))); strippedSlug != "" &&
 		strippedSlug != partySlug {

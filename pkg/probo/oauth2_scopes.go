@@ -145,6 +145,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1CommonThirdPartyRead: {
 		ActionCommonThirdPartyGet,
 		ActionCommonThirdPartyList,
+		ActionCommonGVLVendorList,
 	},
 	ScopeV1ConnectorRead: {
 		ActionConnectorList,
@@ -315,6 +316,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionTrackerPatternList,
 		ActionTrackerResourceGet,
 		ActionTrackerResourceList,
+		ActionCommonGVLVendorList,
 	},
 	ScopeV1Privacy: {
 		ActionProcessingActivityList,
@@ -338,6 +340,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionTrackerPatternList,
 		ActionTrackerResourceGet,
 		ActionTrackerResourceList,
+		ActionCommonGVLVendorList,
 		ActionProcessingActivityCreate,
 		ActionProcessingActivityUpdate,
 		ActionProcessingActivityDelete,

@@ -24,13 +24,19 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/activate"
+	addgvlvendor "go.probo.inc/probo/pkg/cmd/cookie-banner/add-gvl-vendor"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/create"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/deactivate"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/delete"
+	getgvlcatalog "go.probo.inc/probo/pkg/cmd/cookie-banner/get-gvl-catalog"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/latestversion"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/list"
+	listgvlcatalog "go.probo.inc/probo/pkg/cmd/cookie-banner/list-gvl-catalog"
+	listgvlvendors "go.probo.inc/probo/pkg/cmd/cookie-banner/list-gvl-vendors"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/publish"
+	publishedversion "go.probo.inc/probo/pkg/cmd/cookie-banner/published-version"
 	regeneratepolicy "go.probo.inc/probo/pkg/cmd/cookie-banner/regenerate-policy"
+	removegvlvendor "go.probo.inc/probo/pkg/cmd/cookie-banner/remove-gvl-vendor"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/translate"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/update"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/view"
@@ -53,6 +59,12 @@ func NewCmdCookieBanner(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(regeneratepolicy.NewCmdRegeneratePolicy(f))
 	cmd.AddCommand(translate.NewCmdTranslate(f))
 	cmd.AddCommand(latestversion.NewCmdLatestVersion(f))
+	cmd.AddCommand(publishedversion.NewCmdPublishedVersion(f))
+	cmd.AddCommand(getgvlcatalog.NewCmdGetGVLCatalog(f))
+	cmd.AddCommand(listgvlcatalog.NewCmdListGVLCatalog(f))
+	cmd.AddCommand(listgvlvendors.NewCmdListGVLVendors(f))
+	cmd.AddCommand(addgvlvendor.NewCmdAddGVLVendor(f))
+	cmd.AddCommand(removegvlvendor.NewCmdRemoveGVLVendor(f))
 
 	return cmd
 }

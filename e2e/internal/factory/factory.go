@@ -1763,7 +1763,7 @@ func CreateRiskAnalysis(c *testutil.Client, attrs ...Attrs) string {
 		},
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
-		input["description"] = *desc
+		input["description"] = ProseMirrorPlainText(*desc)
 	}
 
 	var result struct {

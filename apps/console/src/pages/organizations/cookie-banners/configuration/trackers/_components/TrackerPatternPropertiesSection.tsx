@@ -48,9 +48,6 @@ const trackerPatternPropertiesSectionFragment = graphql`
       name
       kind
     }
-    thirdParty {
-      name
-    }
     commonThirdParty {
       name
     }
@@ -171,20 +168,9 @@ export function TrackerPatternPropertiesSection({
         />
       </PropertyRow>
       <PropertyRow label={t("trackerProperties.properties.thirdParty")}>
-        {pattern.thirdParty
-          ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{pattern.thirdParty.name}</span>
-              </div>
-            )
-          : pattern.commonThirdParty
-            ? (
-                <div className="flex items-center gap-2">
-                  <Badge variant="info">{t("trackerProperties.commonCatalog")}</Badge>
-                  <span className="text-sm">{pattern.commonThirdParty.name}</span>
-                </div>
-              )
-            : <TrackerAttributionLabel attribution={pattern.attribution} />}
+        {pattern.commonThirdParty
+          ? <span className="text-sm">{pattern.commonThirdParty.name}</span>
+          : <TrackerAttributionLabel attribution={pattern.attribution} />}
       </PropertyRow>
       <PropertyRow label={t("trackerProperties.properties.maxAge")}>
         <span className="text-sm">
@@ -200,7 +186,6 @@ export function TrackerPatternPropertiesSection({
             {pattern.commonTrackerPatternId
               ? (
                   <div className="flex items-center gap-2">
-                    <Badge variant="info">{t("trackerProperties.commonCatalog")}</Badge>
                     <span className="font-mono text-xs text-txt-tertiary">{pattern.commonTrackerPatternId}</span>
                     <button
                       type="button"

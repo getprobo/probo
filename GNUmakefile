@@ -208,7 +208,7 @@ go-lint: generate
 test: generate
 test: CGO_ENABLED=1
 test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
-	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list ./... | grep -v /e2e/))
+	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | awk 'NF && !/\/e2e\//'))
 
 .PHONY: test-verbose
 test-verbose: TEST_FLAGS+=-v

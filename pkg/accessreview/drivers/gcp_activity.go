@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
@@ -41,9 +42,10 @@ const (
 	// not absent.
 	gcpActivityLookback = 90 * 24 * time.Hour
 
-	// gcpActivityTimeout caps enrichment so a long Logging walk cannot
-	// spend the campaign fetch budget and then drop the identity list.
+	// Each phase is capped on its own clock so a long Logging walk cannot
+	// starve MFA or spend the campaign fetch.
 	gcpActivityTimeout = 20 * time.Second
+	gcpMFATimeout      = 20 * time.Second
 
 	gcpActivityLogID               = "cloudaudit.googleapis.com%2Factivity"
 	gcpActivityTypeSALastAuth      = "serviceAccountLastAuthentication"
@@ -77,15 +79,39 @@ func enrichGCPIdentities(
 		return nil
 	}
 
-	enrichCtx, cancel := context.WithTimeout(ctx, gcpActivityTimeout)
-	defer cancel()
+	var (
+		logins      map[string]time.Time
+		usedKey     map[string]bool
+		activityErr error
+		mfa         map[string]coredata.MFAStatus
+		mfaErr      error
+		wg          sync.WaitGroup
+	)
 
-	logins, usedKey, activityErr := fetchGCPActivity(enrichCtx, session, records)
+	wg.Go(
+		func() {
+			activityCtx, cancel := context.WithTimeout(ctx, gcpActivityTimeout)
+			defer cancel()
+
+			logins, usedKey, activityErr = fetchGCPActivity(activityCtx, session, records)
+		},
+	)
+
+	wg.Go(
+		func() {
+			mfaCtx, cancel := context.WithTimeout(ctx, gcpMFATimeout)
+			defer cancel()
+
+			mfa, mfaErr = fetchGCPMFA(mfaCtx, session, records)
+		},
+	)
+
+	wg.Wait()
+
 	if errors.Is(activityErr, context.Canceled) && ctx.Err() != nil {
 		return activityErr
 	}
 
-	mfa, mfaErr := fetchGCPMFA(enrichCtx, session, records)
 	if errors.Is(mfaErr, context.Canceled) && ctx.Err() != nil {
 		return mfaErr
 	}

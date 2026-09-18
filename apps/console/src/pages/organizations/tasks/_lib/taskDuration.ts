@@ -18,9 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export const taskDurationUnits = ["S", "M", "H", "D", "W"] as const;
+export const taskDurationUnits = ["S", "M", "H", "D", "W", "MO", "Y"] as const;
 
 export type TaskDurationUnit = (typeof taskDurationUnits)[number];
+
+export const taskEstimateDurationUnits = ["S", "M", "H", "D", "W"] as const;
+
+export const taskRecurrenceDurationUnits = ["S", "M", "H", "D", "W", "MO", "Y"] as const;
 
 export type ParsedTaskDuration = {
   amount: number;
@@ -31,17 +35,6 @@ const secondsPerMinute = 60;
 const secondsPerHour = 60 * secondsPerMinute;
 const secondsPerDay = 24 * secondsPerHour;
 const secondsPerWeek = 7 * secondsPerDay;
-const secondsPerYear = 365 * secondsPerDay;
-const secondsPerMonth = secondsPerYear / 12;
-const secondsPerUnit: Record<TaskDurationUnit, number> = {
-  S: 1,
-  M: secondsPerMinute,
-  H: secondsPerHour,
-  D: secondsPerDay,
-  W: secondsPerWeek,
-};
-
-const maxTaskEstimateSeconds = 1000 * secondsPerHour;
 
 const isoNumber = String.raw`(\d+(?:\.\d+)?)`;
 const isoDurationPattern = new RegExp(
@@ -49,10 +42,20 @@ const isoDurationPattern = new RegExp(
   + `(?:T(?:${isoNumber}H)?(?:${isoNumber}M)?(?:${isoNumber}S)?)?$`,
 );
 
-function isoDurationSeconds(value: string): number | null {
+type IsoDurationComponents = {
+  years: number;
+  months: number;
+  weeks: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+function parseIsoDuration(value: string): IsoDurationComponents | null {
   const negative = value.startsWith("-");
   const match = (negative ? value.slice(1) : value).match(isoDurationPattern);
-  if (!match) {
+  if (!match || negative) {
     return null;
   }
 
@@ -69,20 +72,19 @@ function isoDurationSeconds(value: string): number | null {
     return null;
   }
 
-  const total
-    = Number(years ?? 0) * secondsPerYear
-      + Number(months ?? 0) * secondsPerMonth
-      + Number(weeks ?? 0) * secondsPerWeek
-      + Number(days ?? 0) * secondsPerDay
-      + Number(hours ?? 0) * secondsPerHour
-      + Number(minutes ?? 0) * secondsPerMinute
-      + Number(seconds ?? 0);
+  return {
+    years: Number(years ?? 0),
+    months: Number(months ?? 0),
+    weeks: Number(weeks ?? 0),
+    days: Number(days ?? 0),
+    hours: Number(hours ?? 0),
+    minutes: Number(minutes ?? 0),
+    seconds: Number(seconds ?? 0),
+  };
+}
 
-  if (!Number.isFinite(total) || total <= 0) {
-    return null;
-  }
-
-  return negative ? -total : total;
+function isWholePositive(value: number): boolean {
+  return Number.isSafeInteger(value) && value > 0;
 }
 
 export function parseTaskDurationAmount(value: string): number | null {
@@ -107,11 +109,6 @@ export function stringifyTaskDuration(
     return null;
   }
 
-  const unitSeconds = secondsPerUnit[unit];
-  if (amount > Math.floor(maxTaskEstimateSeconds / unitSeconds)) {
-    return null;
-  }
-
   switch (unit) {
     case "S":
       return `PT${amount}S`;
@@ -123,34 +120,67 @@ export function stringifyTaskDuration(
       return `P${amount}D`;
     case "W":
       return `P${amount * 7}D`;
+    case "MO":
+      return `P${amount}M`;
+    case "Y":
+      return `P${amount}Y`;
   }
 }
 
 export function parseTaskDuration(value: string): ParsedTaskDuration | null {
-  const raw = isoDurationSeconds(value);
-  if (raw == null || raw <= 0) {
+  const components = parseIsoDuration(value);
+  if (components == null) {
     return null;
   }
 
-  const seconds = Math.round(raw);
-  if (seconds <= 0 || !Number.isSafeInteger(seconds)) {
+  const { years, months, weeks, days, hours, minutes, seconds } = components;
+  const hasClock = hours > 0 || minutes > 0 || seconds > 0;
+
+  if (years > 0 || months > 0) {
+    if (weeks > 0 || days > 0 || hasClock) {
+      return null;
+    }
+
+    const totalMonths = years * 12 + months;
+    if (!isWholePositive(totalMonths)) {
+      return null;
+    }
+
+    if (totalMonths % 12 === 0) {
+      return { amount: totalMonths / 12, unit: "Y" };
+    }
+
+    return { amount: totalMonths, unit: "MO" };
+  }
+
+  const totalSeconds
+    = weeks * secondsPerWeek
+      + days * secondsPerDay
+      + hours * secondsPerHour
+      + minutes * secondsPerMinute
+      + seconds;
+  const normalized = Math.round(totalSeconds);
+  if (!Number.isFinite(totalSeconds) || !isWholePositive(normalized)) {
     return null;
   }
 
-  if (seconds % secondsPerWeek === 0) {
-    return { amount: seconds / secondsPerWeek, unit: "W" };
-  }
-  if (seconds % secondsPerDay === 0) {
-    return { amount: seconds / secondsPerDay, unit: "D" };
-  }
-  if (seconds % secondsPerHour === 0) {
-    return { amount: seconds / secondsPerHour, unit: "H" };
-  }
-  if (seconds % secondsPerMinute === 0) {
-    return { amount: seconds / secondsPerMinute, unit: "M" };
+  if (normalized % secondsPerWeek === 0) {
+    return { amount: normalized / secondsPerWeek, unit: "W" };
   }
 
-  return { amount: seconds, unit: "S" };
+  if (normalized % secondsPerDay === 0) {
+    return { amount: normalized / secondsPerDay, unit: "D" };
+  }
+
+  if (normalized % secondsPerHour === 0) {
+    return { amount: normalized / secondsPerHour, unit: "H" };
+  }
+
+  if (normalized % secondsPerMinute === 0) {
+    return { amount: normalized / secondsPerMinute, unit: "M" };
+  }
+
+  return { amount: normalized, unit: "S" };
 }
 
 export function taskDurationsEqual(left: string, right: string): boolean {

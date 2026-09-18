@@ -46,8 +46,7 @@ type MergeCatalogResult struct {
 	// Re-armed for enrichment: their descriptions named the folded vendor.
 	TrackerPatternsRequeued int64
 
-	OrgTrackerPatternsRelinked int64
-	ThirdPartiesRepointed      int64
+	ThirdPartiesRepointed int64
 
 	// ThirdPartiesSkipped were left linked to the loser because their
 	// organization already had a third party pointing at the winner.
@@ -72,9 +71,8 @@ type MergeCatalogResult struct {
 // vendor and make the counts unobservable.
 //
 // Step order is the substance here. Domains move first, the only step that
-// can violate a unique constraint. The organization relink runs after the
-// catalog patterns move so it resolves against a catalog naming the winner.
-// The logo is adopted while the loser still exists. The delete is last.
+// can violate a unique constraint. The logo is adopted while the loser
+// still exists. The delete is last.
 //
 // Scalar metadata and the enrichment payload are NOT merged: the payload
 // records per-field provenance for its own row's columns, so mixing two rows
@@ -124,16 +122,6 @@ func MergeCatalog(
 	}
 
 	result.ThirdPartiesRepointed, err = coredata.RepointThirdPartiesToCommonThirdParty(ctx, tx, winnerID, loserID)
-	if err != nil {
-		return result, err
-	}
-
-	// Patterns that resolved through the loser carried no organization link,
-	// so they surfaced the catalog entry. Their catalog row now names the
-	// winner, which the organization does manage, and nothing else would
-	// relink them: the import path skips an organization that already holds
-	// the row.
-	result.OrgTrackerPatternsRelinked, err = coredata.RelinkOrgTrackerPatterns(ctx, tx, winnerID)
 	if err != nil {
 		return result, err
 	}

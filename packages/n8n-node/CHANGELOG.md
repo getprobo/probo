@@ -4,6 +4,38 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.231.0] - 2026-09-16
+
+### Added
+
+- Cookie Banner `Add GVL Vendor`, `Remove GVL Vendor`, `List GVL Catalog`,
+  `List GVL Vendors`, and `Get GVL Catalog` actions, to pick which IAB
+  Global Vendor List vendors a TCF-capable banner discloses
+- `List GVL Vendors` takes a `Membership` filter (`On Banner` /
+  `Not On Banner`); Cookie Banner `Get` returns the published version's
+  GVL vendor count and IDs
+- Risk `Create`, `Get`, `Get Many`, and `Update` expose `referenceId`, the
+  org-scoped `RSK-001` display ID; `Get Many` can order by `Reference ID`
+- Compliance Portal Access `Create`, `Activate`, and `Deactivate` return the
+  visitor's identity (full name and email)
+
+### Fixed
+
+- `List GVL Catalog` and `List GVL Vendors` paginate through every page and
+  offer `Return All` / `Limit` like other list actions, instead of silently
+  returning only the first 50 rows
+
+## [0.230.0] - 2026-09-15
+
+### Added
+
+- Compliance Portal Access `Create` action, to add a portal visitor by member or email
+- `Recurrence Interval` on Task `Create`/`Update`, an ISO-8601 duration (requires a deadline); `Update` also gets `Clear Recurrence`
+
+### Changed
+
+- Compliance Portal Access actions and labels say Add instead of Invite
+
 ## [0.229.0] - 2026-09-14
 
 ### Added

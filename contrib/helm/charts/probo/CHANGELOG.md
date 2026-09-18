@@ -4,6 +4,31 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.24.0] - 2026-09-16
+
+### Changed
+
+- Default `appVersion` is now `0.290.0`
+
+## [0.23.0] - 2026-09-16
+
+### Removed
+
+- Tracker-pattern to org-third-party linking (the mapping worker, import,
+  policy, and console no longer write or display the org third party;
+  catalog identification is now the sole vendor path)
+
+## [0.22.0] - 2026-09-15
+
+### Added
+
+- `probo.identityFederation.azureTerraformModuleSource` Helm value, used to
+  build the Azure connector install snippet
+- `probo.identityFederation.cloudformationTemplateUrl`,
+  `probo.identityFederation.terraformModuleSource`, and
+  `probo.identityFederation.gcpTerraformModuleSource` documented on the
+  production values example and the Helm README
+
 ## [0.21.0] - 2026-09-03
 
 ### Added

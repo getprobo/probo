@@ -111,6 +111,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					TenantID:           tenantID,
 					IdentityID:         identityID,
 					CompliancePortalID: portalA,
+					State:              coredata.CompliancePortalAccessStateActive,
 					CreatedAt:          now,
 					UpdatedAt:          now,
 				}

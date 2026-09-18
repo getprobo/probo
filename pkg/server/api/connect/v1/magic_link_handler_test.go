@@ -15,6 +15,7 @@
 package connect_v1_test
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -160,10 +162,86 @@ func TestMagicLinkHandler_VerifyHandler_Validation(t *testing.T) {
 		)
 
 		assert.Equal(t, http.StatusFound, rec.Code)
+		assertUncachedAcceptVary(t, rec)
 
 		location, err := url.Parse(rec.Header().Get("Location"))
 		assert.NoError(t, err)
 		assert.Equal(t, "/auth/error", location.Path)
 		assert.Equal(t, "magic_link_invalid", location.Query().Get("error"))
 	})
+
+	t.Run("returns json redirect when accepted", func(t *testing.T) {
+		t.Parallel()
+
+		rec := postMagicLinkJSON(t, handler.VerifyHandler, url.Values{}, "application/json")
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assertUncachedAcceptVary(t, rec)
+		assertJSONRedirectError(t, rec, "magic_link_invalid")
+	})
+
+	t.Run("ignores json accept with q=0", func(t *testing.T) {
+		t.Parallel()
+
+		rec := postMagicLinkJSON(t, handler.VerifyHandler, url.Values{}, "application/json;q=0")
+
+		assert.Equal(t, http.StatusFound, rec.Code)
+		assertUncachedAcceptVary(t, rec)
+
+		location, err := url.Parse(rec.Header().Get("Location"))
+		assert.NoError(t, err)
+		assert.Equal(t, "/auth/error", location.Path)
+		assert.Equal(t, "magic_link_invalid", location.Query().Get("error"))
+	})
+
+	t.Run("ignores json substring media types", func(t *testing.T) {
+		t.Parallel()
+
+		rec := postMagicLinkJSON(t, handler.VerifyHandler, url.Values{}, "application/jsonp")
+
+		assert.Equal(t, http.StatusFound, rec.Code)
+		assertUncachedAcceptVary(t, rec)
+	})
+}
+
+func postMagicLinkJSON(
+	t *testing.T,
+	handler http.HandlerFunc,
+	values url.Values,
+	accept string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/connect/v1/magic-link/verify",
+		strings.NewReader(values.Encode()),
+	)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", accept)
+
+	rec := httptest.NewRecorder()
+	handler(rec, req)
+
+	return rec
+}
+
+func assertUncachedAcceptVary(t *testing.T, rec *httptest.ResponseRecorder) {
+	t.Helper()
+	assert.Equal(t, "Accept", rec.Header().Get("Vary"))
+	assert.Contains(t, rec.Header().Get("Cache-Control"), "no-store")
+}
+
+func assertJSONRedirectError(t *testing.T, rec *httptest.ResponseRecorder, code string) {
+	t.Helper()
+
+	var payload struct {
+		RedirectURL string `json:"redirect_url"`
+	}
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&payload))
+
+	location, err := url.Parse(payload.RedirectURL)
+	assert.NoError(t, err)
+	assert.Equal(t, "/auth/error", location.Path)
+	assert.Equal(t, code, location.Query().Get("error"))
 }

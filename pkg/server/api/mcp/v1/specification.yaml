@@ -1840,6 +1840,7 @@ components:
         - CREATED_AT
         - UPDATED_AT
         - NAME
+        - REFERENCE_ID
         - CATEGORY
         - TREATMENT
         - INHERENT_RISK_SCORE
@@ -1874,6 +1875,7 @@ components:
       required:
         - id
         - organization_id
+        - reference_id
         - name
         - category
         - note
@@ -1886,6 +1888,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        reference_id:
+          type: string
+          description: Organization-scoped display ID (RSK-001)
         name:
           type: string
           description: Risk name
@@ -6992,6 +6997,12 @@ components:
             - type: "null"
               description: No deadline
           description: Deadline
+        recurrence_interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -7091,6 +7102,9 @@ components:
           type: string
           format: date-time
           description: Deadline
+        recurrence_interval:
+          $ref: "#/components/schemas/TimeSpan"
+          description: Recurrence interval (requires deadline to be set)
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -7163,6 +7177,13 @@ components:
               description: No deadline
           description: Deadline
           go.probo.inc/mcpgen/omittable: true
+        recurrence_interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval
+          go.probo.inc/mcpgen/omittable: true
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -7187,6 +7208,9 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
+        next_task:
+          $ref: "#/components/schemas/Task"
+          description: Next occurrence created when a recurring task is marked done
 
     AssignTaskInput:
       type: object
@@ -10323,11 +10347,64 @@ components:
         setup:
           $ref: "#/components/schemas/GCPConnectorSetup"
 
+    AzureEnvironment:
+      type: string
+      enum:
+        - AZURE_PUBLIC
+        - AZURE_GOVERNMENT
+        - AZURE_GOVERNMENT_DOD
+        - AZURE_CHINA
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cloud/azure.Environment
+      description: Azure cloud environment. Defaults to AZURE_PUBLIC. GCC uses AZURE_PUBLIC; only GCC High and DoD use Government.
+
+    AzureConnectorSetup:
+      type: object
+      required:
+        - issuer
+        - audience
+        - subject
+        - suggested_application_name
+        - terraform_snippet
+      properties:
+        issuer:
+          type: string
+          description: Organization issuer URL
+        audience:
+          type: string
+          description: Token audience
+        subject:
+          type: string
+          description: Token subject
+        suggested_application_name:
+          type: string
+          description: Default Entra application display name
+        terraform_snippet:
+          type: string
+          description: Terraform module block with issuer, subject and application name filled
+
+    AzureConnectorSetupMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    AzureConnectorSetupMCPOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AzureConnectorSetup"
+
     WorkloadIdentityConnectorProvider:
       type: string
       enum:
         - AWS
         - GCP
+        - AZURE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConnectorProvider
       description: Connector provider that supports workload identity
 
@@ -10354,13 +10431,23 @@ components:
           required:
             - gcp_workload_identity_provider
             - gcp_service_account_email
+        - title: Azure
+          properties:
+            provider:
+              type: string
+              enum:
+                - AZURE
+          required:
+            - azure_tenant_id
+            - azure_client_id
+            - azure_subscription_id
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
-          description: Connector provider (AWS or GCP)
+          description: Connector provider (AWS, GCP, or Azure)
         aws_role_arn:
           type: string
           description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
@@ -10370,6 +10457,18 @@ components:
         gcp_service_account_email:
           type: string
           description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
+        azure_tenant_id:
+          type: string
+          description: Entra directory (tenant) ID. Required when provider is Azure.
+        azure_client_id:
+          type: string
+          description: Entra application (client) ID. Required when provider is Azure.
+        azure_subscription_id:
+          type: string
+          description: Azure subscription ID. Required when provider is Azure.
+        azure_environment:
+          $ref: "#/components/schemas/AzureEnvironment"
+          description: Azure cloud environment. Defaults to AZURE_PUBLIC when omitted.
 
     CreateWorkloadIdentityConnectorMCPOutput:
       type: object
@@ -11409,6 +11508,115 @@ components:
       properties:
         compliance_portal:
           $ref: "#/components/schemas/CompliancePortal"
+
+    CreateCompliancePortalAccessInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Existing organization profile ID. Provide exactly one of profile_id or email.
+        email:
+          type: string
+          description: Visitor email address. Provide exactly one of profile_id or email.
+        document_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Document IDs to grant immediately
+        report_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Report file IDs to grant immediately
+        compliance_portal_file_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Compliance portal file IDs to grant immediately
+
+    CreateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    DeactivateCompliancePortalAccessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+
+    DeactivateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    ActivateCompliancePortalAccessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+
+    ActivateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    CompliancePortalAccessState:
+      type: string
+      enum:
+        - ACTIVE
+        - DEACTIVATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalAccessState
+
+    CompliancePortalAccess:
+      type: object
+      required:
+        - id
+        - state
+        - email
+        - full_name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        state:
+          $ref: "#/components/schemas/CompliancePortalAccessState"
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+        full_name:
+          type: string
+        authenticated_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     GetCompliancePortalInput:
       type: object
@@ -12464,10 +12672,14 @@ components:
       type: object
       required:
         - resource_reporting
+        - tcf
       properties:
         resource_reporting:
           type: boolean
           description: Whether the SDK reports detected resources
+        tcf:
+          type: boolean
+          description: Whether IAB TCF is enabled for this banner
 
     CookieBannerCapabilitiesInput:
       type: object
@@ -12539,6 +12751,181 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        published_version:
+          $ref: "#/components/schemas/CookieBannerVersion"
+          description: Latest published cookie banner version, if any
+
+    CommonGVLVendorMembership:
+      type: string
+      enum:
+        - ON_BANNER
+        - NOT_ON_BANNER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CommonGVLVendorMembership
+
+    CommonGVLVendor:
+      type: object
+      required:
+        - id
+        - iab_vendor_id
+        - name
+        - purposes
+        - leg_int_purposes
+        - special_features
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Common GVL vendor ID
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+        name:
+          type: string
+          description: Vendor name
+        policy_url:
+          type:
+            - string
+            - "null"
+          description: Vendor privacy policy URL
+        purposes:
+          type: array
+          items:
+            type: integer
+          description: IAB purposes the vendor declares
+        leg_int_purposes:
+          type: array
+          items:
+            type: integer
+          description: IAB purposes the vendor declares under legitimate interest
+        special_features:
+          type: array
+          items:
+            type: integer
+          description: IAB special features the vendor declares
+
+    CommonGVLCatalog:
+      type: object
+      properties:
+        vendor_list_version:
+          type:
+            - integer
+            - "null"
+          description: Latest IAB vendor list version
+        tcf_policy_version:
+          type:
+            - integer
+            - "null"
+          description: TCF policy version of the latest GVL snapshot
+
+    GetCommonGVLCatalogInput:
+      type: object
+
+    GetCommonGVLCatalogOutput:
+      type: object
+      required:
+        - common_gvl_catalog
+      properties:
+        common_gvl_catalog:
+          $ref: "#/components/schemas/CommonGVLCatalog"
+
+    ListCommonGVLVendorsInput:
+      type: object
+      properties:
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search by vendor name or IAB vendor ID
+            cookie_banner_id:
+              $ref: "#/components/schemas/GID"
+              description: Cookie banner ID required when filtering by membership
+            membership:
+              $ref: "#/components/schemas/CommonGVLVendorMembership"
+              description: Restrict to vendors already on the banner, or not on it
+
+    ListCommonGVLVendorsOutput:
+      type: object
+      required:
+        - common_gvl_vendors
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        common_gvl_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommonGVLVendor"
+
+    ListCookieBannerGVLVendorsInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookieBannerGVLVendorsOutput:
+      type: object
+      required:
+        - common_gvl_vendors
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        common_gvl_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommonGVLVendor"
+
+    AddCookieBannerGVLVendorInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - iab_vendor_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+
+    AddCookieBannerGVLVendorOutput:
+      type: object
+      required:
+        - common_gvl_vendor
+        - cookie_banner
+      properties:
+        common_gvl_vendor:
+          $ref: "#/components/schemas/CommonGVLVendor"
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    RemoveCookieBannerGVLVendorInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - iab_vendor_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+
+    RemoveCookieBannerGVLVendorOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
 
     CookieCategory:
       type: object
@@ -12749,6 +13136,8 @@ components:
         - cookie_banner_id
         - version
         - state
+        - gvl_vendor_count
+        - gvl_vendor_ids
         - created_at
         - updated_at
       properties:
@@ -12773,6 +13162,14 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        gvl_vendor_count:
+          type: integer
+          description: Number of IAB GVL vendors snapshotted on this version
+        gvl_vendor_ids:
+          type: array
+          items:
+            type: integer
+          description: IAB GVL vendor IDs snapshotted on this version
 
     CookieBannerTranslation:
       type: object
@@ -14099,6 +14496,7 @@ components:
           type:
             - string
             - "null"
+          description: Risk analysis description in markdown (converted from stored ProseMirror JSON)
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
@@ -14360,7 +14758,7 @@ components:
           description: Risk analysis name
         description:
           type: string
-          description: Risk analysis description
+          description: Risk analysis description in markdown format
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
@@ -14389,7 +14787,7 @@ components:
           description: Risk analysis name
         description:
           type: ["string", "null"]
-          description: Risk analysis description
+          description: Risk analysis description in markdown format
           go.probo.inc/mcpgen/omittable: true
         period:
           $ref: "#/components/schemas/Period"
@@ -14435,7 +14833,7 @@ components:
           description: Forked risk analysis name
         description:
           type: string
-          description: Forked risk analysis description
+          description: Forked risk analysis description in markdown format
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period (not copied from the source)
@@ -18004,9 +18402,21 @@ tools:
       $ref: "#/components/schemas/GCPConnectorSetupMCPInput"
     outputSchema:
       $ref: "#/components/schemas/GCPConnectorSetupMCPOutput"
+  - name: azureConnectorSetup
+    title: Azure Connector Setup
+    description: Return issuer, subject, audience and deploy artifacts for connecting an Azure subscription
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AzureConnectorSetupMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/AzureConnectorSetupMCPOutput"
   - name: createWorkloadIdentityConnector
     title: Create Workload Identity Connector
-    description: Create a workload-identity connector (AWS or GCP) and report whether the audit identity can be assumed
+    description: Create a workload-identity connector (AWS, GCP, or Azure) and report whether the audit identity can be assumed
     hints:
       readonly: false
       destructive: false
@@ -18376,6 +18786,42 @@ tools:
       $ref: "#/components/schemas/CreateCompliancePortalInput"
     outputSchema:
       $ref: "#/components/schemas/CreateCompliancePortalOutput"
+  - name: createCompliancePortalAccess
+    title: Create Compliance Portal Access
+    description: Add a visitor to a compliance portal by profile ID or email
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalAccessOutput"
+  - name: deactivateCompliancePortalAccess
+    title: Deactivate Compliance Portal Access
+    description: Deactivate a compliance portal visitor. Grants stay; protected reads and requests fail until reactivation.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeactivateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeactivateCompliancePortalAccessOutput"
+  - name: activateCompliancePortalAccess
+    title: Activate Compliance Portal Access
+    description: Activate a deactivated compliance portal visitor
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ActivateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/ActivateCompliancePortalAccessOutput"
   - name: getCompliancePortal
     title: Get Compliance Portal
     description: Get a compliance portal by ID
@@ -19132,6 +19578,66 @@ tools:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationInput"
     outputSchema:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationOutput"
+  - name: getCommonGVLCatalog
+    title: Get Common GVL Catalog
+    description: Get the current IAB GVL catalog versions
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetCommonGVLCatalogInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCommonGVLCatalogOutput"
+  - name: listCommonGVLVendors
+    title: List Common GVL Vendors
+    description: List IAB GVL vendors from the global catalog
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCommonGVLVendorsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCommonGVLVendorsOutput"
+  - name: listCookieBannerGVLVendors
+    title: List Cookie Banner GVL Vendors
+    description: List IAB GVL vendors selected on a cookie banner
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannerGVLVendorsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannerGVLVendorsOutput"
+  - name: addCookieBannerGVLVendor
+    title: Add Cookie Banner GVL Vendor
+    description: Add an IAB GVL vendor to a cookie banner's disclosed set
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookieBannerGVLVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookieBannerGVLVendorOutput"
+  - name: removeCookieBannerGVLVendor
+    title: Remove Cookie Banner GVL Vendor
+    description: Remove an IAB GVL vendor from a cookie banner's disclosed set
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RemoveCookieBannerGVLVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/RemoveCookieBannerGVLVendorOutput"
   - name: listCookieConsentRecords
     title: List Cookie Consent Records
     description: List consent records for a cookie banner

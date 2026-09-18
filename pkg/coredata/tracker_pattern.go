@@ -43,7 +43,6 @@ type (
 		CookieBannerID         gid.GID                 `db:"cookie_banner_id"`
 		CookieCategoryID       gid.GID                 `db:"cookie_category_id"`
 		CommonTrackerPatternID *gid.GID                `db:"common_tracker_pattern_id"`
-		ThirdPartyID           *gid.GID                `db:"third_party_id"`
 		TrackerType            TrackerType             `db:"tracker_type"`
 		Pattern                string                  `db:"pattern"`
 		MatchType              TrackerPatternMatchType `db:"match_type"`
@@ -138,7 +137,6 @@ SELECT
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -199,7 +197,6 @@ SELECT
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -267,7 +264,6 @@ SELECT
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -345,7 +341,6 @@ INSERT INTO tracker_patterns (
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -365,7 +360,6 @@ INSERT INTO tracker_patterns (
 	@cookie_banner_id,
 	@cookie_category_id,
 	@common_tracker_pattern_id,
-	@third_party_id,
 	@tracker_type,
 	@pattern,
 	@match_type,
@@ -388,7 +382,6 @@ INSERT INTO tracker_patterns (
 		"cookie_banner_id":          tp.CookieBannerID,
 		"cookie_category_id":        tp.CookieCategoryID,
 		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
-		"third_party_id":            tp.ThirdPartyID,
 		"tracker_type":              tp.TrackerType,
 		"pattern":                   tp.Pattern,
 		"match_type":                tp.MatchType,
@@ -430,7 +423,6 @@ INSERT INTO tracker_patterns (
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -450,7 +442,6 @@ INSERT INTO tracker_patterns (
 	@cookie_banner_id,
 	@cookie_category_id,
 	@common_tracker_pattern_id,
-	@third_party_id,
 	@tracker_type,
 	@pattern,
 	@match_type,
@@ -474,7 +465,6 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 		"cookie_banner_id":          tp.CookieBannerID,
 		"cookie_category_id":        tp.CookieCategoryID,
 		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
-		"third_party_id":            tp.ThirdPartyID,
 		"tracker_type":              tp.TrackerType,
 		"pattern":                   tp.Pattern,
 		"match_type":                tp.MatchType,
@@ -512,7 +502,6 @@ func (tp *TrackerPattern) Update(
 UPDATE tracker_patterns
 SET
 	common_tracker_pattern_id = @common_tracker_pattern_id,
-	third_party_id = @third_party_id,
 	cookie_category_id = @cookie_category_id,
 	display_name = @display_name,
 	max_age_seconds = @max_age_seconds,
@@ -531,7 +520,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                        tp.ID,
 		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
-		"third_party_id":            tp.ThirdPartyID,
 		"cookie_category_id":        tp.CookieCategoryID,
 		"display_name":              tp.DisplayName,
 		"max_age_seconds":           tp.MaxAgeSeconds,
@@ -562,9 +550,9 @@ WHERE
 }
 
 // UpdateMapping writes only the columns the tracker-mapping worker
-// resolves — common_tracker_pattern_id, third_party_id and an enriched
-// description — leaving the user-editable fields (display_name,
-// excluded, cookie_category_id, max_age_seconds, source, last_matched_at)
+// resolves — common_tracker_pattern_id and an enriched description —
+// leaving the user-editable fields (display_name, excluded,
+// cookie_category_id, max_age_seconds, source, last_matched_at)
 // untouched.
 //
 // The worker loads the pattern in its claim transaction and commits the
@@ -581,7 +569,6 @@ func (tp *TrackerPattern) UpdateMapping(
 UPDATE tracker_patterns
 SET
 	common_tracker_pattern_id = @common_tracker_pattern_id,
-	third_party_id = @third_party_id,
 	description = CASE
 		WHEN description = '' THEN @description
 		ELSE description
@@ -597,7 +584,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                        tp.ID,
 		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
-		"third_party_id":            tp.ThirdPartyID,
 		"description":               tp.Description,
 		"updated_at":                tp.UpdatedAt,
 	}
@@ -690,7 +676,6 @@ SELECT
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -786,7 +771,6 @@ SELECT
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -859,43 +843,6 @@ WHERE
 	return count, nil
 }
 
-// LoadDistinctThirdPartyIDsByCookieBannerID returns the distinct non-null
-// `third_party_id` values referenced by tracker patterns of the given
-// banner. Callers feed it to ThirdParty.GetByIDs to power per-banner
-// pickers without crossing the entity boundary.
-func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-) ([]gid.GID, error) {
-	q := `
-SELECT DISTINCT third_party_id
-FROM tracker_patterns
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND third_party_id IS NOT NULL
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query distinct third party ids: %w", err)
-	}
-
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect distinct third party ids: %w", err)
-	}
-
-	return ids, nil
-}
-
 // LoadDistinctCommonTrackerPatternIDsByCookieBannerID returns the
 // distinct non-null `common_tracker_pattern_id` values referenced by
 // tracker patterns of the given banner. Callers chain this with
@@ -914,7 +861,6 @@ WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
 	AND common_tracker_pattern_id IS NOT NULL
-	AND third_party_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -933,43 +879,6 @@ WHERE
 	}
 
 	return ids, nil
-}
-
-func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByIDs(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	ids []gid.GID,
-) ([]gid.GID, error) {
-	if len(ids) == 0 {
-		return nil, nil
-	}
-
-	q := `
-SELECT DISTINCT third_party_id
-FROM tracker_patterns
-WHERE
-	%s
-	AND id = ANY(@ids)
-	AND third_party_id IS NOT NULL
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"ids": ids}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query distinct third party ids by pattern ids: %w", err)
-	}
-
-	thirdPartyIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect distinct third party ids by pattern ids: %w", err)
-	}
-
-	return thirdPartyIDs, nil
 }
 
 func (tps *TrackerPatterns) LoadDistinctCommonTrackerPatternIDsByIDs(
@@ -1080,55 +989,6 @@ WHERE
 	return nil
 }
 
-// LinkThirdPartyByCommonThirdPartyID points the organization's unlinked
-// tracker patterns at an org ThirdParty when their catalog row resolves
-// to the given common third party. It is the backfill the explicit
-// import action runs so patterns that previously surfaced the catalog
-// (CommonThirdParty) entry now surface the managed org ThirdParty. Only
-// patterns with no third_party_id are touched, so it is idempotent and
-// never overrides an existing link. The common_tracker_patterns
-// subquery only narrows the WHERE clause, keeping the resolution in the
-// database.
-func (tps *TrackerPatterns) LinkThirdPartyByCommonThirdPartyID(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-	commonThirdPartyID gid.GID,
-	thirdPartyID gid.GID,
-) error {
-	q := `
-UPDATE tracker_patterns
-SET
-	third_party_id = @third_party_id,
-	updated_at = NOW()
-WHERE
-	%s
-	AND organization_id = @organization_id
-	AND third_party_id IS NULL
-	AND common_tracker_pattern_id IN (
-		SELECT id FROM common_tracker_patterns
-		WHERE common_third_party_id = @common_third_party_id
-	)
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id":       organizationID,
-		"common_third_party_id": commonThirdPartyID,
-		"third_party_id":        thirdPartyID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot link tracker patterns to third party: %w", err)
-	}
-
-	return nil
-}
-
 func (tp *TrackerPattern) LoadNextForMappingForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
@@ -1140,7 +1000,6 @@ SELECT
 	cookie_banner_id,
 	cookie_category_id,
 	common_tracker_pattern_id,
-	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -1269,24 +1128,19 @@ WHERE id = @id
 
 // RequestMappingForUnmappedSiblings re-arms mapping_requested_at on
 // sibling tracker patterns of the same banner that share an initiator
-// domain with the just-mapped pattern but are still unpromoted. It is
+// domain with the just-mapped pattern but are still unresolved. It is
 // the backward-propagation counterpart to the mapping worker's
 // sibling-origin matching: when a pattern newly resolves a vendor, its
 // siblings that were processed earlier and left unmatched can now be
 // re-evaluated against it.
 //
-// Only siblings still genuinely unresolved are touched: not promoted to
-// an org party (third_party_id IS NULL), not already linked to a catalog
-// row that carries a common third party, and not marked FIRST_PARTY
-// (a terminal verdict). third_party_id IS NULL alone is no longer a
-// sufficient guard: since org-party auto-creation was dropped a pattern
-// can resolve a common third party yet stay third_party_id IS NULL, and
-// re-enqueueing those (or first-party siblings) on every cascade step is
-// what amplified reprocessing to O(N^2) per banner. The siblings must
-// also be not-already-queued (mapping_requested_at IS NULL) and
-// non-extension. A fully mapped banner re-enqueues nothing.
-// common_tracker_patterns and detected_trackers are used only as
-// filtering subqueries. Returns the number of siblings re-enqueued.
+// Only siblings still genuinely unresolved are touched: not already
+// linked to a catalog row that carries a common third party, and not
+// marked FIRST_PARTY (a terminal verdict). The siblings must also be
+// not-already-queued (mapping_requested_at IS NULL) and non-extension.
+// A fully mapped banner re-enqueues nothing. common_tracker_patterns
+// and detected_trackers are used only as filtering subqueries. Returns
+// the number of siblings re-enqueued.
 func (tps *TrackerPatterns) RequestMappingForUnmappedSiblings(
 	ctx context.Context,
 	tx pg.Tx,
@@ -1316,7 +1170,6 @@ WHERE id IN (
 		%[1]s
 		AND cookie_banner_id = @cookie_banner_id
 		AND id != @exclude_pattern_id
-		AND third_party_id IS NULL
 		AND mapping_requested_at IS NULL
 		AND (source IS NULL OR source != @extension_source)
 		AND NOT EXISTS (
@@ -1401,15 +1254,14 @@ WHERE
 
 // RequestMappingForUncategorisedByCommonTrackerPatternIDs re-arms mapping
 // on the uncategorised org tracker patterns linked to the given common
-// tracker patterns: it clears their resolved org third party and stamps
-// mapping_requested_at so the mapping worker re-resolves the vendor from
-// the catalog row's (now changed) common third party. Like the
-// description backfill it is a global catalog operation, so it is
-// intentionally not tenant-scoped. Excluded patterns and patterns in
-// user-chosen categories are left untouched - only the uncategorised
-// category is remapped, matching the reset-trackers philosophy. The
-// cookie_categories subquery is used only for filtering. Returns the
-// number of org patterns re-armed.
+// tracker patterns so the mapping worker re-resolves the vendor from the
+// catalog row's (now changed) common third party. Like the description
+// backfill it is a global catalog operation, so it is intentionally not
+// tenant-scoped. Excluded patterns and patterns in user-chosen
+// categories are left untouched - only the uncategorised category is
+// remapped, matching the reset-trackers philosophy. The cookie_categories
+// subquery is used only for filtering. Returns the number of org
+// patterns re-armed.
 func (tps *TrackerPatterns) RequestMappingForUncategorisedByCommonTrackerPatternIDs(
 	ctx context.Context,
 	tx pg.Tx,
@@ -1418,7 +1270,6 @@ func (tps *TrackerPatterns) RequestMappingForUncategorisedByCommonTrackerPattern
 	q := `
 UPDATE tracker_patterns
 SET
-	third_party_id = NULL,
 	mapping_requested_at = NOW(),
 	updated_at = NOW()
 WHERE
@@ -1493,14 +1344,13 @@ WHERE
 // catalog operation, so it is intentionally not tenant-scoped: a single
 // catalog domain benefits all tenants' patterns.
 //
-// Only patterns with no resolved vendor are targeted (third_party_id IS
-// NULL and an absent or unlinked catalog row), so a pattern already
-// linked to the vendor that gained the domain - or to any other vendor -
-// is never disturbed and never re-attributed. Extension-sourced patterns
-// and patterns already queued for mapping are skipped. The
-// common_tracker_patterns and detected_trackers subqueries are used only
-// for filtering. Returns the number of patterns re-armed; an empty
-// domains slice is a no-op.
+// Only patterns with no resolved catalog vendor are targeted (an absent
+// or unlinked catalog row), so a pattern already linked to the vendor
+// that gained the domain - or to any other vendor - is never disturbed
+// and never re-attributed. Extension-sourced patterns and patterns
+// already queued for mapping are skipped. The common_tracker_patterns
+// and detected_trackers subqueries are used only for filtering. Returns
+// the number of patterns re-armed; an empty domains slice is a no-op.
 func (tps *TrackerPatterns) RequestMappingForUnmappedByInitiatorDomains(
 	ctx context.Context,
 	tx pg.Tx,
@@ -1516,8 +1366,7 @@ SET
 	mapping_requested_at = NOW(),
 	updated_at = NOW()
 WHERE
-	third_party_id IS NULL
-	AND mapping_requested_at IS NULL
+	mapping_requested_at IS NULL
 	AND (source IS NULL OR source != @extension_source)
 	AND (
 		common_tracker_pattern_id IS NULL
@@ -1548,16 +1397,15 @@ WHERE
 }
 
 // ResetAndRequestMappingByCookieCategoryID detaches every pattern in the
-// given category from its catalog row, org third party, and copied
-// description, then re-arms mapping. Operators run this (via proboctl) on
-// a banner's uncategorised category to force a clean re-map when
-// iterating on the mapping agent. Excluded patterns are left untouched -
-// exclusion is a deliberate suppression. The cookie_category_id key
-// scopes the reset to the uncategorised category the caller resolves;
-// the Scoper keeps it tenant-isolated. When keyword is non-nil and
-// non-empty, the reset is further restricted to patterns whose pattern or
-// display name contains it (case-insensitive). Returns the number of
-// patterns reset.
+// given category from its catalog row and copied description, then
+// re-arms mapping. Operators run this (via proboctl) on a banner's
+// uncategorised category to force a clean re-map when iterating on the
+// mapping agent. Excluded patterns are left untouched - exclusion is a
+// deliberate suppression. The cookie_category_id key scopes the reset to
+// the uncategorised category the caller resolves; the Scoper keeps it
+// tenant-isolated. When keyword is non-nil and non-empty, the reset is
+// further restricted to patterns whose pattern or display name contains
+// it (case-insensitive). Returns the number of patterns reset.
 func (tps *TrackerPatterns) ResetAndRequestMappingByCookieCategoryID(
 	ctx context.Context,
 	tx pg.Tx,
@@ -1571,7 +1419,6 @@ func (tps *TrackerPatterns) ResetAndRequestMappingByCookieCategoryID(
 UPDATE tracker_patterns
 SET
 	common_tracker_pattern_id = NULL,
-	third_party_id = NULL,
 	description = '',
 	mapping_requested_at = NOW(),
 	updated_at = NOW()
@@ -1598,11 +1445,8 @@ WHERE
 
 // LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID returns every
 // distinct common_tracker_pattern_id referenced by the banner's patterns,
-// regardless of mapping state. Unlike
-// LoadDistinctCommonTrackerPatternIDsByCookieBannerID (which restricts to
-// unmapped patterns for the mapping pipeline), this returns the full set
-// of catalog rows the banner depends on, so an operator can re-describe
-// exactly those before a reset.
+// regardless of mapping state, so an operator can re-describe exactly
+// those before a reset.
 func (tps *TrackerPatterns) LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,

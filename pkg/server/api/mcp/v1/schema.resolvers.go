@@ -15,6 +15,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
@@ -2141,16 +2142,17 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	task, err := svc.Tasks.Create(
 		ctx, scope,
 		probo.CreateTaskRequest{
-			OrganizationID: input.OrganizationID,
-			MeasureID:      input.MeasureID,
-			Name:           input.Name,
-			Content:        content,
-			State:          input.State,
-			Priority:       priority,
-			TimeEstimate:   input.TimeEstimate,
-			Deadline:       input.Deadline,
-			AssignedToID:   input.AssignedToID,
-			IdentityID:     &identity.ID,
+			OrganizationID:     input.OrganizationID,
+			MeasureID:          input.MeasureID,
+			Name:               input.Name,
+			Content:            content,
+			State:              input.State,
+			Priority:           priority,
+			TimeEstimate:       input.TimeEstimate,
+			Deadline:           input.Deadline,
+			AssignedToID:       input.AssignedToID,
+			IdentityID:         &identity.ID,
+			RecurrenceInterval: input.RecurrenceInterval,
 		},
 	)
 	if err != nil {
@@ -2177,29 +2179,35 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	identity := authn.IdentityFromContext(ctx)
 
-	task, err := svc.Tasks.Update(
+	result, err := svc.Tasks.Update(
 		ctx, scope,
 		probo.UpdateTaskRequest{
-			TaskID:       input.ID,
-			Name:         input.Name,
-			Content:      content,
-			State:        input.State,
-			Priority:     input.Priority,
-			Rank:         input.Rank,
-			TimeEstimate: UnwrapOmittable(input.TimeEstimate),
-			Deadline:     UnwrapOmittable(input.Deadline),
-			AssignedToID: UnwrapOmittable(input.AssignedToID),
-			MeasureID:    UnwrapOmittable(input.MeasureID),
-			IdentityID:   &identity.ID,
+			TaskID:             input.ID,
+			Name:               input.Name,
+			Content:            content,
+			State:              input.State,
+			Priority:           input.Priority,
+			Rank:               input.Rank,
+			TimeEstimate:       UnwrapOmittable(input.TimeEstimate),
+			Deadline:           UnwrapOmittable(input.Deadline),
+			AssignedToID:       UnwrapOmittable(input.AssignedToID),
+			MeasureID:          UnwrapOmittable(input.MeasureID),
+			IdentityID:         &identity.ID,
+			RecurrenceInterval: UnwrapOmittable(input.RecurrenceInterval),
 		},
 	)
 	if err != nil {
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
 	}
 
-	return nil, types.UpdateTaskOutput{
-		Task: types.NewTask(task),
-	}, nil
+	output := types.UpdateTaskOutput{
+		Task: types.NewTask(result.Task),
+	}
+	if result.NextTask != nil {
+		output.NextTask = types.NewTask(result.NextTask)
+	}
+
+	return nil, output, nil
 }
 
 func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error) {
@@ -5712,7 +5720,27 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get cookie banner: %w", err)
 	}
 
-	return nil, types.GetCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	out := types.NewCookieBanner(banner)
+
+	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
+		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
+		if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {
+			return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+		}
+
+		if published != nil {
+			version, err := types.NewCookieBannerVersion(published)
+			if err != nil {
+				return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+			}
+
+			out.PublishedVersion = version
+		}
+	} else if err.Error() != "permission denied" {
+		return nil, types.GetCookieBannerOutput{}, err
+	}
+
+	return nil, types.GetCookieBannerOutput{CookieBanner: out}, nil
 }
 
 func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieBannerInput) (*mcp.CallToolResult, types.AddCookieBannerOutput, error) {
@@ -6092,7 +6120,12 @@ func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.
 		return nil, types.PublishCookieBannerVersionOutput{}, fmt.Errorf("cannot publish cookie banner version: %w", err)
 	}
 
-	return nil, types.PublishCookieBannerVersionOutput{CookieBannerVersion: types.NewCookieBannerVersion(version)}, nil
+	mapped, err := types.NewCookieBannerVersion(version)
+	if err != nil {
+		return nil, types.PublishCookieBannerVersionOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishCookieBannerVersionOutput{CookieBannerVersion: mapped}, nil
 }
 
 func (r *Resolver) RegenerateCookieBannerTrackerPolicyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RegenerateCookieBannerTrackerPolicyInput) (*mcp.CallToolResult, types.RegenerateCookieBannerTrackerPolicyOutput, error) {
@@ -6124,7 +6157,12 @@ func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.Ca
 
 	p := page.NewPage(versions, cursor)
 
-	return nil, types.NewListCookieBannerVersionsOutput(p), nil
+	out, err := types.NewListCookieBannerVersionsOutput(p)
+	if err != nil {
+		return nil, types.ListCookieBannerVersionsOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, out, nil
 }
 
 func (r *Resolver) UpsertCookieBannerTranslationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpsertCookieBannerTranslationInput) (*mcp.CallToolResult, types.UpsertCookieBannerTranslationOutput, error) {
@@ -6601,10 +6639,15 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		}
 	}
 
+	description, err := optionalMarkdownToProseMirrorJSON(input.Description)
+	if err != nil {
+		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAnalysisRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
-		Description:    input.Description,
+		Description:    description,
 		Period:         period,
 		MatrixSize:     matrixSize,
 	})
@@ -6631,10 +6674,15 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
+	description, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Description))
+	if err != nil {
+		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAnalysisRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: UnwrapOmittable(input.Description),
+		Description: description,
 		Period:      period,
 	})
 	if err != nil {
@@ -6691,13 +6739,18 @@ func (r *Resolver) ForkRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRe
 		}
 	}
 
+	description, err := optionalMarkdownToProseMirrorJSON(input.Description)
+	if err != nil {
+		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
 	ra, err := r.riskManagement.Fork(
 		ctx,
 		scope,
 		riskmanagement.ForkRiskAnalysisRequest{
 			RiskAnalysisID: input.ID,
 			Name:           input.Name,
-			Description:    input.Description,
+			Description:    description,
 			Period:         period,
 		},
 	)
@@ -9444,6 +9497,31 @@ func (r *Resolver) GcpConnectorSetupTool(ctx context.Context, req *mcp.CallToolR
 	}, nil
 }
 
+func (r *Resolver) AzureConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AzureConnectorSetupInput) (*mcp.CallToolResult, types.AzureConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.AzureConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.AzureConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudazure.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.azureConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build azure connector setup", log.Error(err))
+
+		return nil, types.AzureConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.AzureConnectorSetupOutput{
+		Setup: types.NewAzureConnectorSetup(setup),
+	}, nil
+}
+
 func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTaskCommentsInput) (*mcp.CallToolResult, types.ListTaskCommentsOutput, error) {
 	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskCommentList)
 	if err != nil {
@@ -9663,5 +9741,284 @@ func (r *Resolver) GetTaskActivityTool(ctx context.Context, req *mcp.CallToolReq
 
 	return nil, types.GetTaskActivityOutput{
 		TaskActivity: types.NewTaskActivity(taskActivity),
+	}, nil
+}
+
+func (r *Resolver) CreateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCompliancePortalAccessInput) (*mcp.CallToolResult, types.CreateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalAccessCreate)
+	if err != nil {
+		return nil, types.CreateCompliancePortalAccessOutput{}, err
+	}
+
+	var email *mail.Addr
+
+	if input.Email != nil && *input.Email != "" {
+		parsed, err := mail.ParseAddr(*input.Email)
+		if err != nil {
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("invalid email")
+		}
+
+		email = &parsed
+	}
+
+	access, err := r.management.CreateAccess(
+		ctx,
+		scope,
+		&management.CreateAccessRequest{
+			CompliancePortalID:      input.CompliancePortalID,
+			ProfileID:               input.ProfileID,
+			Email:                   email,
+			DocumentIDs:             input.DocumentIds,
+			ReportFileIDs:           input.ReportIds,
+			CompliancePortalFileIDs: input.CompliancePortalFileIds,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		case errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("visitor already has access to this portal")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.CreateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
+
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.CreateCompliancePortalAccessOutput{
+		CompliancePortalAccess: out,
+	}, nil
+}
+
+func (r *Resolver) DeactivateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateCompliancePortalAccessInput) (*mcp.CallToolResult, types.DeactivateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, types.DeactivateCompliancePortalAccessOutput{}, err
+	}
+
+	access, err := r.management.DeactivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.DeactivateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot deactivate compliance portal access", log.Error(err))
+
+			return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.DeactivateCompliancePortalAccessOutput{
+		CompliancePortalAccess: out,
+	}, nil
+}
+
+func (r *Resolver) ActivateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ActivateCompliancePortalAccessInput) (*mcp.CallToolResult, types.ActivateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, types.ActivateCompliancePortalAccessOutput{}, err
+	}
+
+	access, err := r.management.ActivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.ActivateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot activate compliance portal access", log.Error(err))
+
+			return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.ActivateCompliancePortalAccessOutput{
+		CompliancePortalAccess: out,
+	}, nil
+}
+
+func (r *Resolver) ListCommonGVLVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCommonGVLVendorsInput) (*mcp.CallToolResult, types.ListCommonGVLVendorsOutput, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.Authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, types.ListCommonGVLVendorsOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	})
+
+	var query *string
+	if input.Filter != nil {
+		query = input.Filter.Query
+	}
+
+	cdFilter := coredata.NewCommonGVLVendorFilter(query)
+
+	if input.Filter != nil && input.Filter.Membership != nil {
+		if input.Filter.CookieBannerID == nil {
+			return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("cookie_banner_id is required when filtering by membership")
+		}
+
+		if _, err := r.Authorize(ctx, *input.Filter.CookieBannerID, probo.ActionCookieBannerGet); err != nil {
+			return nil, types.ListCommonGVLVendorsOutput{}, err
+		}
+
+		cdFilter = cdFilter.WithMembership(input.Filter.CookieBannerID, input.Filter.Membership)
+	} else if input.Filter != nil && input.Filter.CookieBannerID != nil {
+		// cookie_banner_id only means anything alongside membership. Reject the
+		// lone value rather than silently dropping it and returning the
+		// unfiltered global catalog, which reads as a successful filter.
+		return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("membership is required when filtering by cookie_banner_id")
+	}
+
+	vendors, err := r.cookieBanner.ListCommonGVLVendors(ctx, cursor, cdFilter)
+	if err != nil {
+		return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("internal error")
+	}
+
+	p := page.NewPage(vendors, cursor)
+
+	return nil, types.NewListCommonGVLVendorsOutput(p), nil
+}
+
+func (r *Resolver) ListCookieBannerGVLVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerGVLVendorsInput) (*mcp.CallToolResult, types.ListCookieBannerGVLVendorsOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.ListCookieBannerGVLVendorsOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	})
+
+	vendors, err := r.cookieBanner.ListCookieBannerGVLVendors(ctx, scope, input.CookieBannerID, cursor)
+	if err != nil {
+		return nil, types.ListCookieBannerGVLVendorsOutput{}, fmt.Errorf("internal error")
+	}
+
+	p := page.NewPage(vendors, cursor)
+
+	return nil, types.NewListCookieBannerGVLVendorsOutput(p), nil
+}
+
+func (r *Resolver) AddCookieBannerGVLVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieBannerGVLVendorInput) (*mcp.CallToolResult, types.AddCookieBannerGVLVendorOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.AddCookieBannerGVLVendorOutput{}, err
+	}
+
+	vendor, err := r.cookieBanner.AddCookieBannerGVLVendor(ctx, scope, cookiebanner.AddCookieBannerGVLVendorRequest{
+		CookieBannerID: input.CookieBannerID,
+		IABVendorID:    input.IabVendorID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound), errors.Is(err, cookiebanner.ErrGVLVendorNotFound):
+			return nil, types.AddCookieBannerGVLVendorOutput{}, err
+		case errors.Is(err, cookiebanner.ErrGVLVendorDeleted), errors.Is(err, cookiebanner.ErrTCFNotEnabled):
+			return nil, types.AddCookieBannerGVLVendorOutput{}, err
+		default:
+			if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.AddCookieBannerGVLVendorOutput{}, err
+			}
+
+			return nil, types.AddCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.AddCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.AddCookieBannerGVLVendorOutput{
+		CommonGvlVendor: types.NewCommonGVLVendor(vendor),
+		CookieBanner:    types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) RemoveCookieBannerGVLVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveCookieBannerGVLVendorInput) (*mcp.CallToolResult, types.RemoveCookieBannerGVLVendorOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+	}
+
+	err = r.cookieBanner.RemoveCookieBannerGVLVendor(ctx, scope, cookiebanner.RemoveCookieBannerGVLVendorRequest{
+		CookieBannerID: input.CookieBannerID,
+		IABVendorID:    input.IabVendorID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+		default:
+			if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+			}
+
+			return nil, types.RemoveCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.RemoveCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.RemoveCookieBannerGVLVendorOutput{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) GetCommonGVLCatalogTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCommonGVLCatalogInput) (*mcp.CallToolResult, types.GetCommonGVLCatalogOutput, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.Authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, types.GetCommonGVLCatalogOutput{}, err
+	}
+
+	catalog, err := r.cookieBanner.GetCommonGVLCatalog(ctx)
+	if err != nil {
+		return nil, types.GetCommonGVLCatalogOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.GetCommonGVLCatalogOutput{
+		CommonGvlCatalog: types.NewCommonGVLCatalog(catalog),
 	}, nil
 }

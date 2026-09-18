@@ -63,6 +63,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		asanaRegistration(),
 		attioRegistration(),
 		awsRegistration(),
+		azureRegistration(),
 		betterStackRegistration(),
 		bitbucketRegistration(),
 		brevoRegistration(),

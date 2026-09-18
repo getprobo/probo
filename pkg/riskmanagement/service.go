@@ -23,18 +23,21 @@ package riskmanagement
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
-	TitleMaxLength   = 1000
-	ContentMaxLength = 5000
+	TitleMaxLength       = 1000
+	ContentMaxLength     = 5000
+	richTextMaxJSONBytes = 64 << 10
 )
 
 type Service struct {
@@ -175,11 +178,30 @@ type (
 	}
 )
 
+func optionalDocumentJSON(s *string) (*string, error) {
+	if s == nil || strings.TrimSpace(*s) == "" {
+		return nil, nil
+	}
+
+	sanitized, err := prosemirror.SanitizeDocumentJSON(*s)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sanitized, nil
+}
+
 func (r *CreateRiskAnalysisRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(
+		r.Description,
+		"description",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
 	v.Check(r.MatrixSize, "matrix_size", validator.Required())
 	validateMatrixSize(v, r.MatrixSize)
 
@@ -194,7 +216,13 @@ func (r *UpdateRiskAnalysisRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.RiskAnalysisEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(
+		r.Description,
+		"description",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
@@ -207,7 +235,13 @@ func (r *ForkRiskAnalysisRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.RiskAnalysisID, "risk_analysis_id", validator.Required(), validator.GID(coredata.RiskAnalysisEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(
+		r.Description,
+		"description",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
@@ -418,12 +452,17 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
+	description, err := optionalDocumentJSON(req.Description)
+	if err != nil {
+		return nil, fmt.Errorf("cannot sanitize description: %w", err)
+	}
+
 	now := time.Now()
 	ra := &coredata.RiskAnalysis{
 		ID:             gid.New(scope.GetTenantID(), coredata.RiskAnalysisEntityType),
 		OrganizationID: req.OrganizationID,
 		Name:           req.Name,
-		Description:    req.Description,
+		Description:    description,
 		MatrixRows:     req.MatrixSize.Rows,
 		MatrixCols:     req.MatrixSize.Cols,
 		CreatedAt:      now,
@@ -435,7 +474,7 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		ra.PeriodEnd = req.Period.End
 	}
 
-	err := s.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := ra.Insert(ctx, tx, scope); err != nil {
@@ -491,7 +530,12 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 			}
 
 			if req.Description != nil {
-				ra.Description = *req.Description
+				description, err := optionalDocumentJSON(*req.Description)
+				if err != nil {
+					return fmt.Errorf("cannot sanitize description: %w", err)
+				}
+
+				ra.Description = description
 			}
 
 			if req.Period != nil {

@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/access-review/source/delete"
 	"go.probo.inc/probo/pkg/cmd/access-review/source/list"
 	setupaws "go.probo.inc/probo/pkg/cmd/access-review/source/setup-aws"
+	setupazure "go.probo.inc/probo/pkg/cmd/access-review/source/setup-azure"
 	setupgcp "go.probo.inc/probo/pkg/cmd/access-review/source/setup-gcp"
 	"go.probo.inc/probo/pkg/cmd/access-review/source/update"
 	"go.probo.inc/probo/pkg/cmd/access-review/source/view"
@@ -44,6 +45,7 @@ func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(setupaws.NewCmdSetupAWS(f))
+	cmd.AddCommand(setupazure.NewCmdSetupAzure(f))
 	cmd.AddCommand(setupgcp.NewCmdSetupGCP(f))
 
 	return cmd

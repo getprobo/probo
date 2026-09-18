@@ -33,5 +33,6 @@ export type {
   Presentation,
   Regulation,
   SettingsLinkStyle,
+  TCFVendor,
   VisitorConsent,
 } from "../types";

@@ -1089,6 +1089,7 @@
   },
   "linkedRisksCard": {
     "columns": {
+      "referenceId": "ID de référence",
       "name": "Nom",
       "initialRisk": "Risque initial",
       "residualRisk": "Risque résiduel"
@@ -1154,6 +1155,9 @@
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",
       "delete": "Supprimer"
+    },
+    "recurringBadge": {
+      "tooltip": "Se répète avec un intervalle de {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {
@@ -2243,6 +2247,7 @@
     "cookieBannersConfigure": "Configurer",
     "cookieBannersDiscovery": "Découverte",
     "cookieBannersTrail": "Journal",
+    "cookieBannersTCF": "TCF",
     "cookieBannerSwitcher": {
       "label": "Bannière de cookies",
       "select": "Sélectionner une bannière",
@@ -3905,6 +3910,19 @@
     "errors": {
       "extractUrl": "Échec de l’extraction de l’URL du fichier URI"
     },
+    "csv": {
+      "column": "Colonne",
+      "empty": "Ce fichier CSV est vide.",
+      "error": "Impossible de charger l’aperçu CSV.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 100 premières lignes de données."
+    },
+    "text": {
+      "empty": "Ce fichier texte est vide.",
+      "error": "Impossible de charger l’aperçu du texte.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 512 premiers Ko."
+    },
     "previewUnavailable": "Aperçu non disponible pour ce type de fichier : {{mimeType}}",
     "actions": {
       "download": "Télécharger le fichier"
@@ -4439,7 +4457,7 @@
     }
   },
   "riskDetailLayout": {
-    "deleteConfirmation": "Cette action supprimera définitivement le risque « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible.",
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer"
@@ -4462,6 +4480,7 @@
       "newRisk": "Nouveau risque"
     },
     "columns": {
+      "referenceId": "ID de référence",
       "name": "Nom du risque",
       "category": "Catégorie",
       "treatment": "Traitement",
@@ -4578,7 +4597,7 @@
     "errors": {
       "delete": "Échec de la suppression du risque"
     },
-    "deleteConfirmation": "Cette action supprimera définitivement le risque « {{name}} ». Elle est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible.",
     "treatments": {
       "mitigated": "Atténuer",
       "accepted": "Accepter",
@@ -4605,7 +4624,9 @@
       "error": "Erreur"
     },
     "errors": {
-      "delete": "Échec de la suppression de l’analyse des risques"
+      "delete": "Échec de la suppression de l’analyse des risques",
+      "update": "Échec de la mise à jour de l’analyse des risques",
+      "content": "Impossible d’afficher cette description"
     },
     "deleteConfirmation": "Cette action supprimera définitivement cette analyse des risques ainsi que tous ses diagrammes, nœuds, processus et menaces. Cette action est irréversible.",
     "actions": {
@@ -4615,10 +4636,12 @@
       "showMore": "Afficher plus"
     },
     "details": "Détails",
+    "noDescription": "Aucune description",
     "fields": {
       "period": "Période",
       "matrixSize": "Taille de matrice",
-      "createdAt": "Créé le"
+      "createdAt": "Créé le",
+      "description": "Description"
     },
     "diagrams": "Diagrammes",
     "treatmentPlans": "Risques et plans de traitement",
@@ -6004,6 +6027,7 @@
     "pageTitle": "Continuer la connexion",
     "title": "Continuer la connexion",
     "description": "Cliquez sur continuer pour terminer la connexion.",
+    "errors": { "continue": "Impossible de terminer la connexion" },
     "actions": { "continue": "Continuer" }
   },
   "magicLinkForm": {

@@ -23,13 +23,14 @@ import { useTranslation } from "react-i18next";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
 
-import { cookieBannerPath } from "../_lib/cookieBannerPaths";
+import { cookieBannerPath, cookieBannerTCFPath } from "../_lib/cookieBannerPaths";
 
 export interface CookieBannerNavItemsProps {
   cookieBannerId: string;
+  tcf: boolean;
 }
 
-export function CookieBannerNavItems({ cookieBannerId }: CookieBannerNavItemsProps) {
+export function CookieBannerNavItems({ cookieBannerId, tcf }: CookieBannerNavItemsProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const prefix = cookieBannerPath(organizationId, cookieBannerId);
@@ -47,6 +48,12 @@ export function CookieBannerNavItems({ cookieBannerId }: CookieBannerNavItemsPro
         to={`${prefix}/trail`}
         alsoActiveFor={[`${prefix}/consent-records`]}
       />
+      {tcf && (
+        <NavPanelItem
+          label={t("nav.cookieBannersTCF")}
+          to={cookieBannerTCFPath(organizationId, cookieBannerId)}
+        />
+      )}
     </>
   );
 }

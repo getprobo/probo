@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { WarningCircleIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
@@ -28,10 +29,11 @@ import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { SlackLogo } from "@probo/ui/src/v2/SlackLogo/SlackLogo";
+import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState, useTransition } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -232,9 +234,29 @@ export function CompliancePortalSlackSection({
               </div>
             )}
           </div>
-          {showChannelConfig && (
+          {isInstalled && (
             <div className={body()}>
-              {showEmptyCallout && (
+              <div className={empty()}>
+                <Callout
+                  color="amber"
+                  icon={<WarningCircleIcon weight="fill" />}
+                  className={emptyCallout()}
+                >
+                  <div className={emptyCopy()}>
+                    <Text size={2} weight="medium" color="current" highContrast>
+                      {t("slackSection.loginRequired.title")}
+                    </Text>
+                    <Text size={2} color="current">
+                      <Trans
+                        ns="organizations/compliance-portals"
+                        i18nKey="slackSection.loginRequired.description"
+                        components={{ cmd: <Code size={2} /> }}
+                      />
+                    </Text>
+                  </div>
+                </Callout>
+              </div>
+              {showChannelConfig && showEmptyCallout && (
                 <div className={empty()}>
                   <Callout variant="surface" color="neutral" className={emptyCallout()}>
                     <div className={emptyCopy()}>
@@ -248,74 +270,76 @@ export function CompliancePortalSlackSection({
                   </Callout>
                 </div>
               )}
-              <Select
-                value={configuredChannel?.channelId ?? null}
-                onOpenChange={(open) => {
-                  if (open) {
-                    refreshChannels();
-                  }
-                }}
-                onValueChange={(channelId) => {
-                  if (channelId != null) {
-                    setNotificationChannel(channelId);
-                  }
-                }}
-                disabled={isSettingChannel || isClearingChannel}
-              >
-                <div className={channel()}>
-                  <div className={channelRow()}>
-                    <Field
-                      label={t("slackSection.channel.label")}
-                      className={channelField()}
-                    >
-                      <SelectTrigger placeholder={t("slackSection.channel.placeholder")}>
-                        {(value: string | null) => (
-                          value
-                            ? (channelNames[value] ?? `#${value}`)
-                            : t("slackSection.channel.placeholder")
-                        )}
-                      </SelectTrigger>
-                    </Field>
-                    {configuredChannel && (
-                      <Button
-                        variant="surface"
-                        color="neutral"
-                        loading={isClearingChannel}
-                        onClick={clearNotificationChannel}
+              {showChannelConfig && (
+                <Select
+                  value={configuredChannel?.channelId ?? null}
+                  onOpenChange={(open) => {
+                    if (open) {
+                      refreshChannels();
+                    }
+                  }}
+                  onValueChange={(channelId) => {
+                    if (channelId != null) {
+                      setNotificationChannel(channelId);
+                    }
+                  }}
+                  disabled={isSettingChannel || isClearingChannel}
+                >
+                  <div className={channel()}>
+                    <div className={channelRow()}>
+                      <Field
+                        label={t("slackSection.channel.label")}
+                        className={channelField()}
                       >
-                        {t("slackSection.actions.clear")}
-                      </Button>
-                    )}
+                        <SelectTrigger placeholder={t("slackSection.channel.placeholder")}>
+                          {(value: string | null) => (
+                            value
+                              ? (channelNames[value] ?? `#${value}`)
+                              : t("slackSection.channel.placeholder")
+                          )}
+                        </SelectTrigger>
+                      </Field>
+                      {configuredChannel && (
+                        <Button
+                          variant="surface"
+                          color="neutral"
+                          loading={isClearingChannel}
+                          onClick={clearNotificationChannel}
+                        >
+                          {t("slackSection.actions.clear")}
+                        </Button>
+                      )}
+                    </div>
+                    <Text size={1} color="faint">
+                      {t("slackSection.channel.help")}
+                    </Text>
                   </div>
-                  <Text size={1} color="faint">
-                    {t("slackSection.channel.help")}
-                  </Text>
-                </div>
-                <SelectPopup>
-                  {isRefreshing && slackListEmpty
-                    ? (
-                        <Text size={2} color="faint" className={popupEmpty()}>
-                          {t("slackSection.actions.loadingMore")}
-                        </Text>
-                      )
-                    : slackListEmpty
+                  <SelectPopup>
+                    {isRefreshing && slackListEmpty
                       ? (
-                          <div className={popupEmpty()}>
-                            <Text size={2} weight="medium" highContrast>
-                              {t("slackSection.channel.emptyTitle")}
-                            </Text>
-                            <Text size={1} color="faint">
-                              {t("slackSection.channel.emptyDescription")}
-                            </Text>
-                          </div>
+                          <Text size={2} color="faint" className={popupEmpty()}>
+                            {t("slackSection.actions.loadingMore")}
+                          </Text>
                         )
-                      : channels.map(listedChannel => (
-                          <SelectItem key={listedChannel.id} value={listedChannel.id}>
-                            {`#${listedChannel.name}`}
-                          </SelectItem>
-                        ))}
-                </SelectPopup>
-              </Select>
+                      : slackListEmpty
+                        ? (
+                            <div className={popupEmpty()}>
+                              <Text size={2} weight="medium" highContrast>
+                                {t("slackSection.channel.emptyTitle")}
+                              </Text>
+                              <Text size={1} color="faint">
+                                {t("slackSection.channel.emptyDescription")}
+                              </Text>
+                            </div>
+                          )
+                        : channels.map(listedChannel => (
+                            <SelectItem key={listedChannel.id} value={listedChannel.id}>
+                              {`#${listedChannel.name}`}
+                            </SelectItem>
+                          ))}
+                  </SelectPopup>
+                </Select>
+              )}
             </div>
           )}
         </Card>

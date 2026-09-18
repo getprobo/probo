@@ -38,6 +38,13 @@ export interface AccessListFilters {
   clear: () => void;
 }
 
+export function accessListGraphqlVariables(order: AccessListFilters["order"], query: string) {
+  return {
+    order,
+    filter: { query },
+  };
+}
+
 export function useAccessListFilters(): AccessListFilters {
   const [searchParams, setSearchParams] = useSearchParams();
   const sort: AccessListSort = searchParams.get("sort") === "joined" ? "joined" : "requests";

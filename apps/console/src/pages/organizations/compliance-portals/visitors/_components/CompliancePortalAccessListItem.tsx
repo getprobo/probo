@@ -33,15 +33,17 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalAccessListItemFragment$key } from "#/__generated__/core/CompliancePortalAccessListItemFragment.graphql";
 
 import { ndaSignatureListKey, ndaSignatureTone } from "../_lib/ndaSignature";
+import { visitorDisplayName, visitorVisitStatus, visitorVisitStatusTone } from "../_lib/visitorIdentity";
 import { accessListItem } from "../variants";
 
 const fragment = graphql`
   fragment CompliancePortalAccessListItemFragment on CompliancePortalAccess {
     id
-    createdAt
-    profile {
+    state
+    authenticatedAt
+    identity {
       fullName
-      emailAddress
+      email
     }
     pendingRequestCount
     ndaSignature {
@@ -74,6 +76,11 @@ export function CompliancePortalAccessListItem({
     joined,
   } = accessListItem();
   const ndaStatus = access.ndaSignature?.status;
+  const displayName = visitorDisplayName(
+    access.identity.fullName,
+    access.identity.email,
+  );
+  const visitStatus = visitorVisitStatus(access.state, access.authenticatedAt);
 
   return (
     <ListItem className={item()}>
@@ -88,16 +95,16 @@ export function CompliancePortalAccessListItem({
           variant="soft"
           color="gold"
           className={avatar()}
-          fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
+          fallback={displayName.charAt(0).toUpperCase() || "?"}
         />
         <div className={main()}>
           <div className={identity()}>
             <ListItemContent>
               <Text size={2} weight="medium" color="neutral" highContrast className={name()}>
-                {access.profile.fullName}
+                {displayName}
               </Text>
               <Text size={1} color="gold" className={email()}>
-                {access.profile.emailAddress}
+                {access.identity.email}
               </Text>
             </ListItemContent>
           </div>
@@ -115,15 +122,21 @@ export function CompliancePortalAccessListItem({
             to={access.id}
             size={2}
             variant="soft"
-            color="amber"
+            color="indigo"
             className={request()}
             iconStart={<FileTextIcon aria-hidden />}
           >
             {t("accessListItem.requested", { count: access.pendingRequestCount })}
           </ButtonLink>
         )}
-        <Text size={1} color="faint" className={joined()}>
-          {t("visitorPage.joinedOn", { date: dateFormat(i18n.language, access.createdAt) })}
+        <Text size={1} color={visitorVisitStatusTone(visitStatus)} className={joined()}>
+          {visitStatus === "deactivated"
+            ? t("accessListItem.deactivated")
+            : visitStatus === "notVisited"
+              ? t("accessListItem.notVisited")
+              : t("accessListItem.visitedOn", {
+                  date: dateFormat(i18n.language, access.authenticatedAt),
+                })}
         </Text>
       </div>
     </ListItem>

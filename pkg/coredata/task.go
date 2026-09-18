@@ -49,6 +49,7 @@ type (
 		TimeEstimate   *timespan.TimeSpan `db:"time_estimate"`
 		AssignedToID   *gid.GID           `db:"assigned_to_profile_id"`
 		Deadline       *time.Time         `db:"deadline"`
+		Recurrence     *timespan.TimeSpan `db:"recurrence"`
 		Rank           int                `db:"rank"`
 		CreatedAt      time.Time          `db:"created_at"`
 		UpdatedAt      time.Time          `db:"updated_at"`
@@ -129,6 +130,7 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -185,6 +187,7 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -225,6 +228,65 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so completing a recurring
+// task cannot race another complete and insert two next occurrences.
+func (t *Task) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	taskID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+	organization_id,
+    measure_id,
+    name,
+    content,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    recurrence,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    %s
+    AND id = @task_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"task_id": taskID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tasks: %w", err)
+	}
+
+	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect tasks: %w", err)
+	}
+
+	*t = task
+
+	return nil
+}
+
 func (t *Tasks) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -244,6 +306,7 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -279,11 +342,41 @@ WHERE
 	return nil
 }
 
+func lockTaskRank(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+	state TaskState,
+	priority TaskPriority,
+) error {
+	q := `
+SELECT pg_advisory_xact_lock(
+    hashtext(@organization_id::text || ':' || @state::text || ':' || @priority::text)
+)
+`
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"state":           state,
+		"priority":        priority,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot acquire task rank lock: %w", err)
+	}
+
+	return nil
+}
+
 func (t *Task) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	if err := lockTaskRank(ctx, conn, t.OrganizationID, t.State, t.Priority); err != nil {
+		return fmt.Errorf("cannot insert task: %w", err)
+	}
+
 	q := `
 WITH next_rank AS (
     SELECT COALESCE(MAX(rank), 0) + 1 AS value
@@ -304,6 +397,7 @@ INSERT INTO
         time_estimate,
         assigned_to_profile_id,
         deadline,
+        recurrence,
         rank,
         created_at,
         updated_at
@@ -321,6 +415,7 @@ VALUES (
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
+    @recurrence,
     (SELECT value FROM next_rank),
     @created_at,
     @updated_at
@@ -341,6 +436,7 @@ RETURNING rank, priority_rank;
 		"time_estimate":          t.TimeEstimate,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
+		"recurrence":             t.Recurrence,
 		"created_at":             t.CreatedAt,
 		"updated_at":             t.UpdatedAt,
 	}
@@ -364,6 +460,10 @@ func (t *Task) Upsert(
 	conn pg.Querier,
 	scope Scoper,
 ) error {
+	if err := lockTaskRank(ctx, conn, t.OrganizationID, t.State, t.Priority); err != nil {
+		return fmt.Errorf("cannot upsert task: %w", err)
+	}
+
 	q := `
 WITH next_rank AS (
     SELECT COALESCE(MAX(rank), 0) + 1 AS value
@@ -384,6 +484,7 @@ INSERT INTO
         time_estimate,
         assigned_to_profile_id,
         deadline,
+        recurrence,
         rank,
         created_at,
         updated_at
@@ -401,6 +502,7 @@ VALUES (
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
+    @recurrence,
     (SELECT value FROM next_rank),
     @created_at,
     @updated_at
@@ -422,6 +524,7 @@ RETURNING
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -441,6 +544,7 @@ RETURNING
 		"time_estimate":          t.TimeEstimate,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
+		"recurrence":             t.Recurrence,
 		"created_at":             t.CreatedAt,
 		"updated_at":             t.UpdatedAt,
 	}
@@ -513,6 +617,7 @@ func (t *Tasks) LoadByOrganizationID(
 		time_estimate,
 		assigned_to_profile_id,
 		deadline,
+		recurrence,
 		rank,
 		priority_rank,
 		created_at,
@@ -598,6 +703,7 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -647,7 +753,8 @@ SET
   updated_at = @updated_at,
   assigned_to_profile_id = @assigned_to_profile_id,
   deadline = @deadline,
-  measure_id = @measure_id
+  measure_id = @measure_id,
+  recurrence = @recurrence
 WHERE %s
     AND id = @task_id
 `
@@ -665,6 +772,7 @@ WHERE %s
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
 		"measure_id":             t.MeasureID,
+		"recurrence":             t.Recurrence,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -679,6 +787,10 @@ func (t *Task) NextRankForStatePriority(
 	conn pg.Querier,
 	scope Scoper,
 ) error {
+	if err := lockTaskRank(ctx, conn, t.OrganizationID, t.State, t.Priority); err != nil {
+		return fmt.Errorf("cannot get next rank: %w", err)
+	}
+
 	q := `
 SELECT COALESCE(MAX(rank), 0) + 1
 FROM tasks

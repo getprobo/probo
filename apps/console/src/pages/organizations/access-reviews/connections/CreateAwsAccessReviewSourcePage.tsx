@@ -190,7 +190,7 @@ export function CreateAwsAccessReviewSourcePage({
   const roleArnInvalid = roleArn.trim() !== "" && !roleArnValid;
 
   const onSubmit = async () => {
-    if (!roleArnValid) {
+    if (!roleArnValid || isCreating) {
       return;
     }
 

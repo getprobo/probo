@@ -42,6 +42,7 @@ type (
 		ConsentExpiryDays int                                   `json:"consent_expiry_days"`
 		DefaultLanguage   string                                `json:"default_language"`
 		Categories        []CookieBannerVersionSnapshotCategory `json:"categories"`
+		IABVendorIDs      []int                                 `json:"iab_vendor_ids,omitempty"`
 	}
 
 	CookieBannerVersionSnapshotTranslation struct {
@@ -130,6 +131,10 @@ func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error)
 	var snapshot CookieBannerVersionSnapshot
 	if err := json.Unmarshal(v.Snapshot, &snapshot); err != nil {
 		return snapshot, fmt.Errorf("cannot unmarshal cookie banner version snapshot: %w", err)
+	}
+
+	if snapshot.IABVendorIDs == nil {
+		snapshot.IABVendorIDs = []int{}
 	}
 
 	// Snapshots created before tracker types were captured only ever held

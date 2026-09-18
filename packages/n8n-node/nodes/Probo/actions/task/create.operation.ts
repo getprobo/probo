@@ -185,6 +185,19 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The deadline for the task',
 	},
+	{
+		displayName: 'Recurrence Interval',
+		name: 'recurrenceInterval',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		default: '',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set.',
+	},
 ];
 
 export async function execute(
@@ -200,6 +213,7 @@ export async function execute(
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
+	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 
 	const query = `
 		mutation CreateTask($input: CreateTaskInput!) {
@@ -213,6 +227,7 @@ export async function execute(
 						priority
 						timeEstimate
 						deadline
+						recurrenceInterval
 						createdAt
 						updatedAt
 					}
@@ -232,6 +247,7 @@ export async function execute(
 			...(timeEstimate && { timeEstimate }),
 			...(assignedToId && { assignedToId }),
 			...(deadline && { deadline }),
+			...(recurrenceInterval && { recurrenceInterval }),
 		},
 	};
 
