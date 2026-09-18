@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.231.0] - 2026-09-18
+
+### Changed
+
+- `risk-analysis create`/`fork`/`update` send `--description` as
+  ProseMirror JSON, and `view`/`list` render stored rich text as
+  plaintext, matching tasks
+
 ## [0.230.0] - 2026-09-16
 
 ### Added
