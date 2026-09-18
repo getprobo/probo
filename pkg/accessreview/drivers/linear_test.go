@@ -49,6 +49,36 @@ func TestLinearDriver(t *testing.T) {
 	// Suspended accounts are hidden unless the query opts into them, so the
 	// review would silently lose them.
 	require.Len(t, records, 5)
+	assert.Equal(t, []string{"Owner"}, records[3].Roles)
+	assert.Equal(t, new(true), records[3].IsAdmin)
 	assert.Equal(t, "leaver@example.com", records[4].Email)
 	assert.Equal(t, new(false), records[4].Active)
+}
+
+func TestLinearRoles(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		owner bool
+		admin bool
+		guest bool
+		want  []string
+	}{
+		{name: "owner", owner: true, admin: true, want: []string{"Owner"}},
+		{name: "admin", admin: true, want: []string{"Admin"}},
+		{name: "guest", guest: true, want: []string{"Guest"}},
+		{name: "member", want: []string{"Member"}},
+	}
+
+	for _, c := range cases {
+		t.Run(
+			c.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, c.want, linearRoles(c.owner, c.admin, c.guest))
+			},
+		)
+	}
 }
