@@ -61,6 +61,17 @@ describe("toFieldErrors", () => {
         ])).toBeUndefined();
         expect(toFieldErrors(null)).toBeUndefined();
     });
+
+    it("maps field errors nested under source.errors", () => {
+        expect(toFieldErrors({
+            message: "Unexpected error",
+            source: {
+                errors: [
+                    { message: "too long", extensions: { code: "INVALID", field: "name" } },
+                ],
+            },
+        })).toEqual({ name: "too long" });
+    });
 });
 
 describe("formatError", () => {

@@ -47,11 +47,26 @@ function graphqlErrorMessage(error: unknown): string | undefined {
   return typeof error.message === "string" ? error.message : undefined;
 }
 
+function nestedGraphqlErrors(error: unknown): unknown[] {
+  if (error != null && typeof error === "object" && "source" in error) {
+    const source = error.source;
+    if (
+      source != null
+      && typeof source === "object"
+      && "errors" in source
+      && Array.isArray(source.errors)
+    ) {
+      return source.errors;
+    }
+  }
+  return [error];
+}
+
 export function toFieldErrors(error: unknown): Record<string, string> | undefined {
-  const errors = Array.isArray(error) ? error : [error];
+  const items = Array.isArray(error) ? error : [error];
   const fieldErrors: Record<string, string> = {};
 
-  for (const item of errors) {
+  for (const item of items.flatMap(nestedGraphqlErrors)) {
     const field = graphqlErrorField(item);
     const message = graphqlErrorMessage(item);
     if (field != null && message != null) {
