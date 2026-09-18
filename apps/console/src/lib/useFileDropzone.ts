@@ -18,28 +18,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type FileDropzoneError, useFileDropzone } from "#/lib/useFileDropzone";
+import { type Accept, useDropzone } from "react-dropzone";
 
-export type NdaUploadError = FileDropzoneError;
+export type FileDropzoneError = "invalidFileType" | "fileTooLarge";
 
-const NDA_MAX_BYTES = 10 * 1024 * 1024;
+export interface UseFileDropzoneOptions {
+  disabled?: boolean;
+  accept: Accept;
+  maxSize: number;
+  noClick?: boolean;
+  noKeyboard?: boolean;
+  onFile: (file: File) => void;
+  onReject: (error: FileDropzoneError) => void;
+}
 
-export function useNdaDropzone({
-  disabled,
+export function useFileDropzone({
+  disabled = false,
+  accept,
+  maxSize,
+  noClick = false,
+  noKeyboard = false,
   onFile,
   onReject,
-}: {
-  disabled: boolean;
-  onFile: (file: File) => void;
-  onReject: (error: NdaUploadError) => void;
-}) {
-  return useFileDropzone({
+}: UseFileDropzoneOptions) {
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    noClick,
+    noKeyboard,
+    multiple: false,
     disabled,
-    onFile,
-    onReject,
-    noClick: true,
-    noKeyboard: true,
-    accept: { "application/pdf": [".pdf"] },
-    maxSize: NDA_MAX_BYTES,
+    accept,
+    maxSize,
+    onDrop(acceptedFiles, fileRejections) {
+      const rejection = fileRejections[0];
+      if (rejection != null) {
+        const code = rejection.errors[0]?.code;
+        onReject(code === "file-too-large" ? "fileTooLarge" : "invalidFileType");
+        return;
+      }
+
+      const file = acceptedFiles[0];
+      if (file != null) {
+        onFile(file);
+      }
+    },
   });
+
+  return { getRootProps, getInputProps, isDragActive, open };
 }
