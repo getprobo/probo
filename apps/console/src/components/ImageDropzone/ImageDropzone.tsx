@@ -118,7 +118,7 @@ export function ImageDropzone({
           <IconButton
             type="button"
             size={1}
-            variant="ghost"
+            variant="outline"
             color="red"
             aria-label={clearLabel ?? placeholder}
             disabled={uploading}
