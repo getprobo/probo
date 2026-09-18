@@ -31,6 +31,8 @@ import type { ComponentRef, Ref } from "react";
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
+import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
+
 import { pdfPreview } from "./variants";
 
 // Bundle the pdf.js worker with the app (via Vite's `?url`) instead of loading
@@ -98,6 +100,7 @@ interface PdfPreviewProps {
 // Reports the page count and the visible page, and exposes `scrollToPage`.
 export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }: PdfPreviewProps) {
   const [numPages, setNumPages] = useState(0);
+  const [loadError, setLoadError] = useState(false);
   const [pageWidth, setPageWidth] = useState<number | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<ComponentRef<typeof Document>>(null);
@@ -173,6 +176,22 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
 
   const slots = pdfPreview();
 
+  useEffect(() => {
+    setLoadError(false);
+    setNumPages(0);
+    onNumPages(0);
+  }, [file, onNumPages]);
+
+  if (loadError) {
+    return (
+      <div className={slots.viewport()}>
+        <div className={slots.loading()}>
+          <InlineErrorCard onRetry={() => window.location.reload()} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={wrapperRef} onScrollEnd={resolveVisiblePage} className={slots.viewport()}>
       <Document
@@ -185,12 +204,13 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
           </div>
         )}
         onLoadSuccess={(document) => {
+          setLoadError(false);
           setNumPages(document.numPages);
           onNumPages(document.numPages);
           onVisiblePageChange(1);
         }}
-        onLoadError={(error) => {
-          console.error("Failed to load PDF document", error);
+        onLoadError={() => {
+          setLoadError(true);
         }}
       >
         {pageWidth != null
