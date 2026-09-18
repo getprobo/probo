@@ -54,7 +54,7 @@ func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 
   # Run a mutation with variables
   prb api 'mutation($input: CreateRiskInput!) { createRisk(input: $input) { riskEdge { node { id } } } }' \
-    -f input='{"organizationId":"...","name":"Test","category":"Operational","treatment":"ACCEPTED","inherentLikelihood":3,"inherentImpact":3}'
+    -f input='{"organizationId":"...","name":"Test","category":"Operational"}'
 
   # Query the connect schema
   prb api --schema connect 'query { viewer { id email } }'

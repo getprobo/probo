@@ -21,7 +21,6 @@
 import {
   Button,
   IconTrashCan,
-  RiskBadge,
   Table,
   Tbody,
   Td,
@@ -44,8 +43,6 @@ const linkedRiskFragment = graphql`
     id
     referenceId
     name
-    inherentRiskScore
-    residualRiskScore
   }
 `;
 
@@ -111,8 +108,6 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
           <Tr>
             <Th>{t("linkedRisksCard.columns.referenceId")}</Th>
             <Th>{t("linkedRisksCard.columns.name")}</Th>
-            <Th>{t("linkedRisksCard.columns.initialRisk")}</Th>
-            <Th>{t("linkedRisksCard.columns.residualRisk")}</Th>
             {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
@@ -120,7 +115,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
           {props.risks.length === 0 && (
             <Tr>
               <Td
-                colSpan={props.readOnly ? 4 : 5}
+                colSpan={props.readOnly ? 2 : 3}
                 className="text-center text-txt-secondary"
               >
                 {t("linkedRisksCard.empty")}
@@ -143,7 +138,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
               onLink={onAttach}
               onUnlink={onDetach}
             >
-              <TrButton colspan={5}>
+              <TrButton colspan={3}>
                 {t("linkedRisksCard.actions.link")}
               </TrButton>
             </LinkedRisksDialog>
@@ -169,16 +164,6 @@ function RiskRow(props: {
         <span className="font-mono text-sm">{risk.referenceId}</span>
       </Td>
       <Td>{risk.name}</Td>
-      <Td>
-        {risk.inherentRiskScore != null
-          ? <RiskBadge level={risk.inherentRiskScore} />
-          : "—"}
-      </Td>
-      <Td>
-        {risk.residualRiskScore != null
-          ? <RiskBadge level={risk.residualRiskScore} />
-          : "—"}
-      </Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">
           <Button
