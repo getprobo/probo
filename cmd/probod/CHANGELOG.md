@@ -4,10 +4,15 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.291.0] - 2026-09-18
+
 ### Added
 
 - The compliance-portal Slack page explains that reviewers must run
   `/probot login` before they can act on access requests from Slack
+- Risk analysis descriptions use the same Tiptap rich text editor as
+  tasks, stored as JSONB so the console, MCP, CLI, and n8n stay in sync
+- Evidence preview renders CSV, text, and Markdown files in the console
 
 ### Fixed
 
