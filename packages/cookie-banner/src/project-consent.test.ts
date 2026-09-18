@@ -52,11 +52,23 @@ describe("projectConsentFromTCF", () => {
     });
   });
 
-  it("requires every mapped purpose via consent or legitimate interest", () => {
+  it("requires every mapped purpose via consent, not legitimate interest", () => {
     expect(
       projectConsentFromTCF(categories, {
         purposeConsents: [1, 3],
         purposeLegitimateInterests: [4],
+      }),
+    ).toEqual({
+      necessary: true,
+      advertising: false,
+      analytics: false,
+      functional: false,
+    });
+
+    expect(
+      projectConsentFromTCF(categories, {
+        purposeConsents: [1, 3, 4],
+        purposeLegitimateInterests: [],
       }),
     ).toEqual({
       necessary: true,

@@ -6,8 +6,8 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ### Added
 
-- `cookie-banner view`/`update` expose `--publisher-country-code`
-- `cookie-category view`/`update` expose `--tcf-purpose-ids`
+- `cookie-banner view` shows the publisher country; `update` accepts `--publisher-country-code`
+- `cookie-category view` shows TCF purpose IDs; `update` accepts `--tcf-purpose-ids`
 - `consent-record view` shows the optional IAB TCF string when present
 
 ## [0.232.0] - 2026-09-22

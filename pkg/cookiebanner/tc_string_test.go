@@ -44,6 +44,8 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 	ccpa := RegulationCCPA
 	wrongCmpID := mintTCString(tcCookieVersion, 2, true)
 	customCmpID := mintTCString(tcCookieVersion, 123, true)
+	truncatedCore := mintTruncatedCore(tcCookieVersion, uint(DefaultTCFCmpID)) + "." + mintDisclosedSegment()
+	truncatedDisclosed := mintTCString(tcCookieVersion, uint(DefaultTCFCmpID), false) + ".IA"
 
 	tests := []struct {
 		name       string
@@ -101,6 +103,22 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 			tcfEnabled: true,
 			regulation: &gdpr,
 			tc:         new(coreOnlyTCString),
+			wantField:  "tc",
+			wantCode:   validator.ErrorCodeInvalidFormat,
+		},
+		{
+			name:       "rejects a truncated core with a disclosed segment",
+			tcfEnabled: true,
+			regulation: &gdpr,
+			tc:         &truncatedCore,
+			wantField:  "tc",
+			wantCode:   validator.ErrorCodeInvalidFormat,
+		},
+		{
+			name:       "rejects a truncated disclosed-vendors segment",
+			tcfEnabled: true,
+			regulation: &gdpr,
+			tc:         &truncatedDisclosed,
 			wantField:  "tc",
 			wantCode:   validator.ErrorCodeInvalidFormat,
 		},
@@ -173,12 +191,32 @@ func TestParseTCString_AcceptsEncoderFixture(t *testing.T) {
 	assert.NoError(t, parseTCString(validTCStringV23, DefaultTCFCmpID))
 }
 
+func mintTruncatedCore(version, cmpID uint) string {
+	var core bitWriter
+	core.write(version, tcCookieVersionBits)
+	core.write(0, tcCreatedBits)
+	core.write(0, tcLastUpdatedBits)
+	core.write(cmpID, tcCmpIDBits)
+
+	return core.encode()
+}
+
+func mintDisclosedSegment() string {
+	var segment bitWriter
+	segment.write(tcDisclosedVendorsSegment, tcSegmentTypeBits)
+	segment.write(0, tcMaxVendorIDBits)
+	segment.write(0, tcVendorEncodingBits)
+
+	return segment.encode()
+}
+
 func mintTCString(version, cmpID uint, disclosed bool) string {
 	var core bitWriter
 	core.write(version, tcCookieVersionBits)
 	core.write(0, tcCreatedBits)
 	core.write(0, tcLastUpdatedBits)
 	core.write(cmpID, tcCmpIDBits)
+	core.write(0, tcCoreFixedBitsAfterCmpID)
 
 	encoded := core.encode()
 	if !disclosed {
@@ -187,6 +225,8 @@ func mintTCString(version, cmpID uint, disclosed bool) string {
 
 	var segment bitWriter
 	segment.write(tcDisclosedVendorsSegment, tcSegmentTypeBits)
+	segment.write(0, tcMaxVendorIDBits)
+	segment.write(0, tcVendorEncodingBits)
 
 	return encoded + "." + segment.encode()
 }

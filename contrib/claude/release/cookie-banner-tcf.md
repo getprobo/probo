@@ -8,7 +8,7 @@ After confirming commits below, follow the
 - **Tag pattern**: `@probo/cookie-banner-tcf/v*`
 - **Version source**: `packages/cookie-banner-tcf/package.json`
 - **Version bump**: `npm --workspace @probo/cookie-banner-tcf version <X.Y.Z> --no-git-tag-version`
-- **Build**: `npm --workspace @probo/cookie-banner-tcf run build`
+- **Build**: `npm --workspace @probo/cookie-banner run build && npm --workspace @probo/cookie-banner-tcf run build`
 - **Changelog**: `packages/cookie-banner-tcf/CHANGELOG.md`
 - **Files to stage**: `packages/cookie-banner-tcf/package.json`,
   `packages/cookie-banner-tcf/CHANGELOG.md`, `package-lock.json`

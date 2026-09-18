@@ -22,6 +22,7 @@ package factory
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -125,6 +126,17 @@ INSERT INTO common_gvl_vendors (
 	require.NoError(t, err, "test setup: cannot seed common gvl vendor")
 
 	return iabVendorID, version
+}
+
+var commonGVLCatalogMu sync.Mutex
+
+// LockCommonGVLCatalog serializes tests that rewrite the singleton
+// common_gvl_state pointer so GetActiveBannerConfig cannot observe
+// another test's version.
+func LockCommonGVLCatalog(t *testing.T) {
+	t.Helper()
+	commonGVLCatalogMu.Lock()
+	t.Cleanup(commonGVLCatalogMu.Unlock)
 }
 
 // SeedCommonGVLCatalogState points the singleton catalog pointer at version.

@@ -21,7 +21,7 @@
 import type { BannerConfig, TCFGVL, TCFRuntime } from "@probo/cookie-banner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { startTCF } from "./api";
+import { grantForAction, startTCF } from "./api";
 import { setLastTCString } from "./session";
 
 const { update, runtimeHolder, cmpApiCtor } = vi.hoisted(() => ({
@@ -145,7 +145,7 @@ describe("startTCF displayStatus", () => {
     expect(update).toHaveBeenCalledWith(stored, false);
   });
 
-  it("does not update CmpApi when TCF is inactive", () => {
+  it("does not construct CmpApi when TCF is inactive", () => {
     const runtime = runtimeHolder.current;
 
     runtime?.onConfig(bannerConfig({ regulation: "CCPA", tcf: {} }));
@@ -154,6 +154,23 @@ describe("startTCF displayStatus", () => {
     runtime?.onUIVisible?.(true);
     expect(update).not.toHaveBeenCalled();
     expect(cmpApiCtor).not.toHaveBeenCalled();
+  });
+
+  it("falls back to an empty TC when the stored string is rejected", () => {
+    const runtime = runtimeHolder.current;
+    update.mockImplementationOnce(() => {
+      throw new Error("invalid tc");
+    });
+
+    runtime?.onConfig(bannerConfig(), "C-bad-tc");
+
+    expect(update).toHaveBeenCalledWith("", true);
+  });
+
+  it("maps ACKNOWLEDGE to the all-granted TC state", () => {
+    expect(grantForAction("ACKNOWLEDGE", undefined)).toBe("all");
+    expect(grantForAction("ACCEPT_ALL", undefined)).toBe("all");
+    expect(grantForAction("REJECT_ALL", undefined)).toBe("none");
   });
 
   it("constructs CmpApi with the instance cmp_id", () => {

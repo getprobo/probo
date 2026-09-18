@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -177,10 +178,15 @@ export async function execute(
 			.filter((s) => s.length > 0);
 	}
 	if (tcfPurposeIds) {
-		input.tcfPurposeIds = tcfPurposeIds
-			.split(',')
-			.map((s) => Number.parseInt(s.trim(), 10))
-			.filter((id) => Number.isInteger(id) && id > 0);
+		const ids: number[] = [];
+		for (const token of tcfPurposeIds.split(',').map((s) => s.trim()).filter((s) => s.length > 0)) {
+			const id = Number.parseInt(token, 10);
+			if (!Number.isInteger(id) || String(id) !== token || id < 1 || id > 11) {
+				throw new NodeOperationError(this.getNode(), `Invalid TCF purpose ID: ${token}`);
+			}
+			ids.push(id);
+		}
+		input.tcfPurposeIds = ids;
 	}
 	if (posthogConsent) input.posthogConsent = posthogConsent === 'true';
 

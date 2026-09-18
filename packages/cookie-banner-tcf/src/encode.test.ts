@@ -22,9 +22,10 @@ import { TCString } from "@iabtechlabtcf/core";
 import type { BannerConfig, TCFGVL } from "@probo/cookie-banner";
 import { describe, expect, it } from "vitest";
 
-import { encodeTCString, gdprApplies } from "./encode";
+import { encodeTCString, gdprApplies, requireCmpVersion } from "./encode";
 
 const vendorId = 52;
+const unusedVendorId = 99;
 
 const tcfGvl: TCFGVL = {
   gvlSpecificationVersion: 3,
@@ -36,6 +37,11 @@ const tcfGvl: TCFGVL = {
       id: 1,
       name: "Store and/or access information on a device",
       description: "Cookies, device or similar online identifiers.",
+    },
+    "2": {
+      id: 2,
+      name: "Select basic ads",
+      description: "Ads can be shown based on limited data.",
     },
   },
   specialPurposes: {},
@@ -63,6 +69,17 @@ const tcfGvl: TCFGVL = {
       cookieMaxAgeSeconds: 86400,
       cookieRefresh: false,
       usesNonCookieAccess: false,
+    },
+    [String(unusedVendorId)]: {
+      id: unusedVendorId,
+      name: "Unused Vendor",
+      purposes: [2],
+      legIntPurposes: [],
+      flexiblePurposes: [],
+      specialPurposes: [],
+      features: [],
+      specialFeatures: [],
+      policyUrl: "https://unused.example.com/privacy",
     },
   },
 };
@@ -136,6 +153,10 @@ describe("encodeTCString", () => {
     ).toThrow(/tcf.cmp_version is missing or invalid/);
   });
 
+  it("throws when tcf.cmp_version exceeds the 12-bit field", () => {
+    expect(() => requireCmpVersion(4096)).toThrow(/tcf.cmp_version is missing or invalid/);
+  });
+
   it("encodes disclosed vendors on reject without granting consent", () => {
     const encoded = encodeTCString(bannerConfig(), "none");
     const decoded = TCString.decode(encoded);
@@ -170,7 +191,11 @@ describe("encodeTCString", () => {
     const decoded = TCString.decode(encoded);
 
     expect(decoded.purposeConsents.has(1)).toBe(true);
+    expect(decoded.purposeConsents.has(2)).toBe(false);
+    expect(decoded.purposeLegitimateInterests.has(1)).toBe(false);
     expect(decoded.vendorConsents.has(vendorId)).toBe(true);
+    expect(decoded.vendorConsents.has(unusedVendorId)).toBe(false);
+    expect(decoded.vendorLegitimateInterests.has(vendorId)).toBe(false);
     expect(decoded.specialFeatureOptins.has(1)).toBe(false);
   });
 });

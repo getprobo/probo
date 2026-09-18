@@ -143,6 +143,10 @@ func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error)
 	// type. Backfill them as cookies so downstream consumers (policy
 	// generation, GraphQL, served banner config) see a valid type.
 	for i := range snapshot.Categories {
+		if snapshot.Categories[i].TCFPurposeIDs == nil {
+			snapshot.Categories[i].TCFPurposeIDs = []int{}
+		}
+
 		for j := range snapshot.Categories[i].Cookies {
 			if snapshot.Categories[i].Cookies[j].TrackerType == "" {
 				snapshot.Categories[i].Cookies[j].TrackerType = TrackerTypeCookie

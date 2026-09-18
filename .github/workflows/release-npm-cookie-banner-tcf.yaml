@@ -56,7 +56,14 @@ jobs:
             echo "$(sha256sum "$file" | head -c 64)  $file"
           done > ../checksums.txt
       - run: "npm --workspace @probo/cookie-banner-tcf publish --access public --dry-run"
-      - run: "npm --workspace @probo/cookie-banner-tcf publish --access public"
+      - name: "Publish to npm"
+        run: |
+          VERSION="$(node -p "require('./packages/cookie-banner-tcf/package.json').version")"
+          if npm view "@probo/cookie-banner-tcf@${VERSION}" version >/dev/null 2>&1; then
+            echo "@probo/cookie-banner-tcf@${VERSION} is already published; skipping"
+          else
+            npm --workspace @probo/cookie-banner-tcf publish --access public
+          fi
       - uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
         with:
           subject-path: "packages/cookie-banner-tcf/dist/**"
@@ -67,6 +74,10 @@ jobs:
       - name: "Extract release notes"
         run: |
           VERSION="${GITHUB_REF_NAME##*/v}"
+          if ! grep -qE "^## \\[${VERSION}\\]" packages/cookie-banner-tcf/CHANGELOG.md; then
+            echo "CHANGELOG.md has no ## [${VERSION}] heading" >&2
+            exit 1
+          fi
           awk -v ver="$VERSION" '
             /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
             found

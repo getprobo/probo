@@ -77,7 +77,7 @@ export function requireCmpID(cmpId: number | undefined): number {
 }
 
 export function requireCmpVersion(cmpVersion: number | undefined): number {
-  if (cmpVersion !== undefined && cmpVersion >= 1) {
+  if (cmpVersion !== undefined && cmpVersion >= 1 && cmpVersion <= 4095) {
     return cmpVersion;
   }
 

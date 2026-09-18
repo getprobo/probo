@@ -2383,6 +2383,10 @@ func (s *Service) attachTCFVendors(
 		})
 	}
 
+	if snapshot == nil {
+		return nil
+	}
+
 	config.TCF.GVL = buildTCFGVL(snapshot, vendors, iabVendorIDs)
 	if config.TCF.GVLVersion != nil && config.TCF.GVL.VendorListVersion == 0 {
 		config.TCF.GVL.VendorListVersion = *config.TCF.GVLVersion

@@ -298,8 +298,9 @@ export class CookieBannerClient {
 
   customize(categories: Record<string, boolean>): void {
     const cfg = this.config;
-    const consentData = tcfProjects(cfg) && getTCFRuntime()?.getPendingChoices
-      ? projectConsentFromTCF(cfg.categories, getTCFRuntime()?.getPendingChoices?.() ?? null)
+    const pendingChoices = getTCFRuntime()?.getPendingChoices?.();
+    const consentData = tcfProjects(cfg) && pendingChoices
+      ? projectConsentFromTCF(cfg.categories, pendingChoices)
       : Object.fromEntries(
           cfg.categories.map(cat => [
             cat.slug,

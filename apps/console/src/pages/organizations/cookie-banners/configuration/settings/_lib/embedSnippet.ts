@@ -67,6 +67,51 @@ function tcfStubSnippet(): string {
   }
   stub.q = q;
   w.__tcfapi = stub;
+  if (!w.frames || w.frames.__tcfapiLocator) {
+    return;
+  }
+  function addFrame() {
+    if (!document.body) {
+      setTimeout(addFrame, 5);
+      return;
+    }
+    if (w.frames.__tcfapiLocator) {
+      return;
+    }
+    var iframe = document.createElement("iframe");
+    iframe.style.cssText = "display:none";
+    iframe.name = "__tcfapiLocator";
+    iframe.title = "__tcfapiLocator";
+    document.body.appendChild(iframe);
+  }
+  addFrame();
+  w.addEventListener("message", function (event) {
+    var payload;
+    try {
+      var data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      payload = data && data.__tcfapiCall;
+    } catch (e) {
+      return;
+    }
+    if (!payload || typeof payload.command !== "string") {
+      return;
+    }
+    stub(payload.command, payload.version, function (returnValue, success) {
+      var returnMsg = {
+        __tcfapiReturn: {
+          returnValue: returnValue,
+          success: success,
+          callId: payload.callId
+        }
+      };
+      if (event.source && event.source.postMessage) {
+        event.source.postMessage(
+          typeof event.data === "string" ? JSON.stringify(returnMsg) : returnMsg,
+          "*"
+        );
+      }
+    }, payload.parameter);
+  });
 })();
 </script>`;
 }

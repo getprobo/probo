@@ -255,6 +255,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 	t.Run("returns catalog versions", func(t *testing.T) {
 		t.Parallel()
+		factory.LockCommonGVLCatalog(t)
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		_, version := factory.SeedCommonGVLVendor(t, "Catalog Version Vendor", false)
@@ -501,6 +502,7 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 	t.Run("published config nests tcf for selected vendors", func(t *testing.T) {
 		t.Parallel()
+		factory.LockCommonGVLCatalog(t)
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		bannerID := factory.CreateCookieBanner(owner)

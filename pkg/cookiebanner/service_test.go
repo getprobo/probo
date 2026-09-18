@@ -339,7 +339,7 @@ func TestRecordConsentRequest_Validate(t *testing.T) {
 	})
 }
 
-func TestBuildBannerConfig_TCFEnabled(t *testing.T) {
+func TestBuildBannerConfig_TCF(t *testing.T) {
 	t.Parallel()
 
 	tenant := gid.NewTenantID()
