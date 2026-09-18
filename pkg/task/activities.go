@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package task
 
 import (
 	"context"
@@ -32,7 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/timespan"
 )
 
-func insertTaskCreatedActivity(
+func InsertCreatedActivity(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
@@ -56,7 +56,7 @@ func insertTaskCreatedActivity(
 	return nil
 }
 
-func insertTaskFieldActivity(
+func insertFieldActivity(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
@@ -86,7 +86,7 @@ func insertTaskFieldActivity(
 	return nil
 }
 
-func insertTaskUpdateActivities(
+func InsertUpdateActivities(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
@@ -96,7 +96,7 @@ func insertTaskUpdateActivities(
 	now time.Time,
 ) error {
 	if task.Name != oldTask.Name {
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -112,7 +112,7 @@ func insertTaskUpdateActivities(
 	}
 
 	if task.Content != oldTask.Content {
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -128,7 +128,7 @@ func insertTaskUpdateActivities(
 	}
 
 	if task.State != oldTask.State {
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -144,7 +144,7 @@ func insertTaskUpdateActivities(
 	}
 
 	if task.Priority != oldTask.Priority {
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -160,7 +160,7 @@ func insertTaskUpdateActivities(
 	}
 
 	if !timespanPtrEqual(oldTask.TimeEstimate, task.TimeEstimate) {
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -176,7 +176,7 @@ func insertTaskUpdateActivities(
 	}
 
 	if !timePtrEqual(oldTask.Deadline, task.Deadline) {
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -202,7 +202,7 @@ func insertTaskUpdateActivities(
 			return fmt.Errorf("cannot load assignee name: %w", err)
 		}
 
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -228,7 +228,7 @@ func insertTaskUpdateActivities(
 			return fmt.Errorf("cannot load measure name: %w", err)
 		}
 
-		if err := insertTaskFieldActivity(
+		if err := insertFieldActivity(
 			ctx,
 			tx,
 			scope,
@@ -246,7 +246,7 @@ func insertTaskUpdateActivities(
 	return nil
 }
 
-func resolveTaskActivityActorID(
+func ResolveActivityActorID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,

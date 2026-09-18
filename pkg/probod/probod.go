@@ -94,6 +94,8 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -407,6 +409,17 @@ func (impl *Implm) Run(
 
 	slackAPIBaseURL := slackRegistration.Endpoints.APIBase
 
+	// Task sync talks to Linear with the token the LINEAR connector row
+	// minted, so it follows that registration's APIBase rather than pin
+	// api.linear.app, or an override would send a sandbox-issued token to
+	// the real vendor.
+	linearRegistration, ok := providerRegistry.Get(coredata.ConnectorProviderLinear)
+	if !ok {
+		return fmt.Errorf("cannot configure linear task sync: no linear connector provider registered")
+	}
+
+	linearAPIBaseURL := linearRegistration.Endpoints.APIBase
+
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
@@ -600,7 +613,8 @@ func (impl *Implm) Run(
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings).
-		Register(riskmanagement.OAuth2ScopeMappings)
+		Register(riskmanagement.OAuth2ScopeMappings).
+		Register(task.OAuth2ScopeMappings)
 
 	var acmeService *certmanager.ACMEService
 
@@ -827,9 +841,19 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(task.PolicySet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
+
+	taskService := task.NewService(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		baseURL.String(),
+		linearAPIBaseURL,
+		l.Named("task"),
+	)
 
 	itamService := itam.NewService(
 		pgClient,
@@ -952,6 +976,7 @@ func (impl *Implm) Run(
 			ThirdParty:              thirdPartyService,
 			RiskManagement:          riskManagementService,
 			ITAM:                    itamService,
+			Task:                    taskService,
 			Slack:                   slackService,
 			BotDeliveryDestinations: slackMessages,
 			ComplianceMessages:      complianceMessages,
@@ -986,6 +1011,7 @@ func (impl *Implm) Run(
 			AzureConnectorInstall: cloudazure.ConnectorInstallConfig{
 				TerraformModuleSource: impl.cfg.IdentityFederation.AzureTerraformModuleSource,
 			},
+			LinearWebhookSecret: impl.cfg.GetLinearWebhookSecret(),
 		},
 	)
 	if err != nil {
@@ -1262,6 +1288,62 @@ func (impl *Implm) Run(
 		func() {
 			if err := impl.runExportJob(exportJobExporterCtx, proboService, l.Named("export-job-exporter")); err != nil {
 				cancel(fmt.Errorf("export job exporter crashed: %w", err))
+			}
+		},
+	)
+
+	taskSyncOutboundWorker := tasksync.NewOutboundWorker(
+		taskService.Sync,
+		l.Named("task-sync-outbound"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	taskSyncOutboundWorkerCtx, stopTaskSyncOutboundWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := taskSyncOutboundWorker.Run(taskSyncOutboundWorkerCtx); err != nil {
+				cancel(fmt.Errorf("task sync outbound worker crashed: %w", err))
+			}
+		},
+	)
+
+	linearWebhookWorker := tasksync.NewWebhookWorker(
+		taskService.Sync,
+		l.Named("linear-webhook"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	linearWebhookWorkerCtx, stopLinearWebhookWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	linearWebhookRetentionWorker := tasksync.NewRetentionWorker(
+		pgClient,
+		l.Named("linear-webhook-reliability-retention-worker"),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	linearWebhookRetentionWorkerCtx, stopLinearWebhookRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := linearWebhookWorker.Run(linearWebhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("linear webhook worker crashed: %w", err))
+			}
+		},
+	)
+
+	wg.Go(
+		func() {
+			if err := linearWebhookRetentionWorker.Run(linearWebhookRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("linear webhook retention worker crashed: %w", err))
 			}
 		},
 	)
@@ -1587,6 +1669,9 @@ func (impl *Implm) Run(
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
+	stopTaskSyncOutboundWorker()
+	stopLinearWebhookWorker()
+	stopLinearWebhookRetentionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentApprovalQuorumPDFWorker()
 	stopDocumentNotification()

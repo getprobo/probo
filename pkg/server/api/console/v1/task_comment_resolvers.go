@@ -13,27 +13,27 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 // CreateTaskComment is the resolver for the createTaskComment field.
 func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.CreateTaskCommentInput) (*types.CreateTaskCommentPayload, error) {
-	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskCommentCreate)
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskCommentCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 
-	taskComment, err := r.probo.TaskComments.Create(
+	taskComment, err := r.task.CreateComment(
 		ctx, scope,
-		probo.CreateTaskCommentRequest{
+		task.CreateTaskCommentRequest{
 			TaskID:     input.TaskID,
 			OwnerID:    input.OwnerID,
 			IdentityID: identity.ID,
@@ -61,14 +61,14 @@ func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.Cr
 
 // UpdateTaskComment is the resolver for the updateTaskComment field.
 func (r *mutationResolver) UpdateTaskComment(ctx context.Context, input types.UpdateTaskCommentInput) (*types.UpdateTaskCommentPayload, error) {
-	scope, err := r.authorize(ctx, input.TaskCommentID, probo.ActionTaskCommentUpdate)
+	scope, err := r.authorize(ctx, input.TaskCommentID, task.ActionTaskCommentUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	taskComment, err := r.probo.TaskComments.Update(
+	taskComment, err := r.task.UpdateComment(
 		ctx, scope,
-		probo.UpdateTaskCommentRequest{
+		task.UpdateTaskCommentRequest{
 			ID:      input.TaskCommentID,
 			OwnerID: gqlutils.UnwrapOmittable(input.OwnerID),
 			Content: gqlutils.UnwrapOmittable(input.Content),
@@ -95,12 +95,12 @@ func (r *mutationResolver) UpdateTaskComment(ctx context.Context, input types.Up
 
 // DeleteTaskComment is the resolver for the deleteTaskComment field.
 func (r *mutationResolver) DeleteTaskComment(ctx context.Context, input types.DeleteTaskCommentInput) (*types.DeleteTaskCommentPayload, error) {
-	scope, err := r.authorize(ctx, input.TaskCommentID, probo.ActionTaskCommentDelete)
+	scope, err := r.authorize(ctx, input.TaskCommentID, task.ActionTaskCommentDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.TaskComments.Delete(ctx, scope, input.TaskCommentID); err != nil {
+	if err := r.task.DeleteComment(ctx, scope, input.TaskCommentID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -139,7 +139,7 @@ func (r *taskCommentResolver) Owner(ctx context.Context, obj *types.TaskComment)
 
 // Task is the resolver for the task field.
 func (r *taskCommentResolver) Task(ctx context.Context, obj *types.TaskComment) (*types.Task, error) {
-	if _, err := r.authorize(ctx, obj.Task.ID, probo.ActionTaskGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Task.ID, task.ActionTaskGet); err != nil {
 		return nil, err
 	}
 
@@ -166,12 +166,12 @@ func (r *taskCommentResolver) Permission(ctx context.Context, obj *types.TaskCom
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskCommentConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskCommentConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTaskCommentList)
+	scope, err := r.authorize(ctx, obj.ParentID, task.ActionTaskCommentList)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.TaskComments.CountForTaskID(ctx, scope, obj.ParentID)
+	count, err := r.task.CountCommentsForTaskID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count task comments", log.Error(err))
 

@@ -27,6 +27,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -544,6 +546,37 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 	}
 
 	return types.NewConnectors(connectors), nil
+}
+
+// LinearTeams is the resolver for the linearTeams field.
+func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organization) ([]*types.LinearTeam, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	teams, err := r.task.Sync.ListLinearTeams(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
+			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+			return []*types.LinearTeam{}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Linear teams", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.LinearTeam, 0, len(teams))
+	for _, team := range teams {
+		result = append(result, &types.LinearTeam{
+			ID:   team.ID,
+			Name: team.Name,
+			Key:  team.Key,
+		})
+	}
+
+	return result, nil
 }
 
 // SlackbotAvailable is the resolver for the slackbotAvailable field.
@@ -1388,7 +1421,7 @@ func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *t
 
 // Tasks is the resolver for the tasks field.
 func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskList)
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskList)
 	if err != nil {
 		return nil, err
 	}
@@ -1407,7 +1440,7 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Tasks.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	page, err := r.task.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

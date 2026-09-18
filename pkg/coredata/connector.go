@@ -193,7 +193,7 @@ LIMIT 1;
 
 	*c = loadedConnector
 
-	if err := c.decryptConnection(encryptionKey); err != nil {
+	if err := c.DecryptConnection(encryptionKey); err != nil {
 		return fmt.Errorf("cannot decrypt connection: %w", err)
 	}
 
@@ -231,25 +231,8 @@ func (c *Connector) LoadByID(
 		return err
 	}
 
-	// Decrypt the connection
-	if len(c.EncryptedConnection) > 0 {
-		decryptedConnection, err := cipher.Decrypt(c.EncryptedConnection, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt connection: %w", err)
-		}
-
-		c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
-		if err != nil {
-			return fmt.Errorf("cannot unmarshal connection: %w", err)
-		}
-
-		if c.Provider == ConnectorProviderSlack {
-			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-				settings, _ := ConnectorSettings[SlackConnectorSettings](c)
-				slackConn.Settings.Channel = settings.Channel
-				slackConn.Settings.ChannelID = settings.ChannelID
-			}
-		}
+	if err := c.DecryptConnection(encryptionKey); err != nil {
+		return fmt.Errorf("cannot decrypt connection: %w", err)
 	}
 
 	return nil
@@ -710,10 +693,10 @@ WHERE
 	return nil
 }
 
-// decryptConnection decrypts and unmarshals the connector's encrypted
-// connection blob, hydrating Slack channel settings from the settings
-// column. A connector without a blob is left with a nil Connection.
-func (c *Connector) decryptConnection(encryptionKey cipher.EncryptionKey) error {
+// DecryptConnection hydrates Connection from EncryptedConnection already
+// present on the struct. Call it after a metadata or list load instead of
+// LoadByID, which would query the same row again.
+func (c *Connector) DecryptConnection(encryptionKey cipher.EncryptionKey) error {
 	if len(c.EncryptedConnection) == 0 {
 		return nil
 	}

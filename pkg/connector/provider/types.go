@@ -449,6 +449,10 @@ type OAuth2Config struct {
 	// whole authorize with forbidden_scopes.
 	ExclusiveScopes bool
 
+	// ScopeSeparator joins Scopes on the authorize URL. Empty means a single
+	// space (RFC 6749 §3.3). Linear requires a comma.
+	ScopeSeparator string
+
 	// RequiresPKCE enables RFC 7636 PKCE (S256) on the authorization request
 	// and replays the verifier on the token exchange. Default false; non-PKCE
 	// providers are unaffected.

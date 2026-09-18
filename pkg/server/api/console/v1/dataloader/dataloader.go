@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -109,6 +110,7 @@ type (
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
 		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
 		Task                                       *dataloadgen.Loader[gid.GID, *coredata.Task]
+		TaskExternalLink                           *dataloadgen.Loader[gid.GID, *coredata.TaskExternalLink]
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
@@ -131,6 +133,7 @@ type (
 		thirdParty       *thirdparty.Service
 		compliancePortal *management.Service
 		riskManagement   *riskmanagement.Service
+		task             *task.Service
 	}
 )
 
@@ -147,6 +150,7 @@ func NewMiddleware(
 	thirdPartySvc *thirdparty.Service,
 	compliancePortalSvc *management.Service,
 	riskManagementSvc *riskmanagement.Service,
+	taskSvc *task.Service,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -158,6 +162,7 @@ func NewMiddleware(
 					thirdParty:       thirdPartySvc,
 					compliancePortal: compliancePortalSvc,
 					riskManagement:   riskManagementSvc,
+					task:             taskSvc,
 				}
 				loaders := f.newLoaders()
 				ctx := context.WithValue(r.Context(), loadersKey, loaders)
@@ -180,6 +185,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
 		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
 		Task:                                     dataloadgen.NewMappedLoader(f.fetchTasks),
+		TaskExternalLink:                         dataloadgen.NewMappedLoader(f.fetchTaskExternalLinks),
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
 		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
@@ -641,7 +647,7 @@ func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[g
 func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Task, error) {
 	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	tasks, err := f.probo.Tasks.GetByIDs(ctx, scope, keys...)
+	tasks, err := f.task.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load tasks: %w", err)
 	}
@@ -649,6 +655,30 @@ func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.
 	result := make(map[gid.GID]*coredata.Task, len(tasks))
 	for _, v := range tasks {
 		result[v.ID] = v
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchTaskExternalLinks(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.TaskExternalLink, error) {
+	result := make(map[gid.GID]*coredata.TaskExternalLink, len(keys))
+	taskIDsByTenant := make(map[gid.TenantID][]gid.GID)
+
+	for _, taskID := range keys {
+		tenantID := taskID.TenantID()
+		taskIDsByTenant[tenantID] = append(taskIDsByTenant[tenantID], taskID)
+	}
+
+	for tenantID, taskIDs := range taskIDsByTenant {
+		links, err := f.task.Sync.GetLinksByTaskIDs(ctx, coredata.NewScope(tenantID), taskIDs)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load task external links: %w", err)
+		}
+
+		maps.Copy(result, links)
 	}
 
 	return result, nil

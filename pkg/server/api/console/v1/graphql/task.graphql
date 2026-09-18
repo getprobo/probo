@@ -80,10 +80,35 @@ type Task implements Node {
         orderBy: TaskActivityOrder
     ): TaskActivityConnection! @goField(forceResolver: true)
 
+    externalLink: TaskExternalLink @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum TaskExternalLinkOrigin
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOrigin") {
+    PROBO
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOriginProbo")
+    LINEAR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOriginLinear"
+        )
+}
+
+type TaskExternalLink {
+    provider: ConnectorProvider!
+    identifier: String!
+    url: String!
+    origin: TaskExternalLinkOrigin!
+}
+
+type LinearTeam {
+    id: String!
+    name: String!
+    key: String!
 }
 
 type TaskConnection
@@ -104,6 +129,8 @@ extend type Mutation {
     createTask(input: CreateTaskInput!): CreateTaskPayload!
     updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
     deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
+    publishTaskToLinear(input: PublishTaskToLinearInput!): PublishTaskToLinearPayload!
+    unlinkTaskExternal(input: UnlinkTaskExternalInput!): UnlinkTaskExternalPayload!
 }
 
 input CreateTaskInput {
@@ -148,4 +175,21 @@ type UpdateTaskPayload {
 
 type DeleteTaskPayload {
     deletedTaskId: ID!
+}
+
+input PublishTaskToLinearInput {
+    taskId: ID!
+    teamId: String!
+}
+
+type PublishTaskToLinearPayload {
+    task: Task!
+}
+
+input UnlinkTaskExternalInput {
+    taskId: ID!
+}
+
+type UnlinkTaskExternalPayload {
+    task: Task!
 }

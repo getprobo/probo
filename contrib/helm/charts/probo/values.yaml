@@ -497,6 +497,13 @@ probo:
   # Slack endpoint overrides use endpointAuth, endpointToken, and
   # endpointApiBase in the connector config. endpointToken is secret
   # material and is mounted from the chart Secret, not a plain env value.
+  # - name: "linear"
+  #   type: "oauth2"
+  #   config:
+  #     clientId: "linear-client-id"
+  #     clientSecret: "linear-client-secret"
+  #     # Linear OAuth app webhook signing secret for POST /api/linear/v1/webhooks
+  #     webhookSecret: "linear-webhook-secret"
 
 # PostgreSQL configuration
 # For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)

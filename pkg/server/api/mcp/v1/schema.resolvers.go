@@ -33,6 +33,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -2072,12 +2074,10 @@ func (r *Resolver) UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionTaskList)
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskList)
 	if err != nil {
 		return nil, types.ListTasksOutput{}, err
 	}
-
-	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
@@ -2093,39 +2093,47 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.Tasks.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	page, err := r.task.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization tasks: %w", err))
 	}
 
-	return nil, types.NewListTasksOutput(page), nil
+	links, err := r.taskExternalLinksByTasks(ctx, scope, page.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListTasksOutput(page, links), nil
 }
 
 func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskGet)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskGet)
 	if err != nil {
 		return nil, types.GetTaskOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	task, err := prb.Tasks.Get(ctx, scope, input.ID)
+	task, err := r.task.Get(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.GetTaskOutput{}, fmt.Errorf("failed to get task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.GetTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.GetTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskInput) (*mcp.CallToolResult, types.AddTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskCreate)
 	if err != nil {
 		return nil, types.AddTaskOutput{}, err
 	}
-
-	svc := r.proboSvc
 
 	priority := coredata.TaskPriorityMedium
 	if input.Priority != nil {
@@ -2139,9 +2147,9 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 
 	identity := authn.IdentityFromContext(ctx)
 
-	task, err := svc.Tasks.Create(
+	task, err := r.task.Create(
 		ctx, scope,
-		probo.CreateTaskRequest{
+		task.CreateTaskRequest{
 			OrganizationID:     input.OrganizationID,
 			MeasureID:          input.MeasureID,
 			Name:               input.Name,
@@ -2159,18 +2167,22 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, types.AddTaskOutput{}, fmt.Errorf("failed to create task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.AddTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.AddTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskInput) (*mcp.CallToolResult, types.UpdateTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskUpdate)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskUpdate)
 	if err != nil {
 		return nil, types.UpdateTaskOutput{}, err
 	}
-
-	svc := r.proboSvc
 
 	content, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Content))
 	if err != nil {
@@ -2179,9 +2191,9 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	identity := authn.IdentityFromContext(ctx)
 
-	result, err := svc.Tasks.Update(
+	result, err := r.task.Update(
 		ctx, scope,
-		probo.UpdateTaskRequest{
+		task.UpdateTaskRequest{
 			TaskID:             input.ID,
 			Name:               input.Name,
 			Content:            content,
@@ -2200,65 +2212,84 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
 	}
 
-	output := types.UpdateTaskOutput{
-		Task: types.NewTask(result.Task),
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, result.Task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
 	}
+
+	output := types.UpdateTaskOutput{
+		Task: taskWithLink,
+	}
+
 	if result.NextTask != nil {
-		output.NextTask = types.NewTask(result.NextTask)
+		nextWithLink, err := r.taskWithExternalLink(ctx, scope, result.NextTask)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load next task external link", log.Error(err))
+			return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
+		}
+
+		output.NextTask = nextWithLink
 	}
 
 	return nil, output, nil
 }
 
 func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskAssign)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskAssign)
 	if err != nil {
 		return nil, types.AssignTaskOutput{}, err
 	}
 
-	svc := r.proboSvc
-
 	identity := authn.IdentityFromContext(ctx)
 
-	task, err := svc.Tasks.Assign(ctx, scope, input.ID, input.AssignedToID, &identity.ID)
+	task, err := r.task.Assign(ctx, scope, input.ID, input.AssignedToID, &identity.ID)
 	if err != nil {
 		return nil, types.AssignTaskOutput{}, fmt.Errorf("failed to assign task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.AssignTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.AssignTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnassignTaskInput) (*mcp.CallToolResult, types.UnassignTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskUnassign)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskUnassign)
 	if err != nil {
 		return nil, types.UnassignTaskOutput{}, err
 	}
 
-	svc := r.proboSvc
-
 	identity := authn.IdentityFromContext(ctx)
 
-	task, err := svc.Tasks.Unassign(ctx, scope, input.ID, &identity.ID)
+	task, err := r.task.Unassign(ctx, scope, input.ID, &identity.ID)
 	if err != nil {
 		return nil, types.UnassignTaskOutput{}, fmt.Errorf("failed to unassign task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.UnassignTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.UnassignTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskInput) (*mcp.CallToolResult, types.DeleteTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskDelete)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskDelete)
 	if err != nil {
 		return nil, types.DeleteTaskOutput{}, err
 	}
 
-	svc := r.proboSvc
-
-	err = svc.Tasks.Delete(ctx, scope, input.ID)
+	err = r.task.Delete(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteTaskOutput{}, fmt.Errorf("failed to delete task: %w", err)
 	}
@@ -2710,8 +2741,6 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 		return nil, types.ListMeasureTasksOutput{}, err
 	}
 
-	prb := r.proboSvc
-
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -2726,12 +2755,18 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	taskPage, err := prb.Tasks.ListForMeasureID(ctx, scope, input.MeasureID, cursor)
+	taskPage, err := r.task.ListForMeasureID(ctx, scope, input.MeasureID, cursor)
 	if err != nil {
 		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("failed to list measure tasks: %w", err)
 	}
 
-	return nil, types.NewListMeasureTasksOutput(taskPage), nil
+	links, err := r.taskExternalLinksByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListMeasureTasksOutput(taskPage, links), nil
 }
 
 func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureEvidencesInput) (*mcp.CallToolResult, types.ListMeasureEvidencesOutput, error) {
@@ -9523,7 +9558,7 @@ func (r *Resolver) AzureConnectorSetupTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTaskCommentsInput) (*mcp.CallToolResult, types.ListTaskCommentsOutput, error) {
-	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskCommentList)
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskCommentList)
 	if err != nil {
 		return nil, types.ListTaskCommentsOutput{}, err
 	}
@@ -9542,7 +9577,7 @@ func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	commentPage, err := r.proboSvc.TaskComments.ListForTaskID(ctx, scope, input.TaskID, cursor)
+	commentPage, err := r.task.ListCommentsForTaskID(ctx, scope, input.TaskID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list task comments", log.Error(err))
 		return nil, types.ListTaskCommentsOutput{}, fmt.Errorf("internal server error")
@@ -9557,12 +9592,12 @@ func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) GetTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskCommentInput) (*mcp.CallToolResult, types.GetTaskCommentOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskCommentGet)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskCommentGet)
 	if err != nil {
 		return nil, types.GetTaskCommentOutput{}, err
 	}
 
-	taskComment, err := r.proboSvc.TaskComments.Get(ctx, scope, input.ID)
+	taskComment, err := r.task.GetComment(ctx, scope, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, types.GetTaskCommentOutput{}, fmt.Errorf("resource not found")
@@ -9584,7 +9619,7 @@ func (r *Resolver) GetTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 }
 
 func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskCommentInput) (*mcp.CallToolResult, types.AddTaskCommentOutput, error) {
-	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskCommentCreate)
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskCommentCreate)
 	if err != nil {
 		return nil, types.AddTaskCommentOutput{}, err
 	}
@@ -9596,9 +9631,9 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
-	taskComment, err := r.proboSvc.TaskComments.Create(
+	taskComment, err := r.task.CreateComment(
 		ctx, scope,
-		probo.CreateTaskCommentRequest{
+		task.CreateTaskCommentRequest{
 			TaskID:     input.TaskID,
 			OwnerID:    input.OwnerID,
 			IdentityID: identity.ID,
@@ -9630,7 +9665,7 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 }
 
 func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskCommentInput) (*mcp.CallToolResult, types.UpdateTaskCommentOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskCommentUpdate)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskCommentUpdate)
 	if err != nil {
 		return nil, types.UpdateTaskCommentOutput{}, err
 	}
@@ -9640,9 +9675,9 @@ func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
-	taskComment, err := r.proboSvc.TaskComments.Update(
+	taskComment, err := r.task.UpdateComment(
 		ctx, scope,
-		probo.UpdateTaskCommentRequest{
+		task.UpdateTaskCommentRequest{
 			ID:      input.ID,
 			OwnerID: optionalPtr(input.OwnerID),
 			Content: content,
@@ -9673,12 +9708,12 @@ func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskCommentInput) (*mcp.CallToolResult, types.DeleteTaskCommentOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskCommentDelete)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskCommentDelete)
 	if err != nil {
 		return nil, types.DeleteTaskCommentOutput{}, err
 	}
 
-	if err := r.proboSvc.TaskComments.Delete(ctx, scope, input.ID); err != nil {
+	if err := r.task.DeleteComment(ctx, scope, input.ID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, types.DeleteTaskCommentOutput{}, fmt.Errorf("resource not found")
 		}
@@ -9694,7 +9729,7 @@ func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) ListTaskActivitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTaskActivitiesInput) (*mcp.CallToolResult, types.ListTaskActivitiesOutput, error) {
-	scope, err := r.Authorize(ctx, input.TaskID, probo.ActionTaskActivityList)
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskActivityList)
 	if err != nil {
 		return nil, types.ListTaskActivitiesOutput{}, err
 	}
@@ -9713,7 +9748,7 @@ func (r *Resolver) ListTaskActivitiesTool(ctx context.Context, req *mcp.CallTool
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	activityPage, err := r.proboSvc.TaskActivities.ListForTaskID(ctx, scope, input.TaskID, cursor)
+	activityPage, err := r.task.ListActivitiesForTaskID(ctx, scope, input.TaskID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list task activities", log.Error(err))
 		return nil, types.ListTaskActivitiesOutput{}, fmt.Errorf("internal server error")
@@ -9723,12 +9758,12 @@ func (r *Resolver) ListTaskActivitiesTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) GetTaskActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskActivityInput) (*mcp.CallToolResult, types.GetTaskActivityOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskActivityGet)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskActivityGet)
 	if err != nil {
 		return nil, types.GetTaskActivityOutput{}, err
 	}
 
-	taskActivity, err := r.proboSvc.TaskActivities.Get(ctx, scope, input.ID)
+	taskActivity, err := r.task.GetActivity(ctx, scope, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, types.GetTaskActivityOutput{}, fmt.Errorf("resource not found")
@@ -10021,4 +10056,152 @@ func (r *Resolver) GetCommonGVLCatalogTool(ctx context.Context, req *mcp.CallToo
 	return nil, types.GetCommonGVLCatalogOutput{
 		CommonGvlCatalog: types.NewCommonGVLCatalog(catalog),
 	}, nil
+}
+
+func (r *Resolver) ListLinearTeamsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListLinearTeamsInput) (*mcp.CallToolResult, types.ListLinearTeamsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListLinearTeamsOutput{}, err
+	}
+
+	teams, err := r.task.Sync.ListLinearTeams(ctx, scope, input.OrganizationID)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
+			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+			return nil, types.ListLinearTeamsOutput{Teams: []*types.LinearTeam{}}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Linear teams", log.Error(err))
+
+		return nil, types.ListLinearTeamsOutput{}, fmt.Errorf("internal error")
+	}
+
+	result := make([]*types.LinearTeam, 0, len(teams))
+	for _, team := range teams {
+		result = append(result, &types.LinearTeam{
+			ID:   team.ID,
+			Name: team.Name,
+			Key:  team.Key,
+		})
+	}
+
+	return nil, types.ListLinearTeamsOutput{Teams: result}, nil
+}
+
+func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishTaskToLinearInput) (*mcp.CallToolResult, types.PublishTaskToLinearOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.PublishTaskToLinearOutput{}, err
+	}
+
+	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task not found")
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
+		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear team was not found")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
+
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task external link", log.Error(err))
+		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishTaskToLinearOutput{
+		Task: taskWithLink,
+	}, nil
+}
+
+func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkTaskExternalInput) (*mcp.CallToolResult, types.UnlinkTaskExternalOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.UnlinkTaskExternalOutput{}, err
+	}
+
+	if err := r.task.Sync.Unlink(ctx, scope, input.TaskID); err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound), errors.Is(err, tasksync.ErrTaskNotLinked):
+			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("task is not linked to an external issue")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
+			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, input.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
+		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task external link", log.Error(err))
+		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.UnlinkTaskExternalOutput{
+		Task: taskWithLink,
+	}, nil
+}
+
+func (r *Resolver) taskExternalLinksByTasks(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tasks []*coredata.Task,
+) (map[gid.GID]*coredata.TaskExternalLink, error) {
+	if r.task.Sync == nil || len(tasks) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]gid.GID, 0, len(tasks))
+	for _, task := range tasks {
+		ids = append(ids, task.ID)
+	}
+
+	return r.task.Sync.GetLinksByTaskIDs(ctx, scope, ids)
+}
+
+func (r *Resolver) taskWithExternalLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) (*types.Task, error) {
+	result := types.NewTask(task)
+	if r.task.Sync == nil {
+		return result, nil
+	}
+
+	link, err := r.task.Sync.GetLinkByTaskID(ctx, scope, task.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return result, nil
+		}
+
+		return nil, err
+	}
+
+	result.ExternalLink = types.NewTaskExternalLink(link)
+
+	return result, nil
 }
