@@ -1145,6 +1145,163 @@ func (b *ProcessingActivityBuilder) Create() string {
 	return CreateProcessingActivity(b.client, b.attrs)
 }
 
+// CreateConnector creates an API-key connector. The provider defaults to one
+// whose API-key path needs no extra settings and no key format, so a test
+// that only needs "a connector" does not have to know any provider's form.
+func CreateConnector(c *testutil.Client, organizationID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": organizationID,
+		"provider":       a.getString("provider", "NOTION"),
+		"apiKey":         a.getString("apiKey", SafeName("test-api-key")),
+	}
+
+	var result struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID string `json:"id"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createAPIKeyConnector mutation failed")
+
+	return result.CreateAPIKeyConnector.Connector.ID
+}
+
+type ConnectorBuilder struct {
+	client         *testutil.Client
+	organizationID string
+	attrs          Attrs
+}
+
+func NewConnector(c *testutil.Client, organizationID string) *ConnectorBuilder {
+	return &ConnectorBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
+}
+
+func (b *ConnectorBuilder) WithProvider(provider string) *ConnectorBuilder {
+	b.attrs["provider"] = provider
+
+	return b
+}
+
+func (b *ConnectorBuilder) WithAPIKey(apiKey string) *ConnectorBuilder {
+	b.attrs["apiKey"] = apiKey
+
+	return b
+}
+
+func (b *ConnectorBuilder) Create() string {
+	return CreateConnector(b.client, b.organizationID, b.attrs)
+}
+
+// EnableConnectorAccounts records vendor accounts under a connector and
+// returns their ids, in the order requested.
+func EnableConnectorAccounts(
+	c *testutil.Client,
+	organizationID string,
+	connectorID string,
+	externalAccountIDs ...string,
+) []string {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: EnableConnectorAccountsInput!) {
+			enableConnectorAccounts(input: $input) {
+				connectorAccountEdges {
+					node { id externalAccountId name }
+				}
+			}
+		}
+	`
+
+	accounts := make([]map[string]any, 0, len(externalAccountIDs))
+	for _, externalAccountID := range externalAccountIDs {
+		accounts = append(accounts, map[string]any{"externalAccountId": externalAccountID})
+	}
+
+	var result struct {
+		EnableConnectorAccounts struct {
+			ConnectorAccountEdges []struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"connectorAccountEdges"`
+		} `json:"enableConnectorAccounts"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": organizationID,
+			"connectorId":    connectorID,
+			"accounts":       accounts,
+		},
+	}, &result)
+	require.NoError(c.T, err, "enableConnectorAccounts mutation failed")
+
+	ids := make([]string, 0, len(result.EnableConnectorAccounts.ConnectorAccountEdges))
+	for _, edge := range result.EnableConnectorAccounts.ConnectorAccountEdges {
+		ids = append(ids, edge.Node.ID)
+	}
+
+	return ids
+}
+
+// ConnectorAccountIDs returns the accounts Probo has recorded for a
+// connector. Every connector that can back a source has at least one.
+func ConnectorAccountIDs(c *testutil.Client, connectorID string) []string {
+	c.T.Helper()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector {
+					accounts(first: 100) {
+						edges { node { id externalAccountId } }
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Accounts struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accounts"`
+		} `json:"node"`
+	}
+
+	err := c.Execute(query, map[string]any{"id": connectorID}, &result)
+	require.NoError(c.T, err, "connector accounts query failed")
+
+	ids := make([]string, 0, len(result.Node.Accounts.Edges))
+	for _, edge := range result.Node.Accounts.Edges {
+		ids = append(ids, edge.Node.ID)
+	}
+
+	return ids
+}
+
 func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -1173,6 +1330,10 @@ func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs .
 
 	if connectorID := a.getStringPtr("connectorId"); connectorID != nil {
 		input["connectorId"] = *connectorID
+	}
+
+	if connectorAccountID := a.getStringPtr("connectorAccountId"); connectorAccountID != nil {
+		input["connectorAccountId"] = *connectorAccountID
 	}
 
 	var result struct {
@@ -1208,6 +1369,16 @@ func (b *AccessReviewSourceBuilder) WithName(name string) *AccessReviewSourceBui
 
 func (b *AccessReviewSourceBuilder) WithCsvData(csvData string) *AccessReviewSourceBuilder {
 	b.attrs["csvData"] = csvData
+	return b
+}
+
+func (b *AccessReviewSourceBuilder) WithConnectorID(connectorID string) *AccessReviewSourceBuilder {
+	b.attrs["connectorId"] = connectorID
+	return b
+}
+
+func (b *AccessReviewSourceBuilder) WithConnectorAccountID(connectorAccountID string) *AccessReviewSourceBuilder {
+	b.attrs["connectorAccountId"] = connectorAccountID
 	return b
 }
 

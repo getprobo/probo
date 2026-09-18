@@ -90,6 +90,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewTask(task), nil
 		}
+	case coredata.ConnectorEntityType:
+		action = probo.ActionConnectorGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			cnnctr, err := r.probo.Connectors.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewConnector(cnnctr), nil
+		}
 	case coredata.ConnectorAccountEntityType:
 		action = probo.ActionConnectorGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

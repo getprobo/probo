@@ -326,7 +326,7 @@ enum ConnectorConnectionStatus {
     RECONNECT_REQUIRED
 }
 
-type Connector {
+type Connector implements Node {
     id: ID!
     provider: ConnectorProvider!
     protocol: ConnectorProtocol!
