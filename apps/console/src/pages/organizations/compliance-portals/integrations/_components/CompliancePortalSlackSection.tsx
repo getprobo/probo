@@ -41,9 +41,9 @@ import type { CompliancePortalSlackSection_compliancePortal$key } from "#/__gene
 import type { CompliancePortalSlackSectionClearMutation } from "#/__generated__/core/CompliancePortalSlackSectionClearMutation.graphql";
 import type { CompliancePortalSlackSectionRefetchQuery } from "#/__generated__/core/CompliancePortalSlackSectionRefetchQuery.graphql";
 import type { CompliancePortalSlackSectionSetMutation } from "#/__generated__/core/CompliancePortalSlackSectionSetMutation.graphql";
+import { tonedCard } from "#/components/TonedCard/variants";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
-import { tonedCard } from "#/pages/organizations/compliance-portals/_lib/tonedCard";
 
 import { slackSection } from "../variants";
 

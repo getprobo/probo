@@ -21,29 +21,43 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { SettingsLayoutQuery } from "#/__generated__/core/SettingsLayoutQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import type { WorkspaceSettingsPageQuery } from "#/__generated__/iam/WorkspaceSettingsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { SettingsLayout, settingsLayoutQuery } from "./SettingsLayout";
+import { WorkspaceSettingsPage, workspaceSettingsPageQuery } from "./WorkspaceSettingsPage";
+import { WorkspaceSettingsPageSkeleton } from "./WorkspaceSettingsPageSkeleton";
 
-export default function SettingsLayoutLoader() {
+function WorkspaceSettingsPageQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<SettingsLayoutQuery>(
-    settingsLayoutQuery,
+  const [queryRef, loadQuery] = useQueryLoader<WorkspaceSettingsPageQuery>(
+    workspaceSettingsPageQuery,
   );
 
   useEffect(() => {
     loadQuery({ organizationId });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) {
-    return <PageSkeleton />;
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <WorkspaceSettingsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <SettingsLayout queryRef={queryRef} />
+    <Suspense fallback={<WorkspaceSettingsPageSkeleton />}>
+      <WorkspaceSettingsPage key={organizationId} queryRef={currentQueryRef} />
     </Suspense>
+  );
+}
+
+export default function WorkspaceSettingsPageLoader() {
+  return (
+    <IAMRelayProvider>
+      <WorkspaceSettingsPageQueryLoader />
+    </IAMRelayProvider>
   );
 }

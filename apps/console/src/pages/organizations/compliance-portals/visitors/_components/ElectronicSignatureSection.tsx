@@ -35,7 +35,7 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ElectronicSignatureSectionFragment$key } from "#/__generated__/core/ElectronicSignatureSectionFragment.graphql";
-import { CompliancePortalTonedCard } from "#/pages/organizations/compliance-portals/_components/CompliancePortalTonedCard";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 import { type NdaSignatureStatus, ndaSignatureTone } from "../_lib/ndaSignature";
 import { electronicSignatureSection } from "../variants";
@@ -126,7 +126,7 @@ export function ElectronicSignatureSection({
 
   return (
     <section className={root()} aria-label={t("electronicSignature.title")}>
-      <CompliancePortalTonedCard
+      <TonedCard
         tone={tone}
         icon={<SignatureIcon size={24} weight="duotone" />}
         lead={(
@@ -202,7 +202,7 @@ export function ElectronicSignatureSection({
                 {descriptionCopy}
               </Text>
             )}
-      </CompliancePortalTonedCard>
+      </TonedCard>
     </section>
   );
 }

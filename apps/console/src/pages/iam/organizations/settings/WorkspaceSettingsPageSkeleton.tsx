@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type FileDropzoneError, useFileDropzone } from "#/lib/useFileDropzone";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-export type NdaUploadError = FileDropzoneError;
+import { workspaceSettingsPageSkeleton } from "./variants";
 
-const NDA_MAX_BYTES = 10 * 1024 * 1024;
+export function WorkspaceSettingsPageSkeleton() {
+  const { root, header, section, intro } = workspaceSettingsPageSkeleton();
 
-export function useNdaDropzone({
-  disabled,
-  onFile,
-  onReject,
-}: {
-  disabled: boolean;
-  onFile: (file: File) => void;
-  onReject: (error: NdaUploadError) => void;
-}) {
-  return useFileDropzone({
-    disabled,
-    onFile,
-    onReject,
-    noClick: true,
-    noKeyboard: true,
-    accept: { "application/pdf": [".pdf"] },
-    maxSize: NDA_MAX_BYTES,
-  });
+  return (
+    <div className={root()}>
+      <div className={header()}>
+        <HeadingSkeleton size={6} className="w-32" />
+      </div>
+      <div className={section()}>
+        <div className={intro()}>
+          <HeadingSkeleton size={4} className="w-24" />
+          <TextSkeleton size={2} className="w-96" />
+        </div>
+        <CardSkeleton size={2} />
+      </div>
+      <div className={section()}>
+        <div className={intro()}>
+          <HeadingSkeleton size={4} className="w-32" />
+        </div>
+        <CardSkeleton size={2} />
+      </div>
+    </div>
+  );
 }

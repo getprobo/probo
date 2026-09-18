@@ -21,9 +21,9 @@
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import type { ComponentProps, ReactNode } from "react";
 
-import { tonedCard, type TonedCardTone } from "../_lib/tonedCard";
+import { tonedCard, type TonedCardTone } from "./variants";
 
-export type CompliancePortalTonedCardProps = ComponentProps<"div"> & {
+export type TonedCardProps = ComponentProps<"div"> & {
   tone?: TonedCardTone;
   icon: ReactNode;
   lead?: ReactNode;
@@ -32,7 +32,7 @@ export type CompliancePortalTonedCardProps = ComponentProps<"div"> & {
 
 // Status-shaped shell: toned frame, header icon + optional lead + control,
 // body children. Domain cards keep custom JSX and call `tonedCard` directly.
-export function CompliancePortalTonedCard(props: CompliancePortalTonedCardProps) {
+export function TonedCard(props: TonedCardProps) {
   const { tone = "sand", icon, lead, control, className, children, ...rest } = props;
   const { frame, header, wash, fade, icon: iconSlot, lead: leadSlot, control: controlSlot, body }
     = tonedCard({ tone });

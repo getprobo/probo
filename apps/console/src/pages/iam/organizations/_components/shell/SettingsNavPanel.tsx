@@ -78,7 +78,7 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
     <>
       {organization.canUpdateOrganization && (
         <NavPanelItem
-          label={t("nav.organization")}
+          label={t("nav.workspaceSettings")}
           to={navHref(organizationId, group, "general")}
         />
       )}

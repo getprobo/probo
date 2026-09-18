@@ -25,7 +25,7 @@ import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 
-import { CompliancePortalTonedCard } from "#/pages/organizations/compliance-portals/_components/CompliancePortalTonedCard";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 interface CompliancePortalStatusCardProps {
   title: string;
@@ -58,7 +58,7 @@ export function CompliancePortalStatusCard({
   );
 
   return (
-    <CompliancePortalTonedCard
+    <TonedCard
       tone={checked ? "green" : "sand"}
       icon={icon}
       control={disabled === true && disabledHint != null
@@ -76,6 +76,6 @@ export function CompliancePortalStatusCard({
       <Text size={2} color="neutral">
         {description}
       </Text>
-    </CompliancePortalTonedCard>
+    </TonedCard>
   );
 }

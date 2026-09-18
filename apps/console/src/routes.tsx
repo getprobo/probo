@@ -35,6 +35,7 @@ import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading
 import { auditLogRoutes } from "./pages/iam/organizations/audit-log/routes";
 import { authRoutes } from "./pages/iam/organizations/auth/routes";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
+import { settingsRoutes } from "./pages/iam/organizations/settings/routes";
 import { accessReviewRoutes } from "./pages/organizations/access-reviews/routes";
 import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
 import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/routes";
@@ -313,23 +314,8 @@ const routes = [
                   throw redirect("general");
                 },
               },
-              {
-                path: "general",
-                Fallback: PageSkeleton,
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
-                ),
-              },
+              ...settingsRoutes,
               ...contextRoutes,
-              {
-                path: "webhooks",
-                Fallback: PageSkeleton,
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-                ),
-              },
               {
                 path: "slackbot",
                 Fallback: PageSkeleton,

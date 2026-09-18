@@ -908,6 +908,10 @@
       "fileTooLarge": {
         "title": "Fichier trop volumineux",
         "description": "Veuillez téléverser un fichier de moins de 10 Mo."
+      },
+      "tooManyFiles": {
+        "title": "Trop de fichiers",
+        "description": "Veuillez téléverser un seul PDF à la fois."
       }
     }
   },

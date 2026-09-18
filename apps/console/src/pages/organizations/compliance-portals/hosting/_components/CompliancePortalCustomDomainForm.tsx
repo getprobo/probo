@@ -31,8 +31,8 @@ import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalCustomDomainFormMutation } from "#/__generated__/core/CompliancePortalCustomDomainFormMutation.graphql";
+import { tonedCard } from "#/components/TonedCard/variants";
 import { useMutation } from "#/lib/relay/useMutation";
-import { tonedCard } from "#/pages/organizations/compliance-portals/_lib/tonedCard";
 
 import { DOMAIN_MAX_LENGTH, DOMAIN_PATTERN, normalizeDomain } from "../_lib/normalizeDomain";
 import { customDomainForm, domainCard } from "../variants";

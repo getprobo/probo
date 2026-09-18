@@ -18,28 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type FileDropzoneError, useFileDropzone } from "#/lib/useFileDropzone";
+import { tv } from "tailwind-variants/lite";
 
-export type NdaUploadError = FileDropzoneError;
+export const workspaceSettingsPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex flex-col gap-2",
+  },
+});
 
-const NDA_MAX_BYTES = 10 * 1024 * 1024;
+export const workspaceSettingsPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex flex-col gap-2",
+    section: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+  },
+});
 
-export function useNdaDropzone({
-  disabled,
-  onFile,
-  onReject,
-}: {
-  disabled: boolean;
-  onFile: (file: File) => void;
-  onReject: (error: NdaUploadError) => void;
-}) {
-  return useFileDropzone({
-    disabled,
-    onFile,
-    onReject,
-    noClick: true,
-    noKeyboard: true,
-    accept: { "application/pdf": [".pdf"] },
-    maxSize: NDA_MAX_BYTES,
-  });
-}
+export const identitySection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    form: "flex flex-col gap-4",
+    logos: "flex items-start gap-4 max-sm:flex-col",
+    logoCell: "flex shrink-0 flex-col gap-2",
+    horizontalCell: "flex min-w-0 flex-1 flex-col gap-2",
+    actions: "flex justify-end",
+  },
+});
+
+export const dangerZoneSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    actions: "self-start pt-1",
+  },
+});
+
+export const deleteWorkspaceDialog = tv({
+  slots: {
+    form: "flex flex-col gap-4",
+    fields: "flex flex-col gap-4",
+  },
+});
