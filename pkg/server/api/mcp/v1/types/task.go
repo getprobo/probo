@@ -24,6 +24,7 @@ import (
 	"fmt"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -60,10 +61,22 @@ func NewTaskExternalLink(link *coredata.TaskExternalLink) *TaskExternalLink {
 	}
 }
 
-func NewListMeasureTasksOutput(taskPage *page.Page[*coredata.Task, coredata.TaskOrderField]) ListMeasureTasksOutput {
+func NewTaskWithLink(t *coredata.Task, link *coredata.TaskExternalLink) *Task {
+	result := NewTask(t)
+	if link != nil {
+		result.ExternalLink = NewTaskExternalLink(link)
+	}
+
+	return result
+}
+
+func NewListMeasureTasksOutput(
+	taskPage *page.Page[*coredata.Task, coredata.TaskOrderField],
+	links map[gid.GID]*coredata.TaskExternalLink,
+) ListMeasureTasksOutput {
 	tasks := make([]*Task, 0, len(taskPage.Data))
 	for _, v := range taskPage.Data {
-		tasks = append(tasks, NewTask(v))
+		tasks = append(tasks, NewTaskWithLink(v, links[v.ID]))
 	}
 
 	var nextCursor *page.CursorKey
@@ -79,10 +92,13 @@ func NewListMeasureTasksOutput(taskPage *page.Page[*coredata.Task, coredata.Task
 	}
 }
 
-func NewListTasksOutput(taskPage *page.Page[*coredata.Task, coredata.TaskOrderField]) ListTasksOutput {
+func NewListTasksOutput(
+	taskPage *page.Page[*coredata.Task, coredata.TaskOrderField],
+	links map[gid.GID]*coredata.TaskExternalLink,
+) ListTasksOutput {
 	tasks := make([]*Task, 0, len(taskPage.Data))
 	for _, v := range taskPage.Data {
-		tasks = append(tasks, NewTask(v))
+		tasks = append(tasks, NewTaskWithLink(v, links[v.ID]))
 	}
 
 	var nextCursor *page.CursorKey

@@ -32,6 +32,7 @@ import (
 const listQuery = `
 query($id: ID!) {
   node(id: $id) {
+    __typename
     ... on Organization {
       linearTeams {
         id
@@ -45,6 +46,7 @@ query($id: ID!) {
 
 type listResponse struct {
 	Node *struct {
+		Typename    string `json:"__typename"`
 		LinearTeams []struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
@@ -88,11 +90,15 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if resp.Node == nil {
-				return fmt.Errorf("organization not found")
+				return fmt.Errorf("organization %s not found", args[0])
+			}
+
+			if resp.Node.Typename != "Organization" {
+				return fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 			}
 
 			for _, team := range resp.Node.LinearTeams {
-				_, _ = fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", team.ID, team.Key, team.Name)
+				_, _ = fmt.Fprintf(f.IOStreams.Out, "%s\t%s\t%s\n", team.ID, team.Key, team.Name)
 			}
 
 			return nil

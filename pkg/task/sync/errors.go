@@ -30,6 +30,7 @@ var (
 	ErrLinearReconnectRequired = errors.New("linear connector must be reconnected with write scopes")
 	ErrTaskAlreadyLinked       = errors.New("task is already linked to an external issue")
 	ErrTaskNotLinked           = errors.New("task is not linked to an external issue")
+	ErrLinearTeamNotFound      = errors.New("linear team was not found")
 )
 
 type LinearReconnectRequiredError struct {

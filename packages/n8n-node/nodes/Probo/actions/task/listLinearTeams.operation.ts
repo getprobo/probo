@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -59,9 +59,12 @@ export async function execute(
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, { id: organizationId });
+	const data = responseData.data as IDataObject | undefined;
+	const node = data?.node as IDataObject | undefined;
+	const linearTeams = (node?.linearTeams as IDataObject[] | undefined) ?? [];
 
 	return {
-		json: responseData,
+		json: { linearTeams },
 		pairedItem: { item: itemIndex },
 	};
 }

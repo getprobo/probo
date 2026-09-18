@@ -141,6 +141,12 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	})
 	require.Equal(t, http.StatusOK, status)
 
+	require.Eventually(t, func() bool {
+		return taskName(t, owner, taskID) == "Inbound Linear title"
+	}, 30*time.Second, 200*time.Millisecond)
+
+	assert.Equal(t, jobsAfterUpdate, countTaskSyncJobs(t, taskID))
+
 	duplicateStatus := postLinearWebhook(t, deliveryID, map[string]any{
 		"action":           "update",
 		"type":             "Issue",
@@ -155,9 +161,9 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	})
 	require.Equal(t, http.StatusOK, duplicateStatus)
 
-	require.Eventually(t, func() bool {
-		return taskName(t, owner, taskID) == "Inbound Linear title"
-	}, 30*time.Second, 200*time.Millisecond)
+	require.Never(t, func() bool {
+		return taskName(t, owner, taskID) != "Inbound Linear title"
+	}, 3*time.Second, 200*time.Millisecond)
 
 	assert.Equal(t, jobsAfterUpdate, countTaskSyncJobs(t, taskID))
 }

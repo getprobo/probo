@@ -84,6 +84,29 @@ func TestPickWorkflowStateID(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestPickWorkflowStateID_BacklogFallsBackToTriage(t *testing.T) {
+	t.Parallel()
+
+	triageOnly := []linear.WorkflowState{
+		{ID: "t2", Type: "triage", Position: 10},
+		{ID: "t1", Type: "triage", Position: 2},
+		{ID: "u1", Type: "unstarted", Position: 1},
+	}
+
+	id, err := PickWorkflowStateID(triageOnly, coredata.TaskStateBacklog)
+	require.NoError(t, err)
+	assert.Equal(t, "t1", id)
+
+	withBacklog := append(
+		[]linear.WorkflowState{{ID: "b1", Type: "backlog", Position: 50}},
+		triageOnly...,
+	)
+
+	id, err = PickWorkflowStateID(withBacklog, coredata.TaskStateBacklog)
+	require.NoError(t, err)
+	assert.Equal(t, "b1", id)
+}
+
 func TestDeadlineMapping(t *testing.T) {
 	t.Parallel()
 
@@ -128,4 +151,45 @@ func TestContentHashStable(t *testing.T) {
 	second := ContentHash("title", "body", coredata.TaskStateTodo, coredata.TaskPriorityHigh, nil)
 	assert.Equal(t, first, second)
 	assert.NotEqual(t, first, ContentHash("other", "body", coredata.TaskStateTodo, coredata.TaskPriorityHigh, nil))
+}
+
+func TestContentHash_SameLinearDateIsEqual(t *testing.T) {
+	t.Parallel()
+
+	afternoon := time.Date(2026, 9, 14, 15, 4, 5, 0, time.UTC)
+	midnight := LinearDateToDeadline(*DeadlineToLinearDate(&afternoon))
+	require.NotNil(t, midnight)
+
+	afternoonHash := ContentHash("title", "body", coredata.TaskStateTodo, coredata.TaskPriorityHigh, &afternoon)
+	midnightHash := ContentHash("title", "body", coredata.TaskStateTodo, coredata.TaskPriorityHigh, midnight)
+	assert.Equal(t, afternoonHash, midnightHash)
+
+	nextDay := time.Date(2026, 9, 15, 15, 4, 5, 0, time.UTC)
+	assert.NotEqual(
+		t,
+		afternoonHash,
+		ContentHash("title", "body", coredata.TaskStateTodo, coredata.TaskPriorityHigh, &nextDay),
+	)
+}
+
+func TestTaskNeedsOutboundReconcile(t *testing.T) {
+	t.Parallel()
+
+	task := &coredata.Task{
+		Name:     "title",
+		State:    coredata.TaskStateTodo,
+		Priority: coredata.TaskPriorityHigh,
+	}
+
+	published, err := taskContentHash(task)
+	require.NoError(t, err)
+
+	needsSync, err := taskNeedsOutboundReconcile(task, published)
+	require.NoError(t, err)
+	assert.False(t, needsSync)
+
+	task.Name = "renamed"
+	needsSync, err = taskNeedsOutboundReconcile(task, published)
+	require.NoError(t, err)
+	assert.True(t, needsSync)
 }

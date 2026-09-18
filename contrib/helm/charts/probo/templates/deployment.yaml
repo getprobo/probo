@@ -610,6 +610,8 @@ spec:
                   key: connector-github-app-private-key
             {{- end }}
             {{- if eq .name "linear" }}
+            {{- $_ := required "probo.connectors linear config.clientId is required when the linear connector is declared" .config.clientId }}
+            {{- $_ := required "probo.connectors linear config.clientSecret is required when the linear connector is declared" .config.clientSecret }}
             - name: PROBOD_CONNECTOR_LINEAR_CLIENT_ID
               valueFrom:
                 secretKeyRef:

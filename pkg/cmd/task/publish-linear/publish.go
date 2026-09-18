@@ -102,7 +102,7 @@ func NewCmdPublishLinear(f *cmdutil.Factory) *cobra.Command {
 			task := resp.PublishTaskToLinear.Task
 			if task.ExternalLink != nil {
 				_, _ = fmt.Fprintf(
-					cmd.OutOrStdout(),
+					f.IOStreams.Out,
 					"%s %s\n",
 					task.ExternalLink.Identifier,
 					task.ExternalLink.URL,

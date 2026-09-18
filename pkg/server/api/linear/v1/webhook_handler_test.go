@@ -86,12 +86,39 @@ func TestWebhookHandlerAcceptsStaleTimestamp(t *testing.T) {
 	handler := WebhookHandler(log.NewLogger(), queue, "secret")
 	req := httptest.NewRequest(http.MethodPost, "/webhooks", bytes.NewReader(body))
 	req.Header.Set("Linear-Signature", hex.EncodeToString(mac.Sum(nil)))
+	req.Header.Set("Linear-Delivery", "delivery-1")
 
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "wh-1", queue.deliveryID)
+	assert.Equal(t, "delivery-1", queue.deliveryID)
 	assert.Equal(t, body, queue.body)
+}
+
+func TestWebhookHandlerRejectsMissingDeliveryID(t *testing.T) {
+	t.Parallel()
+
+	body, err := json.Marshal(map[string]any{
+		"action":           "update",
+		"type":             "Issue",
+		"webhookId":        "wh-1",
+		"webhookTimestamp": time.Now().UnixMilli(),
+		"data":             map[string]any{"id": "issue-1"},
+	})
+	require.NoError(t, err)
+
+	mac := hmac.New(sha256.New, []byte("secret"))
+	_, _ = mac.Write(body)
+
+	handler := WebhookHandler(log.NewLogger(), &stubWebhookQueue{}, "secret")
+	req := httptest.NewRequest(http.MethodPost, "/webhooks", bytes.NewReader(body))
+	req.Header.Set("Linear-Signature", hex.EncodeToString(mac.Sum(nil)))
+
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }

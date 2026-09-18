@@ -193,7 +193,7 @@ LIMIT 1;
 
 	*c = loadedConnector
 
-	if err := c.decryptConnection(encryptionKey); err != nil {
+	if err := c.DecryptConnection(encryptionKey); err != nil {
 		return fmt.Errorf("cannot decrypt connection: %w", err)
 	}
 
@@ -231,25 +231,8 @@ func (c *Connector) LoadByID(
 		return err
 	}
 
-	// Decrypt the connection
-	if len(c.EncryptedConnection) > 0 {
-		decryptedConnection, err := cipher.Decrypt(c.EncryptedConnection, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt connection: %w", err)
-		}
-
-		c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
-		if err != nil {
-			return fmt.Errorf("cannot unmarshal connection: %w", err)
-		}
-
-		if c.Provider == ConnectorProviderSlack {
-			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-				settings, _ := ConnectorSettings[SlackConnectorSettings](c)
-				slackConn.Settings.Channel = settings.Channel
-				slackConn.Settings.ChannelID = settings.ChannelID
-			}
-		}
+	if err := c.DecryptConnection(encryptionKey); err != nil {
+		return fmt.Errorf("cannot decrypt connection: %w", err)
 	}
 
 	return nil
@@ -433,63 +416,6 @@ SELECT pg_advisory_xact_lock(
 	}
 
 	return nil
-}
-
-func (c *Connector) LoadByOrganizationIDAndProvider(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	provider ConnectorProvider,
-	encryptionKey cipher.EncryptionKey,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    provider,
-    protocol,
-    settings,
-    encrypted_connection,
-    created_at,
-    updated_at
-FROM
-    connectors
-WHERE
-    %s
-    AND organization_id = @organization_id
-    AND provider = @provider
-ORDER BY
-    updated_at DESC,
-    id DESC
-LIMIT 1
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-		"provider":        provider,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query connectors: %w", err)
-	}
-
-	loadedConnector, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Connector])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect connector row: %w", err)
-	}
-
-	*c = loadedConnector
-
-	return c.LoadByID(ctx, conn, scope, c.ID, encryptionKey)
 }
 
 func (c *Connector) Delete(
@@ -767,10 +693,10 @@ WHERE
 	return nil
 }
 
-// decryptConnection decrypts and unmarshals the connector's encrypted
-// connection blob, hydrating Slack channel settings from the settings
-// column. A connector without a blob is left with a nil Connection.
-func (c *Connector) decryptConnection(encryptionKey cipher.EncryptionKey) error {
+// DecryptConnection hydrates Connection from EncryptedConnection already
+// present on the struct. Call it after a metadata or list load instead of
+// LoadByID, which would query the same row again.
+func (c *Connector) DecryptConnection(encryptionKey cipher.EncryptionKey) error {
 	if len(c.EncryptedConnection) == 0 {
 		return nil
 	}

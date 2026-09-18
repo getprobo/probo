@@ -110,6 +110,7 @@ type (
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
 		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
 		Task                                       *dataloadgen.Loader[gid.GID, *coredata.Task]
+		TaskExternalLink                           *dataloadgen.Loader[gid.GID, *coredata.TaskExternalLink]
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
@@ -184,6 +185,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
 		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
 		Task:                                     dataloadgen.NewMappedLoader(f.fetchTasks),
+		TaskExternalLink:                         dataloadgen.NewMappedLoader(f.fetchTaskExternalLinks),
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
 		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
@@ -653,6 +655,30 @@ func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.
 	result := make(map[gid.GID]*coredata.Task, len(tasks))
 	for _, v := range tasks {
 		result[v.ID] = v
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchTaskExternalLinks(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.TaskExternalLink, error) {
+	result := make(map[gid.GID]*coredata.TaskExternalLink, len(keys))
+	taskIDsByTenant := make(map[gid.TenantID][]gid.GID)
+
+	for _, taskID := range keys {
+		tenantID := taskID.TenantID()
+		taskIDsByTenant[tenantID] = append(taskIDsByTenant[tenantID], taskID)
+	}
+
+	for tenantID, taskIDs := range taskIDsByTenant {
+		links, err := f.task.Sync.GetLinksByTaskIDs(ctx, coredata.NewScope(tenantID), taskIDs)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load task external links: %w", err)
+		}
+
+		maps.Copy(result, links)
 	}
 
 	return result, nil

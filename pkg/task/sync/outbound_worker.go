@@ -25,32 +25,43 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
-type outboundHandler struct {
-	svc        *Service
-	pg         *pg.Client
-	logger     *log.Logger
-	staleAfter time.Duration
-}
+const (
+	outboundHeartbeatInterval = 30 * time.Second
+)
+
+type (
+	outboundHandler struct {
+		svc               *Service
+		pg                *pg.Client
+		logger            *log.Logger
+		staleAfter        time.Duration
+		heartbeatInterval time.Duration
+	}
+)
 
 func NewOutboundWorker(
 	svc *Service,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.TaskSyncJob] {
+	staleAfter := 5 * time.Minute
 	h := &outboundHandler{
-		svc:        svc,
-		pg:         svc.pg,
-		logger:     logger,
-		staleAfter: 5 * time.Minute,
+		svc:               svc,
+		pg:                svc.pg,
+		logger:            logger,
+		staleAfter:        staleAfter,
+		heartbeatInterval: outboundLeaseHeartbeatInterval(staleAfter, outboundHeartbeatInterval),
 	}
 
 	return worker.New(
@@ -67,16 +78,7 @@ func (h *outboundHandler) Claim(ctx context.Context) (coredata.TaskSyncJob, erro
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := item.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
-				return err
-			}
-
-			now := time.Now()
-			item.Status = coredata.TaskSyncJobStatusProcessing
-			item.StartedAt = &now
-			item.UpdatedAt = now
-
-			return item.Update(ctx, tx, coredata.NewNoScope())
+			return item.ClaimNextForUpdateSkipLocked(ctx, tx, time.Now())
 		},
 	); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -90,9 +92,30 @@ func (h *outboundHandler) Claim(ctx context.Context) (coredata.TaskSyncJob, erro
 }
 
 func (h *outboundHandler) Process(ctx context.Context, item coredata.TaskSyncJob) error {
-	if err := h.handle(ctx, &item); err != nil {
-		if failErr := h.fail(ctx, &item, err); failErr != nil {
-			h.logger.ErrorCtx(ctx, "cannot fail task sync job", log.Error(failErr))
+	job := *h
+	job.logger = h.logger.With(log.String("task_sync_job_id", item.ID.String()))
+
+	runCtx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+
+	stopHeartbeat := job.startHeartbeat(runCtx, cancel, item)
+	defer stopHeartbeat()
+
+	if err := job.handle(runCtx, &item); err != nil {
+		if taskSyncLeaseLost(runCtx, err) {
+			job.logger.InfoCtx(ctx, "lost task sync job processing lease")
+
+			return nil
+		}
+
+		if failErr := job.fail(ctx, &item, err); failErr != nil {
+			if errors.Is(failErr, coredata.ErrProcessingLeaseLost) {
+				job.logger.InfoCtx(ctx, "lost task sync job processing lease")
+
+				return nil
+			}
+
+			job.logger.ErrorCtx(ctx, "cannot fail task sync job", log.Error(failErr))
 		}
 
 		return err
@@ -119,13 +142,32 @@ func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob
 	scope := coredata.NewScopeFromObjectID(item.ID)
 
 	var (
-		client *linear.Client
-		task   *coredata.Task
+		client     *linear.Client
+		task       *coredata.Task
+		skipUpdate bool
 	)
 
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if payload.Action == SyncActionUpdate {
+				task = &coredata.Task{}
+				if err := task.LoadByID(ctx, tx, scope, payload.TaskID); err != nil {
+					return fmt.Errorf("cannot load task %q: %w", payload.TaskID, err)
+				}
+
+				link, err := loadCurrentOutboundLink(ctx, tx, scope, payload.TaskID)
+				if err != nil {
+					return err
+				}
+
+				if !outboundLinkMatchesJob(link, payload) {
+					skipUpdate = true
+
+					return nil
+				}
+			}
+
 			dbConnector := &coredata.Connector{}
 			if err := dbConnector.LoadByID(ctx, tx, scope, payload.ConnectorID, h.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load Linear connector: %w", err)
@@ -138,20 +180,15 @@ func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob
 				return err
 			}
 
-			if payload.Action != SyncActionUpdate {
-				return nil
-			}
-
-			task = &coredata.Task{}
-			if err := task.LoadByID(ctx, tx, scope, payload.TaskID); err != nil {
-				return fmt.Errorf("cannot load task %q: %w", payload.TaskID, err)
-			}
-
 			return nil
 		},
 	)
 	if err != nil {
 		return err
+	}
+
+	if skipUpdate {
+		return h.succeed(ctx, item)
 	}
 
 	states, err := client.ListWorkflowStates(ctx, payload.TeamID)
@@ -207,13 +244,13 @@ func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob
 		err = h.pg.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				link := &coredata.TaskExternalLink{}
-				if err := link.LoadByTaskID(ctx, tx, scope, payload.TaskID); err != nil {
-					if errors.Is(err, coredata.ErrResourceNotFound) {
-						return nil
-					}
+				link, err := loadCurrentOutboundLink(ctx, tx, scope, payload.TaskID)
+				if err != nil {
+					return err
+				}
 
-					return fmt.Errorf("cannot load task external link: %w", err)
+				if !outboundLinkMatchesJob(link, payload) {
+					return nil
 				}
 
 				hash := ContentHash(task.Name, markdown, task.State, task.Priority, task.Deadline)
@@ -237,6 +274,10 @@ func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob
 		return fmt.Errorf("cannot process task sync job: unknown action %q", payload.Action)
 	}
 
+	return h.succeed(ctx, item)
+}
+
+func (h *outboundHandler) succeed(ctx context.Context, item *coredata.TaskSyncJob) error {
 	now := time.Now()
 	item.Status = coredata.TaskSyncJobStatusSucceeded
 	item.CompletedAt = &now
@@ -244,11 +285,115 @@ func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob
 	item.Error = nil
 
 	return h.pg.WithTx(
-		ctx,
+		context.WithoutCancel(ctx),
 		func(ctx context.Context, tx pg.Tx) error {
-			return item.Update(ctx, tx, coredata.NewNoScope())
+			return item.UpdateProcessingState(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(item.ID),
+			)
 		},
 	)
+}
+
+func (h *outboundHandler) startHeartbeat(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	item coredata.TaskSyncJob,
+) func() {
+	if item.ProcessingOwnerToken == nil || *item.ProcessingOwnerToken == "" {
+		panic("task sync job heartbeat requires an owner token")
+	}
+
+	stop := make(chan struct{})
+	exited := make(chan struct{})
+	var once sync.Once
+
+	lease := coredata.TaskSyncJob{
+		ID:                   item.ID,
+		ProcessingOwnerToken: item.ProcessingOwnerToken,
+	}
+
+	go func() {
+		defer close(exited)
+
+		ticker := time.NewTicker(h.heartbeatInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				err := h.pg.WithConn(
+					context.WithoutCancel(ctx),
+					func(ctx context.Context, conn pg.Querier) error {
+						return lease.TouchLease(
+							ctx,
+							conn,
+							coredata.NewScopeFromObjectID(lease.ID),
+							time.Now(),
+						)
+					},
+				)
+				if err == nil {
+					continue
+				}
+
+				select {
+				case <-stop:
+					return
+				default:
+				}
+
+				if errors.Is(err, coredata.ErrProcessingLeaseLost) {
+					cancel(coredata.ErrProcessingLeaseLost)
+				} else {
+					cancel(fmt.Errorf("cannot heartbeat task sync job: %w", err))
+				}
+
+				return
+			}
+		}
+	}()
+
+	return func() {
+		once.Do(
+			func() {
+				close(stop)
+				<-exited
+			},
+		)
+	}
+}
+
+func taskSyncLeaseLost(ctx context.Context, err error) bool {
+	return errors.Is(err, coredata.ErrProcessingLeaseLost) ||
+		errors.Is(context.Cause(ctx), coredata.ErrProcessingLeaseLost)
+}
+
+func loadCurrentOutboundLink(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	taskID gid.GID,
+) (*coredata.TaskExternalLink, error) {
+	link := &coredata.TaskExternalLink{}
+	if err := link.LoadByTaskID(ctx, conn, scope, taskID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load task external link: %w", err)
+	}
+
+	return link, nil
+}
+
+func outboundLinkMatchesJob(link *coredata.TaskExternalLink, payload JobPayload) bool {
+	return link != nil && link.ExternalID == payload.ExternalID
 }
 
 func (h *outboundHandler) fail(ctx context.Context, item *coredata.TaskSyncJob, processErr error) error {
@@ -270,9 +415,13 @@ func (h *outboundHandler) fail(ctx context.Context, item *coredata.TaskSyncJob, 
 	}
 
 	return h.pg.WithTx(
-		ctx,
+		context.WithoutCancel(ctx),
 		func(ctx context.Context, tx pg.Tx) error {
-			return item.Update(ctx, tx, coredata.NewNoScope())
+			return item.UpdateProcessingState(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(item.ID),
+			)
 		},
 	)
 }
@@ -281,4 +430,12 @@ func outboundRetryDelay(attemptCount int) time.Duration {
 	shift := min(max(attemptCount-1, 0), 5)
 
 	return time.Duration(1<<uint(shift)) * time.Minute
+}
+
+func outboundLeaseHeartbeatInterval(staleAfter, interval time.Duration) time.Duration {
+	if interval >= staleAfter {
+		return max(staleAfter/2, time.Millisecond)
+	}
+
+	return interval
 }

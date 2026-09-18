@@ -21,10 +21,12 @@
 package tasksync
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func TestOutboundRetryDelay(t *testing.T) {
@@ -35,4 +37,94 @@ func TestOutboundRetryDelay(t *testing.T) {
 	assert.Equal(t, 4*time.Minute, outboundRetryDelay(3))
 	assert.Equal(t, 32*time.Minute, outboundRetryDelay(6))
 	assert.Equal(t, 32*time.Minute, outboundRetryDelay(99))
+}
+
+func TestOutboundLinkMatchesJob(t *testing.T) {
+	t.Parallel()
+
+	payload := JobPayload{ExternalID: "issue-a"}
+
+	t.Run(
+		"missing link",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(t, outboundLinkMatchesJob(nil, payload))
+		},
+	)
+
+	t.Run(
+		"mismatched external id",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(
+				t,
+				outboundLinkMatchesJob(
+					&coredata.TaskExternalLink{ExternalID: "issue-b"},
+					payload,
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"matching link",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(
+				t,
+				outboundLinkMatchesJob(
+					&coredata.TaskExternalLink{ExternalID: "issue-a"},
+					payload,
+				),
+			)
+		},
+	)
+}
+
+func TestOutboundLeaseHeartbeatInterval(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 30*time.Second, outboundLeaseHeartbeatInterval(5*time.Minute, 30*time.Second))
+	assert.Equal(t, time.Minute, outboundLeaseHeartbeatInterval(2*time.Minute, 2*time.Minute))
+	assert.Equal(t, time.Millisecond, outboundLeaseHeartbeatInterval(time.Millisecond, time.Second))
+}
+
+func TestTaskSyncLeaseLost(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"direct lease error",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(
+				t,
+				taskSyncLeaseLost(t.Context(), coredata.ErrProcessingLeaseLost),
+			)
+		},
+	)
+
+	t.Run(
+		"cancelled cause",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithCancelCause(t.Context())
+			cancel(coredata.ErrProcessingLeaseLost)
+
+			assert.True(t, taskSyncLeaseLost(ctx, context.Canceled))
+		},
+	)
+
+	t.Run(
+		"unrelated error",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(t, taskSyncLeaseLost(t.Context(), assert.AnError))
+		},
+	)
 }

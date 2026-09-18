@@ -156,8 +156,11 @@ func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.
 			return nil, gqlutils.Invalid(ctx, err)
 		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
 			return nil, gqlutils.Invalid(ctx, err)
-		case errors.Is(err, tasksync.ErrTaskAlreadyLinked):
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
 			return nil, gqlutils.Conflict(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, gqlutils.Invalid(ctx, err)
 		default:
 			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -371,14 +374,13 @@ func (r *taskResolver) Activities(ctx context.Context, obj *types.Task, first *i
 
 // ExternalLink is the resolver for the externalLink field.
 func (r *taskResolver) ExternalLink(ctx context.Context, obj *types.Task) (*types.TaskExternalLink, error) {
-	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, obj.ID, task.ActionTaskGet); err != nil {
 		return nil, err
 	}
 
-	link, err := r.task.Sync.GetLinkByTaskID(ctx, scope, obj.ID)
+	link, err := dataloader.FromContext(ctx).TaskExternalLink.Load(ctx, obj.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, nil
 		}
 

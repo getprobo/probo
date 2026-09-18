@@ -43,6 +43,20 @@ func TestIsAppActor(t *testing.T) {
 	assert.False(t, isAppActor(metadata, ""))
 }
 
+func TestInboundEventIsStale(t *testing.T) {
+	t.Parallel()
+
+	older := time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC)
+	newer := older.Add(time.Minute)
+
+	assert.True(t, inboundEventIsStale(nil, &newer))
+	assert.False(t, inboundEventIsStale(&newer, nil))
+	assert.False(t, inboundEventIsStale(nil, nil))
+	assert.False(t, inboundEventIsStale(&newer, &older))
+	assert.True(t, inboundEventIsStale(&older, &newer))
+	assert.True(t, inboundEventIsStale(&newer, &newer))
+}
+
 func TestLinearDateTime(t *testing.T) {
 	t.Parallel()
 
@@ -70,9 +84,13 @@ func TestPickLinkForLinearOrganization(t *testing.T) {
 	assert.False(t, ok)
 	assert.Nil(t, got)
 
-	got, ok = PickLinkForLinearOrganization(coredata.TaskExternalLinks{linkA}, "org-other")
+	got, ok = PickLinkForLinearOrganization(coredata.TaskExternalLinks{linkA}, "org-a")
 	require.True(t, ok)
 	assert.Equal(t, linkA, got)
+
+	got, ok = PickLinkForLinearOrganization(coredata.TaskExternalLinks{linkA}, "org-other")
+	assert.False(t, ok)
+	assert.Nil(t, got)
 
 	got, ok = PickLinkForLinearOrganization(coredata.TaskExternalLinks{linkA, linkB}, "org-b")
 	require.True(t, ok)
@@ -83,6 +101,10 @@ func TestPickLinkForLinearOrganization(t *testing.T) {
 	assert.Nil(t, got)
 
 	got, ok = PickLinkForLinearOrganization(coredata.TaskExternalLinks{linkA, linkB}, "")
+	assert.False(t, ok)
+	assert.Nil(t, got)
+
+	got, ok = PickLinkForLinearOrganization(coredata.TaskExternalLinks{linkA}, "")
 	assert.False(t, ok)
 	assert.Nil(t, got)
 }

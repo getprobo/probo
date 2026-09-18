@@ -117,6 +117,47 @@ LIMIT 1
 	return l.loadExactlyOne(ctx, conn, q, args)
 }
 
+// LoadByTaskIDForUpdate is LoadByTaskID under FOR UPDATE so concurrent
+// inbound webhooks cannot apply an older Linear event after a newer one.
+func (l *TaskExternalLink) LoadByTaskIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	taskID gid.GID,
+) error {
+	q := `
+SELECT
+    organization_id,
+    task_id,
+    connector_id,
+    provider,
+    external_id,
+    external_identifier,
+    external_url,
+    destination,
+    origin,
+    remote_updated_at,
+    content_hash,
+    metadata,
+    created_at,
+    updated_at
+FROM
+    task_external_links
+WHERE
+    %s
+    AND task_id = @task_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"task_id": taskID}
+	maps.Copy(args, scope.SQLArguments())
+
+	return l.loadExactlyOne(ctx, conn, q, args)
+}
+
 func (l *TaskExternalLinks) LoadByExternalID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -157,6 +198,63 @@ ORDER BY
 		"provider":    provider,
 		"external_id": externalID,
 	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query task external links: %w", err)
+	}
+
+	links, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TaskExternalLink])
+	if err != nil {
+		return fmt.Errorf("cannot collect task external links: %w", err)
+	}
+
+	*l = links
+
+	return nil
+}
+
+func (l *TaskExternalLinks) LoadByTaskIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	taskIDs []gid.GID,
+) error {
+	if len(taskIDs) == 0 {
+		*l = nil
+		return nil
+	}
+
+	q := `
+SELECT
+    organization_id,
+    task_id,
+    connector_id,
+    provider,
+    external_id,
+    external_identifier,
+    external_url,
+    destination,
+    origin,
+    remote_updated_at,
+    content_hash,
+    metadata,
+    created_at,
+    updated_at
+FROM
+    task_external_links
+WHERE
+    %s
+    AND task_id = ANY(@task_ids)
+ORDER BY
+    created_at ASC,
+    task_id ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"task_ids": taskIDs}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -259,6 +357,7 @@ func (l *TaskExternalLink) Update(
 	q := `
 UPDATE task_external_links
 SET
+    external_id = @external_id,
     external_identifier = @external_identifier,
     external_url = @external_url,
     destination = @destination,
@@ -275,6 +374,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"task_id":             l.TaskID,
+		"external_id":         l.ExternalID,
 		"external_identifier": l.ExternalIdentifier,
 		"external_url":        l.ExternalURL,
 		"destination":         l.Destination,
@@ -287,6 +387,12 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot update task external link: %w", err)
 	}
 

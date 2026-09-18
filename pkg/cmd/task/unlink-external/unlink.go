@@ -88,7 +88,7 @@ func NewCmdUnlinkExternal(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), resp.UnlinkTaskExternal.Task.ID)
+			_, _ = fmt.Fprintln(f.IOStreams.Out, resp.UnlinkTaskExternal.Task.ID)
 
 			return nil
 		},

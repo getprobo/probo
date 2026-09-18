@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -58,6 +59,8 @@ type (
 		Key  string
 	}
 )
+
+const linearPublishPendingExternalIDPrefix = "pending:"
 
 func NewService(
 	pgClient *pg.Client,
@@ -101,19 +104,48 @@ func (s *Service) GetLinkByTaskID(
 	return link, nil
 }
 
+func (s *Service) GetLinksByTaskIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	taskIDs []gid.GID,
+) (map[gid.GID]*coredata.TaskExternalLink, error) {
+	links := coredata.TaskExternalLinks{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := links.LoadByTaskIDs(ctx, conn, scope, taskIDs); err != nil {
+				return fmt.Errorf("cannot load task external links: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	byTaskID := make(map[gid.GID]*coredata.TaskExternalLink, len(links))
+	for _, link := range links {
+		byTaskID[link.TaskID] = link
+	}
+
+	return byTaskID, nil
+}
+
 func (s *Service) ListLinearTeams(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 ) ([]LinearTeam, error) {
-	var client *linear.Client
+	var accounts []linearAccount
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var err error
 
-			client, _, err = s.linearClientForOrganization(ctx, tx, scope, organizationID)
+			accounts, err = s.linearAccountsForOrganization(ctx, tx, scope, organizationID)
 
 			return err
 		},
@@ -122,18 +154,31 @@ func (s *Service) ListLinearTeams(
 		return nil, err
 	}
 
-	remoteTeams, err := client.ListTeams(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("cannot list Linear teams: %w", err)
+	batches := make([][]linear.Team, 0, len(accounts))
+	var listErr error
+
+	for _, account := range accounts {
+		remoteTeams, err := account.client.ListTeams(ctx)
+		if err != nil {
+			listErr = err
+			if s.logger != nil {
+				s.logger.WarnCtx(
+					ctx,
+					"cannot list Linear teams for connector",
+					log.String("connector_id", account.connector.ID.String()),
+					log.Error(err),
+				)
+			}
+
+			continue
+		}
+
+		batches = append(batches, remoteTeams)
 	}
 
-	teams := make([]LinearTeam, 0, len(remoteTeams))
-	for _, team := range remoteTeams {
-		teams = append(teams, LinearTeam{
-			ID:   team.ID,
-			Name: team.Name,
-			Key:  team.Key,
-		})
+	teams := mergeLinearTeams(batches)
+	if len(teams) == 0 && listErr != nil {
+		return nil, fmt.Errorf("cannot list Linear teams: %w", listErr)
 	}
 
 	return teams, nil
@@ -150,9 +195,11 @@ func (s *Service) PublishToLinear(
 	}
 
 	var (
-		task        *coredata.Task
-		client      *linear.Client
-		dbConnector *coredata.Connector
+		task         *coredata.Task
+		client       *linear.Client
+		dbConnector  *coredata.Connector
+		accounts     []linearAccount
+		existingLink *coredata.TaskExternalLink
 	)
 
 	err := s.pg.WithTx(
@@ -163,13 +210,20 @@ func (s *Service) PublishToLinear(
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
 
-			if err := ensureTaskNotLinked(ctx, tx, scope, taskID); err != nil {
-				return err
+			existing := &coredata.TaskExternalLink{}
+			if err := existing.LoadByTaskID(ctx, tx, scope, taskID); err == nil {
+				if isLinearPublishComplete(existing) {
+					return ErrTaskAlreadyLinked
+				}
+
+				existingLink = existing
+			} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load task external link: %w", err)
 			}
 
 			var err error
 
-			client, dbConnector, err = s.linearClientForOrganization(ctx, tx, scope, task.OrganizationID)
+			accounts, err = s.linearAccountsForOrganization(ctx, tx, scope, task.OrganizationID)
 
 			return err
 		},
@@ -177,6 +231,14 @@ func (s *Service) PublishToLinear(
 	if err != nil {
 		return nil, err
 	}
+
+	account, err := s.linearAccountForTeam(ctx, accounts, teamID)
+	if err != nil {
+		return nil, err
+	}
+
+	client = account.client
+	dbConnector = account.connector
 
 	states, err := client.ListWorkflowStates(ctx, teamID)
 	if err != nil {
@@ -203,19 +265,163 @@ func (s *Service) PublishToLinear(
 		return nil, fmt.Errorf("cannot load Linear organization: %w", err)
 	}
 
-	issue, err := client.CreateIssue(
-		ctx,
-		linear.IssueInput{
-			TeamID:      teamID,
-			Title:       task.Name,
-			Description: markdown,
-			StateID:     stateID,
-			Priority:    TaskPriorityToLinear(task.Priority),
-			DueDate:     DeadlineToLinearDate(task.Deadline),
+	destination, err := json.Marshal(
+		coredata.TaskExternalLinkDestination{
+			TeamID:               teamID,
+			LinearOrganizationID: linearOrganizationID,
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create Linear issue: %w", err)
+		return nil, fmt.Errorf("cannot marshal destination: %w", err)
+	}
+
+	var issue *linear.Issue
+
+	if existingLink != nil && !isLinearPublishPending(existingLink) {
+		issue = issueFromExternalLink(existingLink)
+	} else {
+		if err := s.claimPendingLinearPublish(ctx, scope, task, dbConnector, destination); err != nil {
+			return nil, err
+		}
+
+		issue, err = client.CreateIssue(
+			ctx,
+			linear.IssueInput{
+				TeamID:      teamID,
+				Title:       task.Name,
+				Description: markdown,
+				StateID:     stateID,
+				Priority:    TaskPriorityToLinear(task.Priority),
+				DueDate:     DeadlineToLinearDate(task.Deadline),
+			},
+		)
+		if err != nil {
+			s.compensateFailedPublish(ctx, client, scope, taskID, "")
+			return nil, fmt.Errorf("cannot create Linear issue: %w", err)
+		}
+	}
+
+	link, err := s.finishLinearPublish(
+		ctx,
+		scope,
+		client,
+		task,
+		dbConnector,
+		destination,
+		viewerID,
+		issue,
+		markdown,
+	)
+	if err != nil {
+		s.compensateFailedPublish(ctx, client, scope, taskID, issue.ID)
+		return nil, err
+	}
+
+	return link, nil
+}
+
+func linearPublishPendingExternalID(taskID gid.GID) string {
+	return linearPublishPendingExternalIDPrefix + taskID.String()
+}
+
+func isLinearPublishPending(link *coredata.TaskExternalLink) bool {
+	return link != nil && strings.HasPrefix(link.ExternalID, linearPublishPendingExternalIDPrefix)
+}
+
+func isLinearPublishComplete(link *coredata.TaskExternalLink) bool {
+	if link == nil || isLinearPublishPending(link) {
+		return false
+	}
+
+	var payload struct {
+		AttachmentID string `json:"attachment_id"`
+	}
+
+	if err := json.Unmarshal(link.Metadata, &payload); err != nil {
+		return false
+	}
+
+	return payload.AttachmentID != ""
+}
+
+func issueFromExternalLink(link *coredata.TaskExternalLink) *linear.Issue {
+	issue := &linear.Issue{
+		ID:         link.ExternalID,
+		Identifier: link.ExternalIdentifier,
+		URL:        link.ExternalURL,
+	}
+
+	if link.RemoteUpdatedAt != nil {
+		issue.UpdatedAt = *link.RemoteUpdatedAt
+	}
+
+	return issue
+}
+
+func (s *Service) claimPendingLinearPublish(
+	ctx context.Context,
+	scope coredata.Scoper,
+	task *coredata.Task,
+	dbConnector *coredata.Connector,
+	destination json.RawMessage,
+) error {
+	now := time.Now()
+	pending := &coredata.TaskExternalLink{
+		OrganizationID: task.OrganizationID,
+		TaskID:         task.ID,
+		ConnectorID:    dbConnector.ID,
+		Provider:       coredata.ConnectorProviderLinear,
+		ExternalID:     linearPublishPendingExternalID(task.ID),
+		Destination:    destination,
+		Origin:         coredata.TaskExternalLinkOriginProbo,
+		Metadata:       json.RawMessage(`{}`),
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			existing := &coredata.TaskExternalLink{}
+			err := existing.LoadByTaskIDForUpdate(ctx, tx, scope, task.ID)
+			if err == nil {
+				if isLinearPublishPending(existing) {
+					return nil
+				}
+
+				return ErrTaskAlreadyLinked
+			}
+
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load task external link: %w", err)
+			}
+
+			if err := pending.Insert(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrTaskAlreadyLinked
+				}
+
+				return fmt.Errorf("cannot insert pending task external link: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) finishLinearPublish(
+	ctx context.Context,
+	scope coredata.Scoper,
+	client *linear.Client,
+	task *coredata.Task,
+	dbConnector *coredata.Connector,
+	destination json.RawMessage,
+	viewerID string,
+	issue *linear.Issue,
+	markdown string,
+) (*coredata.TaskExternalLink, error) {
+	if err := s.persistPublishedIssueIdentity(ctx, scope, task.ID, issue, destination); err != nil {
+		return nil, err
 	}
 
 	taskURL, err := s.taskURL(task.OrganizationID, task.ID)
@@ -226,16 +432,6 @@ func (s *Service) PublishToLinear(
 	attachmentID, err := client.LinkAttachment(ctx, issue.ID, taskURL, "Probo task")
 	if err != nil {
 		return nil, fmt.Errorf("cannot link Linear attachment: %w", err)
-	}
-
-	destination, err := json.Marshal(
-		coredata.TaskExternalLinkDestination{
-			TeamID:               teamID,
-			LinearOrganizationID: linearOrganizationID,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot marshal destination: %w", err)
 	}
 
 	metadata, err := json.Marshal(
@@ -270,12 +466,38 @@ func (s *Service) PublishToLinear(
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := ensureTaskNotLinked(ctx, tx, scope, taskID); err != nil {
-				return err
+			current := &coredata.Task{}
+			if err := current.LoadByIDForUpdate(ctx, tx, scope, task.ID); err != nil {
+				return fmt.Errorf("cannot load task %q: %w", task.ID, err)
 			}
 
-			if err := link.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert task external link: %w", err)
+			existing := &coredata.TaskExternalLink{}
+			if err := existing.LoadByTaskIDForUpdate(ctx, tx, scope, task.ID); err != nil {
+				return fmt.Errorf("cannot load task external link: %w", err)
+			}
+
+			if !isLinearPublishPending(existing) && existing.ExternalID != issue.ID {
+				return ErrTaskAlreadyLinked
+			}
+
+			link.CreatedAt = existing.CreatedAt
+			if err := link.Update(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrTaskAlreadyLinked
+				}
+
+				return fmt.Errorf("cannot update task external link: %w", err)
+			}
+
+			needsSync, err := taskNeedsOutboundReconcile(current, hash)
+			if err != nil {
+				return fmt.Errorf("cannot compare published task snapshot: %w", err)
+			}
+
+			if needsSync {
+				if err := s.enqueueOutboundTx(ctx, tx, scope, link, SyncActionUpdate); err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -286,6 +508,99 @@ func (s *Service) PublishToLinear(
 	}
 
 	return link, nil
+}
+
+func (s *Service) persistPublishedIssueIdentity(
+	ctx context.Context,
+	scope coredata.Scoper,
+	taskID gid.GID,
+	issue *linear.Issue,
+	destination json.RawMessage,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			link := &coredata.TaskExternalLink{}
+			if err := link.LoadByTaskIDForUpdate(ctx, tx, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load pending task external link: %w", err)
+			}
+
+			if !isLinearPublishPending(link) && link.ExternalID != issue.ID {
+				return ErrTaskAlreadyLinked
+			}
+
+			link.ExternalID = issue.ID
+			link.ExternalIdentifier = issue.Identifier
+			link.ExternalURL = issue.URL
+			link.Destination = destination
+			link.RemoteUpdatedAt = &issue.UpdatedAt
+			link.UpdatedAt = time.Now()
+
+			if err := link.Update(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrTaskAlreadyLinked
+				}
+
+				return fmt.Errorf("cannot persist Linear issue identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) compensateFailedPublish(
+	ctx context.Context,
+	client *linear.Client,
+	scope coredata.Scoper,
+	taskID gid.GID,
+	issueID string,
+) {
+	if issueID != "" {
+		if err := client.ArchiveIssue(ctx, issueID); err != nil && s.logger != nil {
+			s.logger.WarnCtx(
+				ctx,
+				"cannot archive Linear issue after failed publish",
+				log.String("task_id", taskID.String()),
+				log.Error(err),
+			)
+		}
+	}
+
+	if err := s.deleteTaskLink(ctx, scope, taskID); err != nil && s.logger != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot delete pending task external link after failed publish",
+			log.String("task_id", taskID.String()),
+			log.Error(err),
+		)
+	}
+}
+
+func (s *Service) deleteTaskLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	taskID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			link := &coredata.TaskExternalLink{}
+			if err := link.LoadByTaskID(ctx, tx, scope, taskID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load task external link: %w", err)
+			}
+
+			if err := link.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete task external link: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 func (s *Service) Unlink(
@@ -376,51 +691,6 @@ func (s *Service) enqueueOutboundTx(
 	}
 
 	return nil
-}
-
-func ensureTaskNotLinked(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	taskID gid.GID,
-) error {
-	existing := &coredata.TaskExternalLink{}
-
-	err := existing.LoadByTaskID(ctx, conn, scope, taskID)
-	if err == nil {
-		return ErrTaskAlreadyLinked
-	}
-
-	if !errors.Is(err, coredata.ErrResourceNotFound) {
-		return fmt.Errorf("cannot load task external link: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Service) linearClientForOrganization(
-	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-) (*linear.Client, *coredata.Connector, error) {
-	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByOrganizationIDAndProvider(
-		ctx,
-		tx,
-		scope,
-		organizationID,
-		coredata.ConnectorProviderLinear,
-		s.encryptionKey,
-	); err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, nil, ErrLinearNotConnected
-		}
-
-		return nil, nil, fmt.Errorf("cannot load Linear connector: %w", err)
-	}
-
-	return s.linearClientForConnector(ctx, tx, scope, dbConnector)
 }
 
 func (s *Service) linearClientForConnector(

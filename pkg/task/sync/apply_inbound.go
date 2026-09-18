@@ -23,6 +23,7 @@ package tasksync
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -75,15 +76,30 @@ func (s *Service) ApplyInboundIssue(
 				return nil
 			}
 
-			remoteUpdatedAt := linearDateTime(data.UpdatedAt)
-			if remoteUpdatedAt != nil && link.RemoteUpdatedAt != nil && !remoteUpdatedAt.After(*link.RemoteUpdatedAt) {
+			scope := coredata.NewScope(link.OrganizationID.TenantID())
+			if err := link.LoadByTaskIDForUpdate(ctx, tx, scope, link.TaskID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot lock task external link: %w", err)
+			}
+
+			if link.ExternalID != data.ID {
 				return nil
 			}
 
-			scope := coredata.NewScope(link.OrganizationID.TenantID())
+			if isAppActor(link.Metadata, envelope.Actor.ID) {
+				return nil
+			}
+
+			remoteUpdatedAt := linearDateTime(data.UpdatedAt)
+			if inboundEventIsStale(remoteUpdatedAt, link.RemoteUpdatedAt) {
+				return nil
+			}
 
 			task := &coredata.Task{}
-			if err := task.LoadByID(ctx, tx, scope, link.TaskID); err != nil {
+			if err := task.LoadByIDForUpdate(ctx, tx, scope, link.TaskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", link.TaskID, err)
 			}
 
@@ -179,18 +195,14 @@ func PickLinkForLinearOrganization(
 	links coredata.TaskExternalLinks,
 	linearOrganizationID string,
 ) (*coredata.TaskExternalLink, bool) {
-	if len(links) == 0 {
+	if linearOrganizationID == "" {
 		return nil, false
-	}
-
-	if len(links) == 1 {
-		return links[0], true
 	}
 
 	var match *coredata.TaskExternalLink
 
 	for _, link := range links {
-		if linearOrganizationID == "" || link.DestinationLinearOrganizationID() != linearOrganizationID {
+		if link.DestinationLinearOrganizationID() != linearOrganizationID {
 			continue
 		}
 
@@ -219,7 +231,10 @@ func touchInboundLink(
 ) error {
 	link.ContentHash = &hash
 
-	link.RemoteUpdatedAt = remoteUpdatedAt
+	if remoteUpdatedAt != nil {
+		link.RemoteUpdatedAt = remoteUpdatedAt
+	}
+
 	if data.Has("identifier") && data.Identifier != "" {
 		link.ExternalIdentifier = data.Identifier
 	}
@@ -251,6 +266,18 @@ func isAppActor(metadata json.RawMessage, actorID string) bool {
 	}
 
 	return payload.AppActorID != "" && payload.AppActorID == actorID
+}
+
+func inboundEventIsStale(remoteUpdatedAt, stored *time.Time) bool {
+	if stored == nil {
+		return false
+	}
+
+	if remoteUpdatedAt == nil {
+		return true
+	}
+
+	return !remoteUpdatedAt.After(*stored)
 }
 
 func linearDateTime(value string) *time.Time {

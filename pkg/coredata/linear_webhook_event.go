@@ -258,6 +258,74 @@ WHERE processed_at IS NULL
 	return nil
 }
 
+func DeleteProcessedLinearWebhookEventsBeforeBatch(
+	ctx context.Context,
+	conn pg.Querier,
+	before time.Time,
+	limit int,
+) (int64, error) {
+	q := `
+WITH doomed AS (
+    SELECT delivery_id
+    FROM linear_webhook_events
+    WHERE processed_at IS NOT NULL
+        AND processed_at < @before
+    ORDER BY processed_at ASC, delivery_id ASC
+    LIMIT @limit
+)
+DELETE FROM linear_webhook_events
+WHERE delivery_id IN (SELECT delivery_id FROM doomed)
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"before": before,
+			"limit":  limit,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete processed Linear webhook events: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+func DeleteDeadLetteredLinearWebhookEventsBeforeBatch(
+	ctx context.Context,
+	conn pg.Querier,
+	before time.Time,
+	limit int,
+) (int64, error) {
+	q := `
+WITH doomed AS (
+    SELECT delivery_id
+    FROM linear_webhook_events
+    WHERE dead_lettered_at IS NOT NULL
+        AND dead_lettered_at < @before
+    ORDER BY dead_lettered_at ASC, delivery_id ASC
+    LIMIT @limit
+)
+DELETE FROM linear_webhook_events
+WHERE delivery_id IN (SELECT delivery_id FROM doomed)
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"before": before,
+			"limit":  limit,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete dead-lettered Linear webhook events: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 func (e *LinearWebhookEvent) loadExactlyOne(
 	ctx context.Context,
 	conn pg.Querier,

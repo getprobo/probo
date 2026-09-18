@@ -2098,7 +2098,13 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 		panic(fmt.Errorf("cannot list organization tasks: %w", err))
 	}
 
-	return nil, types.NewListTasksOutput(page), nil
+	links, err := r.taskExternalLinksByTasks(ctx, scope, page.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListTasksOutput(page, links), nil
 }
 
 func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error) {
@@ -2112,8 +2118,14 @@ func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, types.GetTaskOutput{}, fmt.Errorf("failed to get task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.GetTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.GetTaskOutput{
-		Task: r.taskWithExternalLink(ctx, scope, task),
+		Task: taskWithLink,
 	}, nil
 }
 
@@ -2155,8 +2167,14 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, types.AddTaskOutput{}, fmt.Errorf("failed to create task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.AddTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.AddTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
@@ -2194,11 +2212,23 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, result.Task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	output := types.UpdateTaskOutput{
-		Task: types.NewTask(result.Task),
+		Task: taskWithLink,
 	}
 	if result.NextTask != nil {
-		output.NextTask = types.NewTask(result.NextTask)
+		nextWithLink, err := r.taskWithExternalLink(ctx, scope, result.NextTask)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load next task external link", log.Error(err))
+			return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
+		}
+
+		output.NextTask = nextWithLink
 	}
 
 	return nil, output, nil
@@ -2217,8 +2247,14 @@ func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.AssignTaskOutput{}, fmt.Errorf("failed to assign task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.AssignTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.AssignTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
@@ -2235,8 +2271,14 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 		return nil, types.UnassignTaskOutput{}, fmt.Errorf("failed to unassign task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.UnassignTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.UnassignTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
@@ -2717,7 +2759,13 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("failed to list measure tasks: %w", err)
 	}
 
-	return nil, types.NewListMeasureTasksOutput(taskPage), nil
+	links, err := r.taskExternalLinksByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListMeasureTasksOutput(taskPage, links), nil
 }
 
 func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureEvidencesInput) (*mcp.CallToolResult, types.ListMeasureEvidencesOutput, error) {
@@ -10054,8 +10102,11 @@ func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToo
 			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
 		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
 			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
-		case errors.Is(err, tasksync.ErrTaskAlreadyLinked):
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
 			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
+		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear team was not found")
 		default:
 			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
 
@@ -10069,8 +10120,14 @@ func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToo
 		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task external link", log.Error(err))
+		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.PublishTaskToLinearOutput{
-		Task: r.taskWithExternalLink(ctx, scope, task),
+		Task: taskWithLink,
 	}, nil
 }
 
@@ -10096,27 +10153,54 @@ func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task external link", log.Error(err))
+		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.UnlinkTaskExternalOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
+}
+
+func (r *Resolver) taskExternalLinksByTasks(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tasks []*coredata.Task,
+) (map[gid.GID]*coredata.TaskExternalLink, error) {
+	if r.task.Sync == nil || len(tasks) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]gid.GID, 0, len(tasks))
+	for _, task := range tasks {
+		ids = append(ids, task.ID)
+	}
+
+	return r.task.Sync.GetLinksByTaskIDs(ctx, scope, ids)
 }
 
 func (r *Resolver) taskWithExternalLink(
 	ctx context.Context,
 	scope coredata.Scoper,
 	task *coredata.Task,
-) *types.Task {
+) (*types.Task, error) {
 	result := types.NewTask(task)
 	if r.task.Sync == nil {
-		return result
+		return result, nil
 	}
 
 	link, err := r.task.Sync.GetLinkByTaskID(ctx, scope, task.ID)
 	if err != nil {
-		return result
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return result, nil
+		}
+
+		return nil, err
 	}
 
 	result.ExternalLink = types.NewTaskExternalLink(link)
 
-	return result
+	return result, nil
 }

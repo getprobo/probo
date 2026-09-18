@@ -35,6 +35,7 @@ import (
 
 const (
 	linearStateTypeBacklog   = "backlog"
+	linearStateTypeTriage    = "triage"
 	linearStateTypeUnstarted = "unstarted"
 	linearStateTypeStarted   = "started"
 	linearStateTypeCompleted = "completed"
@@ -60,7 +61,7 @@ func TaskStateToLinearType(state coredata.TaskState) string {
 
 func LinearTypeToTaskState(stateType string) coredata.TaskState {
 	switch stateType {
-	case linearStateTypeBacklog, "triage":
+	case linearStateTypeBacklog, linearStateTypeTriage:
 		return coredata.TaskStateBacklog
 	case linearStateTypeUnstarted:
 		return coredata.TaskStateTodo
@@ -105,7 +106,20 @@ func LinearPriorityToTask(priority int) coredata.TaskPriority {
 
 func PickWorkflowStateID(states []linear.WorkflowState, taskState coredata.TaskState) (string, error) {
 	want := TaskStateToLinearType(taskState)
+	if id, ok := pickWorkflowStateIDByType(states, want); ok {
+		return id, nil
+	}
 
+	if taskState == coredata.TaskStateBacklog {
+		if id, ok := pickWorkflowStateIDByType(states, linearStateTypeTriage); ok {
+			return id, nil
+		}
+	}
+
+	return "", fmt.Errorf("cannot find Linear workflow state for type %q", want)
+}
+
+func pickWorkflowStateIDByType(states []linear.WorkflowState, want string) (string, bool) {
 	var best *linear.WorkflowState
 
 	for i := range states {
@@ -120,10 +134,10 @@ func PickWorkflowStateID(states []linear.WorkflowState, taskState coredata.TaskS
 	}
 
 	if best == nil {
-		return "", fmt.Errorf("cannot find Linear workflow state for type %q", want)
+		return "", false
 	}
 
-	return best.ID, nil
+	return best.ID, true
 }
 
 func ContentToMarkdown(content string) (string, error) {
@@ -199,8 +213,8 @@ func ContentHash(
 	deadline *time.Time,
 ) string {
 	var deadlineValue string
-	if deadline != nil {
-		deadlineValue = deadline.UTC().Format(time.RFC3339)
+	if date := DeadlineToLinearDate(deadline); date != nil {
+		deadlineValue = *date
 	}
 
 	sum := sha256.Sum256(
@@ -217,4 +231,22 @@ func ContentHash(
 	)
 
 	return hex.EncodeToString(sum[:])
+}
+
+func taskContentHash(task *coredata.Task) (string, error) {
+	markdown, err := ContentToMarkdown(task.Content)
+	if err != nil {
+		return "", err
+	}
+
+	return ContentHash(task.Name, markdown, task.State, task.Priority, task.Deadline), nil
+}
+
+func taskNeedsOutboundReconcile(task *coredata.Task, publishedHash string) (bool, error) {
+	current, err := taskContentHash(task)
+	if err != nil {
+		return false, err
+	}
+
+	return current != publishedHash, nil
 }

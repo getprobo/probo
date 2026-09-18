@@ -82,17 +82,12 @@ func WebhookHandler(
 			return
 		}
 
-		envelope, err := linear.ParseEnvelope(body)
-		if err != nil {
+		if _, err := linear.ParseEnvelope(body); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid json"))
 			return
 		}
 
 		deliveryID := r.Header.Get("Linear-Delivery")
-		if deliveryID == "" {
-			deliveryID = envelope.WebhookID
-		}
-
 		if deliveryID == "" {
 			httpserver.RenderError(w, http.StatusBadRequest, errors.New("missing Linear delivery id"))
 			return

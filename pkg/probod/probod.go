@@ -1322,10 +1322,28 @@ func (impl *Implm) Run(
 		context.WithoutCancel(ctx),
 	)
 
+	linearWebhookRetentionWorker := tasksync.NewRetentionWorker(
+		pgClient,
+		l.Named("linear-webhook-reliability-retention-worker"),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	linearWebhookRetentionWorkerCtx, stopLinearWebhookRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
 	wg.Go(
 		func() {
 			if err := linearWebhookWorker.Run(linearWebhookWorkerCtx); err != nil {
 				cancel(fmt.Errorf("linear webhook worker crashed: %w", err))
+			}
+		},
+	)
+
+	wg.Go(
+		func() {
+			if err := linearWebhookRetentionWorker.Run(linearWebhookRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("linear webhook retention worker crashed: %w", err))
 			}
 		},
 	)
@@ -1653,6 +1671,7 @@ func (impl *Implm) Run(
 	stopEvidenceDescriptionWorker()
 	stopTaskSyncOutboundWorker()
 	stopLinearWebhookWorker()
+	stopLinearWebhookRetentionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentApprovalQuorumPDFWorker()
 	stopDocumentNotification()

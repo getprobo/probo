@@ -54,7 +54,7 @@ export function TasksPage({ queryRef }: TasksPageProps) {
   const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
   usePageTitle(t("tasks.title"));
 
-  const organization = query.organization.__typename === "Organization"
+  const organization = query.organization?.__typename === "Organization"
     ? query.organization
     : null;
   const { root, actions } = tasksPage();

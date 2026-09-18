@@ -84,6 +84,11 @@ type (
 	}
 )
 
+const (
+	linearListPageSize = 100
+	linearListMaxPages = 500
+)
+
 // NewClient returns a Linear GraphQL client rooted at endpoint, which callers
 // take from the LINEAR provider registration's Endpoints.APIBase rather than
 // pinning, so an endpoint override moves task sync along with the OAuth
@@ -155,44 +160,76 @@ query TaskSyncLinearOrganization {
 
 func (c *Client) ListTeams(ctx context.Context) ([]Team, error) {
 	const query = `
-query TaskSyncLinearTeams {
-  teams {
+query TaskSyncLinearTeams($first: Int!, $after: String) {
+  teams(first: $first, after: $after) {
     nodes {
       id
       name
       key
     }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 `
 
-	var resp struct {
-		Data struct {
-			Teams struct {
-				Nodes []struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-					Key  string `json:"key"`
-				} `json:"nodes"`
-			} `json:"teams"`
-		} `json:"data"`
-		Errors []graphqlError `json:"errors"`
+	var (
+		teams []Team
+		after *string
+	)
+
+	for range linearListMaxPages {
+		var resp struct {
+			Data struct {
+				Teams struct {
+					Nodes []struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+						Key  string `json:"key"`
+					} `json:"nodes"`
+					PageInfo struct {
+						HasNextPage bool   `json:"hasNextPage"`
+						EndCursor   string `json:"endCursor"`
+					} `json:"pageInfo"`
+				} `json:"teams"`
+			} `json:"data"`
+			Errors []graphqlError `json:"errors"`
+		}
+
+		if err := c.do(
+			ctx,
+			query,
+			map[string]any{
+				"first": linearListPageSize,
+				"after": after,
+			},
+			&resp,
+		); err != nil {
+			return nil, err
+		}
+
+		for _, node := range resp.Data.Teams.Nodes {
+			teams = append(
+				teams,
+				Team{
+					ID:   node.ID,
+					Name: node.Name,
+					Key:  node.Key,
+				},
+			)
+		}
+
+		if !resp.Data.Teams.PageInfo.HasNextPage || resp.Data.Teams.PageInfo.EndCursor == "" {
+			return teams, nil
+		}
+
+		nextCursor := resp.Data.Teams.PageInfo.EndCursor
+		after = &nextCursor
 	}
 
-	if err := c.do(ctx, query, map[string]any{}, &resp); err != nil {
-		return nil, err
-	}
-
-	teams := make([]Team, 0, len(resp.Data.Teams.Nodes))
-	for _, node := range resp.Data.Teams.Nodes {
-		teams = append(teams, Team{
-			ID:   node.ID,
-			Name: node.Name,
-			Key:  node.Key,
-		})
-	}
-
-	return teams, nil
+	return nil, fmt.Errorf("cannot list Linear teams: pagination limit reached")
 }
 
 func (c *Client) ListWorkflowStates(ctx context.Context, teamID string) ([]WorkflowState, error) {
@@ -351,6 +388,35 @@ mutation TaskSyncLinearIssueUpdate($id: String!, $input: IssueUpdateInput!) {
 	}
 
 	return resp.Data.IssueUpdate.Issue.toIssue()
+}
+
+func (c *Client) ArchiveIssue(ctx context.Context, issueID string) error {
+	const query = `
+mutation TaskSyncLinearIssueArchive($id: String!) {
+  issueArchive(id: $id) {
+    success
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			IssueArchive struct {
+				Success bool `json:"success"`
+			} `json:"issueArchive"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, query, map[string]any{"id": issueID}, &resp); err != nil {
+		return err
+	}
+
+	if !resp.Data.IssueArchive.Success {
+		return fmt.Errorf("cannot archive Linear issue: mutation unsuccessful")
+	}
+
+	return nil
 }
 
 func (c *Client) LinkAttachment(ctx context.Context, issueID, url, title string) (string, error) {
