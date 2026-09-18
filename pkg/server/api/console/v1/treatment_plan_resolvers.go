@@ -273,7 +273,14 @@ func (r *treatmentPlanResolver) Risk(ctx context.Context, obj *types.TreatmentPl
 		return nil, err
 	}
 
-	risk, err := r.probo.Risks.Get(ctx, scope, obj.Risk.ID)
+	var risk *coredata.Risk
+
+	if obj.AsOf != nil {
+		risk, err = r.probo.Risks.GetWithDeleted(ctx, scope, obj.Risk.ID)
+	} else {
+		risk, err = r.probo.Risks.Get(ctx, scope, obj.Risk.ID)
+	}
+
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)

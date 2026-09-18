@@ -1461,11 +1461,12 @@ func TestRiskAnalysis_NestedTreatmentPlansAsOf(t *testing.T) {
 	assert.Nil(t, live.Edges[0].Node.AsOf)
 }
 
-func TestRiskAnalysis_DeleteRiskRequiresTreatmentPlanHistory(t *testing.T) {
+func TestRiskAnalysis_DeleteRiskKeepsAsOfHistory(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	riskID := factory.CreateRisk(owner)
+	riskName := "Keep after delete"
+	riskID := factory.CreateRisk(owner, factory.Attrs{"name": riskName})
 	analysisID := factory.CreateRiskAnalysis(owner)
 	diagramID := factory.CreateRiskAnalysisDiagram(owner, analysisID)
 	scenarioID := factory.CreateRiskAnalysisScenario(owner, diagramID)
@@ -1521,11 +1522,45 @@ func TestRiskAnalysis_DeleteRiskRequiresTreatmentPlanHistory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, planID, deletePlan.DeleteTreatmentPlan.DeletedTreatmentPlanID)
 
-	testutil.RequireConflictError(t, deleteRisk())
+	require.NoError(t, deleteRisk())
+
+	err = owner.ExecuteShouldFail(`
+		query($id: ID!) { node(id: $id) { ... on Risk { id } } }
+	`, map[string]any{"id": riskID})
+	require.Error(t, err)
+
+	var list struct {
+		Node struct {
+			Risks struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"risks"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(`
+		query($orgId: ID!) {
+			node(id: $orgId) {
+				... on Organization {
+					risks(first: 50) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"orgId": owner.GetOrganizationID().String()}, &list)
+	require.NoError(t, err)
+
+	for _, edge := range list.Node.Risks.Edges {
+		assert.NotEqual(t, riskID, edge.Node.ID)
+	}
 
 	restored := queryRiskAnalysisPlansAsOf(t, owner, analysisID, &asOf, 10, nil)
 	require.Len(t, restored.Node.TreatmentPlans.Edges, 1)
 	assert.Equal(t, planID, restored.Node.TreatmentPlans.Edges[0].Node.ID)
 	assert.Equal(t, riskID, restored.Node.TreatmentPlans.Edges[0].Node.Risk.ID)
-	assert.NotEmpty(t, restored.Node.TreatmentPlans.Edges[0].Node.Risk.Name)
+	assert.Equal(t, riskName, restored.Node.TreatmentPlans.Edges[0].Node.Risk.Name)
 }

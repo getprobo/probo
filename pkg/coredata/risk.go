@@ -251,6 +251,7 @@ WITH rsks AS (
 		risks_measures rm ON r.id = rm.risk_id
 	WHERE
 		rm.measure_id = @measure_id
+		AND r.deleted_at IS NULL
 )
 SELECT
 	COUNT(id)
@@ -314,6 +315,7 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
+		AND r.deleted_at IS NULL
 )
 SELECT
 	id,
@@ -375,6 +377,7 @@ SELECT
 FROM risks
 WHERE %s
 	AND organization_id = @organization_id
+	AND deleted_at IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -430,6 +433,7 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		r.organization_id = @organization_id
+		AND r.deleted_at IS NULL
 )
 SELECT
 	id,
@@ -479,6 +483,62 @@ WHERE %s
 }
 
 func (r *Risk) LoadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	reference_id,
+	name,
+	description,
+	category,
+	owner_profile_id,
+	NULL as owner_full_name,
+	treatment,
+	note,
+	inherent_likelihood,
+	inherent_impact,
+	inherent_risk_score,
+	residual_likelihood,
+	residual_impact,
+	residual_risk_score,
+	created_at,
+	updated_at
+FROM risks
+WHERE %s
+	AND id = @id
+	AND deleted_at IS NULL
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": riskID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risk: %w", err)
+	}
+
+	risk, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Risk])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect risk: %w", err)
+	}
+
+	*r = risk
+
+	return nil
+}
+
+func (r *Risk) LoadByIDWithDeleted(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -562,6 +622,7 @@ SELECT
 FROM risks
 WHERE %s
 	AND id = ANY(@risk_ids)
+	AND deleted_at IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -606,6 +667,7 @@ FROM
 WHERE
 	%s
 	AND id = ANY(@risk_ids)
+	AND deleted_at IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -660,6 +722,7 @@ FROM
 WHERE
 	%s
 	AND id = ANY(@risk_ids)
+	AND deleted_at IS NULL
 	AND %s
 	AND %s
 `
@@ -803,6 +866,7 @@ SET
 	updated_at = @updated_at
 WHERE %s
 	AND id = @risk_id
+	AND deleted_at IS NULL
 RETURNING inherent_risk_score, residual_risk_score
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -862,6 +926,35 @@ DELETE FROM risks WHERE %s AND id = @id
 	return nil
 }
 
+func (r Risk) SoftDelete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	riskID gid.GID,
+) error {
+	q := `
+UPDATE risks
+SET deleted_at = @deleted_at
+WHERE %s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         riskID,
+		"deleted_at": time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot soft delete risk: %w", err)
+	}
+
+	return nil
+}
+
 func (r *Risks) CountByDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -881,6 +974,7 @@ WITH rsks AS (
 		risks_documents rd ON r.id = rd.risk_id
 	WHERE
 		rd.document_id = @document_id
+		AND r.deleted_at IS NULL
 )
 SELECT
 	COUNT(id)

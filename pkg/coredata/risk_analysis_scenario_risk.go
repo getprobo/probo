@@ -214,6 +214,7 @@ FROM
 WHERE
 	%s
 	AND id IN (SELECT risk_id FROM linked_risks)
+	AND deleted_at IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), cursor.SQLFragment())
@@ -259,6 +260,7 @@ FROM
 WHERE
 	%s
 	AND id IN (SELECT risk_id FROM linked_risks)
+	AND deleted_at IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 	args := pgx.NamedArgs{"scenario_id": scenarioID}
