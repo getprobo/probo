@@ -42,6 +42,8 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { WorkspaceIdentitySection_deleteHorizontalLogoMutation } from "#/__generated__/iam/WorkspaceIdentitySection_deleteHorizontalLogoMutation.graphql";
+import type { WorkspaceIdentitySection_updateHorizontalLogoMutation } from "#/__generated__/iam/WorkspaceIdentitySection_updateHorizontalLogoMutation.graphql";
+import type { WorkspaceIdentitySection_updateLogoMutation } from "#/__generated__/iam/WorkspaceIdentitySection_updateLogoMutation.graphql";
 import type { WorkspaceIdentitySection_updateMutation } from "#/__generated__/iam/WorkspaceIdentitySection_updateMutation.graphql";
 import type { WorkspaceIdentitySectionFragment$key } from "#/__generated__/iam/WorkspaceIdentitySectionFragment.graphql";
 import { ImageDropzone } from "#/components/ImageDropzone/ImageDropzone";
@@ -71,14 +73,29 @@ const updateOrganizationMutation = graphql`
   mutation WorkspaceIdentitySection_updateMutation($input: UpdateOrganizationInput!) {
     updateOrganization(input: $input) {
       organization {
-        id
-        name
-        logo {
-          downloadUrl
-        }
-        horizontalLogo {
-          downloadUrl
-        }
+        ...WorkspaceIdentitySectionFragment
+      }
+    }
+  }
+`;
+
+const updateLogoMutation = graphql`
+  mutation WorkspaceIdentitySection_updateLogoMutation($input: UpdateOrganizationInput!) {
+    updateOrganization(input: $input) {
+      organization {
+        ...WorkspaceIdentitySectionFragment
+      }
+    }
+  }
+`;
+
+const updateHorizontalLogoMutation = graphql`
+  mutation WorkspaceIdentitySection_updateHorizontalLogoMutation(
+    $input: UpdateOrganizationInput!
+  ) {
+    updateOrganization(input: $input) {
+      organization {
+        ...WorkspaceIdentitySectionFragment
       }
     }
   }
@@ -113,8 +130,6 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<string | null>(null);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingHorizontalLogo, setUploadingHorizontalLogo] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
 
   const [updateOrganization, isUpdating] = useMutation<WorkspaceIdentitySection_updateMutation>(
@@ -124,6 +139,21 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
       errorToast: t("identity.errors.update"),
     },
   );
+  const [updateLogo, isUploadingLogo] = useMutation<WorkspaceIdentitySection_updateLogoMutation>(
+    updateLogoMutation,
+    {
+      successMessage: t("identity.messages.updated"),
+      errorToast: t("identity.errors.update"),
+    },
+  );
+  const [updateHorizontalLogo, isUploadingHorizontalLogo]
+    = useMutation<WorkspaceIdentitySection_updateHorizontalLogoMutation>(
+      updateHorizontalLogoMutation,
+      {
+        successMessage: t("identity.messages.updated"),
+        errorToast: t("identity.errors.update"),
+      },
+    );
   const [deleteHorizontalLogo, isDeletingHorizontalLogo]
     = useMutation<WorkspaceIdentitySection_deleteHorizontalLogoMutation>(
       deleteHorizontalLogoMutation,
@@ -134,7 +164,8 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
     );
 
   const canUpdate = organization.canUpdate;
-  const busy = isUpdating || isDeletingHorizontalLogo;
+  const busy = isUpdating || isUploadingLogo || isUploadingHorizontalLogo
+    || isDeletingHorizontalLogo;
   const dropzoneDisabled = !canUpdate || busy;
   const nameDirty = name !== organization.name;
   const logoSrc = logoPreview ?? organization.logo?.downloadUrl;
@@ -151,8 +182,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
   function handleLogoFile(file: File) {
     const preview = URL.createObjectURL(file);
     setLogoPreview(preview);
-    setUploadingLogo(true);
-    void updateOrganization({
+    void updateLogo({
       variables: {
         input: {
           organizationId: organization.id,
@@ -171,16 +201,13 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
         URL.revokeObjectURL(preview);
         setLogoPreview(null);
       },
-    ).finally(() => {
-      setUploadingLogo(false);
-    });
+    );
   }
 
   function handleHorizontalLogoFile(file: File) {
     const preview = URL.createObjectURL(file);
     setHorizontalLogoPreview(preview);
-    setUploadingHorizontalLogo(true);
-    void updateOrganization({
+    void updateHorizontalLogo({
       variables: {
         input: {
           organizationId: organization.id,
@@ -199,9 +226,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
         URL.revokeObjectURL(preview);
         setHorizontalLogoPreview(null);
       },
-    ).finally(() => {
-      setUploadingHorizontalLogo(false);
-    });
+    );
   }
 
   function handleClearHorizontalLogo() {
@@ -274,7 +299,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
                   ratio="square"
                   src={logoSrc}
                   disabled={dropzoneDisabled}
-                  uploading={uploadingLogo}
+                  uploading={isUploadingLogo}
                   placeholder={t("identity.fields.logoPlaceholder")}
                   onFile={handleLogoFile}
                   onReject={handleReject}
@@ -288,7 +313,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
                   ratio="wide"
                   src={horizontalLogoSrc}
                   disabled={dropzoneDisabled}
-                  uploading={uploadingHorizontalLogo}
+                  uploading={isUploadingHorizontalLogo}
                   placeholder={t("identity.fields.horizontalLogoPlaceholder")}
                   clearLabel={t("identity.actions.clearHorizontalLogo")}
                   onFile={handleHorizontalLogoFile}
@@ -320,7 +345,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
                   variant="solid"
                   color="neutral"
                   highContrast
-                  loading={isUpdating && !uploadingLogo && !uploadingHorizontalLogo}
+                  loading={isUpdating}
                   disabled={busy}
                 >
                   {t("identity.actions.save")}
