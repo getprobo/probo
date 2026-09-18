@@ -200,6 +200,7 @@ func setupPublishedTCFCookieBanner(t *testing.T) publishedCookieBannerFixture {
 	bannerID := factory.CreateCookieBanner(owner, factory.Attrs{"origin": origin})
 	factory.EnableCookieBannerTCF(t, bannerID)
 
+	factory.LockCommonGVLCatalog(t)
 	iabVendorID, version := factory.SeedCommonGVLVendor(t, "Consent TC Vendor", false)
 	factory.SeedCommonGVLCatalogState(t, version)
 

@@ -103,7 +103,7 @@ export function wireTCFLayout(root: LayoutHost, host: ShadowRoot): void {
 }
 
 function renderBanner(config: BannerConfig, gvl: TCFGVL, position: string): string {
-  const purposes = namedList(gvl.purposes);
+  const purposes = usedPurposes(gvl);
   const specialFeatures = usedSpecialFeatures(gvl);
   const vendorCount = Object.keys(gvl.vendors).length;
   const partnerLabel = interpolate(
@@ -146,7 +146,7 @@ function renderBanner(config: BannerConfig, gvl: TCFGVL, position: string): stri
 }
 
 function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): string {
-  const purposes = namedList(gvl.purposes);
+  const purposes = usedPurposes(gvl);
   const specialFeatures = usedSpecialFeatures(gvl);
   const vendors = Object.values(gvl.vendors).sort((a, b) => a.id - b.id);
   const purposeNames = new Map(purposes.map((p) => [p.id, p.name]));
@@ -181,18 +181,18 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
                   .join("")}`
               : ""
           }
-          ${disclosureSection("Special purposes", usedSpecialPurposes(gvl))}
-          ${disclosureSection("Features", usedFeatures(gvl))}
+          ${disclosureSection("Special purposes", "tcf_section_special_purposes", usedSpecialPurposes(gvl))}
+          ${disclosureSection("Features", "tcf_section_features", usedFeatures(gvl))}
           ${
             specialFeatures.length
               ? `<div class="section-title" data-text="tcf_section_special_features">Special features</div>${specialFeatures
                   .map((f) =>
-                    row(f.name, namedBody(f), toggle("special-feature", f.id, "Opt-in")),
+                    row(f.name, namedBody(f), toggle("special-feature", f.id, "Opt-in", f.name)),
                   )
                   .join("")}`
               : ""
           }
-          ${disclosureSection("Data categories", usedDataCategories(gvl))}
+          ${disclosureSection("Data categories", "tcf_section_data_categories", usedDataCategories(gvl))}
           <div class="section-title" id="probo-tcf-vendors" data-text="tcf_section_partners">Partners</div>
           ${vendors.map((v) => vendorRow(v, purposeNames)).join("")}
           <div class="section-title" data-text="tcf_section_storage">Storage</div>
@@ -231,8 +231,8 @@ function stackSection(stack: Stack, purposes: Named[], liPurposeIDs: Set<number>
 
 function purposeRow(purpose: Named, showLI: boolean): string {
   const controls = [
-    toggle("purpose-consent", purpose.id, "Consent"),
-    showLI ? toggle("purpose-li", purpose.id, "Legitimate interest") : "",
+    toggle("purpose-consent", purpose.id, "Consent", purpose.name),
+    showLI ? toggle("purpose-li", purpose.id, "Legitimate interest", purpose.name) : "",
   ].join("");
 
   return row(purpose.name, namedBody(purpose), `<div class="toggle-group">${controls}</div>`);
@@ -240,21 +240,21 @@ function purposeRow(purpose: Named, showLI: boolean): string {
 
 function vendorRow(vendor: PanelVendor, purposeNames: Map<number, string>): string {
   const controls = [
-    toggle("vendor-consent", vendor.id, "Consent"),
+    toggle("vendor-consent", vendor.id, "Consent", vendor.name),
     vendor.legIntPurposes?.length
-      ? toggle("vendor-li", vendor.id, "Legitimate interest")
+      ? toggle("vendor-li", vendor.id, "Legitimate interest", vendor.name)
       : "",
   ].join("");
 
   return row(vendor.name, vendorBody(vendor, purposeNames), `<div class="toggle-group">${controls}</div>`);
 }
 
-function disclosureSection(title: string, items: Named[]): string {
+function disclosureSection(title: string, textKey: string, items: Named[]): string {
   if (!items.length) {
     return "";
   }
 
-  return `<div class="section-title">${esc(title)}</div>${items
+  return `<div class="section-title" data-text="${esc(textKey)}">${esc(title)}</div>${items
     .map((item) => row(item.name, namedBody(item), ""))
     .join("")}`;
 }
@@ -361,9 +361,9 @@ function row(name: string, descriptionHtml: string | undefined, controls: string
   </div>`;
 }
 
-function toggle(kind: string, id: number, label: string): string {
-  return `<label class="toggle" title="${esc(label)}">
-    <input type="checkbox" data-tcf="${esc(kind)}" data-id="${id}">
+function toggle(kind: string, id: number, control: string, name: string): string {
+  return `<label class="toggle">
+    <input type="checkbox" data-tcf="${esc(kind)}" data-id="${id}" aria-label="${esc(`${control}: ${name}`)}">
     <span class="toggle-track"></span>
   </label>`;
 }
@@ -455,6 +455,14 @@ function usedNamed(
     }
   }
   return namedList(catalog).filter((item) => used.has(item.id));
+}
+
+function usedPurposes(gvl: TCFGVL): Named[] {
+  return usedNamed(
+    gvl.purposes,
+    (vendor) => [...(vendor.purposes ?? []), ...(vendor.legIntPurposes ?? [])],
+    gvl,
+  );
 }
 
 function usedSpecialFeatures(gvl: TCFGVL): Named[] {

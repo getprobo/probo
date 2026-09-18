@@ -5927,7 +5927,12 @@ func (r *Resolver) UpdateCookieCategoryTool(ctx context.Context, req *mcp.CallTo
 	}
 
 	if v := UnwrapOmittable(input.TcfPurposeIds); v != nil && *v != nil {
-		updateReq.TCFPurposeIDs = optionalIntSlice(*v)
+		ids, err := optionalIntSlice(*v)
+		if err != nil {
+			return nil, types.UpdateCookieCategoryOutput{}, err
+		}
+
+		updateReq.TCFPurposeIDs = ids
 	}
 
 	category, err := r.cookieBanner.UpdateCookieCategory(ctx, scope, updateReq)

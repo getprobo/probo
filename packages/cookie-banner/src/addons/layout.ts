@@ -21,10 +21,10 @@
 import type { BannerConfig, BannerState } from "../types";
 
 export interface LayoutHost {
-  bannerConfig: BannerConfig;
-  consentDraft: Record<string, boolean>;
+  readonly bannerConfig: BannerConfig;
+  readonly consentDraft: Record<string, boolean>;
   setState(state: BannerState): void;
-  client: {
+  readonly client: {
     customize(categories: Record<string, boolean>): void;
   };
 }

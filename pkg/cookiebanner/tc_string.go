@@ -29,13 +29,39 @@ import (
 )
 
 const (
-	tcCookieVersionBits       = 6
-	tcCreatedBits             = 36
-	tcLastUpdatedBits         = 36
-	tcCmpIDBits               = 12
-	tcSegmentTypeBits         = 3
-	tcCookieVersion           = 2
-	tcDisclosedVendorsSegment = 1
+	tcCookieVersionBits        = 6
+	tcCreatedBits              = 36
+	tcLastUpdatedBits          = 36
+	tcCmpIDBits                = 12
+	tcCmpVersionBits           = 12
+	tcConsentScreenBits        = 6
+	tcConsentLanguageBits      = 12
+	tcVendorListVersionBits    = 12
+	tcPolicyVersionBits        = 6
+	tcIsServiceSpecificBits    = 1
+	tcUseNonStandardStacksBits = 1
+	tcSpecialFeatureOptinsBits = 12
+	tcPurposesConsentBits      = 24
+	tcPurposesLIBits           = 24
+	tcPurposeOneTreatmentBits  = 1
+	tcPublisherCCBits          = 12
+	tcSegmentTypeBits          = 3
+	tcMaxVendorIDBits          = 16
+	tcVendorEncodingBits       = 1
+	tcCookieVersion            = 2
+	tcDisclosedVendorsSegment  = 1
+	tcCoreFixedBitsAfterCmpID  = tcCmpVersionBits +
+		tcConsentScreenBits +
+		tcConsentLanguageBits +
+		tcVendorListVersionBits +
+		tcPolicyVersionBits +
+		tcIsServiceSpecificBits +
+		tcUseNonStandardStacksBits +
+		tcSpecialFeatureOptinsBits +
+		tcPurposesConsentBits +
+		tcPurposesLIBits +
+		tcPurposeOneTreatmentBits +
+		tcPublisherCCBits
 )
 
 var errInvalidTCString = errors.New("invalid tc string")
@@ -162,6 +188,10 @@ func parseTCCore(segment string) (uint, uint, error) {
 		return 0, 0, err
 	}
 
+	if _, err := r.read(tcCoreFixedBitsAfterCmpID); err != nil {
+		return 0, 0, err
+	}
+
 	return version, cmpID, nil
 }
 
@@ -180,6 +210,10 @@ func hasDisclosedVendorsSegment(segments []string) bool {
 		}
 
 		if segmentType == tcDisclosedVendorsSegment {
+			if _, err := r.read(tcMaxVendorIDBits + tcVendorEncodingBits); err != nil {
+				continue
+			}
+
 			return true
 		}
 	}

@@ -20,7 +20,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { installTCFStub } from "./stub";
+import { disableTCFStub, installTCFStub } from "./stub";
 
 type TCFAPIStub = ((...args: unknown[]) => void) & { q: unknown[][] };
 
@@ -56,6 +56,24 @@ describe("installTCFStub", () => {
     const listener = (): void => {};
     w.__tcfapi?.("addEventListener", 2, listener);
     expect(w.__tcfapi?.q).toEqual([["addEventListener", 2, listener]]);
+  });
+
+  it("publishes a disabled ping without constructing CmpApi", () => {
+    const w = stubWindow();
+    installTCFStub();
+    disableTCFStub();
+
+    let ping: Record<string, unknown> | undefined;
+    w.__tcfapi?.("ping", 2, (data: unknown) => {
+      ping = data as Record<string, unknown>;
+    });
+    expect(ping).toEqual({
+      gdprApplies: false,
+      cmpLoaded: true,
+      cmpStatus: "loaded",
+      displayStatus: "disabled",
+      apiVersion: "2.2",
+    });
   });
 
   it("does not replace an existing __tcfapi", () => {

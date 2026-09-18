@@ -110,7 +110,9 @@ export class ProboThemedBanner extends HTMLElement {
       this.wirePrivacyChoices(root);
     }
 
-    addon?.wire?.(root, this.shadow);
+    if (addonMarkup !== null) {
+      addon?.wire?.(root, this.shadow);
+    }
   }
 
   private wirePanel(root: ProboCookieBannerRoot): void {

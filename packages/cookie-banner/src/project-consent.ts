@@ -25,10 +25,7 @@ export function projectConsentFromTCF(
   categories: Category[],
   choices: Pick<TCFChoices, "purposeConsents" | "purposeLegitimateInterests"> | null,
 ): Record<string, boolean> {
-  const granted = new Set<number>([
-    ...(choices?.purposeConsents ?? []),
-    ...(choices?.purposeLegitimateInterests ?? []),
-  ]);
+  const granted = new Set<number>([...(choices?.purposeConsents ?? [])]);
 
   const consentData: Record<string, boolean> = {};
   for (const cat of categories) {

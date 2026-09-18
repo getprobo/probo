@@ -32,6 +32,7 @@ import {
 } from "./encode";
 import { renderTCFLayout, wireTCFLayout } from "./layout";
 import { getLastTCString, setLastTCString } from "./session";
+import { disableTCFStub } from "./stub";
 
 function tcfActive(config: BannerConfig): boolean {
   return !!config.tcf && gdprApplies(config) && !!config.tcf.gvl;
@@ -60,18 +61,27 @@ export function startTCF(): void {
       active = tcfActive(config);
       if (!active) {
         setLastTCString(undefined);
-        cmpApi?.update(null);
+        if (cmpApi) {
+          cmpApi.update(null);
+        } else {
+          disableTCFStub();
+        }
         return;
       }
 
       const api = ensureCmpApi(config.tcf?.cmp_id, config.tcf?.cmp_version);
 
-      setLastTCString(existingTc);
       if (existingTc) {
-        api.update(existingTc, false);
-        return;
+        try {
+          api.update(existingTc, false);
+          setLastTCString(existingTc);
+          return;
+        } catch {
+          // A stale or malformed client cookie must not suppress the banner.
+        }
       }
 
+      setLastTCString(undefined);
       api.update("", true);
     },
     onUIVisible(visible) {
@@ -94,7 +104,11 @@ export function startTCF(): void {
       active = tcfActive(config);
       if (!active) {
         setLastTCString(undefined);
-        cmpApi?.update(null);
+        if (cmpApi) {
+          cmpApi.update(null);
+        } else {
+          disableTCFStub();
+        }
         return undefined;
       }
 
@@ -110,11 +124,11 @@ export function startTCF(): void {
   });
 }
 
-function grantForAction(
+export function grantForAction(
   action: ConsentAction,
   pending: TCFChoices | undefined,
 ): TCFGrant {
-  if (action === "ACCEPT_ALL") {
+  if (action === "ACCEPT_ALL" || action === "ACKNOWLEDGE") {
     return "all";
   }
   if (action === "CUSTOMIZE" && pending) {

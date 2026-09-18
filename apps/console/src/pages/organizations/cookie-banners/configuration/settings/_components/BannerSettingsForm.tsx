@@ -112,7 +112,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           privacyPolicyUrl: data.privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(data.consentExpiryDays, 10),
           defaultLanguage: data.defaultLanguage,
-          publisherCountryCode: data.publisherCountryCode,
+          publisherCountryCode: data.publisherCountryCode.trim().toUpperCase() || "AA",
           capabilities: { resourceReporting: data.resourceReportingEnabled },
         },
       },
@@ -181,6 +181,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             </p>
             <Input
               {...register("publisherCountryCode")}
+              required
               maxLength={2}
               className="uppercase"
               placeholder="AA"

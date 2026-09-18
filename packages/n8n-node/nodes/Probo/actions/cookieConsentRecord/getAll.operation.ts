@@ -166,6 +166,7 @@ export async function execute(
 								regulationSource
 								countryCode
 								subdivisionCode
+								tc
 								createdAt
 							}
 						}

@@ -224,7 +224,7 @@ func New() *Implm {
 			},
 			Branding: true,
 			CookieBanner: CookieBannerConfig{
-				TCFCMPID: 4095,
+				TCFCMPID: cookiebanner.DefaultTCFCmpID,
 			},
 			EvidenceDescriber: EvidenceDescriberConfig{
 				Interval:       10,

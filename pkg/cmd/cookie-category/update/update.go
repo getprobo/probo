@@ -23,6 +23,8 @@ package update
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -60,7 +62,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagName          string
 		flagSlug          string
 		flagDescription   string
-		flagTCFPurposeIDs []int
+		flagTCFPurposeIDs string
 	)
 
 	cmd := &cobra.Command{
@@ -101,7 +103,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("tcf-purpose-ids") {
-				input["tcfPurposeIds"] = flagTCFPurposeIDs
+				ids, err := parseTCFPurposeIDs(flagTCFPurposeIDs)
+				if err != nil {
+					return err
+				}
+
+				input["tcfPurposeIds"] = ids
 			}
 
 			if len(input) == 1 {
@@ -128,7 +135,30 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Category name")
 	cmd.Flags().StringVar(&flagSlug, "slug", "", "Category slug")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Category description")
-	cmd.Flags().IntSliceVar(&flagTCFPurposeIDs, "tcf-purpose-ids", nil, "IAB TCF purpose IDs required for this category")
+	cmd.Flags().StringVar(&flagTCFPurposeIDs, "tcf-purpose-ids", "", "IAB TCF purpose IDs (comma-separated; empty clears)")
 
 	return cmd
+}
+
+func parseTCFPurposeIDs(value string) ([]int, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return []int{}, nil
+	}
+
+	parts := strings.Split(value, ",")
+
+	ids := make([]int, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+
+		id, err := strconv.Atoi(part)
+		if err != nil || id < 1 || id > 11 {
+			return nil, fmt.Errorf("invalid TCF purpose ID %q (must be 1-11)", part)
+		}
+
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }
