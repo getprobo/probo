@@ -3917,6 +3917,12 @@
       "retry": "Réessayer",
       "truncated": "Affichage des 100 premières lignes de données."
     },
+    "text": {
+      "empty": "Ce fichier texte est vide.",
+      "error": "Impossible de charger l’aperçu du texte.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 512 premiers Ko."
+    },
     "previewUnavailable": "Aperçu non disponible pour ce type de fichier : {{mimeType}}",
     "actions": {
       "download": "Télécharger le fichier"

@@ -22,6 +22,8 @@ import { Button, IconWarning, Spinner } from "@probo/ui";
 import { parse, type Parser } from "papaparse";
 import { useEffect, useState } from "react";
 
+import { documentPreviewURL } from "./documentPreviewURL";
+
 const MAX_PREVIEW_ROWS = 100;
 const PREVIEW_CHUNK_SIZE = 64 * 1024;
 
@@ -59,17 +61,8 @@ export function CSVPreview({
     let cancelled = false;
     let failed = false;
 
-    const requestURL = new URL(src, window.location.href);
-    if (
-      import.meta.env.DEV
-        && requestURL.pathname.startsWith("/api/files/v1/")
-    ) {
-      requestURL.protocol = window.location.protocol;
-      requestURL.host = window.location.host;
-    }
-
     const rows: string[][] = [];
-    parse<string[]>(requestURL.href, {
+    parse<string[]>(documentPreviewURL(src).href, {
       chunkSize: PREVIEW_CHUNK_SIZE,
       delimiter: ",",
       download: true,

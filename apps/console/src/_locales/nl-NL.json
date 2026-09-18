@@ -3917,6 +3917,12 @@
       "retry": "Opnieuw proberen",
       "truncated": "De eerste 100 gegevensrijen worden weergegeven."
     },
+    "text": {
+      "empty": "Dit tekstbestand is leeg.",
+      "error": "Het tekstvoorbeeld kan niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "truncated": "De eerste 512 KB wordt weergegeven."
+    },
     "previewUnavailable": "Voorbeeld niet beschikbaar voor dit bestandstype: {{mimeType}}",
     "actions": {
       "download": "Bestand downloaden"

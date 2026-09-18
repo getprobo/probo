@@ -36,6 +36,7 @@ import { useLazyLoadQuery } from "react-relay";
 import type { EvidenceGraphFileQuery } from "#/__generated__/core/EvidenceGraphFileQuery.graphql";
 import { CSVPreview } from "#/components/documents/CSVPreview";
 import { PDFPreview } from "#/components/documents/PDFPreview";
+import { TextPreview } from "#/components/documents/TextPreview";
 import { evidenceFileQuery } from "#/hooks/graph/EvidenceGraph";
 
 type Props = {
@@ -97,13 +98,24 @@ function EvidencePreviewContent({
   ).node;
   const { t } = useTranslation();
   const { toast } = useToast();
+  const mimeType
+    = evidence.file?.mimeType?.split(";")[0]?.trim().toLowerCase() ?? "";
+  const fileName = evidence.file?.fileName.toLowerCase() ?? "";
   const isUriFile
-    = evidence.file?.mimeType === "text/uri-list"
-      || evidence.file?.mimeType === "text/uri";
+    = mimeType === "text/uri-list"
+      || mimeType === "text/uri";
   const isCSVFile
-    = evidence.file?.mimeType === "text/csv"
-      || evidence.file?.mimeType === "application/csv"
-      || evidence.file?.fileName.toLowerCase().endsWith(".csv");
+    = mimeType === "text/csv"
+      || mimeType === "application/csv"
+      || fileName.endsWith(".csv");
+  const isMarkdownFile
+    = mimeType === "text/markdown"
+      || fileName.endsWith(".md")
+      || fileName.endsWith(".markdown");
+  const isTextFile
+    = mimeType.startsWith("text/")
+      || fileName.endsWith(".txt")
+      || fileName.endsWith(".log");
   useEffect(() => {
     if (!isUriFile) {
       return;
@@ -179,6 +191,17 @@ function EvidencePreviewContent({
         errorMessage={t("evidencePreviewDialog.csv.error")}
         retryLabel={t("evidencePreviewDialog.csv.retry")}
         truncatedMessage={t("evidencePreviewDialog.csv.truncated")}
+      />
+    );
+  } else if (isMarkdownFile || isTextFile) {
+    preview = (
+      <TextPreview
+        src={evidence.file.downloadUrl}
+        emptyMessage={t("evidencePreviewDialog.text.empty")}
+        errorMessage={t("evidencePreviewDialog.text.error")}
+        format={isMarkdownFile ? "markdown" : "text"}
+        retryLabel={t("evidencePreviewDialog.text.retry")}
+        truncatedMessage={t("evidencePreviewDialog.text.truncated")}
       />
     );
   } else {

@@ -2253,6 +2253,12 @@
       "retry": "Retry",
       "truncated": "Showing the first 100 data rows."
     },
+    "text": {
+      "empty": "This text file is empty.",
+      "error": "Unable to load the text preview.",
+      "retry": "Retry",
+      "truncated": "Showing the first 512 KB."
+    },
     "previewUnavailable": "Preview not available for this file type: {{mimeType}}",
     "actions": { "download": "Download File" }
   },
