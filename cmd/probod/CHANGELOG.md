@@ -6,6 +6,9 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Changed
 
+- Public cookie-banner consent POST rejects a `tc` that is not a TCF 2.3
+  string from this CMP, and requires `tc` on TCF banners when the
+  request is GDPR or UK GDPR
 - TCF GET config emits CMP ID 4095 instead of the placeholder 2
 - Cookie banner settings show the IAB `__tcfapi` stub and the TCF IIFE
   when the hidden TCF capability is on; non-TCF banners keep the default

@@ -7,6 +7,9 @@ in this file.
 
 ### Changed
 
+- `__tcfapi` `displayStatus` follows the banner UI: `visible` while the
+  first layer, preferences, or privacy choices are open, `hidden` when
+  they close, and `disabled` when TCF is inactive
 - Encodes and reports IAB CMP ID 4095 instead of the placeholder 2
 
 ### Added

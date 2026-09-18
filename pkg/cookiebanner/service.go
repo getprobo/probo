@@ -2624,6 +2624,10 @@ func (s *Service) RecordConsent(
 				return ErrVersionNotPublished
 			}
 
+			if err := validateConsentTC(banner.Capabilities.TCF, req.Regulation, req.TC); err != nil {
+				return fmt.Errorf("invalid request: %w", err)
+			}
+
 			record = &coredata.CookieConsentRecord{
 				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
 				OrganizationID:        banner.OrganizationID,

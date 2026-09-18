@@ -31,6 +31,7 @@ export interface TCFChoices {
 export interface TCFRuntime {
   onConfig(config: BannerConfig, existingTc?: string): void;
   onConsent(action: ConsentAction, config: BannerConfig): string | undefined;
+  onUIVisible?(visible: boolean): void;
   setPendingChoices?(choices: TCFChoices): void;
   getPendingChoices?(): TCFChoices | undefined;
   decodeChoices?(tc: string): TCFChoices | null;

@@ -34,7 +34,12 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-const cookieBannerE2ESDKVersion = "e2e-cookie-banner-sdk/1.0.0"
+const (
+	cookieBannerE2ESDKVersion = "e2e-cookie-banner-sdk/1.0.0"
+	// Minted by packages/cookie-banner-tcf encodeTCString (CMP ID 4095, 2.3).
+	validTCStringV23 = "CQqvPYAQqvPYA__ABBENAqFgAAAAAAAAAAAAAAAAAAAA.IAaQAQAaAAAA.YAAAAAAAAAAA"
+	coreOnlyTCString = "CPzqA4APzqA4AEsAAAENAwCAAAAAAAAAAAAAAAAAAAAA"
+)
 
 type (
 	cookieBannerHTTPOptions struct {
@@ -177,6 +182,43 @@ func setupPublishedCookieBanner(t *testing.T) publishedCookieBannerFixture {
 		owner,
 		bannerID,
 	)
+	require.Equal(t, "PUBLISHED", published.State)
+
+	return publishedCookieBannerFixture{
+		Owner:    owner,
+		BannerID: bannerID,
+		Origin:   origin,
+		Version:  published.Version,
+	}
+}
+
+func setupPublishedTCFCookieBanner(t *testing.T) publishedCookieBannerFixture {
+	t.Helper()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	origin := factory.SafeOrigin()
+	bannerID := factory.CreateCookieBanner(owner, factory.Attrs{"origin": origin})
+	factory.EnableCookieBannerTCF(t, bannerID)
+
+	iabVendorID, version := factory.SeedCommonGVLVendor(t, "Consent TC Vendor", false)
+	factory.SeedCommonGVLCatalogState(t, version)
+
+	const addMutation = `
+		mutation($input: AddCookieBannerGVLVendorInput!) {
+			addCookieBannerGVLVendor(input: $input) {
+				cookieBanner { id }
+			}
+		}
+	`
+
+	require.NoError(t, owner.Execute(addMutation, map[string]any{
+		"input": map[string]any{
+			"cookieBannerId": bannerID,
+			"iabVendorId":    iabVendorID,
+		},
+	}, new(map[string]any)))
+
+	published := publishBanner(t, owner, bannerID)
 	require.Equal(t, "PUBLISHED", published.State)
 
 	return publishedCookieBannerFixture{
