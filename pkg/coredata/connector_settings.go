@@ -23,7 +23,9 @@ package coredata
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
+	"go.probo.inc/probo/pkg/awsx/arn"
 	"go.probo.inc/probo/pkg/connector"
 )
 
@@ -270,6 +272,11 @@ type (
 		// RoleARN is the IAM role the customer created for Probo. The account
 		// is the one that ARN names; it is not stored separately.
 		RoleARN string `json:"role_arn"`
+
+		// MemberRoleName is the role Probo assumes in each member account of
+		// an organization install. Empty on a standalone connector, whose
+		// single account is the one RoleARN names.
+		MemberRoleName string `json:"member_role_name,omitempty"`
 	}
 
 	// GCPConnectorSettings names the workload identity provider and the
@@ -280,6 +287,15 @@ type (
 	GCPConnectorSettings struct {
 		WorkloadIdentityProvider string `json:"workload_identity_provider"`
 		ServiceAccountEmail      string `json:"service_account_email"`
+
+		// Parent is the Cloud Asset scope an organization install discovers
+		// and reads under: organizations/{number}, or folders/{number} for a
+		// partial install. Empty on a standalone connector.
+		//
+		// It is an operational address every Cloud Asset call passes, like
+		// AWS MemberRoleName, not a duplicate of state derivable elsewhere:
+		// it drifts only if the customer restructures their organization.
+		Parent string `json:"parent,omitempty"`
 	}
 
 	// AzureConnectorSettings names the Entra application Probo federates
@@ -335,4 +351,182 @@ func ConnectorSettings[T any](c *Connector) (T, error) {
 	}
 
 	return s, nil
+}
+
+// gcpProjectNumberPattern pulls the project number out of a workload identity
+// provider resource name. The full grammar is validated in pkg/cloud/gcp;
+// here only the number is wanted, and a malformed value yields no account
+// rather than an error.
+var gcpProjectNumberPattern = regexp.MustCompile(`projects/([1-9][0-9]*)`)
+
+// ImpliedAccountID is the vendor account this connector's settings name, or
+// "" when the provider stores no tenant identifier — which is most of them.
+//
+// The switch mirrors, arm for arm, the CASE in the migration that backfills
+// connector_accounts. Changing one without the other leaves rows created
+// before and after that migration describing the same connector differently.
+//
+// A malformed value yields "" rather than an error: the caller's question is
+// "which account does this credential imply", and "none I can tell" is a
+// usable answer that becomes a NULL external_account_id.
+func (c *Connector) ImpliedAccountID() string {
+	switch c.Provider {
+	case ConnectorProviderAWS:
+		settings, _ := ConnectorSettings[AWSConnectorSettings](c)
+
+		role, err := arn.ParseRole(settings.RoleARN)
+		if err != nil {
+			return ""
+		}
+
+		return role.AccountID
+
+	case ConnectorProviderGCP:
+		settings, _ := ConnectorSettings[GCPConnectorSettings](c)
+
+		matches := gcpProjectNumberPattern.FindStringSubmatch(settings.WorkloadIdentityProvider)
+		if len(matches) < 2 {
+			return ""
+		}
+
+		return matches[1]
+
+	case ConnectorProviderAzure:
+		settings, _ := ConnectorSettings[AzureConnectorSettings](c)
+
+		return settings.SubscriptionID
+
+	case ConnectorProviderGitHub:
+		settings, _ := ConnectorSettings[GitHubConnectorSettings](c)
+
+		return settings.Organization
+
+	case ConnectorProviderSentry:
+		settings, _ := ConnectorSettings[SentryConnectorSettings](c)
+
+		return settings.OrganizationSlug
+
+	case ConnectorProviderSupabase:
+		settings, _ := ConnectorSettings[SupabaseConnectorSettings](c)
+
+		return settings.OrganizationSlug
+
+	case ConnectorProviderTally:
+		settings, _ := ConnectorSettings[TallyConnectorSettings](c)
+
+		return settings.OrganizationID
+
+	case ConnectorProviderQovery:
+		settings, _ := ConnectorSettings[QoveryConnectorSettings](c)
+
+		return settings.OrganizationID
+
+	case ConnectorProviderNeon:
+		settings, _ := ConnectorSettings[NeonConnectorSettings](c)
+
+		return settings.OrganizationID
+
+	case ConnectorProviderScaleway:
+		settings, _ := ConnectorSettings[ScalewayConnectorSettings](c)
+
+		return settings.OrganizationID
+
+	case ConnectorProviderGitLab:
+		settings, _ := ConnectorSettings[GitLabConnectorSettings](c)
+
+		return settings.GroupID
+
+	case ConnectorProviderBitbucket:
+		settings, _ := ConnectorSettings[BitbucketConnectorSettings](c)
+
+		return settings.Workspace
+
+	case ConnectorProviderAsana:
+		settings, _ := ConnectorSettings[AsanaConnectorSettings](c)
+
+		return settings.WorkspaceGID
+
+	case ConnectorProviderHeroku:
+		settings, _ := ConnectorSettings[HerokuConnectorSettings](c)
+
+		return settings.TeamID
+
+	case ConnectorProviderClickUp:
+		settings, _ := ConnectorSettings[ClickUpConnectorSettings](c)
+
+		return settings.TeamID
+
+	case ConnectorProviderVercel:
+		settings, _ := ConnectorSettings[VercelConnectorSettings](c)
+
+		return settings.TeamID
+
+	case ConnectorProviderBetterStack:
+		settings, _ := ConnectorSettings[BetterStackConnectorSettings](c)
+
+		return settings.TeamName
+
+	case ConnectorProviderPagerDuty:
+		settings, _ := ConnectorSettings[PagerDutyConnectorSettings](c)
+
+		return settings.Subdomain
+
+	case ConnectorProviderZendesk:
+		settings, _ := ConnectorSettings[ZendeskConnectorSettings](c)
+
+		return settings.Subdomain
+
+	case ConnectorProviderNetlify:
+		settings, _ := ConnectorSettings[NetlifyConnectorSettings](c)
+
+		return settings.AccountSlug
+
+	case ConnectorProviderDocuSign:
+		settings, _ := ConnectorSettings[DocuSignConnectorSettings](c)
+
+		return settings.AccountID
+
+	case ConnectorProviderCloudflare:
+		settings, _ := ConnectorSettings[CloudflareConnectorSettings](c)
+
+		return settings.AccountID
+
+	case ConnectorProviderGoogleAnalytics:
+		settings, _ := ConnectorSettings[GoogleAnalyticsConnectorSettings](c)
+
+		return settings.AccountID
+
+	case ConnectorProviderOnePassword:
+		settings, _ := ConnectorSettings[OnePasswordUsersAPISettings](c)
+
+		return settings.AccountID
+
+	case ConnectorProviderOkta:
+		settings, _ := ConnectorSettings[OktaConnectorSettings](c)
+
+		return settings.Domain
+
+	case ConnectorProviderDatadog:
+		settings, _ := ConnectorSettings[DatadogConnectorSettings](c)
+
+		return settings.Domain
+
+	case ConnectorProviderRender:
+		settings, _ := ConnectorSettings[RenderConnectorSettings](c)
+
+		return settings.OwnerID
+
+	case ConnectorProviderCrisp:
+		settings, _ := ConnectorSettings[CrispConnectorSettings](c)
+
+		return settings.WebsiteID
+
+	case ConnectorProviderTwingate:
+		settings, _ := ConnectorSettings[TwingateConnectorSettings](c)
+
+		return settings.Network
+
+	default:
+		return ""
+	}
 }

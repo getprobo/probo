@@ -44,16 +44,18 @@ const (
 
 type (
 	CreateAccessReviewSourceRequest struct {
-		OrganizationID gid.GID
-		ConnectorID    *gid.GID
-		Name           string
-		CsvData        *string
+		OrganizationID     gid.GID
+		ConnectorID        *gid.GID
+		ConnectorAccountID *gid.GID
+		Name               string
+		CsvData            *string
 	}
 
 	UpdateAccessReviewSourceRequest struct {
 		AccessReviewSourceID gid.GID
 		Name                 **string
 		ConnectorID          **gid.GID
+		ConnectorAccountID   **gid.GID
 		CsvData              **string
 	}
 
@@ -74,6 +76,7 @@ func (r *CreateAccessReviewSourceRequest) Validate() error {
 
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
+	v.Check(r.ConnectorAccountID, "connector_account_id", validator.GID(coredata.ConnectorAccountEntityType))
 
 	return v.Error()
 }
@@ -94,6 +97,77 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 
 	return v.Error()
+}
+
+// resolveConnectorAccount picks the connector account a source will review.
+//
+// The Connections UI still sends a connector and no account for one more
+// release, so an absent request account resolves to the connector's sole
+// account rather than being rejected. Resolving it here is what keeps the
+// pairing CHECK satisfiable without ever writing a null-account row.
+//
+// A connector with no account cannot back a source: that is a picker whose
+// organization has not been chosen, or an organization credential with
+// nothing enabled yet, and both have a specific fix the caller should hear.
+func (s *Service) resolveConnectorAccount(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	dbConnector *coredata.Connector,
+	requested *gid.GID,
+) (*coredata.ConnectorAccount, error) {
+	if requested != nil {
+		account := &coredata.ConnectorAccount{}
+		if err := account.LoadByID(ctx, conn, scope, *requested); err != nil {
+			return nil, fmt.Errorf("cannot load connector account: %w", err)
+		}
+
+		if account.ConnectorID != dbConnector.ID {
+			return nil, fmt.Errorf(
+				"cannot use connector account: it belongs to another connector",
+			)
+		}
+
+		return account, nil
+	}
+
+	accounts, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.ConnectorAccountOrderField]{
+			Field:     coredata.ConnectorAccountOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(
+			ctx context.Context,
+			cursor *page.Cursor[coredata.ConnectorAccountOrderField],
+		) ([]*coredata.ConnectorAccount, error) {
+			var batch coredata.ConnectorAccounts
+			if err := batch.LoadByConnectorID(ctx, conn, scope, dbConnector.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load connector accounts: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	switch len(accounts) {
+	case 0:
+		return nil, fmt.Errorf(
+			"cannot attach %s connector: it has no account yet, pick an organization or enable an account first",
+			dbConnector.Provider,
+		)
+	case 1:
+		return accounts[0], nil
+	default:
+		return nil, fmt.Errorf(
+			"cannot attach %s connector: it covers %d accounts, name the one to review",
+			dbConnector.Provider,
+			len(accounts),
+		)
+	}
 }
 
 // EnsureSource returns the access source for req.ConnectorID,
@@ -128,8 +202,8 @@ func (s *Service) EnsureSource(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if req.ConnectorID != nil {
-				connector := &coredata.Connector{}
-				if err := connector.LoadMetadataByID(ctx, conn, scope, *req.ConnectorID); err != nil {
+				dbConnector := &coredata.Connector{}
+				if err := dbConnector.LoadMetadataByID(ctx, conn, scope, *req.ConnectorID); err != nil {
 					return fmt.Errorf("cannot load connector: %w", err)
 				}
 
@@ -147,6 +221,13 @@ func (s *Service) EnsureSource(
 				if bridgeCount > 0 {
 					return fmt.Errorf("cannot create access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
 				}
+
+				account, err := s.resolveConnectorAccount(ctx, conn, scope, dbConnector, req.ConnectorAccountID)
+				if err != nil {
+					return err
+				}
+
+				source.ConnectorAccountID = &account.ID
 			}
 
 			inserted, err := source.Insert(ctx, conn, scope)
@@ -159,9 +240,12 @@ func (s *Service) EnsureSource(
 				return nil
 			}
 
+			// By account, not by connector: LoadByConnectorID is LIMIT 1 on
+			// the connector and becomes non-deterministic the moment two
+			// sources share one.
 			existing := &coredata.AccessReviewSource{}
-			if err := existing.LoadByConnectorID(ctx, conn, scope, *req.ConnectorID); err != nil {
-				return fmt.Errorf("cannot load access source by connector: %w", err)
+			if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
+				return fmt.Errorf("cannot load access source by connector account: %w", err)
 			}
 
 			*source = *existing
@@ -225,9 +309,11 @@ func (s *Service) UpdateSource(
 			}
 
 			if req.ConnectorID != nil {
+				var connectorAccountID *gid.GID
+
 				if *req.ConnectorID != nil {
-					connector := &coredata.Connector{}
-					if err := connector.LoadMetadataByID(ctx, conn, scope, **req.ConnectorID); err != nil {
+					dbConnector := &coredata.Connector{}
+					if err := dbConnector.LoadMetadataByID(ctx, conn, scope, **req.ConnectorID); err != nil {
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
 
@@ -242,22 +328,36 @@ func (s *Service) UpdateSource(
 						return fmt.Errorf("cannot update access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
 					}
 
-					// The partial unique index on connector_id is the
-					// guard; this pre-check only produces a clearer
-					// error than its 23505.
+					// A relink moves the account too, or the pairing CHECK
+					// rejects the update.
+					var requestedAccountID *gid.GID
+					if req.ConnectorAccountID != nil {
+						requestedAccountID = *req.ConnectorAccountID
+					}
+
+					account, err := s.resolveConnectorAccount(ctx, conn, scope, dbConnector, requestedAccountID)
+					if err != nil {
+						return err
+					}
+
+					connectorAccountID = &account.ID
+
+					// The composite partial unique index is the guard; this
+					// pre-check only produces a clearer error than its 23505.
 					other := &coredata.AccessReviewSource{}
 
-					err = other.LoadByConnectorID(ctx, conn, scope, **req.ConnectorID)
+					err = other.LoadByConnectorAccountID(ctx, conn, scope, account.ID)
 					if err == nil && other.ID != source.ID {
-						return fmt.Errorf("cannot update access source: connector already referenced by another source")
+						return fmt.Errorf("cannot update access source: connector account already referenced by another source")
 					}
 
 					if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-						return fmt.Errorf("cannot load access source by connector: %w", err)
+						return fmt.Errorf("cannot load access source by connector account: %w", err)
 					}
 				}
 
 				source.ConnectorID = *req.ConnectorID
+				source.ConnectorAccountID = connectorAccountID
 
 				// A (re)linked connector may resolve to a different instance
 				// name; clear the synced flag so the source-name worker picks
@@ -522,6 +622,26 @@ func (s *Service) ConfigureAccessReviewSource(
 
 			if err := reg.SetOrganizationSettings(dbConnector, req.OrganizationSlug); err != nil {
 				return fmt.Errorf("cannot set %s settings: %w", dbConnector.Provider, err)
+			}
+
+			// The pick is the connector's account identity, so the account
+			// row follows it. A pick that changes the slug updates the row
+			// the source already points at rather than inserting a second
+			// one beside it: the later multi-organization change is exactly
+			// "stop overwriting, insert instead".
+			if source.ConnectorAccountID != nil {
+				account := &coredata.ConnectorAccount{}
+				if err := account.LoadByID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
+					return fmt.Errorf("cannot load connector account: %w", err)
+				}
+
+				account.ExternalAccountID = &req.OrganizationSlug
+				account.Name = req.OrganizationSlug
+				account.UpdatedAt = time.Now()
+
+				if err := account.Update(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot update connector account: %w", err)
+				}
 			}
 
 			dbConnector.UpdatedAt = time.Now()

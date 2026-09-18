@@ -171,3 +171,34 @@ func TestConnectorSettings_RoundTrip(t *testing.T) {
 		assert.Contains(t, err.Error(), "cannot unmarshal connector settings")
 	})
 }
+
+// TestConnector_ImpliedAccountID covers one case per shape the switch has,
+// rather than one per provider: a derived identifier, a regex-extracted one,
+// a provider that names no tenant at all, and a picker whose slug is not
+// chosen yet. The per-provider mapping is data, and the migration's CASE is
+// the thing it must agree with.
+func TestConnector_ImpliedAccountID(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		provider coredata.ConnectorProvider
+		settings string
+		want     string
+	}{
+		{"derived from a role arn", coredata.ConnectorProviderAWS, `{"role_arn":"arn:aws:iam::123456789012:role/ProboAudit"}`, "123456789012"},
+		{"extracted from a provider resource", coredata.ConnectorProviderGCP, `{"workload_identity_provider":"projects/42/locations/global/workloadIdentityPools/probo/providers/probo"}`, "42"},
+		{"read straight off settings", coredata.ConnectorProviderGitHub, `{"organization":"acme"}`, "acme"},
+		{"a picker with no slug chosen yet", coredata.ConnectorProviderGitHub, `{"organization":""}`, ""},
+		{"a provider that names no tenant", coredata.ConnectorProviderSlack, `{"channel":"#general","channel_id":"C1"}`, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := &coredata.Connector{Provider: tc.provider}
+			require.NoError(t, c.SetSettings(json.RawMessage(tc.settings)))
+
+			assert.Equal(t, tc.want, c.ImpliedAccountID())
+		})
+	}
+}

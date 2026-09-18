@@ -59,6 +59,12 @@ type (
 		// gqlgen input (or OAuth callback metadata); the service layer
 		// never sees the typed structs.
 		RawSettings json.RawMessage
+
+		// SkipImpliedAccount leaves the connector at zero accounts. Set by
+		// the organization-connect path, whose accounts are whatever
+		// discovery turns up and the user enables, not something the
+		// credential's own settings imply.
+		SkipImpliedAccount bool
 	}
 
 	ReconnectConnectorRequest struct {
@@ -278,7 +284,11 @@ func (s *ConnectorService) Create(
 				return fmt.Errorf("cannot create connector: %w", err)
 			}
 
-			return nil
+			if req.SkipImpliedAccount {
+				return nil
+			}
+
+			return upsertImpliedAccount(ctx, tx, scope, newConnector, now)
 		},
 	)
 	if err != nil {
@@ -286,6 +296,50 @@ func (s *ConnectorService) Create(
 	}
 
 	return newConnector, nil
+}
+
+// upsertImpliedAccount records the account a connector's own settings name,
+// or the single implicit account when the vendor names none.
+//
+// Every connector that can back a source carries one, written in the same
+// transaction as the connector itself: a source must name an account, and
+// the pairing CHECK on access_review_sources makes a null-account source
+// unrepresentable rather than merely discouraged.
+func upsertImpliedAccount(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+	now time.Time,
+) error {
+	account := &coredata.ConnectorAccount{
+		ID:             gid.New(scope.GetTenantID(), coredata.ConnectorAccountEntityType),
+		OrganizationID: cnnctr.OrganizationID,
+		ConnectorID:    cnnctr.ID,
+		Name:           cnnctr.Provider.String(),
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	implied := cnnctr.ImpliedAccountID()
+	if implied == "" {
+		// ON CONFLICT never matches a NULL, so the implicit row arbitrates
+		// on the partial index rather than the composite one.
+		if err := account.UpsertImplicit(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot create connector account: %w", err)
+		}
+
+		return nil
+	}
+
+	account.ExternalAccountID = &implied
+	account.Name = implied
+
+	if err := account.Upsert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot create connector account: %w", err)
+	}
+
+	return nil
 }
 
 // Reconnect updates an existing OAuth2 connector's connection (token)
@@ -508,6 +562,10 @@ func (s *ConnectorService) CompleteInstall(
 
 				if err := cnnctr.Insert(ctx, tx, scope, s.svc.encryptionKey); err != nil {
 					return fmt.Errorf("cannot create connector: %w", err)
+				}
+
+				if err := upsertImpliedAccount(ctx, tx, scope, cnnctr, now); err != nil {
+					return err
 				}
 			default:
 				return fmt.Errorf("cannot load connector: %w", err)

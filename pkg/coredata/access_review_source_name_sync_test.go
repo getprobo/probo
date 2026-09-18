@@ -61,13 +61,30 @@ func seedNameSyncSource(
 	connectorID, err := insertConnector(ctx, client, scope, organizationID, coredata.ConnectorProviderMetabase, key)
 	require.NoError(t, err)
 
-	source := &coredata.AccessReviewSource{
-		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+	// A source naming a connector must name an account too, per the pairing
+	// CHECK. Metabase stores no vendor account identifier, so this is the
+	// implicit row: the credential is the account.
+	account := &coredata.ConnectorAccount{
+		ID:             gid.New(scope.GetTenantID(), coredata.ConnectorAccountEntityType),
 		OrganizationID: organizationID,
-		ConnectorID:    &connectorID,
+		ConnectorID:    connectorID,
 		Name:           "Metabase",
 		CreatedAt:      createdAt,
 		UpdatedAt:      time.Now().UTC(),
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return account.UpsertImplicit(ctx, tx, scope)
+	}))
+
+	source := &coredata.AccessReviewSource{
+		ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+		OrganizationID:     organizationID,
+		ConnectorID:        &connectorID,
+		ConnectorAccountID: &account.ID,
+		Name:               "Metabase",
+		CreatedAt:          createdAt,
+		UpdatedAt:          time.Now().UTC(),
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {

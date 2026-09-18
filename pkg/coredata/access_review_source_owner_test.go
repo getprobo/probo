@@ -45,13 +45,38 @@ func insertSource(
 	t.Helper()
 
 	now := time.Now().UTC()
+
+	// A source naming a connector must name an account too: the pairing
+	// CHECK enforces it. Upsert returns the existing row on conflict, so
+	// repeated calls for one connector resolve to the same account and the
+	// per-connector idempotency these tests pin still holds.
+	var connectorAccountID *gid.GID
+
+	if connectorID != nil {
+		account := &coredata.ConnectorAccount{
+			ID:             gid.New(scope.GetTenantID(), coredata.ConnectorAccountEntityType),
+			OrganizationID: organizationID,
+			ConnectorID:    *connectorID,
+			Name:           "owner test account",
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			return account.UpsertImplicit(ctx, tx, scope)
+		}))
+
+		connectorAccountID = &account.ID
+	}
+
 	source := &coredata.AccessReviewSource{
-		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-		OrganizationID: organizationID,
-		ConnectorID:    connectorID,
-		Name:           "owner test source",
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+		OrganizationID:     organizationID,
+		ConnectorID:        connectorID,
+		ConnectorAccountID: connectorAccountID,
+		Name:               "owner test source",
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
 	var inserted bool
@@ -69,8 +94,12 @@ func insertSource(
 
 // TestAccessReviewSourceInsert_IdempotentPerConnector pins the
 // index-arbitrated idempotency CreateSource relies on: the second
-// insert against the same connector is skipped, while CSV sources
+// insert against the same connector account is skipped, while CSV sources
 // (nil connector) always insert.
+//
+// The arbiter is now the composite (connector_id, connector_account_id)
+// index. For a single-account connector — every connector these tests build
+// — that is the same behaviour as before.
 func TestAccessReviewSourceInsert_IdempotentPerConnector(t *testing.T) {
 	t.Parallel()
 
