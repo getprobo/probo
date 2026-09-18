@@ -43,6 +43,7 @@
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "svg-pan-zoom": "^3.6.2",
     "tailwind-merge": "^3.4.0",
     "tailwind-variants": "^3.3.1",
     "tailwindcss": "^4.3.1",
