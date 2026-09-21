@@ -36,6 +36,7 @@ import {
 } from "@probo/cookie-banner";
 
 import { gdprApplies } from "./encode";
+import { TCF_PANEL_STYLES } from "./panel-styles";
 import { getLastTCString } from "./session";
 
 interface Named {
@@ -66,7 +67,7 @@ export function renderTCFLayout(config: BannerConfig, position: string): string 
     return null;
   }
 
-  return renderBanner(config, gvl, position) + renderPanel(config, gvl, position);
+  return TCF_PANEL_STYLES + renderBanner(config, gvl, position) + renderPanel(config, gvl, position);
 }
 
 export function wireTCFLayout(root: LayoutHost, host: ShadowRoot): void {
@@ -158,7 +159,7 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
   );
 
   return `
-    <probo-preference-panel>
+    <probo-preference-panel class="tcf-panel">
       ${floatingCard(
         position,
         { labelledby: "probo-panel-title", describedby: "probo-panel-desc" },
@@ -170,33 +171,35 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
               ${CLOSE_ICON}
             </button>
           </div>
-          <p class="description" id="probo-panel-desc" data-text="panel_description"></p>
+          <p class="description" id="probo-panel-desc" data-text="tcf_panel_description">Choose which purposes and partners to allow. Consent and legitimate interest can be set separately when both apply.</p>
         </div>
         <div class="panel-body">
-          ${stacks.map((stack) => stackSection(stack, purposes, liPurposeIDs)).join("")}
-          ${
-            ungrouped.length
-              ? `<div class="section-title" data-text="tcf_section_purposes">Purposes</div>${ungrouped
-                  .map((p) => purposeRow(p, liPurposeIDs.has(p.id)))
-                  .join("")}`
-              : ""
-          }
-          ${disclosureSection("Special purposes", "tcf_section_special_purposes", usedSpecialPurposes(gvl))}
-          ${disclosureSection("Features", "tcf_section_features", usedFeatures(gvl))}
-          ${
-            specialFeatures.length
-              ? `<div class="section-title" data-text="tcf_section_special_features">Special features</div>${specialFeatures
-                  .map((f) =>
-                    row(f.name, namedBody(f), toggle("special-feature", f.id, "Opt-in", f.name)),
-                  )
-                  .join("")}`
-              : ""
-          }
-          ${disclosureSection("Data categories", "tcf_section_data_categories", usedDataCategories(gvl))}
-          <div class="section-title" id="probo-tcf-vendors" data-text="tcf_section_partners">Partners</div>
-          ${vendors.map((v) => vendorRow(v, purposeNames)).join("")}
-          <div class="section-title" data-text="tcf_section_storage">Storage</div>
-          <p class="description" style="padding: 0 24px 16px">${esc(storageCopy)}</p>
+          ${purposesSection(stacks, ungrouped, purposes, liPurposeIDs)}
+          ${sectionGroup(
+            "Special features",
+            specialFeatures
+              .map((f) =>
+                choiceRow(
+                  f.name,
+                  namedBody(f),
+                  toggle("special-feature", f.id, "Opt-in", "tcf_label_optin", f.name),
+                ),
+              )
+              .join(""),
+            "tcf_section_special_features",
+          )}
+          ${sectionGroup(
+            "Partners",
+            vendors.map((v) => vendorRow(v, purposeNames)).join(""),
+            "tcf_section_partners",
+            "probo-tcf-vendors",
+          )}
+          ${moreInformation(
+            disclosureSection("Special purposes", "tcf_section_special_purposes", usedSpecialPurposes(gvl), "always_on"),
+            disclosureSection("Features", "tcf_section_features", usedFeatures(gvl)),
+            disclosureSection("Data categories", "tcf_section_data_categories", usedDataCategories(gvl)),
+          )}
+          ${sectionGroup("Storage", `<p class="tcf-storage">${esc(storageCopy)}</p>`, "tcf_section_storage")}
         </div>
         <div class="footer">
           <div class="buttons">
@@ -212,6 +215,38 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
     </probo-preference-panel>`;
 }
 
+function purposesSection(
+  stacks: Stack[],
+  ungrouped: Named[],
+  purposes: Named[],
+  liPurposeIDs: Set<number>,
+): string {
+  const grouped = stacks.map((stack) => stackSection(stack, purposes, liPurposeIDs)).join("");
+  const leftoverRows = ungrouped.map((purpose) => purposeRow(purpose, liPurposeIDs.has(purpose.id))).join("");
+  const leftover = leftoverRows
+    ? grouped
+      ? stackBlock("Other purposes", leftoverRows, "tcf_section_other_purposes")
+      : leftoverRows
+    : "";
+  if (!grouped && !leftover) {
+    return "";
+  }
+
+  return sectionGroup(
+    "Purposes",
+    `${grouped}${leftover}`,
+    "tcf_section_purposes",
+  );
+}
+
+function sectionGroup(title: string, body: string, textKey?: string, id?: string): string {
+  if (!body) {
+    return "";
+  }
+
+  return `<div class="tcf-group">${sectionTitle(title, textKey, id)}<div class="tcf-group-body">${body}</div></div>`;
+}
+
 function stackSection(stack: Stack, purposes: Named[], liPurposeIDs: Set<number>): string {
   const purposeByID = new Map(purposes.map((p) => [p.id, p]));
   const rows = stack.purposes
@@ -224,39 +259,66 @@ function stackSection(stack: Stack, purposes: Named[], liPurposeIDs: Set<number>
     return "";
   }
 
-  return `<div class="section-title">${esc(stack.name)}</div>${
-    stack.description ? `<p class="description" style="padding: 0 24px 8px">${esc(stack.description)}</p>` : ""
-  }${rows}`;
+  return stackBlock(stack.name, rows, undefined, stack.description);
+}
+
+function stackBlock(name: string, rows: string, textKey?: string, description?: string): string {
+  return `<div class="tcf-stack">${subsectionTitle(name, textKey)}${
+    description ? `<p class="tcf-section-desc">${esc(description)}</p>` : ""
+  }${rows}</div>`;
 }
 
 function purposeRow(purpose: Named, showLI: boolean): string {
   const controls = [
-    toggle("purpose-consent", purpose.id, "Consent", purpose.name),
-    showLI ? toggle("purpose-li", purpose.id, "Legitimate interest", purpose.name) : "",
+    toggle("purpose-consent", purpose.id, "Consent", "tcf_label_consent", purpose.name),
+    showLI
+      ? toggle("purpose-li", purpose.id, "Legitimate interest", "tcf_label_li", purpose.name)
+      : "",
   ].join("");
 
-  return row(purpose.name, namedBody(purpose), `<div class="toggle-group">${controls}</div>`);
+  return choiceRow(purpose.name, namedBody(purpose), controls);
 }
 
 function vendorRow(vendor: PanelVendor, purposeNames: Map<number, string>): string {
   const controls = [
-    toggle("vendor-consent", vendor.id, "Consent", vendor.name),
+    toggle("vendor-consent", vendor.id, "Consent", "tcf_label_consent", vendor.name),
     vendor.legIntPurposes?.length
-      ? toggle("vendor-li", vendor.id, "Legitimate interest", vendor.name)
+      ? toggle("vendor-li", vendor.id, "Legitimate interest", "tcf_label_li", vendor.name)
       : "",
   ].join("");
 
-  return row(vendor.name, vendorBody(vendor, purposeNames), `<div class="toggle-group">${controls}</div>`);
+  return choiceRow(vendor.name, vendorBody(vendor, purposeNames), controls);
 }
 
-function disclosureSection(title: string, textKey: string, items: Named[]): string {
+function disclosureSection(
+  title: string,
+  textKey: string,
+  items: Named[],
+  chip?: "always_on",
+): string {
   if (!items.length) {
     return "";
   }
 
-  return `<div class="section-title" data-text="${esc(textKey)}">${esc(title)}</div>${items
-    .map((item) => row(item.name, namedBody(item), ""))
+  return `${sectionTitle(title, textKey)}${items
+    .map((item) =>
+      disclosureRow(
+        item.name,
+        namedBody(item),
+        chip === "always_on" ? "tcf_label_always_on" : undefined,
+        chip === "always_on" ? "Always on" : undefined,
+      ),
+    )
     .join("")}`;
+}
+
+function moreInformation(...sections: string[]): string {
+  const body = sections.filter((section) => section.length > 0).join("");
+  if (!body) {
+    return "";
+  }
+
+  return `<details class="tcf-more"><summary class="tcf-more-summary" data-text="tcf_section_more">More information</summary>${body}</details>`;
 }
 
 function namedBody(item: Named): string | undefined {
@@ -351,20 +413,61 @@ function httpUrl(value: string | undefined): string | undefined {
   return undefined;
 }
 
-function row(name: string, descriptionHtml: string | undefined, controls: string): string {
-  return `<div class="category-header">
+function sectionTitle(title: string, textKey?: string, id?: string): string {
+  const textAttr = textKey ? ` data-text="${esc(textKey)}"` : "";
+  const idAttr = id ? ` id="${esc(id)}"` : "";
+  return `<div class="tcf-section"${idAttr}${textAttr}>${esc(title)}</div>`;
+}
+
+function subsectionTitle(title: string, textKey?: string): string {
+  const textAttr = textKey ? ` data-text="${esc(textKey)}"` : "";
+  return `<div class="tcf-subsection"${textAttr}>${esc(title)}</div>`;
+}
+
+function choiceRow(
+  name: string,
+  descriptionHtml: string | undefined,
+  controls: string,
+): string {
+  return tcfRow("choice", name, descriptionHtml, `<div class="toggle-group">${controls}</div>`);
+}
+
+function disclosureRow(
+  name: string,
+  descriptionHtml: string | undefined,
+  chipKey?: string,
+  chipLabel?: string,
+): string {
+  const trailing =
+    chipKey && chipLabel
+      ? `<span class="tcf-chip" data-text="${esc(chipKey)}">${esc(chipLabel)}</span>`
+      : "";
+  return tcfRow("disclosure", name, descriptionHtml, trailing);
+}
+
+function tcfRow(
+  kind: "choice" | "disclosure",
+  name: string,
+  descriptionHtml: string | undefined,
+  trailing: string,
+): string {
+  return `<div class="tcf-row tcf-row-${kind}">
+    <div class="tcf-row-id" aria-hidden="true"></div>
     <div class="category-info">
       <div class="category-name">${esc(name)}</div>
       ${descriptionHtml ? `<div class="category-description">${descriptionHtml}</div>` : ""}
     </div>
-    ${controls}
+    ${trailing}
   </div>`;
 }
 
-function toggle(kind: string, id: number, control: string, name: string): string {
-  return `<label class="toggle">
-    <input type="checkbox" data-tcf="${esc(kind)}" data-id="${id}" aria-label="${esc(`${control}: ${name}`)}">
-    <span class="toggle-track"></span>
+function toggle(kind: string, id: number, control: string, textKey: string, name: string): string {
+  return `<label class="tcf-control">
+    <span class="toggle">
+      <input type="checkbox" data-tcf="${esc(kind)}" data-id="${id}" aria-label="${esc(`${control}: ${name}`)}">
+      <span class="toggle-track"></span>
+    </span>
+    <span class="tcf-control-label" data-text="${esc(textKey)}">${esc(control)}</span>
   </label>`;
 }
 

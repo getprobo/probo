@@ -31,3 +31,11 @@ in this file.
 - Second layer discloses special purposes, features, and data categories
   used by partners (no toggles), purpose illustrations, vendor cookie /
   non-cookie storage, and http(s) privacy / legitimate-interest links
+- Preference panel is 720px for TCF. The header describes purposes and
+  partners instead of cookie categories. Choice rows keep a leading spacer
+  (no visible IAB ids) and labeled Consent / Legitimate interest /
+  Opt-in toggles. Order is purposes
+  (IAB stacks nested under that heading, leftovers under Other
+  purposes), special features, then partners. Special purposes, features,
+  and data categories sit in a collapsed More information block; special
+  purposes keep an Always on chip

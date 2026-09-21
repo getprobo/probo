@@ -169,8 +169,14 @@ describe("renderTCFLayout", () => {
     expect(html).toContain("Test Vendor");
     expect(html).toContain("probo_consent cookie for 180 days");
     expect(html).toContain("Advertising");
+    expect(html).toContain('data-text="tcf_section_purposes"');
+    expect(html).toContain('data-text="tcf_section_other_purposes"');
+    expect(html).toContain('class="tcf-group"');
+    expect(html).toContain('class="tcf-subsection"');
     expect(html).toContain('data-tcf="purpose-li"');
     expect(html).toContain('data-text="tcf_disclosure_store"');
+    expect(html).toContain('data-text="tcf_panel_description"');
+    expect(html).not.toContain('data-text="panel_description"');
     expect(html).toContain("How often an ad was shown can be measured.");
     expect(html).toContain("Ensure security, prevent and detect fraud, and fix errors");
     expect(html).toContain("Match and combine data from other data sources");
@@ -182,6 +188,39 @@ describe("renderTCFLayout", () => {
     expect(html).toContain("Privacy policy");
     expect(html).not.toContain("Privacy policy: https://example.com/privacy");
     expect(html).not.toContain("probo-category-list");
+  });
+
+  it("widens the preference panel and distinguishes choice from disclosure rows", () => {
+    const html = renderTCFLayout(bannerConfig(), "bottom-left");
+    expect(html).not.toBeNull();
+    if (html == null) {
+      return;
+    }
+    expect(html).toContain('class="tcf-panel"');
+    expect(html).toContain("max-width: 720px");
+    expect(html).toContain('class="tcf-row-id" aria-hidden="true"></div>');
+    expect(html).not.toContain('class="tcf-row-id" aria-hidden="true">1<');
+    expect(html).not.toContain('class="tcf-row-id" aria-hidden="true">52<');
+    expect(html).toContain('data-text="tcf_label_consent"');
+    expect(html).toContain('data-text="tcf_label_li"');
+    expect(html).toContain('data-text="tcf_label_optin"');
+    expect(html).toContain('data-text="tcf_label_always_on"');
+    expect(html).not.toContain('data-text="tcf_label_information"');
+    expect(html).toContain('data-text="tcf_section_more"');
+    expect(html).toContain("<details");
+    expect(html).toContain('id="probo-tcf-vendors"');
+    expect(html.indexOf('data-text="tcf_section_purposes"')).toBeLessThan(html.indexOf("Advertising"));
+    expect(html.indexOf('data-tcf="special-feature"')).toBeLessThan(html.indexOf('id="probo-tcf-vendors"'));
+    expect(html.indexOf('id="probo-tcf-vendors"')).toBeLessThan(
+      html.indexOf('data-text="tcf_section_special_purposes"'),
+    );
+
+    const disclosureRows = html.split('class="tcf-row tcf-row-disclosure"').slice(1);
+    expect(disclosureRows.length).toBeGreaterThan(0);
+    for (const part of disclosureRows) {
+      const row = part.split(/class="tcf-row tcf-row-(?:choice|disclosure)"/)[0];
+      expect(row).not.toContain("<input");
+    }
   });
 
   it("omits unused disclosure catalogs and rejects non-http policy URLs", () => {

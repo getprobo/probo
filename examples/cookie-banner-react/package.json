@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@probo/cookie-banner": "*",
+    "@probo/cookie-banner-tcf": "*",
     "loglevel": "^1.9.2",
     "posthog-js": "^1.422.5",
     "react": "^19.2.7",
