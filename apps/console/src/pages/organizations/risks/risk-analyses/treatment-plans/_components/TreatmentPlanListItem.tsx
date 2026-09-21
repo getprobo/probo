@@ -63,6 +63,7 @@ export const treatmentPlanListItemFragment = graphql`
     }
     risk {
       id
+      referenceId
       name
     }
     canUpdate: permission(action: "risk-management:treatment-plan:update")
@@ -173,6 +174,7 @@ export function TreatmentPlanListItem({
                 ? <IconChevronDown size={16} />
                 : <IconChevronRight size={16} />}
             </button>
+            <span className="font-mono text-sm text-txt-secondary">{treatmentPlan.risk.referenceId}</span>
             <Link
               className="hover:underline"
               to={`/organizations/${organizationId}/risk-management/risks/${treatmentPlan.risk.id}`}
