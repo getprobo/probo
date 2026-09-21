@@ -132,6 +132,7 @@ function renderBanner(config: BannerConfig, gvl: TCFGVL, position: string): stri
 
   const extras = [
     `<p class="description" data-text="tcf_disclosure_store">This site stores and/or accesses information on a device and processes personal data.</p>`,
+    `<p class="description" data-text="tcf_disclosure_data">Personal data processed includes unique identifiers and browsing data.</p>`,
     purposes.length
       ? `<p class="description"><span data-text="tcf_label_purposes">Purposes</span>: ${esc(purposes.map((p) => p.name).join(", "))}.</p>`
       : "",

@@ -709,6 +709,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 var tcfUIStringsByLanguage = map[string]map[string]string{
 	"en": {
 		"tcf_disclosure_store":         "This site stores and/or accesses information on a device and processes personal data.",
+		"tcf_disclosure_data":          "Personal data processed includes unique identifiers and browsing data.",
 		"tcf_panel_description":        "Choose which purposes and partners to allow. Consent and legitimate interest can be set separately when both apply.",
 		"tcf_label_purposes":           "Purposes",
 		"tcf_label_special_features":   "Special features",
@@ -733,6 +734,7 @@ var tcfUIStringsByLanguage = map[string]map[string]string{
 	},
 	"fr": {
 		"tcf_disclosure_store":         "Ce site stocke et/ou accède à des informations sur un appareil et traite des données personnelles.",
+		"tcf_disclosure_data":          "Les données personnelles traitées incluent des identifiants uniques et des données de navigation.",
 		"tcf_panel_description":        "Choisissez les finalités et les partenaires à autoriser. Le consentement et l'intérêt légitime peuvent être réglés séparément lorsque les deux s'appliquent.",
 		"tcf_label_purposes":           "Finalités",
 		"tcf_label_special_features":   "Fonctionnalités spéciales",
@@ -757,6 +759,7 @@ var tcfUIStringsByLanguage = map[string]map[string]string{
 	},
 	"de": {
 		"tcf_disclosure_store":         "Diese Website speichert und/oder greift auf Informationen auf einem Gerät zu und verarbeitet personenbezogene Daten.",
+		"tcf_disclosure_data":          "Zu den verarbeiteten personenbezogenen Daten gehören eindeutige Kennungen und Browserdaten.",
 		"tcf_panel_description":        "Wählen Sie, welche Zwecke und Partner zugelassen werden sollen. Einwilligung und berechtigtes Interesse können getrennt festgelegt werden, wenn beides zutrifft.",
 		"tcf_label_purposes":           "Zwecke",
 		"tcf_label_special_features":   "Besondere Funktionen",
@@ -781,6 +784,7 @@ var tcfUIStringsByLanguage = map[string]map[string]string{
 	},
 	"es": {
 		"tcf_disclosure_store":         "Este sitio almacena y/o accede a información en un dispositivo y trata datos personales.",
+		"tcf_disclosure_data":          "Los datos personales tratados incluyen identificadores únicos y datos de navegación.",
 		"tcf_panel_description":        "Elija qué finalidades y socios permitir. El consentimiento y el interés legítimo se pueden configurar por separado cuando ambos aplican.",
 		"tcf_label_purposes":           "Finalidades",
 		"tcf_label_special_features":   "Características especiales",
@@ -805,6 +809,7 @@ var tcfUIStringsByLanguage = map[string]map[string]string{
 	},
 	"nl": {
 		"tcf_disclosure_store":         "Deze site slaat informatie op een apparaat op en/of opent die, en verwerkt persoonsgegevens.",
+		"tcf_disclosure_data":          "Verwerkte persoonsgegevens omvatten unieke identificatoren en browsegegevens.",
 		"tcf_panel_description":        "Kies welke doeleinden en partners u wilt toestaan. Toestemming en gerechtvaardigd belang kunnen afzonderlijk worden ingesteld wanneer beide van toepassing zijn.",
 		"tcf_label_purposes":           "Doeleinden",
 		"tcf_label_special_features":   "Speciale functies",

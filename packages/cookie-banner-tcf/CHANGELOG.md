@@ -18,6 +18,9 @@ in this file.
 - Preference toggles push a draft TC string to `CmpApi` while the panel
   is open, so withdrawing a vendor after accept-all updates `getTCData`
   before Save. Save still persists that draft
+- First-layer store/access copy names the nature of personal data
+  processed (unique identifiers and browsing data) per TCF Policy
+  C(b)(II)
 - Panel Accept all / Reject all persist the TC string on `probo_consent`
   even if `CmpApi.update` throws; those footer clicks are handled on
   the host so they cannot miss the headless buttons

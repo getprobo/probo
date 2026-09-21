@@ -165,6 +165,10 @@ describe("renderTCFLayout", () => {
     expect(html).toContain("Use precise geolocation data");
     expect(html).toContain("1 partner");
     expect(html).toContain("View partners");
+    const firstLayer = html!.split("<probo-preference-panel")[0];
+    expect(firstLayer).toContain("unique identifiers and browsing data");
+    expect(firstLayer).toContain('data-text="tcf_disclosure_data"');
+    expect(firstLayer).not.toContain("How often an ad was shown can be measured.");
     expect(html).toContain("Test Vendor");
     expect(html).toContain("probo_consent cookie for 180 days");
     expect(html).toContain("Advertising");
