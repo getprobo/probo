@@ -55,7 +55,9 @@ in this file.
   disclosed vendors and reject grants none
 - Second layer discloses special purposes, features, and data categories
   used by partners (no toggles), purpose illustrations, vendor cookie /
-  non-cookie storage, and http(s) privacy / legitimate-interest links
+  non-cookie storage, and http(s) privacy / legitimate-interest links.
+  Each partner row lists that vendor's purposes by legal basis, special
+  purposes, features, and special features
 - Preference panel is 720px for TCF. The header describes purposes and
   partners instead of cookie categories. Choice rows keep a leading spacer
   (no visible IAB ids) and labeled Consent / Legitimate interest /

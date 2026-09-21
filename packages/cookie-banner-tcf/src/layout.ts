@@ -61,6 +61,13 @@ interface Stack extends Named {
   specialFeatures: number[];
 }
 
+interface VendorCatalogs {
+  purposes: Map<number, string>;
+  specialPurposes: Map<number, string>;
+  features: Map<number, string>;
+  specialFeatures: Map<number, string>;
+}
+
 export function renderTCFLayout(config: BannerConfig, position: string): string | null {
   const gvl = config.tcf?.gvl;
   if (!gvl || !gdprApplies(config)) {
@@ -176,7 +183,12 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
   const purposes = usedPurposes(gvl);
   const specialFeatures = usedSpecialFeatures(gvl);
   const vendors = Object.values(gvl.vendors).sort((a, b) => a.id - b.id);
-  const purposeNames = new Map(purposes.map((p) => [p.id, p.name]));
+  const catalogs: VendorCatalogs = {
+    purposes: nameMap(namedList(gvl.purposes)),
+    specialPurposes: nameMap(namedList(gvl.specialPurposes)),
+    features: nameMap(namedList(gvl.features)),
+    specialFeatures: nameMap(namedList(gvl.specialFeatures)),
+  };
   const liPurposeIDs = purposeLIIds(gvl);
   const { stacks, ungrouped } = groupPurposes(gvl, purposes);
   const storageCopy = interpolate(
@@ -216,7 +228,7 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
           )}
           ${sectionGroup(
             "Partners",
-            vendors.map((v) => vendorRow(v, purposeNames)).join(""),
+            vendors.map((v) => vendorRow(v, catalogs)).join(""),
             "tcf_section_partners",
             "probo-tcf-vendors",
           )}
@@ -305,7 +317,7 @@ function purposeRow(purpose: Named, showLI: boolean): string {
   return choiceRow(purpose.name, namedBody(purpose), controls);
 }
 
-function vendorRow(vendor: PanelVendor, purposeNames: Map<number, string>): string {
+function vendorRow(vendor: PanelVendor, catalogs: VendorCatalogs): string {
   const controls = [
     toggle("vendor-consent", vendor.id, "Consent", "tcf_label_consent", vendor.name),
     vendor.legIntPurposes?.length
@@ -313,7 +325,7 @@ function vendorRow(vendor: PanelVendor, purposeNames: Map<number, string>): stri
       : "",
   ].join("");
 
-  return choiceRow(vendor.name, vendorBody(vendor, purposeNames), controls);
+  return choiceRow(vendor.name, vendorBody(vendor, catalogs), controls);
 }
 
 function disclosureSection(
@@ -354,24 +366,58 @@ function namedBody(item: Named): string | undefined {
   return parts.length ? parts.join(" ") : undefined;
 }
 
-function vendorBody(vendor: PanelVendor, purposeNames: Map<number, string>): string | undefined {
-  const ids = [...new Set([...(vendor.purposes ?? []), ...(vendor.legIntPurposes ?? [])])];
-  const names = ids
-    .map((id) => purposeNames.get(id))
-    .filter((name): name is string => !!name);
-  const bits: string[] = [];
-  if (names.length) {
-    bits.push(esc(names.join(", ")));
-  }
+function vendorBody(vendor: PanelVendor, catalogs: VendorCatalogs): string | undefined {
+  const lines = [
+    vendorLine("tcf_label_consent", "Consent", catalogNames(vendor.purposes, catalogs.purposes)),
+    vendorLine("tcf_label_li", "Legitimate interest", catalogNames(vendor.legIntPurposes, catalogs.purposes)),
+    vendorLine(
+      "tcf_section_special_purposes",
+      "Special purposes",
+      catalogNames(vendor.specialPurposes, catalogs.specialPurposes),
+      "tcf_label_always_on",
+      "Always on",
+    ),
+    vendorLine("tcf_section_features", "Features", catalogNames(vendor.features, catalogs.features)),
+    vendorLine(
+      "tcf_section_special_features",
+      "Special features",
+      catalogNames(vendor.specialFeatures, catalogs.specialFeatures),
+    ),
+  ].filter(Boolean);
   const storage = vendorStorage(vendor);
   if (storage) {
-    bits.push(esc(storage));
+    lines.push(`<p class="tcf-vendor-line">${esc(storage)}</p>`);
   }
   const links = vendorLinks(vendor);
   if (links) {
-    bits.push(links);
+    lines.push(`<p class="tcf-vendor-line">${links}</p>`);
   }
-  return bits.length ? bits.join(". ") : undefined;
+  return lines.length ? `<div class="tcf-vendor-details">${lines.join("")}</div>` : undefined;
+}
+
+function vendorLine(
+  labelKey: string,
+  fallback: string,
+  names: string[],
+  noteKey?: string,
+  noteFallback?: string,
+): string {
+  if (!names.length) {
+    return "";
+  }
+  const note =
+    noteKey && noteFallback
+      ? ` (<span data-text="${esc(noteKey)}">${esc(noteFallback)}</span>)`
+      : "";
+  return `<p class="tcf-vendor-line"><span data-text="${esc(labelKey)}">${esc(fallback)}</span>${note}: ${esc(names.join(", "))}</p>`;
+}
+
+function catalogNames(ids: number[] | undefined, names: Map<number, string>): string[] {
+  return (ids ?? []).map((id) => names.get(id)).filter((name): name is string => !!name);
+}
+
+function nameMap(items: Named[]): Map<number, string> {
+  return new Map(items.map((item) => [item.id, item.name]));
 }
 
 function vendorStorage(vendor: PanelVendor): string | undefined {

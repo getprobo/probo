@@ -82,6 +82,19 @@ export const TCF_PANEL_STYLES = `<style>
     min-width: 0;
   }
 
+  .tcf-vendor-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+  }
+
+  .tcf-vendor-line {
+    margin: 0;
+    font-size: calc(var(--_font-size) - 1px);
+    color: var(--_text-secondary);
+  }
+
   .tcf-control {
     display: flex;
     flex-direction: column;

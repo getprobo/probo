@@ -203,6 +203,25 @@ describe("renderTCFLayout", () => {
     expect(html).not.toContain("probo-category-list");
   });
 
+  it("lists each vendor's purposes, legal bases, and other GVL declarations", () => {
+    const html = renderTCFLayout(bannerConfig(), "bottom-left");
+    const partners = html!.split('id="probo-tcf-vendors"')[1]?.split('data-text="tcf_section_more"')[0] ?? "";
+    expect(partners).toContain('class="tcf-vendor-details"');
+    expect(partners).toContain('data-text="tcf_label_consent"');
+    expect(partners).toContain("Store and/or access information on a device");
+    expect(partners).toContain('data-text="tcf_label_li"');
+    expect(partners).toContain("Measure advertising performance");
+    expect(partners).toContain('data-text="tcf_section_special_purposes"');
+    expect(partners).toContain("Ensure security, prevent and detect fraud, and fix errors");
+    expect(partners).toContain('data-text="tcf_label_always_on"');
+    expect(partners).toContain('data-text="tcf_section_features"');
+    expect(partners).toContain("Match and combine data from other data sources");
+    expect(partners).toContain('data-text="tcf_section_special_features"');
+    expect(partners).toContain("Use precise geolocation data");
+    expect(partners).toContain("Cookies (up to 1 day)");
+    expect(partners).toContain('href="https://example.com/privacy"');
+  });
+
   it("omits the legitimate-interest objection line when no vendor uses LI", () => {
     const vendor = tcfGvl.vendors[String(vendorId)];
     const html = renderTCFLayout(
