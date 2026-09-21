@@ -74,6 +74,11 @@ interface VendorCatalogs {
   specialFeatures: Map<number, string>;
 }
 
+interface PurposeVendorCount {
+  consent: number;
+  li: number;
+}
+
 export function renderTCFLayout(config: BannerConfig, position: string): string | null {
   const gvl = config.tcf?.gvl;
   if (!gvl || !gdprApplies(config)) {
@@ -223,7 +228,7 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
           }
         </div>
         <div class="panel-body">
-          ${purposesSection(stacks, ungrouped, purposes, liPurposeIDs)}
+          ${purposesSection(config, stacks, ungrouped, purposes, liPurposeIDs, purposeVendorCounts(gvl))}
           ${sectionGroup(
             "Special features",
             specialFeatures
@@ -265,13 +270,21 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
 }
 
 function purposesSection(
+  config: BannerConfig,
   stacks: Stack[],
   ungrouped: Named[],
   purposes: Named[],
   liPurposeIDs: Set<number>,
+  vendorCounts: Map<number, PurposeVendorCount>,
 ): string {
-  const grouped = stacks.map((stack) => stackSection(stack, purposes, liPurposeIDs)).join("");
-  const leftoverRows = ungrouped.map((purpose) => purposeRow(purpose, liPurposeIDs.has(purpose.id))).join("");
+  const grouped = stacks
+    .map((stack) => stackSection(config, stack, purposes, liPurposeIDs, vendorCounts))
+    .join("");
+  const leftoverRows = ungrouped
+    .map((purpose) =>
+      purposeRow(config, purpose, liPurposeIDs.has(purpose.id), vendorCounts.get(purpose.id)),
+    )
+    .join("");
   const leftover = leftoverRows
     ? grouped
       ? stackBlock("Other purposes", leftoverRows, "tcf_section_other_purposes")
@@ -296,12 +309,18 @@ function sectionGroup(title: string, body: string, textKey?: string, id?: string
   return `<div class="tcf-group">${sectionTitle(title, textKey, id)}<div class="tcf-group-body">${body}</div></div>`;
 }
 
-function stackSection(stack: Stack, purposes: Named[], liPurposeIDs: Set<number>): string {
+function stackSection(
+  config: BannerConfig,
+  stack: Stack,
+  purposes: Named[],
+  liPurposeIDs: Set<number>,
+  vendorCounts: Map<number, PurposeVendorCount>,
+): string {
   const purposeByID = new Map(purposes.map((p) => [p.id, p]));
   const rows = stack.purposes
     .map((id) => purposeByID.get(id))
     .filter((p): p is Named => !!p)
-    .map((p) => purposeRow(p, liPurposeIDs.has(p.id)))
+    .map((p) => purposeRow(config, p, liPurposeIDs.has(p.id), vendorCounts.get(p.id)))
     .join("");
 
   if (!rows) {
@@ -317,7 +336,12 @@ function stackBlock(name: string, rows: string, textKey?: string, description?: 
   }${rows}</div>`;
 }
 
-function purposeRow(purpose: Named, showLI: boolean): string {
+function purposeRow(
+  config: BannerConfig,
+  purpose: Named,
+  showLI: boolean,
+  counts: PurposeVendorCount | undefined,
+): string {
   const controls = [
     toggle("purpose-consent", purpose.id, "Consent", "tcf_label_consent", purpose.name),
     showLI
@@ -325,7 +349,69 @@ function purposeRow(purpose: Named, showLI: boolean): string {
       : "",
   ].join("");
 
-  return choiceRow(purpose.name, namedBody(purpose), controls);
+  return choiceRow(purpose.name, purposeBody(config, purpose, counts), controls);
+}
+
+function purposeBody(
+  config: BannerConfig,
+  purpose: Named,
+  counts: PurposeVendorCount | undefined,
+): string | undefined {
+  const description = namedBody(purpose);
+  const vendors = purposeVendorLine(config, counts);
+  if (!description && !vendors) {
+    return undefined;
+  }
+  return `${description ?? ""}${vendors}`;
+}
+
+function purposeVendorLine(config: BannerConfig, counts: PurposeVendorCount | undefined): string {
+  if (!counts) {
+    return "";
+  }
+  const parts = [
+    counts.consent > 0
+      ? esc(
+          purposeCountLabel(
+            config,
+            counts.consent,
+            "tcf_purpose_consent_one",
+            "tcf_purpose_consent",
+            "{{count}} partner seeking consent",
+            "{{count}} partners seeking consent",
+          ),
+        )
+      : "",
+    counts.li > 0
+      ? esc(
+          purposeCountLabel(
+            config,
+            counts.li,
+            "tcf_purpose_li_one",
+            "tcf_purpose_li",
+            "{{count}} partner relying on legitimate interest",
+            "{{count}} partners relying on legitimate interest",
+          ),
+        )
+      : "",
+  ].filter(Boolean);
+  if (!parts.length) {
+    return "";
+  }
+  return `<p class="tcf-purpose-vendors">${parts.join(" · ")}</p>`;
+}
+
+function purposeCountLabel(
+  config: BannerConfig,
+  count: number,
+  oneKey: string,
+  manyKey: string,
+  oneFallback: string,
+  manyFallback: string,
+): string {
+  return text(config, count === 1 ? oneKey : manyKey, count === 1 ? oneFallback : manyFallback, {
+    count: String(count),
+  });
 }
 
 function vendorRow(vendor: PanelVendor, catalogs: VendorCatalogs): string {
@@ -725,6 +811,24 @@ function purposeLIIds(gvl: TCFGVL): Set<number> {
     }
   }
   return ids;
+}
+
+function purposeVendorCounts(gvl: TCFGVL): Map<number, PurposeVendorCount> {
+  const counts = new Map<number, PurposeVendorCount>();
+  const bump = (id: number, key: keyof PurposeVendorCount) => {
+    const current = counts.get(id) ?? { consent: 0, li: 0 };
+    current[key] += 1;
+    counts.set(id, current);
+  };
+  for (const vendor of Object.values(gvl.vendors)) {
+    for (const id of vendor.purposes ?? []) {
+      bump(id, "consent");
+    }
+    for (const id of vendor.legIntPurposes ?? []) {
+      bump(id, "li");
+    }
+  }
+  return counts;
 }
 
 function groupPurposes(gvl: TCFGVL, purposes: Named[]): { stacks: Stack[]; ungrouped: Named[] } {

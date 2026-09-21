@@ -193,6 +193,10 @@ describe("renderTCFLayout", () => {
     expect(html).toContain('class="tcf-group"');
     expect(html).toContain('class="tcf-subsection"');
     expect(html).toContain('data-tcf="purpose-li"');
+    expect(html).toContain('class="tcf-purpose-vendors"');
+    expect(html).toContain("1 partner seeking consent");
+    expect(html).toContain("1 partner relying on legitimate interest");
+    expect(html).not.toContain("0 partner");
     expect(html).toContain('data-text="tcf_disclosure_store"');
     expect(html).toContain('data-text="tcf_panel_description"');
     expect(html).not.toContain('data-text="panel_description"');
@@ -263,6 +267,44 @@ describe("renderTCFLayout", () => {
     expect(panel).not.toContain("unique identifiers and browsing data");
     expect(panel).not.toContain('data-text="tcf_disclosure_data"');
     expect(html).not.toContain('data-tcf="purpose-li"');
+    expect(html).toContain("1 partner seeking consent");
+    expect(html).not.toContain("relying on legitimate interest");
+  });
+
+  it("counts partners seeking consent or relying on LI for each purpose", () => {
+    const extraVendor = {
+      ...tcfGvl.vendors[String(vendorId)],
+      id: 99,
+      name: "Second Vendor",
+      purposes: [1, 7],
+      legIntPurposes: [],
+    };
+    const html = renderTCFLayout(
+      bannerConfig({
+        tcf: {
+          gvl: {
+            ...tcfGvl,
+            vendors: {
+              [String(vendorId)]: tcfGvl.vendors[String(vendorId)],
+              "99": extraVendor,
+            },
+          },
+          cmp_id: 4095,
+          cmp_version: 1,
+          publisher_cc: "AA",
+        },
+      }),
+      "bottom-left",
+    );
+
+    const panel = html!.split("<probo-preference-panel")[1];
+    const firstLayer = html!.split("<probo-preference-panel")[0];
+    expect(firstLayer).not.toContain("seeking consent");
+    expect(firstLayer).not.toContain("relying on legitimate interest");
+    expect(panel).toContain("2 partners seeking consent");
+    expect(panel).toContain("1 partner seeking consent · 1 partner relying on legitimate interest");
+    expect(panel).toContain('class="tcf-purpose-vendors"');
+    expect(panel.match(/class="tcf-purpose-vendors"/g)?.length).toBe(2);
   });
 
   it("widens the preference panel and distinguishes choice from disclosure rows", () => {

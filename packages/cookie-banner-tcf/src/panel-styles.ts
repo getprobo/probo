@@ -89,10 +89,15 @@ export const TCF_PANEL_STYLES = `<style>
     margin-top: 4px;
   }
 
-  .tcf-vendor-line {
+  .tcf-vendor-line,
+  .tcf-purpose-vendors {
     margin: 0;
     font-size: calc(var(--_font-size) - 1px);
     color: var(--_text-secondary);
+  }
+
+  .tcf-purpose-vendors {
+    margin-top: 4px;
   }
 
   .tcf-control {

@@ -62,7 +62,8 @@ in this file.
   purposes, features, and special features. Cookie lines include max
   duration and whether it may be refreshed; purpose-specific retention
   and an http(s) device-storage disclosure link appear when the GVL
-  provides them
+  provides them. Each purpose row shows how many partners seek consent
+  or rely on legitimate interest for that purpose
 - Preference panel is 720px for TCF. The header describes purposes and
   partners instead of cookie categories. Choice rows keep a leading spacer
   (no visible IAB ids) and labeled Consent / Legitimate interest /
