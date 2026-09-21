@@ -53,7 +53,7 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Delete',
 				value: 'delete',
-				description: 'Delete a risk',
+				description: 'Delete a risk. Deleting a risk also deletes its history in risk analyses.',
 				action: 'Delete a risk',
 			},
 			{

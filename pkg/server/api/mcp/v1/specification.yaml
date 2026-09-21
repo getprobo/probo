@@ -16448,7 +16448,7 @@ tools:
       $ref: "#/components/schemas/UpdateRiskOutput"
   - name: deleteRisk
     title: Delete Risk
-    description: Delete a risk
+    description: Delete a risk. Deleting a risk also deletes its history in risk analyses.
     hints:
       readonly: false
       destructive: true

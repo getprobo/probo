@@ -4388,6 +4388,8 @@
   },
   "riskDetailLayout": {
     "deleteConfirmation": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmationWithHistory_one": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt. Dit risico staat nog in de geschiedenis van {{count}} analyse. Verwijderen wist die geschiedenis.",
+    "deleteConfirmationWithHistory_other": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt. Dit risico staat nog in de geschiedenis van {{count}} analyses. Verwijderen wist die geschiedenis.",
     "actions": {
       "edit": "Bewerken",
       "delete": "Verwijderen"
@@ -4528,6 +4530,8 @@
       "delete": "Verwijderen van risico mislukt"
     },
     "deleteConfirmation": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmationWithHistory_one": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt. Dit risico staat nog in de geschiedenis van {{count}} analyse. Verwijderen wist die geschiedenis.",
+    "deleteConfirmationWithHistory_other": "Hiermee wordt het risico {{referenceId}} \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt. Dit risico staat nog in de geschiedenis van {{count}} analyses. Verwijderen wist die geschiedenis.",
     "treatments": {
       "mitigated": "Beperken",
       "accepted": "Accepteren",

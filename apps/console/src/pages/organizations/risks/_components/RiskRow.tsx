@@ -53,6 +53,7 @@ const riskRowFragment = graphql`
     }
     inherentRiskScore
     residualRiskScore
+    riskAnalysisHistoryCount
     canUpdate: permission(action: "risk-management:risk:update")
     canDelete: permission(action: "risk-management:risk:delete")
     ...FormRiskDialog_risk
@@ -111,7 +112,16 @@ export function RiskRow(props: RiskRowProps) {
           });
         }),
       {
-        message: t("riskRow.deleteConfirmation", { name: risk.name, referenceId: risk.referenceId }),
+        message: t(
+          risk.riskAnalysisHistoryCount > 0
+            ? "riskRow.deleteConfirmationWithHistory"
+            : "riskRow.deleteConfirmation",
+          {
+            name: risk.name,
+            referenceId: risk.referenceId,
+            count: risk.riskAnalysisHistoryCount,
+          },
+        ),
       },
     );
   };

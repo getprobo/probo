@@ -516,6 +516,22 @@ func (r *riskResolver) TreatmentPlans(ctx context.Context, obj *types.Risk, firs
 	return types.NewTreatmentPlanConnection(p, r, obj.ID, planFilter), nil
 }
 
+// RiskAnalysisHistoryCount is the resolver for the riskAnalysisHistoryCount field.
+func (r *riskResolver) RiskAnalysisHistoryCount(ctx context.Context, obj *types.Risk) (int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.probo.Risks.CountRiskAnalysisHistory(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count risk analysis history", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *riskResolver) Permission(ctx context.Context, obj *types.Risk, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)

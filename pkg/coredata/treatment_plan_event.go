@@ -378,6 +378,33 @@ WHERE
 	return nil
 }
 
+func (es *TreatmentPlanEvents) CountRiskAnalysisIDsByRiskID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(DISTINCT risk_analysis_id)
+FROM treatment_plan_events
+WHERE
+	%s
+	AND risk_id = @risk_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_id": riskID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count risk analysis history: %w", err)
+	}
+
+	return count, nil
+}
+
 func (c *TreatmentPlanEvents) DeleteByOrganizationID(
 	ctx context.Context,
 	conn pg.Tx,

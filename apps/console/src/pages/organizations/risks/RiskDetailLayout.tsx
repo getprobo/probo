@@ -69,6 +69,7 @@ export const riskDetailLayoutQuery = graphql`
         treatmentPlansInfo: treatmentPlans(first: 0) {
           totalCount
         }
+        riskAnalysisHistoryCount
         canUpdate: permission(action: "risk-management:risk:update")
         canDelete: permission(action: "risk-management:risk:delete")
         ...FormRiskDialog_risk
@@ -138,7 +139,16 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
           });
         }),
       {
-        message: t("riskDetailLayout.deleteConfirmation", { name: risk.name, referenceId: risk.referenceId }),
+        message: t(
+          risk.riskAnalysisHistoryCount > 0
+            ? "riskDetailLayout.deleteConfirmationWithHistory"
+            : "riskDetailLayout.deleteConfirmation",
+          {
+            name: risk.name,
+            referenceId: risk.referenceId,
+            count: risk.riskAnalysisHistoryCount,
+          },
+        ),
       },
     );
   };

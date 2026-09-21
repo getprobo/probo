@@ -654,6 +654,32 @@ func (s RiskService) Update(
 	return risk, nil
 }
 
+func (s RiskService) CountRiskAnalysisHistory(
+	ctx context.Context, scope coredata.Scoper,
+	riskID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			events := &coredata.TreatmentPlanEvents{}
+
+			count, err = events.CountRiskAnalysisIDsByRiskID(ctx, conn, scope, riskID)
+			if err != nil {
+				return fmt.Errorf("cannot count risk analysis history: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count risk analysis history: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s RiskService) Delete(
 	ctx context.Context, scope coredata.Scoper,
 	riskID gid.GID,

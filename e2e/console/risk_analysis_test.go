@@ -1461,7 +1461,7 @@ func TestRiskAnalysis_NestedTreatmentPlansAsOf(t *testing.T) {
 	assert.Nil(t, live.Edges[0].Node.AsOf)
 }
 
-func TestRiskAnalysis_DeleteRiskRequiresTreatmentPlanHistory(t *testing.T) {
+func TestRiskAnalysis_DeleteRiskRemovesTreatmentPlanHistory(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1470,23 +1470,37 @@ func TestRiskAnalysis_DeleteRiskRequiresTreatmentPlanHistory(t *testing.T) {
 	diagramID := factory.CreateRiskAnalysisDiagram(owner, analysisID)
 	scenarioID := factory.CreateRiskAnalysisScenario(owner, diagramID)
 	factory.LinkRiskAnalysisScenarioRisk(owner, scenarioID, riskID)
+
+	queryHistoryCount := func() int {
+		t.Helper()
+
+		var result struct {
+			Node struct {
+				RiskAnalysisHistoryCount int `json:"riskAnalysisHistoryCount"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(`
+			query($id: ID!) {
+				node(id: $id) {
+					... on Risk { riskAnalysisHistoryCount }
+				}
+			}
+		`, map[string]any{"id": riskID}, &result)
+		require.NoError(t, err)
+
+		return result.Node.RiskAnalysisHistoryCount
+	}
+
+	assert.Equal(t, 0, queryHistoryCount())
+
 	planID := factory.CreateTreatmentPlan(owner, riskID, analysisID, factory.Attrs{
 		"treatment":          "MITIGATED",
 		"inherentLikelihood": 3,
 		"inherentImpact":     3,
 	})
 
-	deleteRisk := func() error {
-		t.Helper()
-
-		_, err := owner.Do(`
-			mutation($input: DeleteRiskInput!) {
-				deleteRisk(input: $input) { deletedRiskId }
-			}
-		`, map[string]any{"input": map[string]any{"riskId": riskID}})
-
-		return err
-	}
+	assert.Equal(t, 1, queryHistoryCount())
 
 	var deleteScenario struct {
 		DeleteRiskAnalysisScenario struct {
@@ -1503,8 +1517,6 @@ func TestRiskAnalysis_DeleteRiskRequiresTreatmentPlanHistory(t *testing.T) {
 	`, map[string]any{"input": map[string]any{"riskAnalysisScenarioId": scenarioID}}, &deleteScenario)
 	require.NoError(t, err)
 
-	testutil.RequireConflictError(t, deleteRisk())
-
 	asOf := time.Now().UTC().Format(time.RFC3339Nano)
 
 	var deletePlan struct {
@@ -1520,12 +1532,28 @@ func TestRiskAnalysis_DeleteRiskRequiresTreatmentPlanHistory(t *testing.T) {
 	`, map[string]any{"input": map[string]any{"treatmentPlanId": planID}}, &deletePlan)
 	require.NoError(t, err)
 	assert.Equal(t, planID, deletePlan.DeleteTreatmentPlan.DeletedTreatmentPlanID)
-
-	testutil.RequireConflictError(t, deleteRisk())
+	assert.Equal(t, 1, queryHistoryCount())
 
 	restored := queryRiskAnalysisPlansAsOf(t, owner, analysisID, &asOf, 10, nil)
 	require.Len(t, restored.Node.TreatmentPlans.Edges, 1)
 	assert.Equal(t, planID, restored.Node.TreatmentPlans.Edges[0].Node.ID)
 	assert.Equal(t, riskID, restored.Node.TreatmentPlans.Edges[0].Node.Risk.ID)
 	assert.NotEmpty(t, restored.Node.TreatmentPlans.Edges[0].Node.Risk.Name)
+
+	var deleteRisk struct {
+		DeleteRisk struct {
+			DeletedRiskID string `json:"deletedRiskId"`
+		} `json:"deleteRisk"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: DeleteRiskInput!) {
+			deleteRisk(input: $input) { deletedRiskId }
+		}
+	`, map[string]any{"input": map[string]any{"riskId": riskID}}, &deleteRisk)
+	require.NoError(t, err)
+	assert.Equal(t, riskID, deleteRisk.DeleteRisk.DeletedRiskID)
+
+	wiped := queryRiskAnalysisPlansAsOf(t, owner, analysisID, &asOf, 10, nil)
+	assert.Empty(t, wiped.Node.TreatmentPlans.Edges)
 }

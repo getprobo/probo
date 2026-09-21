@@ -2413,6 +2413,8 @@
   },
   "riskDetailLayout": {
     "deleteConfirmation": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This action cannot be undone.",
+    "deleteConfirmationWithHistory_one": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analysis. Deleting it will remove that history.",
+    "deleteConfirmationWithHistory_other": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analyses. Deleting it will remove that history.",
     "actions": { "edit": "Edit", "delete": "Delete" },
     "tabs": { "overview": "Overview", "measures": "Measures", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
   },
@@ -2458,6 +2460,8 @@
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk" },
     "deleteConfirmation": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This action cannot be undone.",
+    "deleteConfirmationWithHistory_one": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analysis. Deleting it will remove that history.",
+    "deleteConfirmationWithHistory_other": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analyses. Deleting it will remove that history.",
     "treatments": { "mitigated": "Mitigate", "accepted": "Accept", "transferred": "Transfer", "avoided": "Avoid", "unknown": "Unknown" },
     "unassigned": "Unassigned",
     "actions": { "edit": "Edit", "delete": "Delete" }

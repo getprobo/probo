@@ -129,6 +129,8 @@ type Risk implements Node {
         filter: TreatmentPlanFilter
     ): TreatmentPlanConnection! @goField(forceResolver: true)
 
+    riskAnalysisHistoryCount: Int! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 

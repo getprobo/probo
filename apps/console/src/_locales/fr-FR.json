@@ -4398,6 +4398,8 @@
   },
   "riskDetailLayout": {
     "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmationWithHistory_one": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible. Ce risque figure encore dans l’historique de {{count}} analyse. Le supprimer effacera cet historique.",
+    "deleteConfirmationWithHistory_other": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible. Ce risque figure encore dans l’historique de {{count}} analyses. Le supprimer effacera cet historique.",
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer"
@@ -4538,6 +4540,8 @@
       "delete": "Échec de la suppression du risque"
     },
     "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible.",
+    "deleteConfirmationWithHistory_one": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible. Ce risque figure encore dans l’historique de {{count}} analyse. Le supprimer effacera cet historique.",
+    "deleteConfirmationWithHistory_other": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible. Ce risque figure encore dans l’historique de {{count}} analyses. Le supprimer effacera cet historique.",
     "treatments": {
       "mitigated": "Atténuer",
       "accepted": "Accepter",
