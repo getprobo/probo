@@ -1400,6 +1400,7 @@
     "context": "Context",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
+    "integrations": "Integrations",
     "tasks": "Tasks",
     "measures": "Measures",
     "risks": "Risks",

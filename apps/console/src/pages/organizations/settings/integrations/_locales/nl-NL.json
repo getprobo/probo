@@ -1,0 +1,44 @@
+{
+  "listPage": {
+    "title": "Integraties",
+    "description": "De leveranciers waarvoor Probo een credential heeft, en waarmee het verder verbinding kan maken.",
+    "notFound": "Organisatie niet gevonden",
+    "sections": {
+      "connected": "Verbonden",
+      "available": "Beschikbaar"
+    },
+    "emptyConnected": "Er is nog geen leverancier verbonden.",
+    "emptyAvailable": "Alle beschikbare leveranciers zijn al verbonden.",
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
+    "actions": {
+      "manage": "Beheren",
+      "connect": "Verbinden",
+      "documentation": "Documentatie"
+    }
+  },
+  "detailsPage": {
+    "notFound": "Integratie niet gevonden",
+    "accounts": {
+      "title": "Accounts",
+      "empty": "Er is nog geen account ingeschakeld op deze credential.",
+      "implicit": "De credential dekt één account"
+    },
+    "actions": {
+      "delete": "Verbinding verbreken",
+      "cancel": "Annuleren",
+      "more": "Meer acties"
+    },
+    "delete": {
+      "title": "Verbinding met integratie verbreken",
+      "description": "Het verbreken verwijdert de credential die Probo voor {{name}} bewaart. Alles wat deze nog gebruikt moet eerst worden verwijderd.",
+      "confirm": "Verbinding verbreken"
+    },
+    "messages": {
+      "deleted": "Verbinding met integratie verbroken."
+    },
+    "errors": {
+      "delete": "Verbreken van de integratie mislukt"
+    }
+  }
+}

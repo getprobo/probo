@@ -1,0 +1,44 @@
+{
+  "listPage": {
+    "title": "Integrations",
+    "description": "The vendors Probo holds a credential for, and what else it can connect to.",
+    "notFound": "Organization not found",
+    "sections": {
+      "connected": "Connected",
+      "available": "Available"
+    },
+    "emptyConnected": "No vendor is connected yet.",
+    "emptyAvailable": "Every available vendor is already connected.",
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
+    "actions": {
+      "manage": "Manage",
+      "connect": "Connect",
+      "documentation": "Documentation"
+    }
+  },
+  "detailsPage": {
+    "notFound": "Integration not found",
+    "accounts": {
+      "title": "Accounts",
+      "empty": "No account is enabled on this credential yet.",
+      "implicit": "The credential covers a single account"
+    },
+    "actions": {
+      "delete": "Disconnect",
+      "cancel": "Cancel",
+      "more": "More actions"
+    },
+    "delete": {
+      "title": "Disconnect integration",
+      "description": "Disconnecting removes the credential Probo holds for {{name}}. Anything still using it has to be removed first.",
+      "confirm": "Disconnect"
+    },
+    "messages": {
+      "deleted": "Integration disconnected."
+    },
+    "errors": {
+      "delete": "Failed to disconnect integration"
+    }
+  }
+}

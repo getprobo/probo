@@ -1,0 +1,44 @@
+{
+  "listPage": {
+    "title": "Intégrations",
+    "description": "Les fournisseurs pour lesquels Probo détient un identifiant, et ce à quoi il peut encore se connecter.",
+    "notFound": "Organisation introuvable",
+    "sections": {
+      "connected": "Connectés",
+      "available": "Disponibles"
+    },
+    "emptyConnected": "Aucun fournisseur n'est encore connecté.",
+    "emptyAvailable": "Tous les fournisseurs disponibles sont déjà connectés.",
+    "accountCount_one": "{{count}} compte",
+    "accountCount_other": "{{count}} comptes",
+    "actions": {
+      "manage": "Gérer",
+      "connect": "Connecter",
+      "documentation": "Documentation"
+    }
+  },
+  "detailsPage": {
+    "notFound": "Intégration introuvable",
+    "accounts": {
+      "title": "Comptes",
+      "empty": "Aucun compte n'est encore activé sur cet identifiant.",
+      "implicit": "L'identifiant couvre un seul compte"
+    },
+    "actions": {
+      "delete": "Déconnecter",
+      "cancel": "Annuler",
+      "more": "Plus d'actions"
+    },
+    "delete": {
+      "title": "Déconnecter l'intégration",
+      "description": "La déconnexion supprime l'identifiant que Probo détient pour {{name}}. Tout ce qui l'utilise encore doit d'abord être supprimé.",
+      "confirm": "Déconnecter"
+    },
+    "messages": {
+      "deleted": "Intégration déconnectée."
+    },
+    "errors": {
+      "delete": "Échec de la déconnexion de l'intégration"
+    }
+  }
+}

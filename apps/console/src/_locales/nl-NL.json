@@ -2194,6 +2194,7 @@
     "context": "Context",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
+    "integrations": "Integraties",
     "tasks": "Taken",
     "measures": "Maatregelen",
     "risks": "Risico's",
