@@ -80,19 +80,24 @@ export function wireTCFLayout(root: LayoutHost, host: ShadowRoot): void {
   host.addEventListener("probo-state", (e: Event) => {
     if ((e as CustomEvent).detail.state === "panel") {
       applyLastTC(host);
+      syncChoices(host);
     }
+  });
+
+  host.addEventListener("change", (e: Event) => {
+    if (!isTCFChoice(e.target)) {
+      return;
+    }
+    syncChoices(host);
   });
 
   host.addEventListener(
     "click",
     (e: Event) => {
-      const target = e.target as Element | null;
-      if (!target?.closest?.("probo-save-button")) {
+      if (!isSaveClick(e)) {
         return;
       }
-      getTCFRuntime()?.setPendingChoices?.(
-        collectChoices(host),
-      );
+      syncChoices(host);
     },
     true,
   );
@@ -613,6 +618,25 @@ function groupPurposes(gvl: TCFGVL, purposes: Named[]): { stacks: Stack[]; ungro
     stacks,
     ungrouped: purposes.filter((p) => !assigned.has(p.id)),
   };
+}
+
+function syncChoices(host: ParentNode): void {
+  getTCFRuntime()?.setPendingChoices?.(collectChoices(host));
+}
+
+function isTCFChoice(target: EventTarget | null): target is HTMLInputElement {
+  return target instanceof HTMLInputElement && typeof target.dataset.tcf === "string";
+}
+
+function isSaveClick(e: Event): boolean {
+  if (typeof e.composedPath === "function") {
+    return e.composedPath().some(
+      (node) => node instanceof Element && node.localName === "probo-save-button",
+    );
+  }
+
+  const target = e.target as Element | null;
+  return !!target?.closest?.("probo-save-button");
 }
 
 function collectChoices(host: ParentNode): TCFChoices {

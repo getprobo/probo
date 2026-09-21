@@ -41,7 +41,9 @@ function tcfActive(config: BannerConfig): boolean {
 export function startTCF(): void {
   let cmpApi: CmpApi | undefined;
   let pending: TCFChoices | undefined;
+  let lastConfig: BannerConfig | undefined;
   let active = false;
+  let uiVisible = false;
 
   function ensureCmpApi(cmpId?: number, cmpVersion?: number): CmpApi {
     if (!cmpApi) {
@@ -51,6 +53,18 @@ export function startTCF(): void {
     return cmpApi;
   }
 
+  function previewPending(choices: TCFChoices): void {
+    if (!active || !cmpApi || !lastConfig || !uiVisible) {
+      return;
+    }
+
+    try {
+      cmpApi.update(encodeTCString(lastConfig, choices), true);
+    } catch {
+      // Leave the last successful CmpApi state in place.
+    }
+  }
+
   setLayoutRenderer({
     render: renderTCFLayout,
     wire: wireTCFLayout,
@@ -58,6 +72,7 @@ export function startTCF(): void {
 
   setTCFRuntime({
     onConfig(config, existingTc) {
+      lastConfig = config;
       active = tcfActive(config);
       if (!active) {
         setLastTCString(undefined);
@@ -85,6 +100,7 @@ export function startTCF(): void {
       api.update("", true);
     },
     onUIVisible(visible) {
+      uiVisible = visible;
       if (!active || !cmpApi) {
         return;
       }
@@ -93,6 +109,7 @@ export function startTCF(): void {
     },
     setPendingChoices(choices) {
       pending = choices;
+      previewPending(choices);
     },
     getPendingChoices() {
       return pending;

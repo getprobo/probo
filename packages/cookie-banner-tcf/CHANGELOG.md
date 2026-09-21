@@ -11,6 +11,9 @@ in this file.
   CMP validator sees `cmpStatus: "loaded"` after `CmpApi` starts. The
   stub also returns its command queue when called with no arguments,
   which is how `CmpApi` drains calls queued before load
+- Preference toggles push a draft TC string to `CmpApi` while the panel
+  is open, so withdrawing a vendor after accept-all updates `getTCData`
+  before Save. Save still persists that draft
 
 ### Changed
 

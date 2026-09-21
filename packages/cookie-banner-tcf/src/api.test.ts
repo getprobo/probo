@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { TCString } from "@iabtechlabtcf/core";
 import type { BannerConfig, TCFGVL, TCFRuntime } from "@probo/cookie-banner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -53,7 +54,13 @@ const tcfGvl: TCFGVL = {
   vendorListVersion: 42,
   tcfPolicyVersion: 5,
   lastUpdated: "2026-01-15T17:00:00Z",
-  purposes: {},
+  purposes: {
+    "1": {
+      id: 1,
+      name: "Store and/or access information on a device",
+      description: "Cookies, device or similar online identifiers.",
+    },
+  },
   specialPurposes: {},
   features: {},
   specialFeatures: {},
@@ -203,5 +210,47 @@ describe("startTCF displayStatus", () => {
     expect(() =>
       runtime?.onConfig(bannerConfig({ tcf: { gvl: tcfGvl, cmp_id: 4095 } })),
     ).toThrow(/tcf.cmp_version is missing or invalid/);
+  });
+
+  it("previews withdrawn vendor consent on CmpApi while the UI is open", () => {
+    const runtime = runtimeHolder.current;
+    const cfg = bannerConfig();
+    runtime?.onConfig(cfg);
+    runtime?.onConsent?.("ACCEPT_ALL", cfg);
+    runtime?.onUIVisible?.(true);
+    update.mockClear();
+
+    runtime?.setPendingChoices?.({
+      purposeConsents: [1],
+      purposeLegitimateInterests: [],
+      vendorConsents: [],
+      vendorLegitimateInterests: [],
+      specialFeatureOptins: [],
+    });
+
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update.mock.calls[0]?.[1]).toBe(true);
+    const decoded = TCString.decode(update.mock.calls[0]?.[0] as string);
+    expect(decoded.vendorConsents.has(52)).toBe(false);
+  });
+
+  it("persists a new TC string when a vendor consent is withdrawn", () => {
+    const runtime = runtimeHolder.current;
+    const cfg = bannerConfig();
+    runtime?.onConfig(cfg);
+    const accepted = runtime?.onConsent?.("ACCEPT_ALL", cfg);
+    expect(TCString.decode(accepted!).vendorConsents.has(52)).toBe(true);
+
+    runtime?.setPendingChoices?.({
+      purposeConsents: [1],
+      purposeLegitimateInterests: [],
+      vendorConsents: [],
+      vendorLegitimateInterests: [],
+      specialFeatureOptins: [],
+    });
+    const customized = runtime?.onConsent?.("CUSTOMIZE", cfg);
+
+    expect(customized).not.toBe(accepted);
+    expect(TCString.decode(customized!).vendorConsents.has(52)).toBe(false);
   });
 });
