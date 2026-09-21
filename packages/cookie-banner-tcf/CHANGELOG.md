@@ -20,7 +20,9 @@ in this file.
   before Save. Save still persists that draft
 - First-layer store/access copy names the nature of personal data
   processed (unique identifiers and browsing data) per TCF Policy
-  C(b)(II)
+  C(b)(II). Scope copy states that choices are service-specific
+  per C(b)(VII). Withdrawal copy says consent can be changed at
+  any time via Cookie settings per C(b)(VIII)
 - Panel Accept all / Reject all persist the TC string on `probo_consent`
   even if `CmpApi.update` throws; those footer clicks are handled on
   the host so they cannot miss the headless buttons

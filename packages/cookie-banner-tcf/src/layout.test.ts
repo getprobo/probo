@@ -168,6 +168,11 @@ describe("renderTCFLayout", () => {
     const firstLayer = html!.split("<probo-preference-panel")[0];
     expect(firstLayer).toContain("unique identifiers and browsing data");
     expect(firstLayer).toContain('data-text="tcf_disclosure_data"');
+    expect(firstLayer).toContain("service-specific consent");
+    expect(firstLayer).toContain('data-text="tcf_disclosure_scope"');
+    expect(firstLayer).toContain("withdraw or change your consent at any time");
+    expect(firstLayer).toContain("Cookie settings");
+    expect(firstLayer).toContain('data-text="tcf_disclosure_withdraw"');
     expect(firstLayer).not.toContain("How often an ad was shown can be measured.");
     expect(html).toContain("Test Vendor");
     expect(html).toContain("probo_consent cookie for 180 days");
