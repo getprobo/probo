@@ -117,7 +117,7 @@ const tcfGvl: TCFGVL = {
 };
 
 Object.assign(tcfGvl.vendors[String(vendorId)], {
-  dataRetention: { purposes: { "7": 30 } },
+  dataRetention: { stdRetention: 365, purposes: { "7": 30 } },
   deviceStorageDisclosureUrl: "https://example.com/storage",
 });
 
@@ -209,6 +209,8 @@ describe("renderTCFLayout", () => {
     expect(html).toContain("Ensure security, prevent and detect fraud, and fix errors");
     expect(html).toContain("Match and combine data from other data sources");
     expect(html).toContain("IP addresses");
+    expect(html).not.toContain('data-text="tcf_section_more"');
+    expect(html).not.toContain("<details");
     expect(html).toContain("Cookies (up to 1 day)");
     expect(html).toContain("Non-cookie storage");
     expect(html).toContain('href="https://example.com/privacy"');
@@ -220,7 +222,7 @@ describe("renderTCFLayout", () => {
 
   it("lists each vendor's purposes, legal bases, and other GVL declarations", () => {
     const html = renderTCFLayout(bannerConfig(), "bottom-left");
-    const partners = html!.split('id="probo-tcf-vendors"')[1]?.split('data-text="tcf_section_more"')[0] ?? "";
+    const partners = html!.split('id="probo-tcf-vendors"')[1]?.split('data-text="tcf_section_storage"')[0] ?? "";
     expect(partners).toContain('class="tcf-vendor-details"');
     expect(partners).toContain('data-text="tcf_label_consent"');
     expect(partners).toContain("Store and/or access information on a device");
@@ -233,9 +235,14 @@ describe("renderTCFLayout", () => {
     expect(partners).toContain("Match and combine data from other data sources");
     expect(partners).toContain('data-text="tcf_section_special_features"');
     expect(partners).toContain("Use precise geolocation data");
+    expect(partners).toContain('data-text="tcf_section_data_categories"');
+    expect(partners).toContain("IP addresses");
     expect(partners).toContain("Cookies (up to 1 day)");
     expect(partners).toContain("not refreshed");
     expect(partners).toContain("Purpose-specific storage");
+    expect(partners).toContain('data-text="tcf_label_std_retention"');
+    expect(partners).toContain("Standard retention");
+    expect(partners).toContain("365 days");
     expect(partners).toContain("Measure advertising performance (30 days)");
     expect(partners).toContain('href="https://example.com/storage"');
     expect(partners).toContain("Device storage details");
@@ -307,7 +314,7 @@ describe("renderTCFLayout", () => {
     expect(panel.match(/class="tcf-purpose-vendors"/g)?.length).toBe(2);
   });
 
-  it("widens the preference panel and distinguishes choice from disclosure rows", () => {
+  it("widens the preference panel and orders purposes before partners", () => {
     const html = renderTCFLayout(bannerConfig(), "bottom-left");
     expect(html).not.toBeNull();
     if (html == null) {
@@ -323,21 +330,15 @@ describe("renderTCFLayout", () => {
     expect(html).toContain('data-text="tcf_label_optin"');
     expect(html).toContain('data-text="tcf_label_always_on"');
     expect(html).not.toContain('data-text="tcf_label_information"');
-    expect(html).toContain('data-text="tcf_section_more"');
-    expect(html).toContain("<details");
+    expect(html).not.toContain('data-text="tcf_section_more"');
+    expect(html).not.toContain("<details");
+    expect(html).not.toContain("tcf-row-disclosure");
     expect(html).toContain('id="probo-tcf-vendors"');
     expect(html.indexOf('data-text="tcf_section_purposes"')).toBeLessThan(html.indexOf("Advertising"));
     expect(html.indexOf('data-tcf="special-feature"')).toBeLessThan(html.indexOf('id="probo-tcf-vendors"'));
     expect(html.indexOf('id="probo-tcf-vendors"')).toBeLessThan(
       html.indexOf('data-text="tcf_section_special_purposes"'),
     );
-
-    const disclosureRows = html.split('class="tcf-row tcf-row-disclosure"').slice(1);
-    expect(disclosureRows.length).toBeGreaterThan(0);
-    for (const part of disclosureRows) {
-      const row = part.split(/class="tcf-row tcf-row-(?:choice|disclosure)"/)[0];
-      expect(row).not.toContain("<input");
-    }
   });
 
   it("omits unused disclosure catalogs and rejects non-http policy URLs", () => {
@@ -375,6 +376,7 @@ describe("renderTCFLayout", () => {
                 dataDeclaration: [],
                 usesCookies: false,
                 usesNonCookieAccess: false,
+                dataRetention: undefined,
                 policyUrl: "javascript:alert(1)",
                 deviceStorageDisclosureUrl: "javascript:alert(1)",
                 urls: [{ privacy: "javascript:alert(1)" }],
@@ -393,6 +395,8 @@ describe("renderTCFLayout", () => {
     expect(html).not.toContain("Link different devices");
     expect(html).not.toContain("Device characteristics");
     expect(html).not.toContain("Cookies (up to");
+    expect(html).not.toContain("Standard retention");
+    expect(html).not.toContain("Purpose-specific storage");
     expect(html).not.toContain("javascript:");
     expect(html).not.toContain('href="javascript:');
   });

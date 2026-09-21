@@ -19,8 +19,7 @@
 // SOFTWARE.
 
 // Injected into the themed-banner shadow so TCF can widen the preference
-// panel and distinguish choice vs disclosure rows without changing the
-// GDPR category layout.
+// panel without changing the GDPR category layout.
 export const TCF_PANEL_STYLES = `<style>
   probo-banner .tcf-disclosures {
     display: flex;
@@ -116,31 +115,8 @@ export const TCF_PANEL_STYLES = `<style>
     max-width: 7.5em;
   }
 
-  .tcf-chip {
-    flex-shrink: 0;
-    font-size: calc(var(--_font-size) - 2px);
-    color: var(--_text-secondary);
-    border: 1px solid var(--_border);
-    border-radius: 999px;
-    padding: 2px 8px;
-    white-space: nowrap;
-  }
-
-  .tcf-more {
-    border-bottom: 1px solid var(--_border);
-  }
-
-  .panel-body > .tcf-group:last-child,
-  .panel-body > .tcf-more:last-child {
+  .panel-body > .tcf-group:last-child {
     border-bottom: none;
-  }
-
-  .tcf-more-summary {
-    font-size: calc(var(--_font-size) - 1px);
-    font-weight: 500;
-    color: var(--_text-secondary);
-    padding: 16px 24px;
-    cursor: pointer;
   }
 
   .tcf-storage {

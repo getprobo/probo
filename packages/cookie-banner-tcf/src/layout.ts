@@ -72,6 +72,7 @@ interface VendorCatalogs {
   specialPurposes: Map<number, string>;
   features: Map<number, string>;
   specialFeatures: Map<number, string>;
+  dataCategories: Map<number, string>;
 }
 
 interface PurposeVendorCount {
@@ -199,6 +200,7 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
     specialPurposes: nameMap(namedList(gvl.specialPurposes)),
     features: nameMap(namedList(gvl.features)),
     specialFeatures: nameMap(namedList(gvl.specialFeatures)),
+    dataCategories: nameMap(namedList(gvl.dataCategories)),
   };
   const liPurposeIDs = purposeLIIds(gvl);
   const { stacks, ungrouped } = groupPurposes(gvl, purposes);
@@ -247,11 +249,6 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
             vendors.map((v) => vendorRow(v, catalogs)).join(""),
             "tcf_section_partners",
             "probo-tcf-vendors",
-          )}
-          ${moreInformation(
-            disclosureSection("Special purposes", "tcf_section_special_purposes", usedSpecialPurposes(gvl), "always_on"),
-            disclosureSection("Features", "tcf_section_features", usedFeatures(gvl)),
-            disclosureSection("Data categories", "tcf_section_data_categories", usedDataCategories(gvl)),
           )}
           ${sectionGroup("Storage", `<p class="tcf-storage">${esc(storageCopy)}</p>`, "tcf_section_storage")}
         </div>
@@ -425,37 +422,6 @@ function vendorRow(vendor: PanelVendor, catalogs: VendorCatalogs): string {
   return choiceRow(vendor.name, vendorBody(vendor, catalogs), controls);
 }
 
-function disclosureSection(
-  title: string,
-  textKey: string,
-  items: Named[],
-  chip?: "always_on",
-): string {
-  if (!items.length) {
-    return "";
-  }
-
-  return `${sectionTitle(title, textKey)}${items
-    .map((item) =>
-      disclosureRow(
-        item.name,
-        namedBody(item),
-        chip === "always_on" ? "tcf_label_always_on" : undefined,
-        chip === "always_on" ? "Always on" : undefined,
-      ),
-    )
-    .join("")}`;
-}
-
-function moreInformation(...sections: string[]): string {
-  const body = sections.filter((section) => section.length > 0).join("");
-  if (!body) {
-    return "";
-  }
-
-  return `<details class="tcf-more"><summary class="tcf-more-summary" data-text="tcf_section_more">More information</summary>${body}</details>`;
-}
-
 function namedBody(item: Named): string | undefined {
   const parts = [item.description, ...(item.illustrations ?? [])]
     .filter((part): part is string => !!part)
@@ -480,10 +446,19 @@ function vendorBody(vendor: PanelVendor, catalogs: VendorCatalogs): string | und
       "Special features",
       catalogNames(vendor.specialFeatures, catalogs.specialFeatures),
     ),
+    vendorLine(
+      "tcf_section_data_categories",
+      "Data categories",
+      catalogNames(vendor.dataDeclaration, catalogs.dataCategories),
+    ),
   ].filter(Boolean);
   const storage = vendorStorage(vendor);
   if (storage) {
     lines.push(`<p class="tcf-vendor-line">${storage}</p>`);
+  }
+  const stdRetention = vendorStdRetention(vendor);
+  if (stdRetention) {
+    lines.push(stdRetention);
   }
   const purposeStorage = vendorPurposeStorage(vendor, catalogs);
   if (purposeStorage) {
@@ -540,6 +515,14 @@ function vendorStorage(vendor: PanelVendor): string | undefined {
   return bits.length ? bits.join(". ") : undefined;
 }
 
+function vendorStdRetention(vendor: PanelVendor): string | undefined {
+  const period = formatRetentionPeriod(vendor.dataRetention?.stdRetention);
+  if (!period) {
+    return undefined;
+  }
+  return `<p class="tcf-vendor-line"><span data-text="tcf_label_std_retention">Standard retention</span>: ${esc(period)}</p>`;
+}
+
 function vendorPurposeStorage(vendor: PanelVendor, catalogs: VendorCatalogs): string | undefined {
   const items = [
     ...retentionItems(vendor.dataRetention?.purposes, catalogs.purposes),
@@ -561,12 +544,23 @@ function retentionItems(
   return Object.entries(record)
     .map(([id, days]) => {
       const name = names.get(Number(id));
-      if (!name || typeof days !== "number" || !Number.isFinite(days) || days < 0) {
+      const period = formatRetentionPeriod(days);
+      if (!name || !period) {
         return "";
       }
-      return `${esc(name)} (${esc(days === 0 ? "session" : formatRetentionDays(days))})`;
+      return `${esc(name)} (${esc(period)})`;
     })
     .filter(Boolean);
+}
+
+function formatRetentionPeriod(days: number | undefined): string | undefined {
+  if (days == null || !Number.isFinite(days) || days < 0) {
+    return undefined;
+  }
+  if (days === 0) {
+    return "session";
+  }
+  return formatRetentionDays(days);
 }
 
 function formatRetentionDays(days: number): string {
@@ -648,29 +642,15 @@ function choiceRow(
   descriptionHtml: string | undefined,
   controls: string,
 ): string {
-  return tcfRow("choice", name, descriptionHtml, `<div class="toggle-group">${controls}</div>`);
-}
-
-function disclosureRow(
-  name: string,
-  descriptionHtml: string | undefined,
-  chipKey?: string,
-  chipLabel?: string,
-): string {
-  const trailing =
-    chipKey && chipLabel
-      ? `<span class="tcf-chip" data-text="${esc(chipKey)}">${esc(chipLabel)}</span>`
-      : "";
-  return tcfRow("disclosure", name, descriptionHtml, trailing);
+  return tcfRow(name, descriptionHtml, `<div class="toggle-group">${controls}</div>`);
 }
 
 function tcfRow(
-  kind: "choice" | "disclosure",
   name: string,
   descriptionHtml: string | undefined,
   trailing: string,
 ): string {
-  return `<div class="tcf-row tcf-row-${kind}">
+  return `<div class="tcf-row tcf-row-choice">
     <div class="tcf-row-id" aria-hidden="true"></div>
     <div class="category-info">
       <div class="category-name">${esc(name)}</div>
@@ -789,18 +769,6 @@ function usedPurposes(gvl: TCFGVL): Named[] {
 
 function usedSpecialFeatures(gvl: TCFGVL): Named[] {
   return usedNamed(gvl.specialFeatures, (vendor) => vendor.specialFeatures, gvl);
-}
-
-function usedSpecialPurposes(gvl: TCFGVL): Named[] {
-  return usedNamed(gvl.specialPurposes, (vendor) => vendor.specialPurposes, gvl);
-}
-
-function usedFeatures(gvl: TCFGVL): Named[] {
-  return usedNamed(gvl.features, (vendor) => vendor.features, gvl);
-}
-
-function usedDataCategories(gvl: TCFGVL): Named[] {
-  return usedNamed(gvl.dataCategories, (vendor) => vendor.dataDeclaration, gvl);
 }
 
 function purposeLIIds(gvl: TCFGVL): Set<number> {

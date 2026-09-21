@@ -55,20 +55,18 @@ in this file.
   group purposes when the GVL includes them. Disclosure copy uses
   `data-text` keys. Save encodes those bits; accept still grants all
   disclosed vendors and reject grants none
-- Second layer discloses special purposes, features, and data categories
-  used by partners (no toggles), purpose illustrations, vendor cookie /
+- Second layer discloses purpose illustrations, vendor cookie /
   non-cookie storage, and http(s) privacy / legitimate-interest links.
   Each partner row lists that vendor's purposes by legal basis, special
-  purposes, features, and special features. Cookie lines include max
-  duration and whether it may be refreshed; purpose-specific retention
-  and an http(s) device-storage disclosure link appear when the GVL
-  provides them. Each purpose row shows how many partners seek consent
-  or rely on legitimate interest for that purpose
+  purposes (Always on), features, special features, and data categories.
+  Cookie lines include max duration and whether it may be refreshed;
+  standard retention, purpose-specific retention, and an http(s)
+  device-storage disclosure link appear when the GVL provides them. Each
+  purpose row shows how many partners seek consent or rely on legitimate
+  interest for that purpose
 - Preference panel is 720px for TCF. The header describes purposes and
   partners instead of cookie categories. Choice rows keep a leading spacer
   (no visible IAB ids) and labeled Consent / Legitimate interest /
   Opt-in toggles. Order is purposes
   (IAB stacks nested under that heading, leftovers under Other
-  purposes), special features, then partners. Special purposes, features,
-  and data categories sit in a collapsed More information block; special
-  purposes keep an Always on chip
+  purposes), special features, then partners, then storage
