@@ -21,7 +21,7 @@ const tabs = [
 type TabId = (typeof tabs)[number]["id"];
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<TabId>("config");
+  const [activeTab, setActiveTab] = useState<TabId>("themed");
   const [themedEvents, setThemedEvents] = useState<EventEntry[]>([]);
   const [headlessEvents, setHeadlessEvents] = useState<EventEntry[]>([]);
 

@@ -51,8 +51,12 @@ function tcfStubSnippet(): string {
   }
   var q = [];
   function stub() {
-    var command = arguments[0];
-    var callback = arguments[2];
+    var args = arguments;
+    if (!args.length) {
+      return q;
+    }
+    var command = args[0];
+    var callback = args[2];
     if (command === "ping" && typeof callback === "function") {
       callback({
         gdprApplies: true,
@@ -63,19 +67,16 @@ function tcfStubSnippet(): string {
       }, true);
       return;
     }
-    q.push(arguments);
+    q.push(args);
   }
   stub.q = q;
   w.__tcfapi = stub;
-  if (!w.frames || w.frames.__tcfapiLocator) {
-    return;
-  }
   function addFrame() {
     if (!document.body) {
       setTimeout(addFrame, 5);
       return;
     }
-    if (w.frames.__tcfapiLocator) {
+    if (w.frames && w.frames.__tcfapiLocator) {
       return;
     }
     var iframe = document.createElement("iframe");
@@ -96,7 +97,7 @@ function tcfStubSnippet(): string {
     if (!payload || typeof payload.command !== "string") {
       return;
     }
-    stub(payload.command, payload.version, function (returnValue, success) {
+    w.__tcfapi(payload.command, payload.version, function (returnValue, success) {
       var returnMsg = {
         __tcfapiReturn: {
           returnValue: returnValue,

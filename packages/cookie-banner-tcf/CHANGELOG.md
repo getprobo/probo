@@ -5,6 +5,13 @@ in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Locator `__tcfapi` messages resolve the live page function so the IAB
+  CMP validator sees `cmpStatus: "loaded"` after `CmpApi` starts. The
+  stub also returns its command queue when called with no arguments,
+  which is how `CmpApi` drains calls queued before load
+
 ### Changed
 
 - `CmpApi` and TC encode require `config.tcf.cmp_id` and

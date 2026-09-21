@@ -20,12 +20,12 @@
 
 type TCFAPICallback = (data: unknown, success: boolean) => void;
 
-type TCFAPIStub = ((...args: unknown[]) => void) & {
-  q: unknown[][];
+type TCFAPI = ((...args: unknown[]) => unknown) & {
+  q?: unknown[][];
 };
 
 type LocatorWindow = Window & {
-  __tcfapi?: TCFAPIStub;
+  __tcfapi?: TCFAPI;
   frames?: { __tcfapiLocator?: Window };
 };
 
@@ -58,7 +58,12 @@ export function installTCFStub(): void {
 
   disabled = false;
   const queue: unknown[][] = [];
-  const stub: TCFAPIStub = (...args: unknown[]): void => {
+  const stub: TCFAPI = (...args: unknown[]): unknown => {
+    // CmpApi drains the stub by calling __tcfapi() with no arguments.
+    if (args.length === 0) {
+      return queue;
+    }
+
     const command = args[0];
     const callback = args[2];
 
@@ -71,7 +76,7 @@ export function installTCFStub(): void {
   };
   stub.q = queue;
   w.__tcfapi = stub;
-  installLocator(w, stub);
+  installLocator(w);
 }
 
 export function disableTCFStub(): void {
@@ -87,11 +92,7 @@ export function disableTCFStub(): void {
   disabled = true;
 }
 
-function installLocator(w: LocatorWindow, stub: TCFAPIStub): void {
-  if (w.frames?.__tcfapiLocator) {
-    return;
-  }
-
+function installLocator(w: LocatorWindow): void {
   const addFrame = (): void => {
     const doc = w.document;
     if (!doc?.body) {
@@ -131,7 +132,15 @@ function installLocator(w: LocatorWindow, stub: TCFAPIStub): void {
       return;
     }
 
-    stub(
+    // Resolve __tcfapi at call time so locator pings reach CmpApi after
+    // it replaces the stub. The IAB validator talks to the iframe, not
+    // the page function.
+    const api = w.__tcfapi;
+    if (typeof api !== "function") {
+      return;
+    }
+
+    api(
       payload.command,
       payload.version,
       (returnValue: unknown, success: boolean) => {

@@ -41,8 +41,12 @@ If CSP blocks inline scripts, either:
   }
   var q = [];
   function stub() {
-    var command = arguments[0];
-    var callback = arguments[2];
+    var args = arguments;
+    if (!args.length) {
+      return q;
+    }
+    var command = args[0];
+    var callback = args[2];
     if (command === "ping" && typeof callback === "function") {
       callback({
         gdprApplies: true,
@@ -53,10 +57,52 @@ If CSP blocks inline scripts, either:
       }, true);
       return;
     }
-    q.push(arguments);
+    q.push(args);
   }
   stub.q = q;
   w.__tcfapi = stub;
+  function addFrame() {
+    if (!document.body) {
+      setTimeout(addFrame, 5);
+      return;
+    }
+    if (w.frames && w.frames.__tcfapiLocator) {
+      return;
+    }
+    var iframe = document.createElement("iframe");
+    iframe.style.cssText = "display:none";
+    iframe.name = "__tcfapiLocator";
+    iframe.title = "__tcfapiLocator";
+    document.body.appendChild(iframe);
+  }
+  addFrame();
+  w.addEventListener("message", function (event) {
+    var payload;
+    try {
+      var data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      payload = data && data.__tcfapiCall;
+    } catch (e) {
+      return;
+    }
+    if (!payload || typeof payload.command !== "string") {
+      return;
+    }
+    w.__tcfapi(payload.command, payload.version, function (returnValue, success) {
+      var returnMsg = {
+        __tcfapiReturn: {
+          returnValue: returnValue,
+          success: success,
+          callId: payload.callId
+        }
+      };
+      if (event.source && event.source.postMessage) {
+        event.source.postMessage(
+          typeof event.data === "string" ? JSON.stringify(returnMsg) : returnMsg,
+          "*"
+        );
+      }
+    }, payload.parameter);
+  });
 })();
 </script>
 <script

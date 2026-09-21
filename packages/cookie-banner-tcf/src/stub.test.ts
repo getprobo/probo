@@ -22,10 +22,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { disableTCFStub, installTCFStub } from "./stub";
 
-type TCFAPIStub = ((...args: unknown[]) => void) & { q: unknown[][] };
+type TCFAPI = ((...args: unknown[]) => unknown) & { q?: unknown[][] };
+type TCFAPICallback = (data: unknown, success: boolean) => void;
 
-function stubWindow(): Window & { __tcfapi?: TCFAPIStub } {
-  const w = {} as Window & { __tcfapi?: TCFAPIStub };
+function stubWindow(): Window & { __tcfapi?: TCFAPI } {
+  const w = {} as Window & { __tcfapi?: TCFAPI };
   vi.stubGlobal("window", w);
   return w;
 }
@@ -56,6 +57,7 @@ describe("installTCFStub", () => {
     const listener = (): void => {};
     w.__tcfapi?.("addEventListener", 2, listener);
     expect(w.__tcfapi?.q).toEqual([["addEventListener", 2, listener]]);
+    expect(w.__tcfapi?.()).toEqual([["addEventListener", 2, listener]]);
   });
 
   it("publishes a disabled ping without constructing CmpApi", () => {
@@ -79,9 +81,54 @@ describe("installTCFStub", () => {
   it("does not replace an existing __tcfapi", () => {
     const existing = Object.assign(() => {}, { q: [["kept"]] });
     const w = stubWindow();
-    w.__tcfapi = existing as TCFAPIStub;
+    w.__tcfapi = existing as TCFAPI;
 
     installTCFStub();
     expect(w.__tcfapi).toBe(existing);
+  });
+
+  it("forwards locator messages to the current __tcfapi", () => {
+    const listeners: Array<(event: MessageEvent) => void> = [];
+    const postMessage = vi.fn();
+    const w = {
+      addEventListener: (_type: string, handler: (event: MessageEvent) => void) => {
+        listeners.push(handler);
+      },
+      document: {
+        body: { appendChild: vi.fn() },
+        createElement: () => ({ style: { cssText: "" } }),
+      },
+      frames: {},
+    } as unknown as Window & { __tcfapi?: TCFAPI };
+    vi.stubGlobal("window", w);
+
+    installTCFStub();
+    const replacement = vi.fn();
+    w.__tcfapi = replacement as TCFAPI;
+
+    listeners[0]?.({
+      data: { __tcfapiCall: { command: "ping", version: 2, callId: "1" } },
+      source: { postMessage },
+    } as unknown as MessageEvent);
+
+    expect(replacement).toHaveBeenCalledWith(
+      "ping",
+      2,
+      expect.any(Function),
+      undefined,
+    );
+
+    const callback = replacement.mock.calls[0]?.[2] as TCFAPICallback;
+    callback({ cmpStatus: "loaded" }, true);
+    expect(postMessage).toHaveBeenCalledWith(
+      {
+        __tcfapiReturn: {
+          returnValue: { cmpStatus: "loaded" },
+          success: true,
+          callId: "1",
+        },
+      },
+      "*",
+    );
   });
 });
