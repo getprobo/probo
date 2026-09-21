@@ -369,6 +369,8 @@ type Connector implements Node {
     """
     discoveredAccounts: [DiscoveredConnectorAccount!]! @goField(forceResolver: true)
     createdAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 """

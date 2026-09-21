@@ -127,6 +127,11 @@ func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.C
 	return r.discoveredConnectorAccounts(ctx, scope, obj.ID)
 }
 
+// Permission is the resolver for the permission field.
+func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *connectorAccountConnectionResolver) TotalCount(ctx context.Context, obj *types.ConnectorAccountConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionConnectorGet)
