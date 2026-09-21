@@ -560,18 +560,44 @@ func TestDeleteConnectorRefusedWhileReferenced(t *testing.T) {
 	testutil.RequireErrorCode(t, err, "CONFLICT")
 	assert.Contains(t, err.Error(), "access review source")
 
+	// The credential and its accounts both survive. Accounts cascade from the
+	// connector, so a refusal that had already begun the delete would take the
+	// account the source reviews with it.
 	const connectorQuery = `
-		query($id: ID!) { node(id: $id) { ... on Connector { id } } }
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector {
+					id
+					accounts(first: 10) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
 	`
 
 	var alive struct {
 		Node struct {
-			ID string `json:"id"`
+			ID       string `json:"id"`
+			Accounts struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accounts"`
 		} `json:"node"`
 	}
 
 	require.NoError(t, owner.Execute(connectorQuery, map[string]any{"id": connectorID}, &alive))
 	assert.Equal(t, connectorID, alive.Node.ID, "a refused delete leaves the credential alive")
+	require.Len(t, alive.Node.Accounts.Edges, 1)
+	assert.Equal(
+		t,
+		accountIDs[0],
+		alive.Node.Accounts.Edges[0].Node.ID,
+		"the account the source reviews survives too",
+	)
 }
 
 // TestCrispConnectsByAppInstall pins the connect path Crisp actually offers,
