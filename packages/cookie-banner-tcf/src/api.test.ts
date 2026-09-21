@@ -23,6 +23,7 @@ import type { BannerConfig, TCFGVL, TCFRuntime } from "@probo/cookie-banner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { grantForAction, startTCF } from "./api";
+import { encodeTCString } from "./encode";
 import { setLastTCString } from "./session";
 
 const { update, runtimeHolder, cmpApiCtor } = vi.hoisted(() => ({
@@ -110,7 +111,6 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
       cmp_id: 4095,
       cmp_version: 1,
       publisher_cc: "AA",
-      policy_version: 5,
     },
     categories: [],
     texts: {},
@@ -132,24 +132,84 @@ describe("startTCF displayStatus", () => {
 
   it("reopens with the stored tc and uiVisible true", () => {
     const runtime = runtimeHolder.current;
-    const stored = "C-stored-tc";
+    const stored = encodeTCString(bannerConfig(), "all");
 
     runtime?.onConfig(bannerConfig(), stored);
+    const published = update.mock.calls[0]?.[0];
     update.mockClear();
 
     runtime?.onUIVisible?.(true);
-    expect(update).toHaveBeenCalledWith(stored, true);
+    expect(update).toHaveBeenCalledWith(published, true);
+    expect(TCString.decode(published as string).vendorConsents.has(52)).toBe(true);
   });
 
   it("hides with the stored tc and uiVisible false", () => {
     const runtime = runtimeHolder.current;
-    const stored = "C-stored-tc";
+    const stored = encodeTCString(bannerConfig(), "all");
 
     runtime?.onConfig(bannerConfig(), stored);
+    const published = update.mock.calls[0]?.[0];
     update.mockClear();
 
     runtime?.onUIVisible?.(false);
-    expect(update).toHaveBeenCalledWith(stored, false);
+    expect(update).toHaveBeenCalledWith(published, false);
+  });
+
+  it("publishes a current-GVL TC before the visitor consents", () => {
+    const runtime = runtimeHolder.current;
+
+    runtime?.onConfig(bannerConfig());
+
+    expect(update).toHaveBeenCalledTimes(1);
+    const [tc, visible] = update.mock.calls[0] ?? [];
+    expect(visible).toBe(true);
+    expect(TCString.decode(tc as string).vendorListVersion).toBe(42);
+    expect(TCString.decode(tc as string).vendorConsents.has(52)).toBe(false);
+  });
+
+  it("re-encodes stored choices onto the current GVL", () => {
+    const runtime = runtimeHolder.current;
+    const current = bannerConfig();
+    const stored = encodeTCString(
+      bannerConfig({
+        tcf: {
+          ...current.tcf!,
+          gvl: { ...tcfGvl, vendorListVersion: 41 },
+        },
+      }),
+      "all",
+    );
+
+    runtime?.onConfig(current, stored);
+
+    expect(update).toHaveBeenCalledTimes(1);
+    const [tc, visible] = update.mock.calls[0] ?? [];
+    expect(visible).toBe(false);
+    expect(tc).not.toBe(stored);
+    expect(TCString.decode(tc as string).vendorListVersion).toBe(42);
+    expect(TCString.decode(tc as string).vendorConsents.has(52)).toBe(true);
+  });
+
+  it("does not restore a stored TC when the TCF policy version changed", () => {
+    const runtime = runtimeHolder.current;
+    const current = bannerConfig();
+    const stored = encodeTCString(
+      bannerConfig({
+        tcf: {
+          ...current.tcf!,
+          gvl: { ...tcfGvl, tcfPolicyVersion: 4 },
+        },
+      }),
+      "all",
+    );
+
+    runtime?.onConfig(current, stored);
+
+    expect(update).toHaveBeenCalledTimes(1);
+    const [tc, visible] = update.mock.calls[0] ?? [];
+    expect(visible).toBe(true);
+    expect(TCString.decode(tc as string).vendorListVersion).toBe(42);
+    expect(TCString.decode(tc as string).vendorConsents.has(52)).toBe(false);
   });
 
   it("does not construct CmpApi when TCF is inactive", () => {
@@ -163,15 +223,19 @@ describe("startTCF displayStatus", () => {
     expect(cmpApiCtor).not.toHaveBeenCalled();
   });
 
-  it("falls back to an empty TC when the stored string is rejected", () => {
+  it("falls back to a current-GVL TC when CmpApi rejects the restored string", () => {
     const runtime = runtimeHolder.current;
-    update.mockImplementationOnce(() => {
+    const stored = encodeTCString(bannerConfig(), "all");
+    update.mockImplementation(() => {
       throw new Error("invalid tc");
     });
 
-    runtime?.onConfig(bannerConfig(), "C-bad-tc");
+    runtime?.onConfig(bannerConfig(), stored);
 
-    expect(update).toHaveBeenCalledWith("", true);
+    const last = update.mock.calls[update.mock.calls.length - 1];
+    expect(last?.[1]).toBe(true);
+    expect(TCString.decode(last?.[0] as string).vendorListVersion).toBe(42);
+    expect(TCString.decode(last?.[0] as string).vendorConsents.has(52)).toBe(false);
   });
 
   it("maps ACKNOWLEDGE to the all-granted TC state", () => {
@@ -196,7 +260,6 @@ describe("startTCF displayStatus", () => {
         cmp_id: 123,
         cmp_version: 1,
         publisher_cc: "AA",
-        policy_version: 5,
       },
     }));
 

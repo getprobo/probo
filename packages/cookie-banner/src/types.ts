@@ -98,9 +98,6 @@ export interface BannerConfig {
 }
 
 export interface BannerTCF {
-  vendors?: TCFVendor[];
-  gvl_version?: number;
-  policy_version?: number;
   cmp_id?: number;
   cmp_version?: number;
   publisher_cc?: string;
@@ -137,15 +134,6 @@ export interface TCFGVLVendor {
   cookieMaxAgeSeconds?: number | null;
   dataDeclaration?: number[];
   urls?: Array<{ langId?: string; privacy?: string; legIntClaim?: string }>;
-}
-
-export interface TCFVendor {
-  iab_vendor_id: number;
-  name: string;
-  purposes: number[];
-  leg_int_purposes: number[];
-  special_features: number[];
-  policy_url?: string;
 }
 
 export type ConsentAction =

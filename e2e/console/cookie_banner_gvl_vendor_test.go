@@ -575,12 +575,10 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 		var config struct {
 			TCF *struct {
-				GVLVersion    *int   `json:"gvl_version"`
-				PolicyVersion *int   `json:"policy_version"`
-				CmpID         *int   `json:"cmp_id"`
-				CmpVersion    *int   `json:"cmp_version"`
-				PublisherCC   string `json:"publisher_cc"`
-				GVL           *struct {
+				CmpID       *int   `json:"cmp_id"`
+				CmpVersion  *int   `json:"cmp_version"`
+				PublisherCC string `json:"publisher_cc"`
+				GVL         *struct {
 					VendorListVersion int                        `json:"vendorListVersion"`
 					TCFPolicyVersion  int                        `json:"tcfPolicyVersion"`
 					Vendors           map[string]json.RawMessage `json:"vendors"`
@@ -590,16 +588,14 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 
 		require.NoError(t, json.NewDecoder(resp.Body).Decode(&config))
 		require.NotNil(t, config.TCF)
-		require.NotNil(t, config.TCF.GVLVersion)
-		assert.Equal(t, version, *config.TCF.GVLVersion)
-		require.NotNil(t, config.TCF.PolicyVersion)
-		assert.Equal(t, 5, *config.TCF.PolicyVersion)
 		require.NotNil(t, config.TCF.CmpID)
 		assert.Equal(t, 4095, *config.TCF.CmpID)
 		require.NotNil(t, config.TCF.CmpVersion)
 		assert.Equal(t, 1, *config.TCF.CmpVersion)
 		assert.Equal(t, "FR", config.TCF.PublisherCC)
 		require.NotNil(t, config.TCF.GVL)
+		assert.Equal(t, version, config.TCF.GVL.VendorListVersion)
+		assert.Equal(t, 5, config.TCF.GVL.TCFPolicyVersion)
 		require.Contains(t, config.TCF.GVL.Vendors, strconv.Itoa(iabVendorID))
 	})
 }

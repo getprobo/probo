@@ -10,11 +10,11 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
   panel / privacy-choices open and close
 - `projectConsentFromTCF` maps TCF purpose consent/LI bits onto category
   slugs (AND, fail-closed). Customize and TC restore use it when TCF is on
-- Published banner config nests TCF under `tcf` (`vendors`, `gvl_version`,
-  `policy_version`, `cmp_id`, `cmp_version`, `publisher_cc`, and a
-  publisher-filtered IAB `gvl`) when the hidden capability is on; the key
-  is omitted otherwise. This replaces the flat `tcf_enabled`,
-  `tcf_vendors`, and `gvl_version` fields from 0.18.0
+- Published banner config nests TCF under `tcf` (`cmp_id`, `cmp_version`,
+  `publisher_cc`, and a publisher-filtered IAB `gvl`) when the hidden
+  capability is on; the key is omitted otherwise. This replaces the
+  flat `tcf_enabled`, `tcf_vendors`, and `gvl_version` fields from
+  0.18.0
 - Stores an optional `tc` field on `probo_consent` when a TCF runtime is
   registered via `setTCFRuntime`. Encoding and `__tcfapi` live in
   `@probo/cookie-banner-tcf` so this package stays IAB-free

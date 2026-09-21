@@ -41,9 +41,6 @@ export function encodeTCString(config: BannerConfig, grant: TCFGrant): string {
   tcModel.isServiceSpecific = true;
   tcModel.consentScreen = 1;
   tcModel.publisherCountryCode = tcf?.publisher_cc ?? "AA";
-  if (tcf?.policy_version) {
-    tcModel.policyVersion = tcf.policy_version;
-  }
 
   tcModel.setAllVendorsDisclosed();
 

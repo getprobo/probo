@@ -38,6 +38,31 @@ function tcfActive(config: BannerConfig): boolean {
   return !!config.tcf && gdprApplies(config) && !!config.tcf.gvl;
 }
 
+function configPolicyVersion(config: BannerConfig): number | undefined {
+  const version = config.tcf?.gvl?.tcfPolicyVersion;
+  return version && version > 0 ? version : undefined;
+}
+
+function restoreTcToCurrentGVL(tc: string, config: BannerConfig): string | undefined {
+  try {
+    const model = TCString.decode(tc);
+    const current = configPolicyVersion(config);
+    if (current && model.policyVersion !== current) {
+      return undefined;
+    }
+
+    return encodeTCString(config, {
+      purposeConsents: vectorIds(model.purposeConsents),
+      purposeLegitimateInterests: vectorIds(model.purposeLegitimateInterests),
+      vendorConsents: vectorIds(model.vendorConsents),
+      vendorLegitimateInterests: vectorIds(model.vendorLegitimateInterests),
+      specialFeatureOptins: vectorIds(model.specialFeatureOptins),
+    });
+  } catch {
+    return undefined;
+  }
+}
+
 export function startTCF(): void {
   let cmpApi: CmpApi | undefined;
   let pending: TCFChoices | undefined;
@@ -87,25 +112,42 @@ export function startTCF(): void {
       const api = ensureCmpApi(config.tcf?.cmp_id, config.tcf?.cmp_version);
 
       if (existingTc) {
-        try {
-          api.update(existingTc, false);
-          setLastTCString(existingTc);
-          return;
-        } catch {
-          // A stale or malformed client cookie must not suppress the banner.
+        const restored = restoreTcToCurrentGVL(existingTc, config);
+        if (restored) {
+          try {
+            api.update(restored, false);
+            setLastTCString(restored);
+            return;
+          } catch {
+            try {
+              api.update(existingTc, false);
+              setLastTCString(existingTc);
+              return;
+            } catch {
+              // A stale or malformed client cookie must not suppress the banner.
+            }
+          }
         }
       }
 
       setLastTCString(undefined);
-      api.update("", true);
+      try {
+        api.update(encodeTCString(config, "none"), true);
+      } catch {
+        // Leave CmpApi without a model rather than publish vendorListVersion 0.
+      }
     },
     onUIVisible(visible) {
       uiVisible = visible;
-      if (!active || !cmpApi) {
+      if (!active || !cmpApi || !lastConfig) {
         return;
       }
 
-      cmpApi.update(getLastTCString() ?? "", visible);
+      try {
+        cmpApi.update(getLastTCString() ?? encodeTCString(lastConfig, "none"), visible);
+      } catch {
+        // Leave the last successful CmpApi state in place.
+      }
     },
     setPendingChoices(choices) {
       pending = choices;

@@ -114,7 +114,6 @@ function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
       cmp_id: 4095,
       cmp_version: 1,
       publisher_cc: "AA",
-      policy_version: 5,
     },
     categories: [],
     texts: {},
@@ -164,6 +163,8 @@ describe("encodeTCString", () => {
     expect(decoded.cmpId).toBe(4095);
     expect(decoded.cmpVersion).toBe(1);
     expect(decoded.isServiceSpecific).toBe(true);
+    expect(decoded.vendorListVersion).toBe(42);
+    expect(decoded.policyVersion).toBe(5);
     expect(decoded.vendorsDisclosed.has(vendorId)).toBe(true);
     expect(decoded.vendorConsents.has(vendorId)).toBe(false);
     expect(decoded.purposeConsents.has(1)).toBe(false);

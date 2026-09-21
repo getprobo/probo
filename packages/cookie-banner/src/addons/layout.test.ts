@@ -23,7 +23,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { BannerConfig } from "../types";
 import { getLayoutRenderer, setLayoutRenderer } from "./layout";
 
-const config = { tcf: { vendors: [] } } as unknown as BannerConfig;
+const config = { tcf: {} } as unknown as BannerConfig;
 
 describe("setLayoutRenderer", () => {
   afterEach(() => {

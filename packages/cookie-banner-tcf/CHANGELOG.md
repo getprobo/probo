@@ -11,6 +11,10 @@ in this file.
   CMP validator sees `cmpStatus: "loaded"` after `CmpApi` starts. The
   stub also returns its command queue when called with no arguments,
   which is how `CmpApi` drains calls queued before load
+- `CmpApi` ping reports the GVL version from GET config before consent
+  instead of an empty TC model (`vendorListVersion` 0). Stored choices
+  are re-encoded onto the current GVL; a TCF policy-version change
+  still discards the cookie TC and re-prompts
 - Preference toggles push a draft TC string to `CmpApi` while the panel
   is open, so withdrawing a vendor after accept-all updates `getTCData`
   before Save. Save still persists that draft

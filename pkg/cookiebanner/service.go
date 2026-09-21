@@ -247,22 +247,10 @@ type (
 	// off, or when the request is not GDPR / UK GDPR. Nested keys are our
 	// config; `gvl` is IAB vendor-list.json shape.
 	BannerTCF struct {
-		Vendors       []BannerTCFVendor `json:"vendors,omitempty"`
-		GVLVersion    *int              `json:"gvl_version,omitempty"`
-		PolicyVersion *int              `json:"policy_version,omitempty"`
-		CmpID         *int              `json:"cmp_id,omitempty"`
-		CmpVersion    *int              `json:"cmp_version,omitempty"`
-		PublisherCC   string            `json:"publisher_cc,omitempty"`
-		GVL           *BannerTCFGVL     `json:"gvl,omitempty"`
-	}
-
-	BannerTCFVendor struct {
-		IABVendorID     int     `json:"iab_vendor_id"`
-		Name            string  `json:"name"`
-		Purposes        []int32 `json:"purposes"`
-		LegIntPurposes  []int32 `json:"leg_int_purposes"`
-		SpecialFeatures []int32 `json:"special_features"`
-		PolicyURL       *string `json:"policy_url,omitempty"`
+		CmpID       *int          `json:"cmp_id,omitempty"`
+		CmpVersion  *int          `json:"cmp_version,omitempty"`
+		PublisherCC string        `json:"publisher_cc,omitempty"`
+		GVL         *BannerTCFGVL `json:"gvl,omitempty"`
 	}
 
 	// BannerTCFGVL is a vendor-list.json-shaped object with vendors reduced to
@@ -2354,8 +2342,6 @@ func (s *Service) attachTCFVendors(
 			return fmt.Errorf("cannot load common gvl state: %w", err)
 		}
 	} else if state.LatestVendorListVersion != nil {
-		config.TCF.GVLVersion = state.LatestVendorListVersion
-
 		var loaded coredata.CommonGVLSnapshot
 		if err := loaded.LoadByVendorListVersion(ctx, conn, *state.LatestVendorListVersion); err != nil {
 			if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -2366,34 +2352,19 @@ func (s *Service) attachTCFVendors(
 		}
 	}
 
+	if snapshot == nil {
+		return nil
+	}
+
 	var vendors coredata.CommonGVLVendors
 	if err := vendors.LoadByIABVendorIDs(ctx, conn, iabVendorIDs); err != nil {
 		return fmt.Errorf("cannot load tcf vendors: %w", err)
 	}
 
-	config.TCF.Vendors = make([]BannerTCFVendor, 0, len(vendors))
-	for _, vendor := range vendors {
-		config.TCF.Vendors = append(config.TCF.Vendors, BannerTCFVendor{
-			IABVendorID:     vendor.IABVendorID,
-			Name:            vendor.Name,
-			Purposes:        emptyInt32s(vendor.Purposes),
-			LegIntPurposes:  emptyInt32s(vendor.LegIntPurposes),
-			SpecialFeatures: emptyInt32s(vendor.SpecialFeatures),
-			PolicyURL:       vendor.PolicyURL,
-		})
-	}
-
-	if snapshot == nil {
-		return nil
-	}
-
 	config.TCF.GVL = buildTCFGVL(snapshot, vendors, iabVendorIDs)
-	if config.TCF.GVLVersion != nil && config.TCF.GVL.VendorListVersion == 0 {
-		config.TCF.GVL.VendorListVersion = *config.TCF.GVLVersion
+	if config.TCF.GVL.VendorListVersion == 0 && state.LatestVendorListVersion != nil {
+		config.TCF.GVL.VendorListVersion = *state.LatestVendorListVersion
 	}
-
-	policy := config.TCF.GVL.TCFPolicyVersion
-	config.TCF.PolicyVersion = &policy
 
 	return nil
 }

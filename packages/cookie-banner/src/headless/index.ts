@@ -43,6 +43,5 @@ export type {
   BannerTCF,
   TCFGVL,
   TCFGVLVendor,
-  TCFVendor,
   VisitorConsent,
 } from "../types";
