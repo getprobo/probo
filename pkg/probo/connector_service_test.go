@@ -149,6 +149,150 @@ func TestConnectorService_Create_ImpliedAccount(t *testing.T) {
 	})
 }
 
+// TestConnectorService_Delete pins the precondition Settings disconnect
+// relies on. Once access review and SCIM stop deleting the connector
+// themselves, this is the only disconnect either module has, so a refusal has
+// to name the module holding the credential rather than surfacing whichever
+// foreign key happened to fire — which, because connector_accounts cascades
+// and access_review_sources.connector_account_id restricts, is usually the
+// account's, naming neither feature.
+func TestConnectorService_Delete(t *testing.T) {
+	t.Parallel()
+
+	newAWSConnector := func(
+		t *testing.T,
+		client *pg.Client,
+		scope coredata.Scoper,
+		organizationID gid.GID,
+	) *coredata.Connector {
+		t.Helper()
+
+		service := ConnectorService{svc: &Service{pg: client}}
+
+		cnnctr, err := service.Create(t.Context(), scope, CreateConnectorRequest{
+			OrganizationID: organizationID,
+			Provider:       coredata.ConnectorProviderAWS,
+			Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+			Connection:     &connector.WorkloadIdentityConnection{},
+			RawSettings:    []byte(`{"role_arn":"arn:aws:iam::123456789012:role/ProboAudit"}`),
+		})
+		require.NoError(t, err)
+
+		return cnnctr
+	}
+
+	t.Run("a connector nothing references is deleted", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorAccountOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newAWSConnector(t, client, scope, organizationID)
+
+		// An account is not a reference. The access-review create pages
+		// delete a connector in exactly this state when the source insert
+		// that follows it fails, so a precondition that refused on the
+		// mere presence of accounts would strand every failed connect.
+		require.Len(t, loadConnectorAccounts(t, client, scope, cnnctr.ID), 1)
+
+		require.NoError(t, service.Delete(t.Context(), scope, cnnctr.ID))
+
+		_, err := service.Get(t.Context(), scope, cnnctr.ID)
+		assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
+	})
+
+	t.Run("a connector an access review source reviews is refused by name", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorAccountOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newAWSConnector(t, client, scope, organizationID)
+
+		accounts := loadConnectorAccounts(t, client, scope, cnnctr.ID)
+		require.Len(t, accounts, 1)
+
+		now := time.Now().UTC()
+		source := &coredata.AccessReviewSource{
+			ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+			OrganizationID:     organizationID,
+			ConnectorID:        &cnnctr.ID,
+			ConnectorAccountID: &accounts[0].ID,
+			Name:               "Production",
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+
+		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := source.Insert(ctx, tx, scope)
+
+			return err
+		}))
+
+		err := service.Delete(t.Context(), scope, cnnctr.ID)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, coredata.ErrResourceInUse)
+		assert.ErrorContains(t, err, "access review source")
+
+		_, err = service.Get(t.Context(), scope, cnnctr.ID)
+		assert.NoError(t, err, "a refused delete leaves the credential alive")
+	})
+
+	t.Run("a connector a SCIM bridge syncs is refused by name", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorAccountOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+
+		cnnctr, err := service.Create(t.Context(), scope, CreateConnectorRequest{
+			OrganizationID: organizationID,
+			Provider:       coredata.ConnectorProviderGoogleWorkspace,
+			Protocol:       coredata.ConnectorProtocolOAuth2,
+			Connection:     &connector.OAuth2Connection{},
+		})
+		require.NoError(t, err)
+
+		now := time.Now().UTC()
+
+		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			config := &coredata.SCIMConfiguration{
+				ID:             gid.New(scope.GetTenantID(), coredata.SCIMConfigurationEntityType),
+				OrganizationID: organizationID,
+				HashedToken:    []byte{0x01},
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := config.Insert(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			bridge := &coredata.SCIMBridge{
+				ID:                  gid.New(scope.GetTenantID(), coredata.SCIMBridgeEntityType),
+				OrganizationID:      organizationID,
+				ScimConfigurationID: config.ID,
+				ConnectorID:         &cnnctr.ID,
+				Type:                coredata.SCIMBridgeTypeGoogleWorkspace,
+				State:               coredata.SCIMBridgeStateActive,
+				ExcludedUserNames:   []string{},
+				CreatedAt:           now,
+				UpdatedAt:           now,
+			}
+
+			return bridge.Insert(ctx, tx, scope)
+		}))
+
+		err = service.Delete(t.Context(), scope, cnnctr.ID)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, coredata.ErrResourceInUse)
+		assert.ErrorContains(t, err, "SCIM")
+
+		_, err = service.Get(t.Context(), scope, cnnctr.ID)
+		assert.NoError(t, err, "a refused delete leaves the credential alive")
+	})
+}
+
 // TestConnectorAccountService pins the two rules that keep Settings and the
 // modules from owning each other's state: enabling is idempotent per vendor
 // identifier, and an account a source reviews cannot be removed out from

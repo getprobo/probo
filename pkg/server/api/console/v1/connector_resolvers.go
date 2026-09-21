@@ -410,11 +410,19 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 	}
 
 	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
-		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflictf(ctx, "connector is in use")
-		}
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, coredata.ErrResourceInUse):
+			// The service names the module still holding the credential;
+			// keep that, because Settings is where the user disconnects and
+			// "in use" alone does not say what to do about it.
+			return nil, gqlutils.Conflict(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot delete connector", log.Error(err))
 
-		panic(fmt.Errorf("cannot delete connector: %w", err))
+			return nil, gqlutils.Internal(ctx)
+		}
 	}
 
 	return &types.DeleteConnectorPayload{

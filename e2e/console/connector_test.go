@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -519,6 +520,58 @@ func TestDeleteConnector(t *testing.T) {
 	}, &deleteResult)
 	require.NoError(t, err)
 	assert.Equal(t, connectorID, deleteResult.DeleteConnector.DeletedConnectorID)
+}
+
+// TestDeleteConnectorRefusedWhileReferenced pins the refusal a user sees when
+// they disconnect a vendor another feature still depends on. Settings is where
+// a connector is deleted, and once access review and SCIM stop deleting it
+// themselves this is the only disconnect either module has — so the message has
+// to name the module holding the credential. A bare "connector is in use", or
+// the foreign key the database happens to raise first, leaves the user nowhere
+// to go.
+func TestDeleteConnectorRefusedWhileReferenced(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	connectorID := factory.NewConnector(owner, orgID).Create()
+	accountIDs := factory.EnableConnectorAccounts(owner, orgID, connectorID, "111111111111")
+	require.Len(t, accountIDs, 1)
+
+	factory.NewAccessReviewSource(owner, orgID).
+		WithName(factory.SafeName("Production")).
+		WithConnectorID(connectorID).
+		WithConnectorAccountID(accountIDs[0]).
+		Create()
+
+	const deleteQuery = `
+		mutation($input: DeleteConnectorInput!) {
+			deleteConnector(input: $input) { deletedConnectorId }
+		}
+	`
+
+	var deleted struct{}
+
+	err := owner.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{"connectorId": connectorID},
+	}, &deleted)
+
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+	assert.Contains(t, err.Error(), "access review source")
+
+	const connectorQuery = `
+		query($id: ID!) { node(id: $id) { ... on Connector { id } } }
+	`
+
+	var alive struct {
+		Node struct {
+			ID string `json:"id"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(connectorQuery, map[string]any{"id": connectorID}, &alive))
+	assert.Equal(t, connectorID, alive.Node.ID, "a refused delete leaves the credential alive")
 }
 
 // TestCrispConnectsByAppInstall pins the connect path Crisp actually offers,
