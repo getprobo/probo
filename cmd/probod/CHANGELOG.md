@@ -4,11 +4,35 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.292.0] - 2026-09-21
+
+### Added
+
+- Access reviews can pull the MongoDB Atlas roster. The customer creates a
+  service account in their own Atlas organization and supplies its client
+  id and secret; Probo registers nothing. The roster covers every
+  organization-level principal: active members, open invitations, service
+  accounts, and programmatic API keys
+- General settings is rebuilt as Workspace, with an Identity section and a
+  Danger Zone. Logos upload through an image dropzone and are capped at
+  5 MB, matching avatars
+
 ### Fixed
 
+- Client-credentials connections mint a token instead of sending an empty
+  bearer, so every request no longer came back 401. A refused exchange
+  (an expired client secret, most often) is now reported as a provider
+  failure rather than a Probo error
+- The client-credentials token endpoint comes from the provider
+  registration when it declares one, so the connect dialog no longer asks
+  the customer to hand-type a URL the server already knows
 - SCIM PUT no longer returns 500 when the incoming `externalId` already
   belongs to another profile in the organization (for example after a
   Google Workspace email change). The id is transferred, matching create
+- Deleting a workspace clears it from the memberships list, and workspace
+  settings no longer carry form state across organizations
+- Risk analysis treatment plan rows show the `RSK-` reference ID, which
+  previously appeared only on unplanned rows
 
 ## [0.291.0] - 2026-09-18
 
