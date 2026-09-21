@@ -24,8 +24,11 @@ export interface LayoutHost {
   readonly bannerConfig: BannerConfig;
   readonly consentDraft: Record<string, boolean>;
   setState(state: BannerState): void;
+  dispatchEvent(event: Event): boolean;
   readonly client: {
     customize(categories: Record<string, boolean>): void;
+    acceptAll?(): void;
+    rejectAll?(): void;
   };
 }
 

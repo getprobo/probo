@@ -178,6 +178,13 @@ describe("startTCF displayStatus", () => {
     expect(grantForAction("ACKNOWLEDGE", undefined)).toBe("all");
     expect(grantForAction("ACCEPT_ALL", undefined)).toBe("all");
     expect(grantForAction("REJECT_ALL", undefined)).toBe("none");
+    expect(grantForAction("REJECT_ALL", {
+      purposeConsents: [1],
+      purposeLegitimateInterests: [],
+      vendorConsents: [52],
+      vendorLegitimateInterests: [],
+      specialFeatureOptins: [],
+    })).toBe("none");
   });
 
   it("constructs CmpApi with the instance cmp_id", () => {
@@ -252,5 +259,40 @@ describe("startTCF displayStatus", () => {
 
     expect(customized).not.toBe(accepted);
     expect(TCString.decode(customized!).vendorConsents.has(52)).toBe(false);
+  });
+
+  it("persists a reject TC string after accept-all", () => {
+    const runtime = runtimeHolder.current;
+    const cfg = bannerConfig();
+    runtime?.onConfig(cfg);
+    const accepted = runtime?.onConsent?.("ACCEPT_ALL", cfg);
+    expect(TCString.decode(accepted!).vendorConsents.has(52)).toBe(true);
+
+    runtime?.onUIVisible?.(true);
+    runtime?.setPendingChoices?.({
+      purposeConsents: [1],
+      purposeLegitimateInterests: [],
+      vendorConsents: [52],
+      vendorLegitimateInterests: [],
+      specialFeatureOptins: [],
+    });
+    const rejected = runtime?.onConsent?.("REJECT_ALL", cfg);
+
+    expect(rejected).not.toBe(accepted);
+    expect(TCString.decode(rejected!).vendorConsents.has(52)).toBe(false);
+  });
+
+  it("returns the encoded TC string even if CmpApi.update throws", () => {
+    const runtime = runtimeHolder.current;
+    const cfg = bannerConfig();
+    runtime?.onConfig(cfg);
+    runtime?.onConsent?.("ACCEPT_ALL", cfg);
+    update.mockImplementation(() => {
+      throw new Error("cmpapi");
+    });
+
+    const rejected = runtime?.onConsent?.("REJECT_ALL", cfg);
+    expect(rejected).toEqual(expect.any(String));
+    expect(TCString.decode(rejected!).vendorConsents.has(52)).toBe(false);
   });
 });

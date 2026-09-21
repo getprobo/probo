@@ -118,6 +118,7 @@ export function startTCF(): void {
       return decodeTCChoices(tc);
     },
     onConsent(action, config) {
+      lastConfig = config;
       active = tcfActive(config);
       if (!active) {
         setLastTCString(undefined);
@@ -135,7 +136,11 @@ export function startTCF(): void {
       pending = undefined;
       const tc = encodeTCString(config, grant);
       setLastTCString(tc);
-      api.update(tc, false);
+      try {
+        api.update(tc, false);
+      } catch {
+        // Persistence must not depend on CmpApi accepting the model.
+      }
       return tc;
     },
   });

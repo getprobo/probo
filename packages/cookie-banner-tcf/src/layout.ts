@@ -94,10 +94,19 @@ export function wireTCFLayout(root: LayoutHost, host: ShadowRoot): void {
   host.addEventListener(
     "click",
     (e: Event) => {
-      if (!isSaveClick(e)) {
+      if (isClickOn(e, "probo-reject-button")) {
+        persistAction(root, "REJECT_ALL", () => root.client.rejectAll?.());
+        e.stopImmediatePropagation();
         return;
       }
-      syncChoices(host);
+      if (isClickOn(e, "probo-accept-button")) {
+        persistAction(root, "ACCEPT_ALL", () => root.client.acceptAll?.());
+        e.stopImmediatePropagation();
+        return;
+      }
+      if (isClickOn(e, "probo-save-button")) {
+        syncChoices(host);
+      }
     },
     true,
   );
@@ -624,19 +633,35 @@ function syncChoices(host: ParentNode): void {
   getTCFRuntime()?.setPendingChoices?.(collectChoices(host));
 }
 
+function persistAction(
+  root: LayoutHost,
+  action: "ACCEPT_ALL" | "REJECT_ALL",
+  run: () => void,
+): void {
+  run();
+  root.setState("hidden");
+  root.dispatchEvent(
+    new CustomEvent("probo-consent", {
+      bubbles: true,
+      composed: true,
+      detail: { action },
+    }),
+  );
+}
+
 function isTCFChoice(target: EventTarget | null): target is HTMLInputElement {
   return target instanceof HTMLInputElement && typeof target.dataset.tcf === "string";
 }
 
-function isSaveClick(e: Event): boolean {
+function isClickOn(e: Event, localName: string): boolean {
   if (typeof e.composedPath === "function") {
     return e.composedPath().some(
-      (node) => node instanceof Element && node.localName === "probo-save-button",
+      (node) => node instanceof Element && node.localName === localName,
     );
   }
 
   const target = e.target as Element | null;
-  return !!target?.closest?.("probo-save-button");
+  return !!target?.closest?.(localName);
 }
 
 function collectChoices(host: ParentNode): TCFChoices {
