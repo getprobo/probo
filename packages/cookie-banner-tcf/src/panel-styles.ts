@@ -22,6 +22,17 @@
 // panel and distinguish choice vs disclosure rows without changing the
 // GDPR category layout.
 export const TCF_PANEL_STYLES = `<style>
+  probo-banner .tcf-disclosures {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 16px;
+  }
+
+  probo-banner .tcf-disclosures .description {
+    margin: 0;
+  }
+
   probo-preference-panel.tcf-panel .card {
     max-width: 720px;
   }

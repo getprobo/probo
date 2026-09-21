@@ -173,6 +173,11 @@ describe("renderTCFLayout", () => {
     expect(firstLayer).toContain("withdraw or change your consent at any time");
     expect(firstLayer).toContain("Cookie settings");
     expect(firstLayer).toContain('data-text="tcf_disclosure_withdraw"');
+    expect(firstLayer).toContain("legitimate interest");
+    expect(firstLayer).toContain("object to that processing");
+    expect(firstLayer).toContain('data-text="tcf_disclosure_object"');
+    expect(firstLayer).toContain('class="tcf-disclosures"');
+    expect(firstLayer).not.toContain('<p class="description" data-text="tcf_disclosure_store">');
     expect(firstLayer).not.toContain("How often an ad was shown can be measured.");
     expect(html).toContain("Test Vendor");
     expect(html).toContain("probo_consent cookie for 180 days");
@@ -196,6 +201,31 @@ describe("renderTCFLayout", () => {
     expect(html).toContain("Privacy policy");
     expect(html).not.toContain("Privacy policy: https://example.com/privacy");
     expect(html).not.toContain("probo-category-list");
+  });
+
+  it("omits the legitimate-interest objection line when no vendor uses LI", () => {
+    const vendor = tcfGvl.vendors[String(vendorId)];
+    const html = renderTCFLayout(
+      bannerConfig({
+        tcf: {
+          gvl: {
+            ...tcfGvl,
+            vendors: {
+              [String(vendorId)]: { ...vendor, legIntPurposes: [] },
+            },
+          },
+          cmp_id: 4095,
+          cmp_version: 1,
+          publisher_cc: "AA",
+        },
+      }),
+      "bottom-left",
+    );
+
+    const firstLayer = html!.split("<probo-preference-panel")[0];
+    expect(firstLayer).not.toContain('data-text="tcf_disclosure_object"');
+    expect(firstLayer).not.toContain("object to that processing");
+    expect(html).not.toContain('data-tcf="purpose-li"');
   });
 
   it("widens the preference panel and distinguishes choice from disclosure rows", () => {

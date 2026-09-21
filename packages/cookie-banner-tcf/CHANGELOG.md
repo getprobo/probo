@@ -22,7 +22,10 @@ in this file.
   processed (unique identifiers and browsing data) per TCF Policy
   C(b)(II). Scope copy states that choices are service-specific
   per C(b)(VII). Withdrawal copy says consent can be changed at
-  any time via Cookie settings per C(b)(VIII)
+  any time via Cookie settings per C(b)(VIII). When a vendor relies
+  on legitimate interest, first-layer copy also states the right to
+  object. Related sentences share paragraphs so translations stay
+  on separate keys without a block per sentence
 - Panel Accept all / Reject all persist the TC string on `probo_consent`
   even if `CmpApi.update` throws; those footer clicks are handled on
   the host so they cannot miss the headless buttons

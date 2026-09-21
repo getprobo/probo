@@ -129,20 +129,29 @@ function renderBanner(config: BannerConfig, gvl: TCFGVL, position: string): stri
     ),
     { count: String(vendorCount) },
   );
+  const rights = [
+    `<span data-text="tcf_disclosure_scope">These choices apply to this site only (service-specific consent).</span>`,
+    `<span data-text="tcf_disclosure_withdraw">You can withdraw or change your consent at any time via Cookie settings.</span>`,
+    purposeLIIds(gvl).size
+      ? `<span data-text="tcf_disclosure_object">Some partners process personal data on the basis of legitimate interest. You can object to that processing.</span>`
+      : "",
+  ].filter(Boolean);
 
-  const extras = [
-    `<p class="description" data-text="tcf_disclosure_store">This site stores and/or accesses information on a device and processes personal data.</p>`,
-    `<p class="description" data-text="tcf_disclosure_data">Personal data processed includes unique identifiers and browsing data.</p>`,
-    `<p class="description" data-text="tcf_disclosure_scope">These choices apply to this site only (service-specific consent).</p>`,
-    `<p class="description" data-text="tcf_disclosure_withdraw">You can withdraw or change your consent at any time via Cookie settings.</p>`,
-    purposes.length
-      ? `<p class="description"><span data-text="tcf_label_purposes">Purposes</span>: ${esc(purposes.map((p) => p.name).join(", "))}.</p>`
-      : "",
-    specialFeatures.length
-      ? `<p class="description"><span data-text="tcf_label_special_features">Special features</span>: ${esc(specialFeatures.map((f) => f.name).join(", "))}.</p>`
-      : "",
-    `<p class="description">${esc(text(config, "tcf_disclosure_partners", "We work with {{partners}}.", { partners: partnerLabel }))} <button type="button" class="btn-link" data-action="open-vendors" data-text="tcf_view_partners">View partners</button></p>`,
-  ].join("");
+  const extras = `<div class="tcf-disclosures">
+      <p class="description"><span data-text="tcf_disclosure_store">This site stores and/or accesses information on a device and processes personal data.</span> <span data-text="tcf_disclosure_data">Personal data processed includes unique identifiers and browsing data.</span></p>
+      <p class="description">${rights.join(" ")}</p>
+      ${
+        purposes.length
+          ? `<p class="description"><span data-text="tcf_label_purposes">Purposes</span>: ${esc(purposes.map((p) => p.name).join(", "))}.</p>`
+          : ""
+      }
+      ${
+        specialFeatures.length
+          ? `<p class="description"><span data-text="tcf_label_special_features">Special features</span>: ${esc(specialFeatures.map((f) => f.name).join(", "))}.</p>`
+          : ""
+      }
+      <p class="description">${esc(text(config, "tcf_disclosure_partners", "We work with {{partners}}.", { partners: partnerLabel }))} <button type="button" class="btn-link" data-action="open-vendors" data-text="tcf_view_partners">View partners</button></p>
+    </div>`;
 
   return `
     <probo-banner>

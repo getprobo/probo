@@ -6,6 +6,10 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ### Added
 
+- Warns in the console when first-layer primary CTAs fail matching text
+  treatment or 5:1 contrast. Custom CSS variables or a style snippet can
+  drop below that floor; default theme colors pass. Runs for opt-in,
+  opt-out, notice, and TCF layouts after the banner mounts
 - Optional `TCFRuntime.onUIVisible` so a TCF addon can follow banner /
   panel / privacy-choices open and close
 - `projectConsentFromTCF` maps TCF purpose consent/LI bits onto category

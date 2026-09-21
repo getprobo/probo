@@ -23,6 +23,7 @@ import { registerHeadlessComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import { resolveLayout } from "../layout";
 import type { BannerConfig, Presentation } from "../types";
+import { scheduleFirstLayerCtaCheck } from "./cta-check";
 import { THEMED_STYLES } from "./styles";
 import { applyTexts, esc, ScrollLock } from "./variants/shared";
 import { renderNotice } from "./variants/notice";
@@ -113,6 +114,8 @@ export class ProboThemedBanner extends HTMLElement {
     if (addonMarkup !== null) {
       addon?.wire?.(root, this.shadow);
     }
+
+    scheduleFirstLayerCtaCheck(this.shadow);
   }
 
   private wirePanel(root: ProboCookieBannerRoot): void {
