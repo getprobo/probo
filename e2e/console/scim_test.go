@@ -270,6 +270,42 @@ func TestSCIM_ExternalIDFallback(t *testing.T) {
 		_, status = sc.createUser(email, "User B", "ext-b-"+factory.SafeName(""), true)
 		assert.Equal(t, http.StatusConflict, status)
 	})
+
+	t.Run("replace transfers external ID from another profile", func(t *testing.T) {
+		t.Parallel()
+
+		googleID := "google-" + factory.SafeName("")
+		oldEmail := factory.SafeEmail()
+		newEmail := factory.SafeEmail()
+
+		body, status := sc.createUser(oldEmail, "Old Email User", googleID, true)
+		require.Equal(t, http.StatusCreated, status, body)
+
+		var oldUser map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &oldUser))
+		oldID := oldUser["id"].(string)
+
+		body, status = sc.createUser(newEmail, "New Email User", "other-"+factory.SafeName(""), true)
+		require.Equal(t, http.StatusCreated, status, body)
+
+		var newUser map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &newUser))
+		newID := newUser["id"].(string)
+
+		body, status = sc.replaceUser(newID, newEmail, "New Email User", googleID, true)
+		require.Equal(t, http.StatusOK, status, body)
+
+		var replaced map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &replaced))
+		assert.Equal(t, googleID, replaced["externalId"])
+
+		body, status = sc.getUser(oldID)
+		require.Equal(t, http.StatusOK, status, body)
+
+		var oldFetched map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &oldFetched))
+		assert.NotEqual(t, googleID, oldFetched["externalId"])
+	})
 }
 
 func TestSCIM_DeleteUser(t *testing.T) {

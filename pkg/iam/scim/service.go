@@ -760,7 +760,23 @@ func (s *Service) updateUser(
 				profile.UpdatedAt = now
 			}
 
+			if attrs.ExternalID != nil && *attrs.ExternalID != "" {
+				if err := profile.ClearExternalID(
+					ctx,
+					tx,
+					scope,
+					*attrs.ExternalID,
+					config.OrganizationID,
+				); err != nil {
+					return fmt.Errorf("cannot clear conflicting external id: %w", err)
+				}
+			}
+
 			if err := profile.Update(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return scimerrors.ScimErrorUniqueness
+				}
+
 				return fmt.Errorf("cannot update membership profile: %w", err)
 			}
 

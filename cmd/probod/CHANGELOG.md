@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- SCIM PUT no longer returns 500 when the incoming `externalId` already
+  belongs to another profile in the organization (for example after a
+  Google Workspace email change). The id is transferred, matching create
+
 ## [0.291.0] - 2026-09-18
 
 ### Added

@@ -1299,6 +1299,15 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "idx_profiles_identity_id_organization_id",
+				"idx_profiles_external_id_organization_id",
+				"idx_profiles_user_name_organization_id":
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot update profile: %w", err)
 	}
 
