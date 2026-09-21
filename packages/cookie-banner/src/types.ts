@@ -132,6 +132,12 @@ export interface TCFGVLVendor {
   cookieRefresh?: boolean;
   usesNonCookieAccess?: boolean;
   cookieMaxAgeSeconds?: number | null;
+  dataRetention?: {
+    stdRetention?: number;
+    purposes?: Record<string, number>;
+    specialPurposes?: Record<string, number>;
+  };
+  deviceStorageDisclosureUrl?: string;
   dataDeclaration?: number[];
   urls?: Array<{ langId?: string; privacy?: string; legIntClaim?: string }>;
 }

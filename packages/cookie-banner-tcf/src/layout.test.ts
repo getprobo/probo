@@ -116,6 +116,11 @@ const tcfGvl: TCFGVL = {
   },
 };
 
+Object.assign(tcfGvl.vendors[String(vendorId)], {
+  dataRetention: { purposes: { "7": 30 } },
+  deviceStorageDisclosureUrl: "https://example.com/storage",
+});
+
 function bannerConfig(overrides: Partial<BannerConfig> = {}): BannerConfig {
   return {
     banner_id: "banner",
@@ -168,7 +173,8 @@ describe("renderTCFLayout", () => {
     const firstLayer = html!.split("<probo-preference-panel")[0];
     expect(firstLayer).toContain("unique identifiers and browsing data");
     expect(firstLayer).toContain('data-text="tcf_disclosure_data"');
-    expect(firstLayer).toContain("service-specific consent");
+    expect(firstLayer).toContain("service-specific");
+    expect(firstLayer).not.toContain("service-specific consent");
     expect(firstLayer).toContain('data-text="tcf_disclosure_scope"');
     expect(firstLayer).toContain("withdraw or change your consent at any time");
     expect(firstLayer).toContain("Cookie settings");
@@ -190,6 +196,11 @@ describe("renderTCFLayout", () => {
     expect(html).toContain('data-text="tcf_disclosure_store"');
     expect(html).toContain('data-text="tcf_panel_description"');
     expect(html).not.toContain('data-text="panel_description"');
+    const panel = html!.split("<probo-preference-panel")[1];
+    expect(panel).toContain("unique identifiers and browsing data");
+    expect(panel).toContain("service-specific");
+    expect(panel).toContain('data-text="tcf_disclosure_data"');
+    expect(panel).toContain('data-text="tcf_disclosure_scope"');
     expect(html).toContain("How often an ad was shown can be measured.");
     expect(html).toContain("Ensure security, prevent and detect fraud, and fix errors");
     expect(html).toContain("Match and combine data from other data sources");
@@ -219,6 +230,11 @@ describe("renderTCFLayout", () => {
     expect(partners).toContain('data-text="tcf_section_special_features"');
     expect(partners).toContain("Use precise geolocation data");
     expect(partners).toContain("Cookies (up to 1 day)");
+    expect(partners).toContain("not refreshed");
+    expect(partners).toContain("Purpose-specific storage");
+    expect(partners).toContain("Measure advertising performance (30 days)");
+    expect(partners).toContain('href="https://example.com/storage"');
+    expect(partners).toContain("Device storage details");
     expect(partners).toContain('href="https://example.com/privacy"');
   });
 
@@ -241,9 +257,11 @@ describe("renderTCFLayout", () => {
       "bottom-left",
     );
 
-    const firstLayer = html!.split("<probo-preference-panel")[0];
+    const [firstLayer, panel] = html!.split("<probo-preference-panel");
     expect(firstLayer).not.toContain('data-text="tcf_disclosure_object"');
     expect(firstLayer).not.toContain("object to that processing");
+    expect(panel).not.toContain("unique identifiers and browsing data");
+    expect(panel).not.toContain('data-text="tcf_disclosure_data"');
     expect(html).not.toContain('data-tcf="purpose-li"');
   });
 
@@ -316,8 +334,9 @@ describe("renderTCFLayout", () => {
                 usesCookies: false,
                 usesNonCookieAccess: false,
                 policyUrl: "javascript:alert(1)",
+                deviceStorageDisclosureUrl: "javascript:alert(1)",
                 urls: [{ privacy: "javascript:alert(1)" }],
-              },
+              } as TCFGVL["vendors"][string],
             },
           },
           cmp_id: 4095,

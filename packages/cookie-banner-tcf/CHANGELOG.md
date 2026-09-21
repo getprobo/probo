@@ -24,8 +24,10 @@ in this file.
   per C(b)(VII). Withdrawal copy says consent can be changed at
   any time via Cookie settings per C(b)(VIII). When a vendor relies
   on legitimate interest, first-layer copy also states the right to
-  object. Related sentences share paragraphs so translations stay
-  on separate keys without a block per sentence
+  object, and the second layer repeats the nature of the data and
+  that choices are service-specific. Scope copy names choices, not
+  only consent. Related sentences share paragraphs so translations
+  stay on separate keys without a block per sentence
 - Panel Accept all / Reject all persist the TC string on `probo_consent`
   even if `CmpApi.update` throws; those footer clicks are handled on
   the host so they cannot miss the headless buttons
@@ -57,7 +59,10 @@ in this file.
   used by partners (no toggles), purpose illustrations, vendor cookie /
   non-cookie storage, and http(s) privacy / legitimate-interest links.
   Each partner row lists that vendor's purposes by legal basis, special
-  purposes, features, and special features
+  purposes, features, and special features. Cookie lines include max
+  duration and whether it may be refreshed; purpose-specific retention
+  and an http(s) device-storage disclosure link appear when the GVL
+  provides them
 - Preference panel is 720px for TCF. The header describes purposes and
   partners instead of cookie categories. Choice rows keep a leading spacer
   (no visible IAB ids) and labeled Consent / Legitimate interest /

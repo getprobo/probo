@@ -54,6 +54,12 @@ interface VendorURL {
 type PanelVendor = TCFGVLVendor & {
   urls?: VendorURL[];
   dataDeclaration?: number[];
+  dataRetention?: {
+    stdRetention?: number;
+    purposes?: Record<string, number>;
+    specialPurposes?: Record<string, number>;
+  };
+  deviceStorageDisclosureUrl?: string;
 };
 
 interface Stack extends Named {
@@ -137,7 +143,7 @@ function renderBanner(config: BannerConfig, gvl: TCFGVL, position: string): stri
     { count: String(vendorCount) },
   );
   const rights = [
-    `<span data-text="tcf_disclosure_scope">These choices apply to this site only (service-specific consent).</span>`,
+    `<span data-text="tcf_disclosure_scope">These choices apply to this site only (service-specific).</span>`,
     `<span data-text="tcf_disclosure_withdraw">You can withdraw or change your consent at any time via Cookie settings.</span>`,
     purposeLIIds(gvl).size
       ? `<span data-text="tcf_disclosure_object">Some partners process personal data on the basis of legitimate interest. You can object to that processing.</span>`
@@ -210,6 +216,11 @@ function renderPanel(config: BannerConfig, gvl: TCFGVL, position: string): strin
             </button>
           </div>
           <p class="description" id="probo-panel-desc" data-text="tcf_panel_description">Choose which purposes and partners to allow. Consent and legitimate interest can be set separately when both apply.</p>
+          ${
+            liPurposeIDs.size
+              ? `<p class="description"><span data-text="tcf_disclosure_data">Personal data processed includes unique identifiers and browsing data.</span> <span data-text="tcf_disclosure_scope">These choices apply to this site only (service-specific).</span></p>`
+              : ""
+          }
         </div>
         <div class="panel-body">
           ${purposesSection(stacks, ungrouped, purposes, liPurposeIDs)}
@@ -386,7 +397,11 @@ function vendorBody(vendor: PanelVendor, catalogs: VendorCatalogs): string | und
   ].filter(Boolean);
   const storage = vendorStorage(vendor);
   if (storage) {
-    lines.push(`<p class="tcf-vendor-line">${esc(storage)}</p>`);
+    lines.push(`<p class="tcf-vendor-line">${storage}</p>`);
+  }
+  const purposeStorage = vendorPurposeStorage(vendor, catalogs);
+  if (purposeStorage) {
+    lines.push(purposeStorage);
   }
   const links = vendorLinks(vendor);
   if (links) {
@@ -424,12 +439,53 @@ function vendorStorage(vendor: PanelVendor): string | undefined {
   const bits: string[] = [];
   if (vendor.usesCookies) {
     const age = formatCookieMaxAge(vendor.cookieMaxAgeSeconds);
-    bits.push(age ? `Cookies (up to ${age})` : "Cookies");
+    const duration = age ? `Cookies (up to ${esc(age)})` : "Cookies";
+    const refresh =
+      vendor.cookieRefresh === true
+        ? `<span data-text="tcf_label_cookie_refresh">may be refreshed</span>`
+        : vendor.cookieRefresh === false
+          ? `<span data-text="tcf_label_cookie_no_refresh">not refreshed</span>`
+          : "";
+    bits.push(refresh ? `${duration} (${refresh})` : duration);
   }
   if (vendor.usesNonCookieAccess) {
-    bits.push("Non-cookie storage");
+    bits.push(`<span data-text="tcf_label_non_cookie">Non-cookie storage</span>`);
   }
   return bits.length ? bits.join(". ") : undefined;
+}
+
+function vendorPurposeStorage(vendor: PanelVendor, catalogs: VendorCatalogs): string | undefined {
+  const items = [
+    ...retentionItems(vendor.dataRetention?.purposes, catalogs.purposes),
+    ...retentionItems(vendor.dataRetention?.specialPurposes, catalogs.specialPurposes),
+  ];
+  if (!items.length) {
+    return undefined;
+  }
+  return `<p class="tcf-vendor-line"><span data-text="tcf_label_purpose_storage">Purpose-specific storage</span>: ${items.join(", ")}</p>`;
+}
+
+function retentionItems(
+  record: Record<string, number> | undefined,
+  names: Map<number, string>,
+): string[] {
+  if (!record) {
+    return [];
+  }
+  return Object.entries(record)
+    .map(([id, days]) => {
+      const name = names.get(Number(id));
+      if (!name || typeof days !== "number" || !Number.isFinite(days) || days < 0) {
+        return "";
+      }
+      return `${esc(name)} (${esc(days === 0 ? "session" : formatRetentionDays(days))})`;
+    })
+    .filter(Boolean);
+}
+
+function formatRetentionDays(days: number): string {
+  const rounded = Math.round(days);
+  return rounded === 1 ? "1 day" : `${rounded} days`;
 }
 
 function formatCookieMaxAge(seconds: number | null | undefined): string | undefined {
@@ -454,6 +510,7 @@ function vendorLinks(vendor: PanelVendor): string | undefined {
   const first = vendor.urls?.[0];
   const privacy = httpUrl(first?.privacy ?? vendor.policyUrl);
   const claim = httpUrl(first?.legIntClaim);
+  const disclosure = httpUrl(vendor.deviceStorageDisclosureUrl);
   const bits: string[] = [];
   if (privacy) {
     bits.push(policyAnchor(privacy, "Privacy policy"));
@@ -461,11 +518,15 @@ function vendorLinks(vendor: PanelVendor): string | undefined {
   if (claim) {
     bits.push(policyAnchor(claim, "Legitimate interest"));
   }
+  if (disclosure) {
+    bits.push(policyAnchor(disclosure, "Device storage details", "tcf_label_device_storage"));
+  }
   return bits.length ? bits.join(". ") : undefined;
 }
 
-function policyAnchor(href: string, label: string): string {
-  return `<a class="btn-link" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
+function policyAnchor(href: string, label: string, textKey?: string): string {
+  const textAttr = textKey ? ` data-text="${esc(textKey)}"` : "";
+  return `<a class="btn-link" href="${esc(href)}" target="_blank" rel="noopener noreferrer"${textAttr}>${esc(label)}</a>`;
 }
 
 function httpUrl(value: string | undefined): string | undefined {
