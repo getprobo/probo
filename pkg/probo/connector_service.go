@@ -309,10 +309,51 @@ func (s *ConnectorService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := refuseReferencedConnector(ctx, tx, scope, connectorID); err != nil {
+				return err
+			}
+
 			cnnctr := &coredata.Connector{ID: connectorID}
+
 			return cnnctr.Delete(ctx, tx, scope)
 		},
 	)
+}
+
+// refuseReferencedConnector names the module still holding the credential.
+// The foreign key that fires first names the account, because connector_accounts
+// cascades while the source restricts. Accounts are not counted: a source on an
+// account also names that connector, and refusing on accounts would strand the
+// connector access review deletes when a source insert fails.
+func refuseReferencedConnector(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	sources := &coredata.AccessReviewSources{}
+
+	sourceCount, err := sources.CountByConnectorID(ctx, tx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count access review sources for connector: %w", err)
+	}
+
+	if sourceCount > 0 {
+		return fmt.Errorf("cannot delete connector: it is used by an access review source: %w", coredata.ErrResourceInUse)
+	}
+
+	bridges := &coredata.SCIMBridges{}
+
+	bridgeCount, err := bridges.CountByConnectorID(ctx, tx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count SCIM bridges for connector: %w", err)
+	}
+
+	if bridgeCount > 0 {
+		return fmt.Errorf("cannot delete connector: it is used by a SCIM configuration: %w", coredata.ErrResourceInUse)
+	}
+
+	return nil
 }
 
 func (s *ConnectorService) Create(

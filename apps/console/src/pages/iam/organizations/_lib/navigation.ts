@@ -66,6 +66,7 @@ export type NavPermission
     | "canListWebhookSubscriptions"
     | "canConnectSlack"
     | "canUninstallSlack"
+    | "canListConnectors"
     | "canUpdateOrganization";
 
 interface NavGroupConfig {

@@ -43,6 +43,7 @@ import { compliancePortalRoutes } from "./pages/organizations/compliance-portals
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { integrationRoutes } from "./pages/organizations/settings/integrations/routes";
 import { taskRoutes } from "./pages/organizations/tasks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
@@ -324,6 +325,7 @@ const routes = [
                     import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
                 ),
               },
+              ...integrationRoutes,
               ...usersRoutes,
               ...authRoutes,
               ...auditLogRoutes,

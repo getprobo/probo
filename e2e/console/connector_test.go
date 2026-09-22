@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -519,6 +520,141 @@ func TestDeleteConnector(t *testing.T) {
 	}, &deleteResult)
 	require.NoError(t, err)
 	assert.Equal(t, connectorID, deleteResult.DeleteConnector.DeletedConnectorID)
+}
+
+func TestDeleteConnectorRefusedWhileReferenced(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	connectorID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithName("Production").
+		WithConnectorID(connectorID).
+		Create()
+	require.NotEmpty(t, sourceID)
+
+	const deleteQuery = `
+		mutation($input: DeleteConnectorInput!) {
+			deleteConnector(input: $input) { deletedConnectorId }
+		}
+	`
+
+	var deleted struct{}
+
+	err := owner.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{"connectorId": connectorID},
+	}, &deleted)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+	assert.Contains(t, err.Error(), "access review source")
+
+	var alive connectorAccountsResult
+
+	require.NoError(t, owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &alive))
+	assert.Equal(t, connectorID, alive.Node.ID)
+	assert.Equal(t, 1, alive.Node.Accounts.TotalCount)
+}
+
+func TestConnectorPermission(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	connectorID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					connectors {
+						id
+						canDelete: permission(action: "core:connector:delete")
+					}
+				}
+			}
+		}
+	`
+
+	type permissionResult struct {
+		Node struct {
+			Connectors []struct {
+				ID        string `json:"id"`
+				CanDelete bool   `json:"canDelete"`
+			} `json:"connectors"`
+		} `json:"node"`
+	}
+
+	canDelete := func(t *testing.T, client *testutil.Client) bool {
+		t.Helper()
+
+		var result permissionResult
+
+		require.NoError(t, client.Execute(query, map[string]any{"id": orgID}, &result))
+
+		for _, connector := range result.Node.Connectors {
+			if connector.ID == connectorID {
+				return connector.CanDelete
+			}
+		}
+
+		t.Fatal("connector missing from organization list")
+
+		return false
+	}
+
+	assert.True(t, canDelete(t, owner))
+	assert.False(t, canDelete(t, viewer))
+}
+
+func TestConnector_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	org1 := testutil.NewClient(t, testutil.RoleOwner)
+	org2 := testutil.NewClient(t, testutil.RoleOwner)
+
+	connectorID := factory.NewConnector(org1).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	t.Run("cannot read a connector from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		var result struct {
+			Node *struct {
+				ID string `json:"id"`
+			} `json:"node"`
+		}
+
+		err := org2.Execute(`
+			query($id: ID!) {
+				node(id: $id) {
+					... on Connector { id }
+				}
+			}
+		`, map[string]any{"id": connectorID}, &result)
+		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "connector")
+	})
+
+	t.Run("cannot delete a connector from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		err := org2.Execute(`
+			mutation($input: DeleteConnectorInput!) {
+				deleteConnector(input: $input) { deletedConnectorId }
+			}
+		`, map[string]any{
+			"input": map[string]any{"connectorId": connectorID},
+		}, &struct{}{})
+		testutil.RequireForbiddenError(t, err, "must not delete connector from another organization")
+	})
 }
 
 // TestCrispConnectsByAppInstall pins the connect path Crisp actually offers,
