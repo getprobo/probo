@@ -105,6 +105,7 @@ const (
 	ConnectorProviderTwingate        ConnectorProvider = "TWINGATE"
 	ConnectorProviderAttio           ConnectorProvider = "ATTIO"
 	ConnectorProviderAzure           ConnectorProvider = "AZURE"
+	ConnectorProviderOVHcloud        ConnectorProvider = "OVHCLOUD"
 )
 
 var (
@@ -188,6 +189,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderTwingate,
 		ConnectorProviderAttio,
 		ConnectorProviderAzure,
+		ConnectorProviderOVHcloud,
 	}
 }
 
@@ -267,7 +269,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderRetool,
 		ConnectorProviderTwingate,
 		ConnectorProviderAttio,
-		ConnectorProviderAzure:
+		ConnectorProviderAzure,
+		ConnectorProviderOVHcloud:
 		return true
 	}
 
