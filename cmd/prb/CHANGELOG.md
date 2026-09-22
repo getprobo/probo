@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.232.0] - 2026-09-22
+
+### Changed
+
+- `risk delete` describes that deleting a risk also removes its analysis
+  history
+
 ## [0.231.0] - 2026-09-18
 
 ### Changed
