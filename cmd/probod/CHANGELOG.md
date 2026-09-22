@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.293.0] - 2026-09-22
+
+### Added
+
+- Risks expose `riskAnalysisHistoryCount`, how many analyses still include
+  the risk. The console delete confirm uses it to warn that deleting the
+  risk also removes that history
+
+### Changed
+
+- Deleting a risk also removes it from risk-analysis history. Treatment-plan
+  events no longer block the delete
+
+### Fixed
+
+- The device enrollment card hides "Open Probo Agent to finish registering
+  this device." once the agent has checked in
+
 ## [0.292.0] - 2026-09-21
 
 ### Added
