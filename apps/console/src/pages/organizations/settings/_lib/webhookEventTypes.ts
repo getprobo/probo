@@ -51,7 +51,8 @@ export const WEBHOOK_EVENT_TYPES = [
   { value: "DOCUMENT_VERSION_APPROVAL_QUORUM_VOIDED", label: "document-version-approval-quorum:voided" },
 ] as const;
 
-export type WebhookEventTypeValue = (typeof WEBHOOK_EVENT_TYPES)[number]["value"];
+export type WebhookEventType = (typeof WEBHOOK_EVENT_TYPES)[number];
+export type WebhookEventTypeValue = WebhookEventType["value"];
 
 export function webhookEventTypeLabel(value: string): string {
   return WEBHOOK_EVENT_TYPES.find(event => event.value === value)?.label ?? value;

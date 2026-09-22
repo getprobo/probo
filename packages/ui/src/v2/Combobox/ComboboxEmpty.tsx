@@ -18,33 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
+import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import type { ComponentProps } from "react";
 
-import { NewWebhookSubscriptionPageSkeleton } from "#/pages/organizations/settings/NewWebhookSubscriptionPageSkeleton";
-import { WebhooksSettingsPageSkeleton } from "#/pages/organizations/settings/WebhooksSettingsPageSkeleton";
+import { comboboxEmpty } from "./variants";
 
-import { WorkspaceSettingsPageSkeleton } from "./WorkspaceSettingsPageSkeleton";
+export type ComboboxEmptyProps
+  = & Omit<ComponentProps<typeof BaseCombobox.Empty>, "className">
+    & { className?: string };
 
-export const settingsRoutes = [
-  {
-    path: "general",
-    Fallback: WorkspaceSettingsPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/iam/organizations/settings/WorkspaceSettingsPageLoader"),
-    ),
-  },
-  {
-    path: "webhooks/new",
-    Fallback: NewWebhookSubscriptionPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/settings/NewWebhookSubscriptionPage"),
-    ),
-  },
-  {
-    path: "webhooks",
-    Fallback: WebhooksSettingsPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-    ),
-  },
-];
+// Shown when `items` is set and the filter matches nothing. Stay mounted;
+// Base UI uses this node for polite announcements.
+export function ComboboxEmpty(props: ComboboxEmptyProps) {
+  const { className, ...rest } = props;
+
+  return <BaseCombobox.Empty className={comboboxEmpty({ className })} {...rest} />;
+}

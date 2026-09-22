@@ -18,33 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
+import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import { XIcon } from "@phosphor-icons/react";
+import type { ComponentProps } from "react";
 
-import { NewWebhookSubscriptionPageSkeleton } from "#/pages/organizations/settings/NewWebhookSubscriptionPageSkeleton";
-import { WebhooksSettingsPageSkeleton } from "#/pages/organizations/settings/WebhooksSettingsPageSkeleton";
+import { comboboxChipRemove } from "./variants";
 
-import { WorkspaceSettingsPageSkeleton } from "./WorkspaceSettingsPageSkeleton";
+export type ComboboxChipRemoveProps
+  = & Omit<ComponentProps<typeof BaseCombobox.ChipRemove>, "className">
+    & { className?: string };
 
-export const settingsRoutes = [
-  {
-    path: "general",
-    Fallback: WorkspaceSettingsPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/iam/organizations/settings/WorkspaceSettingsPageLoader"),
-    ),
-  },
-  {
-    path: "webhooks/new",
-    Fallback: NewWebhookSubscriptionPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/settings/NewWebhookSubscriptionPage"),
-    ),
-  },
-  {
-    path: "webhooks",
-    Fallback: WebhooksSettingsPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-    ),
-  },
-];
+// Button that removes its parent chip. Defaults to a Phosphor X.
+export function ComboboxChipRemove(props: ComboboxChipRemoveProps) {
+  const { className, children, ...rest } = props;
+
+  return (
+    <BaseCombobox.ChipRemove className={comboboxChipRemove({ className })} type="button" {...rest}>
+      {children ?? <XIcon />}
+    </BaseCombobox.ChipRemove>
+  );
+}

@@ -5172,6 +5172,7 @@
   },
   "webhooksSettingsPage": {
     "description": "Configureer webhooks om meldingen te ontvangen wanneer er gebeurtenissen plaatsvinden in uw organisatie.",
+    "newDescription": "Voer de eindpunt-URL in en kies welke gebeurtenissen deze webhook moeten activeren.",
     "fields": {
       "endpointUrl": "Eindpunt-URL",
       "signingSecret": "Signing Secret",
@@ -5226,6 +5227,7 @@
     "subscribedCount_one": "Geabonneerd op {{count}} gebeurtenis",
     "subscribedCount_other": "Geabonneerd op {{count}} gebeurtenissen",
     "searchEvents": "Gebeurtenissen zoeken",
+    "removeEvent": "Verwijder {{event}}",
     "editEvents": "Geabonneerde gebeurtenissen bewerken",
     "emptySearch": "Geen gebeurtenissen komen overeen met die zoekopdracht.",
     "deleteConfirmation": "Weet u zeker dat u dit webhookabonnement wilt verwijderen?",
@@ -5235,6 +5237,7 @@
       "save": "Opslaan",
       "loadMore": "Meer laden",
       "add": "Webhookabonnement toevoegen",
+      "back": "Terug",
       "hide": "Verbergen",
       "show": "Tonen",
       "deleting": "Verwijderen...",

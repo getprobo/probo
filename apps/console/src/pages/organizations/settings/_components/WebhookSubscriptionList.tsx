@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PlusIcon } from "@phosphor-icons/react";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -34,7 +36,6 @@ import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import { webhooksSettingsPage, webhookSubscriptionList } from "../variants";
 
-import { CreateWebhookSubscriptionDialog } from "./CreateWebhookSubscriptionDialog";
 import { WebhookSubscriptionListItem } from "./WebhookSubscriptionListItem";
 
 export const WEBHOOK_SUBSCRIPTION_PAGE_SIZE = 15;
@@ -133,7 +134,9 @@ export function WebhookSubscriptionList({ organizationKey }: WebhookSubscription
           </Text>
         </div>
         {organization.canCreate && (
-          <CreateWebhookSubscriptionDialog onCreated={refetchFirstPage} />
+          <ButtonLink to="new" variant="solid" iconStart={<PlusIcon />}>
+            {t("webhooksSettingsPage.actions.add")}
+          </ButtonLink>
         )}
       </div>
       {edges.length === 0

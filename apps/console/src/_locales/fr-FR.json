@@ -5182,6 +5182,7 @@
   },
   "webhooksSettingsPage": {
     "description": "Configurez des webhooks pour recevoir des notifications lorsque des événements se produisent dans votre organisation.",
+    "newDescription": "Saisissez l'URL du point de terminaison et choisissez les événements qui déclencheront ce webhook.",
     "fields": {
       "endpointUrl": "URL du point de terminaison",
       "signingSecret": "Secret de signature",
@@ -5236,6 +5237,7 @@
     "subscribedCount_one": "Abonné à {{count}} événement",
     "subscribedCount_other": "Abonné à {{count}} événements",
     "searchEvents": "Rechercher des événements",
+    "removeEvent": "Retirer {{event}}",
     "editEvents": "Modifier les événements abonnés",
     "emptySearch": "Aucun événement ne correspond à cette recherche.",
     "deleteConfirmation": "Voulez-vous vraiment supprimer cet abonnement au webhook ?",
@@ -5245,6 +5247,7 @@
       "save": "Enregistrer",
       "loadMore": "Charger plus",
       "add": "Ajouter un abonnement au webhook",
+      "back": "Retour",
       "hide": "Masquer",
       "show": "Afficher",
       "deleting": "Suppression...",

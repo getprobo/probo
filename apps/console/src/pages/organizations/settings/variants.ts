@@ -85,3 +85,21 @@ export const deleteWebhookSubscriptionDialog = tv({
     body: "flex flex-col gap-2",
   },
 });
+
+export const newWebhookSubscriptionPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    back: "self-start",
+    intro: "flex min-w-0 flex-col gap-2",
+    form: "flex flex-col gap-4",
+    actions: "flex justify-end",
+  },
+});
+
+export const newWebhookSubscriptionPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    intro: "flex min-w-0 flex-col gap-2",
+    form: "flex flex-col gap-4",
+  },
+});

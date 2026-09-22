@@ -18,33 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
+import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import type { ComponentProps } from "react";
 
-import { NewWebhookSubscriptionPageSkeleton } from "#/pages/organizations/settings/NewWebhookSubscriptionPageSkeleton";
-import { WebhooksSettingsPageSkeleton } from "#/pages/organizations/settings/WebhooksSettingsPageSkeleton";
+import { comboboxChip } from "./variants";
 
-import { WorkspaceSettingsPageSkeleton } from "./WorkspaceSettingsPageSkeleton";
+export type ComboboxChipProps
+  = & Omit<ComponentProps<typeof BaseCombobox.Chip>, "className">
+    & { className?: string };
 
-export const settingsRoutes = [
-  {
-    path: "general",
-    Fallback: WorkspaceSettingsPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/iam/organizations/settings/WorkspaceSettingsPageLoader"),
-    ),
-  },
-  {
-    path: "webhooks/new",
-    Fallback: NewWebhookSubscriptionPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/settings/NewWebhookSubscriptionPage"),
-    ),
-  },
-  {
-    path: "webhooks",
-    Fallback: WebhooksSettingsPageSkeleton,
-    Component: lazy(
-      () => import("#/pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-    ),
-  },
-];
+// Interactive chip for a selected value. Looks like Badge soft / neutral /
+// size 1 / font-mono — Chip itself is the node, so do not nest Badge.
+export function ComboboxChip(props: ComboboxChipProps) {
+  const { className, ...rest } = props;
+
+  return <BaseCombobox.Chip className={comboboxChip({ className })} {...rest} />;
+}
