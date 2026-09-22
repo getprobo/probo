@@ -5222,6 +5222,12 @@
     "copySigningSecret": "Signing secret kopiëren",
     "editWebhook": "Webhook bewerken",
     "deleteWebhook": "Webhook verwijderen",
+    "seeAll": "Alles zien",
+    "subscribedCount_one": "Geabonneerd op {{count}} gebeurtenis",
+    "subscribedCount_other": "Geabonneerd op {{count}} gebeurtenissen",
+    "searchEvents": "Gebeurtenissen zoeken",
+    "editEvents": "Geabonneerde gebeurtenissen bewerken",
+    "emptySearch": "Geen gebeurtenissen komen overeen met die zoekopdracht.",
     "deleteConfirmation": "Weet u zeker dat u dit webhookabonnement wilt verwijderen?",
     "cannotUndo": "Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
@@ -5232,7 +5238,10 @@
       "hide": "Verbergen",
       "show": "Tonen",
       "deleting": "Verwijderen...",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "cancel": "Annuleren",
+      "previous": "Vorige",
+      "next": "Volgende"
     }
   },
   "statementOfApplicabilityDetailPage": {

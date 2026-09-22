@@ -2787,9 +2787,15 @@
     "copySigningSecret": "Copy signing secret",
     "editWebhook": "Edit webhook",
     "deleteWebhook": "Delete webhook",
+    "seeAll": "See all",
+    "subscribedCount_one": "Subscribed to {{count}} event",
+    "subscribedCount_other": "Subscribed to {{count}} events",
+    "searchEvents": "Search events",
+    "editEvents": "Edit subscribed events",
+    "emptySearch": "No events match that search.",
     "deleteConfirmation": "Are you sure you want to delete this webhook subscription?",
     "cannotUndo": "This action cannot be undone.",
-    "actions": { "create": "Create", "save": "Save", "loadMore": "Load more", "add": "Add Webhook Subscription", "hide": "Hide", "show": "Show", "deleting": "Deleting...", "delete": "Delete" }
+    "actions": { "create": "Create", "save": "Save", "loadMore": "Load more", "add": "Add Webhook Subscription", "hide": "Hide", "show": "Show", "deleting": "Deleting...", "delete": "Delete", "cancel": "Cancel", "previous": "Prev", "next": "Next" }
   },
   "statementOfApplicabilityDetailPage": {
     "title": "Statement of Applicability",

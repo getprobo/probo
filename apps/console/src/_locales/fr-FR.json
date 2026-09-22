@@ -5232,6 +5232,12 @@
     "copySigningSecret": "Copier le secret de signature",
     "editWebhook": "Modifier le webhook",
     "deleteWebhook": "Supprimer le webhook",
+    "seeAll": "Voir tout",
+    "subscribedCount_one": "Abonné à {{count}} événement",
+    "subscribedCount_other": "Abonné à {{count}} événements",
+    "searchEvents": "Rechercher des événements",
+    "editEvents": "Modifier les événements abonnés",
+    "emptySearch": "Aucun événement ne correspond à cette recherche.",
     "deleteConfirmation": "Voulez-vous vraiment supprimer cet abonnement au webhook ?",
     "cannotUndo": "Cette action est irréversible.",
     "actions": {
@@ -5242,7 +5248,10 @@
       "hide": "Masquer",
       "show": "Afficher",
       "deleting": "Suppression...",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "previous": "Préc.",
+      "next": "Suiv."
     }
   },
   "statementOfApplicabilityDetailPage": {
