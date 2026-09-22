@@ -279,9 +279,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		TokenURL:     tokenURL,
 	}
 
-	if input.Scope != nil {
-		oauth2Conn.Scope = *input.Scope
-	}
+	oauth2Conn.Scope = clientCredentialsScope(r.providerRegistry, input.Provider, input.Scope)
 
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
