@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.294.0] - 2026-09-22
+
 ### Changed
 
 - Cookie banner TCF CMP ID comes from probod config
@@ -14,7 +16,6 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - Public cookie-banner consent POST rejects a `tc` that is not a TCF 2.3
   string from this CMP, and requires `tc` on TCF banners when the
   request is GDPR or UK GDPR
-- TCF GET config emits CMP ID 4095 instead of the placeholder 2
 - Cookie banner settings show the IAB `__tcfapi` stub and the TCF IIFE
   when the hidden TCF capability is on; non-TCF banners keep the default
   snippet
@@ -24,10 +25,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - Cookie banners store an IAB TCF publisher country of establishment
   (`publisherCountryCode`, default `AA`) and emit it on GET config
 - Cookie categories store optional `tcfPurposeIds` so TCF purpose bits
-  can be projected onto category slugs for activation and GCM
+  can be projected onto category slugs for activation and GCM. New
+  banners map the default categories onto those purposes
 - Cookie consent records persist an optional IAB TCF string (`tc`) from
   the public cookie-banner API, return it on GET visitor consent, and
   expose it on GraphQL, MCP, CLI, n8n, and the console record detail page
+- TCF banners ship default first-layer and preference-panel copy
+  (purposes, partners, storage, and legitimate-interest objection) in
+  the supported banner languages
+- Publish a risk analysis as a versioned generated document from the
+  console, GraphQL, and MCP (`publishRiskAnalysis`)
 
 ## [0.293.0] - 2026-09-22
 
