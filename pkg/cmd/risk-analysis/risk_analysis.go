@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/list"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/node"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/process"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/publish"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/scenario"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/threat"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/update"
@@ -47,6 +48,7 @@ func NewCmdRiskAnalysis(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(create.NewCmdCreate(f))
 	cmd.AddCommand(fork.NewCmdFork(f))
 	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(diagram.NewCmdDiagram(f))

@@ -21,7 +21,10 @@
 import { usePageTitle } from "@probo/hooks";
 import { dateFormat } from "@probo/i18n";
 import {
+  Button,
   Card,
+  IconPageTextLine,
+  IconUpload,
   PageHeader,
   TabLink,
   Tabs,
@@ -33,13 +36,14 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { Outlet, useNavigate } from "react-router";
+import { Link, Outlet, useNavigate } from "react-router";
 
 import type { RiskAnalysisDetailLayoutQuery } from "#/__generated__/core/RiskAnalysisDetailLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { formatMatrixSize } from "./_components/matrixSize";
+import { PublishRiskAnalysisDialog } from "./_components/PublishRiskAnalysisDialog";
 import { RiskAnalysisActions } from "./_components/RiskAnalysisActions";
 import { RiskAnalysisDescriptionSection } from "./_components/RiskAnalysisDescriptionSection";
 import { riskAnalysisDetailSummary } from "./variants";
@@ -60,6 +64,13 @@ export const riskAnalysisDetailLayoutQuery = graphql`
           cols
         }
         createdAt
+        document {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        canPublish: permission(action: "risk-management:risk-analysis:publish")
         ...RiskAnalysisActions_riskAnalysis
         ...RiskAnalysisDescriptionSection_riskAnalysis
       }
@@ -108,6 +119,31 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
   return (
     <div className="space-y-6">
       <PageHeader title={ra.name}>
+        {ra.document?.id && (
+          <Button variant="secondary" asChild>
+            <Link
+              to={`/organizations/${organizationId}/governance/documents/${ra.document.id}`}
+            >
+              <IconPageTextLine size={16} />
+              {t("riskAnalysisDetailPage.actions.document")}
+            </Link>
+          </Button>
+        )}
+        {ra.canPublish && (
+          <PublishRiskAnalysisDialog
+            riskAnalysisId={ra.id}
+            defaultApproverIds={ra.document?.defaultApprovers?.map(approver => approver.id) ?? []}
+            onPublished={(documentId) => {
+              void navigate(
+                `/organizations/${organizationId}/governance/documents/${documentId}`,
+              );
+            }}
+          >
+            <Button icon={IconUpload}>
+              {t("riskAnalysisDetailPage.actions.publish")}
+            </Button>
+          </PublishRiskAnalysisDialog>
+        )}
         <RiskAnalysisActions
           riskAnalysisKey={ra}
           connectionId={listConnectionId}

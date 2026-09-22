@@ -878,6 +878,56 @@ func (r *mutationResolver) UnlinkRiskAnalysisScenarioRisk(ctx context.Context, i
 	}, nil
 }
 
+// PublishRiskAnalysis is the resolver for the publishRiskAnalysis field.
+func (r *mutationResolver) PublishRiskAnalysis(ctx context.Context, input types.PublishRiskAnalysisInput) (*types.PublishRiskAnalysisPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisPublish)
+	if err != nil {
+		return nil, err
+	}
+
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishRiskAnalysis(ctx, scope, input.RiskAnalysisID, input.ApproverIds, input.Minor)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot publish risk analysis", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishRiskAnalysisPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
+	}, nil
+}
+
+// Document is the resolver for the document field.
+func (r *riskAnalysisResolver) Document(ctx context.Context, obj *types.RiskAnalysis) (*types.Document, error) {
+	if obj.Document == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.Document.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	document, err := loaders.Document.Load(ctx, obj.Document.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(document), nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *riskAnalysisResolver) Organization(ctx context.Context, obj *types.RiskAnalysis) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {

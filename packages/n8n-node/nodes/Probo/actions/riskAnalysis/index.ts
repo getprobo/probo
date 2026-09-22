@@ -60,6 +60,7 @@ import * as linkScenarioThreatOp from './linkScenarioThreat.operation';
 import * as unlinkScenarioThreatOp from './unlinkScenarioThreat.operation';
 import * as linkScenarioRiskOp from './linkScenarioRisk.operation';
 import * as unlinkScenarioRiskOp from './unlinkScenarioRisk.operation';
+import * as publishOp from './publish.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -260,6 +261,12 @@ export const description: INodeProperties[] = [
 				action: 'Link a scenario to a threat',
 			},
 			{
+				name: 'Publish',
+				value: 'publish',
+				description: 'Publish a risk analysis as a document',
+				action: 'Publish a risk analysis',
+			},
+			{
 				name: 'Unlink Scenario Risk',
 				value: 'unlinkScenarioRisk',
 				description: 'Unlink a scenario from a risk',
@@ -357,6 +364,7 @@ export const description: INodeProperties[] = [
 	...unlinkScenarioThreatOp.description,
 	...linkScenarioRiskOp.description,
 	...unlinkScenarioRiskOp.description,
+	...publishOp.description,
 ];
 
 export {
@@ -401,4 +409,5 @@ export {
 	unlinkScenarioThreatOp as unlinkScenarioThreat,
 	linkScenarioRiskOp as linkScenarioRisk,
 	unlinkScenarioRiskOp as unlinkScenarioRisk,
+	publishOp as publish,
 };

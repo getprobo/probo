@@ -10035,3 +10035,22 @@ func (r *Resolver) GetCommonGVLCatalogTool(ctx context.Context, req *mcp.CallToo
 		CommonGvlCatalog: types.NewCommonGVLCatalog(catalog),
 	}, nil
 }
+
+func (r *Resolver) PublishRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishRiskAnalysisInput) (*mcp.CallToolResult, types.PublishRiskAnalysisOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisPublish)
+	if err != nil {
+		return nil, types.PublishRiskAnalysisOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskAnalysis(ctx, scope, input.ID, input.ApproverIds, input.Minor)
+	if err != nil {
+		return nil, types.PublishRiskAnalysisOutput{}, fmt.Errorf("cannot publish risk analysis: %w", err)
+	}
+
+	return nil, types.PublishRiskAnalysisOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}

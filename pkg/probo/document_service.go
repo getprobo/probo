@@ -1633,7 +1633,7 @@ func (s *DocumentService) deleteDocumentEntityMappings(
 }
 
 // clearDocumentReferences nullifies references to the given document IDs in
-// generated_documents and statements_of_applicability. This must be called
+// generated_documents, statements_of_applicability, and risk_analyses. This must be called
 // inside a transaction before soft-deleting or archiving documents, because
 // those operations are UPDATEs and do not trigger ON DELETE SET NULL.
 func (s *DocumentService) clearDocumentReferences(
@@ -1668,6 +1668,11 @@ func (s *DocumentService) clearDocumentReferences(
 
 	soa := coredata.StatementOfApplicability{}
 	if err := soa.ClearDocumentIDByDocumentIDs(ctx, tx, documentIDs); err != nil {
+		return err
+	}
+
+	riskAnalysis := coredata.RiskAnalysis{}
+	if err := riskAnalysis.ClearDocumentIDByDocumentIDs(ctx, tx, documentIDs); err != nil {
 		return err
 	}
 

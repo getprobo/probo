@@ -4522,6 +4522,15 @@
       "published": "Risico's succesvol gepubliceerd."
     }
   },
+  "publishRiskAnalysisDialog": {
+    "title": "Risicobeoordeling publiceren",
+    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
+    "fields": { "approvers": "Goedkeurders" },
+    "placeholders": { "approvers": "Goedkeurders toevoegen..." },
+    "messages": { "success": "Succes", "error": "Fout", "approvalRequested": "Goedkeuring succesvol aangevraagd.", "published": "Risicobeoordeling succesvol gepubliceerd." },
+    "errors": { "publish": "Publiceren van risicobeoordeling mislukt" },
+    "actions": { "publishMinor": "Publiceren als minor", "requestApproval": "Goedkeuring aanvragen", "publish": "Publiceren" }
+  },
   "riskRow": {
     "messages": {
       "error": "Fout"
@@ -4567,7 +4576,9 @@
       "edit": "Bewerken",
       "delete": "Verwijderen",
       "fork": "Forken",
-      "showMore": "Meer tonen"
+      "showMore": "Meer tonen",
+      "publish": "Publiceren",
+      "document": "Document"
     },
     "details": "Details",
     "noDescription": "Geen beschrijving",

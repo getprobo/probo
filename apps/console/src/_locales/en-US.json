@@ -2456,6 +2456,15 @@
       "published": "Risks published successfully."
     }
   },
+  "publishRiskAnalysisDialog": {
+    "title": "Publish Risk Analysis",
+    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
+    "fields": { "approvers": "Approvers" },
+    "placeholders": { "approvers": "Add approvers..." },
+    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Risk analysis published successfully." },
+    "errors": { "publish": "Failed to publish risk analysis" },
+    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+  },
   "riskRow": {
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk" },
@@ -2475,7 +2484,7 @@
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk analysis", "update": "Failed to update risk analysis", "content": "Could not display this description" },
     "deleteConfirmation": "This will permanently delete this risk analysis and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
-    "actions": { "fork": "Fork", "edit": "Edit", "delete": "Delete", "showMore": "Show more" },
+    "actions": { "fork": "Fork", "edit": "Edit", "delete": "Delete", "showMore": "Show more", "publish": "Publish", "document": "Document" },
     "details": "Details",
     "noDescription": "No description",
     "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at", "description": "Description" },

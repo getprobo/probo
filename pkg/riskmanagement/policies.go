@@ -39,7 +39,7 @@ var readActions = []string{
 }
 
 var writeActions = []string{
-	ActionRiskAnalysisCreate, ActionRiskAnalysisUpdate, ActionRiskAnalysisDelete,
+	ActionRiskAnalysisCreate, ActionRiskAnalysisUpdate, ActionRiskAnalysisDelete, ActionRiskAnalysisPublish,
 	ActionRiskAnalysisDiagramCreate, ActionRiskAnalysisDiagramUpdate, ActionRiskAnalysisDiagramDelete,
 	ActionRiskAnalysisNodeCreate, ActionRiskAnalysisNodeUpdate, ActionRiskAnalysisNodeDelete,
 	ActionRiskAnalysisBoundaryCreate, ActionRiskAnalysisBoundaryUpdate, ActionRiskAnalysisBoundaryDelete,

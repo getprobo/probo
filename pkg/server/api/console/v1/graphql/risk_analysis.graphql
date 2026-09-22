@@ -212,6 +212,7 @@ type RiskAnalysis implements Node {
     description: String
     period: Period
     matrixSize: MatrixSize!
+    document: Document @goField(forceResolver: true)
     organization: Organization @goField(forceResolver: true)
 
     treatmentPlans(
@@ -555,6 +556,10 @@ extend type Mutation {
     unlinkRiskAnalysisScenarioRisk(
         input: UnlinkRiskAnalysisScenarioRiskInput!
     ): UnlinkRiskAnalysisScenarioRiskPayload!
+
+    publishRiskAnalysis(
+        input: PublishRiskAnalysisInput!
+    ): PublishRiskAnalysisPayload!
 }
 
 # Mutation inputs & payloads
@@ -809,4 +814,15 @@ input UnlinkRiskAnalysisScenarioRiskInput {
 type UnlinkRiskAnalysisScenarioRiskPayload {
     riskAnalysisScenario: RiskAnalysisScenario!
     deletedRiskAnalysisScenarioId: ID!
+}
+
+input PublishRiskAnalysisInput {
+    riskAnalysisId: ID!
+    approverIds: [ID!]
+    minor: Boolean!
+}
+
+type PublishRiskAnalysisPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }

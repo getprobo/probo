@@ -4532,6 +4532,15 @@
       "published": "Risques publiés avec succès."
     }
   },
+  "publishRiskAnalysisDialog": {
+    "title": "Publier l’analyse des risques",
+    "description": "Sélectionnez des approbateurs pour demander une approbation avant la publication, ou publiez directement sans approbateurs.",
+    "fields": { "approvers": "Approbateurs" },
+    "placeholders": { "approvers": "Ajouter des approbateurs..." },
+    "messages": { "success": "Succès", "error": "Erreur", "approvalRequested": "Approbation demandée avec succès.", "published": "Analyse des risques publiée avec succès." },
+    "errors": { "publish": "Échec de la publication de l’analyse des risques" },
+    "actions": { "publishMinor": "Publier en version mineure", "requestApproval": "Demander une approbation", "publish": "Publier" }
+  },
   "riskRow": {
     "messages": {
       "error": "Erreur"
@@ -4577,7 +4586,9 @@
       "edit": "Modifier",
       "delete": "Supprimer",
       "fork": "Fork",
-      "showMore": "Afficher plus"
+      "showMore": "Afficher plus",
+      "publish": "Publier",
+      "document": "Document"
     },
     "details": "Détails",
     "noDescription": "Aucune description",

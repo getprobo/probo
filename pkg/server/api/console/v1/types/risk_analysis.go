@@ -67,7 +67,7 @@ func NewRiskAnalysisConnectionEdge(ra *coredata.RiskAnalysis, orderBy coredata.R
 }
 
 func NewRiskAnalysis(ra *coredata.RiskAnalysis) *RiskAnalysis {
-	return &RiskAnalysis{
+	result := &RiskAnalysis{
 		ID:          ra.ID,
 		Name:        ra.Name,
 		Description: ra.Description,
@@ -79,4 +79,12 @@ func NewRiskAnalysis(ra *coredata.RiskAnalysis) *RiskAnalysis {
 		CreatedAt: ra.CreatedAt,
 		UpdatedAt: ra.UpdatedAt,
 	}
+
+	if ra.DocumentID != nil {
+		result.Document = &Document{
+			ID: *ra.DocumentID,
+		}
+	}
+
+	return result
 }

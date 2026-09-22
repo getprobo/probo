@@ -295,6 +295,62 @@ type (
 		Note               string
 	}
 
+	RiskAnalysisData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		Period           string
+		Description      string
+		Matrix           RiskAnalysisMatrix
+		TotalPlans       int
+		Rows             []RiskAnalysisRow
+		Diagrams         []RiskAnalysisDiagram
+	}
+
+	RiskAnalysisMatrix struct {
+		Size   string
+		Charts []RiskAnalysisMatrixChart
+	}
+
+	RiskAnalysisMatrixChart struct {
+		Title string
+		HTML  string
+	}
+
+	RiskAnalysisRow struct {
+		ReferenceID        string
+		Name               string
+		Description        string
+		Category           string
+		Treatment          string
+		Owner              string
+		InherentLikelihood string
+		InherentImpact     string
+		InherentRiskScore  string
+		ResidualLikelihood string
+		ResidualImpact     string
+		ResidualRiskScore  string
+		Measures           []RiskAnalysisMeasure
+	}
+
+	RiskAnalysisMeasure struct {
+		Name  string
+		State string
+	}
+
+	RiskAnalysisDiagram struct {
+		Name      string
+		Mermaid   string
+		Scenarios []RiskAnalysisScenario
+	}
+
+	RiskAnalysisScenario struct {
+		Name        string
+		Description string
+		Risks       []string
+		Threats     []string
+	}
+
 	FindingListData struct {
 		Title            string
 		OrganizationName string

@@ -24,11 +24,12 @@ package riskmanagement
 // Format: risk-management:<entity>:<action>
 const (
 	// RiskAnalysis actions
-	ActionRiskAnalysisGet    = "risk-management:risk-analysis:get"
-	ActionRiskAnalysisList   = "risk-management:risk-analysis:list"
-	ActionRiskAnalysisCreate = "risk-management:risk-analysis:create"
-	ActionRiskAnalysisUpdate = "risk-management:risk-analysis:update"
-	ActionRiskAnalysisDelete = "risk-management:risk-analysis:delete"
+	ActionRiskAnalysisGet     = "risk-management:risk-analysis:get"
+	ActionRiskAnalysisList    = "risk-management:risk-analysis:list"
+	ActionRiskAnalysisCreate  = "risk-management:risk-analysis:create"
+	ActionRiskAnalysisUpdate  = "risk-management:risk-analysis:update"
+	ActionRiskAnalysisDelete  = "risk-management:risk-analysis:delete"
+	ActionRiskAnalysisPublish = "risk-management:risk-analysis:publish"
 
 	// RiskAnalysisDiagram actions
 	ActionRiskAnalysisDiagramGet    = "risk-management:diagram:get"

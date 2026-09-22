@@ -1,0 +1,150 @@
+# 1. Purpose
+
+This document records the treatment plans produced by a single risk analysis.
+It captures each linked risk's classification, treatment, ownership, linked
+measures, and initial and residual scoring (likelihood × impact). Initial,
+net, and residual matrices are shown below. Diagrams from the analysis are
+included as Mermaid charts, each with a list of scenarios and their linked
+risks and threats.
+
+**Analysis:** {{ .Title }}
+
+**Organization:** {{ .OrganizationName }}
+
+**Created:** {{ .CreatedAt.Format "2006-01-02" }}
+
+**Period:** {{ .Period }}
+
+**Matrix:** {{ .Matrix.Size }}
+{{ if .Description }}
+
+**Description:**
+
+{{ .Description }}
+{{ end }}
+---
+
+# 2. Risk Matrix
+
+{{ range .Matrix.Charts }}
+### {{ .Title }}
+
+{{ .HTML }}
+↔ Likelihood ↕ Impact
+
+{{ end }}
+---
+
+# 3. Treatment Plans
+
+{{ if not .Rows -}}
+No treatment plans recorded.
+{{ else -}}
+{{ range $i, $r := .Rows -}}
+## 3.{{ add $i 1 }} {{ if $r.ReferenceID }}{{ $r.ReferenceID }} {{ end }}{{ $r.Name }}
+
+### 3.{{ add $i 1 }}.1 General Information
+
+**ID:** {{ if $r.ReferenceID }}{{ $r.ReferenceID }}{{ else }}Not specified{{ end }}
+
+**Description:** {{ $r.Description }}
+
+**Category:** {{ $r.Category }}
+
+**Owner:** {{ $r.Owner }}
+
+**Treatment:** {{ $r.Treatment }}
+
+### 3.{{ add $i 1 }}.2 Initial Risk
+
+| Likelihood | Impact | Score |
+| --- | --- | --- |
+| {{ $r.InherentLikelihood }} | {{ $r.InherentImpact }} | {{ $r.InherentRiskScore }} |
+
+### 3.{{ add $i 1 }}.3 Residual Risk
+
+| Likelihood | Impact | Score |
+| --- | --- | --- |
+| {{ $r.ResidualLikelihood }} | {{ $r.ResidualImpact }} | {{ $r.ResidualRiskScore }} |
+
+### 3.{{ add $i 1 }}.4 Measures
+
+{{ if not $r.Measures -}}
+No measures linked.
+{{ else -}}
+| Measure | State |
+| --- | --- |
+{{ range $r.Measures -}}
+| {{ .Name }} | {{ .State }} |
+{{ end -}}
+{{ end }}
+---
+{{ end -}}
+{{ end -}}
+
+# 4. Diagrams
+
+{{ if not .Diagrams -}}
+No diagrams recorded.
+{{ else -}}
+{{ range $i, $d := .Diagrams -}}
+## 4.{{ add $i 1 }} {{ $d.Name }}
+
+{{ if $d.Mermaid -}}
+```mermaid
+{{ $d.Mermaid }}
+```
+{{ else -}}
+No diagram content.
+{{ end }}
+
+### Scenarios
+
+{{ if not $d.Scenarios -}}
+No scenarios recorded.
+{{ else -}}
+{{ range $d.Scenarios -}}
+**{{ .Name }}**
+{{ if .Description }}
+
+{{ .Description }}
+{{ end }}
+
+- **Risks:** {{ if .Risks }}{{ range $i, $r := .Risks }}{{ if $i }}, {{ end }}{{ $r }}{{ end }}{{ else }}None{{ end }}
+- **Threats:** {{ if .Threats }}{{ range $i, $t := .Threats }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}{{ else }}None{{ end }}
+
+{{ end -}}
+{{ end -}}
+{{ end -}}
+{{ end -}}
+
+# 5. Definitions
+
+### Treatment
+
+- **Mitigated:** Controls are in place to reduce the likelihood and/or impact of the risk.
+- **Accepted:** The risk is acknowledged and accepted without further action.
+- **Avoided:** Activities giving rise to the risk are avoided altogether.
+- **Transferred:** The risk is shifted to a third party (e.g., insurance, vendor contract).
+
+### Likelihood
+
+- **1 — Improbable:** Highly unlikely to occur under normal circumstances.
+- **2 — Remote:** Unlikely but possible.
+- **3 — Occasional:** Could occur from time to time.
+- **4 — Probable:** Likely to occur in most circumstances.
+- **5 — Frequent:** Expected to occur regularly.
+
+### Impact
+
+- **1 — Negligible:** Minimal disruption; absorbed by routine operations.
+- **2 — Low:** Limited disruption; localized impact.
+- **3 — Moderate:** Notable disruption to operations or finances.
+- **4 — Significant:** Major disruption; prolonged recovery effort needed.
+- **5 — Catastrophic:** Severe organization-wide impact threatening continuity.
+
+### Risk Score
+
+Risk Score is the product of Likelihood × Impact (range 1–25). Initial values
+represent the risk before controls; residual values represent the risk after
+controls have been applied. Severity bands: Low (≤4), High (5–14), Critical (≥15).

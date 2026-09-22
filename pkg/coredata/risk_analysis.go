@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -44,6 +45,7 @@ type (
 		PeriodEnd      *time.Time `db:"period_end"`
 		MatrixRows     int        `db:"matrix_rows"`
 		MatrixCols     int        `db:"matrix_cols"`
+		DocumentID     *gid.GID   `db:"document_id"`
 		CreatedAt      time.Time  `db:"created_at"`
 		UpdatedAt      time.Time  `db:"updated_at"`
 	}
@@ -143,6 +145,7 @@ SELECT
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	document_id,
 	created_at,
 	updated_at
 FROM risk_analyses
@@ -187,6 +190,7 @@ SELECT
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	document_id,
 	created_at,
 	updated_at
 FROM risk_analyses
@@ -234,6 +238,7 @@ SELECT
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	document_id,
 	created_at,
 	updated_at
 FROM risk_analyses
@@ -280,6 +285,7 @@ INSERT INTO risk_analyses (
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	document_id,
 	created_at,
 	updated_at
 )
@@ -293,6 +299,7 @@ VALUES (
 	@period_end,
 	@matrix_rows,
 	@matrix_cols,
+	@document_id,
 	@created_at,
 	@updated_at
 )
@@ -308,12 +315,19 @@ VALUES (
 		"period_end":      ra.PeriodEnd,
 		"matrix_rows":     ra.MatrixRows,
 		"matrix_cols":     ra.MatrixCols,
+		"document_id":     ra.DocumentID,
 		"created_at":      ra.CreatedAt,
 		"updated_at":      ra.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			if pgErr.ConstraintName == "risk_analyses_document_id_key" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot insert risk assessment: %w", err)
 	}
 
@@ -334,6 +348,7 @@ SET
 	period_end = @period_end,
 	matrix_rows = @matrix_rows,
 	matrix_cols = @matrix_cols,
+	document_id = @document_id,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @id
@@ -348,12 +363,19 @@ WHERE %s
 		"period_end":   ra.PeriodEnd,
 		"matrix_rows":  ra.MatrixRows,
 		"matrix_cols":  ra.MatrixCols,
+		"document_id":  ra.DocumentID,
 		"updated_at":   ra.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			if pgErr.ConstraintName == "risk_analyses_document_id_key" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot update risk assessment: %w", err)
 	}
 
@@ -381,4 +403,37 @@ DELETE FROM risk_analyses WHERE %s AND id = @id
 	_, err := conn.Exec(ctx, q, args)
 
 	return err
+}
+
+func (ra RiskAnalysis) ClearDocumentIDByDocumentIDs(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	risk_analyses
+SET
+	document_id = NULL,
+	updated_at = @now
+WHERE
+	document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear risk analysis document references: %w", err)
+	}
+
+	return nil
 }

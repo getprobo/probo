@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/riskmanagement"
 )
 
 type GeneratedDocumentService struct {
@@ -3969,13 +3970,101 @@ func riskImpactLabel(v int) string {
 }
 
 func riskSeverityLabel(score int) string {
+	return riskSeverityLabelForSize(score, 5, 5)
+}
+
+func riskSeverityLabelForSize(score, rows, cols int) string {
+	max := rows * cols
+	if max <= 0 {
+		max = 25
+	}
+
 	switch {
-	case score >= 15:
+	case score*25 >= max*15:
 		return "Critical"
-	case score >= 5:
+	case score*25 >= max*5:
 		return "High"
 	default:
 		return "Low"
+	}
+}
+
+func buildRiskAnalysisMatrix(
+	rows, cols int,
+	cells []*coredata.RiskAnalysisMatrixCell,
+) docgen.RiskAnalysisMatrix {
+	if rows < 1 {
+		rows = 5
+	}
+
+	if cols < 1 {
+		cols = 5
+	}
+
+	countsByType := map[coredata.TreatmentPlanScoreType]map[[2]int]int{
+		coredata.TreatmentPlanScoreTypeInherent: {},
+		coredata.TreatmentPlanScoreTypeNet:      {},
+		coredata.TreatmentPlanScoreTypeResidual: {},
+	}
+
+	for _, cell := range cells {
+		counts, ok := countsByType[cell.Type]
+		if !ok {
+			continue
+		}
+
+		if cell.Likelihood < 1 || cell.Likelihood > rows || cell.Impact < 1 || cell.Impact > cols {
+			continue
+		}
+
+		counts[[2]int{cell.Likelihood, cell.Impact}] = cell.Count
+	}
+
+	return docgen.RiskAnalysisMatrix{
+		Size: fmt.Sprintf("%d×%d", rows, cols),
+		Charts: []docgen.RiskAnalysisMatrixChart{
+			riskAnalysisMatrixChart("Initial", rows, cols, countsByType[coredata.TreatmentPlanScoreTypeInherent]),
+			riskAnalysisMatrixChart("Net", rows, cols, countsByType[coredata.TreatmentPlanScoreTypeNet]),
+			riskAnalysisMatrixChart("Residual", rows, cols, countsByType[coredata.TreatmentPlanScoreTypeResidual]),
+		},
+	}
+}
+
+func riskAnalysisMatrixChart(
+	title string,
+	likelihoodMax, impactMax int,
+	counts map[[2]int]int,
+) docgen.RiskAnalysisMatrixChart {
+	var b strings.Builder
+	b.WriteString("<table><tr><th></th>")
+
+	for likelihood := 1; likelihood <= likelihoodMax; likelihood++ {
+		fmt.Fprintf(&b, "<th>%d</th>", likelihood)
+	}
+
+	b.WriteString("</tr>")
+
+	for impact := impactMax; impact >= 1; impact-- {
+		fmt.Fprintf(&b, "<tr><th>%d</th>", impact)
+
+		for likelihood := 1; likelihood <= likelihoodMax; likelihood++ {
+			n := counts[[2]int{likelihood, impact}]
+			if n == 0 {
+				b.WriteString("<td></td>")
+				continue
+			}
+
+			fmt.Fprintf(&b, "<td>%d</td>", n)
+		}
+
+		b.WriteString("</tr>")
+	}
+
+	b.WriteString("</table>\n")
+
+	return docgen.RiskAnalysisMatrixChart{
+		Title: title,
+		HTML:  b.String(),
 	}
 }
 
@@ -3995,6 +4084,699 @@ func formatRiskTreatment(t *coredata.RiskTreatment) string {
 		return "Transferred"
 	default:
 		return stringOrNotSpecified(string(*t))
+	}
+}
+
+func formatRiskTreatmentValue(t coredata.RiskTreatment) string {
+	return formatRiskTreatment(&t)
+}
+
+func formatRiskAnalysisPeriod(start, end *time.Time) string {
+	if start == nil && end == nil {
+		return "Not specified"
+	}
+
+	return formatTimeOrNotSpecified(start) + " – " + formatTimeOrNotSpecified(end)
+}
+
+var riskAnalysisTemplate = template.Must(
+	template.New("risk_analysis.md.tmpl").
+		Funcs(template.FuncMap{
+			"add": func(a, b int) int {
+				return a + b
+			},
+		}).
+		ParseFS(Templates, "templates/risk_analysis.md.tmpl"),
+)
+
+func BuildRiskAnalysisDocument(data docgen.RiskAnalysisData) (string, error) {
+	var buf bytes.Buffer
+	if err := riskAnalysisTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute risk analysis template: %w", err)
+	}
+
+	node, err := prosemirror.ParseMarkdown(buf.String())
+	if err != nil {
+		return "", fmt.Errorf("cannot convert risk analysis markdown: %w", err)
+	}
+
+	out, err := json.Marshal(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal risk analysis prosemirror node: %w", err)
+	}
+
+	return string(out), nil
+}
+
+func (s *GeneratedDocumentService) PublishRiskAnalysis(
+	ctx context.Context, scope coredata.Scoper,
+	riskAnalysisID gid.GID,
+	approverIDs []gid.GID,
+	minor bool,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			riskAnalysis := &coredata.RiskAnalysis{}
+			if err := riskAnalysis.LoadByID(ctx, tx, scope, riskAnalysisID); err != nil {
+				return fmt.Errorf("cannot load risk analysis: %w", err)
+			}
+
+			documentData, err := s.buildRiskAnalysisDocumentData(ctx, scope, tx, riskAnalysis)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildRiskAnalysisDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			var existingDoc *coredata.Document
+
+			if riskAnalysis.DocumentID != nil {
+				doc := &coredata.Document{}
+
+				err = doc.LoadByID(ctx, tx, scope, *riskAnalysis.DocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load risk analysis document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					riskAnalysis.DocumentID = nil
+
+					riskAnalysis.UpdatedAt = now
+					if err := riskAnalysis.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			if existingDoc == nil {
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:             documentID,
+					OrganizationID: riskAnalysis.OrganizationID,
+					WriteMode:      coredata.DocumentWriteModeGenerated,
+					Status:         coredata.DocumentStatusActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := document.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				riskAnalysis.DocumentID = &documentID
+
+				riskAnalysis.UpdatedAt = now
+				if err := riskAnalysis.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update document reference: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: riskAnalysis.OrganizationID,
+				DocumentID:     document.ID,
+				Title:          riskAnalysis.Name,
+				Content:        prosemirrorJSON,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, riskAnalysis.OrganizationID, approverIDs, minor, now)
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
+	ctx context.Context, scope coredata.Scoper,
+	conn pg.Querier,
+	riskAnalysis *coredata.RiskAnalysis,
+) (docgen.RiskAnalysisData, error) {
+	organization := &coredata.Organization{}
+	if err := organization.LoadByID(ctx, conn, scope, riskAnalysis.OrganizationID); err != nil {
+		return docgen.RiskAnalysisData{}, fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	treatmentPlans, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     coredata.TreatmentPlanOrderFieldCategory,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TreatmentPlanOrderField]) ([]*coredata.TreatmentPlan, error) {
+			var batch coredata.TreatmentPlans
+			if err := batch.LoadByRiskAnalysisID(ctx, conn, scope, riskAnalysis.ID, cursor, coredata.NewTreatmentPlanFilter(nil, nil, nil)); err != nil {
+				return nil, fmt.Errorf("cannot load treatment plans: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.RiskAnalysisData{}, err
+	}
+
+	diagrams, err := s.buildRiskAnalysisDiagrams(ctx, scope, conn, riskAnalysis.ID)
+	if err != nil {
+		return docgen.RiskAnalysisData{}, err
+	}
+
+	description, err := riskAnalysisDescriptionMarkdown(riskAnalysis.Description)
+	if err != nil {
+		return docgen.RiskAnalysisData{}, err
+	}
+
+	var treatmentPlansForMatrix coredata.TreatmentPlans
+
+	matrixCells, err := treatmentPlansForMatrix.CountMatrixCellsByRiskAnalysisID(
+		ctx,
+		conn,
+		scope,
+		riskAnalysis.ID,
+	)
+	if err != nil {
+		return docgen.RiskAnalysisData{}, fmt.Errorf("cannot load risk analysis matrix cells: %w", err)
+	}
+
+	matrix := buildRiskAnalysisMatrix(riskAnalysis.MatrixRows, riskAnalysis.MatrixCols, matrixCells)
+
+	if len(treatmentPlans) == 0 {
+		return docgen.RiskAnalysisData{
+			Title:            sanitizeTrackerCell(riskAnalysis.Name),
+			OrganizationName: sanitizeTrackerCell(organization.Name),
+			CreatedAt:        riskAnalysis.CreatedAt,
+			Period:           sanitizeTrackerCell(formatRiskAnalysisPeriod(riskAnalysis.PeriodStart, riskAnalysis.PeriodEnd)),
+			Description:      description,
+			Matrix:           matrix,
+			TotalPlans:       0,
+			Diagrams:         diagrams,
+		}, nil
+	}
+
+	riskIDs := make([]gid.GID, 0, len(treatmentPlans))
+	riskIDSet := make(map[gid.GID]struct{}, len(treatmentPlans))
+	ownerIDs := make([]gid.GID, 0, len(treatmentPlans))
+	ownerIDSet := make(map[gid.GID]struct{}, len(treatmentPlans))
+	planIDs := make([]gid.GID, 0, len(treatmentPlans))
+
+	for _, tp := range treatmentPlans {
+		planIDs = append(planIDs, tp.ID)
+
+		if _, ok := riskIDSet[tp.RiskID]; !ok {
+			riskIDs = append(riskIDs, tp.RiskID)
+			riskIDSet[tp.RiskID] = struct{}{}
+		}
+
+		if _, ok := ownerIDSet[tp.OwnerID]; !ok {
+			ownerIDs = append(ownerIDs, tp.OwnerID)
+			ownerIDSet[tp.OwnerID] = struct{}{}
+		}
+	}
+
+	riskMap := make(map[gid.GID]*coredata.Risk, len(riskIDs))
+
+	if len(riskIDs) > 0 {
+		var risks coredata.Risks
+		if err := risks.LoadByIDs(ctx, conn, scope, riskIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return docgen.RiskAnalysisData{}, fmt.Errorf("cannot load risks: %w", err)
+		}
+
+		for _, r := range risks {
+			riskMap[r.ID] = r
+		}
+	}
+
+	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
+
+	if len(ownerIDs) > 0 {
+		var profiles coredata.MembershipProfiles
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return docgen.RiskAnalysisData{}, fmt.Errorf("cannot load profiles: %w", err)
+		}
+
+		for _, p := range profiles {
+			profileMap[p.ID] = p
+		}
+	}
+
+	measuresByPlan, err := s.loadRiskAnalysisMeasuresByPlan(ctx, scope, conn, planIDs)
+	if err != nil {
+		return docgen.RiskAnalysisData{}, err
+	}
+
+	rows := make([]docgen.RiskAnalysisRow, 0, len(treatmentPlans))
+	for _, tp := range treatmentPlans {
+		name := "Not specified"
+		description := "Not specified"
+		referenceID := ""
+
+		if risk, ok := riskMap[tp.RiskID]; ok {
+			name = risk.Name
+			description = derefStringOrNotSpecified(risk.Description)
+			referenceID = risk.ReferenceID
+		}
+
+		ownerID := tp.OwnerID
+		inherentLikelihood := tp.InherentLikelihood
+		inherentImpact := tp.InherentImpact
+		inherentRiskScore := tp.InherentRiskScore
+		residualLikelihood := tp.ResidualLikelihood
+		residualImpact := tp.ResidualImpact
+		residualRiskScore := tp.ResidualRiskScore
+
+		rows = append(rows, docgen.RiskAnalysisRow{
+			ReferenceID:        sanitizeTrackerCell(referenceID),
+			Name:               sanitizeTrackerCell(name),
+			Description:        sanitizeTrackerCell(description),
+			Category:           sanitizeTrackerCell(stringOrNotSpecified(tp.Category)),
+			Treatment:          sanitizeTrackerCell(formatRiskTreatmentValue(tp.Treatment)),
+			Owner:              sanitizeTrackerCell(lookupProfileName(profileMap, &ownerID)),
+			InherentLikelihood: sanitizeTrackerCell(formatScoreCell(&inherentLikelihood, riskLikelihoodLabel(inherentLikelihood))),
+			InherentImpact:     sanitizeTrackerCell(formatScoreCell(&inherentImpact, riskImpactLabel(inherentImpact))),
+			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskSeverityLabel(inherentRiskScore))),
+			ResidualLikelihood: sanitizeTrackerCell(formatScoreCell(&residualLikelihood, riskLikelihoodLabel(residualLikelihood))),
+			ResidualImpact:     sanitizeTrackerCell(formatScoreCell(&residualImpact, riskImpactLabel(residualImpact))),
+			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskSeverityLabel(residualRiskScore))),
+			Measures:           measuresByPlan[tp.ID],
+		})
+	}
+
+	return docgen.RiskAnalysisData{
+		Title:            sanitizeTrackerCell(riskAnalysis.Name),
+		OrganizationName: sanitizeTrackerCell(organization.Name),
+		CreatedAt:        riskAnalysis.CreatedAt,
+		Period:           sanitizeTrackerCell(formatRiskAnalysisPeriod(riskAnalysis.PeriodStart, riskAnalysis.PeriodEnd)),
+		Description:      description,
+		Matrix:           matrix,
+		TotalPlans:       len(treatmentPlans),
+		Rows:             rows,
+		Diagrams:         diagrams,
+	}, nil
+}
+
+func riskAnalysisDescriptionMarkdown(raw *string) (string, error) {
+	if raw == nil || strings.TrimSpace(*raw) == "" {
+		return "", nil
+	}
+
+	var node prosemirror.Node
+	if err := json.Unmarshal([]byte(*raw), &node); err != nil {
+		return "", fmt.Errorf("cannot parse risk analysis description: %w", err)
+	}
+
+	markdown, err := prosemirror.RenderMarkdown(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot render risk analysis description: %w", err)
+	}
+
+	return strings.TrimSpace(markdown), nil
+}
+
+func (s *GeneratedDocumentService) loadRiskAnalysisMeasuresByPlan(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	planIDs []gid.GID,
+) (map[gid.GID][]docgen.RiskAnalysisMeasure, error) {
+	var mappings coredata.TreatmentPlanMeasures
+	if err := mappings.LoadByTreatmentPlanIDs(ctx, conn, scope, planIDs); err != nil {
+		return nil, fmt.Errorf("cannot load treatment plan measures: %w", err)
+	}
+
+	measureIDs := make([]gid.GID, 0, len(mappings))
+	measureIDSet := make(map[gid.GID]struct{}, len(mappings))
+
+	for _, mapping := range mappings {
+		if _, ok := measureIDSet[mapping.MeasureID]; !ok {
+			measureIDs = append(measureIDs, mapping.MeasureID)
+			measureIDSet[mapping.MeasureID] = struct{}{}
+		}
+	}
+
+	measureMap := make(map[gid.GID]*coredata.Measure, len(measureIDs))
+
+	if len(measureIDs) > 0 {
+		var measures coredata.Measures
+		if err := measures.LoadByIDs(ctx, conn, scope, measureIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, fmt.Errorf("cannot load measures: %w", err)
+		}
+
+		for _, measure := range measures {
+			measureMap[measure.ID] = measure
+		}
+	}
+
+	measuresByPlan := make(map[gid.GID][]docgen.RiskAnalysisMeasure, len(planIDs))
+
+	for _, mapping := range mappings {
+		measure, ok := measureMap[mapping.MeasureID]
+		if !ok {
+			continue
+		}
+
+		measuresByPlan[mapping.TreatmentPlanID] = append(
+			measuresByPlan[mapping.TreatmentPlanID],
+			docgen.RiskAnalysisMeasure{
+				Name:  sanitizeTrackerCell(measure.Name),
+				State: sanitizeTrackerCell(formatMeasureState(measure.State)),
+			},
+		)
+	}
+
+	for _, measures := range measuresByPlan {
+		slices.SortFunc(measures, func(a, b docgen.RiskAnalysisMeasure) int {
+			if cmp := strings.Compare(a.Name, b.Name); cmp != 0 {
+				return cmp
+			}
+
+			return strings.Compare(a.State, b.State)
+		})
+	}
+
+	return measuresByPlan, nil
+}
+
+func (s *GeneratedDocumentService) buildRiskAnalysisDiagrams(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	riskAnalysisID gid.GID,
+) ([]docgen.RiskAnalysisDiagram, error) {
+	diagrams, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisDiagramOrderField]{
+			Field:     coredata.RiskAnalysisDiagramOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisDiagramOrderField]) ([]*coredata.RiskAnalysisDiagram, error) {
+			var batch coredata.RiskAnalysisDiagrams
+			if err := batch.LoadByRiskAnalysisID(ctx, conn, scope, riskAnalysisID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load diagrams: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	rows := make([]docgen.RiskAnalysisDiagram, 0, len(diagrams))
+	for _, diagram := range diagrams {
+		mermaid, err := s.buildRiskAnalysisDiagramMermaid(ctx, scope, conn, diagram.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		scenarios, err := s.buildRiskAnalysisDiagramScenarios(ctx, scope, conn, diagram.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		rows = append(rows, docgen.RiskAnalysisDiagram{
+			Name:      sanitizeTrackerCell(diagram.Name),
+			Mermaid:   mermaid,
+			Scenarios: scenarios,
+		})
+	}
+
+	return rows, nil
+}
+
+func (s *GeneratedDocumentService) buildRiskAnalysisDiagramMermaid(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	diagramID gid.GID,
+) (string, error) {
+	nodes, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisNodeOrderField]{
+			Field:     coredata.RiskAnalysisNodeOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisNodeOrderField]) ([]*coredata.RiskAnalysisNode, error) {
+			var batch coredata.RiskAnalysisNodes
+			if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load diagram nodes: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	boundaries, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisBoundaryOrderField]{
+			Field:     coredata.RiskAnalysisBoundaryOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisBoundaryOrderField]) ([]*coredata.RiskAnalysisBoundary, error) {
+			var batch coredata.RiskAnalysisBoundaries
+			if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load diagram boundaries: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	processes, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisProcessOrderField]{
+			Field:     coredata.RiskAnalysisProcessOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisProcessOrderField]) ([]*coredata.RiskAnalysisProcess, error) {
+			var batch coredata.RiskAnalysisProcesses
+			if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load diagram processes: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	threats, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisThreatOrderField]{
+			Field:     coredata.RiskAnalysisThreatOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisThreatOrderField]) ([]*coredata.RiskAnalysisThreat, error) {
+			var batch coredata.RiskAnalysisThreats
+			if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load diagram threats: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return riskmanagement.DiagramMermaidChart(nodes, boundaries, processes, threats), nil
+}
+
+func (s *GeneratedDocumentService) buildRiskAnalysisDiagramScenarios(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	diagramID gid.GID,
+) ([]docgen.RiskAnalysisScenario, error) {
+	scenarios, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
+			Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisScenarioOrderField]) ([]*coredata.RiskAnalysisScenario, error) {
+			var batch coredata.RiskAnalysisScenarios
+			if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load diagram scenarios: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scenarios) == 0 {
+		return nil, nil
+	}
+
+	scenarioIDs := make([]gid.GID, 0, len(scenarios))
+	for _, scenario := range scenarios {
+		scenarioIDs = append(scenarioIDs, scenario.ID)
+	}
+
+	var riskLinks coredata.RiskAnalysisScenarioRisks
+	if err := riskLinks.LoadByScenarioIDs(ctx, conn, scope, scenarioIDs); err != nil {
+		return nil, fmt.Errorf("cannot load scenario risks: %w", err)
+	}
+
+	var threatLinks coredata.RiskAnalysisScenarioThreats
+	if err := threatLinks.LoadByScenarioIDs(ctx, conn, scope, scenarioIDs); err != nil {
+		return nil, fmt.Errorf("cannot load scenario threats: %w", err)
+	}
+
+	riskIDs := make([]gid.GID, 0, len(riskLinks))
+	riskIDSet := make(map[gid.GID]struct{}, len(riskLinks))
+
+	for _, link := range riskLinks {
+		if _, ok := riskIDSet[link.RiskID]; !ok {
+			riskIDs = append(riskIDs, link.RiskID)
+			riskIDSet[link.RiskID] = struct{}{}
+		}
+	}
+
+	riskMap := make(map[gid.GID]*coredata.Risk, len(riskIDs))
+
+	if len(riskIDs) > 0 {
+		var risks coredata.Risks
+		if err := risks.LoadByIDs(ctx, conn, scope, riskIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, fmt.Errorf("cannot load risks: %w", err)
+		}
+
+		for _, risk := range risks {
+			riskMap[risk.ID] = risk
+		}
+	}
+
+	threats, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisThreatOrderField]{
+			Field:     coredata.RiskAnalysisThreatOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisThreatOrderField]) ([]*coredata.RiskAnalysisThreat, error) {
+			var batch coredata.RiskAnalysisThreats
+			if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load diagram threats: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	threatMap := make(map[gid.GID]*coredata.RiskAnalysisThreat, len(threats))
+	for _, threat := range threats {
+		threatMap[threat.ID] = threat
+	}
+
+	risksByScenario := make(map[gid.GID][]string, len(scenarios))
+
+	for _, link := range riskLinks {
+		risk, ok := riskMap[link.RiskID]
+		if !ok {
+			continue
+		}
+
+		risksByScenario[link.RiskAnalysisScenarioID] = append(
+			risksByScenario[link.RiskAnalysisScenarioID],
+			sanitizeTrackerCell(risk.Name),
+		)
+	}
+
+	threatsByScenario := make(map[gid.GID][]string, len(scenarios))
+
+	for _, link := range threatLinks {
+		threat, ok := threatMap[link.RiskAnalysisThreatID]
+		if !ok {
+			continue
+		}
+
+		label := sanitizeTrackerCell(threat.Name)
+		if category := sanitizeTrackerCell(threat.Category); category != "" {
+			label = label + " (" + category + ")"
+		}
+
+		threatsByScenario[link.RiskAnalysisScenarioID] = append(
+			threatsByScenario[link.RiskAnalysisScenarioID],
+			label,
+		)
+	}
+
+	rows := make([]docgen.RiskAnalysisScenario, 0, len(scenarios))
+	for _, scenario := range scenarios {
+		riskNames := risksByScenario[scenario.ID]
+		threatNames := threatsByScenario[scenario.ID]
+
+		slices.Sort(riskNames)
+
+		slices.Sort(threatNames)
+
+		description := ""
+		if scenario.Description != nil {
+			description = sanitizeTrackerCell(*scenario.Description)
+		}
+
+		rows = append(rows, docgen.RiskAnalysisScenario{
+			Name:        sanitizeTrackerCell(scenario.Name),
+			Description: description,
+			Risks:       riskNames,
+			Threats:     threatNames,
+		})
+	}
+
+	return rows, nil
+}
+
+func formatMeasureState(state coredata.MeasureState) string {
+	switch state {
+	case coredata.MeasureStateNotStarted:
+		return "Not started"
+	case coredata.MeasureStateInProgress:
+		return "In progress"
+	case coredata.MeasureStateNotApplicable:
+		return "Not applicable"
+	case coredata.MeasureStateImplemented:
+		return "Implemented"
+	case coredata.MeasureStateUnknown:
+		return "Unknown"
+	case coredata.MeasureStateNotImplemented:
+		return "Not implemented"
+	default:
+		return stringOrNotSpecified(string(state))
 	}
 }
 

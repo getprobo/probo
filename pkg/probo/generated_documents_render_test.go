@@ -21,6 +21,8 @@
 package probo_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,6 +35,45 @@ import (
 // on: a double quote, a backslash, a control character and an HTML tag all
 // break the emitted JSON if a field is interpolated unescaped.
 const hostileText = "quote \" backslash \\ newline \n tag <script> ampersand &"
+
+func riskAnalysisMatrixFixture(size int) docgen.RiskAnalysisMatrix {
+	chart := func(title string) docgen.RiskAnalysisMatrixChart {
+		var b strings.Builder
+		b.WriteString("<table><tr><th></th>")
+
+		for likelihood := 1; likelihood <= size; likelihood++ {
+			fmt.Fprintf(&b, "<th>%d</th>", likelihood)
+		}
+
+		b.WriteString("</tr>")
+
+		for impact := size; impact >= 1; impact-- {
+			fmt.Fprintf(&b, "<tr><th>%d</th>", impact)
+
+			for likelihood := 1; likelihood <= size; likelihood++ {
+				b.WriteString("<td></td>")
+			}
+
+			b.WriteString("</tr>")
+		}
+
+		b.WriteString("</table>\n")
+
+		return docgen.RiskAnalysisMatrixChart{
+			Title: title,
+			HTML:  b.String(),
+		}
+	}
+
+	return docgen.RiskAnalysisMatrix{
+		Size: fmt.Sprintf("%d×%d", size, size),
+		Charts: []docgen.RiskAnalysisMatrixChart{
+			chart("Initial"),
+			chart("Net"),
+			chart("Residual"),
+		},
+	}
+}
 
 func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 	t.Parallel()
@@ -340,6 +381,54 @@ func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 			},
 		},
 		{
+			name: "risk analysis",
+			build: func() (string, error) {
+				return probo.BuildRiskAnalysisDocument(
+					docgen.RiskAnalysisData{
+						Title:            hostileText,
+						OrganizationName: hostileText,
+						Period:           hostileText,
+						Description:      hostileText,
+						Matrix:           riskAnalysisMatrixFixture(5),
+						TotalPlans:       1,
+						Rows: []docgen.RiskAnalysisRow{
+							{
+								ReferenceID:        hostileText,
+								Name:               hostileText,
+								Description:        hostileText,
+								Category:           hostileText,
+								Treatment:          hostileText,
+								Owner:              hostileText,
+								InherentLikelihood: hostileText,
+								InherentImpact:     hostileText,
+								InherentRiskScore:  hostileText,
+								ResidualLikelihood: hostileText,
+								ResidualImpact:     hostileText,
+								ResidualRiskScore:  hostileText,
+								Measures: []docgen.RiskAnalysisMeasure{
+									{Name: hostileText, State: hostileText},
+								},
+							},
+						},
+						Diagrams: []docgen.RiskAnalysisDiagram{
+							{
+								Name:    hostileText,
+								Mermaid: "flowchart LR\n    n0[\"ok\"]",
+								Scenarios: []docgen.RiskAnalysisScenario{
+									{
+										Name:        hostileText,
+										Description: hostileText,
+										Risks:       []string{hostileText},
+										Threats:     []string{hostileText},
+									},
+								},
+							},
+						},
+					},
+				)
+			},
+		},
+		{
 			name: "tracker policy",
 			build: func() (string, error) {
 				return probo.BuildTrackerPolicyDocument(
@@ -428,6 +517,9 @@ func TestBuildDocuments_EmptyDataProducesParseableProseMirror(t *testing.T) {
 		}},
 		{"risk list", func() (string, error) {
 			return probo.BuildRiskListDocument(docgen.RiskListData{})
+		}},
+		{"risk analysis", func() (string, error) {
+			return probo.BuildRiskAnalysisDocument(docgen.RiskAnalysisData{})
 		}},
 		{"tracker policy", func() (string, error) {
 			return probo.BuildTrackerPolicyDocument(docgen.TrackerPolicyData{})

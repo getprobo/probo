@@ -9366,6 +9366,37 @@ components:
           $ref: "#/components/schemas/GID"
           description: Created document version ID
 
+    PublishRiskAnalysisInput:
+      type: object
+      required:
+        - id
+        - minor
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk analysis ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version and ignore approver_ids. If the document has no published version yet, this is a first release at 0.1; otherwise the version is currentMajor.currentMinor+1. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+
+    PublishRiskAnalysisOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
     ApplicabilityStatementOrderField:
       type: string
       enum:
@@ -18220,6 +18251,18 @@ tools:
       $ref: "#/components/schemas/PublishStatementOfApplicabilityInput"
     outputSchema:
       $ref: "#/components/schemas/PublishStatementOfApplicabilityOutput"
+  - name: publishRiskAnalysis
+    title: Publish Risk Analysis
+    description: Publish a risk analysis as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishRiskAnalysisInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishRiskAnalysisOutput"
   - name: listApplicabilityStatements
     title: List Applicability Statements
     description: List all applicability statements for a statement of applicability

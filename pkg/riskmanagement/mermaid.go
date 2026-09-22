@@ -131,7 +131,17 @@ func (s *Service) BuildDiagramMermaidChart(ctx context.Context, scope coredata.S
 		return "", err
 	}
 
-	return buildDiagramMermaidChart(nodes, boundaries, processes, threats), nil
+	return DiagramMermaidChart(nodes, boundaries, processes, threats), nil
+}
+
+// DiagramMermaidChart renders a risk-analysis diagram as a Mermaid flowchart.
+func DiagramMermaidChart(
+	nodes coredata.RiskAnalysisNodes,
+	boundaries coredata.RiskAnalysisBoundaries,
+	processes coredata.RiskAnalysisProcesses,
+	threats coredata.RiskAnalysisThreats,
+) string {
+	return buildDiagramMermaidChart(nodes, boundaries, processes, threats)
 }
 
 func buildDiagramMermaidChart(
