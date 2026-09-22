@@ -109,7 +109,7 @@ Signed-off-by: John Doe <john.doe@example.org>
 
 The application should now be running at `http://localhost:5173`
 
-For detailed information about all Docker services in the development stack, see [Docker Services Documentation](docs/DOCKER_SERVICES.md).
+For detailed information about all Docker services in the development stack, see [`compose.yaml`](compose.yaml).
 
 ## Need Help?
 
