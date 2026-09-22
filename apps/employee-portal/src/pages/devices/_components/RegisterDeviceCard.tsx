@@ -28,7 +28,7 @@ import { registerDeviceCard } from "./variants";
 export interface RegisterDeviceCardProps {
   icon: ReactNode;
   title: string;
-  description: string;
+  description?: string;
   children?: ReactNode;
   action?: ReactNode;
 }
@@ -49,9 +49,11 @@ export function RegisterDeviceCard({
         <Heading level={2} size={6} weight="medium" highContrast>
           {title}
         </Heading>
-        <Text size={2} color="neutral">
-          {description}
-        </Text>
+        {description !== undefined && (
+          <Text size={2} color="neutral">
+            {description}
+          </Text>
+        )}
       </div>
       {children != null && (
         <div className={slots.body()}>

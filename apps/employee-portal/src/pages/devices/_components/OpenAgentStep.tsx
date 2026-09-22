@@ -53,7 +53,6 @@ export function OpenAgentStep({ enrollment, organizationId }: OpenAgentStepProps
         title={hostname === null
           ? t("enroll.enrolled")
           : t("enroll.enrolledWithHostname", { hostname })}
-        description={t("enroll.description")}
         action={(
           <ButtonLink
             to={`/${organizationId}`}
