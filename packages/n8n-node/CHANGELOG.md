@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.233.0] - 2026-09-22
+
+### Changed
+
+- Risk `Delete` describes that deleting a risk also removes its history
+  in risk analyses
+
 ## [0.232.0] - 2026-09-18
 
 ### Changed
