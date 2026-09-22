@@ -31,6 +31,7 @@ const (
 	ConnectorProviderSlack           ConnectorProvider = "SLACK"
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
 	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
+	ConnectorProviderLinearSync      ConnectorProvider = "LINEAR_SYNC"
 	// _ ConnectorProvider = "FIGMA" — formerly Figma; removed (no driver, no OAuth config, no usage)
 	ConnectorProviderOnePassword  ConnectorProvider = "ONE_PASSWORD"
 	ConnectorProviderHubSpot      ConnectorProvider = "HUBSPOT"
@@ -117,6 +118,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
 		ConnectorProviderLinear,
+		ConnectorProviderLinearSync,
 		ConnectorProviderOnePassword,
 		ConnectorProviderHubSpot,
 		ConnectorProviderDocuSign,
@@ -195,6 +197,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
 		ConnectorProviderLinear,
+		ConnectorProviderLinearSync,
 		ConnectorProviderOnePassword,
 		ConnectorProviderHubSpot,
 		ConnectorProviderDocuSign,

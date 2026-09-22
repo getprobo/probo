@@ -92,6 +92,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		intercomRegistration(),
 		langfuseRegistration(),
 		linearRegistration(),
+		linearSyncRegistration(),
 		mercuryRegistration(),
 		metabaseRegistration(),
 		microsoft365Registration(),

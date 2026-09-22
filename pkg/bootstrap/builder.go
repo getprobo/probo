@@ -584,6 +584,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"DATADOG",
 		"ZENDESK",
 		"LINEAR",
+		"LINEAR_SYNC",
 		"GOOGLE_ANALYTICS",
 		"SQUARE",
 		"CAL_COM",
@@ -606,6 +607,21 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				},
 			},
 		)
+	}
+
+	if webhookSecret := b.resolver.getEnv("PROBOD_CONNECTOR_LINEAR_SYNC_WEBHOOK_SECRET"); webhookSecret != "" {
+		for i := range cfg.Probod.Connectors {
+			if cfg.Probod.Connectors[i].Provider != "LINEAR_SYNC" {
+				continue
+			}
+
+			cfg.Probod.Connectors[i].RawSettings = map[string]any{
+				"webhook-secret": webhookSecret,
+			}
+			cfg.Probod.Connectors[i].Settings = map[string]any{
+				"webhook-secret": webhookSecret,
+			}
+		}
 	}
 
 	// Vercel needs the operator-supplied integration slug to resolve the
@@ -793,6 +809,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_DATADOG", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_ZENDESK", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_LINEAR", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_LINEAR_SYNC", []string{"CLIENT_SECRET", "WEBHOOK_SECRET"}},
 		{"CONNECTOR_GOOGLE_ANALYTICS", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_SQUARE", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_CAL_COM", []string{"CLIENT_SECRET"}},

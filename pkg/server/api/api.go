@@ -62,10 +62,12 @@ import (
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
+	linear_v1 "go.probo.inc/probo/pkg/server/api/linear/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -100,6 +102,7 @@ type (
 		ThirdParty              *thirdparty.Service
 		RiskManagement          *riskmanagement.Service
 		ITAM                    *itam.Service
+		Task                    *task.Service
 		Cookie                  securecookie.Config
 		TokenSecret             string
 		// InstallStateKey signs the app-install state tokens the connector
@@ -116,6 +119,7 @@ type (
 		AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 		GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 		AzureConnectorInstall    cloudazure.ConnectorInstallConfig
+		LinearWebhookSecret      string
 	}
 
 	MCPConfig struct {
@@ -132,6 +136,7 @@ type (
 		filesHandler        http.Handler
 		mcpHandler          http.Handler
 		slackHandler        http.Handler
+		linearHandler       http.Handler
 		connectHandler      http.Handler
 		agentHandler        http.Handler
 	}
@@ -142,6 +147,7 @@ var (
 	ErrMissingIAMService     = errors.New("server configuration requires a valid iam.Service instance")
 	ErrMissingSlackService   = errors.New("server configuration requires a valid slack.Service instance")
 	ErrMissingITAMService    = errors.New("server configuration requires a valid itam.Service instance")
+	ErrMissingTaskService    = errors.New("server configuration requires a valid task.Service instance")
 	ErrMissingMailmanService = errors.New("server configuration requires a valid mailman.Service instance")
 )
 
@@ -186,6 +192,10 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingITAMService
 	}
 
+	if cfg.Task == nil {
+		return nil, ErrMissingTaskService
+	}
+
 	if cfg.Mailman == nil {
 		return nil, ErrMissingMailmanService
 	}
@@ -200,6 +210,10 @@ func NewServer(cfg Config) (*Server, error) {
 	// The SAML Assertion Consumer Service endpoint receives cross-origin
 	// POSTs from external identity providers by design.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
+
+	// Linear webhooks are signed POSTs from Linear's servers. Authentication
+	// is HMAC, not cookies, so CSRF does not apply.
+	csrf.AddInsecureBypassPattern("POST /linear/v1/webhooks")
 
 	// The cookie banner API is called cross-origin from customer websites
 	// by the JS SDK. CORS is handled by the cookie banner middleware.
@@ -278,6 +292,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ComplianceMessages,
 			cfg.GraphQLLimits,
 			cfg.ITAM,
+			cfg.Task,
 			cfg.IdentityFederationIssuer,
 			cfg.AWSConnectorInstall,
 			cfg.GCPConnectorInstall,
@@ -309,6 +324,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.RiskManagement,
 			cfg.ITAM,
+			cfg.Task,
 			cfg.Mailman,
 			cfg.TokenSecret,
 			cfg.File,
@@ -324,6 +340,11 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.SlackInteractiveInbox,
 			cfg.Slackbot,
 			cfg.SlackbotInstallations,
+		),
+		linearHandler: linear_v1.NewMux(
+			cfg.Logger.Named("linear.v1"),
+			cfg.Task.Sync,
+			cfg.LinearWebhookSecret,
 		),
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),
@@ -388,6 +409,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
 		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+		r.Mount("/linear/v1", http.StripPrefix("/linear/v1", s.linearHandler))
 	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)

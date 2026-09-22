@@ -50,6 +50,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -74,6 +75,7 @@ func NewGraphQLHandler(
 	baseURL *baseurl.BaseURL,
 	limits gqlutils.Limits,
 	itamSvc *itam.Service,
+	taskSvc *task.Service,
 	probotIdentityBindings *identitybinding.Service,
 	slackbotInstallations *slackchannel.InstallationService,
 	botDeliveryDestinations BotDeliveryDestinations,
@@ -105,6 +107,7 @@ func NewGraphQLHandler(
 			fileManager:             fileManagerSvc,
 			baseURL:                 baseURL,
 			itam:                    itamSvc,
+			task:                    taskSvc,
 			logger:                  logger,
 			identityFederation:      identityFederation,
 			awsConnectorInstall:     awsConnectorInstall,

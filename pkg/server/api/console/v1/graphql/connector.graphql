@@ -6,6 +6,8 @@ enum ConnectorProvider
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace"
         )
     LINEAR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinear")
+    LINEAR_SYNC
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinearSync")
     ONE_PASSWORD
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOnePassword"

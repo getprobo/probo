@@ -13,11 +13,11 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 )
 
 // Actor is the resolver for the actor field.
@@ -53,12 +53,12 @@ func (r *taskActivityResolver) Permission(ctx context.Context, obj *types.TaskAc
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskActivityConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskActivityConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTaskActivityList)
+	scope, err := r.authorize(ctx, obj.ParentID, task.ActionTaskActivityList)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.TaskActivities.CountForTaskID(ctx, scope, obj.ParentID)
+	count, err := r.task.CountActivitiesForTaskID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count task activities", log.Error(err))
 

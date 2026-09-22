@@ -123,6 +123,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "TaskComment"
 	case TaskActivityEntityType:
 		return "TaskActivity"
+	case TaskSyncJobEntityType:
+		return "TaskSyncJob"
 	default:
 		return "Unknown"
 	}

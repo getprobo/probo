@@ -28,6 +28,9 @@ import (
 	"go.probo.inc/probo/pkg/cmd/task/create"
 	"go.probo.inc/probo/pkg/cmd/task/delete"
 	"go.probo.inc/probo/pkg/cmd/task/list"
+	listlinearteams "go.probo.inc/probo/pkg/cmd/task/list-linear-teams"
+	publishlinear "go.probo.inc/probo/pkg/cmd/task/publish-linear"
+	unlinkexternal "go.probo.inc/probo/pkg/cmd/task/unlink-external"
 	"go.probo.inc/probo/pkg/cmd/task/update"
 	"go.probo.inc/probo/pkg/cmd/task/view"
 )
@@ -45,6 +48,9 @@ func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(comment.NewCmdComment(f))
 	cmd.AddCommand(activity.NewCmdActivity(f))
+	cmd.AddCommand(listlinearteams.NewCmdListLinearTeams(f))
+	cmd.AddCommand(publishlinear.NewCmdPublishLinear(f))
+	cmd.AddCommand(unlinkexternal.NewCmdUnlinkExternal(f))
 
 	return cmd
 }

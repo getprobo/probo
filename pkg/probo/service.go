@@ -88,9 +88,6 @@ type (
 		invitationTokenValidity               time.Duration
 		Frameworks                            *FrameworkService
 		Measures                              *MeasureService
-		Tasks                                 *TaskService
-		TaskComments                          *TaskCommentService
-		TaskActivities                        *TaskActivityService
 		Evidences                             *EvidenceService
 		Organizations                         *OrganizationService
 		ThirdParties                          *ThirdPartyService
@@ -169,9 +166,6 @@ func NewService(
 		html2pdfConverter: html2pdfConverter,
 	}
 	svc.Measures = &MeasureService{svc: svc}
-	svc.Tasks = &TaskService{svc: svc}
-	svc.TaskComments = &TaskCommentService{svc: svc}
-	svc.TaskActivities = &TaskActivityService{svc: svc}
 	svc.Evidences = &EvidenceService{
 		svc: svc,
 		fileValidator: filevalidation.NewValidator(

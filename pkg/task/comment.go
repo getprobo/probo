@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package task
 
 import (
 	"context"
@@ -34,10 +34,6 @@ import (
 )
 
 type (
-	TaskCommentService struct {
-		svc *Service
-	}
-
 	CreateTaskCommentRequest struct {
 		TaskID     gid.GID
 		OwnerID    *gid.GID
@@ -95,13 +91,13 @@ func (req *UpdateTaskCommentRequest) Validate() error {
 	return v.Error()
 }
 
-func (s TaskCommentService) Get(
+func (s *Service) GetComment(
 	ctx context.Context, scope coredata.Scoper,
 	taskCommentID gid.GID,
 ) (*coredata.TaskComment, error) {
 	taskComment := &coredata.TaskComment{}
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := taskComment.LoadByID(ctx, conn, scope, taskCommentID); err != nil {
@@ -118,14 +114,14 @@ func (s TaskCommentService) Get(
 	return taskComment, nil
 }
 
-func (s TaskCommentService) ListForTaskID(
+func (s *Service) ListCommentsForTaskID(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 	cursor *page.Cursor[coredata.TaskCommentOrderField],
 ) (*page.Page[*coredata.TaskComment, coredata.TaskCommentOrderField], error) {
 	var taskComments coredata.TaskComments
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := taskComments.LoadByTaskID(ctx, conn, scope, taskID, cursor); err != nil {
@@ -142,13 +138,13 @@ func (s TaskCommentService) ListForTaskID(
 	return page.NewPage(taskComments, cursor), nil
 }
 
-func (s TaskCommentService) CountForTaskID(
+func (s *Service) CountCommentsForTaskID(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			taskComments := coredata.TaskComments{}
@@ -168,7 +164,7 @@ func (s TaskCommentService) CountForTaskID(
 	return count, nil
 }
 
-func (s TaskCommentService) Create(
+func (s *Service) CreateComment(
 	ctx context.Context, scope coredata.Scoper,
 	req CreateTaskCommentRequest,
 ) (*coredata.TaskComment, error) {
@@ -190,7 +186,7 @@ func (s TaskCommentService) Create(
 		UpdatedAt: now,
 	}
 
-	err = s.svc.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			task := &coredata.Task{}
@@ -237,7 +233,7 @@ func (s TaskCommentService) Create(
 	return taskComment, nil
 }
 
-func (s TaskCommentService) Update(
+func (s *Service) UpdateComment(
 	ctx context.Context, scope coredata.Scoper,
 	req UpdateTaskCommentRequest,
 ) (*coredata.TaskComment, error) {
@@ -247,7 +243,7 @@ func (s TaskCommentService) Update(
 
 	taskComment := &coredata.TaskComment{}
 
-	err := s.svc.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := taskComment.LoadByID(ctx, conn, scope, req.ID); err != nil {
@@ -292,13 +288,13 @@ func (s TaskCommentService) Update(
 	return taskComment, nil
 }
 
-func (s TaskCommentService) Delete(
+func (s *Service) DeleteComment(
 	ctx context.Context, scope coredata.Scoper,
 	taskCommentID gid.GID,
 ) error {
 	taskComment := coredata.TaskComment{ID: taskCommentID}
 
-	return s.svc.pg.WithTx(
+	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := taskComment.LoadByID(ctx, conn, scope, taskCommentID); err != nil {

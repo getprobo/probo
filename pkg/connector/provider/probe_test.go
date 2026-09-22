@@ -579,6 +579,7 @@ func TestProbeClosureURL(t *testing.T) {
 		wantURL string
 	}{
 		{"linear", linearRegistration(), "https://api.linear.app/graphql"},
+		{"linear_sync", linearSyncRegistration(), "https://api.linear.app/graphql"},
 		{"monday", mondayRegistration(), "https://api.monday.com/v2"},
 		{"anthropic", anthropicRegistration(), "https://api.anthropic.com/v1/organizations/users?limit=1"},
 		{"square", squareRegistration(), "https://connect.squareup.com/v2/merchants/me"},

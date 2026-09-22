@@ -504,6 +504,18 @@ probo:
   # Slack endpoint overrides use endpointAuth, endpointToken, and
   # endpointApiBase in the connector config. endpointToken is secret
   # material and is mounted from the chart Secret, not a plain env value.
+  # - name: "linear"
+  #   type: "oauth2"
+  #   config:
+  #     clientId: "linear-client-id"
+  #     clientSecret: "linear-client-secret"
+  # - name: "linear-sync"
+  #   type: "oauth2"
+  #   config:
+  #     clientId: "linear-sync-client-id"
+  #     clientSecret: "linear-sync-client-secret"
+  #     # Required with Linear Sync. Signs POST /api/linear/v1/webhooks.
+  #     webhookSecret: "linear-sync-webhook-secret"
 
 # PostgreSQL configuration
 # For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)

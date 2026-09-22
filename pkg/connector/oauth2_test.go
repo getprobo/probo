@@ -443,6 +443,58 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 		assert.False(t, parsed.Query().Has("scope"), "scope param should be absent when no scopes provided")
 	})
 
+	t.Run("empty requested scopes fall back to registered scopes", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:         "id",
+			ClientSecret:     "secret",
+			RedirectURI:      "https://example.com/cb",
+			AuthURL:          "https://provider.example.com/authorize",
+			RegisteredScopes: []string{"read", "write", "issues:create"},
+			ScopeSeparator:   ",",
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "LINEAR"},
+			InitiateOptions{},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "read,write,issues:create", parsed.Query().Get("scope"))
+	})
+
+	t.Run("reconnect unions registered scopes when initiate sends none", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:         "id",
+			ClientSecret:     "secret",
+			RedirectURI:      "https://example.com/cb",
+			AuthURL:          "https://provider.example.com/authorize",
+			RegisteredScopes: []string{"read", "write", "issues:create"},
+			ScopeSeparator:   ",",
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "LINEAR"},
+			InitiateOptions{GrantedScopes: []string{"read"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "issues:create,read,write", parsed.Query().Get("scope"))
+	})
+
 	t.Run("reconnect unions the earlier grant into the request", func(t *testing.T) {
 		t.Parallel()
 

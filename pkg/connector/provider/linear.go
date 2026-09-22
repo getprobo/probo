@@ -43,7 +43,17 @@ func linearRegistration() *Registration {
 		},
 		Probe: probeLinear,
 		OAuth2: &OAuth2Config{
+			// Access review only lists Linear users. Issue write scopes
+			// live on LINEAR_SYNC.
 			Scopes: []string{"read"},
+			// Linear's authorize endpoint requires a comma-separated scope
+			// list. A space-separated string is treated as a single unknown
+			// scope and Linear falls back to read.
+			ScopeSeparator: ",",
+			ExtraAuthParams: map[string]string{
+				"actor": "app",
+			},
+			SupportsIncrementalAuth: true,
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewLinearDriver(c, ep.APIBase), nil

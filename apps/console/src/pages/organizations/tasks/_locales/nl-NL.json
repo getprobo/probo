@@ -11,6 +11,7 @@
       "state": "Status",
       "priority": "Prioriteit",
       "assignedTo": "Toegewezen aan",
+      "linear": "Linear",
       "measure": "Maatregel",
       "timeEstimate": "Tijdsinschatting",
       "timeEstimateUnit": "Eenheid van inschatting",
@@ -64,6 +65,21 @@
     "messages": {
       "updated": "Taak succesvol bijgewerkt.",
       "deleted": "Taak succesvol verwijderd."
+    },
+    "linear": {
+      "connect": "Linear Sync verbinden",
+      "reconnect": "Linear Sync opnieuw verbinden",
+      "publish": "Publiceren",
+      "unlink": "Ontkoppelen",
+      "team": "Linear-team",
+      "chooseTeam": "Kies een team",
+      "published": "Taak gepubliceerd naar Linear.",
+      "unlinked": "Linear-issue ontkoppeld.",
+      "errors": {
+        "publish": "Publiceren naar Linear mislukt",
+        "unlink": "Ontkoppelen van Linear-issue mislukt",
+        "load": "Linear kon niet worden weergegeven"
+      }
     },
     "errors": {
       "delete": "Verwijderen van taak mislukt",
@@ -128,6 +144,27 @@
         "timeEstimateChanged": "{{actor}} heeft de tijdsinschatting gewijzigd van {{oldValue}} naar {{newValue}}",
         "timeEstimateRemoved": "{{actor}} heeft de tijdsinschatting verwijderd"
       }
+    }
+  },
+  "settingsDialog": {
+    "trigger": "Instellingen",
+    "title": "Instellingen",
+    "integrations": {
+      "title": "Taakintegraties",
+      "description": "Koppel tools om taken te publiceren en te synchroniseren."
+    },
+    "linear": {
+      "name": "Linear Sync",
+      "description": "Publiceer een taak naar Linear en synchroniseer naam, inhoud, status, prioriteit, deadline en toegewezene wanneer e-mails overeenkomen."
+    },
+    "status": {
+      "connected": "Verbonden",
+      "notConnected": "Niet verbonden"
+    },
+    "actions": {
+      "connect": "Verbinden",
+      "reconnect": "Opnieuw verbinden",
+      "close": "Sluiten"
     }
   },
   "createDialog": {

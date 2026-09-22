@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
+	"go.probo.inc/probo/pkg/task"
 )
 
 func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
@@ -41,7 +42,8 @@ func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(agentexecution.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings).
-		Register(riskmanagement.OAuth2ScopeMappings)
+		Register(riskmanagement.OAuth2ScopeMappings).
+		Register(task.OAuth2ScopeMappings)
 }
 
 func TestRegisteredOAuth2ScopeRegistries_OrganizationRead(t *testing.T) {
@@ -75,4 +77,20 @@ func TestRegisteredOAuth2ScopeRegistries_ITAMDeviceDelete(t *testing.T) {
 	assert.True(t, reg.Allows(coredata.OAuth2Scopes{itam.ScopeV1ITAM}, itam.ActionDeviceDelete))
 	assert.False(t, reg.Allows(coredata.OAuth2Scopes{itam.ScopeV1ITAMRead}, itam.ActionDeviceDelete))
 	assert.True(t, reg.Allows(coredata.OAuth2Scopes{itam.ScopeV1ITAMRead}, itam.ActionDeviceGet))
+}
+
+func TestRegisteredOAuth2ScopeRegistries_EvidenceOnControlNotTask(t *testing.T) {
+	t.Parallel()
+
+	reg := allRegisteredOAuth2ScopeRegistries()
+
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1TaskRead}, probo.ActionEvidenceList))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Task}, probo.ActionEvidenceList))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Task}, probo.ActionEvidenceDelete))
+
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1ControlRead}, probo.ActionEvidenceList))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1ControlRead}, probo.ActionEvidenceDelete))
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, probo.ActionEvidenceList))
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, probo.ActionEvidenceDelete))
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, probo.ActionMeasureEvidenceUpload))
 }

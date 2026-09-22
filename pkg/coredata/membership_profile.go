@@ -252,6 +252,94 @@ LIMIT 1;
 	return nil
 }
 
+func (p *MembershipProfile) LoadByOrganizationIDAndEmail(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	email mail.Addr,
+) error {
+	q := `
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    i.email_address,
+    p.source,
+    p.state,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    '' AS organization_name,
+    p.user_name,
+    p.external_id,
+    p.nickname,
+    p.locale,
+    p.timezone,
+    p.profile_url,
+    p.preferred_language,
+    p.given_name,
+    p.family_name,
+    p.formatted_name,
+    p.middle_name,
+    p.honorific_prefix,
+    p.honorific_suffix,
+    p.employee_number,
+    p.department,
+    p.cost_center,
+    p.enterprise_organization,
+    p.division,
+    p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
+    p.created_at,
+    p.updated_at
+FROM
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+WHERE
+    p.%s
+    AND p.organization_id = @organization_id
+    AND p.state = @state
+    AND (
+        i.email_address = @email::citext
+        OR @email::citext = ANY(p.additional_email_addresses)
+    )
+LIMIT 2;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"email":           email,
+		"state":           ProfileStateActive,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profile: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profile: %w", err)
+	}
+
+	if len(profiles) != 1 {
+		return ErrResourceNotFound
+	}
+
+	*p = profiles[0]
+
+	return nil
+}
+
 func (p *MembershipProfile) LoadByIdentityIDAndOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
