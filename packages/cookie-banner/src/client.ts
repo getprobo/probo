@@ -381,11 +381,11 @@ export class CookieBannerClient {
     stored: Record<string, boolean>,
     tc?: string,
   ): Record<string, boolean> {
-    if (!tcfProjects(this.config) || !getTCFRuntime()?.decodeChoices) {
+    if (!tc || !tcfProjects(this.config) || !getTCFRuntime()?.decodeChoices) {
       return stored;
     }
 
-    const choices = tc ? getTCFRuntime()?.decodeChoices?.(tc) ?? null : null;
+    const choices = getTCFRuntime()?.decodeChoices?.(tc) ?? null;
     return projectConsentFromTCF(this.config.categories, choices);
   }
 

@@ -4,6 +4,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Fixed
+
+- Cookie Category `Update` can clear TCF purpose IDs and drops
+  duplicates in the set list
+
 ### Added
 
 - Cookie Banner `Get`/`Update` expose `tcfCmpId`

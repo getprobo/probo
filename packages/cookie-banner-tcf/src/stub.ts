@@ -52,11 +52,10 @@ let disabled = false;
 export function installTCFStub(): void {
   const w = window as LocatorWindow;
 
+  disabled = false;
   if (typeof w.__tcfapi === "function") {
     return;
   }
-
-  disabled = false;
   const queue: unknown[][] = [];
   const stub: TCFAPI = (...args: unknown[]): unknown => {
     // CmpApi drains the stub by calling __tcfapi() with no arguments.

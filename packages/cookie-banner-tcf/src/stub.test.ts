@@ -78,6 +78,20 @@ describe("installTCFStub", () => {
     });
   });
 
+  it("re-enables a disabled stub on a later install", () => {
+    const w = stubWindow();
+    installTCFStub();
+    disableTCFStub();
+    installTCFStub();
+
+    let ping: Record<string, unknown> | undefined;
+    w.__tcfapi?.("ping", 2, (data: unknown) => {
+      ping = data as Record<string, unknown>;
+    });
+    expect(ping?.cmpStatus).toBe("stub");
+    expect(ping?.displayStatus).toBe("hidden");
+  });
+
   it("does not replace an existing __tcfapi", () => {
     const existing = Object.assign(() => {}, { q: [["kept"]] });
     const w = stubWindow();

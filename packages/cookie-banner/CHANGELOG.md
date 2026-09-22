@@ -4,6 +4,13 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+### Fixed
+
+- Restoring a TCF-mode cookie without a `tc` field keeps the stored
+  category grants instead of projecting deny-all
+- First-layer CTA warnings report colors that cannot be parsed, and a
+  contrast just below 5:1 is not rounded up to the minimum
+
 ### Added
 
 - Warns in the console when first-layer primary CTAs fail matching text

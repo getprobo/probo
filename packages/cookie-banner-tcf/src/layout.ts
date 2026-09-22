@@ -82,7 +82,7 @@ interface PurposeVendorCount {
 
 export function renderTCFLayout(config: BannerConfig, position: string): string | null {
   const gvl = config.tcf?.gvl;
-  if (!gvl || !gdprApplies(config)) {
+  if (!gvl || !gdprApplies(config) || config.layout.presentation !== "OPT_IN") {
     return null;
   }
 
@@ -413,7 +413,9 @@ function purposeCountLabel(
 
 function vendorRow(vendor: PanelVendor, catalogs: VendorCatalogs): string {
   const controls = [
-    toggle("vendor-consent", vendor.id, "Consent", "tcf_label_consent", vendor.name),
+    vendor.purposes?.length || vendor.flexiblePurposes?.length
+      ? toggle("vendor-consent", vendor.id, "Consent", "tcf_label_consent", vendor.name)
+      : "",
     vendor.legIntPurposes?.length
       ? toggle("vendor-li", vendor.id, "Legitimate interest", "tcf_label_li", vendor.name)
       : "",

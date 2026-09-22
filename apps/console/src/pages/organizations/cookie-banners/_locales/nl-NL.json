@@ -111,7 +111,7 @@
   "bannerSettingsForm": {
     "title": "Instellingen",
     "messages": { "successTitle": "Gelukt", "updated": "Bannerinstellingen bijgewerkt" },
-    "errors": { "title": "Fout", "update": "Bijwerken mislukt" },
+    "errors": { "title": "Fout", "update": "Bijwerken mislukt", "publisherCountryCode": "Moet AA of een ISO 3166-1 alpha-2-landcode zijn" },
     "fields": {
       "name": "Naam",
       "origin": "Origin-URL",

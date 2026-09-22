@@ -46,6 +46,8 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 	customCmpID := mintTCString(tcCookieVersion, 123, true)
 	truncatedCore := mintTruncatedCore(tcCookieVersion, uint(DefaultTCFCmpID)) + "." + mintDisclosedSegment()
 	truncatedDisclosed := mintTCString(tcCookieVersion, uint(DefaultTCFCmpID), false) + ".IA"
+	whitespaceTC := " " + validTCStringV23 + " "
+	policy22 := mintTCStringWithPolicy(tcCookieVersion, uint(DefaultTCFCmpID), 4, true)
 
 	tests := []struct {
 		name       string
@@ -95,6 +97,22 @@ func TestValidateConsentTC_Scenario(t *testing.T) {
 			tcfEnabled: true,
 			regulation: &gdpr,
 			tc:         new("not-a-tc-string"),
+			wantField:  "tc",
+			wantCode:   validator.ErrorCodeInvalidFormat,
+		},
+		{
+			name:       "rejects surrounding whitespace",
+			tcfEnabled: true,
+			regulation: &gdpr,
+			tc:         &whitespaceTC,
+			wantField:  "tc",
+			wantCode:   validator.ErrorCodeInvalidFormat,
+		},
+		{
+			name:       "rejects a 2.2 policy version",
+			tcfEnabled: true,
+			regulation: &gdpr,
+			tc:         &policy22,
 			wantField:  "tc",
 			wantCode:   validator.ErrorCodeInvalidFormat,
 		},
@@ -211,12 +229,30 @@ func mintDisclosedSegment() string {
 }
 
 func mintTCString(version, cmpID uint, disclosed bool) string {
+	return mintTCStringWithPolicy(version, cmpID, tcfDefaultPolicyVersion, disclosed)
+}
+
+func mintTCStringWithPolicy(version, cmpID uint, policyVersion int, disclosed bool) string {
 	var core bitWriter
 	core.write(version, tcCookieVersionBits)
 	core.write(0, tcCreatedBits)
 	core.write(0, tcLastUpdatedBits)
 	core.write(cmpID, tcCmpIDBits)
-	core.write(0, tcCoreFixedBitsAfterCmpID)
+	core.write(0, tcCmpVersionBits)
+	core.write(0, tcConsentScreenBits)
+	core.write(0, tcConsentLanguageBits)
+	core.write(0, tcVendorListVersionBits)
+	core.write(uint(policyVersion), tcPolicyVersionBits)
+	core.write(
+		0,
+		tcIsServiceSpecificBits+
+			tcUseNonStandardStacksBits+
+			tcSpecialFeatureOptinsBits+
+			tcPurposesConsentBits+
+			tcPurposesLIBits+
+			tcPurposeOneTreatmentBits+
+			tcPublisherCCBits,
+	)
 
 	encoded := core.encode()
 	if !disclosed {

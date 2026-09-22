@@ -23,6 +23,7 @@ package update
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -155,6 +156,10 @@ func parseTCFPurposeIDs(value string) ([]int, error) {
 		id, err := strconv.Atoi(part)
 		if err != nil || id < 1 || id > 11 {
 			return nil, fmt.Errorf("invalid TCF purpose ID %q (must be 1-11)", part)
+		}
+
+		if slices.Contains(ids, id) {
+			return nil, fmt.Errorf("duplicate TCF purpose ID %d", id)
 		}
 
 		ids = append(ids, id)

@@ -112,7 +112,11 @@ export function firstLayerCtaIssues(ctas: NamedCtaStyle[]): string[] {
 
   for (const cta of ctas) {
     const ratio = contrastOf(cta.style);
-    if (ratio !== undefined && ratio < MIN_CONTRAST) {
+    if (ratio === undefined) {
+      issues.push(`${cta.name} contrast cannot be verified`);
+      continue;
+    }
+    if (ratio < MIN_CONTRAST) {
       issues.push(`${cta.name} contrast ${formatRatio(ratio)} (minimum ${MIN_CONTRAST}:1)`);
     }
   }
@@ -304,7 +308,7 @@ function parseAlpha(raw: string | undefined): number {
 }
 
 function formatRatio(ratio: number): string {
-  return `${ratio.toFixed(1).replace(/\.0$/, "")}:1`;
+  return `${(Math.floor(ratio * 10) / 10).toString()}:1`;
 }
 
 function cssRgb(color: RGB): string {

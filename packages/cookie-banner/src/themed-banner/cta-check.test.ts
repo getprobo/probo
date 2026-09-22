@@ -112,6 +112,30 @@ describe("firstLayerCtaIssues", () => {
     ).toEqual([]);
   });
 
+  it("flags unverifiable wide-gamut colors instead of skipping them", () => {
+    expect(
+      firstLayerCtaIssues(
+        pair({ ...defaultPrimary, color: "oklch(0.5 0.1 20)" }, defaultSecondary),
+      ),
+    ).toEqual(["primary CTA contrast cannot be verified"]);
+  });
+
+  it("does not round a failing contrast ratio up to 5:1", () => {
+    const issues = firstLayerCtaIssues([
+      {
+        name: "primary CTA",
+        style: {
+          ...defaultPrimary,
+          color: "rgb(112, 112, 112)",
+          backgroundColor: "rgb(255, 255, 255)",
+        },
+      },
+    ]);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/^primary CTA contrast 4\.\d:1 \(minimum 5:1\)$/);
+    expect(issues[0]).not.toContain(" 5:1 (minimum");
+  });
+
   it("flags contrast below 5:1 on either primary CTA", () => {
     const low = firstLayerCtaIssues(
       pair(

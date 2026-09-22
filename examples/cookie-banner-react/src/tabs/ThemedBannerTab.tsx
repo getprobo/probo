@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import posthog from "posthog-js";
 import { registerCookieBanner, type BannerConfig } from "@probo/cookie-banner";
-import { installTCFStub, startTCF } from "@probo/cookie-banner-tcf";
+import { startTCF } from "@probo/cookie-banner-tcf";
 import { useConfig } from "../hooks/useConfig";
 import { enableNamedLoggers, themedLogger } from "../lib/logger";
 import {
@@ -29,8 +29,7 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
 
   useEffect(() => {
     if (!registered) {
-      themedLogger.debug("[themed] installTCFStub, startTCF, registerCookieBanner");
-      installTCFStub();
+      themedLogger.debug("[themed] startTCF, registerCookieBanner");
       startTCF();
       registerCookieBanner();
       registered = true;

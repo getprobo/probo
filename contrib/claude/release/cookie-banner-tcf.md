@@ -13,13 +13,13 @@ After confirming commits below, follow the
 - **Files to stage**: `packages/cookie-banner-tcf/package.json`,
   `packages/cookie-banner-tcf/CHANGELOG.md`, `package-lock.json`
 - **Workflow**: `.github/workflows/release-npm-cookie-banner-tcf.yaml`
-- **Path filter**: `packages/cookie-banner-tcf`
+- **Path filter**: `packages/cookie-banner-tcf`, `packages/cookie-banner`
 
 ## Detect commits
 
 ```shell
 git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner-tcf/v*')..HEAD --oneline \
-  -- packages/cookie-banner-tcf
+  -- packages/cookie-banner-tcf packages/cookie-banner
 ```
 
 If empty or non-user-facing only, do not release this track.
@@ -29,7 +29,9 @@ If empty or non-user-facing only, do not release this track.
 `packages/cookie-banner-tcf/build.mjs` reads `version` from `package.json`
 and exposes it as the `__SDK_VERSION__` define. The TCF IIFE bundles
 `@probo/cookie-banner`, so that package must be built first (`turbo` already
-depends on `^build`). Run the TCF build after the version bump.
+depends on `^build`). Banner-only changes still require a TCF release
+because the IIFE bundles that package. Run the TCF build after the version
+bump.
 
 CI verifies the tag matches `package.json`, runs the build, publishes to
 npm with provenance + SBOM, and creates a GitHub Release.

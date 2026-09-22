@@ -38,7 +38,7 @@ const (
 	cookieBannerE2ESDKVersion = "e2e-cookie-banner-sdk/1.0.0"
 	// Minted by packages/cookie-banner-tcf encodeTCString (CMP ID 4095, 2.3).
 	validTCStringV23 = "CQqvPYAQqvPYA__ABBENAqFgAAAAAAAAAAAAAAAAAAAA.IAaQAQAaAAAA.YAAAAAAAAAAA"
-	coreOnlyTCString = "CPzqA4APzqA4AEsAAAENAwCAAAAAAAAAAAAAAAAAAAAA"
+	coreOnlyTCString = "CQqvPYAQqvPYA__ABBENAqFgAAAAAAAAAAAAAAAAAAAA"
 )
 
 type (

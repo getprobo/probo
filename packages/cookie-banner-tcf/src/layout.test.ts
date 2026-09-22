@@ -162,6 +162,14 @@ describe("renderTCFLayout", () => {
   it("returns null when TCF does not apply", () => {
     expect(renderTCFLayout(bannerConfig({ tcf: undefined }), "bottom-left")).toBeNull();
     expect(renderTCFLayout(bannerConfig({ regulation: "CCPA" }), "bottom-left")).toBeNull();
+    expect(
+      renderTCFLayout(
+        bannerConfig({
+          layout: { ...bannerConfig().layout, presentation: "NOTICE" },
+        }),
+        "bottom-left",
+      ),
+    ).toBeNull();
   });
 
   it("renders IAB first-layer disclosures and the second-layer lists", () => {
@@ -276,6 +284,30 @@ describe("renderTCFLayout", () => {
     expect(html).not.toContain('data-tcf="purpose-li"');
     expect(html).toContain("1 partner seeking consent");
     expect(html).not.toContain("relying on legitimate interest");
+  });
+
+  it("omits the vendor consent toggle when the vendor has no consent purposes", () => {
+    const vendor = tcfGvl.vendors[String(vendorId)];
+    const html = renderTCFLayout(
+      bannerConfig({
+        tcf: {
+          gvl: {
+            ...tcfGvl,
+            vendors: {
+              [String(vendorId)]: { ...vendor, purposes: [], flexiblePurposes: [], legIntPurposes: [7] },
+            },
+          },
+          cmp_id: 4095,
+          cmp_version: 1,
+          publisher_cc: "AA",
+        },
+      }),
+      "bottom-left",
+    );
+
+    const partners = html!.split('id="probo-tcf-vendors"')[1] ?? "";
+    expect(partners).not.toContain('data-tcf="vendor-consent"');
+    expect(partners).toContain('data-tcf="vendor-li"');
   });
 
   it("counts partners seeking consent or relying on LI for each purpose", () => {

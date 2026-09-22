@@ -111,7 +111,7 @@
   "bannerSettingsForm": {
     "title": "Paramètres",
     "messages": { "successTitle": "Succès", "updated": "Paramètres de la bannière mis à jour" },
-    "errors": { "title": "Erreur", "update": "Échec de la mise à jour" },
+    "errors": { "title": "Erreur", "update": "Échec de la mise à jour", "publisherCountryCode": "Doit être AA ou un code pays ISO 3166-1 alpha-2" },
     "fields": {
       "name": "Nom",
       "origin": "URL d’origine",

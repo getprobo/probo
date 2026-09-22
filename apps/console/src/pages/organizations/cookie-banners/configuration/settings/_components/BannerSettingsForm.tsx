@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { countries, formatError } from "@probo/helpers";
 import { Button, Card, Field, Input, Label, Option, Select, Toggle, useToast } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -90,7 +90,12 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
 
   const [updateBanner, isUpdating] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
 
-  const { register, handleSubmit, control } = useForm<BannerSettingsFormValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<BannerSettingsFormValues>({
     defaultValues: {
       name: banner.name,
       cookiePolicyUrl: banner.cookiePolicyUrl,
@@ -180,12 +185,26 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
               {t("bannerSettingsForm.fields.publisherCountryCodeHelp")}
             </p>
             <Input
-              {...register("publisherCountryCode")}
+              {...register("publisherCountryCode", {
+                required: true,
+                minLength: 2,
+                maxLength: 2,
+                pattern: /^[A-Za-z]{2}$/,
+                validate: value =>
+                  isPublisherCountryCode(value) || t("bannerSettingsForm.errors.publisherCountryCode"),
+              })}
               required
+              minLength={2}
               maxLength={2}
+              pattern="[A-Za-z]{2}"
               className="uppercase"
               placeholder="AA"
             />
+            {errors.publisherCountryCode
+              ? (
+                  <p className="text-sm text-txt-danger">{t("bannerSettingsForm.errors.publisherCountryCode")}</p>
+                )
+              : null}
           </div>
 
           <div className="flex items-start justify-between gap-4">
@@ -215,4 +234,9 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
       </Card>
     </div>
   );
+}
+
+function isPublisherCountryCode(value: string): boolean {
+  const code = value.trim().toUpperCase();
+  return code === "AA" || (countries as readonly string[]).includes(code);
 }

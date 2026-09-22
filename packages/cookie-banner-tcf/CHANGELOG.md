@@ -7,6 +7,10 @@ in this file.
 
 ### Fixed
 
+- TCF markup is used only for GDPR opt-in; notice and opt-out keep their
+  presentation. Vendor consent toggles appear only when the vendor
+  declares consent or flexible purposes. Re-installing the `__tcfapi`
+  stub after disable answers with a live stub ping again
 - Locator `__tcfapi` messages resolve the live page function so the IAB
   CMP validator sees `cmpStatus: "loaded"` after `CmpApi` starts. The
   stub also returns its command queue when called with no arguments,

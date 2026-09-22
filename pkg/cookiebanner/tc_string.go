@@ -139,19 +139,22 @@ func tcfStringFormat(cmpID int) validator.ValidatorFunc {
 }
 
 func parseTCString(encoded string, expectedCmpID int) error {
-	encoded = strings.TrimSpace(encoded)
-	if encoded == "" {
+	if encoded == "" || encoded != strings.TrimSpace(encoded) {
 		return errInvalidTCString
 	}
 
 	segments := strings.Split(encoded, ".")
 
-	version, cmpID, err := parseTCCore(segments[0])
+	version, cmpID, policyVersion, err := parseTCCore(segments[0])
 	if err != nil {
 		return err
 	}
 
 	if version != tcCookieVersion {
+		return errInvalidTCString
+	}
+
+	if policyVersion != tcfDefaultPolicyVersion {
 		return errInvalidTCString
 	}
 
@@ -166,33 +169,50 @@ func parseTCString(encoded string, expectedCmpID int) error {
 	return nil
 }
 
-func parseTCCore(segment string) (uint, uint, error) {
+func parseTCCore(segment string) (uint, uint, uint, error) {
 	data, err := decodeTCSegment(segment)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	r := bitReader{data: data}
 
 	version, err := r.read(tcCookieVersionBits)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	if _, err := r.read(tcCreatedBits + tcLastUpdatedBits); err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	cmpID, err := r.read(tcCmpIDBits)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
-	if _, err := r.read(tcCoreFixedBitsAfterCmpID); err != nil {
-		return 0, 0, err
+	if _, err := r.read(tcCmpVersionBits + tcConsentScreenBits + tcConsentLanguageBits + tcVendorListVersionBits); err != nil {
+		return 0, 0, 0, err
 	}
 
-	return version, cmpID, nil
+	policyVersion, err := r.read(tcPolicyVersionBits)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	if _, err := r.read(
+		tcIsServiceSpecificBits +
+			tcUseNonStandardStacksBits +
+			tcSpecialFeatureOptinsBits +
+			tcPurposesConsentBits +
+			tcPurposesLIBits +
+			tcPurposeOneTreatmentBits +
+			tcPublisherCCBits,
+	); err != nil {
+		return 0, 0, 0, err
+	}
+
+	return version, cmpID, policyVersion, nil
 }
 
 func hasDisclosedVendorsSegment(segments []string) bool {

@@ -111,7 +111,7 @@
   "bannerSettingsForm": {
     "title": "Settings",
     "messages": { "successTitle": "Success", "updated": "Banner settings updated" },
-    "errors": { "title": "Error", "update": "Failed to update" },
+    "errors": { "title": "Error", "update": "Failed to update", "publisherCountryCode": "Must be AA or an ISO 3166-1 alpha-2 country code" },
     "fields": {
       "name": "Name",
       "origin": "Origin URL",

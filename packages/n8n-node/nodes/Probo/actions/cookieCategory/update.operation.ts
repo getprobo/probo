@@ -91,12 +91,40 @@ export const description: INodeProperties[] = [
 	},
 	{
 		displayName: 'TCF Purpose IDs',
+		name: 'tcfPurposeIdsAction',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['cookieCategory'],
+				operation: ['update'],
+			},
+		},
+		options: [
+			{
+				name: '(Unchanged)',
+				value: '',
+			},
+			{
+				name: 'Set',
+				value: 'set',
+			},
+			{
+				name: 'Clear',
+				value: 'clear',
+			},
+		],
+		default: '',
+		description: 'Whether to replace or clear this category TCF purpose IDs',
+	},
+	{
+		displayName: 'TCF Purpose IDs',
 		name: 'tcfPurposeIds',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['cookieCategory'],
 				operation: ['update'],
+				tcfPurposeIdsAction: ['set'],
 			},
 		},
 		default: '',
@@ -140,6 +168,7 @@ export async function execute(
 	const slug = this.getNodeParameter('slug', itemIndex, '') as string;
 	const categoryDescription = this.getNodeParameter('categoryDescription', itemIndex, '') as string;
 	const gcmConsentTypes = this.getNodeParameter('gcmConsentTypes', itemIndex, '') as string;
+	const tcfPurposeIdsAction = this.getNodeParameter('tcfPurposeIdsAction', itemIndex, '') as string;
 	const tcfPurposeIds = this.getNodeParameter('tcfPurposeIds', itemIndex, '') as string;
 	const posthogConsent = this.getNodeParameter('posthogConsent', itemIndex, '') as string;
 
@@ -177,14 +206,18 @@ export async function execute(
 			.map((s) => s.trim())
 			.filter((s) => s.length > 0);
 	}
-	if (tcfPurposeIds) {
+	if (tcfPurposeIdsAction === 'clear') {
+		input.tcfPurposeIds = [];
+	} else if (tcfPurposeIdsAction === 'set' || tcfPurposeIds) {
 		const ids: number[] = [];
 		for (const token of tcfPurposeIds.split(',').map((s) => s.trim()).filter((s) => s.length > 0)) {
 			const id = Number.parseInt(token, 10);
 			if (!Number.isInteger(id) || String(id) !== token || id < 1 || id > 11) {
 				throw new NodeOperationError(this.getNode(), `Invalid TCF purpose ID: ${token}`);
 			}
-			ids.push(id);
+			if (!ids.includes(id)) {
+				ids.push(id);
+			}
 		}
 		input.tcfPurposeIds = ids;
 	}
