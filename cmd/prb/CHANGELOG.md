@@ -4,11 +4,17 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.233.0] - 2026-09-22
+
 ### Added
 
-- `cookie-banner view` shows the publisher country; `update` accepts `--publisher-country-code`
-- `cookie-category view` shows TCF purpose IDs; `update` accepts `--tcf-purpose-ids`
+- `cookie-banner view` shows the publisher country and TCF CMP ID;
+  `update` accepts `--publisher-country-code`
+- `cookie-category view` shows TCF purpose IDs; `update` accepts
+  `--tcf-purpose-ids`
 - `consent-record view` shows the optional IAB TCF string when present
+- `risk-analysis publish` publishes a risk analysis as a document
+  version, with repeatable `--approver` and `--minor`
 
 ## [0.232.0] - 2026-09-22
 
