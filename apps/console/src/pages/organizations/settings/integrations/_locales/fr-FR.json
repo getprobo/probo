@@ -1,0 +1,48 @@
+{
+  "listPage": {
+    "title": "Intégrations",
+    "description": "Les fournisseurs pour lesquels Probo détient un identifiant, et ce à quoi il peut encore se connecter.",
+    "notFound": "Organisation introuvable",
+    "sections": {
+      "connected": "Connectés",
+      "available": "Disponibles"
+    },
+    "emptyConnected": "Aucun fournisseur n'est encore connecté.",
+    "emptyAvailable": "Tous les fournisseurs disponibles sont déjà connectés.",
+    "comingSoon": "Bientôt disponible",
+    "connectElsewhere": "Pour connecter un fournisseur, ouvrez les <connections>connexions des revues d'accès</connections>.",
+    "actions": {
+      "manage": "Gérer"
+    }
+  },
+  "detailsPage": {
+    "notFound": "Intégration introuvable",
+    "status": {
+      "CONNECTED": "Connecté",
+      "DISCONNECTED": "Déconnecté",
+      "NOT_AUTHORIZED": "Non autorisé",
+      "RECONNECT_REQUIRED": "Reconnexion requise"
+    },
+    "accounts": {
+      "title": "Comptes",
+      "empty": "Aucun compte n'est encore activé sur cet identifiant.",
+      "loadMore": "Afficher plus de comptes"
+    },
+    "actions": {
+      "delete": "Déconnecter",
+      "cancel": "Annuler",
+      "more": "Plus d'actions"
+    },
+    "delete": {
+      "title": "Déconnecter l'intégration",
+      "description": "La déconnexion supprime l'identifiant que Probo détient pour {{name}}. Tout ce qui l'utilise encore doit d'abord être supprimé.",
+      "confirm": "Déconnecter"
+    },
+    "messages": {
+      "deleted": "Intégration déconnectée."
+    },
+    "errors": {
+      "delete": "Échec de la déconnexion de l'intégration"
+    }
+  }
+}

@@ -243,6 +243,13 @@ const NAV_DESTINATIONS = [
     path: "audit-log",
     isVisible: permissions => permissions.canListAuditLogEntries,
   },
+  {
+    id: "integrations",
+    group: "settings",
+    labelKey: "nav.connections",
+    path: "integrations",
+    isVisible: permissions => permissions.canListConnectors,
+  },
 ] as const satisfies readonly NavDestination[];
 
 export type NavDestinationConfig = (typeof NAV_DESTINATIONS)[number];
