@@ -54,6 +54,7 @@ export const navPermissionsFragment = graphql`
     canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
     canConnectSlack: permission(action: "core:connector:initiate")
     canUninstallSlack: permission(action: "core:connector:delete")
+    canListConnectors: permission(action: "core:connector:list")
     canUpdateOrganization: permission(action: "iam:organization:update")
   }
 `;
