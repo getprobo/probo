@@ -1,0 +1,328 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"nichandle":"ab1234-ovh","email":"owner@example.com","firstname":"Ada","name":"Lovelace","organisation":null}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/group
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '["ADMIN","DEFAULT","UNPRIVILEGED"]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/group/ADMIN
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"name":"ADMIN","role":"ADMIN","defaultGroup":true,"description":"Default Group with ADMIN role","creation":"2026-09-01T09:00:00.000000000Z","lastUpdate":"2026-09-01T09:00:00.000000000Z","urn":"urn:v1:eu:identity:group:ab1234-ovh/ADMIN"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/group/DEFAULT
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"name":"DEFAULT","role":"REGULAR","defaultGroup":true,"description":"Default Group with REGULAR role","creation":"2026-09-01T09:00:00.000000000Z","lastUpdate":"2026-09-01T09:00:00.000000000Z","urn":"urn:v1:eu:identity:group:ab1234-ovh/DEFAULT"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/group/UNPRIVILEGED
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"name":"UNPRIVILEGED","role":"UNPRIVILEGED","defaultGroup":true,"description":"Default Group with UNPRIVILEGED role","creation":"2026-09-01T09:00:00.000000000Z","lastUpdate":"2026-09-01T09:00:00.000000000Z","urn":"urn:v1:eu:identity:group:ab1234-ovh/UNPRIVILEGED"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/user
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '["alice","bob","carol"]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/user/alice
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"login":"alice","email":"alice@example.com","description":"Platform lead","group":"ADMIN","groups":["ADMIN"],"status":"OK","type":"USER","urn":"urn:v1:eu:identity:user:ab1234-ovh/alice","creation":"2026-09-01T10:00:00.000000000Z","lastUpdate":"2026-09-02T10:00:00.000000000Z","passwordLastUpdate":"2026-09-01T10:00:00.000000000Z"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/user/bob
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"login":"bob","email":"bob@example.com","description":"Backend engineer","group":"DEFAULT","groups":["DEFAULT"],"status":"PASSWORD_CHANGE_REQUIRED","type":"USER","urn":"urn:v1:eu:identity:user:ab1234-ovh/bob","creation":"2026-09-01T10:00:00.000000000Z","lastUpdate":"2026-09-02T10:00:00.000000000Z","passwordLastUpdate":"2026-09-01T10:00:00.000000000Z"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/user/carol
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"login":"carol","email":"carol@example.com","description":"Contractor","group":"ghost","groups":["ghost"],"status":"DISABLED","type":"USER","urn":"urn:v1:eu:identity:user:ab1234-ovh/carol","creation":"2026-09-01T10:00:00.000000000Z","lastUpdate":"2026-09-02T10:00:00.000000000Z","passwordLastUpdate":"2026-09-01T10:00:00.000000000Z"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/oauth2/client
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '["EU.1111111111111111","EU.2222222222222222"]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/oauth2/client/EU.1111111111111111
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"clientId":"EU.1111111111111111","name":"ci-deploy","flow":"CLIENT_CREDENTIALS","identity":"urn:v1:eu:identity:credential:ab1234-ovh/oauth2-EU.1111111111111111","callbackUrls":[],"description":"CI"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/oauth2/client/EU.2222222222222222
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"clientId":"EU.2222222222222222","name":"probo-oauth","flow":"AUTHORIZATION_CODE","identity":null,"callbackUrls":["https://eu.probo.com/cb"],"description":"app"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/logs/audit
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"createdAt":"2026-09-10T08:00:00.000Z","ip":"203.0.113.1","type":"POLICY_CREATED","authDetails":null},{"createdAt":"2026-09-18T07:00:00.000Z","ip":"203.0.113.1","type":"LOGIN_SUCCESS","authDetails":{"userDetails":{"type":"ACCOUNT","user":null}},"loginSuccessDetails":{"mfaType":"TOTP","userAgent":"Mozilla/5.0"}},{"createdAt":"2026-09-19T09:30:00.000Z","ip":"203.0.113.1","type":"LOGIN_SUCCESS","authDetails":{"userDetails":{"type":"USER","user":"alice"}},"loginSuccessDetails":{"mfaType":"NONE","userAgent":"Mozilla/5.0"}},{"createdAt":"2026-09-20T11:15:00.000Z","ip":"203.0.113.1","type":"LOGIN_SUCCESS","authDetails":{"userDetails":{"type":"ACCOUNT","user":null}},"loginSuccessDetails":{"mfaType":"U2F","userAgent":"Mozilla/5.0"}},{"createdAt":"2026-09-21T14:45:00.000Z","ip":"203.0.113.1","type":"LOGIN_SUCCESS","authDetails":{"userDetails":{"type":"PROVIDER","user":"dave@corp.example.com"}},"loginSuccessDetails":{"mfaType":"TOTP","userAgent":"Mozilla/5.0"}},{"createdAt":"2026-09-21T15:00:00.000Z","ip":"203.0.113.1","type":"LOGIN_SUCCESS","authDetails":{"userDetails":{"type":"PROVIDER","user":"CORP\\erin"}},"loginSuccessDetails":{"mfaType":"SMS","userAgent":"Mozilla/5.0"}}]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms

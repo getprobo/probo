@@ -49,6 +49,7 @@ export { Okta } from "./Okta";
 export { OnePassword } from "./OnePassword";
 export { OpenAI } from "./OpenAI";
 export { OpenRouter } from "./OpenRouter";
+export { OVHcloud } from "./OVHcloud";
 export { PagerDuty } from "./PagerDuty";
 export { PostHog } from "./PostHog";
 export { Pylon } from "./Pylon";
