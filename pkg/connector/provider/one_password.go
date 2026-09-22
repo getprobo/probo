@@ -33,9 +33,10 @@ import (
 
 func onePasswordRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderOnePassword,
-		DisplayName:      "1Password",
-		DocumentationURL: accessReviewDocsURL("one-password"),
+		Provider:           coredata.ConnectorProviderOnePassword,
+		DisplayName:        "1Password",
+		InitialAccountFunc: onePasswordInitialAccount,
+		DocumentationURL:   accessReviewDocsURL("one-password"),
 		// APIBase is deliberately empty: 1Password has no single data host to
 		// name. Four host families live under this one registration —
 		// the per-connection SCIM bridge URL (customer-hosted, from
@@ -90,4 +91,21 @@ func onePasswordRegistration() *Registration {
 			return drivers.NewOnePasswordDriver(c, s.SCIMBridgeURL), nil
 		},
 	}
+}
+
+func onePasswordInitialAccount(c *coredata.Connector) (string, string, error) {
+	users, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot read connector settings: %w", err)
+	}
+
+	if users.AccountID != "" {
+		return users.AccountID, users.AccountID, nil
+	}
+
+	return initialAccount(
+		func(s coredata.OnePasswordConnectorSettings) string {
+			return s.SCIMBridgeURL
+		},
+	)(c)
 }

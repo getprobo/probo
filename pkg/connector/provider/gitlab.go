@@ -32,7 +32,12 @@ import (
 
 func gitlabRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderGitLab,
+		Provider: coredata.ConnectorProviderGitLab,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.GitLabConnectorSettings) string {
+				return s.GroupID
+			},
+		),
 		DisplayName: "GitLab",
 		Endpoints: Endpoints{
 			Auth:  "https://gitlab.com/oauth/authorize",

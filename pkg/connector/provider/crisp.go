@@ -36,7 +36,12 @@ import (
 
 func crispRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderCrisp,
+		Provider: coredata.ConnectorProviderCrisp,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.CrispConnectorSettings) string {
+				return s.WebsiteID
+			},
+		),
 		DisplayName:      "Crisp",
 		DocumentationURL: accessReviewDocsURL("crisp"),
 		// Model B: the plugin token is Probo's own Crisp Marketplace plugin

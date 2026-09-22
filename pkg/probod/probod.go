@@ -798,6 +798,7 @@ func (impl *Implm) Run(
 		iamService,
 		esignService,
 		defaultConnectorRegistry,
+		providerRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
 	if err != nil {

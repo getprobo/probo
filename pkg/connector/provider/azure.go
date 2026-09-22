@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/cloud"
@@ -42,7 +43,12 @@ import (
 // the whole check, so there is no grant readback beside Probe.
 func azureRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderAzure,
+		Provider: coredata.ConnectorProviderAzure,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.AzureConnectorSettings) string {
+				return s.SubscriptionID
+			},
+		),
 		DisplayName:      "Microsoft Azure",
 		DocumentationURL: accessReviewDocsURL("azure"),
 		// See Registration.EndpointOverrideUnsupported: the Azure SDK resolves
@@ -50,10 +56,11 @@ func azureRegistration() *Registration {
 		// no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the Azure SDK resolves its hosts from the session cloud configuration, not values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession:      newAzureSession,
-			NewDriver:       newAzureDriver,
-			Probe:           probeAzure,
-			NewNameResolver: newAzureNameResolver,
+			NewSession:       newAzureSession,
+			NewDriver:        newAzureDriver,
+			Probe:            probeAzure,
+			DiscoverAccounts: discoverAzureAccounts,
+			NewNameResolver:  newAzureNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "tenantId", Label: "Directory (tenant) ID", Required: true},
 				{Key: "clientId", Label: "Application (client) ID", Required: true},
@@ -74,10 +81,16 @@ func newAzureSession(
 	_ context.Context,
 	issuer *identityfederation.Issuer,
 	conn *coredata.Connector,
+	accountID string,
 ) (cloud.Session, error) {
 	settings, err := coredata.ConnectorSettings[coredata.AzureConnectorSettings](conn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read azure connector settings: %w", err)
+	}
+
+	subscriptionID := settings.SubscriptionID
+	if accountID != "" {
+		subscriptionID = accountID
 	}
 
 	session, err := cloudazure.NewSession(
@@ -85,7 +98,7 @@ func newAzureSession(
 		conn.OrganizationID,
 		settings.TenantID,
 		settings.ClientID,
-		settings.SubscriptionID,
+		subscriptionID,
 		cloudazure.Environment(settings.Environment),
 	)
 	if err != nil {
@@ -140,4 +153,53 @@ func probeAzure(ctx context.Context, session cloud.Session, _ *coredata.Connecto
 	}
 
 	return azureSession.CheckAccess(ctx)
+}
+
+func discoverAzureAccounts(
+	ctx context.Context,
+	session cloud.Session,
+	_ *coredata.Connector,
+) ([]DiscoveredAccount, error) {
+	azureSession, ok := session.(*cloudazure.Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot discover azure accounts: session is for %s", session.Cloud())
+	}
+
+	client, err := armsubscriptions.NewClient(azureSession.TokenCredential(), azureSession.ARMClientOptions())
+	if err != nil {
+		return nil, fmt.Errorf("cannot create azure subscriptions client: %w", err)
+	}
+
+	pager := client.NewListPager(nil)
+
+	var accounts []DiscoveredAccount
+
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot list azure subscriptions: %w", err)
+		}
+
+		for _, subscription := range page.Value {
+			if subscription == nil || subscription.SubscriptionID == nil {
+				continue
+			}
+
+			name := *subscription.SubscriptionID
+			if subscription.DisplayName != nil && *subscription.DisplayName != "" {
+				name = *subscription.DisplayName
+			}
+
+			accounts = append(accounts, DiscoveredAccount{
+				ExternalAccountID: *subscription.SubscriptionID,
+				Name:              name,
+			})
+		}
+	}
+
+	if accounts == nil {
+		return []DiscoveredAccount{}, nil
+	}
+
+	return accounts, nil
 }

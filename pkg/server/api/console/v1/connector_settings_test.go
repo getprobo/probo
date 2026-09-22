@@ -237,3 +237,109 @@ func TestPinnedClientCredentialsTokenURL(t *testing.T) {
 	require.True(t, ok)
 	assert.Empty(t, pinnedClientCredentialsTokenURL(slack))
 }
+
+func TestApiKeyConnectorSettings_InstanceBaseURL(t *testing.T) {
+	t.Parallel()
+
+	providers := []struct {
+		name     string
+		provider coredata.ConnectorProvider
+		set      func(*types.CreateAPIKeyConnectorInput, *string)
+	}{
+		{
+			name:     "grafana",
+			provider: coredata.ConnectorProviderGrafana,
+			set: func(input *types.CreateAPIKeyConnectorInput, value *string) {
+				input.GrafanaBaseURL = value
+			},
+		},
+		{
+			name:     "signoz",
+			provider: coredata.ConnectorProviderSigNoz,
+			set: func(input *types.CreateAPIKeyConnectorInput, value *string) {
+				input.SignozBaseURL = value
+			},
+		},
+		{
+			name:     "langfuse",
+			provider: coredata.ConnectorProviderLangfuse,
+			set: func(input *types.CreateAPIKeyConnectorInput, value *string) {
+				input.LangfuseBaseURL = value
+			},
+		},
+		{
+			name:     "retool",
+			provider: coredata.ConnectorProviderRetool,
+			set: func(input *types.CreateAPIKeyConnectorInput, value *string) {
+				input.RetoolBaseURL = value
+			},
+		},
+		{
+			name:     "authentik",
+			provider: coredata.ConnectorProviderAuthentik,
+			set: func(input *types.CreateAPIKeyConnectorInput, value *string) {
+				input.AuthentikBaseURL = value
+			},
+		},
+	}
+
+	for _, tc := range providers {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			clean := "https://" + tc.name + ".example.com"
+			stored := func(t *testing.T, raw string) string {
+				t.Helper()
+
+				input := types.CreateAPIKeyConnectorInput{Provider: tc.provider}
+				tc.set(&input, &raw)
+
+				encoded, err := apiKeyConnectorSettings(input)
+				require.NoError(t, err)
+
+				var settings struct {
+					BaseURL string `json:"base_url"`
+				}
+				require.NoError(t, json.Unmarshal(encoded, &settings))
+
+				return settings.BaseURL
+			}
+
+			assert.Equal(t, clean, stored(t, clean))
+			assert.Equal(t, clean, stored(t, "  "+clean+"/  "))
+			assert.Equal(t, clean+"/if/admin", stored(t, clean+"/if/admin/"))
+
+			for _, raw := range []string{
+				clean + "?x=1",
+				clean + "#frag",
+				clean + "/?x=1#frag",
+				clean + "?",
+			} {
+				input := types.CreateAPIKeyConnectorInput{Provider: tc.provider}
+				tc.set(&input, &raw)
+
+				_, err := apiKeyConnectorSettings(input)
+				require.Error(t, err)
+			}
+		})
+	}
+
+	t.Run("retool cloud", func(t *testing.T) {
+		t.Parallel()
+
+		blank := ""
+		spaces := "   "
+
+		for _, raw := range []*string{nil, &blank, &spaces} {
+			encoded, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+				Provider:      coredata.ConnectorProviderRetool,
+				RetoolBaseURL: raw,
+			})
+			require.NoError(t, err)
+
+			var settings coredata.RetoolConnectorSettings
+			require.NoError(t, json.Unmarshal(encoded, &settings))
+			assert.Empty(t, settings.BaseURL)
+		}
+	})
+}

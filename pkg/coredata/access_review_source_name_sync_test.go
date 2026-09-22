@@ -51,7 +51,7 @@ func seedNameSyncSource(
 	ctx context.Context,
 	client *pg.Client,
 	createdAt time.Time,
-) (coredata.Scoper, *coredata.AccessReviewSource) {
+) (coredata.Scoper, *coredata.AccessReviewSource, gid.GID) {
 	t.Helper()
 
 	scope, organizationID := seedConnectorOrg(t, ctx, client)
@@ -61,13 +61,24 @@ func seedNameSyncSource(
 	connectorID, err := insertConnector(ctx, client, scope, organizationID, coredata.ConnectorProviderMetabase, key)
 	require.NoError(t, err)
 
+	account, err := insertConnectorAccount(
+		ctx,
+		client,
+		scope,
+		organizationID,
+		connectorID,
+		"implied",
+		"implied",
+	)
+	require.NoError(t, err)
+
 	source := &coredata.AccessReviewSource{
-		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-		OrganizationID: organizationID,
-		ConnectorID:    &connectorID,
-		Name:           "Metabase",
-		CreatedAt:      createdAt,
-		UpdatedAt:      time.Now().UTC(),
+		ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+		OrganizationID:     organizationID,
+		ConnectorAccountID: &account.ID,
+		Name:               "Metabase",
+		CreatedAt:          createdAt,
+		UpdatedAt:          time.Now().UTC(),
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -92,7 +103,7 @@ func seedNameSyncSource(
 		assert.NoError(t, err, "cleanup: cannot delete seeded access review source %s", source.ID)
 	})
 
-	return scope, source
+	return scope, source, connectorID
 }
 
 // TestRecordNameSyncAttemptHoldsSourceOutOfQueue pins the invariant the
@@ -104,7 +115,7 @@ func TestRecordNameSyncAttemptHoldsSourceOutOfQueue(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var claimed coredata.AccessReviewSource
@@ -160,8 +171,8 @@ func TestNameSyncClaimYieldsToOtherSources(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	olderScope, older := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
-	_, newer := seedNameSyncSource(t, ctx, client, nameSyncEpoch.Add(time.Hour))
+	olderScope, older, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	_, newer, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch.Add(time.Hour))
 
 	// Charge the older source, which is the one the failing provider owns.
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -200,7 +211,7 @@ func TestMarkNameSyncedYieldsToConcurrentReset(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, connectorID := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return source.RecordNameSyncAttempt(ctx, tx, scope, time.Minute)
@@ -210,7 +221,7 @@ func TestMarkNameSyncedYieldsToConcurrentReset(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		sources := coredata.AccessReviewSources{}
 
-		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, *source.ConnectorID)
+		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, connectorID)
 	}))
 
 	// The worker finishes and writes the name it resolved against the old
@@ -240,7 +251,7 @@ func TestResetNameSyncByConnectorIDReleasesBackedOffSource(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, connectorID := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return source.RecordNameSyncAttempt(ctx, tx, scope, time.Hour)
@@ -249,7 +260,7 @@ func TestResetNameSyncByConnectorIDReleasesBackedOffSource(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		sources := coredata.AccessReviewSources{}
 
-		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, *source.ConnectorID)
+		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, connectorID)
 	}))
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -272,7 +283,7 @@ func TestMarkNameSyncedYieldsToAReclaimAtTheSameAttemptCount(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, connectorID := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
 
 	// The in-flight worker claims and starts resolving.
 	inFlight := *source
@@ -287,7 +298,7 @@ func TestMarkNameSyncedYieldsToAReclaimAtTheSameAttemptCount(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		sources := coredata.AccessReviewSources{}
 
-		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, *source.ConnectorID)
+		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, connectorID)
 	}))
 
 	reclaimed := *source
@@ -336,7 +347,7 @@ func TestNameSyncBudgetIsSpentOverFiveAttempts(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
 
 	// The schedule the worker charges: 1m, 2m, 4m, 8m, 16m.
 	backoffs := []time.Duration{time.Minute, 2 * time.Minute, 4 * time.Minute, 8 * time.Minute, 16 * time.Minute}

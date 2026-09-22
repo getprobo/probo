@@ -36,9 +36,10 @@ import (
 )
 
 const (
-	azureTestTenantID       = "a1111111-1111-4111-8111-111111111111"
-	azureTestClientID       = "b2222222-2222-4222-8222-222222222222"
-	azureTestSubscriptionID = "c3333333-3333-4333-8333-333333333333"
+	azureTestTenantID               = "a1111111-1111-4111-8111-111111111111"
+	azureTestClientID               = "b2222222-2222-4222-8222-222222222222"
+	azureTestSubscriptionID         = "c3333333-3333-4333-8333-333333333333"
+	azureTestSelectedSubscriptionID = "d4444444-4444-4444-8444-444444444444"
 )
 
 func azureTestConnector(t *testing.T, settings coredata.AzureConnectorSettings) *coredata.Connector {
@@ -104,14 +105,39 @@ func TestAzureNewSession(t *testing.T) {
 		},
 	)
 
-	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
-	require.NoError(t, err)
+	t.Run(
+		"empty account id keeps the stored subscription",
+		func(t *testing.T) {
+			t.Parallel()
 
-	assert.Equal(t, cloud.Azure, session.Cloud())
-	assert.Equal(t, azureTestSubscriptionID, session.AccountID())
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
+			require.NoError(t, err)
 
-	_, ok = session.(*cloudazure.Session)
-	assert.True(t, ok)
+			assert.Equal(t, cloud.Azure, session.Cloud())
+			assert.Equal(t, azureTestSubscriptionID, session.AccountID())
+
+			_, ok := session.(*cloudazure.Session)
+			assert.True(t, ok)
+		},
+	)
+
+	t.Run(
+		"selected subscription replaces the stored subscription",
+		func(t *testing.T) {
+			t.Parallel()
+
+			session, err := reg.WorkloadIdentity.NewSession(
+				context.Background(),
+				awsTestIssuer(t),
+				conn,
+				azureTestSelectedSubscriptionID,
+			)
+			require.NoError(t, err)
+
+			assert.Equal(t, cloud.Azure, session.Cloud())
+			assert.Equal(t, azureTestSelectedSubscriptionID, session.AccountID())
+		},
+	)
 }
 
 func TestAzureNewDriver(t *testing.T) {
@@ -162,7 +188,7 @@ func TestAzureNewDriver(t *testing.T) {
 				},
 			)
 
-			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 			require.NoError(t, err)
 
 			driver, err := reg.WorkloadIdentity.NewDriver(
@@ -218,7 +244,7 @@ func TestAzureNewNameResolver(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 			require.NoError(t, err)
 
 			assert.NotNil(

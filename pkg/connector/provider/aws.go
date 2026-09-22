@@ -22,8 +22,12 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"regexp"
 
+	"github.com/aws/aws-sdk-go-v2/service/organizations"
+	"github.com/aws/smithy-go"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/cloud"
@@ -42,21 +46,39 @@ import (
 // check, so there is no grant readback beside Probe.
 func awsRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderAWS,
-		DisplayName:      "Amazon Web Services",
-		DocumentationURL: accessReviewDocsURL("aws"),
+		Provider:           coredata.ConnectorProviderAWS,
+		DisplayName:        "Amazon Web Services",
+		InitialAccountFunc: awsInitialAccount,
+		DocumentationURL:   accessReviewDocsURL("aws"),
 		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession:      newAWSSession,
-			NewDriver:       newAWSDriver,
-			Probe:           probeAWS,
-			NewNameResolver: newAWSNameResolver,
+			NewSession:       newAWSSession,
+			NewDriver:        newAWSDriver,
+			Probe:            probeAWS,
+			DiscoverAccounts: discoverAWSAccounts,
+			NewNameResolver:  newAWSNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "roleArn", Label: "Role ARN", Required: true},
 			},
 		},
 	}
+}
+
+var awsAccountFromRoleARN = regexp.MustCompile(`iam::([0-9]+):`)
+
+func awsInitialAccount(c *coredata.Connector) (string, string, error) {
+	settings, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot read connector settings: %w", err)
+	}
+
+	matches := awsAccountFromRoleARN.FindStringSubmatch(settings.RoleARN)
+	if len(matches) != 2 {
+		return "", "", nil
+	}
+
+	return matches[1], matches[1], nil
 }
 
 func newAWSNameResolver(
@@ -84,13 +106,22 @@ func newAWSSession(
 	_ context.Context,
 	issuer *identityfederation.Issuer,
 	conn *coredata.Connector,
+	accountID string,
 ) (cloud.Session, error) {
 	settings, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](conn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read aws connector settings: %w", err)
 	}
 
-	session, err := cloudaws.NewSession(issuer, conn.OrganizationID, settings.RoleARN)
+	roleARN := settings.RoleARN
+	if accountID != "" {
+		roleARN, err = cloudaws.MemberRoleARN(settings.RoleARN, accountID, settings.MemberRoleName)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	session, err := cloudaws.NewSession(issuer, conn.OrganizationID, roleARN)
 	if err != nil {
 		return nil, err
 	}
@@ -124,4 +155,68 @@ func probeAWS(ctx context.Context, session cloud.Session, _ *coredata.Connector)
 	}
 
 	return awsSession.CheckAccess(ctx)
+}
+
+func discoverAWSAccounts(
+	ctx context.Context,
+	session cloud.Session,
+	_ *coredata.Connector,
+) ([]DiscoveredAccount, error) {
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot discover aws accounts: session is for %s", session.Cloud())
+	}
+
+	client := organizations.NewFromConfig(awsSession.Config())
+	paginator := organizations.NewListAccountsPaginator(client, &organizations.ListAccountsInput{})
+
+	var accounts []DiscoveredAccount
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			var apiErr smithy.APIError
+			if errors.As(err, &apiErr) && awsListAccountsEnded(apiErr.ErrorCode()) {
+				return []DiscoveredAccount{{
+					ExternalAccountID: awsSession.AccountID(),
+					Name:              awsSession.AccountID(),
+				}}, nil
+			}
+
+			return nil, fmt.Errorf("cannot list aws organization accounts: %w", err)
+		}
+
+		for _, account := range page.Accounts {
+			if account.Id == nil {
+				continue
+			}
+
+			name := *account.Id
+			if account.Name != nil && *account.Name != "" {
+				name = *account.Name
+			}
+
+			accounts = append(accounts, DiscoveredAccount{
+				ExternalAccountID: *account.Id,
+				Name:              name,
+			})
+		}
+	}
+
+	if accounts == nil {
+		return []DiscoveredAccount{}, nil
+	}
+
+	return accounts, nil
+}
+
+// awsListAccountsEnded reports ListAccounts errors that end the walk on the
+// session account. The role cannot list an organization.
+func awsListAccountsEnded(code string) bool {
+	switch code {
+	case "AccessDeniedException", "AWSOrganizationsNotInUseException":
+		return true
+	default:
+		return false
+	}
 }

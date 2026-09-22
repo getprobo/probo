@@ -204,6 +204,13 @@ type Registration struct {
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) (drivers.Driver, error)
 	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) drivers.NameResolver
 	SetOrganizationSettings func(*coredata.Connector, string) error
+
+	// InitialAccountFunc is the account present from the start, before any
+	// account discovered or enabled later. Register sets a func that returns
+	// empty strings when the provider has no such field. A settings payload
+	// that cannot be decoded is an error, distinct from an empty field.
+	// Callers use ResolveInitialAccount.
+	InitialAccountFunc func(*coredata.Connector) (externalID string, name string, err error)
 }
 
 // APIKeyAuthMode selects how an API key is presented on outbound requests. The
@@ -508,10 +515,20 @@ type WorkloadIdentityConfig struct {
 	// knowledge read from the connector's settings, which is why it lives here
 	// rather than in a cross-cloud switch the access-review service would own.
 	//
+	// accountID selects a member account of an organization install. Empty
+	// keeps the initial account (the RoleARN account, the WIF hub project,
+	// the stored subscription).
+	//
 	// The framework calls it once and hands the session to NewDriver, Probe,
 	// and NewNameResolver, mirroring how it hands one *http.Client to
 	// Registration.NewDriver and Registration.Probe. Required.
-	NewSession func(context.Context, *identityfederation.Issuer, *coredata.Connector) (cloud.Session, error)
+	NewSession func(context.Context, *identityfederation.Issuer, *coredata.Connector, string) (cloud.Session, error)
+
+	// DiscoverAccounts lists the vendor accounts this connector can enable.
+	// Nil means the provider has no discover path (standalone-only, or GitHub
+	// App which is not a workload-identity session). An empty result is a
+	// successful listing of nothing, never an error.
+	DiscoverAccounts func(context.Context, cloud.Session, *coredata.Connector) ([]DiscoveredAccount, error)
 
 	// NewDriver builds the access-review driver from a cloud session rather
 	// than an *http.Client, because cloud SDK credentials sign requests the SDK
@@ -538,6 +555,13 @@ type WorkloadIdentityConfig struct {
 	// Empty when the provider needs none beyond the grant in the customer's
 	// own cloud account.
 	ExtraSettings []ExtraSetting
+}
+
+// DiscoveredAccount is one vendor account a live DiscoverAccounts call
+// returned. It is not a persisted ConnectorAccount: enable writes that row.
+type DiscoveredAccount struct {
+	ExternalAccountID string
+	Name              string
 }
 
 // The Supports* predicates below are derived from the presence of a connect
@@ -569,6 +593,14 @@ func (r *Registration) SupportsClientCredentials() bool {
 // Probo's app at the vendor.
 func (r *Registration) SupportsInstall() bool {
 	return r.Install != nil
+}
+
+// SupportsOrganizationInstall reports whether this provider can connect as an
+// organization (discover + enable accounts) rather than a single tenant. It is
+// the presence of a discover closure, so a workload-identity provider with no
+// listing stays standalone. A later non-WI path adds its own closure here.
+func (r *Registration) SupportsOrganizationInstall() bool {
+	return r.WorkloadIdentity != nil && r.WorkloadIdentity.DiscoverAccounts != nil
 }
 
 // IsManagedAPIKey reports whether Probo, rather than the customer, supplies this

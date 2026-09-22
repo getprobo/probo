@@ -165,6 +165,7 @@ const (
 	TaskActivityEntityType                           uint16 = 133
 	TaskSyncJobEntityType                            uint16 = 134
 	_                                                uint16 = 135 // LinearWebhookEventEntityType - removed
+	ConnectorAccountEntityType                       uint16 = 136
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -419,6 +420,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TaskActivity{ID: id}, true
 	case TaskSyncJobEntityType:
 		return &TaskSyncJob{ID: id}, true
+	case ConnectorAccountEntityType:
+		return &ConnectorAccount{ID: id}, true
 	default:
 		return nil, false
 	}

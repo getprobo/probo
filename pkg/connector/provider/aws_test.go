@@ -24,9 +24,14 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 	"io"
+	"net/http"
+	"strings"
 	"testing"
 
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
@@ -147,7 +152,7 @@ func TestAWSNewNameResolver(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+			session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 			require.NoError(t, err)
 
 			resolver := reg.WorkloadIdentity.NewNameResolver(
@@ -172,7 +177,7 @@ func TestAWSNewSession(t *testing.T) {
 		RoleARN: "arn:aws:iam::123456789012:role/AuditorRole",
 	})
 
-	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+	session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 	require.NoError(t, err)
 
 	assert.Equal(t, cloud.AWS, session.Cloud())
@@ -214,7 +219,7 @@ func TestAWSNewDriver(t *testing.T) {
 			RoleARN: "arn:aws:iam::123456789012:role/ProboAudit",
 		})
 
-		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn)
+		session, err := reg.WorkloadIdentity.NewSession(context.Background(), awsTestIssuer(t), conn, "")
 		require.NoError(t, err)
 
 		driver, err := reg.WorkloadIdentity.NewDriver(
@@ -226,4 +231,113 @@ func TestAWSNewDriver(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, driver)
 	})
+}
+
+const awsDiscoverAccountID = "123456789012"
+
+type awsRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f awsRoundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
+
+// awsOrganizationsErrorClient answers every call with one Organizations JSON
+// error, the shape AWS returns for ListAccounts.
+func awsOrganizationsErrorClient(code, message string) *http.Client {
+	body := fmt.Sprintf(`{"__type":%q,"Message":%q}`, code, message)
+
+	return &http.Client{
+		Transport: awsRoundTripFunc(func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusBadRequest,
+				Status:     "400 Bad Request",
+				Proto:      "HTTP/1.1",
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Header: http.Header{
+					"Content-Type":     []string{"application/x-amz-json-1.1"},
+					"X-Amzn-Errortype": []string{code},
+				},
+				Body:          io.NopCloser(strings.NewReader(body)),
+				ContentLength: int64(len(body)),
+			}, nil
+		}),
+	}
+}
+
+func awsDiscoverSession(client *http.Client) *cloudaws.Session {
+	return cloudaws.NewSessionFromConfig(
+		awsDiscoverAccountID,
+		cloudaws.CommercialPartition,
+		awssdk.Config{
+			Region: cloudaws.DefaultCommercialRegion,
+			Credentials: awssdk.NewCredentialsCache(
+				credentials.NewStaticCredentialsProvider(
+					"TESTINGACCESSKEY",
+					"testing-secret-not-a-credential",
+					"",
+				),
+			),
+			HTTPClient:       client,
+			RetryMaxAttempts: 1,
+		},
+	)
+}
+
+func TestAWSDiscoverAccounts_FallsBackToSessionAccount(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderAWS)
+	require.True(t, ok)
+	require.NotNil(t, reg.WorkloadIdentity.DiscoverAccounts)
+
+	conn := awsTestConnector(t, coredata.AWSConnectorSettings{
+		RoleARN: "arn:aws:iam::" + awsDiscoverAccountID + ":role/ProboAudit",
+	})
+
+	cases := []struct {
+		name string
+		code string
+	}{
+		{name: "organizations not in use", code: "AWSOrganizationsNotInUseException"},
+		{name: "access denied", code: "AccessDeniedException"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			accounts, err := reg.WorkloadIdentity.DiscoverAccounts(
+				context.Background(),
+				awsDiscoverSession(awsOrganizationsErrorClient(tc.code, "denied")),
+				conn,
+			)
+			require.NoError(t, err)
+			require.Len(t, accounts, 1)
+			assert.Equal(t, awsDiscoverAccountID, accounts[0].ExternalAccountID)
+			assert.Equal(t, awsDiscoverAccountID, accounts[0].Name)
+		})
+	}
+}
+
+func TestAWSDiscoverAccounts_ReturnsOtherOrganizationsErrors(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderAWS)
+	require.True(t, ok)
+	require.NotNil(t, reg.WorkloadIdentity.DiscoverAccounts)
+
+	conn := awsTestConnector(t, coredata.AWSConnectorSettings{
+		RoleARN: "arn:aws:iam::" + awsDiscoverAccountID + ":role/ProboAudit",
+	})
+
+	_, err := reg.WorkloadIdentity.DiscoverAccounts(
+		context.Background(),
+		awsDiscoverSession(awsOrganizationsErrorClient("ServiceException", "unavailable")),
+		conn,
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot list aws organization accounts")
 }

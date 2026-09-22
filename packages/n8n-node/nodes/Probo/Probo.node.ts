@@ -119,6 +119,11 @@ export class Probo implements INodeType {
 						description: 'Manage compliance portal',
 					},
 					{
+						name: 'Connector',
+						value: 'connector',
+						description: 'Manage connectors and connector accounts',
+					},
+					{
 						name: 'Control',
 						value: 'control',
 						description: 'Manage controls',

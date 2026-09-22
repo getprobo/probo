@@ -41,7 +41,12 @@ import (
 // region probing.
 func posthogRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderPostHog,
+		Provider: coredata.ConnectorProviderPostHog,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.PostHogConnectorSettings) string {
+				return s.BaseURL
+			},
+		),
 		DisplayName: "PostHog",
 
 		// PublicClient: PostHog OAuth uses the CIMD flow — no client_secret,

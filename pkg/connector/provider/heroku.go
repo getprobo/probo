@@ -32,7 +32,12 @@ import (
 
 func herokuRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderHeroku,
+		Provider: coredata.ConnectorProviderHeroku,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.HerokuConnectorSettings) string {
+				return s.TeamID
+			},
+		),
 		DisplayName: "Heroku",
 		Endpoints: Endpoints{
 			Auth:  "https://id.heroku.com/oauth/authorize",

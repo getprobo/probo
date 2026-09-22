@@ -157,6 +157,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionConnectorCreate,
 		ActionConnectorDelete,
 		ActionConnectorInitiate,
+		ActionConnectorDiscover,
 	},
 	ScopeV1ControlRead: {
 		ActionControlGet,

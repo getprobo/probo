@@ -210,14 +210,14 @@ func buildHTTPClient(
 }
 
 // resolveDriver creates a Driver for the given AccessReviewSource based on
-// connector_id (null = built-in, set = connector-backed).
+// connector_account_id (null = CSV or built-in, set = connector-backed).
 func (s *Service) resolveDriver(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
 	source *coredata.AccessReviewSource,
 ) (drivers.Driver, error) {
-	if source.ConnectorID == nil {
+	if source.ConnectorAccountID == nil {
 		// CSV-backed source: use CSVDriver when csv_data is present
 		if source.CsvData != nil && *source.CsvData != "" {
 			return drivers.NewCSVDriver(strings.NewReader(*source.CsvData)), nil
@@ -227,10 +227,14 @@ func (s *Service) resolveDriver(
 		return drivers.NewProboMembershipsDriver(s.pg, scope, source.OrganizationID), nil
 	}
 
-	// Connector-backed: look up the connector and resolve driver by provider
+	account := &coredata.ConnectorAccount{}
+	if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+		return nil, fmt.Errorf("cannot load connector account: %w", err)
+	}
+
 	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, s.encryptionKey); err != nil {
-		return nil, fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
+	if err := dbConnector.LoadByID(ctx, tx, scope, account.ConnectorID, s.encryptionKey); err != nil {
+		return nil, fmt.Errorf("cannot load connector %s: %w", account.ConnectorID, err)
 	}
 
 	reg, ok := s.providerRegistry.Get(dbConnector.Provider)
@@ -243,7 +247,7 @@ func (s *Service) resolveDriver(
 	// lands in the default arm and fails loudly rather than fetching nothing.
 	switch conn := dbConnector.Connection.(type) {
 	case *connector.WorkloadIdentityConnection:
-		return s.newCloudDriver(ctx, reg, dbConnector)
+		return s.newCloudDriver(ctx, tx, scope, reg, dbConnector, source)
 
 	case connector.HTTPConnection:
 		return s.newHTTPDriver(ctx, tx, scope, reg, dbConnector, conn)
@@ -260,10 +264,22 @@ func (s *Service) resolveDriver(
 // cloud session rather than an HTTP client.
 func (s *Service) newCloudDriver(
 	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
 	reg *provider.Registration,
 	dbConnector *coredata.Connector,
+	source *coredata.AccessReviewSource,
 ) (drivers.Driver, error) {
-	session, err := s.buildCloudSession(ctx, dbConnector)
+	if source.ConnectorAccountID == nil {
+		return nil, fmt.Errorf("cannot resolve driver: source %s has no connector account", source.ID)
+	}
+
+	account := &coredata.ConnectorAccount{}
+	if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+		return nil, fmt.Errorf("cannot load connector account %s: %w", *source.ConnectorAccountID, err)
+	}
+
+	session, err := s.OpenSession(ctx, dbConnector, account.ExternalAccountID)
 	if err != nil {
 		return nil, err
 	}

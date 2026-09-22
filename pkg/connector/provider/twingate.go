@@ -41,7 +41,12 @@ import (
 // probe adds only the per-network host, not a new verdict.
 func twingateRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderTwingate,
+		Provider: coredata.ConnectorProviderTwingate,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.TwingateConnectorSettings) string {
+				return s.Network
+			},
+		),
 		DisplayName:      "Twingate",
 		DocumentationURL: accessReviewDocsURL("twingate"),
 		APIKey: &APIKeyConfig{

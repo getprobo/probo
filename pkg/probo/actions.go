@@ -253,10 +253,11 @@ const (
 	ActionSlackConnectionList = "core:slack-connection:list"
 
 	// Connector actions (generic)
-	ActionConnectorCreate = "core:connector:create"
-	ActionConnectorGet    = "core:connector:get"
-	ActionConnectorList   = "core:connector:list"
-	ActionConnectorDelete = "core:connector:delete"
+	ActionConnectorCreate   = "core:connector:create"
+	ActionConnectorGet      = "core:connector:get"
+	ActionConnectorList     = "core:connector:list"
+	ActionConnectorDelete   = "core:connector:delete"
+	ActionConnectorDiscover = "core:connector:discover"
 
 	// DataProtectionImpactAssessment actions
 	ActionDataProtectionImpactAssessmentList    = "core:data-protection-impact-assessment:list"

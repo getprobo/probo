@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -136,6 +137,7 @@ func NewService(
 	iamService *iam.Service,
 	esignService *esign.Service,
 	connectorRegistry *connector.Registry,
+	providerRegistry *provider.Registry,
 	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	if bucket == "" {
@@ -212,7 +214,7 @@ func NewService(
 	svc.ThirdPartyContacts = &ThirdPartyContactService{svc: svc}
 	svc.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: svc}
 	svc.ThirdPartyServices = &ThirdPartyServiceService{svc: svc}
-	svc.Connectors = &ConnectorService{svc: svc}
+	svc.Connectors = &ConnectorService{svc: svc, providerRegistry: providerRegistry}
 	svc.Assets = &AssetService{svc: svc}
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}

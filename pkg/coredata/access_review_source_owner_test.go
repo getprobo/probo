@@ -45,13 +45,31 @@ func insertSource(
 	t.Helper()
 
 	now := time.Now().UTC()
+
+	var accountID *gid.GID
+
+	if connectorID != nil {
+		account, err := insertConnectorAccount(
+			ctx,
+			client,
+			scope,
+			organizationID,
+			*connectorID,
+			"implied",
+			"implied",
+		)
+		require.NoError(t, err)
+
+		accountID = &account.ID
+	}
+
 	source := &coredata.AccessReviewSource{
-		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-		OrganizationID: organizationID,
-		ConnectorID:    connectorID,
-		Name:           "owner test source",
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+		OrganizationID:     organizationID,
+		ConnectorAccountID: accountID,
+		Name:               "owner test source",
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
 	var inserted bool
@@ -67,11 +85,11 @@ func insertSource(
 	return source, inserted
 }
 
-// TestAccessReviewSourceInsert_IdempotentPerConnector pins the
+// TestAccessReviewSourceInsert_IdempotentPerConnectorAccount pins the
 // index-arbitrated idempotency CreateSource relies on: the second
-// insert against the same connector is skipped, while CSV sources
-// (nil connector) always insert.
-func TestAccessReviewSourceInsert_IdempotentPerConnector(t *testing.T) {
+// insert against the same connector account is skipped, while CSV
+// sources (nil connector) always insert.
+func TestAccessReviewSourceInsert_IdempotentPerConnectorAccount(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -87,12 +105,14 @@ func TestAccessReviewSourceInsert_IdempotentPerConnector(t *testing.T) {
 	require.True(t, inserted)
 
 	_, inserted = insertSource(t, ctx, client, scope, organizationID, &connectorID)
-	require.False(t, inserted, "second insert for the same connector must be skipped")
+	require.False(t, inserted, "second insert for the same connector account must be skipped")
+
+	require.NotNil(t, first.ConnectorAccountID)
 
 	loaded := &coredata.AccessReviewSource{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+		return loaded.LoadByConnectorAccountID(ctx, conn, scope, *first.ConnectorAccountID)
 	}))
 	require.Equal(t, first.ID, loaded.ID)
 

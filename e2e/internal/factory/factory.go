@@ -1175,6 +1175,10 @@ func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs .
 		input["connectorId"] = *connectorID
 	}
 
+	if connectorAccountID := a.getStringPtr("connectorAccountId"); connectorAccountID != nil {
+		input["connectorAccountId"] = *connectorAccountID
+	}
+
 	var result struct {
 		CreateAccessReviewSource struct {
 			AccessReviewSourceEdge struct {
@@ -1208,6 +1212,16 @@ func (b *AccessReviewSourceBuilder) WithName(name string) *AccessReviewSourceBui
 
 func (b *AccessReviewSourceBuilder) WithCsvData(csvData string) *AccessReviewSourceBuilder {
 	b.attrs["csvData"] = csvData
+	return b
+}
+
+func (b *AccessReviewSourceBuilder) WithConnectorID(connectorID string) *AccessReviewSourceBuilder {
+	b.attrs["connectorId"] = connectorID
+	return b
+}
+
+func (b *AccessReviewSourceBuilder) WithConnectorAccountID(connectorAccountID string) *AccessReviewSourceBuilder {
+	b.attrs["connectorAccountId"] = connectorAccountID
 	return b
 }
 
@@ -2170,4 +2184,155 @@ func LinkRiskAnalysisScenarioRisk(c *testutil.Client, scenarioID, riskID string)
 		},
 	})
 	require.NoError(c.T, err, "linkRiskAnalysisScenarioRisk mutation failed")
+}
+
+func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateWorkloadIdentityConnectorInput!) {
+			createWorkloadIdentityConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": a.getString("organizationId", c.GetOrganizationID().String()),
+		"provider":       a.getString("provider", "AWS"),
+		"awsRoleArn":     a.getString("awsRoleArn", "arn:aws:iam::123456789012:role/ProboAudit"),
+	}
+
+	if provider := a.getString("provider", "AWS"); provider == "GCP" {
+		input = map[string]any{
+			"organizationId":              a.getString("organizationId", c.GetOrganizationID().String()),
+			"provider":                    "GCP",
+			"gcpWorkloadIdentityProvider": a.getString("gcpWorkloadIdentityProvider", "projects/123456789012/locations/global/workloadIdentityPools/probo-pool/providers/probo"),
+			"gcpServiceAccountEmail":      a.getString("gcpServiceAccountEmail", "probo-audit@example-project.iam.gserviceaccount.com"),
+		}
+	}
+
+	if provider := a.getString("provider", "AWS"); provider == "AZURE" {
+		input = map[string]any{
+			"organizationId":      a.getString("organizationId", c.GetOrganizationID().String()),
+			"provider":            "AZURE",
+			"azureTenantId":       a.getString("azureTenantId", "a1111111-1111-4111-8111-111111111111"),
+			"azureClientId":       a.getString("azureClientId", "b2222222-2222-4222-8222-222222222222"),
+			"azureSubscriptionId": a.getString("azureSubscriptionId", "c3333333-3333-4333-8333-333333333333"),
+			"azureEnvironment":    a.getString("azureEnvironment", "AZURE_PUBLIC"),
+		}
+	}
+
+	var result struct {
+		CreateWorkloadIdentityConnector struct {
+			Connector struct {
+				ID string `json:"id"`
+			} `json:"connector"`
+		} `json:"createWorkloadIdentityConnector"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createWorkloadIdentityConnector mutation failed")
+
+	return result.CreateWorkloadIdentityConnector.Connector.ID
+}
+
+type ConnectorBuilder struct {
+	client *testutil.Client
+	attrs  Attrs
+}
+
+func NewConnector(c *testutil.Client) *ConnectorBuilder {
+	return &ConnectorBuilder{client: c, attrs: Attrs{}}
+}
+
+func (b *ConnectorBuilder) WithProvider(provider string) *ConnectorBuilder {
+	b.attrs["provider"] = provider
+	return b
+}
+
+func (b *ConnectorBuilder) WithAWSRoleARN(roleARN string) *ConnectorBuilder {
+	b.attrs["awsRoleArn"] = roleARN
+	return b
+}
+
+func (b *ConnectorBuilder) Create() string {
+	return CreateConnector(b.client, b.attrs)
+}
+
+func CreateConnectorAccount(c *testutil.Client, connectorID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: EnableConnectorAccountsInput!) {
+			enableConnectorAccounts(input: $input) {
+				connectorAccounts {
+					id
+					externalAccountId
+				}
+			}
+		}
+	`
+
+	externalID := a.getString("externalAccountId", SafeName("account"))
+	name := a.getString("name", externalID)
+
+	var result struct {
+		EnableConnectorAccounts struct {
+			ConnectorAccounts []struct {
+				ID                string `json:"id"`
+				ExternalAccountID string `json:"externalAccountId"`
+			} `json:"connectorAccounts"`
+		} `json:"enableConnectorAccounts"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"connectorId": connectorID,
+			"accounts": []map[string]string{
+				{
+					"externalAccountId": externalID,
+					"name":              name,
+				},
+			},
+		},
+	}, &result)
+	require.NoError(c.T, err, "enableConnectorAccounts mutation failed")
+	require.NotEmpty(c.T, result.EnableConnectorAccounts.ConnectorAccounts)
+
+	return result.EnableConnectorAccounts.ConnectorAccounts[0].ID
+}
+
+type ConnectorAccountBuilder struct {
+	client      *testutil.Client
+	connectorID string
+	attrs       Attrs
+}
+
+func NewConnectorAccount(c *testutil.Client, connectorID string) *ConnectorAccountBuilder {
+	return &ConnectorAccountBuilder{client: c, connectorID: connectorID, attrs: Attrs{}}
+}
+
+func (b *ConnectorAccountBuilder) WithExternalAccountID(externalAccountID string) *ConnectorAccountBuilder {
+	b.attrs["externalAccountId"] = externalAccountID
+	return b
+}
+
+func (b *ConnectorAccountBuilder) WithName(name string) *ConnectorAccountBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *ConnectorAccountBuilder) Create() string {
+	return CreateConnectorAccount(b.client, b.connectorID, b.attrs)
 }

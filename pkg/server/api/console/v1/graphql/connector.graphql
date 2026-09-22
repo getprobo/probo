@@ -256,6 +256,13 @@ type ConnectorProviderInfo {
     Probo-held credentials the ceremony needs.
     """
     installSupported: Boolean!
+    """
+    organizationInstallSupported is true when this provider can connect as an
+    organization (discover and enable member accounts) rather than a single
+    tenant, and this deployment can open that session. Today that is a
+    workload-identity provider with a discover path.
+    """
+    organizationInstallSupported: Boolean!
 }
 
 type AWSConnectorSetup {
@@ -336,7 +343,7 @@ enum ConnectorConnectionStatus {
     RECONNECT_REQUIRED
 }
 
-type Connector {
+type Connector implements Node {
     id: ID!
     provider: ConnectorProvider!
     protocol: ConnectorProtocol!
@@ -358,7 +365,80 @@ type Connector {
     provider as an access source, or null when no doc page exists yet.
     """
     documentationUrl: String @goField(forceResolver: true)
+    """
+    accounts are the enabled tenant rows this connector owns.
+    """
+    accounts(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ConnectorAccountOrder
+    ): ConnectorAccountConnection! @goField(forceResolver: true)
+    """
+    discoveredAccounts probes the provider live on every read, so selecting it
+    across a list of connectors costs one outbound call per connector. Select
+    it on a single connector, or on the one a mutation just returned.
+    """
+    discoveredAccounts: [DiscoveredConnectorAccount!]!
+        @goField(forceResolver: true)
     createdAt: Datetime!
+}
+
+type ConnectorAccount implements Node {
+    id: ID!
+    connector: Connector! @goField(forceResolver: true)
+    externalAccountId: String!
+    name: String!
+    """
+    connectionStatus probes the provider live on every read. Phase 1 still
+    probes the connector's initial account, never this row's
+    externalAccountId.
+    """
+    connectionStatus: ConnectorConnectionStatus! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type DiscoveredConnectorAccount {
+    externalAccountId: String!
+    name: String!
+}
+
+enum ConnectorAccountOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ConnectorAccountOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorAccountOrderFieldCreatedAt"
+        )
+    EXTERNAL_ACCOUNT_ID
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorAccountOrderFieldExternalAccountID"
+        )
+}
+
+input ConnectorAccountOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ConnectorAccountOrderBy"
+    ) {
+    field: ConnectorAccountOrderField!
+    direction: OrderDirection!
+}
+
+type ConnectorAccountConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ConnectorAccountConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ConnectorAccountEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ConnectorAccountEdge {
+    cursor: CursorKey!
+    node: ConnectorAccount!
 }
 
 type SlackConnection implements Node {
@@ -391,6 +471,15 @@ extend type Mutation {
     createWorkloadIdentityConnector(
         input: CreateWorkloadIdentityConnectorInput!
     ): CreateWorkloadIdentityConnectorPayload!
+    createOrganizationConnector(
+        input: CreateOrganizationConnectorInput!
+    ): CreateOrganizationConnectorPayload!
+    enableConnectorAccounts(
+        input: EnableConnectorAccountsInput!
+    ): EnableConnectorAccountsPayload!
+    disableConnectorAccount(
+        input: DisableConnectorAccountInput!
+    ): DisableConnectorAccountPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
     deleteSlackConnection(
         input: DeleteSlackConnectionInput!
@@ -469,6 +558,46 @@ input CreateWorkloadIdentityConnectorInput {
 
 type CreateWorkloadIdentityConnectorPayload {
     connector: Connector!
+}
+
+input CreateOrganizationConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    awsRoleArn: String
+    awsMemberRoleName: String
+    gcpWorkloadIdentityProvider: String
+    gcpServiceAccountEmail: String
+    gcpParent: String
+    azureTenantId: String
+    azureClientId: String
+    azureEnvironment: AzureEnvironment
+}
+
+type CreateOrganizationConnectorPayload {
+    connector: Connector!
+    discoveredAccounts: [DiscoveredConnectorAccount!]!
+}
+
+input EnableConnectorAccountInput {
+    externalAccountId: String!
+    name: String!
+}
+
+input EnableConnectorAccountsInput {
+    connectorId: ID!
+    accounts: [EnableConnectorAccountInput!]!
+}
+
+type EnableConnectorAccountsPayload {
+    connectorAccounts: [ConnectorAccount!]!
+}
+
+input DisableConnectorAccountInput {
+    connectorAccountId: ID!
+}
+
+type DisableConnectorAccountPayload {
+    disabledConnectorAccountId: ID!
 }
 
 input DeleteConnectorInput {
