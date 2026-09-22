@@ -4,10 +4,7 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
-### Fixed
-
-- Cookie Category `Update` can clear TCF purpose IDs and drops
-  duplicates in the set list
+## [0.234.0] - 2026-09-22
 
 ### Added
 
@@ -15,6 +12,7 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 - Cookie Banner `Get`/`Update` expose `publisherCountryCode`
 - Cookie Category `Get`/`Update` expose `tcfPurposeIds`
 - Cookie Consent Record `Get` returns the optional IAB TCF string (`tc`)
+- Risk Analysis `Publish` publishes an analysis as a document version
 
 ## [0.233.0] - 2026-09-22
 
