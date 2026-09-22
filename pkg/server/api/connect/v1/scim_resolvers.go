@@ -106,6 +106,28 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 	}, nil
 }
 
+// ReactivateSCIMBridge is the resolver for the reactivateSCIMBridge field.
+func (r *mutationResolver) ReactivateSCIMBridge(ctx context.Context, input types.ReactivateSCIMBridgeInput) (*types.ReactivateSCIMBridgePayload, error) {
+	if _, err := r.authorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate); err != nil {
+		return nil, err
+	}
+
+	bridge, err := r.iam.OrganizationService.ReactivateSCIMBridge(ctx, input.ScimBridgeID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot reactivate scim bridge", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ReactivateSCIMBridgePayload{
+		ScimBridge: types.NewSCIMBridge(bridge),
+	}, nil
+}
+
 // RequestSCIMEventExport is the resolver for the requestSCIMEventExport field.
 func (r *mutationResolver) RequestSCIMEventExport(ctx context.Context, input types.RequestSCIMEventExportInput) (*types.RequestSCIMEventExportPayload, error) {
 	scope, err := r.authorize(ctx, input.OrganizationID, iam.ActionSCIMEventExport)

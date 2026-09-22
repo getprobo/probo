@@ -6354,6 +6354,23 @@ func (r *Resolver) UpdateSCIMBridgeTool(ctx context.Context, req *mcp.CallToolRe
 	return nil, types.UpdateSCIMBridgeOutput{ScimBridge: types.NewSCIMBridge(bridge)}, nil
 }
 
+func (r *Resolver) ReactivateSCIMBridgeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ReactivateSCIMBridgeInput) (*mcp.CallToolResult, types.ReactivateSCIMBridgeOutput, error) {
+	if _, err := r.Authorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate); err != nil {
+		return nil, types.ReactivateSCIMBridgeOutput{}, err
+	}
+
+	bridge, err := r.iamSvc.OrganizationService.ReactivateSCIMBridge(ctx, input.ScimBridgeID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeNotFound](err); ok {
+			return nil, types.ReactivateSCIMBridgeOutput{}, fmt.Errorf("SCIM bridge %s not found", input.ScimBridgeID)
+		}
+
+		return nil, types.ReactivateSCIMBridgeOutput{}, fmt.Errorf("cannot reactivate SCIM bridge: %w", err)
+	}
+
+	return nil, types.ReactivateSCIMBridgeOutput{ScimBridge: types.NewSCIMBridge(bridge)}, nil
+}
+
 func (r *Resolver) ListSCIMEventsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSCIMEventsInput) (*mcp.CallToolResult, types.ListSCIMEventsOutput, error) {
 	if _, err := r.Authorize(ctx, input.ScimConfigurationID, iam.ActionSCIMEventList); err != nil {
 		return nil, types.ListSCIMEventsOutput{}, err

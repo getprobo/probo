@@ -42,6 +42,8 @@ import type { GoogleWorkspaceConnectorFragment$key } from "#/__generated__/iam/G
 import type { GoogleWorkspaceConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorUpdateSCIMBridgeMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { ReactivateSCIMBridgeButton } from "./ReactivateSCIMBridgeButton";
+
 const googleWorkspaceConnectorFragment = graphql`
   fragment GoogleWorkspaceConnectorFragment on SCIMConfiguration {
     id
@@ -51,6 +53,7 @@ const googleWorkspaceConnectorFragment = graphql`
       state
       syncError
       excludedUserNames
+      ...ReactivateSCIMBridgeButtonFragment
       connector {
         id
         createdAt
@@ -330,6 +333,7 @@ export function GoogleWorkspaceConnector(props: {
                 </p>
               )}
             </div>
+            {bridge && <ReactivateSCIMBridgeButton fKey={bridge} />}
           </DialogContent>
         </Dialog>
         <Dialog

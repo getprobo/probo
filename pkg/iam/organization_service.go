@@ -1969,6 +1969,54 @@ func (s OrganizationService) UpdateSCIMBridge(
 	return bridge, nil
 }
 
+func (s OrganizationService) ReactivateSCIMBridge(
+	ctx context.Context,
+	bridgeID gid.GID,
+) (*coredata.SCIMBridge, error) {
+	bridge := &coredata.SCIMBridge{}
+	scope := coredata.NewScopeFromObjectID(bridgeID)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			err := bridge.LoadByID(ctx, tx, scope, bridgeID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSCIMBridgeNotFoundError(bridgeID)
+				}
+
+				return fmt.Errorf("cannot load SCIM bridge: %w", err)
+			}
+
+			now := time.Now()
+			bridge.NextSyncAt = new(now)
+			bridge.ConsecutiveFailures = 0
+			bridge.SyncError = nil
+
+			// The runner claims ACTIVE and FAILED bridges, plus stale SYNCING
+			// rows. DISABLED and PENDING are never selected, so any other
+			// state is returned to ACTIVE with the next sync due immediately.
+			if bridge.State != coredata.SCIMBridgeStateActive {
+				bridge.State = coredata.SCIMBridgeStateActive
+			}
+
+			bridge.UpdatedAt = now
+
+			err = bridge.Update(ctx, tx, scope)
+			if err != nil {
+				return fmt.Errorf("cannot reactivate SCIM bridge: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return bridge, nil
+}
+
 func (s OrganizationService) ListSCIMEventsByConfigID(
 	ctx context.Context,
 	scimConfigurationID gid.GID,

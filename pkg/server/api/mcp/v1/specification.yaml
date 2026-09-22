@@ -14376,6 +14376,23 @@ components:
         scim_bridge:
           $ref: "#/components/schemas/SCIMBridge"
 
+    ReactivateSCIMBridgeInput:
+      type: object
+      required:
+        - scim_bridge_id
+      properties:
+        scim_bridge_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM bridge ID
+
+    ReactivateSCIMBridgeOutput:
+      type: object
+      required:
+        - scim_bridge
+      properties:
+        scim_bridge:
+          $ref: "#/components/schemas/SCIMBridge"
+
     ListSCIMEventsInput:
       type: object
       required:
@@ -19811,6 +19828,18 @@ tools:
       $ref: "#/components/schemas/UpdateSCIMBridgeInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateSCIMBridgeOutput"
+  - name: reactivateSCIMBridge
+    title: Reactivate SCIM Bridge
+    description: Schedule the next SCIM bridge sync for now, clear consecutive failures, and set a non-active bridge back to active
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ReactivateSCIMBridgeInput"
+    outputSchema:
+      $ref: "#/components/schemas/ReactivateSCIMBridgeOutput"
   - name: listSCIMEvents
     title: List SCIM Events
     description: List SCIM events for a configuration

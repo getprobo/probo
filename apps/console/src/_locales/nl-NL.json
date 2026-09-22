@@ -6147,6 +6147,11 @@
     "expired": "Verlopen",
     "notes": "Opmerkingen"
   },
+  "reactivateSCIMBridge": {
+    "actions": { "reactivate": "Opnieuw activeren", "reactivating": "Bezig met activeren..." },
+    "dialog": { "title": "SCIM-brug opnieuw activeren", "description": "De volgende synchronisatie wordt nu ingepland. Opeenvolgende fouten worden gewist, en een mislukte, uitgeschakelde of vastgelopen brug wordt weer actief." },
+    "messages": { "success": "De SCIM-brug is opnieuw geactiveerd. De volgende run is nu ingepland." }
+  },
   "country": {
     "GLOBAL": "Wereldwijd",
     "AD": "Andorra",

@@ -42,6 +42,8 @@ import type { Microsoft365ConnectorFragment$key } from "#/__generated__/iam/Micr
 import type { Microsoft365ConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/Microsoft365ConnectorUpdateSCIMBridgeMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { ReactivateSCIMBridgeButton } from "./ReactivateSCIMBridgeButton";
+
 const microsoft365ConnectorFragment = graphql`
   fragment Microsoft365ConnectorFragment on SCIMConfiguration {
     id
@@ -51,6 +53,7 @@ const microsoft365ConnectorFragment = graphql`
       state
       syncError
       excludedUserNames
+      ...ReactivateSCIMBridgeButtonFragment
       connector {
         id
         createdAt
@@ -328,6 +331,7 @@ export function Microsoft365Connector(props: {
                 </p>
               )}
             </div>
+            {bridge && <ReactivateSCIMBridgeButton fKey={bridge} />}
           </DialogContent>
         </Dialog>
         <Dialog

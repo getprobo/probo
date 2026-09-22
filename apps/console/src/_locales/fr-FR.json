@@ -6154,6 +6154,11 @@
     "expired": "Expiré",
     "notes": "Notes"
   },
+  "reactivateSCIMBridge": {
+    "actions": { "reactivate": "Réactiver", "reactivating": "Réactivation..." },
+    "dialog": { "title": "Réactiver le pont SCIM", "description": "La prochaine synchronisation est planifiée pour maintenant. Les erreurs consécutives sont remises à zéro, et un pont en échec, désactivé ou bloqué redevient actif." },
+    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." }
+  },
   "country": {
     "GLOBAL": "Mondial",
     "AD": "Andorre",
