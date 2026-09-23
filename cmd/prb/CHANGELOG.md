@@ -4,6 +4,23 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.234.0] - 2026-09-23
+
+### Added
+
+- `task list-linear-teams` lists Linear teams for an organization
+- `task publish-linear` publishes a task to Linear (`--team-id` required)
+- `task unlink-external` unlinks a task from its external issue
+- `task view` shows the linked external issue identifier and URL
+- `scim bridge reactivate` schedules the next sync for now, clears
+  consecutive errors, and sets a failed or disabled bridge back to
+  active
+
+### Changed
+
+- `webhook event list` accepts `--status` (`PENDING`, `SUCCEEDED`,
+  `FAILED`). JSON output includes the outbound payload
+
 ## [0.233.0] - 2026-09-22
 
 ### Added
