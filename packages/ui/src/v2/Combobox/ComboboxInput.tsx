@@ -31,14 +31,21 @@ export type ComboboxInputProps
 // Unstyled flex-1 search field inside the input group. Shows a placeholder
 // when empty (typically when no chips are selected).
 export function ComboboxInput(props: ComboboxInputProps) {
-  const { className, ...rest } = props;
-  const inputNode = useComboboxInputNode();
+  const { className, ref, ...rest } = props;
+  const input = useComboboxInputNode();
 
   return (
     <BaseCombobox.Input
       className={comboboxInput({ className })}
       {...rest}
-      ref={inputNode}
+      ref={(node) => {
+        input?.setInputNode(node);
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref != null) {
+          ref.current = node;
+        }
+      }}
     />
   );
 }

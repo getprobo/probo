@@ -54,6 +54,7 @@ import { WebhookEventTypeSelectPopover } from "./_components/WebhookEventTypeSel
 import { WebhookSigningSecretField } from "./_components/WebhookSigningSecretField";
 import { WebhookSubscriptionEventList } from "./_components/WebhookSubscriptionEventList";
 import type { WebhookEventTypeValue } from "./_lib/webhookEventTypes";
+import { clearFieldError, endpointUrlError } from "./_lib/webhookSubscriptionForm";
 import { webhookSubscriptionDetailPage } from "./variants";
 
 export const webhookSubscriptionDetailPageFragment = graphql`
@@ -99,34 +100,6 @@ const updateWebhookSubscriptionMutation = graphql`
     }
   }
 `;
-
-function endpointUrlError(value: string, required: string, invalid: string, https: string) {
-  const trimmed = value.trim();
-  if (trimmed === "") {
-    return required;
-  }
-
-  try {
-    const url = new URL(trimmed);
-    if (url.protocol !== "https:") {
-      return https;
-    }
-  } catch {
-    return invalid;
-  }
-
-  return undefined;
-}
-
-function clearFieldError(errors: Record<string, string>, field: string) {
-  if (errors[field] == null) {
-    return errors;
-  }
-
-  const next = { ...errors };
-  delete next[field];
-  return next;
-}
 
 interface WebhookSubscriptionDetailPageProps {
   queryRef: PreloadedQuery<WebhookSubscriptionDetailPageQuery>;
@@ -231,6 +204,8 @@ export function WebhookSubscriptionDetailPage({
           selectedEvents: nextEvents,
         },
       },
+    }).catch(() => {
+      // Error toast is handled by useMutation.
     });
   }
 
@@ -313,7 +288,10 @@ export function WebhookSubscriptionDetailPage({
                   <Code variant="ghost">{subscription.endpointUrl}</Code>
                 </div>
               )}
-          <WebhookSigningSecretField webhookSubscriptionId={subscription.id} />
+          <WebhookSigningSecretField
+            webhookSubscriptionId={subscription.id}
+            canUpdate={subscription.canUpdate}
+          />
           <div className={eventsSection()}>
             <div className={eventsHeading()}>
               <Text size={2} weight="medium">
@@ -331,6 +309,7 @@ export function WebhookSubscriptionDetailPage({
                     variant="outline"
                     color="neutral"
                     size={1}
+                    disabled={isUpdating}
                     aria-label={t("webhooksSettingsPage.editEvents")}
                   >
                     <PlusMinusIcon />

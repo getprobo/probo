@@ -292,12 +292,7 @@ function DeliveryRow({
 
   return (
     <Collapsible className={row()}>
-      <CollapsibleTrigger
-        className={trigger()}
-        aria-label={formattedPayload != null
-          ? t("webhooksSettingsPage.payload")
-          : t("webhooksSettingsPage.response")}
-      >
+      <CollapsibleTrigger className={trigger()}>
         {header}
       </CollapsibleTrigger>
       <CollapsiblePanel>
@@ -341,8 +336,11 @@ export function WebhookSubscriptionEventList({
   >(webhookSubscriptionEventListFragment, webhookSubscriptionKey);
 
   const refetchPage = useCallback((variables: CursorPaginationVariables) => {
-    refetch(variables, { fetchPolicy: "store-or-network" });
-  }, [refetch]);
+    refetch(
+      { ...variables, filter: webhookEventListGraphqlFilter(status) },
+      { fetchPolicy: "store-or-network" },
+    );
+  }, [refetch, status]);
 
   const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
     refetchPage,

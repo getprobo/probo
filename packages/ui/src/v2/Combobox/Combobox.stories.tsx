@@ -89,17 +89,20 @@ export function Multiple() {
         <ComboboxInputGroup>
           <ComboboxChips>
             <ComboboxValue<Fruit[]>>
-              {selected => (
-                <>
-                  {selected.map(fruit => (
-                    <ComboboxChip key={fruit.value} aria-label={fruit.label}>
-                      {fruit.label}
-                      <ComboboxChipRemove aria-label={`Remove ${fruit.label}`} />
-                    </ComboboxChip>
-                  ))}
-                  <ComboboxInput placeholder={selected.length === 0 ? "Search fruit" : undefined} />
-                </>
-              )}
+              {(selected) => {
+                const fruits = selected ?? [];
+                return (
+                  <>
+                    {fruits.map(fruit => (
+                      <ComboboxChip key={fruit.value} aria-label={fruit.label}>
+                        {fruit.label}
+                        <ComboboxChipRemove aria-label={`Remove ${fruit.label}`} />
+                      </ComboboxChip>
+                    ))}
+                    <ComboboxInput placeholder={fruits.length === 0 ? "Search fruit" : undefined} />
+                  </>
+                );
+              }}
             </ComboboxValue>
           </ComboboxChips>
         </ComboboxInputGroup>

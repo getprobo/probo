@@ -29,7 +29,13 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const listQuery = `
+func eventsListQuery(includePayload bool) string {
+	payloadField := ""
+	if includePayload {
+		payloadField = "\n            payload"
+	}
+
+	return fmt.Sprintf(`
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $filter: WebhookEventFilter) {
   node(id: $id) {
     __typename
@@ -40,8 +46,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $fi
           node {
             id
             status
-            createdAt
-            payload
+            createdAt%s
           }
         }
         pageInfo {
@@ -52,7 +57,8 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $fi
     }
   }
 }
-`
+`, payloadField)
+}
 
 type webhookEvent struct {
 	ID        string  `json:"id"`
@@ -129,7 +135,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			events, totalCount, err := api.Paginate(
 				client,
-				listQuery,
+				eventsListQuery(*flagOutput == cmdutil.OutputJSON),
 				variables,
 				flagLimit,
 				func(data json.RawMessage) (*api.Connection[webhookEvent], error) {

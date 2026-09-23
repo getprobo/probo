@@ -24,7 +24,7 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback, useTransition } from "react";
+import { useCallback, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -55,7 +55,7 @@ export const webhookSubscriptionListFragment = graphql`
       after: $after
       last: $last
       before: $before
-    ) {
+    ) @connection(key: "WebhookSubscriptionList_webhookSubscriptions") {
       pageInfo {
         hasNextPage
         hasPreviousPage
@@ -84,22 +84,16 @@ export function WebhookSubscriptionList({ organizationKey }: WebhookSubscription
     WebhookSubscriptionList_organization$key
   >(webhookSubscriptionListFragment, organizationKey);
 
-  const refetchPage = useCallback((variables: CursorPaginationVariables) => {
-    refetch(variables, { fetchPolicy: "store-or-network" });
-  }, [refetch]);
+  const pageVariablesRef = useRef<CursorPaginationVariables>({
+    first: WEBHOOK_SUBSCRIPTION_PAGE_SIZE,
+    after: null,
+    last: null,
+    before: null,
+  });
 
-  const refetchFirstPage = useCallback(() => {
-    startRefetchTransition(() => {
-      refetch(
-        {
-          first: WEBHOOK_SUBSCRIPTION_PAGE_SIZE,
-          after: null,
-          last: null,
-          before: null,
-        },
-        { fetchPolicy: "network-only" },
-      );
-    });
+  const refetchPage = useCallback((variables: CursorPaginationVariables) => {
+    pageVariablesRef.current = variables;
+    refetch(variables, { fetchPolicy: "store-or-network" });
   }, [refetch]);
 
   const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
@@ -119,7 +113,9 @@ export function WebhookSubscriptionList({ organizationKey }: WebhookSubscription
       goPrevious();
       return;
     }
-    refetchFirstPage();
+    startRefetchTransition(() => {
+      refetch(pageVariablesRef.current, { fetchPolicy: "network-only" });
+    });
   }
 
   return (

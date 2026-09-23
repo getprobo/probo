@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import { useRef } from "react";
+import { useState } from "react";
 
 import { ComboboxInputNodeProvider } from "./context";
 
@@ -32,10 +32,10 @@ export type ComboboxProps<Value, Multiple extends boolean | undefined = false>
 export function Combobox<Value, Multiple extends boolean | undefined = false>(
   props: ComboboxProps<Value, Multiple>,
 ) {
-  const inputNode = useRef<HTMLInputElement | null>(null);
+  const [inputNode, setInputNode] = useState<HTMLInputElement | null>(null);
 
   return (
-    <ComboboxInputNodeProvider value={inputNode}>
+    <ComboboxInputNodeProvider value={{ inputNode, setInputNode }}>
       <BaseCombobox.Root {...props} />
     </ComboboxInputNodeProvider>
   );

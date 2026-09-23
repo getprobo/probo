@@ -52,6 +52,7 @@ const webhookSubscriptionListItemFragment = graphql`
     id
     endpointUrl
     selectedEvents
+    canGet: permission(action: "core:webhook-subscription:get")
     canUpdate: permission(action: "core:webhook-subscription:update")
     canDelete: permission(action: "core:webhook-subscription:delete")
   }
@@ -210,6 +211,8 @@ export function WebhookSubscriptionListItem({
           selectedEvents: nextEvents,
         },
       },
+    }).catch(() => {
+      // Error toast is handled by useMutation.
     });
   }
 
@@ -251,6 +254,7 @@ export function WebhookSubscriptionListItem({
                 color="neutral"
                 size={1}
                 className={action()}
+                disabled={isUpdating}
                 aria-label={t("webhooksSettingsPage.editEvents")}
               >
                 <PlusMinusIcon />
@@ -260,7 +264,9 @@ export function WebhookSubscriptionListItem({
         </div>
         <WebhookEventTypeBadges selectedEvents={webhook.selectedEvents} />
       </div>
-      <LastDeliveryActivity key={webhook.id} webhookSubscriptionId={webhook.id} />
+      {webhook.canGet && (
+        <LastDeliveryActivity key={webhook.id} webhookSubscriptionId={webhook.id} />
+      )}
     </Card>
   );
 }

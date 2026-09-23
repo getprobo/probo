@@ -5199,6 +5199,7 @@
     "errorTitle": "Fout",
     "errors": {
       "loadSigningSecret": "Laden van signing secret mislukt.",
+      "copySigningSecret": "Kopiëren van signing secret mislukt.",
       "copyPayload": "Payload kopiëren mislukt.",
       "copyResponse": "Reactie kopiëren mislukt.",
       "create": "Aanmaken van webhook mislukt",

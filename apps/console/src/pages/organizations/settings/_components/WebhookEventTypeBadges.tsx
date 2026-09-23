@@ -58,7 +58,10 @@ export function WebhookEventTypeBadges({
               </Button>
             )}
           />
-          <PopoverPopup className={eventsAll()}>
+          <PopoverPopup
+            className={eventsAll()}
+            aria-label={t("webhooksSettingsPage.seeAll")}
+          >
             {selectedEvents.map(event => (
               <Badge key={event} variant="soft" color="indigo" className={badge()}>
                 {webhookEventTypeLabel(event)}

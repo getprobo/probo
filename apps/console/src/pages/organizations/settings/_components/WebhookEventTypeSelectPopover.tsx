@@ -59,7 +59,7 @@ export function WebhookEventTypeSelectPopover({
 
   return (
     <Popover onOpenChange={handleOpenChange}>
-      <PopoverTrigger render={children} />
+      <PopoverTrigger render={children} disabled={disabled} />
       <PopoverPopup
         side="bottom"
         align="start"

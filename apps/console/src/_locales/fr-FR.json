@@ -5209,6 +5209,7 @@
     "errorTitle": "Erreur",
     "errors": {
       "loadSigningSecret": "Échec du chargement du secret de signature.",
+      "copySigningSecret": "Impossible de copier le secret de signature.",
       "copyPayload": "Impossible de copier la charge utile.",
       "copyResponse": "Impossible de copier la réponse.",
       "create": "Échec de la création du webhook",

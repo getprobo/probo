@@ -46,10 +46,12 @@ const webhookSigningSecretFieldQuery = graphql`
 const MASKED_SECRET = "••••••••••••••••";
 
 interface WebhookSigningSecretFieldProps {
+  canUpdate: boolean;
   webhookSubscriptionId: string;
 }
 
 export function WebhookSigningSecretField({
+  canUpdate,
   webhookSubscriptionId,
 }: WebhookSigningSecretFieldProps) {
   const { t } = useTranslation();
@@ -61,16 +63,13 @@ export function WebhookSigningSecretField({
   const [isLoading, setIsLoading] = useState(false);
 
   async function loadSecret() {
-    if (secret != null) {
-      return secret;
-    }
-
     setIsLoading(true);
     try {
       const data = await fetchQuery<WebhookSigningSecretFieldQuery>(
         environment,
         webhookSigningSecretFieldQuery,
         { webhookSubscriptionId },
+        { fetchPolicy: "network-only" },
       ).toPromise();
       const next = data?.node?.__typename === "WebhookSubscription"
         ? data.node.signingSecret
@@ -120,7 +119,7 @@ export function WebhookSigningSecretField({
     } catch {
       toast({
         title: t("webhooksSettingsPage.errorTitle"),
-        description: t("webhooksSettingsPage.errors.loadSigningSecret"),
+        description: t("webhooksSettingsPage.errors.copySigningSecret"),
         variant: "error",
       });
     }
@@ -132,33 +131,35 @@ export function WebhookSigningSecretField({
         <Text size={2} weight="medium">
           {t("webhooksSettingsPage.fields.signingSecret")}
         </Text>
-        <div className={actions()}>
-          <Button
-            variant="ghost"
-            color="neutral"
-            size={1}
-            disabled={isLoading}
-            onClick={() => {
-              void handleToggleReveal();
-            }}
-          >
-            {revealed
-              ? t("webhooksSettingsPage.actions.hide")
-              : t("webhooksSettingsPage.actions.show")}
-          </Button>
-          <IconButton
-            variant="ghost"
-            color="neutral"
-            size={1}
-            loading={isLoading}
-            aria-label={t("webhooksSettingsPage.copySigningSecret")}
-            onClick={() => {
-              void handleCopy();
-            }}
-          >
-            <CopyIcon />
-          </IconButton>
-        </div>
+        {canUpdate && (
+          <div className={actions()}>
+            <Button
+              variant="ghost"
+              color="neutral"
+              size={1}
+              disabled={isLoading}
+              onClick={() => {
+                void handleToggleReveal();
+              }}
+            >
+              {revealed
+                ? t("webhooksSettingsPage.actions.hide")
+                : t("webhooksSettingsPage.actions.show")}
+            </Button>
+            <IconButton
+              variant="ghost"
+              color="neutral"
+              size={1}
+              loading={isLoading}
+              aria-label={t("webhooksSettingsPage.copySigningSecret")}
+              onClick={() => {
+                void handleCopy();
+              }}
+            >
+              <CopyIcon />
+            </IconButton>
+          </div>
+        )}
       </div>
       <Code variant="ghost" className={value()}>
         {revealed && secret != null ? secret : MASKED_SECRET}

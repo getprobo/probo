@@ -33,7 +33,12 @@ export function ComboboxChipRemove(props: ComboboxChipRemoveProps) {
   const { className, children, ...rest } = props;
 
   return (
-    <BaseCombobox.ChipRemove className={comboboxChipRemove({ className })} type="button" {...rest}>
+    <BaseCombobox.ChipRemove
+      className={comboboxChipRemove({ className })}
+      type="button"
+      aria-label="Remove"
+      {...rest}
+    >
       {children ?? <XIcon />}
     </BaseCombobox.ChipRemove>
   );

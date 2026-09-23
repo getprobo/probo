@@ -2774,7 +2774,7 @@
     "dialogs": { "addTitle": "Add Webhook Subscription", "deleteTitle": "Delete Webhook" },
     "status": { "succeeded": "Succeeded", "pending": "Pending", "failed": "Failed" },
     "errorTitle": "Error",
-    "errors": { "loadSigningSecret": "Failed to load signing secret.", "copyPayload": "Failed to copy payload.", "copyResponse": "Failed to copy response.", "create": "Failed to create webhook", "update": "Failed to update webhook", "delete": "Failed to delete webhook" },
+    "errors": { "loadSigningSecret": "Failed to load signing secret.", "copySigningSecret": "Failed to copy signing secret.", "copyPayload": "Failed to copy payload.", "copyResponse": "Failed to copy response.", "create": "Failed to create webhook", "update": "Failed to update webhook", "delete": "Failed to delete webhook" },
     "messages": { "created": "Webhook created successfully", "updated": "Webhook updated successfully", "deleted": "Webhook deleted successfully" },
     "copiedToClipboard": "Copied to clipboard",
     "deliveriesCount_one": "Delivery ({{count}})",

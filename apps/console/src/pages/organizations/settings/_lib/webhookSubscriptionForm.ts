@@ -18,19 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { createContext, useContext } from "react";
+export function endpointUrlError(
+  value: string,
+  required: string,
+  invalid: string,
+  https: string,
+) {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return required;
+  }
 
-// The search input, used as the popup anchor so the menu sits under the caret
-// instead of stretching to the whole chip group.
-export type ComboboxInputNodeContextValue = {
-  inputNode: HTMLInputElement | null;
-  setInputNode: (node: HTMLInputElement | null) => void;
-};
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:") {
+      return https;
+    }
+  } catch {
+    return invalid;
+  }
 
-const ComboboxInputNodeContext = createContext<ComboboxInputNodeContextValue | null>(null);
+  return undefined;
+}
 
-export const ComboboxInputNodeProvider = ComboboxInputNodeContext.Provider;
+export function clearFieldError(errors: Record<string, string>, field: string) {
+  if (errors[field] == null) {
+    return errors;
+  }
 
-export function useComboboxInputNode() {
-  return useContext(ComboboxInputNodeContext);
+  const next = { ...errors };
+  delete next[field];
+  return next;
 }

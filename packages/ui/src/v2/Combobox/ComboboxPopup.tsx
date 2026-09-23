@@ -44,7 +44,7 @@ export function ComboboxPopup(props: ComboboxPopupProps) {
     side = "bottom", align = "start", sideOffset = 4,
     ...popupProps
   } = props;
-  const inputNode = useComboboxInputNode();
+  const input = useComboboxInputNode();
 
   return (
     <BaseCombobox.Portal container={container}>
@@ -53,7 +53,7 @@ export function ComboboxPopup(props: ComboboxPopupProps) {
           the preferred side runs out of horizontal room. */}
       <BaseCombobox.Positioner
         className="z-3"
-        anchor={inputNode ?? undefined}
+        anchor={input?.inputNode ?? undefined}
         side={side}
         align={align}
         sideOffset={sideOffset}

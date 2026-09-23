@@ -43,7 +43,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { graphql } from "relay-runtime";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { NewWebhookSubscriptionPageMutation } from "#/__generated__/core/NewWebhookSubscriptionPageMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -52,49 +52,24 @@ import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import type { WebhookEventType } from "./_lib/webhookEventTypes";
 import { WEBHOOK_EVENT_TYPES } from "./_lib/webhookEventTypes";
+import { clearFieldError, endpointUrlError } from "./_lib/webhookSubscriptionForm";
 import { newWebhookSubscriptionPage } from "./variants";
 
 const createWebhookSubscriptionMutation = graphql`
   mutation NewWebhookSubscriptionPageMutation(
     $input: CreateWebhookSubscriptionInput!
+    $connections: [ID!]!
   ) {
     createWebhookSubscription(input: $input) {
-      webhookSubscriptionEdge {
+      webhookSubscriptionEdge @prependEdge(connections: $connections) {
         node {
           id
+          ...WebhookSubscriptionListItem_webhookSubscription
         }
       }
     }
   }
 `;
-
-function endpointUrlError(value: string, required: string, invalid: string, https: string) {
-  const trimmed = value.trim();
-  if (trimmed === "") {
-    return required;
-  }
-
-  try {
-    const url = new URL(trimmed);
-    if (url.protocol !== "https:") {
-      return https;
-    }
-  } catch {
-    return invalid;
-  }
-
-  return undefined;
-}
-
-function clearFieldError(errors: Record<string, string>, field: string) {
-  if (errors[field] == null) {
-    return errors;
-  }
-
-  const next = { ...errors };
-  delete next[field];
-  return next;
-}
 
 function NewWebhookSubscriptionPageInner() {
   const { t } = useTranslation();
@@ -136,6 +111,11 @@ function NewWebhookSubscriptionPageInner() {
       return;
     }
 
+    const connectionId = ConnectionHandler.getConnectionID(
+      organizationId,
+      "WebhookSubscriptionList_webhookSubscriptions",
+    );
+
     void createWebhook({
       variables: {
         input: {
@@ -143,6 +123,7 @@ function NewWebhookSubscriptionPageInner() {
           endpointUrl: endpointUrl.trim(),
           selectedEvents: selected.map(event => event.value),
         },
+        connections: [connectionId],
       },
       onCompleted(response, payloadErrors) {
         const fieldErrors = toFieldErrors(payloadErrors);
@@ -216,25 +197,28 @@ function NewWebhookSubscriptionPageInner() {
               <ComboboxInputGroup>
                 <ComboboxChips>
                   <ComboboxValue<WebhookEventType[]>>
-                    {value => (
-                      <>
-                        {value.map(event => (
-                          <ComboboxChip key={event.value} aria-label={event.label}>
-                            {event.label}
-                            <ComboboxChipRemove
-                              aria-label={t("webhooksSettingsPage.removeEvent", { event: event.label })}
-                            />
-                          </ComboboxChip>
-                        ))}
-                        <ComboboxInput
-                          placeholder={
-                            value.length === 0
-                              ? t("webhooksSettingsPage.searchEvents")
-                              : undefined
-                          }
-                        />
-                      </>
-                    )}
+                    {(value) => {
+                      const events = value ?? [];
+                      return (
+                        <>
+                          {events.map(event => (
+                            <ComboboxChip key={event.value} aria-label={event.label}>
+                              {event.label}
+                              <ComboboxChipRemove
+                                aria-label={t("webhooksSettingsPage.removeEvent", { event: event.label })}
+                              />
+                            </ComboboxChip>
+                          ))}
+                          <ComboboxInput
+                            placeholder={
+                              events.length === 0
+                                ? t("webhooksSettingsPage.searchEvents")
+                                : undefined
+                            }
+                          />
+                        </>
+                      );
+                    }}
                   </ComboboxValue>
                 </ComboboxChips>
               </ComboboxInputGroup>

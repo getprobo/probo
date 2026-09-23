@@ -24,7 +24,7 @@ import type { ComponentProps, ReactNode } from "react";
 export type ComboboxValueProps<Value = unknown>
   = Omit<ComponentProps<typeof BaseCombobox.Value>, "children">
     & {
-      children?: ReactNode | ((selectedValue: Value) => ReactNode);
+      children?: ReactNode | ((selectedValue: Value | null) => ReactNode);
     };
 
 // Current selection. Pass a function to render chips (or a label) from the
