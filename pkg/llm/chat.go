@@ -112,6 +112,7 @@ type (
 		Content           string
 		Thinking          string
 		ThinkingSignature string
+		ThinkingProvider  string
 		ToolCalls         []ToolCallDelta
 	}
 
@@ -163,6 +164,7 @@ type StreamAccumulator struct {
 	content           strings.Builder
 	thinking          strings.Builder
 	thinkingSignature string
+	thinkingProvider  string
 	toolCalls         map[int]*ToolCall
 	usage             Usage
 	finishReason      FinishReason
@@ -211,12 +213,13 @@ func (a *StreamAccumulator) Response() *ChatCompletionResponse {
 	}
 
 	var parts []Part
-	if thinking := a.thinking.String(); thinking != "" {
+	if thinking := a.thinking.String(); thinking != "" || a.thinkingSignature != "" {
 		parts = append(
 			parts,
 			ThinkingPart{
 				Text:      thinking,
 				Signature: a.thinkingSignature,
+				Provider:  a.thinkingProvider,
 			},
 		)
 	}
@@ -245,6 +248,10 @@ func (a *StreamAccumulator) accumulate(event ChatCompletionStreamEvent) {
 
 	if event.Delta.ThinkingSignature != "" {
 		a.thinkingSignature = event.Delta.ThinkingSignature
+	}
+
+	if event.Delta.ThinkingProvider != "" {
+		a.thinkingProvider = event.Delta.ThinkingProvider
 	}
 
 	for _, tcd := range event.Delta.ToolCalls {

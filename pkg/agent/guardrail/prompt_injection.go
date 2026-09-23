@@ -76,7 +76,7 @@ func (g *PromptInjectionGuardrail) Check(ctx context.Context, messages []llm.Mes
 					Parts: []llm.Part{llm.TextPart{Text: userText}},
 				},
 			},
-			MaxTokens:   new(10),
+			MaxTokens:   new(16),
 			Temperature: new(0.0),
 		},
 	)
