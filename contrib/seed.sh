@@ -69,6 +69,61 @@ prb_api() {
   echo "$resp"
 }
 
+# signUp no longer opens a session. createOrganization needs one, and sign-in
+# stays rejected until the address is confirmed.
+wait_for_verified_sign_in() {
+  local vars deadline resp code identity_id verified waited
+
+  echo "==> Confirm the email address before continuing..."
+  echo "  A confirmation message was sent to $EMAIL."
+  echo "  Open it and confirm the address. This script continues once sign-in succeeds."
+  echo "  Mailpit: ${PROBO_SEED_MAILPIT_URL:-http://localhost:8025}"
+
+  vars=$(jo input="$(jo email="$EMAIL" password="$PASSWORD")")
+  deadline=$((SECONDS + 600))
+  waited=0
+
+  while true; do
+    resp=$(gql_connect '
+      mutation($input: SignInInput!) {
+        signIn(input: $input) {
+          identity {
+            id
+            emailVerified
+          }
+        }
+      }
+    ' "$vars")
+
+    code=$(echo "$resp" | jq -r '.errors[0].extensions.code // empty')
+    identity_id=$(echo "$resp" | jq -r '.data.signIn.identity.id // empty')
+    verified=$(echo "$resp" | jq -r '.data.signIn.identity.emailVerified | tostring')
+
+    if [ -n "$identity_id" ] && [ "$verified" = "true" ]; then
+      echo "  Email confirmed; signed in"
+      return 0
+    fi
+
+    if [ "$code" != "EMAIL_NOT_VERIFIED" ]; then
+      check_error "$resp" "signIn"
+      echo "ERROR (signIn): email is not verified" >&2
+      exit 1
+    fi
+
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      echo "ERROR: $EMAIL was not confirmed within 10 minutes" >&2
+      exit 1
+    fi
+
+    waited=$((waited + 3))
+    if [ $((waited % 15)) -eq 0 ]; then
+      echo "  Still waiting for $EMAIL to be confirmed..."
+    fi
+
+    sleep 3
+  done
+}
+
 curl -sf -o /dev/null "$BASE_URL/healthz" \
   || {
     echo "ERROR: API at $BASE_URL is not available" >&2
@@ -91,6 +146,8 @@ resp=$(gql_connect '
 ' "$vars")
 check_error "$resp" "signUp"
 echo "  Created user $EMAIL"
+
+wait_for_verified_sign_in
 
 vars=$(jo input="$(jo name="$ORG_NAME")")
 resp=$(gql_connect '
