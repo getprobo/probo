@@ -5213,6 +5213,7 @@
     "errors": {
       "loadEvents": "Échec du chargement des événements du webhook.",
       "loadSigningSecret": "Échec du chargement du secret de signature.",
+      "copyResponse": "Impossible de copier la réponse.",
       "create": "Échec de la création du webhook",
       "update": "Échec de la mise à jour du webhook",
       "delete": "Échec de la suppression du webhook"
@@ -5233,6 +5234,7 @@
     "notFound": "Cet abonnement webhook est introuvable.",
     "response": "Réponse",
     "copySigningSecret": "Copier le secret de signature",
+    "copyResponse": "Copier la réponse",
     "editWebhook": "Modifier le webhook",
     "deleteWebhook": "Supprimer le webhook",
     "seeAll": "Voir tout",

@@ -18,13 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, CopyIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
+import { useToast } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Collapsible } from "@probo/ui/src/v2/Collapsible/Collapsible";
 import { CollapsiblePanel } from "@probo/ui/src/v2/Collapsible/CollapsiblePanel";
 import { CollapsibleTrigger } from "@probo/ui/src/v2/Collapsible/CollapsibleTrigger";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { List } from "@probo/ui/src/v2/List/List";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
@@ -160,9 +162,40 @@ function DeliveryRow({
   status: string;
 }) {
   const { t, i18n } = useTranslation();
-  const { row, trigger, lead, trail, contentType, caret, response: responseClass }
-    = webhookSubscriptionEventList();
+  const { toast } = useToast();
+  const {
+    row,
+    trigger,
+    lead,
+    trail,
+    contentType,
+    caret,
+    responseWrap,
+    response: responseClass,
+    responseCopy,
+  } = webhookSubscriptionEventList();
   const parsed = response != null && response !== "" ? parseResponse(response) : null;
+
+  async function handleCopyResponse() {
+    if (parsed == null) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(parsed.formatted);
+      toast({
+        title: t("webhooksSettingsPage.copiedToClipboard"),
+        description: t("webhooksSettingsPage.response"),
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: t("webhooksSettingsPage.errorTitle"),
+        description: t("webhooksSettingsPage.errors.copyResponse"),
+        variant: "error",
+      });
+    }
+  }
 
   const header = (
     <>
@@ -196,9 +229,23 @@ function DeliveryRow({
         {header}
       </CollapsibleTrigger>
       <CollapsiblePanel>
-        <pre className={responseClass()}>
-          {parsed.formatted}
-        </pre>
+        <div className={responseWrap()}>
+          <IconButton
+            variant="surface"
+            color="neutral"
+            size={1}
+            className={responseCopy()}
+            aria-label={t("webhooksSettingsPage.copyResponse")}
+            onClick={() => {
+              void handleCopyResponse();
+            }}
+          >
+            <CopyIcon />
+          </IconButton>
+          <pre className={responseClass()}>
+            {parsed.formatted}
+          </pre>
+        </div>
       </CollapsiblePanel>
     </Collapsible>
   );

@@ -158,8 +158,10 @@ export const webhookSubscriptionEventList = tv({
     trail: "ml-auto flex min-w-0 items-center gap-2",
     contentType: "min-w-0 truncate",
     caret: "size-4 shrink-0 text-sand-11 transition-transform duration-150",
+    responseWrap: "relative mt-2",
     response:
-      "mt-2 whitespace-pre-wrap break-all rounded-2 bg-sand-2 p-2 text-1 text-sand-12",
+      "whitespace-pre-wrap break-all rounded-2 bg-sand-2 p-2 pr-9 text-1 text-sand-12",
+    responseCopy: "absolute top-1.5 right-1.5",
     pager: "flex justify-center",
   },
   variants: {

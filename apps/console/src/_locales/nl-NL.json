@@ -5203,6 +5203,7 @@
     "errors": {
       "loadEvents": "Laden van webhookgebeurtenissen mislukt.",
       "loadSigningSecret": "Laden van signing secret mislukt.",
+      "copyResponse": "Reactie kopiëren mislukt.",
       "create": "Aanmaken van webhook mislukt",
       "update": "Bijwerken van webhook mislukt",
       "delete": "Verwijderen van webhook mislukt"
@@ -5223,6 +5224,7 @@
     "notFound": "Dit webhookabonnement is niet gevonden.",
     "response": "Reactie",
     "copySigningSecret": "Signing secret kopiëren",
+    "copyResponse": "Reactie kopiëren",
     "editWebhook": "Webhook bewerken",
     "deleteWebhook": "Webhook verwijderen",
     "seeAll": "Alles zien",
