@@ -139,9 +139,6 @@ export function App() {
           </div>
         </probo-privacy-choices>
       </probo-cookie-banner-root>
-      <p style="margin-top:12px;">
-        <probo-settings-link>Cookie settings</probo-settings-link>
-      </p>
     `;
 
     const onClick = (e: Event) => {
@@ -181,7 +178,6 @@ export function App() {
 
   return (
     <ExampleShell
-      current="headless"
       title="@probo/cookie-banner — headless"
       description="Raw headless elements with no themed styling and no TCF."
     >

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { EXAMPLE_APPS, type ExampleApp } from "./apps";
 export { ConfigForm } from "./ConfigForm";
 export { DebugPanel } from "./DebugPanel";
 export { EventLog } from "./EventLog";

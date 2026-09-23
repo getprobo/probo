@@ -88,7 +88,6 @@ export function App() {
 
   return (
     <ExampleShell
-      current="themed"
       title="@probo/cookie-banner — themed"
       description="Category banner only. This app never installs the TCF stub or starts TCF."
     >
@@ -137,13 +136,6 @@ export function App() {
               position="bottom-right"
               gcm-enabled={config.gcmEnabled ? "true" : "false"}
             />
-
-            <p
-              style={{ marginTop: 16 }}
-              onClick={() => themedLogger.debug("[themed] cookie settings")}
-            >
-              <probo-settings-link>Cookie settings</probo-settings-link>
-            </p>
 
             <EventLog events={events} />
           </>

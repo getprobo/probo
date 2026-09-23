@@ -95,7 +95,6 @@ export function App() {
 
   return (
     <ExampleShell
-      current="themed-tcf"
       title="@probo/cookie-banner — themed TCF"
       description="IAB TCF first-layer path. Use this app with the IAB CMP validator."
     >
@@ -146,13 +145,6 @@ export function App() {
               position="bottom-right"
               gcm-enabled={config.gcmEnabled ? "true" : "false"}
             />
-
-            <p
-              style={{ marginTop: 16 }}
-              onClick={() => themedLogger.debug("[themed-tcf] cookie settings")}
-            >
-              <probo-settings-link>Cookie settings</probo-settings-link>
-            </p>
 
             <EventLog events={events} />
           </>
