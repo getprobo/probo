@@ -19,12 +19,12 @@
 // SOFTWARE.
 
 import { PlusMinusIcon, WebhooksLogoIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -37,7 +37,6 @@ import type { WebhookEventTypeValue } from "../_lib/webhookEventTypes";
 import { webhookSubscriptionListItem } from "../variants";
 
 import { DeleteWebhookSubscriptionDialog } from "./DeleteWebhookSubscriptionDialog";
-import { WebhookEventsDialog } from "./WebhookEventsDialog";
 import { WebhookEventTypeBadges } from "./WebhookEventTypeBadges";
 import { WebhookEventTypeSelectPopover } from "./WebhookEventTypeSelectPopover";
 
@@ -81,7 +80,6 @@ export function WebhookSubscriptionListItem({
   const { card, header, lead, icon, endpoint, eventsSection, eventsHeading, footer }
     = webhookSubscriptionListItem();
   const webhook = useFragment(webhookSubscriptionListItemFragment, webhookSubscriptionKey);
-  const [viewingEvents, setViewingEvents] = useState(false);
   const [updateWebhook, isUpdating] = useMutation<WebhookSubscriptionListItem_updateMutation>(
     updateWebhookSubscriptionMutation,
     {
@@ -115,9 +113,9 @@ export function WebhookSubscriptionListItem({
           <span className={icon()} aria-hidden>
             <WebhooksLogoIcon />
           </span>
-          <Code variant="ghost" className={endpoint()}>
-            {webhook.endpointUrl}
-          </Code>
+          <Link to={webhook.id} underline={false} highContrast className={endpoint()}>
+            <Code variant="ghost">{webhook.endpointUrl}</Code>
+          </Link>
         </div>
         {webhook.canDelete && (
           <DeleteWebhookSubscriptionDialog
@@ -153,25 +151,10 @@ export function WebhookSubscriptionListItem({
         <WebhookEventTypeBadges selectedEvents={webhook.selectedEvents} />
       </div>
       <div className={footer()}>
-        <Button
-          variant="surface"
-          color="neutral"
-          onClick={() => {
-            setViewingEvents(true);
-          }}
-        >
+        <ButtonLink to={webhook.id} variant="surface" color="neutral">
           {t("webhooksSettingsPage.eventsCount", { count: webhook.events.totalCount })}
-        </Button>
+        </ButtonLink>
       </div>
-      {viewingEvents && (
-        <WebhookEventsDialog
-          webhookSubscriptionId={webhook.id}
-          endpointUrl={webhook.endpointUrl}
-          onClose={() => {
-            setViewingEvents(false);
-          }}
-        />
-      )}
     </Card>
   );
 }

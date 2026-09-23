@@ -2784,6 +2784,7 @@
     "eventsCount_other": "Events ({{count}})",
     "emptyEvents": "No webhook events recorded yet.",
     "empty": "No webhook subscriptions yet. Add one to get started.",
+    "notFound": "This webhook subscription could not be found.",
     "response": "Response",
     "copySigningSecret": "Copy signing secret",
     "editWebhook": "Edit webhook",

@@ -103,3 +103,59 @@ export const newWebhookSubscriptionPageSkeleton = tv({
     form: "flex flex-col gap-4",
   },
 });
+
+export const webhookSubscriptionDetailPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    back: "self-start",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    title: "min-w-0 break-all",
+    settings: "flex flex-col gap-4",
+    endpointRow: "flex items-end gap-2",
+    endpointField: "min-w-0 flex-1",
+    eventsSection: "flex flex-col gap-2",
+    eventsHeading: "flex items-center gap-2",
+    history: "flex flex-col gap-3",
+  },
+});
+
+export const webhookSubscriptionDetailPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    settings: "flex flex-col gap-4",
+    history: "flex flex-col gap-3",
+  },
+});
+
+export const webhookSigningSecretField = tv({
+  slots: {
+    root: "flex flex-col gap-2",
+    header: "flex items-center gap-2",
+    value: "min-w-0 max-w-full break-all",
+    actions: "flex shrink-0 items-center gap-1",
+  },
+});
+
+export const webhookSubscriptionEventList = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    results: "transition-opacity",
+    empty: "flex flex-col items-center py-8 text-center",
+    item: "items-start",
+    meta: "flex items-center justify-between gap-3",
+    responseTrigger: "text-2 text-sand-11 hover:text-sand-12",
+    response:
+      "mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-2 bg-sand-2 p-2 text-1 text-sand-12",
+    pager: "flex justify-center",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
+  },
+});

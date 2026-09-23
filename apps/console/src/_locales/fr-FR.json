@@ -5229,6 +5229,7 @@
     "eventsCount_other": "Événements ({{count}})",
     "emptyEvents": "Aucun événement de webhook enregistré pour le moment.",
     "empty": "Aucun abonnement au webhook pour le moment. Ajoutez-en un pour commencer.",
+    "notFound": "Cet abonnement webhook est introuvable.",
     "response": "Réponse",
     "copySigningSecret": "Copier le secret de signature",
     "editWebhook": "Modifier le webhook",

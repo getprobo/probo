@@ -1,0 +1,204 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { dateTimeFormat } from "@probo/i18n";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Collapsible } from "@probo/ui/src/v2/Collapsible/Collapsible";
+import { CollapsiblePanel } from "@probo/ui/src/v2/Collapsible/CollapsiblePanel";
+import { CollapsibleTrigger } from "@probo/ui/src/v2/Collapsible/CollapsibleTrigger";
+import { List } from "@probo/ui/src/v2/List/List";
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
+import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { graphql, useRefetchableFragment } from "react-relay";
+
+import type { WebhookSubscriptionEventList_webhookSubscription$key } from "#/__generated__/core/WebhookSubscriptionEventList_webhookSubscription.graphql";
+import type { WebhookSubscriptionEventListRefetchQuery } from "#/__generated__/core/WebhookSubscriptionEventListRefetchQuery.graphql";
+import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
+import { useCursorPagination } from "#/lib/relay/useCursorPagination";
+
+import { webhookSubscriptionEventList } from "../variants";
+
+export const WEBHOOK_EVENT_PAGE_SIZE = 20;
+
+export const webhookSubscriptionEventListFragment = graphql`
+  fragment WebhookSubscriptionEventList_webhookSubscription on WebhookSubscription
+  @refetchable(queryName: "WebhookSubscriptionEventListRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 20 }
+    after: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+  ) {
+    events(first: $first, after: $after, last: $last, before: $before) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      edges {
+        node {
+          id
+          status
+          createdAt
+          response
+        }
+      }
+    }
+  }
+`;
+
+function formatResponse(response: string) {
+  try {
+    return JSON.stringify(JSON.parse(response), null, 2);
+  } catch {
+    return response;
+  }
+}
+
+function EventStatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+  if (status === "SUCCEEDED") {
+    return (
+      <Badge variant="soft" color="green" size={1}>
+        {t("webhooksSettingsPage.status.succeeded")}
+      </Badge>
+    );
+  }
+  if (status === "PENDING") {
+    return (
+      <Badge variant="soft" color="sky" size={1}>
+        {t("webhooksSettingsPage.status.pending")}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="soft" color="red" size={1}>
+      {t("webhooksSettingsPage.status.failed")}
+    </Badge>
+  );
+}
+
+interface WebhookSubscriptionEventListProps {
+  webhookSubscriptionKey: WebhookSubscriptionEventList_webhookSubscription$key;
+}
+
+export function WebhookSubscriptionEventList({
+  webhookSubscriptionKey,
+}: WebhookSubscriptionEventListProps) {
+  const { t, i18n } = useTranslation();
+  const [webhook, refetch] = useRefetchableFragment<
+    WebhookSubscriptionEventListRefetchQuery,
+    WebhookSubscriptionEventList_webhookSubscription$key
+  >(webhookSubscriptionEventListFragment, webhookSubscriptionKey);
+
+  const refetchPage = useCallback((variables: CursorPaginationVariables) => {
+    refetch(variables, { fetchPolicy: "store-or-network" });
+  }, [refetch]);
+
+  const { isPending, goPrevious, goNext } = useCursorPagination(
+    refetchPage,
+    webhook.events.pageInfo,
+    WEBHOOK_EVENT_PAGE_SIZE,
+  );
+
+  const edges = webhook.events.edges;
+  const pageInfo = webhook.events.pageInfo;
+  const {
+    root,
+    results,
+    empty,
+    item,
+    meta,
+    responseTrigger,
+    response,
+    pager,
+  } = webhookSubscriptionEventList({ pending: isPending });
+
+  return (
+    <div className={root()}>
+      <Heading level={2} size={4} weight="medium" highContrast>
+        {t("webhooksSettingsPage.eventsCount", { count: webhook.events.totalCount })}
+      </Heading>
+      {edges.length === 0
+        ? (
+            <Card variant="soft" size={2}>
+              <div className={empty()}>
+                <Text size={2} color="faint">
+                  {t("webhooksSettingsPage.emptyEvents")}
+                </Text>
+              </div>
+            </Card>
+          )
+        : (
+            <>
+              <div aria-busy={isPending} className={results()}>
+                <List>
+                  {edges.map(({ node }) => (
+                    <ListItem key={node.id} className={item()}>
+                      <ListItemContent>
+                        <div className={meta()}>
+                          <EventStatusBadge status={node.status} />
+                          <Text size={1} color="faint">
+                            {dateTimeFormat(i18n.language, node.createdAt)}
+                          </Text>
+                        </div>
+                        {node.response != null && node.response !== "" && (
+                          <Collapsible>
+                            <CollapsibleTrigger className={responseTrigger()}>
+                              {t("webhooksSettingsPage.response")}
+                            </CollapsibleTrigger>
+                            <CollapsiblePanel>
+                              <pre className={response()}>
+                                {formatResponse(node.response)}
+                              </pre>
+                            </CollapsiblePanel>
+                          </Collapsible>
+                        )}
+                      </ListItemContent>
+                    </ListItem>
+                  ))}
+                </List>
+              </div>
+              <div className={pager()}>
+                <Pagination
+                  hasPrevious={pageInfo.hasPreviousPage}
+                  hasNext={pageInfo.hasNextPage}
+                  previousLabel={t("webhooksSettingsPage.actions.previous")}
+                  nextLabel={t("webhooksSettingsPage.actions.next")}
+                  showLabels
+                  variant="surface"
+                  disabled={isPending}
+                  onPrevious={goPrevious}
+                  onNext={goNext}
+                />
+              </div>
+            </>
+          )}
+    </div>
+  );
+}

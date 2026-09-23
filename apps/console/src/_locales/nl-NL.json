@@ -5219,6 +5219,7 @@
     "eventsCount_other": "Gebeurtenissen ({{count}})",
     "emptyEvents": "Nog geen webhookgebeurtenissen geregistreerd.",
     "empty": "Nog geen webhookabonnementen. Voeg er een toe om te beginnen.",
+    "notFound": "Dit webhookabonnement is niet gevonden.",
     "response": "Reactie",
     "copySigningSecret": "Signing secret kopiëren",
     "editWebhook": "Webhook bewerken",
