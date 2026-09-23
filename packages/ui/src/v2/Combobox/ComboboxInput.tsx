@@ -40,11 +40,29 @@ export function ComboboxInput(props: ComboboxInputProps) {
       {...rest}
       ref={(node) => {
         input?.setInputNode(node);
+
         if (typeof ref === "function") {
-          ref(node);
-        } else if (ref != null) {
+          const cleanup = ref(node);
+          return () => {
+            input?.setInputNode(null);
+            if (typeof cleanup === "function") {
+              cleanup();
+            } else {
+              ref(null);
+            }
+          };
+        }
+
+        if (ref != null) {
           ref.current = node;
         }
+
+        return () => {
+          input?.setInputNode(null);
+          if (ref != null && typeof ref !== "function") {
+            ref.current = null;
+          }
+        };
       }}
     />
   );

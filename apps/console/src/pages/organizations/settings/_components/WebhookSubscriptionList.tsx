@@ -55,7 +55,7 @@ export const webhookSubscriptionListFragment = graphql`
       after: $after
       last: $last
       before: $before
-    ) @connection(key: "WebhookSubscriptionList_webhookSubscriptions") {
+    ) {
       pageInfo {
         hasNextPage
         hasPreviousPage

@@ -34,6 +34,9 @@ export function endpointUrlError(
     if (url.protocol !== "https:") {
       return https;
     }
+    if (!/^https:\/\/[^/?#]+/i.test(trimmed)) {
+      return invalid;
+    }
   } catch {
     return invalid;
   }

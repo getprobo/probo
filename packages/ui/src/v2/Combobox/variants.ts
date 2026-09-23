@@ -38,8 +38,8 @@ export const comboboxChips = tv({
 
 export const comboboxChip = tv({
   base: [
-    "inline-flex w-fit max-w-full min-w-0 items-center justify-center gap-1 overflow-hidden rounded-1 border border-transparent bg-sand-3 px-1.5 py-0.5",
-    "truncate font-mono text-1 font-medium whitespace-nowrap text-sand-11 [&_svg]:size-3",
+    "inline-flex w-fit max-w-full min-w-0 items-center justify-center gap-1 rounded-1 border border-transparent bg-sand-3 px-1.5 py-0.5",
+    "truncate font-mono text-1 font-medium text-sand-11 [&_svg]:size-3",
   ],
 });
 

@@ -43,7 +43,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
 import type { NewWebhookSubscriptionPageMutation } from "#/__generated__/core/NewWebhookSubscriptionPageMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -58,13 +58,11 @@ import { newWebhookSubscriptionPage } from "./variants";
 const createWebhookSubscriptionMutation = graphql`
   mutation NewWebhookSubscriptionPageMutation(
     $input: CreateWebhookSubscriptionInput!
-    $connections: [ID!]!
   ) {
     createWebhookSubscription(input: $input) {
-      webhookSubscriptionEdge @prependEdge(connections: $connections) {
+      webhookSubscriptionEdge {
         node {
           id
-          ...WebhookSubscriptionListItem_webhookSubscription
         }
       }
     }
@@ -111,11 +109,6 @@ function NewWebhookSubscriptionPageInner() {
       return;
     }
 
-    const connectionId = ConnectionHandler.getConnectionID(
-      organizationId,
-      "WebhookSubscriptionList_webhookSubscriptions",
-    );
-
     void createWebhook({
       variables: {
         input: {
@@ -123,7 +116,6 @@ function NewWebhookSubscriptionPageInner() {
           endpointUrl: endpointUrl.trim(),
           selectedEvents: selected.map(event => event.value),
         },
-        connections: [connectionId],
       },
       onCompleted(response, payloadErrors) {
         const fieldErrors = toFieldErrors(payloadErrors);
