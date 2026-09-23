@@ -170,8 +170,11 @@ The following parameters **must** be configured:
 | `probo.oauth2.signingKey` | PEM-encoded OAuth2 private signing key |
 | `postgresql.host` | PostgreSQL hostname |
 | `postgresql.password` | PostgreSQL password |
-| `s3.accessKeyId` | S3 access key ID |
-| `s3.secretAccessKey` | S3 secret access key |
+
+S3 credentials are conditionally required. On AWS, leave `s3.accessKeyId` and
+`s3.secretAccessKey` blank to authenticate via EKS Pod Identity or IRSA instead
+of a static key pair; setting only one of the two fails at install time. Off
+AWS, or without workload identity, set both.
 
 ### Secret Format Quick Reference
 

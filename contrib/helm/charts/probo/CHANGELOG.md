@@ -4,6 +4,13 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- `s3.accessKeyId` and `s3.secretAccessKey` are no longer unconditionally
+  required when `seaweedfs.enabled=false`. Leave both blank to authenticate
+  via the AWS SDK default credential chain (EKS Pod Identity, IRSA, instance
+  role). Setting exactly one of the two still fails at render time.
+
 ## [0.24.0] - 2026-09-16
 
 ### Changed
