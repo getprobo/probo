@@ -24,7 +24,7 @@ import { use } from "react";
 import { useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { type DataID, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
 import type { PersonForm_createMutation } from "#/__generated__/iam/PersonForm_createMutation.graphql";
 import type { PersonForm_updateMutation } from "#/__generated__/iam/PersonForm_updateMutation.graphql";
@@ -58,11 +58,12 @@ const fragment = graphql`
 `;
 
 const createPersonMutation = graphql`
-  mutation PersonForm_createMutation($input: CreateUserInput! $connections: [ID!]!) {
+  mutation PersonForm_createMutation($input: CreateUserInput!) {
     createUser(input: $input) {
-      profileEdge @prependEdge(connections: $connections) {
+      profileEdge {
         node {
-          ...PeopleListItemFragment
+          id
+          ...UserListItem_profile
         }
       }
     }
@@ -75,7 +76,7 @@ const updatePersonMutation = graphql`
       profile {
         id
         ...PersonFormFragment
-        ...PeopleListItemFragment
+        ...UserListItem_profile
       }
     }
   }
@@ -110,7 +111,6 @@ type PersonFormValues = z.infer<typeof createSchema>;
 
 export function PersonForm(props: {
   id?: string;
-  connectionId?: DataID;
   disabled?: boolean;
   scimManaged?: boolean;
   defaultValues?: PersonFormValues;
@@ -118,7 +118,6 @@ export function PersonForm(props: {
 }) {
   const {
     id,
-    connectionId = "",
     disabled = false,
     scimManaged = false,
     defaultValues = {
@@ -197,7 +196,6 @@ export function PersonForm(props: {
             role: data.role,
             organizationId,
           },
-          connections: [connectionId],
         },
         onCompleted: () => {
           reset(data);

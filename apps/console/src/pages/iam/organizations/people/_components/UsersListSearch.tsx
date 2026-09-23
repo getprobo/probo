@@ -18,34 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Dialog, DialogContent, useDialogRef } from "@probo/ui";
-import { type PropsWithChildren } from "react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { useTranslation } from "react-i18next";
 
-import { PersonForm } from "./PersonForm";
+import { useUsersListSearch } from "../_lib/useUsersListSearch";
+import { usersList } from "../variants";
 
-export function AddPersonDialog(props: PropsWithChildren<{
-  onCreated: () => void;
-}>) {
-  const { children, onCreated } = props;
-  const dialogRef = useDialogRef();
+export function UsersListSearch() {
   const { t } = useTranslation();
+  const [queryInput, setQueryInput] = useUsersListSearch();
+  const { search } = usersList();
 
   return (
-    <Dialog
-      title={t("addPersonDialog.title")}
-      trigger={children}
-      className="max-w-xl"
-      ref={dialogRef}
-    >
-      <DialogContent padded>
-        <PersonForm
-          onSubmit={() => {
-            dialogRef.current?.close();
-            onCreated();
-          }}
-        />
-      </DialogContent>
-    </Dialog>
+    <div className={search()}>
+      <TextField
+        icon={<MagnifyingGlassIcon />}
+        value={queryInput}
+        onValueChange={setQueryInput}
+        placeholder={t("usersList.searchPlaceholder")}
+        aria-label={t("usersList.searchPlaceholder")}
+      />
+    </div>
   );
 }

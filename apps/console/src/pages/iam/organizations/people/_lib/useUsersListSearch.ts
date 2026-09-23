@@ -18,37 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { useEffect, useRef, useState } from "react";
 
-import type { PeoplePageQuery } from "#/__generated__/iam/PeoplePageQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+import { useUsersListFilters } from "./useUsersListFilters";
 
-import { PeoplePage, peoplePageQuery } from "./PeoplePage";
+const SEARCH_DEBOUNCE_MS = 300;
 
-function PeoplePageQueryLoader() {
-  const organizationId = useOrganizationId();
-  const [queryRef, loadQuery]
-    = useQueryLoader<PeoplePageQuery>(peoplePageQuery);
+// Owns the debounced search input. Mount this in exactly one component (the
+// search field) — it is the single writer of the `q` URL param.
+export function useUsersListSearch(): [string, (value: string) => void] {
+  const { query, setQuery } = useUsersListFilters();
+  const [input, setInput] = useState(query);
+  const lastCommittedRef = useRef(query);
 
   useEffect(() => {
-    loadQuery({
-      organizationId,
-    });
-  }, [loadQuery, organizationId]);
+    if (input === query) {
+      return;
+    }
 
-  if (!queryRef) {
-    return null;
-  }
+    const handle = setTimeout(() => {
+      lastCommittedRef.current = input;
+      setQuery(input);
+    }, SEARCH_DEBOUNCE_MS);
 
-  return <PeoplePage queryRef={queryRef} />;
-}
+    return () => clearTimeout(handle);
+  }, [input, query, setQuery]);
 
-export default function PeoplePageLoader() {
-  return (
-    <IAMRelayProvider>
-      <PeoplePageQueryLoader />
-    </IAMRelayProvider>
-  );
+  useEffect(() => {
+    if (query !== lastCommittedRef.current) {
+      lastCommittedRef.current = query;
+      setInput(query);
+    }
+  }, [query]);
+
+  return [input, setInput];
 }

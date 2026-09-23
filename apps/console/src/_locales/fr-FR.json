@@ -2283,9 +2283,13 @@
       "logout": "Déconnexion"
     }
   },
-  "peoplePage": {
+  "usersPage": {
+    "empty": "Aucune personne",
     "actions": {
-      "add": "Ajouter une personne"
+      "add": "Ajouter un utilisateur",
+      "cancel": "Annuler",
+      "previous": "Préc.",
+      "next": "Suiv."
     }
   },
   "personPage": {
@@ -2309,17 +2313,13 @@
   "addPersonDialog": {
     "title": "Ajouter une personne"
   },
-  "peopleList": {
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "email": "E-mail",
-      "role": "Rôle",
-      "createdOn": "Créé le",
-      "contractEndDate": "Date de fin de contrat"
-    },
-    "empty": "Aucune personne",
+  "usersList": {
     "searchPlaceholder": "Rechercher des personnes...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
+    },
+    "created": "Créé le {{date}}",
     "filters": {
       "allStatuses": "Tous les statuts",
       "status": "Statut",
@@ -2327,28 +2327,36 @@
       "active": "Actif",
       "deactivated": "Désactivé",
       "allRoles": "Tous les rôles",
-      "allTypes": "Tous les types"
+      "allTypes": "Tous les types",
+      "role": "Rôle",
+      "type": "Type"
     }
   },
-  "peopleListItem": {
+  "userListItem": {
     "messages": {
       "invitationSent": "Invitation envoyée avec succès",
-      "roleUpdated": "Rôle mis à jour avec succès",
       "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
+      "removed": "Personne supprimée avec succès",
+      "roleUpdated": "Rôle mis à jour"
     },
     "errors": {
       "sendInvitation": "Échec de l’envoi de l’invitation",
-      "updateRole": "Échec de la mise à jour du rôle",
       "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
+      "remove": "Échec de la suppression de la personne",
+      "updateRole": "Échec de la mise à jour du rôle"
     },
     "confirmations": {
       "sendActivationEmail": "Envoyer l’e-mail d’activation à {{name}} ?",
       "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
       "remove": "Voulez-vous vraiment supprimer {{name}} ?"
     },
+    "dialogs": {
+      "sendTitle": "Envoyer l’e-mail d’activation",
+      "deactivateTitle": "Désactiver la personne",
+      "removeTitle": "Supprimer la personne"
+    },
     "actions": {
+      "more": "Plus d’actions",
       "send": "Envoyer",
       "sendActivationMail": "Envoyer l’e-mail d’activation",
       "resendActivationMail": "Renvoyer l’e-mail d’activation",

@@ -2283,9 +2283,13 @@
       "logout": "Uitloggen"
     }
   },
-  "peoplePage": {
+  "usersPage": {
+    "empty": "Geen personen",
     "actions": {
-      "add": "Persoon toevoegen"
+      "add": "Gebruiker toevoegen",
+      "cancel": "Annuleren",
+      "previous": "Vorige",
+      "next": "Volgende"
     }
   },
   "personPage": {
@@ -2309,17 +2313,13 @@
   "addPersonDialog": {
     "title": "Persoon toevoegen"
   },
-  "peopleList": {
-    "columns": {
-      "name": "Naam",
-      "status": "Status",
-      "email": "E-mail",
-      "role": "Rol",
-      "createdOn": "Aangemaakt op",
-      "contractEndDate": "Einddatum contract"
-    },
-    "empty": "Geen personen",
+  "usersList": {
     "searchPlaceholder": "Personen zoeken...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
+    },
+    "created": "Aangemaakt op {{date}}",
     "filters": {
       "allStatuses": "Alle statussen",
       "status": "Status",
@@ -2327,28 +2327,36 @@
       "active": "Actief",
       "deactivated": "Gedeactiveerd",
       "allRoles": "Alle rollen",
-      "allTypes": "Alle typen"
+      "allTypes": "Alle typen",
+      "role": "Rol",
+      "type": "Type"
     }
   },
-  "peopleListItem": {
+  "userListItem": {
     "messages": {
       "invitationSent": "Uitnodiging succesvol verzonden",
-      "roleUpdated": "Rol succesvol bijgewerkt",
       "deactivated": "Persoon succesvol gedeactiveerd",
-      "removed": "Persoon succesvol verwijderd"
+      "removed": "Persoon succesvol verwijderd",
+      "roleUpdated": "Rol bijgewerkt"
     },
     "errors": {
       "sendInvitation": "Verzenden van uitnodiging mislukt",
-      "updateRole": "Bijwerken van rol mislukt",
       "deactivate": "Deactiveren van persoon mislukt",
-      "remove": "Verwijderen van persoon mislukt"
+      "remove": "Verwijderen van persoon mislukt",
+      "updateRole": "Rol bijwerken mislukt"
     },
     "confirmations": {
       "sendActivationEmail": "Activeringsmail verzenden naar {{name}}?",
       "deactivate": "Weet u zeker dat u {{name}} wilt deactiveren?",
       "remove": "Weet u zeker dat u {{name}} wilt verwijderen?"
     },
+    "dialogs": {
+      "sendTitle": "Activeringsmail verzenden",
+      "deactivateTitle": "Persoon deactiveren",
+      "removeTitle": "Persoon verwijderen"
+    },
     "actions": {
+      "more": "Meer acties",
       "send": "Verzenden",
       "sendActivationMail": "Activeringsmail verzenden",
       "resendActivationMail": "Activeringsmail opnieuw verzenden",

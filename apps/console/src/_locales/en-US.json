@@ -1482,8 +1482,9 @@
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "switchToDarkMode": "Switch to dark mode", "switchToLightMode": "Switch to light mode", "help": "Help", "logout": "Logout" }
   },
-  "peoplePage": {
-    "actions": { "add": "Add Person" }
+  "usersPage": {
+    "empty": "No people",
+    "actions": { "add": "Add User", "cancel": "Cancel", "previous": "Prev", "next": "Next" }
   },
   "personPage": {
     "messages": { "deactivated": "Person deactivated successfully", "removed": "Person removed successfully" },
@@ -1492,17 +1493,18 @@
     "actions": { "deactivate": "Deactivate", "remove": "Remove" }
   },
   "addPersonDialog": { "title": "Add Person" },
-  "peopleList": {
-    "columns": { "name": "Name", "status": "Status", "email": "Email", "role": "Role", "createdOn": "Created on", "contractEndDate": "Contract end date" },
-    "empty": "No people",
+  "usersList": {
     "searchPlaceholder": "Search people...",
-    "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All types" }
+    "contract": { "range": "{{start}} – {{end}}", "empty": "—" },
+    "created": "Created {{date}}",
+    "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All types", "role": "Role", "type": "Type" }
   },
-  "peopleListItem": {
-    "messages": { "invitationSent": "Invitation sent successfully", "roleUpdated": "Role updated successfully", "deactivated": "Person deactivated successfully", "removed": "Person removed successfully" },
-    "errors": { "sendInvitation": "Failed to send invitation", "updateRole": "Failed to update role", "deactivate": "Failed to deactivate person", "remove": "Failed to remove person" },
+  "userListItem": {
+    "messages": { "invitationSent": "Invitation sent successfully", "deactivated": "Person deactivated successfully", "removed": "Person removed successfully", "roleUpdated": "Role updated" },
+    "errors": { "sendInvitation": "Failed to send invitation", "deactivate": "Failed to deactivate person", "remove": "Failed to remove person", "updateRole": "Failed to update role" },
     "confirmations": { "sendActivationEmail": "Send the activation email to {{name}}?", "deactivate": "Are you sure you want to deactivate {{name}}?", "remove": "Are you sure you want to remove {{name}}?" },
-    "actions": { "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "deactivatePerson": "Deactivate person", "removePerson": "Remove person" }
+    "dialogs": { "sendTitle": "Send activation email", "deactivateTitle": "Deactivate person", "removeTitle": "Remove person" },
+    "actions": { "more": "More actions", "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "deactivatePerson": "Deactivate person", "removePerson": "Remove person" }
   },
   "personForm": {
     "messages": { "created": "Person created successfully.", "updated": "Person updated successfully." },
