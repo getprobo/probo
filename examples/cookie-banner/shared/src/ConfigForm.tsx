@@ -45,8 +45,7 @@ export function ConfigForm() {
       <h2>Configuration</h2>
       <p style={{ color: "#666", marginBottom: 16 }}>
         Banner ID, base URL, and Google Consent Mode. Values persist in
-        localStorage and are shared by the themed, themed TCF, and headless
-        examples.
+        this app's localStorage (each example port keeps its own copy).
       </p>
 
       <div style={{ marginBottom: 12 }}>

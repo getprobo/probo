@@ -43,6 +43,10 @@ export function enableNamedLoggers(): void {
     // loglevel persists via property assignment, which the SDK does not
     // hook. Replay the same key through setItem so a live write is
     // observed as SCRIPT after the detector has wrapped Storage.
-    localStorage.setItem(`loglevel:${name}`, "DEBUG");
+    try {
+      localStorage.setItem(`loglevel:${name}`, "DEBUG");
+    } catch {
+      // sandboxed frames and quota errors must not abort probo-ready
+    }
   }
 }

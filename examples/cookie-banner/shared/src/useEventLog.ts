@@ -21,10 +21,13 @@
 import { useCallback, useState } from "react";
 
 export interface EventEntry {
+  id: number;
   time: string;
   type: string;
   detail: unknown;
 }
+
+const MAX_EVENTS = 50;
 
 export function useEventLog(): {
   events: EventEntry[];
@@ -32,10 +35,15 @@ export function useEventLog(): {
 } {
   const [events, setEvents] = useState<EventEntry[]>([]);
   const pushEvent = useCallback((type: string, detail: unknown) => {
-    setEvents((prev) => [
-      { time: new Date().toISOString(), type, detail },
-      ...prev,
-    ]);
+    setEvents((prev) => {
+      const next: EventEntry = {
+        id: (prev[0]?.id ?? 0) + 1,
+        time: new Date().toISOString(),
+        type,
+        detail,
+      };
+      return [next, ...prev].slice(0, MAX_EVENTS);
+    });
   }, []);
   return { events, pushEvent };
 }

@@ -31,9 +31,9 @@ export function EventLog({ events }: EventLogProps) {
       {events.length === 0 ? (
         <p style={{ color: "#999" }}>No events yet.</p>
       ) : (
-        events.map((ev, i) => (
+        events.map((ev) => (
           <div
-            key={i}
+            key={ev.id}
             style={{
               marginBottom: 8,
               border: "1px solid #ddd",

@@ -14,8 +14,9 @@ stub before React boots, then calls `startTCF()` and `registerCookieBanner()`.
 The themed app never loads `@probo/cookie-banner-tcf`. The headless app only
 registers headless components.
 
-Banner ID, base URL, and GCM persist in `localStorage` under
-`probo-example-config` and are shared across the three apps.
+Banner ID, base URL, and GCM persist in each app's `localStorage` under
+`probo-example-config`. The apps run on different ports, so each keeps
+its own copy.
 
 ## Run
 

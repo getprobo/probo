@@ -44,7 +44,6 @@ const headlessActions: Record<string, string> = {
   "PROBO-REJECT-BUTTON": "Reject All",
   "PROBO-CUSTOMIZE-BUTTON": "Customize",
   "PROBO-SAVE-BUTTON": "Save Preferences",
-  "PROBO-SETTINGS-LINK": "Cookie settings",
 };
 
 function headlessActionLabel(target: EventTarget | null): string | null {
@@ -53,7 +52,7 @@ function headlessActionLabel(target: EventTarget | null): string | null {
   }
 
   const host = target.closest(
-    "probo-acknowledge-button, probo-accept-button, probo-reject-button, probo-customize-button, probo-save-button, probo-settings-link",
+    "probo-acknowledge-button, probo-accept-button, probo-reject-button, probo-customize-button, probo-save-button",
   );
   if (!host) {
     return null;
