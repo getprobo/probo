@@ -4,6 +4,19 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.235.0] - 2026-09-23
+
+### Added
+
+- Task `List Linear Teams`, `Publish To Linear`, and `Unlink External`
+- Task `Get` returns `externalLink` (`provider`, `identifier`, `url`,
+  `origin`)
+
+### Changed
+
+- Webhook `Get Events` can filter by delivery status and returns the
+  outbound `payload`
+
 ## [0.234.0] - 2026-09-22
 
 ### Added
