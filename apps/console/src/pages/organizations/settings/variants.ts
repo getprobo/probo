@@ -70,6 +70,7 @@ export const webhookSubscriptionListItem = tv({
     events: "flex flex-wrap items-center gap-1.5",
     eventsAll: "flex max-w-80 flex-wrap content-start gap-1.5",
     badge: "font-mono",
+    activity: "mt-auto flex items-center gap-2",
   },
 });
 

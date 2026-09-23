@@ -45,7 +45,7 @@ export function WebhookEventTypeBadges({
   return (
     <div className={events()}>
       {visibleEvents.map(event => (
-        <Badge key={event} variant="soft" color="neutral" className={badge()}>
+        <Badge key={event} variant="soft" color="indigo" className={badge()}>
           {webhookEventTypeLabel(event)}
         </Badge>
       ))}
@@ -60,7 +60,7 @@ export function WebhookEventTypeBadges({
           />
           <PopoverPopup className={eventsAll()}>
             {selectedEvents.map(event => (
-              <Badge key={event} variant="soft" color="neutral" className={badge()}>
+              <Badge key={event} variant="soft" color="indigo" className={badge()}>
                 {webhookEventTypeLabel(event)}
               </Badge>
             ))}

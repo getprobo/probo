@@ -19,17 +19,25 @@
 // SOFTWARE.
 
 import { PlusMinusIcon, WebhooksLogoIcon } from "@phosphor-icons/react";
+import { dateTimeFormat } from "@probo/i18n";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useFragment } from "react-relay";
+import { fetchQuery, useFragment, useRelayEnvironment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { WebhookSubscriptionListItem_updateMutation } from "#/__generated__/core/WebhookSubscriptionListItem_updateMutation.graphql";
 import type { WebhookSubscriptionListItem_webhookSubscription$key } from "#/__generated__/core/WebhookSubscriptionListItem_webhookSubscription.graphql";
+import type {
+  WebhookEventStatus,
+  WebhookSubscriptionListItemLastDeliveryQuery,
+} from "#/__generated__/core/WebhookSubscriptionListItemLastDeliveryQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { WebhookEventTypeValue } from "../_lib/webhookEventTypes";
@@ -48,6 +56,110 @@ const webhookSubscriptionListItemFragment = graphql`
     canDelete: permission(action: "core:webhook-subscription:delete")
   }
 `;
+
+const webhookSubscriptionListItemLastDeliveryQuery = graphql`
+  query WebhookSubscriptionListItemLastDeliveryQuery($webhookSubscriptionId: ID!) {
+    node(id: $webhookSubscriptionId) {
+      __typename
+      ... on WebhookSubscription {
+        lastDeliveries: events(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+          edges {
+            node {
+              id
+              status
+              createdAt
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+function LastDeliveryStatusBadge({ status }: { status: WebhookEventStatus }) {
+  const { t } = useTranslation();
+  if (status === "SUCCEEDED") {
+    return (
+      <Badge variant="soft" color="green" size={1}>
+        {t("webhooksSettingsPage.status.succeeded")}
+      </Badge>
+    );
+  }
+  if (status === "PENDING") {
+    return (
+      <Badge variant="soft" color="sky" size={1}>
+        {t("webhooksSettingsPage.status.pending")}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="soft" color="red" size={1}>
+      {t("webhooksSettingsPage.status.failed")}
+    </Badge>
+  );
+}
+
+function LastDeliveryActivity({ webhookSubscriptionId }: { webhookSubscriptionId: string }) {
+  const { t, i18n } = useTranslation();
+  const environment = useRelayEnvironment();
+  const { activity } = webhookSubscriptionListItem();
+  const [lastDelivery, setLastDelivery] = useState<{
+    status: WebhookEventStatus;
+    createdAt: string;
+  } | null>();
+
+  useEffect(() => {
+    setLastDelivery(undefined);
+    let cancelled = false;
+    const subscription = fetchQuery<WebhookSubscriptionListItemLastDeliveryQuery>(
+      environment,
+      webhookSubscriptionListItemLastDeliveryQuery,
+      { webhookSubscriptionId },
+      { fetchPolicy: "network-only" },
+    ).subscribe({
+      next(data) {
+        if (cancelled) {
+          return;
+        }
+        if (data.node.__typename !== "WebhookSubscription") {
+          setLastDelivery(null);
+          return;
+        }
+        setLastDelivery(data.node.lastDeliveries.edges[0]?.node ?? null);
+      },
+      error() {
+        if (!cancelled) {
+          setLastDelivery(null);
+        }
+      },
+    });
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [environment, webhookSubscriptionId]);
+
+  return (
+    <div className={activity()}>
+      {lastDelivery === undefined
+        ? <TextSkeleton size={1} className="w-36" />
+        : lastDelivery == null
+          ? (
+              <Text size={1} color="faint">
+                {t("webhooksSettingsPage.lastDeliveryEmpty")}
+              </Text>
+            )
+          : (
+              <>
+                <LastDeliveryStatusBadge status={lastDelivery.status} />
+                <Text size={1} color="faint">
+                  {dateTimeFormat(i18n.language, lastDelivery.createdAt)}
+                </Text>
+              </>
+            )}
+    </div>
+  );
+}
 
 const updateWebhookSubscriptionMutation = graphql`
   mutation WebhookSubscriptionListItem_updateMutation(
@@ -149,6 +261,7 @@ export function WebhookSubscriptionListItem({
         </div>
         <WebhookEventTypeBadges selectedEvents={webhook.selectedEvents} />
       </div>
+      <LastDeliveryActivity webhookSubscriptionId={webhook.id} />
     </Card>
   );
 }

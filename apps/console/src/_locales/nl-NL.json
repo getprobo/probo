@@ -5218,6 +5218,7 @@
     "deliveriesCount_one": "Levering ({{count}})",
     "deliveriesCount_other": "Leveringen ({{count}})",
     "emptyDeliveries": "Nog geen leveringen geregistreerd.",
+    "lastDeliveryEmpty": "Nog geen leveringen.",
     "empty": "Nog geen webhookabonnementen. Voeg er een toe om te beginnen.",
     "notFound": "Dit webhookabonnement is niet gevonden.",
     "response": "Reactie",

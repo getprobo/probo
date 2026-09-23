@@ -2783,6 +2783,7 @@
     "deliveriesCount_one": "Delivery ({{count}})",
     "deliveriesCount_other": "Deliveries ({{count}})",
     "emptyDeliveries": "No deliveries recorded yet.",
+    "lastDeliveryEmpty": "No deliveries yet.",
     "empty": "No webhook subscriptions yet. Add one to get started.",
     "notFound": "This webhook subscription could not be found.",
     "response": "Response",
