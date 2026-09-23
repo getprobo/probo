@@ -18,7 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  getDataLayer,
+  normalizeDataLayerEntry,
+  parseGCMEvent,
+} from "./gcm";
+import { getExampleLogger } from "./logger";
+
+const gcmLogger = getExampleLogger("gcm");
 
 export interface EventEntry {
   id: number;
@@ -45,5 +53,52 @@ export function useEventLog(): {
       return [next, ...prev].slice(0, MAX_EVENTS);
     });
   }, []);
+
+  useEffect(() => {
+    let seen = 0;
+    let dataLayer = getDataLayer();
+    let disposed = false;
+
+    const ingest = (dl: unknown[]): void => {
+      if (dl !== dataLayer) {
+        dataLayer = dl;
+        seen = 0;
+      }
+      while (seen < dl.length) {
+        const parsed = parseGCMEvent(normalizeDataLayerEntry(dl[seen++]));
+        if (!parsed) {
+          continue;
+        }
+        gcmLogger.debug("[gcm]", parsed);
+        pushEvent("gcm-consent", parsed);
+      }
+    };
+
+    const attach = (): void => {
+      const dl = getDataLayer();
+      ingest(dl);
+      const original = dl.push;
+      if ((original as { __proboExampleGcm?: boolean }).__proboExampleGcm) {
+        return;
+      }
+      const wrapped = function (this: unknown[], ...items: unknown[]): number {
+        const n = original.apply(this, items);
+        if (!disposed) {
+          ingest(this);
+        }
+        return n;
+      };
+      wrapped.__proboExampleGcm = true;
+      dl.push = wrapped as typeof dl.push;
+    };
+
+    attach();
+    const id = window.setInterval(attach, 1000);
+    return () => {
+      disposed = true;
+      window.clearInterval(id);
+    };
+  }, [pushEvent]);
+
   return { events, pushEvent };
 }

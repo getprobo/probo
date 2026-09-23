@@ -96,68 +96,61 @@ export function App() {
   return (
     <ExampleShell
       title="@probo/cookie-banner — themed TCF"
-      description="IAB TCF first-layer path. Use this app with the IAB CMP validator."
+      description={
+        <>
+          IAB TCF first-layer path. Use this app with the IAB CMP validator.
+          Uses <code>installTCFStub()</code>, <code>startTCF()</code>, and{" "}
+          <code>registerCookieBanner()</code>, then renders{" "}
+          <code>&lt;probo-cookie-banner&gt;</code> with{" "}
+          <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>.
+          TCF disclosures replace the category banner when the configured banner
+          has the capability on.
+        </>
+      }
     >
       <ConfigForm />
 
-      <section style={{ marginTop: 32 }}>
-        <h2>Themed TCF Banner</h2>
-        {ready ? (
-          <>
-            <p style={{ color: "#666", marginBottom: 16 }}>
-              Uses <code>installTCFStub()</code>, <code>startTCF()</code>, and{" "}
-              <code>registerCookieBanner()</code>, then renders{" "}
-              <code>&lt;probo-cookie-banner&gt;</code> with{" "}
-              <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>.
-              TCF disclosures replace the category banner when the configured
-              banner has the capability on.
+      {ready ? (
+        <probo-cookie-banner
+          key={`${config.bannerId}:${config.baseUrl}:${config.gcmEnabled}`}
+          ref={attachListeners}
+          banner-id={config.bannerId}
+          base-url={config.baseUrl}
+          position="bottom-right"
+          gcm-enabled={config.gcmEnabled ? "true" : "false"}
+        />
+      ) : (
+        <p style={{ color: "tomato", marginTop: 32 }}>
+          Set banner ID and base URL in the configuration section first.
+        </p>
+      )}
+
+      <DebugPanel>
+        <PosthogPanel
+          status={posthogStatus}
+          manualPing={manualPing}
+          onSendPing={sendPing}
+        />
+        {posthogStatus.featureFlagEnabled && (
+          <div
+            style={{
+              border: "2px solid #2563eb",
+              padding: 12,
+              marginBottom: 16,
+              background: "#eff6ff",
+            }}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: 4 }}>Beta panel</h3>
+            <p style={{ margin: 0, color: "#334155", fontSize: 14 }}>
+              Visible only when PostHog consent is granted, the demo user is
+              identified, and feature flag{" "}
+              <code>{posthogStatus.featureFlagKey}</code> is on.
             </p>
-
-            <PosthogPanel
-              status={posthogStatus}
-              manualPing={manualPing}
-              onSendPing={sendPing}
-            />
-
-            {posthogStatus.featureFlagEnabled && (
-              <div
-                style={{
-                  border: "2px solid #2563eb",
-                  padding: 12,
-                  marginBottom: 16,
-                  background: "#eff6ff",
-                }}
-              >
-                <h3 style={{ marginTop: 0, marginBottom: 4 }}>Beta panel</h3>
-                <p style={{ margin: 0, color: "#334155", fontSize: 14 }}>
-                  Visible only when PostHog consent is granted, the demo user is
-                  identified, and feature flag{" "}
-                  <code>{posthogStatus.featureFlagKey}</code> is on.
-                </p>
-              </div>
-            )}
-
-            <probo-cookie-banner
-              key={`${config.bannerId}:${config.baseUrl}:${config.gcmEnabled}`}
-              ref={attachListeners}
-              banner-id={config.bannerId}
-              base-url={config.baseUrl}
-              position="bottom-right"
-              gcm-enabled={config.gcmEnabled ? "true" : "false"}
-            />
-
-            <EventLog events={events} />
-          </>
-        ) : (
-          <p style={{ color: "tomato" }}>
-            Set banner ID and base URL in the configuration section first.
-          </p>
+          </div>
         )}
-      </section>
+      </DebugPanel>
 
-      <div style={{ marginTop: 32 }}>
-        <DebugPanel />
-      </div>
+      <EventLog events={events} />
     </ExampleShell>
   );
 }

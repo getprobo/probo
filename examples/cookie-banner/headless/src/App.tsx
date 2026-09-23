@@ -178,34 +178,29 @@ export function App() {
   return (
     <ExampleShell
       title="@probo/cookie-banner — headless"
-      description="Raw headless elements with no themed styling and no TCF."
+      description={
+        <>
+          Raw headless elements with no themed styling and no TCF. Uses{" "}
+          <code>registerHeadlessComponents()</code> and renders raw headless
+          elements.{" "}
+          <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>{" "}
+          comes from the configuration section. Borders show element
+          boundaries.
+        </>
+      }
     >
       <ConfigForm />
 
-      <section style={{ marginTop: 32 }}>
-        <h2>Headless Components</h2>
-        {ready ? (
-          <>
-            <p style={{ color: "#666", marginBottom: 16 }}>
-              Uses <code>registerHeadlessComponents()</code> and renders raw
-              headless elements.{" "}
-              <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>{" "}
-              comes from the configuration section. Borders show element
-              boundaries.
-            </p>
-            <div ref={containerRef} />
-            <EventLog events={events} />
-          </>
-        ) : (
-          <p style={{ color: "tomato" }}>
-            Set banner ID and base URL in the configuration section first.
-          </p>
-        )}
-      </section>
+      {ready ? (
+        <div ref={containerRef} style={{ marginTop: 32 }} />
+      ) : (
+        <p style={{ color: "tomato", marginTop: 32 }}>
+          Set banner ID and base URL in the configuration section first.
+        </p>
+      )}
 
-      <div style={{ marginTop: 32 }}>
-        <DebugPanel />
-      </div>
+      <DebugPanel />
+      <EventLog events={events} />
     </ExampleShell>
   );
 }

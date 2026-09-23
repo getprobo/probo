@@ -42,11 +42,21 @@ export function ConfigForm() {
 
   return (
     <section>
-      <h2>Configuration</h2>
-      <p style={{ color: "#666", marginBottom: 16 }}>
-        Banner ID, base URL, and Google Consent Mode. Values persist in
-        this app's localStorage (each example port keeps its own copy).
-      </p>
+      <details open>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontSize: "1.5em",
+            fontWeight: "bold",
+            marginBottom: 16,
+          }}
+        >
+          Configuration
+        </summary>
+        <p style={{ color: "#666", marginBottom: 16 }}>
+          Banner ID, base URL, and Google Consent Mode. Values persist in
+          this app's localStorage (each example port keeps its own copy).
+        </p>
 
       <div style={{ marginBottom: 12 }}>
         <label style={{ display: "block", marginBottom: 4, fontWeight: "bold" }}>
@@ -119,6 +129,7 @@ export function ConfigForm() {
       >
         Save
       </button>
+      </details>
     </section>
   );
 }

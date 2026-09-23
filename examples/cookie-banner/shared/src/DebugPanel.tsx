@@ -18,10 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { getConsent } from "@probo/cookie-banner/consent";
 import type { ConsentData } from "@probo/cookie-banner/consent";
+import { readGCMSnapshot, type GCMSnapshot } from "./gcm";
 import { getExampleLogger } from "./logger";
+import { TCFDebugCard } from "./TCFDebugCard";
 import { useConfig } from "./useConfig";
 
 const debugLogger = getExampleLogger("debug");
@@ -63,29 +65,18 @@ function readCookie(): string | null {
   }
 }
 
-function readDataLayer(): unknown[] {
-  const w = window as unknown as { dataLayer?: unknown[] };
-  if (!Array.isArray(w.dataLayer)) return [];
-  return w.dataLayer.map((entry) => {
-    if (
-      entry &&
-      typeof entry === "object" &&
-      typeof (entry as ArrayLike<unknown>).length === "number"
-    ) {
-      return Array.from(entry as ArrayLike<unknown>);
-    }
-    return entry;
-  });
+interface DebugPanelProps {
+  children?: ReactNode;
 }
 
-export function DebugPanel() {
+export function DebugPanel({ children }: DebugPanelProps) {
   const [config] = useConfig();
   const [snapshot, setSnapshot] = useState<ConsentSnapshot>(readSnapshot);
   const [visitorId, setVisitorId] = useState<string | null>(() =>
     readVisitorId(config.bannerId),
   );
   const [cookie, setCookie] = useState<string | null>(readCookie);
-  const [dataLayer, setDataLayer] = useState<unknown[]>(readDataLayer);
+  const [gcm, setGCM] = useState<GCMSnapshot | null>(readGCMSnapshot);
 
   useEffect(() => {
     const mgr = getConsent();
@@ -95,24 +86,24 @@ export function DebugPanel() {
       setSnapshot(next);
       setVisitorId(readVisitorId(config.bannerId));
       setCookie(readCookie());
-      setDataLayer(readDataLayer());
+      setGCM(readGCMSnapshot());
     });
   }, [config.bannerId]);
 
   useEffect(() => {
     setVisitorId(readVisitorId(config.bannerId));
     setCookie(readCookie());
-    setDataLayer(readDataLayer());
+    setGCM(readGCMSnapshot());
   }, [config.bannerId, config.gcmEnabled]);
 
   useEffect(() => {
-    const id = window.setInterval(() => setDataLayer(readDataLayer()), 1000);
+    const id = window.setInterval(() => setGCM(readGCMSnapshot()), 1000);
     return () => window.clearInterval(id);
   }, []);
 
   return (
-    <section>
-      <h2>Debug</h2>
+    <section style={{ marginTop: 32 }}>
+      <h2>State</h2>
 
       <div
         style={{
@@ -244,29 +235,85 @@ export function DebugPanel() {
           border: "1px solid #ccc",
           padding: 12,
           background: "#fafafa",
+          marginBottom: 16,
         }}
       >
         <h3 style={{ marginTop: 0 }}>Google Consent Mode</h3>
-        <p style={{ color: "#666", margin: "0 0 8px 0", fontSize: 13 }}>
-          SDK integration is{" "}
-          <strong>{config.gcmEnabled ? "enabled" : "disabled"}</strong>. When
-          enabled, consent default/update calls land on{" "}
-          <code>window.dataLayer</code>.
-        </p>
         <pre
           style={{
             background: "#f0f0f0",
             padding: 8,
             border: "1px solid #ddd",
             overflow: "auto",
-            margin: 0,
+            margin: "0 0 12px 0",
           }}
         >
-          {dataLayer.length === 0
-            ? "(empty — no gtag/dataLayer consent calls yet)"
-            : JSON.stringify(dataLayer, null, 2)}
+          {JSON.stringify(
+            {
+              enabled: config.gcmEnabled,
+              command: gcm?.command ?? null,
+            },
+            null,
+            2,
+          )}
         </pre>
+
+        {!gcm || Object.keys(gcm.signals).length === 0 ? (
+          <p style={{ color: "#999", margin: 0 }}>
+            No dataLayer consent calls yet.
+          </p>
+        ) : (
+          <table
+            style={{
+              borderCollapse: "collapse",
+              fontFamily: "monospace",
+              fontSize: 14,
+            }}
+          >
+            <thead>
+              <tr>
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "4px 16px 4px 0",
+                    borderBottom: "1px solid #ccc",
+                  }}
+                >
+                  Signal
+                </th>
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "4px 0",
+                    borderBottom: "1px solid #ccc",
+                  }}
+                >
+                  state
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(gcm.signals).map(([signal, state]) => (
+                <tr key={signal}>
+                  <td style={{ padding: "4px 16px 4px 0" }}>{signal}</td>
+                  <td
+                    style={{
+                      padding: "4px 0",
+                      color: state === "granted" ? "green" : state === "denied" ? "red" : undefined,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {state}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      <TCFDebugCard />
+      {children}
     </section>
   );
 }

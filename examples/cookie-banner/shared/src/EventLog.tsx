@@ -26,8 +26,18 @@ interface EventLogProps {
 
 export function EventLog({ events }: EventLogProps) {
   return (
-    <section>
-      <h2>Events ({events.length})</h2>
+    <section style={{ marginTop: 32 }}>
+      <details>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontSize: "1.5em",
+            fontWeight: "bold",
+            marginBottom: 16,
+          }}
+        >
+          Events ({events.length})
+        </summary>
       {events.length === 0 ? (
         <p style={{ color: "#999" }}>No events yet.</p>
       ) : (
@@ -47,12 +57,18 @@ export function EventLog({ events }: EventLogProps) {
                 {ev.time}
               </span>
             </div>
-            <pre style={{ margin: 0, overflow: "auto" }}>
-              {JSON.stringify(ev.detail, null, 2)}
-            </pre>
+            <details>
+              <summary style={{ cursor: "pointer", color: "#666", fontSize: 13 }}>
+                payload
+              </summary>
+              <pre style={{ margin: "8px 0 0", overflow: "auto" }}>
+                {JSON.stringify(ev.detail, null, 2)}
+              </pre>
+            </details>
           </div>
         ))
       )}
+      </details>
     </section>
   );
 }
