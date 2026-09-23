@@ -24,7 +24,6 @@ import type { ConsentData } from "@probo/cookie-banner/consent";
 import { readGCMSnapshot, type GCMSnapshot } from "./gcm";
 import { getExampleLogger } from "./logger";
 import { TCFDebugCard } from "./TCFDebugCard";
-import { useConfig } from "./useConfig";
 
 const debugLogger = getExampleLogger("debug");
 
@@ -66,14 +65,15 @@ function readCookie(): string | null {
 }
 
 interface DebugPanelProps {
+  bannerId: string;
+  gcmEnabled: boolean;
   children?: ReactNode;
 }
 
-export function DebugPanel({ children }: DebugPanelProps) {
-  const [config] = useConfig();
+export function DebugPanel({ bannerId, gcmEnabled, children }: DebugPanelProps) {
   const [snapshot, setSnapshot] = useState<ConsentSnapshot>(readSnapshot);
   const [visitorId, setVisitorId] = useState<string | null>(() =>
-    readVisitorId(config.bannerId),
+    readVisitorId(bannerId),
   );
   const [cookie, setCookie] = useState<string | null>(readCookie);
   const [gcm, setGCM] = useState<GCMSnapshot | null>(readGCMSnapshot);
@@ -84,17 +84,17 @@ export function DebugPanel({ children }: DebugPanelProps) {
       const next = readSnapshot();
       debugLogger.debug("[debug] consent", next);
       setSnapshot(next);
-      setVisitorId(readVisitorId(config.bannerId));
+      setVisitorId(readVisitorId(bannerId));
       setCookie(readCookie());
       setGCM(readGCMSnapshot());
     });
-  }, [config.bannerId]);
+  }, [bannerId]);
 
   useEffect(() => {
-    setVisitorId(readVisitorId(config.bannerId));
+    setVisitorId(readVisitorId(bannerId));
     setCookie(readCookie());
     setGCM(readGCMSnapshot());
-  }, [config.bannerId, config.gcmEnabled]);
+  }, [bannerId, gcmEnabled]);
 
   useEffect(() => {
     const id = window.setInterval(() => setGCM(readGCMSnapshot()), 1000);
@@ -197,7 +197,7 @@ export function DebugPanel({ children }: DebugPanelProps) {
         <div style={{ marginBottom: 12 }}>
           <strong>Visitor ID</strong>{" "}
           <span style={{ fontFamily: "monospace", fontSize: 13, color: "#666" }}>
-            (localStorage: probo_consent:{config.bannerId || "?"}:vid)
+            (localStorage: probo_consent:{bannerId || "?"}:vid)
           </span>
           <pre
             style={{
@@ -250,7 +250,7 @@ export function DebugPanel({ children }: DebugPanelProps) {
         >
           {JSON.stringify(
             {
-              enabled: config.gcmEnabled,
+              enabled: gcmEnabled,
               command: gcm?.command ?? null,
             },
             null,

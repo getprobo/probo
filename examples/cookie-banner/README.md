@@ -15,8 +15,19 @@ The themed app never loads `@probo/cookie-banner-tcf`. The headless app only
 registers headless components.
 
 Banner ID, base URL, and GCM persist in each app's `localStorage` under
-`probo-example-config`. The apps run on different ports, so each keeps
-its own copy.
+`probo-example-config` when the playground is configurable. The apps run
+on different ports, so each keeps its own copy.
+
+When both `PUBLIC_COOKIE_BANNER_ID` and
+`PUBLIC_COOKIE_BANNER_API_BASE_URL` are non-empty at build time, Vite
+inlines them and the app compiles without the configuration form or
+`localStorage` config. Leave the ID blank for the local playground.
+
+The IAB-facing static app is the themed TCF build:
+
+```bash
+npm -w @probo/example-cookie-banner-themed-tcf run build
+```
 
 ## Run
 

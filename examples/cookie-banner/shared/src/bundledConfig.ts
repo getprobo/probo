@@ -18,11 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { bundledConfig, hasBundledConfig } from "./bundledConfig";
-export { ConfigForm } from "./ConfigForm";
-export { DebugPanel } from "./DebugPanel";
-export { EventLog } from "./EventLog";
-export { ExampleShell } from "./ExampleShell";
-export { enableNamedLoggers, getExampleLogger } from "./logger";
-export { useConfig, type Config } from "./useConfig";
-export { useEventLog, type EventEntry } from "./useEventLog";
+export const bundledConfig = {
+  bannerId: import.meta.env.PUBLIC_COOKIE_BANNER_ID ?? "",
+  baseUrl: import.meta.env.PUBLIC_COOKIE_BANNER_API_BASE_URL ?? "",
+  gcmEnabled: true,
+} as const;
+
+export const hasBundledConfig = Boolean(
+  bundledConfig.bannerId && bundledConfig.baseUrl,
+);
