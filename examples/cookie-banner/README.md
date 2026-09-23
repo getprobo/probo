@@ -29,6 +29,18 @@ The IAB-facing static app is the themed TCF build:
 npm -w @probo/example-cookie-banner-themed-tcf run build
 ```
 
+## GitHub Pages
+
+`.github/workflows/pages-cookie-banner-themed-tcf.yaml` publishes that
+build to this repository's GitHub Pages site. Set Pages source to
+GitHub Actions, then add these repository variables:
+
+- `PUBLIC_COOKIE_BANNER_ID`
+- `PUBLIC_COOKIE_BANNER_API_BASE_URL`
+
+Both must be non-empty so Vite bakes the hosted banner in. An empty
+id compiles the playground form, which this workflow rejects.
+
 ## Run
 
 1. Copy `.env.example` to `.env` in this directory and fill in values.

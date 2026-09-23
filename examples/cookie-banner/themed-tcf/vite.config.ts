@@ -18,6 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { defineConfig, mergeConfig } from "vite";
 import { createExampleViteConfig } from "../vite.shared";
 
-export default createExampleViteConfig(5181);
+export default defineConfig(({ command }) =>
+  mergeConfig(createExampleViteConfig(5181), {
+    base: command === "build" ? "./" : "/",
+  }),
+);

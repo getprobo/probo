@@ -1,0 +1,71 @@
+name: "Pages cookie-banner-themed-tcf"
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "examples/cookie-banner/themed-tcf/**"
+      - "examples/cookie-banner/shared/**"
+      - "examples/cookie-banner/vite.shared.ts"
+      - "packages/cookie-banner/**"
+      - "packages/cookie-banner-tcf/**"
+      - "package-lock.json"
+      - ".github/workflows/pages-cookie-banner-themed-tcf.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: "read"
+  pages: "write"
+  id-token: "write"
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: "build"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+      - run: "npm install -g npm@^12.0.2"
+      - run: "npm ci"
+      - name: "Require baked banner config"
+        env:
+          PUBLIC_COOKIE_BANNER_ID: "${{ vars.PUBLIC_COOKIE_BANNER_ID }}"
+          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ vars.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
+        run: |
+          if [ -z "$PUBLIC_COOKIE_BANNER_ID" ] || [ -z "$PUBLIC_COOKIE_BANNER_API_BASE_URL" ]; then
+            echo "PUBLIC_COOKIE_BANNER_ID and PUBLIC_COOKIE_BANNER_API_BASE_URL must be set as repository variables" >&2
+            exit 1
+          fi
+      - run: "npm --workspace @probo/cookie-banner run build"
+      - run: "npm --workspace @probo/cookie-banner-tcf run build"
+      - run: "npm --workspace @probo/example-cookie-banner-themed-tcf run build"
+        env:
+          PUBLIC_COOKIE_BANNER_ID: "${{ vars.PUBLIC_COOKIE_BANNER_ID }}"
+          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ vars.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
+      - run: "touch examples/cookie-banner/themed-tcf/dist/.nojekyll"
+      - uses: "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9" # v5
+        with:
+          path: "examples/cookie-banner/themed-tcf/dist"
+          include-hidden-files: true
+
+  deploy:
+    name: "deploy"
+    needs: "build"
+    runs-on: "ubuntu-latest"
+    environment:
+      name: "github-pages"
+      url: "${{ steps.deployment.outputs.page_url }}"
+    steps:
+      - id: "deployment"
+        uses: "actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346" # v5
