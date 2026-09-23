@@ -1,5 +1,5 @@
 {
-  "name": "@probo/example-cookie-banner-react",
+  "name": "@probo/example-cookie-banner-themed",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,8 +9,7 @@
   },
   "dependencies": {
     "@probo/cookie-banner": "*",
-    "@probo/cookie-banner-tcf": "*",
-    "loglevel": "^1.9.2",
+    "@probo/example-cookie-banner-shared": "*",
     "posthog-js": "^1.422.5",
     "react": "^19.2.7",
     "react-dom": "^19.2.8"

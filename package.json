@@ -8,7 +8,8 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "examples/*"
+    "examples/*",
+    "examples/cookie-banner/*"
   ],
   "scripts": {
     "build": "turbo run build",

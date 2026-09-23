@@ -1,8 +1,30 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 import { useEffect, useState } from "react";
 import { getConsent } from "@probo/cookie-banner/consent";
 import type { ConsentData } from "@probo/cookie-banner/consent";
-import { useConfig } from "../hooks/useConfig";
-import { debugLogger } from "../lib/logger";
+import { getExampleLogger } from "./logger";
+import { useConfig } from "./useConfig";
+
+const debugLogger = getExampleLogger("debug");
 
 interface ConsentSnapshot {
   ready: boolean;
@@ -56,7 +78,7 @@ function readDataLayer(): unknown[] {
   });
 }
 
-export function DebugTab() {
+export function DebugPanel() {
   const [config] = useConfig();
   const [snapshot, setSnapshot] = useState<ConsentSnapshot>(readSnapshot);
   const [visitorId, setVisitorId] = useState<string | null>(() =>
@@ -89,7 +111,7 @@ export function DebugTab() {
   }, []);
 
   return (
-    <div>
+    <section>
       <h2>Debug</h2>
 
       <div
@@ -227,8 +249,8 @@ export function DebugTab() {
         <h3 style={{ marginTop: 0 }}>Google Consent Mode</h3>
         <p style={{ color: "#666", margin: "0 0 8px 0", fontSize: 13 }}>
           SDK integration is{" "}
-          <strong>{config.gcmEnabled ? "enabled" : "disabled"}</strong> (Config
-          tab). When enabled, consent default/update calls land on{" "}
+          <strong>{config.gcmEnabled ? "enabled" : "disabled"}</strong>. When
+          enabled, consent default/update calls land on{" "}
           <code>window.dataLayer</code>.
         </p>
         <pre
@@ -245,6 +267,6 @@ export function DebugTab() {
             : JSON.stringify(dataLayer, null, 2)}
         </pre>
       </div>
-    </div>
+    </section>
   );
 }

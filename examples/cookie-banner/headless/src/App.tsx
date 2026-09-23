@@ -1,3 +1,23 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 import { useEffect, useRef } from "react";
 import {
   registerHeadlessComponents,
@@ -5,9 +25,18 @@ import {
   resolveLayout,
   type BannerConfig,
 } from "@probo/cookie-banner/headless";
-import { useConfig } from "../hooks/useConfig";
-import { enableNamedLoggers, headlessLogger } from "../lib/logger";
-import type { EventEntry } from "../App";
+import {
+  ConfigForm,
+  DebugPanel,
+  EventLog,
+  ExampleShell,
+  enableNamedLoggers,
+  getExampleLogger,
+  useConfig,
+  useEventLog,
+} from "@probo/example-cookie-banner-shared";
+
+const headlessLogger = getExampleLogger("headless");
 
 const headlessActions: Record<string, string> = {
   "PROBO-ACKNOWLEDGE-BUTTON": "Acknowledge",
@@ -37,30 +66,20 @@ function headlessActionLabel(target: EventTarget | null): string | null {
   return headlessActions[host.tagName] ?? null;
 }
 
-let registered = false;
-
-interface HeadlessTabProps {
-  events: EventEntry[];
-  pushEvent: (type: string, detail: unknown) => void;
-}
-
-export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
+export function App() {
   const [config] = useConfig();
+  const { events, pushEvent } = useEventLog();
   const containerRef = useRef<HTMLDivElement>(null);
+  const ready = Boolean(config.bannerId && config.baseUrl);
 
   useEffect(() => {
-    if (!registered) {
-      headlessLogger.debug("[headless] registerHeadlessComponents");
-      registerHeadlessComponents();
-      registered = true;
-    }
+    headlessLogger.debug("[headless] registerHeadlessComponents");
+    registerHeadlessComponents();
   }, []);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !config.bannerId || !config.baseUrl) return;
-
-    container.innerHTML = "";
 
     container.innerHTML = `
       <style>probo-banner, probo-preference-panel, probo-privacy-choices { display: block !important; }</style>
@@ -160,55 +179,38 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
     };
   }, [config.bannerId, config.baseUrl, config.gcmEnabled, pushEvent]);
 
-  if (!config.bannerId || !config.baseUrl) {
-    return (
-      <div>
-        <h2>Headless Components</h2>
-        <p style={{ color: "tomato" }}>
-          Set banner ID and base URL in the Config tab first.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <h2>Headless Components</h2>
-      <p style={{ color: "#666", marginBottom: 16 }}>
-        Uses <code>registerHeadlessComponents()</code> and renders raw headless
-        elements with no themed styling.{" "}
-        <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>{" "}
-        is taken from the Config tab. Borders show element boundaries.
-      </p>
+    <ExampleShell
+      current="headless"
+      title="@probo/cookie-banner — headless"
+      description="Raw headless elements with no themed styling and no TCF."
+    >
+      <ConfigForm />
 
-      <div ref={containerRef} />
+      <section style={{ marginTop: 32 }}>
+        <h2>Headless Components</h2>
+        {ready ? (
+          <>
+            <p style={{ color: "#666", marginBottom: 16 }}>
+              Uses <code>registerHeadlessComponents()</code> and renders raw
+              headless elements.{" "}
+              <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>{" "}
+              comes from the configuration section. Borders show element
+              boundaries.
+            </p>
+            <div ref={containerRef} />
+            <EventLog events={events} />
+          </>
+        ) : (
+          <p style={{ color: "tomato" }}>
+            Set banner ID and base URL in the configuration section first.
+          </p>
+        )}
+      </section>
 
-      <h3>Events ({events.length})</h3>
-      {events.length === 0 ? (
-        <p style={{ color: "#999" }}>No events yet.</p>
-      ) : (
-        events.map((ev, i) => (
-          <div
-            key={i}
-            style={{
-              marginBottom: 8,
-              border: "1px solid #ddd",
-              padding: 8,
-              background: "#f5f5f5",
-            }}
-          >
-            <div style={{ fontWeight: "bold", marginBottom: 4 }}>
-              {ev.type}{" "}
-              <span style={{ fontWeight: "normal", color: "#999" }}>
-                {ev.time}
-              </span>
-            </div>
-            <pre style={{ margin: 0, overflow: "auto" }}>
-              {JSON.stringify(ev.detail, null, 2)}
-            </pre>
-          </div>
-        ))
-      )}
-    </div>
+      <div style={{ marginTop: 32 }}>
+        <DebugPanel />
+      </div>
+    </ExampleShell>
   );
 }

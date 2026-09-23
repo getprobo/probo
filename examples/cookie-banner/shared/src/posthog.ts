@@ -22,6 +22,8 @@ import posthog from "posthog-js";
 import type { BannerConfig } from "@probo/cookie-banner";
 import { getConsent, type ConsentData } from "@probo/cookie-banner/consent";
 
+export { PosthogPanel } from "./PosthogPanel";
+
 export type ConsentMode = BannerConfig["consent_mode"];
 export type ExplicitConsentStatus = "granted" | "denied" | "pending";
 
@@ -88,7 +90,7 @@ export function initPosthog(): void {
   if (!import.meta.env.PUBLIC_POSTHOG_API_KEY) {
     console.warn(
       "[posthog] PUBLIC_POSTHOG_API_KEY is not set; skipping PostHog init. " +
-        "Copy .env.example to .env in examples/cookie-banner-react/ and fill it in.",
+        "Copy .env.example to .env in examples/cookie-banner/ and fill it in.",
     );
     return;
   }

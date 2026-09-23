@@ -1,8 +1,30 @@
-import { useState } from "react";
-import { useConfig } from "../hooks/useConfig";
-import { configLogger } from "../lib/logger";
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
-export function ConfigTab() {
+import { useState } from "react";
+import { getExampleLogger } from "./logger";
+import { useConfig } from "./useConfig";
+
+const configLogger = getExampleLogger("config");
+
+export function ConfigForm() {
   const [config, setConfig] = useConfig();
   const [bannerId, setBannerId] = useState(config.bannerId);
   const [baseUrl, setBaseUrl] = useState(config.baseUrl);
@@ -19,11 +41,12 @@ export function ConfigTab() {
   };
 
   return (
-    <div>
+    <section>
       <h2>Configuration</h2>
       <p style={{ color: "#666", marginBottom: 16 }}>
-        Set the banner ID, base URL, and Google Consent Mode (GCM) option.
-        These values are persisted to localStorage and used by every other tab.
+        Banner ID, base URL, and Google Consent Mode. Values persist in
+        localStorage and are shared by the themed, themed TCF, and headless
+        examples.
       </p>
 
       <div style={{ marginBottom: 12 }}>
@@ -97,22 +120,6 @@ export function ConfigTab() {
       >
         Save
       </button>
-
-      {config.bannerId && config.baseUrl && (
-        <div style={{ marginTop: 24 }}>
-          <h3>Current saved config</h3>
-          <pre
-            style={{
-              background: "#f5f5f5",
-              padding: 12,
-              border: "1px solid #ddd",
-              overflow: "auto",
-            }}
-          >
-            {JSON.stringify(config, null, 2)}
-          </pre>
-        </div>
-      )}
-    </div>
+    </section>
   );
 }

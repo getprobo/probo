@@ -26,13 +26,6 @@ declare module "react" {
       "probo-save-button": CE;
       "probo-privacy-choices": CE;
       "probo-settings-link": CE;
-      "probo-cookie-banner": CE<{
-        "banner-id"?: string;
-        "base-url"?: string;
-        position?: string;
-        lang?: string;
-        "gcm-enabled"?: string;
-      }>;
     }
   }
 }
