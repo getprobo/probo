@@ -560,11 +560,13 @@ s3:
   # For AWS S3, leave endpoint empty
   # For S3-compatible storage (SeaweedFS, DigitalOcean Spaces, etc.), set the endpoint
   endpoint: ""
-  # Set both to authenticate with a static key pair. Leave both empty to use
-  # the AWS SDK's default credential chain instead (EKS Pod Identity, IRSA,
-  # instance role, etc.) -- setting only one is rejected at render time.
-  accessKeyId: ""  # S3 access key, blank for workload identity
-  secretAccessKey: ""  # S3 secret key, blank for workload identity
+  # Set both to authenticate with a static key pair. On AWS, leave both empty
+  # to use the AWS SDK's default credential chain instead (EKS Pod Identity,
+  # IRSA, instance role, etc.) -- setting only one is rejected at render time.
+  # Non-AWS S3-compatible endpoints (DigitalOcean Spaces, etc.) have no
+  # equivalent fallback and still need both keys set.
+  accessKeyId: ""  # S3 access key, blank for AWS workload identity
+  secretAccessKey: ""  # S3 secret key, blank for AWS workload identity
   # Use path-style URLs for selected S3-compatible services
   # When true: https://endpoint/bucket/key
   # When false (default): https://bucket.endpoint/key

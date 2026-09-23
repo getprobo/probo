@@ -181,8 +181,10 @@ All deployments require:
 - `probo.oauth2.signingKey` - PEM private key used to sign OAuth2 tokens
 - `postgresql.host` - PostgreSQL server hostname
 - `postgresql.password` - Database password
-- `s3.accessKeyId` - S3 access credentials
-- `s3.secretAccessKey` - S3 secret key
+
+S3 credentials are conditionally required. On AWS, leave `s3.accessKeyId` and
+`s3.secretAccessKey` blank to authenticate via EKS Pod Identity or IRSA
+instead; on other S3-compatible storage, both must be set.
 
 See [values.yaml](charts/probo/values.yaml) for all available options.
 
