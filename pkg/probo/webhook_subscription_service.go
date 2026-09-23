@@ -270,13 +270,18 @@ func (s WebhookSubscriptionService) ListEventsForSubscriptionID(
 	ctx context.Context, scope coredata.Scoper,
 	webhookSubscriptionID gid.GID,
 	cursor *page.Cursor[coredata.WebhookEventOrderField],
+	filter *coredata.WebhookEventFilter,
 ) (*page.Page[*coredata.WebhookEvent, coredata.WebhookEventOrderField], error) {
 	var events coredata.WebhookEvents
+
+	if filter == nil {
+		filter = coredata.NewWebhookEventFilter(nil)
+	}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := events.LoadBySubscriptionID(ctx, conn, scope, webhookSubscriptionID, cursor); err != nil {
+			if err := events.LoadBySubscriptionID(ctx, conn, scope, webhookSubscriptionID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load webhook events: %w", err)
 			}
 
@@ -293,15 +298,20 @@ func (s WebhookSubscriptionService) ListEventsForSubscriptionID(
 func (s WebhookSubscriptionService) CountEventsForSubscriptionID(
 	ctx context.Context, scope coredata.Scoper,
 	webhookSubscriptionID gid.GID,
+	filter *coredata.WebhookEventFilter,
 ) (int, error) {
 	var count int
+
+	if filter == nil {
+		filter = coredata.NewWebhookEventFilter(nil)
+	}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			events := &coredata.WebhookEvents{}
 
-			count, err = events.CountBySubscriptionID(ctx, conn, scope, webhookSubscriptionID)
+			count, err = events.CountBySubscriptionID(ctx, conn, scope, webhookSubscriptionID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count webhook events: %w", err)
 			}

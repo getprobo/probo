@@ -33,7 +33,7 @@ import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
 
@@ -42,7 +42,13 @@ import type { WebhookSubscriptionEventListRefetchQuery } from "#/__generated__/c
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
+import {
+  useWebhookEventListFilters,
+  webhookEventListGraphqlFilter,
+} from "../_lib/useWebhookEventListFilters";
 import { webhookSubscriptionEventList } from "../variants";
+
+import { WebhookSubscriptionEventListFilter } from "./WebhookSubscriptionEventListFilter";
 
 export const WEBHOOK_EVENT_PAGE_SIZE = 20;
 
@@ -54,8 +60,16 @@ export const webhookSubscriptionEventListFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
+    filter: { type: "WebhookEventFilter", defaultValue: null }
   ) {
-    events(first: $first, after: $after, last: $last, before: $before) {
+    events(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: { field: CREATED_AT, direction: DESC }
+      filter: $filter
+    ) {
       totalCount
       pageInfo {
         hasNextPage
@@ -259,6 +273,9 @@ export function WebhookSubscriptionEventList({
   webhookSubscriptionKey,
 }: WebhookSubscriptionEventListProps) {
   const { t } = useTranslation();
+  const { status, hasActiveFilters } = useWebhookEventListFilters();
+  const [isFilterPending, startTransition] = useTransition();
+  const skipFirstRefetch = useRef(true);
   const [webhook, refetch] = useRefetchableFragment<
     WebhookSubscriptionEventListRefetchQuery,
     WebhookSubscriptionEventList_webhookSubscription$key
@@ -268,16 +285,38 @@ export function WebhookSubscriptionEventList({
     refetch(variables, { fetchPolicy: "store-or-network" });
   }, [refetch]);
 
-  const { isPending, goPrevious, goNext } = useCursorPagination(
+  const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
     refetchPage,
     webhook.events.pageInfo,
     WEBHOOK_EVENT_PAGE_SIZE,
   );
 
+  useEffect(() => {
+    if (skipFirstRefetch.current) {
+      skipFirstRefetch.current = false;
+      return;
+    }
+
+    startTransition(() => {
+      refetch(
+        {
+          first: WEBHOOK_EVENT_PAGE_SIZE,
+          after: null,
+          last: null,
+          before: null,
+          filter: webhookEventListGraphqlFilter(status),
+        },
+        { fetchPolicy: "network-only" },
+      );
+    });
+  }, [status, refetch]);
+
+  const isPending = isFilterPending || isPagePending;
   const edges = webhook.events.edges;
   const pageInfo = webhook.events.pageInfo;
   const {
     root,
+    heading,
     results,
     empty,
     item,
@@ -286,15 +325,20 @@ export function WebhookSubscriptionEventList({
 
   return (
     <div className={root()}>
-      <Heading level={2} size={4} weight="medium" highContrast>
-        {t("webhooksSettingsPage.deliveriesCount", { count: webhook.events.totalCount })}
-      </Heading>
+      <div className={heading()}>
+        <Heading level={2} size={4} weight="medium" highContrast>
+          {t("webhooksSettingsPage.deliveriesCount", { count: webhook.events.totalCount })}
+        </Heading>
+        <WebhookSubscriptionEventListFilter />
+      </div>
       {edges.length === 0
         ? (
             <Card variant="soft" size={2}>
               <div className={empty()}>
                 <Text size={2} color="faint">
-                  {t("webhooksSettingsPage.emptyDeliveries")}
+                  {hasActiveFilters
+                    ? t("webhooksSettingsPage.emptyDeliveriesFiltered")
+                    : t("webhooksSettingsPage.emptyDeliveries")}
                 </Text>
               </div>
             </Card>

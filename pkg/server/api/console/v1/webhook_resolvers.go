@@ -106,7 +106,7 @@ func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *ty
 		return 0, err
 	}
 
-	count, err := r.probo.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, scope, obj.ParentID)
+	count, err := r.probo.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, scope, obj.ParentID, obj.Filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count webhook events", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -154,7 +154,7 @@ func (r *webhookSubscriptionResolver) SigningSecret(ctx context.Context, obj *ty
 }
 
 // Events is the resolver for the events field.
-func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.WebhookSubscription, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookEventOrderBy) (*types.WebhookEventConnection, error) {
+func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.WebhookSubscription, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookEventOrderBy, filter *types.WebhookEventFilter) (*types.WebhookEventConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionGet)
 	if err != nil {
 		return nil, err
@@ -174,13 +174,20 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, obj.ID, cursor)
+	var status *coredata.WebhookEventStatus
+	if filter != nil {
+		status = filter.Status
+	}
+
+	coredataFilter := coredata.NewWebhookEventFilter(status)
+
+	page, err := r.probo.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, obj.ID, cursor, coredataFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list webhook events", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewWebhookEventConnection(page, r, obj.ID), nil
+	return types.NewWebhookEventConnection(page, r, obj.ID, coredataFilter), nil
 }
 
 // Permission is the resolver for the permission field.

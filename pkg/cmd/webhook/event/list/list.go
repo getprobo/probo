@@ -30,11 +30,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $filter: WebhookEventFilter) {
   node(id: $id) {
     __typename
     ... on WebhookSubscription {
-      events(first: $first, after: $after, orderBy: $orderBy) {
+      events(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -64,6 +64,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagLimit    int
 		flagOrderBy  string
 		flagOrderDir string
+		flagStatus   string
 		flagOutput   *string
 	)
 
@@ -107,6 +108,20 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
+				}
+			}
+
+			if flagStatus != "" {
+				if err := cmdutil.ValidateEnum(
+					"status",
+					flagStatus,
+					[]string{"PENDING", "SUCCEEDED", "FAILED"},
+				); err != nil {
+					return err
+				}
+
+				variables["filter"] = map[string]any{
+					"status": flagStatus,
 				}
 			}
 
@@ -183,6 +198,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of events to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (PENDING, SUCCEEDED, FAILED)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

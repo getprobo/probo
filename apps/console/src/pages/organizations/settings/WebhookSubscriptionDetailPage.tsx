@@ -57,7 +57,8 @@ import type { WebhookEventTypeValue } from "./_lib/webhookEventTypes";
 import { webhookSubscriptionDetailPage } from "./variants";
 
 export const webhookSubscriptionDetailPageFragment = graphql`
-  fragment WebhookSubscriptionDetailPage_webhookSubscription on WebhookSubscription {
+  fragment WebhookSubscriptionDetailPage_webhookSubscription on WebhookSubscription
+  @argumentDefinitions(filter: { type: "WebhookEventFilter", defaultValue: null }) {
     id
     endpointUrl
     selectedEvents
@@ -66,16 +67,19 @@ export const webhookSubscriptionDetailPageFragment = graphql`
     organization {
       id
     }
-    ...WebhookSubscriptionEventList_webhookSubscription
+    ...WebhookSubscriptionEventList_webhookSubscription @arguments(filter: $filter)
   }
 `;
 
 export const webhookSubscriptionDetailPageQuery = graphql`
-  query WebhookSubscriptionDetailPageQuery($webhookSubscriptionId: ID!) {
+  query WebhookSubscriptionDetailPageQuery(
+    $webhookSubscriptionId: ID!
+    $filter: WebhookEventFilter
+  ) {
     node(id: $webhookSubscriptionId) {
       __typename
       ... on WebhookSubscription {
-        ...WebhookSubscriptionDetailPage_webhookSubscription
+        ...WebhookSubscriptionDetailPage_webhookSubscription @arguments(filter: $filter)
       }
     }
   }

@@ -36,6 +36,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filters  *coredata.WebhookEventFilter
 	}
 )
 
@@ -43,6 +44,7 @@ func NewWebhookEventConnection(
 	p *page.Page[*coredata.WebhookEvent, coredata.WebhookEventOrderField],
 	parentType any,
 	parentID gid.GID,
+	filters *coredata.WebhookEventFilter,
 ) *WebhookEventConnection {
 	var edges = make([]*WebhookEventEdge, len(p.Data))
 
@@ -56,6 +58,7 @@ func NewWebhookEventConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

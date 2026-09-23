@@ -74,6 +74,7 @@ func (w *WebhookEvents) LoadBySubscriptionID(
 	scope Scoper,
 	webhookSubscriptionID gid.GID,
 	cursor *page.Cursor[WebhookEventOrderField],
+	filter *WebhookEventFilter,
 ) error {
 	q := `
 SELECT
@@ -98,11 +99,13 @@ WHERE
     %s
     AND webhook_subscription_id = @webhook_subscription_id
     AND %s
+    AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"webhook_subscription_id": webhookSubscriptionID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -125,17 +128,20 @@ func (w *WebhookEvents) CountBySubscriptionID(
 	conn pg.Querier,
 	scope Scoper,
 	webhookSubscriptionID gid.GID,
+	filter *WebhookEventFilter,
 ) (int, error) {
 	q := `
 SELECT COUNT(*)
 FROM webhook_events
 WHERE %s
     AND webhook_subscription_id = @webhook_subscription_id
+    AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"webhook_subscription_id": webhookSubscriptionID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {

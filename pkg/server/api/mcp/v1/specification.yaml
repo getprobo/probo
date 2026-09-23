@@ -8818,6 +8818,9 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        status:
+          $ref: "#/components/schemas/WebhookEventStatus"
+          description: Filter by delivery status
 
     ListWebhookEventsOutput:
       type: object

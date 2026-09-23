@@ -4485,7 +4485,9 @@ func (r *Resolver) ListWebhookEventsTool(ctx context.Context, req *mcp.CallToolR
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, input.WebhookSubscriptionID, cursor)
+	filter := coredata.NewWebhookEventFilter(input.Status)
+
+	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, input.WebhookSubscriptionID, cursor, filter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list webhook events: %w", err))
 	}

@@ -100,6 +100,24 @@ const (
 		}
 	`
 
+	webhookSubscriptionEventsFilterQuery = `
+		query WebhookSubscriptionEventsFilter($id: ID!, $filter: WebhookEventFilter) {
+			node(id: $id) {
+				... on WebhookSubscription {
+					events(first: 50, filter: $filter) {
+						totalCount
+						edges {
+							node {
+								id
+								status
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
 	organizationWebhookSubscriptionsQuery = `
 		query OrganizationWebhookSubscriptions($id: ID!) {
 			node(id: $id) {

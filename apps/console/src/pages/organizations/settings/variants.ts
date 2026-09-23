@@ -146,6 +146,8 @@ export const webhookSigningSecretField = tv({
 export const webhookSubscriptionEventList = tv({
   slots: {
     root: "flex flex-col gap-4",
+    heading: "flex items-center justify-between gap-3",
+    filter: "w-56 shrink-0",
     results: "transition-opacity",
     empty: "flex flex-col items-center py-8 text-center",
     item: "items-stretch",

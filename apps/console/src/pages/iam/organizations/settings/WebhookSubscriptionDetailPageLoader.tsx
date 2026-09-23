@@ -18,11 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { WebhookSubscriptionDetailPageQuery } from "#/__generated__/core/WebhookSubscriptionDetailPageQuery.graphql";
+import {
+  useWebhookEventListFilters,
+  webhookEventListGraphqlFilter,
+} from "#/pages/organizations/settings/_lib/useWebhookEventListFilters";
 import {
   WebhookSubscriptionDetailPage,
   webhookSubscriptionDetailPageQuery,
@@ -32,13 +36,19 @@ import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 function WebhookSubscriptionDetailPageQueryLoader() {
   const { webhookSubscriptionId } = useParams<{ webhookSubscriptionId: string }>();
+  const { status } = useWebhookEventListFilters();
+  const filterRef = useRef(webhookEventListGraphqlFilter(status));
   const [queryRef, loadQuery] = useQueryLoader<WebhookSubscriptionDetailPageQuery>(
     webhookSubscriptionDetailPageQuery,
   );
 
   useEffect(() => {
+    filterRef.current = webhookEventListGraphqlFilter(status);
+  }, [status]);
+
+  useEffect(() => {
     if (webhookSubscriptionId != null) {
-      loadQuery({ webhookSubscriptionId });
+      loadQuery({ webhookSubscriptionId, filter: filterRef.current });
     }
   }, [loadQuery, webhookSubscriptionId]);
 
