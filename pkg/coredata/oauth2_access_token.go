@@ -185,6 +185,49 @@ LIMIT 1;
 	return nil
 }
 
+func (t *OAuth2AccessToken) LoadByHashedValueForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	hashedValue []byte,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	hashed_value,
+	client_id,
+	identity_id,
+	resources,
+	scopes,
+	created_at,
+	expires_at
+FROM
+	iam_oauth2_access_tokens
+WHERE
+	hashed_value = @hashed_value
+LIMIT 1
+FOR UPDATE;
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"hashed_value": hashedValue})
+	if err != nil {
+		return fmt.Errorf("cannot query oauth2_access_token for update: %w", err)
+	}
+
+	token, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OAuth2AccessToken])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect oauth2_access_token for update: %w", err)
+	}
+
+	*t = token
+
+	return nil
+}
+
 func (t *OAuth2AccessToken) LoadByHashedValueAndClientID(
 	ctx context.Context,
 	conn pg.Querier,
