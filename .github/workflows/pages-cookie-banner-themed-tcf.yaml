@@ -8,9 +8,14 @@ on:
       - "examples/cookie-banner/themed-tcf/**"
       - "examples/cookie-banner/shared/**"
       - "examples/cookie-banner/vite.shared.ts"
-      - "packages/cookie-banner/**"
-      - "packages/cookie-banner-tcf/**"
-      - "package-lock.json"
+      - "packages/cookie-banner/src/**"
+      - "packages/cookie-banner/package.json"
+      - "packages/cookie-banner/build.mjs"
+      - "packages/cookie-banner/tsconfig.json"
+      - "packages/cookie-banner-tcf/src/**"
+      - "packages/cookie-banner-tcf/package.json"
+      - "packages/cookie-banner-tcf/build.mjs"
+      - "packages/cookie-banner-tcf/tsconfig.json"
       - ".github/workflows/pages-cookie-banner-themed-tcf.yaml"
   workflow_dispatch:
 
