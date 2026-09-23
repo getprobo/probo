@@ -3102,7 +3102,7 @@
       "issuer": "Émetteur",
       "audience": "Audience",
       "subject": "Sujet",
-      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+      "roleArnHelp": "ex. arn:aws:iam::123456789012:role/ProboAudit"
     },
     "messages": {
       "copyFailed": "Échec de la copie",

@@ -321,9 +321,7 @@ export function CreateAwsAccessReviewSourcePage({
               setRoleArn(e.target.value)}
             required
             pattern={AWS_IAM_ROLE_ARN_PATTERN}
-            placeholder={t(
-              "createAwsAccessReviewSourcePage.fields.roleArnPlaceholder",
-            )}
+            help={t("createAwsAccessReviewSourcePage.fields.roleArnHelp")}
             error={
               roleArnInvalid
                 ? t("createAwsAccessReviewSourcePage.errors.roleArn")

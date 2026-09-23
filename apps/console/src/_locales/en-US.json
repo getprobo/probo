@@ -1821,7 +1821,7 @@
       "issuer": "Issuer",
       "audience": "Audience",
       "subject": "Subject",
-      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+      "roleArnHelp": "e.g. arn:aws:iam::123456789012:role/ProboAudit"
     },
     "messages": {
       "copyFailed": "Copy failed",

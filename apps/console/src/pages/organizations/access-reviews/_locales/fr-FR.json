@@ -10,8 +10,8 @@
       "issuer": "Émetteur",
       "audience": "Audience",
       "subject": "Sujet",
-      "workloadIdentityProviderPlaceholder": "projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
-      "serviceAccountEmailPlaceholder": "probo-audit@PROJECT_ID.iam.gserviceaccount.com"
+      "workloadIdentityProviderHelp": "ex. projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+      "serviceAccountEmailHelp": "ex. probo-audit@PROJECT_ID.iam.gserviceaccount.com"
     },
     "messages": {
       "copyFailed": "Échec de la copie",
@@ -56,9 +56,9 @@
       "issuer": "Émetteur",
       "audience": "Audience",
       "subject": "Sujet",
-      "tenantIdPlaceholder": "11111111-1111-1111-1111-111111111111",
-      "clientIdPlaceholder": "22222222-2222-2222-2222-222222222222",
-      "subscriptionIdPlaceholder": "33333333-3333-3333-3333-333333333333"
+      "tenantIdHelp": "ex. 11111111-1111-1111-1111-111111111111",
+      "clientIdHelp": "ex. 22222222-2222-2222-2222-222222222222",
+      "subscriptionIdHelp": "ex. 33333333-3333-3333-3333-333333333333"
     },
     "environments": {
       "AZURE_PUBLIC": "Public — GCC utilise Azure Public",

@@ -3106,7 +3106,7 @@
       "issuer": "Uitgever",
       "audience": "Audience",
       "subject": "Subject",
-      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+      "roleArnHelp": "bijv. arn:aws:iam::123456789012:role/ProboAudit"
     },
     "messages": {
       "copyFailed": "Kopiëren mislukt",
