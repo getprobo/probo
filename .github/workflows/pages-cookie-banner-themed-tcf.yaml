@@ -16,6 +16,7 @@ on:
       - "packages/cookie-banner-tcf/package.json"
       - "packages/cookie-banner-tcf/build.mjs"
       - "packages/cookie-banner-tcf/tsconfig.json"
+      - ".nvmrc"
       - ".github/workflows/pages-cookie-banner-themed-tcf.yaml"
   workflow_dispatch:
 
@@ -37,21 +38,28 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+      - name: "Require baked banner config"
+        env:
+          PUBLIC_COOKIE_BANNER_ID: "${{ vars.PUBLIC_COOKIE_BANNER_ID }}"
+          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ vars.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
+        run: |
+          if [ -z "$PUBLIC_COOKIE_BANNER_ID" ]; then
+            echo "PUBLIC_COOKIE_BANNER_ID must be set as a repository variable" >&2
+            exit 1
+          fi
+          case "$PUBLIC_COOKIE_BANNER_API_BASE_URL" in
+            http://?*|https://?*) ;;
+            *)
+              echo "PUBLIC_COOKIE_BANNER_API_BASE_URL must be an http or https URL" >&2
+              exit 1
+              ;;
+          esac
       - uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v6
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
       - run: "npm install -g npm@^12.0.2"
       - run: "npm ci"
-      - name: "Require baked banner config"
-        env:
-          PUBLIC_COOKIE_BANNER_ID: "${{ vars.PUBLIC_COOKIE_BANNER_ID }}"
-          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ vars.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
-        run: |
-          if [ -z "$PUBLIC_COOKIE_BANNER_ID" ] || [ -z "$PUBLIC_COOKIE_BANNER_API_BASE_URL" ]; then
-            echo "PUBLIC_COOKIE_BANNER_ID and PUBLIC_COOKIE_BANNER_API_BASE_URL must be set as repository variables" >&2
-            exit 1
-          fi
       - run: "npm --workspace @probo/cookie-banner run build"
       - run: "npm --workspace @probo/cookie-banner-tcf run build"
       - run: "npm --workspace @probo/example-cookie-banner-themed-tcf run build"
