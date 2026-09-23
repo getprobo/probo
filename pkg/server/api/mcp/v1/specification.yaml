@@ -8670,6 +8670,11 @@ components:
         status:
           $ref: "#/components/schemas/WebhookEventStatus"
           description: Delivery status
+        payload:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Outbound webhook payload posted to the endpoint
         response:
           anyOf:
             - type: string
@@ -8818,6 +8823,9 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        status:
+          $ref: "#/components/schemas/WebhookEventStatus"
+          description: Filter by delivery status
 
     ListWebhookEventsOutput:
       type: object

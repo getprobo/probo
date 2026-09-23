@@ -29,18 +29,24 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder) {
+func eventsListQuery(includePayload bool) string {
+	payloadField := ""
+	if includePayload {
+		payloadField = "\n            payload"
+	}
+
+	return fmt.Sprintf(`
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $filter: WebhookEventFilter) {
   node(id: $id) {
     __typename
     ... on WebhookSubscription {
-      events(first: $first, after: $after, orderBy: $orderBy) {
+      events(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
             id
             status
-            createdAt
+            createdAt%s
           }
         }
         pageInfo {
@@ -51,12 +57,14 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder) {
     }
   }
 }
-`
+`, payloadField)
+}
 
 type webhookEvent struct {
-	ID        string `json:"id"`
-	Status    string `json:"status"`
-	CreatedAt string `json:"createdAt"`
+	ID        string  `json:"id"`
+	Status    string  `json:"status"`
+	CreatedAt string  `json:"createdAt"`
+	Payload   *string `json:"payload,omitempty"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -64,6 +72,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagLimit    int
 		flagOrderBy  string
 		flagOrderDir string
+		flagStatus   string
 		flagOutput   *string
 	)
 
@@ -110,9 +119,23 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			if flagStatus != "" {
+				if err := cmdutil.ValidateEnum(
+					"status",
+					flagStatus,
+					[]string{"PENDING", "SUCCEEDED", "FAILED"},
+				); err != nil {
+					return err
+				}
+
+				variables["filter"] = map[string]any{
+					"status": flagStatus,
+				}
+			}
+
 			events, totalCount, err := api.Paginate(
 				client,
-				listQuery,
+				eventsListQuery(*flagOutput == cmdutil.OutputJSON),
 				variables,
 				flagLimit,
 				func(data json.RawMessage) (*api.Connection[webhookEvent], error) {
@@ -183,6 +206,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of events to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (PENDING, SUCCEEDED, FAILED)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

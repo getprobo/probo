@@ -371,10 +371,9 @@ func (h *webhookHandler) deliver(
 
 	return h.doHTTPCall(
 		ctx,
-		task.event.ID,
-		task.subscription.EndpointURL,
+		&task.event,
 		&task.webhookData,
-		task.subscription.ID,
+		task.subscription.EndpointURL,
 		signingSecret,
 	)
 }
@@ -454,20 +453,14 @@ func (h *webhookHandler) getSigningSecret(
 
 func (h *webhookHandler) doHTTPCall(
 	ctx context.Context,
-	eventID gid.GID,
-	endpointURL string,
+	event *coredata.WebhookEvent,
 	webhookData *coredata.WebhookData,
-	subscriptionID gid.GID,
+	endpointURL string,
 	signingSecret string,
 ) (json.RawMessage, *webhookDeliveryError) {
-	payload := Payload{
-		EventID:        eventID.String(),
-		SubscriptionID: subscriptionID.String(),
-		OrganizationID: webhookData.OrganizationID.String(),
-		EventType:      webhookData.EventType.String(),
-		CreatedAt:      webhookData.CreatedAt,
-		Data:           webhookData.Data,
-		UpdatedFrom:    webhookData.UpdatedFrom,
+	payload := NewPayload(event, webhookData)
+	if payload == nil {
+		return nil, &webhookDeliveryError{message: "cannot build webhook payload"}
 	}
 
 	body, err := json.Marshal(payload)
@@ -485,7 +478,7 @@ func (h *webhookHandler) doHTTPCall(
 
 	timestamp := strconv.FormatInt(h.now().Unix(), 10)
 	signature := computeSignature(signingSecret, timestamp, body)
-	deliveryID := eventID.String()
+	deliveryID := event.ID.String()
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Idempotency-Key", deliveryID)

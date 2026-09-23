@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -191,4 +192,62 @@ func TestWebhook_ThirdPartyCreatedEvent(t *testing.T) {
 	assert.Equal(t, subscription.ID, event.WebhookSubscriptionID)
 	assert.Equal(t, "PENDING", event.Status)
 	assert.False(t, event.CreatedAt.IsZero())
+	require.NotNil(t, event.Payload)
+
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(*event.Payload), &payload))
+	assert.Equal(t, event.ID, payload["eventId"])
+	assert.Equal(t, "third-party:created", payload["eventType"])
+	require.Contains(t, payload, "data")
+	assert.IsType(t, map[string]any{}, payload["data"])
+}
+
+func TestWebhook_FilterEventsByPendingStatus(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	endpoint := unroutableWebhookEndpoint(t)
+
+	subscription := createWebhookSubscription(
+		t,
+		owner,
+		endpoint,
+		[]string{"THIRD_PARTY_CREATED"},
+	)
+
+	factory.NewThirdParty(owner).
+		WithName(factory.SafeName("Webhook Third Party")).
+		Create()
+
+	eventResult := requireWebhookEventsEventually(t, owner, subscription.ID, 1)
+	require.NotNil(t, eventResult.Node)
+
+	pendingCount := 0
+
+	for _, edge := range eventResult.Node.Events.Edges {
+		if edge.Node.Status == "PENDING" {
+			pendingCount++
+		}
+	}
+
+	require.Greater(t, pendingCount, 0, "expected at least one PENDING event")
+
+	var filtered webhookSubscriptionNodeResponse
+
+	err := owner.Execute(
+		webhookSubscriptionEventsFilterQuery,
+		map[string]any{
+			"id":     subscription.ID,
+			"filter": map[string]any{"status": "PENDING"},
+		},
+		&filtered,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, filtered.Node)
+	assert.Equal(t, pendingCount, filtered.Node.Events.TotalCount)
+	require.NotEmpty(t, filtered.Node.Events.Edges)
+
+	for _, edge := range filtered.Node.Events.Edges {
+		assert.Equal(t, "PENDING", edge.Node.Status)
+	}
 }

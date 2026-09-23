@@ -4485,12 +4485,24 @@ func (r *Resolver) ListWebhookEventsTool(ctx context.Context, req *mcp.CallToolR
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, input.WebhookSubscriptionID, cursor)
+	filter := coredata.NewWebhookEventFilter(input.Status)
+
+	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, input.WebhookSubscriptionID, cursor, filter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list webhook events: %w", err))
 	}
 
-	return nil, types.NewListWebhookEventsOutput(page), nil
+	dataIDs := make([]gid.GID, 0, len(page.Data))
+	for _, event := range page.Data {
+		dataIDs = append(dataIDs, event.WebhookDataID)
+	}
+
+	dataByID, err := prb.WebhookSubscriptions.ListWebhookDataByIDs(ctx, scope, dataIDs)
+	if err != nil {
+		panic(fmt.Errorf("cannot list webhook data: %w", err))
+	}
+
+	return nil, types.NewListWebhookEventsOutput(page, dataByID), nil
 }
 
 func (r *Resolver) ListDocumentVersionApprovalQuorumsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionApprovalQuorumsInput) (*mcp.CallToolResult, types.ListDocumentVersionApprovalQuorumsOutput, error) {

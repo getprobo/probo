@@ -5182,6 +5182,7 @@
   },
   "webhooksSettingsPage": {
     "description": "Configurez des webhooks pour recevoir des notifications lorsque des événements se produisent dans votre organisation.",
+    "newDescription": "Saisissez l'URL du point de terminaison et choisissez les événements qui déclencheront ce webhook.",
     "fields": {
       "endpointUrl": "URL du point de terminaison",
       "signingSecret": "Secret de signature",
@@ -5198,11 +5199,8 @@
     },
     "dialogs": {
       "addTitle": "Ajouter un abonnement au webhook",
-      "editTitle": "Modifier l’abonnement au webhook",
-      "eventsTitle": "Événements du webhook",
       "deleteTitle": "Supprimer le webhook"
     },
-    "eventsHelp": "Sélectionnez les événements qui déclencheront ce webhook.",
     "status": {
       "succeeded": "Réussi",
       "pending": "En attente",
@@ -5210,8 +5208,10 @@
     },
     "errorTitle": "Erreur",
     "errors": {
-      "loadEvents": "Échec du chargement des événements du webhook.",
       "loadSigningSecret": "Échec du chargement du secret de signature.",
+      "copySigningSecret": "Impossible de copier le secret de signature.",
+      "copyPayload": "Impossible de copier la charge utile.",
+      "copyResponse": "Impossible de copier la réponse.",
       "create": "Échec de la création du webhook",
       "update": "Échec de la mise à jour du webhook",
       "delete": "Échec de la suppression du webhook"
@@ -5222,27 +5222,41 @@
       "deleted": "Webhook supprimé avec succès"
     },
     "copiedToClipboard": "Copié dans le presse-papiers",
-    "total_one": "({{count}} au total)",
-    "total_other": "({{count}} au total)",
-    "eventsCount_one": "Événements ({{count}})",
-    "eventsCount_other": "Événements ({{count}})",
-    "emptyEvents": "Aucun événement de webhook enregistré pour le moment.",
+    "deliveriesCount_one": "Livraison ({{count}})",
+    "deliveriesCount_other": "Livraisons ({{count}})",
+    "emptyDeliveries": "Aucune livraison enregistrée pour le moment.",
+    "emptyDeliveriesFiltered": "Aucune livraison ne correspond à ce statut.",
+    "filterStatus": "Statut de livraison",
+    "filterAll": "Tous",
+    "lastDeliveryEmpty": "Aucune livraison pour le moment.",
     "empty": "Aucun abonnement au webhook pour le moment. Ajoutez-en un pour commencer.",
+    "notFound": "Cet abonnement webhook est introuvable.",
+    "payload": "Charge utile",
     "response": "Réponse",
     "copySigningSecret": "Copier le secret de signature",
-    "editWebhook": "Modifier le webhook",
+    "copyPayload": "Copier la charge utile",
+    "copyResponse": "Copier la réponse",
     "deleteWebhook": "Supprimer le webhook",
+    "seeAll": "Voir tout",
+    "subscribedCount_one": "Abonné à {{count}} événement",
+    "subscribedCount_other": "Abonné à {{count}} événements",
+    "searchEvents": "Rechercher des événements",
+    "removeEvent": "Retirer {{event}}",
+    "editEvents": "Modifier les événements abonnés",
+    "emptySearch": "Aucun événement ne correspond à cette recherche.",
     "deleteConfirmation": "Voulez-vous vraiment supprimer cet abonnement au webhook ?",
     "cannotUndo": "Cette action est irréversible.",
     "actions": {
       "create": "Créer",
       "save": "Enregistrer",
-      "loadMore": "Charger plus",
       "add": "Ajouter un abonnement au webhook",
+      "back": "Retour",
       "hide": "Masquer",
       "show": "Afficher",
-      "deleting": "Suppression...",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "previous": "Préc.",
+      "next": "Suiv."
     }
   },
   "statementOfApplicabilityDetailPage": {

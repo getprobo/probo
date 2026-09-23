@@ -30,10 +30,10 @@ import type { GVLVendorList_query$key } from "#/__generated__/core/GVLVendorList
 import type { GVLVendorListAddMutation } from "#/__generated__/core/GVLVendorListAddMutation.graphql";
 import type { GVLVendorListRefetchQuery } from "#/__generated__/core/GVLVendorListRefetchQuery.graphql";
 import type { GVLVendorListRemoveMutation } from "#/__generated__/core/GVLVendorListRemoveMutation.graphql";
+import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
+import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import type { CursorPaginationVariables } from "../_lib/useCursorPagination";
-import { useCursorPagination } from "../_lib/useCursorPagination";
 import { gvlVendorGraphqlFilter, useGVLVendorFilters } from "../_lib/useGVLVendorFilters";
 import { tcfSection } from "../variants";
 

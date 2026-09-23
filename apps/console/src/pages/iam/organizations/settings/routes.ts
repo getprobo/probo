@@ -20,7 +20,9 @@
 
 import { lazy } from "@probo/react-lazy";
 
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { NewWebhookSubscriptionPageSkeleton } from "#/pages/organizations/settings/NewWebhookSubscriptionPageSkeleton";
+import { WebhooksSettingsPageSkeleton } from "#/pages/organizations/settings/WebhooksSettingsPageSkeleton";
+import { WebhookSubscriptionDetailPageSkeleton } from "#/pages/organizations/settings/WebhookSubscriptionDetailPageSkeleton";
 
 import { WorkspaceSettingsPageSkeleton } from "./WorkspaceSettingsPageSkeleton";
 
@@ -33,8 +35,22 @@ export const settingsRoutes = [
     ),
   },
   {
+    path: "webhooks/new",
+    Fallback: NewWebhookSubscriptionPageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/settings/NewWebhookSubscriptionPage"),
+    ),
+  },
+  {
+    path: "webhooks/:webhookSubscriptionId",
+    Fallback: WebhookSubscriptionDetailPageSkeleton,
+    Component: lazy(
+      () => import("#/pages/iam/organizations/settings/WebhookSubscriptionDetailPageLoader"),
+    ),
+  },
+  {
     path: "webhooks",
-    Fallback: PageSkeleton,
+    Fallback: WebhooksSettingsPageSkeleton,
     Component: lazy(
       () => import("#/pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
     ),

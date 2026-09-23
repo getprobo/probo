@@ -41,6 +41,38 @@ type Payload struct {
 	UpdatedFrom    json.RawMessage `json:"updatedFrom,omitempty"`
 }
 
+func NewPayload(event *coredata.WebhookEvent, data *coredata.WebhookData) *Payload {
+	if event == nil || data == nil {
+		return nil
+	}
+
+	return &Payload{
+		EventID:        event.ID.String(),
+		SubscriptionID: event.WebhookSubscriptionID.String(),
+		OrganizationID: data.OrganizationID.String(),
+		EventType:      data.EventType.String(),
+		CreatedAt:      data.CreatedAt,
+		Data:           data.Data,
+		UpdatedFrom:    data.UpdatedFrom,
+	}
+}
+
+func MarshalPayload(event *coredata.WebhookEvent, data *coredata.WebhookData) *string {
+	payload := NewPayload(event, data)
+	if payload == nil {
+		return nil
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil
+	}
+
+	s := string(body)
+
+	return &s
+}
+
 func InsertData(
 	ctx context.Context,
 	tx pg.Tx,

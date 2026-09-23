@@ -108,6 +108,10 @@ input WebhookEventOrder
     direction: OrderDirection!
 }
 
+input WebhookEventFilter {
+    status: WebhookEventStatus
+}
+
 type WebhookSubscription implements Node {
     id: ID!
     organization: Organization @goField(forceResolver: true)
@@ -123,6 +127,7 @@ type WebhookSubscription implements Node {
         last: Int
         before: CursorKey
         orderBy: WebhookEventOrder
+        filter: WebhookEventFilter
     ): WebhookEventConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
@@ -132,6 +137,7 @@ type WebhookEvent implements Node {
     id: ID!
     webhookSubscriptionId: ID!
     status: WebhookEventStatus!
+    payload: String
     response: String
     createdAt: Datetime!
 }

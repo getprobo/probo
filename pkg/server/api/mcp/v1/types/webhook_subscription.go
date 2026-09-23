@@ -24,7 +24,9 @@ import (
 	"encoding/json"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/webhook"
 )
 
 func NewWebhookSubscription(w *coredata.WebhookSubscription) *WebhookSubscription {
@@ -60,7 +62,7 @@ func NewListWebhookSubscriptionsOutput(p *page.Page[*coredata.WebhookSubscriptio
 	}
 }
 
-func NewWebhookEvent(e *coredata.WebhookEvent) *WebhookEvent {
+func NewWebhookEvent(e *coredata.WebhookEvent, data *coredata.WebhookData) *WebhookEvent {
 	var response *string
 
 	if len(e.Response) > 0 && string(e.Response) != "null" {
@@ -72,15 +74,19 @@ func NewWebhookEvent(e *coredata.WebhookEvent) *WebhookEvent {
 		ID:                    e.ID,
 		WebhookSubscriptionID: e.WebhookSubscriptionID,
 		Status:                e.Status,
+		Payload:               webhook.MarshalPayload(e, data),
 		Response:              response,
 		CreatedAt:             e.CreatedAt,
 	}
 }
 
-func NewListWebhookEventsOutput(p *page.Page[*coredata.WebhookEvent, coredata.WebhookEventOrderField]) ListWebhookEventsOutput {
+func NewListWebhookEventsOutput(
+	p *page.Page[*coredata.WebhookEvent, coredata.WebhookEventOrderField],
+	dataByID map[gid.GID]*coredata.WebhookData,
+) ListWebhookEventsOutput {
 	events := make([]*WebhookEvent, 0, len(p.Data))
 	for _, e := range p.Data {
-		events = append(events, NewWebhookEvent(e))
+		events = append(events, NewWebhookEvent(e, dataByID[e.WebhookDataID]))
 	}
 
 	var nextCursor *page.CursorKey

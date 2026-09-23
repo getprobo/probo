@@ -86,12 +86,16 @@ func TestDoHTTPCall_SendsStableDeliveryIdentityAndSignature(t *testing.T) {
 		CreatedAt:      now,
 	}
 
+	event := coredata.WebhookEvent{
+		ID:                    eventID,
+		WebhookSubscriptionID: subscriptionID,
+	}
+
 	_, deliveryErr := h.doHTTPCall(
 		context.Background(),
-		eventID,
-		server.URL,
+		&event,
 		&webhookData,
-		subscriptionID,
+		server.URL,
 		signingSecret,
 	)
 

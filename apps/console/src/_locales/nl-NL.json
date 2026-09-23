@@ -5172,6 +5172,7 @@
   },
   "webhooksSettingsPage": {
     "description": "Configureer webhooks om meldingen te ontvangen wanneer er gebeurtenissen plaatsvinden in uw organisatie.",
+    "newDescription": "Voer de eindpunt-URL in en kies welke gebeurtenissen deze webhook moeten activeren.",
     "fields": {
       "endpointUrl": "Eindpunt-URL",
       "signingSecret": "Signing Secret",
@@ -5188,11 +5189,8 @@
     },
     "dialogs": {
       "addTitle": "Webhookabonnement toevoegen",
-      "editTitle": "Webhookabonnement bewerken",
-      "eventsTitle": "Webhookgebeurtenissen",
       "deleteTitle": "Webhook verwijderen"
     },
-    "eventsHelp": "Selecteer de gebeurtenissen die deze webhook activeren.",
     "status": {
       "succeeded": "Geslaagd",
       "pending": "In behandeling",
@@ -5200,8 +5198,10 @@
     },
     "errorTitle": "Fout",
     "errors": {
-      "loadEvents": "Laden van webhookgebeurtenissen mislukt.",
       "loadSigningSecret": "Laden van signing secret mislukt.",
+      "copySigningSecret": "Kopiëren van signing secret mislukt.",
+      "copyPayload": "Payload kopiëren mislukt.",
+      "copyResponse": "Reactie kopiëren mislukt.",
       "create": "Aanmaken van webhook mislukt",
       "update": "Bijwerken van webhook mislukt",
       "delete": "Verwijderen van webhook mislukt"
@@ -5212,27 +5212,41 @@
       "deleted": "Webhook succesvol verwijderd"
     },
     "copiedToClipboard": "Gekopieerd naar klembord",
-    "total_one": "({{count}} totaal)",
-    "total_other": "({{count}} totaal)",
-    "eventsCount_one": "Gebeurtenissen ({{count}})",
-    "eventsCount_other": "Gebeurtenissen ({{count}})",
-    "emptyEvents": "Nog geen webhookgebeurtenissen geregistreerd.",
+    "deliveriesCount_one": "Levering ({{count}})",
+    "deliveriesCount_other": "Leveringen ({{count}})",
+    "emptyDeliveries": "Nog geen leveringen geregistreerd.",
+    "emptyDeliveriesFiltered": "Geen leveringen komen overeen met deze status.",
+    "filterStatus": "Leveringsstatus",
+    "filterAll": "Alle",
+    "lastDeliveryEmpty": "Nog geen leveringen.",
     "empty": "Nog geen webhookabonnementen. Voeg er een toe om te beginnen.",
+    "notFound": "Dit webhookabonnement is niet gevonden.",
+    "payload": "Payload",
     "response": "Reactie",
     "copySigningSecret": "Signing secret kopiëren",
-    "editWebhook": "Webhook bewerken",
+    "copyPayload": "Payload kopiëren",
+    "copyResponse": "Reactie kopiëren",
     "deleteWebhook": "Webhook verwijderen",
+    "seeAll": "Alles zien",
+    "subscribedCount_one": "Geabonneerd op {{count}} gebeurtenis",
+    "subscribedCount_other": "Geabonneerd op {{count}} gebeurtenissen",
+    "searchEvents": "Gebeurtenissen zoeken",
+    "removeEvent": "Verwijder {{event}}",
+    "editEvents": "Geabonneerde gebeurtenissen bewerken",
+    "emptySearch": "Geen gebeurtenissen komen overeen met die zoekopdracht.",
     "deleteConfirmation": "Weet u zeker dat u dit webhookabonnement wilt verwijderen?",
     "cannotUndo": "Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "create": "Aanmaken",
       "save": "Opslaan",
-      "loadMore": "Meer laden",
       "add": "Webhookabonnement toevoegen",
+      "back": "Terug",
       "hide": "Verbergen",
       "show": "Tonen",
-      "deleting": "Verwijderen...",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "cancel": "Annuleren",
+      "previous": "Vorige",
+      "next": "Volgende"
     }
   },
   "statementOfApplicabilityDetailPage": {
