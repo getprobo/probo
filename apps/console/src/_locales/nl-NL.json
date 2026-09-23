@@ -5199,6 +5199,7 @@
     "errorTitle": "Fout",
     "errors": {
       "loadSigningSecret": "Laden van signing secret mislukt.",
+      "copyPayload": "Payload kopiëren mislukt.",
       "copyResponse": "Reactie kopiëren mislukt.",
       "create": "Aanmaken van webhook mislukt",
       "update": "Bijwerken van webhook mislukt",
@@ -5219,8 +5220,10 @@
     "lastDeliveryEmpty": "Nog geen leveringen.",
     "empty": "Nog geen webhookabonnementen. Voeg er een toe om te beginnen.",
     "notFound": "Dit webhookabonnement is niet gevonden.",
+    "payload": "Payload",
     "response": "Reactie",
     "copySigningSecret": "Signing secret kopiëren",
+    "copyPayload": "Payload kopiëren",
     "copyResponse": "Reactie kopiëren",
     "deleteWebhook": "Webhook verwijderen",
     "seeAll": "Alles zien",

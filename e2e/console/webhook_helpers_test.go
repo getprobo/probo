@@ -92,6 +92,7 @@ const (
 								webhookSubscriptionId
 								status
 								createdAt
+								payload
 							}
 						}
 					}
@@ -161,6 +162,7 @@ type (
 					WebhookSubscriptionID string    `json:"webhookSubscriptionId"`
 					Status                string    `json:"status"`
 					CreatedAt             time.Time `json:"createdAt"`
+					Payload               *string   `json:"payload"`
 				} `json:"node"`
 			} `json:"edges"`
 		} `json:"events"`

@@ -138,6 +138,50 @@ LIMIT 1
 	return nil
 }
 
+func (w *WebhookDataList) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	ids []gid.GID,
+) error {
+	if len(ids) == 0 {
+		*w = nil
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    event_type,
+    data,
+    updated_from,
+    created_at,
+    processed_at
+FROM webhook_data
+WHERE %s
+    AND id = ANY(@ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query webhook data: %w", err)
+	}
+
+	data, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[WebhookData])
+	if err != nil {
+		return fmt.Errorf("cannot collect webhook data: %w", err)
+	}
+
+	*w = data
+
+	return nil
+}
+
 func (w *WebhookData) LoadNextUnprocessedForUpdate(
 	ctx context.Context,
 	conn pg.Tx,

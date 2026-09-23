@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/webhook"
 )
 
 type (
@@ -45,11 +46,12 @@ func NewWebhookEventConnection(
 	parentType any,
 	parentID gid.GID,
 	filters *coredata.WebhookEventFilter,
+	dataByID map[gid.GID]*coredata.WebhookData,
 ) *WebhookEventConnection {
 	var edges = make([]*WebhookEventEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewWebhookEventEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewWebhookEventEdge(p.Data[i], p.Cursor.OrderBy.Field, dataByID[p.Data[i].WebhookDataID])
 	}
 
 	return &WebhookEventConnection{
@@ -62,14 +64,18 @@ func NewWebhookEventConnection(
 	}
 }
 
-func NewWebhookEventEdge(we *coredata.WebhookEvent, orderBy coredata.WebhookEventOrderField) *WebhookEventEdge {
+func NewWebhookEventEdge(
+	we *coredata.WebhookEvent,
+	orderBy coredata.WebhookEventOrderField,
+	data *coredata.WebhookData,
+) *WebhookEventEdge {
 	return &WebhookEventEdge{
 		Cursor: we.CursorKey(orderBy),
-		Node:   NewWebhookEvent(we),
+		Node:   NewWebhookEvent(we, data),
 	}
 }
 
-func NewWebhookEvent(we *coredata.WebhookEvent) *WebhookEvent {
+func NewWebhookEvent(we *coredata.WebhookEvent, data *coredata.WebhookData) *WebhookEvent {
 	var response *string
 
 	if len(we.Response) > 0 {
@@ -81,6 +87,7 @@ func NewWebhookEvent(we *coredata.WebhookEvent) *WebhookEvent {
 		ID:                    we.ID,
 		WebhookSubscriptionID: we.WebhookSubscriptionID,
 		Status:                we.Status,
+		Payload:               webhook.MarshalPayload(we, data),
 		Response:              response,
 		CreatedAt:             we.CreatedAt,
 	}

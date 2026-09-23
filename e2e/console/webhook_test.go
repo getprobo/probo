@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -191,6 +192,14 @@ func TestWebhook_ThirdPartyCreatedEvent(t *testing.T) {
 	assert.Equal(t, subscription.ID, event.WebhookSubscriptionID)
 	assert.Equal(t, "PENDING", event.Status)
 	assert.False(t, event.CreatedAt.IsZero())
+	require.NotNil(t, event.Payload)
+
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(*event.Payload), &payload))
+	assert.Equal(t, event.ID, payload["eventId"])
+	assert.Equal(t, "third-party:created", payload["eventType"])
+	require.Contains(t, payload, "data")
+	assert.IsType(t, map[string]any{}, payload["data"])
 }
 
 func TestWebhook_FilterEventsByPendingStatus(t *testing.T) {

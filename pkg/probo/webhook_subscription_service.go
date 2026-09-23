@@ -295,6 +295,39 @@ func (s WebhookSubscriptionService) ListEventsForSubscriptionID(
 	return page.NewPage(events, cursor), nil
 }
 
+func (s WebhookSubscriptionService) ListWebhookDataByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	ids []gid.GID,
+) (map[gid.GID]*coredata.WebhookData, error) {
+	result := make(map[gid.GID]*coredata.WebhookData, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	var data coredata.WebhookDataList
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := data.LoadByIDs(ctx, conn, scope, ids); err != nil {
+				return fmt.Errorf("cannot load webhook data: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range data {
+		result[item.ID] = item
+	}
+
+	return result, nil
+}
+
 func (s WebhookSubscriptionService) CountEventsForSubscriptionID(
 	ctx context.Context, scope coredata.Scoper,
 	webhookSubscriptionID gid.GID,

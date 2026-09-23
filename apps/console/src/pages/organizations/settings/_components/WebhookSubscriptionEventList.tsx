@@ -82,6 +82,7 @@ export const webhookSubscriptionEventListFragment = graphql`
           id
           status
           createdAt
+          payload
           response
         }
       }
@@ -166,17 +167,90 @@ function EventStatusBadge({ status }: { status: string }) {
   );
 }
 
+function formatJSON(value: string): string {
+  try {
+    return JSON.stringify(JSON.parse(value) as unknown, null, 2);
+  } catch {
+    return value;
+  }
+}
+
+function DeliveryJsonBlock({
+  copyError,
+  copyLabel,
+  label,
+  value,
+}: {
+  copyError: string;
+  copyLabel: string;
+  label: string;
+  value: string;
+}) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const {
+    block,
+    blockHeading,
+    responseWrap,
+    response: responseClass,
+    responseCopy,
+  } = webhookSubscriptionEventList();
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast({
+        title: t("webhooksSettingsPage.copiedToClipboard"),
+        description: label,
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: t("webhooksSettingsPage.errorTitle"),
+        description: copyError,
+        variant: "error",
+      });
+    }
+  }
+
+  return (
+    <div className={block()}>
+      <Text size={1} color="faint" className={blockHeading()}>
+        {label}
+      </Text>
+      <div className={responseWrap()}>
+        <IconButton
+          variant="surface"
+          color="neutral"
+          size={1}
+          className={responseCopy()}
+          aria-label={copyLabel}
+          onClick={() => {
+            void handleCopy();
+          }}
+        >
+          <CopyIcon />
+        </IconButton>
+        <pre className={responseClass()}>
+          {value}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
 function DeliveryRow({
   createdAt,
+  payload,
   response,
   status,
 }: {
   createdAt: string;
+  payload: string | null | undefined;
   response: string | null | undefined;
   status: string;
 }) {
   const { t, i18n } = useTranslation();
-  const { toast } = useToast();
   const {
     row,
     trigger,
@@ -184,32 +258,11 @@ function DeliveryRow({
     trail,
     contentType,
     caret,
-    responseWrap,
-    response: responseClass,
-    responseCopy,
+    panel,
   } = webhookSubscriptionEventList();
+  const formattedPayload = payload != null && payload !== "" ? formatJSON(payload) : null;
   const parsed = response != null && response !== "" ? parseResponse(response) : null;
-
-  async function handleCopyResponse() {
-    if (parsed == null) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(parsed.formatted);
-      toast({
-        title: t("webhooksSettingsPage.copiedToClipboard"),
-        description: t("webhooksSettingsPage.response"),
-        variant: "success",
-      });
-    } catch {
-      toast({
-        title: t("webhooksSettingsPage.errorTitle"),
-        description: t("webhooksSettingsPage.errors.copyResponse"),
-        variant: "error",
-      });
-    }
-  }
+  const expandable = formattedPayload != null || parsed != null;
 
   const header = (
     <>
@@ -228,37 +281,43 @@ function DeliveryRow({
             {parsed.contentType}
           </Code>
         )}
-        {parsed != null && <CaretDownIcon className={caret()} aria-hidden />}
+        {expandable && <CaretDownIcon className={caret()} aria-hidden />}
       </div>
     </>
   );
 
-  if (parsed == null) {
+  if (!expandable) {
     return <div className={trigger()}>{header}</div>;
   }
 
   return (
     <Collapsible className={row()}>
-      <CollapsibleTrigger className={trigger()} aria-label={t("webhooksSettingsPage.response")}>
+      <CollapsibleTrigger
+        className={trigger()}
+        aria-label={formattedPayload != null
+          ? t("webhooksSettingsPage.payload")
+          : t("webhooksSettingsPage.response")}
+      >
         {header}
       </CollapsibleTrigger>
       <CollapsiblePanel>
-        <div className={responseWrap()}>
-          <IconButton
-            variant="surface"
-            color="neutral"
-            size={1}
-            className={responseCopy()}
-            aria-label={t("webhooksSettingsPage.copyResponse")}
-            onClick={() => {
-              void handleCopyResponse();
-            }}
-          >
-            <CopyIcon />
-          </IconButton>
-          <pre className={responseClass()}>
-            {parsed.formatted}
-          </pre>
+        <div className={panel()}>
+          {formattedPayload != null && (
+            <DeliveryJsonBlock
+              label={t("webhooksSettingsPage.payload")}
+              copyLabel={t("webhooksSettingsPage.copyPayload")}
+              copyError={t("webhooksSettingsPage.errors.copyPayload")}
+              value={formattedPayload}
+            />
+          )}
+          {parsed != null && (
+            <DeliveryJsonBlock
+              label={t("webhooksSettingsPage.response")}
+              copyLabel={t("webhooksSettingsPage.copyResponse")}
+              copyError={t("webhooksSettingsPage.errors.copyResponse")}
+              value={parsed.formatted}
+            />
+          )}
         </div>
       </CollapsiblePanel>
     </Collapsible>
@@ -352,6 +411,7 @@ export function WebhookSubscriptionEventList({
                       <DeliveryRow
                         status={node.status}
                         createdAt={node.createdAt}
+                        payload={node.payload}
                         response={node.response}
                       />
                     </ListItem>

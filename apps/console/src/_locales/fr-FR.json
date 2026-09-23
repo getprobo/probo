@@ -5209,6 +5209,7 @@
     "errorTitle": "Erreur",
     "errors": {
       "loadSigningSecret": "Échec du chargement du secret de signature.",
+      "copyPayload": "Impossible de copier la charge utile.",
       "copyResponse": "Impossible de copier la réponse.",
       "create": "Échec de la création du webhook",
       "update": "Échec de la mise à jour du webhook",
@@ -5229,8 +5230,10 @@
     "lastDeliveryEmpty": "Aucune livraison pour le moment.",
     "empty": "Aucun abonnement au webhook pour le moment. Ajoutez-en un pour commencer.",
     "notFound": "Cet abonnement webhook est introuvable.",
+    "payload": "Charge utile",
     "response": "Réponse",
     "copySigningSecret": "Copier le secret de signature",
+    "copyPayload": "Copier la charge utile",
     "copyResponse": "Copier la réponse",
     "deleteWebhook": "Supprimer le webhook",
     "seeAll": "Voir tout",

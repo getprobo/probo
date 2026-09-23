@@ -106,6 +106,7 @@ export async function execute(
 								id
 								webhookSubscriptionId
 								status
+								payload
 								response
 								createdAt
 							}

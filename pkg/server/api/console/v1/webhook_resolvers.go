@@ -13,6 +13,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -187,7 +188,18 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewWebhookEventConnection(page, r, obj.ID, coredataFilter), nil
+	dataIDs := make([]gid.GID, 0, len(page.Data))
+	for _, event := range page.Data {
+		dataIDs = append(dataIDs, event.WebhookDataID)
+	}
+
+	dataByID, err := r.probo.WebhookSubscriptions.ListWebhookDataByIDs(ctx, scope, dataIDs)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list webhook data", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewWebhookEventConnection(page, r, obj.ID, coredataFilter, dataByID), nil
 }
 
 // Permission is the resolver for the permission field.

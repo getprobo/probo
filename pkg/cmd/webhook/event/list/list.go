@@ -41,6 +41,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $fi
             id
             status
             createdAt
+            payload
           }
         }
         pageInfo {
@@ -54,9 +55,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $fi
 `
 
 type webhookEvent struct {
-	ID        string `json:"id"`
-	Status    string `json:"status"`
-	CreatedAt string `json:"createdAt"`
+	ID        string  `json:"id"`
+	Status    string  `json:"status"`
+	CreatedAt string  `json:"createdAt"`
+	Payload   *string `json:"payload,omitempty"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
