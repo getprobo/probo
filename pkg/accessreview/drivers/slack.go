@@ -60,7 +60,7 @@ type slackMember struct {
 	IsUltraRestricted bool         `json:"is_ultra_restricted"`
 	IsBot             bool         `json:"is_bot"`
 	IsAppUser         bool         `json:"is_app_user"`
-	Has2FA            bool         `json:"has_2fa"`
+	Has2FA            *bool        `json:"has_2fa"`
 	Updated           int          `json:"updated"`
 	Profile           slackProfile `json:"profile"`
 }
@@ -197,12 +197,17 @@ func slackRoles(m slackMember) []string {
 	}
 }
 
-func slackMFAStatus(has2FA bool) coredata.MFAStatus {
-	if has2FA {
+// slackMFAStatus maps has_2fa, which Slack only returns to an admin or owner
+// caller: a bot token or a non-admin user token never sees it.
+func slackMFAStatus(has2FA *bool) coredata.MFAStatus {
+	switch {
+	case has2FA == nil:
+		return coredata.MFAStatusUnknown
+	case *has2FA:
 		return coredata.MFAStatusEnabled
+	default:
+		return coredata.MFAStatusDisabled
 	}
-
-	return coredata.MFAStatusDisabled
 }
 
 // slackNameResolver resolves the Slack workspace name via auth.test.

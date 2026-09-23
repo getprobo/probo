@@ -22,11 +22,14 @@ package drivers
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func TestSlackDriver(t *testing.T) {
@@ -53,4 +56,27 @@ func TestSlackDriver(t *testing.T) {
 	require.NotEmpty(t, r.Email, "expected at least one record with an email")
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.Roles)
+}
+
+func TestSlackDriverMFAStatus(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"ok":true,"members":[
+			{"id":"U1","profile":{"email":"on@example.com"},"has_2fa":true},
+			{"id":"U2","profile":{"email":"off@example.com"},"has_2fa":false},
+			{"id":"U3","profile":{"email":"hidden@example.com"}}
+		]}`))
+	}))
+	t.Cleanup(server.Close)
+
+	records, err := NewSlackDriver(server.Client(), server.URL).ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 3)
+
+	assert.Equal(t, coredata.MFAStatusEnabled, records[0].MFAStatus)
+	assert.Equal(t, coredata.MFAStatusDisabled, records[1].MFAStatus)
+	// Slack only returns has_2fa to an admin caller; a bot token never sees it.
+	assert.Equal(t, coredata.MFAStatusUnknown, records[2].MFAStatus)
 }
