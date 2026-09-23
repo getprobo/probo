@@ -202,9 +202,20 @@ export class ProboSettingsLink extends HTMLElement {
   };
 
   private handleClick = (e: Event): void => {
-    if (!this.root) return;
     e.preventDefault();
-    this.root.setState(this.root.reopenState);
+    const root = this.findRoot() ?? this.root;
+    if (root && root !== this.root) {
+      this.attach(root);
+    }
+    // Header/footer links often connect before the banner root exists, and
+    // the themed host defines this element mid-connectedCallback — before
+    // it writes the root into its shadow tree. Re-resolve on click and
+    // fall back to the document event the root already listens for.
+    if (root) {
+      root.setState(root.reopenState);
+      return;
+    }
+    document.dispatchEvent(new CustomEvent("probo-open-preferences"));
   };
 
   private handleKeydown = (e: KeyboardEvent): void => {
