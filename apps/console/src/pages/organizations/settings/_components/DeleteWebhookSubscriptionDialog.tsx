@@ -53,11 +53,13 @@ const deleteWebhookSubscriptionMutation = graphql`
 interface DeleteWebhookSubscriptionDialogProps {
   webhookSubscriptionId: string;
   onDeleted: () => void;
+  trigger?: "icon" | "button";
 }
 
 export function DeleteWebhookSubscriptionDialog({
   webhookSubscriptionId,
   onDeleted,
+  trigger = "icon",
 }: DeleteWebhookSubscriptionDialogProps) {
   const { t } = useTranslation();
   const { body } = deleteWebhookSubscriptionDialog();
@@ -91,15 +93,24 @@ export function DeleteWebhookSubscriptionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        render={(
-          <IconButton
-            variant="outline"
-            color="red"
-            aria-label={t("webhooksSettingsPage.deleteWebhook")}
-          >
-            <TrashIcon />
-          </IconButton>
-        )}
+        render={
+          trigger === "button"
+            ? (
+                <Button variant="surface" color="red" iconStart={<TrashIcon />}>
+                  {t("webhooksSettingsPage.deleteWebhook")}
+                </Button>
+              )
+            : (
+                <IconButton
+                  variant="surface"
+                  color="red"
+                  size={1}
+                  aria-label={t("webhooksSettingsPage.deleteWebhook")}
+                >
+                  <TrashIcon />
+                </IconButton>
+              )
+        }
       />
       <DialogPopup>
         <DialogHeader>

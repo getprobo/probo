@@ -56,17 +56,20 @@ export const webhookSubscriptionList = tv({
 
 export const webhookSubscriptionListItem = tv({
   slots: {
-    card: "flex h-full flex-col gap-4",
+    card: "relative flex h-full flex-col gap-4",
     header: "flex items-center justify-between gap-3",
     lead: "flex min-w-0 flex-1 items-center gap-3",
     icon: "flex size-10 shrink-0 items-center justify-center rounded-2 bg-sand-3 text-sand-11 [&_svg]:size-5",
-    endpoint: "min-w-0 flex-1 break-all",
+    endpoint: [
+      "min-w-0 flex-1 break-all",
+      "after:absolute after:inset-0 after:content-['']",
+    ],
+    action: "relative z-1",
     eventsSection: "flex flex-col gap-2",
     eventsHeading: "flex items-center gap-2",
     events: "flex flex-wrap items-center gap-1.5",
     eventsAll: "flex max-w-80 flex-wrap content-start gap-1.5",
     badge: "font-mono",
-    footer: "mt-auto",
   },
 });
 
@@ -144,11 +147,18 @@ export const webhookSubscriptionEventList = tv({
     root: "flex flex-col gap-4",
     results: "transition-opacity",
     empty: "flex flex-col items-center py-8 text-center",
-    item: "items-start",
-    meta: "flex items-center justify-between gap-3",
-    responseTrigger: "text-2 text-sand-11 hover:text-sand-12",
+    item: "items-stretch",
+    row: "flex w-full min-w-0 flex-col",
+    trigger: [
+      "flex w-full items-center gap-3",
+      "data-open:[&_svg]:rotate-180",
+    ],
+    lead: "flex min-w-0 items-center gap-2",
+    trail: "ml-auto flex min-w-0 items-center gap-2",
+    contentType: "min-w-0 truncate",
+    caret: "size-4 shrink-0 text-sand-11 transition-transform duration-150",
     response:
-      "mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-2 bg-sand-2 p-2 text-1 text-sand-12",
+      "mt-2 whitespace-pre-wrap break-all rounded-2 bg-sand-2 p-2 text-1 text-sand-12",
     pager: "flex justify-center",
   },
   variants: {

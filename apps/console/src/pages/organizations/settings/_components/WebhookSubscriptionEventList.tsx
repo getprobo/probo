@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretDownIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
@@ -26,8 +27,8 @@ import { CollapsiblePanel } from "@probo/ui/src/v2/Collapsible/CollapsiblePanel"
 import { CollapsibleTrigger } from "@probo/ui/src/v2/Collapsible/CollapsibleTrigger";
 import { List } from "@probo/ui/src/v2/List/List";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
-import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
+import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback } from "react";
@@ -72,11 +73,57 @@ export const webhookSubscriptionEventListFragment = graphql`
   }
 `;
 
-function formatResponse(response: string) {
+function headerValue(
+  headers: Record<string, unknown>,
+  name: string,
+): string | undefined {
+  const match = Object.entries(headers).find(
+    ([key]) => key.toLowerCase() === name.toLowerCase(),
+  );
+  if (match == null) {
+    return undefined;
+  }
+
+  const value = match[1];
+  if (typeof value === "string" && value !== "") {
+    return value;
+  }
+  if (Array.isArray(value) && typeof value[0] === "string" && value[0] !== "") {
+    return value[0];
+  }
+
+  return undefined;
+}
+
+function parseResponse(response: string): {
+  formatted: string;
+  statusCode: number | undefined;
+  contentType: string | undefined;
+} {
   try {
-    return JSON.stringify(JSON.parse(response), null, 2);
+    const parsed: unknown = JSON.parse(response);
+    if (parsed == null || typeof parsed !== "object") {
+      return { formatted: JSON.stringify(parsed, null, 2), statusCode: undefined, contentType: undefined };
+    }
+
+    const statusCode = "status_code" in parsed && typeof parsed.status_code === "number"
+      ? parsed.status_code
+      : undefined;
+    const headers = "headers" in parsed
+      && parsed.headers != null
+      && typeof parsed.headers === "object"
+      && !Array.isArray(parsed.headers)
+      ? parsed.headers as Record<string, unknown>
+      : undefined;
+    const contentType = headers != null ? headerValue(headers, "Content-Type") : undefined;
+
+    return {
+      formatted: JSON.stringify(parsed, null, 2),
+      statusCode,
+      contentType,
+    };
   } catch {
-    return response;
+    return { formatted: response, statusCode: undefined, contentType: undefined };
   }
 }
 
@@ -84,22 +131,76 @@ function EventStatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
   if (status === "SUCCEEDED") {
     return (
-      <Badge variant="soft" color="green" size={1}>
+      <Badge variant="soft" color="green" size={2}>
         {t("webhooksSettingsPage.status.succeeded")}
       </Badge>
     );
   }
   if (status === "PENDING") {
     return (
-      <Badge variant="soft" color="sky" size={1}>
+      <Badge variant="soft" color="sky" size={2}>
         {t("webhooksSettingsPage.status.pending")}
       </Badge>
     );
   }
   return (
-    <Badge variant="soft" color="red" size={1}>
+    <Badge variant="soft" color="red" size={2}>
       {t("webhooksSettingsPage.status.failed")}
     </Badge>
+  );
+}
+
+function DeliveryRow({
+  createdAt,
+  response,
+  status,
+}: {
+  createdAt: string;
+  response: string | null | undefined;
+  status: string;
+}) {
+  const { t, i18n } = useTranslation();
+  const { row, trigger, lead, trail, contentType, caret, response: responseClass }
+    = webhookSubscriptionEventList();
+  const parsed = response != null && response !== "" ? parseResponse(response) : null;
+
+  const header = (
+    <>
+      <div className={lead()}>
+        <Text size={2} color="faint">
+          {dateTimeFormat(i18n.language, createdAt)}
+        </Text>
+        <EventStatusBadge status={status} />
+        {parsed?.statusCode != null && (
+          <Code variant="ghost">{String(parsed.statusCode)}</Code>
+        )}
+      </div>
+      <div className={trail()}>
+        {parsed?.contentType != null && (
+          <Code variant="ghost" className={contentType()}>
+            {parsed.contentType}
+          </Code>
+        )}
+        {parsed != null && <CaretDownIcon className={caret()} aria-hidden />}
+      </div>
+    </>
+  );
+
+  if (parsed == null) {
+    return <div className={trigger()}>{header}</div>;
+  }
+
+  return (
+    <Collapsible className={row()}>
+      <CollapsibleTrigger className={trigger()} aria-label={t("webhooksSettingsPage.response")}>
+        {header}
+      </CollapsibleTrigger>
+      <CollapsiblePanel>
+        <pre className={responseClass()}>
+          {parsed.formatted}
+        </pre>
+      </CollapsiblePanel>
+    </Collapsible>
   );
 }
 
@@ -110,7 +211,7 @@ interface WebhookSubscriptionEventListProps {
 export function WebhookSubscriptionEventList({
   webhookSubscriptionKey,
 }: WebhookSubscriptionEventListProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [webhook, refetch] = useRefetchableFragment<
     WebhookSubscriptionEventListRefetchQuery,
     WebhookSubscriptionEventList_webhookSubscription$key
@@ -133,23 +234,20 @@ export function WebhookSubscriptionEventList({
     results,
     empty,
     item,
-    meta,
-    responseTrigger,
-    response,
     pager,
   } = webhookSubscriptionEventList({ pending: isPending });
 
   return (
     <div className={root()}>
       <Heading level={2} size={4} weight="medium" highContrast>
-        {t("webhooksSettingsPage.eventsCount", { count: webhook.events.totalCount })}
+        {t("webhooksSettingsPage.deliveriesCount", { count: webhook.events.totalCount })}
       </Heading>
       {edges.length === 0
         ? (
             <Card variant="soft" size={2}>
               <div className={empty()}>
                 <Text size={2} color="faint">
-                  {t("webhooksSettingsPage.emptyEvents")}
+                  {t("webhooksSettingsPage.emptyDeliveries")}
                 </Text>
               </div>
             </Card>
@@ -160,26 +258,11 @@ export function WebhookSubscriptionEventList({
                 <List>
                   {edges.map(({ node }) => (
                     <ListItem key={node.id} className={item()}>
-                      <ListItemContent>
-                        <div className={meta()}>
-                          <EventStatusBadge status={node.status} />
-                          <Text size={1} color="faint">
-                            {dateTimeFormat(i18n.language, node.createdAt)}
-                          </Text>
-                        </div>
-                        {node.response != null && node.response !== "" && (
-                          <Collapsible>
-                            <CollapsibleTrigger className={responseTrigger()}>
-                              {t("webhooksSettingsPage.response")}
-                            </CollapsibleTrigger>
-                            <CollapsiblePanel>
-                              <pre className={response()}>
-                                {formatResponse(node.response)}
-                              </pre>
-                            </CollapsiblePanel>
-                          </Collapsible>
-                        )}
-                      </ListItemContent>
+                      <DeliveryRow
+                        status={node.status}
+                        createdAt={node.createdAt}
+                        response={node.response}
+                      />
                     </ListItem>
                   ))}
                 </List>

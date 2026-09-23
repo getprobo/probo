@@ -257,6 +257,7 @@ export function WebhookSubscriptionDetailPage({
         {subscription.canDelete && (
           <DeleteWebhookSubscriptionDialog
             webhookSubscriptionId={subscription.id}
+            trigger="button"
             onDeleted={() => {
               void navigate(listPath);
             }}

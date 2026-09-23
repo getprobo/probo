@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { PlusMinusIcon, WebhooksLogoIcon } from "@phosphor-icons/react";
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
@@ -47,9 +46,6 @@ const webhookSubscriptionListItemFragment = graphql`
     selectedEvents
     canUpdate: permission(action: "core:webhook-subscription:update")
     canDelete: permission(action: "core:webhook-subscription:delete")
-    events(first: 0) {
-      totalCount
-    }
   }
 `;
 
@@ -77,7 +73,7 @@ export function WebhookSubscriptionListItem({
   onDeleted,
 }: WebhookSubscriptionListItemProps) {
   const { t } = useTranslation();
-  const { card, header, lead, icon, endpoint, eventsSection, eventsHeading, footer }
+  const { card, header, lead, icon, endpoint, action, eventsSection, eventsHeading }
     = webhookSubscriptionListItem();
   const webhook = useFragment(webhookSubscriptionListItemFragment, webhookSubscriptionKey);
   const [updateWebhook, isUpdating] = useMutation<WebhookSubscriptionListItem_updateMutation>(
@@ -107,7 +103,7 @@ export function WebhookSubscriptionListItem({
   }
 
   return (
-    <Card variant="soft" size={2} className={card()}>
+    <Card variant="soft" size={2} interactive className={card()}>
       <div className={header()}>
         <div className={lead()}>
           <span className={icon()} aria-hidden>
@@ -118,10 +114,12 @@ export function WebhookSubscriptionListItem({
           </Link>
         </div>
         {webhook.canDelete && (
-          <DeleteWebhookSubscriptionDialog
-            webhookSubscriptionId={webhook.id}
-            onDeleted={onDeleted}
-          />
+          <div className={action()}>
+            <DeleteWebhookSubscriptionDialog
+              webhookSubscriptionId={webhook.id}
+              onDeleted={onDeleted}
+            />
+          </div>
         )}
       </div>
       <div className={eventsSection()}>
@@ -138,9 +136,10 @@ export function WebhookSubscriptionListItem({
               onToggle={handleToggleEvent}
             >
               <IconButton
-                variant="outline"
+                variant="surface"
                 color="neutral"
                 size={1}
+                className={action()}
                 aria-label={t("webhooksSettingsPage.editEvents")}
               >
                 <PlusMinusIcon />
@@ -149,11 +148,6 @@ export function WebhookSubscriptionListItem({
           )}
         </div>
         <WebhookEventTypeBadges selectedEvents={webhook.selectedEvents} />
-      </div>
-      <div className={footer()}>
-        <ButtonLink to={webhook.id} variant="surface" color="neutral">
-          {t("webhooksSettingsPage.eventsCount", { count: webhook.events.totalCount })}
-        </ButtonLink>
       </div>
     </Card>
   );

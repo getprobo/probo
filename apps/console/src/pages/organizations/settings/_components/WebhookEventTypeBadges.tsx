@@ -38,7 +38,7 @@ export function WebhookEventTypeBadges({
   selectedEvents,
 }: WebhookEventTypeBadgesProps) {
   const { t } = useTranslation();
-  const { events, eventsAll, badge } = webhookSubscriptionListItem();
+  const { events, eventsAll, badge, action } = webhookSubscriptionListItem();
   const visibleEvents = selectedEvents.slice(0, VISIBLE_EVENT_COUNT);
   const hiddenEvents = selectedEvents.slice(VISIBLE_EVENT_COUNT);
 
@@ -53,7 +53,7 @@ export function WebhookEventTypeBadges({
         <Popover>
           <PopoverTrigger
             render={(
-              <Button variant="ghost" color="neutral" size={1}>
+              <Button variant="ghost" color="neutral" size={1} className={action()}>
                 {t("webhooksSettingsPage.seeAll")}
               </Button>
             )}
