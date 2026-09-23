@@ -110,6 +110,18 @@ func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 	}
 }
 
+func TestApplyOAuth2Defaults_SlackAsksForUserScope(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	c := &connector.OAuth2Connector{ClientID: "id", ClientSecret: "secret"}
+	require.NoError(t, r.ApplyOAuth2Defaults("SLACK", "https://example.com/cb", c))
+	assert.Equal(t, []string{"users:read", "users:read.email"}, c.RegisteredScopes)
+	assert.Equal(t, "user_scope", c.ScopeParam)
+	assert.Equal(t, ",", c.ScopeSeparator)
+	assert.True(t, c.ExclusiveScopes)
+}
+
 // TestApplyOAuth2Defaults_PublicClientTokenAuth verifies that CIMD clients
 // propagate token_endpoint_auth_method "none" so token exchanges omit a
 // client_secret.

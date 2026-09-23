@@ -31,12 +31,68 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/saferedirect"
 )
+
+func TestFinishConnectorCompletion_RejectedInstall(t *testing.T) {
+	t.Parallel()
+
+	providerRegistry := provider.NewRegistry()
+	require.NoError(t, providerRegistry.Register(&provider.Registration{
+		Provider:    coredata.ConnectorProviderSlack,
+		DisplayName: "Slack",
+		ValidateInstall: func(context.Context, *http.Client, provider.Endpoints) error {
+			return &drivers.InstallRejectedError{Message: "Connect as an admin."}
+		},
+	}))
+
+	logger := log.NewLogger(log.WithName("test"))
+	accessReviewSvc := accessreview.NewService(nil, cipher.EncryptionKey{}, connector.NewConnectorRegistry(), providerRegistry, logger)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	safeRedirect := saferedirect.New(func(_ context.Context, host string) bool {
+		return host == "console.example"
+	})
+
+	// A nil probo service panics if the rejected connection reaches Create.
+	finishConnectorCompletion(
+		recorder,
+		req,
+		logger,
+		baseurl.MustParse("https://console.example"),
+		nil,
+		accessReviewSvc,
+		safeRedirect,
+		&connector.CompletionState{
+			Provider:       string(coredata.ConnectorProviderSlack),
+			OrganizationID: gid.New(gid.NewTenantID(), coredata.OrganizationEntityType).String(),
+			ContinueURL:    "https://console.example/organizations/acme/access-reviews/connections",
+			Connection: &connector.SlackConnection{
+				AccessToken: "xoxp-test",
+				TokenType:   "user",
+			},
+		},
+		url.Values{},
+		nil,
+	)
+
+	assert.Equal(t, http.StatusSeeOther, recorder.Code)
+
+	location, err := url.Parse(recorder.Header().Get("Location"))
+	require.NoError(t, err)
+	assert.Equal(t, "/organizations/acme/access-reviews/connections", location.Path)
+	assert.Equal(t, "Connect as an admin.", location.Query().Get("error"))
+	assert.False(t, location.Query().Has("connector_id"))
+}
 
 func TestHandleConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.T) {
 	t.Parallel()

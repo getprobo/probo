@@ -33,6 +33,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -1045,6 +1046,57 @@ func probeStubClient(seen *[]*http.Request, status int, body string) *http.Clien
 			}, nil
 		}),
 	}
+}
+
+func TestSlackNeedsReconnect(t *testing.T) {
+	t.Parallel()
+
+	withToken := func(tokenType string) *coredata.Connector {
+		return &coredata.Connector{
+			Provider: coredata.ConnectorProviderSlack,
+			Connection: &connector.SlackConnection{
+				TokenType: tokenType,
+			},
+		}
+	}
+
+	needsReconnect := slackRegistration().NeedsReconnect
+	assert.True(t, needsReconnect(withToken("bot")))
+	assert.False(t, needsReconnect(withToken(connector.SlackTokenTypeUser)))
+}
+
+func TestSlackProbeVerdict(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, slackProbeVerdict(nil))
+
+	cases := []struct {
+		name    string
+		err     error
+		status  int
+		refused bool
+	}{
+		{"revoked token", &drivers.SlackAPIError{Method: "/auth.test", Code: "token_revoked"}, http.StatusUnauthorized, false},
+		{"invalid token", &drivers.SlackAPIError{Method: "/auth.test", Code: "invalid_auth"}, http.StatusUnauthorized, false},
+		{"installer lost admin", &drivers.InstallRejectedError{Message: "not an admin"}, http.StatusForbidden, true},
+		{"missing scope", &drivers.SlackAPIError{Method: "/users.info", Code: "missing_scope"}, http.StatusForbidden, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			rejected, ok := errors.AsType[*CredentialRejectedError](slackProbeVerdict(tc.err))
+			require.True(t, ok)
+			assert.Equal(t, tc.status, rejected.StatusCode)
+			assert.Equal(t, tc.refused, rejected.OperationRefused)
+		})
+	}
+
+	// Anything else stays Probo's error rather than a provider verdict.
+	unknown := &drivers.SlackAPIError{Method: "/auth.test", Code: "ratelimited"}
+	_, ok := errors.AsType[*CredentialRejectedError](slackProbeVerdict(unknown))
+	assert.False(t, ok)
 }
 
 func TestProbeElevenLabs(t *testing.T) {

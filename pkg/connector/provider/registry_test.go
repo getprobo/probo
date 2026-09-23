@@ -776,13 +776,13 @@ func TestRegistry_ProviderOAuth2Scopes(t *testing.T) {
 }
 
 // TestRegistry_ProbeURL covers the registered and unregistered paths.
-// Slack ships a probe URL in its Registration; an unknown provider
+// HubSpot ships a probe URL in its Registration; an unknown provider
 // returns the empty string.
 func TestRegistry_ProbeURL(t *testing.T) {
 	t.Parallel()
 
 	r := provider.NewBuiltinRegistry()
-	assert.NotEmpty(t, r.ProbeURL("SLACK"))
+	assert.NotEmpty(t, r.ProbeURL("HUBSPOT"))
 	assert.Empty(t, r.ProbeURL("UNKNOWN"))
 }
 

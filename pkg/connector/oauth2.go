@@ -22,6 +22,7 @@ package connector
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/hmac"
 	"crypto/rand"
@@ -83,6 +84,11 @@ type (
 		// to the authorize URL; CompleteWithState replays the verifier
 		// on the token exchange.
 		RequiresPKCE bool
+		// ScopeParam names the authorize query parameter carrying the
+		// scopes, "scope" when empty; ScopeSeparator joins them, a space
+		// when empty.
+		ScopeParam     string
+		ScopeSeparator string
 		// IntegrationSlug is an operator-supplied identifier used by
 		// providers whose authorization URL embeds it as a path segment
 		// (Vercel-style integrations). It is consumed by the provider's
@@ -301,7 +307,9 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("response_type", "code")
 
 	if len(scopes) > 0 {
-		authCodeQuery.Set("scope", strings.Join(scopes, " "))
+		scopeParam := cmp.Or(c.ScopeParam, "scope")
+		scopeSeparator := cmp.Or(c.ScopeSeparator, " ")
+		authCodeQuery.Set(scopeParam, strings.Join(scopes, scopeSeparator))
 	}
 
 	if c.RequiresPKCE {

@@ -204,6 +204,15 @@ type Registration struct {
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) (drivers.Driver, error)
 	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) drivers.NameResolver
 	SetOrganizationSettings func(*coredata.Connector, string) error
+
+	// ValidateInstall runs on the OAuth callback before the connector is
+	// saved. A *drivers.InstallRejectedError discards the connection and
+	// shows its message to the user. Nil skips the check.
+	ValidateInstall func(context.Context, *http.Client, Endpoints) error
+
+	// NeedsReconnect reports a stored connection that still works but was
+	// made under terms the provider no longer uses. Nil means never.
+	NeedsReconnect func(*coredata.Connector) bool
 }
 
 // APIKeyAuthMode selects how an API key is presented on outbound requests. The
@@ -428,6 +437,14 @@ type OAuth2Config struct {
 	// Scopes are the scopes the access-review driver needs to list accounts.
 	// Nil for a provider that needs none (Notion, Intercom).
 	Scopes []string
+
+	// ScopeParam names the authorize query parameter carrying Scopes;
+	// "scope" when empty. Slack asks for user_scope to get a user token.
+	ScopeParam string
+
+	// ScopeSeparator joins Scopes in the authorize request; a space when
+	// empty.
+	ScopeSeparator string
 
 	// ExtraAuthParams are provider-specific query parameters added to the
 	// authorization request. Copied per connector, never aliased.

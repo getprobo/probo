@@ -332,7 +332,7 @@ func (h *sourceNameHandler) newHTTPNameResolver(
 	}
 
 	var tokenBefore string
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+	if oauth2Conn, ok := refreshableOAuth2Connection(conn); ok {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
@@ -347,7 +347,7 @@ func (h *sourceNameHandler) newHTTPNameResolver(
 		return nil, fmt.Errorf("cannot create HTTP client for connector: %w", err)
 	}
 
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+	if oauth2Conn, ok := refreshableOAuth2Connection(conn); ok {
 		if oauth2Conn.AccessToken != tokenBefore {
 			dbConnector.UpdatedAt = time.Now()
 			if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
