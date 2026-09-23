@@ -78,6 +78,20 @@ func TestBuildDatadogProbeURL(t *testing.T) {
 	)
 }
 
+func TestBuildSigNozProbeURL(t *testing.T) {
+	t.Parallel()
+
+	// A trailing slash is how the console form commonly submits it.
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderSigNoz}
+	require.NoError(t, conn.SetSettings(&coredata.SigNozConnectorSettings{
+		BaseURL: "https://acme.us.signoz.cloud/",
+	}))
+
+	probeURL, err := buildSigNozProbeURL(conn, Endpoints{})
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.us.signoz.cloud/api/v2/users", probeURL)
+}
+
 func TestBuildZendeskProbeURL(t *testing.T) {
 	t.Parallel()
 

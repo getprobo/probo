@@ -565,7 +565,7 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 		return "", fmt.Errorf("cannot parse signoz base URL: %w", err)
 	}
 
-	return u.JoinPath("api", "v1", "user").String(), nil
+	return u.JoinPath("api", "v2", "users").String(), nil
 }
 
 func buildAuthentikProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {

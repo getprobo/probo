@@ -23,6 +23,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -50,52 +51,92 @@ type sigNozEnvelope struct {
 	Data json.RawMessage `json:"data"`
 }
 
-// sigNozUser models a user from GET /api/v1/user. That ("v1") list endpoint
-// returns role inline; the v2 endpoint omits role entirely, which would
-// silently disable admin detection.
-type sigNozUser struct {
-	ID          string `json:"id"`
-	Email       string `json:"email"`
-	DisplayName string `json:"displayName"`
-	Role        string `json:"role"`
-	Status      string `json:"status"`
-	IsRoot      bool   `json:"isRoot"`
-	CreatedAt   string `json:"createdAt"`
-}
+type (
+	// sigNozUser models a user from GET /api/v2/users.
+	sigNozUser struct {
+		ID          string `json:"id"`
+		Email       string `json:"email"`
+		DisplayName string `json:"displayName"`
+		Status      string `json:"status"`
+		IsRoot      bool   `json:"isRoot"`
+		CreatedAt   string `json:"createdAt"`
+	}
+
+	sigNozRole struct {
+		Name string `json:"name"`
+	}
+
+	sigNozStatusError struct {
+		StatusCode int
+	}
+)
 
 func NewSigNozDriver(httpClient *http.Client, baseURL string) *SigNozDriver {
+	client := *httpClient
+	client.Transport = &retryRoundTripper{
+		next:       httpClient.Transport,
+		maxRetries: 3,
+	}
+
 	return &SigNozDriver{
-		httpClient: httpClient,
+		httpClient: &client,
 		baseURL:    baseURL,
 	}
 }
 
 func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	users, err := d.queryUsers(ctx)
+	baseURL, err := url.Parse(d.baseURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot parse signoz base URL: %w", err)
+	}
+
+	var users []sigNozUser
+	if err := d.getData(ctx, baseURL.JoinPath("api", "v2", "users"), &users); err != nil {
+		return nil, fmt.Errorf("cannot fetch signoz users: %w", err)
 	}
 
 	records := make([]AccountRecord, 0, len(users))
 
 	for _, u := range users {
 		email := strings.TrimSpace(u.Email)
-		if email == "" {
+
+		id := strings.TrimSpace(u.ID)
+		if email == "" || id == "" {
 			continue
 		}
 
-		roles := sigNozRoles(u.Role)
+		// A user deleted since the listing answers 404.
+		var assigned []sigNozRole
+		if err := d.getData(ctx, baseURL.JoinPath("api", "v2", "users", url.PathEscape(id), "roles"), &assigned); err != nil {
+			if statusErr, ok := errors.AsType[*sigNozStatusError](err); !ok || statusErr.StatusCode != http.StatusNotFound {
+				return nil, fmt.Errorf("cannot fetch signoz roles for user %q: %w", id, err)
+			}
+		}
+
+		roles := make([]string, 0, len(assigned))
+		isAdmin := u.IsRoot
+
+		for _, r := range assigned {
+			name := strings.TrimSpace(r.Name)
+			if name == "signoz-admin" {
+				isAdmin = true
+			}
+
+			if role := normalizeSigNozRole(name); role != "" && !slices.Contains(roles, role) {
+				roles = append(roles, role)
+			}
+		}
 
 		record := AccountRecord{
 			Email:       email,
 			FullName:    strings.TrimSpace(u.DisplayName),
 			Roles:       roles,
 			Active:      sigNozActiveStatus(u.Status),
-			IsAdmin:     new(u.IsRoot || slices.Contains(roles, "Admin")),
+			IsAdmin:     new(isAdmin),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
-			ExternalID:  strings.TrimSpace(u.ID),
+			ExternalID:  id,
 		}
 
 		if t, ok := parseSigNozTimestamp(u.CreatedAt); ok {
@@ -108,24 +149,23 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	return records, nil
 }
 
-func (d *SigNozDriver) queryUsers(ctx context.Context) ([]sigNozUser, error) {
-	baseURL, err := url.Parse(d.baseURL)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse signoz base URL: %w", err)
-	}
+func (e *sigNozStatusError) Error() string {
+	return fmt.Sprintf("unexpected status %d", e.StatusCode)
+}
 
-	endpoint := baseURL.JoinPath("api", "v1", "user")
-
+// getData decodes the envelope's data into out, leaving out untouched when
+// data is null.
+func (d *SigNozDriver) getData(ctx context.Context, endpoint *url.URL, out any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create signoz users request: %w", err)
+		return fmt.Errorf("cannot create request: %w", err)
 	}
 
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot execute signoz users request: %w", err)
+		return fmt.Errorf("cannot execute request: %w", err)
 	}
 
 	defer func() {
@@ -133,46 +173,36 @@ func (d *SigNozDriver) queryUsers(ctx context.Context) ([]sigNozUser, error) {
 	}()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot fetch signoz users: unexpected status %d", httpResp.StatusCode)
+		return &sigNozStatusError{StatusCode: httpResp.StatusCode}
 	}
 
 	var envelope sigNozEnvelope
 	if err := json.NewDecoder(httpResp.Body).Decode(&envelope); err != nil {
-		return nil, fmt.Errorf("cannot decode signoz users response: %w", err)
+		return fmt.Errorf("cannot decode response: %w", err)
 	}
 
 	if len(envelope.Data) == 0 || string(envelope.Data) == "null" {
-		return []sigNozUser{}, nil
+		return nil
 	}
 
-	var users []sigNozUser
-	if err := json.Unmarshal(envelope.Data, &users); err != nil {
-		return nil, fmt.Errorf("cannot decode signoz users data: %w", err)
+	if err := json.Unmarshal(envelope.Data, out); err != nil {
+		return fmt.Errorf("cannot decode response data: %w", err)
 	}
 
-	return users, nil
+	return nil
 }
 
-// sigNozRoles normalizes a SigNoz role string (ADMIN / EDITOR / VIEWER, or the
-// managed-role display names signoz-admin / signoz-editor / signoz-viewer)
-// into a stable label, preserving unknown custom roles verbatim. Matching is
-// exact (not substring) so a custom role merely containing "admin" is not
-// silently promoted to Admin.
-func sigNozRoles(raw string) []string {
-	role := strings.TrimSpace(raw)
-	if role == "" {
-		return []string{}
-	}
-
-	switch strings.ToLower(role) {
-	case "admin", "signoz-admin":
-		return []string{"Admin"}
-	case "editor", "signoz-editor":
-		return []string{"Editor"}
-	case "viewer", "signoz-viewer":
-		return []string{"Viewer"}
+// normalizeSigNozRole labels the managed roles and keeps custom ones verbatim.
+func normalizeSigNozRole(role string) string {
+	switch role {
+	case "signoz-admin":
+		return "Admin"
+	case "signoz-editor":
+		return "Editor"
+	case "signoz-viewer":
+		return "Viewer"
 	default:
-		return []string{role}
+		return role
 	}
 }
 
