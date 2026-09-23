@@ -223,14 +223,17 @@ func TestWebhook_FilterEventsByPendingStatus(t *testing.T) {
 	require.NotNil(t, eventResult.Node)
 
 	pendingCount := 0
+
 	for _, edge := range eventResult.Node.Events.Edges {
 		if edge.Node.Status == "PENDING" {
 			pendingCount++
 		}
 	}
+
 	require.Greater(t, pendingCount, 0, "expected at least one PENDING event")
 
 	var filtered webhookSubscriptionNodeResponse
+
 	err := owner.Execute(
 		webhookSubscriptionEventsFilterQuery,
 		map[string]any{
