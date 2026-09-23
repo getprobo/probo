@@ -53,11 +53,24 @@ type (
 		Ok              bool             `json:"ok"`
 		Error           string           `json:"error,omitempty"`
 		IncomingWebhook *IncomingWebhook `json:"incoming_webhook,omitempty"`
+		AuthedUser      *SlackAuthedUser `json:"authed_user,omitempty"`
+	}
+
+	// SlackAuthedUser carries the user token Slack issues for the
+	// user_scope grant, nested away from the top-level bot token fields.
+	SlackAuthedUser struct {
+		Scope        string `json:"scope"`
+		AccessToken  string `json:"access_token"`
+		TokenType    string `json:"token_type"`
+		RefreshToken string `json:"refresh_token,omitempty"`
+		ExpiresIn    int64  `json:"expires_in,omitempty"`
 	}
 )
 
 const (
 	SlackProvider = "SLACK"
+
+	SlackTokenTypeUser = "user"
 )
 
 var (
@@ -67,6 +80,12 @@ var (
 
 func (c *SlackConnection) Type() ProtocolType {
 	return ProtocolOAuth2
+}
+
+// IsUserToken reports whether the connection holds a user token rather than
+// the bot token Slack connections carried before.
+func (c *SlackConnection) IsUserToken() bool {
+	return c.TokenType == SlackTokenTypeUser
 }
 
 func (c *SlackConnection) Client(ctx context.Context) (*http.Client, error) {
@@ -132,6 +151,19 @@ func ParseSlackTokenResponse(body []byte, oauth2Conn OAuth2Connection, organizat
 
 	if !slackResponse.Ok {
 		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: ok=false")
+	}
+
+	if u := slackResponse.AuthedUser; u != nil && u.AccessToken != "" {
+		oauth2Conn = OAuth2Connection{
+			AccessToken:  u.AccessToken,
+			RefreshToken: u.RefreshToken,
+			TokenType:    u.TokenType,
+			Scope:        u.Scope,
+		}
+
+		if u.ExpiresIn > 0 {
+			oauth2Conn.ExpiresAt = time.Now().Add(time.Duration(u.ExpiresIn) * time.Second)
+		}
 	}
 
 	if oauth2Conn.AccessToken == "" {

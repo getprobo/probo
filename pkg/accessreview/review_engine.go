@@ -172,6 +172,19 @@ func oauthClient(
 	return conn.Client(ctx)
 }
 
+// refreshableOAuth2Connection returns the OAuth2 token a connection
+// carries, so refresh and persistence also cover Slack's embedded one.
+func refreshableOAuth2Connection(conn connector.Connection) (*connector.OAuth2Connection, bool) {
+	switch c := conn.(type) {
+	case *connector.OAuth2Connection:
+		return c, true
+	case *connector.SlackConnection:
+		return &c.OAuth2Connection, true
+	default:
+		return nil, false
+	}
+}
+
 // buildHTTPClient returns an HTTP client for the given connection.
 // For OAuth2 connections it delegates to oauthClient so that token refresh
 // is handled transparently. For API-key connections it overlays a
@@ -189,7 +202,7 @@ func buildHTTPClient(
 		return nil, err
 	}
 
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+	if oauth2Conn, ok := refreshableOAuth2Connection(conn); ok {
 		return oauthClient(ctx, connectorRegistry, oauth2Conn, provider)
 	}
 
@@ -286,7 +299,7 @@ func (s *Service) newHTTPDriver(
 	}
 
 	var tokenBefore string
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+	if oauth2Conn, ok := refreshableOAuth2Connection(conn); ok {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
@@ -305,7 +318,7 @@ func (s *Service) newHTTPDriver(
 	// calls (and other workers) use the updated credentials. Providers
 	// that rotate refresh tokens (HubSpot, DocuSign) will fail on the
 	// next poll if the old refresh token is reused.
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+	if oauth2Conn, ok := refreshableOAuth2Connection(conn); ok {
 		if oauth2Conn.AccessToken != tokenBefore {
 			dbConnector.UpdatedAt = time.Now()
 			if err := dbConnector.Update(ctx, tx, scope, s.encryptionKey); err != nil {

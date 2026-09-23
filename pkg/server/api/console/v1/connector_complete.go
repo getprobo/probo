@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -343,6 +344,32 @@ func finishConnectorCompletion(
 	}
 
 	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	if err := accessReviewSvc.ValidateConnectorInstall(r.Context(), connectorProvider, connection); err != nil {
+		message := "Cannot verify the connection, please try again."
+
+		if rejected, ok := errors.AsType[*drivers.InstallRejectedError](err); ok {
+			message = rejected.Message
+
+			logger.WarnCtx(r.Context(), "connector install rejected", log.String("provider", string(connectorProvider)))
+		} else {
+			logger.ErrorCtx(
+				r.Context(),
+				"cannot validate connector install",
+				log.String("provider", string(connectorProvider)),
+				log.String("failure", accessreview.ProbeFailureCode(err)),
+			)
+		}
+
+		parsedURL := continueRedirectURL(r.Context(), logger, baseURL, completion.ContinueURL, organizationID)
+		q := parsedURL.Query()
+		q.Set("error", message)
+		parsedURL.RawQuery = q.Encode()
+
+		safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+
+		return
+	}
 
 	var cnnctr *coredata.Connector
 
