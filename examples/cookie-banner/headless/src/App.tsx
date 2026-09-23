@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { hasBundledConfig } from "@probo/example-cookie-banner-shared";
-import { App as Configurable } from "./AppConfigurable";
-import { App as Hosted } from "./AppHosted";
 
-export const App = hasBundledConfig ? Hosted : Configurable;
+export const App = hasBundledConfig
+  ? (await import("./AppHosted")).App
+  : (await import("./AppConfigurable")).App;

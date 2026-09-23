@@ -18,6 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export function headlessRootHTML(
   bannerId: string,
   baseUrl: string,
@@ -25,7 +34,7 @@ export function headlessRootHTML(
 ): string {
   return `
       <style>probo-banner, probo-preference-panel, probo-privacy-choices { display: block !important; }</style>
-      <probo-cookie-banner-root banner-id="${bannerId}" base-url="${baseUrl}" gcm-enabled="${gcmEnabled ? "true" : "false"}">
+      <probo-cookie-banner-root banner-id="${escapeAttr(bannerId)}" base-url="${escapeAttr(baseUrl)}" gcm-enabled="${gcmEnabled ? "true" : "false"}">
         <probo-banner>
           <div style="border:2px solid #333;padding:12px;margin-bottom:8px;">
             <strong>[probo-banner]</strong>

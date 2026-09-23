@@ -27,3 +27,12 @@ export const bundledConfig = {
 export const hasBundledConfig = Boolean(
   bundledConfig.bannerId && bundledConfig.baseUrl,
 );
+
+export function isValidBannerApiBaseUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}

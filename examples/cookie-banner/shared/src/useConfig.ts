@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { useCallback, useSyncExternalStore } from "react";
+import { bundledConfig } from "./bundledConfig";
 
 export interface Config {
   bannerId: string;
@@ -29,9 +30,9 @@ export interface Config {
 const STORAGE_KEY = "probo-example-config";
 
 const defaultConfig: Config = {
-  bannerId: import.meta.env.PUBLIC_COOKIE_BANNER_ID ?? "",
-  baseUrl: import.meta.env.PUBLIC_COOKIE_BANNER_API_BASE_URL ?? "",
-  gcmEnabled: true,
+  bannerId: bundledConfig.bannerId,
+  baseUrl: bundledConfig.baseUrl,
+  gcmEnabled: bundledConfig.gcmEnabled,
 };
 
 function getSnapshot(): Config {

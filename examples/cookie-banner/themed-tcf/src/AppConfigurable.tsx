@@ -29,6 +29,7 @@ import {
   ExampleShell,
   enableNamedLoggers,
   getExampleLogger,
+  isValidBannerApiBaseUrl,
   useConfig,
   useEventLog,
 } from "@probo/example-cookie-banner-shared";
@@ -63,9 +64,9 @@ export function App() {
 
   const attachListeners = useCallback(
     (el: HTMLElement | null) => {
-      if (!el) return;
+      if (!el) return undefined;
 
-      el.addEventListener("probo-ready", (e: Event) => {
+      const onReady = (e: Event): void => {
         const detail = (e as CustomEvent).detail as {
           config?: BannerConfig;
         };
@@ -75,11 +76,17 @@ export function App() {
         enableNamedLoggers();
         themedLogger.debug("[themed-tcf] probo-ready", (e as CustomEvent).detail);
         pushEvent("probo-ready", (e as CustomEvent).detail);
-      });
-      el.addEventListener("probo-consent", (e: Event) => {
+      };
+      const onConsent = (e: Event): void => {
         themedLogger.debug("[themed-tcf] probo-consent", (e as CustomEvent).detail);
         pushEvent("probo-consent", (e as CustomEvent).detail);
-      });
+      };
+      el.addEventListener("probo-ready", onReady);
+      el.addEventListener("probo-consent", onConsent);
+      return () => {
+        el.removeEventListener("probo-ready", onReady);
+        el.removeEventListener("probo-consent", onConsent);
+      };
     },
     [pushEvent],
   );
@@ -91,7 +98,7 @@ export function App() {
     setManualPing(new Date().toISOString());
   }, []);
 
-  const ready = Boolean(config.bannerId && config.baseUrl);
+  const ready = Boolean(config.bannerId && isValidBannerApiBaseUrl(config.baseUrl));
 
   return (
     <ExampleShell
@@ -121,7 +128,9 @@ export function App() {
         />
       ) : (
         <p style={{ color: "tomato", marginTop: 32 }}>
-          Set banner ID and base URL in the configuration section first.
+          {config.bannerId && config.baseUrl
+            ? "Base URL must be an absolute http(s) URL."
+            : "Set banner ID and base URL in the configuration section first."}
         </p>
       )}
 

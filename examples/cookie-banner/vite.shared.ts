@@ -18,6 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { createExampleViteConfig } from "../vite.shared";
+import react from "@vitejs/plugin-react";
+import { defineConfig, type UserConfig } from "vite";
 
-export default createExampleViteConfig(5181);
+export function createExampleViteConfig(port: number): UserConfig {
+  return defineConfig({
+    plugins: [react()],
+    envPrefix: "PUBLIC_",
+    envDir: "..",
+    server: {
+      port,
+    },
+    optimizeDeps: {
+      exclude: ["@probo/example-cookie-banner-shared"],
+    },
+  });
+}

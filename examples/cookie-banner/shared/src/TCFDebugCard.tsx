@@ -99,15 +99,25 @@ function callTCF(command: string): Promise<unknown | null> {
   });
 }
 
+function isLiveCMP(ping: TCFPing | null): boolean {
+  return ping?.cmpLoaded === true && ping.displayStatus !== "disabled";
+}
+
 async function readTCF(): Promise<TCFSnapshot | null> {
   if (!tcfapi()) {
     return null;
   }
 
-  const [ping, tcData] = await Promise.all([callTCF("ping"), callTCF("getTCData")]);
+  const pingRaw = await callTCF("ping");
+  const ping = pingRaw && typeof pingRaw === "object" ? (pingRaw as TCFPing) : null;
+  if (!isLiveCMP(ping)) {
+    return { ping, tcData: null };
+  }
+
+  const tcDataRaw = await callTCF("getTCData");
   return {
-    ping: ping && typeof ping === "object" ? (ping as TCFPing) : null,
-    tcData: tcData && typeof tcData === "object" ? (tcData as TCFData) : null,
+    ping,
+    tcData: tcDataRaw && typeof tcDataRaw === "object" ? (tcDataRaw as TCFData) : null,
   };
 }
 

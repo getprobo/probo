@@ -74,22 +74,28 @@ export function useEventLog(): {
       }
     };
 
+    let wrappedLayer: unknown[] | null = null;
+    let wrappedOriginal: typeof Array.prototype.push | null = null;
+
     const attach = (): void => {
       const dl = getDataLayer();
       ingest(dl);
-      const original = dl.push;
-      if ((original as { __proboExampleGcm?: boolean }).__proboExampleGcm) {
+      const current = dl.push as typeof dl.push & { __proboExampleGcm?: boolean };
+      if (current.__proboExampleGcm) {
         return;
       }
+      const original = dl.push;
       const wrapped = function (this: unknown[], ...items: unknown[]): number {
         const n = original.apply(this, items);
         if (!disposed) {
           ingest(this);
         }
         return n;
-      };
+      } as typeof dl.push & { __proboExampleGcm?: boolean };
       wrapped.__proboExampleGcm = true;
-      dl.push = wrapped as typeof dl.push;
+      dl.push = wrapped;
+      wrappedLayer = dl;
+      wrappedOriginal = original;
     };
 
     attach();
@@ -97,6 +103,13 @@ export function useEventLog(): {
     return () => {
       disposed = true;
       window.clearInterval(id);
+      if (
+        wrappedLayer &&
+        wrappedOriginal &&
+        (wrappedLayer.push as { __proboExampleGcm?: boolean }).__proboExampleGcm
+      ) {
+        wrappedLayer.push = wrappedOriginal;
+      }
     };
   }, [pushEvent]);
 

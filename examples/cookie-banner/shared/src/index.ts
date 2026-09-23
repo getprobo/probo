@@ -18,7 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { bundledConfig, hasBundledConfig } from "./bundledConfig";
+export {
+  bundledConfig,
+  hasBundledConfig,
+  isValidBannerApiBaseUrl,
+} from "./bundledConfig";
 export { ConfigForm } from "./ConfigForm";
 export { DebugPanel } from "./DebugPanel";
 export { EventLog } from "./EventLog";

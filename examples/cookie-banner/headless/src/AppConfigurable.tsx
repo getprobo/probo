@@ -32,6 +32,7 @@ import {
   ExampleShell,
   enableNamedLoggers,
   getExampleLogger,
+  isValidBannerApiBaseUrl,
   useConfig,
   useEventLog,
 } from "@probo/example-cookie-banner-shared";
@@ -70,7 +71,7 @@ export function App() {
   const [config] = useConfig();
   const { events, pushEvent } = useEventLog();
   const containerRef = useRef<HTMLDivElement>(null);
-  const ready = Boolean(config.bannerId && config.baseUrl);
+  const ready = Boolean(config.bannerId && isValidBannerApiBaseUrl(config.baseUrl));
 
   useEffect(() => {
     headlessLogger.debug("[headless] registerHeadlessComponents");
@@ -79,7 +80,7 @@ export function App() {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !config.bannerId || !config.baseUrl) return;
+    if (!container || !ready) return;
 
     container.innerHTML = headlessRootHTML(
       config.bannerId,
@@ -120,7 +121,7 @@ export function App() {
       container.removeEventListener("click", onClick);
       container.innerHTML = "";
     };
-  }, [config.bannerId, config.baseUrl, config.gcmEnabled, pushEvent]);
+  }, [ready, config.bannerId, config.baseUrl, config.gcmEnabled, pushEvent]);
 
   return (
     <ExampleShell
@@ -142,7 +143,9 @@ export function App() {
         <div ref={containerRef} style={{ marginTop: 32 }} />
       ) : (
         <p style={{ color: "tomato", marginTop: 32 }}>
-          Set banner ID and base URL in the configuration section first.
+          {config.bannerId && config.baseUrl
+            ? "Base URL must be an absolute http(s) URL."
+            : "Set banner ID and base URL in the configuration section first."}
         </p>
       )}
 

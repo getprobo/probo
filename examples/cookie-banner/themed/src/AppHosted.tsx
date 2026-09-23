@@ -54,9 +54,9 @@ export function App() {
 
   const attachListeners = useCallback(
     (el: HTMLElement | null) => {
-      if (!el) return;
+      if (!el) return undefined;
 
-      el.addEventListener("probo-ready", (e: Event) => {
+      const onReady = (e: Event): void => {
         const detail = (e as CustomEvent).detail as {
           config?: BannerConfig;
         };
@@ -66,11 +66,17 @@ export function App() {
         enableNamedLoggers();
         themedLogger.debug("[themed] probo-ready", (e as CustomEvent).detail);
         pushEvent("probo-ready", (e as CustomEvent).detail);
-      });
-      el.addEventListener("probo-consent", (e: Event) => {
+      };
+      const onConsent = (e: Event): void => {
         themedLogger.debug("[themed] probo-consent", (e as CustomEvent).detail);
         pushEvent("probo-consent", (e as CustomEvent).detail);
-      });
+      };
+      el.addEventListener("probo-ready", onReady);
+      el.addEventListener("probo-consent", onConsent);
+      return () => {
+        el.removeEventListener("probo-ready", onReady);
+        el.removeEventListener("probo-consent", onConsent);
+      };
     },
     [pushEvent],
   );
