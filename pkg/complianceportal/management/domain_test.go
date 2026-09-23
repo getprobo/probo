@@ -122,14 +122,19 @@ func TestPublicHostForCompliancePortal(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			customDomain := newTestCustomDomain(tenantID, "trust.acme.com", nil)
+			pendingCertificate := newTestCertificate(tenantID, coredata.CertificateStatusPending)
+			customDomain := newTestCustomDomain(tenantID, "trust.acme.com", &pendingCertificate.ID)
 			compliancePage := &coredata.CompliancePortal{
 				Slug:           "acme",
 				CustomDomainID: &customDomain.ID,
 			}
 
 			byID := map[gid.GID]*coredata.CustomDomain{customDomain.ID: customDomain}
-			active := activeDomains(coredata.CustomDomains{customDomain}, nil, true)
+			active := activeDomains(
+				coredata.CustomDomains{customDomain},
+				coredata.Certificates{pendingCertificate},
+				true,
+			)
 
 			host := publicHostForCompliancePortal(compliancePage, byID, active, baseDomain)
 
