@@ -5189,11 +5189,8 @@
     },
     "dialogs": {
       "addTitle": "Webhookabonnement toevoegen",
-      "editTitle": "Webhookabonnement bewerken",
-      "eventsTitle": "Webhookgebeurtenissen",
       "deleteTitle": "Webhook verwijderen"
     },
-    "eventsHelp": "Selecteer de gebeurtenissen die deze webhook activeren.",
     "status": {
       "succeeded": "Geslaagd",
       "pending": "In behandeling",
@@ -5201,7 +5198,6 @@
     },
     "errorTitle": "Fout",
     "errors": {
-      "loadEvents": "Laden van webhookgebeurtenissen mislukt.",
       "loadSigningSecret": "Laden van signing secret mislukt.",
       "copyResponse": "Reactie kopiëren mislukt.",
       "create": "Aanmaken van webhook mislukt",
@@ -5214,8 +5210,6 @@
       "deleted": "Webhook succesvol verwijderd"
     },
     "copiedToClipboard": "Gekopieerd naar klembord",
-    "total_one": "({{count}} totaal)",
-    "total_other": "({{count}} totaal)",
     "deliveriesCount_one": "Levering ({{count}})",
     "deliveriesCount_other": "Leveringen ({{count}})",
     "emptyDeliveries": "Nog geen leveringen geregistreerd.",
@@ -5225,7 +5219,6 @@
     "response": "Reactie",
     "copySigningSecret": "Signing secret kopiëren",
     "copyResponse": "Reactie kopiëren",
-    "editWebhook": "Webhook bewerken",
     "deleteWebhook": "Webhook verwijderen",
     "seeAll": "Alles zien",
     "subscribedCount_one": "Geabonneerd op {{count}} gebeurtenis",
@@ -5239,12 +5232,10 @@
     "actions": {
       "create": "Aanmaken",
       "save": "Opslaan",
-      "loadMore": "Meer laden",
       "add": "Webhookabonnement toevoegen",
       "back": "Terug",
       "hide": "Verbergen",
       "show": "Tonen",
-      "deleting": "Verwijderen...",
       "delete": "Verwijderen",
       "cancel": "Annuleren",
       "previous": "Vorige",

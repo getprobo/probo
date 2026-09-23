@@ -5199,11 +5199,8 @@
     },
     "dialogs": {
       "addTitle": "Ajouter un abonnement au webhook",
-      "editTitle": "Modifier l’abonnement au webhook",
-      "eventsTitle": "Événements du webhook",
       "deleteTitle": "Supprimer le webhook"
     },
-    "eventsHelp": "Sélectionnez les événements qui déclencheront ce webhook.",
     "status": {
       "succeeded": "Réussi",
       "pending": "En attente",
@@ -5211,7 +5208,6 @@
     },
     "errorTitle": "Erreur",
     "errors": {
-      "loadEvents": "Échec du chargement des événements du webhook.",
       "loadSigningSecret": "Échec du chargement du secret de signature.",
       "copyResponse": "Impossible de copier la réponse.",
       "create": "Échec de la création du webhook",
@@ -5224,8 +5220,6 @@
       "deleted": "Webhook supprimé avec succès"
     },
     "copiedToClipboard": "Copié dans le presse-papiers",
-    "total_one": "({{count}} au total)",
-    "total_other": "({{count}} au total)",
     "deliveriesCount_one": "Livraison ({{count}})",
     "deliveriesCount_other": "Livraisons ({{count}})",
     "emptyDeliveries": "Aucune livraison enregistrée pour le moment.",
@@ -5235,7 +5229,6 @@
     "response": "Réponse",
     "copySigningSecret": "Copier le secret de signature",
     "copyResponse": "Copier la réponse",
-    "editWebhook": "Modifier le webhook",
     "deleteWebhook": "Supprimer le webhook",
     "seeAll": "Voir tout",
     "subscribedCount_one": "Abonné à {{count}} événement",
@@ -5249,12 +5242,10 @@
     "actions": {
       "create": "Créer",
       "save": "Enregistrer",
-      "loadMore": "Charger plus",
       "add": "Ajouter un abonnement au webhook",
       "back": "Retour",
       "hide": "Masquer",
       "show": "Afficher",
-      "deleting": "Suppression...",
       "delete": "Supprimer",
       "cancel": "Annuler",
       "previous": "Préc.",

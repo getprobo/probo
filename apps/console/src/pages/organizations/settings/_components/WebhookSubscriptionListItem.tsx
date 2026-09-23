@@ -109,7 +109,6 @@ function LastDeliveryActivity({ webhookSubscriptionId }: { webhookSubscriptionId
   } | null>();
 
   useEffect(() => {
-    setLastDelivery(undefined);
     let cancelled = false;
     const subscription = fetchQuery<WebhookSubscriptionListItemLastDeliveryQuery>(
       environment,
@@ -261,7 +260,7 @@ export function WebhookSubscriptionListItem({
         </div>
         <WebhookEventTypeBadges selectedEvents={webhook.selectedEvents} />
       </div>
-      <LastDeliveryActivity webhookSubscriptionId={webhook.id} />
+      <LastDeliveryActivity key={webhook.id} webhookSubscriptionId={webhook.id} />
     </Card>
   );
 }
