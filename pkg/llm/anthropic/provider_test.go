@@ -21,8 +21,10 @@
 package anthropic
 
 import (
+	"encoding/json"
 	"testing"
 
+	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/llm"
@@ -130,4 +132,91 @@ func TestBuildParamsOmitsInvalidThinkingBudget(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Nil(t, params.Thinking.GetBudgetTokens())
+}
+
+func TestBuildMessagesSkipsForeignThinking(t *testing.T) {
+	t.Parallel()
+
+	messages := buildMessages(
+		[]llm.Message{
+			{
+				Role: llm.RoleAssistant,
+				Parts: []llm.Part{
+					llm.ThinkingPart{Signature: `[{"id":"rs_1","encrypted_content":"enc"}]`, Provider: "openai"},
+					llm.ThinkingPart{Text: "legacy", Signature: "sig-legacy"},
+					llm.ThinkingPart{Text: "current", Signature: "sig-current", Provider: "anthropic"},
+					llm.TextPart{Text: "answer"},
+				},
+			},
+			{
+				Role: llm.RoleAssistant,
+				Parts: []llm.Part{
+					llm.ThinkingPart{Signature: `[{"id":"rs_2","encrypted_content":"enc"}]`, Provider: "openai"},
+					llm.TextPart{Text: ""},
+				},
+			},
+		},
+	)
+
+	require.Len(t, messages, 1)
+	require.Len(t, messages[0].Content, 3)
+	assert.Equal(t, "sig-legacy", messages[0].Content[0].OfThinking.Signature)
+	assert.Equal(t, "sig-current", messages[0].Content[1].OfThinking.Signature)
+	assert.Equal(t, "answer", messages[0].Content[2].OfText.Text)
+}
+
+func TestMapResponse_TagsThinkingProvider(t *testing.T) {
+	t.Parallel()
+
+	var msg anthropic.Message
+	require.NoError(
+		t,
+		json.Unmarshal(
+			[]byte(`{
+				"id": "msg_1",
+				"type": "message",
+				"role": "assistant",
+				"model": "claude-sonnet-test",
+				"content": [
+					{"type": "thinking", "thinking": "reasoning", "signature": "sig"},
+					{"type": "text", "text": "answer"}
+				],
+				"stop_reason": "end_turn",
+				"usage": {"input_tokens": 1, "output_tokens": 1}
+			}`),
+			&msg,
+		),
+	)
+
+	resp := mapResponse(&msg)
+
+	require.NotEmpty(t, resp.Message.Parts)
+	assert.Equal(
+		t,
+		llm.ThinkingPart{Text: "reasoning", Signature: "sig", Provider: "anthropic"},
+		resp.Message.Parts[0],
+	)
+}
+
+func TestMapStreamEvent_TagsThinkingProvider(t *testing.T) {
+	t.Parallel()
+
+	var event anthropic.MessageStreamEventUnion
+	require.NoError(
+		t,
+		json.Unmarshal(
+			[]byte(`{"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig"}}`),
+			&event,
+		),
+	)
+
+	stream := &anthropicStream{}
+	got, ok := stream.mapStreamEvent(&event)
+
+	require.True(t, ok)
+	assert.Equal(
+		t,
+		llm.MessageDelta{ThinkingSignature: "sig", ThinkingProvider: "anthropic"},
+		got.Delta,
+	)
 }

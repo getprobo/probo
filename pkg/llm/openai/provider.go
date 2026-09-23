@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -40,9 +41,21 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
+const (
+	thinkingProvider = "openai"
+)
+
 type (
 	Provider struct {
 		client *openai.Client
+	}
+
+	// reasoningItem is replayed on the next turn since responses are not
+	// stored. CallsBefore keeps its position relative to function calls.
+	reasoningItem struct {
+		ID               string `json:"id"`
+		EncryptedContent string `json:"encrypted_content"`
+		CallsBefore      int    `json:"calls_before,omitempty"`
 	}
 
 	Option func(*config)
@@ -157,6 +170,14 @@ func buildParams(req *llm.ChatCompletionRequest) (responses.ResponseNewParams, e
 		return responses.ResponseNewParams{}, errors.New("stop sequences are not supported by OpenAI Responses API")
 	}
 
+	if req.FrequencyPenalty != nil {
+		return responses.ResponseNewParams{}, errors.New("frequency penalty is not supported by OpenAI Responses API")
+	}
+
+	if req.PresencePenalty != nil {
+		return responses.ResponseNewParams{}, errors.New("presence penalty is not supported by OpenAI Responses API")
+	}
+
 	params := responses.ResponseNewParams{
 		Input: responses.ResponseNewParamsInputUnion{
 			OfInputItemList: buildInput(req.Messages),
@@ -178,7 +199,12 @@ func buildParams(req *llm.ChatCompletionRequest) (responses.ResponseNewParams, e
 	}
 
 	if len(req.Tools) > 0 {
-		params.Tools = buildTools(req.Tools)
+		tools, err := buildTools(req.Tools)
+		if err != nil {
+			return responses.ResponseNewParams{}, fmt.Errorf("cannot build tools: %w", err)
+		}
+
+		params.Tools = tools
 	}
 
 	if req.ToolChoice != nil {
@@ -190,7 +216,12 @@ func buildParams(req *llm.ChatCompletionRequest) (responses.ResponseNewParams, e
 	}
 
 	if req.ResponseFormat != nil {
-		params.Text.Format = buildResponseFormat(req.ResponseFormat)
+		format, err := buildResponseFormat(req.ResponseFormat)
+		if err != nil {
+			return responses.ResponseNewParams{}, fmt.Errorf("cannot build response format: %w", err)
+		}
+
+		params.Text.Format = format
 	}
 
 	if req.Thinking != nil && req.Thinking.Enabled && isReasoningModel(req.Model) {
@@ -229,6 +260,10 @@ func buildInput(messages []llm.Message) responses.ResponseInputParam {
 				),
 			)
 		case llm.RoleAssistant:
+			reasoning := reasoningItems(msg.Parts)
+
+			input = append(input, buildReasoningInput(reasoning, 0, 1)...)
+
 			if text := msg.Text(); text != "" {
 				input = append(
 					input,
@@ -239,7 +274,11 @@ func buildInput(messages []llm.Message) responses.ResponseInputParam {
 				)
 			}
 
-			for _, tc := range msg.ToolCalls {
+			for i, tc := range msg.ToolCalls {
+				if i > 0 {
+					input = append(input, buildReasoningInput(reasoning, i, i+1)...)
+				}
+
 				input = append(
 					input,
 					responses.ResponseInputItemParamOfFunctionCall(
@@ -249,6 +288,11 @@ func buildInput(messages []llm.Message) responses.ResponseInputParam {
 					),
 				)
 			}
+
+			input = append(
+				input,
+				buildReasoningInput(reasoning, max(len(msg.ToolCalls), 1), math.MaxInt)...,
+			)
 		case llm.RoleTool:
 			input = append(
 				input,
@@ -258,6 +302,50 @@ func buildInput(messages []llm.Message) responses.ResponseInputParam {
 				),
 			)
 		}
+	}
+
+	return input
+}
+
+func reasoningItems(parts []llm.Part) []reasoningItem {
+	var items []reasoningItem
+
+	for _, part := range parts {
+		thinking, ok := part.(llm.ThinkingPart)
+		if !ok || thinking.Provider != thinkingProvider {
+			continue
+		}
+
+		var decoded []reasoningItem
+		if err := json.Unmarshal([]byte(thinking.Signature), &decoded); err != nil {
+			continue
+		}
+
+		for _, item := range decoded {
+			if item.ID != "" && item.EncryptedContent != "" {
+				items = append(items, item)
+			}
+		}
+	}
+
+	return items
+}
+
+func buildReasoningInput(items []reasoningItem, from, to int) responses.ResponseInputParam {
+	var input responses.ResponseInputParam
+
+	for _, item := range items {
+		if item.CallsBefore < from || item.CallsBefore >= to {
+			continue
+		}
+
+		reasoning := responses.ResponseInputItemParamOfReasoning(
+			item.ID,
+			[]responses.ResponseReasoningItemSummaryParam{},
+		)
+		reasoning.OfReasoning.EncryptedContent = param.NewOpt(item.EncryptedContent)
+
+		input = append(input, reasoning)
 	}
 
 	return input
@@ -284,15 +372,18 @@ func buildUserContent(parts []llm.Part) responses.ResponseInputMessageContentLis
 	return content
 }
 
-func buildTools(tools []llm.Tool) []responses.ToolUnionParam {
+func buildTools(tools []llm.Tool) ([]responses.ToolUnionParam, error) {
 	out := make([]responses.ToolUnionParam, len(tools))
 	for i, t := range tools {
-		var parameters map[string]any
+		tool := responses.ToolParamOfFunction(t.Name, nil, true)
 		if t.Parameters != nil {
-			_ = json.Unmarshal(t.Parameters, &parameters)
+			if err := validateSchema(t.Parameters); err != nil {
+				return nil, fmt.Errorf("cannot decode parameters of tool %q: %w", t.Name, err)
+			}
+
+			tool.OfFunction.SetExtraFields(map[string]any{"parameters": t.Parameters})
 		}
 
-		tool := responses.ToolParamOfFunction(t.Name, parameters, true)
 		if t.Description != "" {
 			tool.OfFunction.Description = param.NewOpt(t.Description)
 		}
@@ -300,7 +391,7 @@ func buildTools(tools []llm.Tool) []responses.ToolUnionParam {
 		out[i] = tool
 	}
 
-	return out
+	return out, nil
 }
 
 func buildToolChoice(tc *llm.ToolChoice) responses.ResponseNewParamsToolChoiceUnion {
@@ -326,48 +417,82 @@ func buildToolChoice(tc *llm.ToolChoice) responses.ResponseNewParamsToolChoiceUn
 	}
 }
 
-func buildResponseFormat(rf *llm.ResponseFormat) responses.ResponseFormatTextConfigUnionParam {
+func buildResponseFormat(rf *llm.ResponseFormat) (responses.ResponseFormatTextConfigUnionParam, error) {
 	switch rf.Type {
 	case llm.ResponseFormatText:
 		return responses.ResponseFormatTextConfigUnionParam{
 			OfText: &shared.ResponseFormatTextParam{},
-		}
+		}, nil
 	case llm.ResponseFormatJSONObject:
 		return responses.ResponseFormatTextConfigUnionParam{
 			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
-		}
+		}, nil
 	case llm.ResponseFormatJSONSchema:
 		if rf.JSONSchema != nil {
-			var schema map[string]any
-
-			_ = json.Unmarshal(rf.JSONSchema.Schema, &schema)
-
 			format := responses.ResponseFormatTextJSONSchemaConfigParam{
 				Name:   rf.JSONSchema.Name,
 				Strict: param.NewOpt(rf.JSONSchema.Strict),
-				Schema: schema,
 			}
+			if rf.JSONSchema.Schema != nil {
+				if err := validateSchema(rf.JSONSchema.Schema); err != nil {
+					return responses.ResponseFormatTextConfigUnionParam{}, fmt.Errorf(
+						"cannot decode JSON schema %q: %w",
+						rf.JSONSchema.Name,
+						err,
+					)
+				}
+
+				format.SetExtraFields(map[string]any{"schema": rf.JSONSchema.Schema})
+			}
+
 			if rf.JSONSchema.Description != "" {
 				format.Description = param.NewOpt(rf.JSONSchema.Description)
 			}
 
 			return responses.ResponseFormatTextConfigUnionParam{
 				OfJSONSchema: &format,
-			}
+			}, nil
 		}
 
-		return responses.ResponseFormatTextConfigUnionParam{}
+		return responses.ResponseFormatTextConfigUnionParam{}, nil
 	default:
-		return responses.ResponseFormatTextConfigUnionParam{}
+		return responses.ResponseFormatTextConfigUnionParam{}, nil
 	}
 }
 
+// validateSchema checks a schema sent raw, keeping integer precision.
+func validateSchema(schema json.RawMessage) error {
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(schema, &object); err != nil {
+		return fmt.Errorf("cannot unmarshal schema: %w", err)
+	}
+
+	if object == nil {
+		return errors.New("schema must be a JSON object")
+	}
+
+	return nil
+}
+
 func mapResponse(response *responses.Response) *llm.ChatCompletionResponse {
+	var parts []llm.Part
+	if signature := reasoningSignature(response); signature != "" {
+		parts = append(
+			parts,
+			llm.ThinkingPart{
+				Signature: signature,
+				Provider:  thinkingProvider,
+			},
+		)
+	}
+
+	parts = append(parts, llm.TextPart{Text: response.OutputText()})
+
 	resp := &llm.ChatCompletionResponse{
 		Model: string(response.Model),
 		Message: llm.Message{
 			Role:  llm.RoleAssistant,
-			Parts: []llm.Part{llm.TextPart{Text: response.OutputText()}},
+			Parts: parts,
 		},
 		Usage: llm.Usage{
 			InputTokens:  int(response.Usage.InputTokens),
@@ -392,6 +517,40 @@ func mapResponse(response *responses.Response) *llm.ChatCompletionResponse {
 	}
 
 	return resp
+}
+
+func reasoningSignature(response *responses.Response) string {
+	var (
+		items []reasoningItem
+		calls int
+	)
+
+	for _, output := range response.Output {
+		switch {
+		case output.Type == "function_call":
+			calls++
+		case output.Type == "reasoning" && output.EncryptedContent != "":
+			items = append(
+				items,
+				reasoningItem{
+					ID:               output.ID,
+					EncryptedContent: output.EncryptedContent,
+					CallsBefore:      calls,
+				},
+			)
+		}
+	}
+
+	if len(items) == 0 {
+		return ""
+	}
+
+	signature, err := json.Marshal(items)
+	if err != nil {
+		return ""
+	}
+
+	return string(signature)
 }
 
 func mapFinishReason(response *responses.Response) llm.FinishReason {
@@ -497,8 +656,16 @@ type openaiStream struct {
 }
 
 func (s *openaiStream) Next() bool {
+	if s.err != nil {
+		return false
+	}
+
 	for s.stream.Next() {
 		event, ok := s.mapEvent(s.stream.Current())
+		if s.err != nil {
+			return false
+		}
+
 		if !ok {
 			continue
 		}
@@ -597,6 +764,10 @@ func finalStreamEvent(response *responses.Response) llm.ChatCompletionStreamEven
 
 	return llm.ChatCompletionStreamEvent{
 		Model: string(response.Model),
+		Delta: llm.MessageDelta{
+			ThinkingSignature: reasoningSignature(response),
+			ThinkingProvider:  thinkingProvider,
+		},
 		Usage: &llm.Usage{
 			InputTokens:  int(response.Usage.InputTokens),
 			OutputTokens: int(response.Usage.OutputTokens),

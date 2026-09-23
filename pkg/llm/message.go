@@ -63,6 +63,7 @@ type partEnvelope struct {
 	Filename string `json:"filename,omitempty"`
 	// ThinkingPart fields
 	Signature string `json:"signature,omitempty"`
+	Provider  string `json:"provider,omitempty"`
 }
 
 type messageJSON struct {
@@ -112,7 +113,7 @@ func (m Message) MarshalJSON() ([]byte, error) {
 				Type: "file", Data: v.Data, MimeType: v.MimeType, Filename: v.Filename,
 			})
 		case ThinkingPart:
-			mj.Parts = append(mj.Parts, partEnvelope{Type: "thinking", Text: v.Text, Signature: v.Signature})
+			mj.Parts = append(mj.Parts, partEnvelope{Type: "thinking", Text: v.Text, Signature: v.Signature, Provider: v.Provider})
 		default:
 			return nil, fmt.Errorf("cannot marshal unknown Part type %T", p)
 		}
@@ -160,7 +161,7 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 		case "file":
 			m.Parts[i] = FilePart{Data: env.Data, MimeType: env.MimeType, Filename: env.Filename}
 		case "thinking":
-			m.Parts[i] = ThinkingPart{Text: env.Text, Signature: env.Signature}
+			m.Parts[i] = ThinkingPart{Text: env.Text, Signature: env.Signature, Provider: env.Provider}
 		default:
 			return fmt.Errorf("cannot unmarshal unknown Part type %q", env.Type)
 		}

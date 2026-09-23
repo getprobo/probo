@@ -88,6 +88,27 @@ func TestMessageJSONRoundTrip(t *testing.T) {
 			},
 		},
 		{
+			name: "thinking with signature",
+			msg: Message{
+				Role:  RoleAssistant,
+				Parts: []Part{ThinkingPart{Text: "reasoning", Signature: "sig", Provider: "anthropic"}},
+			},
+		},
+		{
+			name: "signature-only thinking",
+			msg: Message{
+				Role:  RoleAssistant,
+				Parts: []Part{ThinkingPart{Signature: `[{"id":"rs_1","encrypted_content":"enc"}]`, Provider: "openai"}},
+			},
+		},
+		{
+			name: "legacy thinking without provider",
+			msg: Message{
+				Role:  RoleAssistant,
+				Parts: []Part{ThinkingPart{Text: "reasoning", Signature: "sig"}},
+			},
+		},
+		{
 			name: "empty parts",
 			msg:  Message{Role: RoleAssistant},
 		},
