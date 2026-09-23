@@ -4,6 +4,38 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.295.0] - 2026-09-23
+
+### Added
+
+- Tasks can stay linked to Linear. Console, GraphQL, CLI, and MCP can
+  list Linear teams, publish a task as a Linear issue, and unlink it.
+  Linked tasks stay aligned through a job queue; publish returns the
+  issue identifier immediately
+- Webhook subscriptions have a detail page with the endpoint, event
+  types, signing secret, and delivery history. Deliveries can be
+  filtered by status, and each one shows the outbound payload. The
+  response can be copied, and list cards show the last delivery. The
+  status filter and payload are also on GraphQL, MCP, and the CLI
+- A stuck SCIM bridge can be reactivated from settings, the CLI, and
+  MCP. That schedules the next sync for now, clears consecutive
+  errors, and sets a failed or disabled bridge back to active
+
+### Changed
+
+- Webhook settings are a list of cards. Creating a subscription is its
+  own page instead of a dialog, and opening a card goes to the detail
+  page. Delivery history is labeled separately from subscribed events
+- AWS, Azure, and GCP access-review connect forms show the workload
+  identity example as field help, so it stays visible while typing
+
+### Fixed
+
+- SigNoz access-review rosters and the credential probe read users from
+  the v2 API. A current SigNoz instance no longer marks a valid key as
+  disconnected after GET /api/v1/user was removed. A key without the
+  signoz-admin role is reported as refused
+
 ## [0.294.0] - 2026-09-22
 
 ### Changed
