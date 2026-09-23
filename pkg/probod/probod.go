@@ -754,6 +754,7 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
 		impl.cfg.CompliancePortal.BaseDomain,
+		impl.cfg.CompliancePortal.TLSMode.IsExternal(),
 		fileManagerService,
 		certManagerService,
 		botService,

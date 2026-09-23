@@ -29,7 +29,7 @@ func (s *Service) EffectiveDomainForCompliancePortal(
 	scope coredata.Scoper,
 	compliancePage *coredata.CompliancePortal,
 ) (*coredata.CustomDomain, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
+	byID, active, err := s.loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *Service) PublicURLForCompliancePortal(
 	scope coredata.Scoper,
 	compliancePage *coredata.CompliancePortal,
 ) (string, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
+	byID, active, err := s.loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +76,7 @@ func (s *Service) PublicURLForCompliancePortal(
 	return "https://" + host, nil
 }
 
-func loadDomains(
+func (s *Service) loadDomains(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
@@ -103,12 +103,26 @@ func loadDomains(
 		return nil, nil, fmt.Errorf("cannot load custom domains: %w", err)
 	}
 
+	for _, d := range domains {
+		byID[d.ID] = d
+	}
+
+	// In external TLS mode, the customer's own reverse proxy terminates TLS
+	// for these domains, so Probo never provisions a certificate for them and
+	// certificate status can't gate whether a domain is usable.
+	if s.externallyTerminatedTLS {
+		for id := range byID {
+			active[id] = true
+		}
+
+		return byID, active, nil
+	}
+
 	var certificateIDs []gid.GID
 
 	domainByCertificate := make(map[gid.GID]gid.GID)
 
 	for _, d := range domains {
-		byID[d.ID] = d
 		if d.CertificateID != nil {
 			certificateIDs = append(certificateIDs, *d.CertificateID)
 			domainByCertificate[*d.CertificateID] = d.ID
