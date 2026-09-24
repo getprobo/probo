@@ -327,7 +327,7 @@
     "pageTitle": "Findings",
     "title": "Findings",
     "description": "Manage your organization's findings.",
-    "filters": { "allKinds": "All kinds", "allStatuses": "All statuses", "allPriorities": "All priorities", "allOwners": "All owners" },
+    "filters": { "allKinds": "All kinds", "allStatuses": "All statuses", "allPriorities": "All priorities", "allOwners": "All owners", "allAudits": "All audits" },
     "kinds": { "minor_nonconformity": "Minor nonconformity", "major_nonconformity": "Major nonconformity", "minorNonconformity": "Minor nonconformity", "majorNonconformity": "Major nonconformity", "observation": "Observation", "exception": "Exception" },
     "status": { "open": "Open", "in_progress": "In progress", "closed": "Closed", "risk_accepted": "Risk accepted", "mitigated": "Mitigated", "false_positive": "False positive" },
     "priority": { "low": "Low", "medium": "Medium", "high": "High" },

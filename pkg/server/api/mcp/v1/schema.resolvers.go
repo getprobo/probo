@@ -863,13 +863,14 @@ func (r *Resolver) ListFindingsTool(ctx context.Context, req *mcp.CallToolReques
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	findingFilter := coredata.NewFindingFilter(nil, nil, nil, nil)
+	findingFilter := coredata.NewFindingFilter(nil, nil, nil, nil, nil)
 	if input.Filter != nil {
 		findingFilter = coredata.NewFindingFilter(
 			input.Filter.Kind,
 			input.Filter.Status,
 			input.Filter.Priority,
 			input.Filter.OwnerID,
+			input.Filter.AuditID,
 		)
 	}
 

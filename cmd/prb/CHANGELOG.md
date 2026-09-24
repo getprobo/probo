@@ -4,6 +4,11 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `finding list` accepts `--audit` to list only the findings linked to
+  an audit
+
 ## [0.234.0] - 2026-09-23
 
 ### Added

@@ -621,7 +621,8 @@
       "allKinds": "Alle soorten",
       "allStatuses": "Alle statussen",
       "allPriorities": "Alle prioriteiten",
-      "allOwners": "Alle eigenaren"
+      "allOwners": "Alle eigenaren",
+      "allAudits": "Alle audits"
     },
     "kinds": {
       "minor_nonconformity": "Kleine non-conformiteit",

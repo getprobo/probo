@@ -621,7 +621,8 @@
       "allKinds": "Tous les types",
       "allStatuses": "Tous les statuts",
       "allPriorities": "Toutes les priorités",
-      "allOwners": "Tous les propriétaires"
+      "allOwners": "Tous les propriétaires",
+      "allAudits": "Tous les audits"
     },
     "kinds": {
       "minor_nonconformity": "Non-conformité mineure",

@@ -215,15 +215,17 @@ func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *i
 		status   *coredata.FindingStatus
 		priority *coredata.FindingPriority
 		ownerID  *gid.GID
+		auditID  *gid.GID
 	)
 	if filter != nil {
 		kind = filter.Kind
 		status = filter.Status
 		priority = filter.Priority
 		ownerID = filter.OwnerID
+		auditID = filter.AuditID
 	}
 
-	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID)
 
 	p, err := r.probo.Findings.ListForAuditID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {
@@ -414,15 +416,17 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 		status   *coredata.FindingStatus
 		priority *coredata.FindingPriority
 		ownerID  *gid.GID
+		auditID  *gid.GID
 	)
 	if obj.Filter != nil {
 		kind = obj.Filter.Kind
 		status = obj.Filter.Status
 		priority = obj.Filter.Priority
 		ownerID = obj.Filter.OwnerID
+		auditID = obj.Filter.AuditID
 	}
 
-	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID)
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:

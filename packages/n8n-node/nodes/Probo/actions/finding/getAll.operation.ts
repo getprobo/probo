@@ -66,6 +66,28 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['finding'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Audit ID',
+				name: 'auditId',
+				type: 'string',
+				default: '',
+				description: 'Only return findings linked to this audit',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -75,12 +97,15 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
+		auditId?: string;
+	};
 
 	const query = `
-		query GetFindings($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query GetFindings($organizationId: ID!, $first: Int, $after: CursorKey, $filter: FindingFilter) {
 			node(id: $organizationId) {
 				... on Organization {
-					findings(first: $first, after: $after) {
+					findings(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
 								id
@@ -108,10 +133,21 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { organizationId };
+	const filter: IDataObject = {};
+
+	if (filters.auditId) {
+		filter.auditId = filters.auditId;
+	}
+
+	if (Object.keys(filter).length > 0) {
+		variables.filter = filter;
+	}
+
 	const findings = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

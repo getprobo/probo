@@ -4055,6 +4055,11 @@ components:
                 - $ref: "#/components/schemas/GID"
                 - type: "null"
               description: Filter by owner profile ID. Defaults to null which returns all owners.
+            audit_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by the audit the finding is linked to. Defaults to null which returns findings of all audits.
 
     ListFindingsOutput:
       type: object

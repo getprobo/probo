@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- Findings can be filtered by audit: `FindingFilter.auditId` in the
+  console GraphQL API, `filter.audit_id` on the `list_findings` MCP
+  tool, and an audit select on the console findings page
+
 ## [0.295.0] - 2026-09-23
 
 ### Added

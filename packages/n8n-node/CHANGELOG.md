@@ -4,6 +4,10 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Finding `Get Many` accepts an Audit ID filter
+
 ## [0.235.0] - 2026-09-23
 
 ### Added
