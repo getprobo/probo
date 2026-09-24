@@ -102,6 +102,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 	client := test.PGClient(t)
 
 	toolReady := make(chan struct{})
+	toolCanceled := make(chan struct{})
 	toolRelease := make(chan struct{})
 
 	slowTool := agent.FunctionTool[struct{}](
@@ -124,7 +125,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 			}),
 			stopResponse("All done after resume."),
 		},
-		slowTool,
+		&cancellationObservedTool{Tool: slowTool, canceled: toolCanceled},
 	)
 
 	run, input := insertPendingTurn(t, client, "worker-agent", "do work")
@@ -151,6 +152,15 @@ func TestWorker_StopAndResume(t *testing.T) {
 	case <-runWorker.ShutdownBroadcast():
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for worker shutdown broadcast")
+	}
+
+	// The broadcast only means shutdown was requested: the run context is
+	// cancelled asynchronously. Releasing the tool before that lands lets
+	// the loop start another turn and complete instead of suspending.
+	select {
+	case <-toolCanceled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for suspension to reach the tool")
 	}
 
 	close(toolRelease)
@@ -464,6 +474,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 	client := test.PGClient(t)
 
 	toolReady := make(chan struct{})
+	toolCanceled := make(chan struct{})
 	toolRelease := make(chan struct{})
 
 	slowTool := agent.FunctionTool[struct{}](
@@ -486,7 +497,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 			}),
 			stopResponse("child done"),
 		},
-		slowTool,
+		&cancellationObservedTool{Tool: slowTool, canceled: toolCanceled},
 	)
 
 	rootProvider := &mockProvider{
@@ -533,6 +544,16 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 	case <-runWorker.ShutdownBroadcast():
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for worker shutdown broadcast")
+	}
+
+	// The broadcast only means shutdown was requested: the run context is
+	// cancelled asynchronously. Releasing the tool before that lands lets
+	// the child branch start another turn and complete instead of
+	// suspending.
+	select {
+	case <-toolCanceled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for suspension to reach the child agent tool")
 	}
 
 	close(toolRelease)
