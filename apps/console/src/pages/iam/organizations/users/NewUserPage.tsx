@@ -21,7 +21,6 @@
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { toFieldErrors } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -159,14 +158,12 @@ export function NewUserPage({ queryRef }: NewUserPageProps) {
           {t("newUserPage.description")}
         </Text>
       </div>
-      <Card variant="soft" size={2}>
-        <UserForm
-          disabled={isCreating}
-          errors={errors}
-          onErrorsChange={setErrors}
-          onSubmit={handleSubmit}
-        />
-      </Card>
+      <UserForm
+        disabled={isCreating}
+        errors={errors}
+        onErrorsChange={setErrors}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { peopleRoles } from "@probo/helpers";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
@@ -34,7 +34,6 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { UserIdentitySection_profile$key } from "#/__generated__/iam/UserIdentitySection_profile.graphql";
-import { ImageDropzone } from "#/components/ImageDropzone/ImageDropzone";
 
 import { userUpdateInput, useUpdateUser } from "../_lib/useUpdateUser";
 import { isUsersListKind } from "../_lib/useUsersListFilters";
@@ -46,6 +45,7 @@ const fragment = graphql`
   fragment UserIdentitySection_profile on Profile {
     id
     fullName
+    emailAddress
     kind
     position
     additionalEmailAddresses
@@ -80,13 +80,10 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
     root,
     person,
     avatar,
-    dropzone,
-    source,
     fields,
   } = userIdentitySection({ inactive: isInactive });
   const scimManaged = profile.source === "SCIM";
   const canEditIdentity = profile.canUpdate && !scimManaged;
-  const showSource = profile.source === "SCIM" || profile.source === "SAML";
   const empty = t("userPage.empty");
   const kindOptions = profile.kind != null && !isUsersListKind(profile.kind)
     ? [...peopleRoles, profile.kind]
@@ -138,30 +135,16 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
       <div className={root()}>
         <div className={person()}>
           <div className={avatar()}>
-            <div className={dropzone()}>
-              <ImageDropzone
-                ratio="square"
-                src={profile.avatar?.downloadUrl}
-                disabled
-                placeholder={t("userPage.fields.avatarPlaceholder")}
-                onFile={() => {
-                  // UpdateUser does not accept an avatar file yet.
-                }}
-                onReject={() => {
-                  // Dropzone stays disabled until avatar upload is wired.
-                }}
-              />
-              {showSource && (
-                <span className={source()}>
-                  <Badge variant="soft" color="neutral" size={1}>
-                    {profile.source}
-                  </Badge>
-                </span>
-              )}
-            </div>
+            <Avatar
+              name={profile.fullName}
+              email={profile.emailAddress}
+              src={profile.avatar?.downloadUrl}
+              size={8}
+              radius="large"
+            />
           </div>
           <div className={fields()}>
-            <Field label={t("userForm.fields.fullName")}>
+            <Field required label={t("userForm.fields.fullName")}>
               {canEditIdentity
                 ? (
                     <TextField

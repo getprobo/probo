@@ -82,6 +82,7 @@ export const field = tv({
   slots: {
     root: "flex flex-col gap-1.5",
     labelText: "text-2 font-medium text-sand-12",
+    requiredMark: "ms-0.5 text-red-a11",
     error: "text-1 text-red-a11",
   },
 });

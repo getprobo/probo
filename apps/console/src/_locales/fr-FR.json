@@ -2301,24 +2301,6 @@
     "details": {
       "title": "Détails",
       "description": "Poste, e-mails supplémentaires et dates de contrat."
-    },
-    "fields": {
-      "avatarPlaceholder": "Déposer ou cliquer",
-      "acceptedFiles": "JPEG, PNG, SVG ou WebP. 5 Mo maximum."
-    },
-    "errors": {
-      "invalidFileType": {
-        "title": "Type de fichier non pris en charge",
-        "description": "Téléversez une image JPEG, PNG, SVG ou WebP."
-      },
-      "fileTooLarge": {
-        "title": "Fichier trop volumineux",
-        "description": "Téléversez une image de moins de 5 Mo."
-      },
-      "tooManyFiles": {
-        "title": "Trop de fichiers",
-        "description": "Téléversez une seule image à la fois."
-      }
     }
   },
   "newUserPage": {

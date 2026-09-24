@@ -28,7 +28,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { newUserPageSkeleton } from "./variants";
 
 export function NewUserPageSkeleton() {
-  const { root, intro, form, dates } = newUserPageSkeleton();
+  const { root, intro, form, fields, properties, detailsIntro, dates } = newUserPageSkeleton();
 
   return (
     <div className={root()}>
@@ -37,22 +37,34 @@ export function NewUserPageSkeleton() {
         <HeadingSkeleton size={6} className="w-40" />
         <TextSkeleton size={2} className="w-80" />
       </div>
-      <Card variant="soft" size={2}>
-        <div className={form()}>
-          <TextFieldSkeleton size={2} className="w-full" />
-          <TextFieldSkeleton size={2} className="w-full" />
-          <SelectSkeleton size={2} className="w-full" />
-          <TextSkeleton size={2} className="w-72" />
-          <SelectSkeleton size={2} className="w-full" />
-          <TextFieldSkeleton size={2} className="w-full" />
-          <TextFieldSkeleton size={2} className="w-full" />
-          <div className={dates()}>
+      <div className={form()}>
+        <Card variant="soft" size={2}>
+          <div className={fields()}>
             <TextFieldSkeleton size={2} className="w-full" />
             <TextFieldSkeleton size={2} className="w-full" />
+            <SelectSkeleton size={2} className="w-full" />
+            <TextSkeleton size={2} className="w-72" />
+            <SelectSkeleton size={2} className="w-full" />
           </div>
-          <ButtonSkeleton size={2} className="w-24" />
-        </div>
-      </Card>
+        </Card>
+        <section className={properties()}>
+          <div className={detailsIntro()}>
+            <HeadingSkeleton size={4} className="w-28" />
+            <TextSkeleton size={2} className="w-72" />
+          </div>
+          <Card variant="soft" size={2}>
+            <div className={fields()}>
+              <TextFieldSkeleton size={2} className="w-full" />
+              <TextFieldSkeleton size={2} className="w-full" />
+              <div className={dates()}>
+                <TextFieldSkeleton size={2} className="w-full" />
+                <TextFieldSkeleton size={2} className="w-full" />
+              </div>
+            </div>
+          </Card>
+        </section>
+        <ButtonSkeleton size={2} className="w-24 self-end" />
+      </div>
     </div>
   );
 }

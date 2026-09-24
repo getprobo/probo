@@ -42,10 +42,7 @@ export function UserPageSkeleton() {
       <Card variant="soft" size={2}>
         <div className={identity()}>
           <div className={person()}>
-            <div className="flex w-32 shrink-0 flex-col gap-2">
-              <AvatarSkeleton size={8} radius="large" />
-              <TextSkeleton size={1} className="w-full" />
-            </div>
+            <AvatarSkeleton size={8} radius="large" />
             <div className={fields()}>
               <TextFieldSkeleton size={2} className="w-full" />
               <TextFieldSkeleton size={2} className="w-full" />

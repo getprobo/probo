@@ -2301,24 +2301,6 @@
     "details": {
       "title": "Details",
       "description": "Functie, extra e-mails en contractdata."
-    },
-    "fields": {
-      "avatarPlaceholder": "Sleep of klik",
-      "acceptedFiles": "JPEG, PNG, SVG of WebP. Maximaal 5 MB."
-    },
-    "errors": {
-      "invalidFileType": {
-        "title": "Bestandstype niet ondersteund",
-        "description": "Upload een JPEG-, PNG-, SVG- of WebP-afbeelding."
-      },
-      "fileTooLarge": {
-        "title": "Bestand te groot",
-        "description": "Upload een afbeelding kleiner dan 5 MB."
-      },
-      "tooManyFiles": {
-        "title": "Te veel bestanden",
-        "description": "Upload één afbeelding tegelijk."
-      }
     }
   },
   "newUserPage": {

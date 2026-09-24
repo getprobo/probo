@@ -25,6 +25,10 @@ import { field } from "./variants";
 export type FieldProps = {
   // Text shown above the control, associated with it via `htmlFor`/`id`.
   label?: ReactNode;
+  // Appends a language-neutral asterisk after the label. The control should
+  // also set native `required` so assistive technology does not rely on the
+  // mark. `*` is the usual required marker in the locales we ship.
+  required?: boolean;
   // Validation / server error shown below the control and linked to it via
   // `aria-describedby` so assistive technology announces it.
   error?: ReactNode;
@@ -40,8 +44,8 @@ export type FieldProps = {
 // whose root is a <div> (and multi-element controls) remain valid and clicks
 // never activate an unintended descendant.
 export function Field(props: FieldProps) {
-  const { label, error, className, children } = props;
-  const { root, labelText, error: errorSlot } = field();
+  const { label, required = false, error, className, children } = props;
+  const { root, labelText, requiredMark, error: errorSlot } = field();
 
   const generatedId = useId();
   const errorId = useId();
@@ -76,6 +80,7 @@ export function Field(props: FieldProps) {
       {label != null && (
         <label htmlFor={controlId} className={labelText()}>
           {label}
+          {required && <span className={requiredMark()} aria-hidden>*</span>}
         </label>
       )}
       {control}

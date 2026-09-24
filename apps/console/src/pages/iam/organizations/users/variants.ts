@@ -110,10 +110,7 @@ export const userIdentitySection = tv({
   slots: {
     root: "flex flex-col gap-4",
     person: "flex items-start gap-4 max-sm:flex-col",
-    avatar: "flex w-32 shrink-0 flex-col gap-2",
-    dropzone: "relative",
-    source: "pointer-events-none absolute -right-0.5 -bottom-0.5 z-1 origin-bottom-right scale-75",
-    hint: "text-pretty",
+    avatar: "shrink-0",
     fields: "flex min-w-0 flex-1 flex-col gap-3",
   },
   variants: {
@@ -165,7 +162,7 @@ export const newUserPage = tv({
     root: "flex flex-col gap-6",
     back: "self-start",
     intro: "flex min-w-0 flex-col gap-2",
-    form: "flex flex-col gap-4",
+    form: "flex flex-col gap-6",
     dates: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 [&>*]:min-w-0",
     actions: "flex justify-end",
   },
@@ -175,7 +172,10 @@ export const newUserPageSkeleton = tv({
   slots: {
     root: "flex flex-col gap-6",
     intro: "flex min-w-0 flex-col gap-2",
-    form: "flex flex-col gap-4",
+    form: "flex flex-col gap-6",
+    fields: "flex min-w-0 flex-1 flex-col gap-3",
+    properties: "flex flex-col gap-4",
+    detailsIntro: "flex flex-col gap-1",
     dates: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 [&>*]:min-w-0",
   },
 });

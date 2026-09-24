@@ -1495,24 +1495,6 @@
     "details": {
       "title": "Details",
       "description": "Position, additional emails, and contract dates."
-    },
-    "fields": {
-      "avatarPlaceholder": "Drop or click",
-      "acceptedFiles": "JPEG, PNG, SVG, or WebP. Maximum 5 MB."
-    },
-    "errors": {
-      "invalidFileType": {
-        "title": "Unsupported file type",
-        "description": "Upload a JPEG, PNG, SVG, or WebP image."
-      },
-      "fileTooLarge": {
-        "title": "File too large",
-        "description": "Upload an image smaller than 5 MB."
-      },
-      "tooManyFiles": {
-        "title": "Too many files",
-        "description": "Upload one image at a time."
-      }
     }
   },
   "newUserPage": {
