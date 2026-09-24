@@ -48,7 +48,7 @@ src/
         AssetsPage.tsx
 ```
 
-Existing examples that already follow this pattern: `pages/organizations/compliance-page/routes.ts` and `pages/iam/organizations/people/routes.ts`. The parent route file (`routes.tsx` at the app root) imports and spreads them:
+Existing examples that already follow this pattern: `pages/organizations/compliance-page/routes.ts` and `pages/iam/organizations/users/routes.ts`. The parent route file (`routes.tsx` at the app root) imports and spreads them:
 
 ```tsx
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";

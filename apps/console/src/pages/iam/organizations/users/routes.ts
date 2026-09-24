@@ -30,17 +30,17 @@ export const usersRoutes = [
     children: [
       {
         index: true,
-        Component: lazy(() => import("#/pages/iam/organizations/people/UsersPageLoader")),
+        Component: lazy(() => import("#/pages/iam/organizations/users/UsersPageLoader")),
         Fallback: UsersPageSkeleton,
       },
       {
         path: "new",
-        Component: lazy(() => import("#/pages/iam/organizations/people/NewUserPageLoader")),
+        Component: lazy(() => import("#/pages/iam/organizations/users/NewUserPageLoader")),
         Fallback: NewUserPageSkeleton,
       },
       {
         path: ":personId",
-        Component: lazy(() => import("#/pages/iam/organizations/people/UserPageLoader")),
+        Component: lazy(() => import("#/pages/iam/organizations/users/UserPageLoader")),
         Fallback: UserPageSkeleton,
       },
     ],
