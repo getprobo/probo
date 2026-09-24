@@ -20,6 +20,7 @@
 
 import { dateFormat } from "@probo/i18n";
 import { Card } from "@probo/ui/src/v2/Card/Card";
+import { DateField } from "@probo/ui/src/v2/form/DateField";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -173,13 +174,13 @@ export function UserPropertiesSection({ profileKey }: UserPropertiesSectionProps
           <Field label={t("userForm.fields.contractStartDate")}>
             {canEditContract
               ? (
-                  <TextField
+                  <DateField
                     size={2}
-                    type="date"
                     value={toInputDate(contractStart)}
+                    locale={i18n.language}
                     disabled={isUpdating}
-                    onChange={(event) => {
-                      const next = event.currentTarget.value;
+                    nullable
+                    onValueChange={(next) => {
                       setContractStart(next);
                       saveContract(next, contractEnd);
                     }}
@@ -196,13 +197,13 @@ export function UserPropertiesSection({ profileKey }: UserPropertiesSectionProps
           <Field label={t("userForm.fields.contractEndDate")}>
             {canEditContract
               ? (
-                  <TextField
+                  <DateField
                     size={2}
-                    type="date"
                     value={toInputDate(contractEnd)}
+                    locale={i18n.language}
                     disabled={isUpdating}
-                    onChange={(event) => {
-                      const next = event.currentTarget.value;
+                    nullable
+                    onValueChange={(next) => {
                       setContractEnd(next);
                       saveContract(contractStart, next);
                     }}

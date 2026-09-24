@@ -2396,7 +2396,8 @@
       "additionalEmail": "E-mail supplémentaire {{index}}",
       "additionalEmailPlaceholder": "nom@exemple.com",
       "contractStartDate": "Date de début de contrat",
-      "contractEndDate": "Date de fin de contrat"
+      "contractEndDate": "Date de fin de contrat",
+      "datePlaceholder": "Sélectionner une date"
     },
     "roleDescriptions": {
       "owner": "Accès complet à tout",

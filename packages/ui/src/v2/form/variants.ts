@@ -98,3 +98,91 @@ export const textFieldSkeleton = tv({
     size: 2,
   },
 });
+
+// Date picker trigger (TextField-like surface + typed input) plus the calendar popup chrome.
+export const dateField = tv({
+  slots: {
+    root: "flex w-full items-center gap-1",
+    surface: [
+      "flex min-w-0 flex-1 items-center gap-2 rounded-2 text-2 text-sand-12 transition-colors",
+      "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
+      "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
+    ],
+    iconTrigger: [
+      "flex size-4 shrink-0 items-center justify-center border-0 bg-transparent p-0",
+      "cursor-pointer text-sand-a9 outline-none [&_svg]:size-4 hover:text-sand-12",
+      "data-disabled:pointer-events-none data-disabled:opacity-50",
+    ],
+    input: [
+      "min-w-0 flex-1 bg-transparent text-sand-12 outline-none",
+      "placeholder:text-sand-a9",
+    ],
+    clear: [
+      "flex size-6 shrink-0 items-center justify-center rounded-2 text-sand-a9",
+      "cursor-pointer outline-none hover:bg-sand-3 hover:text-sand-12",
+      "focus-visible:ring-2 focus-visible:ring-sand-8",
+    ],
+    calendar: "flex w-72 flex-col gap-2",
+    header: "flex items-center gap-1",
+    monthSelect: "min-w-0 flex-1",
+    yearSelect: "w-20 shrink-0",
+    weekdays: "grid grid-cols-7",
+    weekday: "py-1 text-center text-1 font-medium text-sand-11",
+    grid: "grid grid-cols-7",
+  },
+  variants: {
+    size: {
+      1: { surface: "h-7 px-2" },
+      2: { surface: "h-8 px-2" },
+    },
+    variant: {
+      classic: { surface: "border border-sand-a5 bg-sand-1 inset-shadow-2" },
+      surface: { surface: "border border-sand-a5 bg-sand-1" },
+    },
+  },
+  defaultVariants: {
+    size: 2,
+    variant: "surface",
+  },
+});
+
+export const dateFieldDay = tv({
+  base: [
+    "flex size-8 items-center justify-center rounded-2 text-2 text-sand-12",
+    "cursor-pointer outline-none hover:bg-sand-4",
+    "focus-visible:ring-2 focus-visible:ring-sand-8",
+    "disabled:pointer-events-none disabled:opacity-50",
+  ],
+  variants: {
+    selected: {
+      true: "bg-sand-5 hover:bg-sand-5",
+      false: "",
+    },
+    today: {
+      true: "font-medium",
+      false: "",
+    },
+    outside: {
+      true: "text-sand-a9",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    selected: false,
+    today: false,
+    outside: false,
+  },
+});
+
+export const dateFieldSkeleton = tv({
+  base: "inline-block animate-pulse rounded-2 bg-sand-3 align-middle",
+  variants: {
+    size: {
+      1: "h-7 w-60",
+      2: "h-8 w-60",
+    },
+  },
+  defaultVariants: {
+    size: 2,
+  },
+});

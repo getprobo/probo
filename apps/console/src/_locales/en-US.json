@@ -1546,7 +1546,8 @@
       "additionalEmail": "Additional email {{index}}",
       "additionalEmailPlaceholder": "name@example.com",
       "contractStartDate": "Contract start date",
-      "contractEndDate": "Contract end date"
+      "contractEndDate": "Contract end date",
+      "datePlaceholder": "Select a date"
     },
     "roleDescriptions": { "owner": "Full access to everything", "admin": "Full access except organization setup and API keys", "viewer": "Read-only access", "auditor": "Read-only access without settings and tasks", "employee": "Access to employee page", "compliancePortalManager": "Can manage the compliance portal", "compliancePortalAccessManager": "Can manage compliance portal visitor access" },
     "kinds": { "EMPLOYEE": "Employee", "CONTRACTOR": "Contractor", "SERVICE_ACCOUNT": "Service account" },

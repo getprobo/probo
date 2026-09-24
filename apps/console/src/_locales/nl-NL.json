@@ -2396,7 +2396,8 @@
       "additionalEmail": "Extra e-mailadres {{index}}",
       "additionalEmailPlaceholder": "naam@voorbeeld.com",
       "contractStartDate": "Startdatum contract",
-      "contractEndDate": "Einddatum contract"
+      "contractEndDate": "Einddatum contract",
+      "datePlaceholder": "Selecteer een datum"
     },
     "roleDescriptions": {
       "owner": "Volledige toegang tot alles",

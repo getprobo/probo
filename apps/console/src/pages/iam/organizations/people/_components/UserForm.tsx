@@ -21,6 +21,7 @@
 import { Form } from "@base-ui/react/form";
 import { formatDatetime, getAssignableRoles, getMembershipRole, getMembershipRoles, peopleRoles, type Role } from "@probo/helpers";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { DateField } from "@probo/ui/src/v2/form/DateField";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
@@ -82,7 +83,7 @@ export function UserForm({
   onErrorsChange,
   onSubmit,
 }: UserFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { role: viewerRole } = use(CurrentUser);
   const assignableRoles = getAssignableRoles(viewerRole);
   const roleOptions = getMembershipRoles(t).filter(({ value }) => (
@@ -230,25 +231,27 @@ export function UserForm({
         />
       </Field>
       <Field label={t("userForm.fields.contractStartDate")} error={errors.contractStart}>
-        <TextField
+        <DateField
           name="contractStart"
-          type="date"
           value={contractStart}
+          locale={i18n.language}
           disabled={disabled}
-          onChange={(event) => {
-            setContractStart(event.currentTarget.value);
+          nullable
+          onValueChange={(next) => {
+            setContractStart(next);
             clearError("contractStart");
           }}
         />
       </Field>
       <Field label={t("userForm.fields.contractEndDate")} error={errors.contractEnd}>
-        <TextField
+        <DateField
           name="contractEnd"
-          type="date"
           value={contractEnd}
+          locale={i18n.language}
           disabled={disabled}
-          onChange={(event) => {
-            setContractEnd(event.currentTarget.value);
+          nullable
+          onValueChange={(next) => {
+            setContractEnd(next);
             clearError("contractEnd");
           }}
         />
