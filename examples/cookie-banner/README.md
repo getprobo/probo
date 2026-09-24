@@ -33,7 +33,8 @@ npm -w @probo/example-cookie-banner-themed-tcf run build
 
 `.github/workflows/pages-cookie-banner-themed-tcf.yaml` publishes that
 build to this repository's GitHub Pages site. Set Pages source to
-GitHub Actions, then add these repository variables:
+GitHub Actions, then add these variables on the
+`cookie-banner-example-pages` environment:
 
 - `PUBLIC_COOKIE_BANNER_ID`
 - `PUBLIC_COOKIE_BANNER_API_BASE_URL`

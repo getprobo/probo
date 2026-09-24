@@ -33,6 +33,7 @@ jobs:
   build:
     name: "build"
     runs-on: "ubuntu-latest"
+    environment: "cookie-banner-example-pages"
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
@@ -44,7 +45,7 @@ jobs:
           PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ vars.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
         run: |
           if [ -z "$PUBLIC_COOKIE_BANNER_ID" ]; then
-            echo "PUBLIC_COOKIE_BANNER_ID must be set as a repository variable" >&2
+            echo "PUBLIC_COOKIE_BANNER_ID must be set on the cookie-banner-example-pages environment" >&2
             exit 1
           fi
           case "$PUBLIC_COOKIE_BANNER_API_BASE_URL" in
