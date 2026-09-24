@@ -127,6 +127,13 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	jobsAfterUpdate := countTaskSyncJobs(t, taskID)
 	require.GreaterOrEqual(t, jobsAfterUpdate, 1)
 
+	webhookSubscription := createWebhookSubscription(
+		t,
+		owner,
+		unroutableWebhookEndpoint(t),
+		[]string{"TASK_UPDATED", "TASK_COMMENT_CREATED"},
+	)
+
 	deliveryID := factory.SafeName("delivery")
 	status := postLinearWebhook(t, deliveryID, map[string]any{
 		"action":           "update",
@@ -151,6 +158,20 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	require.Eventually(t, func() bool {
 		return taskName(t, owner, taskID) == "Inbound Linear title"
 	}, 30*time.Second, 200*time.Millisecond)
+
+	webhookEvents := requireWebhookEventsEventually(t, owner, webhookSubscription.ID, 1)
+	eventTypes, payloads := webhookEventPayloads(t, webhookEvents)
+	assert.Equal(t, []string{"task:updated"}, eventTypes)
+
+	payload := webhookPayloadByEventType(t, payloads, "task:updated")
+	data, ok := payload["data"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, taskID, data["id"])
+	assert.Equal(t, "Inbound Linear title", data["name"])
+
+	updatedFrom, ok := payload["updatedFrom"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "Linear sync updated", updatedFrom["name"])
 
 	activities := listTaskActivities(t, owner, taskID)
 	require.GreaterOrEqual(t, activities.Node.Activities.TotalCount, 1)
@@ -214,6 +235,11 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	}, 3*time.Second, 200*time.Millisecond)
 
 	assert.Equal(t, jobsAfterUpdate, countTaskSyncJobs(t, taskID))
+
+	unchanged := loadWebhookSubscriptionNode(t, owner, webhookSubscription.ID)
+	assert.Equal(t, 1, unchanged.Node.Events.TotalCount)
+	unchangedTypes, _ := webhookEventPayloads(t, unchanged)
+	assert.Equal(t, []string{"task:updated"}, unchangedTypes)
 }
 
 func TestTaskLinearSync_UnlinkedCreateIsIgnored(t *testing.T) {

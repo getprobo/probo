@@ -223,6 +223,10 @@ func (s *Service) CreateComment(
 				return fmt.Errorf("cannot insert task comment: %w", err)
 			}
 
+			if err := emitTaskCommentCreated(ctx, conn, scope, taskComment); err != nil {
+				return fmt.Errorf("cannot emit task comment created webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -249,6 +253,8 @@ func (s *Service) UpdateComment(
 			if err := taskComment.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load task comment: %w", err)
 			}
+
+			previousComment := *taskComment
 
 			if req.OwnerID != nil {
 				owner := &coredata.MembershipProfile{}
@@ -278,6 +284,10 @@ func (s *Service) UpdateComment(
 				return fmt.Errorf("cannot update task comment: %w", err)
 			}
 
+			if err := emitTaskCommentUpdated(ctx, conn, scope, &previousComment, taskComment); err != nil {
+				return fmt.Errorf("cannot emit task comment updated webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -299,6 +309,10 @@ func (s *Service) DeleteComment(
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := taskComment.LoadByID(ctx, conn, scope, taskCommentID); err != nil {
 				return fmt.Errorf("cannot load task comment: %w", err)
+			}
+
+			if err := emitTaskCommentDeleted(ctx, conn, scope, &taskComment); err != nil {
+				return fmt.Errorf("cannot emit task comment deleted webhook: %w", err)
 			}
 
 			if err := taskComment.Delete(ctx, conn, scope); err != nil {

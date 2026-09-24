@@ -8684,6 +8684,12 @@ components:
         - "right-request:created"
         - "right-request:updated"
         - "right-request:deleted"
+        - "task:created"
+        - "task:updated"
+        - "task:deleted"
+        - "task-comment:created"
+        - "task-comment:updated"
+        - "task-comment:deleted"
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.WebhookEventType
 
     WebhookEventStatus:

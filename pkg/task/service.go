@@ -270,6 +270,10 @@ func (s *Service) Create(
 				return fmt.Errorf("cannot record task created event: %w", err)
 			}
 
+			if err := emitTaskCreated(ctx, conn, scope, task); err != nil {
+				return fmt.Errorf("cannot emit task created webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -338,7 +342,7 @@ func (s *Service) Assign(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := task.LoadByID(ctx, conn, scope, taskID); err != nil {
+			if err := task.LoadByIDForUpdate(ctx, conn, scope, taskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
 
@@ -351,6 +355,8 @@ func (s *Service) Assign(
 			if gidPtrEqual(oldAssignedToID, &assignedToID) {
 				return nil
 			}
+
+			oldTask := *task
 
 			oldName, err := taskActivityProfileName(ctx, conn, scope, oldAssignedToID)
 			if err != nil {
@@ -390,6 +396,10 @@ func (s *Service) Assign(
 				return fmt.Errorf("cannot record task assignee event: %w", err)
 			}
 
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
 			if s.Sync != nil {
 				if err := s.Sync.EnqueueOutbound(
 					ctx,
@@ -422,13 +432,15 @@ func (s *Service) Unassign(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := task.LoadByID(ctx, conn, scope, taskID); err != nil {
+			if err := task.LoadByIDForUpdate(ctx, conn, scope, taskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
 
 			if task.AssignedToID == nil {
 				return nil
 			}
+
+			oldTask := *task
 
 			oldName, err := taskActivityProfileName(ctx, conn, scope, task.AssignedToID)
 			if err != nil {
@@ -466,6 +478,10 @@ func (s *Service) Unassign(
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot record task unassign event: %w", err)
+			}
+
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
 			return nil
@@ -639,6 +655,16 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot record task update events: %w", err)
 			}
 
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
+			if nextTask != nil {
+				if err := emitTaskCreated(ctx, conn, scope, nextTask); err != nil {
+					return fmt.Errorf("cannot emit next task created webhook: %w", err)
+				}
+			}
+
 			if s.Sync != nil && syncedTaskFieldsChanged(
 				oldTask.Name,
 				oldTask.Content,
@@ -681,6 +707,10 @@ func (s *Service) Delete(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			if err := task.LoadByIDForUpdate(ctx, conn, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load task %q: %w", taskID, err)
+			}
+
 			if s.Sync != nil {
 				if err := s.Sync.EnqueueOutbound(
 					ctx,
@@ -693,7 +723,15 @@ func (s *Service) Delete(
 				}
 			}
 
-			return task.Delete(ctx, conn, scope)
+			if err := emitTaskDeleted(ctx, conn, scope, task); err != nil {
+				return fmt.Errorf("cannot emit task deleted webhook: %w", err)
+			}
+
+			if err := task.Delete(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot delete task: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {

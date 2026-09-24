@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/task/sync/linear"
+	"go.probo.inc/probo/pkg/webhook"
 )
 
 func (s *Service) ApplyInboundIssue(
@@ -168,6 +169,10 @@ func (s *Service) ApplyInboundIssue(
 				now,
 			); err != nil {
 				return err
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
 			return touchInboundLink(ctx, tx, scope, link, data, remoteUpdatedAt, hash, mapped.Priority)
