@@ -27,6 +27,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 type (
@@ -118,11 +120,14 @@ func (d *ElasticCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord,
 
 		roles := elasticCloudRoles(member.RoleAssignments)
 		records = append(records, AccountRecord{
-			Email:      member.Email,
-			FullName:   member.Name,
-			Roles:      roles,
-			IsAdmin:    new(elasticCloudRolesIncludeAdmin(roles)),
-			ExternalID: member.UserID,
+			Email:       member.Email,
+			FullName:    member.Name,
+			Roles:       roles,
+			IsAdmin:     new(elasticCloudRolesIncludeAdmin(roles)),
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
+			ExternalID:  member.UserID,
 		})
 	}
 
