@@ -40,6 +40,7 @@ import { Cloudflare } from "./Cloudflare";
 import { Crisp } from "./Crisp";
 import { Cursor } from "./Cursor";
 import { Datadog } from "./Datadog";
+import { Daytona } from "./Daytona";
 import { Deepgram } from "./Deepgram";
 import { DocuSign } from "./DocuSign";
 import { Dotfile } from "./Dotfile";
@@ -116,6 +117,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   CRISP: Crisp,
   CURSOR: Cursor,
   DATADOG: Datadog,
+  DAYTONA: Daytona,
   DEEPGRAM: Deepgram,
   DOCUSIGN: DocuSign,
   DOTFILE: Dotfile,

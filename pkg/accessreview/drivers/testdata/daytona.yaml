@@ -1,0 +1,57 @@
+---
+# Synthetic cassette for Daytona GET /organizations/{id}/users and
+# /organizations/{id}/invitations. Authorization is stripped by the recorder.
+# An emailless member and a non-pending invitation are present so the driver
+# drops them; a pending invitation is kept as inactive.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: app.daytona.io
+        headers:
+            Accept:
+                - application/json
+        url: https://app.daytona.io/api/organizations/aaaaaaaa-1111-2222-3333-000000000001/users
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '[{"userId":"user-owner","organizationId":"aaaaaaaa-1111-2222-3333-000000000001","name":"Jane Doe","email":"jane.doe@example.com","role":"owner","assignedRoles":[],"createdAt":"2025-11-12T13:26:01Z","updatedAt":"2025-11-12T13:26:01Z"},{"userId":"user-member","organizationId":"aaaaaaaa-1111-2222-3333-000000000001","name":"John Smith","email":"john.smith@example.com","role":"member","assignedRoles":[{"id":"role-sandbox","name":"Sandbox Admin","description":"Can manage sandboxes","permissions":["write:sandboxes"],"isGlobal":false,"createdAt":"2025-11-12T13:26:01Z","updatedAt":"2025-11-12T13:26:01Z"}],"createdAt":"2025-12-01T09:00:00Z","updatedAt":"2025-12-01T09:00:00Z"},{"userId":"user-no-email","organizationId":"aaaaaaaa-1111-2222-3333-000000000001","name":"No Email","email":"","role":"member","assignedRoles":[],"createdAt":"2026-01-20T14:45:00Z","updatedAt":"2026-01-20T14:45:00Z"}]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 50ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: app.daytona.io
+        headers:
+            Accept:
+                - application/json
+        url: https://app.daytona.io/api/organizations/aaaaaaaa-1111-2222-3333-000000000001/invitations
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"invite-pending","email":"erin.lee@example.com","invitedBy":"jane.doe@example.com","organizationId":"aaaaaaaa-1111-2222-3333-000000000001","organizationName":"Acme","expiresAt":"2026-12-01T00:00:00Z","status":"pending","role":"member","assignedRoles":[],"createdAt":"2026-03-01T10:00:00Z","updatedAt":"2026-03-01T10:00:00Z"},{"id":"invite-declined","email":"old.invite@example.com","invitedBy":"jane.doe@example.com","organizationId":"aaaaaaaa-1111-2222-3333-000000000001","organizationName":"Acme","expiresAt":"2026-01-01T00:00:00Z","status":"declined","role":"member","assignedRoles":[],"createdAt":"2025-12-01T10:00:00Z","updatedAt":"2025-12-02T10:00:00Z"}]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 40ms

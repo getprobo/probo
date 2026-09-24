@@ -178,6 +178,13 @@ type (
 		OrganizationID string `json:"organization_id"`
 	}
 
+	// DaytonaConnectorSettings stores the Daytona organization ID. An API key
+	// is bound to one organization, but GET /organizations/{id}/users takes
+	// the id as a path segment, so it is captured up front.
+	DaytonaConnectorSettings struct {
+		OrganizationID string `json:"organization_id"`
+	}
+
 	// LangfuseConnectorSettings carries the Langfuse API base URL, which
 	// spans the regional cloud hosts (cloud.langfuse.com /
 	// us.cloud.langfuse.com / …) and self-hosted instances. The

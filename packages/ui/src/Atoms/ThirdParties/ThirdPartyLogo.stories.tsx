@@ -51,3 +51,9 @@ export const Attio: Story = {
     thirdParty: "ATTIO",
   },
 };
+
+export const Daytona: Story = {
+  args: {
+    thirdParty: "DAYTONA",
+  },
+};
