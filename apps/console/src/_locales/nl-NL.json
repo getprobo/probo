@@ -2170,6 +2170,11 @@
     "help": "Help",
     "switchToDarkMode": "Overschakelen naar donkere modus",
     "switchToLightMode": "Overschakelen naar lichte modus",
+    "spotlight": {
+      "title": "Ga naar",
+      "placeholder": "Ga naar…",
+      "empty": "Geen overeenkomende pagina's"
+    },
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",

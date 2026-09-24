@@ -1379,6 +1379,11 @@
     "help": "Help",
     "switchToDarkMode": "Switch to dark mode",
     "switchToLightMode": "Switch to light mode",
+    "spotlight": {
+      "title": "Go to",
+      "placeholder": "Go to…",
+      "empty": "No matching pages"
+    },
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",

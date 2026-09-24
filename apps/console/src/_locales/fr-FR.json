@@ -2170,6 +2170,11 @@
     "help": "Aide",
     "switchToDarkMode": "Passer en mode sombre",
     "switchToLightMode": "Passer en mode clair",
+    "spotlight": {
+      "title": "Aller à",
+      "placeholder": "Aller à…",
+      "empty": "Aucune page correspondante"
+    },
     "groups": {
       "governance": "Gouvernance",
       "privacy": "Confidentialité",

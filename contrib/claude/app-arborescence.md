@@ -13,6 +13,7 @@ These rules are the **source of truth**. Where existing code disagrees (e.g. `ap
 | Relay queries, fragments, loaders, `queryRef`                                    | [`contrib/claude/relay.md`](relay.md)                       |
 | Error boundaries at any level, error/fallback props                              | [`contrib/claude/error-handling.md`](error-handling.md)     |
 | i18next translations and `_locales` folders                                      | [`contrib/claude/i18n.md`](i18n.md)                         |
+| Console nav entries a new page must register                                    | [`contrib/claude/routing.md`](routing.md#register-every-new-console-page-in-the-nav) |
 
 ## Single arborescence principle
 
@@ -62,7 +63,7 @@ Each page folder may contain a subset of these files. Names use PascalCase match
 
 | File                 | Role                                                                                                                                                                                                           |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `routes.ts`          | Route definitions for this folder. Exports an array spread into the parent route tree. Uses `lazy()` from `@probo/react-lazy` to point at loaders / pages.                                                     |
+| `routes.ts`          | Route definitions for this folder. Exports an array spread into the parent route tree. Uses `lazy()` from `@probo/react-lazy` to point at loaders / pages. A new console page must also be registered in the shell nav ([`routing.md`](routing.md#register-every-new-console-page-in-the-nav)). |
 | `MyLayout.tsx`       | A **layout route** component that renders shared chrome (`Breadcrumb`, `PageHeader`, `Tabs`, …) and an `<Outlet />`. Named with the **`Layout` suffix** — never `Page` — to make its role obvious at a glance. |
 | `MyLayoutLoader.tsx` | Loader for a layout that needs data (same pattern as `MyPageLoader`).                                                                                                                                          |
 | `MyPageLoader.tsx`   | Bundle entry point imported by `lazy()` in the route. **Default export.** loads data via Relay, renders a skeleton while loading, then mounts the page with `queryRef`. Only needed when the page reads data.  |

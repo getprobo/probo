@@ -107,3 +107,12 @@ export const navPanel = tv({
     groupFallback: "mt-2 mb-2 block h-9 w-full animate-pulse rounded-2 bg-sand-3 first:mt-0 last:mb-0",
   },
 });
+
+export const navSpotlight = tv({
+  slots: {
+    title: "sr-only",
+    list: "mt-3 flex max-h-80 flex-col gap-0.5 overflow-y-auto",
+    row: "flex w-full items-center justify-between gap-3",
+    group: "shrink-0 text-sand-11",
+  },
+});
