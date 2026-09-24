@@ -84,7 +84,9 @@ func (p MembershipProfile) createdAtSortKey() string {
 	if p.State == ProfileStateDeactivated {
 		rank = "0"
 	}
+
 	createdAt := p.CreatedAt.UTC()
+
 	return rank + createdAt.Format("20060102150405") + fmt.Sprintf("%06d", createdAt.Nanosecond()/1000)
 }
 
