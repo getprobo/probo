@@ -117,7 +117,7 @@ export function NewUserPage({ queryRef }: NewUserPageProps) {
         }
         const profileId = response.createUser?.profileEdge.node.id;
         if (profileId != null && profileId !== "") {
-          void navigate(`/organizations/${organizationId}/settings/people/${profileId}`);
+          void navigate(`/organizations/${organizationId}/settings/users/${profileId}`);
         }
       },
     }).catch(() => {

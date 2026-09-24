@@ -105,7 +105,7 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
           {organization.canListMembers && (
             <NavPanelItem
               label={t("nav.users")}
-              to={navHref(organizationId, group, "people")}
+              to={navHref(organizationId, group, "users")}
             />
           )}
           {organization.canUpdateOrganization && (

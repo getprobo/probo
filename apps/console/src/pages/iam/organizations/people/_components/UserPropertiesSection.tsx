@@ -25,7 +25,7 @@ import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -67,21 +67,39 @@ export function UserPropertiesSection({ profileKey }: UserPropertiesSectionProps
   const canEditContract = profile.canUpdate;
   const empty = t("userPage.empty");
 
-  const [position, setPosition] = useState(profile.position ?? "");
-  const [emails, setEmails] = useState<string[]>([...profile.additionalEmailAddresses]);
-  const [contractStart, setContractStart] = useState(profile.contract?.start ?? "");
-  const [contractEnd, setContractEnd] = useState(profile.contract?.end ?? "");
+  const serverPosition = profile.position ?? "";
+  const serverEmails = profile.additionalEmailAddresses;
+  const serverStart = profile.contract?.start ?? "";
+  const serverEnd = profile.contract?.end ?? "";
 
-  useEffect(() => {
-    setPosition(profile.position ?? "");
-    setEmails([...profile.additionalEmailAddresses]);
-    setContractStart(profile.contract?.start ?? "");
-    setContractEnd(profile.contract?.end ?? "");
-  }, [
-    profile.position,
-    profile.additionalEmailAddresses,
-    profile.contract,
-  ]);
+  const [position, setPosition] = useState(serverPosition);
+  const [emails, setEmails] = useState(() => [...serverEmails]);
+  const [contractStart, setContractStart] = useState(serverStart);
+  const [contractEnd, setContractEnd] = useState(serverEnd);
+  const [source, setSource] = useState({
+    position: serverPosition,
+    emails: serverEmails,
+    start: serverStart,
+    end: serverEnd,
+  });
+
+  if (
+    serverPosition !== source.position
+    || serverEmails !== source.emails
+    || serverStart !== source.start
+    || serverEnd !== source.end
+  ) {
+    setSource({
+      position: serverPosition,
+      emails: serverEmails,
+      start: serverStart,
+      end: serverEnd,
+    });
+    setPosition(serverPosition);
+    setEmails([...serverEmails]);
+    setContractStart(serverStart);
+    setContractEnd(serverEnd);
+  }
 
   function save(patch: Parameters<typeof userUpdateInput>[1]) {
     void updateUser({
@@ -145,22 +163,22 @@ export function UserPropertiesSection({ profileKey }: UserPropertiesSectionProps
       <Card variant="soft" size={2}>
         <div className={fields()}>
           <Field label={t("userForm.fields.position")}>
-          {canEditIdentity
-            ? (
-                <TextField
-                  size={2}
-                  value={position}
-                  disabled={isUpdating}
-                  placeholder={t("userForm.fields.positionPlaceholder")}
-                  onValueChange={setPosition}
-                  onBlur={savePosition}
-                />
-              )
-            : (
-                <Text size={2} color={profile.position == null ? "faint" : undefined}>
-                  {profile.position ?? empty}
-                </Text>
-              )}
+            {canEditIdentity
+              ? (
+                  <TextField
+                    size={2}
+                    value={position}
+                    disabled={isUpdating}
+                    placeholder={t("userForm.fields.positionPlaceholder")}
+                    onValueChange={setPosition}
+                    onBlur={savePosition}
+                  />
+                )
+              : (
+                  <Text size={2} color={profile.position == null ? "faint" : undefined}>
+                    {profile.position ?? empty}
+                  </Text>
+                )}
           </Field>
           <Field label={t("userForm.fields.additionalEmails")}>
             <UserEmailsField

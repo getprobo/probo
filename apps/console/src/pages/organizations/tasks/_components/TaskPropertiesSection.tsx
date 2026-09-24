@@ -224,7 +224,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
               ? (
                   <Link
                     size={2}
-                    to={`/organizations/${organizationId}/settings/people/${task.assignedTo.id}`}
+                    to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
                   >
                     {task.assignedTo.fullName}
                   </Link>

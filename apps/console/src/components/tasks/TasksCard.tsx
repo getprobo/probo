@@ -710,7 +710,7 @@ function TaskRow(props: TaskRowProps) {
         {task.assignedTo?.fullName && (
           <Link
             className="relative z-10 text-sm text-txt-secondary hover:underline ml-auto shrink-0"
-            to={`/organizations/${organizationId}/settings/people/${task.assignedTo.id}`}
+            to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
           >
             {task.assignedTo.fullName}
           </Link>

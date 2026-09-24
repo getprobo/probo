@@ -24,9 +24,9 @@ import { NewUserPageSkeleton } from "./NewUserPageSkeleton";
 import { UserPageSkeleton } from "./UserPageSkeleton";
 import { UsersPageSkeleton } from "./UsersPageSkeleton";
 
-export const peopleRoutes = [
+export const usersRoutes = [
   {
-    path: "people",
+    path: "users",
     children: [
       {
         index: true,

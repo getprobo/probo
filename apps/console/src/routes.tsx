@@ -34,7 +34,7 @@ import { AuthLayoutSkeleton } from "./pages/iam/auth/AuthLayoutSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { auditLogRoutes } from "./pages/iam/organizations/audit-log/routes";
 import { authRoutes } from "./pages/iam/organizations/auth/routes";
-import { peopleRoutes } from "./pages/iam/organizations/people/routes";
+import { usersRoutes } from "./pages/iam/organizations/people/routes";
 import { settingsRoutes } from "./pages/iam/organizations/settings/routes";
 import { accessReviewRoutes } from "./pages/organizations/access-reviews/routes";
 import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
@@ -324,7 +324,7 @@ const routes = [
                     import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
                 ),
               },
-              ...peopleRoutes,
+              ...usersRoutes,
               ...authRoutes,
               ...auditLogRoutes,
             ],
