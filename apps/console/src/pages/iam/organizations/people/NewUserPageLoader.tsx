@@ -18,31 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
+import type { NewUserPageQuery } from "#/__generated__/iam/NewUserPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+
+import { NewUserPage, newUserPageQuery } from "./NewUserPage";
 import { NewUserPageSkeleton } from "./NewUserPageSkeleton";
-import { UserPageSkeleton } from "./UserPageSkeleton";
-import { UsersPageSkeleton } from "./UsersPageSkeleton";
 
-export const peopleRoutes = [
-  {
-    path: "people",
-    children: [
-      {
-        index: true,
-        Component: lazy(() => import("#/pages/iam/organizations/people/UsersPageLoader")),
-        Fallback: UsersPageSkeleton,
-      },
-      {
-        path: "new",
-        Component: lazy(() => import("#/pages/iam/organizations/people/NewUserPageLoader")),
-        Fallback: NewUserPageSkeleton,
-      },
-      {
-        path: ":personId",
-        Component: lazy(() => import("#/pages/iam/organizations/people/UserPageLoader")),
-        Fallback: UserPageSkeleton,
-      },
-    ],
-  },
-];
+function NewUserPageQueryLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery] = useQueryLoader<NewUserPageQuery>(newUserPageQuery);
+
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <NewUserPageSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<NewUserPageSkeleton />}>
+      <NewUserPage key={organizationId} queryRef={currentQueryRef} />
+    </Suspense>
+  );
+}
+
+export default function NewUserPageLoader() {
+  return (
+    <IAMRelayProvider>
+      <NewUserPageQueryLoader />
+    </IAMRelayProvider>
+  );
+}

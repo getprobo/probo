@@ -18,36 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { PersonPageQuery } from "#/__generated__/iam/PersonPageQuery.graphql";
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import type { UserPageQuery } from "#/__generated__/iam/UserPageQuery.graphql";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { PersonPage, personPageQuery } from "./PersonPage";
+import { UserPage, userPageQuery } from "./UserPage";
+import { UserPageSkeleton } from "./UserPageSkeleton";
 
-function PersonPageQueryLoader() {
+function UserPageQueryLoader() {
   const { personId } = useParams();
   if (!personId) {
     throw new Error(":personId missing in route params");
   }
-  const [queryRef, loadQuery] = useQueryLoader<PersonPageQuery>(personPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<UserPageQuery>(userPageQuery);
 
   useEffect(() => {
     loadQuery({ personId });
   }, [personId, loadQuery]);
 
-  if (!queryRef) return <LinkCardSkeleton />;
+  if (queryRef == null) {
+    return <UserPageSkeleton />;
+  }
 
-  return <PersonPage queryRef={queryRef} />;
+  return (
+    <Suspense fallback={<UserPageSkeleton />}>
+      <UserPage queryRef={queryRef} />
+    </Suspense>
+  );
 }
 
-export default function PersonPageLoader() {
+export default function UserPageLoader() {
   return (
     <IAMRelayProvider>
-      <PersonPageQueryLoader />
+      <UserPageQueryLoader />
     </IAMRelayProvider>
   );
 }

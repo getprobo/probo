@@ -2292,26 +2292,16 @@
       "next": "Suiv."
     }
   },
-  "personPage": {
-    "messages": {
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
-    },
-    "errors": {
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
-    },
-    "confirmations": {
-      "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
-      "remove": "Voulez-vous vraiment supprimer {{name}} ?"
-    },
-    "actions": {
-      "deactivate": "Désactiver",
-      "remove": "Supprimer"
-    }
+  "userPage": {
+    "back": "Utilisateurs",
+    "empty": "—",
+    "deactivatedCallout": "Cet utilisateur est désactivé.",
+    "notFound": "Utilisateur introuvable"
   },
-  "addPersonDialog": {
-    "title": "Ajouter une personne"
+  "newUserPage": {
+    "title": "Ajouter un utilisateur",
+    "description": "Invitez quelqu’un dans cette organisation.",
+    "notFound": "Vous ne pouvez pas ajouter d’utilisateurs à cette organisation"
   },
   "usersList": {
     "searchPlaceholder": "Rechercher des personnes...",
@@ -2364,22 +2354,25 @@
       "removePerson": "Supprimer la personne"
     }
   },
-  "personForm": {
+  "userForm": {
     "messages": {
-      "created": "Personne créée avec succès.",
-      "updated": "Personne mise à jour avec succès."
+      "created": "Utilisateur créé avec succès.",
+      "updated": "Utilisateur mis à jour avec succès."
     },
     "errors": {
-      "create": "Échec de la création de la personne",
-      "update": "Échec de la mise à jour de la personne"
+      "create": "Échec de la création de l’utilisateur",
+      "update": "Échec de la mise à jour de l’utilisateur"
     },
     "fields": {
-      "fullName": "Nom complet *",
-      "emailAddress": "Adresse e-mail *",
-      "role": "Rôle *",
+      "fullName": "Nom complet",
+      "emailAddress": "Adresse e-mail",
+      "role": "Rôle",
       "type": "Type",
       "position": "Poste",
       "positionPlaceholder": "ex. PDG, DAF, etc.",
+      "additionalEmails": "E-mails supplémentaires",
+      "additionalEmail": "E-mail supplémentaire {{index}}",
+      "additionalEmailPlaceholder": "nom@exemple.com",
       "contractStartDate": "Date de début de contrat",
       "contractEndDate": "Date de fin de contrat"
     },
@@ -2398,8 +2391,9 @@
       "SERVICE_ACCOUNT": "Compte de service"
     },
     "actions": {
-      "update": "Mettre à jour",
-      "create": "Créer"
+      "create": "Créer",
+      "addEmail": "Ajouter un e-mail",
+      "removeEmail": "Supprimer l’e-mail"
     }
   },
   "auditLogPage": {

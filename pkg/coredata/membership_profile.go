@@ -79,10 +79,19 @@ type (
 	MembershipProfiles []*MembershipProfile
 )
 
+func (p MembershipProfile) createdAtSortKey() string {
+	rank := "1"
+	if p.State == ProfileStateDeactivated {
+		rank = "0"
+	}
+	createdAt := p.CreatedAt.UTC()
+	return rank + createdAt.Format("20060102150405") + fmt.Sprintf("%06d", createdAt.Nanosecond()/1000)
+}
+
 func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.CursorKey {
 	switch orderBy {
 	case MembershipProfileOrderFieldCreatedAt:
-		return page.NewCursorKey(p.ID, p.CreatedAt)
+		return page.NewCursorKey(p.ID, p.createdAtSortKey())
 	case MembershipProfileOrderFieldFullName:
 		return page.NewCursorKey(p.ID, p.FullName)
 	case MembershipProfileOrderFieldEmailAddress:

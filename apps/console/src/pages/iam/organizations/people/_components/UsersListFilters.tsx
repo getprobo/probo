@@ -136,14 +136,14 @@ export function UsersListFilters() {
               aria-label={t("usersList.filters.type")}
             >
               {(value: UsersListKind | null) => (
-                value != null ? t(`personForm.kinds.${value}`) : allTypesLabel
+                value != null ? t(`userForm.kinds.${value}`) : allTypesLabel
               )}
             </SelectTrigger>
             <SelectPopup align="start">
               <SelectItem value={null}>{allTypesLabel}</SelectItem>
               {peopleRoles.map(peopleKind => (
                 <SelectItem key={peopleKind} value={peopleKind}>
-                  {t(`personForm.kinds.${peopleKind}`)}
+                  {t(`userForm.kinds.${peopleKind}`)}
                 </SelectItem>
               ))}
             </SelectPopup>

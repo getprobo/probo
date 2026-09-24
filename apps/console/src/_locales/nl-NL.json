@@ -2292,26 +2292,16 @@
       "next": "Volgende"
     }
   },
-  "personPage": {
-    "messages": {
-      "deactivated": "Persoon succesvol gedeactiveerd",
-      "removed": "Persoon succesvol verwijderd"
-    },
-    "errors": {
-      "deactivate": "Deactiveren van persoon mislukt",
-      "remove": "Verwijderen van persoon mislukt"
-    },
-    "confirmations": {
-      "deactivate": "Weet u zeker dat u {{name}} wilt deactiveren?",
-      "remove": "Weet u zeker dat u {{name}} wilt verwijderen?"
-    },
-    "actions": {
-      "deactivate": "Deactiveren",
-      "remove": "Verwijderen"
-    }
+  "userPage": {
+    "back": "Gebruikers",
+    "empty": "—",
+    "deactivatedCallout": "Deze gebruiker is gedeactiveerd.",
+    "notFound": "Gebruiker niet gevonden"
   },
-  "addPersonDialog": {
-    "title": "Persoon toevoegen"
+  "newUserPage": {
+    "title": "Gebruiker toevoegen",
+    "description": "Nodig iemand uit voor deze organisatie.",
+    "notFound": "U kunt geen gebruikers toevoegen aan deze organisatie"
   },
   "usersList": {
     "searchPlaceholder": "Personen zoeken...",
@@ -2364,22 +2354,25 @@
       "removePerson": "Persoon verwijderen"
     }
   },
-  "personForm": {
+  "userForm": {
     "messages": {
-      "created": "Persoon succesvol aangemaakt.",
-      "updated": "Persoon succesvol bijgewerkt."
+      "created": "Gebruiker succesvol aangemaakt.",
+      "updated": "Gebruiker succesvol bijgewerkt."
     },
     "errors": {
-      "create": "Aanmaken van persoon mislukt",
-      "update": "Bijwerken van persoon mislukt"
+      "create": "Aanmaken van gebruiker mislukt",
+      "update": "Bijwerken van gebruiker mislukt"
     },
     "fields": {
-      "fullName": "Volledige naam *",
-      "emailAddress": "E-mailadres *",
-      "role": "Rol *",
+      "fullName": "Volledige naam",
+      "emailAddress": "E-mailadres",
+      "role": "Rol",
       "type": "Type",
       "position": "Functie",
       "positionPlaceholder": "bijv. CEO, CFO, enz.",
+      "additionalEmails": "Extra e-mailadressen",
+      "additionalEmail": "Extra e-mailadres {{index}}",
+      "additionalEmailPlaceholder": "naam@voorbeeld.com",
       "contractStartDate": "Startdatum contract",
       "contractEndDate": "Einddatum contract"
     },
@@ -2398,8 +2391,9 @@
       "SERVICE_ACCOUNT": "Service-account"
     },
     "actions": {
-      "update": "Bijwerken",
-      "create": "Aanmaken"
+      "create": "Aanmaken",
+      "addEmail": "E-mail toevoegen",
+      "removeEmail": "E-mail verwijderen"
     }
   },
   "auditLogPage": {

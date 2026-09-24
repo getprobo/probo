@@ -1486,13 +1486,17 @@
     "empty": "No people",
     "actions": { "add": "Add User", "cancel": "Cancel", "previous": "Prev", "next": "Next" }
   },
-  "personPage": {
-    "messages": { "deactivated": "Person deactivated successfully", "removed": "Person removed successfully" },
-    "errors": { "deactivate": "Failed to deactivate person", "remove": "Failed to remove person" },
-    "confirmations": { "deactivate": "Are you sure you want to deactivate {{name}}?", "remove": "Are you sure you want to remove {{name}}?" },
-    "actions": { "deactivate": "Deactivate", "remove": "Remove" }
+  "userPage": {
+    "back": "Users",
+    "empty": "—",
+    "deactivatedCallout": "This user is deactivated.",
+    "notFound": "User not found"
   },
-  "addPersonDialog": { "title": "Add Person" },
+  "newUserPage": {
+    "title": "Add User",
+    "description": "Invite someone to this organization.",
+    "notFound": "You cannot add users to this organization"
+  },
   "usersList": {
     "searchPlaceholder": "Search people...",
     "contract": { "range": "{{start}} – {{end}}", "empty": "—" },
@@ -1506,13 +1510,25 @@
     "dialogs": { "sendTitle": "Send activation email", "deactivateTitle": "Deactivate person", "removeTitle": "Remove person" },
     "actions": { "more": "More actions", "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "deactivatePerson": "Deactivate person", "removePerson": "Remove person" }
   },
-  "personForm": {
-    "messages": { "created": "Person created successfully.", "updated": "Person updated successfully." },
-    "errors": { "create": "Failed to create person", "update": "Failed to update person" },
-    "fields": { "fullName": "Full name *", "emailAddress": "Email Address *", "role": "Role *", "type": "Type", "position": "Position", "positionPlaceholder": "e.g. CEO, CFO, etc.", "contractStartDate": "Contract start date", "contractEndDate": "Contract end date" },
+  "userForm": {
+    "messages": { "created": "User created successfully.", "updated": "User updated successfully." },
+    "errors": { "create": "Failed to create user", "update": "Failed to update user" },
+    "fields": {
+      "fullName": "Full name",
+      "emailAddress": "Email address",
+      "role": "Role",
+      "type": "Type",
+      "position": "Position",
+      "positionPlaceholder": "e.g. CEO, CFO, etc.",
+      "additionalEmails": "Additional emails",
+      "additionalEmail": "Additional email {{index}}",
+      "additionalEmailPlaceholder": "name@example.com",
+      "contractStartDate": "Contract start date",
+      "contractEndDate": "Contract end date"
+    },
     "roleDescriptions": { "owner": "Full access to everything", "admin": "Full access except organization setup and API keys", "viewer": "Read-only access", "auditor": "Read-only access without settings and tasks", "employee": "Access to employee page", "compliancePortalManager": "Can manage the compliance portal", "compliancePortalAccessManager": "Can manage compliance portal visitor access" },
     "kinds": { "EMPLOYEE": "Employee", "CONTRACTOR": "Contractor", "SERVICE_ACCOUNT": "Service account" },
-    "actions": { "update": "Update", "create": "Create" }
+    "actions": { "create": "Create", "addEmail": "Add email", "removeEmail": "Remove email" }
   },
   "auditLogPage": {
     "title": "Audit Log",

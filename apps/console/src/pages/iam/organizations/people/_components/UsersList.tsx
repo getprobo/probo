@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { PlusIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -37,7 +37,6 @@ import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { useUsersListFilters } from "../_lib/useUsersListFilters";
 import { usersList, usersPage } from "../variants";
 
-import { AddPersonDialog } from "./AddPersonDialog";
 import { UserListItem } from "./UserListItem";
 import { UsersListFilters } from "./UsersListFilters";
 
@@ -59,7 +58,7 @@ export const usersListFragment = graphql`
       after: $after
       last: $last
       before: $before
-      orderBy: { direction: ASC, field: FULL_NAME }
+      orderBy: { direction: DESC, field: CREATED_AT }
       filter: $filter
     ) @required(action: THROW) {
       pageInfo {
@@ -145,16 +144,6 @@ export function UsersList({ organizationKey }: UsersListProps) {
     });
   }
 
-  function handleCreated() {
-    pageVariablesRef.current = {
-      first: USER_PAGE_SIZE,
-      after: null,
-      last: null,
-      before: null,
-    };
-    refetchCurrentPage();
-  }
-
   function handleDeleted() {
     if (edges.length === 1 && pageInfo.hasPreviousPage) {
       goPrevious();
@@ -172,11 +161,9 @@ export function UsersList({ organizationKey }: UsersListProps) {
           </Heading>
         </div>
         {organization.canCreateUser && (
-          <AddPersonDialog onCreated={handleCreated}>
-            <Button variant="solid" iconStart={<PlusIcon />}>
-              {t("usersPage.actions.add")}
-            </Button>
-          </AddPersonDialog>
+          <ButtonLink to="new" variant="solid" iconStart={<PlusIcon />}>
+            {t("usersPage.actions.add")}
+          </ButtonLink>
         )}
       </div>
       <div className={root()}>

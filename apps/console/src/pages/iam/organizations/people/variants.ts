@@ -92,3 +92,77 @@ export const userListItem = tv({
     inactive: false,
   },
 });
+
+export const userPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    back: "self-start",
+    header: "flex items-start justify-between gap-4",
+    person: "flex min-w-0 items-center gap-4",
+    avatar: "relative shrink-0",
+    source: "pointer-events-none absolute -right-0.5 -bottom-0.5 z-1 origin-bottom-right scale-75",
+    identity: "flex min-w-0 flex-1 flex-col gap-0",
+    kind: "min-w-0 truncate leading-none",
+    title: "min-w-0 truncate leading-tight",
+    email: "min-w-0 truncate leading-tight",
+    badges: "flex flex-wrap items-center gap-1.5",
+    menu: "shrink-0",
+    meta: "flex flex-wrap items-center justify-between gap-2",
+    contract: "min-w-0",
+  },
+  variants: {
+    inactive: {
+      true: {
+        person: "opacity-50",
+        meta: "opacity-50",
+      },
+    },
+  },
+  defaultVariants: {
+    inactive: false,
+  },
+});
+
+export const userPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex items-start justify-between gap-4",
+    person: "flex min-w-0 items-center gap-4",
+    identity: "flex min-w-0 flex-1 flex-col gap-2",
+    properties: "flex flex-col gap-3",
+  },
+});
+
+export const userPropertiesSection = tv({
+  slots: {
+    root: "flex flex-col",
+    row: "grid grid-cols-[8.5rem_minmax(0,1fr)] items-start gap-3 border-b border-sand-6 py-2.5 last:border-b-0",
+    value: "flex min-w-0 flex-col gap-2",
+  },
+});
+
+export const userEmailsField = tv({
+  slots: {
+    root: "flex flex-col gap-2",
+    row: "flex items-center gap-2",
+    field: "min-w-0 flex-1",
+  },
+});
+
+export const newUserPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    back: "self-start",
+    intro: "flex min-w-0 flex-col gap-2",
+    form: "flex flex-col gap-4",
+    actions: "flex justify-end",
+  },
+});
+
+export const newUserPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    intro: "flex min-w-0 flex-col gap-2",
+    form: "flex flex-col gap-4",
+  },
+});
