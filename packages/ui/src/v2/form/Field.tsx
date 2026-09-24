@@ -25,17 +25,19 @@ import { field } from "./variants";
 export type FieldProps = {
   // Text shown above the control, associated with it via `htmlFor`/`id`.
   label?: ReactNode;
-  // Appends a language-neutral asterisk after the label. The control should
-  // also set native `required` so assistive technology does not rely on the
-  // mark. `*` is the usual required marker in the locales we ship.
+  // Appends a language-neutral asterisk after the label and injects `required`
+  // plus `aria-required` onto the control so the mark is not the only signal.
+  // Native `required` covers inputs and Base UI Select; `aria-required` covers
+  // controls that only forward ARIA. `*` is the usual marker in our locales.
   required?: boolean;
   // Validation / server error shown below the control and linked to it via
   // `aria-describedby` so assistive technology announces it.
   error?: ReactNode;
   className?: string;
-  // A single form control (TextField, Textarea, …). It receives an injected
-  // `id`, plus `aria-invalid` and a merged `aria-describedby` when an error
-  // is present (existing description IDs are kept).
+  // A single form control (TextField, Textarea, Select, …). It receives an
+  // injected `id`, plus `aria-invalid` and a merged `aria-describedby` when
+  // an error is present (existing description IDs are kept). When `required`
+  // is set, it also receives `required` and `aria-required`.
   children: ReactNode;
 };
 
@@ -72,6 +74,7 @@ export function Field(props: FieldProps) {
         id: controlId,
         ...(describedBy != null ? { "aria-describedby": describedBy } : {}),
         ...(error != null ? { "aria-invalid": true as const } : {}),
+        ...(required ? { "aria-required": true as const, "required": true } : {}),
       })
     : children;
 
