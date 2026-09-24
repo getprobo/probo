@@ -30,19 +30,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const trustCenterQuery = `
-query($id: ID!) {
-  node(id: $id) {
-    __typename
-    ... on Organization {
-      trustCenter {
-        id
-      }
-    }
-  }
-}
-`
-
 const createMutation = `
 mutation($input: CreateCompliancePortalCommitmentGroupInput!) {
   createCompliancePortalCommitmentGroup(input: $input) {
@@ -57,15 +44,6 @@ mutation($input: CreateCompliancePortalCommitmentGroupInput!) {
   }
 }
 `
-
-type trustCenterQueryResponse struct {
-	Node *struct {
-		Typename    string `json:"__typename"`
-		TrustCenter *struct {
-			ID string `json:"id"`
-		} `json:"trustCenter"`
-	} `json:"node"`
-}
 
 type createResponse struct {
 	CreateCompliancePortalCommitmentGroup struct {
@@ -82,7 +60,7 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg         string
+		flagPortal      string
 		flagTitle       string
 		flagDescription string
 	)
@@ -91,10 +69,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a compliance portal commitment group",
 		Example: `  # Create a commitment group interactively
-  prb trust-center commitment-group create
+  prb compliance-portal commitment-group create --portal <compliance-portal-id>
 
   # Create a commitment group non-interactively
-  prb trust-center cg create --title "Security" --description "Our security commitments"`,
+  prb compliance-portal cg create --portal <compliance-portal-id> --title "Security" --description "Our security commitments"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -113,39 +91,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cfg.HTTPTimeoutDuration(),
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
-
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
-			data, err := client.Do(
-				trustCenterQuery,
-				map[string]any{"id": flagOrg},
-			)
-			if err != nil {
-				return err
-			}
-
-			var tcResp trustCenterQueryResponse
-			if err := json.Unmarshal(data, &tcResp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if tcResp.Node == nil {
-				return fmt.Errorf("organization %s not found", flagOrg)
-			}
-
-			if tcResp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", tcResp.Node.Typename)
-			}
-
-			if tcResp.Node.TrustCenter == nil {
-				return fmt.Errorf("trust center not found for organization %s", flagOrg)
-			}
 
 			if f.IOStreams.IsInteractive() {
 				if flagTitle == "" {
@@ -177,11 +122,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("description is required; pass --description or run interactively")
 			}
 
-			data, err = client.Do(
+			data, err := client.Do(
 				createMutation,
 				map[string]any{
 					"input": map[string]any{
-						"compliancePortalId": tcResp.Node.TrustCenter.ID,
+						"compliancePortalId": flagPortal,
 						"title":              flagTitle,
 						"description":        flagDescription,
 					},
@@ -208,7 +153,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID (required)")
+	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().StringVar(&flagTitle, "title", "", "Group title (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Group description (required)")
 

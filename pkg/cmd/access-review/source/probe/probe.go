@@ -29,43 +29,29 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const (
-	sourceQuery = `
+// sourceQuery selecting connectionStatus makes the server probe the provider
+// live, which is what this command reports.
+const sourceQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
     ... on AccessReviewSource {
       id
       connectorId
+      connectionStatus
     }
   }
 }
 `
 
-	probeMutation = `
-mutation($input: ProbeConnectorInput!) {
-  probeConnector(input: $input) {
-    ok
-  }
+type sourceResponse struct {
+	Node *struct {
+		Typename         string  `json:"__typename"`
+		ID               string  `json:"id"`
+		ConnectorID      *string `json:"connectorId"`
+		ConnectionStatus string  `json:"connectionStatus"`
+	} `json:"node"`
 }
-`
-)
-
-type (
-	sourceResponse struct {
-		Node *struct {
-			Typename    string  `json:"__typename"`
-			ID          string  `json:"id"`
-			ConnectorID *string `json:"connectorId"`
-		} `json:"node"`
-	}
-
-	probeResponse struct {
-		ProbeConnector struct {
-			Ok bool `json:"ok"`
-		} `json:"probeConnector"`
-	}
-)
 
 func NewCmdProbe(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
@@ -115,20 +101,7 @@ func NewCmdProbe(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("access source %s has no connector", sourceID)
 			}
 
-			data, err = client.Do(
-				probeMutation,
-				map[string]any{"input": map[string]any{"connectorId": *sourceResp.Node.ConnectorID}},
-			)
-			if err != nil {
-				return err
-			}
-
-			var resp probeResponse
-			if err := json.Unmarshal(data, &resp); err != nil {
-				return fmt.Errorf("cannot parse probe response: %w", err)
-			}
-
-			return cmdutil.PrintJSON(f.IOStreams.Out, resp.ProbeConnector)
+			return cmdutil.PrintJSON(f.IOStreams.Out, sourceResp.Node)
 		},
 	}
 

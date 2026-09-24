@@ -53,7 +53,7 @@ query(
             id
             email
             fullName
-            role
+            roles
             jobTitle
             isAdmin
             active
@@ -105,7 +105,7 @@ query(
             id
             email
             fullName
-            role
+            roles
             jobTitle
             isAdmin
             active
@@ -138,7 +138,7 @@ type entryNode struct {
 	ID             string   `json:"id"`
 	Email          string   `json:"email"`
 	FullName       string   `json:"fullName"`
-	Role           string   `json:"role"`
+	Roles          []string `json:"roles"`
 	JobTitle       string   `json:"jobTitle"`
 	IsAdmin        *bool    `json:"isAdmin"`
 	Active         *bool    `json:"active"`

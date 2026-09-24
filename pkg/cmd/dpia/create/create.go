@@ -33,12 +33,10 @@ import (
 const createMutation = `
 mutation($input: CreateDataProtectionImpactAssessmentInput!) {
   createDataProtectionImpactAssessment(input: $input) {
-    dataProtectionImpactAssessmentEdge {
-      node {
-        id
-        description
-        residualRisk
-      }
+    dataProtectionImpactAssessment {
+      id
+      description
+      residualRisk
     }
   }
 }
@@ -46,13 +44,11 @@ mutation($input: CreateDataProtectionImpactAssessmentInput!) {
 
 type createResponse struct {
 	CreateDataProtectionImpactAssessment struct {
-		DataProtectionImpactAssessmentEdge struct {
-			Node struct {
-				ID           string `json:"id"`
-				Description  string `json:"description"`
-				ResidualRisk string `json:"residualRisk"`
-			} `json:"node"`
-		} `json:"dataProtectionImpactAssessmentEdge"`
+		DataProtectionImpactAssessment struct {
+			ID           string `json:"id"`
+			Description  string `json:"description"`
+			ResidualRisk string `json:"residualRisk"`
+		} `json:"dataProtectionImpactAssessment"`
 	} `json:"createDataProtectionImpactAssessment"`
 }
 
@@ -149,7 +145,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			r := resp.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessmentEdge.Node
+			r := resp.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Created data protection impact assessment %s\n",
