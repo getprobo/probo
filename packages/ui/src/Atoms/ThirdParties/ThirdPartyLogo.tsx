@@ -43,6 +43,7 @@ import { Datadog } from "./Datadog";
 import { Deepgram } from "./Deepgram";
 import { DocuSign } from "./DocuSign";
 import { Dotfile } from "./Dotfile";
+import { ElasticCloud } from "./ElasticCloud";
 import { ElevenLabs } from "./ElevenLabs";
 import { Figma } from "./Figma";
 import { GCP } from "./GCP";
@@ -119,6 +120,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   DEEPGRAM: Deepgram,
   DOCUSIGN: DocuSign,
   DOTFILE: Dotfile,
+  ELASTIC_CLOUD: ElasticCloud,
   ELEVENLABS: ElevenLabs,
   FIGMA: Figma,
   GCP: GCP,

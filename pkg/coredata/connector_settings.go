@@ -178,6 +178,10 @@ type (
 		OrganizationID string `json:"organization_id"`
 	}
 
+	ElasticCloudConnectorSettings struct {
+		OrganizationID string `json:"organization_id"`
+	}
+
 	// LangfuseConnectorSettings carries the Langfuse API base URL, which
 	// spans the regional cloud hosts (cloud.langfuse.com /
 	// us.cloud.langfuse.com / …) and self-hosted instances. The
