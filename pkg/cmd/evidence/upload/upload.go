@@ -106,6 +106,7 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 				variables,
 				"variables.input.file",
 				filepath.Base(filePath),
+				cmdutil.FileContentType(filePath),
 				file,
 			)
 			if err != nil {
