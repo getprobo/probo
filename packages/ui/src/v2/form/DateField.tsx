@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CalendarBlankIcon, CaretLeftIcon, CaretRightIcon, XIcon } from "@phosphor-icons/react";
-import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { type ChangeEvent, type KeyboardEvent, useState } from "react";
 
 import { IconButton } from "../IconButton/IconButton";
 import { Popover, type PopoverProps } from "../Popover/Popover";
@@ -40,30 +40,30 @@ type DatePart = "day" | "month" | "year";
 
 export interface DateFieldProps {
   // Applied to the trigger row (the top-level element).
-  className?: string;
+  "className"?: string;
   // Forwards onto the typed input so Field can associate its label.
-  id?: string;
+  "id"?: string;
   // Native form field name; written to a hidden input.
-  name?: string;
+  "name"?: string;
   // ISO `YYYY-MM-DD`, or `""` when empty.
-  value: string;
+  "value": string;
   // `Intl` locale for typed mask, month names, and weekdays.
-  locale?: string;
+  "locale"?: string;
   // Shown on the input when empty. Defaults to the locale mask (`mm/dd/yyyy`).
-  placeholder?: string;
-  size?: 1 | 2;
+  "placeholder"?: string;
+  "size"?: 1 | 2;
   // Surface treatment (defaults to "surface").
-  variant?: "classic" | "surface";
-  disabled?: boolean;
+  "variant"?: "classic" | "surface";
+  "disabled"?: boolean;
   // Inclusive ISO bound; days before this are not selectable.
-  min?: string;
+  "min"?: string;
   // Inclusive ISO bound; days after this are not selectable.
-  max?: string;
+  "max"?: string;
   // When true, a clear control appears while a date is selected.
-  nullable?: boolean;
+  "nullable"?: boolean;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
-  onValueChange?: (value: string) => void;
+  "onValueChange"?: (value: string) => void;
 }
 
 // TextField-like date control: type digits and separators are inserted, or
@@ -91,6 +91,7 @@ export function DateField(props: DateFieldProps) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(() => visibleFrom(value));
   const [draft, setDraft] = useState(() => isoToMasked(value, pattern));
+  const [source, setSource] = useState({ value, locale });
   const {
     root,
     surface,
@@ -106,9 +107,10 @@ export function DateField(props: DateFieldProps) {
     grid,
   } = dateField({ size, variant });
 
-  useEffect(() => {
-    setDraft(isoToMasked(value, datePattern(locale)));
-  }, [value, locale]);
+  if (value !== source.value || locale !== source.locale) {
+    setSource({ value, locale });
+    setDraft(isoToMasked(value, pattern));
+  }
 
   const minDate = parseIsoDate(min ?? "");
   const maxDate = parseIsoDate(max ?? "");
@@ -339,7 +341,7 @@ export function DateField(props: DateFieldProps) {
             type="button"
             className={clear()}
             aria-label="Clear date"
-            onMouseDown={(event) => event.preventDefault()}
+            onMouseDown={event => event.preventDefault()}
             onClick={clearValue}
           >
             <XIcon />
