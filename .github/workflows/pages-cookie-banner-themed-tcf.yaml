@@ -41,8 +41,8 @@ jobs:
           submodules: recursive
       - name: "Require baked banner config"
         env:
-          PUBLIC_COOKIE_BANNER_ID: "${{ vars.PUBLIC_COOKIE_BANNER_ID }}"
-          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ vars.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
+          PUBLIC_COOKIE_BANNER_ID: "${{ secrets.PUBLIC_COOKIE_BANNER_ID }}"
+          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ secrets.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
         run: |
           if [ -z "$PUBLIC_COOKIE_BANNER_ID" ]; then
             echo "PUBLIC_COOKIE_BANNER_ID must be set on the cookie-banner-example-pages environment" >&2
@@ -65,8 +65,8 @@ jobs:
       - run: "npm --workspace @probo/cookie-banner-tcf run build"
       - run: "npm --workspace @probo/example-cookie-banner-themed-tcf run build"
         env:
-          PUBLIC_COOKIE_BANNER_ID: "${{ vars.PUBLIC_COOKIE_BANNER_ID }}"
-          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ vars.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
+          PUBLIC_COOKIE_BANNER_ID: "${{ secrets.PUBLIC_COOKIE_BANNER_ID }}"
+          PUBLIC_COOKIE_BANNER_API_BASE_URL: "${{ secrets.PUBLIC_COOKIE_BANNER_API_BASE_URL }}"
       - run: "touch examples/cookie-banner/themed-tcf/dist/.nojekyll"
       - uses: "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9" # v5
         with:
