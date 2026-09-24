@@ -34,10 +34,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// SigNozDriver fetches organization members from the SigNoz API. The API key
-// is injected by the connector's API-key HTTP client via the SIGNOZ-API-KEY
-// header. The same base URL serves SigNoz Cloud (region/tenant host) and
-// self-hosted instances.
+// SigNozDriver fetches organization members and service accounts from the
+// SigNoz API. The API key is injected by the connector's API-key HTTP client
+// via the SIGNOZ-API-KEY header. The same base URL serves SigNoz Cloud
+// (region/tenant host) and self-hosted instances.
 type SigNozDriver struct {
 	httpClient *http.Client
 	baseURL    string
@@ -62,8 +62,23 @@ type (
 		CreatedAt   string `json:"createdAt"`
 	}
 
+	// sigNozServiceAccount models a service account from
+	// GET /api/v1/service_accounts.
+	sigNozServiceAccount struct {
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+		Email     string `json:"email"`
+		Status    string `json:"status"`
+		CreatedAt string `json:"createdAt"`
+	}
+
 	sigNozRole struct {
 		Name string `json:"name"`
+	}
+
+	sigNozAPIKey struct {
+		CreatedAt      string `json:"createdAt"`
+		LastObservedAt string `json:"lastObservedAt"`
 	}
 
 	sigNozStatusError struct {
@@ -90,6 +105,20 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		return nil, fmt.Errorf("cannot parse signoz base URL: %w", err)
 	}
 
+	users, err := d.listUsers(ctx, baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceAccounts, err := d.listServiceAccounts(ctx, baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(users, serviceAccounts...), nil
+}
+
+func (d *SigNozDriver) listUsers(ctx context.Context, baseURL *url.URL) ([]AccountRecord, error) {
 	var users []sigNozUser
 	if err := d.getData(ctx, baseURL.JoinPath("api", "v2", "users"), &users); err != nil {
 		return nil, fmt.Errorf("cannot fetch signoz users: %w", err)
@@ -105,26 +134,9 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			continue
 		}
 
-		// A user deleted since the listing answers 404.
-		var assigned []sigNozRole
-		if err := d.getData(ctx, baseURL.JoinPath("api", "v2", "users", url.PathEscape(id), "roles"), &assigned); err != nil {
-			if statusErr, ok := errors.AsType[*sigNozStatusError](err); !ok || statusErr.StatusCode != http.StatusNotFound {
-				return nil, fmt.Errorf("cannot fetch signoz roles for user %q: %w", id, err)
-			}
-		}
-
-		roles := make([]string, 0, len(assigned))
-		isAdmin := u.IsRoot
-
-		for _, r := range assigned {
-			name := strings.TrimSpace(r.Name)
-			if name == "signoz-admin" {
-				isAdmin = true
-			}
-
-			if role := normalizeSigNozRole(name); role != "" && !slices.Contains(roles, role) {
-				roles = append(roles, role)
-			}
+		roles, isAdmin, err := d.getRoles(ctx, baseURL.JoinPath("api", "v2", "users", url.PathEscape(id), "roles"))
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch signoz roles for user %q: %w", id, err)
 		}
 
 		record := AccountRecord{
@@ -132,7 +144,7 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			FullName:    strings.TrimSpace(u.DisplayName),
 			Roles:       roles,
 			Active:      sigNozActiveStatus(u.Status),
-			IsAdmin:     new(isAdmin),
+			IsAdmin:     new(u.IsRoot || isAdmin),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -147,6 +159,113 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	}
 
 	return records, nil
+}
+
+func (d *SigNozDriver) listServiceAccounts(ctx context.Context, baseURL *url.URL) ([]AccountRecord, error) {
+	var serviceAccounts []sigNozServiceAccount
+	if err := d.getData(ctx, baseURL.JoinPath("api", "v1", "service_accounts"), &serviceAccounts); err != nil {
+		return nil, fmt.Errorf("cannot fetch signoz service accounts: %w", err)
+	}
+
+	records := make([]AccountRecord, 0, len(serviceAccounts))
+
+	for _, sa := range serviceAccounts {
+		id := strings.TrimSpace(sa.ID)
+		if id == "" {
+			continue
+		}
+
+		roles, isAdmin, err := d.getRoles(ctx, baseURL.JoinPath("api", "v1", "service_accounts", url.PathEscape(id), "roles"))
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch signoz roles for service account %q: %w", id, err)
+		}
+
+		lastUsed, err := d.getLastKeyUse(ctx, baseURL.JoinPath("api", "v1", "service_accounts", url.PathEscape(id), "keys"))
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch signoz keys for service account %q: %w", id, err)
+		}
+
+		record := AccountRecord{
+			Email:       strings.TrimSpace(sa.Email),
+			FullName:    strings.TrimSpace(sa.Name),
+			Roles:       roles,
+			Active:      sigNozActiveStatus(sa.Status),
+			IsAdmin:     new(isAdmin),
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodAPIKey,
+			AccountType: coredata.AccessReviewEntryAccountTypeServiceAccount,
+			ExternalID:  id,
+			LastLogin:   lastUsed,
+		}
+
+		if t, ok := parseSigNozTimestamp(sa.CreatedAt); ok {
+			record.CreatedAt = &t
+		}
+
+		records = append(records, record)
+	}
+
+	return records, nil
+}
+
+// getRoles reads an account's roles; an account deleted since the listing
+// answers 404 and has none.
+func (d *SigNozDriver) getRoles(ctx context.Context, endpoint *url.URL) ([]string, bool, error) {
+	var assigned []sigNozRole
+	if err := d.getData(ctx, endpoint, &assigned); err != nil && !isSigNozNotFound(err) {
+		return nil, false, err
+	}
+
+	roles := make([]string, 0, len(assigned))
+	isAdmin := false
+
+	for _, r := range assigned {
+		name := strings.TrimSpace(r.Name)
+		if name == "signoz-admin" {
+			isAdmin = true
+		}
+
+		if role := normalizeSigNozRole(name); role != "" && !slices.Contains(roles, role) {
+			roles = append(roles, role)
+		}
+	}
+
+	return roles, isAdmin, nil
+}
+
+// getLastKeyUse returns the latest use of any of a service account's keys.
+// SigNoz stamps lastObservedAt when it creates a key, so a key still carrying
+// its creation time was never used.
+func (d *SigNozDriver) getLastKeyUse(ctx context.Context, endpoint *url.URL) (*time.Time, error) {
+	var keys []sigNozAPIKey
+	if err := d.getData(ctx, endpoint, &keys); err != nil && !isSigNozNotFound(err) {
+		return nil, err
+	}
+
+	var lastUsed *time.Time
+
+	for _, k := range keys {
+		observed, ok := parseSigNozTimestamp(k.LastObservedAt)
+		if !ok {
+			continue
+		}
+
+		if created, ok := parseSigNozTimestamp(k.CreatedAt); ok && observed.Sub(created) < 100*time.Millisecond {
+			continue
+		}
+
+		if lastUsed == nil || observed.After(*lastUsed) {
+			lastUsed = &observed
+		}
+	}
+
+	return lastUsed, nil
+}
+
+func isSigNozNotFound(err error) bool {
+	statusErr, ok := errors.AsType[*sigNozStatusError](err)
+
+	return ok && statusErr.StatusCode == http.StatusNotFound
 }
 
 func (e *sigNozStatusError) Error() string {
@@ -206,8 +325,9 @@ func normalizeSigNozRole(role string) string {
 	}
 }
 
-// sigNozActiveStatus maps the SigNoz user status. SigNoz emits exactly
-// "active", "pending_invite" and "deleted"; anything else is treated as an
+// sigNozActiveStatus maps the SigNoz user and service account status. SigNoz
+// emits exactly "active", "pending_invite" and "deleted" for users, and
+// "active" and "deleted" for service accounts; anything else is treated as an
 // unknown signal (nil) rather than fabricated.
 func sigNozActiveStatus(status string) *bool {
 	switch strings.ToLower(strings.TrimSpace(status)) {
