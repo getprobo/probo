@@ -4,8 +4,16 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.235.0] - 2026-09-24
+
 ### Added
 
+- `connector list`, `connector view`, `connector discover`,
+  `connector enable-accounts`, and `connector connect` manage connector
+  accounts, so one connector credential can cover several accounts
+- `webhook event list` accepts `TASK_CREATED`, `TASK_UPDATED`,
+  `TASK_DELETED`, `TASK_COMMENT_CREATED`, `TASK_COMMENT_UPDATED`, and
+  `TASK_COMMENT_DELETED`
 - `finding list` accepts `--audit` to list only the findings linked to
   an audit
 
