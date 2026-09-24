@@ -59,9 +59,10 @@ const updateMembershipMutation = graphql`
 
 interface UserRoleSelectProps {
   membershipKey: UserRoleSelect_membership$key;
+  size?: 1 | 2;
 }
 
-export function UserRoleSelect({ membershipKey }: UserRoleSelectProps) {
+export function UserRoleSelect({ membershipKey, size = 1 }: UserRoleSelectProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { role: viewerRole } = use(CurrentUser);
@@ -97,6 +98,38 @@ export function UserRoleSelect({ membershipKey }: UserRoleSelectProps) {
     });
   }
 
+  const trigger = (
+    <Select
+      value={membership.role}
+      disabled={isUpdating}
+      onValueChange={handleRoleChange}
+    >
+      <SelectTrigger size={size} aria-label={t("usersList.filters.role")}>
+        {(value: Role | null) => (
+          value != null ? getMembershipRole(t, value) : null
+        )}
+      </SelectTrigger>
+      <SelectPopup align={size === 1 ? "end" : "start"}>
+        {roleOptions.map(({ value, label }) => (
+          <SelectItem key={value} value={value}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectPopup>
+    </Select>
+  );
+
+  if (size === 2) {
+    if (!membership.canUpdate) {
+      return (
+        <Text size={2} weight="medium" highContrast>
+          {getMembershipRole(t, membership.role)}
+        </Text>
+      );
+    }
+    return trigger;
+  }
+
   return (
     <span className={role()}>
       <Text size={1} color="faint">
@@ -105,24 +138,7 @@ export function UserRoleSelect({ membershipKey }: UserRoleSelectProps) {
       {membership.canUpdate
         ? (
             <div className={roleSelect()}>
-              <Select
-                value={membership.role}
-                disabled={isUpdating}
-                onValueChange={handleRoleChange}
-              >
-                <SelectTrigger size={1} aria-label={t("usersList.filters.role")}>
-                  {(value: Role | null) => (
-                    value != null ? getMembershipRole(t, value) : null
-                  )}
-                </SelectTrigger>
-                <SelectPopup align="end">
-                  {roleOptions.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectPopup>
-              </Select>
+              {trigger}
             </div>
           )
         : (

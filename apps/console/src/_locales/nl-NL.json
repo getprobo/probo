@@ -2284,7 +2284,7 @@
     }
   },
   "usersPage": {
-    "empty": "Geen personen",
+    "empty": "Geen gebruikers",
     "actions": {
       "add": "Gebruiker toevoegen",
       "cancel": "Annuleren",
@@ -2296,7 +2296,29 @@
     "back": "Gebruikers",
     "empty": "—",
     "deactivatedCallout": "Deze gebruiker is gedeactiveerd.",
-    "notFound": "Gebruiker niet gevonden"
+    "notFound": "Gebruiker niet gevonden",
+    "details": {
+      "title": "Details",
+      "description": "Functie, extra e-mails en contractdata."
+    },
+    "fields": {
+      "avatarPlaceholder": "Sleep of klik",
+      "acceptedFiles": "JPEG, PNG, SVG of WebP. Maximaal 5 MB."
+    },
+    "errors": {
+      "invalidFileType": {
+        "title": "Bestandstype niet ondersteund",
+        "description": "Upload een JPEG-, PNG-, SVG- of WebP-afbeelding."
+      },
+      "fileTooLarge": {
+        "title": "Bestand te groot",
+        "description": "Upload een afbeelding kleiner dan 5 MB."
+      },
+      "tooManyFiles": {
+        "title": "Te veel bestanden",
+        "description": "Upload één afbeelding tegelijk."
+      }
+    }
   },
   "newUserPage": {
     "title": "Gebruiker toevoegen",
@@ -2304,7 +2326,7 @@
     "notFound": "U kunt geen gebruikers toevoegen aan deze organisatie"
   },
   "usersList": {
-    "searchPlaceholder": "Personen zoeken...",
+    "searchPlaceholder": "Gebruikers zoeken...",
     "contract": {
       "range": "{{start}} – {{end}}",
       "empty": "—"
@@ -2317,22 +2339,22 @@
       "active": "Actief",
       "deactivated": "Gedeactiveerd",
       "allRoles": "Alle rollen",
-      "allTypes": "Alle typen",
-      "role": "Rol",
-      "type": "Type"
+      "allTypes": "Alle gebruikerstypen",
+      "role": "Probo-rol",
+      "type": "Gebruikertype"
     }
   },
   "userListItem": {
     "messages": {
       "invitationSent": "Uitnodiging succesvol verzonden",
-      "deactivated": "Persoon succesvol gedeactiveerd",
-      "removed": "Persoon succesvol verwijderd",
+      "deactivated": "Gebruiker succesvol gedeactiveerd",
+      "removed": "Gebruiker succesvol verwijderd",
       "roleUpdated": "Rol bijgewerkt"
     },
     "errors": {
       "sendInvitation": "Verzenden van uitnodiging mislukt",
-      "deactivate": "Deactiveren van persoon mislukt",
-      "remove": "Verwijderen van persoon mislukt",
+      "deactivate": "Deactiveren van gebruiker mislukt",
+      "remove": "Verwijderen van gebruiker mislukt",
       "updateRole": "Rol bijwerken mislukt"
     },
     "confirmations": {
@@ -2342,16 +2364,16 @@
     },
     "dialogs": {
       "sendTitle": "Activeringsmail verzenden",
-      "deactivateTitle": "Persoon deactiveren",
-      "removeTitle": "Persoon verwijderen"
+      "deactivateTitle": "Gebruiker deactiveren",
+      "removeTitle": "Gebruiker verwijderen"
     },
     "actions": {
       "more": "Meer acties",
       "send": "Verzenden",
       "sendActivationMail": "Activeringsmail verzenden",
       "resendActivationMail": "Activeringsmail opnieuw verzenden",
-      "deactivatePerson": "Persoon deactiveren",
-      "removePerson": "Persoon verwijderen"
+      "deactivatePerson": "Gebruiker deactiveren",
+      "removePerson": "Gebruiker verwijderen"
     }
   },
   "userForm": {
@@ -2366,8 +2388,8 @@
     "fields": {
       "fullName": "Volledige naam",
       "emailAddress": "E-mailadres",
-      "role": "Rol",
-      "type": "Type",
+      "role": "Probo-rol",
+      "type": "Gebruikertype",
       "position": "Functie",
       "positionPlaceholder": "bijv. CEO, CFO, enz.",
       "additionalEmails": "Extra e-mailadressen",

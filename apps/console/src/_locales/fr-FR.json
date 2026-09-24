@@ -2284,7 +2284,7 @@
     }
   },
   "usersPage": {
-    "empty": "Aucune personne",
+    "empty": "Aucun utilisateur",
     "actions": {
       "add": "Ajouter un utilisateur",
       "cancel": "Annuler",
@@ -2296,7 +2296,29 @@
     "back": "Utilisateurs",
     "empty": "—",
     "deactivatedCallout": "Cet utilisateur est désactivé.",
-    "notFound": "Utilisateur introuvable"
+    "notFound": "Utilisateur introuvable",
+    "details": {
+      "title": "Détails",
+      "description": "Poste, e-mails supplémentaires et dates de contrat."
+    },
+    "fields": {
+      "avatarPlaceholder": "Déposer ou cliquer",
+      "acceptedFiles": "JPEG, PNG, SVG ou WebP. 5 Mo maximum."
+    },
+    "errors": {
+      "invalidFileType": {
+        "title": "Type de fichier non pris en charge",
+        "description": "Téléversez une image JPEG, PNG, SVG ou WebP."
+      },
+      "fileTooLarge": {
+        "title": "Fichier trop volumineux",
+        "description": "Téléversez une image de moins de 5 Mo."
+      },
+      "tooManyFiles": {
+        "title": "Trop de fichiers",
+        "description": "Téléversez une seule image à la fois."
+      }
+    }
   },
   "newUserPage": {
     "title": "Ajouter un utilisateur",
@@ -2304,7 +2326,7 @@
     "notFound": "Vous ne pouvez pas ajouter d’utilisateurs à cette organisation"
   },
   "usersList": {
-    "searchPlaceholder": "Rechercher des personnes...",
+    "searchPlaceholder": "Rechercher des utilisateurs...",
     "contract": {
       "range": "{{start}} – {{end}}",
       "empty": "—"
@@ -2317,22 +2339,22 @@
       "active": "Actif",
       "deactivated": "Désactivé",
       "allRoles": "Tous les rôles",
-      "allTypes": "Tous les types",
-      "role": "Rôle",
-      "type": "Type"
+      "allTypes": "Tous les types d’utilisateur",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur"
     }
   },
   "userListItem": {
     "messages": {
       "invitationSent": "Invitation envoyée avec succès",
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès",
+      "deactivated": "Utilisateur désactivé avec succès",
+      "removed": "Utilisateur supprimé avec succès",
       "roleUpdated": "Rôle mis à jour"
     },
     "errors": {
       "sendInvitation": "Échec de l’envoi de l’invitation",
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne",
+      "deactivate": "Échec de la désactivation de l’utilisateur",
+      "remove": "Échec de la suppression de l’utilisateur",
       "updateRole": "Échec de la mise à jour du rôle"
     },
     "confirmations": {
@@ -2342,16 +2364,16 @@
     },
     "dialogs": {
       "sendTitle": "Envoyer l’e-mail d’activation",
-      "deactivateTitle": "Désactiver la personne",
-      "removeTitle": "Supprimer la personne"
+      "deactivateTitle": "Désactiver l’utilisateur",
+      "removeTitle": "Supprimer l’utilisateur"
     },
     "actions": {
       "more": "Plus d’actions",
       "send": "Envoyer",
       "sendActivationMail": "Envoyer l’e-mail d’activation",
       "resendActivationMail": "Renvoyer l’e-mail d’activation",
-      "deactivatePerson": "Désactiver la personne",
-      "removePerson": "Supprimer la personne"
+      "deactivatePerson": "Désactiver l’utilisateur",
+      "removePerson": "Supprimer l’utilisateur"
     }
   },
   "userForm": {
@@ -2366,8 +2388,8 @@
     "fields": {
       "fullName": "Nom complet",
       "emailAddress": "Adresse e-mail",
-      "role": "Rôle",
-      "type": "Type",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur",
       "position": "Poste",
       "positionPlaceholder": "ex. PDG, DAF, etc.",
       "additionalEmails": "E-mails supplémentaires",

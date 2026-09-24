@@ -19,11 +19,9 @@
 // SOFTWARE.
 
 import { ArchiveIcon, CaretLeftIcon, DotsThreeVerticalIcon, EnvelopeIcon, TrashIcon } from "@phosphor-icons/react";
-import { getRole } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { dateFormat } from "@probo/i18n";
-import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -33,7 +31,7 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
@@ -45,8 +43,8 @@ import { NotFoundError } from "#/lib/relay/errors";
 import { DeactivateUserDialog } from "./_components/DeactivateUserDialog";
 import { RemoveUserDialog } from "./_components/RemoveUserDialog";
 import { SendActivationEmailDialog } from "./_components/SendActivationEmailDialog";
+import { UserIdentitySection } from "./_components/UserIdentitySection";
 import { UserPropertiesSection } from "./_components/UserPropertiesSection";
-import { UserRoleSelect } from "./_components/UserRoleSelect";
 import { userPage } from "./variants";
 
 export const userPageQuery = graphql`
@@ -59,18 +57,6 @@ export const userPageQuery = graphql`
         emailAddress
         source
         state
-        kind
-        createdAt
-        avatar {
-          downloadUrl
-        }
-        membership @required(action: THROW) {
-          ...UserRoleSelect_membership
-        }
-        contract {
-          start
-          end
-        }
         pendingInvitations(first: 1) @required(action: THROW) {
           edges {
             __typename
@@ -82,6 +68,7 @@ export const userPageQuery = graphql`
         ...SendActivationEmailDialog_profile
         ...DeactivateUserDialog_profile
         ...RemoveUserDialog_profile
+        ...UserIdentitySection_profile
         ...UserPropertiesSection_profile
       }
     }
@@ -98,12 +85,20 @@ function statusBadgeColor(state: ProfileState) {
   return "neutral" as const;
 }
 
+interface ExtraAction {
+  key: string;
+  label: string;
+  icon: ReactNode;
+  color?: "error";
+  onSelect: () => void;
+}
+
 interface UserPageProps {
   queryRef: PreloadedQuery<UserPageQuery>;
 }
 
 export function UserPage({ queryRef }: UserPageProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { person } = usePreloadedQuery<UserPageQuery>(userPageQuery, queryRef);
   if (person.__typename !== "Profile") {
@@ -120,36 +115,20 @@ export function UserPage({ queryRef }: UserPageProps) {
   const canSendActivationMail = !isActive && person.source !== "SCIM" && person.canInvite;
   const canDeactivate = person.canDeactivate && person.source !== "SCIM" && person.state !== "DEACTIVATED";
   const canRemove = person.canRemoveMember && person.source !== "SCIM";
-  const hasActions = canSendActivationMail || canDeactivate || canRemove;
   const isResend = person.pendingInvitations.edges.length > 0;
-  const showSource = person.source === "SCIM" || person.source === "SAML";
-  const hasContractDates = person.contract?.start != null || person.contract?.end != null;
-  const dateLabel = hasContractDates
-    ? t("usersList.contract.range", {
-        start: person.contract?.start
-          ? dateFormat(i18n.language, person.contract.start)
-          : t("usersList.contract.empty"),
-        end: person.contract?.end
-          ? dateFormat(i18n.language, person.contract.end)
-          : t("usersList.contract.empty"),
-      })
-    : t("usersList.created", { date: dateFormat(i18n.language, person.createdAt) });
-  const {
-    root,
-    back,
-    header,
-    person: personSlot,
-    avatar,
-    source,
-    identity,
-    kind,
-    title,
-    email,
-    badges,
-    menu,
-    meta,
-    contract,
-  } = userPage({ inactive: isInactive });
+  const { root, back, header, identity, titleRow, title, email, actions } = userPage();
+  const extraActions: ExtraAction[] = [];
+  if (canRemove) {
+    extraActions.push({
+      key: "remove",
+      label: t("userListItem.actions.removePerson"),
+      icon: <TrashIcon />,
+      color: "error",
+      onSelect: () => setRemoveOpen(true),
+    });
+  }
+  const onlyExtra = extraActions.length === 1 ? extraActions[0] : null;
+  const hasToolbarActions = canSendActivationMail || canDeactivate || extraActions.length > 0;
 
   function handleLeft() {
     void navigate("..");
@@ -167,101 +146,99 @@ export function UserPage({ queryRef }: UserPageProps) {
       >
         {t("userPage.back")}
       </Link>
+      <div className={header()}>
+        <div className={identity()}>
+          <div className={titleRow()}>
+            <Heading level={1} size={6} weight="medium" highContrast className={title()}>
+              {person.fullName}
+            </Heading>
+            <Badge variant="soft" color={statusBadgeColor(person.state)} size={1}>
+              {t(`usersList.filters.${person.state.toLowerCase()}`)}
+            </Badge>
+          </div>
+          <Text size={2} className={email()}>
+            {person.emailAddress}
+          </Text>
+        </div>
+        {hasToolbarActions && (
+          <div className={actions()}>
+            {canSendActivationMail && (
+              <Button
+                type="button"
+                size={2}
+                variant="solid"
+                color="neutral"
+                highContrast
+                iconStart={<EnvelopeIcon />}
+                onClick={() => setSendOpen(true)}
+              >
+                {isResend
+                  ? t("userListItem.actions.resendActivationMail")
+                  : t("userListItem.actions.sendActivationMail")}
+              </Button>
+            )}
+            {!canSendActivationMail && canDeactivate && (
+              <Button
+                type="button"
+                size={2}
+                variant="solid"
+                color="neutral"
+                highContrast
+                iconStart={<ArchiveIcon />}
+                onClick={() => setDeactivateOpen(true)}
+              >
+                {t("userListItem.actions.deactivatePerson")}
+              </Button>
+            )}
+            {onlyExtra != null && (
+              <IconButton
+                type="button"
+                size={2}
+                variant="surface"
+                color={onlyExtra.color === "error" ? "red" : "neutral"}
+                aria-label={onlyExtra.label}
+                onClick={onlyExtra.onSelect}
+              >
+                {onlyExtra.icon}
+              </IconButton>
+            )}
+            {extraActions.length > 1 && (
+              <Dropdown>
+                <DropdownTrigger
+                  render={(
+                    <IconButton
+                      variant="surface"
+                      color="neutral"
+                      size={2}
+                      aria-label={t("userListItem.actions.more")}
+                    >
+                      <DotsThreeVerticalIcon />
+                    </IconButton>
+                  )}
+                />
+                <DropdownPopup align="end">
+                  {extraActions.map(action => (
+                    <DropdownItem
+                      key={action.key}
+                      color={action.color}
+                      iconStart={action.icon}
+                      onClick={action.onSelect}
+                    >
+                      {action.label}
+                    </DropdownItem>
+                  ))}
+                </DropdownPopup>
+              </Dropdown>
+            )}
+          </div>
+        )}
+      </div>
       {isInactive && (
         <Callout color="amber">
           {t("userPage.deactivatedCallout")}
         </Callout>
       )}
-      <div className={header()}>
-        <div className={personSlot()}>
-          <div className={avatar()}>
-            <Avatar
-              name={person.fullName}
-              email={person.emailAddress}
-              src={person.avatar?.downloadUrl}
-              size={5}
-            />
-            {showSource && (
-              <span className={source()}>
-                <Badge variant="soft" color="neutral" size={1}>
-                  {person.source}
-                </Badge>
-              </span>
-            )}
-          </div>
-          <div className={identity()}>
-            {person.kind != null && (
-              <Text size={1} color="faint" className={kind()}>
-                {getRole(t, person.kind)}
-              </Text>
-            )}
-            <Heading level={1} size={6} weight="medium" highContrast className={title()}>
-              {person.fullName}
-            </Heading>
-            <Text size={2} className={email()}>
-              {person.emailAddress}
-            </Text>
-            <div className={badges()}>
-              <Badge variant="soft" color={statusBadgeColor(person.state)} size={1}>
-                {t(`usersList.filters.${person.state.toLowerCase()}`)}
-              </Badge>
-            </div>
-          </div>
-        </div>
-        {hasActions && (
-          <div className={menu()}>
-            <Dropdown>
-              <DropdownTrigger
-                render={(
-                  <IconButton
-                    variant="ghost"
-                    color="neutral"
-                    size={1}
-                    aria-label={t("userListItem.actions.more")}
-                  >
-                    <DotsThreeVerticalIcon />
-                  </IconButton>
-                )}
-              />
-              <DropdownPopup align="end">
-                {canSendActivationMail && (
-                  <DropdownItem
-                    iconStart={<EnvelopeIcon />}
-                    onClick={() => setSendOpen(true)}
-                  >
-                    {isResend
-                      ? t("userListItem.actions.resendActivationMail")
-                      : t("userListItem.actions.sendActivationMail")}
-                  </DropdownItem>
-                )}
-                {!canSendActivationMail && canDeactivate && (
-                  <DropdownItem
-                    iconStart={<ArchiveIcon />}
-                    onClick={() => setDeactivateOpen(true)}
-                  >
-                    {t("userListItem.actions.deactivatePerson")}
-                  </DropdownItem>
-                )}
-                {canRemove && (
-                  <DropdownItem
-                    color="error"
-                    iconStart={<TrashIcon />}
-                    onClick={() => setRemoveOpen(true)}
-                  >
-                    {t("userListItem.actions.removePerson")}
-                  </DropdownItem>
-                )}
-              </DropdownPopup>
-            </Dropdown>
-          </div>
-        )}
-      </div>
-      <div className={meta()}>
-        <UserRoleSelect membershipKey={person.membership} />
-        <Text size={1} color="faint" className={contract()}>
-          {dateLabel}
-        </Text>
-      </div>
+      <UserIdentitySection profileKey={person} />
       <UserPropertiesSection profileKey={person} />
       {canSendActivationMail && (
         <SendActivationEmailDialog

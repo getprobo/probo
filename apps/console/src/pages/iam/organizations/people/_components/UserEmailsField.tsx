@@ -31,6 +31,7 @@ interface UserEmailsFieldProps {
   value: string[];
   disabled?: boolean;
   readOnly?: boolean;
+  size?: 1 | 2;
   onValueChange: (value: string[]) => void;
   onBlur?: () => void;
 }
@@ -39,6 +40,7 @@ export function UserEmailsField({
   value,
   disabled = false,
   readOnly = false,
+  size = 2,
   onValueChange,
   onBlur,
 }: UserEmailsFieldProps) {
@@ -65,7 +67,7 @@ export function UserEmailsField({
         <div key={index} className={row()}>
           <div className={field()}>
             <TextField
-              size={1}
+              size={size}
               type="email"
               value={email}
               disabled={disabled}

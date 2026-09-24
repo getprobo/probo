@@ -1483,14 +1483,36 @@
     "actions": { "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "switchToDarkMode": "Switch to dark mode", "switchToLightMode": "Switch to light mode", "help": "Help", "logout": "Logout" }
   },
   "usersPage": {
-    "empty": "No people",
+    "empty": "No users",
     "actions": { "add": "Add User", "cancel": "Cancel", "previous": "Prev", "next": "Next" }
   },
   "userPage": {
     "back": "Users",
     "empty": "—",
     "deactivatedCallout": "This user is deactivated.",
-    "notFound": "User not found"
+    "notFound": "User not found",
+    "details": {
+      "title": "Details",
+      "description": "Position, additional emails, and contract dates."
+    },
+    "fields": {
+      "avatarPlaceholder": "Drop or click",
+      "acceptedFiles": "JPEG, PNG, SVG, or WebP. Maximum 5 MB."
+    },
+    "errors": {
+      "invalidFileType": {
+        "title": "Unsupported file type",
+        "description": "Upload a JPEG, PNG, SVG, or WebP image."
+      },
+      "fileTooLarge": {
+        "title": "File too large",
+        "description": "Upload an image smaller than 5 MB."
+      },
+      "tooManyFiles": {
+        "title": "Too many files",
+        "description": "Upload one image at a time."
+      }
+    }
   },
   "newUserPage": {
     "title": "Add User",
@@ -1498,17 +1520,17 @@
     "notFound": "You cannot add users to this organization"
   },
   "usersList": {
-    "searchPlaceholder": "Search people...",
+    "searchPlaceholder": "Search users...",
     "contract": { "range": "{{start}} – {{end}}", "empty": "—" },
     "created": "Created {{date}}",
-    "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All types", "role": "Role", "type": "Type" }
+    "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All user types", "role": "Probo role", "type": "User type" }
   },
   "userListItem": {
-    "messages": { "invitationSent": "Invitation sent successfully", "deactivated": "Person deactivated successfully", "removed": "Person removed successfully", "roleUpdated": "Role updated" },
-    "errors": { "sendInvitation": "Failed to send invitation", "deactivate": "Failed to deactivate person", "remove": "Failed to remove person", "updateRole": "Failed to update role" },
+    "messages": { "invitationSent": "Invitation sent successfully", "deactivated": "User deactivated successfully", "removed": "User removed successfully", "roleUpdated": "Role updated" },
+    "errors": { "sendInvitation": "Failed to send invitation", "deactivate": "Failed to deactivate user", "remove": "Failed to remove user", "updateRole": "Failed to update role" },
     "confirmations": { "sendActivationEmail": "Send the activation email to {{name}}?", "deactivate": "Are you sure you want to deactivate {{name}}?", "remove": "Are you sure you want to remove {{name}}?" },
-    "dialogs": { "sendTitle": "Send activation email", "deactivateTitle": "Deactivate person", "removeTitle": "Remove person" },
-    "actions": { "more": "More actions", "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "deactivatePerson": "Deactivate person", "removePerson": "Remove person" }
+    "dialogs": { "sendTitle": "Send activation email", "deactivateTitle": "Deactivate user", "removeTitle": "Remove user" },
+    "actions": { "more": "More actions", "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "deactivatePerson": "Deactivate user", "removePerson": "Remove user" }
   },
   "userForm": {
     "messages": { "created": "User created successfully.", "updated": "User updated successfully." },
@@ -1516,8 +1538,8 @@
     "fields": {
       "fullName": "Full name",
       "emailAddress": "Email address",
-      "role": "Role",
-      "type": "Type",
+      "role": "Probo role",
+      "type": "User type",
       "position": "Position",
       "positionPlaceholder": "e.g. CEO, CFO, etc.",
       "additionalEmails": "Additional emails",
