@@ -138,6 +138,7 @@ export const userPageSkeleton = tv({
     fields: "flex min-w-0 flex-1 flex-col gap-3",
     properties: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
+    dates: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 [&>*]:min-w-0",
   },
 });
 
@@ -146,6 +147,7 @@ export const userPropertiesSection = tv({
     root: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
     fields: "flex flex-col gap-4",
+    dates: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 [&>*]:min-w-0",
   },
 });
 
@@ -154,6 +156,7 @@ export const userEmailsField = tv({
     root: "flex flex-col gap-2",
     row: "flex items-center gap-2",
     field: "min-w-0 flex-1",
+    add: "self-start",
   },
 });
 
@@ -163,6 +166,7 @@ export const newUserPage = tv({
     back: "self-start",
     intro: "flex min-w-0 flex-col gap-2",
     form: "flex flex-col gap-4",
+    dates: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 [&>*]:min-w-0",
     actions: "flex justify-end",
   },
 });
@@ -172,5 +176,6 @@ export const newUserPageSkeleton = tv({
     root: "flex flex-col gap-6",
     intro: "flex min-w-0 flex-col gap-2",
     form: "flex flex-col gap-4",
+    dates: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 [&>*]:min-w-0",
   },
 });

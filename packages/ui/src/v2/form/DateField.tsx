@@ -334,17 +334,18 @@ export function DateField(props: DateFieldProps) {
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
         />
+        {nullable && value !== "" && !disabled && (
+          <button
+            type="button"
+            className={clear()}
+            aria-label="Clear date"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={clearValue}
+          >
+            <XIcon />
+          </button>
+        )}
       </div>
-      {nullable && value !== "" && !disabled && (
-        <button
-          type="button"
-          className={clear()}
-          aria-label="Clear date"
-          onClick={clearValue}
-        >
-          <XIcon />
-        </button>
-      )}
     </div>
   );
 }

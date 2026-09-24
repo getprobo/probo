@@ -61,7 +61,7 @@ export function UserPropertiesSection({ profileKey }: UserPropertiesSectionProps
   const { t, i18n } = useTranslation();
   const profile = useFragment(fragment, profileKey);
   const [updateUser, isUpdating] = useUpdateUser();
-  const { root, intro, fields } = userPropertiesSection();
+  const { root, intro, fields, dates } = userPropertiesSection();
   const scimManaged = profile.source === "SCIM";
   const canEditIdentity = profile.canUpdate && !scimManaged;
   const canEditContract = profile.canUpdate;
@@ -171,52 +171,54 @@ export function UserPropertiesSection({ profileKey }: UserPropertiesSectionProps
               onBlur={saveEmails}
             />
           </Field>
-          <Field label={t("userForm.fields.contractStartDate")}>
-            {canEditContract
-              ? (
-                  <DateField
-                    size={2}
-                    value={toInputDate(contractStart)}
-                    locale={i18n.language}
-                    disabled={isUpdating}
-                    nullable
-                    onValueChange={(next) => {
-                      setContractStart(next);
-                      saveContract(next, contractEnd);
-                    }}
-                  />
-                )
-              : (
-                  <ContractDateValue
-                    value={profile.contract?.start}
-                    language={i18n.language}
-                    empty={empty}
-                  />
-                )}
-          </Field>
-          <Field label={t("userForm.fields.contractEndDate")}>
-            {canEditContract
-              ? (
-                  <DateField
-                    size={2}
-                    value={toInputDate(contractEnd)}
-                    locale={i18n.language}
-                    disabled={isUpdating}
-                    nullable
-                    onValueChange={(next) => {
-                      setContractEnd(next);
-                      saveContract(contractStart, next);
-                    }}
-                  />
-                )
-              : (
-                  <ContractDateValue
-                    value={profile.contract?.end}
-                    language={i18n.language}
-                    empty={empty}
-                  />
-                )}
-          </Field>
+          <div className={dates()}>
+            <Field label={t("userForm.fields.contractStartDate")}>
+              {canEditContract
+                ? (
+                    <DateField
+                      size={2}
+                      value={toInputDate(contractStart)}
+                      locale={i18n.language}
+                      disabled={isUpdating}
+                      nullable
+                      onValueChange={(next) => {
+                        setContractStart(next);
+                        saveContract(next, contractEnd);
+                      }}
+                    />
+                  )
+                : (
+                    <ContractDateValue
+                      value={profile.contract?.start}
+                      language={i18n.language}
+                      empty={empty}
+                    />
+                  )}
+            </Field>
+            <Field label={t("userForm.fields.contractEndDate")}>
+              {canEditContract
+                ? (
+                    <DateField
+                      size={2}
+                      value={toInputDate(contractEnd)}
+                      locale={i18n.language}
+                      disabled={isUpdating}
+                      nullable
+                      onValueChange={(next) => {
+                        setContractEnd(next);
+                        saveContract(contractStart, next);
+                      }}
+                    />
+                  )
+                : (
+                    <ContractDateValue
+                      value={profile.contract?.end}
+                      language={i18n.language}
+                      empty={empty}
+                    />
+                  )}
+            </Field>
+          </div>
         </div>
       </Card>
     </section>

@@ -45,7 +45,7 @@ export function UserEmailsField({
   onBlur,
 }: UserEmailsFieldProps) {
   const { t } = useTranslation();
-  const { root, row, field } = userEmailsField();
+  const { root, row, field, add } = userEmailsField();
   const emails = value.length > 0 ? value : readOnly ? [] : [""];
 
   if (readOnly) {
@@ -103,6 +103,7 @@ export function UserEmailsField({
         color="neutral"
         size={1}
         disabled={disabled}
+        className={add()}
         iconStart={<PlusIcon />}
         onClick={() => onValueChange([...emails, ""])}
       >

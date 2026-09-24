@@ -27,7 +27,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { newUserPageSkeleton } from "./variants";
 
 export function NewUserPageSkeleton() {
-  const { root, intro, form } = newUserPageSkeleton();
+  const { root, intro, form, dates } = newUserPageSkeleton();
 
   return (
     <div className={root()}>
@@ -42,7 +42,10 @@ export function NewUserPageSkeleton() {
           <TextFieldSkeleton size={2} className="w-full" />
           <TextFieldSkeleton size={2} className="w-full" />
           <TextFieldSkeleton size={2} className="w-full" />
-          <TextFieldSkeleton size={2} className="w-full" />
+          <div className={dates()}>
+            <TextFieldSkeleton size={2} className="w-full" />
+            <TextFieldSkeleton size={2} className="w-full" />
+          </div>
           <ButtonSkeleton size={2} className="w-24" />
         </div>
       </Card>

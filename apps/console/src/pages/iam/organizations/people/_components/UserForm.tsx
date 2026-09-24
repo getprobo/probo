@@ -89,7 +89,7 @@ export function UserForm({
   const roleOptions = getMembershipRoles(t).filter(({ value }) => (
     assignableRoles.includes(value)
   ));
-  const { form, actions } = newUserPage();
+  const { form, dates, actions } = newUserPage();
 
   const [fullName, setFullName] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
@@ -230,32 +230,34 @@ export function UserForm({
           }}
         />
       </Field>
-      <Field label={t("userForm.fields.contractStartDate")} error={errors.contractStart}>
-        <DateField
-          name="contractStart"
-          value={contractStart}
-          locale={i18n.language}
-          disabled={disabled}
-          nullable
-          onValueChange={(next) => {
-            setContractStart(next);
-            clearError("contractStart");
-          }}
-        />
-      </Field>
-      <Field label={t("userForm.fields.contractEndDate")} error={errors.contractEnd}>
-        <DateField
-          name="contractEnd"
-          value={contractEnd}
-          locale={i18n.language}
-          disabled={disabled}
-          nullable
-          onValueChange={(next) => {
-            setContractEnd(next);
-            clearError("contractEnd");
-          }}
-        />
-      </Field>
+      <div className={dates()}>
+        <Field label={t("userForm.fields.contractStartDate")} error={errors.contractStart}>
+          <DateField
+            name="contractStart"
+            value={contractStart}
+            locale={i18n.language}
+            disabled={disabled}
+            nullable
+            onValueChange={(next) => {
+              setContractStart(next);
+              clearError("contractStart");
+            }}
+          />
+        </Field>
+        <Field label={t("userForm.fields.contractEndDate")} error={errors.contractEnd}>
+          <DateField
+            name="contractEnd"
+            value={contractEnd}
+            locale={i18n.language}
+            disabled={disabled}
+            nullable
+            onValueChange={(next) => {
+              setContractEnd(next);
+              clearError("contractEnd");
+            }}
+          />
+        </Field>
+      </div>
       <div className={actions()}>
         <Button
           type="submit"
