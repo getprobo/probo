@@ -61,6 +61,7 @@ export interface DateFieldProps {
   "max"?: string;
   // When true, a clear control appears while a date is selected.
   "nullable"?: boolean;
+  "required"?: boolean;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
   "aria-required"?: boolean;
@@ -83,6 +84,7 @@ export function DateField(props: DateFieldProps) {
     min,
     max,
     nullable = false,
+    required = false,
     "aria-invalid": ariaInvalid,
     "aria-describedby": ariaDescribedBy,
     "aria-required": ariaRequired,
@@ -330,6 +332,7 @@ export function DateField(props: DateFieldProps) {
           autoComplete="off"
           spellCheck={false}
           disabled={disabled}
+          required={required}
           maxLength={10}
           placeholder={placeholder ?? maskPlaceholder(pattern)}
           value={draft}
