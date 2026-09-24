@@ -37,15 +37,15 @@ func daytonaRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("daytona"),
 		// Daytona authenticates with an organization API key as Authorization:
 		// Bearer, the default APIKeyConnection scheme. Listing members takes
-		// the organization id as a path segment, so it is captured up front
-		// (Pattern 2): no picker, no SetOrganizationSettings.
-		APIKey: &APIKeyConfig{
-			ExtraSettings: []ExtraSetting{
-				{Key: "organizationId", Label: "Organization ID", Required: true},
-			},
-		},
-		BuildProbeURL: buildDaytonaProbeURL,
+		// the organization id as a path segment, but GET /organizations
+		// returns it for the key that was pasted, so the customer picks from
+		// what the key can reach instead of copying an id out of the Daytona
+		// dashboard. A key is scoped to one organization, so the picker
+		// normally has a single entry that AutoSelectDefaultOrganization
+		// selects on its own.
+		APIKey: &APIKeyConfig{},
 		Endpoints: Endpoints{
+			Probe:   "https://app.daytona.io/api/organizations",
 			APIBase: "https://app.daytona.io/api",
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
@@ -68,6 +68,9 @@ func daytonaRegistration() *Registration {
 			}
 
 			return drivers.NewDaytonaNameResolver(c, s.OrganizationID, ep.APIBase)
+		},
+		SetOrganizationSettings: func(c *coredata.Connector, organizationID string) error {
+			return c.SetSettings(&coredata.DaytonaConnectorSettings{OrganizationID: organizationID})
 		},
 	}
 }

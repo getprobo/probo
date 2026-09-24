@@ -423,7 +423,6 @@ input CreateAPIKeyConnectorInput {
     qoveryOrganizationId: String
     renderWorkspaceId: String
     neonOrganizationId: String
-    daytonaOrganizationId: String
     langfuseBaseUrl: String
     scalewayOrganizationId: String
     segmentRegion: String

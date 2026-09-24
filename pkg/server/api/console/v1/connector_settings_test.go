@@ -39,32 +39,6 @@ import (
 // walks — the key a Registration declares, the mutation input field it is
 // submitted as, the settings struct that is persisted — so a key renamed on one
 // side and not the other fails here instead of at connect time.
-func TestApiKeyConnectorSettings_DaytonaOrganizationID(t *testing.T) {
-	t.Parallel()
-
-	reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderDaytona)
-	require.True(t, ok)
-	require.Len(t, reg.APIKeyExtraSettings(), 1)
-	require.Equal(t, "organizationId", reg.APIKeyExtraSettings()[0].Key)
-
-	organizationID := "aaaaaaaa-1111-2222-3333-000000000001"
-
-	raw, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
-		Provider:              coredata.ConnectorProviderDaytona,
-		DaytonaOrganizationID: &organizationID,
-	})
-	require.NoError(t, err)
-
-	var settings coredata.DaytonaConnectorSettings
-	require.NoError(t, json.Unmarshal(raw, &settings))
-	assert.Equal(t, organizationID, settings.OrganizationID)
-
-	_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
-		Provider: coredata.ConnectorProviderDaytona,
-	})
-	require.Error(t, err)
-}
-
 func TestApiKeyConnectorSettings_LangfuseBaseURL(t *testing.T) {
 	t.Parallel()
 

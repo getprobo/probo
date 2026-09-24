@@ -43,11 +43,26 @@ func TestDaytonaRegistrationMetadata(t *testing.T) {
 	assert.Equal(t, "Daytona", reg.DisplayName)
 	assert.True(t, reg.SupportsAPIKey())
 	assert.Equal(t, provider.APIKeyAuthBearer, reg.APIKey.Auth.Mode)
-	require.Len(t, reg.APIKeyExtraSettings(), 1)
-	assert.Equal(t, "organizationId", reg.APIKeyExtraSettings()[0].Key)
-	assert.Equal(t, "Organization ID", reg.APIKeyExtraSettings()[0].Label)
-	assert.True(t, reg.APIKeyExtraSettings()[0].Required)
+	assert.Empty(t, reg.APIKeyExtraSettings(), "the organization is picked from GET /organizations, not typed")
+	assert.NotNil(t, reg.SetOrganizationSettings, "daytona must store the picked organization")
 	assert.Equal(t, "https://app.daytona.io/api", reg.Endpoints.APIBase)
+	assert.Equal(t, "https://app.daytona.io/api/organizations", reg.Endpoints.Probe)
+}
+
+func TestDaytonaSetOrganizationSettings(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderDaytona)
+	require.True(t, ok, "daytona provider must be registered")
+	require.NotNil(t, reg.SetOrganizationSettings)
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderDaytona}
+	require.NoError(t, reg.SetOrganizationSettings(conn, "aaaaaaaa-1111-2222-3333-000000000001"))
+
+	s, err := coredata.ConnectorSettings[coredata.DaytonaConnectorSettings](conn)
+	require.NoError(t, err)
+	assert.Equal(t, "aaaaaaaa-1111-2222-3333-000000000001", s.OrganizationID)
 }
 
 func TestDaytonaNewDriver(t *testing.T) {

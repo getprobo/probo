@@ -43,6 +43,12 @@ const (
 	daytonaInvitationPending = "pending"
 )
 
+// daytonaDefaultBaseURL is the Daytona API root. It backs only the exported
+// ListDaytonaOrganizations, and only when its caller resolves no APIBase for
+// the provider (unregistered, or registered without one). Every other path
+// goes through the injected baseURL instead.
+const daytonaDefaultBaseURL = "https://app.daytona.io/api"
+
 type (
 	DaytonaDriver struct {
 		httpClient     *http.Client
@@ -64,6 +70,11 @@ type (
 		CreatedAt      string                `json:"createdAt"`
 	}
 
+	daytonaOrganization struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+
 	daytonaInvitation struct {
 		ID     string `json:"id"`
 		Email  string `json:"email"`
@@ -80,12 +91,7 @@ type (
 
 var _ Driver = (*DaytonaDriver)(nil)
 
-// DaytonaUsersURL builds GET /organizations/{organizationId}/users from an API
-// origin. It is exported because the connection probe checks this same
-// endpoint from another package: were it to re-derive the path, moving the
-// driver's would leave the probe reporting a healthy connection against the
-// old one.
-func DaytonaUsersURL(baseURL, organizationID string) (string, error) {
+func daytonaUsersURL(baseURL, organizationID string) (string, error) {
 	endpoint, err := url.JoinPath(
 		baseURL,
 		daytonaOrganizationsSegment,
@@ -108,6 +114,15 @@ func daytonaInvitationsURL(baseURL, organizationID string) (string, error) {
 	)
 	if err != nil {
 		return "", fmt.Errorf("cannot build daytona invitations URL: %w", err)
+	}
+
+	return endpoint, nil
+}
+
+func daytonaOrganizationsURL(baseURL string) (string, error) {
+	endpoint, err := url.JoinPath(baseURL, daytonaOrganizationsSegment)
+	if err != nil {
+		return "", fmt.Errorf("cannot build daytona organizations URL: %w", err)
 	}
 
 	return endpoint, nil
@@ -179,13 +194,13 @@ func (d *DaytonaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 }
 
 func (d *DaytonaDriver) fetchUsers(ctx context.Context) ([]daytonaUser, error) {
-	endpoint, err := DaytonaUsersURL(d.baseURL, d.organizationID)
+	endpoint, err := daytonaUsersURL(d.baseURL, d.organizationID)
 	if err != nil {
 		return nil, err
 	}
 
 	var users []daytonaUser
-	if err := d.getJSON(ctx, endpoint, "users", &users); err != nil {
+	if err := daytonaGetJSON(ctx, d.httpClient, endpoint, "users", &users); err != nil {
 		return nil, err
 	}
 
@@ -199,14 +214,20 @@ func (d *DaytonaDriver) fetchInvitations(ctx context.Context) ([]daytonaInvitati
 	}
 
 	var invitations []daytonaInvitation
-	if err := d.getJSON(ctx, endpoint, "invitations", &invitations); err != nil {
+	if err := daytonaGetJSON(ctx, d.httpClient, endpoint, "invitations", &invitations); err != nil {
 		return nil, err
 	}
 
 	return invitations, nil
 }
 
-func (d *DaytonaDriver) getJSON(ctx context.Context, endpoint, what string, dest any) error {
+func daytonaGetJSON(
+	ctx context.Context,
+	httpClient *http.Client,
+	endpoint string,
+	what string,
+	dest any,
+) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("cannot create daytona %s request: %w", what, err)
@@ -214,7 +235,7 @@ func (d *DaytonaDriver) getJSON(ctx context.Context, endpoint, what string, dest
 
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := d.httpClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot execute daytona %s request: %w", what, err)
 	}
@@ -369,4 +390,43 @@ func (r *daytonaNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	}
 
 	return strings.TrimSpace(resp.Name), nil
+}
+
+// ListDaytonaOrganizations fetches the organizations the authenticated API key
+// can reach, from baseURL ("" for the Daytona SaaS API). A key is issued
+// inside one organization, so the list is normally a single entry the picker
+// defaults to; it is still read from the provider rather than typed by the
+// customer, because the users endpoint needs the organization id in its path.
+func ListDaytonaOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = daytonaDefaultBaseURL
+	}
+
+	endpoint, err := daytonaOrganizationsURL(baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	var organizations []daytonaOrganization
+	if err := daytonaGetJSON(ctx, httpClient, endpoint, "organizations", &organizations); err != nil {
+		return nil, err
+	}
+
+	result := make([]Organization, 0, len(organizations))
+
+	for _, o := range organizations {
+		id := strings.TrimSpace(o.ID)
+		if id == "" {
+			continue
+		}
+
+		displayName := strings.TrimSpace(o.Name)
+		if displayName == "" {
+			displayName = id
+		}
+
+		result = append(result, Organization{Slug: id, DisplayName: displayName})
+	}
+
+	return result, nil
 }

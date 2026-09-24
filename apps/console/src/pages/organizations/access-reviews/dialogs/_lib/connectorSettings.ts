@@ -83,9 +83,6 @@ export function mapAPIKeyExtraSettingToField(
     case "NEON":
       if (settingKey === "organizationId") return "neonOrganizationId";
       break;
-    case "DAYTONA":
-      if (settingKey === "organizationId") return "daytonaOrganizationId";
-      break;
     case "SCALEWAY":
       if (settingKey === "organizationId") return "scalewayOrganizationId";
       break;

@@ -142,6 +142,64 @@ func TestDaytonaRoles(t *testing.T) {
 	}
 }
 
+func TestListDaytonaOrganizations(t *testing.T) {
+	t.Parallel()
+
+	t.Run("maps organizations the key can reach", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{
+			Transport: roundTripFunc(
+				func(req *http.Request) (*http.Response, error) {
+					assert.Equal(t, "/api/organizations", req.URL.Path)
+
+					body := `[{"id":"` + daytonaTestOrgID + `","name":"Acme","createdAt":"2025-11-12T13:26:01Z"},` +
+						`{"id":"aaaaaaaa-1111-2222-3333-000000000002","name":"","createdAt":"2025-11-12T13:26:01Z"}]`
+
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       io.NopCloser(strings.NewReader(body)),
+						Header:     make(http.Header),
+					}, nil
+				},
+			),
+		}
+
+		orgs, err := ListDaytonaOrganizations(context.Background(), client, "https://app.daytona.io/api")
+		require.NoError(t, err)
+		require.Len(t, orgs, 2)
+		assert.Equal(t, Organization{Slug: daytonaTestOrgID, DisplayName: "Acme"}, orgs[0])
+		assert.Equal(
+			t,
+			Organization{
+				Slug:        "aaaaaaaa-1111-2222-3333-000000000002",
+				DisplayName: "aaaaaaaa-1111-2222-3333-000000000002",
+			},
+			orgs[1],
+		)
+	})
+
+	t.Run("errors on a rejected key", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{
+			Transport: roundTripFunc(
+				func(req *http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: http.StatusUnauthorized,
+						Body:       io.NopCloser(strings.NewReader(`{"message":"unauthorized"}`)),
+						Header:     make(http.Header),
+					}, nil
+				},
+			),
+		}
+
+		_, err := ListDaytonaOrganizations(context.Background(), client, "https://app.daytona.io/api")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unexpected status 401")
+	})
+}
+
 func TestDaytonaNameResolver(t *testing.T) {
 	t.Parallel()
 

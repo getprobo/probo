@@ -348,12 +348,6 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.NeonConnectorSettings{OrganizationID: *input.NeonOrganizationID})
-	case coredata.ConnectorProviderDaytona:
-		if input.DaytonaOrganizationID == nil || *input.DaytonaOrganizationID == "" {
-			return nil, fmt.Errorf("cannot create daytona connector: daytonaOrganizationId is required")
-		}
-
-		return json.Marshal(&coredata.DaytonaConnectorSettings{OrganizationID: *input.DaytonaOrganizationID})
 	case coredata.ConnectorProviderLangfuse:
 		if input.LangfuseBaseURL == nil || *input.LangfuseBaseURL == "" {
 			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl is required")

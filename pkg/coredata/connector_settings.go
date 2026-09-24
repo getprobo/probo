@@ -178,9 +178,10 @@ type (
 		OrganizationID string `json:"organization_id"`
 	}
 
-	// DaytonaConnectorSettings stores the Daytona organization ID. An API key
-	// is bound to one organization, but GET /organizations/{id}/users takes
-	// the id as a path segment, so it is captured up front.
+	// DaytonaConnectorSettings stores the Daytona organization ID the source
+	// reviews. An API key is bound to one organization, but
+	// GET /organizations/{id}/users takes the id as a path segment, so the
+	// picker reads it from GET /organizations and persists it here.
 	DaytonaConnectorSettings struct {
 		OrganizationID string `json:"organization_id"`
 	}

@@ -457,19 +457,6 @@ func buildRenderProbeURL(conn *coredata.Connector, ep Endpoints) (string, error)
 	)
 }
 
-func buildDaytonaProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
-	s, err := coredata.ConnectorSettings[coredata.DaytonaConnectorSettings](conn)
-	if err != nil {
-		return "", fmt.Errorf("cannot read daytona connector settings: %w", err)
-	}
-
-	if s.OrganizationID == "" {
-		return "", fmt.Errorf("missing daytona organization_id")
-	}
-
-	return drivers.DaytonaUsersURL(ep.APIBase, s.OrganizationID)
-}
-
 func buildQoveryProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
 	if err != nil {
