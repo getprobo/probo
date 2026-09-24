@@ -18,26 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArchiveIcon, CaretLeftIcon, DotsThreeVerticalIcon, EnvelopeIcon, TrashIcon } from "@phosphor-icons/react";
+import { ArchiveIcon, CaretLeftIcon, EnvelopeIcon, TrashIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { ProfileState, UserPageQuery } from "#/__generated__/iam/UserPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { DeactivateUserDialog } from "./_components/DeactivateUserDialog";
@@ -57,7 +54,12 @@ export const userPageQuery = graphql`
         emailAddress
         source
         state
-        pendingInvitations(first: 1) @required(action: THROW) {
+        organization {
+          id
+        }
+        lastInvitation: pendingInvitations(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
+        @required(action: THROW)
+        @connection(key: "SendActivationEmailDialog_lastInvitation") {
           edges {
             __typename
           }
@@ -85,14 +87,6 @@ function statusBadgeColor(state: ProfileState) {
   return "neutral" as const;
 }
 
-interface ExtraAction {
-  key: string;
-  label: string;
-  icon: ReactNode;
-  color?: "error";
-  onSelect: () => void;
-}
-
 interface UserPageProps {
   queryRef: PreloadedQuery<UserPageQuery>;
 }
@@ -100,8 +94,9 @@ interface UserPageProps {
 export function UserPage({ queryRef }: UserPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const organizationId = useOrganizationId();
   const { person } = usePreloadedQuery<UserPageQuery>(userPageQuery, queryRef);
-  if (person.__typename !== "Profile") {
+  if (person.__typename !== "Profile" || person.organization?.id !== organizationId) {
     throw new NotFoundError(t("userPage.notFound"));
   }
 
@@ -115,20 +110,9 @@ export function UserPage({ queryRef }: UserPageProps) {
   const canSendActivationMail = !isActive && person.source !== "SCIM" && person.canInvite;
   const canDeactivate = person.canDeactivate && person.source !== "SCIM" && person.state !== "DEACTIVATED";
   const canRemove = person.canRemoveMember && person.source !== "SCIM";
-  const isResend = person.pendingInvitations.edges.length > 0;
+  const isResend = person.lastInvitation.edges.length > 0;
   const { root, back, header, identity, titleRow, title, email, actions } = userPage();
-  const extraActions: ExtraAction[] = [];
-  if (canRemove) {
-    extraActions.push({
-      key: "remove",
-      label: t("userListItem.actions.removePerson"),
-      icon: <TrashIcon />,
-      color: "error",
-      onSelect: () => setRemoveOpen(true),
-    });
-  }
-  const onlyExtra = extraActions.length === 1 ? extraActions[0] : null;
-  const hasToolbarActions = canSendActivationMail || canDeactivate || extraActions.length > 0;
+  const hasToolbarActions = canSendActivationMail || canDeactivate || canRemove;
 
   function handleLeft() {
     void navigate("..");
@@ -177,7 +161,7 @@ export function UserPage({ queryRef }: UserPageProps) {
                   : t("userListItem.actions.sendActivationMail")}
               </Button>
             )}
-            {!canSendActivationMail && canDeactivate && (
+            {canDeactivate && (
               <Button
                 type="button"
                 size={2}
@@ -190,45 +174,17 @@ export function UserPage({ queryRef }: UserPageProps) {
                 {t("userListItem.actions.deactivatePerson")}
               </Button>
             )}
-            {onlyExtra != null && (
+            {canRemove && (
               <IconButton
                 type="button"
                 size={2}
                 variant="surface"
-                color={onlyExtra.color === "error" ? "red" : "neutral"}
-                aria-label={onlyExtra.label}
-                onClick={onlyExtra.onSelect}
+                color="red"
+                aria-label={t("userListItem.actions.removePerson")}
+                onClick={() => setRemoveOpen(true)}
               >
-                {onlyExtra.icon}
+                <TrashIcon />
               </IconButton>
-            )}
-            {extraActions.length > 1 && (
-              <Dropdown>
-                <DropdownTrigger
-                  render={(
-                    <IconButton
-                      variant="surface"
-                      color="neutral"
-                      size={2}
-                      aria-label={t("userListItem.actions.more")}
-                    >
-                      <DotsThreeVerticalIcon />
-                    </IconButton>
-                  )}
-                />
-                <DropdownPopup align="end">
-                  {extraActions.map(action => (
-                    <DropdownItem
-                      key={action.key}
-                      color={action.color}
-                      iconStart={action.icon}
-                      onClick={action.onSelect}
-                    >
-                      {action.label}
-                    </DropdownItem>
-                  ))}
-                </DropdownPopup>
-              </Dropdown>
             )}
           </div>
         )}

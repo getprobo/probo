@@ -81,7 +81,7 @@ export function userUpdateInput(
     contractEnd?: string | null;
   },
 ) {
-  const fullName = patch.fullName ?? profile.fullName;
+  const fullName = (patch.fullName ?? profile.fullName).trim() || profile.fullName.trim();
   const kind = patch.kind !== undefined ? patch.kind : profile.kind;
   const position = patch.position !== undefined ? patch.position : profile.position;
   const additionalEmailAddresses = patch.additionalEmailAddresses

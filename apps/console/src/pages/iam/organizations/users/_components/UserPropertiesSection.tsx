@@ -127,8 +127,8 @@ export function UserPropertiesSection({ profileKey }: UserPropertiesSectionProps
     save({ position: next === "" ? null : next });
   }
 
-  function saveEmails() {
-    const next = emails.map(email => email.trim()).filter(email => email !== "");
+  function saveEmails(nextEmails = emails) {
+    const next = nextEmails.map(email => email.trim()).filter(email => email !== "");
     const current = [...profile.additionalEmailAddresses];
     if (next.length === current.length && next.every((email, index) => email === current[index])) {
       return;

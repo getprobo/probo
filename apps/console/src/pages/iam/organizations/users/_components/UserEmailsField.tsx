@@ -28,12 +28,15 @@ import { useTranslation } from "react-i18next";
 import { userEmailsField } from "../variants";
 
 interface UserEmailsFieldProps {
-  value: string[];
-  disabled?: boolean;
-  readOnly?: boolean;
-  size?: 1 | 2;
-  onValueChange: (value: string[]) => void;
-  onBlur?: () => void;
+  "value": string[];
+  "disabled"?: boolean;
+  "readOnly"?: boolean;
+  "size"?: 1 | 2;
+  "id"?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
+  "onValueChange": (value: string[]) => void;
+  "onBlur"?: (value?: string[]) => void;
 }
 
 export function UserEmailsField({
@@ -41,6 +44,9 @@ export function UserEmailsField({
   disabled = false,
   readOnly = false,
   size = 2,
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
   onValueChange,
   onBlur,
 }: UserEmailsFieldProps) {
@@ -67,18 +73,21 @@ export function UserEmailsField({
         <div key={index} className={row()}>
           <div className={field()}>
             <TextField
+              id={index === 0 ? id : undefined}
               size={size}
               type="email"
               value={email}
               disabled={disabled}
               placeholder={t("userForm.fields.additionalEmailPlaceholder")}
               aria-label={t("userForm.fields.additionalEmail", { index: index + 1 })}
+              aria-describedby={index === 0 ? ariaDescribedBy : undefined}
+              aria-invalid={index === 0 ? ariaInvalid : undefined}
               onValueChange={(next) => {
                 const updated = [...emails];
                 updated[index] = next;
                 onValueChange(updated);
               }}
-              onBlur={onBlur}
+              onBlur={() => onBlur?.()}
             />
           </div>
           <IconButton
@@ -88,9 +97,10 @@ export function UserEmailsField({
             disabled={disabled || (emails.length === 1 && email === "")}
             aria-label={t("userForm.actions.removeEmail")}
             onClick={() => {
-              const updated = emails.filter((_, emailIndex) => emailIndex !== index);
-              onValueChange(updated.length > 0 ? updated : [""]);
-              onBlur?.();
+              const next = emails.filter((_, emailIndex) => emailIndex !== index);
+              const updated = next.length > 0 ? next : [""];
+              onValueChange(updated);
+              onBlur?.(updated);
             }}
           >
             <TrashIcon />

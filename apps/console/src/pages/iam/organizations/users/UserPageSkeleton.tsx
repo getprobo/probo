@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
@@ -42,7 +43,7 @@ export function UserPageSkeleton() {
         <div className={identity()}>
           <div className={person()}>
             <div className="flex w-32 shrink-0 flex-col gap-2">
-              <span className="size-32 animate-pulse rounded-4 bg-sand-3" aria-hidden />
+              <AvatarSkeleton size={8} radius="large" />
               <TextSkeleton size={1} className="w-full" />
             </div>
             <div className={fields()}>

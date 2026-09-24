@@ -150,7 +150,7 @@ export function DateField(props: DateFieldProps) {
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
     const raw = event.currentTarget.value;
     const trimmed = raw.trim();
-    if (ISO_DATE.test(trimmed) && !isOutOfRange(trimmed, minDate, maxDate)) {
+    if (parseIsoDate(trimmed) != null && !isOutOfRange(trimmed, minDate, maxDate)) {
       commitIso(trimmed);
       return;
     }
@@ -194,7 +194,9 @@ export function DateField(props: DateFieldProps) {
       return;
     }
     event.preventDefault();
-    const digits = draft.replace(/\D/g, "").slice(0, -1);
+    const prefixDigits = draft.slice(0, start).replace(/\D/g, "").slice(0, -1);
+    const suffixDigits = draft.slice(start).replace(/\D/g, "");
+    const digits = `${prefixDigits}${suffixDigits}`.slice(0, 8);
     setDraft(maskDigits(digits, pattern));
     if (digits.length === 0 && nullable) {
       onValueChange?.("");
@@ -203,7 +205,7 @@ export function DateField(props: DateFieldProps) {
 
   return (
     <div className={root({ className })}>
-      {name != null && <input type="hidden" name={name} value={value} />}
+      {name != null && <input type="hidden" name={name} value={value} disabled={disabled} />}
       <div className={surface()}>
         <Popover open={open} onOpenChange={handleOpenChange}>
           <PopoverTrigger
@@ -461,7 +463,11 @@ function isNestedSelectDismiss(
   eventDetails: Parameters<NonNullable<PopoverProps["onOpenChange"]>>[1],
 ): boolean {
   if (eventDetails.reason === "focus-out") {
-    return true;
+    const relatedTarget = eventDetails.event instanceof FocusEvent
+      ? eventDetails.event.relatedTarget
+      : null;
+    return relatedTarget instanceof Element
+      && relatedTarget.closest("[role='listbox'], [role='option']") != null;
   }
   if (eventDetails.reason !== "outside-press") {
     return false;

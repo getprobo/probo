@@ -101,13 +101,21 @@ export function UserForm({
   const [contractEnd, setContractEnd] = useState("");
   const roleDescriptionKey = roleDescriptionKeys[role];
 
-  function clearError(name: string) {
-    if (onErrorsChange == null || errors[name] == null) {
+  function clearError(...names: string[]) {
+    if (onErrorsChange == null) {
       return;
     }
     const next = { ...errors };
-    delete next[name];
-    onErrorsChange(next);
+    let changed = false;
+    for (const name of names) {
+      if (next[name] != null) {
+        delete next[name];
+        changed = true;
+      }
+    }
+    if (changed) {
+      onErrorsChange(next);
+    }
   }
 
   function handleSubmit() {
@@ -231,7 +239,10 @@ export function UserForm({
         />
       </Field>
       <div className={dates()}>
-        <Field label={t("userForm.fields.contractStartDate")} error={errors.contractStart}>
+        <Field
+          label={t("userForm.fields.contractStartDate")}
+          error={errors.contractStart ?? errors.contract_start_date}
+        >
           <DateField
             name="contractStart"
             value={contractStart}
@@ -240,11 +251,14 @@ export function UserForm({
             nullable
             onValueChange={(next) => {
               setContractStart(next);
-              clearError("contractStart");
+              clearError("contractStart", "contract_start_date");
             }}
           />
         </Field>
-        <Field label={t("userForm.fields.contractEndDate")} error={errors.contractEnd}>
+        <Field
+          label={t("userForm.fields.contractEndDate")}
+          error={errors.contractEnd ?? errors.contract_end_date}
+        >
           <DateField
             name="contractEnd"
             value={contractEnd}
@@ -253,7 +267,7 @@ export function UserForm({
             nullable
             onValueChange={(next) => {
               setContractEnd(next);
-              clearError("contractEnd");
+              clearError("contractEnd", "contract_end_date");
             }}
           />
         </Field>

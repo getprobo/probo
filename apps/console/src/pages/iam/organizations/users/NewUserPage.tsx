@@ -66,6 +66,20 @@ const createUserMutation = graphql`
   }
 `;
 
+const userFormErrorKeys = {
+  contract_start_date: "contractStart",
+  contract_end_date: "contractEnd",
+} as const;
+
+function mapUserFormErrors(errors: Record<string, string>) {
+  const next: Record<string, string> = {};
+  for (const [key, message] of Object.entries(errors)) {
+    const mapped = userFormErrorKeys[key as keyof typeof userFormErrorKeys];
+    next[mapped ?? key] = message;
+  }
+  return next;
+}
+
 interface NewUserPageProps {
   queryRef: PreloadedQuery<NewUserPageQuery>;
 }
@@ -112,7 +126,7 @@ export function NewUserPage({ queryRef }: NewUserPageProps) {
       onCompleted(response, payloadErrors) {
         const fieldErrors = toFieldErrors(payloadErrors);
         if (fieldErrors != null) {
-          setErrors(fieldErrors);
+          setErrors(mapUserFormErrors(fieldErrors));
           return;
         }
         const profileId = response.createUser?.profileEdge.node.id;

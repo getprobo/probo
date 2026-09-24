@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getRole, peopleRoles } from "@probo/helpers";
-import { useToast } from "@probo/ui";
+import { peopleRoles } from "@probo/helpers";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
@@ -29,14 +28,13 @@ import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { UserIdentitySection_profile$key } from "#/__generated__/iam/UserIdentitySection_profile.graphql";
 import { ImageDropzone } from "#/components/ImageDropzone/ImageDropzone";
-import type { FileDropzoneError } from "#/lib/useFileDropzone";
 
 import { userUpdateInput, useUpdateUser } from "../_lib/useUpdateUser";
 import { isUsersListKind } from "../_lib/useUsersListFilters";
@@ -57,7 +55,9 @@ const fragment = graphql`
       downloadUrl
     }
     contract {
+      # eslint-disable-next-line relay/unused-fields -- passed through userUpdateInput
       start
+      # eslint-disable-next-line relay/unused-fields -- passed through userUpdateInput
       end
     }
     membership @required(action: THROW) {
@@ -73,7 +73,6 @@ interface UserIdentitySectionProps {
 
 export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const profile = useFragment(fragment, profileKey);
   const [updateUser, isUpdating] = useUpdateUser();
   const isInactive = profile.state === "DEACTIVATED";
@@ -83,7 +82,6 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
     avatar,
     dropzone,
     source,
-    hint,
     fields,
   } = userIdentitySection({ inactive: isInactive });
   const scimManaged = profile.source === "SCIM";
@@ -95,10 +93,12 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
     : peopleRoles;
 
   const [fullName, setFullName] = useState(profile.fullName);
+  const [nameSource, setNameSource] = useState(profile.fullName);
 
-  useEffect(() => {
+  if (profile.fullName !== nameSource) {
+    setNameSource(profile.fullName);
     setFullName(profile.fullName);
-  }, [profile.fullName]);
+  }
 
   function save(patch: Parameters<typeof userUpdateInput>[1]) {
     void updateUser({
@@ -126,12 +126,11 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
     save({ fullName: next });
   }
 
-  function handleReject(error: FileDropzoneError) {
-    toast({
-      title: t(`userPage.errors.${error}.title`),
-      description: t(`userPage.errors.${error}.description`),
-      variant: "error",
-    });
+  function kindLabel(kind: string | null | undefined) {
+    if (kind == null) {
+      return empty;
+    }
+    return isUsersListKind(kind) ? t(`userForm.kinds.${kind}`) : kind;
   }
 
   return (
@@ -143,12 +142,14 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
               <ImageDropzone
                 ratio="square"
                 src={profile.avatar?.downloadUrl}
-                disabled={!canEditIdentity}
+                disabled
                 placeholder={t("userPage.fields.avatarPlaceholder")}
                 onFile={() => {
                   // UpdateUser does not accept an avatar file yet.
                 }}
-                onReject={handleReject}
+                onReject={() => {
+                  // Dropzone stays disabled until avatar upload is wired.
+                }}
               />
               {showSource && (
                 <span className={source()}>
@@ -158,9 +159,6 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
                 </span>
               )}
             </div>
-            <Text size={1} color="neutral" className={hint()}>
-              {t("userPage.fields.acceptedFiles")}
-            </Text>
           </div>
           <div className={fields()}>
             <Field label={t("userForm.fields.fullName")}>
@@ -193,9 +191,7 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
                       }}
                     >
                       <SelectTrigger size={2} aria-label={t("userForm.fields.type")}>
-                        {(kind: string | null) => (
-                          kind != null ? getRole(t, kind) : empty
-                        )}
+                        {(kind: string | null) => kindLabel(kind)}
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value={null}>{empty}</SelectItem>
@@ -209,7 +205,7 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
                   )
                 : (
                     <Text size={2} color={profile.kind == null ? "faint" : undefined}>
-                      {profile.kind != null ? getRole(t, profile.kind) : empty}
+                      {kindLabel(profile.kind)}
                     </Text>
                   )}
             </Field>

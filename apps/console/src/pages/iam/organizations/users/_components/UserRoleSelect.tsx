@@ -58,11 +58,20 @@ const updateMembershipMutation = graphql`
 `;
 
 interface UserRoleSelectProps {
-  membershipKey: UserRoleSelect_membership$key;
-  size?: 1 | 2;
+  "membershipKey": UserRoleSelect_membership$key;
+  "size"?: 1 | 2;
+  "id"?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
 }
 
-export function UserRoleSelect({ membershipKey, size = 1 }: UserRoleSelectProps) {
+export function UserRoleSelect({
+  membershipKey,
+  size = 1,
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
+}: UserRoleSelectProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { role: viewerRole } = use(CurrentUser);
@@ -104,7 +113,13 @@ export function UserRoleSelect({ membershipKey, size = 1 }: UserRoleSelectProps)
       disabled={isUpdating}
       onValueChange={handleRoleChange}
     >
-      <SelectTrigger size={size} aria-label={t("usersList.filters.role")}>
+      <SelectTrigger
+        id={id}
+        size={size}
+        aria-label={t("usersList.filters.role")}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
+      >
         {(value: Role | null) => (
           value != null ? getMembershipRole(t, value) : null
         )}

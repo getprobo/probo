@@ -2285,6 +2285,7 @@
   },
   "usersPage": {
     "empty": "Geen gebruikers",
+    "emptyFiltered": "Geen gebruikers komen overeen met de huidige filters.",
     "actions": {
       "add": "Gebruiker toevoegen",
       "cancel": "Annuleren",
@@ -2396,8 +2397,7 @@
       "additionalEmail": "Extra e-mailadres {{index}}",
       "additionalEmailPlaceholder": "naam@voorbeeld.com",
       "contractStartDate": "Startdatum contract",
-      "contractEndDate": "Einddatum contract",
-      "datePlaceholder": "Selecteer een datum"
+      "contractEndDate": "Einddatum contract"
     },
     "roleDescriptions": {
       "owner": "Volledige toegang tot alles",

@@ -21,6 +21,7 @@
 import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
@@ -40,6 +41,9 @@ export function NewUserPageSkeleton() {
         <div className={form()}>
           <TextFieldSkeleton size={2} className="w-full" />
           <TextFieldSkeleton size={2} className="w-full" />
+          <SelectSkeleton size={2} className="w-full" />
+          <TextSkeleton size={2} className="w-72" />
+          <SelectSkeleton size={2} className="w-full" />
           <TextFieldSkeleton size={2} className="w-full" />
           <TextFieldSkeleton size={2} className="w-full" />
           <div className={dates()}>

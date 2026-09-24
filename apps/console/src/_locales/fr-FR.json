@@ -2285,6 +2285,7 @@
   },
   "usersPage": {
     "empty": "Aucun utilisateur",
+    "emptyFiltered": "Aucun utilisateur ne correspond aux filtres actuels.",
     "actions": {
       "add": "Ajouter un utilisateur",
       "cancel": "Annuler",
@@ -2396,8 +2397,7 @@
       "additionalEmail": "E-mail supplémentaire {{index}}",
       "additionalEmailPlaceholder": "nom@exemple.com",
       "contractStartDate": "Date de début de contrat",
-      "contractEndDate": "Date de fin de contrat",
-      "datePlaceholder": "Sélectionner une date"
+      "contractEndDate": "Date de fin de contrat"
     },
     "roleDescriptions": {
       "owner": "Accès complet à tout",

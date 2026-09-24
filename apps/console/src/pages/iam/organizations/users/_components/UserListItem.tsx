@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { ArchiveIcon, DotsThreeVerticalIcon, EnvelopeIcon, TrashIcon } from "@phosphor-icons/react";
-import { getRole } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
@@ -43,6 +42,7 @@ import type {
   UserListItem_profile$key,
 } from "#/__generated__/iam/UserListItem_profile.graphql";
 
+import { isUsersListKind } from "../_lib/useUsersListFilters";
 import { userListItem } from "../variants";
 
 import { DeactivateUserDialog } from "./DeactivateUserDialog";
@@ -69,7 +69,9 @@ const fragment = graphql`
       start
       end
     }
-    pendingInvitations(first: 1) @required(action: THROW) {
+    lastInvitation: pendingInvitations(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
+    @required(action: THROW)
+    @connection(key: "SendActivationEmailDialog_lastInvitation") {
       edges {
         __typename
       }
@@ -111,7 +113,7 @@ export function UserListItem({ profileKey, onDeactivated, onDeleted }: UserListI
   const canDeactivate = profile.canDeactivate && profile.source !== "SCIM" && profile.state !== "DEACTIVATED";
   const canRemove = profile.canRemoveMember && profile.source !== "SCIM";
   const hasActions = canSendActivationMail || canDeactivate || canRemove;
-  const isResend = profile.pendingInvitations.edges.length > 0;
+  const isResend = profile.lastInvitation.edges.length > 0;
   const {
     card,
     overlay,
@@ -162,7 +164,7 @@ export function UserListItem({ profileKey, onDeactivated, onDeleted }: UserListI
         <div className={identity()}>
           {profile.kind != null && (
             <Text size={1} color="faint" className={kind()}>
-              {getRole(t, profile.kind)}
+              {isUsersListKind(profile.kind) ? t(`userForm.kinds.${profile.kind}`) : profile.kind}
             </Text>
           )}
           <Heading level={2} size={3} weight="medium" highContrast className={title()}>
@@ -211,7 +213,7 @@ export function UserListItem({ profileKey, onDeactivated, onDeleted }: UserListI
                     : t("userListItem.actions.sendActivationMail")}
                 </DropdownItem>
               )}
-              {!canSendActivationMail && canDeactivate && (
+              {canDeactivate && (
                 <DropdownItem
                   iconStart={<ArchiveIcon />}
                   onClick={() => setDeactivateOpen(true)}

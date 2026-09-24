@@ -83,7 +83,7 @@ interface UsersListProps {
 
 export function UsersList({ organizationKey }: UsersListProps) {
   const { t } = useTranslation();
-  const { graphqlFilter } = useUsersListFilters();
+  const { graphqlFilter, hasActiveFilters } = useUsersListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
   const [organization, refetch] = useRefetchableFragment<
@@ -144,7 +144,7 @@ export function UsersList({ organizationKey }: UsersListProps) {
     });
   }
 
-  function handleDeleted() {
+  function handleRemoved() {
     if (edges.length === 1 && pageInfo.hasPreviousPage) {
       goPrevious();
       return;
@@ -173,7 +173,7 @@ export function UsersList({ organizationKey }: UsersListProps) {
               <Card variant="soft" size={2}>
                 <div className={empty()}>
                   <Text size={2} color="faint">
-                    {t("usersPage.empty")}
+                    {t(hasActiveFilters ? "usersPage.emptyFiltered" : "usersPage.empty")}
                   </Text>
                 </div>
               </Card>
@@ -186,8 +186,8 @@ export function UsersList({ organizationKey }: UsersListProps) {
                       <UserListItem
                         key={node.id}
                         profileKey={node}
-                        onDeactivated={refetchCurrentPage}
-                        onDeleted={handleDeleted}
+                        onDeactivated={handleRemoved}
+                        onDeleted={handleRemoved}
                       />
                     ))}
                   </div>

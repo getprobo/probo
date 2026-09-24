@@ -111,6 +111,7 @@ export const dateField = tv({
     iconTrigger: [
       "flex size-4 shrink-0 items-center justify-center border-0 bg-transparent p-0",
       "cursor-pointer text-sand-a9 outline-none [&_svg]:size-4 hover:text-sand-12",
+      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
       "data-disabled:pointer-events-none data-disabled:opacity-50",
     ],
     input: [
@@ -118,8 +119,8 @@ export const dateField = tv({
       "placeholder:text-sand-a9",
     ],
     clear: [
-      "flex size-4 shrink-0 items-center justify-center border-0 bg-transparent p-0",
-      "cursor-pointer text-sand-a9 outline-none [&_svg]:size-4 hover:text-sand-12",
+      "flex size-6 shrink-0 items-center justify-center border-0 bg-transparent p-0",
+      "cursor-pointer text-sand-a9 outline-none [&_svg]:size-4 hover:text-sand-12 hover:bg-sand-3",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
     ],
     calendar: "flex w-72 flex-col gap-2",
