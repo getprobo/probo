@@ -70,13 +70,26 @@
       "connect": "Linear Sync verbinden",
       "reconnect": "Linear Sync opnieuw verbinden",
       "publish": "Publiceren",
+      "link": "Koppelen",
       "unlink": "Ontkoppelen",
       "team": "Linear-team",
       "chooseTeam": "Kies een team",
+      "chooseIssue": "Kies een issue",
+      "newIssue": "Nieuwe issue",
+      "searchTeam": "Zoek een team",
+      "searchIssue": "Zoek een issue",
+      "noResults": "Geen resultaten",
+      "loadMore": "Meer laden",
       "published": "Taak gepubliceerd naar Linear.",
+      "linked": "Taak gekoppeld aan Linear.",
+      "confirmLink": {
+        "title": "Linear-issue koppelen",
+        "description": "Dit werkt de Probo-taak bij met de Linear-issue."
+      },
       "unlinked": "Linear-issue ontkoppeld.",
       "errors": {
         "publish": "Publiceren naar Linear mislukt",
+        "link": "Koppelen aan Linear mislukt",
         "unlink": "Ontkoppelen van Linear-issue mislukt",
         "load": "Linear kon niet worden weergegeven"
       }

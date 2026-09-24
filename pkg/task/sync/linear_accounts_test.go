@@ -24,32 +24,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
-
-func TestMergeLinearTeams(t *testing.T) {
-	t.Parallel()
-
-	teams := mergeLinearTeams(
-		[][]linear.Team{
-			{
-				{ID: "team-a", Name: "Alpha", Key: "A"},
-				{ID: "team-b", Name: "Beta", Key: "B"},
-			},
-			{
-				{ID: "team-a", Name: "Alpha duplicate", Key: "A"},
-				{ID: "team-c", Name: "Gamma", Key: "C"},
-			},
-		},
-	)
-
-	require.Len(t, teams, 3)
-	assert.Equal(t, "team-a", teams[0].ID)
-	assert.Equal(t, "Alpha", teams[0].Name)
-	assert.Equal(t, "team-b", teams[1].ID)
-	assert.Equal(t, "team-c", teams[2].ID)
-}
 
 func TestLinearTeamExists(t *testing.T) {
 	t.Parallel()

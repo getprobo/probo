@@ -551,34 +551,114 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 }
 
 // LinearTeams is the resolver for the linearTeams field.
-func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organization) ([]*types.LinearTeam, error) {
+func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organization, first *int, after *string, query *string) (*types.LinearTeamConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	teams, err := r.task.Sync.ListLinearTeams(ctx, scope, obj.ID)
+	pageSize := 0
+	if first != nil {
+		pageSize = *first
+	}
+
+	search := ""
+	if query != nil {
+		search = *query
+	}
+
+	page, err := r.task.Sync.SearchLinearTeams(ctx, scope, obj.ID, search, pageSize, after)
 	if err != nil {
 		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
 			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
-			return []*types.LinearTeam{}, nil
+			return emptyLinearTeamConnection(), nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list Linear teams", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot search Linear teams", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	result := make([]*types.LinearTeam, 0, len(teams))
-	for _, team := range teams {
-		result = append(result, &types.LinearTeam{
-			ID:   team.ID,
-			Name: team.Name,
-			Key:  team.Key,
+	edges := make([]*types.LinearTeamEdge, 0, len(page.Teams))
+	for _, team := range page.Teams {
+		edges = append(edges, &types.LinearTeamEdge{
+			Cursor: team.ID,
+			Node: &types.LinearTeam{
+				ID:   team.ID,
+				Name: team.Name,
+				Key:  team.Key,
+			},
 		})
 	}
 
-	return result, nil
+	startCursor := ""
+	if len(edges) > 0 {
+		startCursor = edges[0].Cursor
+	}
+
+	return &types.LinearTeamConnection{
+		Edges:    edges,
+		PageInfo: linearPageInfo(startCursor, page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+// LinearIssues is the resolver for the linearIssues field.
+func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Organization, teamID string, first *int, after *string, query *string) (*types.LinearIssueConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	pageSize := 0
+	if first != nil {
+		pageSize = *first
+	}
+
+	search := ""
+	if query != nil {
+		search = *query
+	}
+
+	page, err := r.task.Sync.SearchLinearIssues(ctx, scope, obj.ID, teamID, search, pageSize, after)
+	if err != nil {
+		switch {
+		case errors.Is(err, tasksync.ErrLinearNotConnected),
+			errors.Is(err, tasksync.ErrLinearReconnectRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return emptyLinearIssueConnection(), nil
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot search Linear issues", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	edges := make([]*types.LinearIssueEdge, 0, len(page.Issues))
+	for _, issue := range page.Issues {
+		node, err := linearIssueNode(issue)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot map Linear issue", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		edges = append(edges, &types.LinearIssueEdge{
+			Cursor: issue.ID,
+			Node:   node,
+		})
+	}
+
+	startCursor := ""
+	if len(edges) > 0 {
+		startCursor = edges[0].Cursor
+	}
+
+	return &types.LinearIssueConnection{
+		Edges:    edges,
+		PageInfo: linearPageInfo(startCursor, page.EndCursor, page.HasNextPage),
+	}, nil
 }
 
 // SlackbotAvailable is the resolver for the slackbotAvailable field.

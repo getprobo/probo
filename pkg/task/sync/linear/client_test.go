@@ -689,6 +689,68 @@ func TestClient_ArchiveIssue(t *testing.T) {
 	assert.Equal(t, "issue-1", captured["id"])
 }
 
+func TestClient_LinkAttachment(t *testing.T) {
+	t.Parallel()
+
+	var (
+		handlerErr error
+		query      string
+		captured   map[string]any
+	)
+
+	server := newLinearGraphQLServer(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			req, ok := serveDecodedGraphQL(w, r, &handlerErr)
+			if !ok {
+				return
+			}
+
+			vars, err := graphQLObjectVariables(req)
+			if err != nil {
+				handlerErr = err
+				http.Error(w, err.Error(), http.StatusBadRequest)
+
+				return
+			}
+
+			query = req.Query
+			captured = vars
+
+			writeJSON(
+				w,
+				map[string]any{
+					"data": map[string]any{
+						"attachmentCreate": map[string]any{
+							"success":    true,
+							"attachment": map[string]any{"id": "attachment-1"},
+						},
+					},
+				},
+			)
+		},
+	)
+
+	attachmentID, err := NewClient(server.Client(), server.URL).LinkAttachment(
+		context.Background(),
+		"issue-1",
+		"https://app.example/organizations/org/governance/tasks/task",
+		"Probo task",
+	)
+
+	require.NoError(t, handlerErr)
+	require.NoError(t, err)
+	assert.Equal(t, "attachment-1", attachmentID)
+	assert.Contains(t, query, "attachmentCreate")
+	assert.NotContains(t, query, "attachmentLinkURL")
+
+	input, ok := captured["input"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "issue-1", input["issueId"])
+	assert.Equal(t, "https://app.example/organizations/org/governance/tasks/task", input["url"])
+	assert.Equal(t, "Probo task", input["title"])
+}
+
 func TestClient_OrganizationID(t *testing.T) {
 	t.Parallel()
 
@@ -813,4 +875,181 @@ func TestClient_DoIncludesGraphQLErrorMessage(t *testing.T) {
 	_, err := NewClient(server.Client(), server.URL).ViewerID(context.Background())
 	require.Error(t, err)
 	assert.Equal(t, "cannot call Linear graphql: You cannot update this issue", err.Error())
+}
+
+func TestClient_HasTeam(t *testing.T) {
+	t.Parallel()
+
+	var (
+		handlerErr error
+		variables  map[string]any
+	)
+
+	server := newLinearGraphQLServer(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			req, ok := serveDecodedGraphQL(w, r, &handlerErr)
+			if !ok {
+				return
+			}
+
+			vars, err := graphQLObjectVariables(req)
+			if err != nil {
+				handlerErr = err
+				http.Error(w, err.Error(), http.StatusBadRequest)
+
+				return
+			}
+
+			variables = vars
+
+			nodes := []map[string]any{}
+			if vars["id"] == "team-1" {
+				nodes = []map[string]any{{"id": "team-1"}}
+			}
+
+			writeJSON(w, map[string]any{
+				"data": map[string]any{
+					"teams": map[string]any{
+						"nodes": nodes,
+					},
+				},
+			})
+		},
+	)
+
+	client := NewClient(server.Client(), server.URL)
+	ctx := context.Background()
+
+	found, err := client.HasTeam(ctx, "team-1")
+
+	require.NoError(t, handlerErr)
+	require.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, "team-1", variables["id"])
+
+	found, err = client.HasTeam(ctx, "team-missing")
+
+	require.NoError(t, handlerErr)
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.Equal(t, "team-missing", variables["id"])
+}
+
+func TestClient_SearchTeamsAndIssues(t *testing.T) {
+	t.Parallel()
+
+	var (
+		handlerErr error
+		queries    []string
+		variables  []map[string]any
+	)
+
+	server := newLinearGraphQLServer(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			req, ok := serveDecodedGraphQL(w, r, &handlerErr)
+			if !ok {
+				return
+			}
+
+			vars, err := graphQLObjectVariables(req)
+			if err != nil {
+				handlerErr = err
+				http.Error(w, err.Error(), http.StatusBadRequest)
+
+				return
+			}
+
+			queries = append(queries, req.Query)
+			variables = append(variables, vars)
+
+			switch {
+			case strings.Contains(req.Query, "TaskSyncLinearTeamSearch"):
+				writeJSON(w, map[string]any{
+					"data": map[string]any{
+						"teams": map[string]any{
+							"nodes": []map[string]any{
+								{"id": "team-1", "name": "Engineering", "key": "ENG"},
+							},
+							"pageInfo": map[string]any{
+								"hasNextPage": false,
+								"endCursor":   "",
+							},
+						},
+					},
+				})
+			case strings.Contains(req.Query, "TaskSyncLinearIssueSearch"):
+				writeJSON(w, map[string]any{
+					"data": map[string]any{
+						"searchIssues": map[string]any{
+							"nodes": []map[string]any{
+								{
+									"id":         "issue-1",
+									"identifier": "ENG-12",
+									"title":      "Fix login",
+									"url":        "https://linear.app/eng/issue/ENG-12",
+									"updatedAt":  "2026-09-14T12:00:00Z",
+								},
+							},
+							"pageInfo": map[string]any{
+								"hasNextPage": true,
+								"endCursor":   "issue-cursor",
+							},
+						},
+					},
+				})
+			case strings.Contains(req.Query, "TaskSyncLinearIssue("):
+				writeJSON(w, map[string]any{
+					"data": map[string]any{
+						"issue": map[string]any{
+							"id":         "issue-1",
+							"identifier": "ENG-12",
+							"title":      "Fix login",
+							"url":        "https://linear.app/eng/issue/ENG-12",
+							"updatedAt":  "2026-09-14T12:00:00Z",
+							"archivedAt": nil,
+							"team":       map[string]any{"id": "team-1"},
+						},
+					},
+				})
+			default:
+				handlerErr = fmt.Errorf("cannot handle unexpected query %q", req.Query)
+
+				http.Error(w, "unexpected query", http.StatusBadRequest)
+			}
+		},
+	)
+
+	client := NewClient(server.Client(), server.URL)
+	ctx := context.Background()
+
+	teams, err := client.SearchTeams(ctx, "eng", 20, nil)
+
+	require.NoError(t, handlerErr)
+	require.NoError(t, err)
+	require.Len(t, teams.Teams, 1)
+	assert.Equal(t, "ENG", teams.Teams[0].Key)
+	assert.False(t, teams.HasNextPage)
+
+	filter, ok := variables[0]["filter"].(map[string]any)
+	require.True(t, ok)
+	assert.NotEmpty(t, filter["or"])
+
+	issues, err := client.SearchIssues(ctx, "team-1", "ENG-12", 20, nil)
+
+	require.NoError(t, handlerErr)
+	require.NoError(t, err)
+	require.Len(t, issues.Issues, 1)
+	assert.Equal(t, "ENG-12", issues.Issues[0].Identifier)
+	assert.Equal(t, "Fix login", issues.Issues[0].Title)
+	assert.True(t, issues.HasNextPage)
+	assert.Equal(t, "issue-cursor", issues.EndCursor)
+
+	issue, err := client.GetIssue(ctx, "issue-1")
+
+	require.NoError(t, handlerErr)
+	require.NoError(t, err)
+	assert.Equal(t, "team-1", issue.TeamID)
+	assert.Equal(t, "ENG-12", issue.Identifier)
 }

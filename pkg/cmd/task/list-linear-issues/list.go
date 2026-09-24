@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package listlinearteams
+package listlinearissues
 
 import (
 	"encoding/json"
@@ -30,16 +30,16 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: String, $query: String) {
+query($id: ID!, $teamId: String!, $first: Int, $after: String, $query: String) {
   node(id: $id) {
     __typename
     ... on Organization {
-      linearTeams(first: $first, after: $after, query: $query) {
+      linearIssues(teamId: $teamId, first: $first, after: $after, query: $query) {
         edges {
           node {
             id
-            name
-            key
+            identifier
+            title
           }
         }
         pageInfo {
@@ -52,21 +52,22 @@ query($id: ID!, $first: Int, $after: String, $query: String) {
 }
 `
 
-type linearTeam struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Key  string `json:"key"`
+type linearIssue struct {
+	ID         string `json:"id"`
+	Identifier string `json:"identifier"`
+	Title      string `json:"title"`
 }
 
-func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
+func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagQuery string
-		flagLimit int
+		flagTeamID string
+		flagQuery  string
+		flagLimit  int
 	)
 
 	cmd := &cobra.Command{
-		Use:   "list-linear-teams <organization-id>",
-		Short: "Search Linear teams for an organization",
+		Use:   "list-linear-issues <organization-id>",
+		Short: "Search Linear issues for a team",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
@@ -92,26 +93,27 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			variables := map[string]any{
-				"id": args[0],
+				"id":     args[0],
+				"teamId": flagTeamID,
 			}
 			if flagQuery != "" {
 				variables["query"] = flagQuery
 			}
 
-			teams, _, err := api.Paginate(
+			issues, _, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[linearTeam], error) {
+				func(data json.RawMessage) (*api.Connection[linearIssue], error) {
 					var resp struct {
 						Node *struct {
-							Typename    string                     `json:"__typename"`
-							LinearTeams api.Connection[linearTeam] `json:"linearTeams"`
+							Typename     string                      `json:"__typename"`
+							LinearIssues api.Connection[linearIssue] `json:"linearIssues"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, fmt.Errorf("cannot parse Linear teams: %w", err)
+						return nil, fmt.Errorf("cannot parse Linear issues: %w", err)
 					}
 
 					if resp.Node == nil {
@@ -122,29 +124,31 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
 
-					return &resp.Node.LinearTeams, nil
+					return &resp.Node.LinearIssues, nil
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("cannot list Linear teams: %w", err)
+				return fmt.Errorf("cannot list Linear issues: %w", err)
 			}
 
-			if len(teams) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No Linear teams found.")
+			if len(issues) == 0 {
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No Linear issues found.")
 
 				return nil
 			}
 
-			for _, team := range teams {
-				_, _ = fmt.Fprintf(f.IOStreams.Out, "%s\t%s\t%s\n", team.ID, team.Key, team.Name)
+			for _, issue := range issues {
+				_, _ = fmt.Fprintf(f.IOStreams.Out, "%s\t%s\t%s\n", issue.ID, issue.Identifier, issue.Title)
 			}
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&flagQuery, "query", "", "Search teams by name or key")
-	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of teams to list")
+	cmd.Flags().StringVar(&flagTeamID, "team-id", "", "Linear team ID")
+	cmd.Flags().StringVar(&flagQuery, "query", "", "Search issues in the team")
+	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of issues to list")
+	_ = cmd.MarkFlagRequired("team-id")
 
 	return cmd
 }

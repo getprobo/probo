@@ -70,13 +70,26 @@
       "connect": "Connect Linear Sync",
       "reconnect": "Reconnect Linear Sync",
       "publish": "Publish",
+      "link": "Link",
       "unlink": "Unlink",
       "team": "Linear team",
-      "chooseTeam": "Choose a team",
+      "chooseTeam": "Choose team",
+      "chooseIssue": "Choose issue",
+      "newIssue": "New issue",
+      "searchTeam": "Search teams",
+      "searchIssue": "Search issues",
+      "noResults": "No results",
+      "loadMore": "Load more",
       "published": "Task published to Linear.",
+      "linked": "Task linked to Linear.",
+      "confirmLink": {
+        "title": "Link Linear issue",
+        "description": "This will update the Probo task with the Linear issue."
+      },
       "unlinked": "Linear issue unlinked.",
       "errors": {
         "publish": "Failed to publish task to Linear",
+        "link": "Failed to link task to Linear",
         "unlink": "Failed to unlink Linear issue",
         "load": "Could not display Linear"
       }

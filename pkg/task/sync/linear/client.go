@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -50,11 +51,29 @@ type (
 	}
 
 	Issue struct {
-		ID         string
-		Identifier string
-		URL        string
-		Title      string
-		UpdatedAt  time.Time
+		ID            string
+		Identifier    string
+		URL           string
+		Title         string
+		Description   string
+		StateType     string
+		Priority      int
+		DueDate       string
+		AssigneeEmail string
+		TeamID        string
+		UpdatedAt     time.Time
+	}
+
+	TeamPage struct {
+		Teams       []Team
+		EndCursor   string
+		HasNextPage bool
+	}
+
+	IssuePage struct {
+		Issues      []Issue
+		EndCursor   string
+		HasNextPage bool
 	}
 
 	IssueInput struct {
@@ -85,12 +104,19 @@ type (
 	graphqlError struct {
 		Message string `json:"message"`
 	}
+
+	pageInfo struct {
+		HasNextPage bool   `json:"hasNextPage"`
+		EndCursor   string `json:"endCursor"`
+	}
 )
 
 const (
 	linearListPageSize = 100
 	linearListMaxPages = 500
 )
+
+var ErrIssueNotFound = errors.New("linear issue was not found")
 
 // NewClient returns a Linear GraphQL client rooted at endpoint, which callers
 // take from the LINEAR_SYNC provider registration's Endpoints.APIBase rather
@@ -504,9 +530,11 @@ mutation TaskSyncLinearIssueArchive($id: String!) {
 }
 
 func (c *Client) LinkAttachment(ctx context.Context, issueID, url, title string) (string, error) {
+	// attachmentLinkURL fetches the page and rejects auth-gated task URLs
+	// with "Unable to create issue attachment". attachmentCreate stores the link.
 	const query = `
-mutation TaskSyncLinearAttachmentLink($issueId: String!, $url: String!, $title: String) {
-  attachmentLinkURL(issueId: $issueId, url: $url, title: $title) {
+mutation TaskSyncLinearAttachmentCreate($input: AttachmentCreateInput!) {
+  attachmentCreate(input: $input) {
     success
     attachment {
       id
@@ -517,29 +545,340 @@ mutation TaskSyncLinearAttachmentLink($issueId: String!, $url: String!, $title: 
 
 	var resp struct {
 		Data struct {
-			AttachmentLinkURL struct {
+			AttachmentCreate struct {
 				Success    bool `json:"success"`
 				Attachment struct {
 					ID string `json:"id"`
 				} `json:"attachment"`
-			} `json:"attachmentLinkURL"`
+			} `json:"attachmentCreate"`
 		} `json:"data"`
 		Errors []graphqlError `json:"errors"`
 	}
 
 	if err := c.do(ctx, query, map[string]any{
-		"issueId": issueID,
-		"url":     url,
-		"title":   title,
+		"input": map[string]any{
+			"issueId": issueID,
+			"url":     url,
+			"title":   title,
+		},
 	}, &resp); err != nil {
 		return "", err
 	}
 
-	if !resp.Data.AttachmentLinkURL.Success {
+	if !resp.Data.AttachmentCreate.Success || resp.Data.AttachmentCreate.Attachment.ID == "" {
 		return "", fmt.Errorf("cannot link Linear attachment: mutation unsuccessful")
 	}
 
-	return resp.Data.AttachmentLinkURL.Attachment.ID, nil
+	return resp.Data.AttachmentCreate.Attachment.ID, nil
+}
+
+func (c *Client) DeleteAttachment(ctx context.Context, attachmentID string) error {
+	const query = `
+mutation TaskSyncLinearAttachmentDelete($id: String!) {
+  attachmentDelete(id: $id) {
+    success
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			AttachmentDelete struct {
+				Success bool `json:"success"`
+			} `json:"attachmentDelete"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, query, map[string]any{"id": attachmentID}, &resp); err != nil {
+		return err
+	}
+
+	if !resp.Data.AttachmentDelete.Success {
+		return fmt.Errorf("cannot delete Linear attachment: mutation unsuccessful")
+	}
+
+	return nil
+}
+
+func (c *Client) SearchTeams(ctx context.Context, query string, first int, after *string) (TeamPage, error) {
+	const request = `
+query TaskSyncLinearTeamSearch($first: Int!, $after: String, $filter: TeamFilter) {
+  teams(first: $first, after: $after, filter: $filter) {
+    nodes {
+      id
+      name
+      key
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+`
+
+	vars := map[string]any{
+		"first":  first,
+		"after":  after,
+		"filter": teamSearchFilter(query),
+	}
+
+	var resp struct {
+		Data struct {
+			Teams struct {
+				Nodes []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+					Key  string `json:"key"`
+				} `json:"nodes"`
+				PageInfo pageInfo `json:"pageInfo"`
+			} `json:"teams"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, vars, &resp); err != nil {
+		return TeamPage{}, err
+	}
+
+	teams := make([]Team, 0, len(resp.Data.Teams.Nodes))
+	for _, node := range resp.Data.Teams.Nodes {
+		teams = append(teams, Team{
+			ID:   node.ID,
+			Name: node.Name,
+			Key:  node.Key,
+		})
+	}
+
+	return TeamPage{
+		Teams:       teams,
+		EndCursor:   resp.Data.Teams.PageInfo.EndCursor,
+		HasNextPage: resp.Data.Teams.PageInfo.HasNextPage && resp.Data.Teams.PageInfo.EndCursor != "",
+	}, nil
+}
+
+func (c *Client) HasTeam(ctx context.Context, teamID string) (bool, error) {
+	const request = `
+query TaskSyncLinearTeamByID($id: ID!) {
+  teams(first: 1, filter: { id: { eq: $id } }) {
+    nodes { id }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			Teams struct {
+				Nodes []struct {
+					ID string `json:"id"`
+				} `json:"nodes"`
+			} `json:"teams"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{"id": teamID}, &resp); err != nil {
+		return false, err
+	}
+
+	return len(resp.Data.Teams.Nodes) > 0, nil
+}
+
+func teamSearchFilter(query string) any {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil
+	}
+
+	return map[string]any{
+		"or": []any{
+			map[string]any{"name": map[string]any{"containsIgnoreCase": query}},
+			map[string]any{"key": map[string]any{"containsIgnoreCase": query}},
+		},
+	}
+}
+
+func (c *Client) SearchIssues(ctx context.Context, teamID, query string, first int, after *string) (IssuePage, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return c.listTeamIssues(ctx, teamID, first, after)
+	}
+
+	return c.searchTeamIssues(ctx, teamID, query, first, after)
+}
+
+func (c *Client) listTeamIssues(ctx context.Context, teamID string, first int, after *string) (IssuePage, error) {
+	const request = `
+query TaskSyncLinearIssueList($teamId: ID!, $first: Int!, $after: String) {
+  issues(
+    first: $first
+    after: $after
+    filter: { team: { id: { eq: $teamId } } }
+    orderBy: updatedAt
+  ) {
+    nodes {
+      id
+      identifier
+      title
+      description
+      url
+      updatedAt
+      priority
+      dueDate
+      state { type }
+      assignee { email }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			Issues struct {
+				Nodes    []linearIssue `json:"nodes"`
+				PageInfo pageInfo      `json:"pageInfo"`
+			} `json:"issues"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{
+		"teamId": teamID,
+		"first":  first,
+		"after":  after,
+	}, &resp); err != nil {
+		return IssuePage{}, err
+	}
+
+	return issuePage(resp.Data.Issues.Nodes, resp.Data.Issues.PageInfo)
+}
+
+func (c *Client) searchTeamIssues(ctx context.Context, teamID, query string, first int, after *string) (IssuePage, error) {
+	const request = `
+query TaskSyncLinearIssueSearch($term: String!, $teamId: ID!, $first: Int!, $after: String) {
+  searchIssues(
+    term: $term
+    first: $first
+    after: $after
+    includeArchived: false
+    filter: { team: { id: { eq: $teamId } } }
+  ) {
+    nodes {
+      id
+      identifier
+      title
+      description
+      url
+      updatedAt
+      priority
+      dueDate
+      state { type }
+      assignee { email }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			SearchIssues struct {
+				Nodes    []linearIssue `json:"nodes"`
+				PageInfo pageInfo      `json:"pageInfo"`
+			} `json:"searchIssues"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{
+		"term":   query,
+		"teamId": teamID,
+		"first":  first,
+		"after":  after,
+	}, &resp); err != nil {
+		return IssuePage{}, err
+	}
+
+	return issuePage(resp.Data.SearchIssues.Nodes, resp.Data.SearchIssues.PageInfo)
+}
+
+func issuePage(nodes []linearIssue, info pageInfo) (IssuePage, error) {
+	issues := make([]Issue, 0, len(nodes))
+	for _, node := range nodes {
+		issue, err := node.toIssue()
+		if err != nil {
+			return IssuePage{}, err
+		}
+
+		issues = append(issues, *issue)
+	}
+
+	return IssuePage{
+		Issues:      issues,
+		EndCursor:   info.EndCursor,
+		HasNextPage: info.HasNextPage && info.EndCursor != "",
+	}, nil
+}
+
+func (c *Client) GetIssue(ctx context.Context, issueID string) (*Issue, error) {
+	const request = `
+query TaskSyncLinearIssue($id: String!) {
+  issue(id: $id) {
+    id
+    identifier
+    title
+    description
+    url
+    updatedAt
+    priority
+    dueDate
+    state { type }
+    assignee { email }
+    archivedAt
+    team {
+      id
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			Issue *struct {
+				linearIssue
+				ArchivedAt *string `json:"archivedAt"`
+				Team       struct {
+					ID string `json:"id"`
+				} `json:"team"`
+			} `json:"issue"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{"id": issueID}, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.Data.Issue == nil || resp.Data.Issue.ID == "" || resp.Data.Issue.ArchivedAt != nil {
+		return nil, ErrIssueNotFound
+	}
+
+	issue, err := resp.Data.Issue.toIssue()
+	if err != nil {
+		return nil, err
+	}
+
+	issue.TeamID = resp.Data.Issue.Team.ID
+
+	return issue, nil
 }
 
 func (c *Client) do(ctx context.Context, query string, variables any, dest any) error {
@@ -591,11 +930,20 @@ func (c *Client) do(ctx context.Context, query string, variables any, dest any) 
 }
 
 type linearIssue struct {
-	ID         string `json:"id"`
-	Identifier string `json:"identifier"`
-	URL        string `json:"url"`
-	Title      string `json:"title"`
-	UpdatedAt  string `json:"updatedAt"`
+	ID          string  `json:"id"`
+	Identifier  string  `json:"identifier"`
+	URL         string  `json:"url"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Priority    int     `json:"priority"`
+	DueDate     *string `json:"dueDate"`
+	UpdatedAt   string  `json:"updatedAt"`
+	State       *struct {
+		Type string `json:"type"`
+	} `json:"state"`
+	Assignee *struct {
+		Email string `json:"email"`
+	} `json:"assignee"`
 }
 
 func (i linearIssue) toIssue() (*Issue, error) {
@@ -607,13 +955,28 @@ func (i linearIssue) toIssue() (*Issue, error) {
 		}
 	}
 
-	return &Issue{
-		ID:         i.ID,
-		Identifier: i.Identifier,
-		URL:        i.URL,
-		Title:      i.Title,
-		UpdatedAt:  updatedAt,
-	}, nil
+	issue := &Issue{
+		ID:          i.ID,
+		Identifier:  i.Identifier,
+		URL:         i.URL,
+		Title:       i.Title,
+		Description: i.Description,
+		Priority:    i.Priority,
+		UpdatedAt:   updatedAt,
+	}
+	if i.DueDate != nil {
+		issue.DueDate = *i.DueDate
+	}
+
+	if i.State != nil {
+		issue.StateType = i.State.Type
+	}
+
+	if i.Assignee != nil {
+		issue.AssigneeEmail = i.Assignee.Email
+	}
+
+	return issue, nil
 }
 
 func extractGraphQLErrors(dest any) []graphqlError {

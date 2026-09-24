@@ -50,7 +50,7 @@ export function DialogPopup(props: DialogPopupProps) {
         <BaseDialog.Popup className={popup({ className })} {...popupProps}>
           {children}
         </BaseDialog.Popup>
-        <div ref={setOverlayRoot} className={overlayRootSlot()} />
+        <div ref={setOverlayRoot} className={overlayRootSlot()} data-dialog-overlay-root="" />
       </OverlayPortalRootContext.Provider>
     </BaseDialog.Portal>
   );

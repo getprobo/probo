@@ -183,6 +183,57 @@ func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.
 	}, nil
 }
 
+// LinkTaskToLinear is the resolver for the linkTaskToLinear field.
+func (r *mutationResolver) LinkTaskToLinear(ctx context.Context, input types.LinkTaskToLinearInput) (*types.LinkTaskToLinearPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.TeamID == "" {
+		return nil, gqlutils.Invalid(ctx, tasksync.ErrLinearTeamIDRequired)
+	}
+
+	if input.IssueID == "" {
+		return nil, gqlutils.Invalid(ctx, tasksync.ErrLinearIssueIDRequired)
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	link, err := r.task.Sync.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, gqlutils.Conflict(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound),
+			errors.Is(err, tasksync.ErrLinearIssueIDRequired),
+			errors.Is(err, tasksync.ErrLinearIssueNotFound):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot link task to Linear", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.LinkTaskToLinearPayload{
+		Task: types.NewTask(task),
+	}, nil
+}
+
 // UnlinkTaskExternal is the resolver for the unlinkTaskExternal field.
 func (r *mutationResolver) UnlinkTaskExternal(ctx context.Context, input types.UnlinkTaskExternalInput) (*types.UnlinkTaskExternalPayload, error) {
 	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)

@@ -10141,30 +10141,38 @@ func (r *Resolver) ListLinearTeamsTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.ListLinearTeamsOutput{}, err
 	}
 
-	teams, err := r.task.Sync.ListLinearTeams(ctx, scope, input.OrganizationID)
+	page, err := r.task.Sync.SearchLinearTeams(
+		ctx,
+		scope,
+		input.OrganizationID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		input.Cursor,
+	)
 	if err != nil {
-		switch {
-		case errors.Is(err, tasksync.ErrLinearNotConnected):
-			return nil, types.ListLinearTeamsOutput{}, fmt.Errorf("linear connector is not connected")
-		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
-			return nil, types.ListLinearTeamsOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
-		default:
-			r.logger.ErrorCtx(ctx, "cannot list Linear teams", log.Error(err))
-
-			return nil, types.ListLinearTeamsOutput{}, fmt.Errorf("internal error")
+		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
+			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+			return nil, types.ListLinearTeamsOutput{Teams: []*types.LinearTeam{}}, nil
 		}
+
+		r.logger.ErrorCtx(ctx, "cannot search Linear teams", log.Error(err))
+
+		return nil, types.ListLinearTeamsOutput{}, fmt.Errorf("internal error")
 	}
 
-	result := make([]*types.LinearTeam, 0, len(teams))
-	for _, team := range teams {
-		result = append(result, &types.LinearTeam{
+	teams := make([]*types.LinearTeam, 0, len(page.Teams))
+	for _, team := range page.Teams {
+		teams = append(teams, &types.LinearTeam{
 			ID:   team.ID,
 			Name: team.Name,
 			Key:  team.Key,
 		})
 	}
 
-	return nil, types.ListLinearTeamsOutput{Teams: result}, nil
+	return nil, types.ListLinearTeamsOutput{
+		Teams:      teams,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
 }
 
 func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishTaskToLinearInput) (*mcp.CallToolResult, types.PublishTaskToLinearOutput, error) {
@@ -10442,4 +10450,164 @@ func (r *Resolver) EnableConnectorAccountsTool(ctx context.Context, req *mcp.Cal
 	}
 
 	return nil, types.EnableConnectorAccountsOutput{ConnectorAccounts: accounts}, nil
+}
+
+func (r *Resolver) LinkTaskToLinearTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkTaskToLinearInput) (*mcp.CallToolResult, types.LinkTaskToLinearOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.LinkTaskToLinearOutput{}, err
+	}
+
+	if input.TeamID == "" {
+		return nil, types.LinkTaskToLinearOutput{}, tasksync.ErrLinearTeamIDRequired
+	}
+
+	if input.IssueID == "" {
+		return nil, types.LinkTaskToLinearOutput{}, tasksync.ErrLinearIssueIDRequired
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	link, err := r.task.Sync.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("task not found")
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear team id is required")
+		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear team was not found")
+		case errors.Is(err, tasksync.ErrLinearIssueIDRequired):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear issue id is required")
+		case errors.Is(err, tasksync.ErrLinearIssueNotFound):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear issue was not found")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot link task to Linear", log.Error(err))
+
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	linkedTask, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+		return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, linkedTask)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task external link", log.Error(err))
+		return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.LinkTaskToLinearOutput{
+		Task: taskWithLink,
+	}, nil
+}
+
+func (r *Resolver) ListLinearIssuesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListLinearIssuesInput) (*mcp.CallToolResult, types.ListLinearIssuesOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListLinearIssuesOutput{}, err
+	}
+
+	if input.TeamID == "" {
+		return nil, types.ListLinearIssuesOutput{}, tasksync.ErrLinearTeamIDRequired
+	}
+
+	page, err := r.task.Sync.SearchLinearIssues(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.TeamID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		input.Cursor,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, tasksync.ErrLinearNotConnected),
+			errors.Is(err, tasksync.ErrLinearReconnectRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, types.ListLinearIssuesOutput{Issues: []*types.LinearIssue{}}, nil
+		default:
+			r.logger.ErrorCtx(ctx, "cannot search Linear issues", log.Error(err))
+
+			return nil, types.ListLinearIssuesOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	issues := make([]*types.LinearIssue, 0, len(page.Issues))
+	for _, issue := range page.Issues {
+		node, err := linearMCPIssue(issue)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot map Linear issue", log.Error(err))
+
+			return nil, types.ListLinearIssuesOutput{}, fmt.Errorf("internal error")
+		}
+
+		issues = append(issues, node)
+	}
+
+	return nil, types.ListLinearIssuesOutput{
+		Issues:     issues,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func optionalString(value *string) string {
+	if value == nil {
+		return ""
+	}
+
+	return *value
+}
+
+func optionalInt(value *int) int {
+	if value == nil {
+		return 0
+	}
+
+	return *value
+}
+
+func linearNextCursor(endCursor string, hasNextPage bool) *string {
+	if !hasNextPage || endCursor == "" {
+		return nil
+	}
+
+	return &endCursor
+}
+
+func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
+	node := &types.LinearIssue{
+		ID:         issue.ID,
+		Identifier: issue.Identifier,
+		Title:      issue.Title,
+	}
+
+	content, err := tasksync.MarkdownToContent(issue.Description)
+	if err != nil {
+		return nil, err
+	}
+
+	node.Content = &content
+
+	if issue.StateType != "" {
+		state := tasksync.LinearTypeToTaskState(issue.StateType)
+		node.State = &state
+	}
+
+	if priority, ok := tasksync.LinearPriorityToTask(issue.Priority); ok {
+		node.Priority = &priority
+	}
+
+	return node, nil
 }

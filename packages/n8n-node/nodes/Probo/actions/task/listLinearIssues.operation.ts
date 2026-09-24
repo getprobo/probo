@@ -29,11 +29,25 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['task'],
-				operation: ['listLinearTeams'],
+				operation: ['listLinearIssues'],
 			},
 		},
 		default: '',
 		description: 'The ID of the organization',
+		required: true,
+	},
+	{
+		displayName: 'Team ID',
+		name: 'teamId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['listLinearIssues'],
+			},
+		},
+		default: '',
+		description: 'The Linear team ID',
 		required: true,
 	},
 	{
@@ -43,11 +57,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['task'],
-				operation: ['listLinearTeams'],
+				operation: ['listLinearIssues'],
 			},
 		},
 		default: '',
-		description: 'Search teams by name or key',
+		description: 'Search issues in the team',
 	},
 	{
 		displayName: 'Return All',
@@ -56,7 +70,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['task'],
-				operation: ['listLinearTeams'],
+				operation: ['listLinearIssues'],
 			},
 		},
 		default: false,
@@ -69,7 +83,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['task'],
-				operation: ['listLinearTeams'],
+				operation: ['listLinearIssues'],
 				returnAll: [false],
 			},
 		},
@@ -86,20 +100,21 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const teamId = this.getNodeParameter('teamId', itemIndex) as string;
 	const search = this.getNodeParameter('query', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query ListLinearTeams($id: ID!, $first: Int!, $after: String, $query: String) {
+		query ListLinearIssues($id: ID!, $teamId: String!, $first: Int!, $after: String, $query: String) {
 			node(id: $id) {
 				... on Organization {
-					linearTeams(first: $first, after: $after, query: $query) {
+					linearIssues(teamId: $teamId, first: $first, after: $after, query: $query) {
 						edges {
 							node {
 								id
-								name
-								key
+								identifier
+								title
 							}
 						}
 						pageInfo {
@@ -112,21 +127,21 @@ export async function execute(
 		}
 	`;
 
-	const linearTeams = await proboApiRequestAllItems.call(
+	const linearIssues = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ id: organizationId, query: search || null },
+		{ id: organizationId, teamId, query: search || null },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.linearTeams as IDataObject | undefined;
+			return node?.linearIssues as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
 	);
 
 	return {
-		json: { linearTeams },
+		json: { linearIssues },
 		pairedItem: { item: itemIndex },
 	};
 }

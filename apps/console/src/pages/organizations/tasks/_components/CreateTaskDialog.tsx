@@ -29,16 +29,25 @@ import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectLabel } from "@probo/ui/src/v2/Select/SelectLabel";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
-import { type ReactElement, useRef, useState } from "react";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ReactElement, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useLazyLoadQuery } from "react-relay";
 
+import type { CreateTaskDialogLinearQuery } from "#/__generated__/core/CreateTaskDialogLinearQuery.graphql";
+import type { CreateTaskDialogLinkMutation } from "#/__generated__/core/CreateTaskDialogLinkMutation.graphql";
+import type { CreateTaskDialogPublishMutation } from "#/__generated__/core/CreateTaskDialogPublishMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
 import type { TaskPriority, TaskState } from "../_lib/taskState";
@@ -50,19 +59,85 @@ import {
 import { useCreateTask } from "../_lib/useCreateTask";
 import { createTaskDialog } from "../variants";
 
+import { type LinearDraft, type LinearIssueDraft, TaskLinearDraftField } from "./TaskLinearPublishField";
+
+const linearConnectionQuery = graphql`
+  query CreateTaskDialogLinearQuery($organizationId: ID!) {
+    node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        connectors(filter: { providers: [LINEAR_SYNC] }) {
+          id
+        }
+      }
+    }
+  }
+`;
+
+const publishMutation = graphql`
+  mutation CreateTaskDialogPublishMutation($input: PublishTaskToLinearInput!) {
+    publishTaskToLinear(input: $input) {
+      task {
+        id
+      }
+    }
+  }
+`;
+
+const linkMutation = graphql`
+  mutation CreateTaskDialogLinkMutation($input: LinkTaskToLinearInput!) {
+    linkTaskToLinear(input: $input) {
+      task {
+        ...TaskDetailsPage_task
+        ...TasksCard_TaskRowFragment
+      }
+    }
+  }
+`;
+
 const taskNameMaxLength = 1000;
+
+// Server name validation counts UTF-8 bytes, which is stricter than the
+// input's character maxLength for non-ASCII titles.
+function clampTaskName(title: string) {
+  const encoder = new TextEncoder();
+  let result = "";
+  let bytes = 0;
+
+  for (const char of title.trim()) {
+    const size = encoder.encode(char).length;
+    if (bytes + size > taskNameMaxLength) {
+      break;
+    }
+
+    result += char;
+    bytes += size;
+  }
+
+  return result;
+}
 
 type DialogOpenChangeDetails = Parameters<
   NonNullable<DialogProps["onOpenChange"]>
 >[1];
 
-function isRichEditorFloatingDismiss(details: DialogOpenChangeDetails) {
+function isFloatingDismiss(details: DialogOpenChangeDetails) {
   if (details.reason !== "outside-press" && details.reason !== "focus-out") {
     return false;
   }
 
-  const target = details.event.target;
-  return target instanceof Element && target.closest("[data-rich-editor-floating]") != null;
+  const nodes: Array<EventTarget | null> = [details.event.target];
+  if ("relatedTarget" in details.event) {
+    nodes.push(details.event.relatedTarget);
+  }
+
+  return nodes.some(node =>
+    node instanceof Element
+    && (
+      node.closest("[data-rich-editor-floating]") != null
+      || node.closest("[data-dialog-overlay-root]") != null
+    ),
+  );
 }
 
 interface CreateTaskDialogProps {
@@ -87,8 +162,36 @@ export function CreateTaskDialog({
   const [state, setState] = useState<TaskState>("TODO");
   const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
   const [createTask, isCreating] = useCreateTask();
-  const bodyRef = useRef<HTMLDivElement>(null);
+  const [linear, setLinear] = useState<LinearDraft>({ teamId: null, issueId: null });
+  const [publish, isPublishing] = useMutation<CreateTaskDialogPublishMutation>(
+    publishMutation,
+    {
+      successMessage: t("detailsPage.linear.published"),
+      errorToast: t("detailsPage.linear.errors.publish"),
+    },
+  );
+  const [link, isLinking] = useMutation<CreateTaskDialogLinkMutation>(
+    linkMutation,
+    {
+      successMessage: t("detailsPage.linear.linked"),
+      errorToast: t("detailsPage.linear.errors.link"),
+    },
+  );
+  const isSaving = isCreating || isPublishing || isLinking;
   const { form, fields, descriptionField, editor, value } = createTaskDialog();
+
+  function applyLinearIssue(issue: LinearIssueDraft) {
+    setName(clampTaskName(issue.title));
+    setContent(issue.content ?? "");
+    setEditorKey(key => key + 1);
+    if (issue.state != null) {
+      setState(issue.state);
+    }
+    if (issue.priority != null) {
+      setPriority(issue.priority);
+    }
+    setErrors({});
+  }
 
   function reset() {
     setName("");
@@ -97,10 +200,11 @@ export function CreateTaskDialog({
     setErrors({});
     setState("TODO");
     setPriority("MEDIUM");
+    setLinear({ teamId: null, issueId: null });
   }
 
   function handleOpenChange(next: boolean, details: DialogOpenChangeDetails) {
-    if (!next && isRichEditorFloatingDismiss(details)) {
+    if (!next && isFloatingDismiss(details)) {
       details.cancel();
       return;
     }
@@ -129,7 +233,33 @@ export function CreateTaskDialog({
       },
       connectionId,
     ).then(
-      () => {
+      async (taskId) => {
+        try {
+          if (linear.teamId != null) {
+            if (linear.issueId != null) {
+              await link({
+                variables: {
+                  input: {
+                    taskId,
+                    teamId: linear.teamId,
+                    issueId: linear.issueId,
+                  },
+                },
+              });
+            } else {
+              await publish({
+                variables: {
+                  input: {
+                    taskId,
+                    teamId: linear.teamId,
+                  },
+                },
+              });
+            }
+          }
+        } catch {
+          // The task exists; the Linear toast already explains the failure.
+        }
         setOpen(false);
         reset();
         onCompleted?.();
@@ -148,14 +278,14 @@ export function CreateTaskDialog({
           <DialogHeader>
             <DialogTitle>{t("createDialog.title")}</DialogTitle>
           </DialogHeader>
-          <DialogBody ref={bodyRef} className={fields()}>
+          <DialogBody className={fields()}>
             <Field label={t("detailsPage.fields.name")} error={errors.name}>
               <TextField
                 name="name"
                 required
                 maxLength={taskNameMaxLength}
                 value={name}
-                disabled={isCreating}
+                disabled={isSaving}
                 placeholder={t("createDialog.fields.namePlaceholder")}
                 onValueChange={(next) => {
                   setName(next);
@@ -174,14 +304,14 @@ export function CreateTaskDialog({
                 key={editorKey}
                 className={editor()}
                 content={content}
-                disabled={isCreating}
+                disabled={isSaving}
                 aria-label={t("detailsPage.fields.description")}
                 onChangeContent={setContent}
               />
             </Field>
             <Select
               value={state}
-              disabled={isCreating}
+              disabled={isSaving}
               onValueChange={(next: TaskState | null) => {
                 if (next) {
                   setState(next);
@@ -202,7 +332,7 @@ export function CreateTaskDialog({
                       : null}
                 </SelectTrigger>
               </Field>
-              <SelectPopup container={bodyRef}>
+              <SelectPopup>
                 {taskStates.map(item => (
                   <SelectItem key={item} value={item}>
                     <span className={value()}>
@@ -215,7 +345,7 @@ export function CreateTaskDialog({
             </Select>
             <Select
               value={priority}
-              disabled={isCreating}
+              disabled={isSaving}
               onValueChange={(next: TaskPriority | null) => {
                 if (next) {
                   setPriority(next);
@@ -236,7 +366,7 @@ export function CreateTaskDialog({
                       : null}
                 </SelectTrigger>
               </Field>
-              <SelectPopup container={bodyRef}>
+              <SelectPopup>
                 {taskPriorities.map(item => (
                   <SelectItem key={item} value={item}>
                     <span className={value()}>
@@ -247,11 +377,28 @@ export function CreateTaskDialog({
                 ))}
               </SelectPopup>
             </Select>
+            {open && (
+              <ErrorBoundary
+                fallback={(
+                  <Field label={t("detailsPage.fields.linear")}>
+                    <Text size={2} color="faint">{t("detailsPage.linear.errors.load")}</Text>
+                  </Field>
+                )}
+              >
+                <Suspense fallback={<SelectSkeleton className="w-full" />}>
+                  <CreateTaskLinearSection
+                    disabled={isSaving}
+                    onChange={setLinear}
+                    onIssue={applyLinearIssue}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            )}
           </DialogBody>
           <DialogFooter>
             <DialogClose
               render={(
-                <Button variant="soft" color="neutral" disabled={isCreating}>
+                <Button variant="soft" color="neutral" disabled={isSaving}>
                   {t("detailsPage.actions.cancel")}
                 </Button>
               )}
@@ -261,7 +408,7 @@ export function CreateTaskDialog({
               variant="solid"
               color="neutral"
               highContrast
-              loading={isCreating}
+              loading={isSaving}
             >
               {t("createDialog.actions.create")}
             </Button>
@@ -269,5 +416,32 @@ export function CreateTaskDialog({
         </Form>
       </DialogPopup>
     </Dialog>
+  );
+}
+
+function CreateTaskLinearSection({
+  disabled,
+  onChange,
+  onIssue,
+}: {
+  disabled?: boolean;
+  onChange: (selection: LinearDraft) => void;
+  onIssue: (issue: LinearIssueDraft) => void;
+}) {
+  const { t } = useTranslation("organizations/tasks");
+  const organizationId = useOrganizationId();
+  const data = useLazyLoadQuery<CreateTaskDialogLinearQuery>(
+    linearConnectionQuery,
+    { organizationId },
+  );
+  const organization = data.node?.__typename === "Organization" ? data.node : null;
+  if ((organization?.connectors.length ?? 0) === 0) {
+    return null;
+  }
+
+  return (
+    <Field label={t("detailsPage.fields.linear")}>
+      <TaskLinearDraftField disabled={disabled} onChange={onChange} onIssue={onIssue} />
+    </Field>
   );
 }

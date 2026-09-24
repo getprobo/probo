@@ -200,7 +200,14 @@ type Organization implements Node {
         before: CursorKey
     ): SlackConnectionConnection! @goField(forceResolver: true)
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
-    linearTeams: [LinearTeam!]! @goField(forceResolver: true)
+    linearTeams(first: Int, after: String, query: String): LinearTeamConnection!
+        @goField(forceResolver: true)
+    linearIssues(
+        teamId: String!
+        first: Int
+        after: String
+        query: String
+    ): LinearIssueConnection! @goField(forceResolver: true)
     slackbotAvailable: Boolean! @goField(forceResolver: true)
     slackbotInstallation: SlackbotInstallation @goField(forceResolver: true)
     slackbotChannels(cursor: String): SlackbotChannelPage!

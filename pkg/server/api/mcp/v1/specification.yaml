@@ -7074,6 +7074,32 @@ components:
           type: string
           description: Linear team key
 
+    LinearIssue:
+      type: object
+      required:
+        - id
+        - identifier
+        - title
+      properties:
+        id:
+          type: string
+          description: Linear issue ID
+        identifier:
+          type: string
+          description: Linear issue identifier
+        title:
+          type: string
+          description: Linear issue title
+        content:
+          type: string
+          description: Issue description as Probo task content
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Probo task state mapped from the Linear issue
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+          description: Probo task priority mapped from the Linear issue
+
     ListLinearTeamsInput:
       type: object
       required:
@@ -7082,6 +7108,15 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        size:
+          type: integer
+          description: Page size. Linear caps a page at 50. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor. Linear cursors are opaque strings.
+        query:
+          type: string
+          description: Search teams by name or key
 
     ListLinearTeamsOutput:
       type: object
@@ -7092,6 +7127,50 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LinearTeam"
+          description: Linear teams
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    ListLinearIssuesInput:
+      type: object
+      required:
+        - organization_id
+        - team_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        team_id:
+          type: string
+          description: Linear team ID
+        size:
+          type: integer
+          description: Page size. Linear caps a page at 50. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor. Linear cursors are opaque strings.
+        query:
+          type: string
+          description: Search issues in the team
+
+    ListLinearIssuesOutput:
+      type: object
+      required:
+        - issues
+      properties:
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinearIssue"
+          description: Linear issues
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
 
     PublishTaskToLinearInput:
       type: object
@@ -7107,6 +7186,31 @@ components:
           description: Linear team ID
 
     PublishTaskToLinearOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    LinkTaskToLinearInput:
+      type: object
+      required:
+        - task_id
+        - team_id
+        - issue_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        team_id:
+          type: string
+          description: Linear team ID
+        issue_id:
+          type: string
+          description: Linear issue ID
+
+    LinkTaskToLinearOutput:
       type: object
       required:
         - task
@@ -18094,7 +18198,7 @@ tools:
       $ref: "#/components/schemas/DeleteTaskOutput"
   - name: listLinearTeams
     title: List Linear Teams
-    description: List Linear teams for publishing a task
+    description: Search Linear teams for an organization
     hints:
       readonly: true
       destructive: false
@@ -18104,9 +18208,21 @@ tools:
       $ref: "#/components/schemas/ListLinearTeamsInput"
     outputSchema:
       $ref: "#/components/schemas/ListLinearTeamsOutput"
+  - name: listLinearIssues
+    title: List Linear Issues
+    description: Search Linear issues in a team
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListLinearIssuesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListLinearIssuesOutput"
   - name: publishTaskToLinear
     title: Publish Task To Linear
-    description: Publish a Probo task as a Linear issue
+    description: Publish a Probo task as a new Linear issue
     hints:
       readonly: false
       destructive: false
@@ -18116,6 +18232,18 @@ tools:
       $ref: "#/components/schemas/PublishTaskToLinearInput"
     outputSchema:
       $ref: "#/components/schemas/PublishTaskToLinearOutput"
+  - name: linkTaskToLinear
+    title: Link Task To Linear
+    description: Link a Probo task to an existing Linear issue. This updates the Probo task with the Linear issue.
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/LinkTaskToLinearInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkTaskToLinearOutput"
   - name: unlinkTaskExternal
     title: Unlink Task External
     description: Unlink a task from its external issue

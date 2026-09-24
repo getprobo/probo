@@ -249,9 +249,20 @@ func ContentToMarkdown(content string) (string, error) {
 }
 
 func MarkdownToContent(markdown string) (string, error) {
+	if strings.TrimSpace(markdown) == "" {
+		return prosemirror.DefaultDocumentJSON(nil)
+	}
+
 	node, err := prosemirror.ParseMarkdown(markdown)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse markdown: %w", err)
+	}
+
+	// Linear descriptions can contain nodes the task editor cannot store,
+	// such as an image inside a paragraph. Keep the rest of the description.
+	node = dropUnsupportedLinearContent(node)
+	if len(node.Content) == 0 {
+		return prosemirror.DefaultDocumentJSON(nil)
 	}
 
 	encoded, err := json.Marshal(node)
@@ -356,4 +367,101 @@ func taskNeedsOutboundReconcile(task *coredata.Task, publishedHash string) (bool
 	}
 
 	return current != publishedHash, nil
+}
+
+func dropUnsupportedLinearContent(n prosemirror.Node) prosemirror.Node {
+	pruned := pruneLinearNode(n)
+	if pruned == nil {
+		return prosemirror.Node{Type: prosemirror.NodeDoc}
+	}
+
+	return *pruned
+}
+
+func pruneLinearNode(n prosemirror.Node) *prosemirror.Node {
+	next := n
+	next.Content = nil
+
+	next.Marks = append([]prosemirror.Mark(nil), n.Marks...)
+
+	if !linearLeaf(n.Type) {
+		for _, child := range n.Content {
+			kept := pruneLinearNode(child)
+			if kept == nil || !linearChildAllowed(n.Type, *kept, len(next.Content)) {
+				continue
+			}
+
+			next.Content = append(next.Content, *kept)
+		}
+	}
+
+	if !linearNodeKept(next) {
+		return nil
+	}
+
+	return &next
+}
+
+func linearChildAllowed(parent prosemirror.NodeType, child prosemirror.Node, index int) bool {
+	switch parent {
+	case prosemirror.NodeDoc, prosemirror.NodeBlockquote, prosemirror.NodeTableCell, prosemirror.NodeTableHeader:
+		return linearBlock(child.Type)
+	case prosemirror.NodeParagraph, prosemirror.NodeHeading:
+		return linearInline(child.Type)
+	case prosemirror.NodeBulletList, prosemirror.NodeOrderedList:
+		return child.Type == prosemirror.NodeListItem
+	case prosemirror.NodeTable:
+		return child.Type == prosemirror.NodeTableRow
+	case prosemirror.NodeTableRow:
+		return child.Type == prosemirror.NodeTableCell || child.Type == prosemirror.NodeTableHeader
+	case prosemirror.NodeListItem:
+		if index == 0 {
+			return child.Type == prosemirror.NodeParagraph
+		}
+
+		return linearBlock(child.Type)
+	case prosemirror.NodeCodeBlock:
+		return child.Type == prosemirror.NodeText && len(child.Marks) == 0
+	default:
+		return false
+	}
+}
+
+func linearNodeKept(n prosemirror.Node) bool {
+	switch n.Type {
+	case prosemirror.NodeDoc, prosemirror.NodeBlockquote, prosemirror.NodeBulletList, prosemirror.NodeOrderedList,
+		prosemirror.NodeTable, prosemirror.NodeTableRow, prosemirror.NodeTableCell, prosemirror.NodeTableHeader:
+		return len(n.Content) > 0
+	case prosemirror.NodeListItem:
+		return len(n.Content) > 0 && n.Content[0].Type == prosemirror.NodeParagraph
+	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeCodeBlock,
+		prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeText, prosemirror.NodeHardBreak:
+		return true
+	default:
+		return false
+	}
+}
+
+func linearBlock(t prosemirror.NodeType) bool {
+	switch t {
+	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeBlockquote, prosemirror.NodeCodeBlock,
+		prosemirror.NodeHorizontalRule, prosemirror.NodeBulletList, prosemirror.NodeOrderedList,
+		prosemirror.NodeTable, prosemirror.NodeImage:
+		return true
+	default:
+		return false
+	}
+}
+
+func linearInline(t prosemirror.NodeType) bool {
+	return t == prosemirror.NodeText || t == prosemirror.NodeHardBreak
+}
+
+func linearLeaf(t prosemirror.NodeType) bool {
+	switch t {
+	case prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeHardBreak, prosemirror.NodeText:
+		return true
+	default:
+		return false
+	}
 }

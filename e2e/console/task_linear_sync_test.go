@@ -501,10 +501,17 @@ func TestTask_LinearTeamsWhenNotConnected(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					linearTeams {
-						id
-						name
-						key
+					linearTeams(first: 20) {
+						edges {
+							node {
+								id
+								name
+								key
+							}
+						}
+						pageInfo {
+							hasNextPage
+						}
 					}
 				}
 			}
@@ -513,8 +520,12 @@ func TestTask_LinearTeamsWhenNotConnected(t *testing.T) {
 
 	var result struct {
 		Node *struct {
-			LinearTeams []struct {
-				ID string `json:"id"`
+			LinearTeams struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
 			} `json:"linearTeams"`
 		} `json:"node"`
 	}
@@ -522,7 +533,7 @@ func TestTask_LinearTeamsWhenNotConnected(t *testing.T) {
 	err := owner.Execute(query, map[string]any{"id": owner.GetOrganizationID().String()}, &result)
 	require.NoError(t, err)
 	require.NotNil(t, result.Node)
-	assert.Empty(t, result.Node.LinearTeams)
+	assert.Empty(t, result.Node.LinearTeams.Edges)
 }
 
 func TestTask_UnlinkExternalWhenNotLinked(t *testing.T) {

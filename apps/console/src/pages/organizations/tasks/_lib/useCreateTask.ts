@@ -39,6 +39,7 @@ const createTaskMutation = graphql`
     createTask(input: $input) {
       taskEdge {
         node {
+          id
           ...TasksCard_task
           ...TasksCard_TaskRowFragment
         }
@@ -78,7 +79,7 @@ export function useCreateTask() {
         : []),
     ])];
 
-    await commit({
+    const payload = await commit({
       variables: {
         input: {
           organizationId,
@@ -95,6 +96,8 @@ export function useCreateTask() {
     if (measureId) {
       updateStoreCounter(relayEnv, measureId, "tasks(first:0)", 1);
     }
+
+    return payload.createTask.taskEdge.node.id;
   }
 
   return [createTask, isCreating] as const;

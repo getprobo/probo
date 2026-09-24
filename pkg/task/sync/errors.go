@@ -32,6 +32,8 @@ var (
 	ErrTaskNotLinked           = errors.New("task is not linked to an external issue")
 	ErrLinearTeamNotFound      = errors.New("linear team was not found")
 	ErrLinearTeamIDRequired    = errors.New("linear team id is required")
+	ErrLinearIssueIDRequired   = errors.New("linear issue id is required")
+	ErrLinearIssueNotFound     = errors.New("linear issue was not found")
 )
 
 type LinearReconnectRequiredError struct {

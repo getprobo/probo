@@ -23,17 +23,29 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
+		displayName: 'Linking updates the Probo task with the Linear issue',
+		name: 'linkWarning',
+		type: 'notice',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['linkToLinear'],
+			},
+		},
+		default: '',
+	},
+	{
 		displayName: 'Task ID',
 		name: 'taskId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['task'],
-				operation: ['publishToLinear'],
+				operation: ['linkToLinear'],
 			},
 		},
 		default: '',
-		description: 'The ID of the task to publish as a new Linear issue',
+		description: 'The ID of the task to link',
 		required: true,
 	},
 	{
@@ -43,11 +55,25 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['task'],
-				operation: ['publishToLinear'],
+				operation: ['linkToLinear'],
 			},
 		},
 		default: '',
 		description: 'The Linear team ID',
+		required: true,
+	},
+	{
+		displayName: 'Issue ID',
+		name: 'issueId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['linkToLinear'],
+			},
+		},
+		default: '',
+		description: 'The existing Linear issue ID. Linking updates the Probo task with this issue.',
 		required: true,
 	},
 ];
@@ -58,10 +84,11 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
 	const teamId = this.getNodeParameter('teamId', itemIndex) as string;
+	const issueId = this.getNodeParameter('issueId', itemIndex) as string;
 
 	const query = `
-		mutation PublishTaskToLinear($input: PublishTaskToLinearInput!) {
-			publishTaskToLinear(input: $input) {
+		mutation LinkTaskToLinear($input: LinkTaskToLinearInput!) {
+			linkTaskToLinear(input: $input) {
 				task {
 					id
 					externalLink {
@@ -74,7 +101,7 @@ export async function execute(
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, {
-		input: { taskId, teamId },
+		input: { taskId, teamId, issueId },
 	});
 
 	return {

@@ -19,7 +19,9 @@
 // SOFTWARE.
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useContext } from "react";
+
+import { overlayPortalContainer, OverlayPortalRootContext } from "../../lib/overlayPortalRoot";
 
 import { useComboboxInputNode } from "./context";
 import { comboboxPopup } from "./variants";
@@ -45,9 +47,10 @@ export function ComboboxPopup(props: ComboboxPopupProps) {
     ...popupProps
   } = props;
   const input = useComboboxInputNode();
+  const overlayRoot = useContext(OverlayPortalRootContext);
 
   return (
-    <BaseCombobox.Portal container={container}>
+    <BaseCombobox.Portal container={overlayPortalContainer(container, overlayRoot)}>
       {/* z-3 on the Positioner so the portaled root wins over in-page z-1.
           Anchor the input (caret), not the chip group; flip start/end when
           the preferred side runs out of horizontal room. */}

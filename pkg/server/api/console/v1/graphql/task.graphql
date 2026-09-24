@@ -111,6 +111,42 @@ type LinearTeam {
     key: String!
 }
 
+type LinearPageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type LinearTeamEdge {
+    cursor: String!
+    node: LinearTeam!
+}
+
+type LinearTeamConnection {
+    edges: [LinearTeamEdge!]!
+    pageInfo: LinearPageInfo!
+}
+
+type LinearIssue {
+    id: String!
+    identifier: String!
+    title: String!
+    content: String
+    state: TaskState
+    priority: TaskPriority
+}
+
+type LinearIssueEdge {
+    cursor: String!
+    node: LinearIssue!
+}
+
+type LinearIssueConnection {
+    edges: [LinearIssueEdge!]!
+    pageInfo: LinearPageInfo!
+}
+
 type TaskConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TaskConnection"
@@ -130,6 +166,7 @@ extend type Mutation {
     updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
     deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
     publishTaskToLinear(input: PublishTaskToLinearInput!): PublishTaskToLinearPayload!
+    linkTaskToLinear(input: LinkTaskToLinearInput!): LinkTaskToLinearPayload!
     unlinkTaskExternal(input: UnlinkTaskExternalInput!): UnlinkTaskExternalPayload!
 }
 
@@ -183,6 +220,16 @@ input PublishTaskToLinearInput {
 }
 
 type PublishTaskToLinearPayload {
+    task: Task!
+}
+
+input LinkTaskToLinearInput {
+    taskId: ID!
+    teamId: String!
+    issueId: String!
+}
+
+type LinkTaskToLinearPayload {
     task: Task!
 }
 

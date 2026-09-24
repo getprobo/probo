@@ -18,20 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package publishlinear
+package linklinear
 
 import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const publishMutation = `
-mutation($input: PublishTaskToLinearInput!) {
-  publishTaskToLinear(input: $input) {
+const linkMutation = `
+mutation($input: LinkTaskToLinearInput!) {
+  linkTaskToLinear(input: $input) {
     task {
       id
       externalLink {
@@ -43,8 +44,8 @@ mutation($input: PublishTaskToLinearInput!) {
 }
 `
 
-type publishResponse struct {
-	PublishTaskToLinear struct {
+type linkResponse struct {
+	LinkTaskToLinear struct {
 		Task struct {
 			ID           string `json:"id"`
 			ExternalLink *struct {
@@ -52,18 +53,42 @@ type publishResponse struct {
 				URL        string `json:"url"`
 			} `json:"externalLink"`
 		} `json:"task"`
-	} `json:"publishTaskToLinear"`
+	} `json:"linkTaskToLinear"`
 }
 
-func NewCmdPublishLinear(f *cmdutil.Factory) *cobra.Command {
-	var flagTeamID string
+func NewCmdLinkLinear(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagTeamID  string
+		flagIssueID string
+		flagYes     bool
+	)
 
 	cmd := &cobra.Command{
-		Use:   "publish-linear <id>",
-		Short: "Publish a task as a new Linear issue",
-		Long:  "Publish a task as a new Linear issue. The Probo task status and content are left unchanged.",
+		Use:   "link-linear <id>",
+		Short: "Link a task to an existing Linear issue",
+		Long:  "Link a task to an existing Linear issue. This updates the Probo task with the Linear issue.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !flagYes {
+				if !f.IOStreams.IsInteractive() {
+					return fmt.Errorf("cannot link task: confirmation required, use --yes to confirm")
+				}
+
+				var confirmed bool
+
+				err := huh.NewConfirm().
+					Title("Linking will update the Probo task with the Linear issue. Continue?").
+					Value(&confirmed).
+					Run()
+				if err != nil {
+					return fmt.Errorf("cannot confirm Linear link: %w", err)
+				}
+
+				if !confirmed {
+					return nil
+				}
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -83,24 +108,25 @@ func NewCmdPublishLinear(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			data, err := client.Do(
-				publishMutation,
+				linkMutation,
 				map[string]any{
 					"input": map[string]any{
-						"taskId": args[0],
-						"teamId": flagTeamID,
+						"taskId":  args[0],
+						"teamId":  flagTeamID,
+						"issueId": flagIssueID,
 					},
 				},
 			)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot link task to Linear: %w", err)
 			}
 
-			var resp publishResponse
+			var resp linkResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			task := resp.PublishTaskToLinear.Task
+			task := resp.LinkTaskToLinear.Task
 			if task.ExternalLink != nil {
 				_, _ = fmt.Fprintf(
 					f.IOStreams.Out,
@@ -115,7 +141,10 @@ func NewCmdPublishLinear(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagTeamID, "team-id", "", "Linear team ID")
+	cmd.Flags().StringVar(&flagIssueID, "issue-id", "", "Linear issue ID")
+	cmd.Flags().BoolVar(&flagYes, "yes", false, "Confirm that linking updates the Probo task")
 	_ = cmd.MarkFlagRequired("team-id")
+	_ = cmd.MarkFlagRequired("issue-id")
 
 	return cmd
 }
