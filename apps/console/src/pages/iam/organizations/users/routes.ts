@@ -39,7 +39,7 @@ export const usersRoutes = [
         Fallback: NewUserPageSkeleton,
       },
       {
-        path: ":personId",
+        path: ":userId",
         Component: lazy(() => import("#/pages/iam/organizations/users/UserPageLoader")),
         Fallback: UserPageSkeleton,
       },

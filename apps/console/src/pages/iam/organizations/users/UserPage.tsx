@@ -33,7 +33,7 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { ProfileState, UserPageQuery } from "#/__generated__/iam/UserPageQuery.graphql";
+import type { UserPageQuery } from "#/__generated__/iam/UserPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
@@ -42,11 +42,12 @@ import { RemoveUserDialog } from "./_components/RemoveUserDialog";
 import { SendActivationEmailDialog } from "./_components/SendActivationEmailDialog";
 import { UserIdentitySection } from "./_components/UserIdentitySection";
 import { UserPropertiesSection } from "./_components/UserPropertiesSection";
+import { profileStateBadgeColor } from "./_lib/profileStateBadgeColor";
 import { userPage } from "./variants";
 
 export const userPageQuery = graphql`
-  query UserPageQuery($personId: ID!) {
-    person: node(id: $personId) @required(action: THROW) {
+  query UserPageQuery($userId: ID!) {
+    user: node(id: $userId) @required(action: THROW) {
       __typename
       ... on Profile {
         id
@@ -77,16 +78,6 @@ export const userPageQuery = graphql`
   }
 `;
 
-function statusBadgeColor(state: ProfileState) {
-  if (state === "ACTIVE") {
-    return "green" as const;
-  }
-  if (state === "PENDING") {
-    return "amber" as const;
-  }
-  return "neutral" as const;
-}
-
 interface UserPageProps {
   queryRef: PreloadedQuery<UserPageQuery>;
 }
@@ -95,22 +86,22 @@ export function UserPage({ queryRef }: UserPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
-  const { person } = usePreloadedQuery<UserPageQuery>(userPageQuery, queryRef);
-  if (person.__typename !== "Profile" || person.organization?.id !== organizationId) {
+  const { user } = usePreloadedQuery<UserPageQuery>(userPageQuery, queryRef);
+  if (user.__typename !== "Profile" || user.organization?.id !== organizationId) {
     throw new NotFoundError(t("userPage.notFound"));
   }
 
-  usePageTitle(person.fullName);
+  usePageTitle(user.fullName);
 
   const [sendOpen, setSendOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
-  const isActive = person.state === "ACTIVE";
-  const isInactive = person.state === "DEACTIVATED";
-  const canSendActivationMail = !isActive && person.source !== "SCIM" && person.canInvite;
-  const canDeactivate = person.canDeactivate && person.source !== "SCIM" && person.state !== "DEACTIVATED";
-  const canRemove = person.canRemoveMember && person.source !== "SCIM";
-  const isResend = person.lastInvitation.edges.length > 0;
+  const isActive = user.state === "ACTIVE";
+  const isInactive = user.state === "DEACTIVATED";
+  const canSendActivationMail = !isActive && user.source !== "SCIM" && user.canInvite;
+  const canDeactivate = user.canDeactivate && user.source !== "SCIM" && user.state !== "DEACTIVATED";
+  const canRemove = user.canRemoveMember && user.source !== "SCIM";
+  const isResend = user.lastInvitation.edges.length > 0;
   const { root, back, header, identity, titleRow, title, email, actions } = userPage();
   const hasToolbarActions = canSendActivationMail || canDeactivate || canRemove;
 
@@ -134,14 +125,14 @@ export function UserPage({ queryRef }: UserPageProps) {
         <div className={identity()}>
           <div className={titleRow()}>
             <Heading level={1} size={6} weight="medium" highContrast className={title()}>
-              {person.fullName}
+              {user.fullName}
             </Heading>
-            <Badge variant="soft" color={statusBadgeColor(person.state)} size={1}>
-              {t(`usersList.filters.${person.state.toLowerCase()}`)}
+            <Badge variant="soft" color={profileStateBadgeColor(user.state)} size={1}>
+              {t(`usersList.filters.${user.state.toLowerCase()}`)}
             </Badge>
           </div>
           <Text size={2} className={email()}>
-            {person.emailAddress}
+            {user.emailAddress}
           </Text>
         </div>
         {hasToolbarActions && (
@@ -194,18 +185,18 @@ export function UserPage({ queryRef }: UserPageProps) {
           {t("userPage.deactivatedCallout")}
         </Callout>
       )}
-      <UserIdentitySection profileKey={person} />
-      <UserPropertiesSection profileKey={person} />
+      <UserIdentitySection profileKey={user} />
+      <UserPropertiesSection profileKey={user} />
       {canSendActivationMail && (
         <SendActivationEmailDialog
-          profileKey={person}
+          profileKey={user}
           open={sendOpen}
           onOpenChange={setSendOpen}
         />
       )}
       {canDeactivate && (
         <DeactivateUserDialog
-          profileKey={person}
+          profileKey={user}
           open={deactivateOpen}
           onOpenChange={setDeactivateOpen}
           onDeactivated={handleLeft}
@@ -213,7 +204,7 @@ export function UserPage({ queryRef }: UserPageProps) {
       )}
       {canRemove && (
         <RemoveUserDialog
-          profileKey={person}
+          profileKey={user}
           open={removeOpen}
           onOpenChange={setRemoveOpen}
           onRemoved={handleLeft}

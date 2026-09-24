@@ -37,11 +37,9 @@ import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type {
-  ProfileState,
-  UserListItem_profile$key,
-} from "#/__generated__/iam/UserListItem_profile.graphql";
+import type { UserListItem_profile$key } from "#/__generated__/iam/UserListItem_profile.graphql";
 
+import { profileStateBadgeColor } from "../_lib/profileStateBadgeColor";
 import { isUsersListKind } from "../_lib/useUsersListFilters";
 import { userListItem } from "../variants";
 
@@ -84,16 +82,6 @@ const fragment = graphql`
     ...RemoveUserDialog_profile
   }
 `;
-
-function statusBadgeColor(state: ProfileState) {
-  if (state === "ACTIVE") {
-    return "green" as const;
-  }
-  if (state === "PENDING") {
-    return "amber" as const;
-  }
-  return "neutral" as const;
-}
 
 interface UserListItemProps {
   profileKey: UserListItem_profile$key;
@@ -178,7 +166,7 @@ export function UserListItem({ profileKey, onDeactivated, onDeleted }: UserListI
       <Separator />
       <div className={meta()}>
         <div className={metaRow()}>
-          <Badge variant="soft" color={statusBadgeColor(profile.state)} size={1}>
+          <Badge variant="soft" color={profileStateBadgeColor(profile.state)} size={1}>
             {t(`usersList.filters.${profile.state.toLowerCase()}`)}
           </Badge>
           <UserRoleSelect membershipKey={profile.membership} />

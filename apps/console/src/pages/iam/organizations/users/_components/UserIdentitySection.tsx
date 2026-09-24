@@ -76,12 +76,7 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
   const profile = useFragment(fragment, profileKey);
   const [updateUser, isUpdating] = useUpdateUser();
   const isInactive = profile.state === "DEACTIVATED";
-  const {
-    root,
-    person,
-    avatar,
-    fields,
-  } = userIdentitySection({ inactive: isInactive });
+  const { person, avatar, fields } = userIdentitySection({ inactive: isInactive });
   const scimManaged = profile.source === "SCIM";
   const canEditIdentity = profile.canUpdate && !scimManaged;
   const empty = t("userPage.empty");
@@ -132,70 +127,68 @@ export function UserIdentitySection({ profileKey }: UserIdentitySectionProps) {
 
   return (
     <Card variant="soft" size={2}>
-      <div className={root()}>
-        <div className={person()}>
-          <div className={avatar()}>
-            <Avatar
-              name={profile.fullName}
-              email={profile.emailAddress}
-              src={profile.avatar?.downloadUrl}
-              size={8}
-              radius="large"
-            />
-          </div>
-          <div className={fields()}>
-            <Field required label={t("userForm.fields.fullName")}>
-              {canEditIdentity
-                ? (
-                    <TextField
-                      size={2}
-                      value={fullName}
-                      disabled={isUpdating}
-                      required
-                      onValueChange={setFullName}
-                      onBlur={saveName}
-                    />
-                  )
-                : (
-                    <Text size={2} highContrast>{profile.fullName}</Text>
-                  )}
-            </Field>
-            <Field label={t("userForm.fields.type")}>
-              {canEditIdentity
-                ? (
-                    <Select
-                      value={profile.kind}
-                      disabled={isUpdating}
-                      onValueChange={(kind) => {
-                        if ((kind ?? null) === (profile.kind ?? null)) {
-                          return;
-                        }
-                        save({ kind });
-                      }}
-                    >
-                      <SelectTrigger size={2} aria-label={t("userForm.fields.type")}>
-                        {(kind: string | null) => kindLabel(kind)}
-                      </SelectTrigger>
-                      <SelectPopup>
-                        <SelectItem value={null}>{empty}</SelectItem>
-                        {kindOptions.map(kind => (
-                          <SelectItem key={kind} value={kind}>
-                            {isUsersListKind(kind) ? t(`userForm.kinds.${kind}`) : kind}
-                          </SelectItem>
-                        ))}
-                      </SelectPopup>
-                    </Select>
-                  )
-                : (
-                    <Text size={2} color={profile.kind == null ? "faint" : undefined}>
-                      {kindLabel(profile.kind)}
-                    </Text>
-                  )}
-            </Field>
-            <Field label={t("userForm.fields.role")}>
-              <UserRoleSelect membershipKey={profile.membership} size={2} />
-            </Field>
-          </div>
+      <div className={person()}>
+        <div className={avatar()}>
+          <Avatar
+            name={profile.fullName}
+            email={profile.emailAddress}
+            src={profile.avatar?.downloadUrl}
+            size={8}
+            radius="large"
+          />
+        </div>
+        <div className={fields()}>
+          <Field required label={t("userForm.fields.fullName")}>
+            {canEditIdentity
+              ? (
+                  <TextField
+                    size={2}
+                    value={fullName}
+                    disabled={isUpdating}
+                    required
+                    onValueChange={setFullName}
+                    onBlur={saveName}
+                  />
+                )
+              : (
+                  <Text size={2} highContrast>{profile.fullName}</Text>
+                )}
+          </Field>
+          <Field label={t("userForm.fields.type")}>
+            {canEditIdentity
+              ? (
+                  <Select
+                    value={profile.kind}
+                    disabled={isUpdating}
+                    onValueChange={(kind) => {
+                      if ((kind ?? null) === (profile.kind ?? null)) {
+                        return;
+                      }
+                      save({ kind });
+                    }}
+                  >
+                    <SelectTrigger size={2} aria-label={t("userForm.fields.type")}>
+                      {(kind: string | null) => kindLabel(kind)}
+                    </SelectTrigger>
+                    <SelectPopup>
+                      <SelectItem value={null}>{empty}</SelectItem>
+                      {kindOptions.map(kind => (
+                        <SelectItem key={kind} value={kind}>
+                          {isUsersListKind(kind) ? t(`userForm.kinds.${kind}`) : kind}
+                        </SelectItem>
+                      ))}
+                    </SelectPopup>
+                  </Select>
+                )
+              : (
+                  <Text size={2} color={profile.kind == null ? "faint" : undefined}>
+                    {kindLabel(profile.kind)}
+                  </Text>
+                )}
+          </Field>
+          <Field label={t("userForm.fields.role")}>
+            <UserRoleSelect membershipKey={profile.membership} size={2} />
+          </Field>
         </div>
       </div>
     </Card>

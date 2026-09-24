@@ -25,8 +25,8 @@ import { useSearchParams } from "react-router";
 export const usersListProfileStates = ["PENDING", "ACTIVE", "DEACTIVATED"] as const;
 export type UsersListProfileState = (typeof usersListProfileStates)[number];
 
-export const usersListStatusOptions = ["pending", "active", "deactivated"] as const;
-export type UsersListStatusOption = (typeof usersListStatusOptions)[number];
+const usersListStatusOptions = ["pending", "active", "deactivated"] as const;
+type UsersListStatusOption = (typeof usersListStatusOptions)[number];
 export type UsersListKind = (typeof peopleRoles)[number];
 
 const graphqlStates = {
@@ -35,7 +35,7 @@ const graphqlStates = {
   deactivated: "DEACTIVATED",
 } as const;
 
-export function isUsersListStatusOption(value: string): value is UsersListStatusOption {
+function isUsersListStatusOption(value: string): value is UsersListStatusOption {
   return (usersListStatusOptions as readonly string[]).includes(value);
 }
 
@@ -47,7 +47,7 @@ export function isUsersListKind(value: string): value is UsersListKind {
   return (peopleRoles as readonly string[]).includes(value);
 }
 
-export function usersListGraphqlFilter(filters: {
+function usersListGraphqlFilter(filters: {
   query: string;
   status: UsersListProfileState | null;
   role: Role | null;

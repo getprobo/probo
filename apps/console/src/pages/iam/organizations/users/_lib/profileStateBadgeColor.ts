@@ -18,42 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+type ProfileState = "ACTIVE" | "PENDING" | "DEACTIVATED";
 
-import type { UserPageQuery } from "#/__generated__/iam/UserPageQuery.graphql";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
-
-import { UserPage, userPageQuery } from "./UserPage";
-import { UserPageSkeleton } from "./UserPageSkeleton";
-
-function UserPageQueryLoader() {
-  const { userId } = useParams();
-  if (!userId) {
-    throw new Error(":userId missing in route params");
+export function profileStateBadgeColor(state: ProfileState) {
+  if (state === "ACTIVE") {
+    return "green" as const;
   }
-  const [queryRef, loadQuery] = useQueryLoader<UserPageQuery>(userPageQuery);
-
-  useEffect(() => {
-    loadQuery({ userId });
-  }, [userId, loadQuery]);
-
-  if (queryRef == null) {
-    return <UserPageSkeleton />;
+  if (state === "PENDING") {
+    return "amber" as const;
   }
-
-  return (
-    <Suspense fallback={<UserPageSkeleton />}>
-      <UserPage queryRef={queryRef} />
-    </Suspense>
-  );
-}
-
-export default function UserPageLoader() {
-  return (
-    <IAMRelayProvider>
-      <UserPageQueryLoader />
-    </IAMRelayProvider>
-  );
+  return "neutral" as const;
 }
