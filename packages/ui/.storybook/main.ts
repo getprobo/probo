@@ -15,10 +15,13 @@
 import type { StorybookConfig } from "@storybook/react-vite";
 
 const config: StorybookConfig = {
-  // v2 components have their own theme-isolated Storybook (.storybook-v2).
+  // v2 has its own Storybook (.storybook-v2). A "!../src/v2/**" stories
+  // entry does not ignore; Storybook treats each item as its own specifier.
   stories: [
-    "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
-    "!../src/v2/**",
+    "../src/Atoms/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../src/Molecules/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../src/Layouts/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../src/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   addons: [
     import.meta.resolve("@chromatic-com/storybook"),
