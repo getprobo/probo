@@ -66,7 +66,7 @@ func TestFrontDriver(t *testing.T) {
 	assert.Equal(t, "alice@example.com", admin.Email)
 	assert.Equal(t, "Alice Admin", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	require.NotNil(t, admin.Active)
 	assert.True(t, *admin.Active)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
@@ -75,7 +75,7 @@ func TestFrontDriver(t *testing.T) {
 	member := records[1]
 	assert.Equal(t, "tea_2", member.ExternalID)
 	assert.Equal(t, []string{"Teammate"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	require.NotNil(t, member.Active)
 	// is_available false is a presence toggle, not an account state.
 	assert.True(t, *member.Active)
@@ -107,7 +107,7 @@ func TestFrontDriver(t *testing.T) {
 	application := records[5]
 	assert.Equal(t, "tea_6", application.ExternalID)
 	assert.Equal(t, []string{"Admin", "Type: Application"}, application.Roles)
-	assert.True(t, application.IsAdmin)
+	assert.Equal(t, new(true), application.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, application.AccountType)
 }
 

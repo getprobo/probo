@@ -60,8 +60,10 @@ func frontRegistration() *Registration {
 			Probe:   "https://api2.frontapp.com/me",
 			APIBase: "https://api2.frontapp.com",
 		},
-		TokenEndpointAuth: "basic-form",
-		SupportsAPIKey:    true,
+		OAuth2: &OAuth2Config{
+			TokenEndpointAuth: "basic-form",
+		},
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewFrontDriver(c, ep.APIBase), nil
 		},

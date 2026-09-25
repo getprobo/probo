@@ -810,7 +810,6 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE", "FRONT",
-		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
 		"CAL_COM", "CALENDLY", "ATTIO",
 	}
 

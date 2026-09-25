@@ -44,8 +44,9 @@ func TestFrontRegistrationMetadata(t *testing.T) {
 	// Both credential paths are offered: OAuth and a company API token.
 	assert.Equal(t, "https://app.frontapp.com/oauth/authorize", reg.Endpoints.Auth)
 	assert.Equal(t, "https://app.frontapp.com/oauth/token", reg.Endpoints.Token)
-	assert.Equal(t, "basic-form", reg.TokenEndpointAuth, "front requires HTTP Basic client credentials on the token exchange")
-	assert.True(t, reg.SupportsAPIKey)
+	require.NotNil(t, reg.OAuth2)
+	assert.Equal(t, "basic-form", reg.OAuth2.TokenEndpointAuth, "front requires HTTP Basic client credentials on the token exchange")
+	assert.True(t, reg.SupportsAPIKey())
 
 	// The Core API lives on a different host from the OAuth endpoints.
 	assert.Equal(t, "https://api2.frontapp.com", reg.Endpoints.APIBase)
@@ -53,14 +54,13 @@ func TestFrontRegistrationMetadata(t *testing.T) {
 
 	// Front resolves an OAuth token's scopes from the app configuration, so
 	// none are requested per-authorization.
-	assert.Empty(t, reg.OAuth2Scopes)
+	assert.Empty(t, reg.OAuth2.Scopes)
 	// The company API token is a plain Bearer credential and the token is
 	// already company-scoped, so there is nothing extra to collect.
-	assert.Empty(t, reg.APIKeyExtraSettings)
-	assert.Empty(t, reg.APIKeyHeader)
-	assert.Empty(t, reg.APIKeyAuthScheme)
-	assert.False(t, reg.APIKeyBasicAuth)
-	assert.False(t, reg.APIKeyBasicAuthUserPass)
+	require.NotNil(t, reg.APIKey)
+	assert.Empty(t, reg.APIKey.ExtraSettings)
+	assert.Equal(t, provider.APIKeyAuth{}, reg.APIKey.Auth)
+	assert.Nil(t, reg.APIKey.Managed)
 }
 
 func TestFrontFactories(t *testing.T) {

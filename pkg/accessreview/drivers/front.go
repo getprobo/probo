@@ -182,7 +182,7 @@ func frontAccountRecord(teammate frontTeammate) AccountRecord {
 		FullName:    frontFullName(teammate),
 		Roles:       frontRoles(teammate),
 		Active:      &active,
-		IsAdmin:     teammate.IsAdmin,
+		IsAdmin:     new(teammate.IsAdmin),
 		MFAStatus:   coredata.MFAStatusUnknown,
 		AuthMethod:  frontAuthMethod(teammate.Type),
 		AccountType: frontAccountType(teammate.Type),
