@@ -4,6 +4,21 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.236.0] - 2026-09-25
+
+### Added
+
+- `task link-linear` links a task to an existing Linear issue (`--team-id`
+  and `--issue-id` required). Linking updates the Probo task with the
+  Linear issue
+- `task list-linear-issues` searches Linear issues in a team (`--team-id`
+  required, optional `--query` and `--limit`)
+
+### Changed
+
+- `task list-linear-teams` searches and pages teams (`--query`, `--limit`)
+  instead of returning every team
+
 ## [0.235.0] - 2026-09-24
 
 ### Added
