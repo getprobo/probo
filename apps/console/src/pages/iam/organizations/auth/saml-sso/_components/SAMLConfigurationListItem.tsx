@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CopyIcon, PencilSimpleIcon } from "@phosphor-icons/react";
+import { CopyIcon } from "@phosphor-icons/react";
 import { useToast } from "@probo/ui";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -33,18 +32,22 @@ import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 import {
   samlConfigurationCardTone,
+  samlConfigurationStatusKey,
   SAMLConfigurationStatusIcon,
   showsSamlLoginUrl,
 } from "../_lib/samlConfigurationCardTone";
 import { samlConfigurationListItem } from "../variants";
 
 import { DeleteSAMLConfigurationDialog } from "./DeleteSAMLConfigurationDialog";
+import { EditSAMLConfigurationDialog } from "./EditSAMLConfigurationDialog";
+import { SAMLConfigurationDnsRecord } from "./SAMLConfigurationDnsRecord";
 
 const samlConfigurationListItemFragment = graphql`
   fragment SAMLConfigurationListItem_samlConfiguration on SAMLConfiguration {
     id
     emailDomain
     enforcementPolicy
+    autoSignupEnabled
     domainVerificationToken
     domainVerifiedAt
     testLoginUrl
@@ -56,15 +59,11 @@ const samlConfigurationListItemFragment = graphql`
 
 interface SAMLConfigurationListItemProps {
   samlConfigurationKey: SAMLConfigurationListItem_samlConfiguration$key;
-  onEdit: (id: string) => void;
-  onVerifyDomain: (dnsVerificationToken: string) => void;
   onDeleted: () => void;
 }
 
 export function SAMLConfigurationListItem({
   samlConfigurationKey,
-  onEdit,
-  onVerifyDomain,
   onDeleted,
 }: SAMLConfigurationListItemProps) {
   const { t } = useTranslation();
@@ -72,10 +71,13 @@ export function SAMLConfigurationListItem({
   const { actions, body, callout, url, urlRow, urlValue } = samlConfigurationListItem();
   const config = useFragment(samlConfigurationListItemFragment, samlConfigurationKey);
   const tone = samlConfigurationCardTone(config.domainVerifiedAt, config.enforcementPolicy);
+  const statusKey = samlConfigurationStatusKey(
+    config.domainVerifiedAt,
+    config.enforcementPolicy,
+  );
   const showLoginUrl = showsSamlLoginUrl(config.domainVerifiedAt, config.enforcementPolicy);
   const domainVerificationToken = config.domainVerificationToken;
-  const domainVerified = config.domainVerifiedAt != null;
-  const hasActions = (domainVerified && config.canUpdate) || config.canDelete;
+  const hasActions = config.canUpdate || config.canDelete;
 
   async function handleCopyUrl() {
     try {
@@ -104,23 +106,15 @@ export function SAMLConfigurationListItem({
         />
       )}
       lead={(
-        <Text size={3} weight="medium" highContrast>
-          {config.emailDomain}
+        <Text size={3} weight="medium" color={tone === "sand" ? "neutral" : tone}>
+          {t(`samlConfigurationList.title.${statusKey}`)}
         </Text>
       )}
       control={hasActions
         ? (
             <div className={actions()}>
-              {domainVerified && config.canUpdate && (
-                <IconButton
-                  size={1}
-                  variant="surface"
-                  color="neutral"
-                  aria-label={t("samlConfigurationList.actions.edit")}
-                  onClick={() => onEdit(config.id)}
-                >
-                  <PencilSimpleIcon />
-                </IconButton>
+              {config.canUpdate && (
+                <EditSAMLConfigurationDialog samlConfigurationId={config.id} />
               )}
               {config.canDelete && (
                 <DeleteSAMLConfigurationDialog
@@ -133,9 +127,24 @@ export function SAMLConfigurationListItem({
         : undefined}
     >
       <div className={body()}>
+        <Text size={3} weight="medium" highContrast>
+          {config.emailDomain}
+        </Text>
         <Text size={2} color="neutral">
           <Trans
             i18nKey={`samlConfigurationList.enforcement.${config.enforcementPolicy.toLowerCase()}`}
+            components={{
+              policy: <Text size={2} weight="medium" highContrast color="current" />,
+            }}
+          />
+        </Text>
+        <Text size={2} color="neutral">
+          <Trans
+            i18nKey={
+              config.autoSignupEnabled
+                ? "samlConfigurationList.signup.enabled"
+                : "samlConfigurationList.signup.disabled"
+            }
             components={{
               policy: <Text size={2} weight="medium" highContrast color="current" />,
             }}
@@ -146,14 +155,10 @@ export function SAMLConfigurationListItem({
             <Text size={2} color="neutral">
               {t("samlConfigurationList.pending.description")}
             </Text>
-            {config.canUpdate && domainVerificationToken != null && (
-              <Button
-                variant="solid"
-                size={2}
-                onClick={() => onVerifyDomain(domainVerificationToken)}
-              >
-                {t("samlConfigurationList.actions.verifyDomain")}
-              </Button>
+            {domainVerificationToken != null && (
+              <SAMLConfigurationDnsRecord
+                domainVerificationToken={domainVerificationToken}
+              />
             )}
           </div>
         )}

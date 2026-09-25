@@ -20,25 +20,13 @@
 
 import { usePageTitle } from "@probo/hooks";
 import { Breadcrumb, Dialog, useDialogRef } from "@probo/ui";
-import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  graphql,
-  type PreloadedQuery,
-  usePreloadedQuery,
-  useQueryLoader,
-} from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { EditSAMLConfigurationFormQuery } from "#/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
 import type { SAMLSSOPageQuery } from "#/__generated__/iam/SAMLSSOPageQuery.graphql";
 
-import {
-  EditSAMLConfigurationForm,
-  samlConfigurationFormQuery,
-} from "./_components/EditSAMLConfigurationForm";
 import { NewSAMLConfigurationForm } from "./_components/NewSAMLConfigurationForm";
 import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
-import { SAMLDomainVerifyDialog } from "./_components/SAMLDomainVerifyDialog";
 import { samlSsoPage } from "./variants";
 
 export const samlSSOPageQuery = graphql`
@@ -58,10 +46,6 @@ export function SAMLSSOPage(props: {
   const { queryRef } = props;
 
   const formDialogRef = useDialogRef();
-  const domainDialogRef = useDialogRef();
-  const [isEditing, setIsEditing] = useState<boolean>();
-  const [domainVerificationToken, setDomainVerificationToken]
-    = useState<string>();
 
   const { t } = useTranslation();
   const { root } = samlSsoPage();
@@ -71,75 +55,22 @@ export function SAMLSSOPage(props: {
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }
-  const [formQueryRef, loadFormQuery]
-    = useQueryLoader<EditSAMLConfigurationFormQuery>(samlConfigurationFormQuery);
-
-  const handleOpenFormDialog = (samlConfigurationId?: string) => {
-    setIsEditing(!!samlConfigurationId);
-    if (samlConfigurationId) {
-      loadFormQuery({ samlConfigurationId }, { fetchPolicy: "network-only" });
-    }
-    formDialogRef.current?.open();
-  };
-  const handleCloseFormDialog = () => {
-    setIsEditing(false);
-    formDialogRef.current?.close();
-  };
-
-  const handleOpenVerifyDomainDialog = (domainVerificationToken: string) => {
-    setDomainVerificationToken(domainVerificationToken);
-    domainDialogRef.current?.open();
-  };
-  const handleCloseVerifyDomainDialog = () => {
-    setDomainVerificationToken("");
-    formDialogRef.current?.close();
-  };
 
   return (
     <>
       <div className={root()}>
         <SAMLConfigurationList
           organizationKey={organization}
-          onAdd={() => handleOpenFormDialog()}
-          onEdit={(id: string) => handleOpenFormDialog(id)}
-          onVerifyDomain={handleOpenVerifyDomainDialog}
+          onAdd={() => formDialogRef.current?.open()}
         />
       </div>
 
       <Dialog
         ref={formDialogRef}
-        onClose={handleCloseFormDialog}
+        onClose={() => formDialogRef.current?.close()}
         title={<Breadcrumb items={[t("samlSsoPage.breadcrumb.settings"), t("samlSsoPage.breadcrumb.configure")]} />}
       >
-        {isEditing
-          ? (
-              <Suspense>
-                {formQueryRef && (
-                  <EditSAMLConfigurationForm
-                    queryRef={formQueryRef}
-                    onUpdate={handleCloseFormDialog}
-                  />
-                )}
-              </Suspense>
-            )
-          : (
-              <NewSAMLConfigurationForm onCreate={handleCloseFormDialog} />
-            )}
-      </Dialog>
-
-      <Dialog
-        ref={domainDialogRef}
-        onClose={handleCloseVerifyDomainDialog}
-        title={
-          <Breadcrumb items={[t("samlSsoPage.breadcrumb.settings"), t("samlSsoPage.breadcrumb.verifyDomain")]} />
-        }
-      >
-        {domainVerificationToken && (
-          <SAMLDomainVerifyDialog
-            key={domainVerificationToken}
-            domainVerificationToken={domainVerificationToken}
-          />
-        )}
+        <NewSAMLConfigurationForm onCreate={() => formDialogRef.current?.close()} />
       </Dialog>
     </>
   );

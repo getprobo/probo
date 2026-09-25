@@ -58,7 +58,12 @@ export const samlConfigurationListItem = tv({
   slots: {
     actions: "flex items-center gap-1",
     body: "flex flex-col gap-3",
-    callout: "flex flex-col gap-3",
+    callout: "flex flex-col gap-2",
+    record: "flex flex-col gap-2 rounded-2 bg-sand-3 p-3",
+    recordHeader: "flex items-center justify-between gap-2",
+    recordField: "flex flex-col gap-1",
+    recordValue: "flex min-w-0 items-center gap-1",
+    code: "min-w-0 flex-1 break-all",
     url: "flex flex-col gap-1",
     urlRow: "flex items-start gap-2",
     urlValue: "min-w-0 flex-1 break-all",

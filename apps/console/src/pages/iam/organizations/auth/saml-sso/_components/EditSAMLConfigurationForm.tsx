@@ -75,12 +75,7 @@ const updateSAMLConfigurationMutation = graphql`
   ) {
     updateSAMLConfiguration(input: $input) {
       samlConfiguration {
-        id
-        emailDomain
-        enforcementPolicy
-        domainVerificationToken
-        domainVerifiedAt
-        testLoginUrl
+        ...SAMLConfigurationListItem_samlConfiguration
       }
     }
   }
