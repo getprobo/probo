@@ -18,67 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DotsThreeVerticalIcon, TrashIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { ThirdPartyLogo } from "@probo/ui";
-import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useLocation, useNavigate } from "react-router";
 
-import type { ConnectorDetailsPage_accounts$key } from "#/__generated__/core/ConnectorDetailsPage_accounts.graphql";
-import type { ConnectorDetailsPageAccountsQuery } from "#/__generated__/core/ConnectorDetailsPageAccountsQuery.graphql";
 import type { ConnectorDetailsPageQuery } from "#/__generated__/core/ConnectorDetailsPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
-import { ConnectorDocumentationLink } from "#/pages/organizations/access-reviews/dialogs/_components/ConnectorDocumentationLink";
 
-import { ConnectorAccountListItem } from "./_components/ConnectorAccountListItem";
-import { ConnectorDeleteDialog } from "./_components/ConnectorDeleteDialog";
-import { connectorDetailsPage, integrationSection } from "./variants";
-
-const PAGE_SIZE = 50;
+import { ConnectorAccountsDrawer } from "./_components/ConnectorAccountsDrawer";
+import { ConnectorDocumentationLink } from "./_components/ConnectorDocumentationLink";
+import { ConnectorListItem } from "./_components/ConnectorListItem";
+import {
+  createdConnectorLocationState,
+  type DiscoveredAccount,
+} from "./_lib/discoveredAccounts";
+import { connectVendorPath, integrationListPath } from "./_lib/integrationPath";
+import { connectorDetailsPage } from "./variants";
 
 export const connectorDetailsPageQuery = graphql`
-  query ConnectorDetailsPageQuery($connectorId: ID!) {
-    connector: node(id: $connectorId) {
-      __typename
-      ... on Connector {
-        id
-        provider
-        displayName
-        documentationUrl
-        connectionStatus
-        canDelete: permission(action: "core:connector:delete")
-        ...ConnectorDetailsPage_accounts
-        ...ConnectorDeleteDialog_connector
-      }
-    }
-  }
-`;
-
-const connectorDetailsPageAccountsFragment = graphql`
-  fragment ConnectorDetailsPage_accounts on Connector
-  @refetchable(queryName: "ConnectorDetailsPageAccountsQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
-    after: { type: "CursorKey", defaultValue: null }
+  query ConnectorDetailsPageQuery(
+    $organizationId: ID!
+    $provider: ConnectorProvider!
   ) {
-    accounts(
-      first: $first
-      after: $after
-      orderBy: { direction: ASC, field: CREATED_AT }
-    ) @connection(key: "ConnectorDetailsPage_accounts", filters: []) {
-      totalCount
-      edges {
-        node {
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        canCreateConnector: permission(action: "core:connector:create")
+        connectors(filter: { providers: [$provider] }) {
           id
-          ...ConnectorAccountListItem_account
+          provider
+          displayName
+          documentationUrl
+          ...ConnectorListItem_connector @arguments(
+            includeAccountCount: true
+            includeOrganizationSelect: true
+          )
         }
       }
     }
@@ -91,129 +73,133 @@ interface ConnectorDetailsPageProps {
 
 export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const { connector } = usePreloadedQuery<ConnectorDetailsPageQuery>(
+  const organizationId = useOrganizationId();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const created = createdConnectorLocationState(location.state);
+  const [openId, setOpenId] = useState<string | null>(() => created?.connectorId ?? null);
+  const [preset, setPreset] = useState<DiscoveredAccount[] | null>(() => (
+    created?.discoveredAccounts ?? null
+  ));
+  const [presetConnectorId, setPresetConnectorId] = useState<string | null>(() => (
+    created?.connectorId ?? null
+  ));
+  const [fetchKey, setFetchKey] = useState(0);
+  const { organization } = usePreloadedQuery<ConnectorDetailsPageQuery>(
     connectorDetailsPageQuery,
     queryRef,
   );
+  const connectors = organization.__typename === "Organization"
+    ? organization.connectors
+    : [];
+  const vendor = connectors[0];
+  // Keep the last id so the close animation still has the account list.
+  const [displayedId, setDisplayedId] = useState<string | null>(openId);
+  if (openId != null && displayedId !== openId) {
+    setDisplayedId(openId);
+  }
+  const activeId = openId ?? displayedId;
+  const displayed = connectors.find(connector => connector.id === activeId) ?? null;
 
-  usePageTitle(
-    connector?.__typename === "Connector" ? connector.displayName : "",
-  );
+  usePageTitle(vendor?.displayName ?? "");
 
-  if (connector?.__typename !== "Connector") {
+  if (organization.__typename !== "Organization" || vendor == null) {
     throw new NotFoundError(t("detailsPage.notFound"));
   }
 
-  const {
-    data,
-    loadNext,
-    hasNext,
-    isLoadingNext,
-  } = usePaginationFragment<
-    ConnectorDetailsPageAccountsQuery,
-    ConnectorDetailsPage_accounts$key
-  >(connectorDetailsPageAccountsFragment, connector);
+  const { root, back, header, intro, title, grid } = connectorDetailsPage();
 
-  const accounts = data.accounts.edges;
-  const { root, header, titleRow, title, status, actions, body }
-    = connectorDetailsPage();
-  const {
-    root: sectionRoot,
-    header: sectionHeader,
-    title: sectionTitle,
-    count,
-    list,
-    item,
-    description,
-  } = integrationSection();
+  function clearCreatedState() {
+    if (createdConnectorLocationState(location.state) == null) {
+      return;
+    }
+
+    void navigate(
+      { pathname: location.pathname, search: location.search },
+      { replace: true, state: null },
+    );
+  }
+
+  function openAccounts(connectorId: string) {
+    clearCreatedState();
+    setPreset(null);
+    setPresetConnectorId(null);
+    setFetchKey(key => key + 1);
+    setOpenId(connectorId);
+  }
 
   return (
     <div className={root()}>
+      <Link
+        to={integrationListPath(organizationId)}
+        size={2}
+        color="neutral"
+        underline={false}
+        iconStart={<CaretLeftIcon />}
+        className={back()}
+      >
+        {t("detailsPage.actions.back")}
+      </Link>
       <div className={header()}>
-        <div className={titleRow()}>
+        <div className={intro()}>
           <div className={title()}>
-            <div className="flex items-center gap-2">
-              <ThirdPartyLogo
-                thirdParty={connector.provider}
-                className="size-6 shrink-0"
-              />
-              <Heading size={6}>{connector.displayName}</Heading>
-            </div>
-            <ConnectorDocumentationLink url={connector.documentationUrl} />
-            <span className={status()}>
-              {t(`detailsPage.status.${connector.connectionStatus}`)}
-            </span>
+            <ThirdPartyLogo
+              thirdParty={vendor.provider}
+              className="size-8 shrink-0"
+            />
+            <Heading level={1} size={6} weight="medium" highContrast>
+              {vendor.displayName}
+            </Heading>
           </div>
-          {connector.canDelete && (
-            <div className={actions()}>
-              <Dropdown>
-                <DropdownTrigger
-                  render={(
-                    <IconButton
-                      variant="soft"
-                      color="neutral"
-                      aria-label={t("detailsPage.actions.more")}
-                    >
-                      <DotsThreeVerticalIcon />
-                    </IconButton>
-                  )}
-                />
-                <DropdownPopup align="end">
-                  <DropdownItem
-                    color="error"
-                    iconStart={<TrashIcon />}
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    {t("detailsPage.actions.delete")}
-                  </DropdownItem>
-                </DropdownPopup>
-              </Dropdown>
-            </div>
-          )}
+          <ConnectorDocumentationLink url={vendor.documentationUrl} />
         </div>
+        {organization.canCreateConnector && (
+          <ButtonLink
+            to={connectVendorPath(organizationId, vendor.provider)}
+            variant="solid"
+            iconStart={<PlusIcon />}
+          >
+            {t("listPage.actions.add")}
+          </ButtonLink>
+        )}
       </div>
-
-      <div className={body()}>
-        <section className={sectionRoot()}>
-          <div className={sectionHeader()}>
-            <h2 className={sectionTitle()}>{t("detailsPage.accounts.title")}</h2>
-            <span className={count()}>{data.accounts.totalCount}</span>
-          </div>
-          <ul className={list()}>
-            {accounts.length > 0
-              ? accounts.map(({ node }) => (
-                  <ConnectorAccountListItem key={node.id} accountKey={node} />
-                ))
-              : (
-                  <li className={item()}>
-                    <span className={description()}>
-                      {t("detailsPage.accounts.empty")}
-                    </span>
-                  </li>
-                )}
-          </ul>
-          {hasNext && (
-            <Button
-              variant="ghost"
-              color="neutral"
-              loading={isLoadingNext}
-              onClick={() => loadNext(PAGE_SIZE)}
-              className="self-start"
-            >
-              {t("detailsPage.accounts.loadMore")}
-            </Button>
-          )}
-        </section>
+      <div className={grid()}>
+        {connectors.map(connector => (
+          <ConnectorListItem
+            key={connector.id}
+            connectorKey={connector}
+            organizationId={organizationId}
+            canConnect={false}
+            showName={false}
+            showConnectorType
+            showProbeError
+            onSelect={openAccounts}
+            onDeleted={() => {
+              if (connector.id === openId) {
+                setOpenId(null);
+                clearCreatedState();
+              }
+              if (connectors.length <= 1) {
+                void navigate(integrationListPath(organizationId));
+              }
+            }}
+          />
+        ))}
       </div>
-
-      {connector.canDelete && (
-        <ConnectorDeleteDialog
-          connectorKey={connector}
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-        />
-      )}
+      <ConnectorAccountsDrawer
+        connectorId={activeId}
+        provider={displayed?.provider ?? vendor.provider}
+        providerName={displayed?.displayName ?? vendor.displayName}
+        fetchKey={fetchKey}
+        preset={activeId != null && activeId === presetConnectorId ? preset : null}
+        open={openId != null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setOpenId(null);
+            clearCreatedState();
+          }
+        }}
+      />
     </div>
   );
 }

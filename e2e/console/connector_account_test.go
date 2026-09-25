@@ -243,14 +243,14 @@ func TestCreateAccessReviewSource_ConnectorIdOnlyResolvesAccount(t *testing.T) {
 	assert.NotEmpty(t, *result.Node.ConnectorAccountID)
 }
 
-func TestAccessReviewDrivers_OrganizationInstallSupported(t *testing.T) {
+func TestConnectorProviders_OrganizationInstallSupported(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				organizationInstallSupported
 			}
@@ -258,18 +258,18 @@ func TestAccessReviewDrivers_OrganizationInstallSupported(t *testing.T) {
 	`
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider                     string `json:"provider"`
 			OrganizationInstallSupported bool   `json:"organizationInstallSupported"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	err := owner.Execute(query, nil, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.AccessReviewDrivers)
+	require.NotEmpty(t, result.ConnectorProviders)
 
 	supported := map[string]bool{}
-	for _, driver := range result.AccessReviewDrivers {
+	for _, driver := range result.ConnectorProviders {
 		supported[driver.Provider] = driver.OrganizationInstallSupported
 	}
 

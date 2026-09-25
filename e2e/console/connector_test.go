@@ -30,13 +30,13 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestAccessReviewDrivers(t *testing.T) {
+func TestConnectorProviders(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				displayName
 				documentationUrl
@@ -80,7 +80,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	}
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider                       string        `json:"provider"`
 			DisplayName                    string        `json:"displayName"`
 			DocumentationURL               *string       `json:"documentationUrl"`
@@ -93,12 +93,12 @@ func TestAccessReviewDrivers(t *testing.T) {
 			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
 			WorkloadIdentitySupported      bool          `json:"workloadIdentitySupported"`
 			WorkloadIdentityExtraSettings  []settingInfo `json:"workloadIdentityExtraSettings"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	err := owner.Execute(query, nil, &result)
 	require.NoError(t, err)
-	assert.NotEmpty(t, result.AccessReviewDrivers)
+	assert.NotEmpty(t, result.ConnectorProviders)
 
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
@@ -109,7 +109,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	workloadIdentitySettingKeys := make(map[string][]string)
 	workloadIdentitySupported := make(map[string]bool)
 
-	for _, info := range result.AccessReviewDrivers {
+	for _, info := range result.ConnectorProviders {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
 		assert.NotNil(t, info.APIKeyExtraSettings)
@@ -217,15 +217,15 @@ func TestAccessReviewDrivers(t *testing.T) {
 		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
 		var viewerResult struct {
-			AccessReviewDrivers []struct {
+			ConnectorProviders []struct {
 				Provider    string `json:"provider"`
 				DisplayName string `json:"displayName"`
-			} `json:"accessReviewDrivers"`
+			} `json:"connectorProviders"`
 		}
 
 		err := viewer.Execute(query, nil, &viewerResult)
 		require.NoError(t, err)
-		assert.NotEmpty(t, viewerResult.AccessReviewDrivers)
+		assert.NotEmpty(t, viewerResult.ConnectorProviders)
 	})
 }
 
@@ -672,7 +672,7 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				apiKeySupported
 				apiKeyManaged
@@ -685,7 +685,7 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 	`
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider            string `json:"provider"`
 			APIKeySupported     bool   `json:"apiKeySupported"`
 			APIKeyManaged       bool   `json:"apiKeyManaged"`
@@ -693,14 +693,14 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 			APIKeyExtraSettings []struct {
 				Key string `json:"key"`
 			} `json:"apiKeyExtraSettings"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	require.NoError(t, owner.Execute(query, nil, &result))
 
 	crispFound := false
 
-	for _, driver := range result.AccessReviewDrivers {
+	for _, driver := range result.ConnectorProviders {
 		if driver.Provider != "CRISP" {
 			assert.Falsef(
 				t,

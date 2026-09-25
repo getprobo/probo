@@ -21,7 +21,7 @@
 import type {
   ConnectorProtocol,
   ConnectorProvider,
-} from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
+} from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 
 export type ConnectMethod = ConnectorProtocol | "CLIENT_CREDENTIALS" | "INSTALL";
 
@@ -39,8 +39,8 @@ const connectMethodPreference: ReadonlyArray<ConnectMethod> = [
   "GITHUB_APP",
   "INSTALL",
   "OAUTH2",
-  "API_KEY",
   "CLIENT_CREDENTIALS",
+  "API_KEY",
 ];
 
 export function connectMethods({
@@ -71,6 +71,19 @@ export function connectMethods({
   }
 
   return connectMethodPreference.filter(method => supportedMethods.has(method));
+}
+
+// Client credentials is stored as OAUTH2. It is the OAuth2 connection that
+// cannot reconnect; an authorization-code connection can.
+export function connectMethodFromConnector(
+  protocol: ConnectorProtocol,
+  canReconnect: boolean,
+): ConnectMethod {
+  if (protocol === "OAUTH2" && !canReconnect) {
+    return "CLIENT_CREDENTIALS";
+  }
+
+  return protocol;
 }
 
 const workloadIdentitySlugByProvider: Partial<

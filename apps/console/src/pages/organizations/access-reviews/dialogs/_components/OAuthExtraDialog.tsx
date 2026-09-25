@@ -33,12 +33,11 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { OAuthExtraDialog_provider$key } from "#/__generated__/core/OAuthExtraDialog_provider.graphql";
-
 import {
   cleanZendeskSubdomain,
   connectOAuthProvider,
   DATADOG_SITES,
-} from "../_lib/connectorSettings";
+} from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
 
 const oAuthExtraDialogFragment = graphql`
   fragment OAuthExtraDialog_provider on ConnectorProviderInfo {

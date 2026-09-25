@@ -57,7 +57,7 @@ type Query {
         filter: CommonGVLVendorFilter
     ): CommonGVLVendorConnection!
     commonGVLCatalog: CommonGVLCatalog!
-    accessReviewDrivers: [ConnectorProviderInfo!]! @goField(forceResolver: true)
+    connectorProviders: [ConnectorProviderInfo!]! @goField(forceResolver: true)
     awsConnectorSetup(organizationId: ID!): AWSConnectorSetup!
         @goField(forceResolver: true)
     gcpConnectorSetup(organizationId: ID!): GCPConnectorSetup!

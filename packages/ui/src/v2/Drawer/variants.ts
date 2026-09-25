@@ -29,9 +29,11 @@ export const drawer = tv({
       "transition-opacity duration-200",
       "data-starting-style:opacity-0 data-ending-style:opacity-0",
     ],
-    viewport: "fixed inset-0 z-5 flex",
+    // Full-screen viewport must not eat clicks (backdrop or page is underneath).
+    // Direct children stay clickable, including menus portaled onto the viewport.
+    viewport: "pointer-events-none *:pointer-events-auto fixed inset-0 z-5 flex",
     popup: [
-      "relative flex flex-col bg-sand-1 shadow-6 outline-none",
+      "pointer-events-auto relative flex flex-col bg-sand-1 shadow-6 outline-none",
       "transition-transform duration-200",
     ],
     content: "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4",
@@ -76,14 +78,18 @@ export const drawer = tv({
         ],
       },
     },
+    // Width lives here, not on `side`. tv/lite keeps both utilities if they
+    // are set in two places, so only one width class may apply.
     size: {
       1: {},
       2: {},
+      3: {},
     },
   },
   compoundVariants: [
     { side: ["right", "left"], size: 1, class: { popup: "w-[min(20rem,100%)]" } },
     { side: ["right", "left"], size: 2, class: { popup: "w-[min(28rem,100%)]" } },
+    { side: ["right", "left"], size: 3, class: { popup: "w-[min(36rem,100%)]" } },
   ],
   defaultVariants: {
     side: "right",

@@ -115,6 +115,30 @@ export function Controlled() {
   );
 }
 
+export function NonModal() {
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <Text size={2} color="neutral">
+        The page stays clickable while the drawer is open.
+      </Text>
+      <Drawer modal={false} disablePointerDismissal swipeDirection="right">
+        <DrawerTrigger render={<Button variant="solid" color="neutral" highContrast>Open drawer</Button>} />
+        <DrawerPopup side="right" modal={false}>
+          <DrawerHeader>
+            <DrawerTitle>Accounts</DrawerTitle>
+            <DrawerClose render={<Button variant="soft" color="neutral" highContrast>Close</Button>} />
+          </DrawerHeader>
+          <DrawerBody>
+            <Text size={2} color="neutral">
+              No backdrop. Outside clicks do not dismiss the drawer.
+            </Text>
+          </DrawerBody>
+        </DrawerPopup>
+      </Drawer>
+    </div>
+  );
+}
+
 export function Skeleton() {
   return (
     <div className="flex h-80 justify-end border border-sand-6 bg-sand-2">
