@@ -262,9 +262,15 @@ func TestHeuristicTemplate(t *testing.T) {
 			changed:  true,
 		},
 		{
-			name:     "slash inside base64 still collapses to prefix glob",
+			name:     "slash-split long path segments still collapse to prefix glob",
 			input:    "clientSourceId/ODA4MDNjNzk/tYjEzMS00YjBlLTkzYzktZWZmNmQyYzg4YWRj/8f42bee0-1096-4458-89e3-f4495edd018b",
 			template: "clientSourceId/*",
+			changed:  true,
+		},
+		{
+			name:     "short path crumb stays as a fixed segment",
+			input:    "clientSourceId/YWJj/8f42bee0-1096-4458-89e3-f4495edd018b",
+			template: "clientSourceId/YWJj/*",
 			changed:  true,
 		},
 		{
@@ -276,6 +282,18 @@ func TestHeuristicTemplate(t *testing.T) {
 			name:     "stable path prefix keeps trailing UUID wildcard",
 			input:    "clientSourceId/api/8f42bee0-1096-4458-89e3-f4495edd018b",
 			template: "clientSourceId/api/*",
+			changed:  true,
+		},
+		{
+			name:     "short numeric path label stays fixed next to UUID",
+			input:    "clientSourceId/2024/8f42bee0-1096-4458-89e3-f4495edd018b",
+			template: "clientSourceId/2024/*",
+			changed:  true,
+		},
+		{
+			name:     "version path label stays fixed next to UUID",
+			input:    "clientSourceId/v1/8f42bee0-1096-4458-89e3-f4495edd018b",
+			template: "clientSourceId/v1/*",
 			changed:  true,
 		},
 	}
