@@ -33,7 +33,7 @@ export default function IntegrationsPageLoader() {
     = useQueryLoader<IntegrationsPageQuery>(integrationsPageQuery);
 
   useEffect(() => {
-    loadQuery({ organizationId });
+    loadQuery({ organizationId }, { fetchPolicy: "store-and-network" });
   }, [loadQuery, organizationId]);
 
   const currentQueryRef = queryRef != null

@@ -1,37 +1,198 @@
 {
+  "marketplacePage": {
+    "title": "Marketplace",
+    "description": "Leveranciers waarmee Probo verbinding kan maken.",
+    "connect": "Verbinden",
+    "credentialCount_one": "{{count}} credential verbonden",
+    "credentialCount_other": "{{count}} credentials verbonden",
+    "connectTitle": "{{provider}} verbinden",
+    "choose": "Kies hoe u {{provider}} verbindt.",
+    "back": "Terug",
+    "methods": {
+      "WORKLOAD_IDENTITY": "Workload identity",
+      "GITHUB_APP": "GitHub-app",
+      "INSTALL": "App-installatie",
+      "OAUTH2": "OAuth",
+      "CLIENT_CREDENTIALS": "Clientgegevens",
+      "API_KEY": "API-sleutel"
+    },
+    "methodDescriptions": {
+      "WORKLOAD_IDENTITY": "Vertrouw Probo met een cloudrol, zonder langlevend geheim.",
+      "GITHUB_APP": "Installeer de Probo GitHub-app.",
+      "INSTALL": "Installeer de Probo-app bij de leverancier.",
+      "OAUTH2": "Meld u aan bij de leverancier en verleen toegang.",
+      "CLIENT_CREDENTIALS": "Gebruik een client-ID en clientgeheim.",
+      "API_KEY": "Plak een API-sleutel van de leverancier."
+    },
+    "documentation": "Documentatie",
+    "fields": {
+      "apiKey": "API-sleutel",
+      "clientId": "Client-ID",
+      "clientSecret": "Clientgeheim",
+      "tokenUrl": "Token-URL",
+      "scope": "Bereik",
+      "datadogSite": "Datadog-site",
+      "zendeskSubdomain": "Zendesk-subdomein",
+      "region": "Regio",
+      "regionPlaceholder": "Selecteer een regio",
+      "regionUnitedStates": "Verenigde Staten",
+      "regionEurope": "Europa"
+    },
+    "workloadIdentity": {
+      "propagationHint": "Federatie kan enkele minuten duren. Als Verbinden een verbroken connector meldt, wacht dan en probeer het opnieuw.",
+      "fields": {
+        "roleArn": "Rol-ARN",
+        "roleArnHelp": "bijv. arn:aws:iam::123456789012:role/ProboAudit",
+        "workloadIdentityProvider": "Workload Identity-provider",
+        "workloadIdentityProviderHelp": "bijv. projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+        "serviceAccountEmail": "E-mailadres van serviceaccount",
+        "serviceAccountEmailHelp": "bijv. probo-audit@PROJECT_ID.iam.gserviceaccount.com",
+        "tenantId": "Directory-ID (tenant)",
+        "tenantIdHelp": "bijv. 11111111-1111-1111-1111-111111111111",
+        "clientId": "Applicatie-ID (client)",
+        "clientIdHelp": "bijv. 22222222-2222-2222-2222-222222222222",
+        "subscriptionId": "Abonnements-ID",
+        "subscriptionIdHelp": "bijv. 33333333-3333-3333-3333-333333333333",
+        "environment": "Azure-omgeving",
+        "environmentGccNote": "GCC gebruikt Azure Public. Alleen GCC High en DoD gebruiken Government.",
+        "issuer": "Uitgever",
+        "audience": "Audience",
+        "subject": "Subject"
+      },
+      "environments": {
+        "AZURE_PUBLIC": "Public — GCC gebruikt Azure Public",
+        "AZURE_GOVERNMENT": "Government (GCC High)",
+        "AZURE_GOVERNMENT_DOD": "Government DoD",
+        "AZURE_CHINA": "China"
+      },
+      "messages": {
+        "copyFailed": "Kopiëren mislukt",
+        "copiedIssuer": "Uitgever gekopieerd.",
+        "copiedAudience": "Audience gekopieerd.",
+        "copiedSubject": "Subject gekopieerd.",
+        "copiedTerraform": "Terraform-fragment gekopieerd.",
+        "error": "Fout"
+      },
+      "errors": {
+        "roleArn": "Voer een geldige IAM-rol-ARN in.",
+        "workloadIdentityProvider": "Voer een geldige Workload Identity-providerresource in.",
+        "serviceAccountEmail": "Voer een geldig e-mailadres van een serviceaccount in.",
+        "tenantId": "Voer een geldige directory-ID (tenant) in.",
+        "clientId": "Voer een geldige applicatie-ID (client) in.",
+        "subscriptionId": "Voer een geldige abonnements-ID in.",
+        "delete": "Kan de connector niet verwijderen. Probeer het opnieuw.",
+        "aws": {
+          "create": "Aanmaken van de connector mislukt. Controleer de rol-ARN en probeer het opnieuw.",
+          "disconnected": "Probo kon de auditrol niet aannemen. Controleer of de stack in dit account is uitgerold en of de issuer en het subject overeenkomen met de waarden die tijdens de installatie zijn getoond."
+        },
+        "gcp": {
+          "create": "Aanmaken van de connector mislukt. Controleer de providerresource en het e-mailadres van het serviceaccount en probeer het opnieuw.",
+          "disconnected": "Probo kon het audit-serviceaccount niet impersoneren. Controleer of de module in dit project is toegepast en of de issuer en het subject overeenkomen met de waarden die tijdens de installatie zijn getoond."
+        },
+        "azure": {
+          "create": "Aanmaken van de connector mislukt. Controleer de tenant-, client- en abonnements-ID’s en probeer het opnieuw.",
+          "disconnected": "Probo kon de audit-identiteit niet aannemen. Controleer of de module is toegepast en of de issuer en het subject overeenkomen. Federatie kan enkele minuten duren."
+        }
+      },
+      "actions": {
+        "copy": "Kopiëren",
+        "installViaCloudFormation": "Installeren via CloudFormation",
+        "installViaTerraform": "Installeren via Terraform"
+      }
+    },
+    "connected": "Leverancier verbonden.",
+    "connectFailed": "Verbinden mislukt"
+  },
   "listPage": {
-    "title": "Integraties",
-    "description": "De leveranciers waarvoor Probo een credential heeft, en waarmee het verder verbinding kan maken.",
+    "title": "Connectoren",
+    "description": "De leveranciers waarvoor Probo een credential heeft.",
     "notFound": "Organisatie niet gevonden",
     "sections": {
       "connected": "Verbonden",
       "available": "Beschikbaar"
     },
+    "addMore": "Meer toevoegen",
     "emptyConnected": "Er is nog geen leverancier verbonden.",
+    "emptyConnectedSearch": "Geen verbonden leverancier komt overeen met uw zoekopdracht.",
     "emptyAvailable": "Alle beschikbare leveranciers zijn al verbonden.",
+    "emptyAvailableSearch": "Geen beschikbare leverancier komt overeen met uw zoekopdracht.",
+    "searchPlaceholder": "Leveranciers zoeken...",
+    "searchConnectorsPlaceholder": "Connectoren zoeken...",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "Alle statussen"
+    },
+    "created": "Aangemaakt op {{date}}",
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
+    "connectedCount": "{{connected}}/{{total}} verbonden",
+    "connectionIssues": {
+      "reconnect": "Verbind {{provider}} opnieuw om de toegang te herstellen.",
+      "credentials": "De {{provider}}-credentials zijn ongeldig. Probo kan deze leverancier niet lezen met de huidige credentials.",
+      "notAuthorized": "{{provider}} heeft de credential geaccepteerd maar het verzoek geweigerd. Controleer de rechten van deze credential en of uw abonnement de API bevat die Probo gebruikt."
+    },
+    "usedBy": "Gebruikt door:",
+    "notUsedYet": "Nog niet gebruikt",
+    "modules": {
+      "ACCESS_REVIEW": "Toegangsbeoordeling",
+      "SCIM": "Auth & provisioning"
+    },
+    "organization": "Organisatie",
+    "organizationPlaceholder": "Selecteer een organisatie",
     "comingSoon": "Binnenkort beschikbaar",
-    "connectElsewhere": "Om een leverancier te verbinden, open <connections>verbindingen voor toegangsbeoordelingen</connections>.",
     "actions": {
-      "manage": "Beheren"
+      "add": "Connector toevoegen",
+      "manage": "Beheren",
+      "connectMore": "Nog een verbinden"
+    },
+    "messages": {
+      "connected": "Leverancier verbonden.",
+      "connectedDescription": "Deze leverancier is klaar voor gebruik.",
+      "error": "Verbinden mislukt",
+      "organizationUpdated": "Organisatie bijgewerkt."
+    },
+    "errors": {
+      "organization": "Bijwerken van de organisatie mislukt"
     }
   },
   "detailsPage": {
     "notFound": "Integratie niet gevonden",
+    "accountCount_one": "{{count}} account verbonden",
+    "accountCount_other": "{{count}} accounts verbonden",
     "status": {
       "CONNECTED": "Verbonden",
       "DISCONNECTED": "Verbinding verbroken",
       "NOT_AUTHORIZED": "Niet geautoriseerd",
       "RECONNECT_REQUIRED": "Opnieuw verbinden vereist"
     },
+    "connectors": {
+      "title": "Connectoren"
+    },
     "accounts": {
       "title": "Accounts",
+      "subtitle": "Accounts in behandeling moeten nog worden aangemaakt voordat andere modules van het platform ze kunnen gebruiken.",
       "empty": "Er is nog geen account ingeschakeld op deze credential.",
+      "discoveryFailed": "Probo kan met deze credentials geen accounts opvragen.",
+      "pending": "In behandeling",
+      "selectAll": "Alles selecteren",
+      "enable": "Inschakelen",
+      "disconnect": "Verbinding verbreken",
+      "disconnectTitle": "Account loskoppelen",
+      "disconnectDescription": "Loskoppelen verwijdert {{name}}. Alles wat dit account nog gebruikt moet eerst worden verwijderd.",
+      "disconnectConfirm": "Verbinding verbreken",
       "loadMore": "Meer accounts tonen"
     },
     "actions": {
+      "back": "Connectoren",
+      "close": "Sluiten",
+      "reconnect": "Opnieuw verbinden",
       "delete": "Verbinding verbreken",
       "cancel": "Annuleren",
       "more": "Meer acties"
+    },
+    "probeError": {
+      "copy": "Fout kopiëren",
+      "copied": "Fout gekopieerd."
     },
     "delete": {
       "title": "Verbinding met integratie verbreken",
@@ -39,10 +200,13 @@
       "confirm": "Verbinding verbreken"
     },
     "messages": {
-      "deleted": "Verbinding met integratie verbroken."
+      "deleted": "Verbinding met integratie verbroken.",
+      "accountDisconnected": "Account losgekoppeld."
     },
     "errors": {
-      "delete": "Verbreken van de integratie mislukt"
+      "delete": "Verbreken van de integratie mislukt",
+      "enable": "Inschakelen van accounts mislukt",
+      "disable": "Loskoppelen van het account mislukt"
     }
   }
 }

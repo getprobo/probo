@@ -37,19 +37,18 @@ import { graphql } from "relay-runtime";
 
 import type { APIKeyConnectorDialog_provider$key } from "#/__generated__/core/APIKeyConnectorDialog_provider.graphql";
 import type { APIKeyConnectorDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/APIKeyConnectorDialogCreateAPIKeyConnectorMutation.graphql";
-
-import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
+import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
+import {
+  isPostHogDeploymentSelected,
+  PostHogDeploymentField,
+} from "#/pages/organizations/settings/integrations/_components/PostHogDeploymentField";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapAPIKeyExtraSettingToField,
-} from "../_lib/connectorSettings";
-import {
-  isPostHogDeploymentSelected,
-  PostHogDeploymentField,
-} from "../PostHogDeploymentField";
+} from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
 
-import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
+import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
 
 const apiKeyConnectorDialogFragment = graphql`
   fragment APIKeyConnectorDialog_provider on ConnectorProviderInfo {
@@ -98,7 +97,6 @@ function extraSettingsKind(provider: string): "posthog" | "segment" | "generic" 
 type Props = {
   providerKey: APIKeyConnectorDialog_provider$key | null;
   organizationId: string;
-  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
 };
@@ -106,7 +104,6 @@ type Props = {
 export function APIKeyConnectorDialog({
   providerKey,
   organizationId,
-  connectionId,
   onClose,
   onSuccess,
 }: Props) {
@@ -132,7 +129,6 @@ export function APIKeyConnectorDialog({
 
   const createSourceAfterConnector = useCreateAccessReviewSource({
     organizationId,
-    connectionId,
     onSuccess,
   });
 

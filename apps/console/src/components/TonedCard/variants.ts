@@ -28,8 +28,8 @@ export const tonedCard = tv({
     header: "relative flex w-full items-center justify-between gap-3 overflow-hidden px-5 py-4",
     wash: "pointer-events-none absolute top-1/2 left-1/2 aspect-square w-full -translate-x-1/2 -translate-y-1/2 opacity-10 blur-[14px]",
     fade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
-    icon: "relative z-1 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-2",
-    lead: "relative z-1 min-w-0 flex-1 truncate",
+    icon: "relative z-1 flex shrink-0 items-center justify-center overflow-hidden rounded-2",
+    lead: "relative z-1 min-w-0 flex-1",
     control: "relative z-1 shrink-0",
     body: "flex flex-1 flex-col gap-2 px-5 pb-4",
   },
@@ -62,10 +62,22 @@ export const tonedCard = tv({
         icon: "bg-transparent text-red-11",
       },
     },
+    // Size lives in one variant. tv/lite does not drop an earlier utility,
+    // so size-10 and size-14 must not both be on the icon.
+    iconSize: {
+      10: {
+        icon: "size-10",
+      },
+      14: {
+        icon: "size-14",
+      },
+    },
   },
   defaultVariants: {
     tone: "sand",
+    iconSize: 10,
   },
 });
 
 export type TonedCardTone = NonNullable<VariantProps<typeof tonedCard>["tone"]>;
+export type TonedCardIconSize = NonNullable<VariantProps<typeof tonedCard>["iconSize"]>;
