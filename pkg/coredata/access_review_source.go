@@ -148,8 +148,8 @@ LIMIT 1;
 	return nil
 }
 
-// LoadByIDForUpdate is LoadByID under FOR UPDATE, so the caller's
-// account handoff reads connector_account_id under the row lock.
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent updates
+// of the same source serialize.
 func (as *AccessReviewSource) LoadByIDForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
@@ -397,28 +397,15 @@ WHERE
 	return nil
 }
 
-// DeleteReturningConnectorID deletes the source and returns the
-// connector reached through its account at delete time. The account is
-// read under the row lock before the delete. Nil for CSV sources;
-// ErrResourceNotFound when the source does not exist.
-func (as *AccessReviewSource) DeleteReturningConnectorID(
+// Delete removes the source. ErrResourceNotFound when the source does
+// not exist.
+func (as *AccessReviewSource) Delete(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
-) (*gid.GID, error) {
+) error {
 	if err := as.LoadByIDForUpdate(ctx, conn, scope, as.ID); err != nil {
-		return nil, err
-	}
-
-	var connectorID *gid.GID
-
-	if as.ConnectorAccountID != nil {
-		account := &ConnectorAccount{}
-		if err := account.LoadByID(ctx, conn, scope, *as.ConnectorAccountID); err != nil {
-			return nil, fmt.Errorf("cannot load connector account: %w", err)
-		}
-
-		connectorID = &account.ConnectorID
+		return err
 	}
 
 	q := `
@@ -431,10 +418,10 @@ WHERE %s AND id = @id
 	maps.Copy(args, scope.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return nil, fmt.Errorf("cannot delete access_source: %w", err)
+		return fmt.Errorf("cannot delete access_source: %w", err)
 	}
 
-	return connectorID, nil
+	return nil
 }
 
 // LoadByConnectorAccountID loads the access source referencing the

@@ -447,20 +447,25 @@ func TestDeleteSource_KeepsConnectorWhenOtherAccountHasSource(t *testing.T) {
 	requireMissingSource(t, env, dropped.ID)
 	requirePresentSource(t, env, kept.ID)
 	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, keptAccountID)
+	requireAccountPresent(t, env, droppedAccountID)
 }
 
-func TestDeleteSource_DeletesConnectorWhenLastSource(t *testing.T) {
+func TestDeleteSource_KeepsConnectorWhenLastSource(t *testing.T) {
 	t.Parallel()
 
 	env := newAccessSourceEnv(t)
 	connectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
 	accountID := env.insertAccount(t, connectorID, "only")
+	unusedAccountID := env.insertAccount(t, connectorID, "unused")
 	source := env.insertLinkedSource(t, accountID, "only source")
 
 	require.NoError(t, env.svc.DeleteSource(env.ctx, env.scope, source.ID))
 
 	requireMissingSource(t, env, source.ID)
-	requireConnectorMissing(t, env, connectorID)
+	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, accountID)
+	requireAccountPresent(t, env, unusedAccountID)
 }
 
 func TestUpdateSource_RelinkKeepsConnectorWhenOtherAccountHasSource(t *testing.T) {
@@ -488,9 +493,11 @@ func TestUpdateSource_RelinkKeepsConnectorWhenOtherAccountHasSource(t *testing.T
 
 	requirePresentSource(t, env, kept.ID)
 	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, keptAccountID)
+	requireAccountPresent(t, env, movedAccountID)
 }
 
-func TestUpdateSource_RelinkDeletesAbandonedConnectorWhenLastSource(t *testing.T) {
+func TestUpdateSource_RelinkKeepsAbandonedConnectorWhenLastSource(t *testing.T) {
 	t.Parallel()
 
 	env := newAccessSourceEnv(t)
@@ -511,7 +518,30 @@ func TestUpdateSource_RelinkDeletesAbandonedConnectorWhenLastSource(t *testing.T
 	require.NoError(t, err)
 	assert.Nil(t, updated.ConnectorAccountID)
 
-	requireConnectorMissing(t, env, connectorID)
+	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, accountID)
+}
+
+func TestEnsureSource_RefusesBridgedConnector(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := env.insertConnector(t, coredata.ConnectorProviderGoogleWorkspace)
+	accountID := env.insertAccount(t, connectorID, "workspace")
+	env.insertBridge(t, connectorID)
+
+	_, _, err := env.svc.EnsureSource(
+		env.ctx,
+		env.scope,
+		accessreview.CreateAccessReviewSourceRequest{
+			OrganizationID:     env.organizationID,
+			ConnectorAccountID: &accountID,
+			Name:               "shared",
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceInUse)
+	require.ErrorContains(t, err, "SCIM configuration")
+	requireConnectorPresent(t, env, connectorID)
 }
 
 func TestDeleteSource_KeepsConnectorWhenBridgeReferencesIt(t *testing.T) {
@@ -527,6 +557,7 @@ func TestDeleteSource_KeepsConnectorWhenBridgeReferencesIt(t *testing.T) {
 
 	requireMissingSource(t, env, source.ID)
 	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, accountID)
 }
 
 func insertAccessSource(
@@ -626,6 +657,52 @@ func TestSourceNeedsReconnect_Slack(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestSetConnectorOrganization_GitHubApp(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := gid.New(env.scope.GetTenantID(), coredata.ConnectorEntityType)
+
+	var key cipher.EncryptionKey
+
+	require.NoError(t, env.client.WithTx(
+		env.ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			cnnctr := &coredata.Connector{
+				ID:             connectorID,
+				OrganizationID: env.organizationID,
+				Provider:       coredata.ConnectorProviderGitHub,
+				Protocol:       coredata.ConnectorProtocolGitHubApp,
+				Connection:     &connector.GitHubAppConnection{InstallationID: 42},
+				CreatedAt:      env.now,
+				UpdatedAt:      env.now,
+			}
+
+			if err := cnnctr.SetSettings(&coredata.GitHubConnectorSettings{Organization: "acme"}); err != nil {
+				return err
+			}
+
+			return cnnctr.Insert(ctx, tx, env.scope, key)
+		},
+	))
+
+	err := env.svc.SetConnectorOrganization(env.ctx, env.scope, connectorID, "other")
+	require.ErrorIs(t, err, accessreview.ErrOrganizationPickerUnsupported)
+
+	stored := &coredata.Connector{}
+
+	require.NoError(t, env.client.WithConn(
+		env.ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return stored.LoadMetadataByID(ctx, conn, env.scope, connectorID)
+		},
+	))
+
+	settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](stored)
+	require.NoError(t, err)
+	assert.Equal(t, "acme", settings.Organization)
 }
 
 func newAccessSourceEnv(t *testing.T) *accessSourceEnv {
@@ -821,6 +898,19 @@ func requireMissingSource(t *testing.T, env *accessSourceEnv, sourceID gid.GID) 
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
 
+func requireAccountPresent(t *testing.T, env *accessSourceEnv, accountID gid.GID) {
+	t.Helper()
+
+	loaded := &coredata.ConnectorAccount{}
+
+	require.NoError(t, env.client.WithConn(
+		env.ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return loaded.LoadByID(ctx, conn, env.scope, accountID)
+		},
+	))
+}
+
 func requireConnectorPresent(t *testing.T, env *accessSourceEnv, connectorID gid.GID) {
 	t.Helper()
 
@@ -832,18 +922,4 @@ func requireConnectorPresent(t *testing.T, env *accessSourceEnv, connectorID gid
 			return loaded.LoadMetadataByID(ctx, conn, env.scope, connectorID)
 		},
 	))
-}
-
-func requireConnectorMissing(t *testing.T, env *accessSourceEnv, connectorID gid.GID) {
-	t.Helper()
-
-	loaded := &coredata.Connector{}
-
-	err := env.client.WithConn(
-		env.ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return loaded.LoadMetadataByID(ctx, conn, env.scope, connectorID)
-		},
-	)
-	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }

@@ -128,7 +128,7 @@ export function ElectronicSignatureSection({
     <section className={root()} aria-label={t("electronicSignature.title")}>
       <TonedCard
         tone={tone}
-        icon={<SignatureIcon size={24} weight="duotone" />}
+        icon={<SignatureIcon weight="duotone" />}
         lead={(
           <Text size={2} weight="medium" color={tone} className="truncate">
             {t(signatureLeadKey(signature.status))}

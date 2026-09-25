@@ -66,10 +66,10 @@ export function SAMLConfigurationStatusIcon({
   enforcementPolicy: SAMLEnforcementPolicy;
 }): ReactNode {
   if (domainVerifiedAt == null) {
-    return <HourglassIcon size={24} weight="duotone" />;
+    return <HourglassIcon weight="duotone" />;
   }
   if (enforcementPolicy === "OFF") {
-    return <LockIcon size={24} weight="duotone" />;
+    return <LockIcon weight="duotone" />;
   }
-  return <CheckCircleIcon size={24} weight="duotone" />;
+  return <CheckCircleIcon weight="duotone" />;
 }

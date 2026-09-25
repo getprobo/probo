@@ -30,13 +30,13 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestAccessReviewDrivers(t *testing.T) {
+func TestConnectorProviders(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				displayName
 				documentationUrl
@@ -80,7 +80,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	}
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider                       string        `json:"provider"`
 			DisplayName                    string        `json:"displayName"`
 			DocumentationURL               *string       `json:"documentationUrl"`
@@ -93,12 +93,12 @@ func TestAccessReviewDrivers(t *testing.T) {
 			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
 			WorkloadIdentitySupported      bool          `json:"workloadIdentitySupported"`
 			WorkloadIdentityExtraSettings  []settingInfo `json:"workloadIdentityExtraSettings"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	err := owner.Execute(query, nil, &result)
 	require.NoError(t, err)
-	assert.NotEmpty(t, result.AccessReviewDrivers)
+	assert.NotEmpty(t, result.ConnectorProviders)
 
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
@@ -109,7 +109,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	workloadIdentitySettingKeys := make(map[string][]string)
 	workloadIdentitySupported := make(map[string]bool)
 
-	for _, info := range result.AccessReviewDrivers {
+	for _, info := range result.ConnectorProviders {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
 		assert.NotNil(t, info.APIKeyExtraSettings)
@@ -217,15 +217,15 @@ func TestAccessReviewDrivers(t *testing.T) {
 		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
 		var viewerResult struct {
-			AccessReviewDrivers []struct {
+			ConnectorProviders []struct {
 				Provider    string `json:"provider"`
 				DisplayName string `json:"displayName"`
-			} `json:"accessReviewDrivers"`
+			} `json:"connectorProviders"`
 		}
 
 		err := viewer.Execute(query, nil, &viewerResult)
 		require.NoError(t, err)
-		assert.NotEmpty(t, viewerResult.AccessReviewDrivers)
+		assert.NotEmpty(t, viewerResult.ConnectorProviders)
 	})
 }
 
@@ -672,7 +672,7 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				apiKeySupported
 				apiKeyManaged
@@ -685,7 +685,7 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 	`
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider            string `json:"provider"`
 			APIKeySupported     bool   `json:"apiKeySupported"`
 			APIKeyManaged       bool   `json:"apiKeyManaged"`
@@ -693,14 +693,14 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 			APIKeyExtraSettings []struct {
 				Key string `json:"key"`
 			} `json:"apiKeyExtraSettings"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	require.NoError(t, owner.Execute(query, nil, &result))
 
 	crispFound := false
 
-	for _, driver := range result.AccessReviewDrivers {
+	for _, driver := range result.ConnectorProviders {
 		if driver.Provider != "CRISP" {
 			assert.Falsef(
 				t,
@@ -721,4 +721,138 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 	}
 
 	assert.True(t, crispFound, "crisp is configured in the e2e probod and must be in the catalog")
+}
+
+func TestConnectorSearch(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const (
+		createAWS = `
+		mutation($input: CreateWorkloadIdentityConnectorInput!) {
+			createWorkloadIdentityConnector(input: $input) {
+				connector { id provider }
+			}
+		}
+	`
+		createBrex = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id provider }
+			}
+		}
+	`
+	)
+
+	require.NoError(t, owner.Execute(createAWS, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"name":           "production",
+			"provider":       "AWS",
+			"awsRoleArn":     awsFixtureRoleARN,
+		},
+	}, &struct {
+		CreateWorkloadIdentityConnector struct {
+			Connector struct {
+				ID string `json:"id"`
+			} `json:"connector"`
+		} `json:"createWorkloadIdentityConnector"`
+	}{}))
+	require.NoError(t, owner.Execute(createBrex, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"name":           "ledger",
+			"provider":       "BREX",
+			"apiKey":         "bxt_test-key-123",
+		},
+	}, &struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID string `json:"id"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}{}))
+
+	const listQuery = `
+		query($organizationId: ID!, $filter: ConnectorFilter) {
+			node(id: $organizationId) {
+				... on Organization {
+					connectors(filter: $filter) {
+						name
+						provider
+					}
+				}
+			}
+		}
+	`
+
+	type listedConnector struct {
+		Name     string `json:"name"`
+		Provider string `json:"provider"`
+	}
+
+	type listResult struct {
+		Node struct {
+			Connectors []listedConnector `json:"connectors"`
+		} `json:"node"`
+	}
+
+	list := func(t *testing.T, filter map[string]any) []listedConnector {
+		t.Helper()
+
+		var result listResult
+		require.NoError(t, owner.Execute(listQuery, map[string]any{
+			"organizationId": orgID,
+			"filter":         filter,
+		}, &result))
+
+		return result.Node.Connectors
+	}
+
+	providersOf := func(connectors []listedConnector) []string {
+		providers := make([]string, len(connectors))
+		for i, connector := range connectors {
+			providers[i] = connector.Provider
+		}
+
+		return providers
+	}
+
+	t.Run("matches a display name that is not the enum", func(t *testing.T) {
+		t.Parallel()
+
+		connectors := list(t, map[string]any{"query": "Amazon"})
+
+		assert.Equal(t, []string{"AWS"}, providersOf(connectors))
+	})
+
+	t.Run("matches a credential name", func(t *testing.T) {
+		t.Parallel()
+
+		connectors := list(t, map[string]any{"query": "ledger"})
+
+		require.Len(t, connectors, 1)
+		assert.Equal(t, "BREX", connectors[0].Provider)
+		assert.Equal(t, "ledger", connectors[0].Name)
+	})
+
+	t.Run("misses connectors that match neither name nor display name", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Empty(t, list(t, map[string]any{"query": "no-such-connector"}))
+	})
+
+	t.Run("intersects the provider list with the query", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Empty(t, list(t, map[string]any{
+			"providers": []string{"BREX"},
+			"query":     "Amazon",
+		}))
+		assert.Equal(t, []string{"AWS"}, providersOf(list(t, map[string]any{
+			"providers": []string{"AWS"},
+			"query":     "Amazon",
+		})))
+	})
 }

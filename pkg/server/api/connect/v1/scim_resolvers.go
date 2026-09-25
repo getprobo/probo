@@ -37,6 +37,10 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeProviderNotSupported](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create scim configuration", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

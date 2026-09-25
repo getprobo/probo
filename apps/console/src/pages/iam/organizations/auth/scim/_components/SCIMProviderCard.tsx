@@ -87,8 +87,8 @@ export function SCIMProviderCard({ scimConfigurationKey }: SCIMProviderCardProps
     <TonedCard
       tone={tone}
       icon={bridge.type === "MICROSOFT_365"
-        ? <MicrosoftLogo className="size-6" />
-        : <GoogleLogo className="size-6" />}
+        ? <MicrosoftLogo />
+        : <GoogleLogo />}
       lead={(
         <Text size={3} weight="medium" color={tone === "sand" ? "neutral" : tone}>
           {t(`${copy}.name`)}

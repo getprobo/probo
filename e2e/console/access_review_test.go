@@ -1550,8 +1550,8 @@ func TestAccessReviewCampaign_StartWithoutSourcesFails(t *testing.T) {
 
 // TestAccessReviewSource_MultipleConnectionsPerProvider pins the
 // multi-connection flow end to end: two connectors of one provider back
-// two distinct sources, and deleting one source garbage-collects only
-// its own connector.
+// two distinct sources. Deleting or relinking a source leaves every
+// connector in place; disconnect is a separate action.
 func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1692,6 +1692,7 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 			updateAccessReviewSource(input: $input) {
 				accessReviewSource {
 					id
+					connectorId
 				}
 			}
 		}
@@ -1700,7 +1701,8 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	var updateResult struct {
 		UpdateAccessReviewSource struct {
 			AccessReviewSource struct {
-				ID string `json:"id"`
+				ID          string  `json:"id"`
+				ConnectorID *string `json:"connectorId"`
 			} `json:"accessReviewSource"`
 		} `json:"updateAccessReviewSource"`
 	}
@@ -1733,13 +1735,14 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 		},
 	}, &deleteResult)
 	require.NoError(t, err)
+	assert.Equal(t, firstSource, deleteResult.DeleteAccessReviewSource.DeletedAccessReviewSourceID)
 
-	// The deleted source's connector dies with it; the other source's
-	// connector is the survivor.
-	assert.Equal(t, []string{secondConnector}, listBrexConnectorIDs())
+	// Deleting a source leaves its credential. The other source's
+	// connector is untouched too.
+	assert.ElementsMatch(t, []string{firstConnector, secondConnector}, listBrexConnectorIDs())
 
-	// Relinking a source to a fresh connector deletes the abandoned one:
-	// the relink removed its only owner.
+	// Relinking a source to a fresh connector leaves the abandoned one.
+	// Disconnect is how a credential goes away.
 	thirdConnector := createConnector("bxt_test-key-brex-c")
 
 	err = owner.Execute(updateQuery, map[string]any{
@@ -1749,6 +1752,12 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 		},
 	}, &updateResult)
 	require.NoError(t, err)
+	require.NotNil(t, updateResult.UpdateAccessReviewSource.AccessReviewSource.ConnectorID)
+	assert.Equal(t, thirdConnector, *updateResult.UpdateAccessReviewSource.AccessReviewSource.ConnectorID)
 
-	assert.Equal(t, []string{thirdConnector}, listBrexConnectorIDs())
+	assert.ElementsMatch(
+		t,
+		[]string{firstConnector, secondConnector, thirdConnector},
+		listBrexConnectorIDs(),
+	)
 }

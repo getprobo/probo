@@ -36,13 +36,13 @@ import { graphql } from "relay-runtime";
 
 import type { ClientCredentialsConnectorDialog_provider$key } from "#/__generated__/core/ClientCredentialsConnectorDialog_provider.graphql";
 import type { ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation.graphql";
-
-import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapClientCredentialsExtraSettingToField,
-} from "../_lib/connectorSettings";
+} from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
+
+import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
 
 const clientCredentialsConnectorDialogFragment = graphql`
   fragment ClientCredentialsConnectorDialog_provider on ConnectorProviderInfo {
@@ -74,7 +74,6 @@ const createClientCredentialsConnectorMutation = graphql`
 type Props = {
   providerKey: ClientCredentialsConnectorDialog_provider$key | null;
   organizationId: string;
-  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
 };
@@ -82,7 +81,6 @@ type Props = {
 export function ClientCredentialsConnectorDialog({
   providerKey,
   organizationId,
-  connectionId,
   onClose,
   onSuccess,
 }: Props) {
@@ -108,7 +106,6 @@ export function ClientCredentialsConnectorDialog({
 
   const createSourceAfterConnector = useCreateAccessReviewSource({
     organizationId,
-    connectionId,
     onSuccess,
   });
 

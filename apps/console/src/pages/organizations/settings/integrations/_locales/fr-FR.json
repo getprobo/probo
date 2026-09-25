@@ -1,37 +1,192 @@
 {
+  "marketplacePage": {
+    "title": "Marketplace",
+    "description": "Les fournisseurs auxquels Probo peut se connecter.",
+    "permissionDenied": "Vous n'avez pas la permission de connecter des fournisseurs.",
+    "connect": "Connecter",
+    "credentialCount_one": "{{count}} identifiant connecté",
+    "credentialCount_other": "{{count}} identifiants connectés",
+    "connectTitle": "Connecter {{provider}}",
+    "choose": "Choisissez comment connecter {{provider}}.",
+    "methods": {
+      "WORKLOAD_IDENTITY": "Identité de charge de travail",
+      "GITHUB_APP": "Application GitHub",
+      "INSTALL": "Installation de l'application",
+      "OAUTH2": "OAuth",
+      "CLIENT_CREDENTIALS": "Identifiants client",
+      "API_KEY": "Clé API"
+    },
+    "methodDescriptions": {
+      "WORKLOAD_IDENTITY": "Faites confiance à Probo avec un rôle cloud, sans secret de longue durée.",
+      "GITHUB_APP": "Installez l'application GitHub Probo.",
+      "INSTALL": "Installez l'application Probo chez le fournisseur.",
+      "OAUTH2": "Connectez-vous chez le fournisseur et accordez l'accès.",
+      "CLIENT_CREDENTIALS": "Utilisez un identifiant client et un secret client.",
+      "API_KEY": "Collez une clé API du fournisseur."
+    },
+    "documentation": "Documentation",
+    "fields": {
+      "apiKey": "Clé API",
+      "clientId": "Identifiant client",
+      "clientSecret": "Secret client",
+      "tokenUrl": "URL du jeton",
+      "scope": "Périmètre",
+      "datadogSite": "Site Datadog",
+      "zendeskSubdomain": "Sous-domaine Zendesk",
+      "region": "Région",
+      "regionPlaceholder": "Sélectionner une région",
+      "regionUnitedStates": "États-Unis",
+      "regionEurope": "Europe"
+    },
+    "workloadIdentity": {
+      "propagationHint": "La fédération peut prendre quelques minutes. Si le connecteur s’affiche comme déconnecté, attendez puis réessayez.",
+      "fields": {
+        "roleArn": "ARN du rôle",
+        "roleArnHelp": "ex. arn:aws:iam::123456789012:role/ProboAudit",
+        "workloadIdentityProvider": "Fournisseur d’identité de charge de travail",
+        "workloadIdentityProviderHelp": "ex. projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+        "serviceAccountEmail": "E-mail du compte de service",
+        "serviceAccountEmailHelp": "ex. probo-audit@PROJECT_ID.iam.gserviceaccount.com",
+        "tenantId": "ID d’annuaire (locataire)",
+        "tenantIdHelp": "ex. 11111111-1111-1111-1111-111111111111",
+        "clientId": "ID d’application (client)",
+        "clientIdHelp": "ex. 22222222-2222-2222-2222-222222222222",
+        "subscriptionId": "ID d’abonnement",
+        "subscriptionIdHelp": "ex. 33333333-3333-3333-3333-333333333333",
+        "environment": "Environnement Azure",
+        "environmentGccNote": "GCC utilise Azure Public. Seuls GCC High et DoD utilisent Government.",
+        "issuer": "Émetteur",
+        "audience": "Audience",
+        "subject": "Sujet"
+      },
+      "environments": {
+        "AZURE_PUBLIC": "Public — GCC utilise Azure Public",
+        "AZURE_GOVERNMENT": "Government (GCC High)",
+        "AZURE_GOVERNMENT_DOD": "Government DoD",
+        "AZURE_CHINA": "Chine"
+      },
+      "messages": {
+        "copyFailed": "Échec de la copie",
+        "copiedIssuer": "Émetteur copié.",
+        "copiedAudience": "Audience copiée.",
+        "copiedSubject": "Sujet copié.",
+        "copiedTerraform": "Extrait Terraform copié.",
+        "error": "Erreur"
+      },
+      "errors": {
+        "roleArn": "Saisissez un ARN de rôle IAM valide.",
+        "workloadIdentityProvider": "Saisissez une ressource de fournisseur d’identité de charge de travail valide.",
+        "serviceAccountEmail": "Saisissez un e-mail de compte de service valide.",
+        "tenantId": "Saisissez un ID d’annuaire (locataire) valide.",
+        "clientId": "Saisissez un ID d’application (client) valide.",
+        "subscriptionId": "Saisissez un ID d’abonnement valide.",
+        "delete": "Impossible de supprimer le connecteur. Réessayez.",
+        "aws": {
+          "create": "Échec de la création du connecteur. Vérifiez l’ARN du rôle et réessayez.",
+          "disconnected": "Probo n’a pas pu endosser le rôle d’audit. Vérifiez que la stack est déployée dans ce compte et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration."
+        },
+        "gcp": {
+          "create": "Échec de la création du connecteur. Vérifiez la ressource du fournisseur et l’e-mail du compte de service, puis réessayez.",
+          "disconnected": "Probo n’a pas pu usurper le compte de service d’audit. Vérifiez que le module est appliqué dans ce projet et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration."
+        },
+        "azure": {
+          "create": "Échec de la création du connecteur. Vérifiez les identifiants de locataire, d’application et d’abonnement, puis réessayez.",
+          "disconnected": "Probo n’a pas pu assumer l’identité d’audit. Vérifiez que le module est appliqué et que l’émetteur et le sujet correspondent aux valeurs affichées. La fédération peut prendre quelques minutes."
+        }
+      },
+      "actions": {
+        "copy": "Copier",
+        "installViaCloudFormation": "Installer via CloudFormation",
+        "installViaTerraform": "Installer via Terraform"
+      }
+    },
+    "connected": "Fournisseur connecté.",
+    "connectFailed": "Connexion impossible"
+  },
   "listPage": {
-    "title": "Intégrations",
-    "description": "Les fournisseurs pour lesquels Probo détient un identifiant, et ce à quoi il peut encore se connecter.",
+    "title": "Connecteurs",
+    "description": "Les fournisseurs pour lesquels Probo détient un identifiant.",
     "notFound": "Organisation introuvable",
     "sections": {
       "connected": "Connectés",
       "available": "Disponibles"
     },
+    "addMore": "Ajouter plus",
     "emptyConnected": "Aucun fournisseur n'est encore connecté.",
+    "emptyConnectedSearch": "Aucun fournisseur connecté ne correspond à votre recherche.",
     "emptyAvailable": "Tous les fournisseurs disponibles sont déjà connectés.",
+    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche.",
+    "searchPlaceholder": "Rechercher des fournisseurs...",
+    "searchConnectorsPlaceholder": "Rechercher des connecteurs...",
+    "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts"
+    },
+    "created": "Créé le {{date}}",
+    "accountCount_one": "{{count}} compte",
+    "accountCount_other": "{{count}} comptes",
+    "connectedCount": "{{connected}}/{{total}} connectés",
+    "connectionIssues": {
+      "reconnect": "Reconnectez {{provider}} pour rétablir l'accès.",
+      "credentials": "Les identifiants {{provider}} ne sont pas valides. Probo ne peut pas lire ce fournisseur avec les identifiants actuels.",
+      "notAuthorized": "{{provider}} a accepté l'identifiant mais a refusé la requête. Vérifiez les permissions de cet identifiant et si votre offre inclut l'API utilisée par Probo."
+    },
+    "organization": "Organisation",
+    "organizationPlaceholder": "Sélectionner une organisation",
     "comingSoon": "Bientôt disponible",
-    "connectElsewhere": "Pour connecter un fournisseur, ouvrez les <connections>connexions des revues d'accès</connections>.",
     "actions": {
-      "manage": "Gérer"
+      "add": "Ajouter un connecteur",
+      "manage": "Gérer",
+      "connectMore": "Connecter un autre"
+    },
+    "messages": {
+      "connected": "Fournisseur connecté.",
+      "connectedDescription": "Ce fournisseur est prêt à l'emploi.",
+      "error": "Connexion impossible",
+      "organizationUpdated": "Organisation mise à jour."
+    },
+    "errors": {
+      "organization": "Échec de la mise à jour de l'organisation"
     }
   },
   "detailsPage": {
     "notFound": "Intégration introuvable",
+    "accountCount_one": "{{count}} compte connecté",
+    "accountCount_other": "{{count}} comptes connectés",
     "status": {
       "CONNECTED": "Connecté",
       "DISCONNECTED": "Déconnecté",
       "NOT_AUTHORIZED": "Non autorisé",
       "RECONNECT_REQUIRED": "Reconnexion requise"
     },
+    "connectors": {
+      "title": "Connecteurs"
+    },
     "accounts": {
       "title": "Comptes",
+      "subtitle": "Les comptes en attente doivent encore être créés avant que les autres modules de la plateforme puissent les utiliser.",
       "empty": "Aucun compte n'est encore activé sur cet identifiant.",
+      "discoveryFailed": "Probo ne peut pas lister les comptes avec ces identifiants.",
+      "pending": "En attente",
+      "selectAll": "Tout sélectionner",
+      "enable": "Activer",
+      "disconnect": "Déconnecter",
+      "disconnectTitle": "Déconnecter le compte",
+      "disconnectDescription": "La déconnexion retire {{name}}. Tout ce qui l'utilise encore doit d'abord être supprimé.",
+      "disconnectConfirm": "Déconnecter",
       "loadMore": "Afficher plus de comptes"
     },
     "actions": {
+      "back": "Connecteurs",
+      "close": "Fermer",
+      "reconnect": "Reconnecter",
       "delete": "Déconnecter",
       "cancel": "Annuler",
       "more": "Plus d'actions"
+    },
+    "probeError": {
+      "copy": "Copier l'erreur",
+      "copied": "Erreur copiée."
     },
     "delete": {
       "title": "Déconnecter l'intégration",
@@ -39,10 +194,13 @@
       "confirm": "Déconnecter"
     },
     "messages": {
-      "deleted": "Intégration déconnectée."
+      "deleted": "Intégration déconnectée.",
+      "accountDisconnected": "Compte déconnecté."
     },
     "errors": {
-      "delete": "Échec de la déconnexion de l'intégration"
+      "delete": "Échec de la déconnexion de l'intégration",
+      "enable": "Échec de l'activation des comptes",
+      "disable": "Échec de la déconnexion du compte"
     }
   }
 }

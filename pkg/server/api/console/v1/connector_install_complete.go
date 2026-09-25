@@ -409,7 +409,7 @@ func handleConnectorInstallComplete(
 		// from a callback parameter: this flow has one entry point, so there is
 		// no continue URL to honour and none to validate.
 		redirectURL, err := baseURL.
-			WithPath("/organizations/"+organizationID.String()+"/access-reviews/connections").
+			WithPath("/organizations/"+organizationID.String()+"/settings/integrations").
 			WithQuery("connector_id", cnnctr.ID.String()).
 			WithQuery("provider", string(p)).
 			String()
@@ -424,8 +424,8 @@ func handleConnectorInstallComplete(
 	}
 }
 
-// redirectInstallOutcome sends an authorized customer back to their connections
-// page carrying a human-readable failure, rather than answering a top-level
+// redirectInstallOutcome sends an authorized customer back to Settings
+// carrying a human-readable failure, rather than answering a top-level
 // browser navigation with a JSON error body. It is only reachable once the
 // identity and the organization are established; the pre-authorization branches
 // render instead, because a redirect there would tell an anonymous prober which
@@ -440,7 +440,7 @@ func redirectInstallOutcome(
 	message string,
 ) {
 	redirectURL, err := baseURL.
-		WithPath("/organizations/"+organizationID.String()+"/access-reviews/connections").
+		WithPath("/organizations/"+organizationID.String()+"/settings/integrations").
 		WithQuery("error", message).
 		String()
 	if err != nil {

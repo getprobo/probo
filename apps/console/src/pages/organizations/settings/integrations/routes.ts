@@ -32,7 +32,22 @@ export const integrationRoutes = [
     Component: lazy(() => import("./IntegrationsPageLoader")),
   },
   {
-    path: "integrations/:connectorId",
+    path: "integrations/marketplace",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("./MarketplacePageLoader")),
+  },
+  {
+    path: "integrations/marketplace/:provider",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("./ConnectVendorPageLoader")),
+  },
+  {
+    path: "integrations/marketplace/:provider/:method",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("./ConnectVendorPageLoader")),
+  },
+  {
+    path: "integrations/:provider",
     Fallback: ConnectorDetailsPageSkeleton,
     Component: lazy(() => import("./ConnectorDetailsPageLoader")),
   },

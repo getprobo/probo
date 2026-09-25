@@ -235,8 +235,10 @@ func (s *ConnectorService) ListForOrganizationID(
 }
 
 func (s *ConnectorService) ListAllForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
+	filter *coredata.ConnectorFilter,
 ) (coredata.Connectors, error) {
 	var connectors coredata.Connectors
 
@@ -248,6 +250,7 @@ func (s *ConnectorService) ListAllForOrganizationID(
 				conn,
 				scope,
 				organizationID,
+				filter,
 			)
 		},
 	)
@@ -322,9 +325,8 @@ func (s *ConnectorService) Delete(
 
 // refuseReferencedConnector names the module still holding the credential.
 // The foreign key that fires first names the account, because connector_accounts
-// cascades while the source restricts. Accounts are not counted: a source on an
-// account also names that connector, and refusing on accounts would strand the
-// connector access review deletes when a source insert fails.
+// cascades while the source restricts. Accounts are not counted: they cascade
+// with the connector, so a connector with accounts and no source stays deletable.
 func refuseReferencedConnector(
 	ctx context.Context,
 	tx pg.Tx,
@@ -417,6 +419,11 @@ func (s *ConnectorService) Reconnect(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			cnnctr.ID = req.ConnectorID
+			if err := cnnctr.LockByID(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot lock connector: %w", err)
+			}
+
 			if err := cnnctr.LoadByID(ctx, conn, scope, req.ConnectorID, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}

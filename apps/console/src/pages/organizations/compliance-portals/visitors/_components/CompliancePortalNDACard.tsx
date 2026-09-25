@@ -88,8 +88,8 @@ export function CompliancePortalNDACard({
       {...getRootProps({ className: frame() })}
       tone={tone}
       icon={hasFile
-        ? <FilePdfIcon size={24} weight="duotone" />
-        : <FileDashedIcon size={24} weight="duotone" />}
+        ? <FilePdfIcon weight="duotone" />
+        : <FileDashedIcon weight="duotone" />}
       lead={canUpload
         ? (
             <Text size={2} weight="medium" color={tone === "sand" ? "neutral" : tone} className="truncate">

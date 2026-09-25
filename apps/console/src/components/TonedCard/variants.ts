@@ -25,13 +25,13 @@ import { tv, type VariantProps } from "tailwind-variants/lite";
 export const tonedCard = tv({
   slots: {
     frame: "flex flex-col overflow-hidden rounded-4 border bg-sand-1",
-    header: "relative flex w-full items-center justify-between gap-3 overflow-hidden px-5 py-4",
+    header: "relative flex w-full items-center justify-between overflow-hidden px-5 py-4",
     wash: "pointer-events-none absolute top-1/2 left-1/2 aspect-square w-full -translate-x-1/2 -translate-y-1/2 opacity-10 blur-[14px]",
     fade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
-    icon: "relative z-1 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-2",
+    icon: "relative z-1 flex shrink-0 items-center justify-center overflow-hidden rounded-2",
     lead: "relative z-1 min-w-0 flex-1 truncate",
     control: "relative z-1 shrink-0",
-    body: "flex flex-1 flex-col gap-2 px-5 pb-4",
+    body: "flex flex-1 flex-col px-5 pb-4",
   },
   variants: {
     // Match the height of a sibling in a row. Off when the card should hug its content.
@@ -69,11 +69,29 @@ export const tonedCard = tv({
         icon: "bg-transparent text-red-11",
       },
     },
+    // tv/lite does not drop an earlier utility, so gap, type, and glyph size
+    // live only in this variant.
+    size: {
+      1: {
+        header: "gap-3",
+        icon: "size-10 [&_svg]:size-6 [&_img]:size-6",
+        lead: "text-3",
+        body: "gap-2 text-2",
+      },
+      2: {
+        header: "gap-3",
+        icon: "size-12 [&_svg]:size-10 [&_img]:size-10",
+        lead: "text-3",
+        body: "gap-3 text-3",
+      },
+    },
   },
   defaultVariants: {
     tone: "sand",
     fill: true,
+    size: 1,
   },
 });
 
 export type TonedCardTone = NonNullable<VariantProps<typeof tonedCard>["tone"]>;
+export type TonedCardSize = NonNullable<VariantProps<typeof tonedCard>["size"]>;
