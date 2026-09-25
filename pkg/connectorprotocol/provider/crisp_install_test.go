@@ -44,7 +44,22 @@ const (
 // declares EndpointOverrideUnsupported — so there is no Endpoints field to move
 // and the transport is the only seam.
 type installHostRewriter struct {
-	target string
+	target    string
+	transport *http.Transport
+}
+
+// newInstallHostRewriter gives every case its own transport. http.DefaultTransport
+// would put all of them in one idle-connection pool, and httptest.Server.Close
+// drains that pool process-wide — so a sibling case tearing down its server can
+// break this case's connection and report a transport failure where the test is
+// asserting on how a vendor status is classified.
+func newInstallHostRewriter(t *testing.T, target string) *installHostRewriter {
+	t.Helper()
+
+	transport := &http.Transport{}
+	t.Cleanup(transport.CloseIdleConnections)
+
+	return &installHostRewriter{target: target, transport: transport}
 }
 
 func (h *installHostRewriter) RoundTrip(r *http.Request) (*http.Response, error) {
@@ -57,7 +72,7 @@ func (h *installHostRewriter) RoundTrip(r *http.Request) (*http.Response, error)
 	r2.URL.Scheme = u.Scheme
 	r2.URL.Host = u.Host
 
-	return http.DefaultTransport.RoundTrip(r2)
+	return h.transport.RoundTrip(r2)
 }
 
 func crispRegistrationForTest(t *testing.T) *provider.Registration {
@@ -117,7 +132,7 @@ func TestCrispInstallVerify_CanonicalizesWebsiteID(t *testing.T) {
 			reg := crispRegistrationForTest(t)
 			seenPath := ""
 			srv := crispSubscriptionServer(t, &seenPath)
-			client := &http.Client{Transport: &installHostRewriter{target: srv.URL}}
+			client := &http.Client{Transport: newInstallHostRewriter(t, srv.URL)}
 
 			resourceID, err := reg.Install.Verify(
 				t.Context(),
@@ -180,7 +195,7 @@ func TestCrispInstallVerify_Terminal(t *testing.T) {
 
 		reg := crispRegistrationForTest(t)
 		srv := crispSubscriptionServer(t, nil)
-		client := &http.Client{Transport: &installHostRewriter{target: srv.URL}}
+		client := &http.Client{Transport: newInstallHostRewriter(t, srv.URL)}
 
 		_, err := reg.Install.Verify(
 			t.Context(),
@@ -211,7 +226,7 @@ func TestCrispInstallVerify_Terminal(t *testing.T) {
 			}))
 			t.Cleanup(srv.Close)
 
-			client := &http.Client{Transport: &installHostRewriter{target: srv.URL}}
+			client := &http.Client{Transport: newInstallHostRewriter(t, srv.URL)}
 
 			_, err := reg.Install.Verify(
 				t.Context(),
@@ -238,7 +253,7 @@ func TestCrispInstallVerify_Terminal(t *testing.T) {
 		}))
 		t.Cleanup(srv.Close)
 
-		client := &http.Client{Transport: &installHostRewriter{target: srv.URL}}
+		client := &http.Client{Transport: newInstallHostRewriter(t, srv.URL)}
 
 		_, err := reg.Install.Verify(
 			t.Context(),
@@ -282,7 +297,7 @@ func TestCrispInstallVerify_Transient(t *testing.T) {
 			}))
 			t.Cleanup(srv.Close)
 
-			client := &http.Client{Transport: &installHostRewriter{target: srv.URL}}
+			client := &http.Client{Transport: newInstallHostRewriter(t, srv.URL)}
 
 			_, err := reg.Install.Verify(
 				t.Context(),
@@ -308,7 +323,7 @@ func TestCrispInstallVerify_Transient(t *testing.T) {
 
 		srv.Close() // nothing is listening now
 
-		client := &http.Client{Transport: &installHostRewriter{target: target}}
+		client := &http.Client{Transport: newInstallHostRewriter(t, target)}
 
 		_, err := reg.Install.Verify(
 			t.Context(),
