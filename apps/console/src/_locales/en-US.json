@@ -710,6 +710,9 @@
   "tasksCard": {
     "states": { "all": "All", "backlog": "Backlog", "todo": "To do", "inProgress": "In progress", "done": "Done", "canceled": "Canceled", "duplicate": "Duplicate" },
     "empty": "No tasks",
+    "noResults": "No tasks match your filters",
+    "searchPlaceholder": "Search tasks",
+    "filters": { "status": "Status", "allStatuses": "All statuses" },
     "error": { "title": "Error", "reorder": "Failed to reorder task." },
     "dragInstructions": {
       "all": "Drag and drop to reorder tasks or move them between states",
@@ -717,6 +720,7 @@
     },
     "deleteConfirmation": "Are you sure you want to delete this task?",
     "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" },
+    "metadata": { "timeEstimate": "Time estimate", "deadline": "Deadline" },
     "recurringBadge": {
       "tooltip": "Repeats every {{interval}}"
     }

@@ -170,7 +170,7 @@ const linkMutation = graphql`
       task {
         ...TaskLinearField_task
         ...TaskDetailsPage_task
-        ...TasksCard_TaskRowFragment
+        ...TaskListItem_task
       }
     }
   }

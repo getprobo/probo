@@ -744,6 +744,7 @@ func (s *Service) Delete(
 func (s *Service) CountForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
+	filter *coredata.TaskFilter,
 ) (int, error) {
 	var count int
 
@@ -752,7 +753,7 @@ func (s *Service) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
 
-			count, err = tasks.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = tasks.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count tasks: %w", err)
 			}
@@ -771,13 +772,14 @@ func (s *Service) ListForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.TaskOrderField],
+	filter *coredata.TaskFilter,
 ) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
 	var tasks coredata.Tasks
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return tasks.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			return tasks.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 		},
 	)
 	if err != nil {
@@ -790,6 +792,7 @@ func (s *Service) ListForOrganizationID(
 func (s *Service) CountForMeasureID(
 	ctx context.Context, scope coredata.Scoper,
 	measureID gid.GID,
+	filter *coredata.TaskFilter,
 ) (int, error) {
 	var count int
 
@@ -798,7 +801,7 @@ func (s *Service) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
 
-			count, err = tasks.CountByMeasureID(ctx, conn, scope, measureID)
+			count, err = tasks.CountByMeasureID(ctx, conn, scope, measureID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count tasks: %w", err)
 			}
@@ -817,6 +820,7 @@ func (s *Service) ListForMeasureID(
 	ctx context.Context, scope coredata.Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[coredata.TaskOrderField],
+	filter *coredata.TaskFilter,
 ) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
 	var tasks coredata.Tasks
 
@@ -829,6 +833,7 @@ func (s *Service) ListForMeasureID(
 				scope,
 				measureID,
 				cursor,
+				filter,
 			)
 		},
 	)

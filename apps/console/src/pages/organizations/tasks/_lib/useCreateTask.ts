@@ -33,6 +33,7 @@ import {
   taskConnectionId,
 } from "./taskPath";
 import type { TaskPriority, TaskState } from "./taskState";
+import { taskMatchesFilter, useTasksCardFilters } from "./useTasksCardFilters";
 
 const createTaskMutation = graphql`
   mutation useCreateTaskMutation($input: CreateTaskInput!) {
@@ -41,7 +42,7 @@ const createTaskMutation = graphql`
         node {
           id
           ...TasksCard_task
-          ...TasksCard_TaskRowFragment
+          ...TaskListItem_task
         }
       }
     }
@@ -52,6 +53,7 @@ export function useCreateTask() {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const relayEnv = useRelayEnvironment();
+  const { graphqlFilter } = useTasksCardFilters();
   const [commit, isCreating] = useMutation<useCreateTaskMutation>(
     createTaskMutation,
     {
@@ -71,13 +73,16 @@ export function useCreateTask() {
     connectionId: string,
   ) {
     const measureId = input.measureId ?? undefined;
-    const connections = [...new Set([
-      connectionId,
+    const state = input.state ?? "TODO";
+    const connections = new Set([
       taskConnectionId(organizationId, organizationTasksConnectionKey),
-      ...(measureId
-        ? [taskConnectionId(measureId, measureTasksConnectionKey)]
-        : []),
-    ])];
+    ]);
+    if (measureId) {
+      connections.add(taskConnectionId(measureId, measureTasksConnectionKey));
+    }
+    if (taskMatchesFilter({ name: input.name, state }, graphqlFilter)) {
+      connections.add(connectionId);
+    }
 
     const payload = await commit({
       variables: {
@@ -90,7 +95,7 @@ export function useCreateTask() {
           measureId,
         },
       },
-      updater: store => insertTaskEdgeSorted(store, connections),
+      updater: store => insertTaskEdgeSorted(store, [...connections]),
     });
 
     if (measureId) {

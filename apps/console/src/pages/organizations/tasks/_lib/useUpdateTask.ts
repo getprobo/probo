@@ -53,12 +53,12 @@ const updateTaskMutation = graphql`
       task {
         ...TaskDetailsPage_task
         ...TasksCard_task
-        ...TasksCard_TaskRowFragment
+        ...TaskListItem_task
       }
       nextTaskEdge {
         node {
           ...TasksCard_task
-          ...TasksCard_TaskRowFragment
+          ...TaskListItem_task
           measure {
             id
           }

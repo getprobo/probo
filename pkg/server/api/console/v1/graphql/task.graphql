@@ -41,6 +41,11 @@ input TaskOrder
     field: TaskOrderField!
 }
 
+input TaskFilter {
+    query: String
+    state: TaskState
+}
+
 type Task implements Node {
     id: ID!
     name: String!

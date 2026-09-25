@@ -1502,7 +1502,7 @@ func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *t
 }
 
 // Tasks is the resolver for the tasks field.
-func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
+func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy, filter *types.TaskFilter) (*types.TaskConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskList)
 	if err != nil {
 		return nil, err
@@ -1522,13 +1522,18 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.task.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	taskFilter := coredata.NewTaskFilter(nil, nil)
+	if filter != nil {
+		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State)
+	}
+
+	page, err := r.task.ListForOrganizationID(ctx, scope, obj.ID, cursor, taskFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewTaskConnection(page, r, obj.ID), nil
+	return types.NewTaskConnection(page, r, obj.ID, taskFilter), nil
 }
 
 // AgentExecutions is the resolver for the agentExecutions field.

@@ -369,6 +369,7 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: TaskOrder
+        filter: TaskFilter
     ): TaskConnection! @goField(forceResolver: true)
 
     agentExecutions(

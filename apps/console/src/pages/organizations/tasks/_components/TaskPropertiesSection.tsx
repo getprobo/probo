@@ -20,7 +20,6 @@
 
 import { formatDatetime, toDateInput } from "@probo/helpers";
 import { dateFormat, dateTimeFormat, formatDuration } from "@probo/i18n";
-import { PriorityLevel, TaskStateIcon } from "@probo/ui";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
@@ -52,6 +51,8 @@ import { TaskAssigneeField } from "./TaskAssigneeField";
 import { TaskDurationField } from "./TaskDurationField";
 import { TaskLinearField } from "./TaskLinearField";
 import { TaskMeasureField } from "./TaskMeasureField";
+import { TaskPriorityIcon } from "./TaskPriorityIcon";
+import { TaskStateIcon } from "./TaskStateIcon";
 
 const taskPropertiesSectionFragment = graphql`
   fragment TaskPropertiesSection_task on Task {
@@ -180,7 +181,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                       priority
                         ? (
                             <span className={value()}>
-                              <PriorityLevel level={priority} />
+                              <TaskPriorityIcon priority={priority} />
                               {t(`detailsPage.priorities.${priority.toLowerCase()}`)}
                             </span>
                           )
@@ -190,7 +191,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                     {taskPriorities.map(priority => (
                       <SelectItem key={priority} value={priority}>
                         <span className={value()}>
-                          <PriorityLevel level={priority} />
+                          <TaskPriorityIcon priority={priority} />
                           {t(`detailsPage.priorities.${priority.toLowerCase()}`)}
                         </span>
                       </SelectItem>
@@ -200,7 +201,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
               )
             : (
                 <span className={value()}>
-                  <PriorityLevel level={task.priority} />
+                  <TaskPriorityIcon priority={task.priority} />
                   <Text size={2}>
                     {t(`detailsPage.priorities.${task.priority.toLowerCase()}`)}
                   </Text>

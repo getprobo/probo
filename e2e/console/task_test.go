@@ -250,6 +250,167 @@ func TestTask_ListByMeasure(t *testing.T) {
 	assert.GreaterOrEqual(t, result.Node.Tasks.TotalCount, 3)
 }
 
+func TestTask_Filter(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).Create()
+	matchingTaskID := factory.NewTask(owner, measureID).
+		WithName("Quarterly access review").
+		Create()
+	inProgressDecoyID := factory.NewTask(owner, measureID).
+		WithName("Prepare security training").
+		Create()
+	factory.NewTask(owner, measureID).
+		WithName("Annual access review").
+		Create()
+
+	updateQuery := `
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
+				task {
+					id
+				}
+			}
+		}
+	`
+	for _, taskID := range []string{matchingTaskID, inProgressDecoyID} {
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"taskId": taskID,
+				"state":  "IN_PROGRESS",
+			},
+		}, &struct{}{})
+		require.NoError(t, err)
+	}
+
+	query := `
+		query FilterTasks($organizationId: ID!, $filter: TaskFilter) {
+			node(id: $organizationId) {
+				... on Organization {
+					tasks(first: 10, filter: $filter) {
+						edges {
+							node {
+								id
+								name
+								state
+							}
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Tasks struct {
+				Edges []struct {
+					Node struct {
+						ID    string `json:"id"`
+						Name  string `json:"name"`
+						State string `json:"state"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"filter": map[string]any{
+			"query": "access",
+			"state": "IN_PROGRESS",
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.Node.Tasks.Edges, 1)
+	assert.Equal(t, matchingTaskID, result.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, "Quarterly access review", result.Node.Tasks.Edges[0].Node.Name)
+	assert.Equal(t, "IN_PROGRESS", result.Node.Tasks.Edges[0].Node.State)
+	assert.Equal(t, 1, result.Node.Tasks.TotalCount)
+}
+
+func TestTask_Filter_LiteralWildcards(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).Create()
+	percentTaskID := factory.NewTask(owner, measureID).
+		WithName("Quarterly 100% review").
+		Create()
+	underscoreTaskID := factory.NewTask(owner, measureID).
+		WithName("Q3_access review").
+		Create()
+	factory.NewTask(owner, measureID).
+		WithName("Quarterly access review").
+		Create()
+
+	query := `
+		query FilterTasks($organizationId: ID!, $filter: TaskFilter) {
+			node(id: $organizationId) {
+				... on Organization {
+					tasks(first: 10, filter: $filter) {
+						edges {
+							node {
+								id
+								name
+							}
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	type result struct {
+		Node struct {
+			Tasks struct {
+				Edges []struct {
+					Node struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	t.Run("percent is a literal substring", func(t *testing.T) {
+		t.Parallel()
+
+		var got result
+
+		err := owner.Execute(query, map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"filter":         map[string]any{"query": "%"},
+		}, &got)
+		require.NoError(t, err)
+		require.Len(t, got.Node.Tasks.Edges, 1)
+		assert.Equal(t, percentTaskID, got.Node.Tasks.Edges[0].Node.ID)
+		assert.Equal(t, "Quarterly 100% review", got.Node.Tasks.Edges[0].Node.Name)
+		assert.Equal(t, 1, got.Node.Tasks.TotalCount)
+	})
+
+	t.Run("underscore is a literal substring", func(t *testing.T) {
+		t.Parallel()
+
+		var got result
+
+		err := owner.Execute(query, map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"filter":         map[string]any{"query": "_"},
+		}, &got)
+		require.NoError(t, err)
+		require.Len(t, got.Node.Tasks.Edges, 1)
+		assert.Equal(t, underscoreTaskID, got.Node.Tasks.Edges[0].Node.ID)
+		assert.Equal(t, "Q3_access review", got.Node.Tasks.Edges[0].Node.Name)
+		assert.Equal(t, 1, got.Node.Tasks.TotalCount)
+	})
+}
+
 func TestTask_RequiredFields(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

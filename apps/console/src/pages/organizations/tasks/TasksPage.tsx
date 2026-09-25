@@ -20,8 +20,10 @@
 
 import { PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { PageHeader } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -34,11 +36,11 @@ import { TasksSettingsDialog } from "./_components/TasksSettingsDialog";
 import { tasksPage } from "./variants";
 
 export const tasksPageQuery = graphql`
-  query TasksPageQuery($organizationId: ID!) {
+  query TasksPageQuery($organizationId: ID!, $filter: TaskFilter) {
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        ...TasksCardOrganizationFragment
+        ...TasksCardOrganizationFragment @arguments(filter: $filter)
         ...TasksSettingsDialog_organization
       }
     }
@@ -47,29 +49,38 @@ export const tasksPageQuery = graphql`
 
 interface TasksPageProps {
   queryRef: PreloadedQuery<TasksPageQuery>;
+  onReady?: () => void;
 }
 
-export function TasksPage({ queryRef }: TasksPageProps) {
+export function TasksPage({ queryRef, onReady }: TasksPageProps) {
   const { t } = useTranslation();
   const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
   usePageTitle(t("tasks.title"));
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   const { organization } = query;
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for node");
   }
 
-  const { root, actions } = tasksPage();
+  const { root, header, intro, actions } = tasksPage();
 
   return (
     <div className={root()}>
       <OrganizationTasksCard
         organizationRef={organization}
         header={({ connectionId, canCreateTask, refetch }) => (
-          <PageHeader
-            title={t("tasks.title")}
-            description={t("tasks.description")}
-          >
+          <div className={header()}>
+            <div className={intro()}>
+              <Heading level={1} size={6} weight="medium" highContrast>
+                {t("tasks.title")}
+              </Heading>
+              <Text size={2} color="faint">
+                {t("tasks.description")}
+              </Text>
+            </div>
             <div className={actions()}>
               <TasksSettingsDialog organizationKey={organization} />
               {canCreateTask && (
@@ -85,7 +96,7 @@ export function TasksPage({ queryRef }: TasksPageProps) {
                 </CreateTaskDialog>
               )}
             </div>
-          </PageHeader>
+          </div>
         )}
       />
     </div>

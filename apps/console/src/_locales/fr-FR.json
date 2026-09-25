@@ -1131,6 +1131,12 @@
       "duplicate": "Doublon"
     },
     "empty": "Aucune tâche",
+    "noResults": "Aucune tâche ne correspond à vos filtres",
+    "searchPlaceholder": "Rechercher des tâches",
+    "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts"
+    },
     "error": {
       "title": "Erreur",
       "reorder": "Échec de la réorganisation de la tâche."
@@ -1146,6 +1152,10 @@
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",
       "delete": "Supprimer"
+    },
+    "metadata": {
+      "timeEstimate": "Estimation de temps",
+      "deadline": "Échéance"
     },
     "recurringBadge": {
       "tooltip": "Se répète avec un intervalle de {{interval}}"

@@ -2094,7 +2094,18 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := r.task.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	taskFilter := coredata.NewTaskFilter(nil, nil)
+	if input.Filter != nil {
+		taskFilter = coredata.NewTaskFilter(input.Filter.Query, input.Filter.State)
+	}
+
+	page, err := r.task.ListForOrganizationID(
+		ctx,
+		scope,
+		input.OrganizationID,
+		cursor,
+		taskFilter,
+	)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization tasks: %w", err))
 	}
@@ -2756,7 +2767,18 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	taskPage, err := r.task.ListForMeasureID(ctx, scope, input.MeasureID, cursor)
+	taskFilter := coredata.NewTaskFilter(nil, nil)
+	if input.Filter != nil {
+		taskFilter = coredata.NewTaskFilter(input.Filter.Query, input.Filter.State)
+	}
+
+	taskPage, err := r.task.ListForMeasureID(
+		ctx,
+		scope,
+		input.MeasureID,
+		cursor,
+		taskFilter,
+	)
 	if err != nil {
 		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("failed to list measure tasks: %w", err)
 	}

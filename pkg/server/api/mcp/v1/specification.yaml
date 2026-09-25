@@ -2694,6 +2694,15 @@ components:
         order_by:
           $ref: "#/components/schemas/TaskOrderBy"
           description: Task order by
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
+            state:
+              $ref: "#/components/schemas/TaskState"
+              description: Task state filter
 
     ListMeasureTasksOutput:
       type: object
@@ -7255,6 +7264,15 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
+            state:
+              $ref: "#/components/schemas/TaskState"
+              description: Task state filter
 
     ListTasksOutput:
       type: object

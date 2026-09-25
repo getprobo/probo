@@ -66,6 +66,44 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Query',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Search tasks by name',
+			},
+			{
+				displayName: 'State',
+				name: 'state',
+				type: 'options',
+				options: [
+					{ name: 'All', value: '' },
+					{ name: 'Backlog', value: 'BACKLOG' },
+					{ name: 'Canceled', value: 'CANCELED' },
+					{ name: 'Done', value: 'DONE' },
+					{ name: 'Duplicate', value: 'DUPLICATE' },
+					{ name: 'In Progress', value: 'IN_PROGRESS' },
+					{ name: 'Todo', value: 'TODO' },
+				],
+				default: '',
+				description: 'Filter by task state',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -75,12 +113,16 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
+		query?: string;
+		state?: string;
+	};
 
 	const query = `
-		query GetTasks($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query GetTasks($organizationId: ID!, $first: Int, $after: CursorKey, $filter: TaskFilter) {
 			node(id: $organizationId) {
 				... on Organization {
-					tasks(first: $first, after: $after) {
+					tasks(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
 								id
@@ -104,10 +146,25 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { organizationId };
+	const filter: IDataObject = {};
+
+	if (filters.query) {
+		filter.query = filters.query;
+	}
+
+	if (filters.state) {
+		filter.state = filters.state;
+	}
+
+	if (Object.keys(filter).length > 0) {
+		variables.filter = filter;
+	}
+
 	const tasks = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

@@ -36,6 +36,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *coredata.TaskFilter
 	}
 )
 
@@ -43,6 +44,7 @@ func NewTaskConnection(
 	p *page.Page[*coredata.Task, coredata.TaskOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *coredata.TaskFilter,
 ) *TaskConnection {
 	var edges = make([]*TaskEdge, len(p.Data))
 
@@ -56,6 +58,7 @@ func NewTaskConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 

@@ -569,6 +569,7 @@ func (t *Tasks) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *TaskFilter,
 ) (int, error) {
 	q := `
 	SELECT
@@ -578,12 +579,14 @@ func (t *Tasks) CountByOrganizationID(
 	WHERE
 		%s
 		AND organization_id = @organization_id
+		AND %s
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -603,6 +606,7 @@ func (t *Tasks) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
+	filter *TaskFilter,
 ) error {
 	q := `
 	SELECT
@@ -628,11 +632,13 @@ func (t *Tasks) LoadByOrganizationID(
 		%s
 		AND organization_id = @organization_id
 		AND %s
+		AND %s
 	`
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -655,6 +661,7 @@ func (t *Tasks) CountByMeasureID(
 	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
+	filter *TaskFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -664,12 +671,14 @@ FROM
 WHERE
     %s
     AND measure_id = @measure_id
+    AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -689,6 +698,7 @@ func (t *Tasks) LoadByMeasureID(
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
+	filter *TaskFilter,
 ) error {
 	q := `
 SELECT
@@ -714,11 +724,13 @@ WHERE
     %s
     AND measure_id = @measure_id
     AND %s
+    AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

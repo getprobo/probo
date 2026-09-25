@@ -23,7 +23,9 @@ import { tv } from "tailwind-variants/lite";
 export const tasksPage = tv({
   slots: {
     root: "flex flex-col gap-6",
-    actions: "flex items-center gap-2",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    actions: "flex shrink-0 items-center gap-2",
   },
 });
 

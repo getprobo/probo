@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,50 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Meta, StoryObj } from "@storybook/react";
+import { useEffect, useRef, useState } from "react";
 
-import { TaskStateIcon } from "./TaskStateIcon";
+import { useTasksCardFilters } from "./useTasksCardFilters";
 
-export default {
-  title: "Atoms/TaskStateIcon",
-  component: TaskStateIcon,
-  argTypes: {},
-} satisfies Meta<typeof TaskStateIcon>;
+const searchDebounceMs = 300;
 
-type Story = StoryObj<typeof TaskStateIcon>;
+export function useTasksCardSearch(): [string, (value: string) => void] {
+  const { query, setQuery } = useTasksCardFilters();
+  const [input, setInput] = useState(query);
+  const lastCommittedRef = useRef(query);
 
-export const Backlog: Story = {
-  args: {
-    state: "BACKLOG",
-  },
-};
+  useEffect(() => {
+    if (input === query) {
+      return;
+    }
 
-export const Default: Story = {
-  args: {
-    state: "TODO",
-  },
-};
+    const handle = setTimeout(() => {
+      lastCommittedRef.current = input;
+      setQuery(input);
+    }, searchDebounceMs);
 
-export const InProgress: Story = {
-  args: {
-    state: "IN_PROGRESS",
-  },
-};
+    return () => clearTimeout(handle);
+  }, [input, query, setQuery]);
 
-export const Done: Story = {
-  args: {
-    state: "DONE",
-  },
-};
+  useEffect(() => {
+    if (query !== lastCommittedRef.current) {
+      lastCommittedRef.current = query;
+      setInput(query);
+    }
+  }, [query]);
 
-export const Canceled: Story = {
-  args: {
-    state: "CANCELED",
-  },
-};
-
-export const Duplicate: Story = {
-  args: {
-    state: "DUPLICATE",
-  },
-};
+  return [input, setInput];
+}

@@ -1131,6 +1131,12 @@
       "duplicate": "Duplicaat"
     },
     "empty": "Geen taken",
+    "noResults": "Geen taken komen overeen met uw filters",
+    "searchPlaceholder": "Taken zoeken",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "Alle statussen"
+    },
     "error": {
       "title": "Fout",
       "reorder": "Herordenen van taak mislukt."
@@ -1146,6 +1152,10 @@
       "moveToDone": "Verplaatsen naar Voltooid",
       "edit": "Bewerken",
       "delete": "Verwijderen"
+    },
+    "metadata": {
+      "timeEstimate": "Tijdsinschatting",
+      "deadline": "Deadline"
     },
     "recurringBadge": {
       "tooltip": "Herhaalt elke {{interval}}"

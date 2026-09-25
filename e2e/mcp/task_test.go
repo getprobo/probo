@@ -100,6 +100,60 @@ func TestMCP_Task_CRUD(t *testing.T) {
 	assert.Equal(t, addResult.Task.ID, deleteResult.DeletedTaskID)
 }
 
+func TestMCP_Task_Filter(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	measureID := factory.NewMeasure(owner).Create()
+	matchingID := factory.NewTask(owner, measureID).
+		WithName("Quarterly access review").
+		Create()
+	inProgressDecoyID := factory.NewTask(owner, measureID).
+		WithName("Prepare security training").
+		Create()
+	factory.NewTask(owner, measureID).
+		WithName("Annual access review").
+		Create()
+
+	for _, taskID := range []string{matchingID, inProgressDecoyID} {
+		mc.CallToolInto("updateTask", map[string]any{
+			"id":    taskID,
+			"state": "IN_PROGRESS",
+		}, &struct{}{})
+	}
+
+	var listResult struct {
+		Tasks []struct {
+			ID    string `json:"id"`
+			Name  string `json:"name"`
+			State string `json:"state"`
+		} `json:"tasks"`
+	}
+
+	mc.CallToolInto("listTasks", map[string]any{
+		"organization_id": orgID,
+		"filter": map[string]any{
+			"query": "access",
+			"state": "IN_PROGRESS",
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, matchingID, listResult.Tasks[0].ID)
+	assert.Equal(t, "Quarterly access review", listResult.Tasks[0].Name)
+	assert.Equal(t, "IN_PROGRESS", listResult.Tasks[0].State)
+
+	mc.CallToolInto("listMeasureTasks", map[string]any{
+		"measure_id": measureID,
+		"filter": map[string]any{
+			"query": "access",
+			"state": "IN_PROGRESS",
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, matchingID, listResult.Tasks[0].ID)
+}
+
 func TestMCP_Task_Recurrence(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

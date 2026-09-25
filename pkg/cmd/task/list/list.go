@@ -30,11 +30,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskOrder, $filter: TaskFilter) {
   node(id: $id) {
     __typename
     ... on Organization {
-      tasks(first: $first, after: $after, orderBy: $orderBy) {
+      tasks(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -69,6 +69,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagLimit    int
 		flagOrderBy  string
 		flagOrderDir string
+		flagQuery    string
+		flagState    string
 		flagOutput   *string
 	)
 
@@ -78,6 +80,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Aliases: []string{"ls"},
 		Example: `  # List tasks in the default organization
   prb task list
+
+  # List in-progress tasks matching a search
+  prb task ls --query access --state IN_PROGRESS
 
   # List tasks sorted by priority
   prb task ls --order-by PRIORITY_RANK --json`,
@@ -126,6 +131,27 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
 				}
+			}
+
+			filter := map[string]any{}
+			if flagQuery != "" {
+				filter["query"] = flagQuery
+			}
+
+			if flagState != "" {
+				if err := cmdutil.ValidateEnum(
+					"state",
+					flagState,
+					[]string{"BACKLOG", "TODO", "IN_PROGRESS", "DONE", "CANCELED", "DUPLICATE"},
+				); err != nil {
+					return err
+				}
+
+				filter["state"] = flagState
+			}
+
+			if len(filter) > 0 {
+				variables["filter"] = filter
 			}
 
 			tasks, totalCount, err := api.Paginate(
@@ -205,6 +231,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of tasks to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (PRIORITY_RANK, CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmd.Flags().StringVarP(&flagQuery, "query", "q", "", "Search tasks by name")
+	cmd.Flags().StringVar(&flagState, "state", "", "Filter by state (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED, DUPLICATE)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

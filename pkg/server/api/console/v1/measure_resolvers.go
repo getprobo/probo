@@ -55,7 +55,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 }
 
 // Tasks is the resolver for the tasks field.
-func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
+func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy, filter *types.TaskFilter) (*types.TaskConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskList)
 	if err != nil {
 		return nil, err
@@ -75,13 +75,18 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.task.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	taskFilter := coredata.NewTaskFilter(nil, nil)
+	if filter != nil {
+		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State)
+	}
+
+	page, err := r.task.ListForMeasureID(ctx, scope, obj.ID, cursor, taskFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewTaskConnection(page, r, obj.ID), nil
+	return types.NewTaskConnection(page, r, obj.ID, taskFilter), nil
 }
 
 // Risks is the resolver for the risks field.

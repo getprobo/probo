@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { PriorityLevel, RichEditor, TaskStateIcon } from "@probo/ui";
+import { RichEditor } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog, type DialogProps } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
@@ -60,6 +60,8 @@ import { useCreateTask } from "../_lib/useCreateTask";
 import { createTaskDialog } from "../variants";
 
 import { type LinearDraft, type LinearIssueDraft, TaskLinearDraftField } from "./TaskLinearPublishField";
+import { TaskPriorityIcon } from "./TaskPriorityIcon";
+import { TaskStateIcon } from "./TaskStateIcon";
 
 const linearConnectionQuery = graphql`
   query CreateTaskDialogLinearQuery($organizationId: ID!) {
@@ -89,7 +91,7 @@ const linkMutation = graphql`
     linkTaskToLinear(input: $input) {
       task {
         ...TaskDetailsPage_task
-        ...TasksCard_TaskRowFragment
+        ...TaskListItem_task
       }
     }
   }
@@ -359,7 +361,7 @@ export function CreateTaskDialog({
                     selected
                       ? (
                           <span className={value()}>
-                            <PriorityLevel level={selected} />
+                            <TaskPriorityIcon priority={selected} />
                             {t(`detailsPage.priorities.${selected.toLowerCase()}`)}
                           </span>
                         )
@@ -370,7 +372,7 @@ export function CreateTaskDialog({
                 {taskPriorities.map(item => (
                   <SelectItem key={item} value={item}>
                     <span className={value()}>
-                      <PriorityLevel level={item} />
+                      <TaskPriorityIcon priority={item} />
                       {t(`detailsPage.priorities.${item.toLowerCase()}`)}
                     </span>
                   </SelectItem>

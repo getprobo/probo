@@ -462,7 +462,7 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := r.task.CountForMeasureID(ctx, scope, obj.ParentID)
+		count, err := r.task.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -470,7 +470,7 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 		return count, nil
 	case *organizationResolver:
-		count, err := r.task.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.task.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

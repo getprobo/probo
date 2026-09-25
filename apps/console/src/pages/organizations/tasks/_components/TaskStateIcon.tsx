@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,33 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CircleDashedIcon } from "@phosphor-icons/react";
+import {
+  CheckCircleIcon,
+  CircleDashedIcon,
+  CircleHalfIcon,
+  CircleIcon,
+  ProhibitInsetIcon,
+  XCircleIcon,
+} from "@phosphor-icons/react";
+import { tv } from "tailwind-variants/lite";
 
-import { IconCircleCheck } from "./IconCircleCheck";
-import { IconCircleProgress } from "./IconCircleProgress";
-import { IconCircleSlashes } from "./IconCircleSlashes";
-import { IconCircleX } from "./IconCircleX";
-import { IconRadioUnchecked } from "./IconRadioUnchecked";
+import type { TaskState } from "../_lib/taskState";
 
-export type TaskState = "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
+const taskStateIcon = tv({
+  base: "size-4 shrink-0",
+  variants: {
+    state: {
+      BACKLOG: "text-sand-10",
+      TODO: "text-sand-11",
+      IN_PROGRESS: "text-amber-11",
+      DONE: "text-green-11",
+      CANCELED: "text-red-11",
+      DUPLICATE: "text-sand-10",
+    },
+  },
+});
 
-type Props = {
+interface TaskStateIconProps {
   state: TaskState;
-};
+}
 
-export function TaskStateIcon({ state }: Props) {
+export function TaskStateIcon({ state }: TaskStateIconProps) {
+  const className = taskStateIcon({ state });
+
   switch (state) {
     case "BACKLOG":
-      return <CircleDashedIcon size={16} className="text-txt-quaternary" />;
+      return <CircleDashedIcon className={className} aria-hidden />;
     case "TODO":
-      return <IconRadioUnchecked size={16} className="text-txt-quaternary" />;
+      return <CircleIcon className={className} aria-hidden />;
     case "IN_PROGRESS":
-      return <IconCircleProgress size={16} className="text-txt-warning" />;
+      return <CircleHalfIcon className={className} weight="fill" aria-hidden />;
     case "DONE":
-      return <IconCircleCheck size={16} className="text-txt-accent" />;
+      return <CheckCircleIcon className={className} weight="fill" aria-hidden />;
     case "CANCELED":
-      return <IconCircleX size={16} className="text-txt-danger" />;
+      return <XCircleIcon className={className} aria-hidden />;
     case "DUPLICATE":
-      return <IconCircleSlashes size={16} className="text-txt-tertiary" />;
+      return <ProhibitInsetIcon className={className} aria-hidden />;
   }
 }

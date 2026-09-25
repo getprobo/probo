@@ -67,6 +67,7 @@ type Measure implements Node {
         last: Int
         before: CursorKey
         orderBy: TaskOrder
+        filter: TaskFilter
     ): TaskConnection! @goField(forceResolver: true)
 
     risks(
