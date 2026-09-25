@@ -4,6 +4,33 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.298.0] - 2026-09-25
+
+### Added
+
+- Task comments stay in sync with a linked Linear issue. Publishing or
+  linking copies existing comments, and later edits and deletes follow
+  on both sides. A Linear comment whose author is not a Probo member
+  is stored without an owner
+- Organization and measure tasks can be filtered by name and state
+  (`TaskFilter`) in the console, GraphQL, and MCP (`listTasks`,
+  `listMeasureTasks`). Search matches `%` and `_` literally
+
+### Changed
+
+- Organization and measure task lists use the v2 UI kit. Each row shows
+  a status select, the linked Linear issue, the assignee, and time
+  estimate, deadline, and recurrence when set. Deleting a task is on
+  the detail page; drag-and-drop reordering stays. Search and status
+  live in the `q` and `status` URL params
+
+### Fixed
+
+- Cookie-banner tracker patterns treat slash-delimited keys as paths, so
+  a trailing id collapses to one token (`clientSourceId/*`) instead of
+  a separate glob per identifier. Short segments such as `2024` and
+  `v1` stay in the pattern
+
 ## [0.297.0] - 2026-09-25
 
 ### Added
