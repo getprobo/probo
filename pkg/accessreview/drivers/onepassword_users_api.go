@@ -44,7 +44,7 @@ type OnePasswordUsersAPIDriver struct {
 var _ Driver = (*OnePasswordUsersAPIDriver)(nil)
 
 type onePasswordUsersAPIResponse struct {
-	Users         []onePasswordUsersAPIUser `json:"users"`
+	Users         []onePasswordUsersAPIUser `json:"results"`
 	NextPageToken string                    `json:"next_page_token"`
 }
 
