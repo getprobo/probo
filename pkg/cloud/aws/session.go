@@ -38,6 +38,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/cloud"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
 )
@@ -152,6 +153,36 @@ func NewSession(
 		accountID: parsedARN.AccountID,
 		partition: parsedARN.Partition,
 	}, nil
+}
+
+// MemberRoleARN builds the IAM role ARN assumed in a member account of an
+// organization install. The partition comes from managementRoleARN, never
+// the literal "aws". memberRoleName defaults to ProboAudit when empty.
+func MemberRoleARN(managementRoleARN, accountID, memberRoleName string) (string, error) {
+	parsedARN, err := arn.Parse(managementRoleARN)
+	if err != nil {
+		return "", fmt.Errorf("cannot build member role ARN: cannot parse management role ARN: %w", err)
+	}
+
+	if accountID == "" {
+		return "", fmt.Errorf("cannot build member role ARN: account ID is empty")
+	}
+
+	memberRoleName, err = ParseMemberRoleName(memberRoleName)
+	if err != nil {
+		return "", fmt.Errorf("cannot build member role ARN: %w", err)
+	}
+
+	if memberRoleName == "" {
+		memberRoleName = coredata.DefaultAWSRoleName
+	}
+
+	return arn.ARN{
+		Partition: parsedARN.Partition,
+		Service:   "iam",
+		AccountID: accountID,
+		Resource:  "role/" + memberRoleName,
+	}.String(), nil
 }
 
 // regionForPartition is any STS region in the partition the role ARN names.

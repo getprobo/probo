@@ -39,7 +39,12 @@ func datadogRegistration() *Registration {
 	// BuildProbeURL targets the stored API domain. Confidential client + PKCE map
 	// to the default post-form token-endpoint auth.
 	return &Registration{
-		Provider:    coredata.ConnectorProviderDatadog,
+		Provider: coredata.ConnectorProviderDatadog,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.DatadogConnectorSettings) string {
+				return s.Domain
+			},
+		),
 		DisplayName: "Datadog",
 		OAuth2: &OAuth2Config{
 			Scopes:                 []string{"user_access_read"},

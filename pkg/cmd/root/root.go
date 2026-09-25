@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/completion"
 	complianceportal "go.probo.inc/probo/pkg/cmd/compliance-portal"
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
+	"go.probo.inc/probo/pkg/cmd/connector"
 	consentrecord "go.probo.inc/probo/pkg/cmd/consent-record"
 	cmdcontext "go.probo.inc/probo/pkg/cmd/context"
 	"go.probo.inc/probo/pkg/cmd/control"
@@ -113,6 +114,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	cmd.AddCommand(consentrecord.NewCmdConsentRecord(f))
 	cmd.AddCommand(cmdcontext.NewCmdContext(f))
+	cmd.AddCommand(connector.NewCmdConnector(f))
 	cmd.AddCommand(control.NewCmdControl(f))
 	cmd.AddCommand(cookiebanner.NewCmdCookieBanner(f))
 	cmd.AddCommand(cookiecategory.NewCmdCookieCategory(f))

@@ -63,6 +63,7 @@ import (
 	console_web "go.probo.inc/probo/pkg/server/web"
 	employeeportal_web "go.probo.inc/probo/pkg/server/web/employeeportal"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -96,6 +97,7 @@ type Config struct {
 	ThirdParty              *thirdparty.Service
 	RiskManagement          *riskmanagement.Service
 	ITAM                    *itam.Service
+	Task                    *task.Service
 	Cookie                  securecookie.Config
 	TokenSecret             string
 	// InstallStateKey signs the app-install state tokens the connector install
@@ -113,6 +115,7 @@ type Config struct {
 	AWSConnectorInstall      cloudaws.ConnectorInstallConfig
 	GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 	AzureConnectorInstall    cloudazure.ConnectorInstallConfig
+	LinearWebhookSecret      string
 }
 
 type Server struct {
@@ -160,6 +163,7 @@ func NewServer(cfg Config) (*Server, error) {
 		ThirdParty:               cfg.ThirdParty,
 		RiskManagement:           cfg.RiskManagement,
 		ITAM:                     cfg.ITAM,
+		Task:                     cfg.Task,
 		Cookie:                   cfg.Cookie,
 		TokenSecret:              cfg.TokenSecret,
 		InstallStateKey:          cfg.InstallStateKey,
@@ -172,6 +176,7 @@ func NewServer(cfg Config) (*Server, error) {
 		AWSConnectorInstall:      cfg.AWSConnectorInstall,
 		GCPConnectorInstall:      cfg.GCPConnectorInstall,
 		AzureConnectorInstall:    cfg.AzureConnectorInstall,
+		LinearWebhookSecret:      cfg.LinearWebhookSecret,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

@@ -26,18 +26,24 @@ import { tv } from "tailwind-variants/lite";
 export const selectTrigger = tv({
   slots: {
     trigger: [
-      "flex w-full items-center justify-between gap-2 rounded-2 text-2 text-sand-12",
+      "flex w-full items-center justify-between rounded-2 text-sand-12",
       "cursor-pointer outline-none transition-colors",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
       "data-disabled:pointer-events-none data-disabled:opacity-50 data-placeholder:text-sand-a10",
     ],
     value: "min-w-0 flex-1 truncate text-left",
-    icon: "flex size-4 shrink-0 items-center justify-center text-sand-a10 [&_svg]:size-4",
+    icon: "flex shrink-0 items-center justify-center text-sand-a10",
   },
   variants: {
     size: {
-      1: { trigger: "h-7 px-2" },
-      2: { trigger: "h-8 px-3" },
+      1: {
+        trigger: "h-6 gap-1 px-1.5 text-1",
+        icon: "size-3.5 [&_svg]:size-3.5",
+      },
+      2: {
+        trigger: "h-8 gap-2 px-3 text-2",
+        icon: "size-4 [&_svg]:size-4",
+      },
     },
     // Surface treatment. Only the accent (gold) color ships, matching Figma;
     // classic adds a recessed inset shadow (Figma can't express its gradient),
@@ -82,7 +88,7 @@ export const selectSkeleton = tv({
   base: "inline-block animate-pulse rounded-2 bg-sand-3 align-middle",
   variants: {
     size: {
-      1: "h-7 w-40",
+      1: "h-6 w-32",
       2: "h-8 w-40",
     },
   },

@@ -110,6 +110,7 @@ func NewSession(
 	organizationID gid.GID,
 	providerResource string,
 	serviceAccountEmail string,
+	accountID string,
 ) (*Session, error) {
 	parsed, err := parseProviderResource(providerResource)
 	if err != nil {
@@ -137,6 +138,10 @@ func NewSession(
 		accountID:           parsed.projectNumber,
 		universeDomain:      universe,
 	}
+	if accountID != "" {
+		session.accountID = accountID
+	}
+
 	session.authorizedClient = authorizeSession(httpClient, session)
 
 	return session, nil

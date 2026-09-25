@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/errorx"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -413,9 +414,9 @@ func (r *accessReviewSourceResolver) Organization(ctx context.Context, obj *type
 	return types.NewOrganization(organization), nil
 }
 
-// Connector is the resolver for the connector field.
-func (r *accessReviewSourceResolver) Connector(ctx context.Context, obj *types.AccessReviewSource) (*types.Connector, error) {
-	if obj.ConnectorID == nil {
+// ConnectorID is the resolver for the connectorId field.
+func (r *accessReviewSourceResolver) ConnectorID(ctx context.Context, obj *types.AccessReviewSource) (*gid.GID, error) {
+	if obj.ConnectorAccountID == nil {
 		return nil, nil
 	}
 
@@ -424,7 +425,47 @@ func (r *accessReviewSourceResolver) Connector(ctx context.Context, obj *types.A
 		return nil, err
 	}
 
-	connector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	connectorID, err := r.sourceConnectorID(ctx, scope, obj)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return connectorID, nil
+}
+
+// Connector is the resolver for the connector field.
+func (r *accessReviewSourceResolver) Connector(ctx context.Context, obj *types.AccessReviewSource) (*types.Connector, error) {
+	if obj.ConnectorAccountID == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceGet)
+	if err != nil {
+		return nil, err
+	}
+
+	connectorID, err := r.sourceConnectorID(ctx, scope, obj)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if connectorID == nil {
+		return nil, nil
+	}
+
+	connector, err := r.probo.Connectors.Get(ctx, scope, *connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -455,14 +496,24 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 	// access". With no connector, or one whose row is gone, no call was made
 	// at all — reporting that as EMPTY blames the provider for a source-side
 	// problem.
-	if obj.ConnectorID == nil {
+	connectorID, err := r.sourceConnectorID(ctx, scope, obj)
+	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
+
 		return &types.ProviderOrganizations{
 			Status: types.ProviderOrganizationsStatusUnavailable,
 			Nodes:  []*types.ProviderOrganization{},
 		}, nil
 	}
 
-	cnnctr, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	if connectorID == nil {
+		return &types.ProviderOrganizations{
+			Status: types.ProviderOrganizationsStatusUnavailable,
+			Nodes:  []*types.ProviderOrganization{},
+		}, nil
+	}
+
+	cnnctr, err := r.probo.Connectors.Get(ctx, scope, *connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return &types.ProviderOrganizations{
@@ -490,12 +541,12 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 		}, nil
 	}
 
-	orgs, err := r.accessReview.ProviderOrganizations(ctx, scope, *obj.ConnectorID)
+	orgs, err := r.accessReview.ProviderOrganizations(ctx, scope, *connectorID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list provider organizations",
 			log.String("provider", cnnctr.Provider.String()),
 			log.String("source_id", obj.ID.String()),
-			log.String("connector_id", obj.ConnectorID.String()),
+			log.String("connector_id", connectorID.String()),
 			log.Error(err),
 		)
 
@@ -536,11 +587,22 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 		return false, err
 	}
 
-	if obj.ConnectorID == nil {
+	connectorID, err := r.sourceConnectorID(ctx, scope, obj)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
+
+		return false, gqlutils.Internal(ctx)
+	}
+
+	if connectorID == nil {
 		return false, nil
 	}
 
-	needsConfiguration, err := r.accessReview.SourceNeedsConfiguration(ctx, scope, *obj.ConnectorID)
+	needsConfiguration, err := r.accessReview.SourceNeedsConfiguration(ctx, scope, *connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
@@ -560,7 +622,7 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 // plus the one case a connector cannot express: a manual CSV source, which has
 // no connector to be connected to.
 func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *types.AccessReviewSource) (types.AccessReviewSourceConnectionStatus, error) {
-	if obj.ConnectorID == nil {
+	if obj.ConnectorAccountID == nil {
 		return types.AccessReviewSourceConnectionStatusNotApplicable, nil
 	}
 
@@ -569,7 +631,22 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 		return types.AccessReviewSourceConnectionStatusNotApplicable, err
 	}
 
-	status, err := r.connectorConnectionStatus(ctx, scope, *obj.ConnectorID)
+	connectorID, err := r.sourceConnectorID(ctx, scope, obj)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
+
+		return types.AccessReviewSourceConnectionStatusNotApplicable, gqlutils.Internal(ctx)
+	}
+
+	if connectorID == nil {
+		return types.AccessReviewSourceConnectionStatusNotApplicable, nil
+	}
+
+	status, err := r.connectorConnectionStatus(ctx, scope, *connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
@@ -597,11 +674,22 @@ func (r *accessReviewSourceResolver) SelectedOrganization(ctx context.Context, o
 		return nil, err
 	}
 
-	if obj.ConnectorID == nil {
+	connectorID, err := r.sourceConnectorID(ctx, scope, obj)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if connectorID == nil {
 		return nil, nil
 	}
 
-	slug, err := r.accessReview.SelectedOrganizationSlug(ctx, scope, *obj.ConnectorID)
+	slug, err := r.accessReview.SelectedOrganizationSlug(ctx, scope, *connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -659,13 +747,22 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		ctx,
 		scope,
 		accessreview.CreateAccessReviewSourceRequest{
-			OrganizationID: input.OrganizationID,
-			ConnectorID:    input.ConnectorID,
-			Name:           input.Name,
-			CsvData:        input.CSVData,
+			OrganizationID:     input.OrganizationID,
+			ConnectorID:        input.ConnectorID,
+			ConnectorAccountID: input.ConnectorAccountID,
+			Name:               input.Name,
+			CsvData:            input.CSVData,
 		},
 	)
 	if err != nil {
+		if errors.Is(err, accessreview.ErrNoConnectorAccount) || errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if errors.Is(err, coredata.ErrResourceInUse) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
@@ -701,6 +798,10 @@ func (r *mutationResolver) UpdateAccessReviewSource(ctx context.Context, input t
 		},
 	)
 	if err != nil {
+		if errors.Is(err, accessreview.ErrNoConnectorAccount) || errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}

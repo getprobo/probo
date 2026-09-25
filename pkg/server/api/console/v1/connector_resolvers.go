@@ -13,10 +13,12 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // CanReconnect is the resolver for the canReconnect field.
@@ -82,6 +84,118 @@ func (r *connectorResolver) DocumentationURL(ctx context.Context, obj *types.Con
 	}
 
 	return new(reg.DocumentationURL), nil
+}
+
+// Accounts is the resolver for the accounts field.
+func (r *connectorResolver) Accounts(ctx context.Context, obj *types.Connector, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorAccountOrderBy) (*types.ConnectorAccountConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ConnectorAccountOrderField]{
+		Field:     coredata.ConnectorAccountOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ConnectorAccountOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.probo.Connectors.ListAccounts(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list connector accounts", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewConnectorAccountConnection(p, r, obj.ID), nil
+}
+
+// DiscoveredAccounts is the resolver for the discoveredAccounts field.
+func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.Connector) ([]*types.DiscoveredConnectorAccount, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorDiscover)
+	if err != nil {
+		return nil, err
+	}
+
+	accounts, err := r.accessReview.DiscoverAccounts(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot discover connector accounts", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDiscoveredConnectorAccounts(accounts), nil
+}
+
+// Connector is the resolver for the connector field.
+func (r *connectorAccountResolver) Connector(ctx context.Context, obj *types.ConnectorAccount) (*types.Connector, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	cnnctr, err := r.probo.Connectors.Get(ctx, scope, obj.Connector.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load connector for account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewConnector(cnnctr), nil
+}
+
+// ConnectionStatus is the resolver for the connectionStatus field.
+func (r *connectorAccountResolver) ConnectionStatus(ctx context.Context, obj *types.ConnectorAccount) (types.ConnectorConnectionStatus, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return "", err
+	}
+
+	status, err := r.connectorConnectionStatus(ctx, scope, obj.Connector.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return "", gqlutils.NotFound(ctx, err)
+		}
+
+		return "", err
+	}
+
+	return status, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *connectorAccountConnectionResolver) TotalCount(ctx context.Context, obj *types.ConnectorAccountConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionConnectorGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.probo.Connectors.CountAccounts(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count connector accounts", log.Error(err))
+
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
@@ -229,6 +343,132 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 	}, nil
 }
 
+// CreateOrganizationConnector is the resolver for the createOrganizationConnector field.
+func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, input types.CreateOrganizationConnectorInput) (*types.CreateOrganizationConnectorPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+	}
+
+	raw, err := r.organizationConnectorSettings(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       input.Provider,
+		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+		Connection:     &connector.WorkloadIdentityConnection{},
+		RawSettings:    raw,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create organization connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	discovered := []*types.DiscoveredConnectorAccount{}
+
+	if err := r.accessReview.ProbeConnector(ctx, scope, cnnctr.ID); err != nil {
+		r.logger.WarnCtx(
+			ctx,
+			"organization connector probe failed",
+			log.String("connector_id", cnnctr.ID.String()),
+		)
+	} else {
+		accounts, err := r.accessReview.DiscoverAccounts(ctx, scope, cnnctr.ID)
+		if err != nil {
+			r.logger.WarnCtx(
+				ctx,
+				"cannot discover organization connector accounts",
+				log.String("connector_id", cnnctr.ID.String()),
+			)
+		} else {
+			discovered = types.NewDiscoveredConnectorAccounts(accounts)
+		}
+	}
+
+	return &types.CreateOrganizationConnectorPayload{
+		Connector:          types.NewConnector(cnnctr),
+		DiscoveredAccounts: discovered,
+	}, nil
+}
+
+// EnableConnectorAccounts is the resolver for the enableConnectorAccounts field.
+func (r *mutationResolver) EnableConnectorAccounts(ctx context.Context, input types.EnableConnectorAccountsInput) (*types.EnableConnectorAccountsPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req := make([]probo.EnableConnectorAccount, 0, len(input.Accounts))
+	for _, account := range input.Accounts {
+		if account == nil {
+			continue
+		}
+
+		req = append(req, probo.EnableConnectorAccount{
+			ExternalAccountID: account.ExternalAccountID,
+			Name:              account.Name,
+		})
+	}
+
+	enabled, err := r.probo.Connectors.EnableAccounts(ctx, scope, input.ConnectorID, req)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot enable connector accounts", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	accounts := make([]*types.ConnectorAccount, len(enabled))
+	for i, account := range enabled {
+		accounts[i] = types.NewConnectorAccount(account)
+	}
+
+	return &types.EnableConnectorAccountsPayload{
+		ConnectorAccounts: accounts,
+	}, nil
+}
+
+// DisableConnectorAccount is the resolver for the disableConnectorAccount field.
+func (r *mutationResolver) DisableConnectorAccount(ctx context.Context, input types.DisableConnectorAccountInput) (*types.DisableConnectorAccountPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorAccountID, probo.ActionConnectorDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.probo.Connectors.DisableAccount(ctx, scope, input.ConnectorAccountID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflictf(ctx, "connector account is in use")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot disable connector account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DisableConnectorAccountPayload{
+		DisabledConnectorAccountID: input.ConnectorAccountID,
+	}, nil
+}
+
 // DeleteConnector is the resolver for the deleteConnector field.
 func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.DeleteConnectorInput) (*types.DeleteConnectorPayload, error) {
 	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorDelete)
@@ -274,12 +514,24 @@ func (r *slackConnectionResolver) Permission(ctx context.Context, obj *types.Sla
 // Connector returns schema.ConnectorResolver implementation.
 func (r *Resolver) Connector() schema.ConnectorResolver { return &connectorResolver{r} }
 
+// ConnectorAccount returns schema.ConnectorAccountResolver implementation.
+func (r *Resolver) ConnectorAccount() schema.ConnectorAccountResolver {
+	return &connectorAccountResolver{r}
+}
+
+// ConnectorAccountConnection returns schema.ConnectorAccountConnectionResolver implementation.
+func (r *Resolver) ConnectorAccountConnection() schema.ConnectorAccountConnectionResolver {
+	return &connectorAccountConnectionResolver{r}
+}
+
 // SlackConnection returns schema.SlackConnectionResolver implementation.
 func (r *Resolver) SlackConnection() schema.SlackConnectionResolver {
 	return &slackConnectionResolver{r}
 }
 
 type (
-	connectorResolver       struct{ *Resolver }
-	slackConnectionResolver struct{ *Resolver }
+	connectorResolver                  struct{ *Resolver }
+	connectorAccountResolver           struct{ *Resolver }
+	connectorAccountConnectionResolver struct{ *Resolver }
+	slackConnectionResolver            struct{ *Resolver }
 )

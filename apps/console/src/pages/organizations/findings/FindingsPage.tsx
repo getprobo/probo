@@ -73,6 +73,7 @@ import type { FindingsPageRowFragment$key } from "#/__generated__/core/FindingsP
 import { usePeople } from "#/hooks/graph/PeopleGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { AuditFilterSelect } from "./_components/AuditFilterSelect";
 import { CreateFindingDialog } from "./dialogs/CreateFindingDialog";
 import { PublishFindingListDialog } from "./dialogs/PublishFindingListDialog";
 
@@ -135,6 +136,7 @@ const findingsPageFragment = graphql`
     status: { type: "FindingStatus", defaultValue: null }
     priority: { type: "FindingPriority", defaultValue: null }
     ownerId: { type: "ID", defaultValue: null }
+    auditId: { type: "ID", defaultValue: null }
   ) {
     id
     findings(
@@ -145,6 +147,7 @@ const findingsPageFragment = graphql`
         status: $status
         priority: $priority
         ownerId: $ownerId
+        auditId: $auditId
       }
     )
       @connection(
@@ -186,6 +189,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
   const [statusFilter, setStatusFilter] = useState<FindingStatus | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<FindingPriority | null>(null);
   const [ownerFilter, setOwnerFilter] = useState<string | null>(null);
+  const [auditFilter, setAuditFilter] = useState<string | null>(null);
 
   const { data, loadNext, hasNext, isLoadingNext, refetch }
     = usePaginationFragment<FindingsPageRefetchQuery, FindingsPageFragment$key>(
@@ -201,6 +205,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
           status: statusFilter,
           priority: priorityFilter,
           ownerId: ownerFilter,
+          auditId: auditFilter,
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -232,11 +237,18 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
     refetchFilters({ ownerId: newOwner });
   };
 
+  const handleAuditFilterChange = (value: string) => {
+    const newAudit = value === "ALL" ? null : value;
+    setAuditFilter(newAudit);
+    refetchFilters({ auditId: newAudit });
+  };
+
   const currentFilter = {
     kind: kindFilter,
     status: statusFilter,
     priority: priorityFilter,
     ownerId: ownerFilter,
+    auditId: auditFilter,
   };
 
   const connectionId = ConnectionHandler.getConnectionID(
@@ -253,13 +265,17 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
         status: null,
         priority: null,
         ownerId: null,
+        auditId: null,
       },
     },
   );
-  const hasActiveFilter = kindFilter || statusFilter || priorityFilter || ownerFilter;
-  const createConnectionIds = hasActiveFilter
-    ? [allFiltersNullConnectionId, connectionId]
-    : [connectionId];
+  const hasActiveFilter
+    = kindFilter || statusFilter || priorityFilter || ownerFilter || auditFilter;
+  const createConnectionIds = !hasActiveFilter
+    ? [connectionId]
+    : auditFilter
+      ? [allFiltersNullConnectionId]
+      : [allFiltersNullConnectionId, connectionId];
   const findings = data?.findings?.edges?.map(edge => edge.node) ?? [];
 
   const hasAnyAction
@@ -344,6 +360,13 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
             organizationId={organizationId}
             value={ownerFilter}
             onChange={handleOwnerFilterChange}
+          />
+        </Suspense>
+        <Suspense fallback={<Select loading placeholder={t("findingsPage.loading")} />}>
+          <AuditFilterSelect
+            organizationId={organizationId}
+            value={auditFilter}
+            onChange={handleAuditFilterChange}
           />
         </Suspense>
       </div>

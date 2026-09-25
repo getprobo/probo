@@ -343,9 +343,7 @@ export function CreateAzureAccessReviewSourcePage({
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setTenantId(e.target.value)}
             required
-            placeholder={t(
-              "createAzureAccessReviewSourcePage.fields.tenantIdPlaceholder",
-            )}
+            help={t("createAzureAccessReviewSourcePage.fields.tenantIdHelp")}
             error={
               tenantInvalid
                 ? t("createAzureAccessReviewSourcePage.errors.tenantId")
@@ -359,9 +357,7 @@ export function CreateAzureAccessReviewSourcePage({
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setClientId(e.target.value)}
             required
-            placeholder={t(
-              "createAzureAccessReviewSourcePage.fields.clientIdPlaceholder",
-            )}
+            help={t("createAzureAccessReviewSourcePage.fields.clientIdHelp")}
             error={
               clientInvalid
                 ? t("createAzureAccessReviewSourcePage.errors.clientId")
@@ -375,9 +371,7 @@ export function CreateAzureAccessReviewSourcePage({
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setSubscriptionId(e.target.value)}
             required
-            placeholder={t(
-              "createAzureAccessReviewSourcePage.fields.subscriptionIdPlaceholder",
-            )}
+            help={t("createAzureAccessReviewSourcePage.fields.subscriptionIdHelp")}
             error={
               subscriptionInvalid
                 ? t("createAzureAccessReviewSourcePage.errors.subscriptionId")

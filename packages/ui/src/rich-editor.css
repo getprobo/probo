@@ -48,11 +48,9 @@
         @apply list-decimal list-outside my-2 pl-4;
     }
 
-    a { @apply text-txt-info underline font-normal; }
+    a { @apply text-txt-info underline font-normal cursor-pointer; }
 
-    &.pointer-on-hovered-link {
-        a:hover { cursor: pointer; }
-    }
+    &.ProseMirror-focused a { cursor: text; }
 
     blockquote {
         @apply my-2 pl-4 border-l-4 border-l-border-solid;

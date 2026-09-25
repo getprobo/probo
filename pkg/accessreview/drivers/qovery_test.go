@@ -124,3 +124,18 @@ func TestQoveryRoles(t *testing.T) {
 		})
 	}
 }
+
+func TestQoveryRole_PrefersRoleName(t *testing.T) {
+	t.Parallel()
+
+	member := qoveryMember{
+		Role:     "ADMIN",
+		RoleName: "Developer",
+	}
+
+	role := qoveryRole(member)
+
+	assert.Equal(t, "Developer", role)
+	assert.Equal(t, []string{"Developer"}, qoveryRoles(role))
+	assert.False(t, qoveryIsAdmin(role))
+}

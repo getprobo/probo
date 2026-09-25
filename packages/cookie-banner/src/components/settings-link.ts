@@ -27,6 +27,7 @@ const AUTO_ATTR = "data-probo-auto";
 export class ProboSettingsLink extends HTMLElement {
   private root: ProboCookieBannerRoot | null = null;
   private attached = false;
+  private pendingOpen = false;
 
   connectedCallback(): void {
     this.root = this.findRoot();
@@ -51,6 +52,7 @@ export class ProboSettingsLink extends HTMLElement {
     }
     this.root = null;
     this.attached = false;
+    this.pendingOpen = false;
   }
 
   private attach(root: ProboCookieBannerRoot): void {
@@ -67,6 +69,8 @@ export class ProboSettingsLink extends HTMLElement {
     } catch {
       root.addEventListener("probo-ready", this.onRootReady, { once: true });
     }
+
+    this.flushPendingOpen();
   }
 
   private onRootReady = (e: Event): void => {
@@ -198,13 +202,42 @@ export class ProboSettingsLink extends HTMLElement {
     const found = this.findRoot();
     if (found) {
       this.attach(found);
+      return;
+    }
+
+    if (this.pendingOpen) {
+      document.addEventListener("probo-ready", this.onProboReady, { once: true });
     }
   };
 
-  private handleClick = (e: Event): void => {
-    if (!this.root) return;
-    e.preventDefault();
+  private flushPendingOpen(): void {
+    if (!this.pendingOpen || !this.root) {
+      return;
+    }
+    this.pendingOpen = false;
     this.root.setState(this.root.reopenState);
+  }
+
+  private handleClick = (e: Event): void => {
+    e.preventDefault();
+    const root = this.findRoot() ?? this.root;
+    if (root && root !== this.root) {
+      this.attach(root);
+    }
+    // Header/footer links often connect before the banner root exists, and
+    // the themed host defines this element mid-connectedCallback — before
+    // it writes the root into its shadow tree. Re-resolve on click and
+    // fall back to the document event the root already listens for. If
+    // nobody is listening yet, keep the request and open when a root
+    // attaches.
+    if (root) {
+      this.pendingOpen = false;
+      root.setState(root.reopenState);
+      return;
+    }
+    this.pendingOpen = true;
+    document.addEventListener("probo-ready", this.onProboReady, { once: true });
+    document.dispatchEvent(new CustomEvent("probo-open-preferences"));
   };
 
   private handleKeydown = (e: KeyboardEvent): void => {

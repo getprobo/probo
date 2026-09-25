@@ -42,6 +42,7 @@ func stubNewCloudSession(
 	context.Context,
 	*identityfederation.Issuer,
 	*coredata.Connector,
+	string,
 ) (cloud.Session, error) {
 	return nil, nil
 }
@@ -78,8 +79,8 @@ func stubWorkloadIdentity() *provider.WorkloadIdentityConfig {
 // TestEveryProviderRegistered asserts that every
 // coredata.ConnectorProvider constant has a matching Registration in
 // the registry, that the registration carries the minimum metadata
-// (Provider, DisplayName), and that the access-review NewDriver
-// closure is wired — so the provider can actually drive a review.
+// (Provider, DisplayName), and that an access-review driver is wired
+// except for OAuth-only providers such as LINEAR_SYNC.
 func TestEveryProviderRegistered(t *testing.T) {
 	t.Parallel()
 
@@ -101,6 +102,15 @@ func TestEveryProviderRegistered(t *testing.T) {
 			// rejects a provider that sets both.
 			if reg.SupportsWorkloadIdentity() {
 				assert.NotNilf(t, reg.WorkloadIdentity.NewDriver, "provider %q has nil WorkloadIdentity.NewDriver", p)
+
+				return
+			}
+
+			// LINEAR_SYNC is an OAuth app for task issue write, not an
+			// access-review source. AccessReviewDrivers skips NewDriver
+			// nil, so this factory must stay unset.
+			if p == coredata.ConnectorProviderLinearSync {
+				assert.Nilf(t, reg.NewDriver, "provider %q must not register an access-review driver", p)
 
 				return
 			}

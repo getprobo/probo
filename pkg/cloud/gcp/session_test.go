@@ -71,6 +71,7 @@ func TestNewSession(t *testing.T) {
 		testOrganizationID(),
 		testProviderResource,
 		testServiceAccount,
+		"",
 	)
 	require.NoError(t, err)
 
@@ -78,6 +79,20 @@ func TestNewSession(t *testing.T) {
 	assert.Equal(t, "123456789012", session.AccountID(), "account comes from the provider resource")
 	assert.Equal(t, cloudgcp.CommercialUniverse, session.UniverseDomain())
 	assert.NotNil(t, session.HTTPClient())
+}
+
+func TestNewSession_AccountIDOverride(t *testing.T) {
+	t.Parallel()
+
+	session, err := cloudgcp.NewSession(
+		testIssuer(t),
+		testOrganizationID(),
+		testProviderResource,
+		testServiceAccount,
+		"999888777666",
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "999888777666", session.AccountID())
 }
 
 func TestNewSession_S3NSUniverse(t *testing.T) {
@@ -88,6 +103,7 @@ func TestNewSession_S3NSUniverse(t *testing.T) {
 		testOrganizationID(),
 		testProviderResource,
 		testS3NSServiceAccount,
+		"",
 	)
 	require.NoError(t, err)
 
@@ -156,7 +172,7 @@ func TestNewSession_Validation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := cloudgcp.NewSession(issuer, organizationID, tt.providerResource, tt.serviceAccountEmail)
+			_, err := cloudgcp.NewSession(issuer, organizationID, tt.providerResource, tt.serviceAccountEmail, "")
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.wantMessage)
 			assert.NotContains(t, err.Error(), tt.forbidden)
@@ -172,6 +188,7 @@ func TestNewSession_DoesNotReadADC(t *testing.T) {
 		testOrganizationID(),
 		testProviderResource,
 		testServiceAccount,
+		"",
 	)
 	require.NoError(t, err)
 	assert.Equal(t, cloud.GCP, session.Cloud())

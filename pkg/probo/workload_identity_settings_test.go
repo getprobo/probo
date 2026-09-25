@@ -22,6 +22,7 @@ package probo_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -63,6 +64,89 @@ func TestMarshalWorkloadIdentitySettings(t *testing.T) {
 		)
 	})
 
+	t.Run("aws trims a member role name", func(t *testing.T) {
+		t.Parallel()
+
+		raw, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:          coredata.ConnectorProviderAWS,
+				AWSRoleARN:        testAWSRoleARN,
+				AWSMemberRoleName: "  Role+=,.@-_  ",
+			},
+		)
+		require.NoError(t, err)
+
+		var got map[string]string
+		require.NoError(t, json.Unmarshal(raw, &got))
+		assert.Equal(t, "Role+=,.@-_", got["member_role_name"])
+	})
+
+	t.Run("aws omits a blank member role name", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name string
+			role string
+		}{
+			{name: "empty"},
+			{name: "spaces", role: "   "},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				raw, err := probo.MarshalWorkloadIdentitySettings(
+					probo.WorkloadIdentitySettingsInput{
+						Provider:          coredata.ConnectorProviderAWS,
+						AWSRoleARN:        testAWSRoleARN,
+						AWSMemberRoleName: tt.role,
+					},
+				)
+				require.NoError(t, err)
+
+				var got map[string]string
+				require.NoError(t, json.Unmarshal(raw, &got))
+				assert.Equal(
+					t,
+					map[string]string{"role_arn": testAWSRoleARN},
+					got,
+				)
+			})
+		}
+	})
+
+	t.Run("refuses an invalid aws member role name", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name string
+			role string
+		}{
+			{name: "slash", role: "bad/name"},
+			{name: "embedded space", role: "bad name"},
+			{name: "too long", role: strings.Repeat("a", 65)},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				_, err := probo.MarshalWorkloadIdentitySettings(
+					probo.WorkloadIdentitySettingsInput{
+						Provider:          coredata.ConnectorProviderAWS,
+						AWSRoleARN:        testAWSRoleARN,
+						AWSMemberRoleName: tt.role,
+					},
+				)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "awsMemberRoleName is not a valid IAM role name")
+				assert.NotContains(t, err.Error(), tt.role)
+				assert.NotErrorIs(t, err, probo.ErrMarshalWorkloadIdentitySettings)
+			})
+		}
+	})
+
 	t.Run("gcp marshals canonical fields", func(t *testing.T) {
 		t.Parallel()
 
@@ -85,6 +169,43 @@ func TestMarshalWorkloadIdentitySettings(t *testing.T) {
 			},
 			got,
 		)
+	})
+
+	t.Run("gcp trims a parent", func(t *testing.T) {
+		t.Parallel()
+
+		raw, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:                    coredata.ConnectorProviderGCP,
+				GCPWorkloadIdentityProvider: testGCPProvider,
+				GCPServiceAccountEmail:      testGCPServiceAccount,
+				GCPParent:                   "  organizations/123456789012  ",
+			},
+		)
+		require.NoError(t, err)
+
+		var got map[string]string
+		require.NoError(t, json.Unmarshal(raw, &got))
+		assert.Equal(t, "organizations/123456789012", got["parent"])
+	})
+
+	t.Run("refuses an invalid gcp parent", func(t *testing.T) {
+		t.Parallel()
+
+		raw := "projects/my-project"
+
+		_, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:                    coredata.ConnectorProviderGCP,
+				GCPWorkloadIdentityProvider: testGCPProvider,
+				GCPServiceAccountEmail:      testGCPServiceAccount,
+				GCPParent:                   raw,
+			},
+		)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "gcpParent is not an organization or folder")
+		assert.NotContains(t, err.Error(), raw)
+		assert.NotErrorIs(t, err, probo.ErrMarshalWorkloadIdentitySettings)
 	})
 
 	t.Run("refuses a missing aws role arn", func(t *testing.T) {
@@ -229,6 +350,32 @@ func TestMarshalWorkloadIdentitySettings(t *testing.T) {
 		assert.Equal(t, string(cloudazure.EnvironmentPublic), got["environment"])
 	})
 
+	t.Run("azure accepts an empty subscription", func(t *testing.T) {
+		t.Parallel()
+
+		raw, err := probo.MarshalWorkloadIdentitySettings(
+			probo.WorkloadIdentitySettingsInput{
+				Provider:      coredata.ConnectorProviderAzure,
+				AzureTenantID: testAzureTenantID,
+				AzureClientID: testAzureClientID,
+			},
+		)
+		require.NoError(t, err)
+
+		var got map[string]string
+		require.NoError(t, json.Unmarshal(raw, &got))
+		assert.Equal(
+			t,
+			map[string]string{
+				"tenant_id":       testAzureTenantID,
+				"client_id":       testAzureClientID,
+				"subscription_id": "",
+				"environment":     string(cloudazure.EnvironmentPublic),
+			},
+			got,
+		)
+	})
+
 	t.Run("refuses missing azure fields", func(t *testing.T) {
 		t.Parallel()
 
@@ -240,7 +387,6 @@ func TestMarshalWorkloadIdentitySettings(t *testing.T) {
 		}{
 			{name: "empty tenant", clientID: testAzureClientID, subscriptionID: testAzureSubscriptionID},
 			{name: "empty client", tenantID: testAzureTenantID, subscriptionID: testAzureSubscriptionID},
-			{name: "empty subscription", tenantID: testAzureTenantID, clientID: testAzureClientID},
 			{name: "all empty"},
 		}
 
@@ -261,7 +407,7 @@ func TestMarshalWorkloadIdentitySettings(t *testing.T) {
 					require.Error(t, err)
 					assert.Equal(
 						t,
-						"azureTenantId, azureClientId and azureSubscriptionId are required",
+						"azureTenantId and azureClientId are required",
 						err.Error(),
 					)
 					assert.NotErrorIs(t, err, probo.ErrMarshalWorkloadIdentitySettings)

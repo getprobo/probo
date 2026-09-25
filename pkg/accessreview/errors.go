@@ -38,6 +38,7 @@ import (
 )
 
 var (
+	ErrNoConnectorAccount        = errors.New("connector has no account; discover and enable accounts on the connector")
 	ErrCampaignMissingSources    = errors.New("access review campaign missing scope sources")
 	ErrCampaignNotDraft          = errors.New("access review campaign not draft")
 	ErrCampaignNotDeletable      = errors.New("access review campaign not deletable")

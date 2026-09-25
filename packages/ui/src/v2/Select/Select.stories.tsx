@@ -54,6 +54,27 @@ export function Default() {
   );
 }
 
+export function Sizes() {
+  return (
+    <div className="flex flex-col gap-3">
+      {([1, 2] as const).map(size => (
+        <div key={size} className="w-40">
+          <Select defaultValue="apple">
+            <SelectTrigger size={size}>
+              {(value: string | null) => (value ? fruits[value] : null)}
+            </SelectTrigger>
+            <SelectPopup>
+              {Object.entries(fruits).map(([value, label]) => (
+                <SelectItem key={value} value={value}>{label}</SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function Variants() {
   return (
     <div className="flex flex-col gap-3">

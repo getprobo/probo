@@ -78,6 +78,20 @@ func TestBuildDatadogProbeURL(t *testing.T) {
 	)
 }
 
+func TestBuildSigNozProbeURL(t *testing.T) {
+	t.Parallel()
+
+	// A trailing slash is how the console form commonly submits it.
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderSigNoz}
+	require.NoError(t, conn.SetSettings(&coredata.SigNozConnectorSettings{
+		BaseURL: "https://acme.us.signoz.cloud/",
+	}))
+
+	probeURL, err := buildSigNozProbeURL(conn, Endpoints{})
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.us.signoz.cloud/api/v2/users", probeURL)
+}
+
 func TestBuildZendeskProbeURL(t *testing.T) {
 	t.Parallel()
 
@@ -565,6 +579,7 @@ func TestProbeClosureURL(t *testing.T) {
 		wantURL string
 	}{
 		{"linear", linearRegistration(), "https://api.linear.app/graphql"},
+		{"linear_sync", linearSyncRegistration(), "https://api.linear.app/graphql"},
 		{"monday", mondayRegistration(), "https://api.monday.com/v2"},
 		{"anthropic", anthropicRegistration(), "https://api.anthropic.com/v1/organizations/users?limit=1"},
 		{"square", squareRegistration(), "https://connect.squareup.com/v2/merchants/me"},

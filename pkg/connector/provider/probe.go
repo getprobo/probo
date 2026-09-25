@@ -118,6 +118,30 @@ func (r *Registry) ProbeCloudConnection(
 	return reg.WorkloadIdentity.Probe(ctx, session, conn)
 }
 
+// DiscoverAccounts lists the vendor accounts a connector can enable.
+// A provider that does not support organization install returns an empty list.
+func (r *Registry) DiscoverAccounts(
+	ctx context.Context,
+	session cloud.Session,
+	conn *coredata.Connector,
+) ([]DiscoveredAccount, error) {
+	reg, ok := r.Get(conn.Provider)
+	if !ok || !reg.SupportsOrganizationInstall() {
+		return []DiscoveredAccount{}, nil
+	}
+
+	accounts, err := reg.WorkloadIdentity.DiscoverAccounts(ctx, session, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	if accounts == nil {
+		return []DiscoveredAccount{}, nil
+	}
+
+	return accounts, nil
+}
+
 func probeGET(ctx context.Context, httpClient *http.Client, probeURL string) error {
 	if probeURL == "" {
 		return nil
@@ -565,7 +589,7 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 		return "", fmt.Errorf("cannot parse signoz base URL: %w", err)
 	}
 
-	return u.JoinPath("api", "v1", "user").String(), nil
+	return u.JoinPath("api", "v2", "users").String(), nil
 }
 
 func buildAuthentikProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {

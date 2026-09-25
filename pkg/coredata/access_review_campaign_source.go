@@ -47,6 +47,7 @@ type (
 		AccessReviewSourceID   *gid.GID     `db:"access_review_source_id"`
 		Name                   string       `db:"name"`
 		ConnectorID            *gid.GID     `db:"connector_id"`
+		ConnectorAccountID     *gid.GID     `db:"connector_account_id"`
 		CreatedAt              time.Time    `db:"created_at"`
 		UpdatedAt              time.Time    `db:"updated_at"`
 	}
@@ -111,6 +112,7 @@ INSERT INTO access_review_campaign_sources (
 	access_review_source_id,
 	name,
 	connector_id,
+	connector_account_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -121,13 +123,15 @@ INSERT INTO access_review_campaign_sources (
 	@access_review_source_id,
 	@name,
 	@connector_id,
+	@connector_account_id,
 	@created_at,
 	@updated_at
 )
 ON CONFLICT (access_review_campaign_id, access_review_source_id) DO UPDATE SET
-	name         = EXCLUDED.name,
-	connector_id = EXCLUDED.connector_id,
-	updated_at   = EXCLUDED.updated_at
+	name                  = EXCLUDED.name,
+	connector_id          = EXCLUDED.connector_id,
+	connector_account_id  = EXCLUDED.connector_account_id,
+	updated_at            = EXCLUDED.updated_at
 RETURNING id
 `
 	args := pgx.StrictNamedArgs{
@@ -138,6 +142,7 @@ RETURNING id
 		"access_review_source_id":   s.AccessReviewSourceID,
 		"name":                      s.Name,
 		"connector_id":              s.ConnectorID,
+		"connector_account_id":      s.ConnectorAccountID,
 		"created_at":                s.CreatedAt,
 		"updated_at":                s.UpdatedAt,
 	}
@@ -160,6 +165,19 @@ func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 	organizationIDs := make([]string, 0, len(accessReviewSources))
 	names := make([]string, 0, len(accessReviewSources))
 	connectorIDs := make([]*string, 0, len(accessReviewSources))
+	connectorAccountIDs := make([]*string, 0, len(accessReviewSources))
+
+	accountIDs := make([]gid.GID, 0, len(accessReviewSources))
+	for _, source := range accessReviewSources {
+		if source.ConnectorAccountID != nil {
+			accountIDs = append(accountIDs, *source.ConnectorAccountID)
+		}
+	}
+
+	connectorIDsByAccount, err := ConnectorIDsByAccountIDs(ctx, conn, scope, accountIDs)
+	if err != nil {
+		return err
+	}
 
 	seen := make(map[gid.GID]struct{}, len(accessReviewSources))
 	for _, source := range accessReviewSources {
@@ -171,15 +189,25 @@ func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 
 		var connectorID *string
 
-		if source.ConnectorID != nil {
-			s := source.ConnectorID.String()
-			connectorID = &s
+		if source.ConnectorAccountID != nil {
+			if id, ok := connectorIDsByAccount[*source.ConnectorAccountID]; ok {
+				s := id.String()
+				connectorID = &s
+			}
+		}
+
+		var connectorAccountID *string
+
+		if source.ConnectorAccountID != nil {
+			s := source.ConnectorAccountID.String()
+			connectorAccountID = &s
 		}
 
 		ids = append(ids, source.ID.String())
 		organizationIDs = append(organizationIDs, source.OrganizationID.String())
 		names = append(names, source.Name)
 		connectorIDs = append(connectorIDs, connectorID)
+		connectorAccountIDs = append(connectorAccountIDs, connectorAccountID)
 	}
 
 	now := time.Now()
@@ -190,13 +218,15 @@ WITH desired_sources AS (
 		id AS access_review_source_id,
 		organization_id,
 		name,
-		connector_id
+		connector_id,
+		connector_account_id
 	FROM unnest(
 		@access_review_source_ids::text[],
 		@organization_ids::text[],
 		@names::text[],
-		@connector_ids::text[]
-	) AS t(id, organization_id, name, connector_id)
+		@connector_ids::text[],
+		@connector_account_ids::text[]
+	) AS t(id, organization_id, name, connector_id, connector_account_id)
 )
 MERGE INTO access_review_campaign_sources AS target
 USING desired_sources AS source
@@ -206,9 +236,10 @@ ON
 	AND target.access_review_source_id = source.access_review_source_id
 WHEN MATCHED THEN
 	UPDATE SET
-		name         = source.name,
-		connector_id = source.connector_id,
-		updated_at   = @now
+		name                 = source.name,
+		connector_id         = source.connector_id,
+		connector_account_id = source.connector_account_id,
+		updated_at           = @now
 WHEN NOT MATCHED THEN
 	INSERT (
 		id,
@@ -218,6 +249,7 @@ WHEN NOT MATCHED THEN
 		access_review_source_id,
 		name,
 		connector_id,
+		connector_account_id,
 		created_at,
 		updated_at
 	)
@@ -229,6 +261,7 @@ WHEN NOT MATCHED THEN
 		source.access_review_source_id,
 		source.name,
 		source.connector_id,
+		source.connector_account_id,
 		@now,
 		@now
 	)
@@ -241,14 +274,15 @@ WHEN NOT MATCHED BY SOURCE
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"access_review_campaign_id": campaignID,
-		"access_review_source_ids":  ids,
-		"organization_ids":          organizationIDs,
-		"names":                     names,
-		"connector_ids":             connectorIDs,
+		"access_review_campaign_id":                 campaignID,
+		"access_review_source_ids":                  ids,
+		"organization_ids":                          organizationIDs,
+		"names":                                     names,
+		"connector_ids":                             connectorIDs,
+		"connector_account_ids":                     connectorAccountIDs,
 		"access_review_campaign_source_entity_type": AccessReviewCampaignSourceEntityType,
-		"tenant_id": scope.GetTenantID(),
-		"now":       now,
+		"tenant_id":                                 scope.GetTenantID(),
+		"now":                                       now,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -274,6 +308,7 @@ SELECT
 	access_review_source_id,
 	name,
 	connector_id,
+	connector_account_id,
 	created_at,
 	updated_at
 FROM access_review_campaign_sources
@@ -350,6 +385,7 @@ SELECT
 	access_review_source_id,
 	name,
 	connector_id,
+	connector_account_id,
 	created_at,
 	updated_at
 FROM access_review_campaign_sources

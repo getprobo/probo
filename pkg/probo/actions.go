@@ -119,26 +119,6 @@ const (
 	ActionMeasureThirdPartyMappingCreate = "core:measure:create-third-party-mapping"
 	ActionMeasureThirdPartyMappingDelete = "core:measure:delete-third-party-mapping"
 
-	// Task actions
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
-
-	// TaskComment actions
-	ActionTaskCommentGet    = "core:task-comment:get"
-	ActionTaskCommentList   = "core:task-comment:list"
-	ActionTaskCommentCreate = "core:task-comment:create"
-	ActionTaskCommentUpdate = "core:task-comment:update"
-	ActionTaskCommentDelete = "core:task-comment:delete"
-
-	// TaskActivity actions
-	ActionTaskActivityGet  = "core:task-activity:get"
-	ActionTaskActivityList = "core:task-activity:list"
-
 	// Evidence actions
 	ActionEvidenceList   = "core:evidence:list"
 	ActionEvidenceDelete = "core:evidence:delete"
@@ -273,10 +253,11 @@ const (
 	ActionSlackConnectionList = "core:slack-connection:list"
 
 	// Connector actions (generic)
-	ActionConnectorCreate = "core:connector:create"
-	ActionConnectorGet    = "core:connector:get"
-	ActionConnectorList   = "core:connector:list"
-	ActionConnectorDelete = "core:connector:delete"
+	ActionConnectorCreate   = "core:connector:create"
+	ActionConnectorGet      = "core:connector:get"
+	ActionConnectorList     = "core:connector:list"
+	ActionConnectorDelete   = "core:connector:delete"
+	ActionConnectorDiscover = "core:connector:discover"
 
 	// DataProtectionImpactAssessment actions
 	ActionDataProtectionImpactAssessmentList    = "core:data-protection-impact-assessment:list"

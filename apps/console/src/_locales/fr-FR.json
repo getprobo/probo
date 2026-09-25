@@ -621,7 +621,8 @@
       "allKinds": "Tous les types",
       "allStatuses": "Tous les statuts",
       "allPriorities": "Toutes les priorités",
-      "allOwners": "Tous les propriétaires"
+      "allOwners": "Tous les propriétaires",
+      "allAudits": "Tous les audits"
     },
     "kinds": {
       "minor_nonconformity": "Non-conformité mineure",
@@ -2169,6 +2170,11 @@
     "help": "Aide",
     "switchToDarkMode": "Passer en mode sombre",
     "switchToLightMode": "Passer en mode clair",
+    "spotlight": {
+      "title": "Aller à",
+      "placeholder": "Aller à…",
+      "empty": "Aucune page correspondante"
+    },
     "groups": {
       "governance": "Gouvernance",
       "privacy": "Confidentialité",
@@ -2277,43 +2283,38 @@
       "logout": "Déconnexion"
     }
   },
-  "peoplePage": {
+  "usersPage": {
+    "empty": "Aucun utilisateur",
+    "emptyFiltered": "Aucun utilisateur ne correspond aux filtres actuels.",
     "actions": {
-      "add": "Ajouter une personne"
+      "add": "Ajouter un utilisateur",
+      "cancel": "Annuler",
+      "previous": "Préc.",
+      "next": "Suiv."
     }
   },
-  "personPage": {
-    "messages": {
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
-    },
-    "errors": {
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
-    },
-    "confirmations": {
-      "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
-      "remove": "Voulez-vous vraiment supprimer {{name}} ?"
-    },
-    "actions": {
-      "deactivate": "Désactiver",
-      "remove": "Supprimer"
+  "userPage": {
+    "back": "Utilisateurs",
+    "empty": "—",
+    "deactivatedCallout": "Cet utilisateur est désactivé.",
+    "notFound": "Utilisateur introuvable",
+    "details": {
+      "title": "Détails",
+      "description": "Poste, e-mails supplémentaires et dates de contrat."
     }
   },
-  "addPersonDialog": {
-    "title": "Ajouter une personne"
+  "newUserPage": {
+    "title": "Ajouter un utilisateur",
+    "description": "Invitez quelqu’un dans cette organisation.",
+    "notFound": "Vous ne pouvez pas ajouter d’utilisateurs à cette organisation"
   },
-  "peopleList": {
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "email": "E-mail",
-      "role": "Rôle",
-      "createdOn": "Créé le",
-      "contractEndDate": "Date de fin de contrat"
+  "usersList": {
+    "searchPlaceholder": "Rechercher des utilisateurs...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
     },
-    "empty": "Aucune personne",
-    "searchPlaceholder": "Rechercher des personnes...",
+    "created": "Créé le {{date}}",
     "filters": {
       "allStatuses": "Tous les statuts",
       "status": "Statut",
@@ -2321,51 +2322,62 @@
       "active": "Actif",
       "deactivated": "Désactivé",
       "allRoles": "Tous les rôles",
-      "allTypes": "Tous les types"
+      "allTypes": "Tous les types d’utilisateur",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur"
     }
   },
-  "peopleListItem": {
+  "userListItem": {
     "messages": {
       "invitationSent": "Invitation envoyée avec succès",
-      "roleUpdated": "Rôle mis à jour avec succès",
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
+      "deactivated": "Utilisateur désactivé avec succès",
+      "removed": "Utilisateur supprimé avec succès",
+      "roleUpdated": "Rôle mis à jour"
     },
     "errors": {
       "sendInvitation": "Échec de l’envoi de l’invitation",
-      "updateRole": "Échec de la mise à jour du rôle",
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
+      "deactivate": "Échec de la désactivation de l’utilisateur",
+      "remove": "Échec de la suppression de l’utilisateur",
+      "updateRole": "Échec de la mise à jour du rôle"
     },
     "confirmations": {
       "sendActivationEmail": "Envoyer l’e-mail d’activation à {{name}} ?",
       "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
       "remove": "Voulez-vous vraiment supprimer {{name}} ?"
     },
+    "dialogs": {
+      "sendTitle": "Envoyer l’e-mail d’activation",
+      "deactivateTitle": "Désactiver l’utilisateur",
+      "removeTitle": "Supprimer l’utilisateur"
+    },
     "actions": {
+      "more": "Plus d’actions",
       "send": "Envoyer",
       "sendActivationMail": "Envoyer l’e-mail d’activation",
       "resendActivationMail": "Renvoyer l’e-mail d’activation",
-      "deactivatePerson": "Désactiver la personne",
-      "removePerson": "Supprimer la personne"
+      "deactivatePerson": "Désactiver l’utilisateur",
+      "removePerson": "Supprimer l’utilisateur"
     }
   },
-  "personForm": {
+  "userForm": {
     "messages": {
-      "created": "Personne créée avec succès.",
-      "updated": "Personne mise à jour avec succès."
+      "created": "Utilisateur créé avec succès.",
+      "updated": "Utilisateur mis à jour avec succès."
     },
     "errors": {
-      "create": "Échec de la création de la personne",
-      "update": "Échec de la mise à jour de la personne"
+      "create": "Échec de la création de l’utilisateur",
+      "update": "Échec de la mise à jour de l’utilisateur"
     },
     "fields": {
-      "fullName": "Nom complet *",
-      "emailAddress": "Adresse e-mail *",
-      "role": "Rôle *",
-      "type": "Type",
+      "fullName": "Nom complet",
+      "emailAddress": "Adresse e-mail",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur",
       "position": "Poste",
       "positionPlaceholder": "ex. PDG, DAF, etc.",
+      "additionalEmails": "E-mails supplémentaires",
+      "additionalEmail": "E-mail supplémentaire {{index}}",
+      "additionalEmailPlaceholder": "nom@exemple.com",
       "contractStartDate": "Date de début de contrat",
       "contractEndDate": "Date de fin de contrat"
     },
@@ -2384,8 +2396,9 @@
       "SERVICE_ACCOUNT": "Compte de service"
     },
     "actions": {
-      "update": "Mettre à jour",
-      "create": "Créer"
+      "create": "Créer",
+      "addEmail": "Ajouter un e-mail",
+      "removeEmail": "Supprimer l’e-mail"
     }
   },
   "auditLogPage": {
@@ -3102,7 +3115,7 @@
       "issuer": "Émetteur",
       "audience": "Audience",
       "subject": "Sujet",
-      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+      "roleArnHelp": "ex. arn:aws:iam::123456789012:role/ProboAudit"
     },
     "messages": {
       "copyFailed": "Échec de la copie",

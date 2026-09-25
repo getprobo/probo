@@ -60,6 +60,18 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumRejected")
     DOCUMENT_VERSION_APPROVAL_QUORUM_VOIDED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumVoided")
+    TASK_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCreated")
+    TASK_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskUpdated")
+    TASK_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskDeleted")
+    TASK_COMMENT_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCommentCreated")
+    TASK_COMMENT_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCommentUpdated")
+    TASK_COMMENT_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCommentDeleted")
 }
 
 enum WebhookEventStatus

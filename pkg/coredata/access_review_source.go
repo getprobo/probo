@@ -38,7 +38,7 @@ type (
 	AccessReviewSource struct {
 		ID                    gid.GID    `db:"id"`
 		OrganizationID        gid.GID    `db:"organization_id"`
-		ConnectorID           *gid.GID   `db:"connector_id"`
+		ConnectorAccountID    *gid.GID   `db:"connector_account_id"`
 		Name                  string     `db:"name"`
 		CsvData               *string    `db:"csv_data"`
 		NameSyncedAt          *time.Time `db:"name_synced_at"`
@@ -109,7 +109,7 @@ func (as *AccessReviewSource) LoadByID(
 SELECT
     id,
     organization_id,
-    connector_id,
+    connector_account_id,
     name,
     csv_data,
     name_synced_at,
@@ -149,7 +149,7 @@ LIMIT 1;
 }
 
 // LoadByIDForUpdate is LoadByID under FOR UPDATE, so the caller's
-// connector handoff reads connector_id under the row lock.
+// account handoff reads connector_account_id under the row lock.
 func (as *AccessReviewSource) LoadByIDForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
@@ -160,7 +160,7 @@ func (as *AccessReviewSource) LoadByIDForUpdate(
 SELECT
     id,
     organization_id,
-    connector_id,
+    connector_account_id,
     name,
     csv_data,
     name_synced_at,
@@ -210,7 +210,7 @@ func (sources *AccessReviewSources) LoadByIDs(
 SELECT
     id,
     organization_id,
-    connector_id,
+    connector_account_id,
     name,
     csv_data,
     name_synced_at,
@@ -259,9 +259,15 @@ SELECT COUNT(id)
 FROM access_review_sources
 WHERE
     %s
-    AND connector_id = @connector_id;
+    AND connector_account_id IN (
+        SELECT id
+        FROM connector_accounts
+        WHERE
+            %s
+            AND connector_id = @connector_id
+    );
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"connector_id": connectorID}
 	maps.Copy(args, scope.SQLArguments())
@@ -275,9 +281,9 @@ WHERE
 }
 
 // Insert reports whether a row was inserted. The partial unique index
-// on connector_id arbitrates: a source referencing an already-taken
-// connector is skipped, making creation idempotent per connector. CSV
-// sources (nil connector) always insert.
+// on connector_account_id arbitrates: a source referencing an
+// already-taken connector account is skipped, making creation
+// idempotent per account. CSV sources (nil account) always insert.
 func (as *AccessReviewSource) Insert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -289,7 +295,7 @@ INSERT INTO
         id,
         tenant_id,
         organization_id,
-        connector_id,
+        connector_account_id,
         name,
         csv_data,
         name_synced_at,
@@ -302,7 +308,7 @@ VALUES (
     @id,
     @tenant_id,
     @organization_id,
-    @connector_id,
+    @connector_account_id,
     @name,
     @csv_data,
     @name_synced_at,
@@ -311,7 +317,7 @@ VALUES (
     @created_at,
     @updated_at
 )
-ON CONFLICT (connector_id) WHERE connector_id IS NOT NULL DO NOTHING
+ON CONFLICT (connector_account_id) WHERE connector_account_id IS NOT NULL DO NOTHING
 RETURNING id;
 `
 
@@ -319,7 +325,7 @@ RETURNING id;
 		"id":                        as.ID,
 		"tenant_id":                 scope.GetTenantID(),
 		"organization_id":           as.OrganizationID,
-		"connector_id":              as.ConnectorID,
+		"connector_account_id":      as.ConnectorAccountID,
 		"name":                      as.Name,
 		"csv_data":                  as.CsvData,
 		"name_synced_at":            as.NameSyncedAt,
@@ -348,11 +354,14 @@ func (as *AccessReviewSource) Update(
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	// connector_id is a leftover foreign key. Clear it so a relink does not
+	// keep the previous connector referenced.
 	q := `
 UPDATE access_review_sources
 SET
     name = @name,
-    connector_id = @connector_id,
+    connector_account_id = @connector_account_id,
+    connector_id = NULL,
     csv_data = @csv_data,
     name_synced_at = @name_synced_at,
     name_sync_attempts = @name_sync_attempts,
@@ -367,7 +376,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                        as.ID,
 		"name":                      as.Name,
-		"connector_id":              as.ConnectorID,
+		"connector_account_id":      as.ConnectorAccountID,
 		"csv_data":                  as.CsvData,
 		"name_synced_at":            as.NameSyncedAt,
 		"name_sync_attempts":        as.NameSyncAttempts,
@@ -389,51 +398,58 @@ WHERE
 }
 
 // DeleteReturningConnectorID deletes the source and returns the
-// connector it referenced at delete time, read under the DELETE's own
-// row lock. Nil for CSV sources; ErrResourceNotFound when the source
-// does not exist.
+// connector reached through its account at delete time. The account is
+// read under the row lock before the delete. Nil for CSV sources;
+// ErrResourceNotFound when the source does not exist.
 func (as *AccessReviewSource) DeleteReturningConnectorID(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) (*gid.GID, error) {
+	if err := as.LoadByIDForUpdate(ctx, conn, scope, as.ID); err != nil {
+		return nil, err
+	}
+
+	var connectorID *gid.GID
+
+	if as.ConnectorAccountID != nil {
+		account := &ConnectorAccount{}
+		if err := account.LoadByID(ctx, conn, scope, *as.ConnectorAccountID); err != nil {
+			return nil, fmt.Errorf("cannot load connector account: %w", err)
+		}
+
+		connectorID = &account.ConnectorID
+	}
+
 	q := `
 DELETE FROM access_review_sources
 WHERE %s AND id = @id
-RETURNING connector_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": as.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	var connectorID *gid.GID
-
-	err := conn.QueryRow(ctx, q, args).Scan(&connectorID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
+	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return nil, fmt.Errorf("cannot delete access_source: %w", err)
 	}
 
 	return connectorID, nil
 }
 
-// LoadByConnectorID loads the access source referencing the connector.
-// Returns ErrResourceNotFound when none references it.
-func (as *AccessReviewSource) LoadByConnectorID(
+// LoadByConnectorAccountID loads the access source referencing the
+// connector account. Returns ErrResourceNotFound when none references it.
+func (as *AccessReviewSource) LoadByConnectorAccountID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	connectorID gid.GID,
+	connectorAccountID gid.GID,
 ) error {
 	q := `
 SELECT
     id,
     organization_id,
-    connector_id,
+    connector_account_id,
     name,
     csv_data,
     name_synced_at,
@@ -445,12 +461,12 @@ FROM
     access_review_sources
 WHERE
     %s
-    AND connector_id = @connector_id
+    AND connector_account_id = @connector_account_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"connector_id": connectorID}
+	args := pgx.StrictNamedArgs{"connector_account_id": connectorAccountID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -472,6 +488,32 @@ LIMIT 1;
 	return nil
 }
 
+func (sources *AccessReviewSources) CountByConnectorAccountID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	connectorAccountID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM access_review_sources
+WHERE
+    %s
+    AND connector_account_id = @connector_account_id;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"connector_account_id": connectorAccountID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count access_review_sources by connector account ID: %w", err)
+	}
+
+	return count, nil
+}
+
 func (sources *AccessReviewSources) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -483,7 +525,7 @@ func (sources *AccessReviewSources) LoadByOrganizationID(
 SELECT
     id,
     organization_id,
-    connector_id,
+    connector_account_id,
     name,
     csv_data,
     name_synced_at,
@@ -674,10 +716,16 @@ SET
     updated_at = @updated_at
 WHERE
     %s
-    AND connector_id = @connector_id
+    AND connector_account_id IN (
+        SELECT id
+        FROM connector_accounts
+        WHERE
+            %s
+            AND connector_id = @connector_id
+    )
     AND (name_synced_at IS NOT NULL OR name_sync_attempts > 0)
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"connector_id": connectorID,
@@ -718,7 +766,7 @@ func (as *AccessReviewSource) LoadNextUnsyncedNameForUpdateSkipLocked(
 SELECT
     id,
     organization_id,
-    connector_id,
+    connector_account_id,
     name,
     csv_data,
     name_synced_at,
@@ -729,7 +777,7 @@ SELECT
 FROM
     access_review_sources
 WHERE
-    connector_id IS NOT NULL
+    connector_account_id IS NOT NULL
     AND name_synced_at IS NULL
     AND (name_sync_next_attempt_at IS NULL OR name_sync_next_attempt_at <= NOW())
 ORDER BY

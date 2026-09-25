@@ -73,6 +73,28 @@ navigate(`measures/${newId}`);
 
 Build paths from segments; never hand-concatenate query strings (see [`ts-style.md`](ts-style.md) — use `URL` / `URLSearchParams`).
 
+## Register every new console page in the nav
+
+A new page in `apps/console` is not finished when `routes.ts` exists. It must also be reachable from the organization shell. The side panel and the Cmd+K list are **separate catalogs**. Updating only one of them hides the page from the other.
+
+Tasks, Webhooks, and Devices are this kind of page. Add the entry in **both** places, with the same group, path, label key, and permission:
+
+| Surface | Where |
+|---------|--------|
+| Side panel | A `NavPanelItem` in the product group's `*NavPanel` under [`apps/console/src/pages/iam/organizations/_components/shell/`](../../apps/console/src/pages/iam/organizations/_components/shell/) |
+| Cmd+K | One object in `NAV_DESTINATIONS` in [`apps/console/src/pages/iam/organizations/_lib/navDestinations.ts`](../../apps/console/src/pages/iam/organizations/_lib/navDestinations.ts) |
+
+Build the href with `navHref`. Gate both copies with the same `isVisible` / `permission(action:)` check.
+
+Also update:
+
+- The `nav.<key>` label in [`apps/console/src/_locales/`](../../apps/console/src/_locales/) for `en-US`, `fr-FR`, and `nl-NL`. Group names live at `nav.groups.<key>`.
+- When the page introduces a permission: `NavPermission` in [`navigation.ts`](../../apps/console/src/pages/iam/organizations/_lib/navigation.ts), the `navPermissions_organization` fragment, **and** the panel query. Panels do not read the shared fragment, so a permission added to only one of them disagrees.
+- When that permission should reveal the product icon: the group's visibility helper in [`NavRail.tsx`](../../apps/console/src/pages/iam/organizations/_components/shell/NavRail.tsx). When the page can be the first page of the group, the group's landing href in the same file.
+- When the page starts a **new product group**: `NAV_GROUPS` in `navigation.ts`, `navPanels` in [`navPanels.ts`](../../apps/console/src/pages/iam/organizations/_components/shell/navPanels.ts), and a rail item.
+
+Do not put a record-scoped path (a chosen banner, third party, or portal) in `NAV_DESTINATIONS`. Those URLs need an id the Cmd+K list does not have. A detail page of a single record (one risk, one document, one audit) does not get a nav entry either. The list page already links to it.
+
 ## Route params
 
 Read params with `useParams` **inside the component that needs them** — do not drill them as props from a parent that only read the URL to pass them down (see [`react-components.md`](react-components.md#props-are-for-configuration-and-composition-not-data)). Params are always `string | undefined`; narrow before use.

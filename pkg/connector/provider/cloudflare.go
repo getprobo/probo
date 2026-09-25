@@ -32,7 +32,12 @@ import (
 
 func cloudflareRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderCloudflare,
+		Provider: coredata.ConnectorProviderCloudflare,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.CloudflareConnectorSettings) string {
+				return s.AccountID
+			},
+		),
 		DisplayName:      "Cloudflare",
 		DocumentationURL: accessReviewDocsURL("cloudflare"),
 		Endpoints: Endpoints{

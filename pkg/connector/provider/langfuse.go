@@ -34,7 +34,12 @@ import (
 
 func langfuseRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderLangfuse,
+		Provider: coredata.ConnectorProviderLangfuse,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.LangfuseConnectorSettings) string {
+				return s.BaseURL
+			},
+		),
 		DisplayName:      "Langfuse",
 		DocumentationURL: accessReviewDocsURL("langfuse"),
 		APIKey: &APIKeyConfig{

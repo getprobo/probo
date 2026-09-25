@@ -33,7 +33,12 @@ import (
 
 func segmentRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderSegment,
+		Provider: coredata.ConnectorProviderSegment,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.SegmentConnectorSettings) string {
+				return s.BaseURL
+			},
+		),
 		DisplayName:      "Segment",
 		DocumentationURL: accessReviewDocsURL("segment"),
 		APIKey: &APIKeyConfig{

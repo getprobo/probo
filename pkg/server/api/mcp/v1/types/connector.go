@@ -24,6 +24,7 @@ import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,6 +36,29 @@ func NewConnector(c *coredata.Connector, status ConnectorConnectionStatus) *Conn
 		ConnectionStatus: new(status),
 		CreatedAt:        c.CreatedAt,
 	}
+}
+
+func NewConnectorAccount(a *coredata.ConnectorAccount) *ConnectorAccount {
+	return &ConnectorAccount{
+		ID:                a.ID,
+		ConnectorID:       a.ConnectorID,
+		ExternalAccountID: a.ExternalAccountID,
+		Name:              a.Name,
+		CreatedAt:         a.CreatedAt,
+		UpdatedAt:         a.UpdatedAt,
+	}
+}
+
+func NewDiscoveredConnectorAccounts(accounts []provider.DiscoveredAccount) []*DiscoveredConnectorAccount {
+	result := make([]*DiscoveredConnectorAccount, len(accounts))
+	for i, account := range accounts {
+		result[i] = &DiscoveredConnectorAccount{
+			ExternalAccountID: account.ExternalAccountID,
+			Name:              account.Name,
+		}
+	}
+
+	return result
 }
 
 func NewAWSConnectorSetup(setup cloudaws.ConnectorSetup) *AWSConnectorSetup {

@@ -49,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -64,6 +65,7 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	riskManagementSvc *riskmanagement.Service,
 	itamSvc *itam.Service,
+	taskSvc *task.Service,
 	mailmanSvc *mailman.Service,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
@@ -88,6 +90,7 @@ func NewMux(
 		cookieBanner:          cookieBannerSvc,
 		riskManagement:        riskManagementSvc,
 		itamSvc:               itamSvc,
+		task:                  taskSvc,
 		mailman:               mailmanSvc,
 		logger:                logger,
 		fileManager:           fileManagerSvc,

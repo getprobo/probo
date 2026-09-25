@@ -336,8 +336,9 @@ type ProviderOrganizations {
 type AccessReviewSource implements Node {
     id: ID!
     organization: Organization! @goField(forceResolver: true)
-    connectorId: ID
+    connectorId: ID @goField(forceResolver: true)
     connector: Connector @goField(forceResolver: true)
+    connectorAccountId: ID
     name: String!
     csvData: String
     providerOrganizations: ProviderOrganizations! @goField(forceResolver: true)
@@ -580,6 +581,7 @@ extend type Mutation {
 input CreateAccessReviewSourceInput {
     organizationId: ID!
     connectorId: ID
+    connectorAccountId: ID
     name: String!
     csvData: String
 }
@@ -588,8 +590,8 @@ type CreateAccessReviewSourcePayload {
     accessReviewSourceEdge: AccessReviewSourceEdge!
     """
     created is false when a source already existed for the requested
-    connector: creation is idempotent per connector, and the existing
-    source is returned instead of a duplicate.
+    connector account: creation is idempotent per connector account, and
+    the existing source is returned instead of a duplicate.
     """
     created: Boolean!
 }

@@ -1016,7 +1016,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.FindingOrderField]) ([]*coredata.Finding, error) {
 			var batch coredata.Findings
-			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewFindingFilter(nil, nil, nil, nil)); err != nil {
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewFindingFilter(nil, nil, nil, nil, nil)); err != nil {
 				return nil, fmt.Errorf("cannot load findings: %w", err)
 			}
 

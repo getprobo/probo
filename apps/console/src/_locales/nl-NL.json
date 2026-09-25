@@ -621,7 +621,8 @@
       "allKinds": "Alle soorten",
       "allStatuses": "Alle statussen",
       "allPriorities": "Alle prioriteiten",
-      "allOwners": "Alle eigenaren"
+      "allOwners": "Alle eigenaren",
+      "allAudits": "Alle audits"
     },
     "kinds": {
       "minor_nonconformity": "Kleine non-conformiteit",
@@ -2169,6 +2170,11 @@
     "help": "Help",
     "switchToDarkMode": "Overschakelen naar donkere modus",
     "switchToLightMode": "Overschakelen naar lichte modus",
+    "spotlight": {
+      "title": "Ga naar",
+      "placeholder": "Ga naar…",
+      "empty": "Geen overeenkomende pagina's"
+    },
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",
@@ -2277,43 +2283,38 @@
       "logout": "Uitloggen"
     }
   },
-  "peoplePage": {
+  "usersPage": {
+    "empty": "Geen gebruikers",
+    "emptyFiltered": "Geen gebruikers komen overeen met de huidige filters.",
     "actions": {
-      "add": "Persoon toevoegen"
+      "add": "Gebruiker toevoegen",
+      "cancel": "Annuleren",
+      "previous": "Vorige",
+      "next": "Volgende"
     }
   },
-  "personPage": {
-    "messages": {
-      "deactivated": "Persoon succesvol gedeactiveerd",
-      "removed": "Persoon succesvol verwijderd"
-    },
-    "errors": {
-      "deactivate": "Deactiveren van persoon mislukt",
-      "remove": "Verwijderen van persoon mislukt"
-    },
-    "confirmations": {
-      "deactivate": "Weet u zeker dat u {{name}} wilt deactiveren?",
-      "remove": "Weet u zeker dat u {{name}} wilt verwijderen?"
-    },
-    "actions": {
-      "deactivate": "Deactiveren",
-      "remove": "Verwijderen"
+  "userPage": {
+    "back": "Gebruikers",
+    "empty": "—",
+    "deactivatedCallout": "Deze gebruiker is gedeactiveerd.",
+    "notFound": "Gebruiker niet gevonden",
+    "details": {
+      "title": "Details",
+      "description": "Functie, extra e-mails en contractdata."
     }
   },
-  "addPersonDialog": {
-    "title": "Persoon toevoegen"
+  "newUserPage": {
+    "title": "Gebruiker toevoegen",
+    "description": "Nodig iemand uit voor deze organisatie.",
+    "notFound": "U kunt geen gebruikers toevoegen aan deze organisatie"
   },
-  "peopleList": {
-    "columns": {
-      "name": "Naam",
-      "status": "Status",
-      "email": "E-mail",
-      "role": "Rol",
-      "createdOn": "Aangemaakt op",
-      "contractEndDate": "Einddatum contract"
+  "usersList": {
+    "searchPlaceholder": "Gebruikers zoeken...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
     },
-    "empty": "Geen personen",
-    "searchPlaceholder": "Personen zoeken...",
+    "created": "Aangemaakt op {{date}}",
     "filters": {
       "allStatuses": "Alle statussen",
       "status": "Status",
@@ -2321,51 +2322,62 @@
       "active": "Actief",
       "deactivated": "Gedeactiveerd",
       "allRoles": "Alle rollen",
-      "allTypes": "Alle typen"
+      "allTypes": "Alle gebruikerstypen",
+      "role": "Probo-rol",
+      "type": "Gebruikertype"
     }
   },
-  "peopleListItem": {
+  "userListItem": {
     "messages": {
       "invitationSent": "Uitnodiging succesvol verzonden",
-      "roleUpdated": "Rol succesvol bijgewerkt",
-      "deactivated": "Persoon succesvol gedeactiveerd",
-      "removed": "Persoon succesvol verwijderd"
+      "deactivated": "Gebruiker succesvol gedeactiveerd",
+      "removed": "Gebruiker succesvol verwijderd",
+      "roleUpdated": "Rol bijgewerkt"
     },
     "errors": {
       "sendInvitation": "Verzenden van uitnodiging mislukt",
-      "updateRole": "Bijwerken van rol mislukt",
-      "deactivate": "Deactiveren van persoon mislukt",
-      "remove": "Verwijderen van persoon mislukt"
+      "deactivate": "Deactiveren van gebruiker mislukt",
+      "remove": "Verwijderen van gebruiker mislukt",
+      "updateRole": "Rol bijwerken mislukt"
     },
     "confirmations": {
       "sendActivationEmail": "Activeringsmail verzenden naar {{name}}?",
       "deactivate": "Weet u zeker dat u {{name}} wilt deactiveren?",
       "remove": "Weet u zeker dat u {{name}} wilt verwijderen?"
     },
+    "dialogs": {
+      "sendTitle": "Activeringsmail verzenden",
+      "deactivateTitle": "Gebruiker deactiveren",
+      "removeTitle": "Gebruiker verwijderen"
+    },
     "actions": {
+      "more": "Meer acties",
       "send": "Verzenden",
       "sendActivationMail": "Activeringsmail verzenden",
       "resendActivationMail": "Activeringsmail opnieuw verzenden",
-      "deactivatePerson": "Persoon deactiveren",
-      "removePerson": "Persoon verwijderen"
+      "deactivatePerson": "Gebruiker deactiveren",
+      "removePerson": "Gebruiker verwijderen"
     }
   },
-  "personForm": {
+  "userForm": {
     "messages": {
-      "created": "Persoon succesvol aangemaakt.",
-      "updated": "Persoon succesvol bijgewerkt."
+      "created": "Gebruiker succesvol aangemaakt.",
+      "updated": "Gebruiker succesvol bijgewerkt."
     },
     "errors": {
-      "create": "Aanmaken van persoon mislukt",
-      "update": "Bijwerken van persoon mislukt"
+      "create": "Aanmaken van gebruiker mislukt",
+      "update": "Bijwerken van gebruiker mislukt"
     },
     "fields": {
-      "fullName": "Volledige naam *",
-      "emailAddress": "E-mailadres *",
-      "role": "Rol *",
-      "type": "Type",
+      "fullName": "Volledige naam",
+      "emailAddress": "E-mailadres",
+      "role": "Probo-rol",
+      "type": "Gebruikertype",
       "position": "Functie",
       "positionPlaceholder": "bijv. CEO, CFO, enz.",
+      "additionalEmails": "Extra e-mailadressen",
+      "additionalEmail": "Extra e-mailadres {{index}}",
+      "additionalEmailPlaceholder": "naam@voorbeeld.com",
       "contractStartDate": "Startdatum contract",
       "contractEndDate": "Einddatum contract"
     },
@@ -2384,8 +2396,9 @@
       "SERVICE_ACCOUNT": "Service-account"
     },
     "actions": {
-      "update": "Bijwerken",
-      "create": "Aanmaken"
+      "create": "Aanmaken",
+      "addEmail": "E-mail toevoegen",
+      "removeEmail": "E-mail verwijderen"
     }
   },
   "auditLogPage": {
@@ -3106,7 +3119,7 @@
       "issuer": "Uitgever",
       "audience": "Audience",
       "subject": "Subject",
-      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+      "roleArnHelp": "bijv. arn:aws:iam::123456789012:role/ProboAudit"
     },
     "messages": {
       "copyFailed": "Kopiëren mislukt",

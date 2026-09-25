@@ -158,3 +158,74 @@ func TestNewSession_Validation(t *testing.T) {
 		})
 	}
 }
+
+func TestMemberRoleARN(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		managementARN   string
+		accountID       string
+		memberRoleName  string
+		want            string
+		wantErrContains string
+	}{
+		{
+			name:           "commercial partition from management role",
+			managementARN:  "arn:aws:iam::111111111111:role/ProboAudit",
+			accountID:      "222222222222",
+			memberRoleName: "",
+			want:           "arn:aws:iam::222222222222:role/ProboAudit",
+		},
+		{
+			name:           "gov partition never becomes literal aws",
+			managementARN:  "arn:aws-us-gov:iam::111111111111:role/ProboAudit",
+			accountID:      "222222222222",
+			memberRoleName: "CustomAudit",
+			want:           "arn:aws-us-gov:iam::222222222222:role/CustomAudit",
+		},
+		{
+			name:           "trims a padded member role name",
+			managementARN:  "arn:aws:iam::111111111111:role/ProboAudit",
+			accountID:      "222222222222",
+			memberRoleName: "  CustomAudit  ",
+			want:           "arn:aws:iam::222222222222:role/CustomAudit",
+		},
+		{
+			name:            "malformed management role ARN",
+			managementARN:   "ProboAudit",
+			accountID:       "222222222222",
+			wantErrContains: "cannot parse management role ARN",
+		},
+		{
+			name:            "empty account id",
+			managementARN:   testRoleARN,
+			accountID:       "",
+			wantErrContains: "account ID is empty",
+		},
+		{
+			name:            "invalid member role name",
+			managementARN:   testRoleARN,
+			accountID:       "222222222222",
+			memberRoleName:  "bad/name",
+			wantErrContains: "not a valid IAM role name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := cloudaws.MemberRoleARN(tt.managementARN, tt.accountID, tt.memberRoleName)
+			if tt.wantErrContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErrContains)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

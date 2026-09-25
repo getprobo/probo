@@ -327,7 +327,7 @@
     "pageTitle": "Findings",
     "title": "Findings",
     "description": "Manage your organization's findings.",
-    "filters": { "allKinds": "All kinds", "allStatuses": "All statuses", "allPriorities": "All priorities", "allOwners": "All owners" },
+    "filters": { "allKinds": "All kinds", "allStatuses": "All statuses", "allPriorities": "All priorities", "allOwners": "All owners", "allAudits": "All audits" },
     "kinds": { "minor_nonconformity": "Minor nonconformity", "major_nonconformity": "Major nonconformity", "minorNonconformity": "Minor nonconformity", "majorNonconformity": "Major nonconformity", "observation": "Observation", "exception": "Exception" },
     "status": { "open": "Open", "in_progress": "In progress", "closed": "Closed", "risk_accepted": "Risk accepted", "mitigated": "Mitigated", "false_positive": "False positive" },
     "priority": { "low": "Low", "medium": "Medium", "high": "High" },
@@ -1379,6 +1379,11 @@
     "help": "Help",
     "switchToDarkMode": "Switch to dark mode",
     "switchToLightMode": "Switch to light mode",
+    "spotlight": {
+      "title": "Go to",
+      "placeholder": "Go to…",
+      "empty": "No matching pages"
+    },
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",
@@ -1477,35 +1482,58 @@
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "switchToDarkMode": "Switch to dark mode", "switchToLightMode": "Switch to light mode", "help": "Help", "logout": "Logout" }
   },
-  "peoplePage": {
-    "actions": { "add": "Add Person" }
+  "usersPage": {
+    "empty": "No users",
+    "emptyFiltered": "No users match the current filters.",
+    "actions": { "add": "Add User", "cancel": "Cancel", "previous": "Prev", "next": "Next" }
   },
-  "personPage": {
-    "messages": { "deactivated": "Person deactivated successfully", "removed": "Person removed successfully" },
-    "errors": { "deactivate": "Failed to deactivate person", "remove": "Failed to remove person" },
-    "confirmations": { "deactivate": "Are you sure you want to deactivate {{name}}?", "remove": "Are you sure you want to remove {{name}}?" },
-    "actions": { "deactivate": "Deactivate", "remove": "Remove" }
+  "userPage": {
+    "back": "Users",
+    "empty": "—",
+    "deactivatedCallout": "This user is deactivated.",
+    "notFound": "User not found",
+    "details": {
+      "title": "Details",
+      "description": "Position, additional emails, and contract dates."
+    }
   },
-  "addPersonDialog": { "title": "Add Person" },
-  "peopleList": {
-    "columns": { "name": "Name", "status": "Status", "email": "Email", "role": "Role", "createdOn": "Created on", "contractEndDate": "Contract end date" },
-    "empty": "No people",
-    "searchPlaceholder": "Search people...",
-    "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All types" }
+  "newUserPage": {
+    "title": "Add User",
+    "description": "Invite someone to this organization.",
+    "notFound": "You cannot add users to this organization"
   },
-  "peopleListItem": {
-    "messages": { "invitationSent": "Invitation sent successfully", "roleUpdated": "Role updated successfully", "deactivated": "Person deactivated successfully", "removed": "Person removed successfully" },
-    "errors": { "sendInvitation": "Failed to send invitation", "updateRole": "Failed to update role", "deactivate": "Failed to deactivate person", "remove": "Failed to remove person" },
+  "usersList": {
+    "searchPlaceholder": "Search users...",
+    "contract": { "range": "{{start}} – {{end}}", "empty": "—" },
+    "created": "Created {{date}}",
+    "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All user types", "role": "Probo role", "type": "User type" }
+  },
+  "userListItem": {
+    "messages": { "invitationSent": "Invitation sent successfully", "deactivated": "User deactivated successfully", "removed": "User removed successfully", "roleUpdated": "Role updated" },
+    "errors": { "sendInvitation": "Failed to send invitation", "deactivate": "Failed to deactivate user", "remove": "Failed to remove user", "updateRole": "Failed to update role" },
     "confirmations": { "sendActivationEmail": "Send the activation email to {{name}}?", "deactivate": "Are you sure you want to deactivate {{name}}?", "remove": "Are you sure you want to remove {{name}}?" },
-    "actions": { "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "deactivatePerson": "Deactivate person", "removePerson": "Remove person" }
+    "dialogs": { "sendTitle": "Send activation email", "deactivateTitle": "Deactivate user", "removeTitle": "Remove user" },
+    "actions": { "more": "More actions", "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "deactivatePerson": "Deactivate user", "removePerson": "Remove user" }
   },
-  "personForm": {
-    "messages": { "created": "Person created successfully.", "updated": "Person updated successfully." },
-    "errors": { "create": "Failed to create person", "update": "Failed to update person" },
-    "fields": { "fullName": "Full name *", "emailAddress": "Email Address *", "role": "Role *", "type": "Type", "position": "Position", "positionPlaceholder": "e.g. CEO, CFO, etc.", "contractStartDate": "Contract start date", "contractEndDate": "Contract end date" },
+  "userForm": {
+    "messages": { "created": "User created successfully.", "updated": "User updated successfully." },
+    "errors": { "create": "Failed to create user", "update": "Failed to update user" },
+    "fields": {
+      "fullName": "Full name",
+      "emailAddress": "Email address",
+      "role": "Probo role",
+      "type": "User type",
+      "position": "Position",
+      "positionPlaceholder": "e.g. CEO, CFO, etc.",
+      "additionalEmails": "Additional emails",
+      "additionalEmail": "Additional email {{index}}",
+      "additionalEmailPlaceholder": "name@example.com",
+      "contractStartDate": "Contract start date",
+      "contractEndDate": "Contract end date"
+    },
     "roleDescriptions": { "owner": "Full access to everything", "admin": "Full access except organization setup and API keys", "viewer": "Read-only access", "auditor": "Read-only access without settings and tasks", "employee": "Access to employee page", "compliancePortalManager": "Can manage the compliance portal", "compliancePortalAccessManager": "Can manage compliance portal visitor access" },
     "kinds": { "EMPLOYEE": "Employee", "CONTRACTOR": "Contractor", "SERVICE_ACCOUNT": "Service account" },
-    "actions": { "update": "Update", "create": "Create" }
+    "actions": { "create": "Create", "addEmail": "Add email", "removeEmail": "Remove email" }
   },
   "auditLogPage": {
     "title": "Audit Log",
@@ -1821,7 +1849,7 @@
       "issuer": "Issuer",
       "audience": "Audience",
       "subject": "Subject",
-      "roleArnPlaceholder": "arn:aws:iam::123456789012:role/ProboAudit"
+      "roleArnHelp": "e.g. arn:aws:iam::123456789012:role/ProboAudit"
     },
     "messages": {
       "copyFailed": "Copy failed",

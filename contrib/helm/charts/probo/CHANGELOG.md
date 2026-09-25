@@ -12,6 +12,21 @@ All notable changes to the Probo Helm chart will be documented in this file.
   role). Setting exactly one of the two still fails at render time, when
   `seaweedfs.enabled=false`.
 
+## [0.25.0] - 2026-09-24
+
+### Added
+
+- `linear` and `linear-sync` example OAuth2 connector configs
+  (`clientId`, `clientSecret`, and `linear-sync`'s webhook-signing
+  `webhookSecret`) documented for Linear task sync
+- `probo.cookieBanner.tcfCmpId` sets the IAB TCF CMP ID; self-hosted
+  instances that register their own CMP with IAB Europe set this to
+  that ID
+
+### Changed
+
+- Default `appVersion` is now `0.296.0`
+
 ## [0.24.0] - 2026-09-16
 
 ### Changed

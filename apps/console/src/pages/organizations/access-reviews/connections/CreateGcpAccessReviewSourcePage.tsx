@@ -320,8 +320,8 @@ export function CreateGcpAccessReviewSourcePage({
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setProviderResource(e.target.value)}
             required
-            placeholder={t(
-              "createGcpAccessReviewSourcePage.fields.workloadIdentityProviderPlaceholder",
+            help={t(
+              "createGcpAccessReviewSourcePage.fields.workloadIdentityProviderHelp",
             )}
             error={
               providerInvalid
@@ -338,8 +338,8 @@ export function CreateGcpAccessReviewSourcePage({
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setServiceAccountEmail(e.target.value)}
             required
-            placeholder={t(
-              "createGcpAccessReviewSourcePage.fields.serviceAccountEmailPlaceholder",
+            help={t(
+              "createGcpAccessReviewSourcePage.fields.serviceAccountEmailHelp",
             )}
             error={
               emailInvalid

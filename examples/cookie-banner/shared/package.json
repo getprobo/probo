@@ -1,0 +1,24 @@
+{
+  "name": "@probo/example-cookie-banner-shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./posthog": "./src/posthog.ts"
+  },
+  "peerDependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.8"
+  },
+  "dependencies": {
+    "@probo/cookie-banner": "*",
+    "loglevel": "^1.9.2",
+    "posthog-js": "^1.422.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "typescript": "6.0.2"
+  }
+}

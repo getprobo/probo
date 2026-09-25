@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
+	taskpkg "go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -446,7 +447,7 @@ func (s MeasureService) Import(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			actorID, err := resolveTaskActivityActorID(
+			actorID, err := taskpkg.ResolveActivityActorID(
 				ctx,
 				tx,
 				scope,
@@ -533,7 +534,7 @@ func (s MeasureService) Import(
 					}
 
 					if originalTaskID == task.ID {
-						if err := insertTaskCreatedActivity(
+						if err := taskpkg.InsertCreatedActivity(
 							ctx,
 							tx,
 							scope,
@@ -544,7 +545,7 @@ func (s MeasureService) Import(
 							return fmt.Errorf("cannot record task created event: %w", err)
 						}
 					} else if existingErr == nil {
-						if err := insertTaskUpdateActivities(
+						if err := taskpkg.InsertUpdateActivities(
 							ctx,
 							tx,
 							scope,

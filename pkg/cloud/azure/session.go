@@ -118,7 +118,7 @@ func NewSession(
 		return nil, fmt.Errorf("cannot open azure session: %w", err)
 	}
 
-	subscriptionID, err = parseGUID(subscriptionID, errInvalidSubscriptionID)
+	subscriptionID, err = parseOptionalGUID(subscriptionID, errInvalidSubscriptionID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open azure session: %w", err)
 	}

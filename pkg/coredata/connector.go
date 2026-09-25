@@ -193,7 +193,7 @@ LIMIT 1;
 
 	*c = loadedConnector
 
-	if err := c.decryptConnection(encryptionKey); err != nil {
+	if err := c.DecryptConnection(encryptionKey); err != nil {
 		return fmt.Errorf("cannot decrypt connection: %w", err)
 	}
 
@@ -231,25 +231,8 @@ func (c *Connector) LoadByID(
 		return err
 	}
 
-	// Decrypt the connection
-	if len(c.EncryptedConnection) > 0 {
-		decryptedConnection, err := cipher.Decrypt(c.EncryptedConnection, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt connection: %w", err)
-		}
-
-		c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
-		if err != nil {
-			return fmt.Errorf("cannot unmarshal connection: %w", err)
-		}
-
-		if c.Provider == ConnectorProviderSlack {
-			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-				settings, _ := ConnectorSettings[SlackConnectorSettings](c)
-				slackConn.Settings.Channel = settings.Channel
-				slackConn.Settings.ChannelID = settings.ChannelID
-			}
-		}
+	if err := c.DecryptConnection(encryptionKey); err != nil {
+		return fmt.Errorf("cannot decrypt connection: %w", err)
 	}
 
 	return nil
@@ -388,6 +371,45 @@ FOR UPDATE
 	}
 
 	*c = loadedConnector
+
+	return nil
+}
+
+// LockByID locks the connector row for the rest of the caller's transaction.
+// It does not load the row into the receiver. SyncStandaloneAccount calls it
+// before the account check, because FOR UPDATE on a missing account row locks
+// nothing and two syncs would both insert.
+func (c *Connector) LockByID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+SELECT
+    id
+FROM
+    connectors
+WHERE
+    %s
+    AND id = @id
+FOR UPDATE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": c.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var id gid.GID
+
+	err := conn.QueryRow(ctx, q, args).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
 
 	return nil
 }
@@ -710,10 +732,10 @@ WHERE
 	return nil
 }
 
-// decryptConnection decrypts and unmarshals the connector's encrypted
-// connection blob, hydrating Slack channel settings from the settings
-// column. A connector without a blob is left with a nil Connection.
-func (c *Connector) decryptConnection(encryptionKey cipher.EncryptionKey) error {
+// DecryptConnection hydrates Connection from EncryptedConnection already
+// present on the struct. Call it after a metadata or list load instead of
+// LoadByID, which would query the same row again.
+func (c *Connector) DecryptConnection(encryptionKey cipher.EncryptionKey) error {
 	if len(c.EncryptedConnection) == 0 {
 		return nil
 	}

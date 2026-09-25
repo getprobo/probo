@@ -354,6 +354,10 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: duplicate registration", reg.Provider)
 	}
 
+	if reg.InitialAccountFunc == nil {
+		reg.InitialAccountFunc = emptyInitialAccount
+	}
+
 	r.providers[reg.Provider] = reg
 
 	return nil

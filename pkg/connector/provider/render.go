@@ -39,7 +39,12 @@ import (
 // omitted.
 func renderRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderRender,
+		Provider: coredata.ConnectorProviderRender,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.RenderConnectorSettings) string {
+				return s.OwnerID
+			},
+		),
 		DisplayName:      "Render",
 		DocumentationURL: accessReviewDocsURL("render"),
 		APIKey: &APIKeyConfig{

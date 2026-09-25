@@ -99,3 +99,12 @@ func NewTask(t *coredata.Task) *Task {
 
 	return node
 }
+
+func NewTaskExternalLink(link *coredata.TaskExternalLink) *TaskExternalLink {
+	return &TaskExternalLink{
+		Provider:   link.Provider,
+		Identifier: link.ExternalIdentifier,
+		URL:        link.ExternalURL,
+		Origin:     link.Origin,
+	}
+}

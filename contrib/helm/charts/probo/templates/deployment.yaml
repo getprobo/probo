@@ -611,6 +611,40 @@ spec:
                   name: {{ include "probo.fullname" $ }}
                   key: connector-github-app-private-key
             {{- end }}
+            {{- if eq .name "linear" }}
+            {{- $_ := required "probo.connectors linear config.clientId is required when the linear connector is declared" .config.clientId }}
+            {{- $_ := required "probo.connectors linear config.clientSecret is required when the linear connector is declared" .config.clientSecret }}
+            - name: PROBOD_CONNECTOR_LINEAR_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-client-id
+            - name: PROBOD_CONNECTOR_LINEAR_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-client-secret
+            {{- end }}
+            {{- if eq .name "linear-sync" }}
+            {{- $_ := required "probo.connectors linear-sync config.clientId is required when the linear-sync connector is declared" .config.clientId }}
+            {{- $_ := required "probo.connectors linear-sync config.clientSecret is required when the linear-sync connector is declared" .config.clientSecret }}
+            {{- $_ := required "probo.connectors linear-sync config.webhookSecret is required when the linear-sync connector is declared" .config.webhookSecret }}
+            - name: PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-sync-client-id
+            - name: PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-sync-client-secret
+            - name: PROBOD_CONNECTOR_LINEAR_SYNC_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-sync-webhook-secret
+            {{- end }}
             {{- end }}
           ports:
             - name: http

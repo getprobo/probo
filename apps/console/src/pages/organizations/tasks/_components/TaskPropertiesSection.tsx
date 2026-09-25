@@ -50,6 +50,7 @@ import { taskPropertiesSection } from "../variants";
 
 import { TaskAssigneeField } from "./TaskAssigneeField";
 import { TaskDurationField } from "./TaskDurationField";
+import { TaskLinearField } from "./TaskLinearField";
 import { TaskMeasureField } from "./TaskMeasureField";
 
 const taskPropertiesSectionFragment = graphql`
@@ -72,6 +73,7 @@ const taskPropertiesSectionFragment = graphql`
       name
     }
     ...TaskAssigneeField_task
+    ...TaskLinearField_task
     ...TaskMeasureField_task
   }
 `;
@@ -222,7 +224,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
               ? (
                   <Link
                     size={2}
-                    to={`/organizations/${organizationId}/settings/people/${task.assignedTo.id}`}
+                    to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
                   >
                     {task.assignedTo.fullName}
                   </Link>
@@ -231,6 +233,9 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                   <Text size={2} color="faint">{t("detailsPage.unassigned")}</Text>
                 )}
         </PropertyRow>
+        <Suspense fallback={null}>
+          <TaskLinearField taskKey={task} />
+        </Suspense>
         <PropertyRow label={t("detailsPage.fields.measure")}>
           {task.canUpdate
             ? (

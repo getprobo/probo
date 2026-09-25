@@ -25,10 +25,12 @@ import (
 )
 
 // ShutdownBroadcast returns the channel that closes once the worker has
-// broadcast graceful shutdown to all in-flight runs. It is compiled only
-// in test builds so external tests can synchronize tool release with
-// shutdown propagation without leaking a test-only method into the
-// worker's public API.
+// broadcast graceful shutdown to in-flight runs. In-flight run contexts
+// are cancelled asynchronously after the broadcast, so tests that need
+// the suspension to have reached a running tool must also wait for that
+// tool's context to be cancelled. It is compiled only in test builds so
+// external tests can observe shutdown without leaking a test-only method
+// into the worker's public API.
 func (w *Worker) ShutdownBroadcast() <-chan struct{} {
 	return w.handler.shutdownCh
 }

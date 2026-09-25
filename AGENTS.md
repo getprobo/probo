@@ -30,7 +30,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/ui.md`](contrib/claude/ui.md) — @probo/ui v2 kit (Base UI headless, Tailwind, tailwind-variants, flat folders, bundle-safe skeletons)
 - [`contrib/claude/v2-tokens.md`](contrib/claude/v2-tokens.md) — v2 design tokens (color, typography, radius, shadow, z-index scales; native spacing)
 - [`contrib/claude/forms.md`](contrib/claude/forms.md) — Frontend forms (Base UI Field/Form tiers, native vs zod vs react-hook-form, server errors)
-- [`contrib/claude/routing.md`](contrib/claude/routing.md) — Frontend routing (@probo/routes, navigation, typed params, URL state, auth/protected routes)
+- [`contrib/claude/routing.md`](contrib/claude/routing.md) — Frontend routing (@probo/routes, navigation, typed params, URL state, auth/protected routes). A new console page must register its nav entries.
 - [`contrib/claude/state-management.md`](contrib/claude/state-management.md) — Client state decision order (Relay, URL, local, context, zustand)
 - [`contrib/claude/permissions.md`](contrib/claude/permissions.md) — Permission-gated UI (canUpdate/canDelete permission(action:) fields)
 - [`contrib/claude/error-handling.md`](contrib/claude/error-handling.md) — Frontend error handling (ErrorBoundary at any level, error/fallback props, async try/catch)

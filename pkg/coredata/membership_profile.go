@@ -79,10 +79,21 @@ type (
 	MembershipProfiles []*MembershipProfile
 )
 
+func (p MembershipProfile) createdAtSortKey() string {
+	rank := "1"
+	if p.State == ProfileStateDeactivated {
+		rank = "0"
+	}
+
+	createdAt := p.CreatedAt.UTC()
+
+	return rank + createdAt.Format("20060102150405") + fmt.Sprintf("%06d", createdAt.Nanosecond()/1000)
+}
+
 func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.CursorKey {
 	switch orderBy {
 	case MembershipProfileOrderFieldCreatedAt:
-		return page.NewCursorKey(p.ID, p.CreatedAt)
+		return page.NewCursorKey(p.ID, p.createdAtSortKey())
 	case MembershipProfileOrderFieldFullName:
 		return page.NewCursorKey(p.ID, p.FullName)
 	case MembershipProfileOrderFieldEmailAddress:
@@ -248,6 +259,94 @@ LIMIT 1;
 	}
 
 	*p = profile
+
+	return nil
+}
+
+func (p *MembershipProfile) LoadByOrganizationIDAndEmail(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	email mail.Addr,
+) error {
+	q := `
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    i.email_address,
+    p.source,
+    p.state,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    '' AS organization_name,
+    p.user_name,
+    p.external_id,
+    p.nickname,
+    p.locale,
+    p.timezone,
+    p.profile_url,
+    p.preferred_language,
+    p.given_name,
+    p.family_name,
+    p.formatted_name,
+    p.middle_name,
+    p.honorific_prefix,
+    p.honorific_suffix,
+    p.employee_number,
+    p.department,
+    p.cost_center,
+    p.enterprise_organization,
+    p.division,
+    p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
+    p.created_at,
+    p.updated_at
+FROM
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+WHERE
+    p.%s
+    AND p.organization_id = @organization_id
+    AND p.state = @state
+    AND (
+        i.email_address = @email::citext
+        OR @email::citext = ANY(p.additional_email_addresses)
+    )
+LIMIT 2;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"email":           email,
+		"state":           ProfileStateActive,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profile: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profile: %w", err)
+	}
+
+	if len(profiles) != 1 {
+		return ErrResourceNotFound
+	}
+
+	*p = profiles[0]
 
 	return nil
 }
@@ -730,10 +829,12 @@ WITH profiles AS (
         p.activated_at,
         p.deactivated_at,
         p.created_at,
-        p.updated_at
+        p.updated_at,
+        o.name AS organization_name
     FROM
         iam_membership_profiles p
     INNER JOIN identities i ON i.id = p.identity_id
+    INNER JOIN organizations o ON o.id = p.organization_id
     WHERE
         p.identity_id = @identity_id
         AND %s
@@ -751,7 +852,7 @@ SELECT
     p.position,
     p.contract_start_date,
     p.contract_end_date,
-    o.name AS organization_name,
+    p.organization_name,
     p.user_name,
     p.external_id,
     p.nickname,
@@ -776,7 +877,6 @@ SELECT
     p.created_at,
     p.updated_at
 FROM profiles p
-INNER JOIN organizations o ON o.id = p.organization_id
 WHERE
     %s
 `

@@ -244,7 +244,7 @@ function settingsHref(
     return groupHref(organizationId, "settings", "slackbot");
   }
   if (permissions.canListMembers) {
-    return groupHref(organizationId, "settings", "people");
+    return groupHref(organizationId, "settings", "users");
   }
   return groupHref(organizationId, "settings", "audit-log");
 }
