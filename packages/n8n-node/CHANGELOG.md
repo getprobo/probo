@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.238.0] - 2026-09-25
+
+### Added
+
+- Task `Get Many` can filter by name and state
+
 ## [0.237.0] - 2026-09-25
 
 ### Added
