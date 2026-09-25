@@ -96,6 +96,14 @@ type (
 		AssigneeID  *string
 	}
 
+	Comment struct {
+		ID        string
+		Body      string
+		CreatedAt time.Time
+		UpdatedAt time.Time
+		UserEmail string
+	}
+
 	graphqlRequest struct {
 		Query     string `json:"query"`
 		Variables any    `json:"variables"`
@@ -116,7 +124,10 @@ const (
 	linearListMaxPages = 500
 )
 
-var ErrIssueNotFound = errors.New("linear issue was not found")
+var (
+	ErrIssueNotFound   = errors.New("linear issue was not found")
+	ErrCommentNotFound = errors.New("linear comment was not found")
+)
 
 // NewClient returns a Linear GraphQL client rooted at endpoint, which callers
 // take from the LINEAR_SYNC provider registration's Endpoints.APIBase rather
@@ -879,6 +890,249 @@ query TaskSyncLinearIssue($id: String!) {
 	issue.TeamID = resp.Data.Issue.Team.ID
 
 	return issue, nil
+}
+
+func (c *Client) ListIssueComments(ctx context.Context, issueID string) ([]Comment, error) {
+	const query = `
+query TaskSyncLinearIssueComments($id: String!, $first: Int!, $after: String) {
+  issue(id: $id) {
+    comments(first: $first, after: $after, orderBy: createdAt) {
+      nodes {
+        id
+        body
+        createdAt
+        updatedAt
+        user { email }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+`
+
+	var (
+		comments []Comment
+		after    *string
+	)
+
+	for range linearListMaxPages {
+		var resp struct {
+			Data struct {
+				Issue *struct {
+					Comments struct {
+						Nodes []struct {
+							ID        string `json:"id"`
+							Body      string `json:"body"`
+							CreatedAt string `json:"createdAt"`
+							UpdatedAt string `json:"updatedAt"`
+							User      *struct {
+								Email string `json:"email"`
+							} `json:"user"`
+						} `json:"nodes"`
+						PageInfo pageInfo `json:"pageInfo"`
+					} `json:"comments"`
+				} `json:"issue"`
+			} `json:"data"`
+			Errors []graphqlError `json:"errors"`
+		}
+
+		if err := c.do(ctx, query, map[string]any{
+			"id":    issueID,
+			"first": linearListPageSize,
+			"after": after,
+		}, &resp); err != nil {
+			return nil, err
+		}
+
+		if resp.Data.Issue == nil {
+			return nil, ErrIssueNotFound
+		}
+
+		for _, node := range resp.Data.Issue.Comments.Nodes {
+			comment := Comment{
+				ID:   node.ID,
+				Body: node.Body,
+			}
+
+			if node.User != nil {
+				comment.UserEmail = node.User.Email
+			}
+
+			if createdAt, err := time.Parse(time.RFC3339, node.CreatedAt); err == nil {
+				comment.CreatedAt = createdAt
+			}
+
+			if updatedAt, err := time.Parse(time.RFC3339, node.UpdatedAt); err == nil {
+				comment.UpdatedAt = updatedAt
+			}
+
+			comments = append(comments, comment)
+		}
+
+		info := resp.Data.Issue.Comments.PageInfo
+		if !info.HasNextPage || info.EndCursor == "" {
+			return comments, nil
+		}
+
+		next := info.EndCursor
+		after = &next
+	}
+
+	return nil, fmt.Errorf("cannot list Linear comments: pagination limit reached")
+}
+
+func (c *Client) CreateComment(ctx context.Context, issueID, body string) (*Comment, error) {
+	const query = `
+mutation TaskSyncLinearCommentCreate($input: CommentCreateInput!) {
+  commentCreate(input: $input) {
+    success
+    comment {
+      id
+      body
+      createdAt
+      updatedAt
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			CommentCreate struct {
+				Success bool `json:"success"`
+				Comment struct {
+					ID        string `json:"id"`
+					Body      string `json:"body"`
+					CreatedAt string `json:"createdAt"`
+					UpdatedAt string `json:"updatedAt"`
+				} `json:"comment"`
+			} `json:"commentCreate"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, query, map[string]any{
+		"input": map[string]any{
+			"issueId": issueID,
+			"body":    body,
+		},
+	}, &resp); err != nil {
+		return nil, err
+	}
+
+	created := resp.Data.CommentCreate
+	if !created.Success || created.Comment.ID == "" {
+		return nil, fmt.Errorf("cannot create Linear comment: mutation unsuccessful")
+	}
+
+	return commentFromPayload(created.Comment.ID, created.Comment.Body, created.Comment.CreatedAt, created.Comment.UpdatedAt, ""), nil
+}
+
+func (c *Client) UpdateComment(ctx context.Context, commentID, body string) (*Comment, error) {
+	const query = `
+mutation TaskSyncLinearCommentUpdate($id: String!, $input: CommentUpdateInput!) {
+  commentUpdate(id: $id, input: $input) {
+    success
+    comment {
+      id
+      body
+      createdAt
+      updatedAt
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			CommentUpdate struct {
+				Success bool `json:"success"`
+				Comment struct {
+					ID        string `json:"id"`
+					Body      string `json:"body"`
+					CreatedAt string `json:"createdAt"`
+					UpdatedAt string `json:"updatedAt"`
+				} `json:"comment"`
+			} `json:"commentUpdate"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, query, map[string]any{
+		"id": commentID,
+		"input": map[string]any{
+			"body": body,
+		},
+	}, &resp); err != nil {
+		return nil, err
+	}
+
+	updated := resp.Data.CommentUpdate
+	if !updated.Success || updated.Comment.ID == "" {
+		return nil, fmt.Errorf("cannot update Linear comment: mutation unsuccessful")
+	}
+
+	return commentFromPayload(updated.Comment.ID, updated.Comment.Body, updated.Comment.CreatedAt, updated.Comment.UpdatedAt, ""), nil
+}
+
+func (c *Client) DeleteComment(ctx context.Context, commentID string) error {
+	const query = `
+mutation TaskSyncLinearCommentDelete($id: String!) {
+  commentDelete(id: $id) {
+    success
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			CommentDelete struct {
+				Success bool `json:"success"`
+			} `json:"commentDelete"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, query, map[string]any{"id": commentID}, &resp); err != nil {
+		if linearEntityMissing(err) {
+			return ErrCommentNotFound
+		}
+
+		return err
+	}
+
+	if !resp.Data.CommentDelete.Success {
+		return fmt.Errorf("cannot delete Linear comment: mutation unsuccessful")
+	}
+
+	return nil
+}
+
+func linearEntityMissing(err error) bool {
+	message := strings.ToLower(err.Error())
+
+	return strings.Contains(message, "not found") || strings.Contains(message, "could not find")
+}
+
+func commentFromPayload(id, body, createdAt, updatedAt, email string) *Comment {
+	comment := &Comment{
+		ID:        id,
+		Body:      body,
+		UserEmail: email,
+	}
+
+	if parsed, err := time.Parse(time.RFC3339, createdAt); err == nil {
+		comment.CreatedAt = parsed
+	}
+
+	if parsed, err := time.Parse(time.RFC3339, updatedAt); err == nil {
+		comment.UpdatedAt = parsed
+	}
+
+	return comment
 }
 
 func (c *Client) do(ctx context.Context, query string, variables any, dest any) error {

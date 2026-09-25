@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/task/comment/owner"
 )
 
 const viewQuery = `
@@ -50,15 +51,12 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename  string `json:"__typename"`
-		ID        string `json:"id"`
-		Content   string `json:"content"`
-		CreatedAt string `json:"createdAt"`
-		UpdatedAt string `json:"updatedAt"`
-		Owner     struct {
-			ID       string `json:"id"`
-			FullName string `json:"fullName"`
-		} `json:"owner"`
+		Typename  string       `json:"__typename"`
+		ID        string       `json:"id"`
+		Content   string       `json:"content"`
+		CreatedAt string       `json:"createdAt"`
+		UpdatedAt string       `json:"updatedAt"`
+		Owner     *owner.Owner `json:"owner"`
 	} `json:"node"`
 }
 
@@ -128,7 +126,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), c.ID)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Owner:"), c.Owner.FullName)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Owner:"), owner.Name(c.Owner))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Content:"), content)
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(c.CreatedAt))

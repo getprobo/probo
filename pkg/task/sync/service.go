@@ -311,6 +311,14 @@ func (s *Service) PublishToLinear(
 		return nil, fmt.Errorf("cannot finish Linear publish: %w", err)
 	}
 
+	createdIDs, err := s.copyTaskCommentsToLinear(ctx, scope, client, link)
+	if err != nil {
+		s.rollbackLinkedComments(ctx, scope, client, nil, createdIDs)
+		s.compensateFailedPublish(ctx, client, scope, taskID, issue.ID)
+
+		return nil, fmt.Errorf("cannot publish task comments to Linear: %w", err)
+	}
+
 	return link, nil
 }
 
@@ -426,7 +434,7 @@ func (s *Service) LinkToLinear(
 		return nil, fmt.Errorf("cannot link Linear attachment: %w", err)
 	}
 
-	link, err := s.finishLinearLink(
+	link, previous, linked, err := s.finishLinearLink(
 		ctx,
 		scope,
 		task,
@@ -454,6 +462,27 @@ func (s *Service) LinkToLinear(
 		}
 
 		return nil, fmt.Errorf("cannot finish Linear link: %w", err)
+	}
+
+	if err := s.syncLinkedComments(ctx, scope, account.client, link); err != nil {
+		restoreErr := s.restoreLinkedTask(ctx, scope, previous, linked, identityID)
+
+		if deleteErr := account.client.DeleteAttachment(ctx, attachmentID); deleteErr != nil && s.logger != nil {
+			s.logger.WarnCtx(
+				ctx,
+				"cannot delete Linear attachment after failed comment sync",
+				log.String("task_id", taskID.String()),
+				log.Error(deleteErr),
+			)
+		}
+
+		s.deletePendingLinearLink(ctx, scope, taskID, issue.ID)
+
+		if restoreErr != nil {
+			return nil, fmt.Errorf("cannot restore task after failed Linear comment sync: %w", restoreErr)
+		}
+
+		return nil, fmt.Errorf("cannot sync Linear comments: %w", err)
 	}
 
 	return link, nil
@@ -577,7 +606,7 @@ func (s *Service) claimLinearLink(
 		OrganizationID: task.OrganizationID,
 		TaskID:         task.ID,
 		ConnectorID:    dbConnector.ID,
-		Provider:       coredata.ConnectorProviderLinear,
+		Provider:       coredata.ConnectorProviderLinearSync,
 		ExternalID:     linearPublishPendingExternalID(task.ID),
 		Destination:    destination,
 		Origin:         coredata.TaskExternalLinkOriginProbo,
@@ -641,6 +670,10 @@ func (s *Service) claimLinearLink(
 				return fmt.Errorf("cannot delete task external link: %w", err)
 			}
 
+			if err := deleteCommentLinks(ctx, tx, scope, task.ID); err != nil {
+				return err
+			}
+
 			if err := pending.Insert(ctx, tx, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrTaskAlreadyLinked
@@ -685,15 +718,10 @@ func (s *Service) finishLinearLink(
 	markdown string,
 	attachmentID string,
 	identityID *gid.GID,
-) (*coredata.TaskExternalLink, error) {
-	metadata, err := json.Marshal(
-		map[string]string{
-			"attachment_id": attachmentID,
-			"app_actor_id":  viewerID,
-		},
-	)
+) (*coredata.TaskExternalLink, *coredata.Task, *coredata.Task, error) {
+	metadata, err := linearLinkMetadata(attachmentID, viewerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal metadata: %w", err)
+		return nil, nil, nil, err
 	}
 
 	now := time.Now()
@@ -701,7 +729,7 @@ func (s *Service) finishLinearLink(
 		OrganizationID:     task.OrganizationID,
 		TaskID:             task.ID,
 		ConnectorID:        dbConnector.ID,
-		Provider:           coredata.ConnectorProviderLinear,
+		Provider:           coredata.ConnectorProviderLinearSync,
 		ExternalID:         issue.ID,
 		ExternalIdentifier: issue.Identifier,
 		ExternalURL:        issue.URL,
@@ -712,6 +740,11 @@ func (s *Service) finishLinearLink(
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
+
+	var (
+		previous *coredata.Task
+		linked   *coredata.Task
+	)
 
 	err = s.pg.WithTx(
 		ctx,
@@ -730,10 +763,16 @@ func (s *Service) finishLinearLink(
 				return ErrTaskAlreadyLinked
 			}
 
-			oldTask := *current
+			snapshot := *current
+			previous = &snapshot
+			oldTask := snapshot
+
 			if err := applyLinearIssueFields(ctx, tx, scope, current, issue, content, now); err != nil {
 				return fmt.Errorf("cannot apply Linear issue to task: %w", err)
 			}
+
+			applied := *current
+			linked = &applied
 
 			actorID, err := linkActivityActorID(ctx, tx, scope, identityID, current.OrganizationID)
 			if err != nil {
@@ -792,10 +831,89 @@ func (s *Service) finishLinearLink(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
-	return link, nil
+	return link, previous, linked, nil
+}
+
+func (s *Service) restoreLinkedTask(
+	ctx context.Context,
+	scope coredata.Scoper,
+	previous *coredata.Task,
+	linked *coredata.Task,
+	identityID *gid.GID,
+) error {
+	if previous == nil || linked == nil {
+		return nil
+	}
+
+	now := time.Now()
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			current := &coredata.Task{}
+			if err := current.LoadByIDForUpdate(ctx, tx, scope, previous.ID); err != nil {
+				return fmt.Errorf("cannot load task %q: %w", previous.ID, err)
+			}
+
+			oldTask := *current
+
+			if !current.UpdatedAt.Truncate(time.Microsecond).Equal(linked.UpdatedAt.Truncate(time.Microsecond)) {
+				return nil
+			}
+
+			if err := coredata.CompletePendingOutboundJobsForTask(
+				ctx,
+				tx,
+				scope,
+				previous.ID,
+				commentSyncActions(),
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot complete pending task sync jobs: %w", err)
+			}
+
+			current.Name = previous.Name
+			current.Content = previous.Content
+			current.State = previous.State
+			current.Priority = previous.Priority
+			current.Deadline = previous.Deadline
+			current.AssignedToID = previous.AssignedToID
+			current.Rank = previous.Rank
+			current.UpdatedAt = now
+
+			if err := current.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot restore task after failed Linear link: %w", err)
+			}
+
+			actorID, err := linkActivityActorID(ctx, tx, scope, identityID, current.OrganizationID)
+			if err != nil {
+				return fmt.Errorf("cannot resolve task activity actor: %w", err)
+			}
+
+			if s.recordUpdateActivities != nil {
+				if err := s.recordUpdateActivities(
+					ctx,
+					tx,
+					scope,
+					&oldTask,
+					current,
+					actorID,
+					now,
+				); err != nil {
+					return fmt.Errorf("cannot record task update events: %w", err)
+				}
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 func applyLinearIssueFields(
@@ -850,7 +968,7 @@ func applyLinearIssueFields(
 
 func linkActivityActorID(
 	ctx context.Context,
-	tx pg.Tx,
+	tx pg.Querier,
 	scope coredata.Scoper,
 	identityID *gid.GID,
 	organizationID gid.GID,
@@ -939,14 +1057,9 @@ func (s *Service) finishLinearPublish(
 		return nil, fmt.Errorf("cannot link Linear attachment: %w", err)
 	}
 
-	metadata, err := json.Marshal(
-		map[string]string{
-			"attachment_id": attachmentID,
-			"app_actor_id":  viewerID,
-		},
-	)
+	metadata, err := linearLinkMetadata(attachmentID, viewerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal metadata: %w", err)
+		return nil, err
 	}
 
 	hash := ContentHash(
@@ -962,7 +1075,7 @@ func (s *Service) finishLinearPublish(
 		OrganizationID:     task.OrganizationID,
 		TaskID:             task.ID,
 		ConnectorID:        dbConnector.ID,
-		Provider:           coredata.ConnectorProviderLinear,
+		Provider:           coredata.ConnectorProviderLinearSync,
 		ExternalID:         issue.ID,
 		ExternalIdentifier: issue.Identifier,
 		ExternalURL:        issue.URL,
@@ -1127,6 +1240,10 @@ func (s *Service) deleteOwnedTaskLink(
 				return fmt.Errorf("cannot delete task external link: %w", err)
 			}
 
+			if err := deleteCommentLinks(ctx, tx, scope, taskID); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
@@ -1153,9 +1270,27 @@ func (s *Service) Unlink(
 				return fmt.Errorf("cannot delete task external link: %w", err)
 			}
 
+			if err := deleteCommentLinks(ctx, tx, scope, taskID); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
+}
+
+func linearLinkMetadata(attachmentID, viewerID string) (json.RawMessage, error) {
+	metadata := map[string]string{
+		"attachment_id": attachmentID,
+		"app_actor_id":  viewerID,
+	}
+
+	encoded, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal metadata: %w", err)
+	}
+
+	return encoded, nil
 }
 
 func (s *Service) EnqueueOutbound(
@@ -1213,6 +1348,7 @@ func (s *Service) enqueueOutboundTx(
 		tx,
 		scope,
 		link.TaskID,
+		commentSyncActions(),
 		now,
 	); err != nil {
 		return fmt.Errorf("cannot complete pending outbound task sync jobs: %w", err)

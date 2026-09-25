@@ -102,6 +102,7 @@
     "comments": {
       "title": "Opmerkingen",
       "empty": "Nog geen opmerkingen",
+      "authorFallback": "Iemand",
       "fields": {
         "comment": "Opmerking",
         "leaveAComment": "Laat een opmerking achter"

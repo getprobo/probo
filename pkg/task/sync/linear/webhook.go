@@ -79,6 +79,17 @@ type (
 		Email string `json:"email"`
 		Name  string `json:"name"`
 	}
+
+	CommentWebhookData struct {
+		ID        string `json:"id"`
+		Body      string `json:"body"`
+		IssueID   string `json:"issueId"`
+		UpdatedAt string `json:"updatedAt"`
+		User      *struct {
+			Email string `json:"email"`
+		} `json:"user"`
+		present map[string]struct{}
+	}
 )
 
 func VerifySignature(secret, signature string, body []byte) bool {
@@ -139,6 +150,35 @@ func (e *WebhookEnvelope) IssueData() (*IssueWebhookData, error) {
 }
 
 func (d *IssueWebhookData) Has(field string) bool {
+	if d == nil || d.present == nil {
+		return false
+	}
+
+	_, ok := d.present[field]
+
+	return ok
+}
+
+func (e *WebhookEnvelope) CommentData() (*CommentWebhookData, error) {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(e.Data, &raw); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal Linear comment webhook data: %w", err)
+	}
+
+	var data CommentWebhookData
+	if err := json.Unmarshal(e.Data, &data); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal Linear comment webhook data: %w", err)
+	}
+
+	data.present = make(map[string]struct{}, len(raw))
+	for key := range raw {
+		data.present[key] = struct{}{}
+	}
+
+	return &data, nil
+}
+
+func (d *CommentWebhookData) Has(field string) bool {
 	if d == nil || d.present == nil {
 		return false
 	}

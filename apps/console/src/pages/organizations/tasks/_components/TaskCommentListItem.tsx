@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TrashIcon } from "@phosphor-icons/react";
+import { TrashIcon, UserIcon } from "@phosphor-icons/react";
 import { RichEditor } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
@@ -70,20 +70,23 @@ export function TaskCommentListItem({ taskCommentKey }: TaskCommentListItemProps
     minute: "2-digit",
     hour12: false,
   }).format(new Date(comment.createdAt));
+  const ownerName = comment.owner?.fullName
+    ?? t("detailsPage.comments.authorFallback");
 
   return (
     <li className={root()}>
       <div className={header()}>
         <Avatar
-          name={comment.owner.fullName}
-          email={comment.owner.emailAddress}
-          src={comment.owner.avatar?.downloadUrl}
+          name={comment.owner?.fullName}
+          email={comment.owner?.emailAddress}
+          src={comment.owner?.avatar?.downloadUrl}
           size={2}
           radius="full"
+          fallback={comment.owner == null ? <UserIcon /> : undefined}
         />
         <div className={meta()}>
           <Text size={2} weight="medium">
-            {comment.owner.fullName}
+            {ownerName}
           </Text>
           <Text size={1} color="faint">
             {createdAt}

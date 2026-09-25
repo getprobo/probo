@@ -117,6 +117,10 @@ func (r *mutationResolver) DeleteTaskComment(ctx context.Context, input types.De
 
 // Owner is the resolver for the owner field.
 func (r *taskCommentResolver) Owner(ctx context.Context, obj *types.TaskComment) (*types.Profile, error) {
+	if obj.Owner == nil {
+		return nil, nil
+	}
+
 	if _, err := r.authorize(ctx, obj.Owner.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}

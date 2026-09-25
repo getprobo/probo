@@ -124,11 +124,12 @@ func TestEmitTaskCommentCreated_InsertsCommentWebhook(t *testing.T) {
 	scope := coredata.NewScope(orgID.TenantID())
 	insertTaskWebhookSubscription(t, client, orgID, coredata.WebhookEventTypeTaskCommentCreated)
 
+	ownerID := gid.New(orgID.TenantID(), coredata.MembershipProfileEntityType)
 	comment := &coredata.TaskComment{
 		ID:             gid.New(orgID.TenantID(), coredata.TaskCommentEntityType),
 		OrganizationID: orgID,
 		TaskID:         gid.New(orgID.TenantID(), coredata.TaskEntityType),
-		OwnerID:        gid.New(orgID.TenantID(), coredata.MembershipProfileEntityType),
+		OwnerID:        &ownerID,
 		Content:        `{"type":"doc","content":[]}`,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -226,11 +227,13 @@ func newWebhookTestTask(orgID gid.GID, state coredata.TaskState) *coredata.Task 
 func newWebhookTestComment(orgID gid.GID) *coredata.TaskComment {
 	now := time.Now()
 
+	ownerID := gid.New(orgID.TenantID(), coredata.MembershipProfileEntityType)
+
 	return &coredata.TaskComment{
 		ID:             gid.New(orgID.TenantID(), coredata.TaskCommentEntityType),
 		OrganizationID: orgID,
 		TaskID:         gid.New(orgID.TenantID(), coredata.TaskEntityType),
-		OwnerID:        gid.New(orgID.TenantID(), coredata.MembershipProfileEntityType),
+		OwnerID:        &ownerID,
 		Content:        `{"type":"doc","content":[]}`,
 		CreatedAt:      now,
 		UpdatedAt:      now,

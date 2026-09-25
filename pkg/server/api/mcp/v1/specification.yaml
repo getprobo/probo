@@ -7527,7 +7527,6 @@ components:
         - id
         - organization_id
         - task_id
-        - owner_id
         - content
         - created_at
         - updated_at
@@ -7543,7 +7542,8 @@ components:
           description: Task ID
         owner_id:
           $ref: "#/components/schemas/GID"
-          description: Owner membership profile ID
+          description: Owner membership profile ID. Absent when a Linear comment author is not a Probo member.
+          nullable: true
         content:
           type: string
           description: Task comment body in markdown (converted from stored ProseMirror JSON)

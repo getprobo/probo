@@ -18,33 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tasksync
+package owner
 
-import "go.probo.inc/probo/pkg/gid"
-
-type SyncAction string
-
-const (
-	SyncActionUpdate        SyncAction = "update"
-	SyncActionCancel        SyncAction = "cancel"
-	SyncActionCommentUpsert SyncAction = "comment_upsert"
-	SyncActionCommentDelete SyncAction = "comment_delete"
-)
-
-type JobPayload struct {
-	Action             SyncAction `json:"action"`
-	TaskID             gid.GID    `json:"task_id"`
-	ExternalID         string     `json:"external_id"`
-	ExternalIdentifier string     `json:"external_identifier"`
-	TeamID             string     `json:"team_id"`
-	ConnectorID        gid.GID    `json:"connector_id"`
-	CommentID          gid.GID    `json:"comment_id,omitempty"`
-	ExternalCommentID  string     `json:"external_comment_id,omitempty"`
+// Owner is the task comment author returned by the console API.
+// Imported Linear comments can have no owner.
+type Owner struct {
+	ID       string `json:"id"`
+	FullName string `json:"fullName"`
 }
 
-func commentSyncActions() []string {
-	return []string{
-		string(SyncActionCommentUpsert),
-		string(SyncActionCommentDelete),
+// Name returns the owner's display name, or an empty string when the comment has none.
+func Name(owner *Owner) string {
+	if owner == nil {
+		return ""
 	}
+
+	return owner.FullName
 }

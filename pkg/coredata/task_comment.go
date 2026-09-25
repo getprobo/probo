@@ -39,7 +39,7 @@ type (
 		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		TaskID         gid.GID   `db:"task_id"`
-		OwnerID        gid.GID   `db:"owner_profile_id"`
+		OwnerID        *gid.GID  `db:"owner_profile_id"`
 		Content        string    `db:"content"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
@@ -69,7 +69,7 @@ SELECT
     p.identity_id
 FROM
     task_comments tc
-INNER JOIN
+LEFT JOIN
     iam_membership_profiles p ON p.id = tc.owner_profile_id
 WHERE
     tc.id = ANY(@resource_ids)
@@ -85,16 +85,22 @@ WHERE
 	attrsByID := make(policy.AttributesByID, len(resourceIDs))
 
 	for rows.Next() {
-		var id, organizationID, ownerIdentityID gid.GID
+		var id, organizationID gid.GID
+
+		var ownerIdentityID *gid.GID
 
 		if err := rows.Scan(&id, &organizationID, &ownerIdentityID); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
-		attrsByID[id] = policy.Attributes{
+		attrs := policy.Attributes{
 			"organization_id": organizationID.String(),
-			"owner_id":        ownerIdentityID.String(),
 		}
+		if ownerIdentityID != nil {
+			attrs["owner_id"] = ownerIdentityID.String()
+		}
+
+		attrsByID[id] = attrs
 	}
 
 	if err := rows.Err(); err != nil {
@@ -125,6 +131,56 @@ WHERE
     %s
     AND id = @task_comment_id
 LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"task_comment_id": taskCommentID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query task comments: %w", err)
+	}
+
+	taskComment, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TaskComment])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect task comments: %w", err)
+	}
+
+	*tc = taskComment
+
+	return nil
+}
+
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so two outbound comment
+// sync jobs cannot both record a Linear mapping for the same comment.
+func (tc *TaskComment) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	taskCommentID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    task_id,
+    owner_profile_id,
+    content,
+    created_at,
+    updated_at
+FROM
+    task_comments
+WHERE
+    %s
+    AND id = @task_comment_id
+LIMIT 1
+FOR UPDATE;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

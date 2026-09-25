@@ -50,7 +50,7 @@ type (
 		ID             gid.GID   `json:"id"`
 		OrganizationID gid.GID   `json:"organizationId"`
 		TaskID         gid.GID   `json:"taskId"`
-		OwnerID        gid.GID   `json:"ownerId"`
+		OwnerID        *gid.GID  `json:"ownerId"`
 		Content        string    `json:"content"`
 		CreatedAt      time.Time `json:"createdAt"`
 		UpdatedAt      time.Time `json:"updatedAt"`

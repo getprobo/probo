@@ -49,13 +49,27 @@ func TestWebhookIssueIdentity(t *testing.T) {
 		assert.Equal(t, "org-1", organizationID)
 	})
 
-	t.Run("comment is not stored", func(t *testing.T) {
+	t.Run("comment on a linked issue is stored", func(t *testing.T) {
+		t.Parallel()
+
+		issueID, organizationID, keep, err := webhookIssueIdentity([]byte(`{
+			"type":"Comment",
+			"organizationId":"org-1",
+			"data":{"id":"comment-1","issueId":"issue-1","body":"Hi"}
+		}`))
+		require.NoError(t, err)
+		assert.True(t, keep)
+		assert.Equal(t, "issue-1", issueID)
+		assert.Equal(t, "org-1", organizationID)
+	})
+
+	t.Run("comment without an issue is not stored", func(t *testing.T) {
 		t.Parallel()
 
 		_, _, keep, err := webhookIssueIdentity([]byte(`{
 			"type":"Comment",
 			"organizationId":"org-1",
-			"data":{"id":"comment-1","issueId":"issue-1","body":"Hi"}
+			"data":{"id":"comment-1","body":"Hi"}
 		}`))
 		require.NoError(t, err)
 		assert.False(t, keep)
@@ -339,4 +353,11 @@ func TestMapInboundIssue_DescriptionHashMatchesOutboundRender(t *testing.T) {
 		task.AssignedToID,
 	)
 	assert.NotEqual(t, rawHash, outboundHash)
+}
+
+func TestCommentContentHashStable(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, CommentContentHash("hello"), CommentContentHash("hello"))
+	assert.NotEqual(t, CommentContentHash("hello"), CommentContentHash("Hello"))
 }

@@ -213,8 +213,15 @@ func (h *webhookHandler) handle(ctx context.Context, item *coredata.LinearWebhoo
 		return h.markProcessed(ctx, item)
 	}
 
-	if err := h.svc.ApplyInboundIssue(ctx, envelope); err != nil {
-		return fmt.Errorf("cannot apply Linear webhook: %w", err)
+	switch envelope.Type {
+	case "Issue":
+		if err := h.svc.ApplyInboundIssue(ctx, envelope); err != nil {
+			return fmt.Errorf("cannot apply Linear issue webhook: %w", err)
+		}
+	case "Comment":
+		if err := h.svc.ApplyInboundComment(ctx, envelope); err != nil {
+			return fmt.Errorf("cannot apply Linear comment webhook: %w", err)
+		}
 	}
 
 	return h.markProcessed(ctx, item)
@@ -279,7 +286,7 @@ func (s *Service) EnqueueWebhook(ctx context.Context, deliveryID string, envelop
 				ctx,
 				conn,
 				coredata.NewNoScope(),
-				coredata.ConnectorProviderLinear,
+				coredata.ConnectorProviderLinearSync,
 				issueID,
 			); err != nil {
 				return fmt.Errorf("cannot load task external links: %w", err)
@@ -312,14 +319,26 @@ func webhookIssueIdentity(body []byte) (issueID, organizationID string, keep boo
 		return "", "", false, fmt.Errorf("cannot parse Linear webhook: %w", err)
 	}
 
-	if envelope.Type != "Issue" || envelope.OrganizationID == "" {
+	if envelope.OrganizationID == "" {
 		return "", "", false, nil
 	}
 
-	data, err := envelope.IssueData()
-	if err != nil || data.ID == "" {
+	switch envelope.Type {
+	case "Issue":
+		data, err := envelope.IssueData()
+		if err != nil || data.ID == "" {
+			return "", "", false, nil
+		}
+
+		return data.ID, envelope.OrganizationID, true, nil
+	case "Comment":
+		data, err := envelope.CommentData()
+		if err != nil || data.IssueID == "" {
+			return "", "", false, nil
+		}
+
+		return data.IssueID, envelope.OrganizationID, true, nil
+	default:
 		return "", "", false, nil
 	}
-
-	return data.ID, envelope.OrganizationID, true, nil
 }

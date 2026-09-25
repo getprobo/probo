@@ -102,6 +102,7 @@
     "comments": {
       "title": "Commentaires",
       "empty": "Aucun commentaire pour le moment",
+      "authorFallback": "Quelqu'un",
       "fields": {
         "comment": "Commentaire",
         "leaveAComment": "Laisser un commentaire"

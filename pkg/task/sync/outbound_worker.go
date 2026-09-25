@@ -147,6 +147,13 @@ func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob
 		return err
 	}
 
+	switch payload.Action {
+	case SyncActionCommentUpsert:
+		return h.processCommentUpsert(ctx, item, payload, scope, client)
+	case SyncActionCommentDelete:
+		return h.processCommentDelete(ctx, item, payload, client)
+	}
+
 	states, err := client.ListWorkflowStates(ctx, payload.TeamID)
 	if err != nil {
 		return fmt.Errorf("cannot list Linear workflow states: %w", err)
@@ -352,7 +359,7 @@ func (h *outboundHandler) loadOutboundUpdate(
 				return nil
 			}
 
-			newer, err := item.HasNewerOutboundJob(ctx, tx, scope, payload.TaskID)
+			newer, err := item.HasNewerOutboundJob(ctx, tx, scope, payload.TaskID, commentSyncActions())
 			if err != nil {
 				return err
 			}
@@ -458,7 +465,7 @@ func (h *outboundHandler) hasNewerOutboundJob(
 		func(ctx context.Context, tx pg.Tx) error {
 			var err error
 
-			newer, err = item.HasNewerOutboundJob(ctx, tx, scope, taskID)
+			newer, err = item.HasNewerOutboundJob(ctx, tx, scope, taskID, commentSyncActions())
 
 			return err
 		},

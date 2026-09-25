@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/task/comment/owner"
 )
 
 const listQuery = `
@@ -58,13 +59,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskCommentOrder) {
 `
 
 type comment struct {
-	ID        string `json:"id"`
-	Content   string `json:"content"`
-	CreatedAt string `json:"createdAt"`
-	Owner     struct {
-		ID       string `json:"id"`
-		FullName string `json:"fullName"`
-	} `json:"owner"`
+	ID        string       `json:"id"`
+	Content   string       `json:"content"`
+	CreatedAt string       `json:"createdAt"`
+	Owner     *owner.Owner `json:"owner"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -174,7 +172,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 				rows = append(rows, []string{
 					c.ID,
-					c.Owner.FullName,
+					owner.Name(c.Owner),
 					content,
 					cmdutil.FormatTime(c.CreatedAt),
 				})
