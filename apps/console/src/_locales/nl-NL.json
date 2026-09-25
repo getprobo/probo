@@ -2428,8 +2428,7 @@
     "actions": { "addConfiguration": "Configuratie toevoegen", "previous": "Vorige", "next": "Volgende" },
     "breadcrumb": {
       "settings": "SAML-instellingen",
-      "configure": "Configureren",
-      "verifyDomain": "Domein verifiëren"
+      "configure": "Configureren"
     }
   },
   "scimPage": {
@@ -2613,7 +2612,7 @@
     },
     "errors": {
       "delete": "Verwijderen van SAML-configuratie mislukt. Probeer het opnieuw.",
-      "copy": "Kopiëren van SSO-URL mislukt"
+      "copy": "Kopiëren naar klembord mislukt"
     },
     "delete": {
       "title": "SAML-configuratie verwijderen",
@@ -2626,10 +2625,21 @@
     "pending": {
       "description": "Voeg een DNS-TXT-record toe om te verifiëren dat u dit domein beheert."
     },
+    "dns": {
+      "name": "Naam",
+      "value": "Waarde",
+      "copyName": "Naam kopiëren",
+      "copyValue": "Waarde kopiëren",
+      "note": "Het kan tot 48 uur duren voordat DNS-wijzigingen zijn doorgevoerd, maar dit is meestal binnen enkele minuten voltooid."
+    },
     "enforcement": {
       "optional": "SSO is <policy>optioneel</policy>. Leden kunnen single sign-on of een wachtwoord gebruiken.",
       "required": "SSO is <policy>verplicht</policy>. Leden moeten single sign-on gebruiken om in te loggen.",
       "off": "SSO is <policy>uit</policy>. Leden moeten hun wachtwoord gebruiken."
+    },
+    "signup": {
+      "enabled": "Registratie via SAML is <policy>aan</policy>. Nieuwe gebruikers van dit domein kunnen automatisch lid worden.",
+      "disabled": "Registratie via SAML is <policy>uit</policy>. Alleen bestaande gebruikers kunnen inloggen."
     },
     "fields": {
       "domain": "Domein",
@@ -2644,6 +2654,12 @@
       "enforcement": "Handhaving",
       "ssoUrl": "SSO-URL"
     },
+    "title": {
+      "pending": "Verifieer dit domein",
+      "optional": "SSO is optioneel",
+      "required": "SSO is verplicht",
+      "off": "SSO is uit"
+    },
     "status": {
       "verified": "Geverifieerd",
       "pendingVerification": "In afwachting van verificatie",
@@ -2656,26 +2672,7 @@
       "clickToCopy": "Klik om te kopiëren",
       "copied": "Gekopieerd!",
       "copyUrl": "URL kopiëren",
-      "edit": "Bewerken",
-      "verifyDomain": "Domein verifiëren"
-    }
-  },
-  "samlDomainVerifyDialog": {
-    "title": "Domeineigendom verifiëren",
-    "description": "Voeg het volgende TXT-record toe aan de DNS-configuratie van uw domein om eigendom te verifiëren:",
-    "fields": {
-      "hostName": "Host/Naam:",
-      "type": "Type:",
-      "value": "Waarde:"
-    },
-    "hostHint": "of gebruik uw domeinnaam",
-    "actions": {
-      "copy": "Kopiëren",
-      "copied": "Gekopieerd!"
-    },
-    "note": {
-      "label": "Opmerking:",
-      "description": "Het kan tot 48 uur duren voordat DNS-wijzigingen zijn doorgevoerd, maar dit is meestal binnen enkele minuten voltooid."
+      "edit": "Bewerken"
     }
   },
   "scimConfiguration": {

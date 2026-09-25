@@ -41,14 +41,7 @@ const createSAMLConfigurationMutation = graphql`
     createSAMLConfiguration(input: $input) {
       samlConfigurationEdge @prependEdge(connections: $connections) {
         node {
-          id
-          emailDomain
-          enforcementPolicy
-          domainVerificationToken
-          domainVerifiedAt
-          testLoginUrl
-          canUpdate: permission(action: "iam:saml-configuration:update")
-          canDelete: permission(action: "iam:saml-configuration:delete")
+          ...SAMLConfigurationListItem_samlConfiguration
         }
       }
     }

@@ -79,15 +79,11 @@ export const samlConfigurationListFragment = graphql`
 interface SAMLConfigurationListProps {
   organizationKey: SAMLConfigurationList_organization$key;
   onAdd: () => void;
-  onEdit: (id: string) => void;
-  onVerifyDomain: (dnsVerificationToken: string) => void;
 }
 
 export function SAMLConfigurationList({
   organizationKey,
   onAdd,
-  onEdit,
-  onVerifyDomain,
 }: SAMLConfigurationListProps) {
   const { t } = useTranslation();
   const [isRefetchPending, startRefetchTransition] = useTransition();
@@ -165,8 +161,6 @@ export function SAMLConfigurationList({
                     <SAMLConfigurationListItem
                       key={node.id}
                       samlConfigurationKey={node}
-                      onEdit={onEdit}
-                      onVerifyDomain={onVerifyDomain}
                       onDeleted={handleDeleted}
                     />
                   ))}

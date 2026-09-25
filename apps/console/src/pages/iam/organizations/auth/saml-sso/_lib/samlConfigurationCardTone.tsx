@@ -45,6 +45,23 @@ export function showsSamlLoginUrl(
   return domainVerifiedAt != null && enforcementPolicy !== "OFF";
 }
 
+export function samlConfigurationStatusKey(
+  domainVerifiedAt: string | null | undefined,
+  enforcementPolicy: SAMLEnforcementPolicy,
+): "pending" | "optional" | "required" | "off" {
+  if (domainVerifiedAt == null) {
+    return "pending";
+  }
+  switch (enforcementPolicy) {
+    case "REQUIRED":
+      return "required";
+    case "OFF":
+      return "off";
+    default:
+      return "optional";
+  }
+}
+
 export function SAMLConfigurationStatusIcon({
   domainVerifiedAt,
   enforcementPolicy,

@@ -2426,7 +2426,7 @@
     "title": "Authentification unique SAML",
     "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",
     "actions": { "addConfiguration": "Ajouter une configuration", "previous": "Préc.", "next": "Suiv." },
-    "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer", "verifyDomain": "Vérifier le domaine" }
+    "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer" }
   },
   "scimPage": {
     "manualScim": {
@@ -2609,7 +2609,7 @@
     },
     "errors": {
       "delete": "Échec de la suppression de la configuration SAML. Veuillez réessayer.",
-      "copy": "Échec de la copie de l’URL SSO"
+      "copy": "Échec de la copie dans le presse-papiers"
     },
     "delete": {
       "title": "Supprimer la configuration SAML",
@@ -2622,10 +2622,21 @@
     "pending": {
       "description": "Ajoutez un enregistrement TXT DNS pour vérifier que vous contrôlez ce domaine."
     },
+    "dns": {
+      "name": "Nom",
+      "value": "Valeur",
+      "copyName": "Copier le nom",
+      "copyValue": "Copier la valeur",
+      "note": "Les modifications DNS peuvent prendre jusqu’à 48 heures pour se propager, mais se terminent généralement en quelques minutes."
+    },
     "enforcement": {
       "optional": "Le SSO est <policy>facultatif</policy>. Les membres peuvent utiliser l’authentification unique ou un mot de passe.",
       "required": "Le SSO est <policy>obligatoire</policy>. Les membres doivent utiliser l’authentification unique pour se connecter.",
       "off": "Le SSO est <policy>désactivé</policy>. Les membres doivent utiliser leur mot de passe."
+    },
+    "signup": {
+      "enabled": "L’inscription via SAML est <policy>activée</policy>. Les nouveaux utilisateurs de ce domaine peuvent rejoindre automatiquement.",
+      "disabled": "L’inscription via SAML est <policy>désactivée</policy>. Seuls les utilisateurs existants peuvent se connecter."
     },
     "fields": {
       "domain": "Domaine",
@@ -2640,6 +2651,12 @@
       "enforcement": "Application",
       "ssoUrl": "URL SSO"
     },
+    "title": {
+      "pending": "Vérifiez ce domaine",
+      "optional": "Le SSO est facultatif",
+      "required": "Le SSO est obligatoire",
+      "off": "Le SSO est désactivé"
+    },
     "status": {
       "verified": "Vérifié",
       "pendingVerification": "Vérification en attente",
@@ -2652,26 +2669,7 @@
       "clickToCopy": "Cliquer pour copier",
       "copied": "Copié !",
       "copyUrl": "Copier l’URL",
-      "edit": "Modifier",
-      "verifyDomain": "Vérifier le domaine"
-    }
-  },
-  "samlDomainVerifyDialog": {
-    "title": "Vérifier la propriété du domaine",
-    "description": "Ajoutez l’enregistrement TXT suivant à la configuration DNS de votre domaine pour vérifier la propriété :",
-    "fields": {
-      "hostName": "Hôte/Nom :",
-      "type": "Type :",
-      "value": "Valeur :"
-    },
-    "hostHint": "ou utilisez le nom de votre domaine",
-    "actions": {
-      "copy": "Copier",
-      "copied": "Copié !"
-    },
-    "note": {
-      "label": "Remarque :",
-      "description": "Les modifications DNS peuvent prendre jusqu’à 48 heures pour se propager, mais se terminent généralement en quelques minutes."
+      "edit": "Modifier"
     }
   },
   "scimConfiguration": {

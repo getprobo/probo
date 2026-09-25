@@ -1560,7 +1560,7 @@
     "title": "SAML Single Sign-On",
     "description": "Set up SAML 2.0 single sign-on for each email domain.",
     "actions": { "addConfiguration": "Add Configuration", "previous": "Prev", "next": "Next" },
-    "breadcrumb": { "settings": "SAML Settings", "configure": "Configure", "verifyDomain": "Verify Domain" }
+    "breadcrumb": { "settings": "SAML Settings", "configure": "Configure" }
   },
   "scimPage": {
     "manualScim": { "title": "Manual SCIM", "description": "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider." },
@@ -1634,27 +1634,36 @@
   },
   "samlConfigurationList": {
     "messages": { "deleted": "SAML configuration deleted successfully.", "copied": "Copied to clipboard" },
-    "errors": { "delete": "Failed to delete SAML configuration. Please try again.", "copy": "Failed to copy SSO URL" },
+    "errors": { "delete": "Failed to delete SAML configuration. Please try again.", "copy": "Failed to copy to clipboard" },
     "delete": { "title": "Delete SAML Configuration", "description": "Are you sure you want to delete the SAML configuration for {{domain}}? This action cannot be undone." },
     "empty": { "title": "No SAML Configurations", "description": "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain." },
     "pending": { "description": "Add a DNS TXT record to verify you control this domain." },
+    "dns": {
+      "name": "Name",
+      "value": "Value",
+      "copyName": "Copy name",
+      "copyValue": "Copy value",
+      "note": "DNS changes may take up to 48 hours to propagate, but typically complete within a few minutes."
+    },
     "enforcement": {
       "optional": "SSO is <policy>optional</policy>. Members may use single sign-on or a password.",
       "required": "SSO is <policy>required</policy>. Members must use single sign-on to log in.",
       "off": "SSO is <policy>off</policy>. Members must use their password."
     },
+    "signup": {
+      "enabled": "Signup through SAML is <policy>on</policy>. New users on this domain can join automatically.",
+      "disabled": "Signup through SAML is <policy>off</policy>. Only existing users can sign in."
+    },
     "fields": { "domain": "Domain", "sso": "SSO", "ssoUrl": "SSO URL" },
     "columns": { "configurationId": "Configuration ID", "emailDomain": "Email Domain", "domainStatus": "Domain Status", "samlStatus": "SAML Status", "enforcement": "Enforcement", "ssoUrl": "SSO URL" },
+    "title": {
+      "pending": "Verify this domain",
+      "optional": "SSO is optional",
+      "required": "SSO is required",
+      "off": "SSO is off"
+    },
     "status": { "verified": "Verified", "pendingVerification": "Pending Verification", "enabled": "Enabled", "disabled": "Disabled" },
-    "actions": { "delete": "Delete", "cancel": "Cancel", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "edit": "Edit", "verifyDomain": "Verify Domain" }
-  },
-  "samlDomainVerifyDialog": {
-    "title": "Verify Domain Ownership",
-    "description": "Add the following TXT record to your domain's DNS configuration to verify ownership:",
-    "fields": { "hostName": "Host/Name:", "type": "Type:", "value": "Value:" },
-    "hostHint": "or use your domain name",
-    "actions": { "copy": "Copy", "copied": "Copied!" },
-    "note": { "label": "Note:", "description": "DNS changes may take up to 48 hours to propagate, but typically complete within a few minutes." }
+    "actions": { "delete": "Delete", "cancel": "Cancel", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "edit": "Edit" }
   },
   "scimConfiguration": {
     "errors": { "title": "Error", "create": "Manual SCIM configuration failed" },
