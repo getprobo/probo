@@ -38,14 +38,15 @@ import (
 )
 
 var (
-	ErrNoConnectorAccount        = errors.New("connector has no account; discover and enable accounts on the connector")
-	ErrCampaignMissingSources    = errors.New("access review campaign missing scope sources")
-	ErrCampaignNotDraft          = errors.New("access review campaign not draft")
-	ErrCampaignNotDeletable      = errors.New("access review campaign not deletable")
-	ErrCampaignNotPendingActions = errors.New("access review campaign not pending actions")
-	ErrCampaignCompleted         = errors.New("access review campaign completed")
-	ErrCampaignCancelled         = errors.New("access review campaign cancelled")
-	ErrMissingOAuthScopes        = errors.New("missing required OAuth scopes")
+	ErrNoConnectorAccount                = errors.New("connector has no account; discover and enable accounts on the connector")
+	ErrConnectorAccountNeedsOrganization = errors.New("pick an organization before adding a source")
+	ErrCampaignMissingSources            = errors.New("access review campaign missing scope sources")
+	ErrCampaignNotDraft                  = errors.New("access review campaign not draft")
+	ErrCampaignNotDeletable              = errors.New("access review campaign not deletable")
+	ErrCampaignNotPendingActions         = errors.New("access review campaign not pending actions")
+	ErrCampaignCompleted                 = errors.New("access review campaign completed")
+	ErrCampaignCancelled                 = errors.New("access review campaign cancelled")
+	ErrMissingOAuthScopes                = errors.New("missing required OAuth scopes")
 )
 
 type (

@@ -23,8 +23,6 @@ import type { AppRoute } from "@probo/routes";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import { ConnectorDetailsPageSkeleton } from "./ConnectorDetailsPageSkeleton";
-
 export const integrationRoutes = [
   {
     path: "integrations",
@@ -32,8 +30,18 @@ export const integrationRoutes = [
     Component: lazy(() => import("./IntegrationsPageLoader")),
   },
   {
-    path: "integrations/:connectorId",
-    Fallback: ConnectorDetailsPageSkeleton,
-    Component: lazy(() => import("./ConnectorDetailsPageLoader")),
+    path: "integrations/marketplace",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("./MarketplacePageLoader")),
+  },
+  {
+    path: "integrations/marketplace/:provider",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("./ConnectVendorPageLoader")),
+  },
+  {
+    path: "integrations/marketplace/:provider/:method",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("./ConnectVendorPageLoader")),
   },
 ] satisfies AppRoute[];

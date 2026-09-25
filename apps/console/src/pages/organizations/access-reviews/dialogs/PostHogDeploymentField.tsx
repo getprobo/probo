@@ -18,7 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Field, Option, Select } from "@probo/ui";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useTranslation } from "react-i18next";
 
 // PostHog is a single provider spanning Cloud (region us/eu) and self-hosted
@@ -46,35 +51,44 @@ export function PostHogDeploymentField({
 
   return (
     <>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium">
-          {t("postHogDeploymentField.deployment.label")}
-        </label>
+      <Field label={t("postHogDeploymentField.deployment.label")}>
         <Select
-          value={deployment}
-          onValueChange={(val: string) =>
-            onChange(val === "SELF_HOSTED" ? { instanceUrl: "" } : { region: val })}
-          placeholder={t("postHogDeploymentField.deployment.placeholder")}
+          value={deployment === "" ? null : deployment}
+          onValueChange={(value: string | null) => {
+            if (value == null) {
+              return;
+            }
+            onChange(value === "SELF_HOSTED" ? { instanceUrl: "" } : { region: value });
+          }}
         >
-          <Option value="US">
-            {t("postHogDeploymentField.deployment.usCloud")}
-          </Option>
-          <Option value="EU">
-            {t("postHogDeploymentField.deployment.euCloud")}
-          </Option>
-          <Option value="SELF_HOSTED">
-            {t("postHogDeploymentField.deployment.selfHosted")}
-          </Option>
+          <SelectTrigger placeholder={t("postHogDeploymentField.deployment.placeholder")}>
+            {(value: string | null) => {
+              if (value === "US") {
+                return t("postHogDeploymentField.deployment.usCloud");
+              }
+              if (value === "EU") {
+                return t("postHogDeploymentField.deployment.euCloud");
+              }
+              if (value === "SELF_HOSTED") {
+                return t("postHogDeploymentField.deployment.selfHosted");
+              }
+              return null;
+            }}
+          </SelectTrigger>
+          <SelectPopup>
+            <SelectItem value="US">{t("postHogDeploymentField.deployment.usCloud")}</SelectItem>
+            <SelectItem value="EU">{t("postHogDeploymentField.deployment.euCloud")}</SelectItem>
+            <SelectItem value="SELF_HOSTED">{t("postHogDeploymentField.deployment.selfHosted")}</SelectItem>
+          </SelectPopup>
         </Select>
-      </div>
+      </Field>
       {deployment === "SELF_HOSTED" && (
-        <Field
-          label={t("postHogDeploymentField.instanceUrl")}
-          value={values.instanceUrl ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onChange({ instanceUrl: e.target.value })}
-          required
-        />
+        <Field label={t("postHogDeploymentField.instanceUrl")} required>
+          <TextField
+            value={values.instanceUrl ?? ""}
+            onChange={event => onChange({ instanceUrl: event.target.value })}
+          />
+        </Field>
       )}
     </>
   );

@@ -29,12 +29,9 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useNavigate } from "react-router";
 
 import type { ConnectorDeleteDialog_connector$key } from "#/__generated__/core/ConnectorDeleteDialog_connector.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { integrationListPath } from "../_lib/integrationPath";
 import { useDeleteConnector } from "../_lib/useDeleteConnector";
 
 const connectorDeleteDialogFragment = graphql`
@@ -57,8 +54,6 @@ export function ConnectorDeleteDialog({
   onOpenChange,
 }: ConnectorDeleteDialogProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const navigate = useNavigate();
-  const organizationId = useOrganizationId();
   const connector = useFragment(connectorDeleteDialogFragment, connectorKey);
   const [deleteConnector, isDeleting] = useDeleteConnector();
 
@@ -70,7 +65,6 @@ export function ConnectorDeleteDialog({
     void deleteConnector(connector.id).then(
       () => {
         onOpenChange(false);
-        void navigate(integrationListPath(organizationId));
       },
       () => {
         // useMutation has already shown the refusal, which names the feature

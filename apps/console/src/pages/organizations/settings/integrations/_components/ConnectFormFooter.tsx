@@ -18,49 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, ThirdPartyLogo } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
 
-import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
+import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
 import { ConnectorDocumentationLink } from "#/pages/organizations/access-reviews/dialogs/_components/ConnectorDocumentationLink";
 
-import { integrationSection } from "../variants";
+export type ConnectVendorDriver = ConnectVendorPageQuery["response"]["accessReviewDrivers"][number];
 
-const connectorProviderListItemFragment = graphql`
-  fragment ConnectorProviderListItem_provider on ConnectorProviderInfo {
-    provider
-    displayName
-    documentationUrl
-  }
-`;
-
-interface ConnectorProviderListItemProps {
-  providerKey: ConnectorProviderListItem_provider$key;
-}
-
-export function ConnectorProviderListItem({
-  providerKey,
-}: ConnectorProviderListItemProps) {
+export function ConnectFormFooter({
+  documentationUrl,
+  disabled,
+  loading,
+}: {
+  documentationUrl: string | null | undefined;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const provider = useFragment(connectorProviderListItemFragment, providerKey);
-  const { item, content, trailing } = integrationSection();
 
   return (
-    <li className={item()}>
-      <ThirdPartyLogo
-        thirdParty={provider.provider}
-        className="size-6 shrink-0"
-      />
-      <div className={content()}>
-        <span className="text-sm font-medium text-txt-primary">
-          {provider.displayName}
-        </span>
-        <ConnectorDocumentationLink url={provider.documentationUrl} />
-      </div>
-      <div className={trailing()}>
-        <Badge variant="info">{t("listPage.comingSoon")}</Badge>
-      </div>
-    </li>
+    <div className="flex items-center justify-between gap-2">
+      <ConnectorDocumentationLink url={documentationUrl} variant="button" />
+      <Button type="submit" variant="solid" disabled={disabled} loading={loading}>
+        {t("marketplacePage.connect")}
+      </Button>
+    </div>
   );
 }

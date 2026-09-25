@@ -449,7 +449,7 @@ func TestDeleteSource_KeepsConnectorWhenOtherAccountHasSource(t *testing.T) {
 	requireConnectorPresent(t, env, connectorID)
 }
 
-func TestDeleteSource_DeletesConnectorWhenLastSource(t *testing.T) {
+func TestDeleteSource_KeepsConnectorWhenLastSource(t *testing.T) {
 	t.Parallel()
 
 	env := newAccessSourceEnv(t)
@@ -460,7 +460,7 @@ func TestDeleteSource_DeletesConnectorWhenLastSource(t *testing.T) {
 	require.NoError(t, env.svc.DeleteSource(env.ctx, env.scope, source.ID))
 
 	requireMissingSource(t, env, source.ID)
-	requireConnectorMissing(t, env, connectorID)
+	requireConnectorPresent(t, env, connectorID)
 }
 
 func TestUpdateSource_RelinkKeepsConnectorWhenOtherAccountHasSource(t *testing.T) {
@@ -490,7 +490,7 @@ func TestUpdateSource_RelinkKeepsConnectorWhenOtherAccountHasSource(t *testing.T
 	requireConnectorPresent(t, env, connectorID)
 }
 
-func TestUpdateSource_RelinkDeletesAbandonedConnectorWhenLastSource(t *testing.T) {
+func TestUpdateSource_RelinkKeepsAbandonedConnectorWhenLastSource(t *testing.T) {
 	t.Parallel()
 
 	env := newAccessSourceEnv(t)
@@ -511,7 +511,57 @@ func TestUpdateSource_RelinkDeletesAbandonedConnectorWhenLastSource(t *testing.T
 	require.NoError(t, err)
 	assert.Nil(t, updated.ConnectorAccountID)
 
-	requireConnectorMissing(t, env, connectorID)
+	requireConnectorPresent(t, env, connectorID)
+}
+
+func TestEnsureSource_RefusesBridgedConnector(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := env.insertConnector(t, coredata.ConnectorProviderGoogleWorkspace)
+	accountID := env.insertAccount(t, connectorID, "workspace")
+	env.insertBridge(t, connectorID)
+
+	_, _, err := env.svc.EnsureSource(
+		env.ctx,
+		env.scope,
+		accessreview.CreateAccessReviewSourceRequest{
+			OrganizationID:     env.organizationID,
+			ConnectorAccountID: &accountID,
+			Name:               "shared",
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceInUse)
+	require.ErrorContains(t, err, "SCIM configuration")
+	requireConnectorPresent(t, env, connectorID)
+}
+
+func TestUpdateSource_RelinkRefusesBridgedConnector(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	bridgedID := env.insertConnector(t, coredata.ConnectorProviderGoogleWorkspace)
+	env.insertAccount(t, bridgedID, "workspace")
+	env.insertBridge(t, bridgedID)
+
+	otherID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
+	otherAccountID := env.insertAccount(t, otherID, "acme")
+	source := env.insertLinkedSource(t, otherAccountID, "movable")
+
+	linked := &bridgedID
+
+	updated, err := env.svc.UpdateSource(
+		env.ctx,
+		env.scope,
+		accessreview.UpdateAccessReviewSourceRequest{
+			AccessReviewSourceID: source.ID,
+			ConnectorID:          &linked,
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceInUse)
+	require.ErrorContains(t, err, "SCIM configuration")
+	require.Nil(t, updated)
+	requireConnectorPresent(t, env, bridgedID)
 }
 
 func TestDeleteSource_KeepsConnectorWhenBridgeReferencesIt(t *testing.T) {
@@ -770,18 +820,4 @@ func requireConnectorPresent(t *testing.T, env *accessSourceEnv, connectorID gid
 			return loaded.LoadMetadataByID(ctx, conn, env.scope, connectorID)
 		},
 	))
-}
-
-func requireConnectorMissing(t *testing.T, env *accessSourceEnv, connectorID gid.GID) {
-	t.Helper()
-
-	loaded := &coredata.Connector{}
-
-	err := env.client.WithConn(
-		env.ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return loaded.LoadMetadataByID(ctx, conn, env.scope, connectorID)
-		},
-	)
-	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }

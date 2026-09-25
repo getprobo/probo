@@ -1,18 +1,83 @@
 {
+  "marketplacePage": {
+    "title": "Marketplace",
+    "description": "Vendors Probo can connect to.",
+    "connect": "Connect",
+    "connectTitle": "Connect {{provider}}",
+    "choose": "Choose how to connect {{provider}}.",
+    "back": "Back",
+    "methods": {
+      "WORKLOAD_IDENTITY": "Workload identity",
+      "GITHUB_APP": "GitHub App",
+      "INSTALL": "App install",
+      "OAUTH2": "OAuth",
+      "CLIENT_CREDENTIALS": "Client credentials",
+      "API_KEY": "API key"
+    },
+    "methodDescriptions": {
+      "WORKLOAD_IDENTITY": "Trust Probo with a cloud role. No long-lived secret.",
+      "GITHUB_APP": "Install the Probo GitHub App.",
+      "INSTALL": "Install the Probo app in the vendor.",
+      "OAUTH2": "Sign in with the vendor and grant access.",
+      "CLIENT_CREDENTIALS": "Use a client ID and client secret.",
+      "API_KEY": "Paste an API key from the vendor."
+    },
+    "fields": {
+      "apiKey": "API key",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "tokenUrl": "Token URL",
+      "scope": "Scope",
+      "datadogSite": "Datadog site",
+      "zendeskSubdomain": "Zendesk subdomain"
+    },
+    "connected": "Vendor connected.",
+    "connectFailed": "Could not connect"
+  },
   "listPage": {
-    "title": "Integrations",
-    "description": "The vendors Probo holds a credential for, and what else it can connect to.",
+    "title": "Connectors",
+    "description": "The vendors Probo holds a credential for.",
     "notFound": "Organization not found",
     "sections": {
       "connected": "Connected",
       "available": "Available"
     },
+    "addMore": "Add more",
     "emptyConnected": "No vendor is connected yet.",
+    "emptyConnectedSearch": "No connected vendor matches your search.",
     "emptyAvailable": "Every available vendor is already connected.",
+    "emptyAvailableSearch": "No available vendor matches your search.",
+    "searchPlaceholder": "Search vendors...",
+    "searchConnectorsPlaceholder": "Search connectors...",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "All statuses"
+    },
+    "created": "Created {{date}}",
+    "usedBy": "Used by:",
+    "notUsedYet": "Not used yet",
+    "modules": {
+      "ACCESS_REVIEW": "Access Review",
+      "SCIM": "Auth & Provisioning"
+    },
+    "organization": "Organization",
+    "organizationPlaceholder": "Select an organization",
     "comingSoon": "Coming soon",
     "connectElsewhere": "To connect a vendor, open <connections>access review connections</connections>.",
     "actions": {
-      "manage": "Manage"
+      "add": "Add connector",
+      "manage": "Manage",
+      "connectMore": "Connect more",
+      "nextConnector": "Next connector ({{current}} of {{total}})"
+    },
+    "messages": {
+      "connected": "Vendor connected.",
+      "connectedDescription": "Add it as a source from access reviews when you are ready.",
+      "error": "Could not connect",
+      "organizationUpdated": "Organization updated."
+    },
+    "errors": {
+      "organization": "Failed to update organization"
     }
   },
   "detailsPage": {

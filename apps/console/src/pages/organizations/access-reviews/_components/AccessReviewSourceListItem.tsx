@@ -34,6 +34,9 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useLazyLoadQuery, useMutation } from "react-relay";
@@ -190,7 +193,6 @@ export function AccessReviewSourceListItem({
   const { toast } = useToast();
 
   const accessSource = useFragment(fragment, sourceKey);
-  const { item, content, trailing } = accessReviewSourceSection();
 
   const [deleteAccessReviewSource]
     = useMutation<AccessReviewSourceListItemDeleteMutation>(
@@ -307,26 +309,27 @@ export function AccessReviewSourceListItem({
   const showStandaloneIssue = hasConnectionIssue && !showOrgSelector;
 
   return (
-    <li className={item()}>
-      {accessSource.connector?.provider && (
-        <ThirdPartyLogo
-          thirdParty={accessSource.connector.provider}
-          className="size-6 shrink-0"
-        />
-      )}
-      <div className={content()}>
-        <span className="truncate text-sm font-medium text-txt-primary">
-          {accessSource.name}
-        </span>
-        <time
-          dateTime={accessSource.createdAt}
-          className="text-xs text-txt-tertiary"
-        >
-          {dateTimeFormat(i18n.language, accessSource.createdAt)}
-        </time>
+    <Card variant="soft" size={2} className="flex h-full min-w-0 flex-col gap-3">
+      <div className="flex items-center gap-4">
+        {accessSource.connector?.provider && (
+          <ThirdPartyLogo
+            thirdParty={accessSource.connector.provider}
+            className="size-8 shrink-0"
+          />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <Heading level={2} size={3} weight="medium" highContrast className="min-w-0 truncate">
+            {accessSource.name}
+          </Heading>
+          <Text size={1} color="faint">
+            <time dateTime={accessSource.createdAt}>
+              {dateTimeFormat(i18n.language, accessSource.createdAt)}
+            </time>
+          </Text>
+        </div>
       </div>
 
-      <div className={trailing()}>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {showOrgSelector && (
           <Suspense
             fallback={(
@@ -371,7 +374,7 @@ export function AccessReviewSourceListItem({
           </ActionDropdown>
         )}
       </div>
-    </li>
+    </Card>
   );
 }
 

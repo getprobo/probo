@@ -189,7 +189,7 @@ const NAV_DESTINATIONS = [
   {
     id: "connections",
     group: "accessReview",
-    labelKey: "nav.connections",
+    labelKey: "nav.sources",
     path: "connections",
     isVisible: permissions => permissions.canListAccessReviewSources,
   },

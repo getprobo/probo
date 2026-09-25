@@ -309,7 +309,7 @@ export function buildConnectorInitiateURL(
   }
   url.searchParams.append(
     "continue",
-    `/organizations/${organizationId}/access-reviews/connections`,
+    `/organizations/${organizationId}/settings/integrations`,
   );
   return url.toString();
 }

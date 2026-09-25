@@ -104,6 +104,13 @@ func (s *ConnectorService) implicitAccountName(c *coredata.Connector) string {
 	return string(c.Provider)
 }
 
+type ConnectorModule string
+
+const (
+	ConnectorModuleAccessReview ConnectorModule = "ACCESS_REVIEW"
+	ConnectorModuleSCIM         ConnectorModule = "SCIM"
+)
+
 // ErrInstallStateAlreadyUsed is returned when an install callback replays a
 // state another request already claimed or completed. The vendor's proof stays
 // valid (unlike an OAuth code, which the vendor itself burns) and the
@@ -318,6 +325,50 @@ func (s *ConnectorService) Delete(
 			return cnnctr.Delete(ctx, tx, scope)
 		},
 	)
+}
+
+// Modules lists the product modules that currently hold this credential.
+// Counts only; it does not probe the vendor.
+func (s *ConnectorService) Modules(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) ([]ConnectorModule, error) {
+	modules := []ConnectorModule{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			sources := &coredata.AccessReviewSources{}
+
+			sourceCount, err := sources.CountByConnectorID(ctx, conn, scope, connectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count access review sources for connector: %w", err)
+			}
+
+			if sourceCount > 0 {
+				modules = append(modules, ConnectorModuleAccessReview)
+			}
+
+			bridges := &coredata.SCIMBridges{}
+
+			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, connectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count SCIM bridges for connector: %w", err)
+			}
+
+			if bridgeCount > 0 {
+				modules = append(modules, ConnectorModuleSCIM)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return modules, nil
 }
 
 // refuseReferencedConnector names the module still holding the credential.

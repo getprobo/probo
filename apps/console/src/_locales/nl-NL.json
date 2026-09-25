@@ -2228,7 +2228,9 @@
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Rechtenverzoeken",
     "campaigns": "Campagnes",
-    "connections": "Verbindingen",
+    "connections": "Connectoren",
+    "marketplace": "Marketplace",
+    "sources": "Bronnen",
     "compliancePortals": "Compliancepagina's",
     "compliancePortalsSettings": "Instellingen",
     "compliancePortalsHosting": "Hosting",
@@ -3110,46 +3112,6 @@
       "connecting": "Verbinden..."
     }
   },
-  "createAwsAccessReviewSourcePage": {
-    "pageTitle": "AWS verbinden",
-    "title": "AWS verbinden",
-    "description": "Implementeer de auditrol. Voer daarna de ARN in.",
-    "permissionDenied": "U heeft geen rechten om toegangsbronnen aan te maken.",
-    "fields": {
-      "roleArn": "Rol-ARN",
-      "issuer": "Uitgever",
-      "audience": "Audience",
-      "subject": "Subject",
-      "roleArnHelp": "bijv. arn:aws:iam::123456789012:role/ProboAudit"
-    },
-    "messages": {
-      "copyFailed": "Kopiëren mislukt",
-      "copied": "Gekopieerd naar klembord",
-      "copiedIssuer": "Uitgever gekopieerd.",
-      "copiedAudience": "Audience gekopieerd.",
-      "copiedSubject": "Subject gekopieerd.",
-      "copiedTerraform": "Terraform-fragment gekopieerd.",
-      "error": "Fout",
-      "success": "Succes",
-      "created": "Toegangsbron succesvol aangemaakt."
-    },
-    "errors": {
-      "roleArn": "Voer een geldige IAM-rol-ARN in.",
-      "create": "Aanmaken van de connector mislukt. Controleer de rol-ARN en probeer het opnieuw.",
-      "disconnected": "Probo kon de auditrol niet aannemen. Controleer of de stack in dit account is uitgerold en of de issuer en het subject overeenkomen met de waarden die tijdens de installatie zijn getoond.",
-      "delete": "Kan de connector niet verwijderen. Probeer het opnieuw.",
-      "source": "Aanmaken van toegangsbron mislukt",
-      "copy": "Kopieer de waarde handmatig."
-    },
-    "actions": {
-      "copy": "Kopiëren",
-      "connect": "Verbinden",
-      "back": "Terug",
-      "installViaCloudFormation": "Installeren via CloudFormation",
-      "installViaTerraform": "Installeren via Terraform",
-      "chooseAnotherInstallMethod": "Kies een andere installatiemethode"
-    }
-  },
   "oauthExtraDialog": {
     "actions": {
       "continue": "Doorgaan"
@@ -3179,12 +3141,14 @@
     }
   },
   "accessReviewConnectionsPage": {
-    "title": "Verbindingen",
-    "description": "Verbind de systemen waarvan u de toegang wilt beoordelen.",
+    "title": "Bronnen",
+    "description": "Voeg een bron toe vanuit een account dat al in Instellingen is verbonden.",
     "errors": { "create": "Aanmaken van toegangsbron mislukt" },
     "messages": { "error": "Fout", "success": "Succes", "created": "Toegangsbron succesvol aangemaakt." },
-    "actions": { "loading": "Laden...", "loadMore": "Meer laden", "retry": "Opnieuw proberen" },
-    "sections": { "connected": "Verbonden", "available": "Beschikbaar" },
+    "actions": { "loading": "Laden...", "loadMore": "Meer laden", "retry": "Opnieuw proberen", "add": "Bron toevoegen" },
+    "sections": { "connected": "Bronnen", "available": "Beschikbaar", "addSource": "Bron toevoegen" },
+    "needsOrganization": "Kies eerst een organisatie in Instellingen.",
+    "emptyAccounts": "Geen account is klaar. Verbind eerst een leverancier in Instellingen.",
     "searchPlaceholder": "Bronnen en providers zoeken...",
     "emptyConnected": "Er zijn nog geen toegangsbronnen verbonden.",
     "emptyConnectedSearch": "Geen verbonden bronnen komen overeen met uw zoekopdracht.",

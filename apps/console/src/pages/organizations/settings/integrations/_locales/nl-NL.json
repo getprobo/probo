@@ -1,18 +1,83 @@
 {
+  "marketplacePage": {
+    "title": "Marketplace",
+    "description": "Leveranciers waarmee Probo verbinding kan maken.",
+    "connect": "Verbinden",
+    "connectTitle": "{{provider}} verbinden",
+    "choose": "Kies hoe u {{provider}} verbindt.",
+    "back": "Terug",
+    "methods": {
+      "WORKLOAD_IDENTITY": "Workload identity",
+      "GITHUB_APP": "GitHub-app",
+      "INSTALL": "App-installatie",
+      "OAUTH2": "OAuth",
+      "CLIENT_CREDENTIALS": "Clientgegevens",
+      "API_KEY": "API-sleutel"
+    },
+    "methodDescriptions": {
+      "WORKLOAD_IDENTITY": "Vertrouw Probo met een cloudrol, zonder langlevend geheim.",
+      "GITHUB_APP": "Installeer de Probo GitHub-app.",
+      "INSTALL": "Installeer de Probo-app bij de leverancier.",
+      "OAUTH2": "Meld u aan bij de leverancier en verleen toegang.",
+      "CLIENT_CREDENTIALS": "Gebruik een client-ID en clientgeheim.",
+      "API_KEY": "Plak een API-sleutel van de leverancier."
+    },
+    "fields": {
+      "apiKey": "API-sleutel",
+      "clientId": "Client-ID",
+      "clientSecret": "Clientgeheim",
+      "tokenUrl": "Token-URL",
+      "scope": "Bereik",
+      "datadogSite": "Datadog-site",
+      "zendeskSubdomain": "Zendesk-subdomein"
+    },
+    "connected": "Leverancier verbonden.",
+    "connectFailed": "Verbinden mislukt"
+  },
   "listPage": {
-    "title": "Integraties",
-    "description": "De leveranciers waarvoor Probo een credential heeft, en waarmee het verder verbinding kan maken.",
+    "title": "Connectoren",
+    "description": "De leveranciers waarvoor Probo een credential heeft.",
     "notFound": "Organisatie niet gevonden",
     "sections": {
       "connected": "Verbonden",
       "available": "Beschikbaar"
     },
+    "addMore": "Meer toevoegen",
     "emptyConnected": "Er is nog geen leverancier verbonden.",
+    "emptyConnectedSearch": "Geen verbonden leverancier komt overeen met uw zoekopdracht.",
     "emptyAvailable": "Alle beschikbare leveranciers zijn al verbonden.",
+    "emptyAvailableSearch": "Geen beschikbare leverancier komt overeen met uw zoekopdracht.",
+    "searchPlaceholder": "Leveranciers zoeken...",
+    "searchConnectorsPlaceholder": "Connectoren zoeken...",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "Alle statussen"
+    },
+    "created": "Aangemaakt op {{date}}",
+    "usedBy": "Gebruikt door:",
+    "notUsedYet": "Nog niet gebruikt",
+    "modules": {
+      "ACCESS_REVIEW": "Toegangsbeoordeling",
+      "SCIM": "Auth & provisioning"
+    },
+    "organization": "Organisatie",
+    "organizationPlaceholder": "Selecteer een organisatie",
     "comingSoon": "Binnenkort beschikbaar",
     "connectElsewhere": "Om een leverancier te verbinden, open <connections>verbindingen voor toegangsbeoordelingen</connections>.",
     "actions": {
-      "manage": "Beheren"
+      "add": "Connector toevoegen",
+      "manage": "Beheren",
+      "connectMore": "Nog een verbinden",
+      "nextConnector": "Volgende connector ({{current}} van {{total}})"
+    },
+    "messages": {
+      "connected": "Leverancier verbonden.",
+      "connectedDescription": "Voeg het toe als bron in toegangsbeoordelingen wanneer u klaar bent.",
+      "error": "Verbinden mislukt",
+      "organizationUpdated": "Organisatie bijgewerkt."
+    },
+    "errors": {
+      "organization": "Bijwerken van de organisatie mislukt"
     }
   },
   "detailsPage": {

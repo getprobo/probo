@@ -84,7 +84,6 @@ const createAPIKeyConnectorMutation = graphql`
 type Props = {
   providerKey: APIKeyConnectorDialog_provider$key | null;
   organizationId: string;
-  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
 };
@@ -92,7 +91,6 @@ type Props = {
 export function APIKeyConnectorDialog({
   providerKey,
   organizationId,
-  connectionId,
   onClose,
   onSuccess,
 }: Props) {
@@ -116,7 +114,6 @@ export function APIKeyConnectorDialog({
 
   const createSourceAfterConnector = useCreateAccessReviewSource({
     organizationId,
-    connectionId,
     onSuccess,
   });
 

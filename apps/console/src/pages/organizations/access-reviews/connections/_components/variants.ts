@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { tv } from "tailwind-variants";
+import { tv as tvLite } from "tailwind-variants/lite";
 
 export const accessReviewSourceSection = tv({
   slots: {
@@ -35,5 +36,19 @@ export const accessReviewSourceSection = tv({
     issueContent: "min-w-48 flex-1 space-y-0.5",
     issueTitle: "text-sm font-medium text-txt-primary",
     issueDescription: "text-xs leading-5 text-txt-secondary",
+  },
+});
+
+export const sourcesPage = tvLite({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    list: "flex flex-col gap-4",
+    tools: "flex flex-wrap items-center justify-between gap-2",
+    search: "w-80 max-sm:min-w-0 max-sm:w-full",
+    section: "flex flex-col gap-3",
+    grid: "grid grid-cols-3 gap-3 max-xl:grid-cols-2 max-lg:grid-cols-1",
+    empty: "flex flex-col items-center py-8 text-center",
   },
 });
