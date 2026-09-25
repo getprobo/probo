@@ -19,12 +19,12 @@
 | Name | Framework | Valid From | Valid Until |
 |------|-----------|------------|-------------|
 {{ range .Audits }}| {{ cell .Name }} | {{ cell .Framework }} | {{ .ValidFrom }} | {{ .ValidUntil }} |
-{{ end }}{{ end }}{{ if .Vendors }}
+{{ end }}{{ end }}{{ if .ThirdParties }}
 ## Subprocessors
 
 | Name | Category | Countries | Website |
 |------|----------|-----------|---------|
-{{ range .Vendors }}| {{ cell .Name }} | {{ cell .Category }} | {{ cell .Countries }} | {{ cell .Website }} |
+{{ range .ThirdParties }}| {{ cell .Name }} | {{ cell .Category }} | {{ cell .Countries }} | {{ cell .Website }} |
 {{ end }}{{ end }}{{ if .References }}
 ## References
 
