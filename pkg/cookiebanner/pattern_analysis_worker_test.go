@@ -255,6 +255,29 @@ func TestHeuristicTemplate(t *testing.T) {
 			template: "letaido.onboarding.invite_done:*",
 			changed:  true,
 		},
+		{
+			name:     "slash-delimited first-party path collapses to prefix glob",
+			input:    "clientSourceId/ODA4MDNjNzktYjEzMS00YjBlLTkzYzktZWZmNmQyYzg4YWRj/8f42bee0-1096-4458-89e3-f4495edd018b",
+			template: "clientSourceId/*",
+			changed:  true,
+		},
+		{
+			name:     "slash inside base64 still collapses to prefix glob",
+			input:    "clientSourceId/ODA4MDNjNzk/tYjEzMS00YjBlLTkzYzktZWZmNmQyYzg4YWRj/8f42bee0-1096-4458-89e3-f4495edd018b",
+			template: "clientSourceId/*",
+			changed:  true,
+		},
+		{
+			name:    "stable slash-delimited labels are not variable",
+			input:   "clientSourceId/settings/theme",
+			changed: false,
+		},
+		{
+			name:     "stable path prefix keeps trailing UUID wildcard",
+			input:    "clientSourceId/api/8f42bee0-1096-4458-89e3-f4495edd018b",
+			template: "clientSourceId/api/*",
+			changed:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -555,6 +578,16 @@ func TestSplitTokens(t *testing.T) {
 			input:  "letaido.onboarding.invite_done:0a1b2c3d-4e5f-6789-abcd-ef0123456789",
 			tokens: []string{"letaido", "onboarding", "invite", "done", "0a1b2c3d-4e5f-6789-abcd-ef0123456789"},
 			seps:   []byte{'.', '.', '_', ':'},
+		},
+		{
+			name:  "slash-delimited path keeps trailing UUID intact",
+			input: "clientSourceId/ODA4MDNjNzktYjEzMS00YjBlLTkzYzktZWZmNmQyYzg4YWRj/8f42bee0-1096-4458-89e3-f4495edd018b",
+			tokens: []string{
+				"clientSourceId",
+				"ODA4MDNjNzktYjEzMS00YjBlLTkzYzktZWZmNmQyYzg4YWRj",
+				"8f42bee0-1096-4458-89e3-f4495edd018b",
+			},
+			seps: []byte{'/', '/'},
 		},
 	}
 
@@ -985,6 +1018,26 @@ func TestFindMergeGroups(t *testing.T) {
 			require.Len(t, groups, 1)
 
 			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "letaido.onboarding.invite_done:*", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, group, 3)
+		},
+	)
+
+	t.Run(
+		"slash-delimited first-party paths merge under prefix glob",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("clientSourceId/ODA4MDNjNzktYjEzMS00YjBlLTkzYzktZWZmNmQyYzg4YWRj/8f42bee0-1096-4458-89e3-f4495edd018b", &oneYear),
+				makePattern("clientSourceId/YjEzMS00YjBlLTkzYzktZWZmNmQyYzg4YWRjODA4MDNjNzk/11111111-2222-3333-4444-555555555555", &oneYear),
+				makePattern("clientSourceId/ZWZmNmQyYzg4YWRjODA4MDNjNzktYjEzMS00YjBlLTkzYzk/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "clientSourceId/*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},

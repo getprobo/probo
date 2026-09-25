@@ -44,8 +44,9 @@ const (
 	// because it appears inside UUIDs, which splitTokens preserves as a
 	// single token; a value like "done:ecdd43d7-0193-4d24-b6ed-..."
 	// must split on ":" so the trailing UUID is isolated and collapsed
-	// to a wildcard rather than shredded into fixed hex anchors.
-	primarySeparators = "_:."
+	// to a wildcard rather than shredded into fixed hex anchors. `/`
+	// does the same for path-shaped keys (clientSourceId/<id>/<uuid>).
+	primarySeparators = "_:./"
 )
 
 // durationUnits mirrors the snap table from cookie-utils.ts. The same
@@ -439,6 +440,8 @@ func heuristicTemplate(name string) (string, bool) {
 		return "", false
 	}
 
+	variable := variablePathTokens(tokens, seps)
+
 	changed := false
 
 	var (
@@ -447,7 +450,7 @@ func heuristicTemplate(name string) (string, bool) {
 	)
 
 	for i, t := range tokens {
-		if looksVariable(t) {
+		if variable[i] {
 			changed = true
 
 			if len(resultTokens) == 0 || resultTokens[len(resultTokens)-1] != "*" {
@@ -504,6 +507,99 @@ func templateCandidates(name string) []string {
 	}
 
 	return candidates
+}
+
+// variablePathTokens marks identifier-like tokens for wildcarding.
+// On a `/` path, short base64 crumbs (below looksVariable's length bar)
+// are variable too so they do not become per-id anchors.
+func variablePathTokens(tokens []string, seps []byte) []bool {
+	variable := make([]bool, len(tokens))
+	for i, t := range tokens {
+		if looksVariable(t) || (adjacentToSlash(i, seps) && isBase64Crumb(t)) {
+			variable[i] = true
+		}
+	}
+
+	for {
+		changed := false
+
+		for i, t := range tokens {
+			if variable[i] || !isBase64Alphabet(t) || isStableLabel(t) {
+				continue
+			}
+
+			if (i > 0 && seps[i-1] == '/' && variable[i-1]) ||
+				(i < len(seps) && seps[i] == '/' && variable[i+1]) {
+				variable[i] = true
+				changed = true
+			}
+		}
+
+		if !changed {
+			return variable
+		}
+	}
+}
+
+func adjacentToSlash(i int, seps []byte) bool {
+	return (i > 0 && seps[i-1] == '/') || (i < len(seps) && seps[i] == '/')
+}
+
+func isBase64Alphabet(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	for _, ch := range s {
+		switch {
+		case ch >= 'A' && ch <= 'Z', ch >= 'a' && ch <= 'z', ch >= '0' && ch <= '9', ch == '+', ch == '=':
+		default:
+			return false
+		}
+	}
+
+	return true
+}
+
+func isStableLabel(s string) bool {
+	run := 0
+	for _, ch := range s {
+		if ch >= 'a' && ch <= 'z' {
+			run++
+			if run >= 3 {
+				return true
+			}
+
+			continue
+		}
+
+		run = 0
+	}
+
+	return false
+}
+
+func isBase64Crumb(s string) bool {
+	if !isBase64Alphabet(s) || isStableLabel(s) {
+		return false
+	}
+
+	hasLower := false
+	hasUpper := false
+	hasDigitOrPlusEq := false
+
+	for _, ch := range s {
+		switch {
+		case ch >= 'a' && ch <= 'z':
+			hasLower = true
+		case ch >= 'A' && ch <= 'Z':
+			hasUpper = true
+		case ch >= '0' && ch <= '9', ch == '+', ch == '=':
+			hasDigitOrPlusEq = true
+		}
+	}
+
+	return (hasLower && hasUpper) || hasDigitOrPlusEq
 }
 
 func looksVariable(token string) bool {
