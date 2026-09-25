@@ -182,7 +182,7 @@
     }
   },
   "createDialog": {
-    "title": "Nieuwe taak",
+    "title": "Taak toevoegen",
     "fields": {
       "namePlaceholder": "Taaknaam"
     },

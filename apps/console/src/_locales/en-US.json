@@ -365,7 +365,7 @@
     "title": "Tasks",
     "description": "Track your assigned compliance tasks and keep progress on track.",
     "actions": {
-      "create": "New task"
+      "create": "Add Task"
     }
   },
   "pageError": {

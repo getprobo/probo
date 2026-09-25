@@ -182,7 +182,7 @@
     }
   },
   "createDialog": {
-    "title": "New task",
+    "title": "Add Task",
     "fields": {
       "namePlaceholder": "Task name"
     },

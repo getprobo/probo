@@ -752,7 +752,7 @@
     "title": "Tâches",
     "description": "Suivez les tâches de conformité qui vous sont assignées et gardez votre progression sur la bonne voie.",
     "actions": {
-      "create": "Nouvelle tâche"
+      "create": "Ajouter une tâche"
     }
   },
   "pageError": {

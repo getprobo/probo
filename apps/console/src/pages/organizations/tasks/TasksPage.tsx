@@ -85,12 +85,7 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
               <TasksSettingsDialog organizationKey={organization} />
               {canCreateTask && (
                 <CreateTaskDialog connectionId={connectionId} onCompleted={refetch}>
-                  <Button
-                    variant="solid"
-                    color="neutral"
-                    highContrast
-                    iconStart={<PlusIcon />}
-                  >
+                  <Button variant="solid" iconStart={<PlusIcon />}>
                     {t("tasks.actions.create")}
                   </Button>
                 </CreateTaskDialog>

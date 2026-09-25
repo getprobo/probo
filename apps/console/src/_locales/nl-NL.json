@@ -752,7 +752,7 @@
     "title": "Taken",
     "description": "Houd uw toegewezen compliancetaken bij en houd de voortgang op koers.",
     "actions": {
-      "create": "Nieuwe taak"
+      "create": "Taak toevoegen"
     }
   },
   "pageError": {

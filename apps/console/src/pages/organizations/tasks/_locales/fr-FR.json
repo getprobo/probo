@@ -182,7 +182,7 @@
     }
   },
   "createDialog": {
-    "title": "Nouvelle tâche",
+    "title": "Ajouter une tâche",
     "fields": {
       "namePlaceholder": "Nom de la tâche"
     },
