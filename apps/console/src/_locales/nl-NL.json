@@ -2425,7 +2425,7 @@
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein.",
-    "actions": { "addConfiguration": "Configuratie toevoegen", "previous": "Vorige", "next": "Volgende" },
+    "actions": { "add": "SAML SSO toevoegen", "previous": "Vorige", "next": "Volgende" },
     "breadcrumb": {
       "settings": "SAML-instellingen",
       "configure": "Configureren"
@@ -2562,6 +2562,12 @@
       "warning": "Deze actie kan niet ongedaan worden gemaakt."
     }
   },
+  "newSamlSsoPage": {
+    "title": "SAML SSO toevoegen",
+    "description": "Stel SAML 2.0 single sign-on in voor een e-maildomein.",
+    "back": "SAML SSO",
+    "notFound": "U kunt geen SAML SSO toevoegen aan deze organisatie"
+  },
   "newSamlConfigurationForm": {
     "messages": {
       "created": "SAML-configuratie succesvol aangemaakt."
@@ -2572,18 +2578,17 @@
   },
   "samlConfigurationForm": {
     "sections": {
-      "basic": "Basisconfiguratie",
-      "identityProvider": "Identity provider-configuratie",
+      "identityProvider": "Identity provider",
       "attributeMapping": "Attribuuttoewijzing"
     },
     "fields": {
-      "emailDomain": "E-maildomein *",
+      "emailDomain": "E-maildomein",
       "emailDomainLocked": "E-maildomein kan na aanmaak niet meer worden gewijzigd",
       "emailDomainHelp": "Het e-maildomein waarop deze SAML-configuratie van toepassing is (bijv. example.com)",
-      "enforcementPolicy": "Handhavingsbeleid *",
-      "idpEntityId": "IdP Entity ID *",
-      "idpSsoUrl": "IdP SSO-URL *",
-      "idpCertificate": "IdP X.509-certificaat *",
+      "enforcementPolicy": "Handhavingsbeleid",
+      "idpEntityId": "IdP Entity ID",
+      "idpSsoUrl": "IdP SSO-URL",
+      "idpCertificate": "IdP X.509-certificaat",
       "emailAttribute": "E-mailattribuut",
       "firstNameAttribute": "Voornaamattribuut",
       "lastNameAttribute": "Achternaamattribuut",
@@ -2619,8 +2624,8 @@
       "description": "Weet u zeker dat u de SAML-configuratie voor {{domain}} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt."
     },
     "empty": {
-      "title": "Geen SAML-configuraties",
-      "description": "Stel SAML 2.0 single sign-on in voor uw organisatie door voor elk e-maildomein een configuratie toe te voegen."
+      "title": "Geen SAML SSO",
+      "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein."
     },
     "pending": {
       "description": "Voeg een DNS-TXT-record toe om te verifiëren dat u dit domein beheert."

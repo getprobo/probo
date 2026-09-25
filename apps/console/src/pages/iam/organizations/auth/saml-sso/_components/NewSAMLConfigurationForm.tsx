@@ -48,8 +48,11 @@ const createSAMLConfigurationMutation = graphql`
   }
 `;
 
-export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
-  const { onCreate } = props;
+export function NewSAMLConfigurationForm(props: {
+  onCreate: () => void;
+  variant?: "dialog" | "page";
+}) {
+  const { onCreate, variant } = props;
   const organizationId = useOrganizationId();
 
   const { t } = useTranslation();
@@ -80,6 +83,7 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
             idpSsoUrl: data.idpSsoUrl,
             idpCertificate: data.idpCertificate,
             autoSignupEnabled: data.autoSignupEnabled,
+            enforcementPolicy: data.enforcementPolicy,
             attributeMappings: data.attributeMappings,
           },
           connections: [connectionID],
@@ -105,6 +109,10 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
   );
 
   return (
-    <SAMLConfigurationForm onSubmit={handleCreate} disabled={isCreating} />
+    <SAMLConfigurationForm
+      variant={variant}
+      onSubmit={handleCreate}
+      disabled={isCreating}
+    />
   );
 }

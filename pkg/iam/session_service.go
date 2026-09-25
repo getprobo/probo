@@ -676,7 +676,7 @@ func (s SessionService) AssumeOrganizationSession(
 				return fmt.Errorf("cannot load SAML configuration: %w", err)
 			}
 
-			if err == nil {
+			if err == nil && samlConfig.DomainVerifiedAt != nil {
 				switch samlConfig.EnforcementPolicy {
 				case coredata.SAMLEnforcementPolicyRequired:
 					if rootSession.AuthMethod != coredata.AuthMethodSAML {

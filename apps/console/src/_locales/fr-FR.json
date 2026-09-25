@@ -2425,7 +2425,7 @@
   "samlSsoPage": {
     "title": "Authentification unique SAML",
     "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",
-    "actions": { "addConfiguration": "Ajouter une configuration", "previous": "Préc.", "next": "Suiv." },
+    "actions": { "add": "Ajouter le SSO SAML", "previous": "Préc.", "next": "Suiv." },
     "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer" }
   },
   "scimPage": {
@@ -2559,6 +2559,12 @@
       "warning": "Cette action est irréversible."
     }
   },
+  "newSamlSsoPage": {
+    "title": "Ajouter le SSO SAML",
+    "description": "Configurez l’authentification unique SAML 2.0 pour un domaine de messagerie.",
+    "back": "SSO SAML",
+    "notFound": "Vous ne pouvez pas ajouter le SSO SAML à cette organisation"
+  },
   "newSamlConfigurationForm": {
     "messages": {
       "created": "Configuration SAML créée avec succès."
@@ -2569,18 +2575,17 @@
   },
   "samlConfigurationForm": {
     "sections": {
-      "basic": "Configuration de base",
-      "identityProvider": "Configuration du fournisseur d’identité",
+      "identityProvider": "Fournisseur d’identité",
       "attributeMapping": "Mappage des attributs"
     },
     "fields": {
-      "emailDomain": "Domaine e-mail *",
+      "emailDomain": "Domaine e-mail",
       "emailDomainLocked": "Le domaine e-mail ne peut pas être modifié après la création",
       "emailDomainHelp": "Le domaine e-mail auquel cette configuration SAML s’applique (par ex. example.com)",
-      "enforcementPolicy": "Politique d’application *",
-      "idpEntityId": "ID d’entité IdP *",
-      "idpSsoUrl": "URL SSO de l’IdP *",
-      "idpCertificate": "Certificat X.509 de l’IdP *",
+      "enforcementPolicy": "Politique d’application",
+      "idpEntityId": "ID d’entité IdP",
+      "idpSsoUrl": "URL SSO de l’IdP",
+      "idpCertificate": "Certificat X.509 de l’IdP",
       "emailAttribute": "Attribut e-mail",
       "firstNameAttribute": "Attribut prénom",
       "lastNameAttribute": "Attribut nom",
@@ -2616,8 +2621,8 @@
       "description": "Voulez-vous vraiment supprimer la configuration SAML pour {{domain}} ? Cette action est irréversible."
     },
     "empty": {
-      "title": "Aucune configuration SAML",
-      "description": "Configurez l’authentification unique SAML 2.0 pour votre organisation en ajoutant une configuration pour chaque domaine de messagerie."
+      "title": "Aucun SSO SAML",
+      "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie."
     },
     "pending": {
       "description": "Ajoutez un enregistrement TXT DNS pour vérifier que vous contrôlez ce domaine."

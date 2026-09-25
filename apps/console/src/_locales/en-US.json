@@ -1559,7 +1559,7 @@
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Set up SAML 2.0 single sign-on for each email domain.",
-    "actions": { "addConfiguration": "Add Configuration", "previous": "Prev", "next": "Next" },
+    "actions": { "add": "Add SAML SSO", "previous": "Prev", "next": "Next" },
     "breadcrumb": { "settings": "SAML Settings", "configure": "Configure" }
   },
   "scimPage": {
@@ -1621,13 +1621,19 @@
     "settings": { "title": "Microsoft 365 Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Microsoft 365.", "noExcludedUserNames": "No excluded user names. All Microsoft 365 users will be synced." },
     "disconnect": { "title": "Disconnect Microsoft 365", "description": "This will disconnect your Microsoft 365 integration. Users will no longer be automatically synced via SCIM.", "warning": "This action cannot be undone." }
   },
+  "newSamlSsoPage": {
+    "title": "Add SAML SSO",
+    "description": "Set up SAML 2.0 single sign-on for an email domain.",
+    "back": "SAML SSO",
+    "notFound": "You cannot add SAML SSO to this organization"
+  },
   "newSamlConfigurationForm": {
     "messages": { "created": "SAML configuration created successfully." },
     "errors": { "create": "Failed to create SAML configuration" }
   },
   "samlConfigurationForm": {
-    "sections": { "basic": "Basic Configuration", "identityProvider": "Identity Provider Configuration", "attributeMapping": "Attribute Mapping" },
-    "fields": { "emailDomain": "Email Domain *", "emailDomainLocked": "Email domain cannot be changed after creation", "emailDomainHelp": "The email domain this SAML configuration applies to (e.g., example.com)", "enforcementPolicy": "Enforcement Policy *", "idpEntityId": "IdP Entity ID *", "idpSsoUrl": "IdP SSO URL *", "idpCertificate": "IdP X.509 Certificate *", "emailAttribute": "Email Attribute", "firstNameAttribute": "First Name Attribute", "lastNameAttribute": "Last Name Attribute", "roleAttribute": "Role Attribute", "autoSignupEnabled": "Enable automatic user signup via SAML" },
+    "sections": { "identityProvider": "Identity Provider", "attributeMapping": "Attribute Mapping" },
+    "fields": { "emailDomain": "Email Domain", "emailDomainLocked": "Email domain cannot be changed after creation", "emailDomainHelp": "The email domain this SAML configuration applies to (e.g., example.com)", "enforcementPolicy": "Enforcement Policy", "idpEntityId": "IdP Entity ID", "idpSsoUrl": "IdP SSO URL", "idpCertificate": "IdP X.509 Certificate", "emailAttribute": "Email Attribute", "firstNameAttribute": "First Name Attribute", "lastNameAttribute": "Last Name Attribute", "roleAttribute": "Role Attribute", "autoSignupEnabled": "Enable automatic user signup via SAML" },
     "enforcement": { "optional": "Optional", "required": "Required", "off": "Off" },
     "enforcementDescriptions": { "off": "Your team members can't use single sign-on and must use their password", "required": "Your team members must use single sign-on to log in", "optional": "Your team members may use either single sign-on or their password to log in" },
     "actions": { "update": "Update Configuration", "create": "Create Configuration" }
@@ -1636,7 +1642,7 @@
     "messages": { "deleted": "SAML configuration deleted successfully.", "copied": "Copied to clipboard" },
     "errors": { "delete": "Failed to delete SAML configuration. Please try again.", "copy": "Failed to copy to clipboard" },
     "delete": { "title": "Delete SAML Configuration", "description": "Are you sure you want to delete the SAML configuration for {{domain}}? This action cannot be undone." },
-    "empty": { "title": "No SAML Configurations", "description": "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain." },
+    "empty": { "title": "No SAML SSO", "description": "Set up SAML 2.0 single sign-on for each email domain." },
     "pending": { "description": "Add a DNS TXT record to verify you control this domain." },
     "dns": {
       "name": "Name",

@@ -71,6 +71,7 @@ input CreateSAMLConfigurationInput {
   idpSsoUrl: String!
   idpCertificate: String!
   autoSignupEnabled: Boolean!
+  enforcementPolicy: SAMLEnforcementPolicy
   attributeMappings: SAMLAttributeMappingsInput
 }
 

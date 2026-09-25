@@ -24,6 +24,7 @@ import { redirect } from "react-router";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { NewSAMLSSOPageSkeleton } from "./saml-sso/NewSAMLSSOPageSkeleton";
 import { SAMLSSOPageSkeleton } from "./saml-sso/SAMLSSOPageSkeleton";
 
 export const authRoutes = [
@@ -41,8 +42,18 @@ export const authRoutes = [
       },
       {
         path: "saml-sso",
-        Fallback: SAMLSSOPageSkeleton,
-        Component: lazy(() => import("./saml-sso/SAMLSSOPageLoader")),
+        children: [
+          {
+            index: true,
+            Fallback: SAMLSSOPageSkeleton,
+            Component: lazy(() => import("./saml-sso/SAMLSSOPageLoader")),
+          },
+          {
+            path: "new",
+            Fallback: NewSAMLSSOPageSkeleton,
+            Component: lazy(() => import("./saml-sso/NewSAMLSSOPageLoader")),
+          },
+        ],
       },
       {
         path: "scim",

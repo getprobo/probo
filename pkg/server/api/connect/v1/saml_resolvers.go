@@ -29,6 +29,7 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		IdPSsoURL:         input.IdpSsoURL,
 		IdPCertificate:    input.IdpCertificate,
 		AutoSignupEnabled: input.AutoSignupEnabled,
+		EnforcementPolicy: input.EnforcementPolicy,
 	}
 
 	if input.AttributeMappings != nil {

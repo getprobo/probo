@@ -19,13 +19,11 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Breadcrumb, Dialog, useDialogRef } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { SAMLSSOPageQuery } from "#/__generated__/iam/SAMLSSOPageQuery.graphql";
 
-import { NewSAMLConfigurationForm } from "./_components/NewSAMLConfigurationForm";
 import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
 import { samlSsoPage } from "./variants";
 
@@ -45,8 +43,6 @@ export function SAMLSSOPage(props: {
 }) {
   const { queryRef } = props;
 
-  const formDialogRef = useDialogRef();
-
   const { t } = useTranslation();
   const { root } = samlSsoPage();
   usePageTitle(t("samlSsoPage.title"));
@@ -57,21 +53,8 @@ export function SAMLSSOPage(props: {
   }
 
   return (
-    <>
-      <div className={root()}>
-        <SAMLConfigurationList
-          organizationKey={organization}
-          onAdd={() => formDialogRef.current?.open()}
-        />
-      </div>
-
-      <Dialog
-        ref={formDialogRef}
-        onClose={() => formDialogRef.current?.close()}
-        title={<Breadcrumb items={[t("samlSsoPage.breadcrumb.settings"), t("samlSsoPage.breadcrumb.configure")]} />}
-      >
-        <NewSAMLConfigurationForm onCreate={() => formDialogRef.current?.close()} />
-      </Dialog>
-    </>
+    <div className={root()}>
+      <SAMLConfigurationList organizationKey={organization} />
+    </div>
   );
 }
