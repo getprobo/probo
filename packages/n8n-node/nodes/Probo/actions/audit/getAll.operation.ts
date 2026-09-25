@@ -85,11 +85,16 @@ export async function execute(
 							node {
 								id
 								name
+								firm
 								state
-								validFrom
-								validUntil
-								auditStartDate
-								auditEndDate
+								validity {
+									start
+									end
+								}
+								auditDates {
+									start
+									end
+								}
 								reportUrl
 								createdAt
 								updatedAt

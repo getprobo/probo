@@ -21,6 +21,8 @@
 type Translator = (s: string) => string;
 
 export const auditStates = [
+  "TO_BOOK",
+  "AUDIT_BOOKED",
   "NOT_STARTED",
   "IN_PROGRESS",
   "COMPLETED",
@@ -30,6 +32,10 @@ export const auditStates = [
 
 export function getAuditStateLabel(t: Translator, state: (typeof auditStates)[number]) {
   switch (state) {
+    case "TO_BOOK":
+      return t("helpers.auditState.toBook");
+    case "AUDIT_BOOKED":
+      return t("helpers.auditState.auditBooked");
     case "NOT_STARTED":
       return t("helpers.auditState.notStarted");
     case "IN_PROGRESS":
@@ -47,6 +53,10 @@ export function getAuditStateLabel(t: Translator, state: (typeof auditStates)[nu
 
 export function getAuditStateVariant(state: (typeof auditStates)[number]) {
   switch (state) {
+    case "TO_BOOK":
+      return "warning";
+    case "AUDIT_BOOKED":
+      return "info";
     case "NOT_STARTED":
       return "neutral";
     case "IN_PROGRESS":

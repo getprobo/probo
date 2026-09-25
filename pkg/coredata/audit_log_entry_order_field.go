@@ -47,13 +47,7 @@ func AuditLogEntryOrderFields() []AuditLogEntryOrderField {
 }
 
 func (v AuditLogEntryOrderField) IsValid() bool {
-	switch v {
-	case
-		AuditLogEntryOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AuditLogEntryOrderFields())
 }
 
 func (v AuditLogEntryOrderField) String() string {
@@ -65,14 +59,7 @@ func (v AuditLogEntryOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *AuditLogEntryOrderField) UnmarshalText(text []byte) error {
-	val := AuditLogEntryOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AuditLogEntryOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AuditLogEntryOrderFields())
 }
 
 func (p AuditLogEntryOrderField) Column() string {

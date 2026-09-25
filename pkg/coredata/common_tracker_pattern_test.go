@@ -213,6 +213,61 @@ func TestCommonTrackerPattern_UpdateEnrichment_LinksThirdPartyWithoutOverride(t 
 	})
 }
 
+// TestCommonTrackerPattern_UpdateEnrichment_DiscardsVendorOnTerminal pins
+// the persist-side of the claim race: clearing the queue cannot cancel a
+// worker that already holds the row. If that worker then COALESCE-links a
+// researched vendor, a later terminal upsert is undone. The persist must
+// re-read attribution and drop the vendor instead.
+func TestCommonTrackerPattern_UpdateEnrichment_DiscardsVendorOnTerminal(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	party := seedCommonThirdParty(t, ctx, client)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
+
+			require.True(t, verdict.IsTerminal(), "fixture must be a terminal verdict")
+
+			cp := coredata.CommonTrackerPattern{
+				ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType: coredata.TrackerTypeCookie,
+				Pattern:     "stale_enrich_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+				MatchType:   coredata.TrackerPatternMatchTypeExact,
+				Confidence:  0.5,
+				Attribution: verdict,
+				CreatedAt:   now,
+				UpdatedAt:   now,
+			}
+			insertCommonTrackerPattern(t, ctx, client, cp)
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				return cp.UpdateEnrichment(
+					ctx,
+					tx,
+					"Analytics tracker.",
+					&party.ID,
+					json.RawMessage(`{"status":"done"}`),
+				)
+			}))
+
+			assert.Nil(t, cp.CommonThirdPartyID, "in-memory state must not keep a discarded vendor")
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, cp.ID)
+			assert.Equal(t, verdict, reloaded.Attribution)
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal row must stay vendor-free")
+			assert.JSONEq(t, `{"status":"done"}`, string(reloaded.Enrichment))
+		})
+	}
+}
+
 // TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink pins
 // the re-trigger contract: when a blank, unlinked catalog row later
 // gains a third party through the mapping pipeline's Upsert, enrichment
@@ -287,8 +342,22 @@ func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing
 		return reloaded.ClearEnrichmentRequestedAt(ctx, tx)
 	}))
 
+	// Back-date the attempt clock past the staleness window below. The
+	// window is compared against a timestamp taken in this process while
+	// the claim stamps the database's own clock, so a zero window would
+	// make eligibility depend on the skew between the two.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`UPDATE common_tracker_patterns SET last_enrichment_attempt_at = NOW() - interval '1 hour' WHERE id = $1`,
+			blank.ID,
+		)
+
+		return err
+	}))
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return coredata.ResetStaleEnrichments(ctx, conn, 0, 3)
+		return coredata.ResetStaleEnrichments(ctx, conn, time.Minute, 3)
 	}))
 
 	afterSweep := loadCommonTrackerPattern(t, ctx, client, blank.ID)
@@ -478,50 +547,200 @@ func TestCommonTrackerPattern_Upsert_RoundTripsAttribution(t *testing.T) {
 // TestCommonTrackerPattern_Upsert_PreservesFirstPartyVerdict pins the
 // terminal contract: once a row is FIRST_PARTY, an automated upsert that
 // carries a vendor neither flips the verdict nor attaches the vendor.
-func TestCommonTrackerPattern_Upsert_PreservesFirstPartyVerdict(t *testing.T) {
+// TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor pins the
+// other direction of the terminal-row invariant.
+//
+// The existing-attribution guard only stops a terminal row from gaining a
+// vendor. An upsert can also *introduce* a terminal verdict, and if it carries
+// a vendor of its own the row would end up both terminal and attributed —
+// which the organization-scoped lookup then reads as vendor-attributed. A
+// queued undetermined row that becomes terminal must also leave the
+// enrichment queue: the worker claims on that stamp alone and can then
+// COALESCE a vendor onto the settled row.
+func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	party := seedCommonThirdParty(t, ctx, client)
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
 
-	now := time.Now().UTC().Truncate(time.Microsecond)
-	pattern := "first_party_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+			party := seedCommonThirdParty(t, ctx, client)
 
-	firstParty := coredata.CommonTrackerPattern{
-		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-		TrackerType: coredata.TrackerTypeLocalStorage,
-		Pattern:     pattern,
-		MatchType:   coredata.TrackerPatternMatchTypeExact,
-		Confidence:  0.8,
-		Attribution: coredata.CommonTrackerPatternAttributionFirstParty,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			attemptAt := now.Add(-time.Hour)
+			pattern := "incoming_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+			payload := json.RawMessage(`{"status":"no_result"}`)
+
+			existing := coredata.CommonTrackerPattern{
+				ID:                      gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType:             coredata.TrackerTypeCookie,
+				Pattern:                 pattern,
+				MatchType:               coredata.TrackerPatternMatchTypeExact,
+				Description:             "",
+				Confidence:              0.5,
+				Attribution:             coredata.CommonTrackerPatternAttributionUndetermined,
+				EnrichmentRequestedAt:   &now,
+				Enrichment:              payload,
+				EnrichmentAttempts:      2,
+				LastEnrichmentAttemptAt: &attemptAt,
+				CreatedAt:               now,
+				UpdatedAt:               now,
+			}
+			insertCommonTrackerPattern(t, ctx, client, existing)
+
+			// The incoming row settles the artifact but still names a vendor.
+			incoming := existing
+			incoming.ID = gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType)
+			incoming.CommonThirdPartyID = &party.ID
+			incoming.Attribution = verdict
+			incoming.Enrichment = nil
+			incoming.EnrichmentAttempts = 0
+			incoming.LastEnrichmentAttemptAt = nil
+			incoming.UpdatedAt = now.Add(time.Minute)
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				_, err := incoming.Upsert(ctx, tx)
+				return err
+			}))
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, existing.ID)
+			assert.Equal(t, verdict, reloaded.Attribution)
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal verdict must not persist alongside a vendor")
+			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a terminal verdict must leave the enrichment queue")
+			assert.Equal(t, 2, reloaded.EnrichmentAttempts, "a discarded terminal vendor must leave the retry budget")
+			assert.JSONEq(t, string(payload), string(reloaded.Enrichment), "a discarded terminal vendor must keep the prior payload")
+			require.NotNil(t, reloaded.LastEnrichmentAttemptAt)
+			assert.Equal(t, attemptAt, reloaded.LastEnrichmentAttemptAt.UTC())
+		})
 	}
-	insertCommonTrackerPattern(t, ctx, client, firstParty)
+}
 
-	// An automated upsert (same key) that tries to attach a vendor.
-	intruder := coredata.CommonTrackerPattern{
-		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-		CommonThirdPartyID: &party.ID,
-		TrackerType:        coredata.TrackerTypeLocalStorage,
-		Pattern:            pattern,
-		MatchType:          coredata.TrackerPatternMatchTypeExact,
-		Confidence:         0.7,
-		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
-		CreatedAt:          now,
-		UpdatedAt:          now.Add(time.Minute),
+// TestCommonTrackerPattern_Upsert_InsertTerminalVerdictSkipsEnrichmentQueue
+// pins the insert-side of the same invariant: a fresh terminal row that
+// still names a vendor must land vendor-free and unqueued.
+func TestCommonTrackerPattern_Upsert_InsertTerminalVerdictSkipsEnrichmentQueue(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
+
+			party := seedCommonThirdParty(t, ctx, client)
+
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			incoming := coredata.CommonTrackerPattern{
+				ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				CommonThirdPartyID: &party.ID,
+				TrackerType:        coredata.TrackerTypeCookie,
+				Pattern:            "insert_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+				MatchType:          coredata.TrackerPatternMatchTypeExact,
+				Description:        "",
+				Confidence:         0.5,
+				Attribution:        verdict,
+				CreatedAt:          now,
+				UpdatedAt:          now,
+			}
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				inserted, err := incoming.Upsert(ctx, tx)
+				if err != nil {
+					return err
+				}
+
+				assert.True(t, inserted)
+
+				return nil
+			}))
+
+			t.Cleanup(func() {
+				_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+					_, err := tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, incoming.ID)
+					return err
+				})
+			})
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, incoming.ID)
+			assert.Equal(t, verdict, reloaded.Attribution)
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal insert must not persist a vendor")
+			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a terminal insert must not enter the enrichment queue")
+			assert.Equal(t, 0, reloaded.EnrichmentAttempts)
+			assert.Empty(t, reloaded.Enrichment)
+		})
 	}
+}
 
-	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		_, err := intruder.Upsert(ctx, tx)
-		return err
-	}))
+func TestCommonTrackerPattern_Upsert_PreservesTerminalVerdict(t *testing.T) {
+	t.Parallel()
 
-	reloaded := loadCommonTrackerPattern(t, ctx, client, firstParty.ID)
-	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, reloaded.Attribution, "FIRST_PARTY verdict must survive an automated upsert")
-	assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal first-party row must stay vendor-free")
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	// Every terminal verdict must resist a later mapping-side upsert, not just
+	// FIRST_PARTY. The SQL tests membership of a set for that reason, so adding
+	// a verdict cannot silently make it re-attributable.
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
+
+			require.True(t, verdict.IsTerminal(), "fixture must be a terminal verdict")
+
+			party := seedCommonThirdParty(t, ctx, client)
+
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			pattern := "terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+
+			terminal := coredata.CommonTrackerPattern{
+				ID:                    gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType:           coredata.TrackerTypeLocalStorage,
+				Pattern:               pattern,
+				MatchType:             coredata.TrackerPatternMatchTypeExact,
+				Confidence:            0.8,
+				Attribution:           verdict,
+				EnrichmentRequestedAt: &now,
+				CreatedAt:             now,
+				UpdatedAt:             now,
+			}
+			insertCommonTrackerPattern(t, ctx, client, terminal)
+
+			// An automated upsert (same key) that tries to attach a vendor.
+			intruder := coredata.CommonTrackerPattern{
+				ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				CommonThirdPartyID: &party.ID,
+				TrackerType:        coredata.TrackerTypeLocalStorage,
+				Pattern:            pattern,
+				MatchType:          coredata.TrackerPatternMatchTypeExact,
+				Confidence:         0.7,
+				Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+				CreatedAt:          now,
+				UpdatedAt:          now.Add(time.Minute),
+			}
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				_, err := intruder.Upsert(ctx, tx)
+				return err
+			}))
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, terminal.ID)
+			assert.Equal(t, verdict, reloaded.Attribution, "a terminal verdict must survive an automated upsert")
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal row must stay vendor-free")
+			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a terminal row must leave the enrichment queue")
+		})
+	}
 }
 
 // TestCommonTrackerPatterns_SetAttributionByIDs pins that the operator

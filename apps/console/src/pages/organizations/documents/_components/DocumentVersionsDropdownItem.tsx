@@ -61,7 +61,7 @@ export function DocumentVersionsDropdownItem(props: {
   return (
     <DropdownItem asChild>
       <Link
-        to={`/organizations/${organizationId}/documents/${documentId}/versions/${version.id}/${currentTab}`}
+        to={`/organizations/${organizationId}/governance/documents/${documentId}/versions/${version.id}/${currentTab}`}
         className="flex items-center gap-2 py-2 px-[10px] w-full hover:bg-tertiary-hover cursor-pointer rounded"
       >
         <div className="flex gap-3 w-full overflow-hidden">

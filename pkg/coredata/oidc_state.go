@@ -67,6 +67,33 @@ VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @organization_id,
 	return nil
 }
 
+func (s *OIDCState) LoadByID(ctx context.Context, conn pg.Querier, id string) error {
+	query := `
+SELECT id, provider, nonce, code_verifier, continue_url, organization_id, created_at, expires_at
+FROM iam_oidc_states
+WHERE id = @id
+LIMIT 1
+`
+
+	rows, err := conn.Query(ctx, query, pgx.StrictNamedArgs{"id": id})
+	if err != nil {
+		return fmt.Errorf("cannot query oidc_state: %w", err)
+	}
+
+	state, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OIDCState])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect oidc_state: %w", err)
+	}
+
+	*s = state
+
+	return nil
+}
+
 func (s *OIDCState) LoadByIDForUpdate(ctx context.Context, conn pg.Tx, id string) error {
 	query := `
 SELECT id, provider, nonce, code_verifier, continue_url, organization_id, created_at, expires_at

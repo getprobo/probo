@@ -198,7 +198,7 @@ function AuditRow(props: {
   const { t } = useTranslation();
 
   return (
-    <Tr to={`/organizations/${organizationId}/audits/${audit.id}`}>
+    <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td>
         <div className="flex flex-col">
           <div className="font-medium">{audit.framework?.name}</div>

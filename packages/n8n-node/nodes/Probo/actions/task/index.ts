@@ -24,6 +24,11 @@ import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as linkToLinearOp from './linkToLinear.operation';
+import * as listLinearIssuesOp from './listLinearIssues.operation';
+import * as listLinearTeamsOp from './listLinearTeams.operation';
+import * as publishToLinearOp from './publishToLinear.operation';
+import * as unlinkExternalOp from './unlinkExternal.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -62,6 +67,36 @@ export const description: INodeProperties[] = [
 				action: 'Get many tasks',
 			},
 			{
+				name: 'Link To Linear',
+				value: 'linkToLinear',
+				description: 'Link a task to an existing Linear issue. This updates the Probo task with the Linear issue.',
+				action: 'Link a task to linear',
+			},
+			{
+				name: 'List Linear Issues',
+				value: 'listLinearIssues',
+				description: 'Search Linear issues in a team',
+				action: 'List linear issues',
+			},
+			{
+				name: 'List Linear Teams',
+				value: 'listLinearTeams',
+				description: 'Search Linear teams for an organization',
+				action: 'List linear teams',
+			},
+			{
+				name: 'Publish To Linear',
+				value: 'publishToLinear',
+				description: 'Publish a task as a new Linear issue',
+				action: 'Publish a task to linear',
+			},
+			{
+				name: 'Unlink External',
+				value: 'unlinkExternal',
+				description: 'Unlink a task from its external issue',
+				action: 'Unlink a task external issue',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing task',
@@ -75,6 +110,22 @@ export const description: INodeProperties[] = [
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...linkToLinearOp.description,
+	...listLinearIssuesOp.description,
+	...listLinearTeamsOp.description,
+	...publishToLinearOp.description,
+	...unlinkExternalOp.description,
 ];
 
-export { createOp as create, updateOp as update, deleteOp as delete, getOp as get, getAllOp as getAll };
+export {
+	createOp as create,
+	updateOp as update,
+	deleteOp as delete,
+	getOp as get,
+	getAllOp as getAll,
+	linkToLinearOp as linkToLinear,
+	listLinearIssuesOp as listLinearIssues,
+	listLinearTeamsOp as listLinearTeams,
+	publishToLinearOp as publishToLinear,
+	unlinkExternalOp as unlinkExternal,
+};

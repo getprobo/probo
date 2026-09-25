@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
@@ -39,21 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/resourcealias"
-	"go.probo.inc/probo/pkg/slack"
 )
-
-const DefaultNDAContactEmail = "security@probo.com"
-
-func ndaConsentText(contactEmail string) string {
-	if contactEmail == "" {
-		contactEmail = DefaultNDAContactEmail
-	}
-
-	return fmt.Sprintf(
-		"By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact %s.",
-		contactEmail,
-	)
-}
 
 type (
 	// Service is the visitor-facing compliance portal service. It exposes the
@@ -68,7 +55,7 @@ type (
 		html2pdfConverter *html2pdf.Converter
 		fileManager       *filemanager.Service
 		logger            *log.Logger
-		slack             *slack.Service
+		bot               *bot.Service
 		resourceAlias     *resourcealias.Service
 		management        *management.Service
 	}
@@ -83,7 +70,7 @@ func NewService(
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
-	slack *slack.Service,
+	botService *bot.Service,
 	resourceAliasSvc *resourcealias.Service,
 	managementSvc *management.Service,
 ) *Service {
@@ -96,7 +83,7 @@ func NewService(
 		html2pdfConverter: html2pdfConverter,
 		fileManager:       fileManagerService,
 		logger:            logger,
-		slack:             slack,
+		bot:               botService,
 		resourceAlias:     resourceAliasSvc,
 		management:        managementSvc,
 	}
@@ -354,6 +341,8 @@ func (s *Service) ProvisionPortalMember(
 					TenantID:           scope.GetTenantID(),
 					IdentityID:         identityID,
 					CompliancePortalID: compliancePageID,
+					State:              coredata.CompliancePortalAccessStateActive,
+					AuthenticatedAt:    &now,
 					CreatedAt:          now,
 					UpdatedAt:          now,
 				}
@@ -371,7 +360,7 @@ func (s *Service) ProvisionPortalMember(
 							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 							FileID:         *compliancePage.NonDisclosureAgreementFileID,
 							SignerEmail:    identity.EmailAddress,
-							ConsentText:    ndaConsentText(ref.UnrefOrZero(compliancePage.Email)),
+							ConsentText:    management.NDAConsentText(ref.UnrefOrZero(compliancePage.Email)),
 						},
 					)
 					if err != nil {
@@ -386,35 +375,12 @@ func (s *Service) ProvisionPortalMember(
 				if err := access.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert compliance page access: %w", err)
 				}
-			}
+			} else if access.AuthenticatedAt == nil {
+				access.AuthenticatedAt = &now
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(access.ID),
-				identityID,
-				access.OrganizationID,
-			); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load profile: %w", err)
-				}
-
-				profile = &coredata.MembershipProfile{
-					ID:             gid.New(access.TenantID, coredata.MembershipProfileEntityType),
-					IdentityID:     identityID,
-					OrganizationID: access.OrganizationID,
-					EmailAddress:   identity.EmailAddress,
-					Source:         coredata.ProfileSourceManual,
-					State:          coredata.ProfileStateActive,
-					ActivatedAt:    &now,
-					FullName:       identity.FullName,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := profile.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
+				access.UpdatedAt = now
+				if err := access.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot record access authentication: %w", err)
 				}
 			}
 

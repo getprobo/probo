@@ -33,7 +33,12 @@ import (
 func clickupRegistration() *Registration {
 	// ClickUp OAuth flow has no scope granularity, so OAuth2Scopes is empty.
 	return &Registration{
-		Provider:    coredata.ConnectorProviderClickUp,
+		Provider: coredata.ConnectorProviderClickUp,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.ClickUpConnectorSettings) string {
+				return s.TeamID
+			},
+		),
 		DisplayName: "ClickUp",
 		Endpoints: Endpoints{
 			Auth:  "https://app.clickup.com/api",
@@ -44,6 +49,7 @@ func clickupRegistration() *Registration {
 			// endpoint lives on app.clickup.com and is unrelated.
 			APIBase: "https://api.clickup.com/api/v2",
 		},
+		OAuth2: &OAuth2Config{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {

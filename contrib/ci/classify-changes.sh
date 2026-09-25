@@ -113,7 +113,7 @@ for changed_file in "${changed_files[@]}"; do
 
   case "$changed_file" in
     .nvmrc | package.json | turbo.json | \
-      apps/compliance-portal/* | apps/console/* | \
+      apps/compliance-portal/* | apps/console/* | apps/employee-portal/* | \
       packages/coredata/* | packages/emails/* | packages/helpers/* | \
       packages/hooks/* | packages/i18n/* | packages/prosemirror/* | \
       packages/react-lazy/* | packages/relay/* | packages/routes/* | \

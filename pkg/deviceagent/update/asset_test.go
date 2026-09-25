@@ -35,16 +35,17 @@ func TestLayoutFor(t *testing.T) {
 		archive      string
 		dir          string
 		binary       string
+		guiBinary    string
 		isZip        bool
 	}{
-		{"linux", "amd64", "probo-agent_Linux_x86_64.tar.gz", "probo-agent_Linux_x86_64", "probo-agent", false},
-		{"linux", "arm64", "probo-agent_Linux_arm64.tar.gz", "probo-agent_Linux_arm64", "probo-agent", false},
-		{"darwin", "amd64", "probo-agent_Darwin_x86_64.tar.gz", "probo-agent_Darwin_x86_64", "probo-agent", false},
-		{"darwin", "arm64", "probo-agent_Darwin_arm64.tar.gz", "probo-agent_Darwin_arm64", "probo-agent", false},
-		{"windows", "amd64", "probo-agent_Windows_x86_64.zip", "probo-agent_Windows_x86_64", "probo-agent.exe", true},
-		{"windows", "arm64", "probo-agent_Windows_arm64.zip", "probo-agent_Windows_arm64", "probo-agent.exe", true},
-		{"freebsd", "amd64", "probo-agent_Freebsd_x86_64.tar.gz", "probo-agent_Freebsd_x86_64", "probo-agent", false},
-		{"freebsd", "arm64", "probo-agent_Freebsd_arm64.tar.gz", "probo-agent_Freebsd_arm64", "probo-agent", false},
+		{"linux", "amd64", "probo-agent_Linux_x86_64.tar.gz", "probo-agent_Linux_x86_64", "probo-agent", "", false},
+		{"linux", "arm64", "probo-agent_Linux_arm64.tar.gz", "probo-agent_Linux_arm64", "probo-agent", "", false},
+		{"darwin", "amd64", "probo-agent_Darwin_x86_64.tar.gz", "probo-agent_Darwin_x86_64", "probo-agent", "", false},
+		{"darwin", "arm64", "probo-agent_Darwin_arm64.tar.gz", "probo-agent_Darwin_arm64", "probo-agent", "", false},
+		{"windows", "amd64", "probo-agent_Windows_x86_64.zip", "probo-agent_Windows_x86_64", "probo-agent.exe", "probo-agentw.exe", true},
+		{"windows", "arm64", "probo-agent_Windows_arm64.zip", "probo-agent_Windows_arm64", "probo-agent.exe", "probo-agentw.exe", true},
+		{"freebsd", "amd64", "probo-agent_Freebsd_x86_64.tar.gz", "probo-agent_Freebsd_x86_64", "probo-agent", "", false},
+		{"freebsd", "arm64", "probo-agent_Freebsd_arm64.tar.gz", "probo-agent_Freebsd_arm64", "probo-agent", "", false},
 	}
 
 	for _, tc := range cases {
@@ -58,6 +59,7 @@ func TestLayoutFor(t *testing.T) {
 				assert.Equal(t, tc.archive, layout.ArchiveName)
 				assert.Equal(t, tc.dir, layout.ArchiveDir)
 				assert.Equal(t, tc.binary, layout.BinaryName)
+				assert.Equal(t, tc.guiBinary, layout.GUIBinaryName)
 				assert.Equal(t, tc.isZip, layout.IsZip)
 			},
 		)

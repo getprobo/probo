@@ -1,0 +1,14 @@
+name: "Trim GOCACHE to working set"
+description: "Post-job hook: drop GOCACHE entries not used by this run before actions/cache saves."
+inputs:
+  gocache:
+    description: "GOCACHE directory to trim."
+    required: true
+  max-staleness-hours:
+    description: "Whole hours of slack before job start to retain entries. Minimum 1 (Go's mtime touch interval)."
+    required: false
+    default: "2"
+runs:
+  using: "node20"
+  main: "main.js"
+  post: "trim.js"

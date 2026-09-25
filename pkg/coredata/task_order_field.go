@@ -51,14 +51,7 @@ func TaskOrderFields() []TaskOrderField {
 }
 
 func (v TaskOrderField) IsValid() bool {
-	switch v {
-	case
-		TaskOrderFieldPriorityRank,
-		TaskOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, TaskOrderFields())
 }
 
 func (v TaskOrderField) String() string {
@@ -70,14 +63,7 @@ func (v TaskOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *TaskOrderField) UnmarshalText(text []byte) error {
-	val := TaskOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid TaskOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, TaskOrderFields())
 }
 
 func (p TaskOrderField) Column() string {

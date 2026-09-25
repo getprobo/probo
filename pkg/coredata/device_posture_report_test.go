@@ -60,6 +60,8 @@ func insertDevicePostureWithEvidence(
 		CheckKey:       checkKey,
 		Status:         status,
 		Evidence:       raw,
+		Version:        coredata.DevicePostureVersionV1,
+		AgentVersion:   "0.1",
 		ObservedAt:     createdAt,
 		CreatedAt:      createdAt,
 	}

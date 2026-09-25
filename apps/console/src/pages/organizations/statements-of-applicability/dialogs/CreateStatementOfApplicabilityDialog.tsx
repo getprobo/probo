@@ -111,7 +111,7 @@ export function CreateStatementOfApplicabilityDialog({
           = response.createStatementOfApplicability.statementOfApplicabilityEdge
             .node.id;
         void navigate(
-          `/organizations/${organizationId}/statements-of-applicability/${statementOfApplicabilityId}`,
+          `/organizations/${organizationId}/governance/statements-of-applicability/${statementOfApplicabilityId}`,
         );
       },
       onError(error) {

@@ -18,16 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CenteredLayoutSkeleton } from "@probo/ui";
 import { useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { AssumePageQuery } from "#/__generated__/iam/AssumePageQuery.graphql";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { AssumePage, assumePageQuery } from "./AssumePage";
 
-function AssumePageQueryLoader() {
+export default function AssumePageLoader() {
   const [queryRef, loadQuery] = useQueryLoader<AssumePageQuery>(assumePageQuery);
 
   useEffect(() => {
@@ -35,16 +33,8 @@ function AssumePageQueryLoader() {
   }, [loadQuery]);
 
   if (!queryRef) {
-    return <CenteredLayoutSkeleton />;
+    return null;
   }
 
   return <AssumePage queryRef={queryRef} />;
-}
-
-export default function AssumePageLoader() {
-  return (
-    <IAMRelayProvider>
-      <AssumePageQueryLoader />
-    </IAMRelayProvider>
-  );
 }

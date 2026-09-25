@@ -32,16 +32,23 @@ import (
 
 func supabaseRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderSupabase,
+		Provider: coredata.ConnectorProviderSupabase,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.SupabaseConnectorSettings) string {
+				return s.OrganizationSlug
+			},
+		),
 		DisplayName:      "Supabase",
 		DocumentationURL: accessReviewDocsURL("supabase"),
 		Endpoints: Endpoints{
 			APIBase: "https://api.supabase.com/v1",
 			Probe:   "https://api.supabase.com/v1/organizations",
 		},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+			},
+			KeyFormat: apiKeyPrefix("sbp_", "sbp_…"),
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)

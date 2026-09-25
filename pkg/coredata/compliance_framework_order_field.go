@@ -51,14 +51,7 @@ func ComplianceFrameworkOrderFields() []ComplianceFrameworkOrderField {
 }
 
 func (v ComplianceFrameworkOrderField) IsValid() bool {
-	switch v {
-	case
-		ComplianceFrameworkOrderFieldCreatedAt,
-		ComplianceFrameworkOrderFieldRank:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ComplianceFrameworkOrderFields())
 }
 
 func (v ComplianceFrameworkOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ComplianceFrameworkOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ComplianceFrameworkOrderField) UnmarshalText(text []byte) error {
-	val := ComplianceFrameworkOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ComplianceFrameworkOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ComplianceFrameworkOrderFields())
 }
 
 func (p ComplianceFrameworkOrderField) Column() string {

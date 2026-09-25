@@ -19,7 +19,11 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as createOp from './create.operation';
 import * as getAllOp from './getAll.operation';
+import * as setupAwsOp from './setupAws.operation';
+import * as setupAzureOp from './setupAzure.operation';
+import * as setupGcpOp from './setupGcp.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -34,15 +38,49 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create a workload-identity access source',
+				action: 'Create an access review source',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many access review sources',
 				action: 'Get many access review sources',
 			},
+			{
+				name: 'Setup AWS',
+				value: 'setupAws',
+				description: 'Get AWS access source setup values',
+				action: 'Get AWS access source setup',
+			},
+			{
+				name: 'Setup Azure',
+				value: 'setupAzure',
+				description: 'Get Azure access source setup values',
+				action: 'Get azure access source setup',
+			},
+			{
+				name: 'Setup GCP',
+				value: 'setupGcp',
+				description: 'Get GCP access source setup values',
+				action: 'Get GCP access source setup',
+			},
 		],
 		default: 'getAll',
 	},
+	...createOp.description,
 	...getAllOp.description,
+	...setupAwsOp.description,
+	...setupAzureOp.description,
+	...setupGcpOp.description,
 ];
 
-export { getAllOp as getAll };
+export {
+	createOp as create,
+	getAllOp as getAll,
+	setupAwsOp as setupAws,
+	setupAzureOp as setupAzure,
+	setupGcpOp as setupGcp,
+};

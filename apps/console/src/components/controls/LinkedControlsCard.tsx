@@ -171,7 +171,7 @@ function ControlRow(props: {
 
   return (
     <Tr
-      to={`/organizations/${organizationId}/frameworks/${control.framework.id}/controls/${control.id}`}
+      to={`/organizations/${organizationId}/governance/frameworks/${control.framework.id}/controls/${control.id}`}
     >
       <Td>
         <span className="inline-flex gap-2 items-center">

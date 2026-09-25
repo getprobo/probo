@@ -51,14 +51,7 @@ func StatementOfApplicabilityOrderFields() []StatementOfApplicabilityOrderField 
 }
 
 func (v StatementOfApplicabilityOrderField) IsValid() bool {
-	switch v {
-	case
-		StatementOfApplicabilityOrderFieldName,
-		StatementOfApplicabilityOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, StatementOfApplicabilityOrderFields())
 }
 
 func (v StatementOfApplicabilityOrderField) String() string {
@@ -70,14 +63,7 @@ func (v StatementOfApplicabilityOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *StatementOfApplicabilityOrderField) UnmarshalText(text []byte) error {
-	val := StatementOfApplicabilityOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid StatementOfApplicabilityOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, StatementOfApplicabilityOrderFields())
 }
 
 func (s StatementOfApplicabilityOrderField) Column() string {

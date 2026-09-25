@@ -31,21 +31,19 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 		return nil, err
 	}
 
-	config, token, err := r.iam.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID)
+	config, scimBridge, token, err := r.iam.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID, input.ConnectorID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create scim configuration", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	var bridge *types.SCIMBridge
-
-	if input.ConnectorID != nil {
-		scimBridge, err := r.iam.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot create scim bridge", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
+	if scimBridge != nil {
 		bridge = types.NewSCIMBridge(scimBridge)
 	}
 
@@ -104,6 +102,28 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 	}
 
 	return &types.UpdateSCIMBridgePayload{
+		ScimBridge: types.NewSCIMBridge(bridge),
+	}, nil
+}
+
+// ReactivateSCIMBridge is the resolver for the reactivateSCIMBridge field.
+func (r *mutationResolver) ReactivateSCIMBridge(ctx context.Context, input types.ReactivateSCIMBridgeInput) (*types.ReactivateSCIMBridgePayload, error) {
+	if _, err := r.authorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate); err != nil {
+		return nil, err
+	}
+
+	bridge, err := r.iam.OrganizationService.ReactivateSCIMBridge(ctx, input.ScimBridgeID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot reactivate scim bridge", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ReactivateSCIMBridgePayload{
 		ScimBridge: types.NewSCIMBridge(bridge),
 	}, nil
 }

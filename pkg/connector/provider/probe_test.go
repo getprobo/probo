@@ -22,6 +22,8 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -46,7 +48,14 @@ func TestBuiltinRegistry_ProbeCoverage(t *testing.T) {
 	r := NewBuiltinRegistry()
 
 	for _, reg := range r.All() {
+		// A workload identity provider's credential is a cloud SDK
+		// credential, so its probe is a cloud call rather than an HTTP one and
+		// none of the three HTTP forms can express it.
 		hasProbe := reg.Probe != nil || reg.Endpoints.Probe != "" || reg.BuildProbeURL != nil
+		if reg.SupportsWorkloadIdentity() {
+			hasProbe = reg.WorkloadIdentity.Probe != nil
+		}
+
 		assert.True(t, hasProbe, "provider %s has no connection probe configured", reg.Provider)
 	}
 }
@@ -69,6 +78,20 @@ func TestBuildDatadogProbeURL(t *testing.T) {
 	)
 }
 
+func TestBuildSigNozProbeURL(t *testing.T) {
+	t.Parallel()
+
+	// A trailing slash is how the console form commonly submits it.
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderSigNoz}
+	require.NoError(t, conn.SetSettings(&coredata.SigNozConnectorSettings{
+		BaseURL: "https://acme.us.signoz.cloud/",
+	}))
+
+	probeURL, err := buildSigNozProbeURL(conn, Endpoints{})
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.us.signoz.cloud/api/v2/users", probeURL)
+}
+
 func TestBuildZendeskProbeURL(t *testing.T) {
 	t.Parallel()
 
@@ -80,6 +103,59 @@ func TestBuildZendeskProbeURL(t *testing.T) {
 	probeURL, err := buildZendeskProbeURL(conn, Endpoints{})
 	require.NoError(t, err)
 	assert.Contains(t, probeURL, "https://acme.zendesk.com/api/v2/users.json")
+}
+
+func TestProbeGitHub_UsesProtocolEndpoint(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		protocol coredata.ConnectorProtocol
+		wantPath string
+	}{
+		{
+			name:     "oauth uses authenticated user",
+			protocol: coredata.ConnectorProtocolOAuth2,
+			wantPath: "/user",
+		},
+		{
+			name:     "install protocol uses installation repositories",
+			protocol: coredata.ConnectorProtocolGitHubApp,
+			wantPath: "/installation/repositories",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				client := &http.Client{
+					Transport: probeRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+						assert.Equal(t, tt.wantPath, req.URL.Path)
+
+						return &http.Response{
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(strings.NewReader(`{}`)),
+							Header:     make(http.Header),
+						}, nil
+					}),
+				}
+
+				err := probeGitHub(
+					context.Background(),
+					client,
+					&coredata.Connector{Protocol: tt.protocol},
+					Endpoints{
+						Probe:   "https://api.github.com/user",
+						APIBase: "https://api.github.com",
+					},
+				)
+				require.NoError(t, err)
+			},
+		)
+	}
 }
 
 func TestBuildOktaProbeURL(t *testing.T) {
@@ -333,11 +409,23 @@ func TestProbeRailway(t *testing.T) {
 		status     int
 		body       string
 		wantReject bool
+		// wantCredentialRejected separates a token Railway refused from an
+		// outage. Both are errors, but only the first may reach the caller as
+		// a credential rejection: reporting a 502 that way would tell a
+		// customer to reconnect a working token.
+		wantCredentialRejected bool
+		// wantRefused holds Railway to the same reading of a 403 as
+		// every provider probed through doProbeRequest: the credential was
+		// taken and the operation refused.
+		wantRefused bool
 	}{
-		{"valid token", http.StatusOK, `{"data":{"me":{"id":"u-1"}}}`, false},
-		{"rejected token (200 + errors)", http.StatusOK, `{"errors":[{"message":"Not Authorized"}],"data":null}`, true},
-		{"null me", http.StatusOK, `{"data":{"me":null}}`, true},
-		{"unauthorized status", http.StatusUnauthorized, ``, true},
+		{"valid token", http.StatusOK, `{"data":{"me":{"id":"u-1"}}}`, false, false, false},
+		{"rejected token (200 + errors)", http.StatusOK, `{"errors":[{"message":"Not Authorized"}],"data":null}`, true, true, false},
+		{"null me", http.StatusOK, `{"data":{"me":null}}`, true, true, false},
+		{"unauthorized status", http.StatusUnauthorized, ``, true, true, false},
+		{"forbidden status", http.StatusForbidden, ``, true, true, true},
+		{"upstream outage", http.StatusBadGateway, `<html>502 Bad Gateway</html>`, true, false, false},
+		{"rate limited", http.StatusTooManyRequests, `{"errors":[{"message":"rate limited"}]}`, true, false, false},
 	}
 
 	for _, tc := range cases {
@@ -362,10 +450,19 @@ func TestProbeRailway(t *testing.T) {
 			assert.Equal(t, "https://backboard.railway.com/graphql/v2", gotURL)
 			assert.Equal(t, "application/json", gotContentType)
 
-			if tc.wantReject {
-				require.Error(t, err)
-			} else {
+			if !tc.wantReject {
 				require.NoError(t, err)
+
+				return
+			}
+
+			require.Error(t, err)
+
+			rejected, isCredentialRejected := errors.AsType[*CredentialRejectedError](err)
+			assert.Equal(t, tc.wantCredentialRejected, isCredentialRejected)
+
+			if isCredentialRejected {
+				assert.Equal(t, tc.wantRefused, rejected.OperationRefused)
 			}
 		})
 	}
@@ -482,6 +579,7 @@ func TestProbeClosureURL(t *testing.T) {
 		wantURL string
 	}{
 		{"linear", linearRegistration(), "https://api.linear.app/graphql"},
+		{"linear_sync", linearSyncRegistration(), "https://api.linear.app/graphql"},
 		{"monday", mondayRegistration(), "https://api.monday.com/v2"},
 		{"anthropic", anthropicRegistration(), "https://api.anthropic.com/v1/organizations/users?limit=1"},
 		{"square", squareRegistration(), "https://connect.squareup.com/v2/merchants/me"},
@@ -506,4 +604,590 @@ func TestProbeClosureURL(t *testing.T) {
 			assert.Equal(t, tc.wantURL, gotURL)
 		})
 	}
+}
+
+func TestDoProbeRequest_RejectsHTMLBody(t *testing.T) {
+	t.Parallel()
+
+	// A base URL the customer supplies can reach a server that is not the
+	// provider's API: a single-page app serving its index for any unknown
+	// path, an SSO portal, a proxy error page. Those answer 200, so the
+	// status alone reports a healthy connector against which no request will
+	// ever work — and the failure only surfaces much later, in a worker.
+	cases := []struct {
+		name       string
+		status     int
+		body       string
+		wantReject bool
+	}{
+		{"json object", http.StatusOK, `{"site-name":"Acme"}`, false},
+		{"json array", http.StatusOK, `[{"id":1}]`, false},
+		{"empty body", http.StatusOK, "", false},
+		{"no content", http.StatusNoContent, "", false},
+		{"leading whitespace then json", http.StatusOK, "\n  {\"ok\":true}", false},
+		{"html index page", http.StatusOK, "<!doctype html><html><body>Metabase</body></html>", true},
+		{"uppercase doctype", http.StatusOK, "<!DOCTYPE html>\n<html lang=\"en\">", true},
+		{"bare html element", http.StatusOK, "<html>\r\n<head><title>502</title></head>", true},
+		{"html with leading whitespace", http.StatusOK, "\n\t<html></html>", true},
+		{"html behind a byte order mark", http.StatusOK, "\xef\xbb\xbf<!doctype html>", true},
+		{"html padded past the first read", http.StatusOK, strings.Repeat(" ", 600) + "<!doctype html>", true},
+		{"proxy maintenance page on 5xx stays transient", http.StatusBadGateway, "<html><h1>502 Bad Gateway</h1></html>", false},
+		{"not found html page stays a pass", http.StatusNotFound, "<html>404</html>", false},
+		// An XML API is a legitimate thing to reach. Rejecting it would retire
+		// a working connector, which is worse than missing a misconfiguration.
+		{"xml declaration", http.StatusOK, `<?xml version="1.0"?><Error/>`, false},
+		{"bare xml element", http.StatusOK, "<soap:Envelope><soap:Body/></soap:Envelope>", false},
+		{"whitespace only", http.StatusOK, strings.Repeat(" ", 2000), false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: tc.status,
+					Body:       io.NopCloser(strings.NewReader(tc.body)),
+					Header:     make(http.Header),
+				}, nil
+			})}
+
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+			require.NoError(t, err)
+
+			err = doProbeRequest(client, req)
+
+			if !tc.wantReject {
+				require.NoError(t, err)
+
+				return
+			}
+
+			var notAPI *NotAnAPIEndpointError
+
+			require.ErrorAs(t, err, &notAPI)
+			assert.Equal(t, tc.status, notAPI.StatusCode)
+		})
+	}
+}
+
+func TestDoProbeRequest_RefusalVerdict(t *testing.T) {
+	t.Parallel()
+
+	// The two rejections a customer fixes in different places: a credential
+	// the provider will not take at all, and one it takes before refusing the
+	// operation. An extra status a provider opts into is the former — it
+	// opted in precisely because the status is unambiguous there.
+	cases := []struct {
+		name        string
+		status      int
+		extraReject []int
+		wantRefused bool
+	}{
+		{name: "unauthorized status is the credential", status: http.StatusUnauthorized},
+		{name: "forbidden status is the authorization", status: http.StatusForbidden, wantRefused: true},
+		{
+			name:        "opted-in status stays the credential",
+			status:      http.StatusNotFound,
+			extraReject: []int{http.StatusNotFound},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: tc.status,
+					Body:       io.NopCloser(strings.NewReader(`{"error":"nope"}`)),
+					Header:     make(http.Header),
+				}, nil
+			})}
+
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+			require.NoError(t, err)
+
+			var rejected *CredentialRejectedError
+
+			require.ErrorAs(t, doProbeRequest(client, req, tc.extraReject...), &rejected)
+			assert.Equal(t, tc.status, rejected.StatusCode)
+			assert.Equal(t, tc.wantRefused, rejected.OperationRefused)
+
+			// Only a 403 is ever reclassified, so only a 403 pays to keep the
+			// provider's explanation.
+			if tc.status == http.StatusForbidden {
+				assert.Equal(t, `{"error":"nope"}`, string(rejected.body))
+			} else {
+				assert.Nil(t, rejected.body)
+			}
+		})
+	}
+
+	t.Run("a talkative provider is cut off at the limit", func(t *testing.T) {
+		t.Parallel()
+
+		// The hosts this reads from are customer-supplied for Langfuse,
+		// Metabase and SigNoz, so the body is bounded rather than trusted.
+		client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusForbidden,
+				Body:       io.NopCloser(strings.NewReader(strings.Repeat("a", rejectionBodyLimit*3))),
+				Header:     make(http.Header),
+			}, nil
+		})}
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+		require.NoError(t, err)
+
+		var rejected *CredentialRejectedError
+
+		require.ErrorAs(t, doProbeRequest(client, req), &rejected)
+		assert.Len(t, rejected.body, rejectionBodyLimit)
+	})
+}
+
+func TestClassifyRejection(t *testing.T) {
+	t.Parallel()
+
+	// The classifier only ever sees a 403, and its verdict replaces the one
+	// the status gave. Anything else — a 401, a failure that is not a
+	// rejection, a provider that registers no classifier — is left alone.
+	// Every case carries a body, so the assertion that classification drops it
+	// has something to drop, and a classifier can prove it was handed one.
+	const explanation = `{"error":"this feature is not available on your plan"}`
+
+	forbidden := func() *CredentialRejectedError {
+		return &CredentialRejectedError{
+			StatusCode:       http.StatusForbidden,
+			OperationRefused: true,
+			body:             []byte(explanation),
+		}
+	}
+
+	cases := []struct {
+		name           string
+		reg            *Registration
+		err            error
+		wantRefused    bool
+		wantClassified bool
+	}{
+		{
+			name:        "no classifier leaves the status verdict",
+			reg:         &Registration{},
+			err:         forbidden(),
+			wantRefused: true,
+		},
+		{
+			name:           "classifier can demote a forbidden to a bad credential",
+			reg:            &Registration{ClassifyRejection: func([]byte) bool { return false }},
+			err:            forbidden(),
+			wantRefused:    false,
+			wantClassified: true,
+		},
+		{
+			name: "classifier is not consulted on a 401",
+			reg:  &Registration{ClassifyRejection: func([]byte) bool { return true }},
+			err: &CredentialRejectedError{
+				StatusCode: http.StatusUnauthorized,
+				body:       []byte(explanation),
+			},
+			wantRefused: false,
+		},
+		{
+			name:           "a wrapped rejection is still refined",
+			reg:            &Registration{ClassifyRejection: func([]byte) bool { return false }},
+			err:            fmt.Errorf("probe: %w", forbidden()),
+			wantRefused:    false,
+			wantClassified: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var classified []byte
+
+			if inner := tc.reg.ClassifyRejection; inner != nil {
+				tc.reg.ClassifyRejection = func(body []byte) bool {
+					classified = body
+
+					return inner(body)
+				}
+			}
+
+			var rejected *CredentialRejectedError
+
+			require.ErrorAs(t, classifyRejection(tc.reg, tc.err), &rejected)
+			assert.Equal(t, tc.wantRefused, rejected.OperationRefused)
+			assert.Nil(t, rejected.body, "provider text must not outlive classification")
+
+			if tc.wantClassified {
+				assert.Equal(t, explanation, string(classified), "the classifier reads the provider's explanation")
+			} else {
+				assert.Nil(t, classified)
+			}
+		})
+	}
+
+	// Seven providers answer through a custom Probe closure, and that branch of
+	// ProbeConnection is the only other place a rejection carrying provider
+	// text can escape. Driven through the registry, not classifyRejection, so
+	// removing the call at either branch fails here.
+	t.Run("a custom Probe closure is classified too", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewRegistry()
+		require.NoError(t, r.Register(&Registration{
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			Probe: func(_ context.Context, httpClient *http.Client, _ *coredata.Connector, _ Endpoints) error {
+				req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+				if err != nil {
+					return err
+				}
+
+				return fmt.Errorf("slack probe: %w", doProbeRequest(httpClient, req))
+			},
+			ClassifyRejection: func([]byte) bool { return false },
+		}))
+
+		client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusForbidden,
+				Body:       io.NopCloser(strings.NewReader(`{"error":"go away"}`)),
+				Header:     make(http.Header),
+			}, nil
+		})}
+
+		err := r.ProbeConnection(
+			context.Background(),
+			client,
+			&coredata.Connector{Provider: coredata.ConnectorProviderSlack},
+		)
+
+		var rejected *CredentialRejectedError
+
+		require.ErrorAs(t, err, &rejected)
+		assert.False(t, rejected.OperationRefused, "the registration's classifier must reach a custom Probe's rejection")
+		assert.Nil(t, rejected.body, "provider text must not outlive classification")
+	})
+
+	t.Run("passes a non-rejection through untouched", func(t *testing.T) {
+		t.Parallel()
+
+		notAPI := &NotAnAPIEndpointError{StatusCode: http.StatusOK}
+		assert.Same(t, notAPI, classifyRejection(&Registration{}, notAPI))
+		assert.NoError(t, classifyRejection(&Registration{}, nil))
+	})
+}
+
+func TestDoProbeRequest_CredentialRejectionWinsOverMarkup(t *testing.T) {
+	t.Parallel()
+
+	// A 401 that renders a login page is still a rejected credential, which
+	// is the more actionable verdict of the two.
+	client := &http.Client{Transport: probeRoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Body:       io.NopCloser(strings.NewReader("<html>sign in</html>")),
+			Header:     make(http.Header),
+		}, nil
+	})}
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.test/api/user", nil)
+	require.NoError(t, err)
+
+	var rejected *CredentialRejectedError
+
+	require.ErrorAs(t, doProbeRequest(client, req), &rejected)
+	assert.Equal(t, http.StatusUnauthorized, rejected.StatusCode)
+}
+
+func TestBuildRetoolProbeURL(t *testing.T) {
+	t.Parallel()
+
+	endpoints := Endpoints{APIBase: "https://api.retool.com/api/v2"}
+
+	// Retool Cloud: the token routes to its own organization through the
+	// shared gateway, so an empty setting is the cloud case and the probe must
+	// compose from ep.APIBase rather than a literal — an APIBase override has
+	// to move the check along with the driver.
+	cloud := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, cloud.SetSettings(&coredata.RetoolConnectorSettings{}))
+
+	probeURL, err := buildRetoolProbeURL(cloud, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.retool.com/api/v2/users?limit=1", probeURL)
+
+	// Self-hosted: the instance origin plus Retool's own /api/v2 prefix.
+	selfHosted := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, selfHosted.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://retool.acme.internal",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(selfHosted, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL)
+
+	// Retool's own docs write a base URL as https://retool.example.com/api/v2,
+	// so the prefix arriving already attached is the likeliest paste of all.
+	// Appending unconditionally would build /api/v2/api/v2/users.
+	withPrefix := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, withPrefix.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://retool.acme.internal/api/v2",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(withPrefix, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL)
+
+	// A trailing slash is the shape a pasted URL arrives in and must not
+	// double up in the path.
+	trailing := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, trailing.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://retool.acme.internal/",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(trailing, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL)
+
+	// Shapes a person really does paste, each of which slipped past a plain
+	// suffix comparison: a dot segment kept the prefix and got a second one,
+	// and a bare "?" survived as ForceQuery and swallowed the prefix into the
+	// query string. Percent-encoding hides the same suffix from a raw compare.
+	for _, raw := range []string{
+		"https://retool.acme.internal/api/v2/.",
+		"https://retool.acme.internal/?",
+		"https://retool.acme.internal/api/%76%32",
+	} {
+		conn := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+		require.NoError(t, conn.SetSettings(&coredata.RetoolConnectorSettings{BaseURL: raw}))
+
+		probeURL, err := buildRetoolProbeURL(conn, endpoints)
+		require.NoErrorf(t, err, "%q", raw)
+		assert.Equalf(t, "https://retool.acme.internal/api/v2/users?limit=1", probeURL, "%q", raw)
+	}
+
+	// An instance served under a path of its own keeps that path.
+	subpath := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, subpath.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "https://acme.internal/retool",
+	}))
+
+	probeURL, err = buildRetoolProbeURL(subpath, endpoints)
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.internal/retool/api/v2/users?limit=1", probeURL)
+
+	// A setting that is not an http(s) URL is refused rather than reaching one.
+	invalid := &coredata.Connector{Provider: coredata.ConnectorProviderRetool}
+	require.NoError(t, invalid.SetSettings(&coredata.RetoolConnectorSettings{
+		BaseURL: "ftp://retool.acme.internal",
+	}))
+
+	_, err = buildRetoolProbeURL(invalid, endpoints)
+	require.Error(t, err)
+}
+
+func TestNewRelicEndpointFromSettings(t *testing.T) {
+	t.Parallel()
+
+	eu := &coredata.Connector{Provider: coredata.ConnectorProviderNewRelic}
+	require.NoError(t, eu.SetSettings(&coredata.NewRelicConnectorSettings{Region: "eu"}))
+
+	endpoint, err := newRelicEndpoint(eu)
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.eu.newrelic.com/graphql", endpoint)
+
+	// An unset region must not silently default to the US endpoint: an EU
+	// customer's key answers 403 there, which reads as a permissions problem
+	// rather than the misconfiguration it is.
+	missing := &coredata.Connector{Provider: coredata.ConnectorProviderNewRelic}
+	require.NoError(t, missing.SetSettings(&coredata.NewRelicConnectorSettings{}))
+
+	_, err = newRelicEndpoint(missing)
+	require.Error(t, err)
+}
+
+func TestTwingateEndpointFromSettings(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderTwingate}
+	require.NoError(t, conn.SetSettings(&coredata.TwingateConnectorSettings{Network: "acme"}))
+
+	endpoint, err := twingateEndpoint(conn)
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.twingate.com/api/graphql/", endpoint)
+
+	// The network becomes the host label, so a value that is not a DNS label
+	// is refused before it can reach a URL.
+	hostile := &coredata.Connector{Provider: coredata.ConnectorProviderTwingate}
+	require.NoError(t, hostile.SetSettings(&coredata.TwingateConnectorSettings{
+		Network: "acme.evil.example",
+	}))
+
+	_, err = twingateEndpoint(hostile)
+	require.Error(t, err)
+}
+
+// probeStubClient returns a client whose every request is answered by the
+// canned status and body, recording the request it saw.
+func probeStubClient(seen *[]*http.Request, status int, body string) *http.Client {
+	return &http.Client{
+		Transport: probeRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+			*seen = append(*seen, req)
+
+			return &http.Response{
+				StatusCode: status,
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}, nil
+		}),
+	}
+}
+
+func TestProbeElevenLabs(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderElevenLabs}
+	endpoints := Endpoints{APIBase: "https://api.elevenlabs.io/v1"}
+
+	// ElevenLabs refuses a key with 400 and an authentication_error body rather
+	// than 401. Without that status in the reject set the badge would stay
+	// green on a dead key, which is the whole reason this probe is a closure.
+	for _, status := range []int{
+		http.StatusBadRequest,
+		http.StatusUnauthorized,
+		http.StatusForbidden,
+	} {
+		var seen []*http.Request
+
+		client := probeStubClient(&seen, status, `{"detail":{"type":"authentication_error"}}`)
+
+		err := probeElevenLabs(t.Context(), client, conn, endpoints)
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "status %d should reject the credential, got %v", status, err)
+		assert.Equal(t, status, rejected.StatusCode)
+		// Only a 403 means the provider took the key and refused the call.
+		assert.Equal(t, status == http.StatusForbidden, rejected.OperationRefused)
+
+		require.Len(t, seen, 1)
+		assert.Equal(t, "https://api.elevenlabs.io/v1/workspace/members", seen[0].URL.String())
+	}
+
+	// A live key answers with the roster.
+	var seen []*http.Request
+
+	require.NoError(t, probeElevenLabs(t.Context(), probeStubClient(&seen, http.StatusOK, `[]`), conn, endpoints))
+	require.Len(t, seen, 1)
+}
+
+func TestProbeTwingate(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderTwingate}
+	require.NoError(t, conn.SetSettings(&coredata.TwingateConnectorSettings{Network: "acme"}))
+
+	// A dead token is the credential.
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden} {
+		var seen []*http.Request
+
+		err := probeTwingate(t.Context(), probeStubClient(&seen, status, `{}`), conn, Endpoints{})
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "status %d should reject the credential, got %v", status, err)
+		assert.Equal(t, status, rejected.StatusCode)
+
+		require.Len(t, seen, 1)
+		assert.Equal(t, "https://acme.twingate.com/api/graphql/", seen[0].URL.String())
+		assert.Equal(t, http.MethodPost, seen[0].Method)
+	}
+
+	// A network that does not exist answers 404, and that is the one thing the
+	// customer types that a credential check cannot vet. It must not report as
+	// a dead token, or they go and rotate a key that was fine.
+	var missingSeen []*http.Request
+
+	err := probeTwingate(
+		t.Context(),
+		probeStubClient(&missingSeen, http.StatusNotFound, `{"status":404}`),
+		conn,
+		Endpoints{},
+	)
+
+	notAPI, ok := errors.AsType[*NotAnAPIEndpointError](err)
+	require.Truef(t, ok, "a 404 should report a wrong endpoint, got %v", err)
+	assert.Equal(t, http.StatusNotFound, notAPI.StatusCode)
+	assert.Contains(t, notAPI.Error(), "network name")
+
+	_, isCredential := errors.AsType[*CredentialRejectedError](err)
+	assert.False(t, isCredential, "a wrong network must not read as a rejected credential")
+
+	// Twingate answers a refused query with 200 and an errors array, which the
+	// status alone cannot show: a token that authenticates but cannot read the
+	// roster would otherwise probe healthy and fail every campaign after.
+	var refusedSeen []*http.Request
+
+	err = probeTwingate(
+		t.Context(),
+		probeStubClient(&refusedSeen, http.StatusOK, `{"data":null,"errors":[{"message":"x"}]}`),
+		conn,
+		Endpoints{},
+	)
+
+	rejected, ok := errors.AsType[*CredentialRejectedError](err)
+	require.Truef(t, ok, "a graphql errors array should reject, got %v", err)
+	assert.True(t, rejected.OperationRefused)
+
+	var seen []*http.Request
+
+	body := `{"data":{"users":{"edges":[]}}}`
+	require.NoError(t, probeTwingate(t.Context(), probeStubClient(&seen, http.StatusOK, body), conn, Endpoints{}))
+	require.Len(t, seen, 1)
+}
+
+func TestProbeNewRelic(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderNewRelic}
+	require.NoError(t, conn.SetSettings(&coredata.NewRelicConnectorSettings{Region: "eu"}))
+
+	// Any live user key can answer a trivial query, but reading the roster
+	// needs organization user management, which NerdGraph refuses with 200 and
+	// an errors array. Reported as the operation being refused: the key is
+	// good, the role is not, and those are fixed differently.
+	var seen []*http.Request
+
+	err := probeNewRelic(
+		t.Context(),
+		probeStubClient(&seen, http.StatusOK, `{"data":{"actor":{"organization":null}},"errors":[{"message":"x"}]}`),
+		conn,
+		Endpoints{},
+	)
+
+	rejected, ok := errors.AsType[*CredentialRejectedError](err)
+	require.Truef(t, ok, "a graphql errors array should reject, got %v", err)
+	assert.True(t, rejected.OperationRefused)
+
+	require.Len(t, seen, 1)
+	// The region setting, not a fixed host: a key from the other region is
+	// answered with 403 there.
+	assert.Equal(t, "https://api.eu.newrelic.com/graphql", seen[0].URL.String())
+
+	// A dead key is refused outright.
+	var deadSeen []*http.Request
+
+	err = probeNewRelic(t.Context(), probeStubClient(&deadSeen, http.StatusUnauthorized, `{}`), conn, Endpoints{})
+	rejected, ok = errors.AsType[*CredentialRejectedError](err)
+	require.True(t, ok)
+	assert.Equal(t, http.StatusUnauthorized, rejected.StatusCode)
+
+	// A key that can read the roster passes.
+	var okSeen []*http.Request
+
+	body := `{"data":{"actor":{"organization":{"userManagement":{"authenticationDomains":{"nextCursor":null}}}}}}`
+	require.NoError(t, probeNewRelic(t.Context(), probeStubClient(&okSeen, http.StatusOK, body), conn, Endpoints{}))
 }

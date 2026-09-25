@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -48,10 +49,15 @@ import (
 	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -59,9 +65,9 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
-	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -71,10 +77,15 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	compliancecapability "go.probo.inc/probo/pkg/probot/capability/complianceportal"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -83,6 +94,8 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -148,6 +161,12 @@ func New() *Implm {
 					DomainVerificationResolverAddr:    "8.8.8.8:53",
 				},
 			},
+			IdentityFederation: IdentityFederationConfig{
+				CloudFormationTemplateURL:  cloudaws.DefaultCloudFormationTemplateURL,
+				TerraformModuleSource:      cloudaws.DefaultTerraformModuleSource,
+				GCPTerraformModuleSource:   cloudgcp.DefaultTerraformModuleSource,
+				AzureTerraformModuleSource: cloudazure.DefaultTerraformModuleSource,
+			},
 			ITAM: ITAMConfig{
 				DeviceEnrollmentTokenValidity: 604800,
 			},
@@ -155,6 +174,7 @@ func New() *Implm {
 				HTTPAddr:   ":80",
 				HTTPSAddr:  ":443",
 				BaseDomain: "probopage.localhost",
+				TLSMode:    CompliancePortalTLSModeDirect,
 			},
 			AWS: AWSConfig{
 				Region: "us-east-1",
@@ -163,7 +183,7 @@ func New() *Implm {
 			Notifications: NotificationsConfig{
 				Mailer: MailerConfig{
 					MailerInterval: 60,
-					SenderEmail:    "no-reply@notification.getprobo.com",
+					SenderEmail:    "no-reply@portal.getprobo.com",
 					SenderName:     "Probo",
 					SMTP: SMTPConfig{
 						Addr: "localhost:1025",
@@ -174,7 +194,12 @@ func New() *Implm {
 				},
 				Webhook: WebhookConfig{
 					SenderInterval: 5,
+					RequestTimeout: 15,
 					CacheTTL:       86400,
+					StaleAfter:     300,
+					RetryBase:      30,
+					RetryMax:       14400,
+					MaxConcurrency: 5,
 				},
 				Document: DocumentNotificationConfig{
 					Interval:         300,   // 5 minutes
@@ -200,6 +225,9 @@ func New() *Implm {
 				TSAURL: "http://timestamp.digicert.com",
 			},
 			Branding: true,
+			CookieBanner: CookieBannerConfig{
+				TCFCMPID: cookiebanner.DefaultTCFCmpID,
+			},
 			EvidenceDescriber: EvidenceDescriberConfig{
 				Interval:       10,
 				StaleAfter:     300,
@@ -237,6 +265,11 @@ func (impl *Implm) Run(
 
 	ctx, rootSpan := tracer.Start(parentCtx, "probod.Run")
 	defer rootSpan.End()
+
+	if err := impl.cfg.CompliancePortal.TLSMode.Validate(); err != nil {
+		rootSpan.RecordError(err)
+		return fmt.Errorf("cannot validate compliance portal TLS config: %w", err)
+	}
 
 	// Parse config values that need conversion from strings to complex types
 	baseURL, err := baseurl.Parse(impl.cfg.BaseURL)
@@ -379,6 +412,17 @@ func (impl *Implm) Run(
 
 	slackAPIBaseURL := slackRegistration.Endpoints.APIBase
 
+	// Task sync talks to Linear with the token the LINEAR_SYNC connector
+	// row minted, so it follows that registration's APIBase rather than
+	// pin api.linear.app, or an override would send a sandbox-issued token
+	// to the real vendor.
+	linearRegistration, ok := providerRegistry.Get(coredata.ConnectorProviderLinearSync)
+	if !ok {
+		return fmt.Errorf("cannot configure linear task sync: no linear sync connector provider registered")
+	}
+
+	linearAPIBaseURL := linearRegistration.Endpoints.APIBase
+
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
@@ -392,12 +436,55 @@ func (impl *Implm) Run(
 			p := coredata.ConnectorProvider(connectorCfg.Provider)
 
 			reg, ok := providerRegistry.Get(p)
-			if !ok || !reg.ManagedAPIKey {
+			if !ok || !reg.IsManagedAPIKey() {
 				return fmt.Errorf("cannot configure api_key connector %q: not a managed-api-key provider", connectorCfg.Provider)
 			}
 
 			providerRegistry.SetManagedAPIKey(p, connectorCfg.APIKey)
 			providerRegistry.SetManagedResourceID(p, connectorCfg.ResourceID)
+
+			continue
+		}
+
+		if gitHubApp, ok := connectorCfg.Config.(*connector.GitHubAppConnector); ok {
+			if gitHubApp.AppID == "" ||
+				gitHubApp.ClientID == "" ||
+				gitHubApp.ClientSecret == "" ||
+				gitHubApp.Slug == "" ||
+				gitHubApp.PrivateKey == "" {
+				return fmt.Errorf("cannot configure github app connector: app ID, client ID, client secret, slug, and private key are required")
+			}
+
+			if err := gitHubApp.Validate(); err != nil {
+				return fmt.Errorf("cannot configure github app connector: %w", err)
+			}
+
+			reg, ok := providerRegistry.Get(coredata.ConnectorProviderGitHub)
+			if !ok {
+				return fmt.Errorf("cannot configure github app connector: github provider is not registered")
+			}
+
+			authURL, err := url.Parse(reg.Endpoints.Auth)
+			if err != nil || authURL.Scheme == "" || authURL.Host == "" {
+				return fmt.Errorf("cannot configure github app connector: invalid github authorization URL")
+			}
+
+			gitHubApp.InstallBase = (&url.URL{
+				Scheme: authURL.Scheme,
+				Host:   authURL.Host,
+				Path:   "/apps",
+			}).String()
+			gitHubApp.TokenURL = reg.Endpoints.Token
+			gitHubApp.APIBase = reg.Endpoints.APIBase
+			gitHubApp.RedirectURI = baseURL.WithPath(connector.GitHubAppCallbackPath).MustString()
+
+			if err := defaultConnectorRegistry.RegisterProtocol(
+				connectorCfg.Provider,
+				connector.ProtocolGitHubApp,
+				gitHubApp,
+			); err != nil {
+				return fmt.Errorf("cannot register github app connector: %w", err)
+			}
 
 			continue
 		}
@@ -428,7 +515,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	trackerMappingCfg, trackerEnrichmentCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgents(l, tp, r)
+	trackerMappingCfg, trackerEnrichmentCfg, err := impl.buildTrackerAgents(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -445,7 +532,7 @@ func (impl *Implm) Run(
 		samlKey  *rsa.PrivateKey
 	)
 
-	if impl.cfg.Auth.SAML.Certificate != "" && impl.cfg.Auth.SAML.PrivateKey != "" {
+	if impl.cfg.Auth.SAML.Certificate != "" && !impl.cfg.Auth.SAML.PrivateKey.IsZero() {
 		// Decode certificate
 		certBlock, _ := pem.Decode([]byte(impl.cfg.Auth.SAML.Certificate))
 		if certBlock == nil {
@@ -459,18 +546,7 @@ func (impl *Implm) Run(
 			return fmt.Errorf("cannot parse SAML certificate: %w", err)
 		}
 
-		// Decode private key
-		signer, err := pemutil.DecodePrivateKey([]byte(impl.cfg.Auth.SAML.PrivateKey))
-		if err != nil {
-			return fmt.Errorf("cannot decode SAML private key: %w", err)
-		}
-
-		var ok bool
-
-		samlKey, ok = signer.(*rsa.PrivateKey)
-		if !ok {
-			return fmt.Errorf("SAML private key is not an RSA key")
-		}
+		samlKey = impl.cfg.Auth.SAML.PrivateKey.PrivateKey()
 	}
 
 	if len(impl.cfg.Auth.OAuth2Server.SigningKeys) == 0 {
@@ -478,44 +554,29 @@ func (impl *Implm) Run(
 	}
 
 	var (
-		oauth2SigningKeys   oauth2.SigningKeys
-		hasActive           bool
+		oauth2SigningKeys   []jose.SigningKey
 		activeSigningKeyPEM string
 	)
 
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
-		signer, err := pemutil.DecodePrivateKey([]byte(keyCfg.PrivateKey))
-		if err != nil {
-			return fmt.Errorf("cannot decode OAuth2 server signing key: %w", err)
-		}
-
-		rsaKey, ok := signer.(*rsa.PrivateKey)
-		if !ok {
-			return fmt.Errorf("OAuth2 server signing key is not an RSA key")
-		}
-
-		kid := keyCfg.KID
-		if kid == "" {
-			kid = "default"
-		}
-
 		if keyCfg.Active {
-			hasActive = true
-			activeSigningKeyPEM = keyCfg.PrivateKey
+			activeSigningKeyPEM = keyCfg.PrivateKey.PEM()
 		}
 
 		oauth2SigningKeys = append(
 			oauth2SigningKeys,
-			oauth2.SigningKey{
-				PrivateKey: rsaKey,
-				KID:        kid,
-				Active:     keyCfg.Active,
-			},
+			newSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active),
 		)
 	}
 
-	if !hasActive {
-		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
+	oauth2KeyRing, err := jose.NewKeyRing(oauth2SigningKeys)
+	if err != nil {
+		return fmt.Errorf("cannot configure OAuth2 server: %w", err)
+	}
+
+	identityFederationIssuer, err := impl.buildIdentityFederationIssuer(baseURL, l)
+	if err != nil {
+		return err
 	}
 
 	// Auto-register public-client (CIMD) connectors, which need no operator
@@ -525,6 +586,7 @@ func (impl *Implm) Run(
 	// explicitly (already registered from impl.cfg.Connectors above) are
 	// left untouched.
 	connectorStateKey := connector.DeriveConnectorStateKey(activeSigningKeyPEM)
+	installStateKey := connector.DeriveInstallStateKey(activeSigningKeyPEM)
 	cimdClientID := baseURL.WithPath(connector.CIMDMetadataPath).MustString()
 
 	for _, reg := range providerRegistry.PublicClients() {
@@ -550,40 +612,45 @@ func (impl *Implm) Run(
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(management.OAuth2ScopeMappings).
-		Register(agentrun.OAuth2ScopeMappings).
+		Register(agentexecution.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
-		Register(itam.OAuth2ScopeMappings)
+		Register(itam.OAuth2ScopeMappings).
+		Register(riskmanagement.OAuth2ScopeMappings).
+		Register(task.OAuth2ScopeMappings)
 
-	var accountKey crypto.Signer
-	if impl.cfg.CustomDomains.ACME.AccountKey != "" {
-		accountKey, err = pemutil.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
+	var acmeService *certmanager.ACMEService
+
+	if impl.cfg.CompliancePortal.TLSMode.IsExternal() {
+		l.Info("custom domains and ACME are disabled in external compliance portal TLS mode")
+	} else {
+		var accountKey crypto.Signer
+		if !impl.cfg.CustomDomains.ACME.AccountKey.IsZero() {
+			accountKey = impl.cfg.CustomDomains.ACME.AccountKey.Signer()
+
+			l.Info("using configured ACME account key")
+		}
+
+		var rootCAs *x509.CertPool
+		if impl.cfg.CustomDomains.ACME.RootCA != "" {
+			rootCAs = x509.NewCertPool()
+			if !rootCAs.AppendCertsFromPEM([]byte(impl.cfg.CustomDomains.ACME.RootCA)) {
+				return fmt.Errorf("cannot parse ACME root CA certificate")
+			}
+		}
+
+		acmeService, err = certmanager.NewACMEService(
+			impl.cfg.CustomDomains.ACME.Email,
+			keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
+			impl.cfg.CustomDomains.ACME.Directory,
+			accountKey,
+			rootCAs,
+			l,
+			r,
+		)
 		if err != nil {
-			return fmt.Errorf("cannot decode ACME account key: %w", err)
+			return fmt.Errorf("cannot initialize ACME service: %w", err)
 		}
-
-		l.Info("using configured ACME account key")
-	}
-
-	var rootCAs *x509.CertPool
-	if impl.cfg.CustomDomains.ACME.RootCA != "" {
-		rootCAs = x509.NewCertPool()
-		if !rootCAs.AppendCertsFromPEM([]byte(impl.cfg.CustomDomains.ACME.RootCA)) {
-			return fmt.Errorf("cannot parse ACME root CA certificate")
-		}
-	}
-
-	acmeService, err := certmanager.NewACMEService(
-		impl.cfg.CustomDomains.ACME.Email,
-		keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
-		impl.cfg.CustomDomains.ACME.Directory,
-		accountKey,
-		rootCAs,
-		l,
-		r,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot initialize ACME service: %w", err)
 	}
 
 	customDomainRenewalInterval := time.Duration(impl.cfg.CustomDomains.RenewalInterval) * time.Second
@@ -648,10 +715,10 @@ func (impl *Implm) Run(
 				ClientSecret: impl.cfg.Auth.Microsoft.ClientSecret,
 				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
 			},
-			OAuth2ServerSigningKeys: oauth2SigningKeys,
-			OAuth2ServerOptions:     oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
-			OAuth2ScopeRegistry:     oauth2ScopeRegistry,
-			CertManager:             certManagerService,
+			OAuth2ServerKeyRing: oauth2KeyRing,
+			OAuth2ServerOptions: oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
+			OAuth2ScopeRegistry: oauth2ScopeRegistry,
+			CertManager:         certManagerService,
 		},
 	)
 	if err != nil {
@@ -661,8 +728,6 @@ func (impl *Implm) Run(
 	slackService := slack.NewService(
 		pgClient,
 		impl.cfg.GetSlackSigningSecret(),
-		baseURL.String(),
-		impl.cfg.Auth.Cookie.Secret,
 		slackAPIBaseURL,
 		l.Named("slack"),
 	)
@@ -677,6 +742,11 @@ func (impl *Implm) Run(
 	)
 
 	resourceAliasService := resourcealias.NewService(pgClient)
+	botService := bot.NewService(
+		bot.ServiceConfig{
+			Disabled: !impl.cfg.Slackbot.Enabled,
+		},
+	)
 
 	managementService := management.NewService(
 		pgClient,
@@ -686,7 +756,8 @@ func (impl *Implm) Run(
 		impl.cfg.CompliancePortal.BaseDomain,
 		fileManagerService,
 		certManagerService,
-		slackService,
+		botService,
+		esignService,
 		l.Named("compliance-portal-management"),
 	)
 
@@ -701,7 +772,11 @@ func (impl *Implm) Run(
 		l,
 	)
 
-	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
+	cookieBannerService := cookiebanner.NewService(
+		pgClient,
+		impl.cfg.Branding,
+		impl.cfg.CookieBanner.TCFCMPID,
+	)
 
 	proboService, err := probo.NewService(
 		ctx,
@@ -720,10 +795,10 @@ func (impl *Implm) Run(
 		html2pdfConverter,
 		fileManagerService,
 		l.Named("probo"),
-		slackService,
 		iamService,
 		esignService,
 		defaultConnectorRegistry,
+		providerRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
 	if err != nil {
@@ -739,7 +814,7 @@ func (impl *Implm) Run(
 		html2pdfConverter,
 		fileManagerService,
 		l,
-		slackService,
+		botService,
 		resourceAliasService,
 		managementService,
 	)
@@ -749,11 +824,8 @@ func (impl *Implm) Run(
 	iamService.OAuth2ServerService.SetCIMDAllow(
 		func(ctx context.Context, clientIDURL string) (oauth2.CIMDAllowance, error) {
 			host, ok := oauth2.CIMDClientIDHost(clientIDURL)
-			if ok {
-				_, err := visitorService.GetPortalByDomainName(ctx, host)
-				if err == nil {
-					return oauth2.CIMDAllowanceAllowedSkipConsent, nil
-				}
+			if ok && visitorService.IsVerifiedRedirectHost(ctx, host) {
+				return oauth2.CIMDAllowanceAllowedSkipConsent, nil
 			}
 
 			return staticCIMDAllow(ctx, clientIDURL)
@@ -766,17 +838,30 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		providerRegistry,
 		l.Named("access-review"),
+		accessreview.WithIdentityFederation(identityFederationIssuer),
+		accessreview.WithRegisterer(r),
 	)
 
-	agentRunService := agentrun.NewService(pgClient)
+	agentExecutionService := agentexecution.NewService(pgClient)
 
-	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(agentexecution.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(task.PolicySet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
+
+	taskService := task.NewService(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		baseURL.String(),
+		linearAPIBaseURL,
+		l.Named("task"),
+	)
 
 	itamService := itam.NewService(
 		pgClient,
@@ -797,41 +882,144 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot build file storage CSP origin: %w", err)
 	}
 
+	probotIdentityBindings := identitybinding.NewService(pgClient, baseURL)
+	slackbotInstallations := impl.buildSlackbotInstallationService(
+		pgClient,
+		encryptionKey,
+		slackRegistration.Endpoints,
+		l,
+	)
+	slackBindPrompts := slackchannel.NewBindPromptService(
+		pgClient,
+		encryptionKey,
+		l.Named("slackbot.bind-prompts"),
+	)
+	probotIdentityBindings.SetBindingConfirmedHandler(slackBindPrompts)
+
+	slackbotNotifications := slackchannel.NewNotificationService(pgClient)
+	slackInteractiveInbox := slackchannel.NewInteractiveCommandInbox(
+		pgClient,
+		encryptionKey,
+	)
+	complianceRenderer := portal.NewRenderer(baseURL.String())
+	probotCapabilities := probot.NewCapabilityRegistry()
+
+	slackMessages := slackchannel.NewMessageService(
+		pgClient,
+		slackbotInstallations,
+		slackbotNotifications,
+		slackService,
+		l.Named("slack-messages"),
+	)
+
+	complianceMessages := compliancecapability.NewService(
+		pgClient,
+		complianceRenderer,
+		slackMessages,
+		baseURL.String(),
+	)
+	if err := probotCapabilities.Register(
+		compliancecapability.NewCapability(
+			complianceMessages,
+			visitorService,
+			iamService.Authorizer,
+		),
+	); err != nil {
+		return fmt.Errorf("cannot register compliance Probot capability: %w", err)
+	}
+
+	slackbot, probotAgent, err := impl.buildSlackbot(
+		pgClient,
+		probotIdentityBindings,
+		slackbotInstallations,
+		slackBindPrompts,
+		l,
+		tp,
+		r,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot build slackbot: %w", err)
+	}
+
+	probotProfiles := probot.NewAgentProfileRegistry()
+	probotAdapters := probot.NewExecutionAdapterRegistry()
+
+	if probotAgent != nil {
+		if err := probotProfiles.Register("probot", probotAgent); err != nil {
+			return fmt.Errorf("cannot register Probot agent profile: %w", err)
+		}
+
+		if err := probotAdapters.Register(
+			slackchannel.NewExecutionAdapter(
+				pgClient,
+				slackbotInstallations,
+				probotIdentityBindings,
+				probotProfiles,
+				probotCapabilities,
+				slackchannel.NewDeliveryService(pgClient),
+				l.Named("slackbot.execution"),
+			),
+		); err != nil {
+			return fmt.Errorf("cannot register Slack execution adapter: %w", err)
+		}
+	}
+
 	serverHandler, err := server.NewServer(
 		server.Config{
-			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
-			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
-			Probo:             proboService,
-			ResourceAlias:     resourceAliasService,
-			File:              fileManagerService,
-			IAM:               iamService,
-			Visitor:           visitorService,
-			ESign:             esignService,
-			Management:        managementService,
-			CertManager:       certManagerService,
-			AccessReview:      accessReviewService,
-			AgentRun:          agentRunService,
-			Mailman:           mailmanService,
-			CookieBanner:      cookieBannerService,
-			Geoloc:            geolocService,
-			ThirdParty:        thirdPartyService,
-			RiskManagement:    riskManagementService,
-			ITAM:              itamService,
-			Slack:             slackService,
-			ConnectorRegistry: defaultConnectorRegistry,
-			ProviderRegistry:  providerRegistry,
-			BaseURL:           baseURL,
-			FileStorageOrigin: fileStorageOrigin,
+			AllowedOrigins:          impl.cfg.Api.Cors.AllowedOrigins,
+			ExtraHeaderFields:       impl.cfg.Api.ExtraHeaderFields,
+			Probo:                   proboService,
+			ResourceAlias:           resourceAliasService,
+			File:                    fileManagerService,
+			IAM:                     iamService,
+			Visitor:                 visitorService,
+			ESign:                   esignService,
+			Management:              managementService,
+			CertManager:             certManagerService,
+			AccessReview:            accessReviewService,
+			AgentExecution:          agentExecutionService,
+			Mailman:                 mailmanService,
+			CookieBanner:            cookieBannerService,
+			Geoloc:                  geolocService,
+			ThirdParty:              thirdPartyService,
+			RiskManagement:          riskManagementService,
+			ITAM:                    itamService,
+			Task:                    taskService,
+			Slack:                   slackService,
+			BotDeliveryDestinations: slackMessages,
+			ComplianceMessages:      complianceMessages,
+			Slackbot:                slackbot,
+			SlackInteractiveInbox:   slackInteractiveInbox,
+			ProbotIdentityBindings:  probotIdentityBindings,
+			SlackbotInstallations:   slackbotInstallations,
+			ProbotCapabilities:      probotCapabilities,
+			ConnectorRegistry:       defaultConnectorRegistry,
+			ProviderRegistry:        providerRegistry,
+			BaseURL:                 baseURL,
+			FileStorageOrigin:       fileStorageOrigin,
 			GraphQLLimits: gqlutils.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
 				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
 				DisableSuggestion: impl.cfg.Api.GraphQL.DisableSuggestion,
 			},
-			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
-			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
-			Logger:            l.Named("http.server"),
-			Cookie:            authCookie,
+			CustomDomainCname:        impl.cfg.CustomDomains.CnameTarget,
+			TokenSecret:              impl.cfg.Auth.Cookie.Secret,
+			InstallStateKey:          installStateKey,
+			Logger:                   l.Named("http.server"),
+			Cookie:                   authCookie,
+			IdentityFederationIssuer: identityFederationIssuer,
+			AWSConnectorInstall: cloudaws.ConnectorInstallConfig{
+				CloudFormationTemplateURL: impl.cfg.IdentityFederation.CloudFormationTemplateURL,
+				TerraformModuleSource:     impl.cfg.IdentityFederation.TerraformModuleSource,
+			},
+			GCPConnectorInstall: cloudgcp.ConnectorInstallConfig{
+				TerraformModuleSource: impl.cfg.IdentityFederation.GCPTerraformModuleSource,
+			},
+			AzureConnectorInstall: cloudazure.ConnectorInstallConfig{
+				TerraformModuleSource: impl.cfg.IdentityFederation.AzureTerraformModuleSource,
+			},
+			LinearWebhookSecret: impl.cfg.GetLinearWebhookSecret(),
 		},
 	)
 	if err != nil {
@@ -840,19 +1028,20 @@ func (impl *Implm) Run(
 
 	compliancePortalHandler, err := complianceportal_v1.NewMux(
 		complianceportal_v1.MuxConfig{
-			BaseURL:           baseURL,
-			FileStorageOrigin: fileStorageOrigin,
-			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
-			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
-			Logger:            l.Named("compliance-portal"),
-			IAM:               iamService,
-			Visitor:           visitorService,
-			ResourceAlias:     resourceAliasService,
-			File:              fileManagerService,
-			ESign:             esignService,
-			Mailman:           mailmanService,
-			Cookie:            authCookie,
-			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
+			BaseURL:                 baseURL,
+			FileStorageOrigin:       fileStorageOrigin,
+			ExtraHeaderFields:       impl.cfg.Api.ExtraHeaderFields,
+			AllowedOrigins:          impl.cfg.Api.Cors.AllowedOrigins,
+			Logger:                  l.Named("compliance-portal"),
+			IAM:                     iamService,
+			Visitor:                 visitorService,
+			ResourceAlias:           resourceAliasService,
+			File:                    fileManagerService,
+			ESign:                   esignService,
+			Mailman:                 mailmanService,
+			Cookie:                  authCookie,
+			TokenSecret:             impl.cfg.Auth.Cookie.Secret,
+			ExternallyTerminatedTLS: impl.cfg.CompliancePortal.TLSMode.IsExternal(),
 			GraphQLLimits: gqlutils.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
@@ -924,13 +1113,174 @@ func (impl *Implm) Run(
 		},
 	)
 
+	botMessageWorker := probot.NewMessageWorker(
+		pgClient,
+		probotCapabilities,
+		slackMessages,
+		l.Named("probot-message-worker"),
+		worker.WithInterval(time.Second),
+		worker.WithMaxConcurrency(4),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	botMessageWorkerCtx, stopBotMessageWorker := context.WithCancel(context.WithoutCancel(ctx))
+
+	wg.Go(
+		func() {
+			if err := botMessageWorker.Run(botMessageWorkerCtx); err != nil {
+				cancel(fmt.Errorf("probot message worker crashed: %w", err))
+			}
+		},
+	)
+
+	agentExecutionWorker := agentexecution.NewWorker(
+		pgClient,
+		probotProfiles,
+		l.Named("agent-execution-worker"),
+		agentexecution.WithWorkerInterval(time.Second),
+		agentexecution.WithExecutionPreparer(probotAdapters),
+		agentexecution.WithWorkerRegisterer(r),
+		agentexecution.WithWorkerTracerProvider(tp),
+	)
+	agentExecutionWorkerCtx, stopAgentExecutionWorker := context.WithCancel(context.WithoutCancel(ctx))
+
+	wg.Go(
+		func() {
+			if err := agentExecutionWorker.Run(agentExecutionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("agent execution worker crashed: %w", err))
+			}
+		},
+	)
+
+	stopSlackbotEventWorker := func() {}
+	stopSlackbotNotificationWorker := func() {}
+	stopSlackInteractiveCommandWorker := func() {}
+	stopSlackDeliveryWorker := func() {}
+
+	if impl.cfg.Slackbot.Enabled &&
+		slackbot != nil &&
+		slackbotInstallations != nil &&
+		slackMessages != nil {
+		slackbotEventWorker := slackchannel.NewEventWorker(
+			pgClient,
+			slackbot,
+			l.Named("slackbot-event-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithMaxConcurrency(4),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackbotEventWorkerCtx, stopEventWorker := context.WithCancel(context.WithoutCancel(ctx))
+		stopSlackbotEventWorker = stopEventWorker
+
+		wg.Go(
+			func() {
+				if err := slackbotEventWorker.Run(slackbotEventWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slackbot event worker crashed: %w", err))
+				}
+			},
+		)
+
+		slackbotNotificationWorker := slackchannel.NewNotificationWorker(
+			pgClient,
+			slackbotInstallations,
+			slackMessages,
+			l.Named("slackbot-notification-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithMaxConcurrency(4),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackbotNotificationWorkerCtx, stopNotificationWorker := context.WithCancel(context.WithoutCancel(ctx))
+		stopSlackbotNotificationWorker = stopNotificationWorker
+
+		wg.Go(
+			func() {
+				if err := slackbotNotificationWorker.Run(slackbotNotificationWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slackbot notification worker crashed: %w", err))
+				}
+			},
+		)
+
+		slackDeliveryWorker := slackchannel.NewDeliveryWorker(
+			pgClient,
+			slackbotInstallations,
+			l.Named("slack-delivery-operation-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackDeliveryWorkerCtx, stopDeliveryWorker := context.WithCancel(context.WithoutCancel(ctx))
+		stopSlackDeliveryWorker = stopDeliveryWorker
+
+		wg.Go(
+			func() {
+				if err := slackDeliveryWorker.Run(slackDeliveryWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slack delivery operation worker crashed: %w", err))
+				}
+			},
+		)
+
+		slackInteractiveCommandWorker := slackchannel.NewInteractiveCommandWorker(
+			pgClient,
+			encryptionKey,
+			slackbotInstallations,
+			probotIdentityBindings,
+			slackMessages,
+			probotCapabilities,
+			l.Named("slackbot-interactive-command-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithMaxConcurrency(4),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackInteractiveCommandWorkerCtx, stopInteractiveCommandWorker := context.WithCancel(
+			context.WithoutCancel(ctx),
+		)
+		stopSlackInteractiveCommandWorker = stopInteractiveCommandWorker
+
+		wg.Go(
+			func() {
+				if err := slackInteractiveCommandWorker.Run(slackInteractiveCommandWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slack interactive command worker crashed: %w", err))
+				}
+			},
+		)
+	}
+
+	probotRetentionWorker := probot.NewRetentionWorker(
+		pgClient,
+		l.Named("probot-reliability-retention-worker"),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	probotRetentionWorkerCtx, stopProbotRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := probotRetentionWorker.Run(probotRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("probot reliability retention worker crashed: %w", err))
+			}
+		},
+	)
+
 	webhookWorkerCtx, stopWebhookWorker := context.WithCancel(context.Background())
 	webhookWorker := webhook.NewWebhookWorker(pgClient, l.Named("webhook-sender"), webhook.Config{
-		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
-		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
-		EncryptionKey: encryptionKey,
-		Host:          baseURL.String(),
-	})
+		Interval:       time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
+		Timeout:        time.Duration(impl.cfg.Notifications.Webhook.RequestTimeout) * time.Second,
+		CacheTTL:       time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
+		StaleAfter:     time.Duration(impl.cfg.Notifications.Webhook.StaleAfter) * time.Second,
+		RetryBase:      time.Duration(impl.cfg.Notifications.Webhook.RetryBase) * time.Second,
+		RetryMax:       time.Duration(impl.cfg.Notifications.Webhook.RetryMax) * time.Second,
+		MaxConcurrency: impl.cfg.Notifications.Webhook.MaxConcurrency,
+		EncryptionKey:  encryptionKey,
+		Host:           baseURL.String(),
+	},
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
 
 	wg.Go(
 		func() {
@@ -950,17 +1300,96 @@ func (impl *Implm) Run(
 		},
 	)
 
+	taskSyncOutboundWorker := tasksync.NewOutboundWorker(
+		taskService.Sync,
+		l.Named("task-sync-outbound"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	taskSyncOutboundWorkerCtx, stopTaskSyncOutboundWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := taskSyncOutboundWorker.Run(taskSyncOutboundWorkerCtx); err != nil {
+				cancel(fmt.Errorf("task sync outbound worker crashed: %w", err))
+			}
+		},
+	)
+
+	linearWebhookWorker := tasksync.NewWebhookWorker(
+		taskService.Sync,
+		l.Named("linear-webhook"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	linearWebhookWorkerCtx, stopLinearWebhookWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	linearWebhookRetentionWorker := tasksync.NewRetentionWorker(
+		pgClient,
+		l.Named("task-sync-reliability-retention-worker"),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	linearWebhookRetentionWorkerCtx, stopLinearWebhookRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := linearWebhookWorker.Run(linearWebhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("linear webhook worker crashed: %w", err))
+			}
+		},
+	)
+
+	wg.Go(
+		func() {
+			if err := linearWebhookRetentionWorker.Run(linearWebhookRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("task sync retention worker crashed: %w", err))
+			}
+		},
+	)
+
 	documentPDFWorker := probo.NewDocumentPDFWorker(
 		proboService,
 		l.Named("document-pdf-worker"),
 		worker.WithInterval(30*time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
 	)
-	documentPDFWorkerCtx, stopDocumentPDFWorker := context.WithCancel(context.Background())
+	documentPDFWorkerCtx, stopDocumentPDFWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
 
 	wg.Go(
 		func() {
 			if err := documentPDFWorker.Run(documentPDFWorkerCtx); err != nil {
 				cancel(fmt.Errorf("document pdf worker crashed: %w", err))
+			}
+		},
+	)
+
+	documentApprovalQuorumPDFWorker := probo.NewDocumentApprovalQuorumPDFWorker(
+		proboService,
+		l.Named("document-approval-quorum-pdf-worker"),
+		worker.WithInterval(30*time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	documentApprovalQuorumPDFWorkerCtx, stopDocumentApprovalQuorumPDFWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := documentApprovalQuorumPDFWorker.Run(documentApprovalQuorumPDFWorkerCtx); err != nil {
+				cancel(fmt.Errorf("document approval quorum pdf worker crashed: %w", err))
 			}
 		},
 	)
@@ -1040,15 +1469,20 @@ func (impl *Implm) Run(
 		},
 	)
 
-	certManagerServiceCtx, stopCertManagerService := context.WithCancel(context.Background())
+	stopCertManagerService := func() {}
 
-	wg.Go(
-		func() {
-			if err := certManagerService.Run(certManagerServiceCtx); err != nil {
-				cancel(fmt.Errorf("certificate manager service crashed: %w", err))
-			}
-		},
-	)
+	if !impl.cfg.CompliancePortal.TLSMode.IsExternal() {
+		certManagerServiceCtx, stop := context.WithCancel(context.Background())
+		stopCertManagerService = stop
+
+		wg.Go(
+			func() {
+				if err := certManagerService.Run(certManagerServiceCtx); err != nil {
+					cancel(fmt.Errorf("certificate manager service crashed: %w", err))
+				}
+			},
+		)
+	}
 
 	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l)
 	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
@@ -1076,7 +1510,6 @@ func (impl *Implm) Run(
 		pgClient,
 		l,
 		trackerMappingCfg,
-		thirdPartyDisambiguationCfg,
 		time.Duration(impl.cfg.TrackerMappingWorker.StaleAfter)*time.Second,
 		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
 		worker.WithMaxConcurrency(impl.cfg.TrackerMappingWorker.MaxConcurrency),
@@ -1244,7 +1677,11 @@ func (impl *Implm) Run(
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
+	stopTaskSyncOutboundWorker()
+	stopLinearWebhookWorker()
+	stopLinearWebhookRetentionWorker()
 	stopDocumentPDFWorker()
+	stopDocumentApprovalQuorumPDFWorker()
 	stopDocumentNotification()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
@@ -1252,6 +1689,13 @@ func (impl *Implm) Run(
 	stopITAMGC()
 	stopMailer()
 	stopSlackSender()
+	stopAgentExecutionWorker()
+	stopBotMessageWorker()
+	stopSlackbotEventWorker()
+	stopSlackbotNotificationWorker()
+	stopSlackInteractiveCommandWorker()
+	stopSlackDeliveryWorker()
+	stopProbotRetentionWorker()
 
 	wg.Wait()
 
@@ -1435,6 +1879,96 @@ func (impl *Implm) runCompliancePortalServer(
 	ctx, span := tracer.Start(ctx, "probod.runCompliancePortalServer")
 	defer span.End()
 
+	g, ctx := errgroup.WithContext(ctx)
+
+	l.Info("starting compliance portal services")
+	span.AddEvent("Trust center services starting")
+
+	if impl.cfg.CompliancePortal.TLSMode.IsExternal() {
+		externalServer := httpserver.NewServer(
+			impl.cfg.CompliancePortal.HTTPAddr,
+			trustRouter,
+			httpserver.WithLogger(l),
+			httpserver.WithRegisterer(r),
+			httpserver.WithTracerProvider(tp),
+		)
+		externalServer.ReadTimeout = 30 * time.Second
+		externalServer.WriteTimeout = 30 * time.Second
+
+		g.Go(
+			func() error {
+				l.InfoCtx(
+					ctx,
+					"starting externally terminated compliance portal server",
+					log.String("addr", externalServer.Addr),
+				)
+				span.AddEvent("Externally terminated compliance portal server starting")
+
+				listener, err := net.Listen("tcp", externalServer.Addr)
+				if err != nil {
+					return fmt.Errorf("cannot listen on %q: %w", externalServer.Addr, err)
+				}
+
+				defer func() { _ = listener.Close() }()
+
+				if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
+					policy, err := proxyproto.PolicyFromRanges(
+						impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies,
+						proxyproto.USE,
+						proxyproto.REJECT,
+					)
+					if err != nil {
+						return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+					}
+
+					listener = &proxyproto.Listener{
+						Listener:          listener,
+						ReadHeaderTimeout: 10 * time.Second,
+						ConnPolicy:        policy,
+					}
+
+					l.Info(
+						"using proxy protocol for externally terminated compliance portal server",
+						log.Any("trusted-proxies", impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies),
+					)
+				}
+
+				if err := externalServer.Serve(listener); err != nil && err != http.ErrServerClosed {
+					return fmt.Errorf("cannot serve externally terminated compliance portal requests: %w", err)
+				}
+
+				return nil
+			},
+		)
+
+		l.Info("externally terminated compliance portal server started")
+		span.AddEvent("Externally terminated compliance portal server started")
+
+		go func() {
+			<-ctx.Done()
+
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			l.InfoCtx(ctx, "shutting down externally terminated compliance portal server...")
+			span.AddEvent("Externally terminated compliance portal server shutting down")
+
+			if err := externalServer.Shutdown(shutdownCtx); err != nil {
+				span.RecordError(err)
+				l.ErrorCtx(ctx, "cannot shutdown externally terminated compliance portal server", log.Error(err))
+			}
+
+			span.AddEvent("Externally terminated compliance portal server shutdown complete")
+		}()
+
+		if err := g.Wait(); err != nil {
+			span.RecordError(err)
+			return err
+		}
+
+		return ctx.Err()
+	}
+
 	certSelector := certmanager.NewSelector(pgClient, encryptionKey)
 
 	warmer := certmanager.NewCacheStore(pgClient, encryptionKey, l)
@@ -1442,11 +1976,6 @@ func (impl *Implm) runCompliancePortalServer(
 		span.RecordError(err)
 		l.ErrorCtx(ctx, "cannot warm certificate cache", log.Error(err))
 	}
-
-	g, ctx := errgroup.WithContext(ctx)
-
-	l.Info("starting compliance portal services")
-	span.AddEvent("Trust center services starting")
 
 	httpACMEHandler := certmanager.NewACMEChallengeHandler(
 		pgClient,
@@ -1650,6 +2179,86 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 	}
 
 	return opts
+}
+
+// defaultSigningKeyID names a configured key that carries no explicit kid.
+const defaultSigningKeyID = "default"
+
+// newSigningKey turns one configured key into a key ring entry. The OAuth2
+// server and the identity federation issuer keep separate config sections but
+// accept the same material, so both read their keys through here.
+//
+// The key material is already decoded by the configuration; a key left empty
+// there arrives nil and is rejected by jose.NewKeyRing.
+func newSigningKey(privateKey RSAPrivateKey, kid string, active bool) jose.SigningKey {
+	if kid == "" {
+		kid = defaultSigningKeyID
+	}
+
+	return jose.SigningKey{
+		PrivateKey: privateKey.PrivateKey(),
+		KID:        kid,
+		Active:     active,
+	}
+}
+
+// buildIdentityFederationIssuer returns the outbound OIDC issuer, or nil when the
+// identity federation issuer is disabled. A deployment that never federates into a
+// customer cloud account needs no signing key of its own.
+func (impl *Implm) buildIdentityFederationIssuer(
+	baseURL *baseurl.BaseURL,
+	l *log.Logger,
+) (*identityfederation.Issuer, error) {
+	if !impl.cfg.IdentityFederation.Enabled {
+		return nil, nil
+	}
+
+	if len(impl.cfg.IdentityFederation.SigningKeys) == 0 {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: at least one signing key is required")
+	}
+
+	issuerBaseURL, err := identityfederation.ResolveIssuerBaseURL(impl.cfg.IdentityFederation.IssuerBaseURL, baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
+	}
+
+	signingKeys := make([]jose.SigningKey, 0, len(impl.cfg.IdentityFederation.SigningKeys))
+
+	for _, keyCfg := range impl.cfg.IdentityFederation.SigningKeys {
+		signingKeys = append(
+			signingKeys,
+			newSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active),
+		)
+	}
+
+	keyRing, err := jose.NewKeyRing(signingKeys)
+	if err != nil {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
+	}
+
+	issuer, err := identityfederation.NewIssuer(issuerBaseURL, keyRing, identityfederation.DefaultTokenTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	// probod cannot verify that the configured apex actually reaches it, so the
+	// effective value is logged for the startup record and covered by a canary.
+	l.Info(
+		"identity federation issuer configured",
+		log.String("issuer_base_url", issuer.BaseURL()),
+	)
+
+	// A derived issuer is not held to the provider rules, so localhost and CI
+	// still start. Warn instead of failing, rather than staying silent.
+	if err := identityfederation.ValidateConfig(issuerBaseURL); err != nil {
+		l.Warn(
+			"identity federation issuer cannot be registered with one or more cloud providers; customers cannot install the connector until it is publicly reachable over https without a port",
+			log.String("issuer_base_url", issuer.BaseURL()),
+			log.Error(err),
+		)
+	}
+
+	return issuer, nil
 }
 
 func authSecureCookieConfig(c CookieConfig, maxAgeSeconds int) (securecookie.Config, error) {

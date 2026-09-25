@@ -1,8 +1,8 @@
 # Release `probod` (server group)
 
 This track ships `probod`, `@probo/console`, `@probo/compliance-portal`,
-and `@probo/ui` together as the Docker image and accompanying binary
-archive. They share the same version.
+`@probo/employee-portal`, and `@probo/ui` together as the Docker image and
+accompanying binary archive. They share the same version.
 
 After confirming commits below, follow the
 [common steps](./README.md#3-common-steps-every-track).
@@ -12,24 +12,25 @@ After confirming commits below, follow the
 - **Tag pattern**: `probod/v*`
 - **Version source**: `cmd/probod/VERSION` (single `X.Y.Z` line)
 - **Version bump**: Edit `cmd/probod/VERSION` directly
-- **Changelog**: `cmd/probod/CHANGELOG.md` (covers all four components)
+- **Changelog**: `cmd/probod/CHANGELOG.md` (covers every bundled component)
 - **Files to stage**: `cmd/probod/VERSION`, `cmd/probod/CHANGELOG.md`
 - **Workflow**: `.github/workflows/release-probod.yaml`
-- **Path filter**: `cmd/probod apps/console apps/compliance-portal packages/ui pkg`
+- **Path filter**: `cmd/probod apps/console apps/compliance-portal apps/employee-portal packages/ui pkg`
 
 ## Detect commits
 
 ```shell
 git log $(git describe --tags --abbrev=0 --match='probod/v*')..HEAD --oneline \
-  -- cmd/probod apps/console apps/compliance-portal packages/ui pkg
+  -- cmd/probod apps/console apps/compliance-portal apps/employee-portal packages/ui pkg
 ```
 
 If empty or non-user-facing only, do not release this track.
 
 ## Notes
 
-The changelog covers changes across all four components (`probod`,
-`@probo/console`, `@probo/compliance-portal`, `@probo/ui`).
+The changelog covers changes across every bundled component (`probod`,
+`@probo/console`, `@probo/compliance-portal`, `@probo/employee-portal`,
+`@probo/ui`).
 
 CI builds the frontends and Go binaries, builds and pushes the
 multi-arch image to `artifact.probo.inc/probo/probo:v<version>` (and

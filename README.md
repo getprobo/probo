@@ -75,7 +75,7 @@ The [`@probo/n8n-nodes-probo`](packages/n8n-node/) community node brings Probo i
 
 | Tool | Version |
 |------|---------|
-| Go | 1.26+ |
+| Go | 1.27+ |
 | Node.js | 24.15+ |
 | npm | 12.0.2+ |
 | Docker | latest |
@@ -133,6 +133,10 @@ To report a security vulnerability, email [security@probo.com](mailto:security@p
 - [Twitter / X](https://twitter.com/getprobo)
 - [LinkedIn](https://www.linkedin.com/company/getprobo)
 - [Website](https://www.probo.com)
+
+## Thanks
+
+The local Go cache actions use the cache strategy from [CloudX](https://www.cloudx.ai). See [Scaling Golang CI by Replacing actions/setup-go](https://www.cloudx.ai/posts/setup-go) and [cloudx-io/setup-go](https://github.com/cloudx-io/setup-go). Thank you to Lukas Schwab, Peter Downs, and the CloudX team.
 
 ## License
 

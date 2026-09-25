@@ -53,15 +53,7 @@ func SessionOrderFields() []SessionOrderField {
 }
 
 func (v SessionOrderField) IsValid() bool {
-	switch v {
-	case
-		SessionOrderFieldCreatedAt,
-		SessionOrderFieldExpiredAt,
-		SessionOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, SessionOrderFields())
 }
 
 func (v SessionOrderField) String() string {
@@ -73,14 +65,7 @@ func (v SessionOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *SessionOrderField) UnmarshalText(text []byte) error {
-	val := SessionOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid SessionOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, SessionOrderFields())
 }
 
 func (p SessionOrderField) Column() string {

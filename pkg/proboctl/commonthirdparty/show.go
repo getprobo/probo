@@ -130,6 +130,7 @@ func newCmdShow(f *cmdutil.Factory) *cobra.Command {
 		row("Name:", party.Name)
 		row("Slug:", party.Slug)
 		row("Category:", string(party.Category))
+		row("Review:", reviewSummary(&party))
 
 		if party.WebsiteURL != nil {
 			row("Website:", *party.WebsiteURL)
@@ -231,4 +232,24 @@ func printEnrichmentDetails(out io.Writer, label lipgloss.Style, party coredata.
 
 		_, _ = fmt.Fprintln(out, table.Render())
 	}
+}
+
+// reviewSummary renders the review state, appending the terminal verdict a
+// rejection carries: the state alone does not say what patterns resolving to
+// this row will be attributed, which is the reason to look.
+func reviewSummary(party *coredata.CommonThirdParty) string {
+	if party.Review == nil {
+		return "(unknown)"
+	}
+
+	if *party.Review != coredata.CommonThirdPartyReviewRejected {
+		return string(*party.Review)
+	}
+
+	verdict := "(no verdict)"
+	if party.RejectedVerdict != nil {
+		verdict = string(*party.RejectedVerdict)
+	}
+
+	return fmt.Sprintf("%s -> %s", *party.Review, verdict)
 }

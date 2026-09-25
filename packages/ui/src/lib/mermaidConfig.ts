@@ -25,5 +25,9 @@ export const mermaidRenderConfig = {
   markdownAutoWrap: true,
   flowchart: {
     wrappingWidth: 220,
+    subGraphTitleMargin: {
+      top: 16,
+      bottom: 8,
+    },
   },
 } as const;

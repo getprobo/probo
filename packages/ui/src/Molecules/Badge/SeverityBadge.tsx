@@ -18,24 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { getRiskScoreLevel, type RiskMatrixSize } from "@probo/helpers";
 import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
 type Props = {
   score: number;
+  label?: string;
+  matrixSize?: RiskMatrixSize;
 };
 
-export function SeverityBadge({ score }: Props) {
+const severityByLevel = {
+  0: { variant: "neutral" as const, key: "low" },
+  1: { variant: "warning" as const, key: "high" },
+  2: { variant: "danger" as const, key: "critical" },
+} as const;
+
+export function SeverityBadge({ score, label, matrixSize }: Props) {
   const { t } = useTranslation();
-  const severity = score >= 15
-    ? { variant: "danger" as const, key: "critical" }
-    : score >= 5
-      ? { variant: "warning" as const, key: "high" }
-      : { variant: "neutral" as const, key: "low" };
+  const severity = severityByLevel[getRiskScoreLevel(score, matrixSize)];
   return (
     <Badge variant={severity.variant}>
-      {t(`ui.risk.severity.${severity.key}`)}
+      {label ?? t(`ui.risk.severity.${severity.key}`)}
     </Badge>
   );
 }

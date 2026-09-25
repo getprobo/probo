@@ -42,6 +42,7 @@ import { LinkedRisksDialog } from "./LinkedRisksDialog";
 const linkedRiskFragment = graphql`
   fragment LinkedRisksCardFragment on Risk {
     id
+    referenceId
     name
     inherentRiskScore
     residualRiskScore
@@ -108,6 +109,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
       <Table>
         <Thead>
           <Tr>
+            <Th>{t("linkedRisksCard.columns.referenceId")}</Th>
             <Th>{t("linkedRisksCard.columns.name")}</Th>
             <Th>{t("linkedRisksCard.columns.initialRisk")}</Th>
             <Th>{t("linkedRisksCard.columns.residualRisk")}</Th>
@@ -118,7 +120,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
           {props.risks.length === 0 && (
             <Tr>
               <Td
-                colSpan={props.readOnly ? 3 : 4}
+                colSpan={props.readOnly ? 4 : 5}
                 className="text-center text-txt-secondary"
               >
                 {t("linkedRisksCard.empty")}
@@ -141,7 +143,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
               onLink={onAttach}
               onUnlink={onDetach}
             >
-              <TrButton colspan={4}>
+              <TrButton colspan={5}>
                 {t("linkedRisksCard.actions.link")}
               </TrButton>
             </LinkedRisksDialog>
@@ -162,13 +164,20 @@ function RiskRow(props: {
   const { t } = useTranslation();
 
   return (
-    <Tr to={`/organizations/${organizationId}/risks/${risk.id}`}>
+    <Tr to={`/organizations/${organizationId}/risk-management/risks/${risk.id}`}>
+      <Td>
+        <span className="font-mono text-sm">{risk.referenceId}</span>
+      </Td>
       <Td>{risk.name}</Td>
       <Td>
-        <RiskBadge level={risk.inherentRiskScore} />
+        {risk.inherentRiskScore != null
+          ? <RiskBadge level={risk.inherentRiskScore} />
+          : "—"}
       </Td>
       <Td>
-        <RiskBadge level={risk.residualRiskScore} />
+        {risk.residualRiskScore != null
+          ? <RiskBadge level={risk.residualRiskScore} />
+          : "—"}
       </Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">

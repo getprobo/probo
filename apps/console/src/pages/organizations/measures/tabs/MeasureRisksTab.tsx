@@ -29,10 +29,10 @@ export const risksFragment = graphql`
   fragment MeasureRisksTabFragment on Measure {
     id
     canCreateRiskMeasureMapping: permission(
-      action: "core:risk:create-measure-mapping"
+      action: "risk-management:risk:create-measure-mapping"
     )
     canDeleteRiskMeasureMapping: permission(
-      action: "core:risk:delete-measure-mapping"
+      action: "risk-management:risk:delete-measure-mapping"
     )
     risks(first: 100) @connection(key: "Measure__risks") {
       __id

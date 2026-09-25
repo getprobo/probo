@@ -55,6 +55,7 @@ type Props<
   hasNext?: boolean;
   isLoadingNext?: boolean;
   onLoadMore?: (count?: number) => void;
+  onValueChange?: (ids: string[]) => void;
 };
 
 export function EntityMultiSelectField<
@@ -74,6 +75,7 @@ export function EntityMultiSelectField<
   hasNext = false,
   isLoadingNext = false,
   onLoadMore,
+  onValueChange,
 }: Props<TItem, TForm>) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -94,12 +96,16 @@ export function EntityMultiSelectField<
         const available = allItems.filter(item => !selectedIds.includes(item.id));
 
         const handleAdd = (itemId: string) => {
-          field.onChange([...selectedIds, itemId]);
+          const next = [...selectedIds, itemId];
+          field.onChange(next);
+          onValueChange?.(next);
           setIsOpen(false);
         };
 
         const handleRemove = (itemId: string) => {
-          field.onChange(selectedIds.filter(id => id !== itemId));
+          const next = selectedIds.filter(id => id !== itemId);
+          field.onChange(next);
+          onValueChange?.(next);
         };
 
         return (

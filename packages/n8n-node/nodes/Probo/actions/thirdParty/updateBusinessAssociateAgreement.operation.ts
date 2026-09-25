@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, toPeriod } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -77,16 +77,18 @@ export async function execute(
 			updateThirdPartyBusinessAssociateAgreement(input: $input) {
 				thirdPartyBusinessAssociateAgreement {
 					id
-					validFrom
-					validUntil
+					validity {
+						start
+						end
+					}
 				}
 			}
 		}
 	`;
 
 	const input: Record<string, unknown> = { thirdPartyId };
-	if (validFrom) input.validFrom = validFrom;
-	if (validUntil) input.validUntil = validUntil;
+	const validity = toPeriod(validFrom, validUntil);
+	if (validity) input.validity = validity;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

@@ -26,13 +26,17 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
+import type { ProcessingActivityGraphDPIAListQuery } from "#/__generated__/core/ProcessingActivityGraphDPIAListQuery.graphql";
 import type { ProcessingActivityGraphListQuery } from "#/__generated__/core/ProcessingActivityGraphListQuery.graphql";
 import type { ProcessingActivityGraphNodeQuery } from "#/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
+import type { ProcessingActivityGraphTIAListQuery } from "#/__generated__/core/ProcessingActivityGraphTIAListQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
 import {
+  dataProtectionImpactAssessmentsQuery,
   processingActivitiesQuery,
   processingActivityNodeQuery,
+  transferImpactAssessmentsQuery,
 } from "#/hooks/graph/ProcessingActivityGraph";
 
 export const processingActivityRoutes = [
@@ -52,6 +56,44 @@ export const processingActivityRoutes = [
       lazy(
         () =>
           import("#/pages/organizations/processingActivities/ProcessingActivitiesPage"),
+      ),
+    ),
+  },
+  {
+    path: "dpias",
+    Fallback: PageSkeleton,
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<ProcessingActivityGraphDPIAListQuery>(
+        coreEnvironment,
+        dataProtectionImpactAssessmentsQuery,
+        {
+          organizationId: organizationId,
+        },
+      ),
+    ),
+    Component: withQueryRef(
+      lazy(
+        () =>
+          import("#/pages/organizations/processingActivities/DataProtectionImpactAssessmentsPage"),
+      ),
+    ),
+  },
+  {
+    path: "tias",
+    Fallback: PageSkeleton,
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<ProcessingActivityGraphTIAListQuery>(
+        coreEnvironment,
+        transferImpactAssessmentsQuery,
+        {
+          organizationId: organizationId,
+        },
+      ),
+    ),
+    Component: withQueryRef(
+      lazy(
+        () =>
+          import("#/pages/organizations/processingActivities/TransferImpactAssessmentsPage"),
       ),
     ),
   },

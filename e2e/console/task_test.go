@@ -41,6 +41,7 @@ func TestTask_Create(t *testing.T) {
 					node {
 						id
 						name
+						state
 					}
 				}
 			}
@@ -51,8 +52,9 @@ func TestTask_Create(t *testing.T) {
 		CreateTask struct {
 			TaskEdge struct {
 				Node struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
+					ID    string `json:"id"`
+					Name  string `json:"name"`
+					State string `json:"state"`
 				} `json:"node"`
 			} `json:"taskEdge"`
 		} `json:"createTask"`
@@ -63,7 +65,7 @@ func TestTask_Create(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"measureId":      measureID,
 			"name":           "Owner Task",
-			"description":    "Created by owner",
+			"content":        factory.ProseMirrorPlainText("Created by owner"),
 			"priority":       "MEDIUM",
 		},
 	}, &result)
@@ -72,6 +74,7 @@ func TestTask_Create(t *testing.T) {
 	task := result.CreateTask.TaskEdge.Node
 	assert.NotEmpty(t, task.ID)
 	assert.Equal(t, "Owner Task", task.Name)
+	assert.Equal(t, "TODO", task.State)
 }
 
 func TestTask_CreateWithoutMeasure(t *testing.T) {
@@ -112,7 +115,7 @@ func TestTask_CreateWithoutMeasure(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"name":           "Task without measure",
-			"description":    "Created without a measure",
+			"content":        factory.ProseMirrorPlainText("Created without a measure"),
 			"priority":       "HIGH",
 		},
 	}, &result)
@@ -130,7 +133,7 @@ func TestTask_Update(t *testing.T) {
 	measureID := factory.NewMeasure(owner).Create()
 	taskID := factory.NewTask(owner, measureID).
 		WithName("Task to Update").
-		WithDescription("Original description").
+		WithContent("Original description").
 		Create()
 
 	query := `
@@ -155,9 +158,9 @@ func TestTask_Update(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"taskId":      taskID,
-			"name":        "Updated by Owner",
-			"description": "Owner updated this",
+			"taskId":  taskID,
+			"name":    "Updated by Owner",
+			"content": factory.ProseMirrorPlainText("Owner updated this"),
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -247,6 +250,167 @@ func TestTask_ListByMeasure(t *testing.T) {
 	assert.GreaterOrEqual(t, result.Node.Tasks.TotalCount, 3)
 }
 
+func TestTask_Filter(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).Create()
+	matchingTaskID := factory.NewTask(owner, measureID).
+		WithName("Quarterly access review").
+		Create()
+	inProgressDecoyID := factory.NewTask(owner, measureID).
+		WithName("Prepare security training").
+		Create()
+	factory.NewTask(owner, measureID).
+		WithName("Annual access review").
+		Create()
+
+	updateQuery := `
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
+				task {
+					id
+				}
+			}
+		}
+	`
+	for _, taskID := range []string{matchingTaskID, inProgressDecoyID} {
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"taskId": taskID,
+				"state":  "IN_PROGRESS",
+			},
+		}, &struct{}{})
+		require.NoError(t, err)
+	}
+
+	query := `
+		query FilterTasks($organizationId: ID!, $filter: TaskFilter) {
+			node(id: $organizationId) {
+				... on Organization {
+					tasks(first: 10, filter: $filter) {
+						edges {
+							node {
+								id
+								name
+								state
+							}
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Tasks struct {
+				Edges []struct {
+					Node struct {
+						ID    string `json:"id"`
+						Name  string `json:"name"`
+						State string `json:"state"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"filter": map[string]any{
+			"query": "access",
+			"state": "IN_PROGRESS",
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.Node.Tasks.Edges, 1)
+	assert.Equal(t, matchingTaskID, result.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, "Quarterly access review", result.Node.Tasks.Edges[0].Node.Name)
+	assert.Equal(t, "IN_PROGRESS", result.Node.Tasks.Edges[0].Node.State)
+	assert.Equal(t, 1, result.Node.Tasks.TotalCount)
+}
+
+func TestTask_Filter_LiteralWildcards(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).Create()
+	percentTaskID := factory.NewTask(owner, measureID).
+		WithName("Quarterly 100% review").
+		Create()
+	underscoreTaskID := factory.NewTask(owner, measureID).
+		WithName("Q3_access review").
+		Create()
+	factory.NewTask(owner, measureID).
+		WithName("Quarterly access review").
+		Create()
+
+	query := `
+		query FilterTasks($organizationId: ID!, $filter: TaskFilter) {
+			node(id: $organizationId) {
+				... on Organization {
+					tasks(first: 10, filter: $filter) {
+						edges {
+							node {
+								id
+								name
+							}
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	type result struct {
+		Node struct {
+			Tasks struct {
+				Edges []struct {
+					Node struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	t.Run("percent is a literal substring", func(t *testing.T) {
+		t.Parallel()
+
+		var got result
+
+		err := owner.Execute(query, map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"filter":         map[string]any{"query": "%"},
+		}, &got)
+		require.NoError(t, err)
+		require.Len(t, got.Node.Tasks.Edges, 1)
+		assert.Equal(t, percentTaskID, got.Node.Tasks.Edges[0].Node.ID)
+		assert.Equal(t, "Quarterly 100% review", got.Node.Tasks.Edges[0].Node.Name)
+		assert.Equal(t, 1, got.Node.Tasks.TotalCount)
+	})
+
+	t.Run("underscore is a literal substring", func(t *testing.T) {
+		t.Parallel()
+
+		var got result
+
+		err := owner.Execute(query, map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"filter":         map[string]any{"query": "_"},
+		}, &got)
+		require.NoError(t, err)
+		require.Len(t, got.Node.Tasks.Edges, 1)
+		assert.Equal(t, underscoreTaskID, got.Node.Tasks.Edges[0].Node.ID)
+		assert.Equal(t, "Q3_access review", got.Node.Tasks.Edges[0].Node.Name)
+		assert.Equal(t, 1, got.Node.Tasks.TotalCount)
+	})
+}
+
 func TestTask_RequiredFields(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -327,12 +491,53 @@ func TestTask_StateEnum(t *testing.T) {
 		Create()
 
 	states := []string{
+		"BACKLOG",
 		"TODO",
 		"IN_PROGRESS",
 		"DONE",
+		"CANCELED",
+		"DUPLICATE",
 	}
 
 	for _, state := range states {
+		t.Run("create with state "+state, func(t *testing.T) {
+			query := `
+				mutation CreateTask($input: CreateTaskInput!) {
+					createTask(input: $input) {
+						taskEdge {
+							node {
+								id
+								state
+							}
+						}
+					}
+				}
+			`
+
+			var result struct {
+				CreateTask struct {
+					TaskEdge struct {
+						Node struct {
+							ID    string `json:"id"`
+							State string `json:"state"`
+						} `json:"node"`
+					} `json:"taskEdge"`
+				} `json:"createTask"`
+			}
+
+			err := owner.Execute(query, map[string]any{
+				"input": map[string]any{
+					"organizationId": owner.GetOrganizationID().String(),
+					"measureId":      measureID,
+					"name":           "Create State " + state,
+					"priority":       "MEDIUM",
+					"state":          state,
+				},
+			}, &result)
+			require.NoError(t, err, "State %s should be valid on create", state)
+			assert.Equal(t, state, result.CreateTask.TaskEdge.Node.State)
+		})
+
 		t.Run("update to state "+state, func(t *testing.T) {
 			taskID := factory.NewTask(owner, measureID).
 				WithName("State Test " + state).
@@ -389,7 +594,7 @@ func TestTask_SubResolvers(t *testing.T) {
 					... on Task {
 						id
 						name
-						description
+						content
 						state
 					}
 				}
@@ -398,10 +603,10 @@ func TestTask_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID          string  `json:"id"`
-				Name        string  `json:"name"`
-				Description *string `json:"description"`
-				State       string  `json:"state"`
+				ID      string  `json:"id"`
+				Name    string  `json:"name"`
+				Content *string `json:"content"`
+				State   string  `json:"state"`
 			} `json:"node"`
 		}
 
@@ -535,7 +740,7 @@ func TestTask_InvalidID(t *testing.T) {
 	})
 }
 
-func TestTask_OmittableDescription(t *testing.T) {
+func TestTask_OmittableContent(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -545,16 +750,16 @@ func TestTask_OmittableDescription(t *testing.T) {
 
 	taskID := factory.NewTask(owner, measureID).
 		WithName("Description Test Task").
-		WithDescription("Initial description").
+		WithContent("Initial description").
 		Create()
 
-	t.Run("set description", func(t *testing.T) {
+	t.Run("set content", func(t *testing.T) {
 		query := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
 					task {
 						id
-						description
+						content
 					}
 				}
 			}
@@ -563,30 +768,30 @@ func TestTask_OmittableDescription(t *testing.T) {
 		var result struct {
 			UpdateTask struct {
 				Task struct {
-					ID          string  `json:"id"`
-					Description *string `json:"description"`
+					ID      string  `json:"id"`
+					Content *string `json:"content"`
 				} `json:"task"`
 			} `json:"updateTask"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"taskId":      taskID,
-				"description": "Updated description",
+				"taskId":  taskID,
+				"content": factory.ProseMirrorPlainText("Updated description"),
 			},
 		}, &result)
 		require.NoError(t, err)
-		require.NotNil(t, result.UpdateTask.Task.Description)
-		assert.Equal(t, "Updated description", *result.UpdateTask.Task.Description)
+		require.NotNil(t, result.UpdateTask.Task.Content)
+		factory.AssertProseMirrorPlainText(t, "Updated description", *result.UpdateTask.Task.Content)
 	})
 
-	t.Run("clear description with null", func(t *testing.T) {
+	t.Run("clear content with null", func(t *testing.T) {
 		query := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
 					task {
 						id
-						description
+						content
 					}
 				}
 			}
@@ -595,24 +800,23 @@ func TestTask_OmittableDescription(t *testing.T) {
 		var result struct {
 			UpdateTask struct {
 				Task struct {
-					ID          string  `json:"id"`
-					Description *string `json:"description"`
+					ID      string `json:"id"`
+					Content string `json:"content"`
 				} `json:"task"`
 			} `json:"updateTask"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"taskId":      taskID,
-				"description": nil,
+				"taskId":  taskID,
+				"content": nil,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Nil(t, result.UpdateTask.Task.Description)
+		factory.AssertProseMirrorPlainText(t, "", result.UpdateTask.Task.Content)
 	})
 
-	t.Run("update without description preserves value", func(t *testing.T) {
-		// First set a description
+	t.Run("update without content preserves value", func(t *testing.T) {
 		setQuery := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
@@ -625,20 +829,19 @@ func TestTask_OmittableDescription(t *testing.T) {
 
 		err := owner.Execute(setQuery, map[string]any{
 			"input": map[string]any{
-				"taskId":      taskID,
-				"description": "Should persist",
+				"taskId":  taskID,
+				"content": factory.ProseMirrorPlainText("Should persist"),
 			},
 		}, nil)
 		require.NoError(t, err)
 
-		// Update only name
 		query := `
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
 					task {
 						id
 						name
-						description
+						content
 					}
 				}
 			}
@@ -647,9 +850,9 @@ func TestTask_OmittableDescription(t *testing.T) {
 		var result struct {
 			UpdateTask struct {
 				Task struct {
-					ID          string  `json:"id"`
-					Name        string  `json:"name"`
-					Description *string `json:"description"`
+					ID      string  `json:"id"`
+					Name    string  `json:"name"`
+					Content *string `json:"content"`
 				} `json:"task"`
 			} `json:"updateTask"`
 		}
@@ -661,8 +864,8 @@ func TestTask_OmittableDescription(t *testing.T) {
 			},
 		}, &result)
 		require.NoError(t, err)
-		require.NotNil(t, result.UpdateTask.Task.Description)
-		assert.Equal(t, "Should persist", *result.UpdateTask.Task.Description)
+		require.NotNil(t, result.UpdateTask.Task.Content)
+		factory.AssertProseMirrorPlainText(t, "Should persist", *result.UpdateTask.Task.Content)
 	})
 }
 
@@ -861,5 +1064,599 @@ func TestTask_OmittableDeadline(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 		assert.Nil(t, result.UpdateTask.Task.Deadline)
+	})
+}
+
+func TestTask_TimeEstimate(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).
+		WithName("Task Time Estimate Test").
+		Create()
+
+	const createQuery = `
+		mutation CreateTask($input: CreateTaskInput!) {
+			createTask(input: $input) {
+				taskEdge {
+					node {
+						id
+						timeEstimate
+					}
+				}
+			}
+		}
+	`
+
+	var createResult struct {
+		CreateTask struct {
+			TaskEdge struct {
+				Node struct {
+					ID           string  `json:"id"`
+					TimeEstimate *string `json:"timeEstimate"`
+				} `json:"node"`
+			} `json:"taskEdge"`
+		} `json:"createTask"`
+	}
+
+	err := owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"measureId":      measureID,
+			"name":           factory.SafeName("Estimate"),
+			"priority":       "MEDIUM",
+			"timeEstimate":   "PT1H",
+		},
+	}, &createResult)
+	require.NoError(t, err)
+	require.NotNil(t, createResult.CreateTask.TaskEdge.Node.TimeEstimate)
+	assert.Equal(t, "PT1H", *createResult.CreateTask.TaskEdge.Node.TimeEstimate)
+
+	taskID := createResult.CreateTask.TaskEdge.Node.ID
+
+	const updateQuery = `
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
+				task {
+					id
+					timeEstimate
+				}
+			}
+		}
+	`
+
+	var updateResult struct {
+		UpdateTask struct {
+			Task struct {
+				ID           string  `json:"id"`
+				TimeEstimate *string `json:"timeEstimate"`
+			} `json:"task"`
+		} `json:"updateTask"`
+	}
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"taskId":       taskID,
+			"timeEstimate": "P1M",
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	require.NotNil(t, updateResult.UpdateTask.Task.TimeEstimate)
+	assert.Equal(t, "P1M", *updateResult.UpdateTask.Task.TimeEstimate)
+
+	const getQuery = `
+		query GetTask($id: ID!) {
+			node(id: $id) {
+				... on Task {
+					id
+					timeEstimate
+				}
+			}
+		}
+	`
+
+	var getResult struct {
+		Node struct {
+			ID           string  `json:"id"`
+			TimeEstimate *string `json:"timeEstimate"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(getQuery, map[string]any{"id": taskID}, &getResult)
+	require.NoError(t, err)
+	require.NotNil(t, getResult.Node.TimeEstimate)
+	assert.Equal(t, "P1M", *getResult.Node.TimeEstimate)
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"taskId":       taskID,
+			"timeEstimate": nil,
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	assert.Nil(t, updateResult.UpdateTask.Task.TimeEstimate)
+
+	t.Run("rejects two calendar months", func(t *testing.T) {
+		t.Parallel()
+
+		err := owner.ExecuteShouldFail(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"measureId":      measureID,
+				"name":           factory.SafeName("Overlong estimate"),
+				"priority":       "MEDIUM",
+				"timeEstimate":   "P2M",
+			},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("rejects incomplete duration", func(t *testing.T) {
+		t.Parallel()
+
+		err := owner.ExecuteShouldFail(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"measureId":      measureID,
+				"name":           factory.SafeName("Incomplete estimate"),
+				"priority":       "MEDIUM",
+				"timeEstimate":   "P1YT",
+			},
+		})
+		require.Error(t, err)
+	})
+}
+
+func TestTask_Recurrence(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).WithName("Task Recurrence Test").Create()
+
+	createQuery := `
+		mutation CreateTask($input: CreateTaskInput!) {
+			createTask(input: $input) {
+				taskEdge {
+					node {
+						id
+						name
+						deadline
+						recurrenceInterval
+					}
+				}
+			}
+		}
+	`
+
+	t.Run("create with recurrence and deadline round-trips", func(t *testing.T) {
+		t.Parallel()
+
+		var result struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID                 string  `json:"id"`
+						Deadline           *string `json:"deadline"`
+						RecurrenceInterval *string `json:"recurrenceInterval"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2026-01-15T00:00:00Z",
+				"recurrenceInterval": "P21D",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		node := result.CreateTask.TaskEdge.Node
+		assert.NotEmpty(t, node.ID)
+		require.NotNil(t, node.Deadline)
+		assert.Equal(t, "2026-01-15T00:00:00Z", *node.Deadline)
+		require.NotNil(t, node.RecurrenceInterval)
+		assert.Equal(t, "P21D", *node.RecurrenceInterval)
+	})
+
+	t.Run("create with a calendar month keeps P1M", func(t *testing.T) {
+		t.Parallel()
+
+		var result struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID                 string  `json:"id"`
+						RecurrenceInterval *string `json:"recurrenceInterval"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Monthly Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2026-01-31T00:00:00Z",
+				"recurrenceInterval": "P1M",
+			},
+		}, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.CreateTask.TaskEdge.Node.RecurrenceInterval)
+		assert.Equal(t, "P1M", *result.CreateTask.TaskEdge.Node.RecurrenceInterval)
+	})
+
+	t.Run("create with recurrence but no deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"recurrenceInterval": "P21D",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "deadline")
+	})
+
+	t.Run("create as done with recurrence fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"state":              "DONE",
+				"deadline":           "2026-01-15T00:00:00Z",
+				"recurrenceInterval": "P21D",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "state")
+	})
+
+	t.Run("create with a zero interval fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2026-01-15T00:00:00Z",
+				"recurrenceInterval": "PT0S",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "recurrence_interval")
+	})
+
+	t.Run("create with an interval that does not advance the deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2026-01-31T12:00:00Z",
+				"recurrenceInterval": "P1M-29D",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "recurrence_interval")
+	})
+
+	t.Run("completing clones the next occurrence", func(t *testing.T) {
+		t.Parallel()
+
+		var created struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID                 string  `json:"id"`
+						Name               string  `json:"name"`
+						Deadline           *string `json:"deadline"`
+						RecurrenceInterval *string `json:"recurrenceInterval"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2027-01-15T00:00:00Z",
+				"recurrenceInterval": "P21D",
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		var updated struct {
+			UpdateTask struct {
+				Task struct {
+					ID                 string  `json:"id"`
+					State              string  `json:"state"`
+					Deadline           *string `json:"deadline"`
+					RecurrenceInterval *string `json:"recurrenceInterval"`
+				} `json:"task"`
+				NextTaskEdge *struct {
+					Node struct {
+						ID                 string  `json:"id"`
+						Name               string  `json:"name"`
+						State              string  `json:"state"`
+						Deadline           *string `json:"deadline"`
+						RecurrenceInterval *string `json:"recurrenceInterval"`
+					} `json:"node"`
+				} `json:"nextTaskEdge"`
+			} `json:"updateTask"`
+		}
+
+		err = owner.Execute(`
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task {
+						id
+						state
+						deadline
+						recurrenceInterval
+					}
+					nextTaskEdge {
+						node {
+							id
+							name
+							state
+							deadline
+							recurrenceInterval
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId": created.CreateTask.TaskEdge.Node.ID,
+				"state":  "DONE",
+			},
+		}, &updated)
+		require.NoError(t, err)
+
+		completed := updated.UpdateTask.Task
+		assert.Equal(t, "DONE", completed.State)
+		assert.Nil(t, completed.RecurrenceInterval)
+		require.NotNil(t, completed.Deadline)
+		assert.Equal(t, "2027-01-15T00:00:00Z", *completed.Deadline)
+
+		require.NotNil(t, updated.UpdateTask.NextTaskEdge)
+		next := updated.UpdateTask.NextTaskEdge.Node
+		assert.NotEqual(t, completed.ID, next.ID)
+		assert.Equal(t, created.CreateTask.TaskEdge.Node.Name, next.Name)
+		assert.Equal(t, "TODO", next.State)
+		require.NotNil(t, next.RecurrenceInterval)
+		assert.Equal(t, "P21D", *next.RecurrenceInterval)
+		require.NotNil(t, next.Deadline)
+		assert.Equal(t, "2027-02-05T00:00:00Z", *next.Deadline)
+	})
+
+	t.Run("completing a monthly task advances a calendar month", func(t *testing.T) {
+		t.Parallel()
+
+		var created struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Monthly Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2027-01-31T00:00:00Z",
+				"recurrenceInterval": "P1M",
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		var updated struct {
+			UpdateTask struct {
+				Task struct {
+					State string `json:"state"`
+				} `json:"task"`
+				NextTaskEdge *struct {
+					Node struct {
+						Deadline           *string `json:"deadline"`
+						RecurrenceInterval *string `json:"recurrenceInterval"`
+					} `json:"node"`
+				} `json:"nextTaskEdge"`
+			} `json:"updateTask"`
+		}
+
+		err = owner.Execute(`
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { state }
+					nextTaskEdge {
+						node {
+							deadline
+							recurrenceInterval
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId": created.CreateTask.TaskEdge.Node.ID,
+				"state":  "DONE",
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Equal(t, "DONE", updated.UpdateTask.Task.State)
+		require.NotNil(t, updated.UpdateTask.NextTaskEdge)
+		require.NotNil(t, updated.UpdateTask.NextTaskEdge.Node.RecurrenceInterval)
+		assert.Equal(t, "P1M", *updated.UpdateTask.NextTaskEdge.Node.RecurrenceInterval)
+		require.NotNil(t, updated.UpdateTask.NextTaskEdge.Node.Deadline)
+		assert.Equal(t, "2027-02-28T00:00:00Z", *updated.UpdateTask.NextTaskEdge.Node.Deadline)
+	})
+
+	t.Run("canceling a recurring task does not clone", func(t *testing.T) {
+		t.Parallel()
+
+		var created struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2027-01-15T00:00:00Z",
+				"recurrenceInterval": "P21D",
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		var updated struct {
+			UpdateTask struct {
+				Task struct {
+					ID                 string  `json:"id"`
+					State              string  `json:"state"`
+					RecurrenceInterval *string `json:"recurrenceInterval"`
+				} `json:"task"`
+				NextTaskEdge *struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"nextTaskEdge"`
+			} `json:"updateTask"`
+		}
+
+		err = owner.Execute(`
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task {
+						id
+						state
+						recurrenceInterval
+					}
+					nextTaskEdge {
+						node { id }
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId": created.CreateTask.TaskEdge.Node.ID,
+				"state":  "CANCELED",
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Equal(t, "CANCELED", updated.UpdateTask.Task.State)
+		require.NotNil(t, updated.UpdateTask.Task.RecurrenceInterval)
+		assert.Equal(t, "P21D", *updated.UpdateTask.Task.RecurrenceInterval)
+		assert.Nil(t, updated.UpdateTask.NextTaskEdge)
+	})
+
+	t.Run("clearing the deadline also clears recurrence", func(t *testing.T) {
+		t.Parallel()
+
+		var created struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               factory.SafeName("Recurring Task"),
+				"priority":           "MEDIUM",
+				"deadline":           "2027-01-15T00:00:00Z",
+				"recurrenceInterval": "P21D",
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		var updated struct {
+			UpdateTask struct {
+				Task struct {
+					Deadline           *string `json:"deadline"`
+					RecurrenceInterval *string `json:"recurrenceInterval"`
+				} `json:"task"`
+			} `json:"updateTask"`
+		}
+
+		err = owner.Execute(`
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task {
+						deadline
+						recurrenceInterval
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":   created.CreateTask.TaskEdge.Node.ID,
+				"deadline": nil,
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Nil(t, updated.UpdateTask.Task.Deadline)
+		assert.Nil(t, updated.UpdateTask.Task.RecurrenceInterval)
+	})
+
+	t.Run("update to add recurrence without a deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		taskID := factory.NewTask(owner, measureID).
+			WithName(factory.SafeName("Task without deadline")).
+			Create()
+
+		_, err := owner.Do(`
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":             taskID,
+				"recurrenceInterval": "P30D",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "deadline")
 	})
 }

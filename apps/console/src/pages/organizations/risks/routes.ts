@@ -29,31 +29,25 @@ import { RisksPageSkeleton } from "#/components/skeletons/RisksPageSkeleton";
 
 export const riskRoutes = [
   {
+    path: "risk-analyses",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("./RisksLayoutLoader")),
-    children: [
-      {
-        path: "risks",
-        Fallback: RisksPageSkeleton,
-        Component: lazy(() => import("./RisksPageLoader")),
-      },
-      {
-        path: "risk-analyses",
-        Fallback: PageSkeleton,
-        Component: lazy(
-          () =>
-            import("./risk-analyses/RiskAnalysesPageLoader"),
-        ),
-      },
-      {
-        path: "risk-assessments",
-        loader: () => {
-          // eslint-disable-next-line
-          throw redirect("../risk-analyses");
-        },
-        Component: Fragment,
-      },
-    ],
+    Component: lazy(
+      () =>
+        import("./risk-analyses/RiskAnalysesPageLoader"),
+    ),
+  },
+  {
+    path: "risks",
+    Fallback: RisksPageSkeleton,
+    Component: lazy(() => import("./RisksPageLoader")),
+  },
+  {
+    path: "risk-assessments",
+    loader: () => {
+      // eslint-disable-next-line
+      throw redirect("../risk-analyses");
+    },
+    Component: Fragment,
   },
   {
     path: "risks/:riskId",
@@ -98,6 +92,13 @@ export const riskRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("./scenarios/RiskScenariosPageLoader")),
       },
+      {
+        path: "treatment-plans",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("./treatment-plans/RiskTreatmentPlansPageLoader"),
+        ),
+      },
     ],
   },
   {
@@ -105,14 +106,40 @@ export const riskRoutes = [
     Fallback: PageSkeleton,
     Component: lazy(
       () =>
-        import("./risk-analyses/RiskAnalysisDetailPageLoader"),
+        import("./risk-analyses/RiskAnalysisDetailLayoutLoader"),
     ),
+    children: [
+      {
+        path: "",
+        loader: () => {
+          // eslint-disable-next-line
+          throw redirect("treatment-plans");
+        },
+        Component: Fragment,
+      },
+      {
+        path: "treatment-plans",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("./risk-analyses/treatment-plans/RiskAnalysisTreatmentPlansPageLoader"),
+        ),
+      },
+      {
+        path: "diagrams",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("./risk-analyses/diagrams/RiskAnalysisDiagramsPageLoader"),
+        ),
+      },
+    ],
   },
   {
     path: "risk-assessments/:riskAssessmentId",
     loader: ({ params }) => {
       // eslint-disable-next-line
-      throw redirect(`../risk-analyses/${params.riskAssessmentId}`);
+      throw redirect(`../risk-analyses/${params.riskAssessmentId}/treatment-plans`);
     },
     Component: Fragment,
   },

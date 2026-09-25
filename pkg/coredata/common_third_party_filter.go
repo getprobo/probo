@@ -84,6 +84,8 @@ type CommonThirdPartyFilter struct {
 	keyword          *string
 	state            *CommonThirdPartyEnrichmentState
 	enrichmentStatus *string
+	review           *CommonThirdPartyReview
+	excludedReview   *CommonThirdPartyReview
 }
 
 func NewCommonThirdPartyFilter(name *string) *CommonThirdPartyFilter {
@@ -102,6 +104,10 @@ func (f *CommonThirdPartyFilter) WithCategory(category *ThirdPartyCategory) *Com
 	return f
 }
 
+// WithKeyword matches a substring of the name or slug. Both are stable
+// identifiers rather than generated prose, so unlike the catalog pattern
+// filter's keyword this selection does not drift as enrichment runs, and no
+// pattern-only variant is needed.
 func (f *CommonThirdPartyFilter) WithKeyword(keyword *string) *CommonThirdPartyFilter {
 	f.keyword = keyword
 	return f
@@ -117,6 +123,22 @@ func (f *CommonThirdPartyFilter) WithState(state *CommonThirdPartyEnrichmentStat
 // match.
 func (f *CommonThirdPartyFilter) WithEnrichmentStatus(status *string) *CommonThirdPartyFilter {
 	f.enrichmentStatus = status
+	return f
+}
+
+// WithReview restricts the result to one review state. Use it to work
+// through a backlog: UNREVIEWED is the set nobody has judged.
+func (f *CommonThirdPartyFilter) WithReview(review *CommonThirdPartyReview) *CommonThirdPartyFilter {
+	f.review = review
+	return f
+}
+
+// WithoutReview excludes one review state. Callers that offer a row as a
+// vendor — the catalog import and the identification agent's search — pass
+// REJECTED here, so a row a human ruled out stops being offered without
+// being deleted.
+func (f *CommonThirdPartyFilter) WithoutReview(review *CommonThirdPartyReview) *CommonThirdPartyFilter {
+	f.excludedReview = review
 	return f
 }
 
@@ -161,6 +183,18 @@ func (f *CommonThirdPartyFilter) SQLFragment() string {
 			enrichment->>'status' = @filter_enrichment_status
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @filter_review::text IS NOT NULL THEN
+			review = @filter_review::common_third_party_review
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @filter_excluded_review::text IS NOT NULL THEN
+			review <> @filter_excluded_review::common_third_party_review
+		ELSE TRUE
+	END
 )`
 }
 
@@ -174,6 +208,8 @@ func (f *CommonThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_state_enriched":    false,
 		"filter_state_unenriched":  false,
 		"filter_enrichment_status": nil,
+		"filter_review":            nil,
+		"filter_excluded_review":   nil,
 	}
 
 	if f.ids != nil {
@@ -205,6 +241,14 @@ func (f *CommonThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.enrichmentStatus != nil {
 		args["filter_enrichment_status"] = *f.enrichmentStatus
+	}
+
+	if f.review != nil {
+		args["filter_review"] = string(*f.review)
+	}
+
+	if f.excludedReview != nil {
+		args["filter_excluded_review"] = string(*f.excludedReview)
 	}
 
 	return args

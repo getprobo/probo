@@ -42,8 +42,10 @@ query($id: ID!) {
       additionalEmailAddresses
       kind
       position
-      contractStartDate
-      contractEndDate
+      contract {
+        start
+        end
+      }
       createdAt
       updatedAt
     }
@@ -61,10 +63,12 @@ type viewResponse struct {
 		AdditionalEmailAddresses []string `json:"additionalEmailAddresses"`
 		Kind                     *string  `json:"kind"`
 		Position                 *string  `json:"position"`
-		ContractStartDate        *string  `json:"contractStartDate"`
-		ContractEndDate          *string  `json:"contractEndDate"`
-		CreatedAt                string   `json:"createdAt"`
-		UpdatedAt                string   `json:"updatedAt"`
+		Contract                 *struct {
+			Start *string `json:"start"`
+			End   *string `json:"end"`
+		} `json:"contract"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -153,12 +157,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintln(out)
-			if p.ContractStartDate != nil {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract Start:"), *p.ContractStartDate)
+			if p.Contract != nil && p.Contract.Start != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract Start:"), *p.Contract.Start)
 			}
 
-			if p.ContractEndDate != nil {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract End:"), *p.ContractEndDate)
+			if p.Contract != nil && p.Contract.End != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract End:"), *p.Contract.End)
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(p.CreatedAt))

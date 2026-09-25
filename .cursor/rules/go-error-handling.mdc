@@ -32,6 +32,26 @@ if err != nil {
 }
 ```
 
+## Unrecoverable invariants
+
+Do **not** return a defensive error for a broken invariant that cannot happen on
+the real call path (for example a claimed agent execution with no
+`ProcessingOwnerToken`). That is a programming error: **panic**.
+
+Return errors for recoverable operational failures (not found, lease lost,
+upstream, validation). Panic when continuing would mean the program is in an
+impossible state.
+
+```go
+// GOOD — Claim always sets the token; a nil token is unrecoverable
+ownerToken := *execution.ProcessingOwnerToken
+
+// BAD — pretends an impossible state is a normal failure
+if execution.ProcessingOwnerToken == nil || *execution.ProcessingOwnerToken == "" {
+	return fmt.Errorf("claimed agent execution has no owner token")
+}
+```
+
 ## Type assertions on errors
 
 Use `errors.AsType[T](err)` (generic form), not `errors.As(err, &ptr)`:

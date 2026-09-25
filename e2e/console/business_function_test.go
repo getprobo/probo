@@ -640,8 +640,6 @@ func TestBusinessFunction_Timestamps(t *testing.T) {
 		initialCreatedAt := getResult.Node.CreatedAt
 		initialUpdatedAt := getResult.Node.UpdatedAt
 
-		time.Sleep(1100 * time.Millisecond)
-
 		const updateQuery = `
 			mutation UpdateBusinessFunction($input: UpdateBusinessFunctionInput!) {
 				updateBusinessFunction(input: $input) {
@@ -833,6 +831,8 @@ func TestBusinessFunction_Create_Validation(t *testing.T) {
 func TestBusinessFunction_RBAC(t *testing.T) {
 	t.Parallel()
 
+	org := testutil.NewOrganizationRoles(t)
+
 	baseCreateInput := func(client *testutil.Client) map[string]any {
 		return map[string]any{
 			"organizationId": client.GetOrganizationID().String(),
@@ -845,8 +845,12 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 	}
 
 	t.Run("create", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("owner can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
 
 			_, err := owner.Do(`
 				mutation CreateBusinessFunction($input: CreateBusinessFunctionInput!) {
@@ -859,8 +863,9 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("admin can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+			t.Parallel()
+
+			admin := org.Client(t, testutil.RoleAdmin)
 
 			_, err := admin.Do(`
 				mutation CreateBusinessFunction($input: CreateBusinessFunctionInput!) {
@@ -873,8 +878,9 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("viewer cannot create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			t.Parallel()
+
+			viewer := org.Client(t, testutil.RoleViewer)
 
 			_, err := viewer.Do(`
 				mutation CreateBusinessFunction($input: CreateBusinessFunctionInput!) {
@@ -888,8 +894,12 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 	})
 
 	t.Run("update", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("owner can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Update Test",
 				"classification": "STANDARD",
@@ -914,8 +924,10 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("admin can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
+			admin := org.Client(t, testutil.RoleAdmin)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Update Test",
 				"classification": "STANDARD",
@@ -940,8 +952,10 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("viewer cannot update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
+			viewer := org.Client(t, testutil.RoleViewer)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Update Test",
 				"classification": "STANDARD",
@@ -967,8 +981,12 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 	})
 
 	t.Run("delete", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("owner can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Delete Test",
 				"classification": "STANDARD",
@@ -990,8 +1008,10 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("admin can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
+			admin := org.Client(t, testutil.RoleAdmin)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Delete Test",
 				"classification": "STANDARD",
@@ -1013,8 +1033,10 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("viewer cannot delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
+			viewer := org.Client(t, testutil.RoleViewer)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Delete Test",
 				"classification": "STANDARD",
@@ -1037,8 +1059,12 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 	})
 
 	t.Run("read", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("owner can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Read Test",
 				"classification": "STANDARD",
@@ -1066,8 +1092,10 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("admin can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
+			admin := org.Client(t, testutil.RoleAdmin)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Read Test",
 				"classification": "STANDARD",
@@ -1095,8 +1123,10 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("viewer can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
+			viewer := org.Client(t, testutil.RoleViewer)
 			businessFunctionID := createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC Read Test",
 				"classification": "STANDARD",
@@ -1124,8 +1154,10 @@ func TestBusinessFunction_RBAC(t *testing.T) {
 		})
 
 		t.Run("viewer can list", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			t.Parallel()
+
+			owner := org.Client(t, testutil.RoleOwner)
+			viewer := org.Client(t, testutil.RoleViewer)
 
 			createBusinessFunction(t, owner, map[string]any{
 				"name":           "RBAC List Test",

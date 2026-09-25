@@ -24,16 +24,20 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 func githubRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderGitHub,
-		DisplayName: "GitHub",
+		Provider:           coredata.ConnectorProviderGitHub,
+		DisplayName:        "GitHub",
+		InitialAccountFunc: githubInitialAccount,
+		DocumentationURL:   accessReviewDocsURL("github"),
 		Endpoints: Endpoints{
 			Auth:  "https://github.com/login/oauth/authorize",
 			Token: "https://github.com/login/oauth/access_token",
@@ -42,11 +46,19 @@ func githubRegistration() *Registration {
 			// negotiated through the Accept header instead.
 			APIBase: "https://api.github.com",
 		},
-		OAuth2Scopes:   []string{"read:org"},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organization", Label: "Organization", Required: true},
+		// read:audit_log is Enterprise Cloud only, so it cannot be a
+		// universal requirement for GitHub.com organizations. The driver
+		// treats audit-log access as optional and leaves LastLogin nil when
+		// GitHub rejects that request.
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"read:org"},
 		},
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organization", Label: "Organization", Required: true},
+			},
+		},
+		Probe: probeGitHub,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
 			if err != nil {
@@ -72,4 +84,28 @@ func githubRegistration() *Registration {
 			return c.SetSettings(&coredata.GitHubConnectorSettings{Organization: org})
 		},
 	}
+}
+
+func githubInitialAccount(c *coredata.Connector) (string, string, error) {
+	if githubApp, ok := c.Connection.(*connector.GitHubAppConnection); ok && githubApp.InstallationID != 0 {
+		externalID := strconv.FormatInt(githubApp.InstallationID, 10)
+
+		settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](c)
+		if err != nil {
+			return "", "", fmt.Errorf("cannot read connector settings: %w", err)
+		}
+
+		name := settings.Organization
+		if name == "" {
+			name = externalID
+		}
+
+		return externalID, name, nil
+	}
+
+	return initialAccount(
+		func(s coredata.GitHubConnectorSettings) string {
+			return s.Organization
+		},
+	)(c)
 }

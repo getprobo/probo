@@ -485,7 +485,7 @@ func TestAccessReviewCampaign_Delete(t *testing.T) {
 // disappear from the organization's `accessReviewCampaigns` connection, and a
 // `node(id:)` lookup on the deleted GID must surface a NOT_FOUND error rather
 // than partial data. Without this contract the cached Relay query in the
-// access-reviews tab would render edges pointing to a vanished record and
+// access-reviews campaigns page would render edges pointing to a vanished record and
 // crash with "Unexpected error :(".
 func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
 	t.Parallel()
@@ -524,8 +524,8 @@ func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
 	assert.Equal(t, campaignID, deleteResult.DeleteAccessReviewCampaign.DeletedAccessReviewCampaignID)
 
 	// The campaign must no longer appear in the organization's campaign
-	// connection -- mirrors the AccessReviewCampaignsTabQuery the FE fires
-	// when the user navigates back to the access-reviews tab.
+	// connection -- mirrors the AccessReviewCampaignsPageQuery the FE fires
+	// when the user navigates back to the campaigns page.
 	const listQuery = `
 		query($id: ID!) {
 			node(id: $id) {
@@ -1546,4 +1546,209 @@ func TestAccessReviewCampaign_StartWithoutSourcesFails(t *testing.T) {
 		},
 	})
 	require.Error(t, err, "starting a campaign without sources should fail")
+}
+
+// TestAccessReviewSource_MultipleConnectionsPerProvider pins the
+// multi-connection flow end to end: two connectors of one provider back
+// two distinct sources, and deleting one source garbage-collects only
+// its own connector.
+func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const createConnectorQuery = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector {
+					id
+				}
+			}
+		}
+	`
+
+	createConnector := func(apiKey string) string {
+		var result struct {
+			CreateAPIKeyConnector struct {
+				Connector struct {
+					ID string `json:"id"`
+				} `json:"connector"`
+			} `json:"createAPIKeyConnector"`
+		}
+
+		err := owner.Execute(createConnectorQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": orgID,
+				"provider":       "BREX",
+				"apiKey":         apiKey,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		return result.CreateAPIKeyConnector.Connector.ID
+	}
+
+	const createSourceQuery = `
+		mutation($input: CreateAccessReviewSourceInput!) {
+			createAccessReviewSource(input: $input) {
+				created
+				accessReviewSourceEdge {
+					node {
+						id
+						name
+						connectorId
+					}
+				}
+			}
+		}
+	`
+
+	createSource := func(name, connectorID string) (string, bool) {
+		var result struct {
+			CreateAccessReviewSource struct {
+				Created                bool `json:"created"`
+				AccessReviewSourceEdge struct {
+					Node struct {
+						ID          string  `json:"id"`
+						Name        string  `json:"name"`
+						ConnectorID *string `json:"connectorId"`
+					} `json:"node"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"createAccessReviewSource"`
+		}
+
+		err := owner.Execute(createSourceQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": orgID,
+				"name":           name,
+				"connectorId":    connectorID,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		node := result.CreateAccessReviewSource.AccessReviewSourceEdge.Node
+		require.NotNil(t, node.ConnectorID)
+		require.Equal(t, connectorID, *node.ConnectorID)
+
+		return node.ID, result.CreateAccessReviewSource.Created
+	}
+
+	listBrexConnectorIDs := func() []string {
+		const query = `
+			query($organizationId: ID!) {
+				node(id: $organizationId) {
+					... on Organization {
+						connectors(filter: { providers: [BREX] }) {
+							id
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				Connectors []struct {
+					ID string `json:"id"`
+				} `json:"connectors"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"organizationId": orgID}, &result)
+		require.NoError(t, err)
+
+		ids := make([]string, 0, len(result.Node.Connectors))
+		for _, c := range result.Node.Connectors {
+			ids = append(ids, c.ID)
+		}
+
+		return ids
+	}
+
+	firstConnector := createConnector("bxt_test-key-brex-a")
+	secondConnector := createConnector("bxt_test-key-brex-b")
+	require.NotEqual(t, firstConnector, secondConnector)
+
+	firstSource, firstCreated := createSource("Brex A", firstConnector)
+	require.True(t, firstCreated)
+
+	secondSource, secondCreated := createSource("Brex B", secondConnector)
+	require.True(t, secondCreated)
+	require.NotEqual(t, firstSource, secondSource)
+
+	// Creation is idempotent per connector: asking again for a connector
+	// that already has a source returns that source instead of a
+	// duplicate.
+	repeatSource, repeatCreated := createSource("Brex A again", firstConnector)
+	require.False(t, repeatCreated)
+	require.Equal(t, firstSource, repeatSource)
+
+	require.ElementsMatch(t, []string{firstConnector, secondConnector}, listBrexConnectorIDs())
+
+	// Relinking a source to a connector already referenced by another
+	// source is refused: sources stay one-to-one with connectors.
+	const updateQuery = `
+		mutation($input: UpdateAccessReviewSourceInput!) {
+			updateAccessReviewSource(input: $input) {
+				accessReviewSource {
+					id
+				}
+			}
+		}
+	`
+
+	var updateResult struct {
+		UpdateAccessReviewSource struct {
+			AccessReviewSource struct {
+				ID string `json:"id"`
+			} `json:"accessReviewSource"`
+		} `json:"updateAccessReviewSource"`
+	}
+
+	err := owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewSourceId": secondSource,
+			"connectorId":          firstConnector,
+		},
+	}, &updateResult)
+	require.Error(t, err)
+
+	const deleteQuery = `
+		mutation($input: DeleteAccessReviewSourceInput!) {
+			deleteAccessReviewSource(input: $input) {
+				deletedAccessReviewSourceId
+			}
+		}
+	`
+
+	var deleteResult struct {
+		DeleteAccessReviewSource struct {
+			DeletedAccessReviewSourceID string `json:"deletedAccessReviewSourceId"`
+		} `json:"deleteAccessReviewSource"`
+	}
+
+	err = owner.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewSourceId": firstSource,
+		},
+	}, &deleteResult)
+	require.NoError(t, err)
+
+	// The deleted source's connector dies with it; the other source's
+	// connector is the survivor.
+	assert.Equal(t, []string{secondConnector}, listBrexConnectorIDs())
+
+	// Relinking a source to a fresh connector deletes the abandoned one:
+	// the relink removed its only owner.
+	thirdConnector := createConnector("bxt_test-key-brex-c")
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewSourceId": secondSource,
+			"connectorId":          thirdConnector,
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{thirdConnector}, listBrexConnectorIDs())
 }

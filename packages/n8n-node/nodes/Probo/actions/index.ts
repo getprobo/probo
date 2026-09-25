@@ -50,9 +50,13 @@ import * as riskAnalysis from './riskAnalysis';
 import * as user from './user';
 import * as risk from './risk';
 import * as statementOfApplicability from './statementOfApplicability';
+import * as treatmentPlan from './treatmentPlan';
 import * as task from './task';
+import * as taskComment from './taskComment';
+import * as taskActivity from './taskActivity';
 import * as tia from './tia';
 import * as compliancePortal from './compliancePortal';
+import * as connector from './connector';
 import * as thirdParty from './thirdParty';
 import * as webhook from './webhook';
 
@@ -99,8 +103,12 @@ export const resources: Record<string, ResourceModule> = {
 	risk: risk as ResourceModule,
 	statementOfApplicability: statementOfApplicability as ResourceModule,
 	task: task as ResourceModule,
+	taskComment: taskComment as ResourceModule,
+	taskActivity: taskActivity as ResourceModule,
+	treatmentPlan: treatmentPlan as ResourceModule,
 	tia: tia as ResourceModule,
 	compliancePortal: compliancePortal as ResourceModule,
+	connector: connector as ResourceModule,
 	thirdParty: thirdParty as ResourceModule,
 	webhook: webhook as ResourceModule,
 };

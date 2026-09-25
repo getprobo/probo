@@ -33,6 +33,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -63,7 +64,7 @@ func (r *Registry) ProbeConnection(
 	}
 
 	if reg.Probe != nil {
-		return reg.Probe(ctx, httpClient, conn, reg.Endpoints)
+		return classifyRejection(reg, reg.Probe(ctx, httpClient, conn, reg.Endpoints))
 	}
 
 	probeURL := reg.Endpoints.Probe
@@ -76,7 +77,69 @@ func (r *Registry) ProbeConnection(
 		probeURL = built
 	}
 
-	return probeGET(ctx, httpClient, probeURL)
+	return classifyRejection(reg, probeGET(ctx, httpClient, probeURL))
+}
+
+// classifyRejection lets a registration read the provider's own explanation of
+// a rejection the status alone cannot settle. Only a 403 is ambiguous: 401 is
+// always the credential, and an extra status a provider rejects on is one it
+// chose precisely because it is unambiguous. The error is refined in place so
+// that whatever a provider's Probe wrapped it in survives, and the body is
+// dropped either way — no caller past this point may read provider text.
+func classifyRejection(reg *Registration, err error) error {
+	rejected, ok := errors.AsType[*CredentialRejectedError](err)
+	if !ok || rejected == nil {
+		return err
+	}
+
+	if reg.ClassifyRejection != nil && rejected.StatusCode == http.StatusForbidden {
+		rejected.OperationRefused = reg.ClassifyRejection(rejected.body)
+	}
+
+	rejected.body = nil
+
+	return err
+}
+
+// ProbeCloudConnection is ProbeConnection for a workload identity connector,
+// whose credential is a cloud SDK credential rather than an *http.Client. A
+// provider that registers no ProbeCloud skips the check, matching the empty
+// probe URL contract above.
+func (r *Registry) ProbeCloudConnection(
+	ctx context.Context,
+	session cloud.Session,
+	conn *coredata.Connector,
+) error {
+	reg, ok := r.Get(conn.Provider)
+	if !ok || reg.WorkloadIdentity == nil || reg.WorkloadIdentity.Probe == nil {
+		return nil
+	}
+
+	return reg.WorkloadIdentity.Probe(ctx, session, conn)
+}
+
+// DiscoverAccounts lists the vendor accounts a connector can enable.
+// A provider that does not support organization install returns an empty list.
+func (r *Registry) DiscoverAccounts(
+	ctx context.Context,
+	session cloud.Session,
+	conn *coredata.Connector,
+) ([]DiscoveredAccount, error) {
+	reg, ok := r.Get(conn.Provider)
+	if !ok || !reg.SupportsOrganizationInstall() {
+		return []DiscoveredAccount{}, nil
+	}
+
+	accounts, err := reg.WorkloadIdentity.DiscoverAccounts(ctx, session, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	if accounts == nil {
+		return []DiscoveredAccount{}, nil
+	}
+
+	return accounts, nil
 }
 
 func probeGET(ctx context.Context, httpClient *http.Client, probeURL string) error {
@@ -100,6 +163,7 @@ func probePOSTJSON(
 	probeURL string,
 	payload any,
 	extraHeaders map[string]string,
+	extraReject ...int,
 ) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -118,14 +182,91 @@ func probePOSTJSON(
 		req.Header.Set(key, value)
 	}
 
-	return doProbeRequest(httpClient, req)
+	return doProbeRequest(httpClient, req, extraReject...)
 }
+
+// CredentialRejectedError reports that the provider refused the credential,
+// carrying the status separately so callers can log it without the message.
+//
+// OperationRefused separates the two rejections a customer fixes differently: a
+// credential the provider will not accept at all (a dead key, the wrong kind
+// of key) from one it accepts before refusing what was asked of it (a plan
+// that excludes the endpoint, a role without the permission). The status
+// decides it — 401 is the credential, 403 is the refusal — unless the provider
+// explains itself in the body and its registration reads that explanation.
+//
+// Deliberately not named for HTTP's own word: 401 is the status called
+// Unauthorized, and this is the bit that is true for 403.
+type CredentialRejectedError struct {
+	StatusCode       int
+	OperationRefused bool
+
+	// body is the provider's own explanation, held only until ProbeConnection
+	// has run the registration's ClassifyRejection over it. Provider-controlled
+	// text, so it stays unexported and out of Error().
+	body []byte
+}
+
+func (e *CredentialRejectedError) Error() string {
+	return fmt.Sprintf("credential rejected: status %d", e.StatusCode)
+}
+
+// newCredentialRejected builds the rejection a status implies, so that the
+// "403 is the authorization, everything else is the credential" rule lives in
+// one place rather than at each site that answers a provider's refusal.
+func newCredentialRejected(statusCode int) *CredentialRejectedError {
+	return &CredentialRejectedError{
+		StatusCode:       statusCode,
+		OperationRefused: statusCode == http.StatusForbidden,
+	}
+}
+
+// NotAnAPIEndpointError reports that the probe reached a server that is not
+// this provider's API: it answered with markup instead of JSON, or it answered
+// that nothing lives at the host the customer named. Either way the credential
+// was never the problem, so it must not be reported as one.
+//
+// It carries no response body: the page is the customer's and may hold
+// anything. Detail is Probo's own words, never the provider's.
+type NotAnAPIEndpointError struct {
+	StatusCode int
+
+	// Detail replaces the default explanation for a provider that can say
+	// something more useful than "this answered with a page". Empty keeps the
+	// markup wording.
+	Detail string
+}
+
+func (e *NotAnAPIEndpointError) Error() string {
+	if e.Detail != "" {
+		return fmt.Sprintf("%s (status %d)", e.Detail, e.StatusCode)
+	}
+
+	return fmt.Sprintf(
+		"endpoint returned an HTML page instead of JSON (status %d): check the instance URL points at the API",
+		e.StatusCode,
+	)
+}
+
+// rejectionBodyLimit caps what a provider's explanation of a rejection can
+// cost: enough for the one-line JSON error a rejection carries, never enough
+// for a page.
+const rejectionBodyLimit = 4 << 10
 
 // doProbeRequest executes a probe request and maps the status to a verdict:
 // 401/403 always mean the credential is rejected, any 2xx/other status means
 // connected. extraReject lets a provider add statuses that also mean a hard
 // rejection (e.g. OpenRouter's 404 for a non-organization key); pass none for
-// the default 401/403-only contract.
+// the default 401/403-only contract. A rejection is the credential's fault
+// unless the status is 403, which means the provider got far enough to refuse
+// the operation instead.
+//
+// A 2xx that answers with an HTML document is rejected: only there does the
+// status lie.
+// A customer-supplied base URL can reach a single-page app serving its index
+// for any unknown path, or an SSO portal, and both answer 200. Other statuses
+// keep their existing verdict, so a provider's 5xx maintenance page stays a
+// transient failure rather than flipping a working connector to disconnected.
 func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...int) error {
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -140,10 +281,69 @@ func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...i
 	if resp.StatusCode == http.StatusUnauthorized ||
 		resp.StatusCode == http.StatusForbidden ||
 		slices.Contains(extraReject, resp.StatusCode) {
-		return fmt.Errorf("credential rejected: status %d", resp.StatusCode)
+		rejected := newCredentialRejected(resp.StatusCode)
+
+		// Only a 403 is ever reclassified, so only a 403 body is worth keeping.
+		if resp.StatusCode == http.StatusForbidden {
+			rejected.body, _ = io.ReadAll(io.LimitReader(resp.Body, rejectionBodyLimit))
+		}
+
+		return rejected
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 && respondsWithHTML(resp.Body) {
+		return &NotAnAPIEndpointError{StatusCode: resp.StatusCode}
 	}
 
 	return nil
+}
+
+// respondsWithHTML reports whether the body opens an HTML document. It matches
+// HTML specifically rather than any '<': an XML API is a legitimate thing for a
+// probe to reach, and a false positive here retires a working connector.
+//
+// Leading whitespace is skipped over a bounded number of reads, so a page
+// padded ahead of its doctype is still recognised without letting a slow or
+// endless body hold the probe open.
+func respondsWithHTML(body io.Reader) bool {
+	// The byte order mark some servers prepend to an HTML page.
+	const utf8BOM = "\xef\xbb\xbf"
+
+	prefixes := [][]byte{
+		[]byte("<!doctype"),
+		[]byte("<html"),
+		[]byte("<head"),
+		[]byte("<body"),
+	}
+
+	var (
+		buf     [512]byte
+		scanned []byte
+	)
+
+	for range 8 {
+		n, err := io.ReadFull(body, buf[:])
+		if n > 0 {
+			scanned = append(scanned, buf[:n]...)
+			scanned = bytes.TrimLeft(bytes.TrimPrefix(scanned, []byte(utf8BOM)), " \t\r\n\v\f")
+		}
+
+		// Keep reading only while everything seen so far is whitespace; the
+		// longest prefix below decides how much is enough to classify.
+		if len(scanned) >= 9 || err != nil {
+			break
+		}
+	}
+
+	lowered := bytes.ToLower(scanned)
+
+	for _, prefix := range prefixes {
+		if bytes.HasPrefix(lowered, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func buildDatadogProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
@@ -305,7 +505,7 @@ func buildGrafanaProbeURL(conn *coredata.Connector, _ Endpoints) (string, error)
 		return "", fmt.Errorf("cannot read grafana connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeGrafanaBaseURL(s.BaseURL)
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -360,7 +560,7 @@ func buildLangfuseProbeURL(conn *coredata.Connector, _ Endpoints) (string, error
 		return "", fmt.Errorf("cannot read langfuse connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeLangfuseBaseURL(s.BaseURL)
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -379,7 +579,7 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 		return "", fmt.Errorf("cannot read signoz connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeSigNozBaseURL(s.BaseURL)
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -389,7 +589,26 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 		return "", fmt.Errorf("cannot parse signoz base URL: %w", err)
 	}
 
-	return u.JoinPath("api", "v1", "user").String(), nil
+	return u.JoinPath("api", "v2", "users").String(), nil
+}
+
+func buildAuthentikProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
+	s, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read authentik connector settings: %w", err)
+	}
+
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
+	if err != nil {
+		return "", err
+	}
+
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse authentik base URL: %w", err)
+	}
+
+	return u.JoinPath("api", "v3", "core", "users", "me/").String(), nil
 }
 
 func buildPostHogProbeURL(conn *coredata.Connector) (string, error) {
@@ -470,7 +689,15 @@ func probeRailway(
 	}()
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("credential rejected: status %d", resp.StatusCode)
+		return newCredentialRejected(resp.StatusCode)
+	}
+
+	// The errors-array rule below is Railway's documented rejection, and it
+	// only means that on a 2xx. Checked before the decode so an outage that
+	// answers with an HTML error page reports its status rather than a
+	// decode failure.
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("railway probe returned unexpected status %d", resp.StatusCode)
 	}
 
 	var parsed struct {
@@ -485,8 +712,10 @@ func probeRailway(
 		return fmt.Errorf("cannot decode railway probe response: %w", err)
 	}
 
+	// Railway answers 200 with an errors array rather than a 401, so this is
+	// a rejection too and must classify the same way.
 	if len(parsed.Errors) > 0 || parsed.Data.Me == nil {
-		return fmt.Errorf("credential rejected: railway returned no authenticated account")
+		return newCredentialRejected(resp.StatusCode)
 	}
 
 	return nil
@@ -551,6 +780,35 @@ func probeAnthropic(
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("anthropic-version", anthropicAPIVersion)
+
+	return doProbeRequest(httpClient, req)
+}
+
+// probeMongoDBAtlas lists the organizations the service account reaches, the
+// same call the driver and the name resolver open with.
+//
+// The closure exists for the versioned Accept header. Without it Atlas answers
+// 406, which doProbeRequest does not reject, so a healthy verdict would rest on
+// a content-negotiation failure rather than on having reached anything. A
+// revoked credential still surfaces as 401 either way, since Atlas
+// authenticates before it negotiates content.
+func probeMongoDBAtlas(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+	ep Endpoints,
+) error {
+	endpoint, err := url.JoinPath(ep.APIBase, "orgs")
+	if err != nil {
+		return fmt.Errorf("cannot build mongodb atlas probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", drivers.MongoDBAtlasAcceptHeader)
 
 	return doProbeRequest(httpClient, req)
 }
@@ -712,4 +970,253 @@ func probeSquare(
 	req.Header.Set("Square-Version", squareVersion)
 
 	return doProbeRequest(httpClient, req)
+}
+
+func buildGitHubProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
+	return connector.ResolveProbeURLFor(
+		conn.Connection,
+		connector.ProtocolType(conn.Protocol),
+		ep.APIBase,
+		ep.Probe,
+	)
+}
+
+func probeGitHub(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	ep Endpoints,
+) error {
+	probeURL, err := buildGitHubProbeURL(conn, ep)
+	if err != nil {
+		return err
+	}
+
+	return probeGET(ctx, httpClient, probeURL)
+}
+
+// probeElevenLabs checks the workspace-members endpoint, and treats 400 as a
+// rejected credential on top of the usual 401/403.
+//
+// ElevenLabs answers a key it will not accept with 400 and an
+// authentication_error body rather than 401 — verified against the live API
+// for both a malformed key and a well-formed one that is simply wrong. Without
+// the extra status a dead key would read as connected, which is the failure
+// this check exists to catch. The endpoint takes no parameters, so a 400 from
+// it cannot mean a bad request of ours.
+func probeElevenLabs(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+	ep Endpoints,
+) error {
+	endpoint, err := drivers.ElevenLabsMembersURL(ep.APIBase)
+	if err != nil {
+		return fmt.Errorf("cannot build elevenlabs probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	return doProbeRequest(httpClient, req, http.StatusBadRequest)
+}
+
+// probeNewRelic checks the access the roster actually needs, against the region
+// the connector names.
+//
+// Two things could each pass a lazier check and fail every campaign afterwards.
+// A user key belongs to one region and the other answers it with 403, so the
+// probe targets the same host the driver will rather than a fixed one. And any
+// live user key can answer `actor { user { id } }`, while reading the roster
+// needs organization user management, which NerdGraph refuses with 200 and an
+// errors array — a status doProbeRequest reads as connected. So this asks for
+// the roster's own entry point and treats that array as the refusal it is.
+func probeNewRelic(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	_ Endpoints,
+) error {
+	settings, err := coredata.ConnectorSettings[coredata.NewRelicConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read new relic connector settings: %w", err)
+	}
+
+	endpoint, err := drivers.NewRelicEndpoint(settings.Region)
+	if err != nil {
+		return fmt.Errorf("cannot build new relic probe URL: %w", err)
+	}
+
+	payload, err := json.Marshal(map[string]string{
+		"query": "{ actor { organization { userManagement { authenticationDomains { nextCursor } } } } }",
+	})
+	if err != nil {
+		return fmt.Errorf("cannot marshal new relic probe request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("cannot create new relic probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("new relic probe request failed: %w", err)
+	}
+
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return newCredentialRejected(resp.StatusCode)
+	}
+
+	// The errors-array rule below is NerdGraph's own rejection and only means
+	// that on a 2xx. Checked before the decode so an outage answering with a
+	// page reports its status rather than a decode failure.
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("new relic probe returned unexpected status %d", resp.StatusCode)
+	}
+
+	var parsed struct {
+		Errors []json.RawMessage `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return fmt.Errorf("cannot decode new relic probe response: %w", err)
+	}
+
+	// The key is live — it reached a 200 — but it may not read the roster.
+	// That is the operation being refused, not the credential being dead, and
+	// the customer fixes it by granting the role rather than rotating the key.
+	if len(parsed.Errors) > 0 {
+		return &CredentialRejectedError{
+			StatusCode:       resp.StatusCode,
+			OperationRefused: true,
+		}
+	}
+
+	return nil
+}
+
+// probeTwingate runs the cheapest authenticated query against the network the
+// connector names.
+//
+// It rejects 404 on top of the usual 401/403. The network name is the one thing
+// the customer types that a credential check cannot vet — a wrong token is 401,
+// but a wrong network is a host that answers 404 "Unable to find shard for
+// domain", which the default contract reads as connected. The connector would
+// then save as healthy and fail on every campaign fetch instead. The endpoint
+// takes no path parameters, so a 404 from it can only mean the host is not a
+// Twingate network.
+func probeTwingate(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	_ Endpoints,
+) error {
+	settings, err := coredata.ConnectorSettings[coredata.TwingateConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read twingate connector settings: %w", err)
+	}
+
+	endpoint, err := drivers.TwingateEndpoint(settings.Network)
+	if err != nil {
+		return fmt.Errorf("cannot build twingate probe URL: %w", err)
+	}
+
+	// The same shape the driver reads, so the check cannot pass on a field the
+	// roster never asks for.
+	payload, err := json.Marshal(map[string]string{
+		"query": "{ users(first: 1) { edges { node { id } } } }",
+	})
+	if err != nil {
+		return fmt.Errorf("cannot marshal twingate probe request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("cannot create twingate probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("twingate probe request failed: %w", err)
+	}
+
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return newCredentialRejected(resp.StatusCode)
+	}
+
+	// A 404 here is the network name, not the token: Twingate serves every
+	// tenant its own host and answers "unable to find shard for domain" when no
+	// network owns it. Reporting it as a rejected credential would send the
+	// customer to rotate a token that is fine.
+	if resp.StatusCode == http.StatusNotFound {
+		return &NotAnAPIEndpointError{
+			StatusCode: resp.StatusCode,
+			Detail:     "no twingate network answers at this host: check the network name",
+		}
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("twingate probe returned unexpected status %d", resp.StatusCode)
+	}
+
+	var parsed struct {
+		Errors []json.RawMessage `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return fmt.Errorf("cannot decode twingate probe response: %w", err)
+	}
+
+	// Twingate answers a refused query with 200 and an errors array, which the
+	// status alone cannot show. A token that authenticates but may not read the
+	// roster is the operation being refused, not a dead credential.
+	if len(parsed.Errors) > 0 {
+		return &CredentialRejectedError{
+			StatusCode:       resp.StatusCode,
+			OperationRefused: true,
+		}
+	}
+
+	return nil
+}
+
+// buildRetoolProbeURL derives the users endpoint from whichever Retool the
+// connector points at: a self-hosted instance when the customer named one, and
+// otherwise the shared cloud gateway in ep.APIBase, which the token routes to
+// its own organization by itself.
+//
+// A missing users:read scope answers 403 rather than 401, which the framework
+// already reports as the operation being refused rather than the token being
+// dead — the two are fixed differently and Retool distinguishes them for us.
+func buildRetoolProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
+	apiBase, err := retoolAPIBase(conn, ep)
+	if err != nil {
+		return "", fmt.Errorf("cannot build retool probe URL: %w", err)
+	}
+
+	endpoint, err := drivers.RetoolUsersURL(apiBase)
+	if err != nil {
+		return "", err
+	}
+
+	return endpoint + "?" + url.Values{"limit": {"1"}}.Encode(), nil
 }

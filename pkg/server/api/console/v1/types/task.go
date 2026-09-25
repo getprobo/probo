@@ -36,6 +36,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *coredata.TaskFilter
 	}
 )
 
@@ -43,6 +44,7 @@ func NewTaskConnection(
 	p *page.Page[*coredata.Task, coredata.TaskOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *coredata.TaskFilter,
 ) *TaskConnection {
 	var edges = make([]*TaskEdge, len(p.Data))
 
@@ -56,6 +58,7 @@ func NewTaskConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 
@@ -73,15 +76,16 @@ func NewTask(t *coredata.Task) *Task {
 			ID: t.OrganizationID,
 		},
 
-		Name:         t.Name,
-		Description:  t.Description,
-		State:        t.State,
-		Priority:     t.Priority,
-		Rank:         t.Rank,
-		TimeEstimate: t.TimeEstimate,
-		Deadline:     t.Deadline,
-		CreatedAt:    t.CreatedAt,
-		UpdatedAt:    t.UpdatedAt,
+		Name:               t.Name,
+		Content:            t.Content,
+		State:              t.State,
+		Priority:           t.Priority,
+		Rank:               t.Rank,
+		TimeEstimate:       t.TimeEstimate,
+		Deadline:           t.Deadline,
+		RecurrenceInterval: t.Recurrence,
+		CreatedAt:          t.CreatedAt,
+		UpdatedAt:          t.UpdatedAt,
 	}
 
 	if t.MeasureID != nil {
@@ -97,4 +101,13 @@ func NewTask(t *coredata.Task) *Task {
 	}
 
 	return node
+}
+
+func NewTaskExternalLink(link *coredata.TaskExternalLink) *TaskExternalLink {
+	return &TaskExternalLink{
+		Provider:   link.Provider,
+		Identifier: link.ExternalIdentifier,
+		URL:        link.ExternalURL,
+		Origin:     link.Origin,
+	}
 }

@@ -24,7 +24,7 @@ import type {
 	INodeExecutionData,
 	IDataObject,
 } from 'n8n-workflow';
-import { proboConnectApiRequest } from '../../GenericFunctions';
+import { proboConnectApiRequest, toPeriod } from '../../GenericFunctions';
 
 const roleOptions = [
 	{ name: 'Owner', value: 'OWNER' },
@@ -193,11 +193,9 @@ export async function execute(
 	if (additionalFields.position) {
 		input.position = additionalFields.position;
 	}
-	if (additionalFields.contractStartDate) {
-		input.contractStartDate = additionalFields.contractStartDate;
-	}
-	if (additionalFields.contractEndDate) {
-		input.contractEndDate = additionalFields.contractEndDate;
+	const contract = toPeriod(additionalFields.contractStartDate, additionalFields.contractEndDate);
+	if (contract) {
+		input.contract = contract;
 	}
 
 	const query = `
@@ -210,8 +208,10 @@ export async function execute(
 						emailAddress
 						kind
 						position
-						contractStartDate
-						contractEndDate
+						contract {
+							start
+							end
+						}
 						createdAt
 						updatedAt
 						organization { id name }

@@ -70,6 +70,64 @@ enum CompliancePortalAccessOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessOrderFieldCreatedAt"
         )
+    PENDING_REQUEST_COUNT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessOrderFieldPendingRequestCount"
+        )
+}
+
+enum CompliancePortalAccessResourceKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKind"
+    ) {
+    DOCUMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKindDocument"
+        )
+    REPORT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKindReport"
+        )
+    FILE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKindFile"
+        )
+}
+
+enum CompliancePortalAccessResourceOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceOrderField"
+    ) {
+    ACCESS_STATUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceOrderFieldAccessStatus"
+        )
+}
+
+enum CompliancePortalAccessResourceStatusFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilter"
+    ) {
+    REQUESTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterRequested"
+        )
+    GRANTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterGranted"
+        )
+    REJECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterRejected"
+        )
+    REVOKED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterRevoked"
+        )
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceStatusFilterNone"
+        )
 }
 
 enum CompliancePortalAccessState
@@ -80,19 +138,9 @@ enum CompliancePortalAccessState
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessStateActive"
         )
-    INACTIVE
+    DEACTIVATED
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessStateInactive"
-        )
-}
-
-enum CompliancePortalDocumentAccessOrderField
-    @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessOrderField"
-    ) {
-    CREATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessStateDeactivated"
         )
 }
 
@@ -286,12 +334,20 @@ input CompliancePortalAccessOrder
     field: CompliancePortalAccessOrderField!
 }
 
-input CompliancePortalDocumentAccessOrder
+input CompliancePortalAccessFilter {
+    query: String
+}
+
+input CompliancePortalAccessResourceOrder
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentAccessOrderBy"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAccessResourceOrderBy"
     ) {
     direction: OrderDirection!
-    field: CompliancePortalDocumentAccessOrderField!
+    field: CompliancePortalAccessResourceOrderField!
+}
+
+input CompliancePortalAccessResourceFilter {
+    status: CompliancePortalAccessResourceStatusFilter
 }
 
 input CompliancePortalReferenceOrder
@@ -384,6 +440,8 @@ type CompliancePortal implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
+    slackbotNotificationChannel: SlackbotNotificationChannel
+        @goField(forceResolver: true)
 
     accesses(
         first: Int
@@ -391,6 +449,7 @@ type CompliancePortal implements Node {
         last: Int
         before: CursorKey
         orderBy: CompliancePortalAccessOrder
+        filter: CompliancePortalAccessFilter
     ): CompliancePortalAccessConnection! @goField(forceResolver: true)
 
     references(
@@ -424,6 +483,8 @@ type CompliancePortal implements Node {
         before: CursorKey
         orderBy: ComplianceCustomLinkOrder
     ): ComplianceCustomLinkConnection! @goField(forceResolver: true)
+
+    memberCandidates(query: String!): [Profile!]! @goField(forceResolver: true)
 
     compliancePortalFiles(
         first: Int
@@ -477,6 +538,8 @@ type CompliancePortalEdge {
 
 type CompliancePortalAccess implements Node {
     id: ID!
+    state: CompliancePortalAccessState!
+    authenticatedAt: Datetime
     ndaSignature: ElectronicSignature @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -485,40 +548,27 @@ type CompliancePortalAccess implements Node {
     organizationId: ID!
     identityID: ID!
 
-    profile: Profile! @goField(forceResolver: true)
+    identity: CompliancePortalAccessIdentity! @goField(forceResolver: true)
 
-    availableDocumentAccesses(
+    resources(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: CompliancePortalDocumentAccessOrder
-    ): CompliancePortalDocumentAccessConnection! @goField(forceResolver: true)
+        orderBy: CompliancePortalAccessResourceOrder
+        filter: CompliancePortalAccessResourceFilter
+    ): CompliancePortalAccessResourceConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type CompliancePortalDocumentAccess {
+type CompliancePortalDocumentAccess implements Node {
     id: ID!
     status: CompliancePortalDocumentAccessStatus!
     document: Document @goField(forceResolver: true)
     reportFile: File @goField(forceResolver: true)
     audit: Audit @goField(forceResolver: true)
     compliancePortalFile: CompliancePortalFile @goField(forceResolver: true)
-}
-
-type CompliancePortalDocumentAccessConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentAccessConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalDocumentAccessEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalDocumentAccessEdge {
-    cursor: CursorKey!
-    node: CompliancePortalDocumentAccess!
 }
 
 type CompliancePortalAccessConnection {
@@ -529,6 +579,33 @@ type CompliancePortalAccessConnection {
 type CompliancePortalAccessEdge {
     cursor: CursorKey!
     node: CompliancePortalAccess!
+}
+
+type CompliancePortalAccessIdentity {
+    email: EmailAddr!
+    fullName: String!
+}
+
+type CompliancePortalAccessResource {
+    kind: CompliancePortalAccessResourceKind!
+    resourceId: ID!
+    name: String!
+    category: String!
+    status: CompliancePortalDocumentAccessStatus
+}
+
+type CompliancePortalAccessResourceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAccessResourceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CompliancePortalAccessResourceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CompliancePortalAccessResourceEdge {
+    cursor: CursorKey!
+    node: CompliancePortalAccessResource!
 }
 
 type CompliancePortalReference implements Node {
@@ -674,6 +751,9 @@ type CompliancePortalFile implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
+    compliancePortalDocumentAccess(
+        compliancePortalAccessId: ID!
+    ): CompliancePortalDocumentAccess @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -755,9 +835,18 @@ extend type Mutation {
     updateCompliancePortalBrand(
         input: UpdateCompliancePortalBrandInput!
     ): UpdateCompliancePortalBrandPayload!
+    createCompliancePortalAccess(
+        input: CreateCompliancePortalAccessInput!
+    ): CreateCompliancePortalAccessPayload!
     updateCompliancePortalAccess(
         input: UpdateCompliancePortalAccessInput!
     ): UpdateCompliancePortalAccessPayload!
+    deactivateCompliancePortalAccess(
+        input: DeactivateCompliancePortalAccessInput!
+    ): DeactivateCompliancePortalAccessPayload!
+    activateCompliancePortalAccess(
+        input: ActivateCompliancePortalAccessInput!
+    ): ActivateCompliancePortalAccessPayload!
     deleteCompliancePortalAccess(
         input: DeleteCompliancePortalAccessInput!
     ): DeleteCompliancePortalAccessPayload!
@@ -867,6 +956,15 @@ input UpdateCompliancePortalBrandInput {
     darkLogoFile: Upload @goField(omittable: true)
 }
 
+input CreateCompliancePortalAccessInput {
+    compliancePortalId: ID!
+    profileId: ID
+    email: EmailAddr
+    documents: [ID!]
+    reports: [ID!]
+    compliancePortalFiles: [ID!]
+}
+
 input CompliancePortalDocumentAccessInput {
     id: ID!
     status: CompliancePortalDocumentAccessStatus!
@@ -882,6 +980,14 @@ input UpdateCompliancePortalAccessInput {
 }
 
 input DeleteCompliancePortalAccessInput {
+    id: ID!
+}
+
+input DeactivateCompliancePortalAccessInput {
+    id: ID!
+}
+
+input ActivateCompliancePortalAccessInput {
     id: ID!
 }
 
@@ -1091,12 +1197,27 @@ type UpdateCompliancePortalBrandPayload {
     compliancePortal: CompliancePortal!
 }
 
+type CreateCompliancePortalAccessPayload {
+    compliancePortalAccessEdge: CompliancePortalAccessEdge!
+}
+
 type UpdateCompliancePortalAccessPayload {
     compliancePortalAccess: CompliancePortalAccess!
+    documents: [Document!]!
+    audits: [Audit!]!
+    compliancePortalFiles: [CompliancePortalFile!]!
 }
 
 type DeleteCompliancePortalAccessPayload {
     deletedCompliancePortalAccessId: ID!
+}
+
+type DeactivateCompliancePortalAccessPayload {
+    compliancePortalAccess: CompliancePortalAccess!
+}
+
+type ActivateCompliancePortalAccessPayload {
+    compliancePortalAccess: CompliancePortalAccess!
 }
 
 type CreateCompliancePortalReferencePayload {

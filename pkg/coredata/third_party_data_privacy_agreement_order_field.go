@@ -51,14 +51,7 @@ func ThirdPartyDataPrivacyAgreementOrderFields() []ThirdPartyDataPrivacyAgreemen
 }
 
 func (v ThirdPartyDataPrivacyAgreementOrderField) IsValid() bool {
-	switch v {
-	case
-		ThirdPartyDataPrivacyAgreementOrderFieldValidFrom,
-		ThirdPartyDataPrivacyAgreementOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ThirdPartyDataPrivacyAgreementOrderFields())
 }
 
 func (v ThirdPartyDataPrivacyAgreementOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ThirdPartyDataPrivacyAgreementOrderField) MarshalText() ([]byte, error) 
 }
 
 func (v *ThirdPartyDataPrivacyAgreementOrderField) UnmarshalText(text []byte) error {
-	val := ThirdPartyDataPrivacyAgreementOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ThirdPartyDataPrivacyAgreementOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ThirdPartyDataPrivacyAgreementOrderFields())
 }
 
 func (p ThirdPartyDataPrivacyAgreementOrderField) Column() string {

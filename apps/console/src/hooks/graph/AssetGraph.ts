@@ -63,6 +63,7 @@ export const assetNodeQuery = graphql`
         owner {
           id
           fullName
+          emailAddress
         }
         thirdParties(first: 50) {
           edges {
@@ -99,6 +100,7 @@ export const createAssetMutation = graphql`
           owner {
             id
             fullName
+            emailAddress
           }
           thirdParties(first: 50) {
             edges {
@@ -130,6 +132,7 @@ export const updateAssetMutation = graphql`
         owner {
           id
           fullName
+          emailAddress
         }
         thirdParties(first: 50) {
           edges {

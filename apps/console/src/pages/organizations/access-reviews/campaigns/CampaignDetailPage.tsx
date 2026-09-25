@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useList } from "@probo/hooks";
+import { useList, usePageTitle } from "@probo/hooks";
 import {
-  Breadcrumb,
   Button,
   Card,
   Dialog,
@@ -203,6 +202,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   }
 
   const campaign = data.node;
+  usePageTitle(campaign.name);
   const isInProgress = campaign.status === "IN_PROGRESS";
   const isDraft = campaign.status === "DRAFT";
   const isPendingActions = campaign.status === "PENDING_ACTIONS";
@@ -428,7 +428,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     const connections = [
       ConnectionHandler.getConnectionID(
         organizationId,
-        "AccessReviewCampaignsTab_accessReviewCampaigns",
+        "AccessReviewCampaignsPage_accessReviewCampaigns",
       ),
     ];
     confirm(
@@ -455,7 +455,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 variant: "success",
               });
               resolve();
-              void navigate(`/organizations/${organizationId}/access-reviews`);
+              void navigate(`/organizations/${organizationId}/access-reviews/campaigns`);
             },
             onError(error) {
               toast({
@@ -794,16 +794,6 @@ export default function CampaignDetailPage({ queryRef }: Props) {
 
   return (
     <div className={page()}>
-      <Breadcrumb
-        items={[
-          {
-            label: t("campaignDetailPage.breadcrumb"),
-            to: `/organizations/${organizationId}/access-reviews`,
-          },
-          { label: campaign.name },
-        ]}
-      />
-
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-semibold">
           {campaign.name}

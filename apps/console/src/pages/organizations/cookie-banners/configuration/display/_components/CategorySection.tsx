@@ -73,6 +73,7 @@ export const categorySectionFragment = graphql`
     description
     kind
     gcmConsentTypes
+    tcfPurposeIds
     posthogConsent
     trackerPatterns(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
       @connection(key: "CategorySection_trackerPatterns", filters: [])
@@ -117,6 +118,7 @@ const updateCategoryMutation = graphql`
         description
         rank
         gcmConsentTypes
+        tcfPurposeIds
         posthogConsent
         updatedAt
       }
@@ -341,7 +343,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
 
   const handleSaveCategory = (
     name: string, slug: string, description: string,
-    gcmConsentTypes: string[], posthogConsent: boolean,
+    gcmConsentTypes: string[], tcfPurposeIds: number[], posthogConsent: boolean,
   ) => {
     updateCategory({
       variables: {
@@ -351,6 +353,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
           slug,
           description,
           gcmConsentTypes,
+          tcfPurposeIds,
           posthogConsent,
         },
       },
@@ -701,6 +704,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                 description={category.description}
                 kind={category.kind}
                 gcmConsentTypes={[...category.gcmConsentTypes]}
+                tcfPurposeIds={[...category.tcfPurposeIds]}
                 posthogConsent={category.posthogConsent}
                 isUpdating={isUpdating}
                 onSave={handleSaveCategory}
@@ -771,6 +775,18 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                 {category.gcmConsentTypes.map(type => (
                   <Badge key={type} variant="neutral">
                     {type}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {category.tcfPurposeIds.length > 0 && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="text-xs text-txt-secondary/70">
+                  {t("categorySection.tcfPurposes")}
+                </span>
+                {category.tcfPurposeIds.map(id => (
+                  <Badge key={id} variant="neutral">
+                    {id}
                   </Badge>
                 ))}
               </div>

@@ -1,24 +1,8 @@
 {
-  "overviewPage": {
-    "title": "compliance portals",
-    "description": "Manage public compliance portals for your organization. Configure branding, documents, and access controls.",
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive"
-    },
-    "actions": {
-      "create": "Create compliance portal",
-      "createFirst": "Create your first compliance portal"
-      }
-  },
   "newPortalPage": {
     "pageTitle": "New compliance portal",
     "title": "Create compliance portal",
     "description": "Set up a new public compliance portal. Its URL slug is assigned automatically when the page is created.",
-    "breadcrumb": {
-      "root": "compliance portals",
-      "current": "New"
-    },
     "fields": {
       "entityName": {
         "label": "Entity name",
@@ -49,69 +33,161 @@
     },
     "placeholder": "e.g. privacy-policy"
   },
-  "accessPage": {
-    "title": "External Access",
-    "description": "Manage who can access your compliance portal"
+  "hostingPage": {
+    "title": "Hosting",
+    "description": "Publish your portal and serve it on a custom domain."
   },
-  "accessEditDialog": {
-    "title": "Edit Access for {{email}}",
-    "types": {
-      "document": "Document",
-      "report": "Report",
-      "file": "File"
+  "visitorsPage": {
+    "title": "Visitors",
+    "description": "Control who can read private documents and require an NDA."
+  },
+  "integrationsPage": {
+    "title": "Integrations",
+    "description": "Connect Slack so your team is notified of access requests."
+  },
+  "brandingPage": {
+    "title": "Branding",
+    "description": "Set the look, profile, and custom links visitors see first."
+  },
+  "contentPage": {
+    "title": "Content",
+    "description": "Choose frameworks, commitments, and references shown on the landing page."
+  },
+  "rightRequestsPage": {
+    "title": "Right Requests",
+    "description": "Let visitors submit data subject rights requests on the portal."
+  },
+  "accessPage": {
+    "description": "Add people to the portal, or wait for them to sign in to request documents or accept an NDA."
+  },
+  "visitorPage": {
+    "back": "Visitors",
+    "notVisited": "Not visited",
+    "visitedOn": "Visited on {{date}}",
+    "deactivated": "Deactivated",
+    "deactivatedCallout": "This visitor cannot request or use protected documents until they are reactivated. Assigned grants stay in place but have no effect until then.",
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate"
+    },
+    "deactivate": {
+      "title": "Deactivate visitor?",
+      "description": "They will lose access to protected documents, reports, and files until you reactivate them. Assigned grants stay in place but have no effect until then.",
+      "actions": {
+        "cancel": "Cancel",
+        "confirm": "Deactivate"
+      }
     },
     "messages": {
-      "updated": "Access updated successfully"
+      "updated": "Access updated",
+      "deactivated": "Visitor deactivated",
+      "activated": "Visitor activated"
     },
     "errors": {
-      "update": "Failed to update access"
-    },
-    "actions": {
-      "update": "Update Access"
+      "update": "Failed to update access",
+      "deactivate": "Failed to deactivate visitor",
+      "activate": "Failed to activate visitor"
     }
   },
   "accessList": {
-    "empty": "No external access granted yet",
-    "columns": {
-      "name": "Name",
-      "email": "Email",
-      "date": "Date",
-      "access": "Access",
-      "requests": "Requests",
-      "nda": "NDA"
+    "empty": "No visitors yet",
+    "emptyDescription": "Add people or wait for them to sign in on your portal.",
+    "emptyFiltered": "No matching visitors",
+    "emptyFilteredDescription": "Try a different name or email, or clear the search.",
+    "search": {
+      "placeholder": "Search by name or email"
+    },
+    "sort": {
+      "label": "Sort by",
+      "ariaLabel": "Sort by: {{value}}",
+      "requests": "By request count",
+      "joined": "By join date"
     },
     "actions": {
-      "showMore": "Show More"
+      "showMore": "Show More",
+      "clearSearch": "Clear search"
     }
   },
   "accessListItem": {
+    "notVisited": "Not visited",
+    "visitedOn": "Visited {{date}}",
+    "deactivated": "Deactivated",
+    "requested_one": "Review {{count}} request",
+    "requested_other": "Review {{count}} requests",
+    "nda": {
+      "signed": "NDA signed",
+      "processing": "NDA processing",
+      "pending": "NDA pending",
+      "failed": "NDA failed"
+    },
     "actions": {
-      "edit": "Edit"
+      "open": "Open visitor"
+    }
+  },
+  "addVisitorDialog": {
+    "title": "Add visitor",
+    "searchPlaceholder": "Search people or type an email",
+    "addEmail": "Add {{email}}",
+    "empty": "No matching people",
+    "actions": {
+      "open": "Add visitor"
+    },
+    "messages": {
+      "created": "Visitor added"
+    },
+    "errors": {
+      "create": "Failed to add visitor"
     }
   },
   "documentAccessList": {
-    "title": "Document Access Permissions",
-    "columns": {
-      "name": "Name",
-      "type": "Type",
-      "category": "Category",
-      "access": "Access"
-    },
+    "title": "Restricted Document Accesses",
     "actions": {
-      "grantAll": "Grant All",
-      "rejectOrRevokeAll": "Reject/Revoke All",
       "grant": "Grant",
       "reject": "Reject",
-      "revoke": "Revoke"
+      "revoke": "Revoke",
+      "rejectOrRevoke": "Reject or revoke",
+      "cancel": "Cancel",
+      "showMore": "Show More"
     },
-    "empty": "No documents available"
+    "selection": {
+      "count": "{{count}} selected",
+      "clear": "Clear selection",
+      "selectAll": "Select all",
+      "selectRow": "Select {{title}}"
+    },
+    "grantConfirm": {
+      "title": "Grant {{count}} documents?",
+      "description": "This visitor will be able to read the selected documents.",
+      "confirm": "Grant"
+    },
+    "rejectOrRevokeConfirm": {
+      "title": "Reject or revoke {{count}} documents?",
+      "description": "Granted documents will be revoked. Pending requests will be rejected.",
+      "confirm": "Reject or revoke"
+    },
+    "empty": "No documents available",
+    "emptyFilter": "No documents with this status",
+    "filter": {
+      "label": "Status",
+      "all": "All statuses",
+      "none": "None"
+    }
   },
   "electronicSignature": {
-    "title": "Electronic Signature",
-    "fields": {
-      "status": "Status",
-      "signedAt": "Signed at",
-      "certificate": "Certificate"
+    "title": "NDA",
+    "certificateTitle": "Certificate of completion",
+    "status": {
+      "signed": "Signed electronically",
+      "processing": "Signature in progress",
+      "pending": "Awaiting signature",
+      "failed": "Signature unsuccessful"
+    },
+    "descriptions": {
+      "signedAt": "This visitor signed electronically on {{date}}.",
+      "pending": "This visitor has not signed yet.",
+      "processing": "This signature is still being processed.",
+      "failed": "This signature could not be completed.",
+      "completed": "This visitor signed electronically."
     },
     "actions": {
       "download": "Download"
@@ -119,21 +195,15 @@
     "activity": "Activity"
   },
   "eventTypeLabel": {
-    "documentViewed": "Document viewed",
-    "consentGiven": "Consent given",
-    "fullNameTyped": "Full name typed",
-    "signatureAccepted": "Signature accepted",
-    "signatureCompleted": "Signature completed",
-    "sealComputed": "Seal computed",
-    "timestampRequested": "Timestamp requested",
-    "certificateGenerated": "Certificate generated",
-    "processingError": "Processing error"
-  },
-  "ndaSignatureBadge": {
-    "signed": "Signed",
-    "processing": "Processing",
-    "pending": "Pending",
-    "failed": "Failed"
+    "documentViewed": "Viewed the document",
+    "consentGiven": "Agreed to sign electronically",
+    "fullNameTyped": "Typed their name",
+    "signatureAccepted": "Accepted to sign",
+    "signatureCompleted": "Signature recorded",
+    "sealComputed": "Document sealed",
+    "timestampRequested": "Timestamp applied",
+    "certificateGenerated": "Certificate created",
+    "processingError": "Processing failed"
   },
   "auditsPage": {
     "title": "Audits",
@@ -185,7 +255,6 @@
     },
     "actions": {
       "uploading": "Uploading...",
-      "updating": "Updating...",
       "noLogo": "No logo",
       "uploadLogo": "Upload logo",
       "uploadDarkLogo": "Upload dark logo",
@@ -206,20 +275,15 @@
       "alt": "compliance portal dark logo",
       "uploadDescription": "Upload dark logo image (PNG, JPG, SVG, WEBP up to 5MB)"
     },
-    "visualIdentity": {
-      "title": "Visual identity",
-      "description": "Square logos displayed on your public compliance portal."
-    },
-    "domains": {
-      "title": "Domains",
-      "description": "Your compliance portal is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own.",
-      "actions": {
-        "configure": "Configure"
-      }
-    },
     "profile": {
       "title": "General information",
       "description": "Description and contact details shown to visitors.",
+      "errors": {
+        "update": "Failed to update compliance portal information"
+      },
+      "validation": {
+        "emailInvalid": "Please enter a valid email address"
+      },
       "fields": {
         "entityName": "Entity name",
         "entityNamePlaceholder": "Acme",
@@ -391,12 +455,6 @@
       "toggle": "Toggle {{title}} on the compliance portal"
     }
   },
-  "domainPage": {
-    "title": "Custom Domain",
-    "empty": {
-      "description": "Add your own domain to make your compliance portal more professional"
-    }
-  },
   "thirdPartyListItem": {
     "messages": {
       "linked": "Subprocessor added to the portal.",
@@ -418,10 +476,6 @@
     },
     "empty": "No subprocessors available"
   },
-  "thirdPartiesPage": {
-    "title": "Subprocessors",
-    "description": "Manage subprocessor assessments and third-party risk information"
-  },
   "referenceList": {
     "columns": {
       "name": "Name",
@@ -438,9 +492,11 @@
     }
   },
   "statusSection": {
-    "title": "compliance portal status",
+    "title": "Visibility",
+    "description": "Publish your compliance portal and choose whether search engines can find it.",
     "activation": {
-      "title": "Activate compliance portal",
+      "titleActive": "Compliance portal is active",
+      "titleInactive": "Compliance portal is inactive",
       "description": "Make your compliance portal publicly accessible to build customer confidence"
     },
     "indexing": {
@@ -453,31 +509,32 @@
       "description": "Let visitors submit data subject rights requests on your compliance portal"
     }
   },
-  "slackSection": {
-    "title": "Integrations",
-    "disconnect": {
-      "title": "Disconnect Slack",
-      "description": "Are you sure you want to disconnect this Slack channel? This action cannot be undone."
-    },
-    "emptyDescription": "Manage your compliance portal access with Slack",
-    "actions": {
-      "connect": "Connect",
-      "disconnect": "Disconnect"
-    }
+  "domainsSection": {
+    "title": "Domains",
+    "description": "Your compliance portal is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own."
   },
-  "slackConnectionCard": {
-    "title": "Slack",
-    "connected": "Connected on {{date}}",
-    "connectedWithChannel": "Connected on {{date}} • Channel: {{channel}}",
-    "notConfiguredDescription": "Slack is connected, but no channel is set up for the compliance portal yet.",
-    "status": {
-      "connected": "Connected",
-      "notConfigured": "Channel not configured"
+  "slackSection": {
+    "title": "Slack notifications",
+    "connectionTitle": "Notification channel",
+    "notInstalledTitle": "Slack bot not installed",
+    "description": "Choose where access requests for this compliance portal are sent.",
+    "notInstalled": "Install the Probo Slack app from organization settings before choosing a channel.",
+    "loginRequired": {
+      "title": "Slack access requires /probot login",
+      "description": "Reviewers must run <cmd>/probot login</cmd> in Slack to link their Probo account before they can act on access requests."
+    },
+    "channel": {
+      "label": "Channel",
+      "placeholder": "Select channel",
+      "help": "Invite @Probo to a channel before selecting it.",
+      "emptyTitle": "No Slack channel yet",
+      "emptyDescription": "In Slack, invite @Probo to a channel, then open this list again."
     },
     "actions": {
-      "changeChannel": "Change channel",
-      "connect": "Connect",
-      "disconnect": "Disconnect"
+      "clear": "Clear",
+      "install": "Install",
+      "refresh": "Refresh",
+      "loadingMore": "Loading…"
     }
   },
   "externalUrls": {
@@ -635,29 +692,6 @@
       "showMore": "Show more"
     }
   },
-  "mailingListPage": {
-    "messages": {
-      "updated": "Mailing list updated successfully"
-    },
-    "errors": {
-      "update": "Failed to update mailing list"
-    },
-    "settings": {
-      "title": "Settings",
-      "description": "Configure how your mailing list behaves",
-      "replyTo": "Reply-to email",
-      "replyToPlaceholder": "security@example.com"
-    },
-    "tabs": {
-      "updates": "Updates",
-      "subscribers": "Subscribers"
-    },
-    "actions": {
-      "save": "Save",
-      "addUpdate": "Add update",
-      "addSubscriber": "Add subscriber"
-    }
-  },
   "newFileDialog": {
     "title": "Add file",
     "uploadDescription": "Upload file (max 10MB)",
@@ -745,9 +779,8 @@
       "add": "Add file"
     }
   },
-  "newDomainDialog": {
-    "title": "Add domain",
-    "description": "Enter your domain and we'll generate the DNS records you need to add.",
+  "customDomainForm": {
+    "title": "Add a custom domain",
     "messages": {
       "created": "Domain added successfully. Configure the DNS records to verify and activate your domain."
     },
@@ -756,11 +789,11 @@
     },
     "fields": {
       "domain": "Domain",
-      "domainPlaceholder": "compliance.example.com"
+      "domainPlaceholder": "compliance.example.com",
+      "domainInvalid": "Please enter a valid domain (e.g., compliance.example.com)"
     },
     "examples": "Examples: compliance.example.com, trust.example.com",
     "actions": {
-      "adding": "Adding...",
       "add": "Add domain"
     }
   },
@@ -769,6 +802,7 @@
     "description": "This will permanently delete the custom domain {{domain}} and all its configuration.",
     "warning": "This action cannot be undone.",
     "confirmationLabel": "To confirm deletion, type \"{{domain}}\" below:",
+    "confirmationMismatch": "The value does not match the domain.",
     "messages": {
       "deleted": "Domain deleted successfully"
     },
@@ -776,32 +810,62 @@
       "delete": "Failed to delete domain"
     },
     "actions": {
-      "deleting": "Deleting...",
-      "delete": "Delete domain"
+      "delete": "Delete domain",
+      "cancel": "Cancel"
     }
   },
-  "domainDialog": {
-    "messages": {
-      "copied": "Copied",
-      "valueCopied": "Value copied to clipboard"
-    },
+  "domainCard": {
+    "managed": "Managed",
     "active": {
       "title": "Domain is active",
-      "description": "Your custom domain is verified and SSL certificate is active"
+      "description": "Your custom domain is verified and SSL certificate is active",
+      "dns": "Leave these records in place. They keep this domain pointed here."
     },
-    "provisioningError": "Provisioning error",
-    "sslExpires": "SSL expires",
+    "pending": {
+      "title": "Waiting on DNS",
+      "description": "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate.",
+      "dns": "Add these records at your DNS provider to complete verification."
+    },
+    "provisioning": {
+      "title": "Certificate is being issued",
+      "description": "We are provisioning an SSL certificate for this domain.",
+      "dns": "These records must stay in place for as long as this domain is in use."
+    },
+    "renewing": {
+      "title": "Certificate is renewing",
+      "description": "A new SSL certificate is being issued. The current one stays active until it completes.",
+      "dns": "These records must stay in place during renewal and after it completes."
+    },
+    "expired": {
+      "title": "Certificate has expired",
+      "description": "This domain's SSL certificate has expired and needs to be reissued.",
+      "dns": "These records must still point here so we can reissue the certificate."
+    },
+    "failed": {
+      "title": "Certificate provisioning failed",
+      "description": "We could not issue an SSL certificate for this domain.",
+      "dns": "Check that these records match your DNS provider. A mismatch is a common cause of failure."
+    },
+    "error": {
+      "title": "Provisioning error"
+    },
+    "sslExpires": "SSL expires {{date}}",
     "dns": {
-      "title": "DNS configuration",
-      "description": "Add these DNS records to your domain to complete verification",
       "name": "Name",
       "value": "Value",
-      "ttl": "TTL: {{ttl}}"
+      "ttl": "TTL: {{ttl}}",
+      "copy": "Copy",
+      "purposePointToServers": "Point domain to Probo servers"
+    },
+    "messages": {
+      "copied": "Copied",
+      "valueCopied": "Value copied to clipboard",
+      "copyFailed": "Copy failed",
+      "valueCopyFailed": "The value could not be copied to the clipboard"
     },
     "actions": {
-      "copy": "Copy"
-    },
-    "pendingDescription": "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate."
+      "delete": "Delete"
+    }
   },
   "frameworkList": {
     "title": "Compliance frameworks",
@@ -817,19 +881,23 @@
   "ndaSection": {
     "title": "Non-disclosure agreement",
     "empty": "No NDA file uploaded",
-    "emptyDescription": "Upload a PDF that visitors must accept before they can access your compliance portal.",
-    "uploadDescription": "Require visitors to accept a Non-Disclosure Agreement before accessing your compliance portal.",
-    "acceptanceDescription": "Visitors must accept this agreement before accessing your compliance portal.",
+    "description": "Visitors must sign this agreement before they can read private documents.",
+    "dropHint": "Drop a PDF here",
+    "dropReplace": "Drop a PDF to replace",
+    "dropActive": "Drop PDF",
     "actions": {
       "download": "Download",
       "upload": "Upload NDA",
-      "replace": "Replace"
+      "replace": "Replace",
+      "delete": "Delete",
+      "uploading": "Uploading..."
     },
     "delete": {
       "title": "Delete NDA",
       "description": "Are you sure you want to delete the NDA file? This action cannot be undone.",
       "actions": {
-        "delete": "Delete"
+        "delete": "Delete",
+        "cancel": "Cancel"
       }
     },
     "errors": {
@@ -840,46 +908,49 @@
       "fileTooLarge": {
         "title": "File size too large",
         "description": "Please upload a file smaller than 10MB."
+      },
+      "tooManyFiles": {
+        "title": "Too many files",
+        "description": "Please upload one PDF at a time."
       }
     }
   },
-  "domainCard": {
-    "managed": "Managed",
-    "status": {
-      "active": "Active",
-      "pending": "Pending"
-    },
-    "actions": {
-      "viewDetails": "View Details",
-      "delete": "Delete"
-    }
+  "subprocessorsPage": {
+    "title": "Subprocessors",
+    "description": "Manage subprocessor assessments and third-party risk information"
   },
-  "configLayout": {
-    "title": "compliance portal",
-    "breadcrumb": "compliance portals",
-    "description": "Configure your public compliance portal to showcase your security and compliance posture.",
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive"
+  "updatesPage": {
+    "title": "Updates",
+    "description": "Send security and compliance updates to subscribers.",
+    "errors": {
+      "update": "Failed to update mailing list"
     },
-    "actions": {
-      "open": "Open"
+    "settings": {
+      "title": "Settings",
+      "description": "Configure how your mailing list behaves",
+      "replyTo": "Reply-to email",
+      "replyToPlaceholder": "security@example.com"
     },
     "tabs": {
-      "overview": "Overview",
-      "brand": "Brand",
-      "references": "References",
-      "commitments": "Commitments",
-      "audits": "Audits",
-      "documents": "Documents",
-      "files": "Files",
-      "subprocessors": "Subprocessors",
-      "access": "Access",
-      "mailingList": "Mailing List"
+      "updates": "Updates",
+      "subscribers": "Subscribers"
+    },
+    "actions": {
+      "addUpdate": "Add update",
+      "addSubscriber": "Add subscriber"
     }
   },
-  "emptyState": {
-    "title": "No compliance portals yet",
-    "description": "Create a public compliance portal to showcase your security posture, certifications, and policies to customers and partners."
+  "documentsLayout": {
+    "tabs": {
+      "audits": "Audits",
+      "documents": "Documents",
+      "files": "Files"
+    }
+  },
+  "landingLayout": {
+    "tabs": {
+      "branding": "Branding",
+      "content": "Content"
+    }
   }
 }

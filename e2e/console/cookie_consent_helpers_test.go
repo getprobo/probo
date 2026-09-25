@@ -34,7 +34,12 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-const cookieBannerE2ESDKVersion = "e2e-cookie-banner-sdk/1.0.0"
+const (
+	cookieBannerE2ESDKVersion = "e2e-cookie-banner-sdk/1.0.0"
+	// Minted by packages/cookie-banner-tcf encodeTCString (CMP ID 4095, 2.3).
+	validTCStringV23 = "CQqvPYAQqvPYA__ABBENAqFgAAAAAAAAAAAAAAAAAAAA.IAaQAQAaAAAA.YAAAAAAAAAAA"
+	coreOnlyTCString = "CQqvPYAQqvPYA__ABBENAqFgAAAAAAAAAAAAAAAAAAAA"
+)
 
 type (
 	cookieBannerHTTPOptions struct {
@@ -187,6 +192,44 @@ func setupPublishedCookieBanner(t *testing.T) publishedCookieBannerFixture {
 	}
 }
 
+func setupPublishedTCFCookieBanner(t *testing.T) publishedCookieBannerFixture {
+	t.Helper()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	origin := factory.SafeOrigin()
+	bannerID := factory.CreateCookieBanner(owner, factory.Attrs{"origin": origin})
+	factory.EnableCookieBannerTCF(t, bannerID)
+
+	factory.LockCommonGVLCatalog(t)
+	iabVendorID, version := factory.SeedCommonGVLVendor(t, "Consent TC Vendor", false)
+	factory.SeedCommonGVLCatalogState(t, version)
+
+	const addMutation = `
+		mutation($input: AddCookieBannerGVLVendorInput!) {
+			addCookieBannerGVLVendor(input: $input) {
+				cookieBanner { id }
+			}
+		}
+	`
+
+	require.NoError(t, owner.Execute(addMutation, map[string]any{
+		"input": map[string]any{
+			"cookieBannerId": bannerID,
+			"iabVendorId":    iabVendorID,
+		},
+	}, new(map[string]any)))
+
+	published := publishBanner(t, owner, bannerID)
+	require.Equal(t, "PUBLISHED", published.State)
+
+	return publishedCookieBannerFixture{
+		Owner:    owner,
+		BannerID: bannerID,
+		Origin:   origin,
+		Version:  published.Version,
+	}
+}
+
 func deactivateCookieBanner(t *testing.T, c *testutil.Client, bannerID string) {
 	t.Helper()
 
@@ -209,6 +252,7 @@ type postConsentRequest struct {
 	Version     int             `json:"version"`
 	Action      string          `json:"action"`
 	ConsentData json.RawMessage `json:"consent_data"`
+	TC          *string         `json:"tc,omitempty"`
 }
 
 type postConsentResponseBody struct {
@@ -225,15 +269,21 @@ func postCookieConsent(
 	visitorID string,
 	action string,
 	consentData json.RawMessage,
+	tc ...string,
 ) postConsentResponseBody {
 	t.Helper()
 
-	body, err := json.Marshal(postConsentRequest{
+	req := postConsentRequest{
 		VisitorID:   visitorID,
 		Version:     fixture.Version,
 		Action:      action,
 		ConsentData: consentData,
-	})
+	}
+	if len(tc) > 0 {
+		req.TC = &tc[0]
+	}
+
+	body, err := json.Marshal(req)
 	require.NoError(t, err)
 
 	const ua = "Probo-CookieBanner-E2E/1.0"

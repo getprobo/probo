@@ -47,13 +47,7 @@ func MailingListSubscriberOrderFields() []MailingListSubscriberOrderField {
 }
 
 func (v MailingListSubscriberOrderField) IsValid() bool {
-	switch v {
-	case
-		MailingListSubscriberOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, MailingListSubscriberOrderFields())
 }
 
 func (v MailingListSubscriberOrderField) String() string {
@@ -65,14 +59,7 @@ func (v MailingListSubscriberOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *MailingListSubscriberOrderField) UnmarshalText(text []byte) error {
-	val := MailingListSubscriberOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid MailingListSubscriberOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, MailingListSubscriberOrderFields())
 }
 
 func (f MailingListSubscriberOrderField) Column() string {

@@ -125,6 +125,12 @@ export function Dialog({
 
   const preventDismissWhenPointerIsInsideContent: DialogContentPrimitiveProps["onPointerDownOutside"] = (event) => {
     const originalEvent = event.detail.originalEvent;
+    const target = originalEvent.target;
+    if (target instanceof Element && target.closest("[data-rich-editor-floating]") != null) {
+      event.preventDefault();
+      return;
+    }
+
     const rect = contentRef.current?.getBoundingClientRect();
     if (
       rect
@@ -140,6 +146,12 @@ export function Dialog({
   const contentProps = closable
     ? {
         onPointerDownOutside: preventDismissWhenPointerIsInsideContent,
+        onInteractOutside: (event: Event) => {
+          const target = event.target;
+          if (target instanceof Element && target.closest("[data-rich-editor-floating]") != null) {
+            event.preventDefault();
+          }
+        },
       }
     : {
         onEscapeKeyDown: (e: Event) => e.preventDefault(),

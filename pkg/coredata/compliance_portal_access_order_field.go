@@ -30,7 +30,8 @@ import (
 type CompliancePortalAccessOrderField string
 
 const (
-	CompliancePortalAccessOrderFieldCreatedAt CompliancePortalAccessOrderField = "CREATED_AT"
+	CompliancePortalAccessOrderFieldCreatedAt           CompliancePortalAccessOrderField = "CREATED_AT"
+	CompliancePortalAccessOrderFieldPendingRequestCount CompliancePortalAccessOrderField = "PENDING_REQUEST_COUNT"
 )
 
 var (
@@ -43,17 +44,12 @@ var (
 func CompliancePortalAccessOrderFields() []CompliancePortalAccessOrderField {
 	return []CompliancePortalAccessOrderField{
 		CompliancePortalAccessOrderFieldCreatedAt,
+		CompliancePortalAccessOrderFieldPendingRequestCount,
 	}
 }
 
 func (v CompliancePortalAccessOrderField) IsValid() bool {
-	switch v {
-	case
-		CompliancePortalAccessOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CompliancePortalAccessOrderFields())
 }
 
 func (v CompliancePortalAccessOrderField) String() string {
@@ -65,20 +61,20 @@ func (v CompliancePortalAccessOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CompliancePortalAccessOrderField) UnmarshalText(text []byte) error {
-	val := CompliancePortalAccessOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CompliancePortalAccessOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CompliancePortalAccessOrderFields())
 }
 
 func (tcaof CompliancePortalAccessOrderField) Column() string {
 	switch tcaof {
 	case CompliancePortalAccessOrderFieldCreatedAt:
 		return "created_at"
+	case CompliancePortalAccessOrderFieldPendingRequestCount:
+		return `(
+			SELECT COUNT(*)
+			FROM cp_document_accesses
+			WHERE compliance_portal_access_id = cp_accesses.id
+			AND status = @status_requested::compliance_portal_document_access_status
+		)`
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", tcaof))

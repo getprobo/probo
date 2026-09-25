@@ -51,6 +51,7 @@ type Measure implements Node {
     name: String!
     description: String
     state: MeasureState!
+    asOf: Datetime
 
     evidences(
         first: Int
@@ -66,6 +67,7 @@ type Measure implements Node {
         last: Int
         before: CursorKey
         orderBy: TaskOrder
+        filter: TaskFilter
     ): TaskConnection! @goField(forceResolver: true)
 
     risks(
@@ -103,6 +105,16 @@ type Measure implements Node {
         orderBy: ThirdPartyOrder
     ): ThirdPartyConnection! @goField(forceResolver: true)
 
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+        filter: TreatmentPlanFilter
+        asOf: Datetime
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -116,6 +128,7 @@ type MeasureConnection
     totalCount: Int! @goField(forceResolver: true)
     edges: [MeasureEdge!]!
     pageInfo: PageInfo!
+    asOf: Datetime
 }
 
 type MeasureEdge {

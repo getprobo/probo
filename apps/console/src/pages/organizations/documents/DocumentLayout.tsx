@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, Breadcrumb, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
+import { usePageTitle } from "@probo/hooks";
+import { Badge, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -41,8 +42,8 @@ export const documentLayoutQuery = graphql`
       __typename
       ... on DocumentVersion {
         id
-        title
         status
+        title
         ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_versionFragment
         ...DocumentDetailsCard_versionFragment
@@ -86,8 +87,8 @@ export const documentLayoutQuery = graphql`
           edges {
             node {
               id
-              title
               status
+              title
               ...DocumentTitleFormFragment
               ...DocumentActionsDropdown_versionFragment
               ...DocumentDetailsCard_versionFragment
@@ -160,12 +161,14 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
 
   const currentTab = location.pathname.split("/").at(-1);
 
+  usePageTitle(currentVersion.title);
+
   // For changes on the current version (type, classification, title, content).
   // Refreshes layout data but does NOT remount the editor.
   const handleDocumentUpdated = useCallback(() => {
     if (versionId) {
       void navigate(
-        `/organizations/${organizationId}/documents/${document.id}/${currentTab}`,
+        `/organizations/${organizationId}/governance/documents/${document.id}/${currentTab}`,
         { replace: true },
       );
     } else {
@@ -178,7 +181,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const handleVersionChanged = useCallback(() => {
     if (versionId) {
       void navigate(
-        `/organizations/${organizationId}/documents/${document.id}/${currentTab}`,
+        `/organizations/${organizationId}/governance/documents/${document.id}/${currentTab}`,
         { replace: true },
       );
     } else {
@@ -188,25 +191,13 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   }, [versionId, currentTab, navigate, organizationId, document.id, onRefetch]);
 
   const urlPrefix = versionId
-    ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
-    : `/organizations/${organizationId}/documents/${document.id}`;
+    ? `/organizations/${organizationId}/governance/documents/${document.id}/versions/${versionId}`
+    : `/organizations/${organizationId}/governance/documents/${document.id}`;
 
   return (
     <>
       <div className="flex flex-col gap-6 h-full">
-        <div className="flex justify-between items-center mb-4">
-          <Breadcrumb
-            items={[
-              {
-                label: t("documentLayout.breadcrumbs.documents"),
-                to: `/organizations/${organizationId}/documents`,
-              },
-              {
-                label: currentVersion.title,
-              },
-            ]}
-          />
-
+        <div className="flex justify-end items-center mb-4">
           <div className="flex gap-2">
             {isDraft && document.canPublish && (
               <Button

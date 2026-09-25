@@ -43,6 +43,7 @@ import { FormRiskDialog } from "./FormRiskDialog";
 const riskRowFragment = graphql`
   fragment RiskRow_risk on Risk {
     id
+    referenceId
     name
     category
     treatment
@@ -52,8 +53,9 @@ const riskRowFragment = graphql`
     }
     inherentRiskScore
     residualRiskScore
-    canUpdate: permission(action: "core:risk:update")
-    canDelete: permission(action: "core:risk:delete")
+    riskAnalysisHistoryCount
+    canUpdate: permission(action: "risk-management:risk:update")
+    canDelete: permission(action: "risk-management:risk:delete")
     ...FormRiskDialog_risk
   }
 `;
@@ -110,12 +112,21 @@ export function RiskRow(props: RiskRowProps) {
           });
         }),
       {
-        message: t("riskRow.deleteConfirmation", { name: risk.name }),
+        message: t(
+          risk.riskAnalysisHistoryCount > 0
+            ? "riskRow.deleteConfirmationWithHistory"
+            : "riskRow.deleteConfirmation",
+          {
+            name: risk.name,
+            referenceId: risk.referenceId,
+            count: risk.riskAnalysisHistoryCount,
+          },
+        ),
       },
     );
   };
 
-  const riskUrl = `/organizations/${organizationId}/risks/${risk.id}/overview`;
+  const riskUrl = `/organizations/${organizationId}/risk-management/risks/${risk.id}/overview`;
 
   return (
     <>
@@ -125,14 +136,25 @@ export function RiskRow(props: RiskRowProps) {
         connection={props.connectionId}
       />
       <Tr to={riskUrl}>
+        <Td>
+          <span className="font-mono text-sm">{risk.referenceId}</span>
+        </Td>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>
-        <Td>{t(`riskRow.treatments.${(risk.treatment ?? "UNKNOWN").toLowerCase()}`)}</Td>
         <Td>
-          <SeverityBadge score={risk.inherentRiskScore} />
+          {risk.treatment
+            ? t(`riskRow.treatments.${risk.treatment.toLowerCase()}`)
+            : "—"}
         </Td>
         <Td>
-          <SeverityBadge score={risk.residualRiskScore} />
+          {risk.inherentRiskScore != null
+            ? <SeverityBadge score={risk.inherentRiskScore} />
+            : "—"}
+        </Td>
+        <Td>
+          {risk.residualRiskScore != null
+            ? <SeverityBadge score={risk.residualRiskScore} />
+            : "—"}
         </Td>
         <Td>{risk.owner?.fullName || t("riskRow.unassigned")}</Td>
         {props.hasAnyAction && (

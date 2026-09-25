@@ -277,10 +277,8 @@ func TestCheckCNAME(t *testing.T) {
 				networks = append(networks, network)
 				if network == "udp" {
 					return &dns.Msg{
-						MsgHeader: dns.MsgHeader{
-							Rcode:     dns.RcodeSuccess,
-							Truncated: true,
-						},
+						Rcode:     dns.RcodeSuccess,
+						Truncated: true,
 					}, nil
 				}
 
@@ -306,11 +304,9 @@ func TestCheckCNAME(t *testing.T) {
 				cname.Target = "custom.getprobo.com."
 
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{
-						Rcode:     dns.RcodeSuccess,
-						Truncated: true,
-					},
-					Answer: []dns.RR{cname},
+					Rcode:     dns.RcodeSuccess,
+					Truncated: true,
+					Answer:    []dns.RR{cname},
 				}, nil
 			},
 		}
@@ -366,7 +362,7 @@ func TestCheckTXT(t *testing.T) {
 		client := &Client{
 			exchange: func(_ context.Context, _ *dns.Msg, _ string) (*dns.Msg, error) {
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeNameError},
+					Rcode: dns.RcodeNameError,
 				}, nil
 			},
 		}
@@ -387,10 +383,8 @@ func TestCheckTXT(t *testing.T) {
 				networks = append(networks, network)
 				if network == "udp" {
 					return &dns.Msg{
-						MsgHeader: dns.MsgHeader{
-							Rcode:     dns.RcodeSuccess,
-							Truncated: true,
-						},
+						Rcode:     dns.RcodeSuccess,
+						Truncated: true,
 					}, nil
 				}
 
@@ -398,8 +392,8 @@ func TestCheckTXT(t *testing.T) {
 				txt.Txt = []string{"probo-verification=token"}
 
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess},
-					Answer:    []dns.RR{txt},
+					Rcode:  dns.RcodeSuccess,
+					Answer: []dns.RR{txt},
 				}, nil
 			},
 		}
@@ -526,7 +520,7 @@ func TestCheckCAA(t *testing.T) {
 		client := &Client{
 			exchange: func(_ context.Context, _ *dns.Msg, _ string) (*dns.Msg, error) {
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeServerFailure},
+					Rcode: dns.RcodeServerFailure,
 				}, nil
 			},
 		}
@@ -548,10 +542,8 @@ func TestCheckCAA(t *testing.T) {
 				networks = append(networks, network)
 				if network == "udp" {
 					return &dns.Msg{
-						MsgHeader: dns.MsgHeader{
-							Rcode:     dns.RcodeSuccess,
-							Truncated: true,
-						},
+						Rcode:     dns.RcodeSuccess,
+						Truncated: true,
 					}, nil
 				}
 
@@ -560,8 +552,8 @@ func TestCheckCAA(t *testing.T) {
 				caa.Hdr.Name = name
 
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess},
-					Answer:    []dns.RR{caa},
+					Rcode:  dns.RcodeSuccess,
+					Answer: []dns.RR{caa},
 				}, nil
 			},
 		}
@@ -578,10 +570,8 @@ func TestCheckCAA(t *testing.T) {
 		client := &Client{
 			exchange: func(_ context.Context, _ *dns.Msg, _ string) (*dns.Msg, error) {
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{
-						Rcode:     dns.RcodeSuccess,
-						Truncated: true,
-					},
+					Rcode:     dns.RcodeSuccess,
+					Truncated: true,
 				}, nil
 			},
 		}
@@ -598,7 +588,7 @@ func TestCheckCAA(t *testing.T) {
 		client := &Client{
 			exchange: func(_ context.Context, _ *dns.Msg, _ string) (*dns.Msg, error) {
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeNameError},
+					Rcode: dns.RcodeNameError,
 				}, nil
 			},
 		}
@@ -620,15 +610,15 @@ func TestCheckCAA(t *testing.T) {
 				queried = append(queried, name)
 
 				if name != "example.com." {
-					return &dns.Msg{MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess}}, nil
+					return &dns.Msg{Rcode: dns.RcodeSuccess}, nil
 				}
 
 				caa := caaRecord("issue", "letsencrypt.org", 0)
 				caa.Hdr.Name = name
 
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess},
-					Answer:    []dns.RR{caa},
+					Rcode:  dns.RcodeSuccess,
+					Answer: []dns.RR{caa},
 				}, nil
 			},
 		}
@@ -650,15 +640,15 @@ func TestCheckCAA(t *testing.T) {
 				queried = append(queried, name)
 
 				if name == "trust.example.com." {
-					return &dns.Msg{MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess}}, nil
+					return &dns.Msg{Rcode: dns.RcodeSuccess}, nil
 				}
 
 				caa := caaRecord("issue", "digicert.com", 0)
 				caa.Hdr.Name = name
 
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess},
-					Answer:    []dns.RR{caa},
+					Rcode:  dns.RcodeSuccess,
+					Answer: []dns.RR{caa},
 				}, nil
 			},
 		}
@@ -680,8 +670,8 @@ func TestCheckCAA(t *testing.T) {
 				caa.Hdr.Name = name
 
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess},
-					Answer:    []dns.RR{caa},
+					Rcode:  dns.RcodeSuccess,
+					Answer: []dns.RR{caa},
 				}, nil
 			},
 		}
@@ -707,15 +697,15 @@ func TestCheckCAA(t *testing.T) {
 
 				name := msg.Question[0].Header().Name
 				if name != "example.com." {
-					return &dns.Msg{MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess}}, nil
+					return &dns.Msg{Rcode: dns.RcodeSuccess}, nil
 				}
 
 				caa := caaRecord("issue", "letsencrypt.org", 0)
 				caa.Hdr.Name = name
 
 				return &dns.Msg{
-					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess},
-					Answer:    []dns.RR{caa},
+					Rcode:  dns.RcodeSuccess,
+					Answer: []dns.RR{caa},
 				}, nil
 			},
 		}

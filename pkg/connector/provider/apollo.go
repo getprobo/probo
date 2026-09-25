@@ -34,7 +34,9 @@ func apolloRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderApollo,
 		DisplayName:      "Apollo.io",
 		DocumentationURL: accessReviewDocsURL("apollo"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+		},
 		// Apollo's REST API authenticates with a master API key in the
 		// x-api-key header; it rejects Authorization: Bearer (and, since
 		// Sept 2024, query/body key params). APIKeyHeader makes the
@@ -42,7 +44,6 @@ func apolloRegistration() *Registration {
 		// OAuth2 flow needed: the customer supplies a master key, which is
 		// bound to one Apollo account, so there is nothing to pick
 		// (Pattern 3): no settings struct, no picker.
-		APIKeyHeader: "x-api-key",
 		Endpoints: Endpoints{
 			APIBase: "https://api.apollo.io/api/v1",
 			// ProbeURL lets the connection-status check confirm the key with a

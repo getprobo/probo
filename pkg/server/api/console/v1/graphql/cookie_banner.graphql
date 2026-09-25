@@ -132,6 +132,7 @@ type CookieBannerCapabilities
         model: "go.probo.inc/probo/pkg/coredata.CookieBannerCapabilities"
     ) {
     resourceReporting: Boolean!
+    tcf: Boolean! @goField(name: "TCF")
 }
 
 type CookieBanner implements Node {
@@ -145,6 +146,12 @@ type CookieBanner implements Node {
     showBranding: Boolean!
     capabilities: CookieBannerCapabilities!
     defaultLanguage: String!
+    publisherCountryCode: String!
+    """
+    IAB TCF CMP ID for this instance, from probod config. 4095 is a
+    placeholder until IAB Europe issues a registered ID.
+    """
+    tcfCmpId: Int! @goField(forceResolver: true)
 
     organization: Organization @goField(forceResolver: true)
 
@@ -160,6 +167,7 @@ type CookieBanner implements Node {
     translations: [CookieBannerTranslation!]! @goField(forceResolver: true)
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
+    publishedVersion: CookieBannerVersion @goField(forceResolver: true)
 
     policyDocument: Document @goField(forceResolver: true)
 
@@ -182,13 +190,22 @@ type CookieBanner implements Node {
     ): TrackerPatternConnection @goField(forceResolver: true)
 
     """
-    The deduped union of third parties referenced by the banner's
-    tracker patterns, both org-scoped (ThirdParty) and global
-    (CommonThirdParty). Powers the third-party filter combobox on the
+    The deduped catalog third parties referenced by the banner's
+    tracker patterns. Powers the third-party filter combobox on the
     trackers list page.
     """
-    linkedThirdParties: [TrackerPatternThirdPartyLink!]!
+    linkedThirdParties: [CommonThirdParty!]!
         @goField(forceResolver: true)
+
+    gvlVendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CommonGVLVendorOrder
+    ): CommonGVLVendorConnection @goField(forceResolver: true)
+
+    gvlVendorIds: [Int!]! @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -222,6 +239,7 @@ type CookieCategory implements Node {
     kind: CookieCategoryKind!
     rank: Int!
     gcmConsentTypes: [String!]!
+    tcfPurposeIds: [Int!]!
     posthogConsent: Boolean!
 
     trackerPatterns(
@@ -244,6 +262,28 @@ type CookieCategory implements Node {
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum CommonTrackerPatternAttribution
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttribution"
+    ) {
+    UNDETERMINED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionUndetermined"
+        )
+    THIRD_PARTY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionThirdParty"
+        )
+    FIRST_PARTY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionFirstParty"
+        )
+    NOT_ATTRIBUTABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionNotAttributable"
+        )
 }
 
 enum TrackerPatternMatchType
@@ -306,18 +346,9 @@ type TrackerPattern implements Node
     updatedAt: Datetime!
 
     """
-    The org-scoped third party this pattern is mapped to, if any. Set
-    when the mapping worker promoted the pattern to a tenant-managed
-    ThirdParty record. When this field is non-null, commonThirdParty is
-    always null.
-    """
-    thirdParty: ThirdParty @goField(forceResolver: true)
-
-    """
     The global third party this pattern is mapped to via the common
-    tracker-pattern catalog. Null when the pattern has its own
-    org-scoped thirdParty, when it has not been mapped, or when the
-    matched common pattern has no common third party.
+    tracker-pattern catalog. Null when the pattern has not been mapped
+    or when the matched common pattern has no common third party.
     """
     commonThirdParty: CommonThirdParty @goField(forceResolver: true)
 
@@ -330,6 +361,13 @@ type TrackerPattern implements Node
     debugging agent-generated descriptions.
     """
     commonTrackerPatternId: ID
+
+    """
+    Catalog verdict inherited from the linked common tracker pattern.
+    Null when the org pattern has no catalog link.
+    """
+    attribution: CommonTrackerPatternAttribution
+        @goField(forceResolver: true)
 
     detectedTrackers(
         first: Int
@@ -350,14 +388,6 @@ type TrackerPatternConnection
     edges: [TrackerPatternEdge!]!
     pageInfo: PageInfo!
 }
-
-"""
-A third party associated with a banner's tracker patterns. Either the
-tenant-managed ThirdParty (when a pattern was promoted to the org
-catalog) or the global CommonThirdParty linked through a common
-tracker pattern.
-"""
-union TrackerPatternThirdPartyLink = ThirdParty | CommonThirdParty
 
 type TrackerPatternEdge {
     cursor: CursorKey!
@@ -381,11 +411,9 @@ input TrackerPatternFilter
     trackerType: TrackerType
     cookieCategoryId: ID
     """
-    Filter to tracker patterns linked to a single third party. Accepts
-    either an org-scoped ThirdParty GID (matched against third_party_id)
-    or a global CommonThirdParty GID (matched against the indirect link
-    through common_tracker_patterns). The dispatch happens at the
-    resolver based on the GID entity-type prefix.
+    Filter to tracker patterns linked to a single catalog third party.
+    Accepts a CommonThirdParty GID, matched through
+    common_tracker_patterns.
     """
     thirdPartyId: ID
 }
@@ -549,6 +577,8 @@ type CookieBannerVersion implements Node {
     version: Int!
     state: String!
     categories: [CookieBannerVersionCategory!]! @goField(forceResolver: true)
+    gvlVendorCount: Int! @goField(forceResolver: true)
+    gvlVendorIds: [Int!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 }
@@ -657,6 +687,12 @@ extend type Mutation {
     moveTrackerResourceToCategory(
         input: MoveTrackerResourceToCategoryInput!
     ): MoveTrackerResourceToCategoryPayload!
+    addCookieBannerGVLVendor(
+        input: AddCookieBannerGVLVendorInput!
+    ): AddCookieBannerGVLVendorPayload!
+    removeCookieBannerGVLVendor(
+        input: RemoveCookieBannerGVLVendorInput!
+    ): RemoveCookieBannerGVLVendorPayload!
 }
 
 input CreateCookieBannerInput {
@@ -679,6 +715,7 @@ input UpdateCookieBannerInput {
     cookiePolicyUrl: String
     consentExpiryDays: Int
     defaultLanguage: String
+    publisherCountryCode: String
     capabilities: CookieBannerCapabilitiesInput
 }
 
@@ -716,6 +753,7 @@ input UpdateCookieCategoryInput {
     slug: String
     description: String
     gcmConsentTypes: [String!]
+    tcfPurposeIds: [Int!]
     posthogConsent: Boolean
 }
 
@@ -875,5 +913,24 @@ type DeleteTrackerResourcePayload {
 
 type MoveTrackerResourceToCategoryPayload {
     trackerResource: TrackerResource!
+    cookieBanner: CookieBanner!
+}
+
+input AddCookieBannerGVLVendorInput {
+    cookieBannerId: ID!
+    iabVendorId: Int!
+}
+
+input RemoveCookieBannerGVLVendorInput {
+    cookieBannerId: ID!
+    iabVendorId: Int!
+}
+
+type AddCookieBannerGVLVendorPayload {
+    commonGVLVendor: CommonGVLVendor!
+    cookieBanner: CookieBanner!
+}
+
+type RemoveCookieBannerGVLVendorPayload {
     cookieBanner: CookieBanner!
 }

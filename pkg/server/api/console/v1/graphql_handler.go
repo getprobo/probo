@@ -25,9 +25,12 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -35,15 +38,19 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -55,13 +62,12 @@ func NewGraphQLHandler(
 	managementSvc *management.Service,
 	certManagerSvc *certmanager.Service,
 	accessReviewSvc *accessreview.Service,
-	agentRunSvc *agentrun.Service,
+	agentExecutionSvc *agentexecution.Service,
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
 	customDomainCname string,
-	tokenSecret string,
 	logger *log.Logger,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
@@ -69,31 +75,48 @@ func NewGraphQLHandler(
 	baseURL *baseurl.BaseURL,
 	limits gqlutils.Limits,
 	itamSvc *itam.Service,
+	taskSvc *task.Service,
+	probotIdentityBindings *identitybinding.Service,
+	slackbotInstallations *slackchannel.InstallationService,
+	botDeliveryDestinations BotDeliveryDestinations,
+	complianceMessages ComplianceMessages,
+	identityFederation *identityfederation.Issuer,
+	awsConnectorInstall cloudaws.ConnectorInstallConfig,
+	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
+	azureConnectorInstall cloudazure.ConnectorInstallConfig,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:         dataloader.NewAuthorizeFunc(logger),
-			batchAuthorize:    authz.NewBatchAuthorizeFunc(iamSvc, logger),
-			probo:             proboSvc,
-			resourceAlias:     resourceAliasSvc,
-			iam:               iamSvc,
-			esign:             esignSvc,
-			management:        managementSvc,
-			certManager:       certManagerSvc,
-			accessReview:      accessReviewSvc,
-			agentRun:          agentRunSvc,
-			mailman:           mailmanSvc,
-			cookieBanner:      cookieBannerSvc,
-			connectorRegistry: connectorRegistry,
-			providerRegistry:  providerRegistry,
-			riskManagement:    riskManagementSvc,
-			thirdParty:        thirdPartySvc,
-			customDomainCname: customDomainCname,
-			tokenSecret:       tokenSecret,
-			fileManager:       fileManagerSvc,
-			baseURL:           baseURL,
-			itam:              itamSvc,
-			logger:            logger,
+			authorize:               dataloader.NewAuthorizeFunc(logger),
+			batchAuthorize:          authz.NewBatchAuthorizeFunc(iamSvc, logger),
+			probo:                   proboSvc,
+			resourceAlias:           resourceAliasSvc,
+			iam:                     iamSvc,
+			esign:                   esignSvc,
+			management:              managementSvc,
+			certManager:             certManagerSvc,
+			accessReview:            accessReviewSvc,
+			agentExecution:          agentExecutionSvc,
+			mailman:                 mailmanSvc,
+			cookieBanner:            cookieBannerSvc,
+			connectorRegistry:       connectorRegistry,
+			providerRegistry:        providerRegistry,
+			riskManagement:          riskManagementSvc,
+			thirdParty:              thirdPartySvc,
+			customDomainCname:       customDomainCname,
+			fileManager:             fileManagerSvc,
+			baseURL:                 baseURL,
+			itam:                    itamSvc,
+			task:                    taskSvc,
+			logger:                  logger,
+			identityFederation:      identityFederation,
+			awsConnectorInstall:     awsConnectorInstall,
+			gcpConnectorInstall:     gcpConnectorInstall,
+			azureConnectorInstall:   azureConnectorInstall,
+			probotIdentityBindings:  probotIdentityBindings,
+			slackbotInstallations:   slackbotInstallations,
+			botDeliveryDestinations: botDeliveryDestinations,
+			complianceMessages:      complianceMessages,
 		},
 	}
 

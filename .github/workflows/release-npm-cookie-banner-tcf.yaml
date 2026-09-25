@@ -1,0 +1,107 @@
+name: "Release cookie-banner-tcf"
+
+on:
+  push:
+    tags:
+      - "@probo/cookie-banner-tcf/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  publish:
+    name: "publish"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@probo"
+      - run: "npm install -g npm@^12.0.2"
+      - run: "npm ci"
+      - name: "Verify package.json version matches tag"
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME##*/v}"
+          PKG_VERSION="$(node -p "require('./packages/cookie-banner-tcf/package.json').version")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)" >&2
+            exit 1
+          fi
+      - run: "npm --workspace @probo/cookie-banner run build"
+      - run: "npm --workspace @probo/cookie-banner-tcf run build"
+      - uses: "anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26" # v0.24.2
+        with:
+          path: ./packages/cookie-banner-tcf
+          format: cyclonedx-json
+          output-file: packages/cookie-banner-tcf/sbom.json
+      - uses: "anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439" # v7.4.2
+        with:
+          path: ./packages/cookie-banner-tcf
+          fail-build: true
+          severity-cutoff: critical
+      - name: "Generate checksums for dist files"
+        run: |
+          cd packages/cookie-banner-tcf/dist
+          find . -type f | while read file; do
+            echo "$(sha256sum "$file" | head -c 64)  $file"
+          done > ../checksums.txt
+      - run: "npm --workspace @probo/cookie-banner-tcf publish --access public --dry-run"
+      - name: "Publish to npm"
+        run: |
+          VERSION="$(node -p "require('./packages/cookie-banner-tcf/package.json').version")"
+          if npm view "@probo/cookie-banner-tcf@${VERSION}" version >/dev/null 2>&1; then
+            echo "@probo/cookie-banner-tcf@${VERSION} is already published; skipping"
+          else
+            npm --workspace @probo/cookie-banner-tcf publish --access public
+          fi
+      - uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        with:
+          subject-path: "packages/cookie-banner-tcf/dist/**"
+          sbom-path: "packages/cookie-banner-tcf/sbom.json"
+      - uses: "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4
+        with:
+          subject-path: "packages/cookie-banner-tcf/dist/**"
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          if ! grep -qE "^## \\[${VERSION}\\]" packages/cookie-banner-tcf/CHANGELOG.md; then
+            echo "CHANGELOG.md has no ## [${VERSION}] heading" >&2
+            exit 1
+          fi
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' packages/cookie-banner-tcf/CHANGELOG.md > release-notes.md
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if echo "${GITHUB_REF_NAME}" | grep -qE '(alpha|beta|rc)'; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            $PRERELEASE_FLAG \
+            packages/cookie-banner-tcf/sbom.json packages/cookie-banner-tcf/checksums.txt
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        with:
+          name: "cookie-banner-tcf-sbom"
+          path: |
+            packages/cookie-banner-tcf/sbom.json
+            packages/cookie-banner-tcf/checksums.txt
+          retention-days: 30

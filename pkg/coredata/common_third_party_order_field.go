@@ -51,15 +51,7 @@ func CommonThirdPartyOrderFields() []CommonThirdPartyOrderField {
 }
 
 func (v CommonThirdPartyOrderField) IsValid() bool {
-	switch v {
-	case
-		CommonThirdPartyOrderFieldName,
-		CommonThirdPartyOrderFieldCreatedAt,
-		CommonThirdPartyOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CommonThirdPartyOrderFields())
 }
 
 func (v CommonThirdPartyOrderField) String() string {
@@ -71,14 +63,7 @@ func (v CommonThirdPartyOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CommonThirdPartyOrderField) UnmarshalText(text []byte) error {
-	val := CommonThirdPartyOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CommonThirdPartyOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CommonThirdPartyOrderFields())
 }
 
 func (v CommonThirdPartyOrderField) Column() string {

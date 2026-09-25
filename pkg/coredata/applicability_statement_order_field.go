@@ -49,14 +49,7 @@ func ApplicabilityStatementOrderFields() []ApplicabilityStatementOrderField {
 }
 
 func (v ApplicabilityStatementOrderField) IsValid() bool {
-	switch v {
-	case
-		ApplicabilityStatementOrderFieldCreatedAt,
-		ApplicabilityStatementOrderFieldControlSectionTitle:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ApplicabilityStatementOrderFields())
 }
 
 func (v ApplicabilityStatementOrderField) String() string {
@@ -68,14 +61,7 @@ func (v ApplicabilityStatementOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ApplicabilityStatementOrderField) UnmarshalText(text []byte) error {
-	val := ApplicabilityStatementOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ApplicabilityStatementOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ApplicabilityStatementOrderFields())
 }
 
 func (p ApplicabilityStatementOrderField) Column() string {

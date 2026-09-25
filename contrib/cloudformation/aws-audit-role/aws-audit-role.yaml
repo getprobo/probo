@@ -1,0 +1,434 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Grants Probo read-only audit access to this AWS account, and optionally to
+  every account in the organization, through OIDC web identity federation. Probo
+  holds no credential for this account: it presents a short-lived signed
+  assertion that STS verifies against a public key set, and access is revoked by
+  deleting the role created here.
+
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        # W1030 resolves the empty OrganizationalUnitIds default against the
+        # StackSet's deployment targets, without seeing that the whole
+        # resource is conditional on DeployToOrganization. Defaulting the list
+        # to empty is what lets a customer install into a single account
+        # without inventing an OU.
+        - W1030
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Probo identity (prefilled — do not edit)"
+        Parameters:
+          - ProboIssuerURL
+          - ProboSubject
+      - Label:
+          default: "Role"
+        Parameters:
+          - RoleName
+          - CreateOIDCProvider
+      - Label:
+          default: "Organization-wide rollout"
+        Parameters:
+          - DeployToOrganization
+          - OrganizationalUnitIds
+          - UseDelegatedAdmin
+    ParameterLabels:
+      ProboIssuerURL:
+        default: "Probo issuer URL"
+      ProboSubject:
+        default: "Probo subject"
+      RoleName:
+        default: "Role name"
+      CreateOIDCProvider:
+        default: "Create the OIDC provider"
+      DeployToOrganization:
+        default: "Deploy to the whole organization"
+      OrganizationalUnitIds:
+        default: "Organizational unit IDs"
+      UseDelegatedAdmin:
+        default: "Use the delegated administrator"
+
+Parameters:
+  ProboIssuerURL:
+    Type: String
+    MinLength: 12
+    MaxLength: 255
+    # AWS caps an OIDC provider URL at 255 characters, forbids a port and a
+    # query string, and compares the whole URL CASE-SENSITIVELY. The trailing
+    # path segment is a mixed-case identifier, so retyping this value is the
+    # most likely way to end up with an OIDC provider that no token matches.
+    # Host and path are limited to unreserved URL characters so a quote,
+    # backslash or ${} cannot break the trust-policy JSON or the embedded
+    # member template when Fn::Sub interpolates this value raw.
+    AllowedPattern: '^https://[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(/[A-Za-z0-9._~%-]+)*/?$'
+    ConstraintDescription: >-
+      must be the https:// URL Probo showed you, with no port and no query
+      string, copied exactly including capitalisation
+    Description: >-
+      The issuer URL Probo mints its assertions under, unique to your Probo
+      organization. Copy it exactly.
+
+  ProboSubject:
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: '^[A-Za-z0-9_-]+$'
+    ConstraintDescription: must be the subject Probo showed you
+    Description: >-
+      The subject claim Probo asserts, identifying your Probo organization. The
+      role trusts this value and no other.
+
+  RoleName:
+    Type: String
+    Default: "ProboAudit"
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: '^[\w+=,.@-]+$'
+    ConstraintDescription: must be a valid IAM role name
+    Description: >-
+      Name of the role Probo assumes. The same name is used in every account.
+      If you change it, the RoleARN output changes. Paste that ARN into Probo.
+
+  CreateOIDCProvider:
+    Type: String
+    Default: "Yes"
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Description: >-
+      Create the IAM OIDC provider for the issuer. Choose No only if this
+      account already has a provider for this exact URL — a second create
+      fails with EntityAlreadyExists.
+
+  DeployToOrganization:
+    Type: String
+    Default: "No"
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Description: >-
+      Also create the provider and role in every member account, through a
+      service-managed StackSet that auto-deploys into accounts added later.
+      Requires CloudFormation trusted access in the organization.
+
+  OrganizationalUnitIds:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: >-
+      Organizational units to roll out to, most often just the organization
+      root (r-xxxx). Required when deploying to the whole organization.
+
+  UseDelegatedAdmin:
+    Type: String
+    Default: "No"
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Description: >-
+      Choose Yes when this account is a delegated administrator for
+      CloudFormation rather than the organization's management account.
+
+# The empty OrganizationalUnitIds default is required so a single-account
+# install does not invent an OU. A service-managed StackSet rejects that
+# empty list, so this rule requires at least one ID when rolling out to
+# the organization. Rules cannot reference Conditions, hence the inlined
+# Equals rather than ShouldDeployToOrganization.
+Rules:
+  OrganizationalUnitIdsRequired:
+    RuleCondition: !Equals [!Ref DeployToOrganization, "Yes"]
+    Assertions:
+      - Assert:
+          Fn::Not:
+            - Fn::EachMemberEquals:
+                - !Ref OrganizationalUnitIds
+                - ""
+        AssertDescription: >-
+          Specify at least one organization root (r-xxxx) or OU ID when
+          deploying to the whole organization.
+
+Conditions:
+  ShouldCreateOIDCProvider: !Equals [!Ref CreateOIDCProvider, "Yes"]
+  ShouldDeployToOrganization: !Equals [!Ref DeployToOrganization, "Yes"]
+  ShouldCallAsDelegatedAdmin: !Equals [!Ref UseDelegatedAdmin, "Yes"]
+
+Resources:
+  ProboOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: ShouldCreateOIDCProvider
+    Properties:
+      Url: !Ref ProboIssuerURL
+      # Probo always mints this audience; the connector cannot be told another.
+      ClientIdList:
+        - "sts.amazonaws.com"
+      # ThumbprintList is documented as optional, but CloudFormation validation
+      # rejects a null list. AWS validates publicly trusted certificates
+      # against its own CA library and ignores whatever is supplied here, so
+      # this is a placeholder rather than a real thumbprint.
+      ThumbprintList:
+        - "ffffffffffffffffffffffffffffffffffffffff"
+
+  ProboAuditRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: !Sub "Read-only audit access for Probo (${ProboIssuerURL})"
+      # One hour, matching the token lifetime Probo requests. Raising it widens
+      # the window a leaked session credential stays usable.
+      MaxSessionDuration: 3600
+      # The trust policy is a JSON string, not a YAML mapping, because the two
+      # condition keys embed the issuer and CloudFormation cannot use an
+      # intrinsic function as a mapping key. Supplying the document as a string
+      # is the only way to template a condition key.
+      #
+      # The provider is named by CONSTRUCTED ARN rather than !Ref, so the policy
+      # is identical whether or not this stack created the provider.
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+          - |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Federated": "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/${IssuerHostPath}"
+                  },
+                  "Action": "sts:AssumeRoleWithWebIdentity",
+                  "Condition": {
+                    "StringEquals": {
+                      "${IssuerHostPath}:aud": "sts.amazonaws.com",
+                      "${IssuerHostPath}:sub": "${ProboSubject}"
+                    }
+                  }
+                }
+              ]
+            }
+          # The condition-key prefix and the provider ARN both use the issuer
+          # with the scheme stripped. Deriving it here instead of taking a
+          # second parameter is what stops the two from disagreeing.
+          - IssuerHostPath: !Select [1, !Split ["https://", !Ref ProboIssuerURL]]
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/SecurityAudit"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
+      Policies:
+        # Keep in sync with the member-account template embedded in
+        # ProboAuditStackSet below. CloudFormation has no way to share a
+        # fragment between a stack and its StackSet's template body.
+        - PolicyName: ProboAuditIdentityRead
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # SecurityAudit and ViewOnlyAccess between them miss IAM Identity
+              # Center, which is where the human access in an organization
+              # actually lives. Every action listed is a read.
+              - Effect: Allow
+                Action:
+                  - "identitystore:Describe*"
+                  - "identitystore:Get*"
+                  - "identitystore:List*"
+                  - "sso:Describe*"
+                  - "sso:Get*"
+                  - "sso:List*"
+                  - "sso-directory:Describe*"
+                  - "sso-directory:List*"
+                  - "sso-directory:Search*"
+                Resource: "*"
+              # Credential state is only readable through a generated report.
+              # The Generate* calls write nothing outside IAM's own report
+              # store and are the documented way to read it.
+              - Effect: Allow
+                Action:
+                  - "iam:GenerateCredentialReport"
+                  - "iam:GenerateServiceLastAccessedDetails"
+                  - "iam:GetCredentialReport"
+                  - "iam:GetServiceLastAccessedDetails"
+                Resource: "*"
+        # Only this account gets Organizations reads: it is the account Probo
+        # enumerates the organization from. Member accounts cannot call these
+        # at all, so granting them there would be noise.
+        - PolicyName: ProboAuditOrganizationsRead
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "organizations:DescribeAccount"
+                  - "organizations:DescribeOrganization"
+                  - "organizations:ListAccounts"
+                  - "organizations:ListAccountsForParent"
+                  - "organizations:ListOrganizationalUnitsForParent"
+                  - "organizations:ListRoots"
+                  - "organizations:ListTagsForResource"
+                Resource: "*"
+
+  # AWS publishes no quick-create link for StackSets, so organization-wide
+  # rollout is embedded in this ordinary stack rather than being a second step
+  # the customer has to find. A service-managed StackSet cannot target the
+  # account it is created from, which is why the role above is created directly.
+  ProboAuditStackSet:
+    Type: AWS::CloudFormation::StackSet
+    Condition: ShouldDeployToOrganization
+    Properties:
+      StackSetName: !Ref AWS::StackName
+      Description: "Read-only audit access for Probo in every member account"
+      PermissionModel: SERVICE_MANAGED
+      CallAs: !If [ShouldCallAsDelegatedAdmin, "DELEGATED_ADMIN", "SELF"]
+      Capabilities:
+        - CAPABILITY_NAMED_IAM
+      # Accounts joining the organization later are onboarded without anyone
+      # revisiting this stack, which is the point of covering the organization
+      # rather than a list of accounts.
+      AutoDeployment:
+        Enabled: true
+        RetainStacksOnAccountRemoval: false
+      ManagedExecution:
+        Active: true
+      OperationPreferences:
+        RegionConcurrencyType: PARALLEL
+        MaxConcurrentPercentage: 25
+        # A single account that already carries a provider for this issuer
+        # must not block every other account. Probo reports the accounts it
+        # could not reach, so partial coverage is visible rather than silent.
+        FailureTolerancePercentage: 10
+      StackInstancesGroup:
+        - DeploymentTargets:
+            OrganizationalUnitIds: !Ref OrganizationalUnitIds
+          # IAM is global. One region creates one role per account; listing
+          # more would attempt the same named role again and fail.
+          Regions:
+            - !Ref AWS::Region
+      # Inside this Fn::Sub, ${!Foo} renders as the literal ${Foo} for the
+      # member-account template to resolve per account, while ${Foo} is
+      # substituted here and once. Every AWS pseudo-parameter below is escaped
+      # for that reason; the Probo values deliberately are not.
+      TemplateBody:
+        Fn::Sub:
+          - |
+            AWSTemplateFormatVersion: "2010-09-09"
+
+            Description: >-
+              Read-only audit access for Probo in a member account. Managed by
+              the ${AWS::StackName} stack in the management account; edit that
+              stack rather than this one.
+
+            Resources:
+              ProboOIDCProvider:
+                Type: AWS::IAM::OIDCProvider
+                Properties:
+                  Url: "${ProboIssuerURL}"
+                  ClientIdList:
+                    - "sts.amazonaws.com"
+                  ThumbprintList:
+                    - "ffffffffffffffffffffffffffffffffffffffff"
+
+              ProboAuditRole:
+                Type: AWS::IAM::Role
+                Properties:
+                  RoleName: "${RoleName}"
+                  Description: "Read-only audit access for Probo"
+                  MaxSessionDuration: 3600
+                  AssumeRolePolicyDocument:
+                    Fn::Sub: |
+                      {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                          {
+                            "Effect": "Allow",
+                            "Principal": {
+                              "Federated": "arn:${!AWS::Partition}:iam::${!AWS::AccountId}:oidc-provider/${IssuerHostPath}"
+                            },
+                            "Action": "sts:AssumeRoleWithWebIdentity",
+                            "Condition": {
+                              "StringEquals": {
+                                "${IssuerHostPath}:aud": "sts.amazonaws.com",
+                                "${IssuerHostPath}:sub": "${ProboSubject}"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                  ManagedPolicyArns:
+                    - Fn::Sub: "arn:${!AWS::Partition}:iam::aws:policy/SecurityAudit"
+                    - Fn::Sub: "arn:${!AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
+                  Policies:
+                    - PolicyName: ProboAuditIdentityRead
+                      PolicyDocument:
+                        Version: "2012-10-17"
+                        Statement:
+                          - Effect: Allow
+                            Action:
+                              - "identitystore:Describe*"
+                              - "identitystore:Get*"
+                              - "identitystore:List*"
+                              - "sso:Describe*"
+                              - "sso:Get*"
+                              - "sso:List*"
+                              - "sso-directory:Describe*"
+                              - "sso-directory:List*"
+                              - "sso-directory:Search*"
+                            Resource: "*"
+                          - Effect: Allow
+                            Action:
+                              - "iam:GenerateCredentialReport"
+                              - "iam:GenerateServiceLastAccessedDetails"
+                              - "iam:GetCredentialReport"
+                              - "iam:GetServiceLastAccessedDetails"
+                            Resource: "*"
+
+            Outputs:
+              RoleARN:
+                Description: "ARN of the role Probo assumes in this account"
+                Value:
+                  Fn::GetAtt: [ProboAuditRole, Arn]
+          - IssuerHostPath: !Select [1, !Split ["https://", !Ref ProboIssuerURL]]
+
+Outputs:
+  RoleARN:
+    Description: "ARN of the role Probo assumes. Paste this value into Probo."
+    Value: !GetAtt ProboAuditRole.Arn
+
+  RoleName:
+    Description: "Name of the role, the same in every account"
+    Value: !Ref ProboAuditRole
+
+  ManagementAccountID:
+    Description: "The account Probo enumerates the organization from"
+    Value: !Ref AWS::AccountId
+
+  OIDCProviderARN:
+    Description: >-
+      ARN of the OIDC provider the role trusts, whether or not this stack
+      created it
+    Value: !Sub
+      - "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/${IssuerHostPath}"
+      - IssuerHostPath: !Select [1, !Split ["https://", !Ref ProboIssuerURL]]
+
+  IssuerHostPath:
+    Description: >-
+      The issuer with the scheme stripped, which is the prefix of the trust
+      policy condition keys. Useful when diagnosing an AccessDenied.
+    Value: !Select [1, !Split ["https://", !Ref ProboIssuerURL]]

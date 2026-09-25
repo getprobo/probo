@@ -223,7 +223,7 @@ export function BusinessFunctionsPage({ queryRef }: BusinessFunctionsPageProps) 
           {organization.node.businessFunctionsDocument?.id && (
             <Button variant="secondary" asChild>
               <Link
-                to={`/organizations/${organizationId}/documents/${organization.node.businessFunctionsDocument.id}`}
+                to={`/organizations/${organizationId}/governance/documents/${organization.node.businessFunctionsDocument.id}`}
               >
                 <IconPageTextLine size={16} />
                 {t("businessFunctionsPage.actions.document")}
@@ -235,7 +235,7 @@ export function BusinessFunctionsPage({ queryRef }: BusinessFunctionsPageProps) 
               organizationKey={organization.node}
               onPublished={(documentId) => {
                 void navigate(
-                  `/organizations/${organizationId}/documents/${documentId}`,
+                  `/organizations/${organizationId}/governance/documents/${documentId}`,
                 );
               }}
             >

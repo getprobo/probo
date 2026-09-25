@@ -32,6 +32,7 @@ import { useTranslation } from "react-i18next";
 
 type Props<TFieldValues extends FieldValues = FieldValues> = {
   disabled: boolean;
+  readOnly?: boolean;
   control: Control<TFieldValues>;
   register: UseFormRegister<TFieldValues>;
 };
@@ -43,6 +44,7 @@ export function EmailsField<TFieldValues extends FieldValues = FieldValues>({
   control,
   register,
   disabled,
+  readOnly = false,
 }: Props<TFieldValues>) {
   const { t } = useTranslation();
   const { fields, append, remove } = useFieldArray({
@@ -62,12 +64,13 @@ export function EmailsField<TFieldValues extends FieldValues = FieldValues>({
             )}
             type="email"
             disabled={disabled}
+            readOnly={readOnly}
           />
           <Button
             icon={IconTrashCan}
             variant="tertiary"
             onClick={() => remove(index)}
-            disabled={disabled}
+            disabled={disabled || readOnly}
           />
         </div>
       ))}
@@ -76,7 +79,7 @@ export function EmailsField<TFieldValues extends FieldValues = FieldValues>({
         type="button"
         icon={IconPlusLarge}
         onClick={() => append("" as FieldValue<TFieldValues>)}
-        disabled={disabled}
+        disabled={disabled || readOnly}
       >
         {t("emailsField.actions.add")}
       </Button>

@@ -23,11 +23,13 @@ package commonthirdparty
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.gearno.de/kit/pg"
 	clicmdutil "go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
@@ -39,6 +41,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagKeyword  string
 		flagState    string
 		flagStatus   string
+		flagReview   string
+		flagPatterns bool
 		flagSort     string
 		flagOrder    string
 	)
@@ -56,6 +60,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by name/slug substring")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by last enrichment status (done, partial, failed)")
+	cmd.Flags().StringVar(&flagReview, "review", "", "Filter by review state (unreviewed, validated, rejected)")
+	cmd.Flags().BoolVar(&flagPatterns, "with-patterns", false, "Show each entry's tracker pattern keys, so a review can be judged from the listing instead of one lookup per row")
 	cmd.Flags().StringVar(&flagSort, "sort", "name", "Sort field: name, created, updated")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
 
@@ -89,6 +95,15 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 
 		if flagKeyword != "" {
 			filter.WithKeyword(&flagKeyword)
+		}
+
+		if flagReview != "" {
+			review, err := parseReview(flagReview)
+			if err != nil {
+				return err
+			}
+
+			filter.WithReview(&review)
 		}
 
 		if flagState != "" {
@@ -155,7 +170,49 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			return nil
 		}
 
-		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY", "STATE", "STATUS", "LAST ATTEMPT", "UPDATED")
+		// The pattern keys are what a review is judged on, so with
+		// --with-patterns they replace the enrichment columns rather than
+		// widening an already wide table. One grouped query serves the whole
+		// page: per-row lookups are what make reading the evidence slower
+		// than guessing from the name.
+		if flagPatterns {
+			var byParty map[gid.GID][]coredata.PatternSummary
+
+			if err := pgClient.WithConn(
+				cmd.Context(),
+				func(ctx context.Context, conn pg.Querier) error {
+					var patterns coredata.CommonTrackerPatterns
+
+					var err error
+
+					byParty, err = patterns.LoadSummariesGroupedByCommonThirdPartyID(ctx, conn)
+
+					return err
+				},
+			); err != nil {
+				return fmt.Errorf("cannot load pattern summaries: %w", err)
+			}
+
+			table := clicmdutil.NewTable("NAME", "SLUG", "CATEGORY", "REVIEW", "PATTERNS")
+
+			for _, p := range parties {
+				table.Row(
+					p.Name,
+					p.Slug,
+					string(p.Category),
+					reviewSummary(p),
+					summarisePatterns(byParty[p.ID]),
+				)
+			}
+
+			_, _ = fmt.Fprintln(f.IOStreams.Out, table.Render())
+			cmdutil.PrintPageInfo(f.IOStreams.Out, pageInfo)
+			_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Showing %d common third parties.\n", len(parties))
+
+			return nil
+		}
+
+		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY", "REVIEW", "STATE", "STATUS", "LAST ATTEMPT", "UPDATED")
 
 		for _, p := range parties {
 			lastAttempt := ""
@@ -168,6 +225,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 				p.Name,
 				p.Slug,
 				string(p.Category),
+				reviewSummary(p),
 				enrichmentState(p),
 				enrichmentStatus(p),
 				lastAttempt,
@@ -191,4 +249,48 @@ func optionalString(s string) *string {
 	}
 
 	return &s
+}
+
+// summarisePatterns renders the few keys that decide a verdict. Highest
+// confidence first (the loader orders them), capped because a handful is
+// enough to classify a row and a shared-library namespace runs to dozens.
+func summarisePatterns(summaries []coredata.PatternSummary) string {
+	const shown = 4
+
+	if len(summaries) == 0 {
+		return "(none)"
+	}
+
+	parts := make([]string, 0, shown+1)
+
+	for i, s := range summaries {
+		if i == shown {
+			parts = append(parts, fmt.Sprintf("+%d more", len(summaries)-shown))
+			break
+		}
+
+		parts = append(parts, fmt.Sprintf("%s [%s]", s.Pattern, storageAbbrev(s.TrackerType)))
+	}
+
+	return strings.Join(parts, ", ")
+}
+
+// storageAbbrev keeps the storage kind visible without the column dominating
+// the row: where a key lives distinguishes a cookie sent to a vendor from
+// local state that never leaves the browser.
+func storageAbbrev(trackerType coredata.TrackerType) string {
+	switch trackerType {
+	case coredata.TrackerTypeCookie:
+		return "ck"
+	case coredata.TrackerTypeLocalStorage:
+		return "ls"
+	case coredata.TrackerTypeSessionStorage:
+		return "ss"
+	case coredata.TrackerTypeIndexedDB:
+		return "idb"
+	case coredata.TrackerTypeCacheStorage:
+		return "cs"
+	}
+
+	return strings.ToLower(string(trackerType))
 }

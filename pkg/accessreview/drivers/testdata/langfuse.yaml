@@ -1,8 +1,4 @@
 ---
-# Hand-authored fixture for GET /api/public/organizations/memberships against a
-# Langfuse organization (org-scoped API key). The membership object shape
-# (userId, role, email, name) and the {memberships:[...]} wrapper mirror the
-# documented response. Synthetic IDs/emails only.
 version: 2
 interactions:
     - id: 0
@@ -21,12 +17,31 @@ interactions:
         proto: HTTP/2.0
         proto_major: 2
         proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '{"memberships":[{"userId":"lf-user-1","role":"OWNER","email":"owner@example.com","name":"Olivia Owner"},{"userId":"lf-user-2","role":"ADMIN","email":"admin@example.com","name":"Adam Admin"},{"userId":"lf-user-3","role":"MEMBER","email":"member@example.com","name":"Mia Member"},{"userId":"lf-user-4","role":"VIEWER","email":"viewer@example.com","name":""}]}'
+        content_length: 103
+        body: '{"memberships":[{"email":"member1@example.com","name":"Member 1","role":"OWNER","userId":"lf-user-1"}]}'
         headers:
+            Content-Length:
+                - "103"
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 27 Aug 2026 16:12:22 GMT
+            Document-Policy:
+                - js-profiling
+            Etag:
+                - '"77ayt4l0sh3g"'
+            Permissions-Policy:
+                - autoplay=*, fullscreen=*, microphone=*
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Vary:
+                - Origin, Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Robots-Tag:
+                - noindex
         status: 200 OK
         code: 200
-        duration: 100ms
+        duration: 104.309167ms

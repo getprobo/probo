@@ -21,9 +21,9 @@
 import {
   measureStates,
 } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import {
   ActionDropdown,
-  Breadcrumb,
   Button,
   DropdownItem,
   IconCheckmark1,
@@ -83,7 +83,6 @@ export const measureNodeQuery = graphql`
         name
         description
         state
-        category
         canUpdate: permission(action: "core:measure:update")
         canDelete: permission(action: "core:measure:delete")
         canListTasks: permission(action: "core:task:list")
@@ -144,6 +143,7 @@ export default function MeasureDetailPage(props: Props) {
   const data = usePreloadedQuery<MeasureDetailPageNodeQuery>(measureNodeQuery, props.queryRef);
   const measure = data.node;
   const { t } = useTranslation();
+  usePageTitle(measure.name ?? "");
   const [deleteMeasure] = useDeleteMeasureMutation();
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -174,7 +174,7 @@ export default function MeasureDetailPage(props: Props) {
               connections: [connectionId],
             },
             onSuccess() {
-              void navigate(`/organizations/${organizationId}/measures`);
+              void navigate(`/organizations/${organizationId}/governance/measures`);
               resolve();
             },
           });
@@ -198,27 +198,6 @@ export default function MeasureDetailPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Breadcrumb
-        items={[
-          {
-            label: t("measureDetailPage.breadcrumb.measures"),
-            to: `/organizations/${organizationId}/measures`,
-          },
-          ...(measure.category
-            ? [
-                {
-                  label: measure.category,
-                  to: `/organizations/${organizationId}/measures?category=${encodeURIComponent(measure.category)}`,
-                },
-              ]
-            : []),
-          {
-            label: t("measureDetailPage.breadcrumb.detail"),
-          },
-        ]}
-      />
-
       <PageHeader title={measure.name} description={measure.description}>
         {!measure.canUpdate && <MeasureBadge state={measure.state!} />}
         {measure.canUpdate && (
@@ -259,7 +238,7 @@ export default function MeasureDetailPage(props: Props) {
 
       <Tabs>
         <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/evidences`}
+          to={`/organizations/${organizationId}/governance/measures/${measureId}/evidences`}
         >
           <IconPageCheck size={20} />
           {t("measureDetailPage.tabs.evidences")}
@@ -267,7 +246,7 @@ export default function MeasureDetailPage(props: Props) {
         </TabLink>
         {measure.canListTasks && (
           <TabLink
-            to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
+            to={`/organizations/${organizationId}/governance/measures/${measureId}/tasks`}
           >
             <IconCheckmark1 size={20} />
             {t("measureDetailPage.tabs.tasks")}
@@ -277,28 +256,28 @@ export default function MeasureDetailPage(props: Props) {
           </TabLink>
         )}
         <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/controls`}
+          to={`/organizations/${organizationId}/governance/measures/${measureId}/controls`}
         >
           <IconFrame2 size={20} />
           {t("measureDetailPage.tabs.controls")}
           <TabBadge>{controlsCount}</TabBadge>
         </TabLink>
         <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/risks`}
+          to={`/organizations/${organizationId}/governance/measures/${measureId}/risks`}
         >
           <IconWarning size={20} />
           {t("measureDetailPage.tabs.risks")}
           <TabBadge>{risksCount}</TabBadge>
         </TabLink>
         <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/documents`}
+          to={`/organizations/${organizationId}/governance/measures/${measureId}/documents`}
         >
           <IconPageTextLine size={20} />
           {t("measureDetailPage.tabs.documents")}
           <TabBadge>{documentsCount}</TabBadge>
         </TabLink>
         <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/third-parties`}
+          to={`/organizations/${organizationId}/governance/measures/${measureId}/third-parties`}
         >
           <IconStore size={20} />
           {t("measureDetailPage.tabs.thirdParties")}

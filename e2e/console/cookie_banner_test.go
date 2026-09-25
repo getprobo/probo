@@ -52,6 +52,7 @@ func TestCookieBanner_Create(t *testing.T) {
 								resourceReporting
 							}
 							defaultLanguage
+							tcfCmpId
 							createdAt
 							updatedAt
 						}
@@ -78,6 +79,7 @@ func TestCookieBanner_Create(t *testing.T) {
 							ResourceReporting bool `json:"resourceReporting"`
 						} `json:"capabilities"`
 						DefaultLanguage string `json:"defaultLanguage"`
+						TcfCmpId        int    `json:"tcfCmpId"`
 						CreatedAt       string `json:"createdAt"`
 						UpdatedAt       string `json:"updatedAt"`
 					} `json:"node"`
@@ -105,6 +107,8 @@ func TestCookieBanner_Create(t *testing.T) {
 		assert.Equal(t, 365, node.ConsentExpiryDays)
 		assert.True(t, node.Capabilities.ResourceReporting)
 		assert.Equal(t, "en", node.DefaultLanguage)
+		assert.GreaterOrEqual(t, node.TcfCmpId, 2)
+		assert.LessOrEqual(t, node.TcfCmpId, 4095)
 		assert.NotEmpty(t, node.CreatedAt)
 		assert.NotEmpty(t, node.UpdatedAt)
 	})
@@ -314,6 +318,7 @@ func TestCookieBanner_Update(t *testing.T) {
 					cookieBanner {
 						consentExpiryDays
 						defaultLanguage
+						publisherCountryCode
 					}
 				}
 			}
@@ -322,23 +327,26 @@ func TestCookieBanner_Update(t *testing.T) {
 		var result struct {
 			UpdateCookieBanner struct {
 				CookieBanner struct {
-					ConsentExpiryDays int    `json:"consentExpiryDays"`
-					DefaultLanguage   string `json:"defaultLanguage"`
+					ConsentExpiryDays    int    `json:"consentExpiryDays"`
+					DefaultLanguage      string `json:"defaultLanguage"`
+					PublisherCountryCode string `json:"publisherCountryCode"`
 				} `json:"cookieBanner"`
 			} `json:"updateCookieBanner"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"cookieBannerId":    bannerID,
-				"consentExpiryDays": 90,
-				"defaultLanguage":   "fr",
+				"cookieBannerId":       bannerID,
+				"consentExpiryDays":    90,
+				"defaultLanguage":      "fr",
+				"publisherCountryCode": "FR",
 			},
 		}, &result)
 
 		require.NoError(t, err)
 		assert.Equal(t, 90, result.UpdateCookieBanner.CookieBanner.ConsentExpiryDays)
 		assert.Equal(t, "fr", result.UpdateCookieBanner.CookieBanner.DefaultLanguage)
+		assert.Equal(t, "FR", result.UpdateCookieBanner.CookieBanner.PublisherCountryCode)
 	})
 
 	t.Run("disable resource reporting", func(t *testing.T) {

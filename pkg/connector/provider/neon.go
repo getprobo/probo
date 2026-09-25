@@ -32,7 +32,12 @@ import (
 
 func neonRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderNeon,
+		Provider: coredata.ConnectorProviderNeon,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.NeonConnectorSettings) string {
+				return s.OrganizationID
+			},
+		),
 		DisplayName:      "Neon",
 		DocumentationURL: accessReviewDocsURL("neon"),
 		// Neon's API authenticates with an API key (napi_...) presented
@@ -42,15 +47,16 @@ func neonRegistration() *Registration {
 		// can belong to several organizations; the operator supplies the
 		// org ID (org-...) of the one to review.
 		//
-		SupportsAPIKey: true,
-		BuildProbeURL:  buildNeonProbeURL,
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
+		},
+		BuildProbeURL: buildNeonProbeURL,
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /api/v2
 			// prefix, so the version segment stays in APIBase.
 			APIBase: "https://console.neon.tech/api/v2",
-		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)

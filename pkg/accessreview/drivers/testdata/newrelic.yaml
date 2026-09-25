@@ -1,0 +1,47 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 430
+        host: api.eu.newrelic.com
+        body: '{"query":"query($domainCursor: String) {\n  actor { organization { userManagement { authenticationDomains(cursor: $domainCursor) {\n    nextCursor\n    authenticationDomains {\n      id\n      name\n      users { nextCursor users { id name email lastActive type { id displayName } } }\n      groups { nextCursor groups { id displayName users { nextCursor users { id } } } }\n    }\n  } } } }\n}","variables":{"domainCursor":null}}'
+        headers:
+            Accept:
+                - application/json
+            Content-Type:
+                - application/json
+        url: https://api.eu.newrelic.com/graphql
+        method: POST
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 568
+        uncompressed: true
+        body: '{"data":{"actor":{"organization":{"userManagement":{"authenticationDomains":{"authenticationDomains":[{"groups":{"groups":[{"displayName":"Admin","id":"group-0001","users":{"nextCursor":null,"users":[{"id":"1000000001"}]}},{"displayName":"User","id":"group-0002","users":{"nextCursor":null,"users":[]}}],"nextCursor":null},"id":"domain-0001","name":"Default","users":{"nextCursor":null,"users":[{"email":"1000000001@example.com","id":"1000000001","lastActive":null,"name":"Member 1000000001","type":{"displayName":"Full platform","id":"0"}}]}}],"nextCursor":null}}}}}}'
+        headers:
+            Cache-Control:
+                - max-age=0, private, must-revalidate
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - a38d413728632a58-CDG
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 10 Sep 2026 09:02:38 GMT
+            Served-By:
+                - nerd-graph
+            Server:
+                - cloudflare
+            Vary:
+                - accept-encoding
+            X-Envoy-Upstream-Service-Time:
+                - "1009"
+        status: 200 OK
+        code: 200
+        duration: 1.730989s

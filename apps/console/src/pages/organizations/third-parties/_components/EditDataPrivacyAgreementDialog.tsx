@@ -47,8 +47,10 @@ const updateDataPrivacyAgreementMutation = graphql`
         file {
           downloadUrl
         }
-        validFrom
-        validUntil
+        validity {
+          start
+          end
+        }
         createdAt
       }
     }
@@ -111,8 +113,10 @@ export function EditDataPrivacyAgreementDialog({
       variables: {
         input: {
           thirdPartyId,
-          validFrom: formatDatetime(data.validFrom),
-          validUntil: formatDatetime(data.validUntil),
+          validity: {
+            start: formatDatetime(data.validFrom),
+            end: formatDatetime(data.validUntil),
+          },
         },
       },
       onCompleted(_response, errors) {

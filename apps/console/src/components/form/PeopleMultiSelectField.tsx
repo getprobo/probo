@@ -40,6 +40,7 @@ type Props<T extends FieldValues = FieldValues> = {
   error?: string;
   selectedPeople?: Person[];
   placeholder?: string;
+  onIdsChange?: (ids: string[]) => void;
 } & ComponentProps<typeof Field>;
 
 export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
@@ -47,6 +48,7 @@ export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
   control,
   selectedPeople = [],
   placeholder,
+  onIdsChange,
   ...props
 }: Props<T>) {
   return (
@@ -61,6 +63,7 @@ export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
           disabled={props.disabled}
           selectedPeople={selectedPeople}
           placeholder={placeholder}
+          onIdsChange={onIdsChange}
         />
       </Suspense>
     </Field>
@@ -76,6 +79,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
     | "disabled"
     | "selectedPeople"
     | "placeholder"
+    | "onIdsChange"
   >,
 ) {
   const { t } = useTranslation();
@@ -86,6 +90,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
     selectedPeople = [],
     placeholder,
     disabled,
+    onIdsChange,
   } = props;
   const people = usePeople(organizationId, { contractEnded: false });
 
@@ -106,6 +111,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
       emptyLabel={t("peopleMultiSelectField.empty")}
       getRemoveAriaLabel={person =>
         t("peopleMultiSelectField.remove", { name: person.fullName })}
+      onValueChange={onIdsChange}
       renderOption={person => (
         <div className="flex flex-col">
           <span>{person.fullName}</span>

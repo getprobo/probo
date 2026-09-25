@@ -25,6 +25,15 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// TcfCmpID is the resolver for the tcfCmpId field.
+func (r *cookieBannerResolver) TcfCmpID(ctx context.Context, obj *types.CookieBanner) (int, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
+		return 0, err
+	}
+
+	return r.cookieBanner.TCFCmpID(), nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.CookieBanner) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -143,6 +152,33 @@ func (r *cookieBannerResolver) LatestVersion(ctx context.Context, obj *types.Coo
 	}, nil
 }
 
+// PublishedVersion is the resolver for the publishedVersion field.
+func (r *cookieBannerResolver) PublishedVersion(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerVersion, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionList)
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrVersionNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load published cookie banner version", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CookieBannerVersion{
+		ID:        v.ID,
+		Version:   v.Version,
+		State:     string(v.State),
+		CreatedAt: v.CreatedAt,
+		UpdatedAt: v.UpdatedAt,
+	}, nil
+}
+
 // PolicyDocument is the resolver for the policyDocument field.
 func (r *cookieBannerResolver) PolicyDocument(ctx context.Context, obj *types.CookieBanner) (*types.Document, error) {
 	if obj.PolicyDocument == nil {
@@ -239,14 +275,11 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 		coredataFilter = coredataFilter.WithQuery(filter.Query).WithSource(filter.Source).WithTrackerType(filter.TrackerType)
 
 		if filter.ThirdPartyID != nil {
-			switch filter.ThirdPartyID.EntityType() {
-			case coredata.ThirdPartyEntityType:
-				coredataFilter = coredataFilter.WithThirdPartyID(filter.ThirdPartyID)
-			case coredata.CommonThirdPartyEntityType:
-				coredataFilter = coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID)
-			default:
-				return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a ThirdParty or CommonThirdParty")
+			if filter.ThirdPartyID.EntityType() != coredata.CommonThirdPartyEntityType {
+				return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a CommonThirdParty")
 			}
+
+			coredataFilter = coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID)
 		}
 	}
 
@@ -263,24 +296,12 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 
 // LinkedThirdParties is the resolver for the linkedThirdParties field.
 //
-// Aggregates the deduped union of third parties linked to the banner's
-// tracker patterns: the org-scoped ThirdParty values reached through
-// the direct foreign key, plus the global CommonThirdParty values
-// reached indirectly through CommonTrackerPattern. The two sources are
-// independent, so a tracker pattern that has both ThirdPartyID and
-// CommonTrackerPatternID contributes the org-scoped link only — the
-// commonThirdParty resolver follows the same priority and we want the
-// banner-level filter to mirror it.
-func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *types.CookieBanner) ([]types.TrackerPatternThirdPartyLink, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+// Aggregates the deduped catalog third parties linked to the banner's
+// tracker patterns through CommonTrackerPattern.
+func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *types.CookieBanner) ([]*types.CommonThirdParty, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList)
 	if err != nil {
 		return nil, err
-	}
-
-	thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list banner third party links", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
 	}
 
 	commonPatternIDs, err := r.cookieBanner.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, scope, obj.ID)
@@ -289,75 +310,101 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	out := make([]types.TrackerPatternThirdPartyLink, 0, len(thirdPartyIDs)+len(commonPatternIDs))
-	loaders := dataloader.FromContext(ctx)
-
-	if len(thirdPartyIDs) > 0 {
-		tps, loadErr := loaders.ThirdParty.LoadAll(ctx, thirdPartyIDs)
-
-		var loadErrs dataloadgen.ErrorSlice
-		if loadErr != nil && !errors.As(loadErr, &loadErrs) {
-			r.logger.ErrorCtx(ctx, "cannot get third parties", log.Error(loadErr))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		for i, tp := range tps {
-			if loadErrs != nil && loadErrs[i] != nil {
-				if errors.Is(loadErrs[i], coredata.ErrResourceNotFound) || errors.Is(loadErrs[i], dataloadgen.ErrNotFound) {
-					continue
-				}
-
-				r.logger.ErrorCtx(ctx, "cannot get third party", log.Error(loadErrs[i]))
-
-				return nil, gqlutils.Internal(ctx)
-			}
-
-			out = append(out, types.NewThirdParty(tp))
-		}
+	if len(commonPatternIDs) == 0 {
+		return []*types.CommonThirdParty{}, nil
 	}
 
-	if len(commonPatternIDs) > 0 {
-		identity := authn.IdentityFromContext(ctx)
-		if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
-			return nil, err
+	identity := authn.IdentityFromContext(ctx)
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+		return nil, err
+	}
+
+	patterns, err := r.cookieBanner.GetCommonTrackerPatternsByIDs(ctx, commonPatternIDs...)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get common tracker patterns", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	seen := make(map[gid.GID]struct{}, len(patterns))
+
+	commonThirdPartyIDs := make([]gid.GID, 0, len(patterns))
+	for _, p := range patterns {
+		if p.CommonThirdPartyID == nil {
+			continue
 		}
 
-		patterns, err := r.cookieBanner.GetCommonTrackerPatternsByIDs(ctx, commonPatternIDs...)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot get common tracker patterns", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+		if _, ok := seen[*p.CommonThirdPartyID]; ok {
+			continue
 		}
 
-		seen := make(map[gid.GID]struct{}, len(patterns))
+		seen[*p.CommonThirdPartyID] = struct{}{}
+		commonThirdPartyIDs = append(commonThirdPartyIDs, *p.CommonThirdPartyID)
+	}
 
-		commonThirdPartyIDs := make([]gid.GID, 0, len(patterns))
-		for _, p := range patterns {
-			if p.CommonThirdPartyID == nil {
-				continue
-			}
+	if len(commonThirdPartyIDs) == 0 {
+		return []*types.CommonThirdParty{}, nil
+	}
 
-			if _, ok := seen[*p.CommonThirdPartyID]; ok {
-				continue
-			}
+	parties, err := r.thirdParty.GetCommonThirdPartiesByIDs(ctx, commonThirdPartyIDs...)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get common third parties", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
 
-			seen[*p.CommonThirdPartyID] = struct{}{}
-			commonThirdPartyIDs = append(commonThirdPartyIDs, *p.CommonThirdPartyID)
-		}
-
-		if len(commonThirdPartyIDs) > 0 {
-			parties, err := r.thirdParty.GetCommonThirdPartiesByIDs(ctx, commonThirdPartyIDs...)
-			if err != nil {
-				r.logger.ErrorCtx(ctx, "cannot get common third parties", log.Error(err))
-				return nil, gqlutils.Internal(ctx)
-			}
-
-			for _, p := range parties {
-				out = append(out, types.NewCommonThirdParty(p))
-			}
-		}
+	out := make([]*types.CommonThirdParty, 0, len(parties))
+	for _, p := range parties {
+		out = append(out, types.NewCommonThirdParty(p))
 	}
 
 	return out, nil
+}
+
+// GvlVendors is the resolver for the gvlVendors field.
+func (r *cookieBannerResolver) GvlVendors(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CommonGVLVendorOrderBy) (*types.CommonGVLVendorConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CommonGVLVendorOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	vendors, err := r.cookieBanner.ListCookieBannerGVLVendors(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner gvl vendors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(vendors, cursor)
+	parentID := obj.ID
+
+	return types.NewCommonGVLVendorConnection(p, r, &parentID, nil), nil
+}
+
+// GvlVendorIds is the resolver for the gvlVendorIds field.
+func (r *cookieBannerResolver) GvlVendorIds(ctx context.Context, obj *types.CookieBanner) ([]int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := r.cookieBanner.ListCookieBannerGVLVendorIDs(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner gvl vendor ids", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return ids, nil
 }
 
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
@@ -458,6 +505,54 @@ func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types
 	}
 
 	return categories, nil
+}
+
+// GvlVendorCount is the resolver for the gvlVendorCount field.
+func (r *cookieBannerVersionResolver) GvlVendorCount(ctx context.Context, obj *types.CookieBannerVersion) (int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionGet)
+	if err != nil {
+		return 0, err
+	}
+
+	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	snapshot, err := version.GetSnapshot()
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return len(snapshot.IABVendorIDs), nil
+}
+
+// GvlVendorIds is the resolver for the gvlVendorIds field.
+func (r *cookieBannerVersionResolver) GvlVendorIds(ctx context.Context, obj *types.CookieBannerVersion) ([]int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionGet)
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	snapshot, err := version.GetSnapshot()
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if snapshot.IABVendorIDs == nil {
+		return []int{}, nil
+	}
+
+	return snapshot.IABVendorIDs, nil
 }
 
 // CookieBanner is the resolver for the cookieBanner field.
@@ -641,13 +736,14 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 		ctx,
 		scope,
 		cookiebanner.UpdateCookieBannerRequest{
-			CookieBannerID:    input.CookieBannerID,
-			Name:              input.Name,
-			PrivacyPolicyURL:  input.PrivacyPolicyURL,
-			CookiePolicyURL:   input.CookiePolicyURL,
-			ConsentExpiryDays: input.ConsentExpiryDays,
-			DefaultLanguage:   input.DefaultLanguage,
-			Capabilities:      capabilities,
+			CookieBannerID:       input.CookieBannerID,
+			Name:                 input.Name,
+			PrivacyPolicyURL:     input.PrivacyPolicyURL,
+			CookiePolicyURL:      input.CookiePolicyURL,
+			ConsentExpiryDays:    input.ConsentExpiryDays,
+			DefaultLanguage:      input.DefaultLanguage,
+			PublisherCountryCode: input.PublisherCountryCode,
+			Capabilities:         capabilities,
 		},
 	)
 	if err != nil {
@@ -872,6 +968,11 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 		gcmConsentTypes = &input.GcmConsentTypes
 	}
 
+	var tcfPurposeIDs *[]int
+	if input.TcfPurposeIds != nil {
+		tcfPurposeIDs = &input.TcfPurposeIds
+	}
+
 	category, err := r.cookieBanner.UpdateCookieCategory(
 		ctx,
 		scope,
@@ -881,6 +982,7 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 			Slug:             input.Slug,
 			Description:      input.Description,
 			GCMConsentTypes:  gcmConsentTypes,
+			TCFPurposeIDs:    tcfPurposeIDs,
 			PostHogConsent:   input.PosthogConsent,
 		},
 	)
@@ -1409,6 +1511,95 @@ func (r *mutationResolver) MoveTrackerResourceToCategory(ctx context.Context, in
 	}, nil
 }
 
+// AddCookieBannerGVLVendor is the resolver for the addCookieBannerGVLVendor field.
+func (r *mutationResolver) AddCookieBannerGVLVendor(ctx context.Context, input types.AddCookieBannerGVLVendorInput) (*types.AddCookieBannerGVLVendorPayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	vendor, err := r.cookieBanner.AddCookieBannerGVLVendor(
+		ctx,
+		scope,
+		cookiebanner.AddCookieBannerGVLVendorRequest{
+			CookieBannerID: input.CookieBannerID,
+			IABVendorID:    input.IabVendorID,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrGVLVendorNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrGVLVendorDeleted):
+			return nil, gqlutils.Invalidf(ctx, "gvl vendor has been deleted from the catalog")
+		case errors.Is(err, cookiebanner.ErrTCFNotEnabled):
+			return nil, gqlutils.Invalidf(ctx, "tcf is not enabled for this cookie banner")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot add cookie banner gvl vendor", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.AddCookieBannerGVLVendorPayload{
+		CommonGVLVendor: types.NewCommonGVLVendor(vendor),
+		CookieBanner:    types.NewCookieBanner(banner),
+	}, nil
+}
+
+// RemoveCookieBannerGVLVendor is the resolver for the removeCookieBannerGVLVendor field.
+func (r *mutationResolver) RemoveCookieBannerGVLVendor(ctx context.Context, input types.RemoveCookieBannerGVLVendorInput) (*types.RemoveCookieBannerGVLVendorPayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.cookieBanner.RemoveCookieBannerGVLVendor(
+		ctx,
+		scope,
+		cookiebanner.RemoveCookieBannerGVLVendorRequest{
+			CookieBannerID: input.CookieBannerID,
+			IABVendorID:    input.IabVendorID,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot remove cookie banner gvl vendor", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RemoveCookieBannerGVLVendorPayload{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
 // CookieCategory is the resolver for the cookieCategory field.
 func (r *trackerPatternResolver) CookieCategory(ctx context.Context, obj *types.TrackerPattern) (*types.CookieCategory, error) {
 	if _, err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
@@ -1447,39 +1638,9 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	return count, nil
 }
 
-// ThirdParty is the resolver for the thirdParty field.
-func (r *trackerPatternResolver) ThirdParty(ctx context.Context, obj *types.TrackerPattern) (*types.ThirdParty, error) {
-	if obj.ThirdPartyID == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, *obj.ThirdPartyID, probo.ActionThirdPartyGet); err != nil {
-		return nil, err
-	}
-
-	loaders := dataloader.FromContext(ctx)
-
-	tp, err := loaders.ThirdParty.Load(ctx, *obj.ThirdPartyID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get tracker pattern third party", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewThirdParty(tp), nil
-}
-
 // CommonThirdParty is the resolver for the commonThirdParty field.
-//
-// The org-scoped thirdParty takes priority: when ThirdPartyID is set we
-// short-circuit to nil so the chained common-tracker-pattern lookup is
-// never paid for.
 func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *types.TrackerPattern) (*types.CommonThirdParty, error) {
-	if obj.ThirdPartyID != nil || obj.CommonTrackerPatternID == nil {
+	if obj.CommonTrackerPatternID == nil {
 		return nil, nil
 	}
 
@@ -1517,6 +1678,41 @@ func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *type
 	}
 
 	return types.NewCommonThirdParty(party), nil
+}
+
+// Attribution is the resolver for the attribution field.
+//
+// The verdict lives on the linked common catalog row, not the org
+// pattern. A missing catalog link is a real null, not UNDETERMINED.
+func (r *trackerPatternResolver) Attribution(ctx context.Context, obj *types.TrackerPattern) (*coredata.CommonTrackerPatternAttribution, error) {
+	if obj.CommonTrackerPatternID == nil {
+		return nil, nil
+	}
+
+	// Same catalog row, same gate as the sibling commonThirdParty resolver:
+	// the verdict is global catalog data, so a role denied it there must not
+	// be able to read it here instead.
+	identity := authn.IdentityFromContext(ctx)
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	pattern, err := loaders.CommonTrackerPattern.Load(ctx, *obj.CommonTrackerPatternID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get common tracker pattern", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	attribution := pattern.Attribution
+
+	return &attribution, nil
 }
 
 // DetectedTrackers is the resolver for the detectedTrackers field.

@@ -65,7 +65,7 @@ type (
 		tracer            trace.Tracer
 		registerer        prometheus.Registerer
 		encryptionKey     cipher.EncryptionKey
-		connectorRegistry *connector.ConnectorRegistry
+		connectorRegistry *connector.Registry
 		cfg               BridgeRunnerConfig
 	}
 )
@@ -77,7 +77,7 @@ func NewBridgeRunner(
 	tp trace.TracerProvider,
 	registerer prometheus.Registerer,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	cfg BridgeRunnerConfig,
 ) *BridgeRunner {
 	if cfg.Interval == 0 {

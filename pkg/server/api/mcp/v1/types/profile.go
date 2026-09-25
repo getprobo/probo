@@ -41,8 +41,7 @@ func NewProfile(p *coredata.MembershipProfile) *Profile {
 		Source:                   p.Source,
 		State:                    p.State,
 		Position:                 p.Position,
-		ContractStartDate:        p.ContractStartDate,
-		ContractEndDate:          p.ContractEndDate,
+		Contract:                 NewPeriod(p.ContractStartDate, p.ContractEndDate),
 		CreatedAt:                p.CreatedAt,
 		UpdatedAt:                p.UpdatedAt,
 	}

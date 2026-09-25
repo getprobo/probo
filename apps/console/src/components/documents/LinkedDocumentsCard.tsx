@@ -214,7 +214,7 @@ function DocumentRow(props: {
   const { t } = useTranslation();
 
   return (
-    <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
+    <Tr to={`/organizations/${organizationId}/governance/documents/${document.id}`}>
       <Td>
         <div className="flex gap-4 items-center">
           <img

@@ -11,7 +11,7 @@ export LIMA_CIDATA_USER
 
 export DEBIAN_FRONTEND=noninteractive
 
-GO_VERSION="1.26.6"
+GO_VERSION="1.27.1"
 NODE_MAJOR=24
 NPM_VERSION="12.0.2"
 
@@ -104,6 +104,12 @@ if [ ! -f "${OAUTH2_SIGNING_KEY_PATH}" ]; then
   chmod 600 "${OAUTH2_SIGNING_KEY_PATH}"
 fi
 
+IDENTITY_FEDERATION_SIGNING_KEY_PATH=/etc/probod/identity-federation-signing-key.pem
+if [ ! -f "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}" ]; then
+  openssl genrsa -out "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}" 2048
+  chmod 600 "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}"
+fi
+
 # Load developer-specific overrides (not committed to repo).
 if [ -f /workspace/.sandbox.env ]; then
   set -a
@@ -119,7 +125,9 @@ PROBOD_BASE_URL="http://${VM_IP}:8080" \
   PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
   PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
   PROBOD_OAUTH2_SERVER_SIGNING_KEY="$(cat "${OAUTH2_SIGNING_KEY_PATH}")" \
-  PROBOD_API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
+  PROBOD_IDENTITY_FEDERATION_ENABLED=true \
+  PROBOD_IDENTITY_FEDERATION_SIGNING_KEY="$(cat "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}")" \
+  PROBOD_API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174,http://${VM_IP}:5175" \
   PROBOD_AWS_ENDPOINT="http://127.0.0.1:8333" \
   PROBOD_AWS_ACCESS_KEY_ID="probod" \
   PROBOD_AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
@@ -132,7 +140,7 @@ PROBOD_BASE_URL="http://${VM_IP}:8080" \
 
 # probod runs as ${LIMA_USER} but bootstrap writes config.yml as root with 0600
 # because it contains secrets. Transfer ownership so probod can read it.
-chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}"
+chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}" "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}"
 
 # Bind-mount VM-local node_modules over the shared workspace to avoid
 # platform conflicts between macOS host and Linux VM native binaries.
@@ -140,7 +148,7 @@ cat >/etc/systemd/system/probo-node-modules.service <<EOF
 [Unit]
 Description=Bind-mount VM-local node_modules over workspace
 DefaultDependencies=no
-Before=probo-console.service probo-compliance-portal.service
+Before=probo-console.service probo-compliance-portal.service probo-employee-portal.service
 
 [Service]
 Type=oneshot
@@ -168,6 +176,7 @@ make -C /workspace embed
 
 echo "VITE_API_URL=http://${VM_IP}:8080" >/workspace/apps/console/.env
 echo "VITE_API_URL=http://${VM_IP}:8080" >/workspace/apps/compliance-portal/.env
+echo "VITE_API_URL=http://${VM_IP}:8080" >/workspace/apps/employee-portal/.env
 
 # Install systemd services for the sandbox
 cat >/etc/systemd/system/probo-stack.service <<EOF
@@ -246,6 +255,24 @@ RestartSec=3s
 WantedBy=multi-user.target
 EOF
 
+cat >/etc/systemd/system/probo-employee-portal.service <<EOF
+[Unit]
+Description=Probo Employee Portal Dev Server
+Requires=probo-node-modules.service
+After=probo-node-modules.service probod.service
+
+[Service]
+Type=simple
+User=${LIMA_USER}
+WorkingDirectory=/workspace
+ExecStart=/usr/bin/npm --workspace @probo/employee-portal run dev -- --host 0.0.0.0
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 systemctl daemon-reload
 systemctl enable --now probo-stack.service
-systemctl enable --now probod.service probo-console.service probo-compliance-portal.service
+systemctl enable --now probod.service probo-console.service probo-compliance-portal.service probo-employee-portal.service

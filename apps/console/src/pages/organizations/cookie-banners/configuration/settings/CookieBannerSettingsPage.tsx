@@ -32,6 +32,7 @@ export const cookieBannerSettingsPageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...BannerSettingsForm_cookieBanner
+        ...CodeSnippets_cookieBanner
       }
     }
   }
@@ -53,7 +54,7 @@ export default function CookieBannerSettingsPage({
   return (
     <div className="space-y-8">
       <BannerSettingsForm cookieBannerKey={data.node} />
-      <CodeSnippets />
+      <CodeSnippets cookieBannerKey={data.node} />
     </div>
   );
 }

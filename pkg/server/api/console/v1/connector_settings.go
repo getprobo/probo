@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -42,8 +43,8 @@ import (
 
 // resolveAPIKeyConnectorCredential returns the API key to persist on a new
 // API-key connection. For ManagedAPIKey providers (Model B, e.g. Crisp) it
-// persists NOTHING (empty string): the Probo-held key is injected fresh at
-// use time by (*provider.Registry).ApplyManagedAPIKey, so it survives key
+// persists NOTHING (empty string): the Probo-held key is resolved at
+// use time by (*provider.Registry).APIKeyFor, so it survives key
 // rotation and is not duplicated across tenant rows. It still requires the
 // key to be configured, which is what keeps the provider deactivated, and
 // ignores any client-supplied value. For all other providers it requires
@@ -51,7 +52,7 @@ import (
 // client via gqlutils.Invalid, so it contains only provider/field names,
 // never the key itself.
 func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorProvider, clientKey *string) (string, error) {
-	if reg, ok := r.providerRegistry.Get(provider); ok && reg.ManagedAPIKey {
+	if reg, ok := r.providerRegistry.Get(provider); ok && reg.IsManagedAPIKey() {
 		if _, ok := r.providerRegistry.ManagedAPIKey(provider); !ok {
 			return "", fmt.Errorf("connector is not configured for this deployment")
 		}
@@ -59,106 +60,129 @@ func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorP
 		return "", nil
 	}
 
-	if clientKey == nil || *clientKey == "" {
+	if clientKey == nil || strings.TrimSpace(*clientKey) == "" {
 		return "", fmt.Errorf("apiKey is required")
 	}
 
-	return *clientKey, nil
+	// A key is copied out of a provider's UI, so it arrives with whatever the
+	// clipboard picked up. Several transports encode the credential verbatim,
+	// where a trailing newline is an authentication failure the customer has
+	// no way to see.
+	key := strings.TrimSpace(*clientKey)
+
+	if err := r.providerRegistry.ValidateAPIKey(provider, key); err != nil {
+		return "", err
+	}
+
+	return key, nil
 }
 
 // newAPIKeyConnection builds an API-key connection for provider, filling the auth
 // presentation (header, basic-auth mode, scheme) from the provider registry and
 // using key as the credential. Both CreateAPIKeyConnector (the persisted
-// connection) and verifyCrispOwnership (the ownership-check client) construct
-// their connection through it, so the verification client authenticates exactly
-// as the persisted connector will: a new auth flag cannot be added to one path
-// and silently missed on the other.
+// connection) and the pre-write validation clients (resolveTallySettings) build
+// their connection through it, so a key accepted at validation time
+// authenticates exactly as the persisted connector will: a new auth flag cannot
+// be added to one path and silently missed on the other.
 func (r *Resolver) newAPIKeyConnection(provider coredata.ConnectorProvider, key string) *connector.APIKeyConnection {
-	return &connector.APIKeyConnection{
-		APIKey:            key,
-		Header:            r.providerRegistry.APIKeyHeader(provider),
-		BasicAuth:         r.providerRegistry.APIKeyUsesBasicAuth(provider),
-		BasicAuthUserPass: r.providerRegistry.APIKeyUsesBasicAuthUserPass(provider),
-		Scheme:            r.providerRegistry.APIKeyAuthScheme(provider),
-	}
+	return r.providerRegistry.NewAPIKeyConnection(provider, key)
 }
 
-// crispSettingsFetcher reads a Crisp plugin's per-website subscription settings.
-// It matches drivers.GetCrispSubscriptionSettings: verifyCrispOwnership injects
-// the real fetch, and tests substitute a fake so the branch wiring (the security
-// polarity and the Invalid-versus-Internal error mapping) is exercised without a
-// live Crisp API.
-type crispSettingsFetcher func(ctx context.Context, httpClient *http.Client, websiteID, pluginID string) (*drivers.CrispSubscriptionSettings, error)
+// tallyUserFetcher fetches the Tally user profile bound to an API key. It
+// matches drivers.GetTallyCurrentUser: resolveTallySettings injects the real
+// fetch, and tests substitute a fake so the branch wiring (the auth-failure
+// mapping and the derived organization id) is exercised without a live
+// Tally API.
+type tallyUserFetcher func(ctx context.Context, httpClient *http.Client, baseURL string) (*drivers.TallyCurrentUser, error)
 
-// verifyCrispOwnership proves the connecting organization controls the Crisp
-// website before a connection is created (the #1b ownership check). It reads the
-// Probo plugin's per-website settings through the managed plugin token and
-// requires probo_verification_code to equal the code Probo showed for this exact
-// (organization, website) pair. Because the code is bound to both, one
-// organization cannot bind another organization's website, and only someone with
-// dashboard access to the website could have written the setting. It runs only
-// for Crisp/managed providers; nothing is persisted before it returns, so a
-// failed check creates no row. Returned Invalid errors are surfaced to the
-// client and contain only guidance, never the code or the token.
-func (r *Resolver) verifyCrispOwnership(ctx context.Context, input types.CreateAPIKeyConnectorInput) error {
-	return r.verifyCrispOwnershipWith(ctx, input, drivers.GetCrispSubscriptionSettings)
+// resolveTallySettings validates the presented API key against Tally and
+// derives the connector settings from it: GET /users/me both proves the key
+// is accepted and returns the organization it belongs to, so no
+// organization-id input is asked of the user (Tally 401s a wrong org id,
+// indistinguishable from a bad key). Runs before any write, so a rejected
+// key leaves no row. Returned Invalid errors carry only guidance, never the
+// key.
+func (r *Resolver) resolveTallySettings(ctx context.Context, apiKey string) (json.RawMessage, error) {
+	return r.resolveTallySettingsWith(ctx, apiKey, drivers.GetTallyCurrentUser)
 }
 
-// verifyCrispOwnershipWith is verifyCrispOwnership with the settings fetch
-// injected, so its branch wiring can be unit-tested without reaching the live
-// Crisp API. verifyCrispOwnership passes the real
-// drivers.GetCrispSubscriptionSettings.
-func (r *Resolver) verifyCrispOwnershipWith(ctx context.Context, input types.CreateAPIKeyConnectorInput, fetch crispSettingsFetcher) error {
-	if input.CrispWebsiteID == nil || strings.TrimSpace(*input.CrispWebsiteID) == "" {
-		return gqlutils.Invalidf(ctx, "crispWebsiteId is required")
-	}
-
-	websiteID := strings.TrimSpace(*input.CrispWebsiteID)
-
-	// The managed plugin token gates the connector's visibility, so it is set
-	// here; treat its absence as an internal error rather than client input.
-	managedKey, ok := r.providerRegistry.ManagedAPIKey(input.Provider)
+// resolveTallySettingsWith is resolveTallySettings with the profile fetch
+// injected, so its branch wiring can be unit-tested without reaching the
+// live Tally API. resolveTallySettings passes the real
+// drivers.GetTallyCurrentUser.
+func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, fetch tallyUserFetcher) (json.RawMessage, error) {
+	reg, ok := r.providerRegistry.Get(coredata.ConnectorProviderTally)
 	if !ok {
-		r.logger.ErrorCtx(ctx, "crisp managed api key not configured")
+		r.logger.ErrorCtx(ctx, "tally connector provider not registered")
 
-		return gqlutils.Internal(ctx)
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	// The plugin ID is a separate managed value the per-website plugin API
-	// needs; the bootstrap requires it alongside the token, so its absence is a
-	// deployment misconfiguration.
-	pluginID, ok := r.providerRegistry.ManagedResourceID(input.Provider)
-	if !ok {
-		r.logger.ErrorCtx(ctx, "crisp plugin id not configured")
-
-		return gqlutils.Internal(ctx)
-	}
-
-	conn := r.newAPIKeyConnection(input.Provider, managedKey)
+	// The validation client authenticates exactly as the persisted connector
+	// will, so a key accepted here keeps working for the workers.
+	conn := r.newAPIKeyConnection(coredata.ConnectorProviderTally, apiKey)
 
 	httpClient, err := conn.Client(ctx)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot build crisp verification client", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot build tally validation client", log.Error(err))
 
-		return gqlutils.Internal(ctx)
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	settings, err := fetch(ctx, httpClient, websiteID, pluginID)
+	user, err := fetch(ctx, httpClient, reg.Endpoints.APIBase)
 
 	switch {
-	case errors.Is(err, drivers.ErrCrispPluginNotSubscribed):
-		return gqlutils.Invalidf(ctx, "install and configure the Probo plugin on this Crisp website, then retry")
+	case errors.Is(err, drivers.ErrTallyUnauthorized):
+		return nil, gqlutils.Invalidf(ctx, "Tally rejected the API key: create a key under Settings > API keys and try again")
 	case err != nil:
-		r.logger.ErrorCtx(ctx, "cannot read crisp subscription settings", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot fetch tally current user", log.Error(err))
 
-		return gqlutils.Internal(ctx)
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	if !verifyCrispVerificationCode(r.tokenSecret, input.OrganizationID.String(), websiteID, settings.ProboVerificationCode) {
-		return gqlutils.Invalidf(ctx, "verification code mismatch: paste the code shown in Probo into the plugin settings, then retry")
+	if user.OrganizationID == "" {
+		r.logger.ErrorCtx(ctx, "tally current user has no organization id")
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return nil
+	return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: user.OrganizationID})
+}
+
+// instanceBaseURL trims space and one trailing slash. A query or fragment
+// is refused: those are not the same instance URL the user typed.
+func instanceBaseURL(raw *string, provider, field string, required bool) (string, error) {
+	value := ""
+	if raw != nil {
+		value = strings.TrimSpace(*raw)
+	}
+
+	if value == "" {
+		if !required {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("cannot create %s connector: %s is required", provider, field)
+	}
+
+	u, err := url.Parse(value)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+		return "", fmt.Errorf("cannot create %s connector: %s must be an http(s) URL", provider, field)
+	}
+
+	hasQuery := strings.Contains(value, "?") || u.RawQuery != "" || u.ForceQuery
+	hasFragment := strings.Contains(value, "#") || u.Fragment != ""
+
+	switch {
+	case hasQuery && hasFragment:
+		return "", fmt.Errorf("cannot create %s connector: %s must not include a query or a fragment", provider, field)
+	case hasQuery:
+		return "", fmt.Errorf("cannot create %s connector: %s must not include a query", provider, field)
+	case hasFragment:
+		return "", fmt.Errorf("cannot create %s connector: %s must not include a fragment", provider, field)
+	}
+
+	return strings.TrimSuffix(value, "/"), nil
 }
 
 // apiKeyConnectorSettings marshals the provider-specific extra settings
@@ -171,12 +195,6 @@ func (r *Resolver) verifyCrispOwnershipWith(ctx context.Context, input types.Cre
 // information, never user-supplied values.
 func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMessage, error) {
 	switch input.Provider {
-	case coredata.ConnectorProviderTally:
-		if input.TallyOrganizationID == nil || *input.TallyOrganizationID == "" {
-			return nil, fmt.Errorf("cannot create tally connector: tallyOrganizationId is required")
-		}
-
-		return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: *input.TallyOrganizationID})
 	case coredata.ConnectorProviderSentry:
 		if input.SentryOrganizationSlug == nil || *input.SentryOrganizationSlug == "" {
 			return nil, fmt.Errorf("cannot create sentry connector: sentryOrganizationSlug is required")
@@ -196,27 +214,66 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 
 		return json.Marshal(&coredata.GitHubConnectorSettings{Organization: *input.GithubOrganization})
 	case coredata.ConnectorProviderGrafana:
-		if input.GrafanaBaseURL == nil || *input.GrafanaBaseURL == "" {
-			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl is required")
+		baseURL, err := instanceBaseURL(input.GrafanaBaseURL, "grafana", "grafanaBaseUrl", true)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.GrafanaBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl must be an http(s) URL")
-		}
-
-		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: *input.GrafanaBaseURL})
+		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderSigNoz:
-		if input.SignozBaseURL == nil || *input.SignozBaseURL == "" {
-			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl is required")
+		baseURL, err := instanceBaseURL(input.SignozBaseURL, "signoz", "signozBaseUrl", true)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.SignozBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl must be an http(s) URL")
+		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: baseURL})
+	case coredata.ConnectorProviderNewRelic:
+		if input.NewRelicRegion == nil || *input.NewRelicRegion == "" {
+			return nil, fmt.Errorf("cannot create new relic connector: newRelicRegion is required")
 		}
 
-		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: *input.SignozBaseURL})
+		// The region selects which of New Relic's three NerdGraph endpoints
+		// the driver talks to, so it goes into a URL: accept only the three
+		// the driver knows and reject anything else here rather than at first use.
+		if _, err := drivers.NewRelicEndpoint(*input.NewRelicRegion); err != nil {
+			return nil, fmt.Errorf("cannot create new relic connector: newRelicRegion must be us, eu or jp")
+		}
+
+		// Stored normalized so one region is not persisted as "eu", "EU" and
+		// "  eu  " and re-normalized on every read.
+		return json.Marshal(&coredata.NewRelicConnectorSettings{
+			Region: strings.ToLower(strings.TrimSpace(*input.NewRelicRegion)),
+		})
+	case coredata.ConnectorProviderTwingate:
+		if input.TwingateNetwork == nil || *input.TwingateNetwork == "" {
+			return nil, fmt.Errorf("cannot create twingate connector: twingateNetwork is required")
+		}
+
+		// TwingateNetwork returns the canonical label, so the value stored is
+		// the one the host is built from rather than whatever was typed.
+		network, err := drivers.TwingateNetwork(*input.TwingateNetwork)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create twingate connector: twingateNetwork must be a valid network name")
+		}
+
+		return json.Marshal(&coredata.TwingateConnectorSettings{Network: network})
+	case coredata.ConnectorProviderRetool:
+		// Optional: Retool Cloud routes every organization through the shared
+		// api.retool.com gateway, so only a self-hosted customer has a URL to
+		// give. An empty setting is the cloud case, not a missing field.
+		baseURL, err := instanceBaseURL(input.RetoolBaseURL, "retool", "retoolBaseUrl", false)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.Marshal(&coredata.RetoolConnectorSettings{BaseURL: baseURL})
+	case coredata.ConnectorProviderAuthentik:
+		baseURL, err := instanceBaseURL(input.AuthentikBaseURL, "authentik", "authentikBaseUrl", true)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.Marshal(&coredata.AuthentikConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordScimBridgeURL == nil || *input.OnePasswordScimBridgeURL == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL is required")
@@ -312,16 +369,12 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 
 		return json.Marshal(&coredata.NeonConnectorSettings{OrganizationID: *input.NeonOrganizationID})
 	case coredata.ConnectorProviderLangfuse:
-		if input.LangfuseBaseURL == nil || *input.LangfuseBaseURL == "" {
-			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl is required")
+		baseURL, err := instanceBaseURL(input.LangfuseBaseURL, "langfuse", "langfuseBaseUrl", true)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.LangfuseBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl must be an http(s) URL")
-		}
-
-		return json.Marshal(&coredata.LangfuseConnectorSettings{BaseURL: *input.LangfuseBaseURL})
+		return json.Marshal(&coredata.LangfuseConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderScaleway:
 		if input.ScalewayOrganizationID == nil || *input.ScalewayOrganizationID == "" {
 			return nil, fmt.Errorf("cannot create scaleway connector: scalewayOrganizationId is required")
@@ -349,21 +402,6 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.SegmentConnectorSettings{BaseURL: baseURL})
-	case coredata.ConnectorProviderCrisp:
-		websiteID := ""
-		if input.CrispWebsiteID != nil {
-			websiteID = strings.TrimSpace(*input.CrispWebsiteID)
-		}
-
-		if websiteID == "" {
-			return nil, fmt.Errorf("cannot create crisp connector: crispWebsiteId is required")
-		}
-
-		// Persist the same trimmed value that verifyCrispOwnership proved and the
-		// crispVerificationCode query minted the code against, so the stored,
-		// verified, and displayed website are identical (a padded value would
-		// verify then break the driver's URL).
-		return json.Marshal(&coredata.CrispConnectorSettings{WebsiteID: websiteID})
 	}
 
 	return nil, nil
@@ -387,4 +425,58 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 	}
 
 	return nil, nil
+}
+
+// pinnedClientCredentialsTokenURL returns the token endpoint a provider fixes
+// at compile time, or "" when its token host varies per connection and only
+// the customer can supply it.
+func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
+	if reg == nil || !reg.SupportsClientCredentials() {
+		return ""
+	}
+
+	return reg.Endpoints.Token
+}
+
+// clientCredentialsTokenURL decides which token endpoint a client-credentials
+// connector will POST its client secret to.
+//
+// A provider that pins one wins outright and the client-supplied value is
+// discarded: the server already knows the URL and the customer has no way to
+// know a better one. Only a provider whose token host varies per connection
+// falls back to the input, and that value is checked to be an absolute https
+// URL first — it is the address a client secret is sent to, and nothing else
+// in the request constrains it.
+func clientCredentialsTokenURL(
+	registry *provider.Registry,
+	p coredata.ConnectorProvider,
+	supplied *string,
+) (string, error) {
+	// An unregistered provider has no registration to consult, so there is no
+	// basis for deciding whether it pins an endpoint. Trusting client input
+	// here would let an unknown provider name a token endpoint freely.
+	reg, ok := registry.Get(p)
+	if !ok {
+		return "", fmt.Errorf("unknown connector provider")
+	}
+
+	if pinned := pinnedClientCredentialsTokenURL(reg); pinned != "" {
+		return pinned, nil
+	}
+
+	if supplied == nil || strings.TrimSpace(*supplied) == "" {
+		return "", fmt.Errorf("tokenUrl is required for this provider")
+	}
+
+	tokenURL := strings.TrimSpace(*supplied)
+
+	// Hostname() rather than Host: "https://:443/token" parses with a non-empty
+	// Host that carries only a port, which would persist a token endpoint the
+	// exchange can never reach.
+	parsed, err := url.Parse(tokenURL)
+	if err != nil || parsed.Scheme != "https" || parsed.Hostname() == "" {
+		return "", fmt.Errorf("tokenUrl must be an absolute https URL")
+	}
+
+	return tokenURL, nil
 }

@@ -23,6 +23,10 @@ enum RiskOrderField
             value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldUpdatedAt"
         )
     NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldName")
+    REFERENCE_ID
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldReferenceID"
+        )
     CATEGORY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCategory")
     TREATMENT
@@ -57,16 +61,17 @@ input RiskFilter {
 
 type Risk implements Node {
     id: ID!
+    referenceId: String!
     name: String!
     description: String
     category: String!
-    treatment: RiskTreatment!
-    inherentLikelihood: Int!
-    inherentImpact: Int!
-    inherentRiskScore: Int!
-    residualLikelihood: Int!
-    residualImpact: Int!
-    residualRiskScore: Int!
+    treatment: RiskTreatment
+    inherentLikelihood: Int
+    inherentImpact: Int
+    inherentRiskScore: Int
+    residualLikelihood: Int
+    residualImpact: Int
+    residualRiskScore: Int
     note: String!
 
     owner: Profile @goField(forceResolver: true)
@@ -114,6 +119,17 @@ type Risk implements Node {
         before: CursorKey
         orderBy: RiskAnalysisScenarioOrder
     ): RiskAnalysisScenarioConnection! @goField(forceResolver: true)
+
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+        filter: TreatmentPlanFilter
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
+    riskAnalysisHistoryCount: Int! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -179,9 +195,9 @@ input CreateRiskInput {
     description: String
     category: String!
     ownerId: ID
-    treatment: RiskTreatment!
-    inherentLikelihood: Int!
-    inherentImpact: Int!
+    treatment: RiskTreatment
+    inherentLikelihood: Int
+    inherentImpact: Int
     residualLikelihood: Int
     residualImpact: Int
     note: String

@@ -49,14 +49,7 @@ func ProcessingActivityOrderFields() []ProcessingActivityOrderField {
 }
 
 func (v ProcessingActivityOrderField) IsValid() bool {
-	switch v {
-	case
-		ProcessingActivityOrderFieldCreatedAt,
-		ProcessingActivityOrderFieldName:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ProcessingActivityOrderFields())
 }
 
 func (v ProcessingActivityOrderField) String() string {
@@ -68,14 +61,7 @@ func (v ProcessingActivityOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ProcessingActivityOrderField) UnmarshalText(text []byte) error {
-	val := ProcessingActivityOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ProcessingActivityOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ProcessingActivityOrderFields())
 }
 
 func (p ProcessingActivityOrderField) Column() string {

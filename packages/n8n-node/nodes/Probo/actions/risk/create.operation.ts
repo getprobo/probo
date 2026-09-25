@@ -216,6 +216,7 @@ export async function execute(
 				riskEdge {
 					node {
 						id
+						referenceId
 						name
 						description
 						category

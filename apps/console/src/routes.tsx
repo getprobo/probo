@@ -22,28 +22,30 @@ import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { CenteredLayout } from "@probo/ui";
-import { use } from "react";
-import {
-  createBrowserRouter,
-  Navigate,
-  redirect,
-} from "react-router";
+import { Fragment, use } from "react";
+import { createBrowserRouter, Navigate, redirect } from "react-router";
 
 import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
+import { RedirectToEmployeePortal } from "./components/RedirectToEmployeePortal";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
+import { AuthLayoutSkeleton } from "./pages/iam/auth/AuthLayoutSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
-import { peopleRoutes } from "./pages/iam/organizations/people/routes";
+import { auditLogRoutes } from "./pages/iam/organizations/audit-log/routes";
+import { authRoutes } from "./pages/iam/organizations/auth/routes";
+import { settingsRoutes } from "./pages/iam/organizations/settings/routes";
+import { usersRoutes } from "./pages/iam/organizations/users/routes";
+import { accessReviewRoutes } from "./pages/organizations/access-reviews/routes";
 import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
 import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/routes";
 import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { taskRoutes } from "./pages/organizations/tasks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
-import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
@@ -56,12 +58,12 @@ import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
-import { taskRoutes } from "./routes/taskRoutes";
 
 const routes = [
   {
     path: "/auth",
     Component: lazy(() => import("./pages/iam/auth/AuthLayout")),
+    Fallback: AuthLayoutSkeleton,
     children: [
       {
         path: "login",
@@ -86,6 +88,10 @@ const routes = [
       {
         path: "verify-email",
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
+      },
+      {
+        path: "magic-link",
+        Component: lazy(() => import("./pages/iam/auth/MagicLinkPage")),
       },
       {
         path: "resend-verification-email",
@@ -148,12 +154,6 @@ const routes = [
             ),
           },
           {
-            path: "me/api-keys",
-            Component: lazy(
-              () => import("./pages/iam/apiKeys/APIKeysPageLoader"),
-            ),
-          },
-          {
             path: "me/oauth-tokens",
             Component: lazy(
               () => import("./pages/iam/oauthTokens/OAuthTokensPageLoader"),
@@ -163,12 +163,6 @@ const routes = [
             path: "me/oauth-tokens/new",
             Component: lazy(
               () => import("./pages/iam/oauthTokens/NewOAuthTokenPageLoader"),
-            ),
-          },
-          {
-            path: "enroll",
-            Component: lazy(
-              () => import("./pages/iam/enroll/EnrollDevicePageLoader"),
             ),
           },
           {
@@ -190,79 +184,18 @@ const routes = [
     path: "/organizations/:organizationId",
     children: [
       {
-        path: "assume",
-        Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
-      },
-      {
-        path: "employee",
-        ErrorBoundary: OrganizationErrorBoundary,
-        Component: lazy(
-          () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
-        ),
+        Component: lazy(() => import("./pages/iam/auth/AuthLayout")),
+        Fallback: AuthLayoutSkeleton,
         children: [
           {
-            index: true,
-            loader: ({ params: { organizationId } }) => {
-              // eslint-disable-next-line
-              throw redirect(`/organizations/${organizationId}/employee/signatures`);
-            },
-            Component: () => null,
-          },
-          {
-            Component: lazy(
-              () => import("./pages/organizations/employee/EmployeeTabsLayout"),
-            ),
-            children: [
-              {
-                path: "signatures",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
-                ),
-              },
-              {
-                path: "approvals",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeApprovalsPageLoader"),
-                ),
-              },
-              {
-                path: "devices",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/employee/EmployeeDevicesPageLoader"),
-                ),
-              },
-            ],
-          },
-          {
-            path: ":documentId",
-            loader: ({ params: { organizationId, documentId } }) => {
-              // eslint-disable-next-line
-              throw redirect(`/organizations/${organizationId}/employee/signatures/${documentId}`);
-            },
-            Component: () => null,
-          },
-          {
-            path: "signatures/:documentId",
-            Component: lazy(
-              () =>
-                import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
-            ),
-          },
-          {
-            path: "approvals/:documentId",
-            Component: lazy(
-              () =>
-                import("./pages/organizations/documents/approve/DocumentApprovePageLoader"),
-            ),
+            path: "assume",
+            Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
           },
         ],
       },
       {
         Component: lazy(
-          () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
+          () => import("./pages/iam/organizations/OrganizationLayoutLoader"),
         ),
         ErrorBoundary: OrganizationErrorBoundary,
         children: [
@@ -272,24 +205,107 @@ const routes = [
               const { role } = use(CurrentUser);
               switch (role) {
                 case Role.EMPLOYEE:
-                  return <Navigate to="employee" />;
+                  return <RedirectToEmployeePortal />;
                 case Role.AUDITOR:
-                  return <Navigate to="measures" />;
+                  return <Navigate to="governance/measures" />;
                 case Role.COMPLIANCE_PORTAL_MANAGER:
                   return <Navigate to="compliance-portals" />;
                 case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER:
                   return <Navigate to="compliance-portals" />;
                 default:
-                  return <Navigate to="tasks" />;
+                  return <Navigate to="governance/tasks" />;
               }
             },
           },
+
+          // Features are grouped under a product segment, mirroring the rail.
+          // NAV_GROUPS in _lib/navigation.ts must agree with these segments —
+          // it is what builds the links.
+          {
+            path: "governance",
+            children: [
+              ...frameworkRoutes,
+              ...auditRoutes,
+              ...findingRoutes,
+              ...measureRoutes,
+              ...documentsRoutes,
+              ...taskRoutes,
+              ...statementsOfApplicabilityRoutes,
+            ],
+          },
+          {
+            path: "privacy",
+            children: [
+              ...rightsRequestRoutes,
+              ...processingActivityRoutes,
+              ...cookieBannerRoutes,
+            ],
+          },
+          {
+            path: "tprm",
+            children: [...thirdPartyRoutes],
+          },
+          {
+            path: "itam",
+            children: [...deviceRoutes],
+          },
+          {
+            path: "risk-management",
+            children: [
+              ...riskRoutes,
+              {
+                path: "data",
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("../registries/data");
+                },
+                Component: Fragment,
+              },
+              {
+                path: "data/:dataId",
+                loader: ({ params }) => {
+                  // eslint-disable-next-line
+                  throw redirect(`../registries/data/${params.dataId}`);
+                },
+                Component: Fragment,
+              },
+              {
+                path: "assets",
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("../registries/assets");
+                },
+                Component: Fragment,
+              },
+              {
+                path: "assets/:assetId",
+                loader: ({ params }) => {
+                  // eslint-disable-next-line
+                  throw redirect(`../registries/assets/${params.assetId}`);
+                },
+                Component: Fragment,
+              },
+            ],
+          },
+
+          {
+            path: "access-reviews",
+            children: [...accessReviewRoutes],
+          },
+          {
+            path: "registries",
+            children: [
+              ...dataRoutes,
+              ...assetRoutes,
+              ...businessFunctionRoutes,
+              ...aiSystemRoutes,
+              ...obligationRoutes,
+            ],
+          },
+          ...compliancePortalRoutes,
+
           {
             path: "settings",
-            Fallback: PageSkeleton,
-            Component: lazy(
-              () => import("./pages/iam/organizations/settings/SettingsLayout"),
-            ),
             children: [
               {
                 index: true,
@@ -298,65 +314,21 @@ const routes = [
                   throw redirect("general");
                 },
               },
+              ...settingsRoutes,
+              ...contextRoutes,
               {
-                path: "general",
+                path: "slackbot",
+                Fallback: PageSkeleton,
                 Component: lazy(
                   () =>
-                    import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                    import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
                 ),
               },
-              {
-                path: "saml-sso",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "scim",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "webhooks",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "audit-log",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/AuditLogSettingsPageLoader"),
-                ),
-              },
+              ...usersRoutes,
+              ...authRoutes,
+              ...auditLogRoutes,
             ],
           },
-          ...peopleRoutes,
-          ...riskRoutes,
-          ...measureRoutes,
-          ...documentsRoutes,
-          ...thirdPartyRoutes,
-          ...deviceRoutes,
-          ...frameworkRoutes,
-          ...taskRoutes,
-          ...assetRoutes,
-          ...dataRoutes,
-          ...auditRoutes,
-          ...contextRoutes,
-          ...findingRoutes,
-          ...businessFunctionRoutes,
-          ...aiSystemRoutes,
-          ...obligationRoutes,
-          ...rightsRequestRoutes,
-          ...processingActivityRoutes,
-          ...statementsOfApplicabilityRoutes,
-          ...accessReviewRoutes,
-          ...compliancePortalRoutes,
-          ...cookieBannerRoutes,
           {
             path: "*",
             Component: PageError,

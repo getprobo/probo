@@ -73,9 +73,9 @@
         {
           "type": "tableRow",
           "content": [
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "%d — %s" $r.InherentLikelihood $r.InherentLikelihoodLabel)}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "%d — %s" $r.InherentImpact $r.InherentImpactLabel)}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "%d — %s" $r.InherentRiskScore $r.InherentSeverity)}} }] }] }
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.InherentLikelihood}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.InherentImpact}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.InherentRiskScore}} }] }] }
           ]
         }
       ]
@@ -99,9 +99,9 @@
         {
           "type": "tableRow",
           "content": [
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "%d — %s" $r.ResidualLikelihood $r.ResidualLikelihoodLabel)}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "%d — %s" $r.ResidualImpact $r.ResidualImpactLabel)}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "%d — %s" $r.ResidualRiskScore $r.ResidualSeverity)}} }] }] }
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.ResidualLikelihood}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.ResidualImpact}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [160] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json $r.ResidualRiskScore}} }] }] }
           ]
         }
       ]

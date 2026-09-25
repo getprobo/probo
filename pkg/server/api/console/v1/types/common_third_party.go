@@ -43,8 +43,6 @@ type CommonThirdParty struct {
 	Logo                       *File                       `json:"logo,omitempty"`
 }
 
-func (CommonThirdParty) IsTrackerPatternThirdPartyLink() {}
-
 func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {
 	party := &CommonThirdParty{
 		ID:                         c.ID,

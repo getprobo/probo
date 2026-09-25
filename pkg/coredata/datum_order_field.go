@@ -51,15 +51,7 @@ func DatumOrderFields() []DatumOrderField {
 }
 
 func (v DatumOrderField) IsValid() bool {
-	switch v {
-	case
-		DatumOrderFieldCreatedAt,
-		DatumOrderFieldName,
-		DatumOrderFieldDataClassification:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DatumOrderFields())
 }
 
 func (v DatumOrderField) String() string {
@@ -71,14 +63,7 @@ func (v DatumOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DatumOrderField) UnmarshalText(text []byte) error {
-	val := DatumOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DatumOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DatumOrderFields())
 }
 
 func (p DatumOrderField) Column() string {

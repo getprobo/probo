@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
+import { avatarColor, avatarInitial } from "@probo/helpers";
 import type { ComponentProps, ReactNode } from "react";
 import type { VariantProps } from "tailwind-variants/lite";
 
@@ -30,24 +31,50 @@ export type AvatarProps
     & {
       className?: string;
       // Profile image URL. When absent or it fails to load, `fallback` shows.
-      src?: string;
+      src?: string | null;
       alt?: string;
+      name?: string;
+      email?: string;
       // Shown until/unless the image loads: user initials (string) or an icon.
-      fallback: ReactNode;
+      // Defaults to the first letter of `name` when that is set.
+      fallback?: ReactNode;
     };
 
 // Foundational avatar primitive (Radix "Avatar") over Base UI's image-loading
 // behavior. See contrib/claude/ui.md.
 export function Avatar(props: AvatarProps) {
-  const { size, variant, color, highContrast, radius, className, src, alt, fallback, ...rest } = props;
-  const slots = avatar({ size, variant, color, highContrast, radius });
+  const {
+    size,
+    variant,
+    color,
+    highContrast,
+    radius,
+    className,
+    src,
+    alt,
+    name,
+    email,
+    fallback,
+    ...rest
+  } = props;
+  const colorSeed = email ?? name;
+  const slots = avatar({
+    size,
+    variant,
+    color: color ?? (colorSeed != null ? avatarColor(colorSeed) : undefined),
+    highContrast,
+    radius,
+  });
+  const resolvedSrc = src ?? undefined;
+  const resolvedAlt = alt ?? name;
+  const resolvedFallback = fallback ?? (name != null ? avatarInitial(name) : "?");
 
   return (
     <BaseAvatar.Root className={slots.root({ className })} {...rest}>
-      {src != null && (
-        <BaseAvatar.Image src={src} alt={alt} className={slots.image()} />
+      {resolvedSrc != null && (
+        <BaseAvatar.Image src={resolvedSrc} alt={resolvedAlt} className={slots.image()} />
       )}
-      <BaseAvatar.Fallback className={slots.fallback()}>{fallback}</BaseAvatar.Fallback>
+      <BaseAvatar.Fallback className={slots.fallback()}>{resolvedFallback}</BaseAvatar.Fallback>
     </BaseAvatar.Root>
   );
 }

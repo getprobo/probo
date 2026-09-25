@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -189,6 +190,203 @@ func TestWebhook_ThirdPartyCreatedEvent(t *testing.T) {
 	event := eventResult.Node.Events.Edges[0].Node
 	assert.NotEmpty(t, event.ID)
 	assert.Equal(t, subscription.ID, event.WebhookSubscriptionID)
-	assert.Equal(t, "FAILED", event.Status)
+	assert.Equal(t, "PENDING", event.Status)
 	assert.False(t, event.CreatedAt.IsZero())
+	require.NotNil(t, event.Payload)
+
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(*event.Payload), &payload))
+	assert.Equal(t, event.ID, payload["eventId"])
+	assert.Equal(t, "third-party:created", payload["eventType"])
+	require.Contains(t, payload, "data")
+	assert.IsType(t, map[string]any{}, payload["data"])
+}
+
+func TestWebhook_TaskLifecycleEvents(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	endpoint := unroutableWebhookEndpoint(t)
+	taskName := factory.SafeName("Webhook Task")
+
+	subscription := createWebhookSubscription(
+		t,
+		owner,
+		endpoint,
+		[]string{"TASK_CREATED", "TASK_UPDATED", "TASK_DELETED"},
+	)
+
+	taskID := factory.NewTaskWithoutMeasure(owner).WithName(taskName).Create()
+
+	updateQuery := `
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
+				task { id }
+			}
+		}
+	`
+	_, err := owner.Do(
+		updateQuery,
+		map[string]any{
+			"input": map[string]any{
+				"taskId": taskID,
+				"name":   taskName + " updated",
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	deleteQuery := `
+		mutation DeleteTask($input: DeleteTaskInput!) {
+			deleteTask(input: $input) {
+				deletedTaskId
+			}
+		}
+	`
+	_, err = owner.Do(
+		deleteQuery,
+		map[string]any{
+			"input": map[string]any{"taskId": taskID},
+		},
+	)
+	require.NoError(t, err)
+
+	eventResult := requireWebhookEventsEventually(t, owner, subscription.ID, 3)
+	eventTypes, payloads := webhookEventPayloads(t, eventResult)
+	assert.ElementsMatch(t, []string{"task:created", "task:updated", "task:deleted"}, eventTypes)
+
+	for _, payload := range payloads {
+		data, ok := payload["data"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, taskID, data["id"])
+	}
+
+	updated := webhookPayloadByEventType(t, payloads, "task:updated")
+	updatedFrom, ok := updated["updatedFrom"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, taskName, updatedFrom["name"])
+}
+
+func TestWebhook_TaskCommentLifecycleEvents(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	endpoint := unroutableWebhookEndpoint(t)
+	taskID := factory.NewTaskWithoutMeasure(owner).WithName("Task for webhook comment").Create()
+
+	subscription := createWebhookSubscription(
+		t,
+		owner,
+		endpoint,
+		[]string{"TASK_COMMENT_CREATED", "TASK_COMMENT_UPDATED", "TASK_COMMENT_DELETED"},
+	)
+
+	commentID := factory.NewTaskComment(owner, taskID).
+		WithContent("Webhook comment").
+		Create()
+
+	updateQuery := `
+		mutation UpdateTaskComment($input: UpdateTaskCommentInput!) {
+			updateTaskComment(input: $input) {
+				taskComment { id }
+			}
+		}
+	`
+	_, err := owner.Do(
+		updateQuery,
+		map[string]any{
+			"input": map[string]any{
+				"taskCommentId": commentID,
+				"content":       factory.ProseMirrorPlainText("Updated webhook comment"),
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	deleteQuery := `
+		mutation DeleteTaskComment($input: DeleteTaskCommentInput!) {
+			deleteTaskComment(input: $input) {
+				deletedTaskCommentId
+			}
+		}
+	`
+	_, err = owner.Do(
+		deleteQuery,
+		map[string]any{
+			"input": map[string]any{"taskCommentId": commentID},
+		},
+	)
+	require.NoError(t, err)
+
+	eventResult := requireWebhookEventsEventually(t, owner, subscription.ID, 3)
+	eventTypes, payloads := webhookEventPayloads(t, eventResult)
+	assert.ElementsMatch(
+		t,
+		[]string{"task-comment:created", "task-comment:updated", "task-comment:deleted"},
+		eventTypes,
+	)
+
+	for _, payload := range payloads {
+		data, ok := payload["data"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, commentID, data["id"])
+		assert.Equal(t, taskID, data["taskId"])
+	}
+
+	updated := webhookPayloadByEventType(t, payloads, "task-comment:updated")
+	updatedFrom, ok := updated["updatedFrom"].(map[string]any)
+	require.True(t, ok)
+	previousContent, ok := updatedFrom["content"].(string)
+	require.True(t, ok)
+	factory.AssertProseMirrorPlainText(t, "Webhook comment", previousContent)
+}
+
+func TestWebhook_FilterEventsByPendingStatus(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	endpoint := unroutableWebhookEndpoint(t)
+
+	subscription := createWebhookSubscription(
+		t,
+		owner,
+		endpoint,
+		[]string{"THIRD_PARTY_CREATED"},
+	)
+
+	factory.NewThirdParty(owner).
+		WithName(factory.SafeName("Webhook Third Party")).
+		Create()
+
+	eventResult := requireWebhookEventsEventually(t, owner, subscription.ID, 1)
+	require.NotNil(t, eventResult.Node)
+
+	pendingCount := 0
+
+	for _, edge := range eventResult.Node.Events.Edges {
+		if edge.Node.Status == "PENDING" {
+			pendingCount++
+		}
+	}
+
+	require.Greater(t, pendingCount, 0, "expected at least one PENDING event")
+
+	var filtered webhookSubscriptionNodeResponse
+
+	err := owner.Execute(
+		webhookSubscriptionEventsFilterQuery,
+		map[string]any{
+			"id":     subscription.ID,
+			"filter": map[string]any{"status": "PENDING"},
+		},
+		&filtered,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, filtered.Node)
+	assert.Equal(t, pendingCount, filtered.Node.Events.TotalCount)
+	require.NotEmpty(t, filtered.Node.Events.Edges)
+
+	for _, edge := range filtered.Node.Events.Edges {
+		assert.Equal(t, "PENDING", edge.Node.Status)
+	}
 }

@@ -41,25 +41,21 @@ func (s *Service) serviceProvider(
 		EntityID: config.IdPEntityID,
 		IDPSSODescriptors: []saml.IDPSSODescriptor{
 			{
-				SSODescriptor: saml.SSODescriptor{
-					RoleDescriptor: saml.RoleDescriptor{
-						ProtocolSupportEnumeration: "urn:oasis:names:tc:SAML:2.0:protocol",
-						KeyDescriptors: []saml.KeyDescriptor{
-							{
-								Use: "signing",
-								KeyInfo: saml.KeyInfo{
-									X509Data: saml.X509Data{
-										X509Certificates: []saml.X509Certificate{
-											{Data: base64.StdEncoding.EncodeToString(cert.Raw)},
-										},
-									},
+				ProtocolSupportEnumeration: "urn:oasis:names:tc:SAML:2.0:protocol",
+				KeyDescriptors: []saml.KeyDescriptor{
+					{
+						Use: "signing",
+						KeyInfo: saml.KeyInfo{
+							X509Data: saml.X509Data{
+								X509Certificates: []saml.X509Certificate{
+									{Data: base64.StdEncoding.EncodeToString(cert.Raw)},
 								},
 							},
 						},
 					},
-					NameIDFormats: []saml.NameIDFormat{
-						saml.EmailAddressNameIDFormat,
-					},
+				},
+				NameIDFormats: []saml.NameIDFormat{
+					saml.EmailAddressNameIDFormat,
 				},
 				SingleSignOnServices: []saml.Endpoint{
 					{

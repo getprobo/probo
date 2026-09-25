@@ -58,8 +58,17 @@ export async function execute(
 					showBranding
 					capabilities { resourceReporting }
 					defaultLanguage
+					publisherCountryCode
+					tcfCmpId
 					createdAt
 					updatedAt
+					publishedVersion {
+						id
+						version
+						state
+						gvlVendorCount
+						gvlVendorIds
+					}
 				}
 			}
 		}

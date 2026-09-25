@@ -47,13 +47,7 @@ func DataProtectionImpactAssessmentOrderFields() []DataProtectionImpactAssessmen
 }
 
 func (v DataProtectionImpactAssessmentOrderField) IsValid() bool {
-	switch v {
-	case
-		DataProtectionImpactAssessmentOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DataProtectionImpactAssessmentOrderFields())
 }
 
 func (v DataProtectionImpactAssessmentOrderField) String() string {
@@ -65,14 +59,7 @@ func (v DataProtectionImpactAssessmentOrderField) MarshalText() ([]byte, error) 
 }
 
 func (v *DataProtectionImpactAssessmentOrderField) UnmarshalText(text []byte) error {
-	val := DataProtectionImpactAssessmentOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DataProtectionImpactAssessmentOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DataProtectionImpactAssessmentOrderFields())
 }
 
 func (p DataProtectionImpactAssessmentOrderField) Column() string {

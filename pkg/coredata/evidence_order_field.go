@@ -49,13 +49,7 @@ func EvidenceOrderFields() []EvidenceOrderField {
 }
 
 func (v EvidenceOrderField) IsValid() bool {
-	switch v {
-	case
-		EvidenceOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, EvidenceOrderFields())
 }
 
 func (v EvidenceOrderField) String() string {
@@ -67,14 +61,7 @@ func (v EvidenceOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *EvidenceOrderField) UnmarshalText(text []byte) error {
-	val := EvidenceOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid EvidenceOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, EvidenceOrderFields())
 }
 
 func (p EvidenceOrderField) Column() string {

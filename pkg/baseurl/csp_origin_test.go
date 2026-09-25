@@ -102,6 +102,11 @@ func TestCSPOrigin(t *testing.T) {
 			input:   "https://example.com:",
 			wantErr: true,
 		},
+		{
+			name:    "rejects ipv6 with empty port",
+			input:   "https://[::1]:",
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

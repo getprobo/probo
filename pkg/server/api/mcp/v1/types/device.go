@@ -38,12 +38,14 @@ func NewDevicePosture(p *coredata.DevicePosture) *DevicePosture {
 	value := coredata.ParseDevicePostureValue(p.CheckKey, p.Evidence)
 
 	return &DevicePosture{
-		ID:         p.ID,
-		DeviceID:   p.DeviceID,
-		CheckKey:   p.CheckKey,
-		Status:     p.Status,
-		Value:      NewDevicePostureValue(value),
-		ObservedAt: p.ObservedAt,
+		ID:           p.ID,
+		DeviceID:     p.DeviceID,
+		CheckKey:     p.CheckKey,
+		Status:       p.Status,
+		Value:        NewDevicePostureValue(value),
+		Version:      p.Version,
+		AgentVersion: p.AgentVersion,
+		ObservedAt:   p.ObservedAt,
 	}
 }
 

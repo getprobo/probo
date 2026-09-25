@@ -96,7 +96,7 @@ export default function StatementsOfApplicabilityPage({
 }) {
   const { t } = useTranslation();
 
-  usePageTitle(t("statementsOfApplicabilityPage.title"));
+  usePageTitle(t("nav.statementsOfApplicability"));
 
   const { organization } = usePreloadedQuery<StatementsOfApplicabilityPageQuery>(
     statementsOfApplicabilityPageQuery,
@@ -120,7 +120,7 @@ export default function StatementsOfApplicabilityPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("statementsOfApplicabilityPage.title")}
+        title={t("nav.statementsOfApplicability")}
         description={t("statementsOfApplicabilityPage.description")}
       >
         {organization.canCreateStatementOfApplicability && (

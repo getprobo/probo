@@ -211,7 +211,7 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 
 	scope := coredata.NewScopeFromObjectID(dev.ID)
 
-	if err := h.itamSvc.RecordPostures(r.Context(), scope, dev.ID, results); err != nil {
+	if err := h.itamSvc.RecordPostures(r.Context(), scope, dev.ID, req.AgentVersion, results); err != nil {
 		if errors.Is(err, itam.ErrDeviceRevoked) {
 			jsonx.RenderUnauthorized(w, errors.New("device revoked"))
 			return

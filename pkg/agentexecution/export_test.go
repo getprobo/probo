@@ -1,0 +1,40 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package agentexecution
+
+import (
+	"context"
+)
+
+// ShutdownBroadcast returns the channel that closes once the worker has
+// broadcast graceful shutdown to in-flight runs. In-flight run contexts
+// are cancelled asynchronously after the broadcast, so tests that need
+// the suspension to have reached a running tool must also wait for that
+// tool's context to be cancelled. It is compiled only in test builds so
+// external tests can observe shutdown without leaking a test-only method
+// into the worker's public API.
+func (w *Worker) ShutdownBroadcast() <-chan struct{} {
+	return w.handler.shutdownCh
+}
+
+func (w *Worker) RecoverStale(ctx context.Context) error {
+	return w.handler.RecoverStale(ctx)
+}

@@ -126,7 +126,9 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 				map[string]any{
 					"input": map[string]any{
 						"thirdPartyId": org1ThirdPartyID,
-						"validUntil":   "2026-01-01T00:00:00Z",
+						"validity": map[string]any{
+							"end": "2026-01-01T00:00:00Z",
+						},
 					},
 				},
 			)
@@ -156,7 +158,9 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 				map[string]any{
 					"input": map[string]any{
 						"thirdPartyId": org1ThirdPartyID,
-						"validUntil":   "2026-02-01T00:00:00Z",
+						"validity": map[string]any{
+							"end": "2026-02-01T00:00:00Z",
+						},
 					},
 				},
 			)

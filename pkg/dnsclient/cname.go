@@ -97,7 +97,7 @@ func (c *Client) CheckCNAME(ctx context.Context, hostname, expectedTarget string
 }
 
 func (c *Client) queryCNAME(ctx context.Context, name string) (*dns.Msg, error) {
-	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+	msg := &dns.Msg{ID: dns.ID(), RecursionDesired: true}
 	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: name, Class: dns.ClassINET}}}
 
 	return c.query(ctx, msg)

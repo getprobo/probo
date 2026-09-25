@@ -955,6 +955,7 @@ func (s *Service) RecordPostures(
 	ctx context.Context,
 	scope coredata.Scoper,
 	deviceID gid.GID,
+	agentVersion string,
 	results []RecordPostureResult,
 ) error {
 	if len(results) == 0 {
@@ -973,6 +974,10 @@ func (s *Service) RecordPostures(
 
 			if device.State != coredata.DeviceStateActive {
 				return ErrDeviceRevoked
+			}
+
+			if agentVersion == "" {
+				agentVersion = *device.AgentVersion
 			}
 
 			for _, r := range results {
@@ -996,6 +1001,8 @@ func (s *Service) RecordPostures(
 					CheckKey:       r.CheckKey,
 					Status:         r.Status,
 					Evidence:       r.Evidence,
+					Version:        coredata.DevicePostureVersionV1,
+					AgentVersion:   agentVersion,
 					ObservedAt:     r.ObservedAt,
 					CreatedAt:      now,
 				}

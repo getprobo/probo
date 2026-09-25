@@ -37,12 +37,6 @@ query($id: ID!) {
     ... on StatementOfApplicability {
       id
       name
-      owner {
-        ... on PeopleProfile {
-          id
-          fullName
-        }
-      }
       createdAt
       updatedAt
     }
@@ -52,13 +46,9 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename string `json:"__typename"`
-		ID       string `json:"id"`
-		Name     string `json:"name"`
-		Owner    struct {
-			ID       string `json:"id"`
-			FullName string `json:"fullName"`
-		} `json:"owner"`
+		Typename  string `json:"__typename"`
+		ID        string `json:"id"`
+		Name      string `json:"name"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
@@ -128,10 +118,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(s.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), s.ID)
-
-			if s.Owner.FullName != "" {
-				_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("Owner:"), s.Owner.FullName, s.Owner.ID)
-			}
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(s.CreatedAt))

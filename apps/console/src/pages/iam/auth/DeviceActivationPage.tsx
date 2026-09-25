@@ -20,7 +20,10 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Button, useToast } from "@probo/ui";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import {
   type ClipboardEvent,
   type KeyboardEvent,
@@ -167,30 +170,34 @@ export default function DeviceActivationPage(props: {
 
   if (status === "success") {
     return (
-      <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{t("deviceActivationPage.authorized.title")}</h1>
-        <p className="text-txt-tertiary">
+      <div className="flex w-full flex-col gap-8">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("deviceActivationPage.authorized.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
           {t("deviceActivationPage.authorized.description")}
-        </p>
+        </Text>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-md mx-auto pt-8 space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">{t("deviceActivationPage.title")}</h1>
-        <p className="text-txt-tertiary">
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
+          {t("deviceActivationPage.title")}
+        </Heading>
+        <Text size={2} align="center" className="block">
           {t("deviceActivationPage.description")}
-        </p>
+        </Text>
       </div>
 
-      <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
+      <form onSubmit={e => void handleSubmit(e)} className="flex flex-col gap-5">
         <div className="flex items-center justify-center gap-2">
           {values.map((val, idx) => (
             <div key={idx} className="contents">
               {idx === 4 && (
-                <span className="text-xl text-txt-tertiary select-none px-0.5">&ndash;</span>
+                <span className="select-none px-0.5 text-4 text-sand-11">&ndash;</span>
               )}
               <input
                 ref={(el) => { inputRefs.current[idx] = el; }}
@@ -207,7 +214,7 @@ export default function DeviceActivationPage(props: {
                 spellCheck={false}
                 autoFocus={idx === 0}
                 aria-label={t("deviceActivationPage.codeCharacter", { count: idx + 1 })}
-                className="w-11 h-13 text-center text-lg font-mono font-medium uppercase rounded-lg border border-border-mid bg-level-1 text-txt-primary outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="h-13 w-11 rounded-3 border border-sand-6 bg-sand-1 text-center font-mono text-3 font-medium uppercase text-sand-12 outline-none transition-colors focus:border-sand-8 focus:ring-2 focus:ring-sand-8/20"
               />
             </div>
           ))}
@@ -215,16 +222,21 @@ export default function DeviceActivationPage(props: {
 
         <Button
           type="submit"
-          className="w-full h-10"
-          disabled={!isFilled || isInFlight}
+          variant="solid"
+          color="neutral"
+          highContrast
+          size={3}
+          className="w-full"
+          loading={isInFlight}
+          disabled={!isFilled}
         >
-          {isInFlight ? t("deviceActivationPage.actions.authorizing") : t("deviceActivationPage.actions.continue")}
+          {t("deviceActivationPage.actions.continue")}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-txt-tertiary">
+      <Text align="center" size={2} className="block">
         {t("deviceActivationPage.notice")}
-      </p>
+      </Text>
     </div>
   );
 }

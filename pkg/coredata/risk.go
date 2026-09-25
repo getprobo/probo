@@ -145,22 +145,23 @@ WHERE
 
 type (
 	Risk struct {
-		ID                 gid.GID       `db:"id"`
-		OrganizationID     gid.GID       `db:"organization_id"`
-		Name               string        `db:"name"`
-		Description        *string       `db:"description"`
-		Category           string        `db:"category"`
-		Treatment          RiskTreatment `db:"treatment"`
-		Note               string        `db:"note"`
-		OwnerID            *gid.GID      `db:"owner_profile_id"`
-		InherentLikelihood int           `db:"inherent_likelihood"`
-		InherentImpact     int           `db:"inherent_impact"`
-		InherentRiskScore  int           `db:"inherent_risk_score"`
-		ResidualLikelihood int           `db:"residual_likelihood"`
-		ResidualImpact     int           `db:"residual_impact"`
-		ResidualRiskScore  int           `db:"residual_risk_score"`
-		CreatedAt          time.Time     `db:"created_at"`
-		UpdatedAt          time.Time     `db:"updated_at"`
+		ID                 gid.GID        `db:"id"`
+		OrganizationID     gid.GID        `db:"organization_id"`
+		ReferenceID        string         `db:"reference_id"`
+		Name               string         `db:"name"`
+		Description        *string        `db:"description"`
+		Category           string         `db:"category"`
+		Treatment          *RiskTreatment `db:"treatment"`
+		Note               string         `db:"note"`
+		OwnerID            *gid.GID       `db:"owner_profile_id"`
+		InherentLikelihood *int           `db:"inherent_likelihood"`
+		InherentImpact     *int           `db:"inherent_impact"`
+		InherentRiskScore  *int           `db:"inherent_risk_score"`
+		ResidualLikelihood *int           `db:"residual_likelihood"`
+		ResidualImpact     *int           `db:"residual_impact"`
+		ResidualRiskScore  *int           `db:"residual_risk_score"`
+		CreatedAt          time.Time      `db:"created_at"`
+		UpdatedAt          time.Time      `db:"updated_at"`
 
 		// Ordering only
 		OwnerFullName *string `db:"owner_full_name"`
@@ -173,6 +174,8 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	switch orderBy {
 	case RiskOrderFieldCreatedAt:
 		return page.CursorKey{ID: r.ID, Value: r.CreatedAt}
+	case RiskOrderFieldReferenceID:
+		return page.CursorKey{ID: r.ID, Value: r.ReferenceID}
 	case RiskOrderFieldName:
 		return page.CursorKey{ID: r.ID, Value: r.Name}
 	case RiskOrderFieldCategory:
@@ -286,6 +289,7 @@ WITH rsks AS (
 		r.id,
 		r.tenant_id,
 		r.organization_id,
+		r.reference_id,
 		r.name,
 		r.description,
 		r.category,
@@ -314,6 +318,7 @@ WITH rsks AS (
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -402,6 +407,7 @@ WITH rsks AS (
 		r.id,
 		r.tenant_id,
 		r.organization_id,
+		r.reference_id,
 		r.name,
 		r.description,
 		r.owner_profile_id,
@@ -428,6 +434,7 @@ WITH rsks AS (
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	owner_profile_id,
@@ -481,6 +488,7 @@ func (r *Risk) LoadByID(
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -535,6 +543,7 @@ func (r *Risks) LoadByIDs(
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -578,14 +587,167 @@ WHERE %s
 	return nil
 }
 
+func (r *Risks) CountByRiskIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskIDs []gid.GID,
+	filter *RiskFilter,
+) (int, error) {
+	if len(riskIDs) == 0 {
+		return 0, nil
+	}
+
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	risks
+WHERE
+	%s
+	AND id = ANY(@risk_ids)
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_ids": riskIDs}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r *Risks) LoadByRiskIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskIDs []gid.GID,
+	cursor *page.Cursor[RiskOrderField],
+	filter *RiskFilter,
+) error {
+	if len(riskIDs) == 0 {
+		*r = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	reference_id,
+	name,
+	description,
+	category,
+	treatment,
+	inherent_likelihood,
+	inherent_impact,
+	inherent_risk_score,
+	residual_likelihood,
+	residual_impact,
+	residual_risk_score,
+	owner_profile_id,
+	NULL AS owner_full_name,
+	note,
+	created_at,
+	updated_at
+FROM
+	risks
+WHERE
+	%s
+	AND id = ANY(@risk_ids)
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_ids": riskIDs}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risks: %w", err)
+	}
+
+	risks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Risk])
+	if err != nil {
+		return fmt.Errorf("cannot collect risks: %w", err)
+	}
+
+	*r = risks
+
+	return nil
+}
+
 func (r *Risk) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	lockQuery := `SELECT pg_advisory_xact_lock(hashtext(@organization_id::text))`
+
+	lockArgs := pgx.StrictNamedArgs{
+		"organization_id": r.OrganizationID,
+	}
+
+	if _, err := conn.Exec(ctx, lockQuery, lockArgs); err != nil {
+		return fmt.Errorf("cannot acquire advisory lock: %w", err)
+	}
+
 	q := `
-INSERT INTO risks (id, tenant_id, organization_id, name, description, category, owner_profile_id, treatment, note, inherent_likelihood, inherent_impact, residual_likelihood, residual_impact, created_at, updated_at)
-VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owner_profile_id, @treatment, @note, @inherent_likelihood, @inherent_impact, @residual_likelihood, @residual_impact, @created_at, @updated_at)
+WITH next_ref AS (
+	SELECT
+		COALESCE(
+			MAX(CAST(SUBSTRING(reference_id FROM 5) AS INTEGER)),
+			0
+		) + 1 AS next_num
+	FROM risks
+	WHERE organization_id = @organization_id
+		AND reference_id ~ '^RSK-[0-9]+$'
+)
+INSERT INTO risks (
+	id,
+	tenant_id,
+	organization_id,
+	reference_id,
+	name,
+	description,
+	category,
+	owner_profile_id,
+	treatment,
+	note,
+	inherent_likelihood,
+	inherent_impact,
+	residual_likelihood,
+	residual_impact,
+	created_at,
+	updated_at
+)
+SELECT
+	@id,
+	@tenant_id,
+	@organization_id,
+	'RSK-' || LPAD(next_ref.next_num::TEXT, GREATEST(3, LENGTH(next_ref.next_num::TEXT)), '0'),
+	@name,
+	@description,
+	@category,
+	@owner_profile_id,
+	@treatment,
+	@note,
+	@inherent_likelihood,
+	@inherent_impact,
+	@residual_likelihood,
+	@residual_impact,
+	@created_at,
+	@updated_at
+FROM next_ref
+RETURNING reference_id
 `
 
 	args := pgx.StrictNamedArgs{
@@ -606,9 +768,18 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owne
 		"updated_at":          r.UpdatedAt,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
+	err := conn.QueryRow(ctx, q, args).Scan(&r.ReferenceID)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "risks_organization_id_reference_id_key" {
+				return ErrResourceAlreadyExists
+			}
+		}
 
-	return err
+		return fmt.Errorf("cannot insert risk: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Risk) Update(

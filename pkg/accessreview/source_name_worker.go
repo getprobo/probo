@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -35,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/identityfederation"
 )
 
 // sourceNameHandler polls for access sources that have a connector but no
@@ -42,16 +42,18 @@ import (
 type sourceNameHandler struct {
 	pg                *pg.Client
 	encryptionKey     cipher.EncryptionKey
-	connectorRegistry *connector.ConnectorRegistry
+	connectorRegistry *connector.Registry
 	providerRegistry  *provider.Registry
+	federation        *identityfederation.Issuer
 	logger            *log.Logger
 }
 
 func NewSourceNameWorker(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
+	federation *identityfederation.Issuer,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.AccessReviewSource] {
@@ -60,6 +62,7 @@ func NewSourceNameWorker(
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
 		providerRegistry:  providerRegistry,
+		federation:        federation,
 		logger:            logger,
 	}
 
@@ -76,13 +79,46 @@ func NewSourceNameWorker(
 	)
 }
 
+// Name resolution is best-effort display metadata, so its retry budget is
+// small: a briefly unreachable provider gets a few spaced retries, and
+// anything still failing keeps the generic name until a reconnect resets the
+// budget. See LoadNextUnsyncedNameForUpdateSkipLocked for why the budget, not
+// the error taxonomy, is what bounds the claim.
+const (
+	maxNameSyncAttempts = 5
+	nameSyncBaseBackoff = time.Minute
+	nameSyncMaxBackoff  = time.Hour
+)
+
+// nameSyncBackoff returns how long to hold a source out of the queue after its
+// attempt-th failure, doubling from nameSyncBaseBackoff up to the cap.
+func nameSyncBackoff(attempt int) time.Duration {
+	backoff := nameSyncBaseBackoff << max(attempt-1, 0)
+	if backoff > nameSyncMaxBackoff || backoff <= 0 {
+		return nameSyncMaxBackoff
+	}
+
+	return backoff
+}
+
 func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessReviewSource, error) {
 	var source coredata.AccessReviewSource
 
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return source.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx)
+			if err := source.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx); err != nil {
+				return fmt.Errorf("cannot claim next unsynced source name: %w", err)
+			}
+
+			// Charging the attempt here, rather than after Process, is what
+			// bounds the claim: nothing else transitions the predicate.
+			return source.RecordNameSyncAttempt(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(source.ID),
+				nameSyncBackoff(source.NameSyncAttempts+1),
+			)
 		},
 	)
 	if err != nil {
@@ -97,12 +133,9 @@ func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessReviewSou
 }
 
 func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessReviewSource) error {
-	h.logger.InfoCtx(
-		ctx,
-		"syncing source name",
-		log.String("source_id", source.ID.String()),
-		log.String("current_name", source.Name),
-	)
+	logger := h.logger.With(log.String("source_id", source.ID.String()))
+
+	logger.DebugCtx(ctx, "syncing source name")
 
 	var (
 		dbConnector coredata.Connector
@@ -113,36 +146,50 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
-			if source.ConnectorID == nil {
+			if source.ConnectorAccountID == nil {
 				return fmt.Errorf("source %s has no connector", source.ID)
 			}
 
-			if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, h.encryptionKey); err != nil {
-				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
+			account := &coredata.ConnectorAccount{}
+			if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+				return fmt.Errorf("cannot load connector account: %w", err)
 			}
 
-			var tokenBefore string
-			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-				tokenBefore = oauth2Conn.AccessToken
+			if err := dbConnector.LoadByID(ctx, tx, scope, account.ConnectorID, h.encryptionKey); err != nil {
+				return fmt.Errorf("cannot load connector %s: %w", account.ConnectorID, err)
 			}
 
-			httpClient, err := h.connectorHTTPClient(ctx, &dbConnector)
-			if err != nil {
-				return fmt.Errorf("cannot create HTTP client for connector: %w", err)
-			}
-
-			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-				if oauth2Conn.AccessToken != tokenBefore {
-					dbConnector.UpdatedAt = time.Now()
-					if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
-						return fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
-					}
+			// The connection decides which credential the resolver can be
+			// built from, the same way ProbeConnector and resolveDriver
+			// pick a path. A protocol without a factory lands in the
+			// default arm rather than falling through to the other kind.
+			switch conn := dbConnector.Connection.(type) {
+			case *connector.WorkloadIdentityConnection:
+				r, err := h.newCloudNameResolver(ctx, tx, scope, &source, &dbConnector)
+				if err != nil {
+					return err
 				}
+
+				resolver = r
+
+				return nil
+
+			case connector.HTTPConnection:
+				r, err := h.newHTTPNameResolver(ctx, tx, scope, &dbConnector, conn)
+				if err != nil {
+					return err
+				}
+
+				resolver = r
+
+				return nil
+
+			default:
+				return fmt.Errorf(
+					"cannot resolve source name: %s connector has an unsupported credential",
+					dbConnector.Provider,
+				)
 			}
-
-			resolver = h.buildResolver(ctx, &dbConnector, httpClient)
-
-			return nil
 		},
 	)
 	if err != nil {
@@ -150,10 +197,13 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		// or an eager refresh on a revoked token). Mark the source synced
 		// rather than returning nil: an unsynced row is re-claimed every poll
 		// with no backoff and hot-loops the vendor. A reconnect clears it.
-		h.logger.WarnCtx(
+		if ctx.Err() != nil {
+			return err
+		}
+
+		logger.WarnCtx(
 			ctx,
 			"cannot set up name resolver, keeping generic name",
-			log.String("source_id", source.ID.String()),
 			log.Error(err),
 		)
 
@@ -161,11 +211,24 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 	}
 
 	if resolver == nil {
-		h.logger.InfoCtx(
+		logger.DebugCtx(
 			ctx,
 			"no name resolver for provider, keeping generic name",
-			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
+		)
+
+		return h.markNameSynced(ctx, &source)
+	}
+
+	// The budget is charged at claim time, so a crash between the charge and
+	// the resolve leaves the row already over it. Retire it here rather than
+	// spending another request the budget did not authorise.
+	if source.NameSyncAttempts > maxNameSyncAttempts {
+		logger.WarnCtx(
+			ctx,
+			"name resolution exhausted its attempts, keeping generic name",
+			log.String("provider", dbConnector.Provider.String()),
+			log.Int("attempts", source.NameSyncAttempts),
 		)
 
 		return h.markNameSynced(ctx, &source)
@@ -176,16 +239,13 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
-		// A permanent failure (auth/bad-request) cannot be fixed by
-		// retrying: keep the generic name and mark the source synced so the
-		// worker stops re-claiming it every poll. Returning the error here
-		// would leave name_synced_at NULL and re-enqueue the source forever
-		// (a single unauthorized source produced millions of error logs).
+		// Retiring a known-permanent failure on its first attempt spares the
+		// budget four pointless requests. It is only that shortcut: the
+		// budget below, not this branch, is what bounds the claim.
 		if errors.Is(err, drivers.ErrTerminalNameResolution) {
-			h.logger.WarnCtx(
+			logger.WarnCtx(
 				ctx,
 				"permanent name resolution failure, keeping generic name",
-				log.String("source_id", source.ID.String()),
 				log.String("provider", dbConnector.Provider.String()),
 				log.Error(err),
 			)
@@ -193,22 +253,25 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 			return h.markNameSynced(ctx, &source)
 		}
 
-		h.logger.WarnCtx(
-			ctx,
-			"cannot resolve instance name",
-			log.String("source_id", source.ID.String()),
-			log.String("provider", dbConnector.Provider.String()),
-			log.Error(err),
-		)
+		if source.NameSyncAttempts >= maxNameSyncAttempts {
+			logger.WarnCtx(
+				ctx,
+				"name resolution exhausted its attempts, keeping generic name",
+				log.String("provider", dbConnector.Provider.String()),
+				log.Int("attempts", source.NameSyncAttempts),
+				log.Error(err),
+			)
+
+			return h.markNameSynced(ctx, &source)
+		}
 
 		return fmt.Errorf("cannot resolve instance name for source %s: %w", source.ID, err)
 	}
 
 	if instanceName == "" {
-		h.logger.InfoCtx(
+		logger.DebugCtx(
 			ctx,
 			"instance name is empty, keeping generic name",
-			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
 
@@ -216,14 +279,12 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 	}
 
 	displayName := h.providerRegistry.ProviderDisplayName(dbConnector.Provider)
-	newName := displayName + " " + instanceName
+	newName := displayName + " / " + instanceName
 
-	h.logger.InfoCtx(
+	logger.InfoCtx(
 		ctx,
 		"resolved source name",
-		log.String("source_id", source.ID.String()),
-		log.String("old_name", source.Name),
-		log.String("new_name", newName),
+		log.String("connector_id", dbConnector.ID.String()),
 	)
 
 	source.Name = newName
@@ -239,58 +300,77 @@ func (h *sourceNameHandler) markNameSynced(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
-			now := time.Now()
 
-			source.NameSyncedAt = new(now)
-			source.UpdatedAt = now
-
-			if err := source.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update access source: %w", err)
-			}
-
-			return nil
+			return source.MarkNameSynced(ctx, tx, scope, time.Now())
 		},
 	)
 }
 
-// connectorHTTPClient returns an HTTP client for the given connector.
-// For OAuth2 connections it uses RefreshableClient when a refresh config
-// is registered for the provider, so that short-lived tokens are
-// transparently refreshed.
-func (h *sourceNameHandler) connectorHTTPClient(
+func (h *sourceNameHandler) newCloudNameResolver(
 	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
 	dbConnector *coredata.Connector,
-) (*http.Client, error) {
-	oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection)
-	if !ok {
-		// Inject the Probo-held key for ManagedAPIKey providers (no-op
-		// otherwise) before building the client.
-		if err := h.providerRegistry.ApplyManagedAPIKey(dbConnector); err != nil {
-			return nil, err
-		}
-
-		return dbConnector.Connection.Client(ctx)
+) (drivers.NameResolver, error) {
+	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.WorkloadIdentity == nil || reg.WorkloadIdentity.NewNameResolver == nil {
+		return nil, nil
 	}
 
-	if h.connectorRegistry != nil {
-		refreshCfg := h.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
-		if refreshCfg != nil {
-			return oauth2Conn.RefreshableClient(ctx, *refreshCfg)
-		}
+	if source.ConnectorAccountID == nil {
+		return nil, fmt.Errorf("cannot resolve source name: source %s has no connector account", source.ID)
 	}
 
-	return oauth2Conn.Client(ctx)
+	account := &coredata.ConnectorAccount{}
+	if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+		return nil, fmt.Errorf("cannot load connector account %s: %w", *source.ConnectorAccountID, err)
+	}
+
+	session, err := h.openSession(ctx, dbConnector, account.ExternalAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	return reg.WorkloadIdentity.NewNameResolver(ctx, session, dbConnector, h.logger), nil
 }
 
-func (h *sourceNameHandler) buildResolver(
+func (h *sourceNameHandler) newHTTPNameResolver(
 	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
-	httpClient *http.Client,
-) drivers.NameResolver {
+	conn connector.HTTPConnection,
+) (drivers.NameResolver, error) {
 	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
 	if !ok || reg.NewNameResolver == nil {
-		return nil
+		return nil, nil
 	}
 
-	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints)
+	var tokenBefore string
+	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+		tokenBefore = oauth2Conn.AccessToken
+	}
+
+	httpClient, err := buildHTTPClient(
+		ctx,
+		h.connectorRegistry,
+		h.providerRegistry,
+		dbConnector.Provider,
+		conn,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create HTTP client for connector: %w", err)
+	}
+
+	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+		if oauth2Conn.AccessToken != tokenBefore {
+			dbConnector.UpdatedAt = time.Now()
+			if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
+				return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", dbConnector.ID, err)
+			}
+		}
+	}
+
+	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints), nil
 }

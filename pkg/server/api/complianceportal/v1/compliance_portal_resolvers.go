@@ -912,6 +912,10 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		input.DocumentID,
 	)
 	if err != nil {
+		if errors.Is(err, visitor.ErrUserInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
 		return nil, nil
 	}
 
@@ -975,6 +979,10 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		input.ReportID,
 	)
 	if err != nil {
+		if errors.Is(err, visitor.ErrUserInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
 		return nil, nil
 	}
 
@@ -1037,6 +1045,10 @@ func (r *mutationResolver) ExportCompliancePortalFile(ctx context.Context, input
 		input.CompliancePortalFileID,
 	)
 	if err != nil {
+		if errors.Is(err, visitor.ErrUserInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
 		return nil, nil
 	}
 
@@ -1322,6 +1334,10 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 	); err != nil {
 		if errors.Is(err, visitor.ErrNoAccessTargets) {
 			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
+		}
+
+		if errors.Is(err, visitor.ErrUserInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot request accesses", log.Error(err))

@@ -55,17 +55,7 @@ func CommonTrackerPatternOrderFields() []CommonTrackerPatternOrderField {
 }
 
 func (v CommonTrackerPatternOrderField) IsValid() bool {
-	switch v {
-	case
-		CommonTrackerPatternOrderFieldPattern,
-		CommonTrackerPatternOrderFieldConfidence,
-		CommonTrackerPatternOrderFieldCreatedAt,
-		CommonTrackerPatternOrderFieldUpdatedAt,
-		CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CommonTrackerPatternOrderFields())
 }
 
 func (v CommonTrackerPatternOrderField) String() string {
@@ -77,14 +67,7 @@ func (v CommonTrackerPatternOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CommonTrackerPatternOrderField) UnmarshalText(text []byte) error {
-	val := CommonTrackerPatternOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CommonTrackerPatternOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CommonTrackerPatternOrderFields())
 }
 
 func (v CommonTrackerPatternOrderField) Column() string {

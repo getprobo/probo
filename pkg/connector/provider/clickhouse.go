@@ -23,18 +23,31 @@ package provider
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// clickhouseKeyPattern asserts the separator and nothing else: neither half
+// carries a prefix, so what the check can catch is a customer who pasted the
+// key ID or the secret on its own, which the Basic transport would encode as a
+// credential with no password and no way to tell from a dead key.
+var clickhouseKeyPattern = regexp.MustCompile(`^[^:]+:[\s\S]`)
+
 func clickhouseRegistration() *Registration {
 	return &Registration{
 		Provider:         coredata.ConnectorProviderClickHouse,
 		DisplayName:      "ClickHouse Cloud",
 		DocumentationURL: accessReviewDocsURL("clickhouse"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthBasicUserPass},
+			KeyFormat: &KeyFormat{
+				Pattern: clickhouseKeyPattern,
+				Example: "keyId:keySecret",
+			},
+		},
 		// ClickHouse Cloud's control-plane API authenticates with HTTP Basic
 		// auth where the credential is keyId:keySecret. APIKeyBasicAuthUserPass
 		// makes the APIKeyConnection base64 the verbatim "keyId:keySecret"
@@ -43,7 +56,6 @@ func clickhouseRegistration() *Registration {
 		// scoped to exactly one organization, which the driver discovers via
 		// GET /v1/organizations, so there is nothing to pick or configure
 		// (Pattern 3): no settings struct, no picker.
-		APIKeyBasicAuthUserPass: true,
 		Endpoints: Endpoints{
 			// Every control-plane endpoint the driver calls lives under the
 			// same /v1 prefix, so the version segment stays in APIBase.

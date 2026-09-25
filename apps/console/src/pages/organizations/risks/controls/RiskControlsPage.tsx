@@ -121,7 +121,7 @@ export default function RiskControlsPage(props: RiskControlsPageProps) {
         {controls.map(control => (
           <Tr
             key={control.id}
-            to={`/organizations/${organizationId}/frameworks/${control.framework.id}/controls/${control.id}`}
+            to={`/organizations/${organizationId}/governance/frameworks/${control.framework.id}/controls/${control.id}`}
           >
             <Td>
               <span className="inline-flex gap-2 items-center">

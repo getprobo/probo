@@ -60,6 +60,18 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumRejected")
     DOCUMENT_VERSION_APPROVAL_QUORUM_VOIDED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumVoided")
+    TASK_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCreated")
+    TASK_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskUpdated")
+    TASK_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskDeleted")
+    TASK_COMMENT_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCommentCreated")
+    TASK_COMMENT_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCommentUpdated")
+    TASK_COMMENT_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeTaskCommentDeleted")
 }
 
 enum WebhookEventStatus
@@ -108,6 +120,10 @@ input WebhookEventOrder
     direction: OrderDirection!
 }
 
+input WebhookEventFilter {
+    status: WebhookEventStatus
+}
+
 type WebhookSubscription implements Node {
     id: ID!
     organization: Organization @goField(forceResolver: true)
@@ -123,6 +139,7 @@ type WebhookSubscription implements Node {
         last: Int
         before: CursorKey
         orderBy: WebhookEventOrder
+        filter: WebhookEventFilter
     ): WebhookEventConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
@@ -132,6 +149,7 @@ type WebhookEvent implements Node {
     id: ID!
     webhookSubscriptionId: ID!
     status: WebhookEventStatus!
+    payload: String
     response: String
     createdAt: Datetime!
 }

@@ -343,6 +343,139 @@ func TestVendorAttributionRejected(t *testing.T) {
 	)
 }
 
+// TestRejectVendorAttribution pins the shared acceptance bar that governs
+// every write into the global catalog.
+//
+// The nil-SiteOrigin cases carry the design: a catalog pattern belongs to
+// no scanned site, so the scanned-site backstop must be inapplicable
+// there while every other guard stays armed. That is precisely the
+// invariant the enricher used to break by applying no guards at all.
+func TestRejectVendorAttribution(t *testing.T) {
+	t.Parallel()
+
+	origin := "https://example.com"
+
+	confident := func(mut func(*TrackerMappingAgentResult)) TrackerMappingAgentResult {
+		r := TrackerMappingAgentResult{
+			ThirdPartyName:       "Acme Analytics",
+			Category:             coredata.ThirdPartyCategoryAnalytics,
+			ThirdPartyConfidence: 0.9,
+			EvidenceSource:       evidenceSourceNamingConvention,
+		}
+		if mut != nil {
+			mut(&r)
+		}
+
+		return r
+	}
+
+	tests := []struct {
+		name       string
+		mutate     func(*TrackerMappingAgentResult)
+		siteOrigin *string
+		expected   attributionRejection
+	}{
+		{
+			name:       "accepts a confident evidence-backed attribution",
+			siteOrigin: &origin,
+			expected:   attributionAccepted,
+		},
+		{
+			name:     "accepts with no scanned site",
+			expected: attributionAccepted,
+		},
+		{
+			name:       "accepts exactly at the confidence threshold",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyConfidence = 0.6 },
+			siteOrigin: &origin,
+			expected:   attributionAccepted,
+		},
+		{
+			name:       "rejects below the confidence threshold",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyConfidence = 0.3 },
+			siteOrigin: &origin,
+			expected:   attributionRejectedConfidence,
+		},
+		{
+			name:       "rejects an empty name",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedConfidence,
+		},
+		{
+			name:       "rejects a whitespace-only name",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "   " },
+			siteOrigin: &origin,
+			expected:   attributionRejectedConfidence,
+		},
+		{
+			name:       "rejects evidence source none",
+			mutate:     func(r *TrackerMappingAgentResult) { r.EvidenceSource = evidenceSourceNone },
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+		{
+			name:       "rejects an empty evidence source",
+			mutate:     func(r *TrackerMappingAgentResult) { r.EvidenceSource = "" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+		{
+			name:       "rejects an unknown evidence source",
+			mutate:     func(r *TrackerMappingAgentResult) { r.EvidenceSource = "vibes" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+		{
+			name:       "rejects the scanned site as its own third party",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Example" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedScannedSite,
+		},
+		{
+			name:     "scanned-site backstop is inapplicable without an origin",
+			mutate:   func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Example" },
+			expected: attributionAccepted,
+		},
+		{
+			name:       "rejects a cookie-database aggregator",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Cookiepedia" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedAggregator,
+		},
+		{
+			name:     "rejects a cookie-database aggregator without an origin",
+			mutate:   func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Cookiepedia" },
+			expected: attributionRejectedAggregator,
+		},
+		{
+			name: "missing evidence outranks a denylisted name",
+			mutate: func(r *TrackerMappingAgentResult) {
+				r.ThirdPartyName = "Cookiepedia"
+				r.EvidenceSource = evidenceSourceNone
+			},
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				got := rejectVendorAttribution(
+					confident(tt.mutate),
+					attributionContext{SiteOrigin: tt.siteOrigin},
+				)
+
+				assert.Equal(t, tt.expected, got)
+			},
+		)
+	}
+}
+
 func TestBuildAgentPrompt(t *testing.T) {
 	t.Parallel()
 
@@ -383,4 +516,108 @@ func TestBuildAgentPrompt(t *testing.T) {
 			assert.Less(t, strings.Index(prompt, "<scanned_site>"), strings.Index(prompt, "<observed_domains>"))
 		},
 	)
+}
+
+// TestTerminalVerdictFor pins which attribution a terminal agent verdict
+// persists. NOT_ATTRIBUTABLE must win over FIRST_PARTY: an extension key
+// egresses nothing to a vendor and so satisfies the first-party test too, but
+// the operator did not write it and recording it as theirs would be false.
+// TestRejectVendorAttribution_TerminalVerdictOutranksVendor pins the ordering
+// that decides which of two contradictory agent answers wins.
+//
+// An agent can name a defensible vendor and flag the artifact terminal in the
+// same response. Accepting the vendor there wrote a THIRD_PARTY row for an
+// artifact the agent said had no third party, so the terminal verdict was
+// silently discarded and the row was both attributed and settled.
+func TestRejectVendorAttribution_TerminalVerdictOutranksVendor(t *testing.T) {
+	t.Parallel()
+
+	defensible := TrackerMappingAgentResult{
+		ThirdPartyName:       "PostHog",
+		Category:             coredata.ThirdPartyCategoryAnalytics,
+		ThirdPartyConfidence: 0.95,
+		EvidenceSource:       evidenceSourceNamingConvention,
+	}
+
+	t.Run("accepted when no terminal flag is set", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(
+			t,
+			attributionAccepted,
+			rejectVendorAttribution(defensible, attributionContext{}),
+		)
+	})
+
+	for name, mutate := range map[string]func(*TrackerMappingAgentResult){
+		"first party":      func(r *TrackerMappingAgentResult) { r.IsFirstParty = true },
+		"not attributable": func(r *TrackerMappingAgentResult) { r.IsNotAttributable = true },
+	} {
+		t.Run("rejected alongside "+name, func(t *testing.T) {
+			t.Parallel()
+
+			r := defensible
+			mutate(&r)
+
+			assert.Equal(
+				t,
+				attributionRejectedTerminalVerdict,
+				rejectVendorAttribution(r, attributionContext{}),
+				"a terminal verdict must stop the vendor being recorded",
+			)
+		})
+	}
+}
+
+func TestTerminalVerdictFor(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		firstParty      bool
+		notAttributable bool
+		expected        coredata.CommonTrackerPatternAttribution
+	}{
+		{name: "neither flag settles nothing", expected: ""},
+		{name: "first party alone", firstParty: true, expected: coredata.CommonTrackerPatternAttributionFirstParty},
+		{name: "not attributable alone", notAttributable: true, expected: coredata.CommonTrackerPatternAttributionNotAttributable},
+		{
+			name:            "not attributable wins over first party",
+			firstParty:      true,
+			notAttributable: true,
+			expected:        coredata.CommonTrackerPatternAttributionNotAttributable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := terminalVerdictFor(TrackerMappingAgentResult{
+				IsFirstParty:      tt.firstParty,
+				IsNotAttributable: tt.notAttributable,
+			})
+
+			assert.Equal(t, tt.expected, got)
+
+			if tt.expected != "" {
+				assert.True(t, got.IsTerminal(), "a persisted verdict must be terminal")
+			}
+		})
+	}
+}
+
+// TestIsExtensionSource pins the guard that keeps a confirmed extension write
+// away from the mapping agent. The stack carried an extension frame, which is
+// stronger evidence than any verdict the agent could produce, so asking it to
+// attribute a vendor could only pollute the global catalog.
+func TestIsExtensionSource(t *testing.T) {
+	t.Parallel()
+
+	extension := coredata.CookieSourceExtension
+	script := coredata.CookieSourceScript
+
+	assert.True(t, isExtensionSource(coredata.TrackerPattern{Source: &extension}))
+	assert.False(t, isExtensionSource(coredata.TrackerPattern{Source: &script}))
+	assert.False(t, isExtensionSource(coredata.TrackerPattern{}), "an unknown source must not be treated as an extension")
 }

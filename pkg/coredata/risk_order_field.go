@@ -34,6 +34,7 @@ type (
 const (
 	RiskOrderFieldCreatedAt         RiskOrderField = "CREATED_AT"
 	RiskOrderFieldUpdatedAt         RiskOrderField = "UPDATED_AT"
+	RiskOrderFieldReferenceID       RiskOrderField = "REFERENCE_ID"
 	RiskOrderFieldName              RiskOrderField = "NAME"
 	RiskOrderFieldCategory          RiskOrderField = "CATEGORY"
 	RiskOrderFieldTreatment         RiskOrderField = "TREATMENT"
@@ -53,6 +54,7 @@ func RiskOrderFields() []RiskOrderField {
 	return []RiskOrderField{
 		RiskOrderFieldCreatedAt,
 		RiskOrderFieldUpdatedAt,
+		RiskOrderFieldReferenceID,
 		RiskOrderFieldName,
 		RiskOrderFieldCategory,
 		RiskOrderFieldTreatment,
@@ -63,20 +65,7 @@ func RiskOrderFields() []RiskOrderField {
 }
 
 func (v RiskOrderField) IsValid() bool {
-	switch v {
-	case
-		RiskOrderFieldCreatedAt,
-		RiskOrderFieldUpdatedAt,
-		RiskOrderFieldName,
-		RiskOrderFieldCategory,
-		RiskOrderFieldTreatment,
-		RiskOrderFieldInherentRiskScore,
-		RiskOrderFieldResidualRiskScore,
-		RiskOrderFieldOwnerFullName:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, RiskOrderFields())
 }
 
 func (v RiskOrderField) String() string {
@@ -88,14 +77,7 @@ func (v RiskOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *RiskOrderField) UnmarshalText(text []byte) error {
-	val := RiskOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid RiskOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, RiskOrderFields())
 }
 
 func (p RiskOrderField) Column() string {

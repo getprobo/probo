@@ -39,15 +39,35 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-const MaxTrackerIdentifierLength = 255
+const (
+	MaxTrackerIdentifierLength = 255
+	MaxTCStringLength          = 16 * 1024
+)
 
 type Service struct {
 	pg           *pg.Client
 	showBranding bool
+	tcfCmpID     int
 }
 
-func NewService(pgClient *pg.Client, showBranding bool) *Service {
-	return &Service{pg: pgClient, showBranding: showBranding}
+func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
+	return &Service{
+		pg:           pgClient,
+		showBranding: showBranding,
+		tcfCmpID:     normalizeTCFCmpID(tcfCmpID),
+	}
+}
+
+func (s *Service) TCFCmpID() int {
+	return s.tcfCmpID
+}
+
+func normalizeTCFCmpID(id int) int {
+	if id < 2 || id > 4095 {
+		return DefaultTCFCmpID
+	}
+
+	return id
 }
 
 type (
@@ -69,13 +89,14 @@ type (
 	}
 
 	UpdateCookieBannerRequest struct {
-		CookieBannerID    gid.GID
-		Name              *string
-		PrivacyPolicyURL  *string
-		CookiePolicyURL   *string
-		ConsentExpiryDays *int
-		DefaultLanguage   *string
-		Capabilities      *coredata.CookieBannerCapabilitiesPatch
+		CookieBannerID       gid.GID
+		Name                 *string
+		PrivacyPolicyURL     *string
+		CookiePolicyURL      *string
+		ConsentExpiryDays    *int
+		DefaultLanguage      *string
+		PublisherCountryCode *string
+		Capabilities         *coredata.CookieBannerCapabilitiesPatch
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -84,6 +105,7 @@ type (
 		Slug             *string
 		Description      *string
 		GCMConsentTypes  *[]string
+		TCFPurposeIDs    *[]int
 		PostHogConsent   *bool
 	}
 
@@ -116,6 +138,7 @@ type (
 		CountryCode      *coredata.CountryCode
 		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
+		TC               *string
 	}
 
 	DetectedCookie struct {
@@ -215,8 +238,36 @@ type (
 		Layout                   Layout                                         `json:"layout"`
 		ShowBranding             bool                                           `json:"show_branding"`
 		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
+		TCF                      *BannerTCF                                     `json:"tcf,omitempty"`
 		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts                    map[string]string                              `json:"texts"`
+	}
+
+	// BannerTCF is omitted from GET config when the hidden TCF capability is
+	// off, or when the request is not GDPR / UK GDPR. Nested keys are our
+	// config; `gvl` is IAB vendor-list.json shape.
+	BannerTCF struct {
+		CmpID       *int          `json:"cmp_id,omitempty"`
+		CmpVersion  *int          `json:"cmp_version,omitempty"`
+		PublisherCC string        `json:"publisher_cc,omitempty"`
+		GVL         *BannerTCFGVL `json:"gvl,omitempty"`
+	}
+
+	// BannerTCFGVL is a vendor-list.json-shaped object with vendors reduced to
+	// the banner’s disclosed IAB IDs. Nested keys follow the IAB GVL schema
+	// (camelCase) so @iabtechlabtcf/core can construct a GVL from it.
+	BannerTCFGVL struct {
+		GVLSpecificationVersion int                        `json:"gvlSpecificationVersion"`
+		VendorListVersion       int                        `json:"vendorListVersion"`
+		TCFPolicyVersion        int                        `json:"tcfPolicyVersion"`
+		LastUpdated             string                     `json:"lastUpdated,omitempty"`
+		Purposes                json.RawMessage            `json:"purposes,omitempty"`
+		SpecialPurposes         json.RawMessage            `json:"specialPurposes,omitempty"`
+		Features                json.RawMessage            `json:"features,omitempty"`
+		SpecialFeatures         json.RawMessage            `json:"specialFeatures,omitempty"`
+		Stacks                  json.RawMessage            `json:"stacks,omitempty"`
+		DataCategories          json.RawMessage            `json:"dataCategories,omitempty"`
+		Vendors                 map[string]json.RawMessage `json:"vendors"`
 	}
 
 	UpsertCookieBannerTranslationRequest struct {
@@ -230,7 +281,23 @@ type (
 		Version     int                          `json:"version"`
 		Action      coredata.CookieConsentAction `json:"action"`
 		ConsentData json.RawMessage              `json:"consent_data"`
+		TC          *string                      `json:"tc,omitempty"`
 		CreatedAt   time.Time                    `json:"created_at"`
+	}
+
+	CommonGVLCatalog struct {
+		VendorListVersion *int
+		TCFPolicyVersion  *int
+	}
+
+	AddCookieBannerGVLVendorRequest struct {
+		CookieBannerID gid.GID
+		IABVendorID    int
+	}
+
+	RemoveCookieBannerGVLVendorRequest struct {
+		CookieBannerID gid.GID
+		IABVendorID    int
 	}
 )
 
@@ -257,6 +324,31 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.DefaultLanguage, "default_language", validator.OneOfSlice(SupportedLanguages))
 
+	if r.PublisherCountryCode != nil {
+		code := strings.ToUpper(strings.TrimSpace(*r.PublisherCountryCode))
+		r.PublisherCountryCode = &code
+	}
+
+	v.Check(r.PublisherCountryCode, "publisher_country_code", publisherCountryCode())
+
+	return v.Error()
+}
+
+func (r *AddCookieBannerGVLVendorRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
+	v.Check(r.IABVendorID, "iab_vendor_id", validator.Required(), validator.Min(1))
+
+	return v.Error()
+}
+
+func (r *RemoveCookieBannerGVLVendorRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
+	v.Check(r.IABVendorID, "iab_vendor_id", validator.Required(), validator.Min(1))
+
 	return v.Error()
 }
 
@@ -279,6 +371,12 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(r.Slug, "slug", validator.Slug(100))
 	v.Check(r.Description, "description", validator.SafeText(1000))
+
+	if r.TCFPurposeIDs != nil {
+		v.CheckEach(*r.TCFPurposeIDs, "tcf_purpose_ids", func(index int, item any) {
+			v.Check(item, fmt.Sprintf("tcf_purpose_ids.%d", index), validator.Min(1), validator.Max(11))
+		})
+	}
 
 	return v.Error()
 }
@@ -309,6 +407,7 @@ func (r *RecordConsentRequest) Validate() error {
 	v.Check(r.Version, "version", validator.Required(), validator.Min(1))
 	v.Check(r.VisitorID, "visitor_id", validator.Required(), validator.NotEmpty())
 	v.Check(r.Action, "action", validator.Required(), validator.OneOfSlice(coredata.CookieConsentActions()))
+	v.Check(r.TC, "tc", validator.MaxLen(MaxTCStringLength))
 
 	return v.Error()
 }
@@ -495,11 +594,18 @@ func (s *Service) ensureDraftVersion(
 	categories coredata.CookieCategories,
 	allPatterns coredata.TrackerPatterns,
 ) (*coredata.CookieBannerVersion, error) {
-	snapshot := buildSnapshot(banner, categories, allPatterns)
+	var links coredata.CookieBannerGVLVendors
+
+	iabVendorIDs, err := links.LoadIABVendorIDsByCookieBannerID(ctx, tx, scope, banner.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load cookie banner gvl vendor ids: %w", err)
+	}
+
+	snapshot := buildSnapshot(banner, categories, allPatterns, iabVendorIDs)
 
 	var latest coredata.CookieBannerVersion
 
-	err := latest.LoadLatestByCookieBannerID(ctx, tx, scope, banner.ID)
+	err = latest.LoadLatestByCookieBannerID(ctx, tx, scope, banner.ID)
 	if err == nil {
 		if latestSnapshot, snapErr := latest.GetSnapshot(); snapErr == nil && snapshotsEqual(snapshot, latestSnapshot) {
 			return &latest, nil
@@ -622,19 +728,20 @@ func (s *Service) CreateCookieBanner(
 			now := time.Now()
 
 			banner = &coredata.CookieBanner{
-				ID:                gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
-				OrganizationID:    req.OrganizationID,
-				Name:              req.Name,
-				Origin:            CanonicalizeOrigin(req.Origin),
-				State:             coredata.CookieBannerStateActive,
-				PrivacyPolicyURL:  req.PrivacyPolicyURL,
-				CookiePolicyURL:   req.CookiePolicyURL,
-				ConsentExpiryDays: req.ConsentExpiryDays,
-				ShowBranding:      s.showBranding,
-				Capabilities:      coredata.DefaultCookieBannerCapabilities(),
-				DefaultLanguage:   "en",
-				CreatedAt:         now,
-				UpdatedAt:         now,
+				ID:                   gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
+				OrganizationID:       req.OrganizationID,
+				Name:                 req.Name,
+				Origin:               CanonicalizeOrigin(req.Origin),
+				State:                coredata.CookieBannerStateActive,
+				PrivacyPolicyURL:     req.PrivacyPolicyURL,
+				CookiePolicyURL:      req.CookiePolicyURL,
+				ConsentExpiryDays:    req.ConsentExpiryDays,
+				ShowBranding:         s.showBranding,
+				Capabilities:         coredata.DefaultCookieBannerCapabilities(),
+				DefaultLanguage:      "en",
+				PublisherCountryCode: tcfPublisherCC,
+				CreatedAt:            now,
+				UpdatedAt:            now,
 			}
 
 			if err := banner.Insert(ctx, tx, scope); err != nil {
@@ -652,6 +759,11 @@ func (s *Service) CreateCookieBanner(
 					gcmConsentTypes = []string{}
 				}
 
+				tcfPurposeIDs := dc.TCFPurposeIDs
+				if tcfPurposeIDs == nil {
+					tcfPurposeIDs = []int{}
+				}
+
 				category := &coredata.CookieCategory{
 					ID:              gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
 					OrganizationID:  banner.OrganizationID,
@@ -662,6 +774,7 @@ func (s *Service) CreateCookieBanner(
 					Kind:            dc.Kind,
 					Rank:            dc.Rank,
 					GCMConsentTypes: gcmConsentTypes,
+					TCFPurposeIDs:   tcfPurposeIDs,
 					PostHogConsent:  dc.PostHogConsent,
 					CreatedAt:       now,
 					UpdatedAt:       now,
@@ -805,6 +918,285 @@ func (s *Service) GetCookieBannersByIDs(
 	return banners, nil
 }
 
+func (s *Service) ListCommonGVLVendors(
+	ctx context.Context,
+	cursor *page.Cursor[coredata.CommonGVLVendorOrderField],
+	filter *coredata.CommonGVLVendorFilter,
+) (coredata.CommonGVLVendors, error) {
+	var vendors coredata.CommonGVLVendors
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := vendors.Load(ctx, conn, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list common gvl vendors: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return vendors, nil
+}
+
+func (s *Service) CountCommonGVLVendors(
+	ctx context.Context,
+	filter *coredata.CommonGVLVendorFilter,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var vendors coredata.CommonGVLVendors
+
+			var err error
+
+			count, err = vendors.Count(ctx, conn, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count common gvl vendors: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) GetCommonGVLCatalog(ctx context.Context) (*CommonGVLCatalog, error) {
+	catalog := &CommonGVLCatalog{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var state coredata.CommonGVLState
+			if err := state.Load(ctx, conn); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load common gvl state: %w", err)
+			}
+
+			if state.LatestVendorListVersion == nil {
+				return nil
+			}
+
+			var snapshot coredata.CommonGVLSnapshot
+			if err := snapshot.LoadByVendorListVersion(ctx, conn, *state.LatestVendorListVersion); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load common gvl snapshot: %w", err)
+			}
+
+			catalog.VendorListVersion = state.LatestVendorListVersion
+			catalog.TCFPolicyVersion = new(snapshot.TCFPolicyVersion)
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return catalog, nil
+}
+
+func (s *Service) ListCookieBannerGVLVendors(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	cursor *page.Cursor[coredata.CommonGVLVendorOrderField],
+) (coredata.CommonGVLVendors, error) {
+	var vendors coredata.CommonGVLVendors
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := vendors.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor); err != nil {
+				return fmt.Errorf("cannot list cookie banner gvl vendors: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return vendors, nil
+}
+
+func (s *Service) ListCookieBannerGVLVendorIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) ([]int, error) {
+	var ids []int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var links coredata.CookieBannerGVLVendors
+
+			loaded, err := links.LoadIABVendorIDsByCookieBannerID(ctx, conn, scope, bannerID)
+			if err != nil {
+				return fmt.Errorf("cannot list cookie banner gvl vendor ids: %w", err)
+			}
+
+			ids = loaded
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+func (s *Service) CountCookieBannerGVLVendors(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var vendors coredata.CommonGVLVendors
+
+			var err error
+
+			count, err = vendors.CountByCookieBannerID(ctx, conn, scope, bannerID)
+			if err != nil {
+				return fmt.Errorf("cannot count cookie banner gvl vendors: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) AddCookieBannerGVLVendor(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AddCookieBannerGVLVendorRequest,
+) (*coredata.CommonGVLVendor, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var vendor coredata.CommonGVLVendor
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, req.CookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			if !banner.Capabilities.TCF {
+				return ErrTCFNotEnabled
+			}
+
+			if err := vendor.LoadByIABVendorID(ctx, tx, req.IABVendorID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrGVLVendorNotFound
+				}
+
+				return fmt.Errorf("cannot load common gvl vendor: %w", err)
+			}
+
+			if vendor.IsDeleted(time.Now()) {
+				return ErrGVLVendorDeleted
+			}
+
+			link := coredata.CookieBannerGVLVendor{
+				CookieBannerID: banner.ID,
+				IABVendorID:    vendor.IABVendorID,
+				OrganizationID: banner.OrganizationID,
+				CreatedAt:      time.Now(),
+			}
+
+			if err := link.Upsert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot add cookie banner gvl vendor: %w", err)
+			}
+
+			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
+				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &vendor, nil
+}
+
+func (s *Service) RemoveCookieBannerGVLVendor(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req RemoveCookieBannerGVLVendorRequest,
+) error {
+	if err := req.Validate(); err != nil {
+		return fmt.Errorf("invalid request: %w", err)
+	}
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, req.CookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			// Removal stays available even when TCF is off, so vendors linked
+			// while it was on can still be cleaned up. Gating it too would leave
+			// those rows undeletable while ensureDraftVersion keeps folding them
+			// into every new snapshot.
+			var link coredata.CookieBannerGVLVendor
+			if err := link.Delete(ctx, tx, scope, banner.ID, req.IABVendorID); err != nil {
+				return fmt.Errorf("cannot remove cookie banner gvl vendor: %w", err)
+			}
+
+			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
+				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
 func (s *Service) GetActiveCookieBanner(
 	ctx context.Context,
 	bannerID gid.GID,
@@ -916,12 +1308,13 @@ func (s *Service) UpdateCookieBanner(
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
+			publisherCCChanged := req.PublisherCountryCode != nil && *req.PublisherCountryCode != banner.PublisherCountryCode
 			capabilitiesChanged := req.Capabilities != nil &&
 				req.Capabilities.Apply(banner.Capabilities) != banner.Capabilities
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
-			if !nameChanged && !snapshotChanged && !capabilitiesChanged {
+			if !nameChanged && !snapshotChanged && !capabilitiesChanged && !publisherCCChanged {
 				return nil
 			}
 
@@ -943,6 +1336,10 @@ func (s *Service) UpdateCookieBanner(
 
 			if req.DefaultLanguage != nil {
 				banner.DefaultLanguage = *req.DefaultLanguage
+			}
+
+			if req.PublisherCountryCode != nil {
+				banner.PublisherCountryCode = *req.PublisherCountryCode
 			}
 
 			if req.Capabilities != nil {
@@ -1207,6 +1604,7 @@ func (s *Service) CreateCookieCategory(
 				Kind:            coredata.CookieCategoryKindNormal,
 				Rank:            req.Rank,
 				GCMConsentTypes: []string{},
+				TCFPurposeIDs:   []int{},
 				CreatedAt:       now,
 				UpdatedAt:       now,
 			}
@@ -1368,9 +1766,10 @@ func (s *Service) UpdateCookieCategory(
 			slugChanged := req.Slug != nil && *req.Slug != category.Slug
 			descChanged := req.Description != nil && *req.Description != category.Description
 			gcmChanged := req.GCMConsentTypes != nil && !slices.Equal(*req.GCMConsentTypes, category.GCMConsentTypes)
+			tcfChanged := req.TCFPurposeIDs != nil && !slices.Equal(*req.TCFPurposeIDs, category.TCFPurposeIDs)
 			posthogChanged := req.PostHogConsent != nil && *req.PostHogConsent != category.PostHogConsent
 
-			if !nameChanged && !slugChanged && !descChanged && !gcmChanged && !posthogChanged {
+			if !nameChanged && !slugChanged && !descChanged && !gcmChanged && !tcfChanged && !posthogChanged {
 				return nil
 			}
 
@@ -1388,6 +1787,10 @@ func (s *Service) UpdateCookieCategory(
 
 			if req.GCMConsentTypes != nil {
 				category.GCMConsentTypes = *req.GCMConsentTypes
+			}
+
+			if req.TCFPurposeIDs != nil {
+				category.TCFPurposeIDs = *req.TCFPurposeIDs
 			}
 
 			if posthogChanged {
@@ -1543,6 +1946,34 @@ func (s *Service) GetCookieBannerVersion(
 				}
 
 				return fmt.Errorf("cannot load cookie banner version: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &version, nil
+}
+
+func (s *Service) GetLatestPublishedCookieBannerVersion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (*coredata.CookieBannerVersion, error) {
+	var version coredata.CookieBannerVersion
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := version.LoadLatestPublishedByCookieBannerID(ctx, conn, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrVersionNotFound
+				}
+
+				return fmt.Errorf("cannot load latest published cookie banner version: %w", err)
 			}
 
 			return nil
@@ -1775,6 +2206,12 @@ func (s *Service) GetActiveBannerConfig(
 			resolved := resolveTranslations(translations, categories)
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
+			if banner.Capabilities.TCF && tcfServesGVL(regulation) {
+				if err := s.attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
+					return err
+				}
+			}
+
 			return nil
 		},
 	)
@@ -1853,6 +2290,8 @@ func buildBannerConfig(
 		}
 	}
 
+	mergeTCFTexts(resolvedLang, texts)
+
 	var privacyPolicyURL string
 	if snapshot.PrivacyPolicyURL != nil {
 		privacyPolicyURL = *snapshot.PrivacyPolicyURL
@@ -1871,6 +2310,63 @@ func buildBannerConfig(
 		Categories:               categories,
 		Texts:                    texts,
 	}
+}
+
+func (s *Service) attachTCFVendors(
+	ctx context.Context,
+	conn pg.Querier,
+	config *BannerConfig,
+	iabVendorIDs []int,
+	publisherCC string,
+) error {
+	if config.TCF == nil {
+		config.TCF = &BannerTCF{}
+	}
+
+	cmpID := s.tcfCmpID
+	cmpVersion := tcfCmpVersion
+	config.TCF.CmpID = &cmpID
+	config.TCF.CmpVersion = &cmpVersion
+
+	if publisherCC == "" {
+		publisherCC = tcfPublisherCC
+	}
+
+	config.TCF.PublisherCC = publisherCC
+
+	var snapshot *coredata.CommonGVLSnapshot
+
+	var state coredata.CommonGVLState
+	if err := state.Load(ctx, conn); err != nil {
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			return fmt.Errorf("cannot load common gvl state: %w", err)
+		}
+	} else if state.LatestVendorListVersion != nil {
+		var loaded coredata.CommonGVLSnapshot
+		if err := loaded.LoadByVendorListVersion(ctx, conn, *state.LatestVendorListVersion); err != nil {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load common gvl snapshot: %w", err)
+			}
+		} else {
+			snapshot = &loaded
+		}
+	}
+
+	if snapshot == nil {
+		return nil
+	}
+
+	var vendors coredata.CommonGVLVendors
+	if err := vendors.LoadByIABVendorIDs(ctx, conn, iabVendorIDs); err != nil {
+		return fmt.Errorf("cannot load tcf vendors: %w", err)
+	}
+
+	config.TCF.GVL = buildTCFGVL(snapshot, vendors, iabVendorIDs)
+	if config.TCF.GVL.VendorListVersion == 0 && state.LatestVendorListVersion != nil {
+		config.TCF.GVL.VendorListVersion = *state.LatestVendorListVersion
+	}
+
+	return nil
 }
 
 func (s *Service) SetShowBranding(
@@ -2050,6 +2546,7 @@ func (s *Service) GetVisitorConsent(
 				Version:     version.Version,
 				Action:      record.Action,
 				ConsentData: record.ConsentData,
+				TC:          record.TC,
 				CreatedAt:   record.CreatedAt,
 			}
 
@@ -2061,6 +2558,14 @@ func (s *Service) GetVisitorConsent(
 	}
 
 	return consent, nil
+}
+
+func optionalNonEmptyString(value *string) *string {
+	if value == nil || *value == "" {
+		return nil
+	}
+
+	return value
 }
 
 func (s *Service) RecordConsent(
@@ -2106,6 +2611,10 @@ func (s *Service) RecordConsent(
 				return ErrVersionNotPublished
 			}
 
+			if err := validateConsentTC(banner.Capabilities.TCF, req.Regulation, req.TC, s.tcfCmpID); err != nil {
+				return fmt.Errorf("invalid request: %w", err)
+			}
+
 			record = &coredata.CookieConsentRecord{
 				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
 				OrganizationID:        banner.OrganizationID,
@@ -2122,6 +2631,7 @@ func (s *Service) RecordConsent(
 				CountryCode:           req.CountryCode,
 				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
+				TC:                    optionalNonEmptyString(req.TC),
 				CreatedAt:             time.Now(),
 			}
 
@@ -2740,13 +3250,30 @@ func (s *Service) MoveTrackerPatternToCategory(
 
 			// A manual move is the user's signal that this is a
 			// real tracker. Enqueue the tracker-mapping worker so
-			// it can promote the pattern to an org ThirdParty (or
-			// link an existing one) — never EXTENSION-sourced
-			// patterns, and never patterns we already promoted.
-			// SetMappingRequested is idempotent: it short-circuits
-			// when mapping_requested_at is already non-NULL.
-			if pattern.ThirdPartyID == nil &&
-				(pattern.Source == nil || *pattern.Source != coredata.CookieSourceExtension) {
+			// it can resolve the catalog vendor — never
+			// EXTENSION-sourced patterns, and never patterns whose
+			// catalog row already has a vendor or a terminal
+			// attribution. An unmatched / undetermined catalog
+			// link is not resolved: sibling and domain signals
+			// still need a chance to backfill. SetMappingRequested
+			// is idempotent: it short-circuits when
+			// mapping_requested_at is already non-NULL.
+			shouldEnqueueMapping := pattern.Source == nil ||
+				*pattern.Source != coredata.CookieSourceExtension
+
+			if shouldEnqueueMapping && pattern.CommonTrackerPatternID != nil {
+				var commonPattern coredata.CommonTrackerPattern
+				if err := commonPattern.LoadByID(ctx, tx, *pattern.CommonTrackerPatternID); err != nil {
+					if !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load common tracker pattern: %w", err)
+					}
+				} else if commonPattern.Attribution.IsTerminal() ||
+					commonPattern.CommonThirdPartyID != nil {
+					shouldEnqueueMapping = false
+				}
+			}
+
+			if shouldEnqueueMapping {
 				if err := pattern.SetMappingRequested(ctx, tx); err != nil {
 					return fmt.Errorf("cannot enqueue tracker mapping after move: %w", err)
 				}
@@ -2854,41 +3381,6 @@ func (s *Service) GetCommonTrackerPatternsByIDs(
 	}
 
 	return patterns, nil
-}
-
-// LoadDistinctThirdPartyIDsByCookieBannerID returns the distinct
-// org-scoped third-party IDs referenced by tracker patterns of the
-// banner. The companion
-// LoadDistinctCommonTrackerPatternIDsByCookieBannerID covers the
-// indirect mapping through common_tracker_patterns.
-func (s *Service) LoadDistinctThirdPartyIDsByCookieBannerID(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-) ([]gid.GID, error) {
-	var ids []gid.GID
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var (
-				patterns coredata.TrackerPatterns
-				err      error
-			)
-
-			ids, err = patterns.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
-			if err != nil {
-				return fmt.Errorf("cannot load distinct third party ids: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return ids, nil
 }
 
 func (s *Service) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(

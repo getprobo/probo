@@ -27,6 +27,7 @@ SOFTWARE. -->
 		Preprocessor variables (passed by build.ps1 via wix -d):
 		  Version      Product version, e.g. 0.3.0  → $(var.Version)
 		  AgentExe     Absolute path to probo-agent.exe → $(var.AgentExe)
+		  GUIAgentExe  Absolute path to probo-agentw.exe → $(var.GUIAgentExe)
 		  ProductIcon  Absolute path to the generated product ICO → $(var.ProductIcon)
 	-->
 	<Package
@@ -61,6 +62,15 @@ SOFTWARE. -->
 				/>
 			</Component>
 
+			<Component Guid="430dc51c-baba-45e9-ac74-5cf9d3109d2e">
+				<File
+					Id="ProboAgentGUIExe"
+					Source="$(var.GUIAgentExe)"
+					Name="probo-agentw.exe"
+					KeyPath="yes"
+				/>
+			</Component>
+
 			<Component Guid="6603ee19-ddba-42f1-8961-5cd945374657">
 				<RegistryKey Root="HKLM" Key="Software\Classes\probo">
 					<RegistryValue
@@ -72,7 +82,7 @@ SOFTWARE. -->
 					<RegistryKey Key="shell\open\command">
 						<RegistryValue
 							Type="string"
-							Value="&quot;[INSTALLFOLDER]probo-agent.exe&quot; &quot;%1&quot;"
+							Value="&quot;[INSTALLFOLDER]probo-agentw.exe&quot; &quot;%1&quot;"
 						/>
 					</RegistryKey>
 				</RegistryKey>
@@ -91,7 +101,7 @@ SOFTWARE. -->
 		     machine-wide tray autostart. -->
 		<CustomAction
 			Id="RegisterTray"
-			FileRef="ProboAgentExe"
+			FileRef="ProboAgentGUIExe"
 			ExeCommand="setup-tray"
 			Execute="deferred"
 			Impersonate="no"
@@ -99,7 +109,7 @@ SOFTWARE. -->
 		/>
 		<CustomAction
 			Id="UnregisterTray"
-			FileRef="ProboAgentExe"
+			FileRef="ProboAgentGUIExe"
 			ExeCommand="setup-tray --unregister"
 			Execute="deferred"
 			Impersonate="no"

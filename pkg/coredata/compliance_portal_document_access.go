@@ -524,143 +524,6 @@ WHERE
 	return count, nil
 }
 
-func (tcdas *CompliancePortalDocumentAccesses) LoadAvailableByCompliancePortalAccessID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	compliancePortalAccessID gid.GID,
-	cursor *page.Cursor[CompliancePortalDocumentAccessOrderField],
-) error {
-	q := `
-WITH organization AS (
-    SELECT tc.organization_id, tc.id AS compliance_portal_id
-    FROM cp_accesses tca
-    INNER JOIN compliance_portals tc ON tca.compliance_portal_id = tc.id
-    WHERE tca.tenant_id = @tenant_id
-        AND tca.id = @compliance_portal_access_id
-),
-tenant_organization AS (
-    SELECT o.id AS organization_id
-    FROM organizations o
-    WHERE %s
-),
-all_items AS (
-    SELECT
-        d.id AS item_id,
-        d.id AS document_id,
-        NULL::text AS report_file_id,
-        NULL::text AS compliance_portal_file_id,
-        d.created_at AS item_created_at,
-        d.updated_at AS item_updated_at
-    FROM documents d, tenant_organization o
-    WHERE d.organization_id = o.organization_id
-        AND d.deleted_at IS NULL
-        AND d.status = 'ACTIVE'::document_status
-        AND d.current_published_major IS NOT NULL
-        AND d.id IN (
-            SELECT tcd.document_id
-            FROM cp_documents tcd
-            WHERE tcd.compliance_portal_id = (SELECT compliance_portal_id FROM organization)
-                AND tcd.visibility = 'RESTRICTED'::compliance_portal_visibility
-        )
-
-    UNION ALL
-
-    SELECT
-        r.report_file_id AS item_id,
-        NULL::text AS document_id,
-        r.report_file_id AS report_file_id,
-        NULL::text AS compliance_portal_file_id,
-        r.created_at AS item_created_at,
-        r.updated_at AS item_updated_at
-    FROM audits r, tenant_organization o
-    WHERE r.organization_id = o.organization_id
-        AND r.report_file_id IS NOT NULL
-        AND r.id IN (
-            SELECT tca.audit_id
-            FROM cp_audits tca
-            WHERE tca.compliance_portal_id = (SELECT compliance_portal_id FROM organization)
-                AND tca.visibility = 'RESTRICTED'::compliance_portal_visibility
-        )
-
-    UNION ALL
-
-    SELECT
-        tcf.id AS item_id,
-        NULL::text AS document_id,
-        NULL::text AS report_file_id,
-        tcf.id AS compliance_portal_file_id,
-        tcf.created_at AS item_created_at,
-        tcf.updated_at AS item_updated_at
-    FROM cp_files tcf, tenant_organization o
-    WHERE tcf.organization_id = o.organization_id
-        AND tcf.compliance_portal_id = (SELECT compliance_portal_id FROM organization)
-        AND (
-            tcf.compliance_portal_visibility = 'RESTRICTED'::compliance_portal_visibility
-            OR tcf.compliance_portal_visibility = 'NONE'::compliance_portal_visibility
-        )
-),
-final_items AS (
-  SELECT
-      COALESCE(tcda.id, ai.item_id) AS id,
-      tcda.tenant_id,
-      (SELECT organization_id FROM organization) AS organization_id,
-      @compliance_portal_access_id AS compliance_portal_access_id,
-      ai.document_id,
-      ai.report_file_id,
-      ai.compliance_portal_file_id,
-      COALESCE(tcda.status, 'REQUESTED'::compliance_portal_document_access_status) AS status,
-      tcda.requested_at AS requested_at,
-      COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
-      COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
-  FROM all_items ai
-  LEFT JOIN cp_document_accesses tcda ON (
-      tcda.compliance_portal_access_id = @compliance_portal_access_id
-      AND (
-          (tcda.document_id = ai.document_id AND ai.document_id IS NOT NULL)
-          OR (tcda.report_file_id = ai.report_file_id AND ai.report_file_id IS NOT NULL)
-          OR (tcda.compliance_portal_file_id = ai.compliance_portal_file_id AND ai.compliance_portal_file_id IS NOT NULL)
-      )
-  )
-)
-SELECT
-    id,
-    organization_id,
-    compliance_portal_access_id,
-    document_id,
-    report_file_id,
-    compliance_portal_file_id,
-    status,
-    requested_at,
-    created_at,
-    updated_at
-FROM final_items
-WHERE %s
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"compliance_portal_access_id": compliancePortalAccessID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query compliance portal document accesses: %w", err)
-	}
-
-	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocumentAccess])
-	if err != nil {
-		return fmt.Errorf("cannot collect compliance portal document accesses: %w", err)
-	}
-
-	*tcdas = accesses
-
-	return nil
-}
-
 func (tcdas *CompliancePortalDocumentAccesses) LoadByCompliancePortalAccessID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -969,19 +832,23 @@ WHERE
 	return nil
 }
 
-type MergeCompliancePortalDocumentAccessesData struct {
+type UpsertCompliancePortalDocumentAccessesData struct {
 	ID     gid.GID                              `json:"id"`
 	Status CompliancePortalDocumentAccessStatus `json:"status"`
 }
 
-func (tcdas CompliancePortalDocumentAccesses) MergeDocumentAccesses(
+func (tcdas CompliancePortalDocumentAccesses) UpsertDocumentAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	compliancePortalAccessID gid.GID,
-	data []MergeCompliancePortalDocumentAccessesData,
+	data []UpsertCompliancePortalDocumentAccessesData,
 ) error {
+	if len(data) == 0 {
+		return nil
+	}
+
 	q := `
 WITH data AS (
     SELECT
@@ -992,43 +859,33 @@ WITH data AS (
             status compliance_portal_document_access_status
         )
 )
-MERGE INTO cp_document_accesses AS tcda
-USING data
-    ON data.id = tcda.document_id
-    AND tcda.tenant_id = @tenant_id
-    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
-WHEN MATCHED
-    THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
-WHEN NOT MATCHED BY SOURCE
-    AND tcda.tenant_id = @tenant_id
-    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
-    AND tcda.document_id IS NOT NULL
-    THEN DELETE
-WHEN NOT MATCHED
-    THEN INSERT (
-        id,
-        tenant_id,
-        organization_id,
-        compliance_portal_access_id,
-        document_id,
-        report_file_id,
-        compliance_portal_file_id,
-        status,
-        created_at,
-        updated_at
-    )
-    VALUES (
-        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
-        @tenant_id,
-        @organization_id,
-        @compliance_portal_access_id,
-        data.id,
-        NULL,
-        NULL,
-        data.status,
-        @now::timestamptz,
-        @now::timestamptz
-    )
+INSERT INTO cp_document_accesses (
+    id,
+    tenant_id,
+    organization_id,
+    compliance_portal_access_id,
+    document_id,
+    report_file_id,
+    compliance_portal_file_id,
+    status,
+    created_at,
+    updated_at
+)
+SELECT
+    generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
+    @tenant_id,
+    @organization_id,
+    @compliance_portal_access_id,
+    data.id,
+    NULL,
+    NULL,
+    data.status,
+    @now::timestamptz,
+    @now::timestamptz
+FROM data
+ON CONFLICT (compliance_portal_access_id, document_id) DO UPDATE SET
+    status = EXCLUDED.status,
+    updated_at = EXCLUDED.updated_at
 `
 
 	args := pgx.StrictNamedArgs{
@@ -1041,7 +898,7 @@ WHEN NOT MATCHED
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return err
+		return fmt.Errorf("cannot upsert document accesses: %w", err)
 	}
 
 	return nil
@@ -1111,14 +968,18 @@ ON CONFLICT DO NOTHING
 	return nil
 }
 
-func (tcdas CompliancePortalDocumentAccesses) MergeReportFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) UpsertReportFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	compliancePortalAccessID gid.GID,
-	data []MergeCompliancePortalDocumentAccessesData,
+	data []UpsertCompliancePortalDocumentAccessesData,
 ) error {
+	if len(data) == 0 {
+		return nil
+	}
+
 	q := `
 WITH data AS (
     SELECT
@@ -1129,43 +990,33 @@ WITH data AS (
             status compliance_portal_document_access_status
         )
 )
-MERGE INTO cp_document_accesses AS tcda
-USING data
-    ON data.id = tcda.report_file_id
-    AND tcda.tenant_id = @tenant_id
-    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
-WHEN MATCHED
-    THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
-WHEN NOT MATCHED BY SOURCE
-    AND tcda.tenant_id = @tenant_id
-    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
-    AND tcda.report_file_id IS NOT NULL
-    THEN DELETE
-WHEN NOT MATCHED
-    THEN INSERT (
-        id,
-        tenant_id,
-        organization_id,
-        compliance_portal_access_id,
-        document_id,
-        report_file_id,
-        compliance_portal_file_id,
-        status,
-        created_at,
-        updated_at
-    )
-    VALUES (
-        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
-        @tenant_id,
-        @organization_id,
-        @compliance_portal_access_id,
-        NULL,
-        data.id,
-        NULL,
-        data.status,
-        @now::timestamptz,
-        @now::timestamptz
-    )
+INSERT INTO cp_document_accesses (
+    id,
+    tenant_id,
+    organization_id,
+    compliance_portal_access_id,
+    document_id,
+    report_file_id,
+    compliance_portal_file_id,
+    status,
+    created_at,
+    updated_at
+)
+SELECT
+    generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
+    @tenant_id,
+    @organization_id,
+    @compliance_portal_access_id,
+    NULL,
+    data.id,
+    NULL,
+    data.status,
+    @now::timestamptz,
+    @now::timestamptz
+FROM data
+ON CONFLICT (compliance_portal_access_id, report_file_id) DO UPDATE SET
+    status = EXCLUDED.status,
+    updated_at = EXCLUDED.updated_at
 `
 
 	args := pgx.StrictNamedArgs{
@@ -1178,7 +1029,7 @@ WHEN NOT MATCHED
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return err
+		return fmt.Errorf("cannot upsert report file accesses: %w", err)
 	}
 
 	return nil
@@ -1299,6 +1150,171 @@ LIMIT 1;
 	}
 
 	*tcda = access
+
+	return nil
+}
+
+func (tcdas *CompliancePortalDocumentAccesses) LoadByCompliancePortalAccessIDAndDocumentIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+	documentIDs []gid.GID,
+) error {
+	if len(documentIDs) == 0 {
+		*tcdas = CompliancePortalDocumentAccesses{}
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    compliance_portal_access_id,
+    document_id,
+    report_file_id,
+    compliance_portal_file_id,
+    status,
+    requested_at,
+    created_at,
+    updated_at
+FROM
+    cp_document_accesses
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND document_id = ANY(@document_ids::text[]);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"document_ids":                documentIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal document accesses: %w", err)
+	}
+
+	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocumentAccess])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portal document accesses: %w", err)
+	}
+
+	*tcdas = accesses
+
+	return nil
+}
+
+func (tcdas *CompliancePortalDocumentAccesses) LoadByCompliancePortalAccessIDAndReportFileIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+	reportFileIDs []gid.GID,
+) error {
+	if len(reportFileIDs) == 0 {
+		*tcdas = CompliancePortalDocumentAccesses{}
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    compliance_portal_access_id,
+    document_id,
+    report_file_id,
+    compliance_portal_file_id,
+    status,
+    requested_at,
+    created_at,
+    updated_at
+FROM
+    cp_document_accesses
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND report_file_id = ANY(@report_file_ids::text[]);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"report_file_ids":             reportFileIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal document accesses: %w", err)
+	}
+
+	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocumentAccess])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portal document accesses: %w", err)
+	}
+
+	*tcdas = accesses
+
+	return nil
+}
+
+func (tcdas *CompliancePortalDocumentAccesses) LoadByCompliancePortalAccessIDAndCompliancePortalFileIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+	compliancePortalFileIDs []gid.GID,
+) error {
+	if len(compliancePortalFileIDs) == 0 {
+		*tcdas = CompliancePortalDocumentAccesses{}
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    compliance_portal_access_id,
+    document_id,
+    report_file_id,
+    compliance_portal_file_id,
+    status,
+    requested_at,
+    created_at,
+    updated_at
+FROM
+    cp_document_accesses
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND compliance_portal_file_id = ANY(@compliance_portal_file_ids::text[]);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"compliance_portal_file_ids":  compliancePortalFileIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal document accesses: %w", err)
+	}
+
+	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocumentAccess])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portal document accesses: %w", err)
+	}
+
+	*tcdas = accesses
 
 	return nil
 }
@@ -1432,14 +1448,18 @@ WHERE
 	return nil
 }
 
-func (tcdas CompliancePortalDocumentAccesses) MergeCompliancePortalFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) UpsertCompliancePortalFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	compliancePortalAccessID gid.GID,
-	data []MergeCompliancePortalDocumentAccessesData,
+	data []UpsertCompliancePortalDocumentAccessesData,
 ) error {
+	if len(data) == 0 {
+		return nil
+	}
+
 	q := `
 WITH data AS (
     SELECT
@@ -1450,43 +1470,33 @@ WITH data AS (
             status compliance_portal_document_access_status
         )
 )
-MERGE INTO cp_document_accesses AS tcda
-USING data
-    ON data.id = tcda.compliance_portal_file_id
-    AND tcda.tenant_id = @tenant_id
-    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
-WHEN MATCHED
-    THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
-WHEN NOT MATCHED BY SOURCE
-    AND tcda.tenant_id = @tenant_id
-    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
-    AND tcda.compliance_portal_file_id IS NOT NULL
-    THEN DELETE
-WHEN NOT MATCHED
-    THEN INSERT (
-        id,
-        tenant_id,
-        organization_id,
-        compliance_portal_access_id,
-        document_id,
-        report_file_id,
-        compliance_portal_file_id,
-        status,
-        created_at,
-        updated_at
-    )
-    VALUES (
-        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
-        @tenant_id,
-        @organization_id,
-        @compliance_portal_access_id,
-        NULL,
-        NULL,
-        data.id,
-        data.status,
-        @now::timestamptz,
-        @now::timestamptz
-    )
+INSERT INTO cp_document_accesses (
+    id,
+    tenant_id,
+    organization_id,
+    compliance_portal_access_id,
+    document_id,
+    report_file_id,
+    compliance_portal_file_id,
+    status,
+    created_at,
+    updated_at
+)
+SELECT
+    generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
+    @tenant_id,
+    @organization_id,
+    @compliance_portal_access_id,
+    NULL,
+    NULL,
+    data.id,
+    data.status,
+    @now::timestamptz,
+    @now::timestamptz
+FROM data
+ON CONFLICT (compliance_portal_access_id, compliance_portal_file_id) DO UPDATE SET
+    status = EXCLUDED.status,
+    updated_at = EXCLUDED.updated_at
 `
 
 	args := pgx.StrictNamedArgs{
@@ -1499,7 +1509,7 @@ WHEN NOT MATCHED
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return err
+		return fmt.Errorf("cannot upsert compliance portal file accesses: %w", err)
 	}
 
 	return nil

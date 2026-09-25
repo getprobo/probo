@@ -4,6 +4,192 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.238.0] - 2026-09-25
+
+### Added
+
+- Task `Get Many` can filter by name and state
+
+## [0.237.0] - 2026-09-25
+
+### Added
+
+- Task `Link To Linear` links a task to an existing Linear issue
+- Task `List Linear Issues` searches Linear issues in a team
+
+### Changed
+
+- Task `List Linear Teams` searches and pages teams instead of returning
+  the full list
+
+## [0.236.0] - 2026-09-24
+
+### Added
+
+- Connector `Create Organization Connector`, `Discover Accounts`,
+  `Enable Accounts`, `Get`, and `Get Many` operations manage connector
+  accounts
+- Webhook `Get Events` includes Task and Task Comment event types
+- Finding `Get Many` accepts an Audit ID filter
+
+## [0.235.0] - 2026-09-23
+
+### Added
+
+- Task `List Linear Teams`, `Publish To Linear`, and `Unlink External`
+- Task `Get` returns `externalLink` (`provider`, `identifier`, `url`,
+  `origin`)
+
+### Changed
+
+- Webhook `Get Events` can filter by delivery status and returns the
+  outbound `payload`
+
+## [0.234.0] - 2026-09-22
+
+### Added
+
+- Cookie Banner `Get`/`Update` expose `tcfCmpId`
+- Cookie Banner `Get`/`Update` expose `publisherCountryCode`
+- Cookie Category `Get`/`Update` expose `tcfPurposeIds`
+- Cookie Consent Record `Get` returns the optional IAB TCF string (`tc`)
+- Risk Analysis `Publish` publishes an analysis as a document version
+
+## [0.233.0] - 2026-09-22
+
+### Changed
+
+- Risk `Delete` describes that deleting a risk also removes its history
+  in risk analyses
+
+## [0.232.0] - 2026-09-18
+
+### Changed
+
+- Risk Analysis `Create`, `Fork`, `Update`, `Get`, and `Get Many`
+  treat `description` as plaintext (converted to ProseMirror JSON on
+  write), matching Task operations
+
+## [0.231.0] - 2026-09-16
+
+### Added
+
+- Cookie Banner `Add GVL Vendor`, `Remove GVL Vendor`, `List GVL Catalog`,
+  `List GVL Vendors`, and `Get GVL Catalog` actions, to pick which IAB
+  Global Vendor List vendors a TCF-capable banner discloses
+- `List GVL Vendors` takes a `Membership` filter (`On Banner` /
+  `Not On Banner`); Cookie Banner `Get` returns the published version's
+  GVL vendor count and IDs
+- Risk `Create`, `Get`, `Get Many`, and `Update` expose `referenceId`, the
+  org-scoped `RSK-001` display ID; `Get Many` can order by `Reference ID`
+- Compliance Portal Access `Create`, `Activate`, and `Deactivate` return the
+  visitor's identity (full name and email)
+
+### Fixed
+
+- `List GVL Catalog` and `List GVL Vendors` paginate through every page and
+  offer `Return All` / `Limit` like other list actions, instead of silently
+  returning only the first 50 rows
+
+## [0.230.0] - 2026-09-15
+
+### Added
+
+- Compliance Portal Access `Create` action, to add a portal visitor by member or email
+- `Recurrence Interval` on Task `Create`/`Update`, an ISO-8601 duration (requires a deadline); `Update` also gets `Clear Recurrence`
+
+### Changed
+
+- Compliance Portal Access actions and labels say Add instead of Invite
+
+## [0.229.0] - 2026-09-14
+
+### Added
+
+- Task Activity resource with `Get` and `Get All` actions, listing a
+  task's field-level changes newest-first
+
+## [0.228.0] - 2026-09-10
+
+### Added
+
+- Device `Get` and `Get All` actions expose each posture's schema version and observing agent version
+
+## [0.227.0] - 2026-09-10
+
+### Added
+
+- Access Review Source `Create` now accepts GCP (`GCP Workload Identity
+  Provider`, `GCP Service Account Email`), including S3NS universe
+  suffixes
+- Access Review Source `Setup GCP`, to get the GCP connector setup
+  values (issuer, audience, subject, suggested service account name,
+  Terraform snippet)
+- `Firm` on Audit `Create` and `Update`, and `To Book` / `Audit Booked`
+  added to the Audit state options; an empty firm on update clears it
+
+### Changed
+
+- Task and Task Comment operations return `content` as plaintext
+  instead of ProseMirror JSON
+
+### Removed
+
+- Access Review `Read Entries` no longer returns `incrementalTag`
+
+## [0.226.0] - 2026-09-02
+
+### Added
+
+- `Task Comment` resource (`Create`, `Get`, `Get Many`, `Update`, `Delete`) for description-only comments on a task, owned by a membership profile (the author by default)
+
+## [0.225.0] - 2026-09-01
+
+### Added
+
+- Access Review Source `Create`, to create an AWS workload-identity access source
+- Access Review Source `Setup AWS`, to get the AWS connector setup values (issuer, audience, subject, suggested role name, Terraform snippet, CloudFormation quick-create URL)
+
+## [0.224.0] - 2026-09-01
+
+### Added
+
+- `As Of` on Risk Analysis `Get` and Treatment Plan `Get Many` reconstructs matrix cells and plans as of that instant; on Treatment Plan `Get Many` it requires `Risk Analysis ID`, and leaving it empty keeps reading live tables
+- `State` on Task `Create`, and `Backlog`, `Canceled`, and `Duplicate` added to the Task state options
+
+### Changed
+
+- Treatment Plan `Get` and `Get Many` return the plan's `category`
+
+## [0.223.0] - 2026-08-27
+
+### Added
+
+- Risk Analysis `Fork`, copying diagrams, treatment plans, and their relations into a new analysis; matrix size stays on the source and the period starts empty
+
+### Changed
+
+- Date ranges are returned as nested `Period` objects: Audit `validity` / `auditDates` replace `validFrom`, `validUntil`, `auditStartDate`, `auditEndDate`, and Vendor `contract` replaces `contractStartDate` / `contractEndDate`. Operation input fields are unchanged
+
+## [0.222.0] - 2026-08-26
+
+### Added
+
+- `Treatment Plan` resource (`Create`, `Get`, `Get Many`, `Update`, `Delete`) for plans that hold scores, treatment, and owner per (risk, analysis)
+- Measure `Link Treatment Plan` / `Unlink Treatment Plan`
+- Risk `Get Many`: `Risk Analysis ID` lists unplanned scenario-linked risks on that analysis
+- Risk Analysis `Get` now returns `matrixCells`
+
+### Changed
+
+- Risk Analysis `Update` no longer accepts `Matrix Size`; matrix size is set at create only
+
+## [0.221.0] - 2026-08-25
+
+### Added
+
+- Tracker Pattern `Get` / `Get Many`: `attribution` catalog verdict inherited from the linked common tracker pattern
+
 ## [0.220.0] - 2026-08-14
 
 ### Added

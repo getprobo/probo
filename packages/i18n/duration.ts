@@ -20,6 +20,63 @@
 
 type Translator = (key: string, options?: { count?: number }) => string;
 
+const isoNumber = String.raw`(\d+(?:\.\d+)?)`;
+const isoDurationPattern = new RegExp(
+  `^P(?:${isoNumber}Y)?(?:${isoNumber}M)?(?:${isoNumber}W)?(?:${isoNumber}D)?`
+  + `(?:T(?:${isoNumber}H)?(?:${isoNumber}M)?(?:${isoNumber}S)?)?$`,
+);
+
+type IsoDurationComponents = {
+  years: number;
+  months: number;
+  weeks: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+function parseAmount(raw: string | undefined): number {
+  if (raw == null) {
+    return 0;
+  }
+
+  const amount = Number(raw);
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function parseIsoDuration(value: string): IsoDurationComponents | null {
+  const match = (value.startsWith("-") ? value.slice(1) : value).match(
+    isoDurationPattern,
+  );
+  if (!match) {
+    return null;
+  }
+
+  const [, years, months, weeks, days, hours, minutes, seconds] = match;
+  if (
+    years == null
+    && months == null
+    && weeks == null
+    && days == null
+    && hours == null
+    && minutes == null
+    && seconds == null
+  ) {
+    return null;
+  }
+
+  return {
+    years: parseAmount(years),
+    months: parseAmount(months),
+    weeks: parseAmount(weeks),
+    days: parseAmount(days),
+    hours: parseAmount(hours),
+    minutes: parseAmount(minutes),
+    seconds: parseAmount(seconds),
+  };
+}
+
 const DURATION_UNITS = [
   { value: "seconds", seconds: 1, snap: 0 },
   { value: "minutes", seconds: 60, snap: 5 },
@@ -68,29 +125,49 @@ export function formatDuration(
 ): string | null {
   if (!duration || !t) return null;
 
-  const timeMatch = duration.match(/PT(\d+)([MH])/);
-  if (timeMatch) {
-    const amount = parseInt(timeMatch[1], 10) || 0;
-    const unit = timeMatch[2];
-    if (unit === "M") return t("duration.min", { count: amount });
-    if (unit === "H") return t("duration.hour", { count: amount });
+  const components = parseIsoDuration(duration);
+  if (!components) {
+    return null;
   }
 
-  const dateMatch = duration.match(/P(\d+)([DW])/);
-  if (dateMatch) {
-    const amount = parseInt(dateMatch[1], 10) || 0;
-    const unit = dateMatch[2];
-    if (unit === "W") {
-      return `${amount} ${amount === 1 ? t("Week") : t("Weeks")}`;
-    }
-    if (unit === "D") {
-      if (amount % 7 === 0 && amount > 0) {
-        const weeks = amount / 7;
-        return `${weeks} ${weeks === 1 ? t("Week") : t("Weeks")}`;
-      }
-      return `${amount} ${amount === 1 ? t("Day") : t("Days")}`;
-    }
+  let { weeks, days } = components;
+  const { years, months, hours, minutes, seconds } = components;
+  if (
+    weeks === 0
+    && days > 0
+    && days % 7 === 0
+    && hours === 0
+    && minutes === 0
+    && seconds === 0
+    && years === 0
+    && months === 0
+  ) {
+    weeks = days / 7;
+    days = 0;
   }
 
-  return null;
+  const parts: string[] = [];
+  if (years > 0) {
+    parts.push(`${years} ${t("duration.years", { count: years })}`);
+  }
+  if (months > 0) {
+    parts.push(`${months} ${t("duration.months", { count: months })}`);
+  }
+  if (weeks > 0) {
+    parts.push(`${weeks} ${t("duration.weeks", { count: weeks })}`);
+  }
+  if (days > 0) {
+    parts.push(`${days} ${t("duration.days", { count: days })}`);
+  }
+  if (hours > 0) {
+    parts.push(t("duration.hour", { count: hours }));
+  }
+  if (minutes > 0) {
+    parts.push(t("duration.min", { count: minutes }));
+  }
+  if (seconds > 0) {
+    parts.push(t("duration.sec", { count: seconds }));
+  }
+
+  return parts.length > 0 ? parts.join(", ") : null;
 }

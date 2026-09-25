@@ -95,6 +95,8 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder) {
                 text
                 number
               }
+              version
+              agentVersion
               observedAt
             }
           }

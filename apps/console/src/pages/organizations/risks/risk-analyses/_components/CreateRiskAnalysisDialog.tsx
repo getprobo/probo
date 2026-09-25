@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime } from "@probo/helpers";
+import { formatDatetime, toPeriod } from "@probo/helpers";
 import {
   Breadcrumb,
   Button,
@@ -29,15 +29,21 @@ import {
   IconPlusLarge,
   Input,
   Option,
+  RichEditor,
   useDialogRef,
 } from "@probo/ui";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { graphql, useMutation } from "react-relay";
+import { graphql } from "react-relay";
 
 import type { CreateRiskAnalysisDialogCreateMutation } from "#/__generated__/core/CreateRiskAnalysisDialogCreateMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
+import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
+
+import { riskAnalysisDescriptionField } from "../variants";
 
 import {
   matrixSizeFromOption,
@@ -54,17 +60,7 @@ const createMutation = graphql`
       riskAnalysisEdge @prependEdge(connections: $connections) {
         node {
           id
-          name
-          description
-          period {
-            start
-            end
-          }
-          matrixSize {
-            rows
-            cols
-          }
-          createdAt
+          ...RiskAnalysisListItem_riskAnalysis
         }
       }
     }
@@ -86,46 +82,47 @@ export function CreateRiskAnalysisDialog(props: {
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const [createRiskAnalysis, isCreating] = useMutation<CreateRiskAnalysisDialogCreateMutation>(createMutation);
+  const [editorKey, setEditorKey] = useState(0);
   const { register, handleSubmit, reset, control, formState } = useForm<FormData>({
     defaultValues: {
       name: "",
       description: "",
       periodStart: "",
       periodEnd: "",
+      matrixSize: "5x5",
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    const periodStart = formatDatetime(data.periodStart);
-    const periodEnd = formatDatetime(data.periodEnd);
-    const period = periodStart || periodEnd
-      ? {
-          start: periodStart ?? null,
-          end: periodEnd ?? null,
-        }
-      : null;
+  const onSubmit = async (data: FormData) => {
+    const period = toPeriod(
+      formatDatetime(data.periodStart),
+      formatDatetime(data.periodEnd),
+    );
 
-    createRiskAnalysis({
-      variables: {
-        input: {
-          organizationId,
-          name: data.name,
-          description: data.description || null,
-          period,
-          matrixSize: matrixSizeFromOption(data.matrixSize),
+    try {
+      await createRiskAnalysis({
+        variables: {
+          input: {
+            organizationId,
+            name: data.name,
+            description: isRichEditorContentEmpty(data.description) ? null : data.description,
+            period,
+            matrixSize: matrixSizeFromOption(data.matrixSize),
+          },
+          connections: [props.connectionId],
         },
-        connections: [props.connectionId],
-      },
-      onCompleted: () => {
-        reset();
-        dialogRef.current?.close();
-      },
-    });
+      });
+      reset();
+      setEditorKey(key => key + 1);
+      dialogRef.current?.close();
+    } catch {
+      // Error toast is handled by useMutation.
+    }
   };
 
   return (
     <Dialog
-      className="max-w-lg"
+      className="max-w-2xl"
       ref={dialogRef}
       trigger={(
         <Button icon={IconPlusLarge} variant="primary">
@@ -147,13 +144,23 @@ export function CreateRiskAnalysisDialog(props: {
             error={formState.errors.name?.message}
             placeholder={t("createRiskAnalysisDialog.placeholders.name")}
           />
-          <Field
-            label={t("createRiskAnalysisDialog.fields.description")}
-            {...register("description")}
-            type="textarea"
-            rows={3}
-            placeholder={t("createRiskAnalysisDialog.placeholders.description")}
-          />
+          <Field label={t("createRiskAnalysisDialog.fields.description")}>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field }) => (
+                <RichEditor
+                  key={editorKey}
+                  className={riskAnalysisDescriptionField().editor()}
+                  content={field.value}
+                  disabled={isCreating}
+                  placeholder={t("createRiskAnalysisDialog.placeholders.description")}
+                  aria-label={t("createRiskAnalysisDialog.fields.description")}
+                  onChangeContent={field.onChange}
+                />
+              )}
+            />
+          </Field>
           <ControlledField
             control={control}
             name="matrixSize"

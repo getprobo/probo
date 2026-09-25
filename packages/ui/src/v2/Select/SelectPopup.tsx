@@ -19,7 +19,9 @@
 // SOFTWARE.
 
 import { Select as BaseSelect } from "@base-ui/react/select";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useContext } from "react";
+
+import { overlayPortalContainer, OverlayPortalRootContext } from "../../lib/overlayPortalRoot";
 
 import { selectPopup } from "./variants";
 
@@ -45,9 +47,10 @@ export function SelectPopup(props: SelectPopupProps) {
     side = "bottom", align = "start", sideOffset = 4,
     ...popupProps
   } = props;
+  const overlayRoot = useContext(OverlayPortalRootContext);
 
   return (
-    <BaseSelect.Portal container={container}>
+    <BaseSelect.Portal container={overlayPortalContainer(container, overlayRoot)}>
       {/* z-3 on the Positioner so the portaled root wins over in-page z-1. */}
       <BaseSelect.Positioner className="z-3" side={side} align={align} sideOffset={sideOffset}>
         <BaseSelect.Popup className={selectPopup({ className })} {...popupProps}>

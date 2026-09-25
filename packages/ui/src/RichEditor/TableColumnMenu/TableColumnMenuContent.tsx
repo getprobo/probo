@@ -13,6 +13,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import { CellSelection, TableMap } from "@tiptap/pm/tables";
 import { type Editor } from "@tiptap/react";
 
+import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
 import { MenuButton } from "../MenuButton";
 
@@ -234,43 +235,46 @@ export function TableColumnMenuContent({
   };
 
   return (
-    <div
-      ref={(node) => {
-        setDropdownEl(node);
-        menuRefs.setFloating(node);
-      }}
-      data-column-menu
-      style={menuStyles}
-      {...getFloatingProps()}
-      onMouseDown={e => e.preventDefault()}
-      className={menu()}
-    >
-      {isFirstColumn && (
-        <MenuButton active={isHeaderColumn()} onClick={handleToggleHeaderColumn}>
-          <CrownSimpleIcon size={16} weight="bold" />
-          Header column
+    <EditorFloatingPortal>
+      <div
+        ref={(node) => {
+          setDropdownEl(node);
+          menuRefs.setFloating(node);
+        }}
+        data-column-menu
+        data-rich-editor-floating=""
+        style={menuStyles}
+        {...getFloatingProps()}
+        onMouseDown={e => e.preventDefault()}
+        className={menu()}
+      >
+        {isFirstColumn && (
+          <MenuButton active={isHeaderColumn()} onClick={handleToggleHeaderColumn}>
+            <CrownSimpleIcon size={16} weight="bold" />
+            Header column
+          </MenuButton>
+        )}
+        <MenuButton onClick={handleInsertLeft}>
+          <PlusIcon size={16} weight="bold" />
+          Insert column left
         </MenuButton>
-      )}
-      <MenuButton onClick={handleInsertLeft}>
-        <PlusIcon size={16} weight="bold" />
-        Insert column left
-      </MenuButton>
-      <MenuButton onClick={handleInsertRight}>
-        <PlusIcon size={16} weight="bold" />
-        Insert column right
-      </MenuButton>
-      <MenuButton onClick={handleDuplicateColumn}>
-        <CopyIcon size={16} weight="bold" />
-        Duplicate column
-      </MenuButton>
-      <MenuButton onClick={handleClearContents}>
-        <BroomIcon size={16} weight="bold" />
-        Clear contents
-      </MenuButton>
-      <MenuButton onClick={handleDeleteColumn}>
-        <TrashIcon size={16} weight="bold" />
-        Delete column
-      </MenuButton>
-    </div>
+        <MenuButton onClick={handleInsertRight}>
+          <PlusIcon size={16} weight="bold" />
+          Insert column right
+        </MenuButton>
+        <MenuButton onClick={handleDuplicateColumn}>
+          <CopyIcon size={16} weight="bold" />
+          Duplicate column
+        </MenuButton>
+        <MenuButton onClick={handleClearContents}>
+          <BroomIcon size={16} weight="bold" />
+          Clear contents
+        </MenuButton>
+        <MenuButton onClick={handleDeleteColumn}>
+          <TrashIcon size={16} weight="bold" />
+          Delete column
+        </MenuButton>
+      </div>
+    </EditorFloatingPortal>
   );
 }

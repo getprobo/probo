@@ -149,6 +149,8 @@ func TestDevice_DeleteOrphans(t *testing.T) {
 			CorrelationID:  gid.New(tenantID, coredata.DevicePostureReportEntityType),
 			CheckKey:       "DISK_ENCRYPTION",
 			Status:         coredata.DevicePostureStatusPass,
+			Version:        coredata.DevicePostureVersionV1,
+			AgentVersion:   "0.1",
 			ObservedAt:     now,
 			CreatedAt:      now,
 		}

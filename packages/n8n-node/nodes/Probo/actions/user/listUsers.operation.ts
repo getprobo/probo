@@ -173,8 +173,10 @@ export async function execute(
 								additionalEmailAddresses
 								kind
 								position
-								contractStartDate
-								contractEndDate
+								contract {
+									start
+									end
+								}
 								createdAt
 								updatedAt
 								organization { id name }

@@ -1,0 +1,222 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package provider
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"regexp"
+
+	"github.com/aws/aws-sdk-go-v2/service/organizations"
+	"github.com/aws/smithy-go"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/identityfederation"
+)
+
+// awsRegistration declares AWS as a workload identity provider: Probo holds no
+// AWS credential and mints an assertion the customer's STS exchanges for
+// temporary ones. It therefore declares no OAuth2, API-key or
+// client-credentials path — there is no credential for a customer to paste or
+// an operator to configure.
+//
+// Isolation is the per-organization issuer; a successful assume is the whole
+// check, so there is no grant readback beside Probe.
+func awsRegistration() *Registration {
+	return &Registration{
+		Provider:           coredata.ConnectorProviderAWS,
+		DisplayName:        "Amazon Web Services",
+		InitialAccountFunc: awsInitialAccount,
+		DocumentationURL:   accessReviewDocsURL("aws"),
+		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
+		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
+		WorkloadIdentity: &WorkloadIdentityConfig{
+			NewSession:       newAWSSession,
+			NewDriver:        newAWSDriver,
+			Probe:            probeAWS,
+			DiscoverAccounts: discoverAWSAccounts,
+			NewNameResolver:  newAWSNameResolver,
+			ExtraSettings: []ExtraSetting{
+				{Key: "roleArn", Label: "Role ARN", Required: true},
+			},
+		},
+	}
+}
+
+var awsAccountFromRoleARN = regexp.MustCompile(`iam::([0-9]+):`)
+
+func awsInitialAccount(c *coredata.Connector) (string, string, error) {
+	settings, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot read connector settings: %w", err)
+	}
+
+	matches := awsAccountFromRoleARN.FindStringSubmatch(settings.RoleARN)
+	if len(matches) != 2 {
+		return "", "", nil
+	}
+
+	return matches[1], matches[1], nil
+}
+
+func newAWSNameResolver(
+	ctx context.Context,
+	session cloud.Session,
+	_ *coredata.Connector,
+	logger *log.Logger,
+) drivers.NameResolver {
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		logger.ErrorCtx(ctx, "cannot create aws name resolver", log.String("cloud", session.Cloud()))
+		return nil
+	}
+
+	return drivers.NewAWSNameResolver(awsSession, logger)
+}
+
+// newAWSSession opens a session on the account the connector names, by
+// assuming the role the customer created for Probo there.
+//
+// The organization comes from the connector row, never from its settings: it
+// selects whose assertion is minted, and so whose cloud account the resulting
+// credentials can reach.
+func newAWSSession(
+	_ context.Context,
+	issuer *identityfederation.Issuer,
+	conn *coredata.Connector,
+	accountID string,
+) (cloud.Session, error) {
+	settings, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read aws connector settings: %w", err)
+	}
+
+	roleARN := settings.RoleARN
+	if accountID != "" {
+		roleARN, err = cloudaws.MemberRoleARN(settings.RoleARN, accountID, settings.MemberRoleName)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	session, err := cloudaws.NewSession(issuer, conn.OrganizationID, roleARN)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+// newAWSDriver builds the access review driver over the session already
+// assumed on the connected account.
+func newAWSDriver(
+	_ context.Context,
+	session cloud.Session,
+	_ *coredata.Connector,
+	logger *log.Logger,
+) (drivers.Driver, error) {
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot create aws driver: session is for %s", session.Cloud())
+	}
+
+	return drivers.NewAWSDriver(awsSession, logger), nil
+}
+
+// probeAWS checks the connection by asking AWS who we are. It reaches for the
+// concrete session because a cloud.Session deliberately exposes only which
+// cloud and which account it names.
+func probeAWS(ctx context.Context, session cloud.Session, _ *coredata.Connector) error {
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		return fmt.Errorf("cannot probe aws connector: session is for %s", session.Cloud())
+	}
+
+	return awsSession.CheckAccess(ctx)
+}
+
+func discoverAWSAccounts(
+	ctx context.Context,
+	session cloud.Session,
+	_ *coredata.Connector,
+) ([]DiscoveredAccount, error) {
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot discover aws accounts: session is for %s", session.Cloud())
+	}
+
+	client := organizations.NewFromConfig(awsSession.Config())
+	paginator := organizations.NewListAccountsPaginator(client, &organizations.ListAccountsInput{})
+
+	var accounts []DiscoveredAccount
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			var apiErr smithy.APIError
+			if errors.As(err, &apiErr) && awsListAccountsEnded(apiErr.ErrorCode()) {
+				return []DiscoveredAccount{{
+					ExternalAccountID: awsSession.AccountID(),
+					Name:              awsSession.AccountID(),
+				}}, nil
+			}
+
+			return nil, fmt.Errorf("cannot list aws organization accounts: %w", err)
+		}
+
+		for _, account := range page.Accounts {
+			if account.Id == nil {
+				continue
+			}
+
+			name := *account.Id
+			if account.Name != nil && *account.Name != "" {
+				name = *account.Name
+			}
+
+			accounts = append(accounts, DiscoveredAccount{
+				ExternalAccountID: *account.Id,
+				Name:              name,
+			})
+		}
+	}
+
+	if accounts == nil {
+		return []DiscoveredAccount{}, nil
+	}
+
+	return accounts, nil
+}
+
+// awsListAccountsEnded reports ListAccounts errors that end the walk on the
+// session account. The role cannot list an organization.
+func awsListAccountsEnded(code string) bool {
+	switch code {
+	case "AccessDeniedException", "AWSOrganizationsNotInUseException":
+		return true
+	default:
+		return false
+	}
+}

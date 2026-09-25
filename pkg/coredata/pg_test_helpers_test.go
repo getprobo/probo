@@ -31,35 +31,31 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/llm"
 )
 
-func insertPendingRun(
+func insertIdleExecution(
 	t *testing.T,
 	client *pg.Client,
 	agentName string,
-	inputMessages []llm.Message,
-) coredata.AgentRun {
+) coredata.AgentExecution {
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
 	orgID := gid.New(tenantID, coredata.OrganizationEntityType)
-	runID := gid.New(tenantID, coredata.AgentRunEntityType)
-	inputJSON, err := json.Marshal(inputMessages)
-	require.NoError(t, err)
+	runID := gid.New(tenantID, coredata.AgentExecutionEntityType)
 
 	now := time.Now()
-	run := coredata.AgentRun{
-		ID:             runID,
-		OrganizationID: orgID,
-		StartAgentName: agentName,
-		Status:         coredata.AgentRunStatusPending,
-		InputMessages:  inputJSON,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+	run := coredata.AgentExecution{
+		ID:              runID,
+		OrganizationID:  orgID,
+		StartAgentName:  agentName,
+		Status:          coredata.AgentExecutionStatusIdle,
+		SessionMessages: json.RawMessage("[]"),
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
-	err = client.WithTx(
+	err := client.WithTx(
 		context.Background(),
 		func(ctx context.Context, tx pg.Tx) error {
 			if _, err := tx.Exec(

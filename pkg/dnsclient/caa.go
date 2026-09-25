@@ -40,7 +40,7 @@ func (c *Client) CheckCAA(ctx context.Context, hostname, permittedIssuer string)
 	for _, checkName := range checkNames {
 		fqdn := ToFQDN(checkName)
 
-		msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+		msg := &dns.Msg{ID: dns.ID(), RecursionDesired: true}
 		msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
 
 		// Each label gets its own exchange budget so a slow empty answer at a

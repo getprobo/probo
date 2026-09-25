@@ -1,0 +1,222 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package coredata
+
+// Statements backing a catalog third party merge, one per affected table.
+//
+// The ordering these must be applied in, and the reporting of what moved,
+// belong to the caller that orchestrates them: see thirdparty.MergeCatalog.
+// Each function here does one table's write and returns what it touched.
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+)
+
+// MergeCommonThirdPartyDomains moves the loser's domains to the winner and
+// deletes whatever remains, returning both counts.
+//
+// The only step of a merge that can violate a unique constraint, since
+// common_third_party_domains is unique on (common_third_party_id, domain):
+// the NOT EXISTS guard moves only what the winner lacks and the delete clears
+// the collisions. Moving rather than re-inserting preserves each row's id.
+//
+// domain is CITEXT, so the equality is already case-insensitive and matches
+// the index's own semantics — a lower() here would diverge from the index and
+// let a collision through.
+func MergeCommonThirdPartyDomains(
+	ctx context.Context,
+	tx pg.Tx,
+	winnerID gid.GID,
+	loserID gid.GID,
+) (moved int64, dropped int64, err error) {
+	moveQuery := `
+UPDATE common_third_party_domains AS loser
+SET
+    common_third_party_id = @winner_id,
+    updated_at = NOW()
+WHERE
+    loser.common_third_party_id = @loser_id
+    AND NOT EXISTS (
+        SELECT 1
+        FROM common_third_party_domains AS winner
+        WHERE winner.common_third_party_id = @winner_id
+          AND winner.domain = loser.domain
+    )
+`
+
+	args := pgx.StrictNamedArgs{
+		"winner_id": winnerID,
+		"loser_id":  loserID,
+	}
+
+	moveResult, err := tx.Exec(ctx, moveQuery, args)
+	if err != nil {
+		return 0, 0, fmt.Errorf("cannot move common third party domains: %w", err)
+	}
+
+	// Delete explicitly instead of relying on ON DELETE CASCADE: the count
+	// of dropped duplicates is part of the operator's account of the merge,
+	// and a cascade would discard it silently.
+	deleteQuery := `
+DELETE FROM common_third_party_domains
+WHERE common_third_party_id = @loser_id
+`
+
+	deleteResult, err := tx.Exec(ctx, deleteQuery, pgx.StrictNamedArgs{"loser_id": loserID})
+	if err != nil {
+		return 0, 0, fmt.Errorf("cannot delete merged common third party domains: %w", err)
+	}
+
+	return moveResult.RowsAffected(), deleteResult.RowsAffected(), nil
+}
+
+// CollidingThirdPartyIDs returns the loser's organization third parties whose
+// organization already links the winner. These cannot be repointed: no
+// constraint forbids two rows in one organization on the same catalog entry,
+// but the organization-scoped lookup returns only the lowest id, leaving the
+// other permanently invisible. They are reported instead.
+func CollidingThirdPartyIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	winnerID gid.GID,
+	loserID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    loser.id
+FROM
+    third_parties AS loser
+WHERE
+    loser.common_third_party_id = @loser_id
+    AND EXISTS (
+        SELECT 1
+        FROM third_parties AS winner
+        WHERE winner.organization_id = loser.organization_id
+          AND winner.common_third_party_id = @winner_id
+    )
+ORDER BY
+    loser.id ASC
+`
+
+	args := pgx.StrictNamedArgs{
+		"winner_id": winnerID,
+		"loser_id":  loserID,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query colliding third parties: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect colliding third parties: %w", err)
+	}
+
+	return ids, nil
+}
+
+// RepointThirdPartiesToCommonThirdParty links the loser's organization third
+// parties to the winner across every tenant, skipping the collisions
+// CollidingThirdPartyIDs describes. The absence of a tenant predicate is
+// deliberate: see thirdparty.MergeCatalog.
+//
+// Raw SQL rather than a loop over ThirdParty.Update, which rewrites the whole
+// column set from a Go struct: that would clobber concurrent writes and could
+// not express the NOT EXISTS guard.
+func RepointThirdPartiesToCommonThirdParty(
+	ctx context.Context,
+	tx pg.Tx,
+	winnerID gid.GID,
+	loserID gid.GID,
+) (int64, error) {
+	q := `
+UPDATE third_parties AS loser
+SET
+    common_third_party_id = @winner_id,
+    updated_at = NOW()
+WHERE
+    loser.common_third_party_id = @loser_id
+    AND NOT EXISTS (
+        SELECT 1
+        FROM third_parties AS winner
+        WHERE winner.organization_id = loser.organization_id
+          AND winner.common_third_party_id = @winner_id
+    )
+`
+
+	args := pgx.StrictNamedArgs{
+		"winner_id": winnerID,
+		"loser_id":  loserID,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot repoint third parties: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// AdoptCommonThirdPartyLogo gives the winner the loser's logo when the
+// winner has none, and reports whether it did.
+//
+// The logo reference has no ON DELETE action, so without this the loser's
+// file row survives the merge with nothing referencing it. The guard makes
+// the statement a no-op when the winner already has a logo, so an existing
+// one is never overwritten.
+func AdoptCommonThirdPartyLogo(
+	ctx context.Context,
+	tx pg.Tx,
+	winnerID gid.GID,
+	loserID gid.GID,
+) (bool, error) {
+	q := `
+UPDATE common_third_parties AS winner
+SET
+    logo_file_id = loser.logo_file_id,
+    updated_at = NOW()
+FROM
+    common_third_parties AS loser
+WHERE
+    winner.id = @winner_id
+    AND loser.id = @loser_id
+    AND winner.logo_file_id IS NULL
+    AND loser.logo_file_id IS NOT NULL
+`
+
+	args := pgx.StrictNamedArgs{
+		"winner_id": winnerID,
+		"loser_id":  loserID,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot adopt merged common third party logo: %w", err)
+	}
+
+	return result.RowsAffected() > 0, nil
+}

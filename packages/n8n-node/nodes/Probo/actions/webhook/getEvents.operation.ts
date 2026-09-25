@@ -66,6 +66,25 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Status',
+		name: 'status',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['webhook'],
+				operation: ['getEvents'],
+			},
+		},
+		options: [
+			{ name: 'All', value: '' },
+			{ name: 'Pending', value: 'PENDING' },
+			{ name: 'Succeeded', value: 'SUCCEEDED' },
+			{ name: 'Failed', value: 'FAILED' },
+		],
+		default: '',
+		description: 'Filter events by delivery status',
+	},
 ];
 
 export async function execute(
@@ -75,17 +94,19 @@ export async function execute(
 	const webhookSubscriptionId = this.getNodeParameter('webhookSubscriptionId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const status = this.getNodeParameter('status', itemIndex, '') as string;
 
 	const query = `
-		query GetWebhookEvents($webhookSubscriptionId: ID!, $first: Int, $after: CursorKey) {
+		query GetWebhookEvents($webhookSubscriptionId: ID!, $first: Int, $after: CursorKey, $filter: WebhookEventFilter) {
 			node(id: $webhookSubscriptionId) {
 				... on WebhookSubscription {
-					events(first: $first, after: $after) {
+					events(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
 								id
 								webhookSubscriptionId
 								status
+								payload
 								response
 								createdAt
 							}
@@ -100,10 +121,15 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { webhookSubscriptionId };
+	if (status !== '') {
+		variables.filter = { status };
+	}
+
 	const events = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ webhookSubscriptionId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

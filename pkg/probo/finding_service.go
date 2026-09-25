@@ -370,18 +370,24 @@ func (s FindingService) CreateAuditMapping(
 	findingID gid.GID,
 	auditID gid.GID,
 	referenceID string,
-) (*coredata.Finding, *coredata.Audit, error) {
+) (*coredata.Finding, *coredata.Audit, *coredata.FindingAudit, error) {
 	finding := &coredata.Finding{}
 	audit := &coredata.Audit{}
+	findingAudit := &coredata.FindingAudit{
+		FindingID:   findingID,
+		AuditID:     auditID,
+		ReferenceID: referenceID,
+		CreatedAt:   time.Now(),
+	}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := finding.LoadByID(ctx, conn, scope, findingID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := finding.LoadByID(ctx, tx, scope, findingID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
 			}
 
-			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
+			if err := audit.LoadByID(ctx, tx, scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -389,15 +395,9 @@ func (s FindingService) CreateAuditMapping(
 				return fmt.Errorf("cannot create finding audit mapping: finding and audit belong to different organizations")
 			}
 
-			findingAudit := &coredata.FindingAudit{
-				FindingID:      findingID,
-				AuditID:        auditID,
-				ReferenceID:    referenceID,
-				OrganizationID: finding.OrganizationID,
-				CreatedAt:      time.Now(),
-			}
+			findingAudit.OrganizationID = finding.OrganizationID
 
-			if err := findingAudit.Upsert(ctx, conn, scope); err != nil {
+			if err := findingAudit.Upsert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot create finding audit mapping: %w", err)
 			}
 
@@ -405,10 +405,10 @@ func (s FindingService) CreateAuditMapping(
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return finding, audit, nil
+	return finding, audit, findingAudit, nil
 }
 
 func (s FindingService) DeleteAuditMapping(
@@ -443,6 +443,37 @@ func (s FindingService) DeleteAuditMapping(
 	}
 
 	return finding, audit, nil
+}
+
+func (s FindingService) ListAuditMappings(
+	ctx context.Context,
+	scope coredata.Scoper,
+	findingID gid.GID,
+	auditIDs []gid.GID,
+) (coredata.FindingAudits, error) {
+	var findingAudits coredata.FindingAudits
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := findingAudits.LoadByFindingIDAndAuditIDs(
+				ctx,
+				conn,
+				scope,
+				findingID,
+				auditIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load finding audit mappings: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list finding audit mappings: %w", err)
+	}
+
+	return findingAudits, nil
 }
 
 func (s FindingService) ListForAuditID(

@@ -23,6 +23,8 @@ package cookiebanner
 import (
 	"strings"
 	"time"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 // Per-field outcomes recorded in the common tracker pattern enrichment
@@ -33,6 +35,16 @@ const (
 	commonPatternFieldStatusFound    = "found"
 	commonPatternFieldStatusNotFound = "not_found"
 	commonPatternFieldStatusExternal = "exists_external"
+
+	// commonPatternFieldStatusTerminal records that the artifact was
+	// determined to have no third party behind it, whichever terminal verdict
+	// applied. It is a definitive answer, not a missing one, so it counts as
+	// resolved: such a row would otherwise report no_result forever despite
+	// the question being settled.
+	//
+	// The wire value stays "first_party" so payloads already written keep
+	// parsing; the verdict itself is recorded in the attribution block.
+	commonPatternFieldStatusTerminal = "first_party"
 
 	// Run-level status recorded at the top of the enrichment payload.
 	commonPatternStatusDone     = "done"
@@ -60,6 +72,16 @@ type (
 		Category       string  `json:"category,omitempty"`
 		Confidence     float64 `json:"confidence"`
 		Linked         bool    `json:"linked"`
+
+		// FirstParty records that the artifact has no third party behind it,
+		// so the decision stays auditable from the payload after the vendor
+		// link has been cleared. Kept for payloads already written; read
+		// TerminalVerdict for which verdict applied.
+		FirstParty bool `json:"first_party,omitempty"`
+
+		// TerminalVerdict names the verdict recorded, so a browser extension
+		// is not represented as the site operator's own code.
+		TerminalVerdict string `json:"terminal_verdict,omitempty"`
 	}
 
 	// CommonPatternEnrichmentMetadata is the full payload stored in the
@@ -135,6 +157,43 @@ func buildCommonPatternEnrichmentMetadata(
 	return meta
 }
 
+// buildCommonPatternTerminalMetadata assembles the provenance for a run that
+// ended in a terminal verdict. Both enrichment targets are recorded as
+// resolved rather than not_found: the artifact has no vendor to name and
+// therefore no vendor-informed description to write, so the run answered both
+// questions rather than failing at them.
+//
+// The verdict is recorded explicitly, because "no third party" covers both the
+// operator's own code and software the visitor installed, and a register that
+// conflates them is wrong about who is responsible.
+func buildCommonPatternTerminalMetadata(
+	model string,
+	verdict coredata.CommonTrackerPatternAttribution,
+	now time.Time,
+) CommonPatternEnrichmentMetadata {
+	fields := map[string]CommonPatternFieldMeta{
+		commonPatternFieldDescription: {
+			Status:    commonPatternFieldStatusTerminal,
+			UpdatedAt: now,
+		},
+		commonPatternFieldThirdParty: {
+			Status:    commonPatternFieldStatusTerminal,
+			UpdatedAt: now,
+		},
+	}
+
+	return CommonPatternEnrichmentMetadata{
+		Model:       model,
+		AttemptedAt: now,
+		Status:      commonPatternRunStatus(fields),
+		Fields:      fields,
+		Attribution: &CommonPatternAttributionMeta{
+			FirstParty:      true,
+			TerminalVerdict: string(verdict),
+		},
+	}
+}
+
 // commonPatternRunStatus classifies the run from its per-field outcomes:
 // done when every field resolved a value, no_result when none did, partial
 // otherwise.
@@ -162,7 +221,9 @@ func commonPatternRunStatus(fields map[string]CommonPatternFieldMeta) string {
 // one.
 func commonPatternFieldResolved(status string) bool {
 	switch status {
-	case commonPatternFieldStatusFound, commonPatternFieldStatusExternal:
+	case commonPatternFieldStatusFound,
+		commonPatternFieldStatusExternal,
+		commonPatternFieldStatusTerminal:
 		return true
 	default:
 		return false

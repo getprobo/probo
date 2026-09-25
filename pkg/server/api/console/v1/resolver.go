@@ -24,19 +24,16 @@ package console_v1
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -46,9 +43,13 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -58,33 +59,53 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type (
+	BotDeliveryDestinations interface {
+		GetDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget) (*coredata.BotDeliveryDestination, error)
+		SetDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget, externalDestinationID string) (*coredata.BotDeliveryDestination, error)
+		RestoreDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget, previous *coredata.BotDeliveryDestination, expectedExternalDestinationID string) (*coredata.BotDeliveryDestination, error)
+		ClearDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget) error
+	}
+
+	ComplianceMessages interface {
+		QueueWelcome(ctx context.Context, organizationID, compliancePortalID gid.GID) error
+	}
+
 	Resolver struct {
-		authorize         authz.AuthorizeFunc
-		batchAuthorize    authz.BatchAuthorizeFunc
-		probo             *probo.Service
-		resourceAlias     *resourcealias.Service
-		iam               *iam.Service
-		esign             *esign.Service
-		management        *management.Service
-		certManager       *certmanager.Service
-		accessReview      *accessreview.Service
-		agentRun          *agentrun.Service
-		mailman           *mailman.Service
-		cookieBanner      *cookiebanner.Service
-		connectorRegistry *connector.ConnectorRegistry
-		providerRegistry  *provider.Registry
-		riskManagement    *riskmanagement.Service
-		thirdParty        *thirdparty.Service
-		itam              *itam.Service
-		logger            *log.Logger
-		fileManager       *filemanager.Service
-		baseURL           *baseurl.BaseURL
-		customDomainCname string
-		tokenSecret       string
+		authorize               authz.AuthorizeFunc
+		batchAuthorize          authz.BatchAuthorizeFunc
+		probo                   *probo.Service
+		resourceAlias           *resourcealias.Service
+		iam                     *iam.Service
+		esign                   *esign.Service
+		management              *management.Service
+		certManager             *certmanager.Service
+		accessReview            *accessreview.Service
+		agentExecution          *agentexecution.Service
+		mailman                 *mailman.Service
+		cookieBanner            *cookiebanner.Service
+		connectorRegistry       *connector.Registry
+		providerRegistry        *provider.Registry
+		riskManagement          *riskmanagement.Service
+		thirdParty              *thirdparty.Service
+		itam                    *itam.Service
+		task                    *task.Service
+		logger                  *log.Logger
+		fileManager             *filemanager.Service
+		baseURL                 *baseurl.BaseURL
+		customDomainCname       string
+		identityFederation      *identityfederation.Issuer
+		awsConnectorInstall     cloudaws.ConnectorInstallConfig
+		gcpConnectorInstall     cloudgcp.ConnectorInstallConfig
+		azureConnectorInstall   cloudazure.ConnectorInstallConfig
+		probotIdentityBindings  *identitybinding.Service
+		slackbotInstallations   *slackchannel.InstallationService
+		botDeliveryDestinations BotDeliveryDestinations
+		complianceMessages      ComplianceMessages
 	}
 )
 
@@ -97,20 +118,30 @@ func NewMux(
 	managementSvc *management.Service,
 	certManagerSvc *certmanager.Service,
 	accessReviewSvc *accessreview.Service,
-	agentRunSvc *agentrun.Service,
+	agentExecutionSvc *agentexecution.Service,
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
-	connectorRegistry *connector.ConnectorRegistry,
+	installStateKey string,
+	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
+	probotIdentityBindings *identitybinding.Service,
+	slackbotInstallations *slackchannel.InstallationService,
+	botDeliveryDestinations BotDeliveryDestinations,
+	complianceMessages ComplianceMessages,
 	graphqlLimits gqlutils.Limits,
 	itamSvc *itam.Service,
+	taskSvc *task.Service,
+	identityFederation *identityfederation.Issuer,
+	awsConnectorInstall cloudaws.ConnectorInstallConfig,
+	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
+	azureConnectorInstall cloudazure.ConnectorInstallConfig,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -124,13 +155,12 @@ func NewMux(
 		managementSvc,
 		certManagerSvc,
 		accessReviewSvc,
-		agentRunSvc,
+		agentExecutionSvc,
 		mailmanSvc,
 		cookieBannerSvc,
 		connectorRegistry,
 		providerRegistry,
 		customDomainCname,
-		tokenSecret,
 		logger,
 		thirdPartySvc,
 		riskManagementSvc,
@@ -138,6 +168,15 @@ func NewMux(
 		baseURL,
 		graphqlLimits,
 		itamSvc,
+		taskSvc,
+		probotIdentityBindings,
+		slackbotInstallations,
+		botDeliveryDestinations,
+		complianceMessages,
+		identityFederation,
+		awsConnectorInstall,
+		gcpConnectorInstall,
+		azureConnectorInstall,
 	)
 
 	r.Group(func(r chi.Router) {
@@ -152,6 +191,8 @@ func NewMux(
 			cookieBannerSvc,
 			thirdPartySvc,
 			managementSvc,
+			riskManagementSvc,
+			taskSvc,
 		))
 
 		r.Handle("/graphql", graphqlHandler)
@@ -159,6 +200,16 @@ func NewMux(
 		r.Get(
 			"/connectors/initiate",
 			handleConnectorInitiate(logger, proboSvc, iamSvc, connectorRegistry),
+		)
+
+		r.Get(
+			"/connectors/github-app/initiate",
+			handleConnectorGitHubAppInitiate(logger, proboSvc, iamSvc, connectorRegistry),
+		)
+
+		r.Get(
+			"/connectors/install/initiate",
+			handleConnectorInstallInitiate(logger, iamSvc, providerRegistry, installStateKey),
 		)
 
 		r.Get(
@@ -172,7 +223,72 @@ func NewMux(
 				safeRedirect,
 			),
 		)
+
+		r.Get(
+			"/connectors/github-app/complete",
+			handleConnectorGitHubAppComplete(
+				logger,
+				baseURL,
+				proboSvc,
+				accessReviewSvc,
+				connectorRegistry,
+				safeRedirect,
+			),
+		)
+
+		r.Get(
+			"/slackbot/install/initiate",
+			handleSlackbotInstallInitiate(
+				logger,
+				iamSvc,
+				slackbotInstallations,
+			),
+		)
 	})
+
+	// Public in the sense that the vendor top-level-redirects the customer's
+	// browser here carrying no Probo credentials of its own, so the full auth
+	// group above -- API key, OAuth2 access token, identity presence,
+	// membership -- cannot gate it. NewSessionMiddleware is mounted alone
+	// because it is the one middleware that is non-blocking when no cookie is
+	// present: it hands the request straight to the next handler, attaching an
+	// identity only when a valid session cookie rides along.
+	//
+	// It must NEVER be paired with NewIdentityPresenceMiddleware here: that one
+	// redirects or rejects an anonymous request, which would turn a legitimate
+	// SameSite-blocked callback into a redirect loop instead of the explicit
+	// 401 the handler renders.
+	//
+	// The handler then requires that attached identity to be the SAME identity
+	// the state was minted for, and re-authorizes it against the organization:
+	// a valid session is neither a live permission nor, on its own, a right to
+	// bind a vendor tenant to any organization.
+	r.Group(func(r chi.Router) {
+		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+
+		r.Get(
+			"/connectors/install/{provider}/complete",
+			handleConnectorInstallComplete(
+				logger,
+				iamSvc,
+				baseURL,
+				proboSvc,
+				providerRegistry,
+				installStateKey,
+				safeRedirect,
+			),
+		)
+	})
+
+	r.Get(
+		"/slackbot/install/complete",
+		handleSlackbotInstallComplete(
+			logger,
+			baseURL,
+			slackbotInstallations,
+			safeRedirect,
+		),
+	)
 
 	// Public, unauthenticated: the OAuth Client ID Metadata Document (CIMD)
 	// is fetched server-to-server by public-client providers (PostHog)
@@ -183,354 +299,45 @@ func NewMux(
 	return r
 }
 
-func handleConnectorComplete(
-	logger *log.Logger,
-	baseURL *baseurl.BaseURL,
-	proboSvc *probo.Service,
-	accessReviewSvc *accessreview.Service,
-	connectorRegistry *connector.ConnectorRegistry,
-	safeRedirect *saferedirect.SafeRedirect,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-
-		if oauthErr := query.Get("error"); oauthErr != "" {
-			handleConnectorOAuth2Error(w, r, logger, baseURL, safeRedirect, query)
-			return
-		}
-
-		stateToken := query.Get("state")
-		if stateToken == "" {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
-			return
-		}
-
-		provider, err := connector.ExtractProviderFromState(stateToken)
-		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot extract provider from state: %w", err))
-			return
-		}
-
-		var connectorProvider coredata.ConnectorProvider
-		if err := connectorProvider.UnmarshalText([]byte(provider)); err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
-			return
-		}
-
-		connection, state, err := connectorRegistry.CompleteWithState(r.Context(), provider, r)
-		if err != nil {
-			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
-			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-			return
-		}
-
-		organizationID, err := gid.ParseGID(state.OrganizationID)
-		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse organization ID from state: %w", err))
-			return
-		}
-
-		scope := coredata.NewScopeFromObjectID(organizationID)
-		svc := proboSvc
-
-		var cnnctr *coredata.Connector
-
-		// Some providers persist per-customer settings on the connector,
-		// captured here for both the create and the reconnect path: Datadog
-		// echoes its API domain as a `domain` callback param; Zendesk's
-		// subdomain rode the signed OAuth state from initiate (it is not
-		// echoed back). Both become a URL host, so each is re-validated
-		// before use. At most one block applies per callback.
-		var rawSettings json.RawMessage
-
-		if connectorProvider == coredata.ConnectorProviderDatadog {
-			domain := query.Get("domain")
-			if !connector.IsValidDatadogDomain(domain) {
-				logger.WarnCtx(r.Context(), "rejecting invalid datadog domain",
-					log.String("provider", string(connectorProvider)),
-				)
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid domain"))
-
-				return
-			}
-
-			region, _ := connector.DatadogSiteForDomain(domain)
-
-			raw, err := json.Marshal(&coredata.DatadogConnectorSettings{
-				Region: region,
-				Domain: domain,
-			})
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot marshal datadog settings", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-
-			rawSettings = raw
-		}
-
-		if connectorProvider == coredata.ConnectorProviderZendesk {
-			// The subdomain is HMAC-signed in the state (untamperable) and was
-			// validated at initiate, but re-validate it here too — it becomes
-			// a URL host on every API call (defense-in-depth).
-			if !connector.IsValidZendeskSubdomain(state.Site) {
-				logger.WarnCtx(r.Context(), "rejecting invalid zendesk subdomain",
-					log.String("provider", string(connectorProvider)),
-				)
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid subdomain"))
-
-				return
-			}
-
-			raw, err := json.Marshal(&coredata.ZendeskConnectorSettings{
-				Subdomain: state.Site,
-			})
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot marshal zendesk settings", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-
-			rawSettings = raw
-		}
-
-		// If a connector_id was passed in the state, this is a
-		// reconnection — update the existing connector's token.
-		if state.ConnectorID != "" {
-			connectorID, err := gid.ParseGID(state.ConnectorID)
-			if err != nil {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse connector ID from state: %w", err))
-				return
-			}
-
-			cnnctr, err = svc.Connectors.Reconnect(
-				r.Context(),
-				scope,
-				probo.ReconnectConnectorRequest{
-					ConnectorID:    connectorID,
-					OrganizationID: organizationID,
-					Provider:       connectorProvider,
-					Connection:     connection,
-					RawSettings:    rawSettings,
-				},
-			)
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot reconnect connector", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-
-			// The reconnect may carry a different scope/org, changing the
-			// resolvable instance name. Clear the synced-name flag so the
-			// source-name worker re-resolves it. Best-effort: a failure here
-			// must not fail the OAuth callback redirect.
-			if err := accessReviewSvc.ResetSourceNameSyncForConnector(r.Context(), scope, cnnctr.ID); err != nil {
-				logger.WarnCtx(r.Context(), "cannot reset access source name sync after reconnect", log.Error(err))
-			}
-		} else {
-			createReq := probo.CreateConnectorRequest{
-				OrganizationID: organizationID,
-				Provider:       connectorProvider,
-				Protocol:       coredata.ConnectorProtocol(connection.Type()),
-				Connection:     connection,
-			}
-
-			// PagerDuty Scoped OAuth surfaces the customer's subdomain as
-			// a `subdomain` query parameter on the redirect URL (not in
-			// the token response body). Persist it on the connector
-			// settings so the driver and name resolver can read it.
-			if connectorProvider == coredata.ConnectorProviderPagerDuty {
-				subdomain := query.Get("subdomain")
-				if subdomain == "" {
-					// Fall back to ProviderMetadata for older OAuth flows
-					// that may have surfaced the subdomain through the
-					// token response body.
-					subdomain = state.ProviderMetadata["subdomain"]
-				}
-
-				// The subdomain comes from an attacker-influenceable
-				// callback parameter; refuse anything that isn't a valid
-				// DNS label so it cannot be smuggled into URLs or logs.
-				if subdomain != "" && !isValidPagerDutySubdomain(subdomain) {
-					logger.WarnCtx(r.Context(), "rejecting invalid pagerduty subdomain",
-						log.String("provider", string(connectorProvider)),
-					)
-
-					subdomain = ""
-				}
-
-				if subdomain != "" {
-					raw, err := json.Marshal(&coredata.PagerDutyConnectorSettings{
-						Subdomain: subdomain,
-					})
-					if err != nil {
-						logger.ErrorCtx(r.Context(), "cannot marshal pagerduty settings", log.Error(err))
-						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-						return
-					}
-
-					createReq.RawSettings = raw
-				}
-			}
-
-			// Personal-account installs send no teamId; fall back to
-			// /v2/user.id as a synthetic TeamID (the v3 members endpoint
-			// accepts personal-account UIDs).
-			if connectorProvider == coredata.ConnectorProviderVercel {
-				teamID := vercelCallbackTeamID(query)
-				if teamID == "" {
-					if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
-						if uid, err := connector.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
-							teamID = uid
-						} else {
-							logger.WarnCtx(r.Context(), "cannot fetch vercel user id for personal-account fallback", log.Error(err))
-						}
-					}
-				}
-
-				if teamID != "" {
-					raw, err := json.Marshal(&coredata.VercelConnectorSettings{
-						TeamID: teamID,
-					})
-					if err != nil {
-						logger.ErrorCtx(r.Context(), "cannot marshal vercel settings", log.Error(err))
-						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-						return
-					}
-
-					createReq.RawSettings = raw
-				}
-			}
-
-			// Per-customer settings captured above (Datadog's callback domain
-			// or Zendesk's state subdomain) apply to the create request; at
-			// most one provider populates them per callback.
-			if rawSettings != nil {
-				createReq.RawSettings = rawSettings
-			}
-
-			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-		}
-
-		redirectURL := state.ContinueURL
-		if redirectURL == "" {
-			redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
-		}
-
-		parsedURL, err := url.Parse(redirectURL)
-		if err != nil {
-			logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
-
-			parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
-		}
-
-		q := parsedURL.Query()
-		q.Set("connector_id", cnnctr.ID.String())
-		q.Set("provider", string(connectorProvider))
-
-		// Access-review sources toast missing scopes after redirect. Other
-		// continue URLs (Slack compliance page, SCIM settings, …) must not
-		// get a false missing-scope error from this access-review check.
-		if strings.Contains(state.ContinueURL, "/access-reviews/sources") {
-			missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
-			if err != nil {
-				logger.WarnCtx(r.Context(), "cannot determine missing OAuth scopes after connector callback", log.Error(err))
-			} else if len(missing) > 0 {
-				q.Set("error", accessreview.NewMissingOAuthScopesError(missing).Error())
-			}
-		}
-
-		parsedURL.RawQuery = q.Encode()
-
-		safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
-	}
-}
-
-func handleConnectorOAuth2Error(
-	w http.ResponseWriter,
-	r *http.Request,
-	logger *log.Logger,
-	baseURL *baseurl.BaseURL,
-	safeRedirect *saferedirect.SafeRedirect,
-	query url.Values,
-) {
-	oauthErr := query.Get("error")
-
-	provider := "unknown"
-	redirectURL := baseURL.String()
-
-	if stateToken := query.Get("state"); stateToken != "" {
-		if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
-			if payload.Data.Provider != "" {
-				provider = payload.Data.Provider
-			}
-
-			if payload.Data.ContinueURL != "" {
-				redirectURL = payload.Data.ContinueURL
-			}
-		}
-	}
-
-	// Provider error_description fields routinely carry PII (user emails,
-	// account names) and must never reach logs or the client redirect URL.
-	// Forward only the standardized error code.
-	logger.WarnCtx(r.Context(), "OAuth2 callback returned error",
-		log.String("provider", provider),
-		log.String("error", oauthErr),
-	)
-
-	parsedURL, _ := url.Parse(redirectURL)
-	q := parsedURL.Query()
-	q.Set("error", oauthErr)
-	parsedURL.RawQuery = q.Encode()
-
-	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
-}
-
-// vercelCallbackTeamID returns the team identifier from Vercel's OAuth
-// callback. Vercel uses the camelCase `teamId` query param (not snake_case
-// `team_id`); the name is pinned by a test so it cannot silently regress.
-func vercelCallbackTeamID(query url.Values) string {
-	return query.Get("teamId")
-}
-
-// isValidPagerDutySubdomain reports whether s is a single DNS label
-// (RFC 1035 §2.3.1). PagerDuty subdomains are tenant identifiers that
-// will be embedded in API URLs; the OAuth callback is the only place
-// where a malformed value can enter the system.
-func isValidPagerDutySubdomain(s string) bool {
-	if s == "" || len(s) > 63 {
-		return false
-	}
-
-	for _, c := range s {
-		switch {
-		case c >= 'a' && c <= 'z':
-		case c >= 'A' && c <= 'Z':
-		case c >= '0' && c <= '9':
-		case c == '-':
-		default:
-			return false
-		}
-	}
-
-	return true
-}
-
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
 	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
 
 	return err == nil, nil
+}
+
+func (r *Resolver) treatmentPlanNetScores(
+	ctx context.Context,
+	obj *types.TreatmentPlan,
+) (int, int, int, error) {
+	if obj.AsOf != nil {
+		if _, err := r.authorize(ctx, obj.RiskAnalysis.ID, riskmanagement.ActionTreatmentPlanList); err != nil {
+			return 0, 0, 0, err
+		}
+
+		return obj.NetLikelihood, obj.NetImpact, obj.NetRiskScore, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanGet); err != nil {
+		return 0, 0, 0, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	progress, err := loaders.TreatmentProgress.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get treatment plan progress", log.Error(err))
+		return 0, 0, 0, gqlutils.Internal(ctx)
+	}
+
+	likelihood, impact, score := riskmanagement.NetScores(
+		&coredata.TreatmentPlan{
+			InherentLikelihood: obj.InherentLikelihood,
+			InherentImpact:     obj.InherentImpact,
+			ResidualLikelihood: obj.ResidualLikelihood,
+			ResidualImpact:     obj.ResidualImpact,
+		},
+		progress,
+	)
+
+	return likelihood, impact, score, nil
 }

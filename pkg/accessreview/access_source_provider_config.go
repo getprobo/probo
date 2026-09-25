@@ -25,6 +25,7 @@ import (
 	"net/http"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -44,7 +45,7 @@ import (
 // connector (empty string if none).
 //
 // NeedsPicker reports whether the picker mutation should surface in the
-// UI; false for 2-auto providers.
+// UI; false for 2-auto providers (identifier captured at OAuth/install).
 type providerOrgConfig struct {
 	ListOrgs     func(ctx context.Context, httpClient *http.Client, baseURL string) ([]drivers.Organization, error)
 	SelectedSlug func(c *coredata.Connector) string
@@ -151,7 +152,9 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
 	// (subdomain for PagerDuty, teamId or fallback /v2/user.id for
-	// Vercel). No picker UI; NeedsPicker = false.
+	// Vercel). No picker UI; NeedsPicker = false. Install-scoped connections
+	// (GitHub App) share a provider entry that has ListOrgs for OAuth; the
+	// connection's OrganizationSelector capability gates the picker.
 	coredata.ConnectorProviderPagerDuty: {
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](c)
@@ -182,18 +185,23 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	},
 }
 
-// ProviderSupportsOrganizationPicker reports whether the provider surfaces an
+// ProviderSupportsOrganizationPicker reports whether the connector surfaces an
 // organization picker at all.
 //
-// It distinguishes two cases the org listing itself cannot: a provider that
-// offers a picker and returned nothing, versus a provider that has no picker
-// because its identifier is captured during the OAuth callback (PagerDuty's
-// subdomain, Vercel's team, Datadog's domain, Zendesk's subdomain). Both come
-// back as an empty list, but only the first means something is wrong — telling
-// a healthy 2-auto source that its organization "may not have approved Probo"
-// would be a lie.
-func ProviderSupportsOrganizationPicker(p coredata.ConnectorProvider) bool {
-	cfg, ok := providerOrgConfigs[p]
+// The provider must register ListOrgs, and the connection auth model must
+// implement OrganizationSelector (OAuth user tokens and API keys do;
+// install-scoped connections do not). Pattern 2-auto providers omit ListOrgs,
+// so an empty org list is NOT_APPLICABLE rather than EMPTY.
+func ProviderSupportsOrganizationPicker(
+	provider coredata.ConnectorProvider,
+	protocol coredata.ConnectorProtocol,
+) bool {
+	cfg, ok := providerOrgConfigs[provider]
+	if !ok || cfg.ListOrgs == nil {
+		return false
+	}
 
-	return ok && cfg.ListOrgs != nil
+	return connector.SupportsOrganizationPickerForProtocol(
+		connector.ProtocolType(protocol),
+	)
 }

@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
@@ -268,14 +269,19 @@ func (s ThirdPartyDataPrivacyAgreementService) GenerateFileURL(
 	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
 		encodedFilename, encodedFilename)
 
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     new(s.svc.bucket),
-		Key:                        new(file.FileKey),
-		ResponseCacheControl:       new("max-age=3600, public"),
-		ResponseContentDisposition: new(contentDisposition),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiresIn
-	})
+	presignedReq, err := presignClient.PresignGetObject(
+		ctx,
+		&s3.GetObjectInput{
+			Bucket:                     new(s.svc.bucket),
+			Key:                        new(file.FileKey),
+			ResponseCacheControl:       new("max-age=3600, public"),
+			ResponseContentDisposition: new(contentDisposition),
+		},
+		awsconfig.UnsignedChecksumMode,
+		func(opts *s3.PresignOptions) {
+			opts.Expires = expiresIn
+		},
+	)
 	if err != nil {
 		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
 	}

@@ -34,14 +34,15 @@ func deepgramRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderDeepgram,
 		DisplayName:      "Deepgram",
 		DocumentationURL: accessReviewDocsURL("deepgram"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthScheme, Name: "Token"},
+		},
 		// Deepgram authenticates with an API key under the `Token` scheme
 		// (`Authorization: Token <key>`), not Bearer. APIKeyAuthScheme makes
 		// the APIKeyConnection use that scheme. There is no third-party
 		// OAuth2 flow; the customer supplies an owner/admin key bound to one
 		// account, so there is nothing to pick (Pattern 3): no settings
 		// struct, no picker.
-		APIKeyAuthScheme: "Token",
 		Endpoints: Endpoints{
 			APIBase: "https://api.deepgram.com/v1",
 			// ProbeURL lets the connection-status check confirm the key with a

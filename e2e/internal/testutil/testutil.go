@@ -99,7 +99,15 @@ func Setup() {
 			}
 		}
 
-		configPath, err := generateConfig(configOptions{})
+		opts := configOptions{
+			APIAddr:        os.Getenv("PROBO_E2E_API_ADDR"),
+			BaseURL:        os.Getenv("PROBO_E2E_BASE_URL"),
+			MetricsAddr:    os.Getenv("PROBO_E2E_METRICS_ADDR"),
+			TrustHTTPAddr:  os.Getenv("PROBO_E2E_TRUST_HTTP_ADDR"),
+			TrustHTTPSAddr: os.Getenv("PROBO_E2E_TRUST_HTTPS_ADDR"),
+		}
+
+		configPath, err := generateConfig(opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "e2etest: cannot generate config: %v\n", err)
 			os.Exit(1)
@@ -142,7 +150,16 @@ func Setup() {
 			testEnv.done <- err
 		}()
 
-		testEnv.BaseURL = "http://localhost:18080"
+		testEnv.BaseURL = opts.BaseURL
+		if testEnv.BaseURL == "" {
+			apiAddr := opts.APIAddr
+			if apiAddr == "" {
+				apiAddr = "localhost:18080"
+			}
+
+			testEnv.BaseURL = "http://" + apiAddr
+		}
+
 		testEnv.MailpitBaseURL = "http://localhost:8025"
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -271,6 +288,11 @@ func generateConfig(opts configOptions) (string, error) {
 		return "", fmt.Errorf("generate oauth2 signing key: %w", err)
 	}
 
+	identityFederationSigningKey, err := bootstrap.GenerateOAuth2SigningKey()
+	if err != nil {
+		return "", fmt.Errorf("generate identity federation signing key: %w", err)
+	}
+
 	apiAddr := opts.APIAddr
 	if apiAddr == "" {
 		apiAddr = "localhost:18080"
@@ -308,6 +330,11 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_AUTH_PASSWORD_PEPPER":      "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes",
 		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": oauth2SigningKey,
 
+		// Identity federation issuer. No issuer base URL is set, so the issuer is derived
+		// as {base-url}/federation.
+		"PROBOD_IDENTITY_FEDERATION_ENABLED":     "true",
+		"PROBOD_IDENTITY_FEDERATION_SIGNING_KEY": identityFederationSigningKey,
+
 		// Unit.
 		"PROBOD_METRICS_ADDR": metricsAddr,
 		"PROBOD_TRACING_ADDR": "localhost:14317",
@@ -335,6 +362,24 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION": "5",
 		"PROBOD_OAUTH2_SERVER_DEVICE_CODE_DURATION":        "15",
 
+		// Connector catalog. No test completes this external OAuth flow, but
+		// one deterministic configured protocol lets catalog tests assert the
+		// configuredProtocols migration rather than ambient deployment state.
+		"PROBOD_CONNECTOR_GITHUB_CLIENT_ID":           "e2e-github-client-id",
+		"PROBOD_CONNECTOR_GITHUB_CLIENT_SECRET":       "e2e-github-client-secret",
+		"PROBOD_CONNECTOR_LINEAR_CLIENT_ID":           "e2e-linear-client-id",
+		"PROBOD_CONNECTOR_LINEAR_CLIENT_SECRET":       "e2e-linear-client-secret",
+		"PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_ID":      "e2e-linear-sync-client-id",
+		"PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_SECRET":  "e2e-linear-sync-client-secret",
+		"PROBOD_CONNECTOR_LINEAR_SYNC_WEBHOOK_SECRET": "e2e-linear-webhook-secret",
+
+		// Crisp is the only app-install provider, and it stays out of the
+		// catalog entirely until BOTH of these are set. Configuring it here is
+		// what lets the catalog test assert installSupported rather than
+		// asserting that an unconfigured provider is absent.
+		"PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN": "e2e-plugin-identifier:e2e-plugin-key",
+		"PROBOD_CONNECTOR_CRISP_PLUGIN_ID":    "e2e-crisp-plugin-id",
+
 		// Trust center. Compliance pages are served exclusively over this
 		// dedicated listener, addressed by Host/SNI. The managed base domain
 		// yields {slug}.probopage.localhost subdomains for pages without a
@@ -342,6 +387,7 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_TRUST_CENTER_HTTP_ADDR":   trustHTTPAddr,
 		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  trustHTTPSAddr,
 		"PROBOD_TRUST_CENTER_BASE_DOMAIN": "probopage.localhost",
+		"PROBOD_TRUST_CENTER_TLS_MODE":    "direct",
 
 		// Keep certificate provisioning snappy so trust-center e2e flows do not
 		// wait on the default 30s poll (step-ca validates HTTP-01 via port 80).

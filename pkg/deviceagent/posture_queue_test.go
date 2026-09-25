@@ -22,6 +22,7 @@ package deviceagent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -48,6 +49,7 @@ func TestPendingPostureQueue_EnqueueTrimsOldestBatches(t *testing.T) {
 		}
 		dropped, err := enqueuePendingPostureBatch(
 			dir,
+			"0.1",
 			results,
 			time.Unix(int64(i), 0),
 		)
@@ -79,12 +81,14 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
 			)
 			require.NoError(t, err)
 			_, err = enqueuePendingPostureBatch(
 				dir,
+				"0.1",
 				[]PostureResultPayload{{CheckKey: "second", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
 			)
@@ -118,12 +122,14 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
 			)
 			require.NoError(t, err)
 			_, err = enqueuePendingPostureBatch(
 				dir,
+				"0.1",
 				[]PostureResultPayload{{CheckKey: "second", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
 			)
@@ -164,6 +170,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
 			)
@@ -209,6 +216,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
 			)
@@ -250,6 +258,44 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			batches, err := loadPendingPostureBatches(dir)
 			require.NoError(t, err)
 			assert.Len(t, batches, 0)
+		},
+	)
+
+	t.Run(
+		"sends empty agent version for legacy queued batches",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			_, err := enqueuePendingPostureBatch(
+				dir,
+				"",
+				[]PostureResultPayload{{CheckKey: "legacy", Status: "pass", ObservedAt: time.Now().UTC()}},
+				time.Now().UTC(),
+			)
+			require.NoError(t, err)
+
+			var (
+				calls atomic.Int32
+				got   PosturesRequest
+			)
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/api/agent/v1/postures", r.URL.Path)
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&got))
+				calls.Add(1)
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer srv.Close()
+
+			a := New(dir, "2.0.0", nil)
+			a.client = NewClient(srv.URL, "api-key", "test-agent")
+			a.flushQueuedPostures(context.Background())
+
+			require.Equal(t, int32(1), calls.Load())
+			require.Len(t, got.Results, 1)
+			assert.Empty(t, got.AgentVersion)
+			assert.Equal(t, "legacy", got.Results[0].CheckKey)
 		},
 	)
 }

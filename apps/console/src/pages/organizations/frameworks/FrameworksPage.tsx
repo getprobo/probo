@@ -220,7 +220,7 @@ function FrameworkCard(props: FrameworkCardProps) {
   const { t } = useTranslation();
   const dialogRef = useDialogRef();
   return (
-    <Card padded className="p-6 bg-white rounded shadow relative">
+    <Card padded className="p-6 relative">
       <FrameworkFormDialog
         ref={dialogRef}
         connectionId={props.connectionId}
@@ -260,7 +260,7 @@ function FrameworkCard(props: FrameworkCardProps) {
       <h2 className="text-xl font-medium">
         <Link
           className="hover:underline after:absolute after:content-[''] after:inset-0"
-          to={`/organizations/${props.organizationId}/frameworks/${framework.id}`}
+          to={`/organizations/${props.organizationId}/governance/frameworks/${framework.id}`}
         >
           {framework.name}
         </Link>

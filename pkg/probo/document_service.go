@@ -38,6 +38,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/esign"
@@ -1632,7 +1633,7 @@ func (s *DocumentService) deleteDocumentEntityMappings(
 }
 
 // clearDocumentReferences nullifies references to the given document IDs in
-// generated_documents and statements_of_applicability. This must be called
+// generated_documents, statements_of_applicability, and risk_analyses. This must be called
 // inside a transaction before soft-deleting or archiving documents, because
 // those operations are UPDATEs and do not trigger ON DELETE SET NULL.
 func (s *DocumentService) clearDocumentReferences(
@@ -1667,6 +1668,11 @@ func (s *DocumentService) clearDocumentReferences(
 
 	soa := coredata.StatementOfApplicability{}
 	if err := soa.ClearDocumentIDByDocumentIDs(ctx, tx, documentIDs); err != nil {
+		return err
+	}
+
+	riskAnalysis := coredata.RiskAnalysis{}
+	if err := riskAnalysis.ClearDocumentIDByDocumentIDs(ctx, tx, documentIDs); err != nil {
 		return err
 	}
 
@@ -2748,7 +2754,11 @@ func exportDocumentPDF(
 			return nil, fmt.Errorf("watermark text is required with watermark enabled")
 		}
 
-		pdfData, err = pdfutils.AddConfidentialWithTimestamp(pdfData, *options.WatermarkText)
+		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			pdfData,
+			version.Classification.String(),
+			*options.WatermarkText,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
@@ -2795,7 +2805,11 @@ func exportStoredPDF(
 			return nil, fmt.Errorf("watermark text is required with watermark enabled")
 		}
 
-		pdfData, err = pdfutils.AddConfidentialWithTimestamp(pdfData, *options.WatermarkText)
+		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			pdfData,
+			version.Classification.String(),
+			*options.WatermarkText,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
@@ -2870,6 +2884,12 @@ func generateSignaturePagePDF(
 	return pdfData, nil
 }
 
+type documentPDFInput struct {
+	version            *coredata.DocumentVersion
+	approverNames      []string
+	horizontalLogoFile *coredata.File
+}
+
 func generateDocumentPDF(
 	ctx context.Context,
 	svc *Service,
@@ -2879,6 +2899,20 @@ func generateDocumentPDF(
 	version *coredata.DocumentVersion,
 	options ExportPDFOptions,
 ) ([]byte, error) {
+	input, err := loadDocumentPDFInput(ctx, conn, scope, version)
+	if err != nil {
+		return nil, err
+	}
+
+	return renderDocumentPDF(ctx, svc, html2pdfConverter, input, options)
+}
+
+func loadDocumentPDFInput(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	version *coredata.DocumentVersion,
+) (*documentPDFInput, error) {
 	document := &coredata.Document{}
 	organization := &coredata.Organization{}
 
@@ -2941,6 +2975,31 @@ func generateDocumentPDF(
 		return nil, fmt.Errorf("cannot load organization: %w", err)
 	}
 
+	var horizontalLogoFile *coredata.File
+
+	if organization.HorizontalLogoFileID != nil {
+		fileRecord := &coredata.File{}
+		if err := fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID); err == nil {
+			horizontalLogoFile = fileRecord
+		}
+	}
+
+	return &documentPDFInput{
+		version:            version,
+		approverNames:      approverNames,
+		horizontalLogoFile: horizontalLogoFile,
+	}, nil
+}
+
+func renderDocumentPDF(
+	ctx context.Context,
+	svc *Service,
+	html2pdfConverter *html2pdf.Converter,
+	input *documentPDFInput,
+	options ExportPDFOptions,
+) ([]byte, error) {
+	version := input.version
+
 	classification := docgen.ClassificationSecret
 
 	switch version.Classification {
@@ -2954,15 +3013,10 @@ func generateDocumentPDF(
 
 	horizontalLogoBase64 := ""
 
-	if organization.HorizontalLogoFileID != nil {
-		fileRecord := &coredata.File{}
-
-		fileErr := fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID)
-		if fileErr == nil {
-			base64Data, mimeType, logoErr := svc.fileManager.GetFileBase64(ctx, fileRecord)
-			if logoErr == nil {
-				horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
-			}
+	if input.horizontalLogoFile != nil {
+		base64Data, mimeType, logoErr := svc.fileManager.GetFileBase64(ctx, input.horizontalLogoFile)
+		if logoErr == nil {
+			horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
 		}
 	}
 
@@ -2974,7 +3028,7 @@ func generateDocumentPDF(
 		Major:                       version.Major,
 		Minor:                       version.Minor,
 		Classification:              classification,
-		Approvers:                   approverNames,
+		Approvers:                   input.approverNames,
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 		Landscape:                   isLandscape,
@@ -3017,7 +3071,11 @@ func generateDocumentPDF(
 			return nil, fmt.Errorf("watermark text is required with watermark enabled")
 		}
 
-		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, *options.WatermarkText)
+		watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+			pdfData,
+			version.Classification.String(),
+			*options.WatermarkText,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
@@ -3153,6 +3211,7 @@ func (s *DocumentService) GenerateDocumentExportDownloadURL(
 			ResponseContentType:        new(file.MimeType),
 			ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
 		},
+		awsconfig.UnsignedChecksumMode,
 		func(opts *s3.PresignOptions) {
 			opts.Expires = documentExportEmailExpiresIn
 		},

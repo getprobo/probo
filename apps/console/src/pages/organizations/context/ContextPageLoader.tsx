@@ -27,7 +27,7 @@ import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
-import ContextPage from "./ContextPage";
+import { ContextPage } from "./ContextPage";
 
 const contextPageQuery = graphql`
   query ContextPageLoaderQuery($organizationId: ID!) {

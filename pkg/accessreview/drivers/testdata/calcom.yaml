@@ -1,0 +1,117 @@
+---
+# Hand-authored K7 fixture matching Cal.com's published v2 response schemas.
+# Synthetic IDs and identities only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.cal.com
+        form: {}
+        headers:
+            Accept:
+                - application/json
+        url: https://api.cal.com/v2/me
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":{"id":100,"name":"K7 Owner","email":"owner@example.com","organizationId":null}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 50ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.cal.com
+        form: {}
+        headers:
+            Accept:
+                - application/json
+        url: https://api.cal.com/v2/teams
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":[{"id":7,"name":"K7"},{"id":9,"name":"K7 Security"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 50ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.cal.com
+        form:
+            skip:
+                - "0"
+            take:
+                - "250"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.cal.com/v2/teams/7/memberships?skip=0&take=250
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":[{"userId":100,"accepted":false,"role":"MEMBER","user":{"name":"Shared User","email":"shared@example.com"}},{"userId":101,"accepted":true,"role":"MEMBER","user":{"name":"Team Seven User","email":"seven@example.com"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 50ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.cal.com
+        form:
+            skip:
+                - "0"
+            take:
+                - "250"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.cal.com/v2/teams/9/memberships?skip=0&take=250
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":[{"userId":100,"accepted":true,"role":"OWNER","user":{"name":"Shared User","email":"shared@example.com"}},{"userId":102,"accepted":true,"role":"ADMIN","user":{"name":"Team Nine User","email":"nine@example.com"}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 50ms

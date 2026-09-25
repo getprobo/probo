@@ -32,17 +32,21 @@ func TestCookieBannerCapabilities_Scan(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name  string
-		value any
-		want  bool
+		name                  string
+		value                 any
+		wantResourceReporting bool
+		wantTCF               bool
 	}{
-		{"null column", nil, true},
-		{"empty bytes", []byte{}, true},
-		{"object without the key", []byte(`{}`), true},
-		{"unrelated key only", []byte(`{"future_capability": true}`), true},
-		{"explicit true", []byte(`{"resource_reporting": true}`), true},
-		{"explicit false", []byte(`{"resource_reporting": false}`), false},
-		{"string payload", `{"resource_reporting": false}`, false},
+		{"null column", nil, true, false},
+		{"empty bytes", []byte{}, true, false},
+		{"object without the key", []byte(`{}`), true, false},
+		{"unrelated key only", []byte(`{"future_capability": true}`), true, false},
+		{"explicit true", []byte(`{"resource_reporting": true}`), true, false},
+		{"explicit false", []byte(`{"resource_reporting": false}`), false, false},
+		{"string payload", `{"resource_reporting": false}`, false, false},
+		{"explicit tcf true", []byte(`{"tcf": true}`), true, true},
+		{"explicit tcf false", []byte(`{"tcf": false}`), true, false},
+		{"both set", []byte(`{"resource_reporting": false, "tcf": true}`), false, true},
 	}
 
 	for _, tt := range tests {
@@ -53,7 +57,8 @@ func TestCookieBannerCapabilities_Scan(t *testing.T) {
 
 				var capabilities coredata.CookieBannerCapabilities
 				require.NoError(t, capabilities.Scan(tt.value))
-				assert.Equal(t, tt.want, capabilities.ResourceReporting)
+				assert.Equal(t, tt.wantResourceReporting, capabilities.ResourceReporting)
+				assert.Equal(t, tt.wantTCF, capabilities.TCF)
 			},
 		)
 	}
@@ -90,6 +95,20 @@ func TestCookieBannerCapabilitiesPatch_Apply(t *testing.T) {
 			patch := coredata.CookieBannerCapabilitiesPatch{ResourceReporting: new(false)}
 
 			assert.False(t, patch.Apply(current).ResourceReporting)
+		},
+	)
+
+	t.Run(
+		"resource reporting patch preserves tcf",
+		func(t *testing.T) {
+			t.Parallel()
+
+			current := coredata.CookieBannerCapabilities{ResourceReporting: true, TCF: true}
+			patch := coredata.CookieBannerCapabilitiesPatch{ResourceReporting: new(false)}
+			got := patch.Apply(current)
+
+			assert.False(t, got.ResourceReporting)
+			assert.True(t, got.TCF)
 		},
 	)
 }

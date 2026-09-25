@@ -49,13 +49,7 @@ func IdentityOrderFields() []IdentityOrderField {
 }
 
 func (v IdentityOrderField) IsValid() bool {
-	switch v {
-	case
-		IdentityOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, IdentityOrderFields())
 }
 
 func (v IdentityOrderField) String() string {
@@ -67,14 +61,7 @@ func (v IdentityOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *IdentityOrderField) UnmarshalText(text []byte) error {
-	val := IdentityOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid IdentityOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, IdentityOrderFields())
 }
 
 func (p IdentityOrderField) Column() string {

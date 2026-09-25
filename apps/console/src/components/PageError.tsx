@@ -28,6 +28,8 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useRouteError } from "react-router";
 
+import { NotFoundError } from "#/lib/relay/errors";
+
 type Props = {
   resetErrorBoundary?: () => void;
   error?: Error;
@@ -66,7 +68,11 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     actions,
   };
 
-  if (!error || (error instanceof Error && error.message.includes("PAGE_NOT_FOUND"))) {
+  if (
+    !error
+    || error instanceof NotFoundError
+    || (error instanceof Error && error.message.includes("PAGE_NOT_FOUND"))
+  ) {
     return (
       <ErrorLayout
         {...layoutProps}

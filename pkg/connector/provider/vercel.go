@@ -39,7 +39,12 @@ func vercelRegistration() *Registration {
 	// scopes — capabilities are pinned on the integration registration
 	// in the Vercel dashboard.
 	return &Registration{
-		Provider:    coredata.ConnectorProviderVercel,
+		Provider: coredata.ConnectorProviderVercel,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.VercelConnectorSettings) string {
+				return s.TeamID
+			},
+		),
 		DisplayName: "Vercel",
 		// See Registration.EndpointOverrideUnsupported: BuildAuthURL builds the
 		// authorize URL from an operator slug and FetchVercelUserID resolves the
@@ -53,13 +58,15 @@ func vercelRegistration() *Registration {
 			// its own version onto this origin.
 			APIBase: "https://api.vercel.com",
 		},
-		BuildAuthURL: func(slug string) (string, error) {
-			u, err := url.JoinPath("https://vercel.com/integrations", url.PathEscape(slug), "new")
-			if err != nil {
-				return "", fmt.Errorf("cannot build vercel auth URL: %w", err)
-			}
+		OAuth2: &OAuth2Config{
+			BuildAuthURL: func(slug string) (string, error) {
+				u, err := url.JoinPath("https://vercel.com/integrations", url.PathEscape(slug), "new")
+				if err != nil {
+					return "", fmt.Errorf("cannot build vercel auth URL: %w", err)
+				}
 
-			return u, nil
+				return u, nil
+			},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)

@@ -37,23 +37,33 @@ import (
 
 type (
 	CompliancePortalAccess struct {
-		ID                    gid.GID      `db:"id"`
-		OrganizationID        gid.GID      `db:"organization_id"`
-		TenantID              gid.TenantID `db:"tenant_id"`
-		IdentityID            gid.GID      `db:"identity_id"`
-		CompliancePortalID    gid.GID      `db:"compliance_portal_id"`
-		ElectronicSignatureID *gid.GID     `db:"electronic_signature_id"`
-		CreatedAt             time.Time    `db:"created_at"`
-		UpdatedAt             time.Time    `db:"updated_at"`
+		ID                    gid.GID                     `db:"id"`
+		OrganizationID        gid.GID                     `db:"organization_id"`
+		TenantID              gid.TenantID                `db:"tenant_id"`
+		IdentityID            gid.GID                     `db:"identity_id"`
+		CompliancePortalID    gid.GID                     `db:"compliance_portal_id"`
+		ElectronicSignatureID *gid.GID                    `db:"electronic_signature_id"`
+		State                 CompliancePortalAccessState `db:"state"`
+		AuthenticatedAt       *time.Time                  `db:"authenticated_at"`
+		CreatedAt             time.Time                   `db:"created_at"`
+		UpdatedAt             time.Time                   `db:"updated_at"`
+		PendingRequestCount   int                         `db:"-"`
 	}
 
 	CompliancePortalAccesses []*CompliancePortalAccess
+
+	listedCompliancePortalAccess struct {
+		CompliancePortalAccess
+		Count int `db:"pending_request_count"`
+	}
 )
 
 func (tca *CompliancePortalAccess) CursorKey(orderBy CompliancePortalAccessOrderField) page.CursorKey {
 	switch orderBy {
 	case CompliancePortalAccessOrderFieldCreatedAt:
 		return page.NewCursorKey(tca.ID, tca.CreatedAt)
+	case CompliancePortalAccessOrderFieldPendingRequestCount:
+		return page.NewCursorKey(tca.ID, tca.PendingRequestCount)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -112,6 +122,8 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 FROM
@@ -120,6 +132,59 @@ WHERE
 	%s
 	AND id = @access_id
 LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_id": accessID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal access: %w", err)
+	}
+
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal access: %w", err)
+	}
+
+	*tca = access
+
+	return nil
+}
+
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent grant
+// and management updates take the access row before child mutations.
+func (tca *CompliancePortalAccess) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	accessID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	identity_id,
+	compliance_portal_id,
+	electronic_signature_id,
+	state,
+	authenticated_at,
+	created_at,
+	updated_at
+FROM
+	cp_accesses
+WHERE
+	%s
+	AND id = @access_id
+LIMIT 1
+FOR UPDATE;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -161,6 +226,8 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 FROM
@@ -170,6 +237,65 @@ WHERE
 	AND compliance_portal_id = @compliance_portal_id
 	AND identity_id = @identity_id
 LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_id": compliancePortalID,
+		"identity_id":          identityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal access: %w", err)
+	}
+
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal access: %w", err)
+	}
+
+	*tca = access
+
+	return nil
+}
+
+// LoadByCompliancePortalIDAndIdentityIDForUpdate is
+// LoadByCompliancePortalIDAndIdentityID under FOR UPDATE so grant and
+// management updates take the access row before child mutations.
+func (tca *CompliancePortalAccess) LoadByCompliancePortalIDAndIdentityIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	identityID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	identity_id,
+	compliance_portal_id,
+	electronic_signature_id,
+	state,
+	authenticated_at,
+	created_at,
+	updated_at
+FROM
+	cp_accesses
+WHERE
+	%s
+	AND compliance_portal_id = @compliance_portal_id
+	AND identity_id = @identity_id
+LIMIT 1
+FOR UPDATE;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -213,6 +339,8 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 FROM
@@ -260,6 +388,8 @@ INSERT INTO cp_accesses (
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -269,6 +399,8 @@ INSERT INTO cp_accesses (
 	@identity_id,
 	@compliance_portal_id,
 	@electronic_signature_id,
+	@state,
+	@authenticated_at,
 	@created_at,
 	@updated_at
 )
@@ -281,6 +413,8 @@ INSERT INTO cp_accesses (
 		"identity_id":             tca.IdentityID,
 		"compliance_portal_id":    tca.CompliancePortalID,
 		"electronic_signature_id": tca.ElectronicSignatureID,
+		"state":                   tca.State,
+		"authenticated_at":        tca.AuthenticatedAt,
 		"created_at":              tca.CreatedAt,
 		"updated_at":              tca.UpdatedAt,
 	}
@@ -307,7 +441,9 @@ func (tca *CompliancePortalAccess) Update(
 	q := `
 UPDATE cp_accesses SET
 	updated_at = @updated_at,
-	electronic_signature_id = @electronic_signature_id
+	electronic_signature_id = @electronic_signature_id,
+	state = @state,
+	authenticated_at = @authenticated_at
 WHERE
 	%s
 	AND id = @id
@@ -319,12 +455,18 @@ WHERE
 		"id":                      tca.ID,
 		"updated_at":              tca.UpdatedAt,
 		"electronic_signature_id": tca.ElectronicSignatureID,
+		"state":                   tca.State,
+		"authenticated_at":        tca.AuthenticatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update compliance portal access: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil
@@ -363,6 +505,7 @@ func (tcas *CompliancePortalAccesses) LoadByCompliancePortalID(
 	scope Scoper,
 	compliancePortalID gid.GID,
 	cursor *page.Cursor[CompliancePortalAccessOrderField],
+	filter *CompliancePortalAccessFilter,
 ) error {
 	q := `
 SELECT
@@ -372,22 +515,33 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	state,
+	authenticated_at,
 	created_at,
-	updated_at
+	updated_at,
+	(
+		SELECT COUNT(*)
+		FROM cp_document_accesses
+		WHERE compliance_portal_access_id = cp_accesses.id
+		AND status = @status_requested::compliance_portal_document_access_status
+	) AS pending_request_count
 FROM
 	cp_accesses
 WHERE
 	%s
 	AND compliance_portal_id = @compliance_portal_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"compliance_portal_id": compliancePortalID,
+		"status_requested":     CompliancePortalDocumentAccessStatusRequested,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -395,9 +549,16 @@ WHERE
 		return fmt.Errorf("cannot query compliance portal accesses: %w", err)
 	}
 
-	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalAccess])
+	listed, err := pgx.CollectRows(rows, pgx.RowToStructByName[listedCompliancePortalAccess])
 	if err != nil {
 		return fmt.Errorf("cannot collect compliance portal accesses: %w", err)
+	}
+
+	accesses := make(CompliancePortalAccesses, len(listed))
+	for i := range listed {
+		access := listed[i].CompliancePortalAccess
+		access.PendingRequestCount = listed[i].Count
+		accesses[i] = &access
 	}
 
 	*tcas = accesses

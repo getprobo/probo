@@ -60,7 +60,8 @@ type (
 	}
 
 	PostureRequest struct {
-		Results []PostureResultPayload `json:"results"`
+		AgentVersion string                 `json:"agent_version"`
+		Results      []PostureResultPayload `json:"results"`
 	}
 
 	EnrollRequest struct {

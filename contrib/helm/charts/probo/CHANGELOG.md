@@ -4,6 +4,98 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.25.0] - 2026-09-24
+
+### Added
+
+- `linear` and `linear-sync` example OAuth2 connector configs
+  (`clientId`, `clientSecret`, and `linear-sync`'s webhook-signing
+  `webhookSecret`) documented for Linear task sync
+- `probo.cookieBanner.tcfCmpId` sets the IAB TCF CMP ID; self-hosted
+  instances that register their own CMP with IAB Europe set this to
+  that ID
+
+### Changed
+
+- Default `appVersion` is now `0.296.0`
+
+## [0.24.0] - 2026-09-16
+
+### Changed
+
+- Default `appVersion` is now `0.290.0`
+
+## [0.23.0] - 2026-09-16
+
+### Removed
+
+- Tracker-pattern to org-third-party linking (the mapping worker, import,
+  policy, and console no longer write or display the org third party;
+  catalog identification is now the sole vendor path)
+
+## [0.22.0] - 2026-09-15
+
+### Added
+
+- `probo.identityFederation.azureTerraformModuleSource` Helm value, used to
+  build the Azure connector install snippet
+- `probo.identityFederation.cloudformationTemplateUrl`,
+  `probo.identityFederation.terraformModuleSource`, and
+  `probo.identityFederation.gcpTerraformModuleSource` documented on the
+  production values example and the Helm README
+
+## [0.21.0] - 2026-09-03
+
+### Added
+
+- `probo.identityFederation.gcpTerraformModuleSource` Helm value, used to
+  build the GCP connector install snippet
+
+## [0.20.0] - 2026-09-01
+
+### Added
+
+- `probo.identityFederation.cloudformationTemplateUrl` and `probo.identityFederation.terraformModuleSource` Helm values, used to build the AWS connector's quick-create link and install snippet
+
+## [0.19.0] - 2026-08-24
+
+### Added
+
+- Example Helm values for connecting a GitHub App connector (`appId`, `clientId`, `clientSecret`, `slug`, `privateKey`), and Secret wiring for the app's private key and client secret
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.265.0`
+
+## [0.18.0] - 2026-08-21
+
+### Added
+
+- Helm values for the per-organization cloud identity issuer: signing key, key id, retired-key rotation, and issuer base URL
+- Helm values for outbound webhook delivery tuning: sender interval, request timeout, cache TTL, stale-after threshold, retry base/max, and max concurrency
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.264.0`
+
+## [0.17.0] - 2026-08-18
+
+### Added
+
+- Helm values for deploying the Probot Slack bot: Slack OAuth, signing
+  secret, and durable delivery worker wiring, plus the Anthropic API key
+  required when the Slackbot's LLM provider is set to Anthropic
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.262.0`
+
+## [0.16.0] - 2026-08-17
+
+### Added
+
+- Support for externally terminated portal TLS: skips ACME environment variables and account-key secret, and disables the HAProxy TCP map, when a chart deployment runs in external TLS mode
+
 ## [0.15.0] - 2026-08-10
 
 ### Changed

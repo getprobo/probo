@@ -47,12 +47,7 @@ func DevicePostureReportOrderFields() []DevicePostureReportOrderField {
 }
 
 func (v DevicePostureReportOrderField) IsValid() bool {
-	switch v {
-	case DevicePostureReportOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DevicePostureReportOrderFields())
 }
 
 func (v DevicePostureReportOrderField) String() string {
@@ -64,14 +59,7 @@ func (v DevicePostureReportOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DevicePostureReportOrderField) UnmarshalText(text []byte) error {
-	val := DevicePostureReportOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DevicePostureReportOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DevicePostureReportOrderFields())
 }
 
 func (f DevicePostureReportOrderField) Column() string {

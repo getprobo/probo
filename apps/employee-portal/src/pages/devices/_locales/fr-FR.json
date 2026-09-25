@@ -1,0 +1,134 @@
+{
+  "title": "Inscrire cet appareil",
+  "breadcrumb": "Appareils",
+  "registerBreadcrumb": "Inscrire",
+  "addManuallyBreadcrumb": "Ajouter manuellement",
+  "list": {
+    "title": "Appareils",
+    "register": "Inscrire un nouvel appareil",
+    "addManually": "Ajouter manuellement",
+    "lastActive": "Dernière activité",
+    "never": "Jamais",
+    "justNow": "À l’instant",
+    "pendingHostname": "En attente",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté",
+    "columns": {
+      "hostname": "Appareil",
+      "details": "Détails"
+    },
+    "platforms": {
+      "DARWIN": "macOS",
+      "WINDOWS": "Windows",
+      "LINUX": "Linux",
+      "FREEBSD": "FreeBSD"
+    }
+  },
+  "empty": {
+    "title": "Aucun appareil pour le moment",
+    "description": "Inscrivez un appareil pour le connecter à votre organisation et surveiller son état de sécurité.",
+    "register": "Inscrire un appareil",
+    "addManually": "Ajouter manuellement"
+  },
+  "unavailable": {
+    "title": "Enrôlement indisponible",
+    "description": "Vous n’avez pas l’autorisation d’enrôler des appareils dans cette organisation.",
+    "home": "Retour à l’accueil"
+  },
+  "steps": {
+    "review": {
+      "title": "Vérifier les informations de l’appareil",
+      "description": "Découvrez ce que l’agent Probo enregistrera."
+    },
+    "download": {
+      "title": "Télécharger l’agent",
+      "description": "Installer l’agent de bureau"
+    },
+    "enroll": {
+      "title": "Ouvrir l’agent Probo",
+      "description": "Terminer l’inscription de cet appareil."
+    }
+  },
+  "review": {
+    "title": "Vérifier les données collectées",
+    "description": "Probo collecte les métadonnées d’appareil suivantes à des fins d’inventaire et de rapport de posture.",
+    "understand": "J’ai compris",
+    "thisDevice": {
+      "title": "Cet appareil",
+      "hostname": "Nom d’hôte",
+      "platform": "Plateforme",
+      "osVersion": "Version du système"
+    },
+    "identity": {
+      "title": "Identité de l’appareil",
+      "hardwareUuid": "UUID matériel",
+      "hostname": "Nom d’hôte",
+      "serialNumber": "Numéro de série, lorsqu’il est disponible"
+    },
+    "system": {
+      "title": "Détails système",
+      "platform": "Plateforme",
+      "osVersion": "Version du système",
+      "agentVersion": "Version de l’agent Probo"
+    },
+    "activity": {
+      "title": "Signaux d’activité",
+      "enrollmentTime": "Heure d’enrôlement",
+      "heartbeats": "Signaux de vie de l’agent",
+      "posture": "Résultats des vérifications de posture"
+    }
+  },
+  "download": {
+    "title": "Télécharger l’agent Probo",
+    "description": "Installez l’application pour sécuriser cet appareil et le connecter à votre organisation.",
+    "featured": "Agent Probo pour macOS",
+    "continue": "Continuer",
+    "download": "Télécharger",
+    "downloadNamed": "Télécharger {{title}}",
+    "macosIntel": {
+      "title": "macOS Intel",
+      "meta": "macOS 13.0+"
+    },
+    "windows": {
+      "title": "Windows",
+      "meta": "Windows 11+"
+    }
+  },
+  "enroll": {
+    "title": "Continuer dans l’application",
+    "description": "Ouvrez l’agent Probo pour terminer l’inscription de cet appareil.",
+    "open": "Ouvrir l’agent Probo",
+    "preparing": "Préparation…",
+    "waiting": "En attente de la première connexion de l’agent…",
+    "timedOut": "Nous n’avons toujours pas de nouvelles de l’agent. Assurez-vous que l’agent de bureau est installé et en cours d’exécution, puis réessayez.",
+    "failed": "Nous n’avons pas pu démarrer l’enrôlement. Réessayez.",
+    "tryAgain": "Réessayer",
+    "enrolled": "Cet appareil est enrôlé.",
+    "enrolledWithHostname": "{{hostname}} est enrôlé.",
+    "home": "Retour à l’accueil"
+  },
+  "addManually": {
+    "title": "Enrôlement manuel",
+    "creating": "Création de l’appareil…",
+    "failed": "Nous n’avons pas pu créer de jeton d’enrôlement. Réessayez.",
+    "created": "Appareil créé. Copiez le jeton d’enrôlement maintenant — il ne sera plus affiché par la suite.",
+    "done": "Terminé",
+    "retry": "Réessayer",
+    "back": "Retour aux appareils",
+    "copy": "Copier",
+    "copied": "Copié",
+    "copyFailed": "Échec de la copie dans le presse-papiers",
+    "token": {
+      "title": "Jeton d’enrôlement généré",
+      "description": "Ne partagez ce jeton d’enrôlement qu’avec le propriétaire de l’appareil, via un canal sécurisé. Il ne peut être utilisé qu’une seule fois et expire après sept jours.",
+      "releaseListHint": "Consultez les <link>versions probo-agent sur GitHub</link> (tags probo-agent/v*), puis choisissez l’archive correspondant à votre OS et architecture (par exemple probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz ou probo-agent_Windows_x86_64.zip). Remplacez vX.Y.Z, OS et ARCH dans la commande de téléchargement par les valeurs de l’asset choisi.",
+      "tabUnix": "macOS / Linux",
+      "tabWindows": "Windows",
+      "installUnix": "Installer sur macOS ou Linux (exécuter depuis un shell avec accès sudo)",
+      "installWindows": "Installer sur Windows (exécuter depuis une session PowerShell élevée)",
+      "downloadStep": "Télécharger et placer le binaire",
+      "enrollStep": "Configurer l’appareil et démarrer l’agent",
+      "securityNotice": "Le jeton est transmis sous forme d’indicateur CLI (et non via un curl redirigé vers un shell ou des variables d’environnement sudo). Une fois installé, l’agent se met à jour automatiquement depuis les GitHub Releases avec vérification de signature cosign."
+    }
+  }
+}

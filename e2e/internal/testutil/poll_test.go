@@ -22,52 +22,52 @@ package testutil
 
 import (
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPoll(t *testing.T) {
+func TestPoll_SucceedsImmediately(t *testing.T) {
 	t.Parallel()
 
-	t.Run(
-		"returns true when condition succeeds immediately",
-		func(t *testing.T) {
-			t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
+		calls := 0
 
-			calls := 0
+		ok := Poll(
+			t,
+			time.Hour,
+			time.Second,
+			func() bool {
+				calls++
 
-			ok := Poll(
-				t,
-				time.Second,
-				10*time.Millisecond,
-				func() bool {
-					calls++
+				return true
+			},
+		)
 
-					return true
-				},
-			)
+		assert.True(t, ok)
+		assert.Equal(t, 1, calls)
+	})
+}
 
-			assert.True(t, ok)
-			assert.Equal(t, 1, calls)
-		},
-	)
+func TestPoll_NeverSucceeds(t *testing.T) {
+	t.Parallel()
 
-	t.Run(
-		"returns false when condition never succeeds",
-		func(t *testing.T) {
-			t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
+		calls := 0
 
-			ok := Poll(
-				t,
-				50*time.Millisecond,
-				10*time.Millisecond,
-				func() bool {
-					return false
-				},
-			)
+		ok := Poll(
+			t,
+			2*time.Second,
+			time.Second,
+			func() bool {
+				calls++
 
-			assert.False(t, ok)
-		},
-	)
+				return false
+			},
+		)
+
+		assert.False(t, ok)
+		assert.Equal(t, 3, calls)
+	})
 }

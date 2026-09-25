@@ -18,19 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Layout, Skeleton } from "@probo/ui";
 import { Outlet } from "react-router";
+
+import { TopBarSkeleton } from "./_components/TopBar/TopBarSkeleton";
 
 export function ViewerLayoutLoading() {
   return (
-    <Layout
-      headerTrailing={(
-        <div className="ml-auto">
-          <Skeleton className="w-32 h-8" />
-        </div>
-      )}
-    >
+    <div className="flex min-h-dvh flex-col bg-sand-2">
+      <TopBarSkeleton />
       <Outlet />
-    </Layout>
+    </div>
   );
 }

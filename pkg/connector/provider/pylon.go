@@ -34,7 +34,7 @@ func pylonRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderPylon,
 		DisplayName:      "Pylon",
 		DocumentationURL: accessReviewDocsURL("pylon"),
-		SupportsAPIKey:   true,
+		APIKey:           &APIKeyConfig{},
 		Endpoints: Endpoints{
 			APIBase: "https://api.usepylon.com",
 			// Pylon authenticates with an account API token presented as

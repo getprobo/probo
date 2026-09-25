@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -132,79 +131,73 @@ func (c *Connector) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	protocol ConnectorProtocol,
-	provider ConnectorProvider,
-	encryptionKey cipher.EncryptionKey,
-) error {
-	if err := c.loadAllByOrganizationIDProtocolAndProvider(ctx, conn, scope, organizationID, protocol, provider); err != nil {
-		return fmt.Errorf("cannot load all connectors by organization ID, protocol and provider: %w", err)
-	}
-
-	if err := c.decryptConnections(encryptionKey); err != nil {
-		return fmt.Errorf("cannot decrypt connections: %w", err)
-	}
-
-	return nil
-}
-
-// LoadOneByOrganizationIDAndProvider loads the effective OAuth2
-// connector for an (organization, provider) pair, picking the row with
-// the widest stored scope set. Ties are broken by most recent
-// updated_at. Returns ErrResourceNotFound if no OAuth2 row exists.
-func (c *Connector) LoadOneByOrganizationIDAndProvider(
+// LoadSlackMessagingConnector resolves the Slack connector the legacy
+// messaging fallback sends with (probot delivers via its own
+// installation tokens, not this table). The pick is deterministic
+// under several Slack rows: channel-configured settings win — only the
+// legacy messaging connect flow ever captured one — then oldest
+// created_at, then id. Returns ErrResourceNotFound if no OAuth2 Slack
+// row exists.
+func (c *Connector) LoadSlackMessagingConnector(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 	organizationID gid.GID,
-	provider ConnectorProvider,
 ) error {
-	var connectors Connectors
-	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
-		ctx,
-		conn,
-		scope,
-		organizationID,
-		ConnectorProtocolOAuth2,
-		provider,
-		encryptionKey,
-	); err != nil {
-		return fmt.Errorf("cannot load connectors: %w", err)
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND provider = @provider
+    AND protocol = @protocol
+ORDER BY
+    (COALESCE(settings->>'channel_id', '') <> '') DESC,
+    created_at ASC,
+    id ASC
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        ConnectorProviderSlack,
+		"protocol":        ConnectorProtocolOAuth2,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
 	}
 
-	if len(connectors) == 0 {
-		return ErrResourceNotFound
-	}
-
-	// Widest-scope-wins, tiebreak by most recent updated_at.
-	sort.Slice(connectors, func(i, j int) bool {
-		ci, cj := connectorScopeCount(connectors[i]), connectorScopeCount(connectors[j])
-		if ci != cj {
-			return ci > cj
+	loadedConnector, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Connector])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
 		}
 
-		return connectors[i].UpdatedAt.After(connectors[j].UpdatedAt)
-	})
-
-	*c = *connectors[0]
-
-	return nil
-}
-
-// connectorScopeCount returns the number of scopes granted on a
-// decrypted connector's connection. Returns 0 if the connection is nil.
-// Used by the widest-scope selector.
-func connectorScopeCount(c *Connector) int {
-	if c == nil || c.Connection == nil {
-		return 0
+		return fmt.Errorf("cannot collect connector row: %w", err)
 	}
 
-	return len(c.Connection.Scopes())
+	*c = loadedConnector
+
+	if err := c.DecryptConnection(encryptionKey); err != nil {
+		return fmt.Errorf("cannot decrypt connection: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
@@ -238,25 +231,8 @@ func (c *Connector) LoadByID(
 		return err
 	}
 
-	// Decrypt the connection
-	if len(c.EncryptedConnection) > 0 {
-		decryptedConnection, err := cipher.Decrypt(c.EncryptedConnection, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt connection: %w", err)
-		}
-
-		c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
-		if err != nil {
-			return fmt.Errorf("cannot unmarshal connection: %w", err)
-		}
-
-		if c.Provider == ConnectorProviderSlack {
-			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-				settings, _ := ConnectorSettings[SlackConnectorSettings](c)
-				slackConn.Settings.Channel = settings.Channel
-				slackConn.Settings.ChannelID = settings.ChannelID
-			}
-		}
+	if err := c.DecryptConnection(encryptionKey); err != nil {
+		return fmt.Errorf("cannot decrypt connection: %w", err)
 	}
 
 	return nil
@@ -308,6 +284,175 @@ LIMIT 1;
 	}
 
 	*c = loadedConnector
+
+	return nil
+}
+
+// LoadByOrganizationIDProviderAndSettingForUpdate loads the connector in
+// organizationID for provider whose settings carry settingValue at settingKey,
+// locking the row for the caller's transaction. It is the idempotency lookup for
+// an app-install callback: the vendor tenant id is the ceremony's durable
+// output, so a repeat install of the same tenant must find its existing row
+// rather than add a second.
+//
+// It deliberately tolerates duplicates. The (organization_id, provider,
+// protocol) unique index was dropped in 20260819T142937Z and the retired API-key
+// create path took a customer-typed website id, so an organization may ALREADY
+// hold two rows for one tenant. The query therefore orders and takes one row
+// instead of asserting there is exactly one: pgx.CollectExactlyOneRow -- the
+// house pattern for a singular loader -- returns ErrTooManyRows on exactly that
+// pre-existing data, which would turn a tolerated duplicate into a 500 on every
+// re-install of that tenant.
+//
+// The (created_at, id) tiebreak is what makes the choice deterministic: every
+// caller converges on the same, oldest row, so two concurrent completions cannot
+// each adopt a different duplicate and diverge.
+//
+// Callers must already hold the advisory lock from LockConnectorInstallResource:
+// FOR UPDATE on zero rows locks nothing, so this loader alone does not serialize
+// two concurrent first installs of the same tenant.
+//
+// It does not decrypt the connection. Returns ErrResourceNotFound when there is
+// no such connector.
+func (c *Connector) LoadByOrganizationIDProviderAndSettingForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+	settingKey string,
+	settingValue string,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND provider = @provider
+    AND settings ->> @setting_key = @setting_value
+ORDER BY
+    created_at, id
+LIMIT 1
+FOR UPDATE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        provider,
+		"setting_key":     settingKey,
+		"setting_value":   settingValue,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	loadedConnector, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Connector])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect connector row: %w", err)
+	}
+
+	*c = loadedConnector
+
+	return nil
+}
+
+// LockByID locks the connector row for the rest of the caller's transaction.
+// It does not load the row into the receiver. SyncStandaloneAccount calls it
+// before the account check, because FOR UPDATE on a missing account row locks
+// nothing and two syncs would both insert.
+func (c *Connector) LockByID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+SELECT
+    id
+FROM
+    connectors
+WHERE
+    %s
+    AND id = @id
+FOR UPDATE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": c.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var id gid.GID
+
+	err := conn.QueryRow(ctx, q, args).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	return nil
+}
+
+// LockConnectorInstallResource serializes concurrent install completions that
+// target the same (organization, provider, vendor tenant id) for the rest of the
+// transaction. It must be taken BEFORE the find-or-create load: two states are
+// two distinct claim rows, and FOR UPDATE on a not-yet-existing row locks
+// nothing, so without it two tabs both miss and both insert.
+//
+// resourceID must be the canonical spelling of the vendor tenant id: two
+// spellings take two different locks and defeat the mechanism.
+func LockConnectorInstallResource(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+	resourceID string,
+) error {
+	// hashtext is int4, so unrelated keys can collide; a collision costs two
+	// installs a serialization, never correctness. The namespace prefix keeps
+	// this key space clear of BusinessFunction.Insert's, which hashes a bare
+	// organization id.
+	q := `
+SELECT pg_advisory_xact_lock(
+    hashtext(
+        'connector-install:'
+        || @organization_id::text
+        || ':' || @provider::text
+        || ':' || @resource_id::text
+    )
+)
+`
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        provider,
+		"resource_id":     resourceID,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot acquire connector install advisory lock: %w", err)
+	}
 
 	return nil
 }
@@ -414,12 +559,6 @@ INSERT INTO connectors (
 
 	_, err = conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_connectors_organization_id_provider" {
-				return ErrResourceAlreadyExists
-			}
-		}
-
 		return fmt.Errorf("cannot insert connector: %w", err)
 	}
 
@@ -522,59 +661,6 @@ ORDER BY
 	return nil
 }
 
-func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	protocol ConnectorProtocol,
-	provider ConnectorProvider,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    provider,
-    protocol,
-    settings,
-    encrypted_connection,
-	created_at,
-	updated_at
-FROM
-    connectors
-WHERE
-	%s
-    AND organization_id = @organization_id
-    AND protocol = @protocol
-    AND provider = @provider
-ORDER BY
-	created_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-		"protocol":        protocol,
-		"provider":        provider,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query connectors: %w", err)
-	}
-
-	connectors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Connector])
-	if err != nil {
-		return fmt.Errorf("cannot collect connectors: %w", err)
-	}
-
-	*c = connectors
-
-	return nil
-}
-
 func (c *Connector) Update(
 	ctx context.Context,
 	conn pg.Tx,
@@ -646,28 +732,29 @@ WHERE
 	return nil
 }
 
-func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) error {
-	for _, cnnctr := range *c {
-		if len(cnnctr.EncryptedConnection) == 0 {
-			continue
-		}
+// DecryptConnection hydrates Connection from EncryptedConnection already
+// present on the struct. Call it after a metadata or list load instead of
+// LoadByID, which would query the same row again.
+func (c *Connector) DecryptConnection(encryptionKey cipher.EncryptionKey) error {
+	if len(c.EncryptedConnection) == 0 {
+		return nil
+	}
 
-		decryptedConnection, err := cipher.Decrypt(cnnctr.EncryptedConnection, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt connection for %s: %w", cnnctr.Provider, err)
-		}
+	decryptedConnection, err := cipher.Decrypt(c.EncryptedConnection, encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot decrypt connection for %s: %w", c.Provider, err)
+	}
 
-		cnnctr.Connection, err = connector.UnmarshalConnection(cnnctr.Protocol.String(), cnnctr.Provider.String(), decryptedConnection)
-		if err != nil {
-			return fmt.Errorf("cannot unmarshal connection for %s: %w", cnnctr.Provider, err)
-		}
+	c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
+	if err != nil {
+		return fmt.Errorf("cannot unmarshal connection for %s: %w", c.Provider, err)
+	}
 
-		if cnnctr.Provider == ConnectorProviderSlack {
-			if slackConn, ok := cnnctr.Connection.(*connector.SlackConnection); ok {
-				settings, _ := ConnectorSettings[SlackConnectorSettings](cnnctr)
-				slackConn.Settings.Channel = settings.Channel
-				slackConn.Settings.ChannelID = settings.ChannelID
-			}
+	if c.Provider == ConnectorProviderSlack {
+		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+			settings, _ := ConnectorSettings[SlackConnectorSettings](c)
+			slackConn.Settings.Channel = settings.Channel
+			slackConn.Settings.ChannelID = settings.ChannelID
 		}
 	}
 

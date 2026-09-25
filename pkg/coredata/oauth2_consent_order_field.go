@@ -47,13 +47,7 @@ func OAuth2ConsentOrderFields() []OAuth2ConsentOrderField {
 }
 
 func (v OAuth2ConsentOrderField) IsValid() bool {
-	switch v {
-	case
-		OAuth2ConsentOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, OAuth2ConsentOrderFields())
 }
 
 func (v OAuth2ConsentOrderField) String() string {
@@ -65,14 +59,7 @@ func (v OAuth2ConsentOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *OAuth2ConsentOrderField) UnmarshalText(text []byte) error {
-	val := OAuth2ConsentOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid OAuth2ConsentOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, OAuth2ConsentOrderFields())
 }
 
 func (f OAuth2ConsentOrderField) Column() string {

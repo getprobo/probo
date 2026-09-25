@@ -123,6 +123,31 @@ func TestValidateClientMetadataDocument(t *testing.T) {
 	require.NoError(t, validateClientMetadataDocument(clientID, &doc))
 
 	t.Run(
+		"live ChatGPT metadata shape",
+		func(t *testing.T) {
+			t.Parallel()
+
+			chatGPTClientID := "https://chatgpt.com/oauth/client.json"
+			chatGPT := ClientMetadataDocument{
+				ClientID:                chatGPTClientID,
+				ClientName:              "ChatGPT",
+				ClientURI:               "https://chatgpt.com/",
+				LogoURI:                 "https://persistent.oaistatic.com/sonic/misc/openai-logo.png",
+				RedirectURIs:            []string{"https://chatgpt.com/connector_platform_oauth_redirect"},
+				GrantTypes:              []string{"authorization_code", "refresh_token"},
+				ResponseTypes:           []string{"code"},
+				TokenEndpointAuthMethod: "private_key_jwt",
+				TokenEndpointAuthMethodsSupported: []string{
+					"none",
+					"private_key_jwt",
+				},
+			}
+
+			require.NoError(t, validateClientMetadataDocument(chatGPTClientID, &chatGPT))
+		},
+	)
+
+	t.Run(
 		"http redirect on non-loopback rejected",
 		func(t *testing.T) {
 			t.Parallel()
@@ -198,6 +223,73 @@ func TestValidateClientMetadataDocument(t *testing.T) {
 			require.Error(t, err)
 		},
 	)
+}
+
+func TestSelectCIMDTokenEndpointAuthMethod(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		doc     ClientMetadataDocument
+		want    coredata.OAuth2ClientTokenEndpointAuthMethod
+		wantErr bool
+	}{
+		{
+			name: "chatgpt negotiates none from supported methods",
+			doc: ClientMetadataDocument{
+				TokenEndpointAuthMethod: "private_key_jwt",
+				TokenEndpointAuthMethodsSupported: []string{
+					"none",
+					"private_key_jwt",
+				},
+			},
+			want: coredata.OAuth2ClientTokenEndpointAuthMethodNone,
+		},
+		{
+			name: "legacy none method",
+			doc: ClientMetadataDocument{
+				TokenEndpointAuthMethod: "none",
+			},
+			want: coredata.OAuth2ClientTokenEndpointAuthMethodNone,
+		},
+		{
+			name: "missing method defaults to none",
+			doc:  ClientMetadataDocument{},
+			want: coredata.OAuth2ClientTokenEndpointAuthMethodNone,
+		},
+		{
+			name: "legacy private key jwt rejected",
+			doc: ClientMetadataDocument{
+				TokenEndpointAuthMethod: "private_key_jwt",
+			},
+			wantErr: true,
+		},
+		{
+			name: "no supported method intersection rejected",
+			doc: ClientMetadataDocument{
+				TokenEndpointAuthMethodsSupported: []string{"private_key_jwt"},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				got, err := selectCIMDTokenEndpointAuthMethod(&tt.doc)
+				if tt.wantErr {
+					require.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			},
+		)
+	}
 }
 
 func TestCIMDFetcherFetch(t *testing.T) {

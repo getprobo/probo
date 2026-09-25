@@ -21,8 +21,14 @@
 package connect_v1
 
 import (
+	"mime"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
+
+	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/server/httpx"
 )
 
 const (
@@ -34,6 +40,10 @@ const (
 	authErrorMagicLinkAlreadyUsed      = "magic_link_already_used"
 	authErrorMagicLinkInvalid          = "magic_link_invalid"
 )
+
+type authRedirectResponse struct {
+	RedirectURL string `json:"redirect_url"`
+}
 
 func redirectAuthError(w http.ResponseWriter, r *http.Request, code string, continueURL string) {
 	q := url.Values{}
@@ -48,5 +58,46 @@ func redirectAuthError(w http.ResponseWriter, r *http.Request, code string, cont
 		RawQuery: q.Encode(),
 	}
 
-	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+	respondAuthRedirect(w, r, redirectURL.String())
+}
+
+func respondAuthRedirect(w http.ResponseWriter, r *http.Request, redirectURL string) {
+	w.Header().Set("Vary", "Accept")
+	httpx.NoCache(w)
+
+	if acceptsJSON(r.Header.Get("Accept")) {
+		httpserver.RenderJSON(
+			w,
+			http.StatusOK,
+			authRedirectResponse{RedirectURL: redirectURL},
+		)
+
+		return
+	}
+
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func acceptsJSON(accept string) bool {
+	for value := range strings.SplitSeq(accept, ",") {
+		mediaType, params, err := mime.ParseMediaType(value)
+		if err != nil {
+			continue
+		}
+
+		if mediaType != "application/json" {
+			continue
+		}
+
+		if q, ok := params["q"]; ok {
+			quality, parseErr := strconv.ParseFloat(q, 64)
+			if parseErr != nil || quality <= 0 {
+				continue
+			}
+		}
+
+		return true
+	}
+
+	return false
 }

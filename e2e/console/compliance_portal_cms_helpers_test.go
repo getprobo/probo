@@ -117,7 +117,7 @@ const (
 							node {
 								pendingRequestCount
 								activeCount
-								profile { id }
+								identity { email }
 							}
 						}
 					}
@@ -198,9 +198,9 @@ type (
 				Node struct {
 					PendingRequestCount int `json:"pendingRequestCount"`
 					ActiveCount         int `json:"activeCount"`
-					Profile             *struct {
-						ID string `json:"id"`
-					} `json:"profile"`
+					Identity            struct {
+						Email string `json:"email"`
+					} `json:"identity"`
 				} `json:"node"`
 			} `json:"edges"`
 		} `json:"accesses"`

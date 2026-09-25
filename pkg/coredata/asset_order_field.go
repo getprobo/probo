@@ -51,15 +51,7 @@ func AssetOrderFields() []AssetOrderField {
 }
 
 func (v AssetOrderField) IsValid() bool {
-	switch v {
-	case
-		AssetOrderFieldCreatedAt,
-		AssetOrderFieldAmount,
-		AssetOrderFieldName:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AssetOrderFields())
 }
 
 func (v AssetOrderField) String() string {
@@ -71,14 +63,7 @@ func (v AssetOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *AssetOrderField) UnmarshalText(text []byte) error {
-	val := AssetOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AssetOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AssetOrderFields())
 }
 
 func (p AssetOrderField) Column() string {

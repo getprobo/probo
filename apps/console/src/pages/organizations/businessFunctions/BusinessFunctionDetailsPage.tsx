@@ -21,7 +21,6 @@
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -258,7 +257,7 @@ export function BusinessFunctionDetailsPage({
           description: t("businessFunctionDetailsPage.messages.deleted"),
           variant: "success",
         });
-        void navigate(`/organizations/${organizationId}/business-functions`);
+        void navigate(`/organizations/${organizationId}/registries/business-functions`);
       },
       {
         message: t("businessFunctionDetailsPage.deleteConfirmation", {
@@ -318,23 +317,8 @@ export function BusinessFunctionDetailsPage({
     });
   });
 
-  const breadcrumbListUrl = `/organizations/${organizationId}/business-functions`;
-
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("businessFunctionDetailsPage.breadcrumb.businessFunctions"),
-            to: breadcrumbListUrl,
-          },
-          {
-            label: businessFunction.referenceId
-              || t("businessFunctionDetailsPage.breadcrumb.unknown"),
-          },
-        ]}
-      />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl font-semibold">

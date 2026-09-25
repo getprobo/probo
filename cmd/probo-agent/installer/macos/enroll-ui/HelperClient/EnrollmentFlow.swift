@@ -6,12 +6,17 @@ public struct EnrollPreflightResult: Decodable {
     public let token: String
     public let alreadyEnrolled: Bool
     public let configDir: String
+    public let trust: String
+    public let confirmTitle: String
+    public let confirmMessage: String
 }
 
 public enum EnrollmentFlow {
     private static let agentExecutablePath = ProboAgentHelperConstants.agentExecutablePath
 
     public static func runPreflight(rawURL: String) throws -> EnrollPreflightResult {
+        try AgentAuth.verify()
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: agentExecutablePath)
         process.arguments = ["enroll-url", "--preflight", rawURL]
@@ -37,7 +42,7 @@ public enum EnrollmentFlow {
         try HelperClient.shared.install(
             serverURL: preflight.server,
             enrollmentToken: preflight.token,
-            configDir: preflight.configDir
+            configDir: ProboAgentHelperConstants.defaultConfigDir
         )
     }
 }

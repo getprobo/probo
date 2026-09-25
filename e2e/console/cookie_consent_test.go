@@ -126,6 +126,7 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 		Version     int             `json:"version"`
 		Action      string          `json:"action"`
 		ConsentData json.RawMessage `json:"consent_data"`
+		TC          *string         `json:"tc"`
 		CreatedAt   string          `json:"created_at"`
 	}
 	require.NoError(t, json.Unmarshal(getResp.Body, &visitorConsent))
@@ -133,6 +134,7 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 	assert.Equal(t, fixture.Version, visitorConsent.Version)
 	assert.Equal(t, "ACCEPT_ALL", visitorConsent.Action)
 	assert.JSONEq(t, string(consentDataAccept), string(visitorConsent.ConsentData))
+	assert.Nil(t, visitorConsent.TC)
 
 	missingResp := doCookieBannerHTTP(
 		t,
@@ -326,6 +328,7 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 					action
 					consentData
 					sdkVersion
+					tc
 					cookieBanner { id }
 					cookieBannerVersion { version }
 				}
@@ -335,10 +338,11 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 
 	var recordNode struct {
 		Node *struct {
-			ID           string `json:"id"`
-			VisitorID    string `json:"visitorId"`
-			Action       string `json:"action"`
-			SdkVersion   string `json:"sdkVersion"`
+			ID           string  `json:"id"`
+			VisitorID    string  `json:"visitorId"`
+			Action       string  `json:"action"`
+			SdkVersion   string  `json:"sdkVersion"`
+			TC           *string `json:"tc"`
 			CookieBanner struct {
 				ID string `json:"id"`
 			} `json:"cookieBanner"`
@@ -353,6 +357,7 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 	assert.Equal(t, visitorA, recordNode.Node.VisitorID)
 	assert.Equal(t, fixture.BannerID, recordNode.Node.CookieBanner.ID)
 	assert.Equal(t, fixture.Version, recordNode.Node.CookieBannerVersion.Version)
+	assert.Nil(t, recordNode.Node.TC)
 
 	t.Run(
 		"read-only config and consent roundtrip",

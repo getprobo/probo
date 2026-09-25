@@ -240,7 +240,7 @@ function RequestRow({
     );
   };
 
-  const detailsUrl = `/organizations/${organizationId}/rights-requests/${request.id}`;
+  const detailsUrl = `/organizations/${organizationId}/privacy/rights-requests/${request.id}`;
 
   return (
     <Tr to={detailsUrl}>

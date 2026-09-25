@@ -23,6 +23,7 @@ import {
   formatDatetime,
   formatError,
   type GraphQLError,
+  toPeriod,
 } from "@probo/helpers";
 import {
   Breadcrumb,
@@ -90,23 +91,19 @@ export function CreateAuditDialog({
   const schema = z.object({
     frameworkId: z.string().min(1, t("createAuditDialog.validation.frameworkRequired")),
     name: z.string().optional(),
+    firm: z.string().optional(),
     validFrom: z.string().optional(),
     validUntil: z.string().optional(),
     auditStartDate: z.string().optional(),
     auditEndDate: z.string().optional(),
-    state: z.enum([
-      "NOT_STARTED",
-      "IN_PROGRESS",
-      "COMPLETED",
-      "REJECTED",
-      "OUTDATED",
-    ]),
+    state: z.enum(auditStates),
   });
   const { control, handleSubmit, register, formState, reset }
     = useFormWithSchema(schema, {
       defaultValues: {
         frameworkId: "",
         name: "",
+        firm: "",
         validFrom: "",
         validUntil: "",
         auditStartDate: "",
@@ -124,10 +121,15 @@ export function CreateAuditDialog({
         organizationId,
         frameworkId: data.frameworkId,
         name: data.name || null,
-        validFrom: formatDatetime(data.validFrom),
-        validUntil: formatDatetime(data.validUntil),
-        auditStartDate: formatDatetime(data.auditStartDate),
-        auditEndDate: formatDatetime(data.auditEndDate),
+        firm: data.firm || null,
+        validity: toPeriod(
+          formatDatetime(data.validFrom),
+          formatDatetime(data.validUntil),
+        ),
+        auditDates: toPeriod(
+          formatDatetime(data.auditStartDate),
+          formatDatetime(data.auditEndDate),
+        ),
         state: data.state,
         file: file ?? null,
       });
@@ -216,6 +218,13 @@ export function CreateAuditDialog({
             />
           </Field>
 
+          <Field label={t("createAuditDialog.fields.firm")}>
+            <Input
+              {...register("firm")}
+              placeholder={t("createAuditDialog.fields.firmPlaceholder")}
+            />
+          </Field>
+
           <ControlledField
             control={control}
             name="state"
@@ -255,11 +264,12 @@ export function CreateAuditDialog({
 type FormSchema = {
   frameworkId: string;
   name?: string;
+  firm?: string;
   validFrom?: string;
   validUntil?: string;
   auditStartDate?: string;
   auditEndDate?: string;
-  state: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "REJECTED" | "OUTDATED";
+  state: (typeof auditStates)[number];
 };
 
 function FrameworkSelect({

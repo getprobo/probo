@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, toPeriod } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -54,14 +54,20 @@ export const description: INodeProperties[] = [
 				name: 'auditEndDate',
 				type: 'dateTime',
 				default: '',
-				description: 'The end date of the audit engagement',
+				description: 'The end date of the audit',
+			},
+			{
+				displayName: 'Audit Firm',
+				name: 'firm',
+				type: 'string',
+				default: '',
 			},
 			{
 				displayName: 'Audit Start Date',
 				name: 'auditStartDate',
 				type: 'dateTime',
 				default: '',
-				description: 'The start date of the audit engagement',
+				description: 'The start date of the audit',
 			},
 			{
 				displayName: 'Name',
@@ -75,6 +81,10 @@ export const description: INodeProperties[] = [
 				name: 'state',
 				type: 'options',
 				options: [
+					{
+						name: 'Audit Booked',
+						value: 'AUDIT_BOOKED',
+					},
 					{
 						name: 'Completed',
 						value: 'COMPLETED',
@@ -94,6 +104,10 @@ export const description: INodeProperties[] = [
 					{
 						name: 'Rejected',
 						value: 'REJECTED',
+					},
+					{
+						name: 'To Book',
+						value: 'TO_BOOK',
 					},
 				],
 				default: 'NOT_STARTED',
@@ -124,6 +138,7 @@ export async function execute(
 	const id = this.getNodeParameter('id', itemIndex) as string;
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
 		name?: string;
+		firm?: string;
 		state?: string;
 		validFrom?: string;
 		validUntil?: string;
@@ -137,11 +152,16 @@ export async function execute(
 				audit {
 					id
 					name
+					firm
 					state
-					validFrom
-					validUntil
-					auditStartDate
-					auditEndDate
+					validity {
+						start
+						end
+					}
+					auditDates {
+						start
+						end
+					}
 					reportUrl
 					createdAt
 					updatedAt
@@ -152,11 +172,12 @@ export async function execute(
 
 	const input: Record<string, unknown> = { id };
 	if (updateFields.name) input.name = updateFields.name;
+	if (updateFields.firm !== undefined) input.firm = updateFields.firm === '' ? null : updateFields.firm;
 	if (updateFields.state) input.state = updateFields.state;
-	if (updateFields.validFrom) input.validFrom = updateFields.validFrom;
-	if (updateFields.validUntil) input.validUntil = updateFields.validUntil;
-	if (updateFields.auditStartDate) input.auditStartDate = updateFields.auditStartDate;
-	if (updateFields.auditEndDate) input.auditEndDate = updateFields.auditEndDate;
+	const validity = toPeriod(updateFields.validFrom, updateFields.validUntil);
+	if (validity) input.validity = validity;
+	const auditDates = toPeriod(updateFields.auditStartDate, updateFields.auditEndDate);
+	if (auditDates) input.auditDates = auditDates;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

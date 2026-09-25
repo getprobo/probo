@@ -82,36 +82,21 @@ export function isCampaignDeletableStatus(status: string): boolean {
   return status !== "IN_PROGRESS";
 }
 
-export function fetchStatusBadgeVariant(status: string): BadgeVariant {
-  switch (status) {
-    case "SUCCESS":
-      return "success";
-    case "FAILED":
-      return "danger";
-    case "FETCHING":
-      return "info";
-    case "QUEUED":
-      return "neutral";
-    default:
-      return "info";
-  }
-}
-
 export function statusLabel(
   t: (key: string) => string,
   status: string,
 ): string {
   switch (status) {
     case "DRAFT":
-      return t("accessReviewCampaignsTab.status.draft");
+      return t("accessReviewCampaignsPage.status.draft");
     case "IN_PROGRESS":
-      return t("accessReviewCampaignsTab.status.in_progress");
+      return t("accessReviewCampaignsPage.status.in_progress");
     case "PENDING_ACTIONS":
-      return t("accessReviewCampaignsTab.status.pending_actions");
+      return t("accessReviewCampaignsPage.status.pending_actions");
     case "COMPLETED":
-      return t("accessReviewCampaignsTab.status.completed");
+      return t("accessReviewCampaignsPage.status.completed");
     case "CANCELLED":
-      return t("accessReviewCampaignsTab.status.cancelled");
+      return t("accessReviewCampaignsPage.status.cancelled");
     default:
       return status;
   }
@@ -129,26 +114,6 @@ export function decisionBadgeVariant(decision: string): BadgeVariant {
       return "info";
     default:
       return "neutral";
-  }
-}
-
-export function decisionLabel(
-  t: (key: string) => string,
-  decision: string,
-): string {
-  switch (decision) {
-    case "PENDING":
-      return t("campaignDetailPage.decisions.pending");
-    case "APPROVED":
-      return t("campaignDetailPage.decisions.approved");
-    case "REVOKE":
-      return t("campaignDetailPage.decisions.revoke");
-    case "DEFER":
-      return t("campaignDetailPage.decisions.defer");
-    case "ESCALATE":
-      return t("campaignDetailPage.decisions.escalate");
-    default:
-      return decision;
   }
 }
 
@@ -204,24 +169,6 @@ export const flagGroups = [
     ],
   },
 ];
-
-export function flagLabel(flag: string): string {
-  for (const group of flagGroups) {
-    for (const f of group.flags) {
-      if (f.value === flag) return f.label;
-    }
-  }
-  if (flag === "NONE") return "None";
-  // Legacy flag values not shown in the grouped dropdown
-  if (flag === "INACTIVE") return "Inactive";
-  if (flag === "ROLE_MISMATCH") return "Role mismatch";
-  if (flag === "NEW") return "New";
-  return flag;
-}
-
-export function formatStatus(status: string): string {
-  return status.replace(/_/g, " ");
-}
 
 export function NotAvailable() {
   return (
@@ -285,7 +232,7 @@ export function AuthMethodStatus({
     <span
       aria-label={label}
       title={label}
-      className="text-xs text-txt-primary"
+      className="max-w-full truncate text-center text-xs text-txt-primary"
     >
       {label}
     </span>

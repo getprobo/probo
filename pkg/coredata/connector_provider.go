@@ -31,6 +31,7 @@ const (
 	ConnectorProviderSlack           ConnectorProvider = "SLACK"
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
 	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
+	ConnectorProviderLinearSync      ConnectorProvider = "LINEAR_SYNC"
 	// _ ConnectorProvider = "FIGMA" — formerly Figma; removed (no driver, no OAuth config, no usage)
 	ConnectorProviderOnePassword  ConnectorProvider = "ONE_PASSWORD"
 	ConnectorProviderHubSpot      ConnectorProvider = "HUBSPOT"
@@ -64,6 +65,7 @@ const (
 	ConnectorProviderVercel          ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday          ConnectorProvider = "MONDAY"
 	ConnectorProviderMetabase        ConnectorProvider = "METABASE"
+	ConnectorProviderMongoDBAtlas    ConnectorProvider = "MONGODB_ATLAS"
 	ConnectorProviderTailscale       ConnectorProvider = "TAILSCALE"
 	ConnectorProviderAnthropic       ConnectorProvider = "ANTHROPIC"
 	ConnectorProviderCursor          ConnectorProvider = "CURSOR"
@@ -93,6 +95,17 @@ const (
 	ConnectorProviderUpCloud         ConnectorProvider = "UPCLOUD"
 	ConnectorProviderFront           ConnectorProvider = "FRONT"
 	ConnectorProviderNuki            ConnectorProvider = "NUKI"
+	ConnectorProviderAuthentik       ConnectorProvider = "AUTHENTIK"
+	ConnectorProviderCalCom          ConnectorProvider = "CAL_COM"
+	ConnectorProviderCalendly        ConnectorProvider = "CALENDLY"
+	ConnectorProviderAWS             ConnectorProvider = "AWS"
+	ConnectorProviderGCP             ConnectorProvider = "GCP"
+	ConnectorProviderElevenLabs      ConnectorProvider = "ELEVENLABS"
+	ConnectorProviderNewRelic        ConnectorProvider = "NEW_RELIC"
+	ConnectorProviderRetool          ConnectorProvider = "RETOOL"
+	ConnectorProviderTwingate        ConnectorProvider = "TWINGATE"
+	ConnectorProviderAttio           ConnectorProvider = "ATTIO"
+	ConnectorProviderAzure           ConnectorProvider = "AZURE"
 )
 
 var (
@@ -106,6 +119,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
 		ConnectorProviderLinear,
+		ConnectorProviderLinearSync,
 		ConnectorProviderOnePassword,
 		ConnectorProviderHubSpot,
 		ConnectorProviderDocuSign,
@@ -135,6 +149,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
+		ConnectorProviderMongoDBAtlas,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
 		ConnectorProviderCursor,
@@ -164,6 +179,17 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderUpCloud,
 		ConnectorProviderFront,
 		ConnectorProviderNuki,
+		ConnectorProviderAuthentik,
+		ConnectorProviderCalCom,
+		ConnectorProviderCalendly,
+		ConnectorProviderAWS,
+		ConnectorProviderGCP,
+		ConnectorProviderElevenLabs,
+		ConnectorProviderNewRelic,
+		ConnectorProviderRetool,
+		ConnectorProviderTwingate,
+		ConnectorProviderAttio,
+		ConnectorProviderAzure,
 	}
 }
 
@@ -173,6 +199,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
 		ConnectorProviderLinear,
+		ConnectorProviderLinearSync,
 		ConnectorProviderOnePassword,
 		ConnectorProviderHubSpot,
 		ConnectorProviderDocuSign,
@@ -203,6 +230,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
+		ConnectorProviderMongoDBAtlas,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
 		ConnectorProviderCursor,
@@ -231,7 +259,18 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderGoogleAnalytics,
 		ConnectorProviderUpCloud,
 		ConnectorProviderFront,
-		ConnectorProviderNuki:
+		ConnectorProviderNuki,
+		ConnectorProviderAuthentik,
+		ConnectorProviderCalCom,
+		ConnectorProviderCalendly,
+		ConnectorProviderAWS,
+		ConnectorProviderGCP,
+		ConnectorProviderElevenLabs,
+		ConnectorProviderNewRelic,
+		ConnectorProviderRetool,
+		ConnectorProviderTwingate,
+		ConnectorProviderAttio,
+		ConnectorProviderAzure:
 		return true
 	}
 

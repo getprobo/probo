@@ -54,23 +54,30 @@ const createThirdPartyMutation = graphql`
           id
           canDelete: permission(action: "core:thirdParty:delete")
           ...ThirdPartyRow_thirdParty
+          ...ThirdPartySwitcherListItem_thirdParty
         }
       }
     }
   }
 `;
 
-type Props = {
-  children: ReactNode;
+export interface CreateThirdPartyDialogProps {
+  children?: ReactNode;
   organizationId: string;
   connection: string;
-};
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onCreated?: (thirdPartyId: string) => void;
+}
 
 export function CreateThirdPartyDialog({
   children,
   organizationId,
   connection,
-}: Props) {
+  defaultOpen,
+  onOpenChange,
+  onCreated,
+}: CreateThirdPartyDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [createThirdParty] = useMutation<CreateThirdPartyDialogCreateMutation>(createThirdPartyMutation);
@@ -96,7 +103,7 @@ export function CreateThirdPartyDialog({
         input,
         connections: [connection],
       },
-      onCompleted(_response, errors) {
+      onCompleted(response, errors) {
         if (errors) {
           toast({
             title: t("createThirdPartyDialog.messages.error"),
@@ -110,6 +117,7 @@ export function CreateThirdPartyDialog({
           description: t("createThirdPartyDialog.messages.created"),
           variant: "success",
         });
+        onCreated?.(response.createThirdParty.thirdPartyEdge.node.id);
         dialogRef.current?.close();
       },
       onError(error) {
@@ -141,7 +149,13 @@ export function CreateThirdPartyDialog({
   };
 
   return (
-    <Dialog ref={dialogRef} trigger={children} title={t("createThirdPartyDialog.title")}>
+    <Dialog
+      ref={dialogRef}
+      trigger={children}
+      title={t("createThirdPartyDialog.title")}
+      defaultOpen={defaultOpen}
+      onOpenChange={onOpenChange}
+    >
       <DialogContent className="p-6">
         <Combobox onSearch={handleSearch} placeholder={t("createThirdPartyDialog.searchPlaceholder")}>
           {searchQuery.trim().length >= 2 && queryRef && (

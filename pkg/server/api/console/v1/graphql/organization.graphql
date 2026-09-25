@@ -42,8 +42,8 @@ type Profile implements Node {
     additionalEmailAddresses: [EmailAddr!]!
     kind: String
     position: String
-    contractStartDate: Datetime
-    contractEndDate: Datetime
+    contract: Period
+    avatar: File @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -199,8 +199,19 @@ type Organization implements Node {
         last: Int
         before: CursorKey
     ): SlackConnectionConnection! @goField(forceResolver: true)
-    slackOAuth2Scopes: [String!]! @goField(forceResolver: true)
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
+    linearTeams(first: Int, after: String, query: String): LinearTeamConnection!
+        @goField(forceResolver: true)
+    linearIssues(
+        teamId: String!
+        first: Int
+        after: String
+        query: String
+    ): LinearIssueConnection! @goField(forceResolver: true)
+    slackbotAvailable: Boolean! @goField(forceResolver: true)
+    slackbotInstallation: SlackbotInstallation @goField(forceResolver: true)
+    slackbotChannels(cursor: String): SlackbotChannelPage!
+        @goField(forceResolver: true)
 
     controls(
         first: Int
@@ -335,6 +346,15 @@ type Organization implements Node {
         orderBy: RiskAnalysisOrder
     ): RiskAnalysisConnection! @goField(forceResolver: true)
 
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+        filter: TreatmentPlanFilter
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
     riskAnalysisScenarios(
         first: Int
         after: CursorKey
@@ -349,15 +369,16 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: TaskOrder
+        filter: TaskFilter
     ): TaskConnection! @goField(forceResolver: true)
 
-    agentRuns(
+    agentExecutions(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: AgentRunOrder
-    ): AgentRunConnection! @goField(forceResolver: true)
+        orderBy: AgentExecutionOrder
+    ): AgentExecutionConnection! @goField(forceResolver: true)
 
     compliancePortals(
         first: Int

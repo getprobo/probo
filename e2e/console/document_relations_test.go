@@ -99,6 +99,28 @@ func linkMeasureToDocument(
 	require.NoError(t, err)
 }
 
+func linkRiskToMeasure(
+	t *testing.T,
+	owner *testutil.Client,
+	riskID, measureID string,
+) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: CreateRiskMeasureMappingInput!) {
+			createRiskMeasureMapping(input: $input) {
+				riskEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"riskId":    riskID,
+			"measureId": measureID,
+		},
+	})
+	require.NoError(t, err)
+}
+
 func linkRiskToDocument(
 	t *testing.T,
 	owner *testutil.Client,

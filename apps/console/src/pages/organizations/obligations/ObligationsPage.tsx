@@ -149,7 +149,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
           {organization.node.obligationsDocument?.id && (
             <Button variant="secondary" asChild>
               <Link
-                to={`/organizations/${organizationId}/documents/${organization.node.obligationsDocument.id}`}
+                to={`/organizations/${organizationId}/governance/documents/${organization.node.obligationsDocument.id}`}
               >
                 <IconPageTextLine size={16} />
                 {t("obligationsPage.actions.document")}
@@ -162,7 +162,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
               defaultApproverIds={defaultApproverIds}
               onPublished={(documentId) => {
                 void navigate(
-                  `/organizations/${organizationId}/documents/${documentId}`,
+                  `/organizations/${organizationId}/governance/documents/${documentId}`,
                 );
               }}
             >
@@ -268,7 +268,7 @@ function ObligationRow({
     );
   };
 
-  const detailsUrl = `/organizations/${organizationId}/obligations/${obligation.id}`;
+  const detailsUrl = `/organizations/${organizationId}/registries/obligations/${obligation.id}`;
 
   return (
     <Tr to={detailsUrl}>

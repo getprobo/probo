@@ -23,6 +23,8 @@
     "years_other": "ans",
     "session": "session",
     "persistent": "persistant",
+    "sec_one": "{{count}} seconde",
+    "sec_other": "{{count}} secondes",
     "min_one": "{{count}} minute",
     "min_other": "{{count}} minutes",
     "hour_one": "{{count}} heure",
@@ -48,9 +50,6 @@
     "none": "Aucun"
   },
   "datumDetails": {
-    "breadcrumbs": {
-      "data": "Données"
-    },
     "fields": {
       "name": "Nom",
       "classification": "Classification",
@@ -111,9 +110,6 @@
     }
   },
   "documentLayout": {
-    "breadcrumbs": {
-      "documents": "Documents"
-    },
     "actions": {
       "publish": "Publier"
     },
@@ -265,6 +261,7 @@
   },
   "documentList": {
     "filters": {
+      "searchPlaceholder": "Rechercher des documents par titre...",
       "allSources": "Toutes les sources",
       "allTypes": "Tous les types",
       "allClassifications": "Toutes les classifications"
@@ -501,44 +498,6 @@
       "review": "Examiner"
     }
   },
-  "documentApprovePage": {
-    "pageTitle": "Examiner et approuver le document",
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": {
-      "approved": "Approuvé",
-      "rejected": "Rejeté",
-      "voided": "Annulé",
-      "inReview": "En cours d’examen",
-      "pending": "En attente"
-    },
-    "messages": {
-      "noLongerRequired": "Votre approbation n’est plus requise pour cette version.",
-      "approved": "Vous avez approuvé ce document.",
-      "rejected": "Vous avez rejeté ce document.",
-      "successTitle": "Succès",
-      "approvalSuccess": "Document approuvé avec succès",
-      "rejectionSuccess": "Document rejeté"
-    },
-    "errors": {
-      "title": "Erreur",
-      "approve": "Échec de l’approbation du document",
-      "reject": "Échec du rejet du document",
-      "loadPdf": "Échec du chargement du PDF"
-    },
-    "actions": {
-      "back": "Retour aux documents",
-      "approve": "Approuver",
-      "reject": "Rejeter"
-    },
-    "rejectDialog": {
-      "title": "Rejeter le document",
-      "description": "Veuillez indiquer un motif de rejet de ce document. Le document repassera au statut de brouillon.",
-      "placeholder": "Motif du rejet…",
-      "submit": "Rejeter le document"
-    },
-    "reviewHint": "Veuillez examiner attentivement le document avant de prendre votre décision."
-  },
   "documentDescriptionPage": {
     "messages": {
       "successTitle": "Succès",
@@ -587,124 +546,7 @@
       "request": "Demander une signature"
     }
   },
-  "employeeApprovalsPage": {
-    "pageTitle": "Documents",
-    "columns": {
-      "name": "Nom",
-      "type": "Type",
-      "classification": "Classification",
-      "lastUpdate": "Dernière mise à jour",
-      "approved": "Approuvé"
-    },
-    "empty": {
-      "title": "Aucun document pour le moment",
-      "description": "Aucun document n’a été soumis à votre approbation."
-    }
-  },
-  "employeeDocumentSignaturePage": {
-    "pageTitle": "Signer le document",
-    "messages": {
-      "successTitle": "Succès",
-      "signed": "Document signé avec succès"
-    },
-    "errors": {
-      "title": "Erreur",
-      "sign": "Échec de la signature du document",
-      "loadPdf": "Échec du chargement du PDF"
-    },
-    "reviewHint": "Veuillez examiner attentivement le document avant de le signer."
-  },
-  "employeeDocumentsPage": {
-    "pageTitle": "Documents",
-    "columns": {
-      "name": "Nom",
-      "type": "Type",
-      "classification": "Classification",
-      "lastUpdate": "Dernière mise à jour",
-      "signed": "Signé"
-    },
-    "empty": {
-      "title": "Aucun document pour le moment",
-      "description": "Aucun document n’a été demandé pour votre signature."
-    }
-  },
-  "employeeTabsLayout": {
-    "title": "Documents",
-    "tabs": {
-      "signatures": "Signatures",
-      "approvals": "Approbations"
-    }
-  },
-  "approvableDocumentRow": {
-    "states": {
-      "approved": "Approuvé",
-      "rejected": "Rejeté",
-      "noLongerRequired": "Plus nécessaire",
-      "pending": "En attente"
-    },
-    "documentTypes": {
-      "other": "Autre",
-      "governance": "Gouvernance",
-      "policy": "Politique",
-      "procedure": "Procédure",
-      "plan": "Plan",
-      "register": "Registre",
-      "record": "Enregistrement",
-      "report": "Rapport",
-      "template": "Modèle",
-      "statement_of_applicability": "Déclaration d’applicabilité"
-    },
-    "classifications": {
-      "public": "Public",
-      "internal": "Interne",
-      "confidential": "Confidentiel",
-      "secret": "Secret"
-    }
-  },
-  "employeeDocumentRow": {
-    "documentTypes": {
-      "other": "Autre",
-      "governance": "Gouvernance",
-      "policy": "Politique",
-      "procedure": "Procédure",
-      "plan": "Plan",
-      "register": "Registre",
-      "record": "Enregistrement",
-      "report": "Rapport",
-      "template": "Modèle",
-      "statement_of_applicability": "Déclaration d’applicabilité"
-    },
-    "classifications": {
-      "public": "Public",
-      "internal": "Interne",
-      "confidential": "Confidentiel",
-      "secret": "Secret"
-    },
-    "signed": {
-      "yes": "Oui",
-      "no": "Non"
-    }
-  },
-  "versionActions": {
-    "actions": {
-      "back": "Retour aux documents",
-      "reviewAndSign": "Examiner et signer"
-    }
-  },
-  "versionRow": {
-    "version": "v{{major}}.{{minor}}",
-    "versionWithDate": "v{{major}}.{{minor}} - {{date}}",
-    "status": {
-      "signed": "Signé",
-      "inReview": "En revue",
-      "waitingSignature": "En attente de signature"
-    }
-  },
   "findingDetails": {
-    "breadcrumbs": {
-      "findings": "Constats"
-    },
-    "unknown": "Constat inconnu",
     "kinds": {
       "minor_nonconformity": "Non-conformité mineure",
       "major_nonconformity": "Non-conformité majeure",
@@ -732,7 +574,9 @@
     "errors": {
       "title": "Erreur",
       "delete": "Échec de la suppression du constat",
-      "update": "Échec de la mise à jour du constat"
+      "update": "Échec de la mise à jour du constat",
+      "linkAudit": "Échec de l’association de l’audit",
+      "unlinkAudit": "Échec de la dissociation de l’audit"
     },
     "deleteConfirmation": "Cette action supprimera définitivement le constat {{referenceId}}. Cette action est irréversible.",
     "fields": {
@@ -759,6 +603,14 @@
       "delete": "Supprimer",
       "updating": "Mise à jour...",
       "update": "Mettre à jour"
+    },
+    "audits": {
+      "title": "Audits associés",
+      "referenceId": "Référence de l’audit",
+      "link": "Associer un audit",
+      "empty": "Aucun audit associé",
+      "loadMore": "Charger plus d’audits",
+      "loading": "Chargement..."
     }
   },
   "findingsPage": {
@@ -769,7 +621,8 @@
       "allKinds": "Tous les types",
       "allStatuses": "Tous les statuts",
       "allPriorities": "Toutes les priorités",
-      "allOwners": "Tous les propriétaires"
+      "allOwners": "Tous les propriétaires",
+      "allAudits": "Tous les audits"
     },
     "kinds": {
       "minor_nonconformity": "Non-conformité mineure",
@@ -899,7 +752,7 @@
     "title": "Tâches",
     "description": "Suivez les tâches de conformité qui vous sont assignées et gardez votre progression sur la bonne voie.",
     "actions": {
-      "create": "Nouvelle tâche"
+      "create": "Ajouter une tâche"
     }
   },
   "pageError": {
@@ -979,8 +832,14 @@
   "linkedAuditsDialog": {
     "title": "Associer des audits",
     "searchPlaceholder": "Rechercher des audits...",
+    "referenceIdLabel": "Référence de l’audit",
+    "referenceIdDescription": "Saisissez la référence utilisée pour ce constat dans le rapport d’audit.",
+    "referenceIdPlaceholder": "Saisir la référence du rapport",
+    "empty": "Aucun audit ne correspond à votre recherche.",
     "actions": {
+      "back": "Retour",
       "close": "Fermer",
+      "confirmLink": "Associer l’audit",
       "link": "Associer",
       "unlink": "Dissocier"
     }
@@ -1012,7 +871,7 @@
     },
     "watermark": {
       "label": "Ajouter un filigrane",
-      "description": "Ajouter un filigrane confidentiel avec un texte personnalisé et un horodatage à tous les PDF",
+      "description": "Ajouter à tous les PDF un filigrane avec la classification de chaque document, un texte personnalisé et un horodatage",
       "textLabel": "Texte du filigrane",
       "textPlaceholder": "Saisissez le texte du filigrane"
     },
@@ -1053,7 +912,7 @@
     },
     "watermark": {
       "label": "Ajouter un filigrane",
-      "description": "Ajouter un filigrane confidentiel avec un texte personnalisé et un horodatage",
+      "description": "Ajouter un filigrane avec la classification du document, un texte personnalisé et un horodatage",
       "textLabel": "Texte du filigrane",
       "textPlaceholder": "Saisissez le texte du filigrane"
     },
@@ -1061,10 +920,6 @@
       "download": "Télécharger le PDF",
       "downloading": "Téléchargement..."
     }
-  },
-  "auditSelectField": {
-    "placeholder": "Sélectionner un audit",
-    "none": "Aucun"
   },
   "controlMaturityLevelOptions": {
     "levels": {
@@ -1223,18 +1078,9 @@
       "unlink": "Dissocier"
     }
   },
-  "deleteOrganizationDialog": {
-    "title": "Supprimer l’organisation",
-    "description": "Cette action supprimera définitivement l’organisation {{organizationName}} et toutes ses données.",
-    "warning": "Cette action est irréversible.",
-    "confirmationLabel": "Pour confirmer la suppression, saisissez « {{organizationName}} » ci-dessous :",
-    "actions": {
-      "delete": "Supprimer l’organisation",
-      "deleting": "Suppression..."
-    }
-  },
   "linkedRisksCard": {
     "columns": {
+      "referenceId": "ID de référence",
       "name": "Nom",
       "initialRisk": "Risque initial",
       "residualRisk": "Risque résiduel"
@@ -1274,109 +1120,23 @@
       "showMore": "Afficher plus"
     }
   },
-  "linkedStatementsOfApplicabilityCard": {
-    "title": "Déclarations d’applicabilité",
-    "columns": {
-      "name": "Nom",
-      "applicability": "Applicabilité",
-      "justification": "Justification"
-    },
-    "empty": "Aucune déclaration d’applicabilité associée",
-    "applicable": "Applicable",
-    "notApplicable": "Non applicable",
-    "actions": {
-      "link": "Associer une déclaration d’applicabilité",
-      "unlink": "Dissocier",
-      "showMore": "Afficher {{count}} de plus"
-    }
-  },
-  "linkedStatementsOfApplicabilityDialog": {
-    "title": "Associer une déclaration d’applicabilité",
-    "empty": {
-      "title": "Aucune déclaration d’applicabilité disponible",
-      "description": "Créez d’abord une déclaration d’applicabilité pour l’associer à ce contrôle"
-    },
-    "select": "Sélectionnez une déclaration d’applicabilité :",
-    "linked": "Associée",
-    "selected": "Sélectionnée :",
-    "applicable": "Applicable",
-    "justification": {
-      "label": "Justification (facultatif)",
-      "placeholder": "Ajouter une justification..."
-    },
-    "actions": {
-      "back": "Retour",
-      "change": "Modifier",
-      "close": "Fermer",
-      "link": "Associer",
-      "unlink": "Dissocier"
-    }
-  },
-  "taskFormDialog": {
-    "breadcrumb": {
-      "tasks": "Tâches",
-      "edit": "Modifier la tâche",
-      "new": "Nouvelle tâche"
-    },
-    "properties": "Propriétés",
-    "fields": {
-      "title": {
-        "placeholder": "Titre de la tâche"
-      },
-      "description": {
-        "placeholder": "Ajouter une description"
-      },
-      "state": {
-        "label": "État"
-      },
-      "priority": {
-        "label": "Priorité"
-      },
-      "assignedTo": {
-        "label": "Assigné à"
-      },
-      "measure": {
-        "label": "Mesure"
-      },
-      "timeEstimate": {
-        "label": "Estimation de temps"
-      },
-      "deadline": {
-        "label": "Échéance"
-      }
-    },
-    "states": {
-      "todo": "À faire",
-      "inProgress": "En cours",
-      "done": "Terminé"
-    },
-    "priorities": {
-      "urgent": "Urgente",
-      "high": "Haute",
-      "medium": "Moyenne",
-      "low": "Basse"
-    },
-    "messages": {
-      "created": "Tâche créée avec succès.",
-      "updated": "Tâche mise à jour avec succès."
-    },
-    "errors": {
-      "create": "Échec de la création de la tâche",
-      "update": "Échec de la mise à jour de la tâche"
-    },
-    "actions": {
-      "create": "Créer la tâche",
-      "update": "Mettre à jour la tâche"
-    }
-  },
   "tasksCard": {
     "states": {
       "all": "Toutes",
       "todo": "À faire",
       "inProgress": "En cours",
-      "done": "Terminé"
+      "done": "Terminé",
+      "backlog": "Backlog",
+      "canceled": "Annulé",
+      "duplicate": "Doublon"
     },
     "empty": "Aucune tâche",
+    "noResults": "Aucune tâche ne correspond à vos filtres",
+    "searchPlaceholder": "Rechercher des tâches",
+    "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts"
+    },
     "error": {
       "title": "Erreur",
       "reorder": "Échec de la réorganisation de la tâche."
@@ -1387,10 +1147,18 @@
     },
     "deleteConfirmation": "Voulez-vous vraiment supprimer cette tâche ?",
     "actions": {
+      "moveToTodo": "Déplacer vers À faire",
       "moveToInProgress": "Déplacer vers En cours",
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",
       "delete": "Supprimer"
+    },
+    "metadata": {
+      "timeEstimate": "Estimation de temps",
+      "deadline": "Échéance"
+    },
+    "recurringBadge": {
+      "tooltip": "Se répète avec un intervalle de {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {
@@ -1433,12 +1201,6 @@
       "add": "Ajouter une référence",
       "edit": "Modifier la référence",
       "update": "Mettre à jour la référence"
-    }
-  },
-  "thirdPartyForm": {
-    "messages": {
-      "updated": "Tiers mis à jour avec succès.",
-      "updateError": "Échec de la mise à jour du tiers"
     }
   },
   "assetGraph": {
@@ -1562,6 +1324,8 @@
       "unknown": "Inconnu"
     },
     "auditState": {
+      "toBook": "À réserver",
+      "auditBooked": "Audit réservé",
       "notStarted": "Non commencé",
       "inProgress": "En cours",
       "completed": "Terminé",
@@ -1576,10 +1340,10 @@
       "custom": "Certifications personnalisées"
     },
     "compliancePortalDocumentAccessStatus": {
-      "requested": "demandé",
-      "granted": "accordé",
-      "rejected": "rejeté",
-      "revoked": "révoqué"
+      "requested": "Demandé",
+      "granted": "Accordé",
+      "rejected": "Rejeté",
+      "revoked": "Révoqué"
     },
     "compliancePortalVisibility": {
       "none": "Aucune",
@@ -1705,6 +1469,42 @@
       "probable": "Probable",
       "frequent": "Fréquente"
     },
+    "riskScales": {
+      "impact": {
+        "2": {
+          "1": "Faible",
+          "2": "Élevé"
+        },
+        "3": {
+          "1": "Faible",
+          "2": "Moyen",
+          "3": "Élevé"
+        },
+        "4": {
+          "1": "Faible",
+          "2": "Moyen",
+          "3": "Élevé",
+          "4": "Critique"
+        }
+      },
+      "likelihood": {
+        "2": {
+          "1": "Improbable",
+          "2": "Probable"
+        },
+        "3": {
+          "1": "Improbable",
+          "2": "Possible",
+          "3": "Probable"
+        },
+        "4": {
+          "1": "Improbable",
+          "2": "Possible",
+          "3": "Probable",
+          "4": "Quasi certaine"
+        }
+      }
+    },
     "riskSeverity": {
       "critical": "Critique",
       "high": "Élevée",
@@ -1806,6 +1606,7 @@
     },
     "risk": {
       "initial": "Risque initial",
+      "net": "Risque net",
       "residual": "Risque résiduel",
       "score": "Score",
       "numberOfRisks": "Nombre de risques",
@@ -1822,7 +1623,8 @@
       },
       "likelihood": {
         "label": "Probabilité"
-      }
+      },
+      "cell": "{{count}} avec une probabilité {{likelihood}} et un impact {{impact}}"
     }
   },
   "common": {
@@ -1849,95 +1651,20 @@
       "commit": "Échec de l’exécution de cette opération"
     }
   },
-  "apiKeys": {
-    "title": "Clés API"
-  },
-  "personalApiKeyList": {
-    "messages": {
-      "created": "Clé API créée avec succès."
-    },
-    "errors": {
-      "create": "Échec de la création de la clé API."
-    },
-    "empty": {
-      "title": "Aucune clé API",
-      "description": "Créez une clé API pour authentifier les accès programmatiques."
-    },
-    "fields": {
-      "name": {
-        "label": "Nom",
-        "placeholder": "par ex. Clé API de production"
-      },
-      "expiresIn": {
-        "label": "Expire dans"
-      }
-    },
-    "expirations": {
-      "month_one": "{{count}} mois",
-      "month_other": "{{count}} mois",
-      "year_one": "{{count}} an",
-      "year_other": "{{count}} ans"
-    },
-    "actions": {
-      "create": "Créer une clé API",
-      "creating": "Création..."
-    }
-  },
-  "personalApiKeyRow": {
-    "messages": {
-      "revoked": "Clé API révoquée avec succès."
-    },
-    "errors": {
-      "revoke": "Échec de la révocation de la clé API."
-    },
-    "revoke": {
-      "title": "Révoquer la clé API",
-      "confirmation": "Voulez-vous vraiment révoquer la clé API « {{name}} » ? Cette action est irréversible."
-    },
-    "status": {
-      "expired": "Expirée",
-      "active": "Active"
-    },
-    "never": "Jamais",
-    "actions": {
-      "revoke": "Révoquer"
-    }
-  },
-  "personalApiKeyTokenAction": {
-    "errors": {
-      "load": "Échec du chargement du jeton de clé API."
-    },
-    "actions": {
-      "show": "Afficher"
-    }
-  },
-  "personalApiKeyTokenDialog": {
-    "title": "Jeton",
-    "actions": {
-      "copy": "Copier",
-      "copied": "Copié",
-      "done": "Terminé"
-    }
-  },
-  "personalApiKeysTable": {
-    "columns": {
-      "name": "Nom",
-      "lastUsed": "Dernière utilisation",
-      "created": "Créée",
-      "expires": "Expire"
-    }
-  },
   "activateAccountPage": {
     "pageTitle": "Activer le compte",
     "title": "Activation du compte",
+    "description": "Cliquez sur continuer pour activer votre compte.",
     "activating": "Activation de votre compte…",
     "messages": {
       "activated": "Compte activé avec succès."
     },
     "errors": {
-      "activationFailed": "Échec de l’activation"
+      "activationFailed": "Échec de l’activation",
+      "missingToken": "Veuillez utiliser le lien d’activation envoyé par e-mail"
     },
     "actions": {
+      "continue": "Continuer",
       "goBack": "Retour"
     }
   },
@@ -2033,7 +1760,8 @@
       "created": "Compte créé avec succès"
     },
     "errors": {
-      "creationFailed": "Échec de la création du mot de passe"
+      "creationFailed": "Échec de la création du mot de passe",
+      "missingToken": "Veuillez utiliser le lien de création de mot de passe envoyé par e-mail"
     },
     "fields": {
       "password": "Mot de passe"
@@ -2129,7 +1857,7 @@
     },
     "errors": {
       "resetFailed": "Échec de la réinitialisation",
-      "invalidToken": "Jeton de réinitialisation invalide ou manquant",
+      "invalidToken": "Veuillez utiliser le lien de réinitialisation envoyé par e-mail",
       "reset": "Échec de la réinitialisation du mot de passe"
     },
     "fields": {
@@ -2147,6 +1875,11 @@
     "title": "Inscription",
     "description": "Saisissez vos informations pour créer un compte",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "checkEmail": {
+      "title": "Vérifiez votre e-mail",
+      "description": "Nous avons envoyé un lien de confirmation à {{email}}.",
+      "resend": "Vous n’avez pas reçu l’e-mail ?"
+    },
     "messages": {
       "created": "Compte créé avec succès"
     },
@@ -2168,19 +1901,22 @@
       "backToLogin": "Retour à la connexion",
       "creating": "Création du compte...",
       "signUpWithEmail": "S’inscrire avec e-mail",
-      "logIn": "Connectez-vous ici"
+      "logIn": "Connectez-vous ici",
+      "resend": "Renvoyer l’e-mail de confirmation"
     }
   },
   "verifyEmailPage": {
     "pageTitle": "Confirmer l’e-mail",
     "title": "Confirmation de l’e-mail",
     "description": "Confirmez votre adresse e-mail pour finaliser votre inscription",
+    "continueDescription": "Cliquez sur continuer pour confirmer votre e-mail et vous connecter.",
     "messages": {
       "confirmed": "Votre e-mail a été confirmé avec succès",
       "confirmedWithExclamation": "Votre e-mail a été confirmé avec succès !"
     },
     "errors": {
-      "confirm": "Échec de la confirmation de l’e-mail"
+      "confirm": "Échec de la confirmation de l’e-mail",
+      "tokenRequired": "Veuillez saisir votre jeton de confirmation"
     },
     "fields": {
       "token": "Jeton de confirmation",
@@ -2191,6 +1927,7 @@
       "proceedToLogin": "Continuer vers la connexion",
       "confirming": "Confirmation...",
       "confirm": "Confirmer l’e-mail",
+      "continue": "Continuer",
       "backToLogin": "Retour à la connexion"
     }
   },
@@ -2208,6 +1945,7 @@
     },
     "actions": {
       "back": "Retour",
+      "backToLogin": "Retour à la connexion",
       "loggingIn": "Connexion...",
       "login": "Connexion",
       "register": "S’inscrire",
@@ -2226,6 +1964,7 @@
     },
     "actions": {
       "back": "Retour",
+      "backToLogin": "Retour à la connexion",
       "checking": "Vérification en cours...",
       "continue": "Continuer avec SSO",
       "register": "S’inscrire"
@@ -2241,21 +1980,23 @@
     "or": "Ou",
     "newToProbo": "Nouveau sur Probo ?",
     "actions": {
-      "signInWithSso": "Se connecter avec SSO",
-      "signInWithEmail": "Se connecter avec l’e-mail",
+      "usePassword": "Utiliser un mot de passe",
       "createAccount": "Créer un compte"
     }
   },
   "oidcButton": {
     "signInWith": "Se connecter avec {{provider}}"
   },
+  "topBar": {
+    "tagline": "Console"
+  },
   "membershipsPage": {
-    "pageTitle": "Sélectionner une organisation",
-    "title": "Sélectionner une organisation",
+    "pageTitle": "Vos organisations",
+    "title": "Vos organisations",
     "pendingInvitations": "Invitations en attente",
-    "yourOrganizations": "Vos organisations",
-    "searchPlaceholder": "Rechercher des organisations...",
+    "searchPlaceholder": "Rechercher des organisations",
     "empty": "Aucune organisation trouvée",
+    "emptySearch": "Aucune organisation ne correspond à cette recherche.",
     "createOrganization": {
       "title": "Créer une organisation",
       "description": "Ajoutez une nouvelle organisation à votre compte",
@@ -2282,10 +2023,9 @@
       "sessionExpired": "Session expirée",
       "authenticationRequired": "Authentification requise"
     },
-    "accountDeactivated": "Compte désactivé",
     "actions": {
-      "start": "Démarrer",
-      "login": "Connexion"
+      "open": "Ouvrir",
+      "continue": "Continuer"
     }
   },
   "viewerDropdown": {
@@ -2297,6 +2037,26 @@
       "oauthTokens": "Jetons OAuth",
       "help": "Aide",
       "logout": "Déconnexion"
+    }
+  },
+  "editAvatar": {
+    "title": "Photo de profil",
+    "description": "Ajoutez une photo publique.",
+    "messages": {
+      "updated": "Photo de profil mise à jour.",
+      "removed": "Photo de profil supprimée."
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de la photo de profil",
+      "remove": "Échec de la suppression de la photo de profil",
+      "invalidFile": "Utilisez un JPEG ou un PNG de moins de 5 Mo."
+    },
+    "actions": {
+      "upload": "Téléverser une photo",
+      "replace": "Remplacer la photo",
+      "remove": "Supprimer la photo",
+      "close": "Fermer",
+      "change": "Changer la photo de profil"
     }
   },
   "newOAuthTokenPage": {
@@ -2409,14 +2169,59 @@
   "membershipsDropdownMenu": {
     "pendingInvitations": "Invitations en attente"
   },
-  "sidebar": {
+  "organizationSwitcher": {
+    "empty": "Aucune organisation trouvée",
+    "sessionActive": "Connecté",
+    "sessionExpired": "Session expirée",
+    "sessionLocked": "Non connecté"
+  },
+  "nav": {
+    "products": "Produits",
+    "help": "Aide",
+    "switchToDarkMode": "Passer en mode sombre",
+    "switchToLightMode": "Passer en mode clair",
+    "spotlight": {
+      "title": "Aller à",
+      "placeholder": "Aller à…",
+      "empty": "Aucune page correspondante"
+    },
+    "groups": {
+      "governance": "Gouvernance",
+      "privacy": "Confidentialité",
+      "tprm": "TPRM",
+      "itam": "Gestion des actifs informatiques",
+      "riskManagement": "Gestion des risques",
+      "registries": "Registres",
+      "compliancePortal": "Portail de conformité",
+      "accessReview": "Revue d’accès",
+      "settings": "Paramètres"
+    },
+    "workspaceSettings": "Espace de travail",
     "context": "Contexte",
+    "webhooks": "Webhooks",
+    "slackBot": "SlackBot",
     "tasks": "Tâches",
     "measures": "Mesures",
     "risks": "Risques",
+    "allRisks": "Tous les risques",
+    "riskAnalyses": "Analyses des risques",
     "frameworks": "Référentiels",
-    "people": "Personnes",
+    "iam": "IAM",
+    "users": "Utilisateurs",
+    "authProvisioning": "Auth. et provisionnement",
+    "auditLog": "Journal d’audit",
+    "allThirdParties": "Tous les tiers",
     "thirdParties": "Tiers",
+    "thirdPartyCompliance": "Conformité",
+    "thirdPartyRisk": "Risque",
+    "thirdPartyProfile": "Profil",
+    "thirdPartyStakeholders": "Parties prenantes",
+    "thirdPartyAssurance": "Assurance",
+    "thirdPartyAgreements": "Accords",
+    "thirdPartyServices": "Services",
+    "thirdPartySupplyChain": "Chaîne d’approvisionnement",
+    "thirdPartyRisks": "Évaluations des risques",
+    "thirdPartyMeasures": "Mesures",
     "documents": "Documents",
     "assets": "Actifs",
     "devices": "Appareils",
@@ -2427,12 +2232,52 @@
     "aiSystems": "Systèmes d'IA",
     "obligations": "Obligations",
     "processingActivities": "Activités de traitement",
-    "statementsOfApplicability": "Déclarations d’applicabilité",
+    "dataProtectionImpactAssessments": "DPIAs",
+    "transferImpactAssessments": "TIAs",
+    "statementsOfApplicability": "SoA",
     "rightsRequests": "Demandes d’exercice de droits",
-    "accessReviews": "Revues d’accès",
+    "campaigns": "Campagnes",
+    "connections": "Connexions",
     "compliancePortals": "Portails de conformité",
+    "compliancePortalsSettings": "Paramètres",
+    "compliancePortalsHosting": "Hébergement",
+    "compliancePortalsVisitors": "Visiteurs",
+    "compliancePortalsIntegrations": "Intégrations",
+    "compliancePortalsPages": "Pages",
+    "compliancePortalsLanding": "Accueil",
+    "compliancePortalsDocuments": "Documents",
+    "compliancePortalsSubprocessors": "Sous-traitants",
+    "compliancePortalsUpdates": "Mises à jour",
+    "compliancePortalsRightRequests": "Demandes de droits",
     "cookieBanners": "Bannières de cookies",
-    "settings": "Paramètres"
+    "cookieBannersConfigure": "Configurer",
+    "cookieBannersDiscovery": "Découverte",
+    "cookieBannersTrail": "Journal",
+    "cookieBannersTCF": "TCF",
+    "cookieBannerSwitcher": {
+      "label": "Bannière de cookies",
+      "select": "Sélectionner une bannière",
+      "new": "Nouvelle bannière",
+      "create": "Nouvelle bannière de cookies",
+      "empty": "Aucune bannière de cookies",
+      "loading": "Chargement…",
+      "showMore": "Afficher plus"
+    },
+    "thirdPartySwitcher": {
+      "label": "Tiers",
+      "select": "Sélectionner un tiers",
+      "create": "Nouveau tiers",
+      "empty": "Aucun tiers",
+      "loading": "Chargement…"
+    },
+    "compliancePortalSwitcher": {
+      "label": "Portail de conformité",
+      "new": "Nouveau portail",
+      "create": "Nouveau portail",
+      "empty": "Aucun portail de conformité",
+      "loading": "Chargement…",
+      "open": "Ouvrir le portail"
+    }
   },
   "viewerMembershipDropdown": {
     "errors": {
@@ -2440,54 +2285,46 @@
       "cannotSignOut": "Impossible de se déconnecter"
     },
     "actions": {
-      "apiKeys": "Clés API",
       "oauthTokens": "Jetons OAuth",
       "employeePortal": "Portail employé",
+      "switchToDarkMode": "Passer en mode sombre",
+      "switchToLightMode": "Passer en mode clair",
       "help": "Aide",
       "logout": "Déconnexion"
     }
   },
-  "peoplePage": {
-    "title": "Personnes",
+  "usersPage": {
+    "empty": "Aucun utilisateur",
+    "emptyFiltered": "Aucun utilisateur ne correspond aux filtres actuels.",
     "actions": {
-      "add": "Ajouter une personne"
+      "add": "Ajouter un utilisateur",
+      "cancel": "Annuler",
+      "previous": "Préc.",
+      "next": "Suiv."
     }
   },
-  "personPage": {
-    "breadcrumb": {
-      "people": "Personnes"
-    },
-    "messages": {
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
-    },
-    "errors": {
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
-    },
-    "confirmations": {
-      "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
-      "remove": "Voulez-vous vraiment supprimer {{name}} ?"
-    },
-    "actions": {
-      "deactivate": "Désactiver",
-      "remove": "Supprimer"
+  "userPage": {
+    "back": "Utilisateurs",
+    "empty": "—",
+    "deactivatedCallout": "Cet utilisateur est désactivé.",
+    "notFound": "Utilisateur introuvable",
+    "details": {
+      "title": "Détails",
+      "description": "Poste, e-mails supplémentaires et dates de contrat."
     }
   },
-  "addPersonDialog": {
-    "title": "Ajouter une personne"
+  "newUserPage": {
+    "title": "Ajouter un utilisateur",
+    "description": "Invitez quelqu’un dans cette organisation.",
+    "notFound": "Vous ne pouvez pas ajouter d’utilisateurs à cette organisation"
   },
-  "peopleList": {
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "email": "E-mail",
-      "role": "Rôle",
-      "createdOn": "Créé le",
-      "contractEndDate": "Date de fin de contrat"
+  "usersList": {
+    "searchPlaceholder": "Rechercher des utilisateurs...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
     },
-    "empty": "Aucune personne",
-    "searchPlaceholder": "Rechercher des personnes...",
+    "created": "Créé le {{date}}",
     "filters": {
       "allStatuses": "Tous les statuts",
       "status": "Statut",
@@ -2495,51 +2332,62 @@
       "active": "Actif",
       "deactivated": "Désactivé",
       "allRoles": "Tous les rôles",
-      "allTypes": "Tous les types"
+      "allTypes": "Tous les types d’utilisateur",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur"
     }
   },
-  "peopleListItem": {
+  "userListItem": {
     "messages": {
       "invitationSent": "Invitation envoyée avec succès",
-      "roleUpdated": "Rôle mis à jour avec succès",
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
+      "deactivated": "Utilisateur désactivé avec succès",
+      "removed": "Utilisateur supprimé avec succès",
+      "roleUpdated": "Rôle mis à jour"
     },
     "errors": {
       "sendInvitation": "Échec de l’envoi de l’invitation",
-      "updateRole": "Échec de la mise à jour du rôle",
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
+      "deactivate": "Échec de la désactivation de l’utilisateur",
+      "remove": "Échec de la suppression de l’utilisateur",
+      "updateRole": "Échec de la mise à jour du rôle"
     },
     "confirmations": {
       "sendActivationEmail": "Envoyer l’e-mail d’activation à {{name}} ?",
       "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
       "remove": "Voulez-vous vraiment supprimer {{name}} ?"
     },
+    "dialogs": {
+      "sendTitle": "Envoyer l’e-mail d’activation",
+      "deactivateTitle": "Désactiver l’utilisateur",
+      "removeTitle": "Supprimer l’utilisateur"
+    },
     "actions": {
+      "more": "Plus d’actions",
       "send": "Envoyer",
       "sendActivationMail": "Envoyer l’e-mail d’activation",
       "resendActivationMail": "Renvoyer l’e-mail d’activation",
-      "deactivatePerson": "Désactiver la personne",
-      "removePerson": "Supprimer la personne"
+      "deactivatePerson": "Désactiver l’utilisateur",
+      "removePerson": "Supprimer l’utilisateur"
     }
   },
-  "personForm": {
+  "userForm": {
     "messages": {
-      "created": "Personne créée avec succès.",
-      "updated": "Personne mise à jour avec succès."
+      "created": "Utilisateur créé avec succès.",
+      "updated": "Utilisateur mis à jour avec succès."
     },
     "errors": {
-      "create": "Échec de la création de la personne",
-      "update": "Échec de la mise à jour de la personne"
+      "create": "Échec de la création de l’utilisateur",
+      "update": "Échec de la mise à jour de l’utilisateur"
     },
     "fields": {
-      "fullName": "Nom complet *",
-      "emailAddress": "Adresse e-mail *",
-      "role": "Rôle *",
-      "type": "Type",
+      "fullName": "Nom complet",
+      "emailAddress": "Adresse e-mail",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur",
       "position": "Poste",
       "positionPlaceholder": "ex. PDG, DAF, etc.",
+      "additionalEmails": "E-mails supplémentaires",
+      "additionalEmail": "E-mail supplémentaire {{index}}",
+      "additionalEmailPlaceholder": "nom@exemple.com",
       "contractStartDate": "Date de début de contrat",
       "contractEndDate": "Date de fin de contrat"
     },
@@ -2558,74 +2406,36 @@
       "SERVICE_ACCOUNT": "Compte de service"
     },
     "actions": {
-      "update": "Mettre à jour",
-      "create": "Créer"
+      "create": "Créer",
+      "addEmail": "Ajouter un e-mail",
+      "removeEmail": "Supprimer l’e-mail"
     }
   },
-  "auditLogSettingsPage": {
+  "auditLogPage": {
     "title": "Journal d’audit",
     "description": "Un enregistrement de toutes les actions effectuées au sein de votre organisation. Les entrées sont immuables et ne peuvent pas être modifiées ou supprimées.",
     "empty": "Aucune entrée dans le journal d’audit pour le moment.",
     "showing": "Affichage de {{shown}} sur {{total}} entrées",
-    "columns": {
-      "date": "Date",
-      "actor": "Acteur",
-      "action": "Action",
-      "resource": "Ressource"
-    },
-    "actions": {
-      "showMore": "Afficher plus"
-    },
+    "columns": { "date": "Date", "actor": "Acteur", "action": "Action", "resource": "Ressource" },
+    "actions": { "showMore": "Afficher plus" },
     "export": {
       "title": "Exporter le journal d'audit",
       "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d'audit au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
-      "fields": {
-        "from": "Du",
-        "to": "Au"
-      },
-      "actions": {
-        "export": "Exporter",
-        "exporting": "Exportation..."
-      },
+      "fields": { "from": "Du", "to": "Au" },
+      "actions": { "export": "Exporter", "exporting": "Exportation..." },
       "messages": {
         "successTitle": "Succès",
         "success": "L'export a démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu'il sera prêt."
       },
-      "errors": {
-        "title": "Erreur",
-        "request": "Échec de la demande d'export du journal d'audit"
-      }
+      "errors": { "title": "Erreur", "request": "Échec de la demande d'export du journal d'audit" }
     }
   },
-  "generalSettingsPage": {
-    "messages": {
-      "deleted": "Organisation supprimée avec succès."
-    },
-    "errors": {
-      "delete": "Échec de la suppression de l’organisation"
-    },
-    "dangerZone": {
-      "title": "Zone de danger",
-      "delete": {
-        "title": "Supprimer l’organisation",
-        "description": "Supprimer définitivement cette organisation et toutes ses données.",
-        "warning": "Cette action est irréversible.",
-        "action": "Supprimer l’organisation"
-      }
-    }
-  },
-  "samlSettingsPage": {
+  "samlSsoPage": {
     "title": "Authentification unique SAML",
-    "actions": {
-      "addConfiguration": "Ajouter une configuration"
-    },
-    "breadcrumb": {
-      "settings": "Paramètres SAML",
-      "configure": "Configurer",
-      "verifyDomain": "Vérifier le domaine"
-    }
+    "actions": { "addConfiguration": "Ajouter une configuration" },
+    "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer", "verifyDomain": "Vérifier le domaine" }
   },
-  "scimSettingsPage": {
+  "scimPage": {
     "manualScim": {
       "title": "SCIM manuel",
       "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé ci-dessus. Cela nécessite de configurer l’URL du point de terminaison SCIM et le jeton porteur dans votre fournisseur d’identité."
@@ -2634,32 +2444,36 @@
     "export": {
       "title": "Exporter les événements SCIM",
       "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
-      "fields": {
-        "from": "Du",
-        "to": "Au"
-      },
-      "actions": {
-        "export": "Exporter",
-        "exporting": "Exportation..."
-      },
+      "fields": { "from": "Du", "to": "Au" },
+      "actions": { "export": "Exporter", "exporting": "Exportation..." },
       "messages": {
         "successTitle": "Succès",
         "success": "Export démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
       },
-      "errors": {
-        "title": "Erreur",
-        "request": "Échec de la demande d’export des événements SCIM"
-      }
+      "errors": { "title": "Erreur", "request": "Échec de la demande d’export des événements SCIM" }
     }
   },
-  "settingsLayout": {
-    "title": "Paramètres",
-    "tabs": {
-      "general": "Général",
-      "samlSso": "SAML SSO",
-      "scim": "SCIM",
-      "webhooks": "Webhooks",
-      "auditLog": "Journal d’audit"
+  "authLayout": {
+    "title": "Auth. et provisionnement",
+    "tabs": { "samlSso": "SAML SSO", "scim": "SCIM" }
+  },
+  "slackBotSettingsPage": {
+    "title": "SlackBot",
+    "connectionTitle": "Slack",
+    "emptyDescription": "Installez l’application Slack Probo pour recevoir des notifications",
+    "installed": "L’application Slack Probo est installée",
+    "uninstallConfirmation": "Désinstaller l’application Slack Probo ? Probo cessera de recevoir les événements Slack et d’envoyer des notifications dans cet espace de travail.",
+    "messages": {
+      "uninstalled": "L’application Slack Probo a été désinstallée"
+    },
+    "errors": {
+      "uninstall": "Échec de la désinstallation de l’application Slack Probo"
+    },
+    "actions": {
+      "install": "Installer",
+      "configure": "Configurer",
+      "uninstall": "Désinstaller",
+      "uninstalling": "Désinstallation..."
     }
   },
   "connectorList": {
@@ -2758,39 +2572,6 @@
     },
     "errors": {
       "create": "Échec de la création de la configuration SAML"
-    }
-  },
-  "organizationForm": {
-    "title": "Détails de l’organisation",
-    "messages": {
-      "updated": "Organisation mise à jour avec succès",
-      "horizontalLogoDeleted": "Logo horizontal supprimé avec succès"
-    },
-    "errors": {
-      "update": "Échec de la mise à jour de l’organisation",
-      "deleteHorizontalLogo": "Échec de la suppression du logo horizontal"
-    },
-    "fields": {
-      "logo": "Logo de l’organisation",
-      "horizontalLogo": "Logo horizontal",
-      "horizontalLogoDescription": "Téléversez une version horizontale de votre logo pour l’utiliser dans les documents",
-      "name": "Nom de l’organisation"
-    },
-    "actions": {
-      "uploading": "Téléversement...",
-      "changeLogo": "Changer le logo",
-      "changeHorizontalLogo": "Changer le logo horizontal",
-      "uploadHorizontalLogo": "Téléverser le logo horizontal",
-      "deleteHorizontalLogo": "Supprimer le logo horizontal",
-      "deleting": "Suppression...",
-      "delete": "Supprimer",
-      "updating": "Mise à jour...",
-      "update": "Mettre à jour l’organisation"
-    },
-    "deleteHorizontalLogo": {
-      "title": "Supprimer le logo horizontal",
-      "description": "Voulez-vous vraiment supprimer le logo horizontal ?",
-      "warning": "Cette action est irréversible."
     }
   },
   "samlConfigurationForm": {
@@ -2947,13 +2728,27 @@
     },
     "empty": "Aucun événement SCIM enregistré pour le moment."
   },
-  "accessReviewLayout": {
-    "title": "Revues d’accès",
+  "accessReviewCampaignsPage": {
+    "title": "Campagnes",
     "description": "Passez en revue et gérez les accès des utilisateurs à travers les systèmes et applications de votre organisation.",
-    "tabs": {
-      "campaigns": "Campagnes",
-      "sources": "Connexions"
-    }
+    "errors": { "delete": "Échec de la suppression de la campagne" },
+    "messages": { "error": "Erreur", "success": "Succès", "deleted": "Campagne supprimée avec succès." },
+    "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
+    "actions": {
+      "new": "Nouvelle campagne",
+      "delete": "Supprimer",
+      "loading": "Chargement...",
+      "loadMore": "Charger plus"
+    },
+    "columns": { "name": "Nom", "status": "Statut", "createdAt": "Créé le" },
+    "status": {
+      "draft": "Brouillon",
+      "in_progress": "En cours",
+      "pending_actions": "Actions en attente",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "empty": "Aucune campagne de revue d’accès pour le moment. Créez votre première campagne pour commencer à revoir les accès."
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "Ajouter une source d’accès CSV",
@@ -2980,18 +2775,7 @@
     }
   },
   "accessReviewSourceRow": {
-    "sources": {
-      "csv": "CSV",
-      "googleWorkspace": "Google Workspace",
-      "microsoft365": "Microsoft 365",
-      "linear": "Linear",
-      "slack": "Slack",
-      "metabase": "Metabase",
-      "signoz": "SigNoz",
-      "cursor": "Cursor",
-      "github": "GitHub",
-      "cloudflare": "Cloudflare"
-    },
+    "sources": { "csv": "CSV" },
     "errors": {
       "delete": "Échec de la suppression de la source d’accès",
       "configure": "Échec de la configuration de la source"
@@ -3020,7 +2804,9 @@
         "reconnectTitle": "{{provider}} est déconnecté",
         "credentialsTitle": "Les identifiants de {{provider}} sont invalides",
         "reconnectDescription": "Reconnectez cette source pour rétablir l’accès aux organisations.",
-        "credentialsDescription": "Probo ne peut pas accéder aux organisations avec les identifiants actuels. Vérifiez les identifiants et les permissions de cette source."
+        "credentialsDescription": "Probo ne peut pas lire cette source avec les identifiants actuels. Vérifiez les identifiants et les permissions dont ils disposent sur {{provider}}.",
+        "notAuthorizedTitle": "{{provider}} a refusé cette requête",
+        "notAuthorizedDescription": "{{provider}} a accepté les identifiants mais a refusé la requête envoyée par Probo. Vérifiez les permissions dont ils disposent sur {{provider}}, et si votre offre inclut l’API utilisée par Probo."
       }
     }
   },
@@ -3075,36 +2861,6 @@
       "none": "Aucun"
     }
   },
-  "accessReviewCampaignsTab": {
-    "errors": {
-      "delete": "Échec de la suppression de la campagne"
-    },
-    "messages": {
-      "error": "Erreur",
-      "success": "Succès",
-      "deleted": "Campagne supprimée avec succès."
-    },
-    "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
-    "actions": {
-      "new": "Nouvelle campagne",
-      "delete": "Supprimer",
-      "loading": "Chargement...",
-      "loadMore": "Charger plus"
-    },
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "createdAt": "Créé le"
-    },
-    "status": {
-      "draft": "Brouillon",
-      "in_progress": "En cours",
-      "pending_actions": "Actions en attente",
-      "completed": "Terminé",
-      "cancelled": "Annulé"
-    },
-    "empty": "Aucune campagne de revue d’accès pour le moment. Créez votre première campagne pour commencer à revoir les accès."
-  },
   "campaignDetailPage": {
     "errors": {
       "start": "Échec du démarrage de la campagne",
@@ -3126,7 +2882,6 @@
     },
     "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
     "completeConfirmation": "Voulez-vous vraiment finaliser cette campagne ? Cette action est irréversible. Toutes les décisions seront définitives.",
-    "breadcrumb": "Revues d’accès",
     "status": {
       "draft": "Brouillon",
       "in_progress": "En cours",
@@ -3156,6 +2911,8 @@
       "sso": "SSO",
       "password": "Mot de passe",
       "api_key": "Clé API",
+      "oauth2": "OAuth2",
+      "ssh": "SSH",
       "service_account": "Compte de service",
       "unknown": "Inconnu"
     },
@@ -3220,7 +2977,7 @@
       "mfa": "MFA",
       "authMethod": "Auth",
       "lastLogin": "Dernière connexion"
-      },
+    },
     "values": {
       "yes": "Oui",
       "no": "Non",
@@ -3245,8 +3002,12 @@
   "addAccessReviewSourceDialog": {
     "actions": {
       "connectWithOAuth": "OAuth",
+      "connectWithGitHubApp": "Application GitHub",
       "connectWithApiKey": "Clé API",
       "connectWithClientCredentials": "Identifiants client",
+      "connectWithWorkloadIdentity": "Identité de charge de travail",
+      "connectWithAppInstall": "Installation de l’application",
+      "chooseAnotherMethod": "Choisir une autre méthode de connexion",
       "open": "Ouvrir"
     },
     "csv": {
@@ -3284,7 +3045,7 @@
       "created": "Campagne créée avec succès."
     },
     "breadcrumb": {
-      "accessReviews": "Revues d’accès",
+      "accessReviews": "Campagnes",
       "newCampaign": "Nouvelle campagne"
     },
     "fields": {
@@ -3296,7 +3057,7 @@
     "actions": {
       "create": "Créer"
     },
-    "emptySources": "Aucune source disponible. Ajoutez d’abord des sources dans l’onglet Sources."
+    "emptySources": "Aucune connexion disponible. Ajoutez d’abord des connexions sur la page Connexions."
   },
   "postHogDeploymentField": {
     "deployment": {
@@ -3315,25 +3076,14 @@
     "apiKeyDescription": "Saisissez la clé API de {{provider}} pour le connecter en tant que source d’accès.",
     "apiKey": "Clé API",
     "messages": {
-      "connectionFailed": "Connexion échouée",
-      "copyFailed": "Échec de la copie",
-      "copied": "Copié dans le presse-papiers"
+      "connectionFailed": "Connexion échouée"
     },
     "errors": {
-      "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres et votre code de vérification, puis réessayez.",
+      "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres, puis réessayez.",
       "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
-      "copy": "Copiez le code de vérification manuellement.",
-      "generateCode": "Impossible de générer un code de vérification. Vérifiez l’identifiant du site et réessayez."
-    },
-    "verificationCode": {
-      "label": "Code de vérification",
-      "description": "Collez ce code dans les paramètres du plugin Probo pour ce site dans votre tableau de bord Crisp, puis cliquez sur Connecter. Cela prouve que vous contrôlez ce site.",
-      "enterWebsiteId": "Saisissez l’identifiant de votre site ci-dessus pour obtenir votre code de vérification.",
-      "generating": "Génération du code..."
+      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}"
     },
     "actions": {
-      "copy": "Copier",
-      "retry": "Réessayer",
       "connect": "Connecter",
       "connecting": "Connexion..."
     }
@@ -3365,6 +3115,46 @@
       "connecting": "Connexion..."
     }
   },
+  "createAwsAccessReviewSourcePage": {
+    "pageTitle": "Connecter AWS",
+    "title": "Connecter AWS",
+    "description": "Déployez le rôle d’audit. Saisissez ensuite son ARN.",
+    "permissionDenied": "Vous n’avez pas la permission de créer des sources d’accès.",
+    "fields": {
+      "roleArn": "ARN du rôle",
+      "issuer": "Émetteur",
+      "audience": "Audience",
+      "subject": "Sujet",
+      "roleArnHelp": "ex. arn:aws:iam::123456789012:role/ProboAudit"
+    },
+    "messages": {
+      "copyFailed": "Échec de la copie",
+      "copied": "Copié dans le presse-papiers",
+      "copiedIssuer": "Émetteur copié.",
+      "copiedAudience": "Audience copiée.",
+      "copiedSubject": "Sujet copié.",
+      "copiedTerraform": "Extrait Terraform copié.",
+      "error": "Erreur",
+      "success": "Succès",
+      "created": "Source d’accès créée avec succès."
+    },
+    "errors": {
+      "roleArn": "Saisissez un ARN de rôle IAM valide.",
+      "create": "Échec de la création du connecteur. Vérifiez l’ARN du rôle et réessayez.",
+      "disconnected": "Probo n’a pas pu endosser le rôle d’audit. Vérifiez que la stack est déployée dans ce compte et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration.",
+      "delete": "Impossible de supprimer le connecteur. Réessayez.",
+      "source": "Échec de la création de la source d’accès",
+      "copy": "Copiez la valeur manuellement."
+    },
+    "actions": {
+      "copy": "Copier",
+      "connect": "Connecter",
+      "back": "Retour",
+      "installViaCloudFormation": "Installer via CloudFormation",
+      "installViaTerraform": "Installer via Terraform",
+      "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
+    }
+  },
   "oauthExtraDialog": {
     "actions": {
       "continue": "Continuer"
@@ -3393,34 +3183,21 @@
       "created": "Source d’accès créée avec succès."
     }
   },
-  "accessReviewSourcesTab": {
-    "errors": {
-      "create": "Échec de la création de la source d’accès"
-    },
-    "messages": {
-      "error": "Erreur",
-      "success": "Succès",
-      "created": "Source d’accès créée avec succès."
-    },
-    "actions": {
-      "loading": "Chargement...",
-      "loadMore": "Charger plus",
-      "retry": "Réessayer"
-    },
-    "sections": {
-      "connected": "Connectées",
-      "notConnected": "Non connectées"
-    },
+  "accessReviewConnectionsPage": {
+    "title": "Connexions",
+    "description": "Connectez les systèmes dont vous souhaitez revoir les accès.",
+    "errors": { "create": "Échec de la création de la source d’accès" },
+    "messages": { "error": "Erreur", "success": "Succès", "created": "Source d’accès créée avec succès." },
+    "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer" },
+    "sections": { "connected": "Connectées", "available": "Disponibles" },
     "searchPlaceholder": "Rechercher des sources et des fournisseurs...",
     "emptyConnected": "Aucune source d’accès n’est encore connectée.",
     "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",
     "searchLoadFailed": "Certaines sources n’ont pas pu être chargées, la recherche est donc incomplète. Réessayez pour toutes les rechercher.",
-    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche."
+    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche.",
+    "comingSoon": "Bientôt disponible"
   },
   "assetDetailsPage": {
-    "breadcrumb": {
-      "assets": "Actifs"
-    },
     "validation": {
       "nameRequired": "Le nom est requis",
       "amountRequired": "Le montant est requis",
@@ -3481,7 +3258,6 @@
     "deleteConfirmation": "Cela supprimera définitivement la fonction métier {{referenceId}}. Cette action est irréversible."
   },
   "businessFunctionDetailsPage": {
-    "breadcrumb": { "businessFunctions": "Fonctions métier", "unknown": "Fonction métier inconnue" },
     "validation": { "nameRequired": "Le nom est requis" },
     "fields": { "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire l'impact acceptable en cas de perturbation", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
     "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
@@ -3533,7 +3309,6 @@
     "deleteConfirmation": "Cela supprimera définitivement le système d'IA « {{name}} ». Cette action est irréversible."
   },
   "aiSystemDetailsPage": {
-    "breadcrumb": { "aiSystems": "Systèmes d'IA", "unknown": "Système d'IA inconnu" },
     "validation": { "nameRequired": "Le nom est requis" },
     "fields": {
       "name": "Nom",
@@ -3676,10 +3451,6 @@
     }
   },
   "auditDetailsPage": {
-    "breadcrumb": {
-      "audits": "Audits"
-    },
-    "unknownAudit": "Audit inconnu",
     "errors": {
       "update": "Échec de la mise à jour de l’audit"
     },
@@ -3690,6 +3461,8 @@
     },
     "deleteReportConfirmation": "Cette action supprimera définitivement le rapport d’audit « {{name}} ». Cette action est irréversible.",
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -3699,6 +3472,8 @@
     "fields": {
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
+      "firm": "Cabinet d’audit",
+      "firmPlaceholder": "Cabinet d’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
@@ -3736,11 +3511,13 @@
       "name": "Nom",
       "framework": "Référentiel",
       "state": "État",
-      "validFrom": "Valide à partir de",
-      "validUntil": "Valide jusqu’au",
+      "auditPeriod": "Période d’audit",
+      "validityPeriod": "Période de validité",
       "report": "Rapport"
     },
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -3752,7 +3529,11 @@
       "unknownFramework": "Référentiel inconnu",
       "notSet": "Non défini",
       "uploaded": "Téléversé",
-      "notUploaded": "Non téléversé"
+      "notUploaded": "Non téléversé",
+      "period": {
+        "from": "À partir du {{date}}",
+        "until": "Jusqu’au {{date}}"
+      }
     }
   },
   "createAuditDialog": {
@@ -3779,6 +3560,8 @@
       "frameworkPlaceholder": "Sélectionner un référentiel",
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
+      "firm": "Cabinet d’audit",
+      "firmPlaceholder": "Cabinet d’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
@@ -3786,6 +3569,8 @@
       "auditEndDate": "Date de fin de l’audit"
     },
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",
@@ -3956,10 +3741,6 @@
     }
   },
   "measureDetailPage": {
-    "breadcrumb": {
-      "measures": "Mesures",
-      "detail": "Détail de la mesure"
-    },
     "deleteConfirmation": "Cette action supprimera définitivement la mesure « {{name}} ». Elle est irréversible.",
     "fields": {
       "selectState": "Sélectionner un état"
@@ -4092,6 +3873,19 @@
     "errors": {
       "extractUrl": "Échec de l’extraction de l’URL du fichier URI"
     },
+    "csv": {
+      "column": "Colonne",
+      "empty": "Ce fichier CSV est vide.",
+      "error": "Impossible de charger l’aperçu CSV.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 100 premières lignes de données."
+    },
+    "text": {
+      "empty": "Ce fichier texte est vide.",
+      "error": "Impossible de charger l’aperçu du texte.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 512 premiers Ko."
+    },
     "previewUnavailable": "Aperçu non disponible pour ce type de fichier : {{mimeType}}",
     "actions": {
       "download": "Télécharger le fichier"
@@ -4166,10 +3960,6 @@
     }
   },
   "obligationDetailsPage": {
-    "breadcrumb": {
-      "obligations": "Obligations",
-      "details": "Détails de l’obligation"
-    },
     "title": "Obligation",
     "messages": {
       "success": "Succès",
@@ -4311,11 +4101,6 @@
   "processingActivitiesPage": {
     "title": "Activités de traitement",
     "description": "Gérez les activités de traitement de votre organisation dans le cadre du RGPD",
-    "tabs": {
-      "activities": "Activités de traitement",
-      "dpia": "Analyses d’impact relatives à la protection des données",
-      "tia": "Analyses d’impact des transferts"
-    },
     "actions": {
       "add": "Ajouter une activité de traitement",
       "document": "Document",
@@ -4331,22 +4116,11 @@
       "lawfulBasis": "Base légale",
       "location": "Emplacement",
       "internationalTransfers": "Transferts internationaux",
-      "actions": "Actions",
-      "processingActivity": "Activité de traitement",
-      "description": "Description",
-      "potentialRisk": "Risque potentiel",
-      "residualRisk": "Risque résiduel",
-      "dataSubjects": "Personnes concernées",
-      "transfer": "Transfert",
-      "localLawRisk": "Risque lié au droit local"
+      "actions": "Actions"
     },
     "empty": {
-      "activitiesTitle": "Aucune activité de traitement pour le moment",
-      "activitiesDescription": "Créez votre première activité de traitement pour commencer votre conformité au RGPD.",
-      "dpiaTitle": "Aucune analyse d’impact relative à la protection des données pour le moment",
-      "dpiaDescription": "Les AIPD sont créées depuis chaque activité de traitement.",
-      "tiaTitle": "Aucune analyse d’impact des transferts pour le moment",
-      "tiaDescription": "Les analyses d’impact des transferts sont créées depuis chaque activité de traitement."
+      "title": "Aucune activité de traitement pour le moment",
+      "description": "Créez votre première activité de traitement pour commencer votre conformité au RGPD."
     },
     "deleteConfirmation": "Cette action supprimera définitivement l’activité de traitement {{name}}. Cette action est irréversible.",
     "answers": {
@@ -4354,10 +4128,45 @@
       "no": "Non"
     }
   },
-  "processingActivityDetailsPage": {
-    "breadcrumb": {
-      "activities": "Activités de traitement"
+  "dataProtectionImpactAssessmentsPage": {
+    "description": "Consultez les analyses d’impact relatives à la protection des données de vos activités de traitement",
+    "actions": {
+      "document": "Document",
+      "publish": "Publier",
+      "loading": "Chargement...",
+      "loadMore": "Charger plus"
     },
+    "columns": {
+      "processingActivity": "Activité de traitement",
+      "description": "Description",
+      "potentialRisk": "Risque potentiel",
+      "residualRisk": "Risque résiduel"
+    },
+    "empty": {
+      "title": "Aucune analyse d’impact relative à la protection des données pour le moment",
+      "description": "Les AIPD sont créées depuis chaque activité de traitement."
+    }
+  },
+  "transferImpactAssessmentsPage": {
+    "description": "Consultez les analyses d’impact des transferts de vos activités de traitement",
+    "actions": {
+      "document": "Document",
+      "publish": "Publier",
+      "loading": "Chargement...",
+      "loadMore": "Charger plus"
+    },
+    "columns": {
+      "processingActivity": "Activité de traitement",
+      "dataSubjects": "Personnes concernées",
+      "transfer": "Transfert",
+      "localLawRisk": "Risque lié au droit local"
+    },
+    "empty": {
+      "title": "Aucune analyse d’impact des transferts pour le moment",
+      "description": "Les analyses d’impact des transferts sont créées depuis chaque activité de traitement."
+    }
+  },
+  "processingActivityDetailsPage": {
     "tabs": {
       "overview": "Vue d’ensemble",
       "dpia": "Analyse d’impact relative à la protection des données",
@@ -4509,9 +4318,6 @@
     }
   },
   "rightsRequestDetailsPage": {
-    "breadcrumb": {
-      "requests": "Demandes d’exercice de droits"
-    },
     "messages": {
       "success": "Succès",
       "error": "Erreur",
@@ -4614,11 +4420,9 @@
     }
   },
   "riskDetailLayout": {
-    "breadcrumb": {
-      "risks": "Risques",
-      "detail": "Détail du risque"
-    },
-    "deleteConfirmation": "Cette action supprimera définitivement le risque « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmationWithHistory_one": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible. Ce risque figure encore dans l’historique de {{count}} analyse. Le supprimer effacera cet historique.",
+    "deleteConfirmationWithHistory_other": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Cette action est irréversible. Ce risque figure encore dans l’historique de {{count}} analyses. Le supprimer effacera cet historique.",
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer"
@@ -4629,13 +4433,34 @@
       "documents": "Documents",
       "controls": "Contrôles",
       "obligations": "Obligations",
-      "scenarios": "Scénarios"
+      "scenarios": "Scénarios",
+      "treatmentPlans": "Plans de traitement"
+    }
+  },
+  "risksPage": {
+    "description": "Les risques sont des menaces potentielles pour votre organisation. Gérez-les en les identifiant, en les évaluant et en mettant en œuvre des mesures d’atténuation.",
+    "actions": {
+      "document": "Document",
+      "publish": "Publier",
+      "newRisk": "Nouveau risque"
     },
+    "columns": {
+      "referenceId": "ID de référence",
+      "name": "Nom du risque",
+      "category": "Catégorie",
+      "treatment": "Traitement",
+      "initialRisk": "Risque initial",
+      "residualRisk": "Risque résiduel",
+      "owner": "Propriétaire"
+    }
+  },
+  "riskOverviewPage": {
+    "emptyScores": "Les scores sont définis sur un plan de traitement dans une analyse de risques.",
     "fields": {
       "owner": "Propriétaire",
       "treatment": "Traitement",
-      "initialRiskScore": "Score de risque initial",
-      "residualRiskScore": "Score de risque résiduel",
+      "initialRiskScore": "Score initial",
+      "residualRiskScore": "Score résiduel",
       "note": "Note"
     },
     "treatments": {
@@ -4645,27 +4470,6 @@
       "avoided": "Éviter",
       "unknown": "Inconnu"
     }
-  },
-  "risksPage": {
-    "title": "Risques",
-    "description": "Les risques sont des menaces potentielles pour votre organisation. Gérez-les en les identifiant, en les évaluant et en mettant en œuvre des mesures d’atténuation.",
-    "actions": {
-      "document": "Document",
-      "publish": "Publier",
-      "newRisk": "Nouveau risque"
-    },
-    "columns": {
-      "name": "Nom du risque",
-      "category": "Catégorie",
-      "treatment": "Traitement",
-      "initialRisk": "Risque initial",
-      "residualRisk": "Risque résiduel",
-      "owner": "Propriétaire"
-    }
-  },
-  "risksTabs": {
-    "risks": "Risques",
-    "riskAnalyses": "Analyses des risques"
   },
   "formRiskDialog": {
     "breadcrumb": {
@@ -4751,6 +4555,15 @@
       "published": "Risques publiés avec succès."
     }
   },
+  "publishRiskAnalysisDialog": {
+    "title": "Publier l’analyse des risques",
+    "description": "Sélectionnez des approbateurs pour demander une approbation avant la publication, ou publiez directement sans approbateurs.",
+    "fields": { "approvers": "Approbateurs" },
+    "placeholders": { "approvers": "Ajouter des approbateurs..." },
+    "messages": { "success": "Succès", "error": "Erreur", "approvalRequested": "Approbation demandée avec succès.", "published": "Analyse des risques publiée avec succès." },
+    "errors": { "publish": "Échec de la publication de l’analyse des risques" },
+    "actions": { "publishMinor": "Publier en version mineure", "requestApproval": "Demander une approbation", "publish": "Publier" }
+  },
   "riskRow": {
     "messages": {
       "error": "Erreur"
@@ -4758,7 +4571,9 @@
     "errors": {
       "delete": "Échec de la suppression du risque"
     },
-    "deleteConfirmation": "Cette action supprimera définitivement le risque « {{name}} ». Elle est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible.",
+    "deleteConfirmationWithHistory_one": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible. Ce risque figure encore dans l’historique de {{count}} analyse. Le supprimer effacera cet historique.",
+    "deleteConfirmationWithHistory_other": "Cette action supprimera définitivement le risque {{referenceId}} « {{name}} ». Elle est irréversible. Ce risque figure encore dans l’historique de {{count}} analyses. Le supprimer effacera cet historique.",
     "treatments": {
       "mitigated": "Atténuer",
       "accepted": "Accepter",
@@ -4781,34 +4596,38 @@
   },
   "riskAnalysisDetailPage": {
     "title": "Analyse des risques",
-    "breadcrumb": {
-      "assessments": "Analyses des risques"
-    },
     "messages": {
       "error": "Erreur"
     },
     "errors": {
-      "delete": "Échec de la suppression de l’analyse des risques"
+      "delete": "Échec de la suppression de l’analyse des risques",
+      "update": "Échec de la mise à jour de l’analyse des risques",
+      "content": "Impossible d’afficher cette description"
     },
     "deleteConfirmation": "Cette action supprimera définitivement cette analyse des risques ainsi que tous ses diagrammes, nœuds, processus et menaces. Cette action est irréversible.",
     "actions": {
       "edit": "Modifier",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "fork": "Fork",
+      "showMore": "Afficher plus",
+      "publish": "Publier",
+      "document": "Document"
     },
     "details": "Détails",
+    "noDescription": "Aucune description",
     "fields": {
       "period": "Période",
       "matrixSize": "Taille de matrice",
       "createdAt": "Créé le",
-      "updatedAt": "Mis à jour le"
-    },
-    "matrixSizes": {
-      "3x3": "3×3",
-      "4x4": "4×4",
-      "5x5": "5×5"
+      "description": "Description"
     },
     "diagrams": "Diagrammes",
-    "emptyDiagrams": "Aucun diagramme pour l’instant. Créez un diagramme pour commencer à définir des nœuds, des processus et des menaces."
+    "treatmentPlans": "Risques et plans de traitement",
+    "emptyDiagrams": "Aucun diagramme pour l’instant. Créez un diagramme pour commencer à définir des nœuds, des processus et des menaces.",
+    "tabs": {
+      "diagrams": "Diagrammes",
+      "treatmentPlans": "Risques et plans de traitement"
+    }
   },
   "riskAnalysesPage": {
     "title": "Analyses des risques",
@@ -4820,10 +4639,9 @@
       "matrixSize": "Matrice",
       "created": "Créé le"
     },
-    "matrixSizes": {
-      "3x3": "3×3",
-      "4x4": "4×4",
-      "5x5": "5×5"
+    "empty": "Aucune analyse des risques pour le moment.",
+    "actions": {
+      "fork": "Fork"
     }
   },
   "riskAnalysisBoundaryActions": {
@@ -4926,8 +4744,6 @@
     },
     "validation": {
       "nameRequired": "Ce champ est requis",
-      "periodStartRequired": "Ce champ est requis",
-      "periodEndRequired": "Ce champ est requis",
       "periodEndBeforeStart": "La fin de période doit être égale ou postérieure au début",
       "matrixSizeRequired": "La taille de matrice est requise"
     },
@@ -4937,6 +4753,30 @@
     },
     "actions": {
       "create": "Créer"
+    }
+  },
+  "forkRiskAnalysisDialog": {
+    "title": "Fork de l’analyse des risques",
+    "breadcrumb": {
+      "riskAnalyses": "Analyses des risques"
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "matrixSize": "Taille de matrice",
+      "periodStart": "Début de période",
+      "periodEnd": "Fin de période"
+    },
+    "validation": {
+      "nameRequired": "Ce champ est requis",
+      "periodEndBeforeStart": "La fin de période doit être égale ou postérieure au début"
+    },
+    "placeholders": {
+      "name": "ex. Modèle de menace de la plateforme 2026",
+      "description": "Décrivez la portée et l’objectif de cette analyse..."
+    },
+    "actions": {
+      "fork": "Fork"
     }
   },
   "updateRiskAnalysisDialog": {
@@ -5033,6 +4873,151 @@
     "actions": {
       "add": "Ajouter"
     }
+  },
+  "createTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "Risques et plans de traitement",
+      "new": "Nouveau plan de traitement"
+    },
+    "fields": {
+      "risk": "Risque",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "inherentRisk": "Risque inhérent",
+      "residualRisk": "Risque résiduel",
+      "inherentLikelihood": "Probabilité inhérente",
+      "inherentImpact": "Impact inhérent",
+      "residualLikelihood": "Probabilité résiduelle",
+      "residualImpact": "Impact résiduel"
+    },
+    "placeholders": {
+      "treatment": "Sélectionner un traitement",
+      "risk": "Sélectionner un risque"
+    },
+    "validation": {
+      "riskRequired": "Sélectionnez un risque",
+      "ownerRequired": "Sélectionnez un responsable"
+    },
+    "properties": "Propriétés",
+    "hint": "Uniquement les risques liés à un scénario de cette analyse.",
+    "emptyEligible": "Liez d’abord un risque à un scénario sur un diagramme.",
+    "actions": {
+      "add": "Ajouter un plan de traitement",
+      "create": "Créer le plan de traitement"
+    }
+  },
+  "updateTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "Risques et plans de traitement",
+      "edit": "Modifier le plan de traitement"
+    },
+    "fields": {
+      "risk": "Risque",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "inherentRisk": "Risque inhérent",
+      "residualRisk": "Risque résiduel",
+      "inherentLikelihood": "Probabilité inhérente",
+      "inherentImpact": "Impact inhérent",
+      "residualLikelihood": "Probabilité résiduelle",
+      "residualImpact": "Impact résiduel"
+    },
+    "placeholders": {
+      "treatment": "Sélectionner un traitement"
+    },
+    "validation": {
+      "ownerRequired": "Sélectionnez un responsable"
+    },
+    "properties": "Propriétés",
+    "actions": {
+      "update": "Mettre à jour le plan de traitement"
+    }
+  },
+  "riskAnalysisTreatmentPlansPage": {
+    "columns": {
+      "risk": "Risque",
+      "category": "Catégorie",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "scores": "Inhérent / Résiduel",
+      "progress": "Avancement"
+    },
+    "empty": "Aucun risque n’est lié à un scénario de cette analyse.",
+    "emptyFilter": "Aucun risque lié ne correspond à cette cellule.",
+    "unplannedWarning_one": "{{count}} risque lié n’a pas encore de plan de traitement.",
+    "unplannedWarning_other": "{{count}} risques liés n’ont pas encore de plan de traitement.",
+    "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "asOf": "En date du",
+    "search": "Rechercher des risques",
+    "states": {
+      "inherent": "Inhérent",
+      "net": "Net",
+      "residual": "Résiduel"
+    },
+    "axes": {
+      "likelihood": "Probabilité",
+      "impact": "Impact"
+    },
+    "legend": {
+      "impact": "Impact : {{levels}}",
+      "likelihood": "Probabilité : {{levels}}",
+      "level": "{{value}} {{label}}"
+    },
+    "cell": "{{count}} avec une probabilité {{likelihood}} et un impact {{impact}}"
+  },
+  "linkedRiskListItem": {
+    "empty": "Aucun plan de traitement",
+    "actions": {
+      "create": "Ajouter un plan"
+    }
+  },
+  "treatmentPlanListItem": {
+    "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "progress": "{{done}}/{{total}}",
+    "progressEmpty": "Aucune mesure",
+    "actions": {
+      "tasks": "Tâches",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "expand": "Afficher les mesures",
+      "collapse": "Masquer les mesures"
+    }
+  },
+  "riskTreatmentPlansPage": {
+    "columns": {
+      "analysis": "Analyse de risque",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "scores": "Inhérent / Résiduel"
+    },
+    "empty": "Ce risque n'a pas encore de plan de traitement."
+  },
+  "riskTreatmentPlanListItem": {
+    "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "actions": {
+      "measures": "Mesures",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    }
+  },
+  "treatmentPlanMeasureList": {
+    "title": "Mesures",
+    "empty": "Aucune mesure liée pour le moment.",
+    "deleted": "Mesure supprimée",
+    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de mesures liées.",
+    "actions": {
+      "create": "Nouvelle mesure",
+      "link": "Lier une mesure",
+      "unlink": "Délier",
+      "showMore": "Afficher plus"
+    }
+  },
+  "treatmentPlanMeasuresDialog": {
+    "title": "Mesures du plan de traitement",
+    "loading": "Chargement des mesures…",
+    "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {
     "breadcrumb": {
@@ -5167,6 +5152,10 @@
       "boundaries": "Aucun périmètre",
       "threats": "Aucune menace",
       "scenarios": "Aucun scénario"
+    },
+    "schema": {
+      "title": "Structure du diagramme",
+      "hint": "Nœuds, processus, périmètres et menaces utilisés pour mettre à jour le diagramme."
     }
   },
   "diagramChart": {
@@ -5215,8 +5204,8 @@
     }
   },
   "webhooksSettingsPage": {
-    "title": "Abonnements aux webhooks",
     "description": "Configurez des webhooks pour recevoir des notifications lorsque des événements se produisent dans votre organisation.",
+    "newDescription": "Saisissez l'URL du point de terminaison et choisissez les événements qui déclencheront ce webhook.",
     "fields": {
       "endpointUrl": "URL du point de terminaison",
       "signingSecret": "Secret de signature",
@@ -5233,11 +5222,8 @@
     },
     "dialogs": {
       "addTitle": "Ajouter un abonnement au webhook",
-      "editTitle": "Modifier l’abonnement au webhook",
-      "eventsTitle": "Événements du webhook",
       "deleteTitle": "Supprimer le webhook"
     },
-    "eventsHelp": "Sélectionnez les événements qui déclencheront ce webhook.",
     "status": {
       "succeeded": "Réussi",
       "pending": "En attente",
@@ -5245,8 +5231,10 @@
     },
     "errorTitle": "Erreur",
     "errors": {
-      "loadEvents": "Échec du chargement des événements du webhook.",
       "loadSigningSecret": "Échec du chargement du secret de signature.",
+      "copySigningSecret": "Impossible de copier le secret de signature.",
+      "copyPayload": "Impossible de copier la charge utile.",
+      "copyResponse": "Impossible de copier la réponse.",
       "create": "Échec de la création du webhook",
       "update": "Échec de la mise à jour du webhook",
       "delete": "Échec de la suppression du webhook"
@@ -5257,35 +5245,45 @@
       "deleted": "Webhook supprimé avec succès"
     },
     "copiedToClipboard": "Copié dans le presse-papiers",
-    "total_one": "({{count}} au total)",
-    "total_other": "({{count}} au total)",
-    "eventsCount_one": "Événements ({{count}})",
-    "eventsCount_other": "Événements ({{count}})",
-    "emptyEvents": "Aucun événement de webhook enregistré pour le moment.",
+    "deliveriesCount_one": "Livraison ({{count}})",
+    "deliveriesCount_other": "Livraisons ({{count}})",
+    "emptyDeliveries": "Aucune livraison enregistrée pour le moment.",
+    "emptyDeliveriesFiltered": "Aucune livraison ne correspond à ce statut.",
+    "filterStatus": "Statut de livraison",
+    "filterAll": "Tous",
+    "lastDeliveryEmpty": "Aucune livraison pour le moment.",
     "empty": "Aucun abonnement au webhook pour le moment. Ajoutez-en un pour commencer.",
+    "notFound": "Cet abonnement webhook est introuvable.",
+    "payload": "Charge utile",
     "response": "Réponse",
     "copySigningSecret": "Copier le secret de signature",
-    "editWebhook": "Modifier le webhook",
+    "copyPayload": "Copier la charge utile",
+    "copyResponse": "Copier la réponse",
     "deleteWebhook": "Supprimer le webhook",
+    "seeAll": "Voir tout",
+    "subscribedCount_one": "Abonné à {{count}} événement",
+    "subscribedCount_other": "Abonné à {{count}} événements",
+    "searchEvents": "Rechercher des événements",
+    "removeEvent": "Retirer {{event}}",
+    "editEvents": "Modifier les événements abonnés",
+    "emptySearch": "Aucun événement ne correspond à cette recherche.",
     "deleteConfirmation": "Voulez-vous vraiment supprimer cet abonnement au webhook ?",
     "cannotUndo": "Cette action est irréversible.",
     "actions": {
       "create": "Créer",
       "save": "Enregistrer",
-      "loadMore": "Charger plus",
       "add": "Ajouter un abonnement au webhook",
+      "back": "Retour",
       "hide": "Masquer",
       "show": "Afficher",
-      "deleting": "Suppression...",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "previous": "Préc.",
+      "next": "Suiv."
     }
   },
   "statementOfApplicabilityDetailPage": {
     "title": "Déclaration d’applicabilité",
-    "breadcrumb": {
-      "statementsOfApplicability": "Déclarations d’applicabilité",
-      "detail": "Détail de la déclaration d’applicabilité"
-    },
     "sections": {
       "details": "Détails",
       "statements": "Déclarations"
@@ -5322,7 +5320,6 @@
     }
   },
   "statementsOfApplicabilityPage": {
-    "title": "Déclarations d’applicabilité",
     "description": "Gérez les déclarations d’applicabilité des référentiels de votre organisation.",
     "columns": {
       "name": "Nom",
@@ -5417,36 +5414,6 @@
       "save": "Enregistrer"
     }
   },
-  "linkControlDialog": {
-    "breadcrumb": {
-      "statementsOfApplicability": "Déclarations d’applicabilité",
-      "addControls": "Ajouter des contrôles"
-    },
-    "applicability": {
-      "notLinked": "Non associé",
-      "applicable": "Applicable",
-      "notApplicable": "Non applicable"
-    },
-    "placeholders": {
-      "justification": "Motif de non-applicabilité",
-      "search": "Rechercher des contrôles..."
-    },
-    "messages": {
-      "updated": "Contrôle mis à jour avec succès.",
-      "removed": "Contrôle retiré avec succès."
-    },
-    "errors": {
-      "update": "Échec de la mise à jour du contrôle",
-      "remove": "Échec du retrait du contrôle"
-    },
-    "empty": "Aucun contrôle trouvé",
-    "actions": {
-      "save": "Enregistrer",
-      "expand": "Développer",
-      "collapse": "Réduire",
-      "close": "Fermer"
-    }
-  },
   "publishStatementOfApplicabilityDialog": {
     "title": "Publier la déclaration d’applicabilité",
     "description": "Sélectionnez des approbateurs pour demander une approbation avant la publication, ou publiez directement sans approbateurs.",
@@ -5508,7 +5475,6 @@
     }
   },
   "thirdPartiesPage": {
-    "title": "Tiers",
     "description": "Les tiers sont des services et fournisseurs externes utilisés par votre entreprise. Ajoutez-les pour suivre leur risque et leur statut de conformité.",
     "actions": {
       "document": "Document",
@@ -5524,9 +5490,6 @@
   },
   "thirdPartyDetailLayout": {
     "title": "Tiers",
-    "breadcrumb": {
-      "thirdParties": "Tiers"
-    },
     "messages": {
       "error": "Erreur"
     },
@@ -5541,16 +5504,6 @@
     "actions": {
       "startVetting": "Démarrer la vérification",
       "delete": "Supprimer"
-    },
-    "tabs": {
-      "overview": "Vue d’ensemble",
-      "certifications": "Certifications",
-      "complianceReports": "Rapports de conformité",
-      "riskAssessment": "Évaluation des risques",
-      "contacts": "Contacts",
-      "services": "Services",
-      "thirdParties": "Tiers",
-      "measures": "Mesures"
     }
   },
   "addChildThirdPartyDialog": {
@@ -5880,88 +5833,20 @@
       "start": "Démarrer la vérification"
     }
   },
-  "thirdPartyCertificationsPage": {
-    "pageTitle": "{{name}} - Certifications",
-    "categories": {
-      "securityStandards": "Normes de sécurité",
-      "regulatoryLegal": "Réglementaire et juridique",
-      "industrySpecific": "Spécifique au secteur",
-      "internationalGov": "International et gouvernemental",
-      "custom": "Certifications personnalisées"
-    },
-    "placeholders": {
-      "add": "Ajouter une nouvelle certification"
-    },
-    "addCustom": "Ajouter une certification personnalisée : {{name}}",
-    "actions": {
-      "update": "Mettre à jour le tiers"
-    }
-  },
-  "thirdPartyCompliancePage": {
-    "pageTitle": "{{name}} - Rapports de conformité",
-    "title": "Rapports de conformité",
-    "description": "Suivez les certifications et rapports de conformité des tiers.",
-    "actions": {
-      "addReport": "Ajouter un rapport"
-    },
-    "columns": {
-      "reportName": "Nom du rapport",
-      "reportDate": "Date du rapport",
-      "validUntil": "Valide jusqu’au",
-      "fileSize": "Taille du fichier",
-      "actions": "Actions"
-    }
-  },
-  "thirdPartyComplianceReportRow": {
-    "messages": {
-      "error": "Erreur"
-    },
-    "errors": {
-      "delete": "Échec de la suppression du rapport"
-    },
-    "deleteConfirmation": "Cette action supprimera définitivement le rapport « {{name}} ». Cette action est irréversible.",
-    "actions": {
-      "download": "Télécharger",
-      "delete": "Supprimer"
-    }
-  },
-  "thirdPartyContactsPage": {
-    "pageTitle": "{{name}} - Contacts",
-    "title": "Contacts",
-    "description": "Gérez les contacts du tiers et leurs informations.",
-    "actions": {
-      "add": "Ajouter un contact"
-    },
-    "columns": {
-      "name": "Nom",
-      "email": "E-mail",
-      "phone": "Téléphone",
-      "role": "Rôle",
-      "actions": "Actions"
-    }
-  },
-  "thirdPartyOverviewPage": {
-    "pageTitle": "{{name}} - Aperçu",
-    "sections": {
-      "details": "Détails du tiers",
-      "countries": "Pays",
-      "administrators": "Administrateurs",
-      "links": "Liens",
-      "dataAgreements": "Accords de données"
-    },
+  "thirdPartyProfilePage": {
+    "pageTitle": "{{name}} - Profil",
+    "title": "Profil",
+    "description": "Identité et lieux d’activité de ce tiers.",
+    "sections": { "details": "Détails du tiers", "countries": "Pays" },
     "fields": {
       "name": "Nom",
       "description": "Description",
       "category": "Catégorie",
       "legalName": "Nom légal",
       "headquarterAddress": "Adresse du siège",
-      "websiteUrl": "URL du site web",
-      "administrators": "Administrateurs"
+      "websiteUrl": "URL du site web"
     },
-    "placeholders": {
-      "category": "Sélectionner une catégorie",
-      "administrators": "Ajouter des administrateurs..."
-    },
+    "placeholders": { "category": "Sélectionner une catégorie" },
     "categories": {
       "analytics": "Analytique",
       "cloudMonitoring": "Surveillance cloud",
@@ -5986,6 +5871,33 @@
       "security": "Sécurité",
       "versionControl": "Contrôle de version"
     },
+    "actions": { "update": "Mettre à jour le tiers" },
+    "messages": { "updated": "Tiers mis à jour avec succès.", "updateError": "Échec de la mise à jour du tiers" }
+  },
+  "thirdPartyStakeholdersPage": {
+    "pageTitle": "{{name}} - Parties prenantes",
+    "title": "Parties prenantes",
+    "description": "Les personnes responsables de cette relation — vos administrateurs et leurs contacts.",
+    "sections": { "administrators": "Administrateurs", "contacts": "Contacts" },
+    "fields": { "administrators": "Administrateurs" },
+    "placeholders": { "administrators": "Ajouter des administrateurs..." },
+    "actions": { "addContact": "Ajouter un contact" },
+    "columns": { "name": "Nom", "email": "E-mail", "phone": "Téléphone", "role": "Rôle", "actions": "Actions" }
+  },
+  "thirdPartyAssurancePage": {
+    "pageTitle": "{{name}} - Assurance",
+    "title": "Assurance",
+    "description": "Preuves de la posture de sécurité et de confidentialité de ce tiers.",
+    "sections": { "certifications": "Certifications", "links": "Liens", "reports": "Rapports de conformité" },
+    "categories": {
+      "securityStandards": "Normes de sécurité",
+      "regulatoryLegal": "Réglementaire et juridique",
+      "industrySpecific": "Spécifique au secteur",
+      "internationalGov": "International et gouvernemental",
+      "custom": "Certifications personnalisées"
+    },
+    "placeholders": { "add": "Ajouter une nouvelle certification" },
+    "addCustom": "Ajouter une certification personnalisée : {{name}}",
     "urlLabels": {
       "statusPage": "URL de la page de statut",
       "termsOfService": "URL des conditions d’utilisation",
@@ -5995,6 +5907,19 @@
       "securityPage": "URL de la page de sécurité",
       "trustPage": "URL de la page de confiance"
     },
+    "actions": { "addReport": "Ajouter un rapport" },
+    "columns": {
+      "reportName": "Nom du rapport",
+      "reportDate": "Date du rapport",
+      "validUntil": "Valide jusqu’au",
+      "fileSize": "Taille du fichier",
+      "actions": "Actions"
+    }
+  },
+  "thirdPartyAgreementsPage": {
+    "pageTitle": "{{name}} - Accords",
+    "title": "Accords",
+    "description": "Accords de traitement des données signés avec ce tiers.",
     "agreements": {
       "businessAssociate": "Accord de partenaire commercial",
       "dataPrivacy": "Accord de confidentialité des données",
@@ -6006,10 +5931,19 @@
         "until": "Valable jusqu’au {{date}}"
       }
     },
+    "actions": { "downloadPdf": "Télécharger le PDF", "upload": "Téléverser" }
+  },
+  "thirdPartyComplianceReportRow": {
+    "messages": {
+      "error": "Erreur"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du rapport"
+    },
+    "deleteConfirmation": "Cette action supprimera définitivement le rapport « {{name}} ». Cette action est irréversible.",
     "actions": {
-      "downloadPdf": "Télécharger le PDF",
-      "upload": "Téléverser",
-      "update": "Mettre à jour le tiers"
+      "download": "Télécharger",
+      "delete": "Supprimer"
     }
   },
   "thirdPartyRiskAssessmentPage": {
@@ -6052,15 +5986,13 @@
       "delete": "Supprimer"
     }
   },
-  "thirdPartyThirdPartiesPage": {
-    "pageTitle": "{{name}} - Tiers",
-    "title": "Tiers",
-    "description": "Gérez les tiers associés à ce tiers.",
+  "thirdPartySupplyChainPage": {
+    "pageTitle": "{{name}} - Chaîne d’approvisionnement",
+    "title": "Chaîne d’approvisionnement",
+    "description": "Les tiers sur lesquels ce fournisseur s’appuie.",
     "deleteConfirmation": "Supprimer « {{name}} » ?",
     "notAssessed": "Non évalué",
-    "actions": {
-      "add": "Ajouter un tiers"
-    },
+    "actions": { "add": "Ajouter un tiers" },
     "columns": {
       "thirdParty": "Tiers",
       "assessedAt": "Évalué le",
@@ -6083,6 +6015,13 @@
       "delete": "Supprimer"
     }
   },
+  "magicLinkPage": {
+    "pageTitle": "Continuer la connexion",
+    "title": "Continuer la connexion",
+    "description": "Cliquez sur continuer pour terminer la connexion.",
+    "errors": { "continue": "Impossible de terminer la connexion" },
+    "actions": { "continue": "Continuer" }
+  },
   "magicLinkForm": {
     "errors": {
       "send": "Impossible d’envoyer le lien magique"
@@ -6097,7 +6036,7 @@
     "actions": {
       "resend": "Renvoyer le lien",
       "resendIn": "Renvoyer le lien dans {{count}} s",
-      "send": "Envoyer le lien magique"
+      "send": "Continuer"
     }
   },
   "auth": {
@@ -6229,76 +6168,7 @@
       }
     }
   },
-  "employeeDevices": {
-    "title": "Vos appareils"
-  },
   "deviceEnrollment": {
-    "pageTitle": "Inscrire un appareil",
-    "title": "Enrôlement de l’appareil",
-    "setup": "Configuration",
-    "stepProgress": "Étape {{current}} sur {{total}}",
-    "steps": {
-      "privacy": {
-        "title": "Confidentialité",
-        "description": "Vérifier les données collectées"
-      },
-      "download": {
-        "title": "Télécharger",
-        "description": "Installer l’agent de bureau"
-      },
-      "organization": {
-        "description": "Choisir l’espace de travail de destination"
-      },
-      "enroll": {
-        "title": "Ouvrir et attendre",
-        "description": "Terminer la configuration dans l’agent de bureau"
-      }
-    },
-    "unavailable": {
-      "title": "Enrôlement indisponible",
-      "description": "Vous n’avez pas l’autorisation d’enrôler des appareils dans aucune organisation."
-    },
-    "intro": {
-      "title": "Avant de commencer",
-      "description": "Probo collecte les métadonnées d’appareil suivantes à des fins d’inventaire et de rapport de posture :"
-    },
-    "download": {
-      "title": "Télécharger l’agent Probo",
-      "description": "Téléchargez l’agent Probo depuis <a>pro.bo/install</a>.",
-      "alreadyInstalled": "Cette étape n’est pas nécessaire si l’agent est déjà installé sur cet appareil."
-    },
-    "privacy": {
-      "identity": "Identité de l’appareil : UUID matériel, nom d’hôte et numéro de série (si disponible).",
-      "systemDetails": "Détails système : plateforme, version du système d’exploitation et version de l’agent Probo.",
-      "activitySignals": "Signaux d’activité : heure d’enrôlement, signaux de vie et résultats des vérifications de posture."
-    },
-    "organization": {
-      "title": "Choisir une organisation",
-      "description": "Choisissez l’organisation qui possédera et gérera cet appareil."
-    },
-    "openAgent": {
-      "title": "Ouvrir l’agent Probo",
-      "description": "Cliquez sur « {{action}} » pour terminer la configuration, puis laissez cette page ouverte jusqu’à confirmation de l’enrôlement."
-    },
-    "actions": {
-      "backToOrganizations": "Retour aux organisations",
-      "enrollNew": "Enrôler un nouvel appareil",
-      "openAgent": "Ouvrir l’agent Probo",
-      "preparing": "Préparation…"
-    },
-    "status": {
-      "enrolledWithHostname": "{{hostname}} est enrôlé.",
-      "enrolled": "Cet appareil est enrôlé.",
-      "closeWindow": "Vous pouvez fermer cette fenêtre.",
-      "waitingForCheckIn": "En attente de la première connexion de l’agent…",
-      "timedOut": "Nous n’avons toujours pas de nouvelles de l’agent. Assurez-vous que l’agent de bureau est installé et en cours d’exécution, puis réessayez."
-    },
-    "manual": {
-      "cannotEnroll": "Impossible d’enrôler un nouvel appareil ?",
-      "tryCreating": "Essayez de le créer manuellement",
-      "title": "Enrôlement manuel",
-      "creating": "Création de l’appareil…"
-    },
     "token": {
       "title": "Jeton d’enrôlement généré",
       "description": "Ne partagez ce jeton d’enrôlement qu’avec le propriétaire de l’appareil, via un canal sécurisé. Il ne peut être utilisé qu’une seule fois et expire après sept jours.",
@@ -6320,6 +6190,11 @@
   "thirdPartyRiskAssessmentRow": {
     "expired": "Expiré",
     "notes": "Notes"
+  },
+  "reactivateSCIMBridge": {
+    "actions": { "reactivate": "Réactiver", "reactivating": "Réactivation..." },
+    "dialog": { "title": "Réactiver le pont SCIM", "description": "La prochaine synchronisation est planifiée pour maintenant. Les erreurs consécutives sont remises à zéro, et un pont en échec, désactivé ou bloqué redevient actif." },
+    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." }
   },
   "country": {
     "GLOBAL": "Mondial",

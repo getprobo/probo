@@ -19,16 +19,22 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Button } from "@probo/ui";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Link, useLocation, useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
-import { isOAuthAuthorizeContinueUrl } from "#/lib/buildAuthorizeContinueURL";
+import {
+  isCompliancePortalSource,
+  isOAuthAuthorizeContinueUrl,
+} from "#/lib/buildAuthorizeContinueURL";
 
+import { CreateAccountFooter } from "./_components/CreateAccountFooter";
 import { Divider } from "./_components/Divider";
 import { MagicLinkForm } from "./_components/MagicLinkForm";
 import { OAuthClientBrandingSection } from "./_components/OAuthClientBrandingSection";
@@ -36,6 +42,7 @@ import { OIDCButton } from "./_components/OIDCButton";
 
 export const signInPageQuery = graphql`
   query SignInPageQuery($clientId: String) {
+    ...CreateAccountFooterFragment
     oidcProviders {
       ...OIDCButtonFragment
     }
@@ -78,73 +85,62 @@ export default function SignInPage(props: Props) {
   const oidcContinueURL = isAuthorizeFlow ? postAuthRedirectUrl : undefined;
 
   return (
-    <div className="w-full max-w-sm mx-auto pt-8 space-y-6">
+    <div className="flex w-full flex-col gap-8">
       {isAuthorizeFlow && clientBranding && (
-        <>
-          <OAuthClientBrandingSection
-            name={clientBranding.name}
-            logoDownloadUrl={clientBranding.logoUrl}
-            clientURL={clientBranding.clientURL}
-          />
-          <div className="w-full border-t border-t-border-mid" />
-        </>
+        <OAuthClientBrandingSection
+          name={clientBranding.name}
+          logoDownloadUrl={clientBranding.logoUrl}
+          clientURL={clientBranding.clientURL}
+        />
       )}
 
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">
+      <div className="flex flex-col gap-1">
+        <Heading level={1} size={4} weight="medium" align="center" highContrast>
           {isAuthorizeFlow
             ? authorizeHeading
             : t("signInPage.title")}
-        </h1>
+        </Heading>
         {isAuthorizeFlow && (
-          <p className="text-txt-tertiary">
+          <Text size={2} align="center" className="block">
             {t("signInPage.authorize.description")}
-          </p>
+          </Text>
         )}
       </div>
 
-      <div className="space-y-4">
-        {data.oidcProviders.map((providerRef, index) => (
-          <OIDCButton
-            key={index}
-            providerRef={providerRef}
-            continueURL={oidcContinueURL}
-          />
-        ))}
-
+      <div className="flex flex-col gap-5">
         <MagicLinkForm />
 
-        <Divider>{t("signInPage.or")}</Divider>
+        {data.oidcProviders.length > 0 && (
+          <>
+            <Divider>{t("signInPage.or")}</Divider>
+            <div className="flex gap-4">
+              {data.oidcProviders.map((providerRef, index) => (
+                <OIDCButton
+                  key={index}
+                  providerRef={providerRef}
+                  continueURL={oidcContinueURL}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
-        <Button
-          variant="secondary"
-          className="w-full h-10"
-          to={{ pathname: "/auth/sso-login", search: location.search }}
-        >
-          {t("signInPage.actions.signInWithSso")}
-        </Button>
-
-        <Divider>{t("signInPage.or")}</Divider>
-
-        <Button
-          variant="secondary"
-          className="w-full h-10"
-          to={{ pathname: "/auth/password-login", search: location.search }}
-        >
-          {t("signInPage.actions.signInWithEmail")}
-        </Button>
+        {!isCompliancePortalSource(searchParams) && (
+          <Text align="center" size={2} className="block">
+            <Link
+              to={{ pathname: "/auth/password-login", search: location.search }}
+            >
+              {t("signInPage.actions.usePassword")}
+            </Link>
+          </Text>
+        )}
       </div>
 
-      <p className="mt-8 text-center text-sm text-txt-secondary">
-        {t("signInPage.newToProbo")}
-        {" "}
-        <Link
-          to={{ pathname: "/auth/register", search: location.search }}
-          className="underline hover:text-txt-primary"
-        >
-          {t("signInPage.actions.createAccount")}
-        </Link>
-      </p>
+      <CreateAccountFooter
+        queryKey={data}
+        prefix={t("signInPage.newToProbo")}
+        label={t("signInPage.actions.createAccount")}
+      />
     </div>
   );
 }

@@ -1,24 +1,8 @@
 {
-  "overviewPage": {
-    "title": "Portails de conformité",
-    "description": "Gérez les portails de conformité publiques de votre organisation. Configurez la marque, les documents et les contrôles d’accès.",
-    "status": {
-      "active": "Actif",
-      "inactive": "Inactif"
-    },
-    "actions": {
-      "create": "Créer une portail de conformité",
-      "createFirst": "Créer votre première portail de conformité"
-      }
-  },
   "newPortalPage": {
     "pageTitle": "Nouvelle portail de conformité",
     "title": "Créer une portail de conformité",
     "description": "Configurez une nouvelle portail de conformité publique. Son slug d’URL est attribué automatiquement à la création de la page.",
-    "breadcrumb": {
-      "root": "Portails de conformité",
-      "current": "Nouvelle"
-    },
     "fields": {
       "entityName": {
         "label": "Nom de l’entité",
@@ -49,69 +33,161 @@
     },
     "placeholder": "par ex. politique-de-confidentialite"
   },
-  "accessPage": {
-    "title": "Accès externe",
-    "description": "Gérez qui peut accéder à votre portail de conformité"
+  "hostingPage": {
+    "title": "Hébergement",
+    "description": "Publiez votre portail et associez-le à un domaine personnalisé."
   },
-  "accessEditDialog": {
-    "title": "Modifier l’accès pour {{email}}",
-    "types": {
-      "document": "Document",
-      "report": "Rapport",
-      "file": "Fichier"
+  "visitorsPage": {
+    "title": "Visiteurs",
+    "description": "Contrôlez qui peut lire les documents privés et exigez un NDA."
+  },
+  "integrationsPage": {
+    "title": "Intégrations",
+    "description": "Connectez Slack pour notifier votre équipe des demandes d’accès."
+  },
+  "brandingPage": {
+    "title": "Identité",
+    "description": "Définissez l’apparence, le profil et les liens personnalisés que les visiteurs voient en premier."
+  },
+  "contentPage": {
+    "title": "Contenu",
+    "description": "Choisissez les référentiels, engagements et références affichés sur la page d’accueil."
+  },
+  "rightRequestsPage": {
+    "title": "Demandes de droits",
+    "description": "Permettez aux visiteurs de soumettre des demandes de droits sur le portail."
+  },
+  "accessPage": {
+    "description": "Ajoutez des personnes au portail, ou attendez qu’elles se connectent pour demander des documents ou accepter un NDA."
+  },
+  "visitorPage": {
+    "back": "Visiteurs",
+    "notVisited": "Non visité",
+    "visitedOn": "Visité le {{date}}",
+    "deactivated": "Désactivé",
+    "deactivatedCallout": "Ce visiteur ne peut pas demander ni utiliser les documents protégés tant qu’il n’est pas réactivé. Les autorisations restent attribuées, mais sont sans effet jusqu’à la réactivation.",
+    "actions": {
+      "deactivate": "Désactiver",
+      "activate": "Activer"
+    },
+    "deactivate": {
+      "title": "Désactiver le visiteur ?",
+      "description": "Il perdra l’accès aux documents, rapports et fichiers protégés jusqu’à ce que vous le réactiviez. Les autorisations restent attribuées, mais sont sans effet jusqu’à la réactivation.",
+      "actions": {
+        "cancel": "Annuler",
+        "confirm": "Désactiver"
+      }
     },
     "messages": {
-      "updated": "Accès mis à jour avec succès"
+      "updated": "Accès mis à jour",
+      "deactivated": "Visiteur désactivé",
+      "activated": "Visiteur activé"
     },
     "errors": {
-      "update": "Échec de la mise à jour de l’accès"
-    },
-    "actions": {
-      "update": "Mettre à jour l’accès"
+      "update": "Échec de la mise à jour de l’accès",
+      "deactivate": "Échec de la désactivation du visiteur",
+      "activate": "Échec de l’activation du visiteur"
     }
   },
   "accessList": {
-    "empty": "Aucun accès externe accordé pour le moment",
-    "columns": {
-      "name": "Nom",
-      "email": "E-mail",
-      "date": "Date",
-      "access": "Accès",
-      "requests": "Demandes",
-      "nda": "NDA"
+    "empty": "Aucun visiteur pour le moment",
+    "emptyDescription": "Ajoutez des personnes ou attendez qu’elles se connectent sur votre portail.",
+    "emptyFiltered": "Aucun visiteur correspondant",
+    "emptyFilteredDescription": "Essayez un autre nom ou e-mail, ou effacez la recherche.",
+    "search": {
+      "placeholder": "Rechercher par nom ou e-mail"
+    },
+    "sort": {
+      "label": "Trier par",
+      "ariaLabel": "Trier par : {{value}}",
+      "requests": "Par nombre de demandes",
+      "joined": "Par date d’inscription"
     },
     "actions": {
-      "showMore": "Afficher plus"
+      "showMore": "Afficher plus",
+      "clearSearch": "Effacer la recherche"
     }
   },
   "accessListItem": {
+    "notVisited": "Non visité",
+    "visitedOn": "Visité le {{date}}",
+    "deactivated": "Désactivé",
+    "requested_one": "Examiner {{count}} demande",
+    "requested_other": "Examiner {{count}} demandes",
+    "nda": {
+      "signed": "NDA signé",
+      "processing": "NDA en cours",
+      "pending": "NDA en attente",
+      "failed": "NDA échoué"
+    },
     "actions": {
-      "edit": "Modifier"
+      "open": "Ouvrir le visiteur"
+    }
+  },
+  "addVisitorDialog": {
+    "title": "Ajouter un visiteur",
+    "searchPlaceholder": "Rechercher une personne ou saisir un e-mail",
+    "addEmail": "Ajouter {{email}}",
+    "empty": "Aucune personne correspondante",
+    "actions": {
+      "open": "Ajouter un visiteur"
+    },
+    "messages": {
+      "created": "Visiteur ajouté"
+    },
+    "errors": {
+      "create": "Échec de l’ajout du visiteur"
     }
   },
   "documentAccessList": {
-    "title": "Autorisations d’accès aux documents",
-    "columns": {
-      "name": "Nom",
-      "type": "Type",
-      "category": "Catégorie",
-      "access": "Accès"
-    },
+    "title": "Accès aux documents restreints",
     "actions": {
-      "grantAll": "Tout accorder",
-      "rejectOrRevokeAll": "Tout rejeter/révoquer",
       "grant": "Accorder",
       "reject": "Rejeter",
-      "revoke": "Révoquer"
+      "revoke": "Révoquer",
+      "rejectOrRevoke": "Rejeter ou révoquer",
+      "cancel": "Annuler",
+      "showMore": "Afficher plus"
     },
-    "empty": "Aucun document disponible"
+    "selection": {
+      "count": "{{count}} sélectionnés",
+      "clear": "Effacer la sélection",
+      "selectAll": "Tout sélectionner",
+      "selectRow": "Sélectionner {{title}}"
+    },
+    "grantConfirm": {
+      "title": "Accorder {{count}} documents ?",
+      "description": "Ce visiteur pourra lire les documents sélectionnés.",
+      "confirm": "Accorder"
+    },
+    "rejectOrRevokeConfirm": {
+      "title": "Rejeter ou révoquer {{count}} documents ?",
+      "description": "Les documents accordés seront révoqués. Les demandes en attente seront rejetées.",
+      "confirm": "Rejeter ou révoquer"
+    },
+    "empty": "Aucun document disponible",
+    "emptyFilter": "Aucun document avec ce statut",
+    "filter": {
+      "label": "Statut",
+      "all": "Tous les statuts",
+      "none": "Aucun"
+    }
   },
   "electronicSignature": {
-    "title": "Signature électronique",
-    "fields": {
-      "status": "Statut",
-      "signedAt": "Signé le",
-      "certificate": "Certificat"
+    "title": "NDA",
+    "certificateTitle": "Certificat d’achèvement",
+    "status": {
+      "signed": "Signé électroniquement",
+      "processing": "Signature en cours",
+      "pending": "En attente de signature",
+      "failed": "Signature non aboutie"
+    },
+    "descriptions": {
+      "signedAt": "Ce visiteur a signé électroniquement le {{date}}.",
+      "pending": "Ce visiteur n’a pas encore signé.",
+      "processing": "Cette signature est encore en cours de traitement.",
+      "failed": "Cette signature n’a pas pu être finalisée.",
+      "completed": "Ce visiteur a signé électroniquement."
     },
     "actions": {
       "download": "Télécharger"
@@ -119,21 +195,15 @@
     "activity": "Activité"
   },
   "eventTypeLabel": {
-    "documentViewed": "Document consulté",
-    "consentGiven": "Consentement donné",
-    "fullNameTyped": "Nom complet saisi",
-    "signatureAccepted": "Signature acceptée",
-    "signatureCompleted": "Signature terminée",
-    "sealComputed": "Sceau calculé",
-    "timestampRequested": "Horodatage demandé",
-    "certificateGenerated": "Certificat généré",
-    "processingError": "Erreur de traitement"
-  },
-  "ndaSignatureBadge": {
-    "signed": "Signé",
-    "processing": "En cours de traitement",
-    "pending": "En attente",
-    "failed": "Échoué"
+    "documentViewed": "A consulté le document",
+    "consentGiven": "A accepté de signer électroniquement",
+    "fullNameTyped": "A saisi son nom",
+    "signatureAccepted": "A accepté de signer",
+    "signatureCompleted": "Signature enregistrée",
+    "sealComputed": "Document scellé",
+    "timestampRequested": "Horodatage appliqué",
+    "certificateGenerated": "Certificat créé",
+    "processingError": "Échec du traitement"
   },
   "auditsPage": {
     "title": "Audits",
@@ -185,7 +255,6 @@
     },
     "actions": {
       "uploading": "Téléversement...",
-      "updating": "Mise à jour...",
       "noLogo": "Aucun logo",
       "uploadLogo": "Téléverser le logo",
       "uploadDarkLogo": "Téléverser le logo sombre",
@@ -206,20 +275,15 @@
       "alt": "Logo sombre de la portail de conformité",
       "uploadDescription": "Téléversez une image de logo sombre (PNG, JPG, SVG, WEBP jusqu’à 5 Mo)"
     },
-    "visualIdentity": {
-      "title": "Identité visuelle",
-      "description": "Logos carrés affichés sur votre portail de conformité publique."
-    },
-    "domains": {
-      "title": "Domaines",
-      "description": "Votre portail de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé.",
-      "actions": {
-        "configure": "Configurer"
-      }
-    },
     "profile": {
       "title": "Informations générales",
       "description": "Description et coordonnées affichées aux visiteurs.",
+      "errors": {
+        "update": "Échec de la mise à jour des informations du portail de conformité"
+      },
+      "validation": {
+        "emailInvalid": "Veuillez saisir une adresse e-mail valide"
+      },
       "fields": {
         "entityName": "Nom de l’entité",
         "entityNamePlaceholder": "Acme",
@@ -391,12 +455,6 @@
       "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
     }
   },
-  "domainPage": {
-    "title": "Domaine personnalisé",
-    "empty": {
-      "description": "Ajoutez votre propre domaine pour rendre votre portail de conformité plus professionnelle"
-    }
-  },
   "thirdPartyListItem": {
     "messages": {
       "linked": "Sous-traitant ajouté au portail.",
@@ -418,10 +476,6 @@
     },
     "empty": "Aucun sous-traitant disponible"
   },
-  "thirdPartiesPage": {
-    "title": "Sous-traitants",
-    "description": "Gérez les évaluations des sous-traitants et les informations de risque tiers"
-  },
   "referenceList": {
     "columns": {
       "name": "Nom",
@@ -438,9 +492,11 @@
     }
   },
   "statusSection": {
-    "title": "Statut de la portail de conformité",
+    "title": "Visibilité",
+    "description": "Publiez votre portail de conformité et choisissez si les moteurs de recherche peuvent le trouver.",
     "activation": {
-      "title": "Activer la portail de conformité",
+      "titleActive": "Le portail de conformité est actif",
+      "titleInactive": "Le portail de conformité est inactif",
       "description": "Rendez votre portail de conformité accessible publiquement pour renforcer la confiance de vos clients"
     },
     "indexing": {
@@ -453,31 +509,32 @@
       "description": "Permettez aux visiteurs de soumettre des demandes relatives aux droits des personnes concernées sur votre portail de conformité"
     }
   },
-  "slackSection": {
-    "title": "Intégrations",
-    "disconnect": {
-      "title": "Déconnecter Slack",
-      "description": "Voulez-vous vraiment déconnecter ce canal Slack ? Cette action est irréversible."
-    },
-    "emptyDescription": "Gérez l’accès à votre portail de conformité avec Slack",
-    "actions": {
-      "connect": "Connecter",
-      "disconnect": "Déconnecter"
-    }
+  "domainsSection": {
+    "title": "Domaines",
+    "description": "Votre portail de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé."
   },
-  "slackConnectionCard": {
-    "title": "Slack",
-    "connected": "Connecté le {{date}}",
-    "connectedWithChannel": "Connecté le {{date}} • Canal : {{channel}}",
-    "notConfiguredDescription": "Slack est connecté, mais aucun canal n’est encore configuré pour la portail de conformité.",
-    "status": {
-      "connected": "Connecté",
-      "notConfigured": "Canal non configuré"
+  "slackSection": {
+    "title": "Notifications Slack",
+    "connectionTitle": "Canal de notification",
+    "notInstalledTitle": "Bot Slack non installé",
+    "description": "Choisissez où envoyer les demandes d’accès à ce portail de conformité.",
+    "notInstalled": "Installez l’application Slack Probo depuis les paramètres de l’organisation avant de choisir un canal.",
+    "loginRequired": {
+      "title": "L’accès Slack nécessite /probot login",
+      "description": "Chaque relecteur doit exécuter <cmd>/probot login</cmd> dans Slack pour lier son compte Probo avant de pouvoir traiter les demandes d’accès."
+    },
+    "channel": {
+      "label": "Canal",
+      "placeholder": "Sélectionner un canal",
+      "help": "Invitez @Probo dans un canal avant de le sélectionner.",
+      "emptyTitle": "Aucun canal Slack pour le moment",
+      "emptyDescription": "Dans Slack, invitez @Probo dans un canal, puis rouvrez cette liste."
     },
     "actions": {
-      "changeChannel": "Changer de canal",
-      "connect": "Connecter",
-      "disconnect": "Déconnecter"
+      "clear": "Effacer",
+      "install": "Installer",
+      "refresh": "Actualiser",
+      "loadingMore": "Chargement…"
     }
   },
   "externalUrls": {
@@ -635,29 +692,6 @@
       "showMore": "Afficher plus"
     }
   },
-  "mailingListPage": {
-    "messages": {
-      "updated": "Liste de diffusion mise à jour avec succès"
-    },
-    "errors": {
-      "update": "Échec de la mise à jour de la liste de diffusion"
-    },
-    "settings": {
-      "title": "Paramètres",
-      "description": "Configurez le comportement de votre liste de diffusion",
-      "replyTo": "E-mail de réponse",
-      "replyToPlaceholder": "security@example.com"
-    },
-    "tabs": {
-      "updates": "Mises à jour",
-      "subscribers": "Abonnés"
-    },
-    "actions": {
-      "save": "Enregistrer",
-      "addUpdate": "Ajouter une mise à jour",
-      "addSubscriber": "Ajouter un abonné"
-    }
-  },
   "newFileDialog": {
     "title": "Ajouter un fichier",
     "uploadDescription": "Téléversez un fichier (10 Mo max)",
@@ -745,9 +779,8 @@
       "add": "Ajouter un fichier"
     }
   },
-  "newDomainDialog": {
-    "title": "Ajouter un domaine",
-    "description": "Saisissez votre domaine et nous générerons les enregistrements DNS à ajouter.",
+  "customDomainForm": {
+    "title": "Ajouter un domaine personnalisé",
     "messages": {
       "created": "Domaine ajouté avec succès. Configurez les enregistrements DNS pour vérifier et activer votre domaine."
     },
@@ -756,11 +789,11 @@
     },
     "fields": {
       "domain": "Domaine",
-      "domainPlaceholder": "compliance.example.com"
+      "domainPlaceholder": "compliance.example.com",
+      "domainInvalid": "Veuillez saisir un domaine valide (p. ex. compliance.example.com)"
     },
     "examples": "Exemples : compliance.example.com, trust.example.com",
     "actions": {
-      "adding": "Ajout en cours...",
       "add": "Ajouter un domaine"
     }
   },
@@ -769,6 +802,7 @@
     "description": "Cela supprimera définitivement le domaine personnalisé {{domain}} et toute sa configuration.",
     "warning": "Cette action est irréversible.",
     "confirmationLabel": "Pour confirmer la suppression, saisissez « {{domain}} » ci-dessous :",
+    "confirmationMismatch": "La valeur ne correspond pas au domaine.",
     "messages": {
       "deleted": "Domaine supprimé avec succès"
     },
@@ -776,32 +810,62 @@
       "delete": "Échec de la suppression du domaine"
     },
     "actions": {
-      "deleting": "Suppression en cours...",
-      "delete": "Supprimer le domaine"
+      "delete": "Supprimer le domaine",
+      "cancel": "Annuler"
     }
   },
-  "domainDialog": {
-    "messages": {
-      "copied": "Copié",
-      "valueCopied": "Valeur copiée dans le presse-papiers"
-    },
+  "domainCard": {
+    "managed": "Géré",
     "active": {
       "title": "Le domaine est actif",
-      "description": "Votre domaine personnalisé est vérifié et le certificat SSL est actif"
+      "description": "Votre domaine personnalisé est vérifié et le certificat SSL est actif",
+      "dns": "Laissez ces enregistrements en place. Ils font pointer ce domaine ici."
     },
-    "provisioningError": "Erreur de provisionnement",
-    "sslExpires": "Expiration du SSL",
+    "pending": {
+      "title": "En attente du DNS",
+      "description": "Après l’ajout des enregistrements DNS, la vérification se fera automatiquement. La propagation peut prendre quelques minutes.",
+      "dns": "Ajoutez ces enregistrements chez votre fournisseur DNS pour terminer la vérification."
+    },
+    "provisioning": {
+      "title": "Le certificat est en cours d’émission",
+      "description": "Nous provisionnons un certificat SSL pour ce domaine.",
+      "dns": "Ces enregistrements doivent rester en place tant que ce domaine est utilisé."
+    },
+    "renewing": {
+      "title": "Le certificat est en cours de renouvellement",
+      "description": "Un nouveau certificat SSL est en cours d’émission. L’actuel reste actif jusqu’à la fin du renouvellement.",
+      "dns": "Ces enregistrements doivent rester en place pendant le renouvellement et après son achèvement."
+    },
+    "expired": {
+      "title": "Le certificat a expiré",
+      "description": "Le certificat SSL de ce domaine a expiré et doit être réémis.",
+      "dns": "Ces enregistrements doivent toujours pointer ici pour que le certificat puisse être réémis."
+    },
+    "failed": {
+      "title": "Échec du provisionnement du certificat",
+      "description": "Nous n’avons pas pu émettre de certificat SSL pour ce domaine.",
+      "dns": "Vérifiez que ces enregistrements correspondent à votre fournisseur DNS. Un écart est une cause fréquente d’échec."
+    },
+    "error": {
+      "title": "Erreur de provisionnement"
+    },
+    "sslExpires": "Expiration du SSL le {{date}}",
     "dns": {
-      "title": "Configuration DNS",
-      "description": "Ajoutez ces enregistrements DNS à votre domaine pour terminer la vérification",
       "name": "Nom",
       "value": "Valeur",
-      "ttl": "TTL : {{ttl}}"
+      "ttl": "TTL : {{ttl}}",
+      "copy": "Copier",
+      "purposePointToServers": "Pointer le domaine vers les serveurs Probo"
+    },
+    "messages": {
+      "copied": "Copié",
+      "valueCopied": "Valeur copiée dans le presse-papiers",
+      "copyFailed": "Échec de la copie",
+      "valueCopyFailed": "La valeur n'a pas pu être copiée dans le presse-papiers"
     },
     "actions": {
-      "copy": "Copier"
-    },
-    "pendingDescription": "Après l’ajout des enregistrements DNS, la vérification se fera automatiquement. La propagation peut prendre quelques minutes."
+      "delete": "Supprimer"
+    }
   },
   "frameworkList": {
     "title": "Référentiels de conformité",
@@ -817,19 +881,23 @@
   "ndaSection": {
     "title": "Accord de confidentialité",
     "empty": "Aucun fichier NDA téléversé",
-    "emptyDescription": "Téléversez un PDF que les visiteurs doivent accepter avant de pouvoir accéder à votre portail de conformité.",
-    "uploadDescription": "Exigez que les visiteurs acceptent un accord de confidentialité avant d’accéder à votre portail de conformité.",
-    "acceptanceDescription": "Les visiteurs doivent accepter cet accord avant d’accéder à votre portail de conformité.",
+    "description": "Les visiteurs doivent signer cet accord avant de pouvoir lire les documents privés.",
+    "dropHint": "Déposez un PDF ici",
+    "dropReplace": "Déposez un PDF pour remplacer",
+    "dropActive": "Déposez le PDF",
     "actions": {
       "download": "Télécharger",
       "upload": "Téléverser le NDA",
-      "replace": "Remplacer"
+      "replace": "Remplacer",
+      "delete": "Supprimer",
+      "uploading": "Téléversement..."
     },
     "delete": {
       "title": "Supprimer le NDA",
       "description": "Voulez-vous vraiment supprimer le fichier NDA ? Cette action est irréversible.",
       "actions": {
-        "delete": "Supprimer"
+        "delete": "Supprimer",
+        "cancel": "Annuler"
       }
     },
     "errors": {
@@ -840,46 +908,49 @@
       "fileTooLarge": {
         "title": "Fichier trop volumineux",
         "description": "Veuillez téléverser un fichier de moins de 10 Mo."
+      },
+      "tooManyFiles": {
+        "title": "Trop de fichiers",
+        "description": "Veuillez téléverser un seul PDF à la fois."
       }
     }
   },
-  "domainCard": {
-    "managed": "Géré",
-    "status": {
-      "active": "Actif",
-      "pending": "En attente"
-    },
-    "actions": {
-      "viewDetails": "Voir les détails",
-      "delete": "Supprimer"
-    }
+  "subprocessorsPage": {
+    "title": "Sous-traitants",
+    "description": "Gérez les évaluations des sous-traitants et les informations de risque tiers"
   },
-  "configLayout": {
-    "title": "Portail de conformité",
-    "breadcrumb": "Portails de conformité",
-    "description": "Configurez votre portail de conformité publique pour présenter votre posture de sécurité et de conformité.",
-    "status": {
-      "active": "Actif",
-      "inactive": "Inactif"
+  "updatesPage": {
+    "title": "Mises à jour",
+    "description": "Envoyez des mises à jour de sécurité et de conformité aux abonnés.",
+    "errors": {
+      "update": "Échec de la mise à jour de la liste de diffusion"
     },
-    "actions": {
-      "open": "Ouvrir"
+    "settings": {
+      "title": "Paramètres",
+      "description": "Configurez le comportement de votre liste de diffusion",
+      "replyTo": "E-mail de réponse",
+      "replyToPlaceholder": "security@example.com"
     },
     "tabs": {
-      "overview": "Vue d’ensemble",
-      "brand": "Marque",
-      "references": "Références",
-      "commitments": "Engagements",
-      "audits": "Audits",
-      "documents": "Documents",
-      "files": "Fichiers",
-      "subprocessors": "Sous-traitants",
-      "access": "Accès",
-      "mailingList": "Liste de diffusion"
+      "updates": "Mises à jour",
+      "subscribers": "Abonnés"
+    },
+    "actions": {
+      "addUpdate": "Ajouter une mise à jour",
+      "addSubscriber": "Ajouter un abonné"
     }
   },
-  "emptyState": {
-    "title": "Aucune portail de conformité",
-    "description": "Créez une portail de conformité publique pour présenter votre posture de sécurité, vos certifications et vos politiques à vos clients et partenaires."
+  "documentsLayout": {
+    "tabs": {
+      "audits": "Audits",
+      "documents": "Documents",
+      "files": "Fichiers"
+    }
+  },
+  "landingLayout": {
+    "tabs": {
+      "branding": "Identité",
+      "content": "Contenu"
+    }
   }
 }

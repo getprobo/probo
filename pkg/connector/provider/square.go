@@ -46,14 +46,16 @@ func squareRegistration() *Registration {
 		// Square's confidential token endpoint accepts client credentials in
 		// the form body (the default post-form scheme) and rejects HTTP Basic,
 		// so no TokenEndpointAuth override is set.
-		OAuth2Scopes: []string{"EMPLOYEES_READ", "MERCHANT_PROFILE_READ"},
-		Probe:        probeSquare,
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"EMPLOYEES_READ", "MERCHANT_PROFILE_READ"},
+		},
+		Probe: probeSquare,
 		// SupportsAPIKey enables the Personal Access Token fallback, which
 		// authenticates with the same Authorization: Bearer scheme as the OAuth
 		// token. A Square token — OAuth or PAT — is always scoped to one
 		// merchant, so there is nothing to pick (Pattern 3): no settings
 		// struct, no picker, no OAuth-callback capture.
-		SupportsAPIKey: true,
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewSquareDriver(c, ep.APIBase), nil
 		},

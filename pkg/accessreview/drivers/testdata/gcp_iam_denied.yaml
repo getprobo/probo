@@ -1,0 +1,25 @@
+---
+# Hand-authored. getIamPolicy 403 must fail the fetch.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: cloudresourcemanager.googleapis.com
+        url: https://cloudresourcemanager.googleapis.com/v1/projects/123456789012:getIamPolicy
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":403,"message":"Permission denied","status":"PERMISSION_DENIED"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 403 Forbidden
+        code: 403
+        duration: 1ms

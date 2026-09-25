@@ -96,6 +96,83 @@ WHERE
 	return err
 }
 
+func (srs *RiskAnalysisScenarioRisks) LoadByRiskID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskID gid.GID,
+) error {
+	q := `
+SELECT
+	risk_analysis_scenario_id,
+	risk_id,
+	created_at
+FROM
+	risk_analysis_scenario_risks
+WHERE
+	%s
+	AND risk_id = @risk_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"risk_id": riskID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query scenario risks: %w", err)
+	}
+
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAnalysisScenarioRisk])
+	if err != nil {
+		return fmt.Errorf("cannot collect scenario risks: %w", err)
+	}
+
+	*srs = results
+
+	return nil
+}
+
+func (srs *RiskAnalysisScenarioRisks) LoadByScenarioIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	scenarioIDs []gid.GID,
+) error {
+	if len(scenarioIDs) == 0 {
+		*srs = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	risk_analysis_scenario_id,
+	risk_id,
+	created_at
+FROM
+	risk_analysis_scenario_risks
+WHERE
+	%s
+	AND risk_analysis_scenario_id = ANY(@scenario_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"scenario_ids": scenarioIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query scenario risks: %w", err)
+	}
+
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAnalysisScenarioRisk])
+	if err != nil {
+		return fmt.Errorf("cannot collect scenario risks: %w", err)
+	}
+
+	*srs = results
+
+	return nil
+}
+
 func (rs *Risks) LoadByScenarioID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -116,6 +193,7 @@ WITH linked_risks AS (
 SELECT
 	id,
 	organization_id,
+	reference_id,
 	name,
 	description,
 	category,
@@ -192,4 +270,36 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (srs *RiskAnalysisScenarioRisks) DeleteByOrganizationID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+DELETE FROM risk_analysis_scenario_risks
+WHERE
+	%s
+	AND risk_id IN (
+		SELECT id
+		FROM risks
+		WHERE
+			%s
+			AND organization_id = @organization_id
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete risk analysis scenario risks: %w", err)
+	}
+
+	return nil
 }

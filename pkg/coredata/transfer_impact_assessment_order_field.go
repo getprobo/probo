@@ -47,13 +47,7 @@ func TransferImpactAssessmentOrderFields() []TransferImpactAssessmentOrderField 
 }
 
 func (v TransferImpactAssessmentOrderField) IsValid() bool {
-	switch v {
-	case
-		TransferImpactAssessmentOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, TransferImpactAssessmentOrderFields())
 }
 
 func (v TransferImpactAssessmentOrderField) String() string {
@@ -65,14 +59,7 @@ func (v TransferImpactAssessmentOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *TransferImpactAssessmentOrderField) UnmarshalText(text []byte) error {
-	val := TransferImpactAssessmentOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid TransferImpactAssessmentOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, TransferImpactAssessmentOrderFields())
 }
 
 func (p TransferImpactAssessmentOrderField) Column() string {

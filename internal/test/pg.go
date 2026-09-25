@@ -20,8 +20,8 @@
 
 // Package test provides shared Postgres test fixtures for packages that
 // exercise the database layer against a real Postgres instance. Centralizing
-// the connection bootstrap and agent_runs schema setup here keeps a single
-// copy of that logic so it cannot drift between the coredata and agentrun
+// the connection bootstrap and agent_executions schema setup here keeps a single
+// copy of that logic so it cannot drift between the coredata and agentexecution
 // test suites.
 package test
 
@@ -48,9 +48,7 @@ const (
 	pgURLEnvVar = "PROBO_TEST_PG_URL"
 
 	// defaultPGURL targets the local compose Postgres so tests run with zero
-	// configuration against a developer's stack. When the database is not
-	// reachable (e.g. in CI, where `make test` runs without Postgres) the
-	// connection check fails and the test is skipped.
+	// configuration against a developer's stack.
 	defaultPGURL = "postgres://probod:probod@localhost:5432/probod_test"
 )
 
@@ -64,11 +62,13 @@ var (
 
 // PGClient returns a process-wide shared pg.Client connected to the test
 // database described by the PROBO_TEST_PG_URL environment variable (falling
-// back to a local compose Postgres), applying the agent_runs migrations on
-// first use. The test is skipped when no database is reachable so `make test`
-// stays a pure unit-test run.
+// back to a local compose Postgres), applying the agent_executions migrations on
+// first use. The test is skipped when the default local database is unreachable,
+// but fails when an explicitly configured database is unreachable.
 func PGClient(t *testing.T) *pg.Client {
 	t.Helper()
+
+	pgURLConfigured := os.Getenv(pgURLEnvVar) != ""
 
 	pgOnce.Do(
 		func() {
@@ -124,6 +124,10 @@ func PGClient(t *testing.T) *pg.Client {
 	)
 
 	if pgInitErr != nil {
+		if pgURLConfigured {
+			t.Fatalf("cannot connect to configured test database: %v", pgInitErr)
+		}
+
 		t.Skipf("cannot connect to test database: %v", pgInitErr)
 	}
 

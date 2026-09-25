@@ -30,6 +30,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
 import { Drawer } from "@probo/ui/src/v2/Drawer/Drawer";
 import { DrawerBody } from "@probo/ui/src/v2/Drawer/DrawerBody";
 import { DrawerClose } from "@probo/ui/src/v2/Drawer/DrawerClose";
@@ -47,7 +48,6 @@ import { useLocation } from "react-router";
 
 import { getSafeContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
 import { useSignOut } from "#/lib/auth/useSignOut";
-import { useDisplayMode } from "#/lib/displayMode/useDisplayMode";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 

@@ -28,13 +28,33 @@ import (
 
 func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
 	return &AccessReviewSource{
-		ID:             s.ID,
-		OrganizationID: s.OrganizationID,
-		ConnectorID:    s.ConnectorID,
-		Name:           s.Name,
-		CsvData:        s.CsvData,
-		CreatedAt:      s.CreatedAt,
-		UpdatedAt:      s.UpdatedAt,
+		ID:                 s.ID,
+		OrganizationID:     s.OrganizationID,
+		ConnectorAccountID: s.ConnectorAccountID,
+		Name:               s.Name,
+		CsvData:            s.CsvData,
+		CreatedAt:          s.CreatedAt,
+		UpdatedAt:          s.UpdatedAt,
+	}
+}
+
+func ApplySourceConnectorIDs(
+	mapped []*AccessReviewSource,
+	rows []*coredata.AccessReviewSource,
+	connectorIDs map[gid.GID]gid.GID,
+) {
+	for i, row := range rows {
+		if row.ConnectorAccountID == nil {
+			continue
+		}
+
+		id, ok := connectorIDs[*row.ConnectorAccountID]
+		if !ok {
+			continue
+		}
+
+		copied := id
+		mapped[i].ConnectorID = &copied
 	}
 }
 
@@ -100,7 +120,6 @@ func NewAccessReviewEntry(
 		LastLogin:                    e.LastLogin,
 		AccountCreatedAt:             e.AccountCreatedAt,
 		ExternalID:                   e.ExternalID,
-		IncrementalTag:               e.IncrementalTag,
 		Flags:                        e.Flags,
 		FlagReasons:                  e.FlagReasons,
 		Decision:                     e.Decision,
@@ -168,15 +187,9 @@ func NewAccessReviewStatistics(s *coredata.AccessReviewStatistics) *AccessReview
 		flagCounts[string(k)] = v
 	}
 
-	incrementalTagCounts := make(map[string]any, len(s.IncrementalTagCounts))
-	for k, v := range s.IncrementalTagCounts {
-		incrementalTagCounts[string(k)] = v
-	}
-
 	return &AccessReviewStatistics{
-		TotalCount:           s.TotalCount,
-		DecisionCounts:       decisionCounts,
-		FlagCounts:           flagCounts,
-		IncrementalTagCounts: incrementalTagCounts,
+		TotalCount:     s.TotalCount,
+		DecisionCounts: decisionCounts,
+		FlagCounts:     flagCounts,
 	}
 }

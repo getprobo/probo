@@ -36,7 +36,3 @@ END;
 
 ALTER TABLE controls ALTER COLUMN maturity_level SET NOT NULL;
 ALTER TABLE controls ALTER COLUMN implemented DROP NOT NULL;
-
--- TODO: drop column and type in a future migration
--- ALTER TABLE controls DROP COLUMN implemented;
--- DROP TYPE control_implementation_state;

@@ -82,6 +82,8 @@ const paginatedAssetsFragment = graphql`
             id
             # eslint-disable-next-line relay/unused-fields
             fullName
+            # eslint-disable-next-line relay/unused-fields
+            emailAddress
           }
           # eslint-disable-next-line relay/unused-fields
           thirdParties(first: 50) {
@@ -138,7 +140,7 @@ export default function AssetsPage(props: Props) {
           {data.node.assetListDocument?.id && (
             <Button variant="secondary" asChild>
               <Link
-                to={`/organizations/${organizationId}/documents/${data.node.assetListDocument.id}`}
+                to={`/organizations/${organizationId}/governance/documents/${data.node.assetListDocument.id}`}
               >
                 <IconPageTextLine size={16} />
                 {t("assetsPage.actions.document")}
@@ -151,7 +153,7 @@ export default function AssetsPage(props: Props) {
               defaultApproverIds={defaultApproverIds}
               onPublished={(documentId) => {
                 void navigate(
-                  `/organizations/${organizationId}/documents/${documentId}`,
+                  `/organizations/${organizationId}/governance/documents/${documentId}`,
                 );
               }}
             >

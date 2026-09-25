@@ -33,7 +33,6 @@ type TrackerPatternFilter struct {
 	patternKeyword     *string
 	source             *CookieSource
 	trackerType        *TrackerType
-	thirdPartyID       *gid.GID
 	commonThirdPartyID *gid.GID
 }
 
@@ -71,11 +70,6 @@ func (f *TrackerPatternFilter) WithSource(source *CookieSource) *TrackerPatternF
 
 func (f *TrackerPatternFilter) WithTrackerType(trackerType *TrackerType) *TrackerPatternFilter {
 	f.trackerType = trackerType
-	return f
-}
-
-func (f *TrackerPatternFilter) WithThirdPartyID(thirdPartyID *gid.GID) *TrackerPatternFilter {
-	f.thirdPartyID = thirdPartyID
 	return f
 }
 
@@ -141,13 +135,6 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 	END
 	AND
 	CASE
-		WHEN @has_third_party_id_filter::boolean = false THEN TRUE
-		WHEN @has_third_party_id_filter::boolean = true THEN
-			third_party_id = @filter_third_party_id::text
-		ELSE TRUE
-	END
-	AND
-	CASE
 		WHEN @has_common_third_party_id_filter::boolean = false THEN TRUE
 		WHEN @has_common_third_party_id_filter::boolean = true THEN
 			common_tracker_pattern_id IN (
@@ -177,8 +164,6 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_source":                    nil,
 		"has_tracker_type_filter":          false,
 		"filter_tracker_type":              nil,
-		"has_third_party_id_filter":        false,
-		"filter_third_party_id":            nil,
 		"has_common_third_party_id_filter": false,
 		"filter_common_third_party_id":     nil,
 	}
@@ -214,11 +199,6 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.trackerType != nil {
 		args["has_tracker_type_filter"] = true
 		args["filter_tracker_type"] = string(*f.trackerType)
-	}
-
-	if f.thirdPartyID != nil {
-		args["has_third_party_id_filter"] = true
-		args["filter_third_party_id"] = *f.thirdPartyID
 	}
 
 	if f.commonThirdPartyID != nil {

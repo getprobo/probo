@@ -1,0 +1,144 @@
+<!--
+Copyright (c) 2026 Probo Inc <hello@probo.com>.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
+# `getprobo/audit-role/gcp`
+
+Grants Probo read-only audit access to one GCP project through Workload
+Identity Federation. Probo holds no credential for the project: it presents a
+short-lived signed assertion that STS verifies against a public key set, and
+you revoke access by deleting the pool or the service account.
+
+This module covers **one project**. Apply it in the project you are
+connecting. It does not walk folders or the organization.
+
+## Usage
+
+Copy the issuer URL and the subject out of the connector setup screen. GCP
+compares the issuer URL case-sensitively and its last path segment is a
+mixed-case identifier, so paste it rather than retyping it.
+
+The Google provider must target the project you want to connect. Set
+`project` on the provider, or export `GOOGLE_CLOUD_PROJECT`.
+
+Enable `iam.googleapis.com`, `cloudresourcemanager.googleapis.com`,
+`sts.googleapis.com`, `iamcredentials.googleapis.com`, and
+`logging.googleapis.com` in that project before you apply. Terraform
+uses the first two and Logging to grant the `_Required` view. Probo
+uses STS and IAM Credentials to exchange a token and impersonate the
+service account.
+
+```hcl
+module "probo_audit" {
+  source = "getprobo/audit-role/gcp"
+
+  probo_issuer_url     = "https://proboidentity.com/e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg"
+  probo_subject        = "e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg"
+  service_account_name = "probo-audit"
+}
+
+output "probo_workload_identity_provider" {
+  value = module.probo_audit.workload_identity_provider
+}
+
+output "probo_service_account_email" {
+  value = module.probo_audit.service_account_email
+}
+```
+
+Give Probo the `workload_identity_provider` and `service_account_email`
+outputs when you create the connector.
+
+## Optional: MFA for human users
+
+Human identities on the project are Google Workspace or Cloud Identity
+users. Cloud IAM cannot grant Directory reads, so this module does not
+cover MFA. After you apply, a Super Admin can assign a Users-read admin
+role to the `probo-audit` service account in the Google Admin console
+(Account > Admin roles > Assign service accounts). See [Assign a Google
+Workspace administrator role to a service
+account](https://developers.google.com/workspace/guides/create-credentials#assign_a_google_workspace_administrator_role_to_a_service_account).
+
+Probo then reads 2-Step Verification enrollment with the same WIF token.
+Skip this step if you do not need MFA on the GCP source; those accounts
+stay MFA unknown.
+
+## Verifying an install
+
+Probo probes the install by exchanging a token and impersonating the service
+account. Isolation is the per-organization issuer: a foreign token fails at
+the provider-match step before GCP evaluates the attribute condition. The
+`assertion.sub` condition in this module is IAM hygiene; Probo does not read
+it back.
+
+## What it creates
+
+| Resource | Notes |
+|---|---|
+| `google_iam_workload_identity_pool` | `probo` by default. |
+| `google_iam_workload_identity_pool_provider` | OIDC. Issuer is `probo_issuer_url`. `allowed_audiences` is unset. |
+| `google_service_account` | `probo-audit` by default. |
+| `roles/iam.securityReviewer` | Project IAM, additive. |
+| `roles/iam.serviceAccountViewer` | Project IAM, additive. |
+| `roles/logging.viewAccessor` | On `_Required`/`_AllLogs` only, additive. Admin Activity and the other `_Required` audit logs; not `_Default` application logs. |
+| `roles/policyanalyzer.activityAnalysisViewer` | Project IAM, additive. |
+| `roles/iam.workloadIdentityUser` | On the service account, for `principal://…/subject/{probo_subject}` only. |
+
+The attribute condition pins `assertion.sub` with CEL `==`. Isolation is the
+per-organization issuer: a foreign token fails at the provider-match step
+before GCP evaluates the condition. That pin is IAM hygiene; Probo does not
+read it back.
+
+## Inputs and outputs
+
+Run `terraform-docs markdown .` for the generated table. The variable and
+output descriptions in [`variables.tf`](variables.tf) and
+[`outputs.tf`](outputs.tf) are the source of truth.
+
+## Notes
+
+- **Do not set `allowed_audiences`.** An empty list tells GCP to accept the
+  default provider URL, with or without the `https:` prefix. Probo mints that
+  URL as the JWT `aud`.
+- **The subject condition is exact equality.** A `startsWith` wildcard would
+  let any subject this issuer can mint impersonate the service account.
+- **IAM members are additive**, not bindings. A binding would replace
+  every other member of that role in the project or on the log view.
+- **`_Required` is queried in `global` by default.** If default resource
+  settings moved that bucket, set `required_bucket_location` to match.
+- Requires the `google` provider at 5.0 or later.
+
+## Cloud de Confiance (S3NS)
+
+S3NS is a separate Google Cloud universe. Set the universe on the **root**
+provider; this module does not configure it. Project IDs carry the `s3ns:`
+prefix. Workload identity principals still use `iam.googleapis.com`.
+
+```hcl
+provider "google" {
+  project         = "s3ns:my-project"
+  universe_domain = "s3nsapis.fr"
+}
+```
+
+The service account email this module creates ends in
+`.s3ns.iam.gserviceaccount.com`. Paste that email when you create the
+connector so Probo dials `*.s3nsapis.fr`.

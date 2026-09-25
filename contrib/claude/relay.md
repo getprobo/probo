@@ -23,7 +23,7 @@ Config lives in `relay.config.json` at the repo root with three projects (`core`
 make relay  # merge split schemas + clean + compile
 ```
 
-Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → string`, `Duration → string`, `BigInt → number`, `EmailAddr → string`.
+Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → string`, `TimeSpan → string`, `BigInt → number`, `EmailAddr → string`.
 
 ## Naming operations and fragments
 

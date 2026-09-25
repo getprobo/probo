@@ -76,7 +76,7 @@ export function AccessReviewCampaignListItem({
       <Td>
         <Badge variant={statusBadgeVariant(campaign.status)}>
           {t(
-            `accessReviewCampaignsTab.status.${campaign.status.toLowerCase()}`,
+            `accessReviewCampaignsPage.status.${campaign.status.toLowerCase()}`,
           )}
         </Badge>
       </Td>
@@ -94,7 +94,7 @@ export function AccessReviewCampaignListItem({
                   onDelete(campaign.id, campaign.name);
                 }}
               >
-                {t("accessReviewCampaignsTab.actions.delete")}
+                {t("accessReviewCampaignsPage.actions.delete")}
               </DropdownItem>
             </ActionDropdown>
           )}

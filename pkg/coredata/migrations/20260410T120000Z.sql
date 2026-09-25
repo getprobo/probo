@@ -41,11 +41,6 @@ ALTER TYPE electronic_signature_document_type ADD VALUE 'STATEMENT_OF_APPLICABIL
 ALTER TABLE statements_of_applicability
     ADD COLUMN document_id TEXT UNIQUE REFERENCES documents(id) ON DELETE SET NULL;
 
--- TODO: drop owner_profile_id column
 ALTER TABLE statements_of_applicability
     ALTER COLUMN owner_profile_id DROP NOT NULL;
-
--- TODO: drop statements_of_applicability.source_id column
--- TODO: drop statements_of_applicability.snapshot_id column
--- TODO: drop applicability_statements.snapshot_id column
 

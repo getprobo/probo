@@ -33,9 +33,10 @@ import (
 
 func onePasswordRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderOnePassword,
-		DisplayName:      "1Password",
-		DocumentationURL: accessReviewDocsURL("one-password"),
+		Provider:           coredata.ConnectorProviderOnePassword,
+		DisplayName:        "1Password",
+		InitialAccountFunc: onePasswordInitialAccount,
+		DocumentationURL:   accessReviewDocsURL("one-password"),
 		// APIBase is deliberately empty: 1Password has no single data host to
 		// name. Four host families live under this one registration —
 		// the per-connection SCIM bridge URL (customer-hosted, from
@@ -48,19 +49,21 @@ func onePasswordRegistration() *Registration {
 		Endpoints: Endpoints{
 			Probe: "https://events.1password.com/api/v1/auditevents",
 		},
-		SupportsAPIKey:            true,
-		SupportsClientCredentials: true,
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
+			},
+		},
+		ClientCredentials: &ClientCredentialsConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "accountId", Label: "Account ID", Required: true},
+				{Key: "region", Label: "Region", Required: true},
+			},
+		},
 		// Two settings shapes, one per connect path, because a different
 		// driver sits behind each:
 		//  - API key:            SCIMBridgeURL      (SCIM-bridge driver).
 		//  - Client credentials: AccountID + Region (Users API driver).
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
-		},
-		ClientCredentialsExtraSettings: []ExtraSetting{
-			{Key: "accountId", Label: "Account ID", Required: true},
-			{Key: "region", Label: "Region", Required: true},
-		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			// The client-credentials grant uses the Users API driver.
 			// Everything else is the API-key connection, whose
@@ -88,4 +91,21 @@ func onePasswordRegistration() *Registration {
 			return drivers.NewOnePasswordDriver(c, s.SCIMBridgeURL), nil
 		},
 	}
+}
+
+func onePasswordInitialAccount(c *coredata.Connector) (string, string, error) {
+	users, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot read connector settings: %w", err)
+	}
+
+	if users.AccountID != "" {
+		return users.AccountID, users.AccountID, nil
+	}
+
+	return initialAccount(
+		func(s coredata.OnePasswordConnectorSettings) string {
+			return s.SCIMBridgeURL
+		},
+	)(c)
 }

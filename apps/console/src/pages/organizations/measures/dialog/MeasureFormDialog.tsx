@@ -38,6 +38,7 @@ import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { MeasureFormDialogCreateMutation } from "#/__generated__/core/MeasureFormDialogCreateMutation.graphql";
 import type { MeasureFormDialogMeasureFragment$key } from "#/__generated__/core/MeasureFormDialogMeasureFragment.graphql";
 import { ControlledSelect } from "#/components/form/ControlledField";
 import { useUpdateMeasure } from "#/hooks/graph/MeasureGraph";
@@ -64,6 +65,7 @@ const measureCreateMutation = graphql`
     createMeasure(input: $input) {
       measureEdge @prependEdge(connections: $connections) {
         node {
+          id
           ...MeasureFormDialogMeasureFragment
         }
       }
@@ -76,21 +78,24 @@ type Props = {
   measure?: MeasureFormDialogMeasureFragment$key;
   connection?: string;
   ref?: DialogRef;
+  onCreated?: (measureId: string) => void | Promise<void>;
 };
 
 export default function MeasureFormDialog(props: Props) {
-  const { children, measure: measureKey, connection, ...rest } = props;
+  const { children, measure: measureKey, connection, onCreated, ...rest } = props;
   const { t } = useTranslation();
   const ref = useDialogRef();
   const dialogRef = rest.ref ?? ref;
   const measure = useFragment(measureFragment, measureKey);
   const organizationId = useOrganizationId();
   const [updateMeasure] = useUpdateMeasure();
-  const [createMeasure] = useMutationWithToasts(measureCreateMutation, {
-    successMessage: t("measureFormDialog.messages.created"),
-    errorMessage: t("measureFormDialog.errors.create"),
-  });
-  const mutate = measureKey ? updateMeasure : createMeasure;
+  const [createMeasure] = useMutationWithToasts<MeasureFormDialogCreateMutation>(
+    measureCreateMutation,
+    {
+      successMessage: t("measureFormDialog.messages.created"),
+      errorMessage: t("measureFormDialog.errors.create"),
+    },
+  );
   const measureSchema = z.object({
     name: z.string().min(1, t("measureFormDialog.validation.nameRequired")),
     description: z.string().optional().nullable(),
@@ -110,7 +115,7 @@ export default function MeasureFormDialog(props: Props) {
 
   const onSubmit = async (data: z.infer<typeof measureSchema>) => {
     if (measure) {
-      await mutate({
+      await updateMeasure({
         variables: {
           input: {
             id: measure.id,
@@ -122,7 +127,8 @@ export default function MeasureFormDialog(props: Props) {
         },
       });
     } else {
-      await mutate({
+      let createdId: string | undefined;
+      await createMeasure({
         variables: {
           input: {
             organizationId,
@@ -130,9 +136,21 @@ export default function MeasureFormDialog(props: Props) {
             description: data.description || null,
             category: data.category,
           },
-          connections: [connection!],
+          connections: connection ? [connection] : [],
+        },
+        onCompleted: (response, errors) => {
+          if (!errors) {
+            createdId = response.createMeasure.measureEdge.node.id;
+          }
         },
       });
+      if (createdId) {
+        try {
+          await onCreated?.(createdId);
+        } catch {
+          // Linking errors are reported by the caller.
+        }
+      }
       reset();
     }
     dialogRef.current?.close();

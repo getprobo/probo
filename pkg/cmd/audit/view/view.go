@@ -37,11 +37,16 @@ query($id: ID!) {
     ... on Audit {
       id
       name
+      firm
       state
-      validFrom
-      validUntil
-      auditStartDate
-      auditEndDate
+      validity {
+        start
+        end
+      }
+      auditDates {
+        start
+        end
+      }
       createdAt
       updatedAt
     }
@@ -51,16 +56,21 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename       string  `json:"__typename"`
-		ID             string  `json:"id"`
-		Name           string  `json:"name"`
-		State          string  `json:"state"`
-		ValidFrom      *string `json:"validFrom"`
-		ValidUntil     *string `json:"validUntil"`
-		AuditStartDate *string `json:"auditStartDate"`
-		AuditEndDate   *string `json:"auditEndDate"`
-		CreatedAt      string  `json:"createdAt"`
-		UpdatedAt      string  `json:"updatedAt"`
+		Typename string `json:"__typename"`
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Firm     string `json:"firm"`
+		State    string `json:"state"`
+		Validity *struct {
+			Start *string `json:"start"`
+			End   *string `json:"end"`
+		} `json:"validity"`
+		AuditDates *struct {
+			Start *string `json:"start"`
+			End   *string `json:"end"`
+		} `json:"auditDates"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -128,22 +138,26 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(a.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), a.ID)
+			if a.Firm != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Firm:"), a.Firm)
+			}
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), a.State)
 
-			if a.ValidFrom != nil && *a.ValidFrom != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Valid From:"), *a.ValidFrom)
+			if a.Validity != nil && a.Validity.Start != nil && *a.Validity.Start != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Valid From:"), *a.Validity.Start)
 			}
 
-			if a.ValidUntil != nil && *a.ValidUntil != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Valid Until:"), *a.ValidUntil)
+			if a.Validity != nil && a.Validity.End != nil && *a.Validity.End != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Valid Until:"), *a.Validity.End)
 			}
 
-			if a.AuditStartDate != nil && *a.AuditStartDate != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Audit Start:"), *a.AuditStartDate)
+			if a.AuditDates != nil && a.AuditDates.Start != nil && *a.AuditDates.Start != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Audit Start:"), *a.AuditDates.Start)
 			}
 
-			if a.AuditEndDate != nil && *a.AuditEndDate != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Audit End:"), *a.AuditEndDate)
+			if a.AuditDates != nil && a.AuditDates.End != nil && *a.AuditDates.End != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Audit End:"), *a.AuditDates.End)
 			}
 
 			_, _ = fmt.Fprintln(out)

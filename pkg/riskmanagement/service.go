@@ -23,18 +23,21 @@ package riskmanagement
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
-	TitleMaxLength   = 1000
-	ContentMaxLength = 5000
+	TitleMaxLength       = 1000
+	ContentMaxLength     = 5000
+	richTextMaxJSONBytes = 64 << 10
 )
 
 type Service struct {
@@ -69,7 +72,6 @@ type (
 		Name        *string
 		Description **string
 		Period      *Period
-		MatrixSize  *MatrixSize
 	}
 
 	CreateRiskAnalysisDiagramRequest struct {
@@ -167,13 +169,39 @@ type (
 		RiskAnalysisScenarioID gid.GID
 		RiskID                 gid.GID
 	}
+
+	ForkRiskAnalysisRequest struct {
+		RiskAnalysisID gid.GID
+		Name           string
+		Description    *string
+		Period         *Period
+	}
 )
+
+func optionalDocumentJSON(s *string) (*string, error) {
+	if s == nil || strings.TrimSpace(*s) == "" {
+		return nil, nil
+	}
+
+	sanitized, err := prosemirror.SanitizeDocumentJSON(*s)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sanitized, nil
+}
 
 func (r *CreateRiskAnalysisRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(
+		r.Description,
+		"description",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
 	v.Check(r.MatrixSize, "matrix_size", validator.Required())
 	validateMatrixSize(v, r.MatrixSize)
 
@@ -188,8 +216,32 @@ func (r *UpdateRiskAnalysisRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.RiskAnalysisEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
-	validateMatrixSize(v, r.MatrixSize)
+	v.Check(
+		r.Description,
+		"description",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
+
+	if r.Period != nil {
+		validatePeriodRange(v, r.Period.Start, r.Period.End)
+	}
+
+	return v.Error()
+}
+
+func (r *ForkRiskAnalysisRequest) Validate() error {
+	v := validator.New()
+	v.Check(r.RiskAnalysisID, "risk_analysis_id", validator.Required(), validator.GID(coredata.RiskAnalysisEntityType))
+	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(
+		r.Description,
+		"description",
+		validator.MaxLen(richTextMaxJSONBytes),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+	)
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
@@ -400,12 +452,17 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
+	description, err := optionalDocumentJSON(req.Description)
+	if err != nil {
+		return nil, fmt.Errorf("cannot sanitize description: %w", err)
+	}
+
 	now := time.Now()
 	ra := &coredata.RiskAnalysis{
 		ID:             gid.New(scope.GetTenantID(), coredata.RiskAnalysisEntityType),
 		OrganizationID: req.OrganizationID,
 		Name:           req.Name,
-		Description:    req.Description,
+		Description:    description,
 		MatrixRows:     req.MatrixSize.Rows,
 		MatrixCols:     req.MatrixSize.Cols,
 		CreatedAt:      now,
@@ -417,7 +474,7 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		ra.PeriodEnd = req.Period.End
 	}
 
-	err := s.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := ra.Insert(ctx, tx, scope); err != nil {
@@ -473,17 +530,17 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 			}
 
 			if req.Description != nil {
-				ra.Description = *req.Description
+				description, err := optionalDocumentJSON(*req.Description)
+				if err != nil {
+					return fmt.Errorf("cannot sanitize description: %w", err)
+				}
+
+				ra.Description = description
 			}
 
 			if req.Period != nil {
 				ra.PeriodStart = req.Period.Start
 				ra.PeriodEnd = req.Period.End
-			}
-
-			if req.MatrixSize != nil {
-				ra.MatrixRows = req.MatrixSize.Rows
-				ra.MatrixCols = req.MatrixSize.Cols
 			}
 
 			v := validator.New()
@@ -1873,6 +1930,183 @@ func (s *Service) ListRisksForScenarioID(
 	}
 
 	return page.NewPage(results, cursor), nil
+}
+
+func untreatedScenarioRiskIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	analysisID gid.GID,
+) ([]gid.GID, error) {
+	diagrams, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskAnalysisDiagramOrderField]{
+			Field:     coredata.RiskAnalysisDiagramOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisDiagramOrderField]) ([]*coredata.RiskAnalysisDiagram, error) {
+			var batch coredata.RiskAnalysisDiagrams
+			if err := batch.LoadByRiskAnalysisID(ctx, conn, scope, analysisID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load risk analysis diagrams: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var scenarioIDs []gid.GID
+
+	for _, diagram := range diagrams {
+		scenarios, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
+				Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisScenarioOrderField]) ([]*coredata.RiskAnalysisScenario, error) {
+				var batch coredata.RiskAnalysisScenarios
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagram.ID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load risk analysis scenarios: %w", err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, scenario := range scenarios {
+			scenarioIDs = append(scenarioIDs, scenario.ID)
+		}
+	}
+
+	var links coredata.RiskAnalysisScenarioRisks
+	if err := links.LoadByScenarioIDs(ctx, conn, scope, scenarioIDs); err != nil {
+		return nil, fmt.Errorf("cannot load scenario risks: %w", err)
+	}
+
+	plans, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     coredata.TreatmentPlanOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TreatmentPlanOrderField]) ([]*coredata.TreatmentPlan, error) {
+			var batch coredata.TreatmentPlans
+			if err := batch.LoadByRiskAnalysisID(
+				ctx,
+				conn,
+				scope,
+				analysisID,
+				cursor,
+				coredata.NewTreatmentPlanFilter(nil, nil, nil),
+			); err != nil {
+				return nil, fmt.Errorf("cannot load treatment plans: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	planRiskIDs := make([]gid.GID, 0, len(plans))
+	for _, plan := range plans {
+		planRiskIDs = append(planRiskIDs, plan.RiskID)
+	}
+
+	planned := gid.NewSet(planRiskIDs...)
+
+	seen := gid.NewSet()
+	untreated := make([]gid.GID, 0)
+
+	for _, link := range links {
+		if planned.Contains(link.RiskID) || seen.Contains(link.RiskID) {
+			continue
+		}
+
+		seen[link.RiskID] = struct{}{}
+		untreated = append(untreated, link.RiskID)
+	}
+
+	return untreated, nil
+}
+
+func (s *Service) ListRisksForRiskAnalysisID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	analysisID gid.GID,
+	cursor *page.Cursor[coredata.RiskOrderField],
+	filter *coredata.RiskFilter,
+) (*page.Page[*coredata.Risk, coredata.RiskOrderField], error) {
+	var results coredata.Risks
+
+	if filter == nil {
+		filter = coredata.NewRiskFilter(nil)
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			riskIDs, err := untreatedScenarioRiskIDs(ctx, conn, scope, analysisID)
+			if err != nil {
+				return err
+			}
+
+			if err := results.LoadByRiskIDs(ctx, conn, scope, riskIDs, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list scenario risks on analysis: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(results, cursor), nil
+}
+
+func (s *Service) CountRisksForRiskAnalysisID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	analysisID gid.GID,
+	filter *coredata.RiskFilter,
+) (int, error) {
+	var count int
+
+	if filter == nil {
+		filter = coredata.NewRiskFilter(nil)
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			riskIDs, err := untreatedScenarioRiskIDs(ctx, conn, scope, analysisID)
+			if err != nil {
+				return err
+			}
+
+			rs := &coredata.Risks{}
+
+			count, err = rs.CountByRiskIDs(ctx, conn, scope, riskIDs, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count scenario risks on analysis: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s *Service) CountRisksForScenarioID(ctx context.Context, scope coredata.Scoper, scenarioID gid.GID) (int, error) {

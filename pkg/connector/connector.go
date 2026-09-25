@@ -38,6 +38,13 @@ type (
 	// a different set of scopes (e.g. SCIM bridge vs access review).
 	InitiateOptions struct {
 		Scopes []string
+		// GrantedScopes carries what the connector being reconnected was
+		// granted earlier. The authorize request asks for the union of it
+		// and Scopes, so a reconnect never narrows an existing grant on a
+		// provider that replaces rather than merges. It is ignored for a
+		// provider with ExclusiveScopes, which refuses any scope its app
+		// registration no longer offers. Empty on a fresh install.
+		GrantedScopes []string
 		// IncludeGrantedScopes is honored only when the provider has
 		// SupportsIncrementalAuth=true.
 		IncludeGrantedScopes bool
@@ -59,11 +66,20 @@ type (
 
 	Connection interface {
 		Type() ProtocolType
-		Client(ctx context.Context) (*http.Client, error)
 		Scopes() []string
 
 		json.Unmarshaler
 		json.Marshaler
+	}
+
+	// HTTPConnection is a Connection whose credential is presented on an
+	// *http.Client. Every protocol but workload identity is one, whose
+	// credential a cloud SDK uses to sign requests it builds itself; a caller
+	// holding a Connection asserts to this before reaching for a transport.
+	HTTPConnection interface {
+		Connection
+
+		Client(ctx context.Context) (*http.Client, error)
 	}
 )
 
@@ -97,6 +113,24 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 		var conn APIKeyConnection
 		if err := json.Unmarshal(data, &conn); err != nil {
 			return nil, fmt.Errorf("cannot unmarshal api key connection: %w", err)
+		}
+
+		return &conn, nil
+	case string(ProtocolGitHubApp):
+		if provider != GitHubProvider {
+			return nil, fmt.Errorf("github app protocol is unsupported for provider: %s", provider)
+		}
+
+		var conn GitHubAppConnection
+		if err := json.Unmarshal(data, &conn); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal github app connection: %w", err)
+		}
+
+		return &conn, nil
+	case string(ProtocolWorkloadIdentity):
+		var conn WorkloadIdentityConnection
+		if err := json.Unmarshal(data, &conn); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal workload identity connection: %w", err)
 		}
 
 		return &conn, nil

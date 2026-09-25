@@ -46,8 +46,8 @@
  * the Radix specification (Figma stores the same values resolved at 16px,
  * e.g. -0.005em → -0.08px).
  *
- * --text-* is reset to initial so the only type scale available in a v2
- * build is the Radix one, the same way --color-* is wiped in colors.css.
+ * `--text-*: initial`, which drops Tailwind's t-shirt sizes so the Radix scale
+ * is the only one available, lives in ./reset.css.
  * ------------------------------------------------------------------------- */
 @theme {
     --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
@@ -55,8 +55,6 @@
     /* Code/mono — Radix-style system stack. The design specifies Menlo, an
      * Apple system font that is not self-hostable, so fall back per OS. */
     --font-mono: "Menlo", "Consolas", "Liberation Mono", "Monaco", monospace;
-
-    --text-*: initial;
 
     --text-1: 0.75rem;
     --text-1--line-height: 1rem;

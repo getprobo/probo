@@ -103,12 +103,10 @@ func NewBeginChallengeWorker(
 	opts ...worker.Option,
 ) *worker.Worker[coredata.Certificate] {
 	h := &beginChallengeHandler{
-		provisionCore: provisionCore{
-			pg:          pgClient,
-			acmeService: acmeService,
-			logger:      logger,
-			tracer:      otel.Tracer(tracerName),
-		},
+		pg:                pgClient,
+		acmeService:       acmeService,
+		logger:            logger,
+		tracer:            otel.Tracer(tracerName),
 		cnameTarget:       cnameTarget,
 		caaIssuerDomain:   caaIssuerDomain,
 		dnsClient:         dnsclient.NewClient(resolverAddr),
@@ -133,12 +131,10 @@ func NewPollOrderWorker(
 	opts ...worker.Option,
 ) *worker.Worker[coredata.Certificate] {
 	h := &pollOrderHandler{
-		provisionCore: provisionCore{
-			pg:          pgClient,
-			acmeService: acmeService,
-			logger:      logger,
-			tracer:      otel.Tracer(tracerName),
-		},
+		pg:            pgClient,
+		acmeService:   acmeService,
+		logger:        logger,
+		tracer:        otel.Tracer(tracerName),
 		encryptionKey: encryptionKey,
 	}
 

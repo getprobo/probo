@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, toPeriod } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -68,14 +68,20 @@ export const description: INodeProperties[] = [
 				name: 'auditEndDate',
 				type: 'dateTime',
 				default: '',
-				description: 'The end date of the audit engagement',
+				description: 'The end date of the audit',
+			},
+			{
+				displayName: 'Audit Firm',
+				name: 'firm',
+				type: 'string',
+				default: '',
 			},
 			{
 				displayName: 'Audit Start Date',
 				name: 'auditStartDate',
 				type: 'dateTime',
 				default: '',
-				description: 'The start date of the audit engagement',
+				description: 'The start date of the audit',
 			},
 			{
 				displayName: 'Name',
@@ -89,6 +95,10 @@ export const description: INodeProperties[] = [
 				name: 'state',
 				type: 'options',
 				options: [
+					{
+						name: 'Audit Booked',
+						value: 'AUDIT_BOOKED',
+					},
 					{
 						name: 'Completed',
 						value: 'COMPLETED',
@@ -108,6 +118,10 @@ export const description: INodeProperties[] = [
 					{
 						name: 'Rejected',
 						value: 'REJECTED',
+					},
+					{
+						name: 'To Book',
+						value: 'TO_BOOK',
 					},
 				],
 				default: 'NOT_STARTED',
@@ -139,6 +153,7 @@ export async function execute(
 	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
+		firm?: string;
 		state?: string;
 		validFrom?: string;
 		validUntil?: string;
@@ -153,11 +168,16 @@ export async function execute(
 					node {
 						id
 						name
+						firm
 						state
-						validFrom
-						validUntil
-						auditStartDate
-						auditEndDate
+						validity {
+							start
+							end
+						}
+						auditDates {
+							start
+							end
+						}
 						reportUrl
 						createdAt
 						updatedAt
@@ -172,11 +192,12 @@ export async function execute(
 		frameworkId,
 	};
 	if (additionalFields.name) input.name = additionalFields.name;
+	if (additionalFields.firm) input.firm = additionalFields.firm;
 	if (additionalFields.state) input.state = additionalFields.state;
-	if (additionalFields.validFrom) input.validFrom = additionalFields.validFrom;
-	if (additionalFields.validUntil) input.validUntil = additionalFields.validUntil;
-	if (additionalFields.auditStartDate) input.auditStartDate = additionalFields.auditStartDate;
-	if (additionalFields.auditEndDate) input.auditEndDate = additionalFields.auditEndDate;
+	const validity = toPeriod(additionalFields.validFrom, additionalFields.validUntil);
+	if (validity) input.validity = validity;
+	const auditDates = toPeriod(additionalFields.auditStartDate, additionalFields.auditEndDate);
+	if (auditDates) input.auditDates = auditDates;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

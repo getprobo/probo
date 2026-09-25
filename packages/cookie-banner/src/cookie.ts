@@ -29,6 +29,7 @@ export interface ConsentCookie {
   vid: string;
   action: ConsentAction;
   data: Record<string, boolean>;
+  tc?: string;
 }
 
 export function getConsentCookie(): ConsentCookie | null {

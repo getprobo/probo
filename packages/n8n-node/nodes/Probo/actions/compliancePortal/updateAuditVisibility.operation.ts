@@ -88,8 +88,10 @@ export async function execute(
 						id
 						name
 						state
-						validFrom
-						validUntil
+						validity {
+							start
+							end
+						}
 						createdAt
 						updatedAt
 					}

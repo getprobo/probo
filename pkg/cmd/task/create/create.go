@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const createMutation = `
@@ -60,14 +61,16 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg          string
-		flagName         string
-		flagDescription  string
-		flagPriority     string
-		flagMeasure      string
-		flagTimeEstimate string
-		flagAssignedTo   string
-		flagDeadline     string
+		flagOrg                string
+		flagName               string
+		flagContent            string
+		flagState              string
+		flagPriority           string
+		flagMeasure            string
+		flagTimeEstimate       string
+		flagAssignedTo         string
+		flagDeadline           string
+		flagRecurrenceInterval string
 	)
 
 	cmd := &cobra.Command{
@@ -142,8 +145,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				"name":           flagName,
 			}
 
-			if flagDescription != "" {
-				input["description"] = flagDescription
+			if flagContent != "" {
+				input["content"] = prosemirror.FromPlainText(flagContent)
+			}
+
+			if flagState != "" {
+				if err := cmdutil.ValidateEnum("state", flagState, cmdutil.TaskStates()); err != nil {
+					return err
+				}
+
+				input["state"] = flagState
 			}
 
 			if flagPriority != "" {
@@ -164,6 +175,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			if flagDeadline != "" {
 				input["deadline"] = flagDeadline
+			}
+
+			if flagRecurrenceInterval != "" {
+				if flagDeadline == "" {
+					return fmt.Errorf("--recurrence-interval requires --deadline")
+				}
+
+				input["recurrenceInterval"] = flagRecurrenceInterval
 			}
 
 			data, err := client.Do(
@@ -193,12 +212,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name (required)")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "Task description")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
+	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
 	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
+	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline)")
 
 	return cmd
 }

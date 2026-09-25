@@ -1,0 +1,57 @@
+{
+  "bind": {
+    "title": "Conectar Slack con Probo",
+    "description": "Vincule esta cuenta de Slack con su identidad de Probo para que Probot pueda ayudarle.",
+    "breadcrumb": "Conectar",
+    "fields": {
+      "tenant": "Espacio de trabajo",
+      "account": "Cuenta"
+    },
+    "actions": {
+      "confirm": "Vincular cuenta de Slack"
+    },
+    "messages": {
+      "linked": "Su cuenta de Slack ya está vinculada con Probo."
+    },
+    "missingToken": {
+      "title": "No hay ningún enlace de confirmación",
+      "description": "Ejecute /probot login en Slack para obtener un enlace de confirmación privado."
+    },
+    "errors": {
+      "linkFailed": "No se pudo vincular la cuenta",
+      "invalidOrExpiredTokenTitle": "Este enlace ha caducado",
+      "invalidOrExpiredToken": "Pida al bot un nuevo enlace de confirmación privado."
+    }
+  },
+  "list": {
+    "title": "Slack",
+    "breadcrumb": "Slack",
+    "description": "Vincule su cuenta de Slack para que Probot pueda ayudarle en esta organización.",
+    "connectedDescription": "{{account}} · {{workspace}}",
+    "providers": {
+      "slack": "Slack"
+    },
+    "columns": {
+      "account": "Cuenta",
+      "action": "Acción"
+    },
+    "actions": {
+      "unlink": "Desvincular",
+      "cancel": "Cancelar"
+    },
+    "empty": {
+      "title": "No hay ninguna cuenta de Slack vinculada",
+      "description": "Ejecute <cmd>/probot login</cmd> en Slack para obtener un enlace de confirmación privado."
+    },
+    "messages": {
+      "unlinked": "Cuenta de Slack desvinculada."
+    },
+    "errors": {
+      "unlinkFailed": "No se pudo desvincular esta cuenta."
+    },
+    "confirmations": {
+      "unlinkTitle": "Desvincular cuenta de Slack",
+      "unlink": "¿Desvincular esta cuenta de Slack? Probot no podrá ayudarle hasta que vuelva a vincularla."
+    }
+  }
+}

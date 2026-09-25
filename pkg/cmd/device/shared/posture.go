@@ -28,10 +28,12 @@ type (
 	}
 
 	Posture struct {
-		ID         string       `json:"id"`
-		CheckKey   string       `json:"checkKey"`
-		Status     string       `json:"status"`
-		Value      PostureValue `json:"value"`
-		ObservedAt string       `json:"observedAt"`
+		ID           string       `json:"id"`
+		CheckKey     string       `json:"checkKey"`
+		Status       string       `json:"status"`
+		Value        PostureValue `json:"value"`
+		Version      string       `json:"version"`
+		AgentVersion string       `json:"agentVersion"`
+		ObservedAt   string       `json:"observedAt"`
 	}
 )

@@ -60,17 +60,18 @@ type (
 		GrantTypes              []string `json:"grant_types"`
 		ResponseTypes           []string `json:"response_types"`
 		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-		Scopes                  string   `json:"scopes"`
+		Scopes                  string   `json:"scope"`
 	}
 
 	OAuth2IntrospectResponse struct {
-		Active    bool   `json:"active"`
-		Scope     string `json:"scope,omitempty"`
-		ClientID  string `json:"client_id,omitempty"`
-		Sub       string `json:"sub,omitempty"`
-		Exp       int64  `json:"exp,omitempty"`
-		Iat       int64  `json:"iat,omitempty"`
-		TokenType string `json:"token_type,omitempty"`
+		Active    bool     `json:"active"`
+		Scope     string   `json:"scope,omitempty"`
+		ClientID  string   `json:"client_id,omitempty"`
+		Sub       string   `json:"sub,omitempty"`
+		Audiences []string `json:"aud,omitempty"`
+		Exp       int64    `json:"exp,omitempty"`
+		Iat       int64    `json:"iat,omitempty"`
+		TokenType string   `json:"token_type,omitempty"`
 	}
 
 	OAuth2DeviceAuthResponse struct {
@@ -104,6 +105,7 @@ type (
 		ClaimsSupported                           []string `json:"claims_supported"`
 		ProtectedResources                        []string `json:"protected_resources,omitempty"`
 		ClientIDMetadataDocumentSupported         bool     `json:"client_id_metadata_document_supported"`
+		AuthorizationResponseIssuerSupported      bool     `json:"authorization_response_iss_parameter_supported"`
 	}
 
 	OAuth2ProtectedResourceMetadataResponse struct {
@@ -285,7 +287,28 @@ func OAuth2JWKS(c *Client) (*OAuth2JWKSResponse, *OAuth2HTTPResponse, error) {
 func OAuth2ProtectedResourceMetadata(
 	c *Client,
 ) (*OAuth2ProtectedResourceMetadataResponse, *OAuth2HTTPResponse, error) {
-	raw, err := getJSON(c.HTTPClient(), c.BaseURL()+"/.well-known/oauth-protected-resource", nil)
+	return oauth2ProtectedResourceMetadata(c, "/.well-known/oauth-protected-resource")
+}
+
+// OAuth2ProtectedResourceMetadataAt fetches RFC 9728 metadata at a path-aware
+// well-known URL (RFC 9728 §3.1).
+func OAuth2ProtectedResourceMetadataAt(
+	c *Client,
+	path string,
+) (*OAuth2ProtectedResourceMetadataResponse, *OAuth2HTTPResponse, error) {
+	return oauth2ProtectedResourceMetadata(c, path)
+}
+
+func oauth2ProtectedResourceMetadata(
+	c *Client,
+	path string,
+) (*OAuth2ProtectedResourceMetadataResponse, *OAuth2HTTPResponse, error) {
+	endpoint, err := url.JoinPath(c.BaseURL(), path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot build protected resource metadata URL: %w", err)
+	}
+
+	raw, err := getJSON(c.HTTPClient(), endpoint, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -442,6 +465,42 @@ func OAuth2TokenWithCode(
 	c *Client,
 	clientID, clientSecret, code, redirectURI, codeVerifier string,
 ) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
+	return OAuth2TokenWithCodeForResource(
+		c,
+		clientID,
+		clientSecret,
+		code,
+		redirectURI,
+		codeVerifier,
+		"",
+	)
+}
+
+func OAuth2TokenWithCodeForResource(
+	c *Client,
+	clientID, clientSecret, code, redirectURI, codeVerifier, resource string,
+) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
+	var resources []string
+	if resource != "" {
+		resources = []string{resource}
+	}
+
+	return OAuth2TokenWithCodeForResources(
+		c,
+		clientID,
+		clientSecret,
+		code,
+		redirectURI,
+		codeVerifier,
+		resources,
+	)
+}
+
+func OAuth2TokenWithCodeForResources(
+	c *Client,
+	clientID, clientSecret, code, redirectURI, codeVerifier string,
+	resources []string,
+) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
 	values := url.Values{
 		"grant_type":   {"authorization_code"},
 		"code":         {code},
@@ -450,6 +509,10 @@ func OAuth2TokenWithCode(
 
 	if codeVerifier != "" {
 		values.Set("code_verifier", codeVerifier)
+	}
+
+	if len(resources) > 0 {
+		values["resource"] = resources
 	}
 
 	raw, err := postFormWithBasicAuth(
@@ -515,9 +578,45 @@ func OAuth2TokenWithRefreshToken(
 	c *Client,
 	clientID, clientSecret, refreshToken string,
 ) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
+	return OAuth2TokenWithRefreshTokenForResource(
+		c,
+		clientID,
+		clientSecret,
+		refreshToken,
+		"",
+	)
+}
+
+func OAuth2TokenWithRefreshTokenForResource(
+	c *Client,
+	clientID, clientSecret, refreshToken, resource string,
+) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
+	var resources []string
+	if resource != "" {
+		resources = []string{resource}
+	}
+
+	return OAuth2TokenWithRefreshTokenForResources(
+		c,
+		clientID,
+		clientSecret,
+		refreshToken,
+		resources,
+	)
+}
+
+func OAuth2TokenWithRefreshTokenForResources(
+	c *Client,
+	clientID, clientSecret, refreshToken string,
+	resources []string,
+) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
 	values := url.Values{
 		"grant_type":    {"refresh_token"},
 		"refresh_token": {refreshToken},
+	}
+
+	if len(resources) > 0 {
+		values["resource"] = resources
 	}
 
 	raw, err := postFormWithBasicAuth(

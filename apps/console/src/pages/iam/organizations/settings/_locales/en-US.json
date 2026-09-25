@@ -1,0 +1,76 @@
+{
+  "workspaceSettingsPage": {
+    "title": "Workspace"
+  },
+  "identity": {
+    "title": "Identity",
+    "description": "These details are used in the console, documents, and exports.",
+    "fields": {
+      "logo": "Logo",
+      "logoPlaceholder": "Drop or click",
+      "horizontalLogo": "Horizontal logo",
+      "horizontalLogoPlaceholder": "Drop or click",
+      "acceptedFiles": "JPEG, PNG, SVG, or WebP. Maximum 5 MB.",
+      "name": "Name"
+    },
+    "actions": {
+      "save": "Save",
+      "clearHorizontalLogo": "Remove horizontal logo"
+    },
+    "messages": {
+      "updated": "Workspace updated",
+      "horizontalLogoDeleted": "Horizontal logo removed"
+    },
+    "errors": {
+      "update": "Failed to update workspace",
+      "deleteHorizontalLogo": "Failed to remove horizontal logo",
+      "nameRequired": "Enter a name",
+      "invalidFileType": {
+        "title": "Unsupported file type",
+        "description": "Upload a JPEG, PNG, SVG, or WebP image."
+      },
+      "fileTooLarge": {
+        "title": "File too large",
+        "description": "Upload an image smaller than 5 MB."
+      },
+      "tooManyFiles": {
+        "title": "Too many files",
+        "description": "Upload one image at a time."
+      }
+    },
+    "deleteHorizontalLogo": {
+      "title": "Remove horizontal logo",
+      "description": "Remove the horizontal logo from this workspace?",
+      "actions": {
+        "cancel": "Cancel",
+        "confirm": "Remove"
+      }
+    }
+  },
+  "dangerZone": {
+    "title": "Danger Zone",
+    "delete": {
+      "title": "Delete workspace",
+      "description": "Permanently delete this workspace and all its data.",
+      "warning": "This cannot be undone.",
+      "action": "Delete workspace"
+    }
+  },
+  "deleteWorkspaceDialog": {
+    "title": "Delete workspace",
+    "description": "This will permanently delete {{organizationName}} and all its data.",
+    "warning": "This cannot be undone.",
+    "confirmationLabel": "Type \"{{organizationName}}\" to confirm:",
+    "confirmationMismatch": "The name does not match.",
+    "actions": {
+      "cancel": "Cancel",
+      "delete": "Delete workspace"
+    },
+    "messages": {
+      "deleted": "Workspace deleted"
+    },
+    "errors": {
+      "delete": "Failed to delete workspace"
+    }
+  }
+}

@@ -21,6 +21,8 @@
 package mcp_v1
 
 import (
+	"fmt"
+	"math"
 	"net/http"
 	"time"
 
@@ -31,10 +33,14 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -43,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -58,30 +65,40 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	riskManagementSvc *riskmanagement.Service,
 	itamSvc *itam.Service,
+	taskSvc *task.Service,
 	mailmanSvc *mailman.Service,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
+	identityFederation *identityfederation.Issuer,
+	awsConnectorInstall cloudaws.ConnectorInstallConfig,
+	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
+	azureConnectorInstall cloudazure.ConnectorInstallConfig,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
 
 	resolver := &Resolver{
-		proboSvc:       proboSvc,
-		management:     managementSvc,
-		certManager:    certManagerSvc,
-		resourceAlias:  resourceAliasSvc,
-		thirdPartySvc:  thirdPartySvc,
-		iamSvc:         iamSvc,
-		accessReview:   accessReviewSvc,
-		cookieBanner:   cookieBannerSvc,
-		riskManagement: riskManagementSvc,
-		itamSvc:        itamSvc,
-		mailman:        mailmanSvc,
-		logger:         logger,
-		fileManager:    fileManagerSvc,
-		baseURL:        baseURL,
+		proboSvc:              proboSvc,
+		management:            managementSvc,
+		certManager:           certManagerSvc,
+		resourceAlias:         resourceAliasSvc,
+		thirdPartySvc:         thirdPartySvc,
+		iamSvc:                iamSvc,
+		accessReview:          accessReviewSvc,
+		cookieBanner:          cookieBannerSvc,
+		riskManagement:        riskManagementSvc,
+		itamSvc:               itamSvc,
+		task:                  taskSvc,
+		mailman:               mailmanSvc,
+		logger:                logger,
+		fileManager:           fileManagerSvc,
+		baseURL:               baseURL,
+		identityFederation:    identityFederation,
+		awsConnectorInstall:   awsConnectorInstall,
+		gcpConnectorInstall:   gcpConnectorInstall,
+		azureConnectorInstall: azureConnectorInstall,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
@@ -101,13 +118,12 @@ func NewMux(
 			Logger:     nil, // TODO put logger here
 		},
 	)
-	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
 
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
-	r.Handle("/", protectedHandler)
+	r.Handle("/", handler)
 
 	logger.Info("MCP server initialized successfully")
 
@@ -120,6 +136,51 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 	}
 
 	value, _ := field.Value()
+
+	return &value
+}
+
+func optionalIntSlice(values *[]any) (*[]int, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	ids := make([]int, 0, len(*values))
+	for _, item := range *values {
+		n, err := intFromAny(item)
+		if err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, n)
+	}
+
+	return &ids, nil
+}
+
+func intFromAny(item any) (int, error) {
+	switch n := item.(type) {
+	case int:
+		return n, nil
+	case int32:
+		return int(n), nil
+	case int64:
+		return int(n), nil
+	case float64:
+		if n != math.Trunc(n) {
+			return 0, fmt.Errorf("tcf_purpose_ids must contain integers")
+		}
+
+		return int(n), nil
+	default:
+		return 0, fmt.Errorf("tcf_purpose_ids must contain integers")
+	}
+}
+
+func optionalPtr[T any](value *T) **T {
+	if value == nil {
+		return nil
+	}
 
 	return &value
 }

@@ -1,0 +1,128 @@
+---
+# SSO Admin walk succeeds with one direct user assignment, then
+# identity-store ListUsers is denied. That is a genuine store failure
+# and must fail the fetch rather than degrade to IAM only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.ListInstances
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"Instances":[{"InstanceArn":"arn:aws:sso:::instance/ssoins-example","IdentityStoreId":"d-1234567890"}]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.ListPermissionSets
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"PermissionSets":["arn:aws:sso:::permissionSet/ssoins-example/ps-admin"]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.DescribePermissionSet
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"PermissionSet":{"Name":"AdministratorAccess","PermissionSetArn":"arn:aws:sso:::permissionSet/ssoins-example/ps-admin"}}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: sso.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - SWBExternalService.ListAccountAssignments
+        url: https://sso.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"AccountAssignments":[{"AccountId":"123456789012","PermissionSetArn":"arn:aws:sso:::permissionSet/ssoins-example/ps-admin","PrincipalId":"11111111-1111-1111-1111-111111111111","PrincipalType":"USER"}]}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: identitystore.us-east-1.amazonaws.com
+        headers:
+            X-Amz-Target:
+                - AWSIdentityStore.ListUsers
+        url: https://identitystore.us-east-1.amazonaws.com/
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"__type":"AccessDeniedException","Message":"not authorized to perform identitystore:ListUsers"}'
+        headers:
+            Content-Type:
+                - application/x-amz-json-1.1
+            X-Amzn-Errortype:
+                - AccessDeniedException
+        status: 400 Bad Request
+        code: 400
+        duration: 1ms

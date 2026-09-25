@@ -99,6 +99,33 @@ func TestAudit_Create(t *testing.T) {
 			assertField: "state",
 			assertValue: "OUTDATED",
 		},
+		{
+			name: "with TO_BOOK state",
+			input: map[string]any{
+				"name":  "Audit TO_BOOK",
+				"state": "TO_BOOK",
+			},
+			assertField: "state",
+			assertValue: "TO_BOOK",
+		},
+		{
+			name: "with AUDIT_BOOKED state",
+			input: map[string]any{
+				"name":  "Audit AUDIT_BOOKED",
+				"state": "AUDIT_BOOKED",
+			},
+			assertField: "state",
+			assertValue: "AUDIT_BOOKED",
+		},
+		{
+			name: "with firm",
+			input: map[string]any{
+				"name": "Audit with firm",
+				"firm": "A-LIGN",
+			},
+			assertField: "firm",
+			assertValue: "A-LIGN",
+		},
 	}
 
 	for _, tt := range tests {
@@ -110,6 +137,7 @@ func TestAudit_Create(t *testing.T) {
 							node {
 								id
 								name
+								firm
 								state
 							}
 						}
@@ -129,6 +157,7 @@ func TestAudit_Create(t *testing.T) {
 						Node struct {
 							ID    string `json:"id"`
 							Name  string `json:"name"`
+							Firm  string `json:"firm"`
 							State string `json:"state"`
 						} `json:"node"`
 					} `json:"auditEdge"`
@@ -144,6 +173,8 @@ func TestAudit_Create(t *testing.T) {
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, node.Name)
+			case "firm":
+				assert.Equal(t, tt.assertValue, node.Firm)
 			case "state":
 				assert.Equal(t, tt.assertValue, node.State)
 			}
@@ -163,8 +194,10 @@ func TestAudit_AuditDates(t *testing.T) {
 				auditEdge {
 					node {
 						id
-						auditStartDate
-						auditEndDate
+						auditDates {
+							start
+							end
+						}
 					}
 				}
 			}
@@ -174,19 +207,23 @@ func TestAudit_AuditDates(t *testing.T) {
 	input := map[string]any{
 		"organizationId": owner.GetOrganizationID().String(),
 		"frameworkId":    frameworkID,
-		"name":           "Audit with engagement dates",
+		"name":           "Audit with start and end dates",
 		"state":          "NOT_STARTED",
-		"auditStartDate": "2026-03-01T00:00:00Z",
-		"auditEndDate":   "2026-03-15T00:00:00Z",
+		"auditDates": map[string]any{
+			"start": "2026-03-01T00:00:00Z",
+			"end":   "2026-03-15T00:00:00Z",
+		},
 	}
 
 	var createResult struct {
 		CreateAudit struct {
 			AuditEdge struct {
 				Node struct {
-					ID             string  `json:"id"`
-					AuditStartDate *string `json:"auditStartDate"`
-					AuditEndDate   *string `json:"auditEndDate"`
+					ID         string `json:"id"`
+					AuditDates *struct {
+						Start *string `json:"start"`
+						End   *string `json:"end"`
+					} `json:"auditDates"`
 				} `json:"node"`
 			} `json:"auditEdge"`
 		} `json:"createAudit"`
@@ -196,34 +233,41 @@ func TestAudit_AuditDates(t *testing.T) {
 	require.NoError(t, err)
 
 	node := createResult.CreateAudit.AuditEdge.Node
-	require.NotNil(t, node.AuditStartDate)
-	require.NotNil(t, node.AuditEndDate)
-	assert.True(t, strings.HasPrefix(*node.AuditStartDate, "2026-03-01"))
-	assert.True(t, strings.HasPrefix(*node.AuditEndDate, "2026-03-15"))
+	require.NotNil(t, node.AuditDates)
+	require.NotNil(t, node.AuditDates.Start)
+	require.NotNil(t, node.AuditDates.End)
+	assert.True(t, strings.HasPrefix(*node.AuditDates.Start, "2026-03-01"))
+	assert.True(t, strings.HasPrefix(*node.AuditDates.End, "2026-03-15"))
 
 	const updateQuery = `
 		mutation UpdateAudit($input: UpdateAuditInput!) {
 			updateAudit(input: $input) {
 				audit {
 					id
-					auditStartDate
-					auditEndDate
+					auditDates {
+						start
+						end
+					}
 				}
 			}
 		}
 	`
 
 	updateInput := map[string]any{
-		"id":             node.ID,
-		"auditStartDate": "2026-04-01T00:00:00Z",
-		"auditEndDate":   "2026-04-30T00:00:00Z",
+		"id": node.ID,
+		"auditDates": map[string]any{
+			"start": "2026-04-01T00:00:00Z",
+			"end":   "2026-04-30T00:00:00Z",
+		},
 	}
 
 	var updateResult struct {
 		UpdateAudit struct {
 			Audit struct {
-				AuditStartDate *string `json:"auditStartDate"`
-				AuditEndDate   *string `json:"auditEndDate"`
+				AuditDates *struct {
+					Start *string `json:"start"`
+					End   *string `json:"end"`
+				} `json:"auditDates"`
 			} `json:"audit"`
 		} `json:"updateAudit"`
 	}
@@ -232,10 +276,11 @@ func TestAudit_AuditDates(t *testing.T) {
 	require.NoError(t, err)
 
 	updated := updateResult.UpdateAudit.Audit
-	require.NotNil(t, updated.AuditStartDate)
-	require.NotNil(t, updated.AuditEndDate)
-	assert.True(t, strings.HasPrefix(*updated.AuditStartDate, "2026-04-01"))
-	assert.True(t, strings.HasPrefix(*updated.AuditEndDate, "2026-04-30"))
+	require.NotNil(t, updated.AuditDates)
+	require.NotNil(t, updated.AuditDates.Start)
+	require.NotNil(t, updated.AuditDates.End)
+	assert.True(t, strings.HasPrefix(*updated.AuditDates.Start, "2026-04-01"))
+	assert.True(t, strings.HasPrefix(*updated.AuditDates.End, "2026-04-30"))
 }
 
 func TestAudit_Create_Validation(t *testing.T) {
@@ -271,6 +316,13 @@ func TestAudit_Create_Validation(t *testing.T) {
 			name: "name with HTML tags",
 			input: map[string]any{
 				"name": "<script>alert('xss')</script>",
+			},
+			wantErrorContains: "HTML",
+		},
+		{
+			name: "firm with HTML tags",
+			input: map[string]any{
+				"firm": "<script>alert('xss')</script>",
 			},
 			wantErrorContains: "HTML",
 		},
@@ -439,6 +491,45 @@ func TestAudit_Update(t *testing.T) {
 			assertField: "state",
 			assertValue: "OUTDATED",
 		},
+		{
+			name: "update to TO_BOOK state",
+			setup: func() string {
+				return factory.NewAudit(owner, frameworkID).
+					WithName("State Test").
+					Create()
+			},
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "state": "TO_BOOK"}
+			},
+			assertField: "state",
+			assertValue: "TO_BOOK",
+		},
+		{
+			name: "update to AUDIT_BOOKED state",
+			setup: func() string {
+				return factory.NewAudit(owner, frameworkID).
+					WithName("State Test").
+					Create()
+			},
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "state": "AUDIT_BOOKED"}
+			},
+			assertField: "state",
+			assertValue: "AUDIT_BOOKED",
+		},
+		{
+			name: "update firm",
+			setup: func() string {
+				return factory.NewAudit(owner, frameworkID).
+					WithName("Firm Test").
+					Create()
+			},
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "firm": "BSI"}
+			},
+			assertField: "firm",
+			assertValue: "BSI",
+		},
 	}
 
 	for _, tt := range tests {
@@ -451,6 +542,7 @@ func TestAudit_Update(t *testing.T) {
 						audit {
 							id
 							name
+							firm
 							state
 						}
 					}
@@ -462,6 +554,7 @@ func TestAudit_Update(t *testing.T) {
 					Audit struct {
 						ID    string `json:"id"`
 						Name  string `json:"name"`
+						Firm  string `json:"firm"`
 						State string `json:"state"`
 					} `json:"audit"`
 				} `json:"updateAudit"`
@@ -475,6 +568,8 @@ func TestAudit_Update(t *testing.T) {
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, audit.Name)
+			case "firm":
+				assert.Equal(t, tt.assertValue, audit.Firm)
 			case "state":
 				assert.Equal(t, tt.assertValue, audit.State)
 			}
@@ -508,6 +603,14 @@ func TestAudit_Update_Validation(t *testing.T) {
 			setup: func() string { return baseAuditID },
 			input: func(id string) map[string]any {
 				return map[string]any{"id": id, "name": "<script>alert('xss')</script>"}
+			},
+			wantErrorContains: "HTML",
+		},
+		{
+			name:  "firm with HTML tags",
+			setup: func() string { return baseAuditID },
+			input: func(id string) map[string]any {
+				return map[string]any{"id": id, "firm": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
 		},
@@ -803,9 +906,6 @@ func TestAudit_Timestamps(t *testing.T) {
 
 		initialCreatedAt := getResult.Node.CreatedAt
 		initialUpdatedAt := getResult.Node.UpdatedAt
-
-		// Wait long enough for timestamp to change (database may have second precision)
-		time.Sleep(1100 * time.Millisecond)
 
 		updateQuery := `
 			mutation UpdateAudit($input: UpdateAuditInput!) {

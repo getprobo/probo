@@ -38,6 +38,7 @@ func newCmdUnlink(f *cmdutil.Factory) *cobra.Command {
 		flagCommonThirdParty   string
 		flagTrackerType        string
 		flagKeyword            string
+		flagPatternKeyword     string
 		flagState              string
 		flagWithoutDescription bool
 		flagDryRun             bool
@@ -65,6 +66,7 @@ func newCmdUnlink(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCommonThirdParty, "common-third-party", "", "Select patterns currently linked to a common third party (slug or GID)")
 	cmd.Flags().StringVar(&flagTrackerType, "tracker-type", "", "Filter selected patterns by tracker type")
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter selected patterns by a pattern/description substring")
+	cmd.Flags().StringVar(&flagPatternKeyword, "pattern-keyword", "", "Filter selected patterns by a substring of the pattern key only (stable: unlike --keyword it ignores descriptions)")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter selected patterns by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().BoolVar(&flagWithoutDescription, "without-description", false, "Only patterns with a blank description")
 	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the selected patterns without unlinking")
@@ -87,6 +89,7 @@ func newCmdUnlink(f *cmdutil.Factory) *cobra.Command {
 			flagCommonThirdParty,
 			flagTrackerType,
 			flagKeyword,
+			flagPatternKeyword,
 			flagState,
 			flagWithoutDescription,
 		)

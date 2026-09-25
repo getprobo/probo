@@ -76,7 +76,7 @@ export function Th({
     <th
       {...props}
       className={clsx(
-        "first:pl-6 last:pr-6 whitespace-nowrap",
+        "pr-6 first:pl-6 last:pr-6 whitespace-nowrap",
         compact ? "py-1" : "py-3",
         className,
       )}
@@ -133,7 +133,7 @@ export function Td({
       <td
         {...props}
         width={width}
-        className={clsx("first:pl-6 last:pr-6 py-3", className)}
+        className={clsx("pr-6 first:pl-6 last:pr-6 py-3", className)}
       >
         {children}
       </td>

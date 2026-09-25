@@ -136,22 +136,6 @@ enum AccessReviewEntryDecision
         )
 }
 
-enum AccessReviewEntryIncrementalTag
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTag") {
-    NEW
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTagNew"
-        )
-    REMOVED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTagRemoved"
-        )
-    UNCHANGED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTagUnchanged"
-        )
-}
-
 enum MfaStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.MFAStatus") {
     ENABLED
@@ -183,6 +167,14 @@ enum AccessReviewEntryAuthMethod
     API_KEY
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethodAPIKey"
+        )
+    OAUTH2
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethodOAuth2"
+        )
+    SSH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethodSSH"
         )
     SERVICE_ACCOUNT
         @goEnum(
@@ -247,6 +239,11 @@ input AccessReviewCampaignSourceFetchAttemptOrder {
 enum AccessReviewSourceConnectionStatus {
     CONNECTED
     DISCONNECTED
+    """
+    NOT_AUTHORIZED mirrors ConnectorConnectionStatus.NOT_AUTHORIZED: the
+    provider accepted the credential and refused the operation anyway.
+    """
+    NOT_AUTHORIZED
     RECONNECT_REQUIRED
     NOT_APPLICABLE
 }
@@ -272,7 +269,6 @@ input AccessReviewEntryFilter
     ) {
     decision: AccessReviewEntryDecision
     flag: AccessReviewEntryFlag
-    incrementalTag: AccessReviewEntryIncrementalTag
     isAdmin: Boolean
     active: Boolean
     authMethod: AccessReviewEntryAuthMethod
@@ -340,8 +336,9 @@ type ProviderOrganizations {
 type AccessReviewSource implements Node {
     id: ID!
     organization: Organization! @goField(forceResolver: true)
-    connectorId: ID
+    connectorId: ID @goField(forceResolver: true)
     connector: Connector @goField(forceResolver: true)
+    connectorAccountId: ID
     name: String!
     csvData: String
     providerOrganizations: ProviderOrganizations! @goField(forceResolver: true)
@@ -438,7 +435,6 @@ type AccessReviewEntry implements Node {
     lastLogin: Datetime
     accountCreatedAt: Datetime
     externalId: String!
-    incrementalTag: AccessReviewEntryIncrementalTag!
     flags: [AccessReviewEntryFlag!]!
     flagReasons: [String!]!
     decision: AccessReviewEntryDecision!
@@ -522,7 +518,6 @@ type AccessReviewStatistics {
     totalCount: Int!
     decisionCounts: [AccessReviewEntryDecisionCount!]!
     flagCounts: [AccessReviewEntryFlagCount!]!
-    incrementalTagCounts: [AccessReviewEntryIncrementalTagCount!]!
 }
 
 type AccessReviewEntryDecisionCount {
@@ -532,11 +527,6 @@ type AccessReviewEntryDecisionCount {
 
 type AccessReviewEntryFlagCount {
     flag: AccessReviewEntryFlag!
-    count: Int!
-}
-
-type AccessReviewEntryIncrementalTagCount {
-    incrementalTag: AccessReviewEntryIncrementalTag!
     count: Int!
 }
 
@@ -591,12 +581,19 @@ extend type Mutation {
 input CreateAccessReviewSourceInput {
     organizationId: ID!
     connectorId: ID
+    connectorAccountId: ID
     name: String!
     csvData: String
 }
 
 type CreateAccessReviewSourcePayload {
     accessReviewSourceEdge: AccessReviewSourceEdge!
+    """
+    created is false when a source already existed for the requested
+    connector account: creation is idempotent per connector account, and
+    the existing source is returned instead of a duplicate.
+    """
+    created: Boolean!
 }
 
 input UpdateAccessReviewSourceInput {

@@ -4,6 +4,63 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.13.0] - 2026-09-16
+
+### Removed
+
+- `common-third-party merge` no longer reports relinked org tracker
+  patterns, since patterns no longer link to an org third party
+
+## [0.12.0] - 2026-08-25
+
+### Added
+
+- `common-third-party list --with-patterns` shows each entry's tracker pattern keys grouped by storage kind, to help judge whether a row is a real vendor
+- `common-third-party show` / `list` display the review verdict (e.g. `REJECTED -> FIRST_PARTY`)
+
+### Fixed
+
+- `common-third-party prune` no longer offers to delete a catalog entry that has already been reviewed
+- Removed a duplicate PowerLinks seed entry that was re-added on every reseed
+
+## [0.11.0] - 2026-08-24
+
+### Added
+
+- `proboctl common-third-party review <slug> --verdict <VALIDATED|REJECTED>` — record a human review verdict on a catalog entry, and `--review <state>` on `list` to filter by review state so the backlog can be worked through
+
+### Changed
+
+- Seeded catalog entries are now marked reviewed on load, so the review backlog reflects only rows that actually need a human look instead of the whole catalog
+
+### Fixed
+
+- A verdict recorded by `common-third-party review` could be silently overwritten by a concurrent tracker-mapping run; the read is now locked against it
+- The Microsoft catalog entry was seeded under the wrong category (`ANALYTICS` instead of `OTHER`), and a duplicate Tawk.to entry was removed
+
+## [0.10.0] - 2026-08-19
+
+### Added
+
+- `proboctl common-third-party merge --into <winner> <loser>...` — fold duplicate catalog entries into one, repointing patterns, third parties, and domains and deleting the losers, across every tenant that references them
+- `proboctl common-third-party find-duplicates` and `prune` — score and group likely catalog duplicates by name/domain/prefix signals, and delete catalog entries nothing references
+- `mark-not-attributable` beside `mark-first-party` on `common-tracker-pattern`, for tracker keys that belong to neither the operator nor a vendor (browser extensions, other visitor-installed software)
+- `--pattern-keyword` on `common-tracker-pattern list`/`reenrich`/`link`/`unlink`/`mark-first-party`/`mark-not-attributable` — matches the pattern key only, so a selection stays stable across actions that blank the agent-written description
+
+### Changed
+
+- A catalog merge now re-triggers organization backfill and re-enrichment for tracker patterns left pointing at a description written for the merged-away vendor
+- Duplicate-winner selection breaks ties on name quality and enrichment completeness instead of creation time, and no longer strips country/region qualifiers from names before comparing them
+
+### Fixed
+
+- `prune`, the mark commands, and `common-third-party rename --reenrich` no longer race with concurrent enrichment: overlapping runs could delete a freshly-enriched row, re-arm enrichment on an already-settled row, or report rename success before the second write committed
+- Merge previews now run the actual merge sequence in a rollback-only transaction instead of predicting it, so reported collision and relink counts match what the merge does
+- `--min-score` and `prune --limit` reject invalid or out-of-range values instead of silently falling back to unsafe defaults (0, negative, or NaN could suppress or delete everything)
+- `--pattern-keyword` values are escaped before use in the pattern match, closing a hole where `%` matched the entire catalog
+- `prune` no longer skips every entry that has a domain — enrichment gives almost every entry one, which had made unwanted entries permanently unremovable
+- The common-third-party seed no longer risks moving a vendor's domains onto a different row on reload; 23 domains previously claimed by more than one catalog entry are now uniquely assigned, and duplicate/non-vendor seed entries are merged or removed
+
 ## [0.9.0] - 2026-08-05
 
 ### Added

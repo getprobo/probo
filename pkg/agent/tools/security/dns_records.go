@@ -150,10 +150,8 @@ func withDNSSEC() queryOption {
 
 func queryDNS(ctx context.Context, client *dns.Client, question dns.RR, opts ...queryOption) ([]dns.RR, error) {
 	msg := &dns.Msg{
-		MsgHeader: dns.MsgHeader{
-			ID:               dns.ID(),
-			RecursionDesired: true,
-		},
+		ID:               dns.ID(),
+		RecursionDesired: true,
 	}
 	for _, opt := range opts {
 		opt(&msg.MsgHeader)

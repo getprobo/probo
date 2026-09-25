@@ -35,7 +35,12 @@ func pagerdutyRegistration() *Registration {
 	// occasionally in the token response body) and is persisted on
 	// PagerDutyConnectorSettings by the OAuth callback handler.
 	return &Registration{
-		Provider:    coredata.ConnectorProviderPagerDuty,
+		Provider: coredata.ConnectorProviderPagerDuty,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.PagerDutyConnectorSettings) string {
+				return s.Subdomain
+			},
+		),
 		DisplayName: "PagerDuty",
 		Endpoints: Endpoints{
 			Auth:  "https://identity.pagerduty.com/oauth/authorize",
@@ -45,8 +50,10 @@ func pagerdutyRegistration() *Registration {
 			// the identity.pagerduty.com OAuth endpoints above.
 			APIBase: "https://api.pagerduty.com",
 		},
-		OAuth2Scopes: []string{"users.read"},
-		RequiresPKCE: true,
+		OAuth2: &OAuth2Config{
+			Scopes:       []string{"users.read"},
+			RequiresPKCE: true,
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			// PagerDuty's REST API uses the regional api.pagerduty.com host;
 			// the driver does not consume the per-tenant subdomain.

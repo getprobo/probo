@@ -206,6 +206,50 @@ LIMIT 1
 	return nil
 }
 
+func (ss *RiskAnalysisDiagrams) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	diagramIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	risk_analysis_id,
+	name,
+	created_at,
+	updated_at
+FROM
+	risk_analysis_diagrams
+WHERE
+	%s
+	AND id = ANY(@diagram_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"diagram_ids": diagramIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risk analysis diagrams: %w", err)
+	}
+
+	diagrams, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAnalysisDiagram])
+	if err != nil {
+		return fmt.Errorf("cannot collect risk analysis diagrams: %w", err)
+	}
+
+	*ss = diagrams
+
+	if len(diagrams) != len(gid.NewSet(diagramIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (s *RiskAnalysisDiagram) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
 INSERT INTO risk_analysis_diagrams (

@@ -12,6 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+
 type OAuthClientBrandingSectionProps = {
   name: string;
   logoDownloadUrl?: string | null;
@@ -33,25 +37,31 @@ export function OAuthClientBrandingSection({
 }: OAuthClientBrandingSectionProps) {
   return (
     <div className="flex flex-col items-center gap-3 text-center">
-      {logoDownloadUrl && (
-        <img
-          src={logoDownloadUrl}
-          alt=""
-          className="h-12 w-auto max-w-[180px] object-contain"
-        />
-      )}
+      {logoDownloadUrl
+        ? (
+            <img
+              src={logoDownloadUrl}
+              alt=""
+              className="h-12 w-auto max-w-45 object-contain"
+            />
+          )
+        : (
+            <Avatar size={4} fallback={name.slice(0, 1)} />
+          )}
 
-      <p className="text-lg font-semibold">{name}</p>
+      <Text size={4} weight="medium" highContrast className="block">
+        {name}
+      </Text>
 
       {clientURL && (
-        <a
+        <Anchor
           href={clientURL}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-txt-tertiary hover:text-txt-primary transition-colors"
+          size={2}
         >
           {clientURLHost(clientURL)}
-        </a>
+        </Anchor>
       )}
     </div>
   );

@@ -1,0 +1,33 @@
+{
+  "title": "Handtekeningen",
+  "breadcrumb": "Handtekeningen",
+  "pending": {
+    "heading": "Wachtend op uw handtekening ({{count}})",
+    "summaryTitle_one": "{{count}} document om te ondertekenen",
+    "summaryTitle_other": "{{count}} documenten om te ondertekenen",
+    "summaryDescription": "Bekijk en onderteken de documenten die nodig zijn om uw medewerkersinstelling te voltooien.",
+    "action": "Beginnen met ondertekenen",
+    "itemAction": "Ondertekenen"
+  },
+  "history": {
+    "heading": "Ondertekend ({{count}})"
+  },
+  "empty": {
+    "none": {
+      "title": "Nog geen handtekeningverzoeken",
+      "description": "Documenten die uw handtekening nodig hebben, verschijnen hier."
+    },
+    "allDone": {
+      "title": "U bent klaar",
+      "description": "U bent up-to-date. Eerder ondertekende documenten staan hieronder."
+    }
+  },
+  "document": {
+    "instruction": "Bekijk dit document voordat u het ondertekent.",
+    "reviewAndSign": "Bekijken en ondertekenen",
+    "signed": "U heeft dit document ondertekend.",
+    "goToNext": "Naar het volgende document",
+    "finish": "Ondertekenen afronden",
+    "backToList": "Terug naar handtekeningen"
+  }
+}

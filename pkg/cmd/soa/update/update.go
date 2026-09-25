@@ -50,10 +50,7 @@ type updateResponse struct {
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
-	var (
-		flagName  string
-		flagOwner string
-	)
+	var flagName string
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
@@ -86,14 +83,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["name"] = flagName
 			}
 
-			if cmd.Flags().Changed("owner") {
-				if flagOwner == "" {
-					input["ownerId"] = nil
-				} else {
-					input["ownerId"] = flagOwner
-				}
-			}
-
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -124,7 +113,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Name")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
 
 	return cmd
 }

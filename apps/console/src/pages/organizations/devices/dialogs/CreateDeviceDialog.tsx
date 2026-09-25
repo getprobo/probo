@@ -38,7 +38,7 @@ import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
 
-import { EnrollmentInstructions } from "../../employee/_components/EnrollmentInstructions";
+import { EnrollmentInstructions } from "../_components/EnrollmentInstructions";
 
 const createDeviceMutation = graphql`
   mutation CreateDeviceDialogMutation($input: CreateDeviceInput!) {

@@ -1,0 +1,426 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { formatError } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { Button, Input, PageHeader, useToast } from "@probo/ui";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { PreloadedQuery } from "react-relay";
+import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { Link, useSearchParams } from "react-router";
+
+import type { AccessReviewConnectionsPageFragment$key } from "#/__generated__/core/AccessReviewConnectionsPageFragment.graphql";
+import type { AccessReviewConnectionsPagePaginationQuery } from "#/__generated__/core/AccessReviewConnectionsPagePaginationQuery.graphql";
+import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
+import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
+import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
+
+import {
+  AccessReviewSourceProviderListItem,
+} from "./_components/AccessReviewSourceProviderListItem";
+import { accessReviewSourceSection } from "./_components/variants";
+
+function clearOAuthCallbackParams(params: URLSearchParams) {
+  params.delete("connector_id");
+  params.delete("provider");
+  params.delete("error");
+  return params;
+}
+
+export const accessReviewConnectionsPageQuery = graphql`
+  query AccessReviewConnectionsPageQuery($organizationId: ID!) {
+    accessReviewDrivers {
+      provider
+      displayName
+      ...AccessReviewSourceProviderListItem_provider
+    }
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        canCreateSource: permission(action: "access-review:source:create")
+        ...AccessReviewConnectionsPageFragment
+      }
+    }
+  }
+`;
+
+const sourcesFragment = graphql`
+  fragment AccessReviewConnectionsPageFragment on Organization
+  @refetchable(queryName: "AccessReviewConnectionsPagePaginationQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: {
+      type: "AccessReviewSourceOrder"
+      defaultValue: { direction: DESC, field: CREATED_AT }
+    }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    accessReviewSources(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "AccessReviewConnectionsPage_accessReviewSources") {
+      __id
+      edges {
+        node {
+          id
+          name
+          connector {
+            provider
+          }
+          ...AccessReviewSourceListItem_source
+        }
+      }
+    }
+  }
+`;
+
+interface AccessReviewConnectionsPageProps {
+  queryRef: PreloadedQuery<AccessReviewConnectionsPageQuery>;
+}
+
+export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnectionsPageProps) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const organizationId = useOrganizationId();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+  const processedConnectorIdRef = useRef<string | null>(null);
+
+  usePageTitle(t("accessReviewConnectionsPage.title"));
+
+  const { organization, accessReviewDrivers } = usePreloadedQuery<AccessReviewConnectionsPageQuery>(
+    accessReviewConnectionsPageQuery,
+    queryRef,
+  );
+  if (organization.__typename !== "Organization") {
+    throw new Error("Organization not found");
+  }
+
+  const {
+    data: { accessReviewSources },
+    loadNext,
+    hasNext,
+    isLoadingNext,
+  } = usePaginationFragment<
+    AccessReviewConnectionsPagePaginationQuery,
+    AccessReviewConnectionsPageFragment$key
+  >(sourcesFragment, organization);
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const isSearching = normalizedSearch !== "";
+  // accessReviewSources has no server-side filter, so the search matches only
+  // the pages already in the store. Pull the remaining ones while a search is
+  // active, otherwise a source past the first page is reported as absent.
+  // hasNext stays true when a page fails to load, so the failing term is
+  // latched to stop the effect from retrying in a loop; the load-more button
+  // stays available on that term to retry, and success clears the latch.
+  const [failedSearch, setFailedSearch] = useState<string | null>(null);
+  const loadMoreSources = useCallback(() => {
+    loadNext(50, {
+      onComplete: error => setFailedSearch(error ? normalizedSearch : null),
+    });
+  }, [loadNext, normalizedSearch]);
+  const hasFailedSearchLoad
+    = isSearching && hasNext && failedSearch === normalizedSearch;
+  const isLoadingRemainingSources
+    = isSearching && hasNext && !hasFailedSearchLoad;
+  useEffect(() => {
+    if (!isLoadingRemainingSources || isLoadingNext) return;
+    loadMoreSources();
+  }, [isLoadingRemainingSources, isLoadingNext, loadMoreSources]);
+  const filteredSources = useMemo(
+    () => accessReviewSources.edges.filter(({ node }) => {
+      if (!normalizedSearch) return true;
+      return node.name.toLowerCase().includes(normalizedSearch)
+        || (node.connector?.provider
+          ?.replaceAll("_", " ")
+          .toLowerCase()
+          .includes(normalizedSearch) ?? false);
+    }),
+    [accessReviewSources.edges, normalizedSearch],
+  );
+  const availableProviders = useMemo(
+    () => accessReviewDrivers
+      .filter(provider =>
+        !normalizedSearch
+        || provider.displayName.toLowerCase().includes(normalizedSearch)
+        || provider.provider
+          .replaceAll("_", " ")
+          .toLowerCase()
+          .includes(normalizedSearch),
+      )
+      .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    [accessReviewDrivers, normalizedSearch],
+  );
+  const showCSV = !normalizedSearch
+    || "csv".includes(normalizedSearch)
+    || t("addAccessReviewSourceDialog.csv.title")
+      .toLowerCase()
+      .includes(normalizedSearch);
+
+  const [createAccessReviewSource, isCreatingSource]
+    = useMutation<accessReviewSourceMutationsCreateMutation>(
+      createAccessReviewSourceMutation,
+    );
+
+  // Handle OAuth callback: ensure an access source exists for the
+  // returned connector_id. Creation is idempotent server-side (a
+  // reconnect resolves to the existing source, created=false), so the
+  // page always asks. Missing scopes arrive as a backend error query
+  // param.
+  const callbackConnectorId = searchParams.get("connector_id");
+  const callbackProvider = searchParams.get("provider");
+  const callbackError = searchParams.get("error");
+
+  useEffect(() => {
+    if (!callbackConnectorId) {
+      // Provider-denied OAuth errors redirect with an error and no
+      // connector_id; toast rather than leaving it latched in the URL.
+      if (callbackError) {
+        toast({
+          title: t("accessReviewConnectionsPage.messages.error"),
+          description: callbackError,
+          variant: "error",
+        });
+        setSearchParams(clearOAuthCallbackParams, { replace: true });
+      }
+      return;
+    }
+
+    if (processedConnectorIdRef.current === callbackConnectorId || isCreatingSource) {
+      return;
+    }
+    processedConnectorIdRef.current = callbackConnectorId;
+
+    const providerInfo = callbackProvider
+      ? accessReviewDrivers.find(p => p.provider === callbackProvider)
+      : null;
+    const sourceName = providerInfo?.displayName ?? callbackProvider ?? "Source";
+
+    createAccessReviewSource({
+      variables: {
+        input: {
+          organizationId,
+          connectorId: callbackConnectorId,
+          name: sourceName,
+          csvData: null,
+        },
+      },
+      updater: store => prependCreatedSourceEdge(store, accessReviewSources.__id),
+      onCompleted(data, errors) {
+        if (errors?.length) {
+          processedConnectorIdRef.current = null;
+          setSearchParams(clearOAuthCallbackParams, { replace: true });
+          toast({
+            title: t("accessReviewConnectionsPage.messages.error"),
+            description: formatError(
+              t("accessReviewConnectionsPage.errors.create"),
+              errors,
+            ),
+            variant: "error",
+          });
+          return;
+        }
+        if (callbackError) {
+          toast({
+            title: t("accessReviewConnectionsPage.messages.error"),
+            description: callbackError,
+            variant: "error",
+          });
+        } else if (data.createAccessReviewSource.created) {
+          toast({
+            title: t("accessReviewConnectionsPage.messages.success"),
+            description: t("accessReviewConnectionsPage.messages.created"),
+            variant: "success",
+          });
+        }
+        processedConnectorIdRef.current = null;
+        setSearchParams(clearOAuthCallbackParams, { replace: true });
+      },
+      onError(error) {
+        processedConnectorIdRef.current = null;
+        setSearchParams(clearOAuthCallbackParams, { replace: true });
+        toast({
+          title: t("accessReviewConnectionsPage.messages.error"),
+          description: formatError(
+            t("accessReviewConnectionsPage.errors.create"),
+            error,
+          ),
+          variant: "error",
+        });
+      },
+    });
+  }, [
+    callbackConnectorId,
+    callbackProvider,
+    callbackError,
+    accessReviewDrivers,
+    createAccessReviewSource,
+    isCreatingSource,
+    organizationId,
+    accessReviewSources.__id,
+    setSearchParams,
+    toast,
+    t,
+  ]);
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={t("accessReviewConnectionsPage.title")}
+        description={t("accessReviewConnectionsPage.description")}
+      />
+
+      <div className="flex flex-col gap-8">
+        <Input
+          value={searchQuery}
+          onChange={event => setSearchQuery(event.target.value)}
+          placeholder={t("accessReviewConnectionsPage.searchPlaceholder")}
+          className="max-w-sm"
+        />
+
+        <SourceSection
+          title={t("accessReviewConnectionsPage.sections.connected")}
+          count={filteredSources.length}
+          empty={isLoadingRemainingSources
+            ? t("accessReviewConnectionsPage.actions.loading")
+            : hasFailedSearchLoad
+              ? t("accessReviewConnectionsPage.searchLoadFailed")
+              : isSearching
+                ? t("accessReviewConnectionsPage.emptyConnectedSearch")
+                : t("accessReviewConnectionsPage.emptyConnected")}
+        >
+          {filteredSources.map(({ node }) => (
+            <AccessReviewSourceListItem
+              key={node.id}
+              sourceKey={node}
+              connectionId={accessReviewSources.__id}
+              organizationId={organizationId}
+            />
+          ))}
+        </SourceSection>
+
+        {hasNext && (!isSearching || hasFailedSearchLoad) && (
+          <Button
+            variant="secondary"
+            onClick={loadMoreSources}
+            disabled={isLoadingNext}
+            className="self-start"
+          >
+            {isLoadingNext
+              ? t("accessReviewConnectionsPage.actions.loading")
+              : hasFailedSearchLoad
+                ? t("accessReviewConnectionsPage.actions.retry")
+                : t("accessReviewConnectionsPage.actions.loadMore")}
+          </Button>
+        )}
+
+        {organization.canCreateSource && (
+          <SourceSection
+            title={t("accessReviewConnectionsPage.sections.available")}
+            count={availableProviders.length + (showCSV ? 1 : 0)}
+            empty={t("accessReviewConnectionsPage.emptyAvailableSearch")}
+          >
+            {availableProviders.map(provider => (
+              <AccessReviewSourceProviderListItem
+                key={provider.provider}
+                providerKey={provider}
+                organizationId={organizationId}
+                connectionId={accessReviewSources.__id}
+              />
+            ))}
+            {showCSV && (
+              <CSVSourceListItem organizationId={organizationId} />
+            )}
+          </SourceSection>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SourceSection({
+  title,
+  count,
+  empty,
+  children,
+}: {
+  title: string;
+  count: number;
+  empty: string;
+  children: ReactNode;
+}) {
+  const { root, header, title: titleClass, count: countClass, list, item }
+    = accessReviewSourceSection();
+
+  return (
+    <section className={root()}>
+      <div className={header()}>
+        <h2 className={titleClass()}>{title}</h2>
+        <span className={countClass()}>{count}</span>
+      </div>
+      <ul className={list()}>
+        {count > 0
+          ? children
+          : (
+              <li className={item()}>
+                <span className="text-sm text-txt-tertiary">{empty}</span>
+              </li>
+            )}
+      </ul>
+    </section>
+  );
+}
+
+function CSVSourceListItem({ organizationId }: { organizationId: string }) {
+  const { t } = useTranslation();
+  const { item, content, trailing } = accessReviewSourceSection();
+
+  return (
+    <li className={item()}>
+      <div className={content()}>
+        <span className="text-sm font-medium text-txt-primary">
+          {t("addAccessReviewSourceDialog.csv.title")}
+        </span>
+        <span className="text-xs text-txt-tertiary">
+          {t("addAccessReviewSourceDialog.csv.description")}
+        </span>
+      </div>
+      <div className={trailing()}>
+        <Button variant="primary" asChild>
+          <Link
+            to={`/organizations/${organizationId}/access-reviews/connections/new/csv`}
+          >
+            {t("addAccessReviewSourceDialog.actions.open")}
+          </Link>
+        </Button>
+      </div>
+    </li>
+  );
+}

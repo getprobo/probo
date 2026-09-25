@@ -53,16 +53,7 @@ func RightsRequestOrderFields() []RightsRequestOrderField {
 }
 
 func (v RightsRequestOrderField) IsValid() bool {
-	switch v {
-	case
-		RightsRequestOrderFieldCreatedAt,
-		RightsRequestOrderFieldDeadline,
-		RightsRequestOrderFieldState,
-		RightsRequestOrderFieldType:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, RightsRequestOrderFields())
 }
 
 func (v RightsRequestOrderField) String() string {
@@ -74,14 +65,7 @@ func (v RightsRequestOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *RightsRequestOrderField) UnmarshalText(text []byte) error {
-	val := RightsRequestOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid RightsRequestOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, RightsRequestOrderFields())
 }
 
 func (p RightsRequestOrderField) Column() string {

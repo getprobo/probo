@@ -51,12 +51,7 @@ func AiSystemOrderFields() []AiSystemOrderField {
 }
 
 func (v AiSystemOrderField) IsValid() bool {
-	switch v {
-	case AiSystemOrderFieldCreatedAt, AiSystemOrderFieldName, AiSystemOrderFieldStatus:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AiSystemOrderFields())
 }
 
 func (v AiSystemOrderField) String() string {
@@ -68,14 +63,7 @@ func (v AiSystemOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *AiSystemOrderField) UnmarshalText(text []byte) error {
-	val := AiSystemOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AiSystemOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AiSystemOrderFields())
 }
 
 func (p AiSystemOrderField) Column() string {

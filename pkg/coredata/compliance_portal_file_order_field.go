@@ -53,15 +53,7 @@ func CompliancePortalFileOrderFields() []CompliancePortalFileOrderField {
 }
 
 func (v CompliancePortalFileOrderField) IsValid() bool {
-	switch v {
-	case
-		CompliancePortalFileOrderFieldName,
-		CompliancePortalFileOrderFieldCreatedAt,
-		CompliancePortalFileOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CompliancePortalFileOrderFields())
 }
 
 func (v CompliancePortalFileOrderField) String() string {
@@ -73,14 +65,7 @@ func (v CompliancePortalFileOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CompliancePortalFileOrderField) UnmarshalText(text []byte) error {
-	val := CompliancePortalFileOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CompliancePortalFileOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CompliancePortalFileOrderFields())
 }
 
 func (p CompliancePortalFileOrderField) Column() string {

@@ -18,8 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { registerCookieBanner } from "./themed-banner";
+export {
+  getLayoutRenderer,
+  getTCFRuntime,
+  setLayoutRenderer,
+  setTCFRuntime,
+} from "./addons";
+export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "./addons";
+export { BRANDING, CLOSE_ICON } from "./html";
 export { resolveBannerText, resolveLayout } from "./layout";
+export { projectConsentFromTCF } from "./project-consent";
+export { interpolate } from "./i18n";
+export { registerCookieBanner } from "./themed-banner";
+export { bootCookieBanner } from "./themed-banner/boot";
+export { esc, floatingCard } from "./themed-banner/variants/shared";
 export type {
   BannerConfig,
   BannerLayout,
@@ -33,5 +45,8 @@ export type {
   Presentation,
   Regulation,
   SettingsLinkStyle,
+  BannerTCF,
+  TCFGVL,
+  TCFGVLVendor,
   VisitorConsent,
 } from "./types";

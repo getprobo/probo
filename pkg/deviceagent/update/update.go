@@ -96,6 +96,10 @@ type (
 		// probo-agent release workflow.
 		Verifier Verifier
 
+		// AllowPrereleases includes GitHub prerelease tags when
+		// choosing an update. Production hosts leave this false.
+		AllowPrereleases bool
+
 		// GOOS/GOARCH override the values used to compute the
 		// archive name. They default to runtime.GOOS/GOARCH and
 		// exist for tests.
@@ -150,7 +154,14 @@ func (j *jsonTimestamp) UnmarshalJSON(b []byte) error {
 // sigstoreCacheDir is the on-disk directory used to cache Sigstore
 // TUF metadata for cosign bundle verification. It MUST be writable by
 // the agent. A typical value is `<agent state dir>/sigstore-cache`.
-func New(currentVersion, exePath, userAgent, sigstoreCacheDir string, logger *log.Logger) *Updater {
+func New(
+	currentVersion string,
+	exePath string,
+	userAgent string,
+	sigstoreCacheDir string,
+	allowPrereleases bool,
+	logger *log.Logger,
+) *Updater {
 	if logger == nil {
 		logger = log.NewLogger(log.WithName("agent-update"))
 	}
@@ -166,6 +177,7 @@ func New(currentVersion, exePath, userAgent, sigstoreCacheDir string, logger *lo
 		Logger:           logger,
 		HTTP:             defaultHTTPClient(logger),
 		SigstoreCacheDir: sigstoreCacheDir,
+		AllowPrereleases: allowPrereleases,
 		GOOS:             runtime.GOOS,
 		GOARCH:           runtime.GOARCH,
 	}
@@ -201,7 +213,11 @@ func (u *Updater) CheckLatest(ctx context.Context) (*Release, error) {
 
 	for i := range releases {
 		rel := &releases[i]
-		if rel.Draft || rel.Prerelease {
+		if rel.Draft {
+			continue
+		}
+
+		if rel.Prerelease && !u.AllowPrereleases {
 			continue
 		}
 
@@ -221,33 +237,12 @@ func (u *Updater) CheckLatest(ctx context.Context) (*Release, error) {
 			continue
 		}
 
-		assetURL, ok := findAssetURL(rel.Assets, layout.ArchiveName)
+		candidate, ok := releaseForLayout(rel, ver, layout)
 		if !ok {
 			continue
 		}
 
-		checksumURL, ok := findAssetURL(rel.Assets, checksumFileName)
-		if !ok {
-			continue
-		}
-
-		bundleURL, ok := findAssetURL(rel.Assets, checksumBundleFileName)
-		if !ok {
-			// Releases without a Sigstore bundle predate the
-			// signed-release pipeline and cannot be verified.
-			// Skip them so the agent never auto-installs an
-			// unsigned artifact.
-			continue
-		}
-
-		best = &Release{
-			Version:           ver,
-			Tag:               rel.TagName,
-			AssetName:         layout.ArchiveName,
-			AssetURL:          assetURL,
-			ChecksumURL:       checksumURL,
-			ChecksumBundleURL: bundleURL,
-		}
+		best = candidate
 	}
 
 	if best == nil {
@@ -257,14 +252,108 @@ func (u *Updater) CheckLatest(ctx context.Context) (*Release, error) {
 	return best, nil
 }
 
+func releaseForLayout(
+	rel *githubRelease,
+	version string,
+	layout AssetLayout,
+) (*Release, bool) {
+	assetURL, ok := findAssetURL(rel.Assets, layout.ArchiveName)
+	if !ok {
+		return nil, false
+	}
+
+	checksumURL, ok := findAssetURL(rel.Assets, checksumFileName)
+	if !ok {
+		return nil, false
+	}
+
+	bundleURL, ok := findAssetURL(rel.Assets, checksumBundleFileName)
+	if !ok {
+		return nil, false
+	}
+
+	return &Release{
+		Version:           version,
+		Tag:               rel.TagName,
+		AssetName:         layout.ArchiveName,
+		AssetURL:          assetURL,
+		ChecksumURL:       checksumURL,
+		ChecksumBundleURL: bundleURL,
+	}, true
+}
+
+// EnsureGUIBinary installs the Windows GUI companion when it is missing.
+// NOTE: Remove this migration and currentRelease after all supported
+// installs include probo-agentw.exe.
+func (u *Updater) EnsureGUIBinary(ctx context.Context) error {
+	if u.ExePath == "" {
+		return errors.New("agent executable path is empty")
+	}
+
+	layout, err := LayoutFor(u.goos(), u.goarch())
+	if err != nil {
+		return err
+	}
+
+	if layout.GUIBinaryName == "" {
+		return nil
+	}
+
+	guiExePath := filepath.Join(filepath.Dir(u.ExePath), layout.GUIBinaryName)
+	if _, err := os.Stat(guiExePath); err == nil {
+		return nil
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("cannot inspect GUI agent binary: %w", err)
+	}
+
+	rel, err := u.currentRelease(ctx, layout)
+	if err != nil {
+		return err
+	}
+
+	return u.apply(ctx, rel, false)
+}
+
+func (u *Updater) currentRelease(ctx context.Context, layout AssetLayout) (*Release, error) {
+	releases, err := u.listReleases(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	current := normalizeSemver(u.CurrentVersion)
+
+	for i := range releases {
+		rel := &releases[i]
+		if rel.Draft {
+			continue
+		}
+
+		version, ok := parseTag(rel.TagName, u.TagPrefix)
+		if !ok || normalizeSemver(version) != current {
+			continue
+		}
+
+		if candidate, ok := releaseForLayout(rel, version, layout); ok {
+			return candidate, nil
+		}
+	}
+
+	return nil, fmt.Errorf("cannot find signed release %s%s", u.TagPrefix, u.CurrentVersion)
+}
+
 // Apply downloads the release archive, verifies the Sigstore bundle
 // covering checksums.txt, verifies the SHA-256 of the archive against
 // the now-trusted checksums.txt, extracts the binary to a temp
-// directory, and atomically replaces u.ExePath with the new binary.
+// directory, and replaces the installed binaries.
 //
 // Failure at *any* verification step aborts the update without
 // touching the running binary.
 func (u *Updater) Apply(ctx context.Context, rel *Release) error {
+	return u.apply(ctx, rel, true)
+}
+
+// NOTE: Remove replaceConsole after the EnsureGUIBinary migration is removed.
+func (u *Updater) apply(ctx context.Context, rel *Release, replaceConsole bool) error {
 	if rel == nil {
 		return errors.New("nil release")
 	}
@@ -325,17 +414,41 @@ func (u *Updater) Apply(ctx context.Context, rel *Release) error {
 		return fmt.Errorf("cannot extract archive: %w", err)
 	}
 
-	if err := ensureSignatureCompatible(ctx, u.Logger, u.ExePath, extractedBinary); err != nil {
-		return fmt.Errorf("cannot verify code signature compatibility: %w", err)
+	var extractedGUIBinary string
+	if layout.GUIBinaryName != "" {
+		extractedGUIBinary, err = extractGUIBinary(archivePath, layout, workDir)
+		if err != nil {
+			return fmt.Errorf("cannot extract GUI binary: %w", err)
+		}
 	}
 
-	if err := replaceBinary(u.ExePath, extractedBinary); err != nil {
-		return fmt.Errorf("cannot replace agent binary: %w", err)
+	if replaceConsole {
+		if err := ensureSignatureCompatible(ctx, u.Logger, u.ExePath, extractedBinary); err != nil {
+			return fmt.Errorf("cannot verify code signature compatibility: %w", err)
+		}
+	}
+
+	if extractedGUIBinary != "" {
+		guiExePath := filepath.Join(filepath.Dir(u.ExePath), layout.GUIBinaryName)
+		if err := replaceBinary(guiExePath, extractedGUIBinary); err != nil {
+			return fmt.Errorf("cannot replace GUI agent binary: %w", err)
+		}
+	}
+
+	if replaceConsole {
+		if err := replaceBinary(u.ExePath, extractedBinary); err != nil {
+			return fmt.Errorf("cannot replace agent binary: %w", err)
+		}
+	}
+
+	message := "agent binaries updated"
+	if !replaceConsole {
+		message = "agent GUI binary installed"
 	}
 
 	u.Logger.InfoCtx(
 		ctx,
-		"agent binary updated",
+		message,
 		log.String("version", rel.Version),
 		log.String("tag", rel.Tag),
 		log.String("asset", rel.AssetName),

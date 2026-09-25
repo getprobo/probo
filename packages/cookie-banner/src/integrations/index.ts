@@ -21,11 +21,38 @@
 export type { ConsentIntegration } from "./integration";
 export { GoogleConsentModeIntegration } from "./gcm";
 
+import type { IntegrationConfig } from "../types";
 import type { ConsentIntegration } from "./integration";
 import { GoogleConsentModeIntegration } from "./gcm";
 
-export function createDefaultIntegrations(): ConsentIntegration[] {
+export function createDefaultIntegrations(
+  configs?: IntegrationConfig[],
+): ConsentIntegration[] {
+  const gcm = configs?.find((config) => config.name === "gcm");
+  if (gcm?.enabled === false) {
+    return [];
+  }
+
   return [
     new GoogleConsentModeIntegration(),
   ];
+}
+
+export function resolveGcmEnabled(value: string | null): boolean {
+  if (value == null) {
+    return true;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") {
+    return true;
+  }
+  if (normalized === "false") {
+    return false;
+  }
+
+  console.warn(
+    `[probo] invalid gcm-enabled value "${value}": expected "true" or "false", falling back to enabled`,
+  );
+  return true;
 }

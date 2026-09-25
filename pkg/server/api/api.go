@@ -31,9 +31,12 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -43,9 +46,13 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -55,41 +62,64 @@ import (
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
+	linear_v1 "go.probo.inc/probo/pkg/server/api/linear/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type (
+	BotDeliveryDestinations = console_v1.BotDeliveryDestinations
+	ComplianceMessages      = console_v1.ComplianceMessages
+
 	Config struct {
-		BaseURL           *baseurl.BaseURL
-		AllowedOrigins    []string
-		Probo             *probo.Service
-		ResourceAlias     *resourcealias.Service
-		File              *filemanager.Service
-		IAM               *iam.Service
-		Visitor           *visitor.Service
-		ESign             *esign.Service
-		Management        *management.Service
-		CertManager       *certmanager.Service
-		AccessReview      *accessreview.Service
-		AgentRun          *agentrun.Service
-		Slack             *slack.Service
-		Mailman           *mailman.Service
-		CookieBanner      *cookiebanner.Service
-		Geoloc            *geoloc.Service
-		ThirdParty        *thirdparty.Service
-		RiskManagement    *riskmanagement.Service
-		ITAM              *itam.Service
-		Cookie            securecookie.Config
-		TokenSecret       string
-		ConnectorRegistry *connector.ConnectorRegistry
+		BaseURL                 *baseurl.BaseURL
+		AllowedOrigins          []string
+		Probo                   *probo.Service
+		ResourceAlias           *resourcealias.Service
+		File                    *filemanager.Service
+		IAM                     *iam.Service
+		Visitor                 *visitor.Service
+		ESign                   *esign.Service
+		Management              *management.Service
+		CertManager             *certmanager.Service
+		AccessReview            *accessreview.Service
+		AgentExecution          *agentexecution.Service
+		Slack                   *slack.Service
+		BotDeliveryDestinations BotDeliveryDestinations
+		ComplianceMessages      ComplianceMessages
+		Slackbot                *slackchannel.Service
+		SlackInteractiveInbox   *slackchannel.InteractiveCommandInbox
+		ProbotIdentityBindings  *identitybinding.Service
+		SlackbotInstallations   *slackchannel.InstallationService
+		ProbotCapabilities      *probot.CapabilityRegistry
+		Mailman                 *mailman.Service
+		CookieBanner            *cookiebanner.Service
+		Geoloc                  *geoloc.Service
+		ThirdParty              *thirdparty.Service
+		RiskManagement          *riskmanagement.Service
+		ITAM                    *itam.Service
+		Task                    *task.Service
+		Cookie                  securecookie.Config
+		TokenSecret             string
+		// InstallStateKey signs the app-install state tokens the connector
+		// install ceremony carries across the vendor.
+		InstallStateKey   string
+		ConnectorRegistry *connector.Registry
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
 		GraphQLLimits     gqlutils.Limits
 		Logger            *log.Logger
+
+		// IdentityFederationIssuer is nil when identity federation is disabled.
+		IdentityFederationIssuer *identityfederation.Issuer
+		AWSConnectorInstall      cloudaws.ConnectorInstallConfig
+		GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
+		AzureConnectorInstall    cloudazure.ConnectorInstallConfig
+		LinearWebhookSecret      string
 	}
 
 	MCPConfig struct {
@@ -106,6 +136,7 @@ type (
 		filesHandler        http.Handler
 		mcpHandler          http.Handler
 		slackHandler        http.Handler
+		linearHandler       http.Handler
 		connectHandler      http.Handler
 		agentHandler        http.Handler
 	}
@@ -116,6 +147,7 @@ var (
 	ErrMissingIAMService     = errors.New("server configuration requires a valid iam.Service instance")
 	ErrMissingSlackService   = errors.New("server configuration requires a valid slack.Service instance")
 	ErrMissingITAMService    = errors.New("server configuration requires a valid itam.Service instance")
+	ErrMissingTaskService    = errors.New("server configuration requires a valid task.Service instance")
 	ErrMissingMailmanService = errors.New("server configuration requires a valid mailman.Service instance")
 )
 
@@ -160,6 +192,10 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingITAMService
 	}
 
+	if cfg.Task == nil {
+		return nil, ErrMissingTaskService
+	}
+
 	if cfg.Mailman == nil {
 		return nil, ErrMissingMailmanService
 	}
@@ -175,6 +211,10 @@ func NewServer(cfg Config) (*Server, error) {
 	// POSTs from external identity providers by design.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
 
+	// Linear webhooks are signed POSTs from Linear's servers. Authentication
+	// is HMAC, not cookies, so CSRF does not apply.
+	csrf.AddInsecureBypassPattern("POST /linear/v1/webhooks")
+
 	// The cookie banner API is called cross-origin from customer websites
 	// by the JS SDK. CORS is handled by the cookie banner middleware.
 	// GET and OPTIONS are safe methods (always allowed), but we bypass
@@ -188,7 +228,30 @@ func NewServer(cfg Config) (*Server, error) {
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/revoke")
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/device")
 
+	// MCP is a bearer-token API called by external clients (ChatGPT, Claude,
+	// Composio, IDEs). Authentication is the Authorization header, not
+	// cookies, so CSRF does not apply. Clients send Sec-Fetch-Site:
+	// cross-site by design.
+	csrf.AddInsecureBypassPattern("POST /mcp/v1")
+	csrf.AddInsecureBypassPattern("POST /mcp/v1/{rest...}")
+	csrf.AddInsecureBypassPattern("DELETE /mcp/v1")
+	csrf.AddInsecureBypassPattern("DELETE /mcp/v1/{rest...}")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := httpserver.LoggerFromContext(r.Context())
+		if logger == nil {
+			logger = cfg.Logger
+		}
+
+		logger.WarnCtx(
+			r.Context(),
+			"cross-origin request denied",
+			log.String("path", r.URL.Path),
+			log.String("host", r.Host),
+			log.String("origin", r.Header.Get("Origin")),
+			log.String("sec_fetch_site", r.Header.Get("Sec-Fetch-Site")),
+		)
+
 		httpserver.RenderJSON(
 			w,
 			http.StatusForbidden,
@@ -210,11 +273,12 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Management,
 			cfg.CertManager,
 			cfg.AccessReview,
-			cfg.AgentRun,
+			cfg.AgentExecution,
 			cfg.Mailman,
 			cfg.CookieBanner,
 			cfg.Cookie,
 			cfg.TokenSecret,
+			cfg.InstallStateKey,
 			cfg.ConnectorRegistry,
 			cfg.ProviderRegistry,
 			cfg.File,
@@ -222,8 +286,17 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,
+			cfg.ProbotIdentityBindings,
+			cfg.SlackbotInstallations,
+			cfg.BotDeliveryDestinations,
+			cfg.ComplianceMessages,
 			cfg.GraphQLLimits,
 			cfg.ITAM,
+			cfg.Task,
+			cfg.IdentityFederationIssuer,
+			cfg.AWSConnectorInstall,
+			cfg.GCPConnectorInstall,
+			cfg.AzureConnectorInstall,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -251,15 +324,27 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.RiskManagement,
 			cfg.ITAM,
+			cfg.Task,
 			cfg.Mailman,
 			cfg.TokenSecret,
 			cfg.File,
 			cfg.BaseURL,
+			cfg.IdentityFederationIssuer,
+			cfg.AWSConnectorInstall,
+			cfg.GCPConnectorInstall,
+			cfg.AzureConnectorInstall,
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),
 			cfg.Slack,
-			cfg.Visitor,
+			cfg.SlackInteractiveInbox,
+			cfg.Slackbot,
+			cfg.SlackbotInstallations,
+		),
+		linearHandler: linear_v1.NewMux(
+			cfg.Logger.Named("linear.v1"),
+			cfg.Task.Sync,
+			cfg.LinearWebhookSecret,
 		),
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),
@@ -275,6 +360,7 @@ func NewServer(cfg Config) (*Server, error) {
 				cfg.Visitor.IsVerifiedRedirectHost,
 			),
 			cfg.GraphQLLimits,
+			cfg.SlackbotInstallations != nil,
 		),
 		agentHandler: agent_v1.NewMux(
 			cfg.Logger.Named("agent.v1"),
@@ -323,6 +409,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
 		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+		r.Mount("/linear/v1", http.StripPrefix("/linear/v1", s.linearHandler))
 	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)

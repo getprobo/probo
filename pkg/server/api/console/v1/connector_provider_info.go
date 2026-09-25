@@ -21,7 +21,9 @@
 package console_v1
 
 import (
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
@@ -39,6 +41,29 @@ func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.Co
 			Label:    s.Label,
 			Required: s.Required,
 		})
+	}
+
+	return out
+}
+
+// connectorAPIKeyFormat surfaces the shape a provider expects a pasted key to
+// have, so the connect form can check it as the customer leaves the field and
+// show it as the field's placeholder. Nil for a provider that declares none.
+func connectorAPIKeyFormat(reg *provider.Registration) *types.ConnectorAPIKeyFormat {
+	if reg.APIKey == nil || reg.APIKey.KeyFormat == nil {
+		return nil
+	}
+
+	return &types.ConnectorAPIKeyFormat{
+		Pattern: reg.APIKey.KeyFormat.Pattern.String(),
+		Example: reg.APIKey.KeyFormat.Example,
+	}
+}
+
+func connectorProtocols(protocols []connector.ProtocolType) []coredata.ConnectorProtocol {
+	out := make([]coredata.ConnectorProtocol, 0, len(protocols))
+	for _, protocol := range protocols {
+		out = append(out, coredata.ConnectorProtocol(protocol))
 	}
 
 	return out

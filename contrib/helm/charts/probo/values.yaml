@@ -176,6 +176,16 @@ probo:
   metrics:
     port: 8081
 
+  trustCenter:
+    # Use "external" when an external L7 proxy terminates TLS and forwards
+    # requests privately to service.httpPort. Probo's HTTPS port and all
+    # bundled HAProxy TCP passthrough are disabled in this mode.
+    # External mode also disables Probo ACME issuance and renewal. Preserve the
+    # requested Host and overwrite X-Forwarded-Proto at the proxy. Route
+    # {slug}.<baseDomain> or a domain already stored in Probo.
+    # Creating custom domains is unsupported and leaves them pending.
+    tlsMode: "direct"
+
   # OpenTelemetry tracing configuration
   tracing:
     enabled: false
@@ -194,6 +204,43 @@ probo:
     # Comma-separated HTTPS client metadata document URLs allowed for CIMD
     # OAuth clients (e.g. MCP connectors). Leave empty to disable CIMD.
     cimdAllowedClientIds: []
+
+  # Outbound OIDC issuer used to federate into customer cloud accounts.
+  # Disabled by default: it needs its own signing key and a publicly reachable
+  # issuer URL.
+  identityFederation:
+    enabled: false
+    # Base of the advertised issuer. Leave empty to serve the issuer at
+    # {baseUrl}/federation, which is what a self-hosted deployment uses.
+    # WARNING: this value becomes immutable once a customer registers it with
+    # their cloud provider. Changing it forces every customer to redeploy their
+    # own infrastructure.
+    issuerBaseUrl: ""
+    # REQUIRED when enabled: PEM-encoded RSA private key, separate from
+    # oauth2.signingKey.
+    # Generate with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+    signingKey: ""
+    # Key id published for signingKey. Name the keys before the first rotation:
+    # a retired key can only be told apart from the active one by its kid.
+    signingKeyKid: "default"
+    # Optional retired key. It never signs, it only stays published in the JWKS
+    # so a cloud provider holding a cached key set can still verify a token
+    # minted before a rotation. Rotate in three steps: set the new key here
+    # while signingKey still signs, then swap the two so the old key becomes the
+    # previous one, then clear these two once the token TTL (5 minutes) has
+    # elapsed.
+    previousSigningKey: ""
+    # REQUIRED when previousSigningKey is set, and it must differ from
+    # signingKeyKid.
+    previousSigningKeyKid: ""
+    # Public S3 HTTPS URL used to build the AWS console quick-create link.
+    cloudformationTemplateUrl: "https://probo-cloudformation-template.s3.us-east-2.amazonaws.com/aws-audit-role.yaml"
+    # Terraform module address copied into the AWS connector install snippet.
+    terraformModuleSource: "getprobo/audit-role/aws"
+    # Terraform module address copied into the GCP connector install snippet.
+    gcpTerraformModuleSource: "getprobo/audit-role/gcp"
+    # Terraform module address copied into the Azure connector install snippet.
+    azureTerraformModuleSource: "getprobo/audit-role/azurerm"
 
   # CORS configuration
   cors:
@@ -217,6 +264,13 @@ probo:
 
   # Show Probo branding
   branding: true
+
+  # Cookie banner instance settings
+  cookieBanner:
+    # IAB TCF CMP ID encoded in consent strings. 4095 is a placeholder
+    # until IAB Europe issues Probo a registered ID. Self-hosted
+    # instances that register their own CMP must set this to that ID.
+    tcfCmpId: 4095
 
   # Extra HTTP headers to add to responses
   extraHeaderFields: {}
@@ -289,12 +343,26 @@ probo:
 #      tlsRequired: false
 #      helloName: ""
 
+  # Outbound webhook delivery
+  webhook:
+    senderInterval: 5
+    requestTimeout: 15
+    cacheTTL: 86400
+    staleAfter: 300
+    retryBase: 30
+    retryMax: 14400
+    maxConcurrency: 5
+
   # OpenAI integration (optional)
   openai:
     apiKey: ""
     temperature: 0.1
     modelName: "gpt-4o"
     maxTokens: 4096
+
+  # Anthropic integration (optional; required when slackbot.provider is anthropic)
+  anthropic:
+    apiKey: ""
 
   # Agent tools (optional, shared across agents)
   agentTools:
@@ -316,15 +384,6 @@ probo:
     maxConcurrency: 1
     staleAfter: 1500
 
-  # Third-party disambiguation agent (optional; runs inside the tracker
-  # mapping worker to pick the best matching org third party). Falls back
-  # to trackerMapping when its provider is unset.
-  thirdPartyDisambiguation:
-    provider: ""
-    modelName: ""
-    temperature: ""
-    maxTokens: ""
-
   # Tracker mapping agent (optional, requires openai.apiKey or anthropic key)
   trackerMapping:
     provider: ""
@@ -341,16 +400,15 @@ probo:
     maxTokens: ""
 
   # Tracker mapping background worker tuning (optional). interval,
-  # staleAfter, agentTimeout, and disambiguationAgentTimeout are in
-  # seconds. Keep concurrency modest to stay under OpenAI/Firecrawl rate
-  # limits and the database connection pool.
+  # staleAfter, and agentTimeout are in seconds. Keep concurrency modest
+  # to stay under OpenAI/Firecrawl rate limits and the database connection
+  # pool.
   trackerMappingWorker:
     interval: 10
     maxConcurrency: 3
     staleAfter: 600
     agentTimeout: 45
     agentMaxTurns: 10
-    disambiguationAgentTimeout: 45
 
   # Common-pattern enrichment background worker tuning (optional).
   # interval, staleAfter, and agentTimeout are in seconds.
@@ -385,7 +443,27 @@ probo:
     confidenceThreshold: 0.7
     maxAttempts: 3
 
-  # Custom domains configuration (optional)
+  # Slackbot assistant and compliance notifications (optional). Each Slack
+  # workspace installs the app through OAuth. Events API URL:
+  # https://<baseUrl>/slack/v1/events
+  # Interactive URL: https://<baseUrl>/slack/v1/interactive
+  # Slash command Request URL: https://<baseUrl>/slack/v1/commands
+  # Create a /probot slash command on the Slackbot app pointing at that URL.
+  # OAuth requests the commands bot scope; reinstall after adding it.
+  # signingSecret must be the Slackbot app secret. Do not reuse the Slack
+  # connector signing secret when Slackbot is a separate Slack app.
+  slackbot:
+    enabled: false
+    signingSecret: ""
+    clientId: ""
+    clientSecret: ""
+    redirectUri: ""
+    provider: ""
+    modelName: ""
+    temperature: ""
+    maxTokens: ""
+
+  # Custom domains configuration (optional, direct TLS mode only)
   customDomains:
     enabled: false
     renewalInterval: 3600
@@ -410,6 +488,34 @@ probo:
   #     redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
   #     auth-url: "https://github.com/login/oauth/authorize"
   #     token-url: "https://github.com/login/oauth/access_token"
+  # - name: "github"
+  #   type: "github-app"
+  #   config:
+  #     # Enable "Request user authorization (OAuth) during installation" and
+  #     # set its callback URL to /api/console/v1/connectors/github-app/complete.
+  #     appId: "123456"
+  #     clientId: "Iv1.example"
+  #     clientSecret: "github-app-client-secret"
+  #     slug: "probo"
+  #     privateKey: |
+  #       -----BEGIN RSA PRIVATE KEY-----
+  #       ...
+  #       -----END RSA PRIVATE KEY-----
+  # Slack endpoint overrides use endpointAuth, endpointToken, and
+  # endpointApiBase in the connector config. endpointToken is secret
+  # material and is mounted from the chart Secret, not a plain env value.
+  # - name: "linear"
+  #   type: "oauth2"
+  #   config:
+  #     clientId: "linear-client-id"
+  #     clientSecret: "linear-client-secret"
+  # - name: "linear-sync"
+  #   type: "oauth2"
+  #   config:
+  #     clientId: "linear-sync-client-id"
+  #     clientSecret: "linear-sync-client-secret"
+  #     # Required with Linear Sync. Signs POST /api/linear/v1/webhooks.
+  #     webhookSecret: "linear-sync-webhook-secret"
 
 # PostgreSQL configuration
 # For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)

@@ -672,9 +672,6 @@ func TestFramework_Timestamps(t *testing.T) {
 		initialCreatedAt := getResult.Node.CreatedAt
 		initialUpdatedAt := getResult.Node.UpdatedAt
 
-		// Wait long enough for timestamp to change (database may have second precision)
-		time.Sleep(1100 * time.Millisecond)
-
 		updateQuery := `
 			mutation UpdateFramework($input: UpdateFrameworkInput!) {
 				updateFramework(input: $input) {

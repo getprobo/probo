@@ -23,6 +23,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -43,7 +44,73 @@ const (
 	tallyOrganizationsPath = "/organizations"
 	tallyUsersSegment      = "users"
 	tallyInvitesSegment    = "invites"
+	tallyCurrentUserPath   = "/users/me"
 )
+
+// ErrTallyUnauthorized reports that Tally rejected the presented API key.
+// Tally's auth middleware runs before routing, so a 401 carries no route
+// information: it always means the credential itself was refused.
+var ErrTallyUnauthorized = errors.New("tally rejected the api key")
+
+// TallyCurrentUser is the subset of GET /users/me the driver needs: the
+// organization the API key belongs to, and the identities used to label
+// the access source.
+type TallyCurrentUser struct {
+	FullName          string                  `json:"fullName"`
+	Email             string                  `json:"email"`
+	OrganizationID    string                  `json:"organizationId"`
+	OrganizationOwner *TallyOrganizationOwner `json:"organizationOwner"`
+}
+
+type TallyOrganizationOwner struct {
+	FullName string `json:"fullName"`
+	Email    string `json:"email"`
+}
+
+// GetTallyCurrentUser fetches the profile bound to the API key
+// (GET /users/me). It is the only Tally endpoint that both accepts API-key
+// auth and identifies the key: /me and /organizations/{id} are session-only
+// and return 401 for every API key, valid or not. The create-connector
+// resolver uses it to validate the key and derive the organization ID; the
+// name resolver labels the source from it.
+func GetTallyCurrentUser(ctx context.Context, httpClient *http.Client, baseURL string) (*TallyCurrentUser, error) {
+	endpoint, err := url.JoinPath(baseURL, tallyCurrentUserPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build tally current user URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create tally current user request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute tally current user request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode == http.StatusUnauthorized || httpResp.StatusCode == http.StatusForbidden {
+		return nil, ErrTallyUnauthorized
+	}
+
+	// nameStatusError keeps the name worker's terminal-versus-retryable
+	// classification: permanent client errors (400, 404) must not re-enqueue
+	// the source forever, while 5xx stays retryable.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, nameStatusError("tally current user", httpResp.StatusCode)
+	}
+
+	var user TallyCurrentUser
+	if err := json.NewDecoder(httpResp.Body).Decode(&user); err != nil {
+		return nil, fmt.Errorf("cannot decode tally current user response: %w", err)
+	}
+
+	return &user, nil
+}
 
 type tallyUser struct {
 	ID                  string    `json:"id"`
@@ -205,51 +272,48 @@ func tallyRoles() []string {
 	return []string{"Invited"}
 }
 
-// tallyNameResolver resolves the Tally organization name.
+// tallyNameResolver labels the source from the current-user profile. Tally
+// has no organization-name API (organizations are unnamed in its model), so
+// the closest stable label is the organization owner's identity, falling
+// back to the key's user.
 type tallyNameResolver struct {
-	httpClient     *http.Client
-	organizationID string
-	baseURL        string
+	httpClient *http.Client
+	baseURL    string
 }
 
-func NewTallyNameResolver(httpClient *http.Client, organizationID, baseURL string) NameResolver {
+func NewTallyNameResolver(httpClient *http.Client, baseURL string) NameResolver {
 	return &tallyNameResolver{
-		httpClient:     httpClient,
-		organizationID: organizationID,
-		baseURL:        baseURL,
+		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
 func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	endpoint, err := url.JoinPath(r.baseURL, tallyOrganizationsPath, url.PathEscape(r.organizationID))
+	user, err := GetTallyCurrentUser(ctx, r.httpClient, r.baseURL)
 	if err != nil {
-		return "", fmt.Errorf("cannot build tally organization URL: %w", err)
+		if errors.Is(err, ErrTallyUnauthorized) {
+			return "", fmt.Errorf("cannot fetch tally current user: unauthorized: %w", ErrTerminalNameResolution)
+		}
+
+		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return "", fmt.Errorf("cannot create tally organization request: %w", err)
+	// Prefer the owner's identity entirely (name, then email) before
+	// falling back to the key's user, so a non-owner key still labels
+	// the source with the owner.
+	if user.OrganizationOwner != nil {
+		if user.OrganizationOwner.FullName != "" {
+			return user.OrganizationOwner.FullName, nil
+		}
+
+		if user.OrganizationOwner.Email != "" {
+			return user.OrganizationOwner.Email, nil
+		}
 	}
 
-	req.Header.Set("Accept", "application/json")
-
-	httpResp, err := r.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute tally organization request: %w", err)
+	if user.FullName != "" {
+		return user.FullName, nil
 	}
 
-	defer func() { _ = httpResp.Body.Close() }()
-
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", nameStatusError("tally organization", httpResp.StatusCode)
-	}
-
-	var resp struct {
-		Name string `json:"name"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return "", fmt.Errorf("cannot decode tally organization response: %w", err)
-	}
-
-	return resp.Name, nil
+	return user.Email, nil
 }

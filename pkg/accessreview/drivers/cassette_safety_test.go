@@ -55,6 +55,8 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 		".localhost",
 		// Google Workspace test domain family (RFC-style synthetic).
 		".test-google-a.com",
+		// Synthetic GCP project used in hand-authored cassettes.
+		".my-project.iam.gserviceaccount.com",
 	}
 
 	// allowedExactDomains lists individual domains that pre-date this
@@ -70,6 +72,8 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 		"oauthapp.linear.app":    true,
 		"linear.linear.app":      true,
 		"intercom.io":            true,
+		// Synthetic Entra tenant used in hand-authored Azure cassettes.
+		"probo-azure.test": true,
 	}
 
 	matches, err := filepath.Glob("testdata/*.yaml")

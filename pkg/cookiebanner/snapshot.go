@@ -80,6 +80,7 @@ func buildSnapshot(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
 	allPatterns coredata.TrackerPatterns,
+	iabVendorIDs []int,
 ) coredata.CookieBannerVersionSnapshot {
 	sortConsentCategories(categories)
 
@@ -109,6 +110,11 @@ func buildSnapshot(
 			gcmConsentTypes = []string{}
 		}
 
+		tcfPurposeIDs := c.TCFPurposeIDs
+		if tcfPurposeIDs == nil {
+			tcfPurposeIDs = []int{}
+		}
+
 		snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
 			Name:            c.Name,
 			Slug:            c.Slug,
@@ -116,9 +122,17 @@ func buildSnapshot(
 			Kind:            c.Kind,
 			Cookies:         cookies,
 			GCMConsentTypes: gcmConsentTypes,
+			TCFPurposeIDs:   tcfPurposeIDs,
 			PostHogConsent:  c.PostHogConsent,
 		}
 	}
+
+	ids := slices.Clone(iabVendorIDs)
+	if ids == nil {
+		ids = []int{}
+	}
+
+	slices.Sort(ids)
 
 	return coredata.CookieBannerVersionSnapshot{
 		PrivacyPolicyURL:  banner.PrivacyPolicyURL,
@@ -126,6 +140,7 @@ func buildSnapshot(
 		ConsentExpiryDays: banner.ConsentExpiryDays,
 		DefaultLanguage:   banner.DefaultLanguage,
 		Categories:        snapshotCategories,
+		IABVendorIDs:      ids,
 	}
 }
 

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -50,8 +50,8 @@ export const description: INodeProperties[] = [
 		description: 'The name of the task',
 	},
 	{
-		displayName: 'Description',
-		name: 'description',
+		displayName: 'Content',
+		name: 'content',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -60,7 +60,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The description of the task',
+		description: 'The content of the task',
 	},
 	{
 		displayName: 'State',
@@ -78,16 +78,28 @@ export const description: INodeProperties[] = [
 				value: '',
 			},
 			{
-				name: 'Todo',
-				value: 'TODO',
+				name: 'Backlog',
+				value: 'BACKLOG',
+			},
+			{
+				name: 'Canceled',
+				value: 'CANCELED',
+			},
+			{
+				name: 'Done',
+				value: 'DONE',
+			},
+			{
+				name: 'Duplicate',
+				value: 'DUPLICATE',
 			},
 			{
 				name: 'In Progress',
 				value: 'IN_PROGRESS',
 			},
 			{
-				name: 'Done',
-				value: 'DONE',
+				name: 'Todo',
+				value: 'TODO',
 			},
 		],
 		default: '',
@@ -193,6 +205,32 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The ID of the measure this task belongs to',
 	},
+	{
+		displayName: 'Recurrence Interval',
+		name: 'recurrenceInterval',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set. Leave empty and enable Clear Recurrence to remove it.',
+	},
+	{
+		displayName: 'Clear Recurrence',
+		name: 'clearRecurrenceInterval',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['update'],
+			},
+		},
+		default: false,
+		description: 'Whether to remove the recurrence interval from the task',
+	},
 ];
 
 export async function execute(
@@ -201,7 +239,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const description = this.getNodeParameter('description', itemIndex, '') as string;
+	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
 	const priority = this.getNodeParameter('priority', itemIndex, '') as string;
 	const rank = this.getNodeParameter('rank', itemIndex, '') as string;
@@ -209,6 +247,8 @@ export async function execute(
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
 	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
+	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
+	const clearRecurrenceInterval = this.getNodeParameter('clearRecurrenceInterval', itemIndex, false) as boolean;
 
 	const query = `
 		mutation UpdateTask($input: UpdateTaskInput!) {
@@ -216,21 +256,36 @@ export async function execute(
 				task {
 					id
 					name
-					description
+					content
 					state
 					priority
 					timeEstimate
 					deadline
+					recurrenceInterval
 					createdAt
 					updatedAt
+				}
+				nextTaskEdge {
+					node {
+						id
+						name
+						content
+						state
+						priority
+						timeEstimate
+						deadline
+						recurrenceInterval
+						createdAt
+						updatedAt
+					}
 				}
 			}
 		}
 	`;
 
-	const input: Record<string, string> = { taskId };
+	const input: Record<string, string | null> = { taskId };
 	if (name) input.name = name;
-	if (description) input.description = description;
+	if (content) input.content = plainTextToProseMirrorJSON(content);
 	if (state) input.state = state;
 	if (priority) input.priority = priority;
 	if (rank) input.rank = rank;
@@ -238,8 +293,24 @@ export async function execute(
 	if (deadline) input.deadline = deadline;
 	if (assignedToId) input.assignedToId = assignedToId;
 	if (measureId) input.measureId = measureId;
+	if (clearRecurrenceInterval) {
+		input.recurrenceInterval = null;
+	} else if (recurrenceInterval) {
+		input.recurrenceInterval = recurrenceInterval;
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
+	const data = responseData.data as IDataObject | undefined;
+	const payload = data?.updateTask as IDataObject | undefined;
+	const task = payload?.task as IDataObject | undefined;
+	if (payload && task) {
+		payload.task = withPlainTextContent(task);
+	}
+	const nextEdge = payload?.nextTaskEdge as IDataObject | undefined;
+	const nextTask = nextEdge?.node as IDataObject | undefined;
+	if (nextEdge && nextTask) {
+		nextEdge.node = withPlainTextContent(nextTask);
+	}
 
 	return {
 		json: responseData,

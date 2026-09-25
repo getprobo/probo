@@ -620,6 +620,73 @@ func TestTrackerPattern_List(t *testing.T) {
 	})
 }
 
+func TestTrackerPattern_Attribution(t *testing.T) {
+	t.Parallel()
+
+	t.Run("is null without a catalog link", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on TrackerPattern {
+						id
+						attribution
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				ID          string  `json:"id"`
+				Attribution *string `json:"attribution"`
+			} `json:"node"`
+		}
+
+		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
+		assert.Nil(t, result.Node.Attribution, "a freshly created pattern has no catalog verdict")
+	})
+
+	t.Run("inherits the catalog verdict", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
+		commonID := seedCommonTrackerPatternWithAttribution(t, coredata.CommonTrackerPatternAttributionFirstParty)
+		linkTrackerPatternToCommon(t, patternID, commonID)
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on TrackerPattern {
+						id
+						attribution
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				ID          string  `json:"id"`
+				Attribution *string `json:"attribution"`
+			} `json:"node"`
+		}
+
+		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
+		require.NotNil(t, result.Node.Attribution, "a catalog-linked pattern must expose the inherited verdict")
+		assert.Equal(t, string(coredata.CommonTrackerPatternAttributionFirstParty), *result.Node.Attribution)
+	})
+}
+
 func TestTrackerPattern_CommonTrackerPatternID(t *testing.T) {
 	t.Parallel()
 
@@ -664,6 +731,15 @@ func TestTrackerPattern_CommonTrackerPatternID(t *testing.T) {
 func seedCommonTrackerPattern(t *testing.T) gid.GID {
 	t.Helper()
 
+	return seedCommonTrackerPatternWithAttribution(t, coredata.CommonTrackerPatternAttributionUndetermined)
+}
+
+func seedCommonTrackerPatternWithAttribution(
+	t *testing.T,
+	attribution coredata.CommonTrackerPatternAttribution,
+) gid.GID {
+	t.Helper()
+
 	ctx := context.Background()
 	conn := dialTestPg(t, ctx)
 	t.Cleanup(func() { _ = conn.Close(ctx) })
@@ -677,7 +753,7 @@ func seedCommonTrackerPattern(t *testing.T) gid.GID {
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 		)
-	`, id, "COOKIE", "e2e_common_"+id.String(), "EXACT", "Seeded catalog description", 1.0, coredata.CommonTrackerPatternAttributionUndetermined, 0, now, now)
+	`, id, "COOKIE", "e2e_common_"+id.String(), "EXACT", "Seeded catalog description", 1.0, attribution, 0, now, now)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

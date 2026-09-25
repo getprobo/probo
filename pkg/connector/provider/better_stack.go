@@ -38,16 +38,22 @@ import (
 // name that scopes the team-members listing.
 func betterStackRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderBetterStack,
+		Provider: coredata.ConnectorProviderBetterStack,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.BetterStackConnectorSettings) string {
+				return s.TeamName
+			},
+		),
 		DisplayName:      "Better Stack",
 		DocumentationURL: accessReviewDocsURL("better-stack"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "teamName", Label: "Team Name", Required: true},
+			},
+		},
 		Endpoints: Endpoints{
 			APIBase: "https://betterstack.com/api/v2",
 			Probe:   "https://betterstack.com/api/v2/team-members",
-		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "teamName", Label: "Team Name", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)

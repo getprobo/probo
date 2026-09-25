@@ -33,19 +33,25 @@ import (
 
 func segmentRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderSegment,
+		Provider: coredata.ConnectorProviderSegment,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.SegmentConnectorSettings) string {
+				return s.BaseURL
+			},
+		),
 		DisplayName:      "Segment",
 		DocumentationURL: accessReviewDocsURL("segment"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "region", Label: "Region", Required: true},
+			},
+		},
 		// Segment authenticates with a Public API token as the default
 		// Authorization: Bearer scheme, so no APIKeyHeader. The token is bound
 		// to one workspace, but the workspace's region selects the API host
 		// (US vs EU) and is not discoverable from the token, so it is captured
 		// as an extra setting and resolved to a base URL (Pattern 3 + region);
 		// there is nothing to pick.
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "region", Label: "Region", Required: true},
-		},
 		BuildProbeURL: buildSegmentProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)

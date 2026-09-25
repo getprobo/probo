@@ -270,6 +270,42 @@ func TestSCIM_ExternalIDFallback(t *testing.T) {
 		_, status = sc.createUser(email, "User B", "ext-b-"+factory.SafeName(""), true)
 		assert.Equal(t, http.StatusConflict, status)
 	})
+
+	t.Run("replace transfers external ID from another profile", func(t *testing.T) {
+		t.Parallel()
+
+		googleID := "google-" + factory.SafeName("")
+		oldEmail := factory.SafeEmail()
+		newEmail := factory.SafeEmail()
+
+		body, status := sc.createUser(oldEmail, "Old Email User", googleID, true)
+		require.Equal(t, http.StatusCreated, status, body)
+
+		var oldUser map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &oldUser))
+		oldID := oldUser["id"].(string)
+
+		body, status = sc.createUser(newEmail, "New Email User", "other-"+factory.SafeName(""), true)
+		require.Equal(t, http.StatusCreated, status, body)
+
+		var newUser map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &newUser))
+		newID := newUser["id"].(string)
+
+		body, status = sc.replaceUser(newID, newEmail, "New Email User", googleID, true)
+		require.Equal(t, http.StatusOK, status, body)
+
+		var replaced map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &replaced))
+		assert.Equal(t, googleID, replaced["externalId"])
+
+		body, status = sc.getUser(oldID)
+		require.Equal(t, http.StatusOK, status, body)
+
+		var oldFetched map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &oldFetched))
+		assert.NotEqual(t, googleID, oldFetched["externalId"])
+	})
 }
 
 func TestSCIM_DeleteUser(t *testing.T) {
@@ -352,4 +388,98 @@ func TestSCIM_Unauthorized(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+// A SCIM configuration refuses a connector already held by an access
+// review source, and the refusal must not commit a bridgeless
+// configuration: configurations are unique per organization, so a
+// leftover one would block every retry.
+func TestSCIMConfiguration_RefusesSourceHeldConnector(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	var connectorResult struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID string `json:"id"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"provider":       "BREX",
+			"apiKey":         "bxt_test-key-brex-scim-refusal",
+		},
+	}, &connectorResult)
+	require.NoError(t, err)
+
+	connectorID := connectorResult.CreateAPIKeyConnector.Connector.ID
+
+	var sourceResult struct {
+		CreateAccessReviewSource struct {
+			Created bool `json:"created"`
+		} `json:"createAccessReviewSource"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: CreateAccessReviewSourceInput!) {
+			createAccessReviewSource(input: $input) {
+				created
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"connectorId":    connectorID,
+			"name":           "Brex held by a source",
+		},
+	}, &sourceResult)
+	require.NoError(t, err)
+	require.True(t, sourceResult.CreateAccessReviewSource.Created)
+
+	const createConfigQuery = `
+		mutation($input: CreateSCIMConfigurationInput!) {
+			createSCIMConfiguration(input: $input) {
+				scimConfiguration { id }
+				token
+			}
+		}
+	`
+
+	var configResult struct {
+		CreateSCIMConfiguration struct {
+			ScimConfiguration struct {
+				ID string `json:"id"`
+			} `json:"scimConfiguration"`
+			Token string `json:"token"`
+		} `json:"createSCIMConfiguration"`
+	}
+
+	err = owner.ExecuteConnect(createConfigQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"connectorId":    connectorID,
+		},
+	}, &configResult)
+	require.ErrorContains(t, err, "used by an access review source")
+
+	// The refused bind rolled the configuration back with it: the same
+	// mutation without a connector must succeed.
+	err = owner.ExecuteConnect(createConfigQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+		},
+	}, &configResult)
+	require.NoError(t, err)
+	require.NotEmpty(t, configResult.CreateSCIMConfiguration.Token)
 }

@@ -42,7 +42,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "delete <id>",
-		Short: "Delete a risk",
+		Short: "Delete a risk and its analysis history",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {

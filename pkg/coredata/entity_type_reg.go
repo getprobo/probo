@@ -116,7 +116,7 @@ const (
 	OAuth2DeviceCodeEntityType                       uint16 = 84
 	_                                                uint16 = 85 // CookieEntityType - removed
 	CookieBannerTranslationEntityType                uint16 = 86
-	AgentRunEntityType                               uint16 = 87
+	AgentExecutionEntityType                         uint16 = 87
 	_                                                uint16 = 88 // CookiePatternEntityType - removed
 	TrackerPatternEntityType                         uint16 = 89
 	DetectedTrackerEntityType                        uint16 = 90
@@ -145,6 +145,27 @@ const (
 	CompliancePortalDocumentEntityType               uint16 = 113
 	BusinessFunctionEntityType                       uint16 = 114
 	AiSystemEntityType                               uint16 = 115
+	ProbotIdentityBindingEntityType                  uint16 = 116
+	SlackbotInstallationEntityType                   uint16 = 117
+	BotDeliveryDestinationEntityType                 uint16 = 118
+	SlackbotMessageEntityType                        uint16 = 119
+	SlackbotEventEntityType                          uint16 = 120
+	_                                                uint16 = 121 // BotConversationEntityType - removed
+	SlackbotInteractiveCommandEntityType             uint16 = 122
+	OperationReceiptEntityType                       uint16 = 123
+	SlackDeliveryOperationEntityType                 uint16 = 124
+	AgentInputEntityType                             uint16 = 125
+	AgentExecutionAnchorEntityType                   uint16 = 126
+	BotMessageEntityType                             uint16 = 127
+	BotThreadSubjectEntityType                       uint16 = 128
+	TreatmentPlanEntityType                          uint16 = 129
+	CommonGVLSnapshotEntityType                      uint16 = 130
+	CommonGVLVendorEntityType                        uint16 = 131
+	TaskCommentEntityType                            uint16 = 132
+	TaskActivityEntityType                           uint16 = 133
+	TaskSyncJobEntityType                            uint16 = 134
+	_                                                uint16 = 135 // LinearWebhookEventEntityType - removed
+	ConnectorAccountEntityType                       uint16 = 136
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -307,8 +328,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &OAuth2DeviceCode{ID: id}, true
 	case CookieBannerTranslationEntityType:
 		return &CookieBannerTranslation{ID: id}, true
-	case AgentRunEntityType:
-		return &AgentRun{ID: id}, true
+	case AgentExecutionEntityType:
+		return &AgentExecution{ID: id}, true
 	case TrackerPatternEntityType:
 		return &TrackerPattern{ID: id}, true
 	case DetectedTrackerEntityType:
@@ -363,6 +384,44 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &BusinessFunction{ID: id}, true
 	case AiSystemEntityType:
 		return &AiSystem{ID: id}, true
+	case ProbotIdentityBindingEntityType:
+		return &ProbotIdentityBinding{ID: id}, true
+	case SlackbotInstallationEntityType:
+		return &SlackbotInstallation{ID: id}, true
+	case BotDeliveryDestinationEntityType:
+		return &BotDeliveryDestination{ID: id}, true
+	case SlackbotMessageEntityType:
+		return &SlackbotMessage{ID: id}, true
+	case SlackbotEventEntityType:
+		return &SlackbotEvent{ID: id}, true
+	case SlackbotInteractiveCommandEntityType:
+		return &SlackbotInteractiveCommand{ID: id}, true
+	case OperationReceiptEntityType:
+		return &OperationReceipt{ID: id}, true
+	case SlackDeliveryOperationEntityType:
+		return &SlackDeliveryOperation{ID: id}, true
+	case AgentInputEntityType:
+		return &AgentInput{ID: id}, true
+	case AgentExecutionAnchorEntityType:
+		return &AgentExecutionAnchor{ID: id}, true
+	case BotMessageEntityType:
+		return &BotMessage{ID: id}, true
+	case BotThreadSubjectEntityType:
+		return &BotThreadSubject{ID: id}, true
+	case TreatmentPlanEntityType:
+		return &TreatmentPlan{ID: id}, true
+	case CommonGVLSnapshotEntityType:
+		return &CommonGVLSnapshot{ID: id}, true
+	case CommonGVLVendorEntityType:
+		return &CommonGVLVendor{ID: id}, true
+	case TaskCommentEntityType:
+		return &TaskComment{ID: id}, true
+	case TaskActivityEntityType:
+		return &TaskActivity{ID: id}, true
+	case TaskSyncJobEntityType:
+		return &TaskSyncJob{ID: id}, true
+	case ConnectorAccountEntityType:
+		return &ConnectorAccount{ID: id}, true
 	default:
 		return nil, false
 	}

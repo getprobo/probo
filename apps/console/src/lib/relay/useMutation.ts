@@ -32,14 +32,18 @@ function useMutationNotifier(): MutationNotifier {
 
   return useMemo<MutationNotifier>(
     () => ({
-      notifySuccess: (title) => {
-        toast({ title, description: "", variant: "success" });
+      notifySuccess: (message) => {
+        toast({
+          title: t("common.success"),
+          description: message,
+          variant: "success",
+        });
       },
       notifyError: (error, title) => {
-        const finalTitle = title ?? t("common.error");
+        const errorTitle = title ?? t("mutation.errors.commit");
         toast({
-          title: finalTitle,
-          description: formatError(finalTitle, error),
+          title: t("common.error"),
+          description: formatError(errorTitle, error),
           variant: "error",
         });
       },

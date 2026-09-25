@@ -14,7 +14,11 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -29,6 +33,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -291,16 +297,25 @@ func (r *Resolver) UpdateThirdPartyTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskList)
+	authzID := input.OrganizationID
+	if input.RiskAnalysisID != nil {
+		authzID = *input.RiskAnalysisID
+	}
+
+	scope, err := r.Authorize(ctx, authzID, probo.ActionRiskList)
 	if err != nil {
 		return nil, types.ListRisksOutput{}, err
 	}
 
-	prb := r.proboSvc
-
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
+	}
+	if input.RiskAnalysisID != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
+			Field:     coredata.RiskOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		}
 	}
 
 	if input.OrderBy != nil {
@@ -317,12 +332,19 @@ func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, 
 		riskFilter = coredata.NewRiskFilter(input.Filter.Query)
 	}
 
-	page, err := prb.Risks.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, riskFilter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organization risks: %w", err))
+	var riskPage *page.Page[*coredata.Risk, coredata.RiskOrderField]
+	if input.RiskAnalysisID != nil {
+		riskPage, err = r.riskManagement.ListRisksForRiskAnalysisID(ctx, scope, *input.RiskAnalysisID, cursor, riskFilter)
+	} else {
+		riskPage, err = r.proboSvc.Risks.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, riskFilter)
 	}
 
-	return nil, types.NewListRisksOutput(page), nil
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risks", log.Error(err))
+		return nil, types.ListRisksOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListRisksOutput(riskPage), nil
 }
 
 func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error) {
@@ -358,9 +380,9 @@ func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 			Name:               input.Name,
 			Description:        input.Description,
 			Category:           input.Category,
-			Treatment:          input.Treatment,
-			InherentLikelihood: input.InherentLikelihood,
-			InherentImpact:     input.InherentImpact,
+			Treatment:          &input.Treatment,
+			InherentLikelihood: &input.InherentLikelihood,
+			InherentImpact:     &input.InherentImpact,
 			ResidualLikelihood: input.ResidualLikelihood,
 			ResidualImpact:     input.ResidualImpact,
 		},
@@ -841,13 +863,14 @@ func (r *Resolver) ListFindingsTool(ctx context.Context, req *mcp.CallToolReques
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	findingFilter := coredata.NewFindingFilter(nil, nil, nil, nil)
+	findingFilter := coredata.NewFindingFilter(nil, nil, nil, nil, nil)
 	if input.Filter != nil {
 		findingFilter = coredata.NewFindingFilter(
 			input.Filter.Kind,
 			input.Filter.Status,
 			input.Filter.Priority,
 			input.Filter.OwnerID,
+			input.Filter.AuditID,
 		)
 	}
 
@@ -1507,15 +1530,19 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 
 	svc := r.proboSvc
 
+	validFrom, validUntil := types.PeriodDates(input.Validity)
+	auditStart, auditEnd := types.PeriodDates(input.AuditDates)
+
 	audit, err := svc.Audits.Create(
 		ctx, scope,
 		&probo.CreateAuditRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
-			ValidFrom:      input.ValidFrom,
-			ValidUntil:     input.ValidUntil,
-			AuditStartDate: input.AuditStartDate,
-			AuditEndDate:   input.AuditEndDate,
+			Firm:           input.Firm,
+			ValidFrom:      validFrom,
+			ValidUntil:     validUntil,
+			AuditStartDate: auditStart,
+			AuditEndDate:   auditEnd,
 			State:          input.State,
 			FrameworkID:    input.FrameworkID,
 		},
@@ -1537,15 +1564,19 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
+	validFrom, validUntil := types.PeriodDates(input.Validity)
+	auditStart, auditEnd := types.PeriodDates(input.AuditDates)
+
 	audit, err := svc.Audits.Update(
 		ctx, scope,
 		&probo.UpdateAuditRequest{
 			ID:             input.ID,
 			Name:           UnwrapOmittable(input.Name),
-			ValidFrom:      input.ValidFrom,
-			ValidUntil:     input.ValidUntil,
-			AuditStartDate: input.AuditStartDate,
-			AuditEndDate:   input.AuditEndDate,
+			Firm:           UnwrapOmittable(input.Firm),
+			ValidFrom:      validFrom,
+			ValidUntil:     validUntil,
+			AuditStartDate: auditStart,
+			AuditEndDate:   auditEnd,
 			State:          input.State,
 		},
 	)
@@ -2044,12 +2075,10 @@ func (r *Resolver) UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionTaskList)
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskList)
 	if err != nil {
 		return nil, types.ListTasksOutput{}, err
 	}
-
-	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
@@ -2065,144 +2094,214 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.Tasks.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	taskFilter := coredata.NewTaskFilter(nil, nil)
+	if input.Filter != nil {
+		taskFilter = coredata.NewTaskFilter(input.Filter.Query, input.Filter.State)
+	}
+
+	page, err := r.task.ListForOrganizationID(
+		ctx,
+		scope,
+		input.OrganizationID,
+		cursor,
+		taskFilter,
+	)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization tasks: %w", err))
 	}
 
-	return nil, types.NewListTasksOutput(page), nil
+	links, err := r.taskExternalLinksByTasks(ctx, scope, page.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListTasksOutput(page, links), nil
 }
 
 func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskGet)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskGet)
 	if err != nil {
 		return nil, types.GetTaskOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	task, err := prb.Tasks.Get(ctx, scope, input.ID)
+	task, err := r.task.Get(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.GetTaskOutput{}, fmt.Errorf("failed to get task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.GetTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.GetTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskInput) (*mcp.CallToolResult, types.AddTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskCreate)
 	if err != nil {
 		return nil, types.AddTaskOutput{}, err
 	}
-
-	svc := r.proboSvc
 
 	priority := coredata.TaskPriorityMedium
 	if input.Priority != nil {
 		priority = *input.Priority
 	}
 
-	task, err := svc.Tasks.Create(
+	content, err := optionalMarkdownToProseMirrorJSON(input.Content)
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	task, err := r.task.Create(
 		ctx, scope,
-		probo.CreateTaskRequest{
-			OrganizationID: input.OrganizationID,
-			MeasureID:      input.MeasureID,
-			Name:           input.Name,
-			Description:    input.Description,
-			Priority:       priority,
-			TimeEstimate:   input.TimeEstimate,
-			Deadline:       input.Deadline,
-			AssignedToID:   input.AssignedToID,
+		task.CreateTaskRequest{
+			OrganizationID:     input.OrganizationID,
+			MeasureID:          input.MeasureID,
+			Name:               input.Name,
+			Content:            content,
+			State:              input.State,
+			Priority:           priority,
+			TimeEstimate:       input.TimeEstimate,
+			Deadline:           input.Deadline,
+			AssignedToID:       input.AssignedToID,
+			IdentityID:         &identity.ID,
+			RecurrenceInterval: input.RecurrenceInterval,
 		},
 	)
 	if err != nil {
 		return nil, types.AddTaskOutput{}, fmt.Errorf("failed to create task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.AddTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.AddTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskInput) (*mcp.CallToolResult, types.UpdateTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskUpdate)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskUpdate)
 	if err != nil {
 		return nil, types.UpdateTaskOutput{}, err
 	}
 
-	svc := r.proboSvc
+	content, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Content))
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
 
-	task, err := svc.Tasks.Update(
+	identity := authn.IdentityFromContext(ctx)
+
+	result, err := r.task.Update(
 		ctx, scope,
-		probo.UpdateTaskRequest{
-			TaskID:       input.ID,
-			Name:         input.Name,
-			Description:  UnwrapOmittable(input.Description),
-			State:        input.State,
-			Priority:     input.Priority,
-			Rank:         input.Rank,
-			TimeEstimate: UnwrapOmittable(input.TimeEstimate),
-			Deadline:     UnwrapOmittable(input.Deadline),
-			AssignedToID: UnwrapOmittable(input.AssignedToID),
-			MeasureID:    UnwrapOmittable(input.MeasureID),
+		task.UpdateTaskRequest{
+			TaskID:             input.ID,
+			Name:               input.Name,
+			Content:            content,
+			State:              input.State,
+			Priority:           input.Priority,
+			Rank:               input.Rank,
+			TimeEstimate:       UnwrapOmittable(input.TimeEstimate),
+			Deadline:           UnwrapOmittable(input.Deadline),
+			AssignedToID:       UnwrapOmittable(input.AssignedToID),
+			MeasureID:          UnwrapOmittable(input.MeasureID),
+			IdentityID:         &identity.ID,
+			RecurrenceInterval: UnwrapOmittable(input.RecurrenceInterval),
 		},
 	)
 	if err != nil {
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
 	}
 
-	return nil, types.UpdateTaskOutput{
-		Task: types.NewTask(task),
-	}, nil
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, result.Task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
+	}
+
+	output := types.UpdateTaskOutput{
+		Task: taskWithLink,
+	}
+
+	if result.NextTask != nil {
+		nextWithLink, err := r.taskWithExternalLink(ctx, scope, result.NextTask)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load next task external link", log.Error(err))
+			return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
+		}
+
+		output.NextTask = nextWithLink
+	}
+
+	return nil, output, nil
 }
 
 func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskAssign)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskAssign)
 	if err != nil {
 		return nil, types.AssignTaskOutput{}, err
 	}
 
-	svc := r.proboSvc
+	identity := authn.IdentityFromContext(ctx)
 
-	task, err := svc.Tasks.Assign(ctx, scope, input.ID, input.AssignedToID)
+	task, err := r.task.Assign(ctx, scope, input.ID, input.AssignedToID, &identity.ID)
 	if err != nil {
 		return nil, types.AssignTaskOutput{}, fmt.Errorf("failed to assign task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.AssignTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.AssignTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnassignTaskInput) (*mcp.CallToolResult, types.UnassignTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskUnassign)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskUnassign)
 	if err != nil {
 		return nil, types.UnassignTaskOutput{}, err
 	}
 
-	svc := r.proboSvc
+	identity := authn.IdentityFromContext(ctx)
 
-	task, err := svc.Tasks.Unassign(ctx, scope, input.ID)
+	task, err := r.task.Unassign(ctx, scope, input.ID, &identity.ID)
 	if err != nil {
 		return nil, types.UnassignTaskOutput{}, fmt.Errorf("failed to unassign task: %w", err)
 	}
 
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+		return nil, types.UnassignTaskOutput{}, fmt.Errorf("internal error")
+	}
+
 	return nil, types.UnassignTaskOutput{
-		Task: types.NewTask(task),
+		Task: taskWithLink,
 	}, nil
 }
 
 func (r *Resolver) DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskInput) (*mcp.CallToolResult, types.DeleteTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionTaskDelete)
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskDelete)
 	if err != nil {
 		return nil, types.DeleteTaskOutput{}, err
 	}
 
-	svc := r.proboSvc
-
-	err = svc.Tasks.Delete(ctx, scope, input.ID)
+	err = r.task.Delete(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteTaskOutput{}, fmt.Errorf("failed to delete task: %w", err)
 	}
@@ -2654,8 +2753,6 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 		return nil, types.ListMeasureTasksOutput{}, err
 	}
 
-	prb := r.proboSvc
-
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -2670,12 +2767,29 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	taskPage, err := prb.Tasks.ListForMeasureID(ctx, scope, input.MeasureID, cursor)
+	taskFilter := coredata.NewTaskFilter(nil, nil)
+	if input.Filter != nil {
+		taskFilter = coredata.NewTaskFilter(input.Filter.Query, input.Filter.State)
+	}
+
+	taskPage, err := r.task.ListForMeasureID(
+		ctx,
+		scope,
+		input.MeasureID,
+		cursor,
+		taskFilter,
+	)
 	if err != nil {
 		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("failed to list measure tasks: %w", err)
 	}
 
-	return nil, types.NewListMeasureTasksOutput(taskPage), nil
+	links, err := r.taskExternalLinksByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListMeasureTasksOutput(taskPage, links), nil
 }
 
 func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureEvidencesInput) (*mcp.CallToolResult, types.ListMeasureEvidencesOutput, error) {
@@ -2741,6 +2855,15 @@ func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest
 		if _, _, err := svc.Measures.CreateThirdPartyMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
 			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to third party: %w", err)
 		}
+	case coredata.TreatmentPlanEntityType:
+		scope, err := r.Authorize(ctx, input.ResourceID, riskmanagement.ActionTreatmentPlanUpdate)
+		if err != nil {
+			return nil, types.LinkMeasureOutput{}, err
+		}
+
+		if _, _, err := r.riskManagement.CreateMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
+			return nil, types.LinkMeasureOutput{}, mapTreatmentPlanError(ctx, r.logger, "link measure on", err)
+		}
 	default:
 		return nil, types.LinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure linking: entity type %d", input.ResourceID.EntityType())
 	}
@@ -2787,6 +2910,15 @@ func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolReque
 
 		if _, _, err := svc.Measures.DeleteThirdPartyMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
 			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from third party: %w", err)
+		}
+	case coredata.TreatmentPlanEntityType:
+		scope, err := r.Authorize(ctx, input.ResourceID, riskmanagement.ActionTreatmentPlanUpdate)
+		if err != nil {
+			return nil, types.UnlinkMeasureOutput{}, err
+		}
+
+		if _, _, err := r.riskManagement.DeleteMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
+			return nil, types.UnlinkMeasureOutput{}, mapTreatmentPlanError(ctx, r.logger, "unlink measure from", err)
 		}
 	default:
 		return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure unlinking: entity type %d", input.ResourceID.EntityType())
@@ -2888,12 +3020,8 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 	}
 
 	var contractStart, contractEnd **time.Time
-	if input.ContractStartDate != nil {
-		contractStart = &input.ContractStartDate
-	}
-
-	if input.ContractEndDate != nil {
-		contractEnd = &input.ContractEndDate
+	if input.Contract != nil {
+		contractStart, contractEnd = types.PeriodOmittableDates(input.Contract)
 	}
 
 	profile, err := r.iamSvc.OrganizationService.CreateUser(ctx, scope, &iam.CreateUserRequest{
@@ -2958,12 +3086,8 @@ func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 	}
 
 	var contractStart, contractEnd **time.Time
-	if p := UnwrapOmittable(input.ContractStartDate); p != nil {
-		contractStart = p
-	}
-
-	if p := UnwrapOmittable(input.ContractEndDate); p != nil {
-		contractEnd = p
+	if input.Contract != nil {
+		contractStart, contractEnd = types.PeriodOmittableDates(input.Contract)
 	}
 
 	profile, err := r.iamSvc.OrganizationService.UpdateUser(ctx, &iam.UpdateUserRequest{
@@ -3396,7 +3520,13 @@ func (r *Resolver) LinkFindingAuditTool(ctx context.Context, req *mcp.CallToolRe
 
 	svc := r.proboSvc
 
-	finding, audit, err := svc.Findings.CreateAuditMapping(ctx, scope, input.FindingID, input.AuditID, input.ReferenceID)
+	finding, audit, _, err := svc.Findings.CreateAuditMapping(
+		ctx,
+		scope,
+		input.FindingID,
+		input.AuditID,
+		input.ReferenceID,
+	)
 	if err != nil {
 		return nil, types.LinkFindingAuditOutput{}, fmt.Errorf("cannot link finding to audit: %w", err)
 	}
@@ -3550,13 +3680,12 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 	var filter *coredata.AccessReviewEntryFilter
 	if input.Filter != nil {
 		filter = &coredata.AccessReviewEntryFilter{
-			Decision:       input.Filter.Decision,
-			Flag:           input.Filter.Flag,
-			IncrementalTag: input.Filter.IncrementalTag,
-			IsAdmin:        input.Filter.IsAdmin,
-			Active:         input.Filter.Active,
-			AuthMethod:     input.Filter.AuthMethod,
-			AccountType:    input.Filter.AccountType,
+			Decision:    input.Filter.Decision,
+			Flag:        input.Filter.Flag,
+			IsAdmin:     input.Filter.IsAdmin,
+			Active:      input.Filter.Active,
+			AuthMethod:  input.Filter.AuthMethod,
+			AccountType: input.Filter.AccountType,
 		}
 	}
 
@@ -3753,7 +3882,12 @@ func (r *Resolver) ListAccessReviewSourcesTool(ctx context.Context, req *mcp.Cal
 		panic(fmt.Errorf("cannot list access sources: %w", err))
 	}
 
-	return nil, types.NewListAccessReviewSourcesOutput(p), nil
+	out := types.NewListAccessReviewSourcesOutput(p)
+	if err := r.fillSourceConnectorIDs(ctx, scope, p.Data, out.AccessReviewSources); err != nil {
+		return nil, types.ListAccessReviewSourcesOutput{}, err
+	}
+
+	return nil, out, nil
 }
 
 // CreateAccessReviewSourceTool handles the createAccessSource tool
@@ -3764,11 +3898,12 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 		return nil, types.CreateAccessReviewSourceOutput{}, err
 	}
 
-	source, err := r.accessReview.CreateSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
-		OrganizationID: input.OrganizationID,
-		ConnectorID:    input.ConnectorID,
-		Name:           input.Name,
-		CsvData:        input.CsvData,
+	source, created, err := r.accessReview.EnsureSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
+		OrganizationID:     input.OrganizationID,
+		ConnectorID:        input.ConnectorID,
+		ConnectorAccountID: input.ConnectorAccountID,
+		Name:               input.Name,
+		CsvData:            input.CsvData,
 	})
 	if err != nil {
 		return nil, types.CreateAccessReviewSourceOutput{}, fmt.Errorf("cannot create access source: %w", err)
@@ -3776,8 +3911,14 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 
 	r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
 
+	mapped := types.NewAccessReviewSource(source)
+	if err := r.fillSourceConnectorIDs(ctx, scope, []*coredata.AccessReviewSource{source}, []*types.AccessReviewSource{mapped}); err != nil {
+		return nil, types.CreateAccessReviewSourceOutput{}, err
+	}
+
 	return nil, types.CreateAccessReviewSourceOutput{
-		AccessReviewSource: types.NewAccessReviewSource(source),
+		AccessReviewSource: mapped,
+		Created:            created,
 	}, nil
 }
 
@@ -3833,8 +3974,13 @@ func (r *Resolver) UpdateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 		r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
 	}
 
+	mapped := types.NewAccessReviewSource(source)
+	if err := r.fillSourceConnectorIDs(ctx, scope, []*coredata.AccessReviewSource{source}, []*types.AccessReviewSource{mapped}); err != nil {
+		return nil, types.UpdateAccessReviewSourceOutput{}, err
+	}
+
 	return nil, types.UpdateAccessReviewSourceOutput{
-		AccessReviewSource: types.NewAccessReviewSource(source),
+		AccessReviewSource: mapped,
 	}, nil
 }
 
@@ -4413,12 +4559,24 @@ func (r *Resolver) ListWebhookEventsTool(ctx context.Context, req *mcp.CallToolR
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, input.WebhookSubscriptionID, cursor)
+	filter := coredata.NewWebhookEventFilter(input.Status)
+
+	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, input.WebhookSubscriptionID, cursor, filter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list webhook events: %w", err))
 	}
 
-	return nil, types.NewListWebhookEventsOutput(page), nil
+	dataIDs := make([]gid.GID, 0, len(page.Data))
+	for _, event := range page.Data {
+		dataIDs = append(dataIDs, event.WebhookDataID)
+	}
+
+	dataByID, err := prb.WebhookSubscriptions.ListWebhookDataByIDs(ctx, scope, dataIDs)
+	if err != nil {
+		panic(fmt.Errorf("cannot list webhook data: %w", err))
+	}
+
+	return nil, types.NewListWebhookEventsOutput(page, dataByID), nil
 }
 
 func (r *Resolver) ListDocumentVersionApprovalQuorumsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionApprovalQuorumsInput) (*mcp.CallToolResult, types.ListDocumentVersionApprovalQuorumsOutput, error) {
@@ -5634,7 +5792,7 @@ func (r *Resolver) ListCookieBannersTool(ctx context.Context, req *mcp.CallToolR
 
 	p := page.NewPage(banners, cursor)
 
-	return nil, types.NewListCookieBannersOutput(p), nil
+	return nil, types.NewListCookieBannersOutput(p, r.cookieBanner.TCFCmpID()), nil
 }
 
 func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerInput) (*mcp.CallToolResult, types.GetCookieBannerOutput, error) {
@@ -5648,7 +5806,27 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get cookie banner: %w", err)
 	}
 
-	return nil, types.GetCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	out := types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())
+
+	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
+		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
+		if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {
+			return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+		}
+
+		if published != nil {
+			version, err := types.NewCookieBannerVersion(published)
+			if err != nil {
+				return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+			}
+
+			out.PublishedVersion = version
+		}
+	} else if err.Error() != "permission denied" {
+		return nil, types.GetCookieBannerOutput{}, err
+	}
+
+	return nil, types.GetCookieBannerOutput{CookieBanner: out}, nil
 }
 
 func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieBannerInput) (*mcp.CallToolResult, types.AddCookieBannerOutput, error) {
@@ -5669,7 +5847,7 @@ func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.AddCookieBannerOutput{}, fmt.Errorf("cannot create cookie banner: %w", err)
 	}
 
-	return nil, types.AddCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.AddCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCookieBannerInput) (*mcp.CallToolResult, types.UpdateCookieBannerOutput, error) {
@@ -5699,6 +5877,10 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		updateReq.DefaultLanguage = *v
 	}
 
+	if v := UnwrapOmittable(input.PublisherCountryCode); v != nil && *v != nil {
+		updateReq.PublisherCountryCode = *v
+	}
+
 	if v := UnwrapOmittable(input.Capabilities); v != nil && *v != nil {
 		updateReq.Capabilities = &coredata.CookieBannerCapabilitiesPatch{
 			ResourceReporting: (*v).ResourceReporting,
@@ -5710,7 +5892,7 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.UpdateCookieBannerOutput{}, fmt.Errorf("cannot update cookie banner: %w", err)
 	}
 
-	return nil, types.UpdateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.UpdateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) DeleteCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCookieBannerInput) (*mcp.CallToolResult, types.DeleteCookieBannerOutput, error) {
@@ -5737,7 +5919,7 @@ func (r *Resolver) ActivateCookieBannerTool(ctx context.Context, req *mcp.CallTo
 		return nil, types.ActivateCookieBannerOutput{}, fmt.Errorf("cannot activate cookie banner: %w", err)
 	}
 
-	return nil, types.ActivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.ActivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) DeactivateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateCookieBannerInput) (*mcp.CallToolResult, types.DeactivateCookieBannerOutput, error) {
@@ -5751,7 +5933,7 @@ func (r *Resolver) DeactivateCookieBannerTool(ctx context.Context, req *mcp.Call
 		return nil, types.DeactivateCookieBannerOutput{}, fmt.Errorf("cannot deactivate cookie banner: %w", err)
 	}
 
-	return nil, types.DeactivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.DeactivateCookieBannerOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieCategoriesInput) (*mcp.CallToolResult, types.ListCookieCategoriesOutput, error) {
@@ -5762,7 +5944,12 @@ func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallTo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieCategoryOrderField]{Field: coredata.CookieCategoryOrderFieldRank, Direction: page.OrderDirectionAsc})
 
-	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, input.CookieBannerID, cursor, coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised)))
+	excludeKind := new(coredata.CookieCategoryKindUncategorised)
+	if input.Filter != nil {
+		excludeKind = input.Filter.ExcludeKind
+	}
+
+	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, input.CookieBannerID, cursor, coredata.NewCookieCategoryFilter(excludeKind))
 	if err != nil {
 		panic(fmt.Errorf("cannot list cookie categories: %w", err))
 	}
@@ -5825,6 +6012,15 @@ func (r *Resolver) UpdateCookieCategoryTool(ctx context.Context, req *mcp.CallTo
 		updateReq.Description = *v
 	}
 
+	if v := UnwrapOmittable(input.TcfPurposeIds); v != nil && *v != nil {
+		ids, err := optionalIntSlice(*v)
+		if err != nil {
+			return nil, types.UpdateCookieCategoryOutput{}, err
+		}
+
+		updateReq.TCFPurposeIDs = ids
+	}
+
 	category, err := r.cookieBanner.UpdateCookieCategory(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateCookieCategoryOutput{}, fmt.Errorf("cannot update cookie category: %w", err)
@@ -5883,7 +6079,12 @@ func (r *Resolver) ListTrackerPatternsTool(ctx context.Context, req *mcp.CallToo
 
 	p := page.NewPage(patterns, cursor)
 
-	return nil, types.NewListTrackerPatternsOutput(p), nil
+	attributions, err := r.trackerPatternAttributions(ctx, patterns...)
+	if err != nil {
+		panic(fmt.Errorf("cannot load tracker pattern attributions: %w", err))
+	}
+
+	return nil, types.NewListTrackerPatternsOutput(p, attributions), nil
 }
 
 func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrackerPatternInput) (*mcp.CallToolResult, types.GetTrackerPatternOutput, error) {
@@ -5897,7 +6098,12 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get tracker pattern: %w", err)
 	}
 
-	return nil, types.GetTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, pattern)
+	if err != nil {
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerPatternInput) (*mcp.CallToolResult, types.AddTrackerPatternOutput, error) {
@@ -5922,7 +6128,12 @@ func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.AddTrackerPatternOutput{}, fmt.Errorf("cannot create tracker pattern: %w", err)
 	}
 
-	return nil, types.AddTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, pattern)
+	if err != nil {
+		return nil, types.AddTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.AddTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrackerPatternInput) (*mcp.CallToolResult, types.UpdateTrackerPatternOutput, error) {
@@ -5950,7 +6161,12 @@ func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallTo
 		return nil, types.UpdateTrackerPatternOutput{}, fmt.Errorf("cannot update tracker pattern: %w", err)
 	}
 
-	return nil, types.UpdateTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, pattern)
+	if err != nil {
+		return nil, types.UpdateTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.UpdateTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) DeleteTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrackerPatternInput) (*mcp.CallToolResult, types.DeleteTrackerPatternOutput, error) {
@@ -5984,7 +6200,12 @@ func (r *Resolver) MoveTrackerPatternToCategoryTool(ctx context.Context, req *mc
 		return nil, types.MoveTrackerPatternToCategoryOutput{}, fmt.Errorf("cannot move tracker pattern: %w", err)
 	}
 
-	return nil, types.MoveTrackerPatternToCategoryOutput{TrackerPattern: types.NewTrackerPattern(result.TrackerPattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, result.TrackerPattern)
+	if err != nil {
+		return nil, types.MoveTrackerPatternToCategoryOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.MoveTrackerPatternToCategoryOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishCookieBannerVersionInput) (*mcp.CallToolResult, types.PublishCookieBannerVersionOutput, error) {
@@ -5998,7 +6219,12 @@ func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.
 		return nil, types.PublishCookieBannerVersionOutput{}, fmt.Errorf("cannot publish cookie banner version: %w", err)
 	}
 
-	return nil, types.PublishCookieBannerVersionOutput{CookieBannerVersion: types.NewCookieBannerVersion(version)}, nil
+	mapped, err := types.NewCookieBannerVersion(version)
+	if err != nil {
+		return nil, types.PublishCookieBannerVersionOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishCookieBannerVersionOutput{CookieBannerVersion: mapped}, nil
 }
 
 func (r *Resolver) RegenerateCookieBannerTrackerPolicyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RegenerateCookieBannerTrackerPolicyInput) (*mcp.CallToolResult, types.RegenerateCookieBannerTrackerPolicyOutput, error) {
@@ -6012,7 +6238,7 @@ func (r *Resolver) RegenerateCookieBannerTrackerPolicyTool(ctx context.Context, 
 		return nil, types.RegenerateCookieBannerTrackerPolicyOutput{}, fmt.Errorf("cannot regenerate cookie banner tracker policy: %w", err)
 	}
 
-	return nil, types.RegenerateCookieBannerTrackerPolicyOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+	return nil, types.RegenerateCookieBannerTrackerPolicyOutput{CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())}, nil
 }
 
 func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerVersionsInput) (*mcp.CallToolResult, types.ListCookieBannerVersionsOutput, error) {
@@ -6030,7 +6256,12 @@ func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.Ca
 
 	p := page.NewPage(versions, cursor)
 
-	return nil, types.NewListCookieBannerVersionsOutput(p), nil
+	out, err := types.NewListCookieBannerVersionsOutput(p)
+	if err != nil {
+		return nil, types.ListCookieBannerVersionsOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, out, nil
 }
 
 func (r *Resolver) UpsertCookieBannerTranslationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpsertCookieBannerTranslationInput) (*mcp.CallToolResult, types.UpsertCookieBannerTranslationOutput, error) {
@@ -6133,7 +6364,7 @@ func (r *Resolver) CreateSCIMConfigurationTool(ctx context.Context, req *mcp.Cal
 		return nil, types.CreateSCIMConfigurationOutput{}, err
 	}
 
-	config, token, err := r.iamSvc.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID)
+	config, bridge, token, err := r.iamSvc.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID, input.ConnectorID)
 	if err != nil {
 		return nil, types.CreateSCIMConfigurationOutput{}, fmt.Errorf("cannot create SCIM configuration: %w", err)
 	}
@@ -6143,12 +6374,7 @@ func (r *Resolver) CreateSCIMConfigurationTool(ctx context.Context, req *mcp.Cal
 		Token:             token,
 	}
 
-	if input.ConnectorID != nil {
-		bridge, err := r.iamSvc.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
-		if err != nil {
-			return nil, types.CreateSCIMConfigurationOutput{}, fmt.Errorf("cannot create SCIM bridge: %w", err)
-		}
-
+	if bridge != nil {
 		output.ScimBridge = types.NewSCIMBridge(bridge)
 	}
 
@@ -6212,6 +6438,23 @@ func (r *Resolver) UpdateSCIMBridgeTool(ctx context.Context, req *mcp.CallToolRe
 	}
 
 	return nil, types.UpdateSCIMBridgeOutput{ScimBridge: types.NewSCIMBridge(bridge)}, nil
+}
+
+func (r *Resolver) ReactivateSCIMBridgeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ReactivateSCIMBridgeInput) (*mcp.CallToolResult, types.ReactivateSCIMBridgeOutput, error) {
+	if _, err := r.Authorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate); err != nil {
+		return nil, types.ReactivateSCIMBridgeOutput{}, err
+	}
+
+	bridge, err := r.iamSvc.OrganizationService.ReactivateSCIMBridge(ctx, input.ScimBridgeID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeNotFound](err); ok {
+			return nil, types.ReactivateSCIMBridgeOutput{}, fmt.Errorf("SCIM bridge %s not found", input.ScimBridgeID)
+		}
+
+		return nil, types.ReactivateSCIMBridgeOutput{}, fmt.Errorf("cannot reactivate SCIM bridge: %w", err)
+	}
+
+	return nil, types.ReactivateSCIMBridgeOutput{ScimBridge: types.NewSCIMBridge(bridge)}, nil
 }
 
 func (r *Resolver) ListSCIMEventsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSCIMEventsInput) (*mcp.CallToolResult, types.ListSCIMEventsOutput, error) {
@@ -6427,7 +6670,7 @@ func (r *Resolver) ListChildThirdPartiesTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) ListRiskAnalysesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysesInput) (*mcp.CallToolResult, types.ListRiskAnalysesOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskAnalysisList)
+	scope, err := r.Authorize(ctx, input.OrganizationID, riskmanagement.ActionRiskAnalysisList)
 	if err != nil {
 		return nil, types.ListRiskAnalysesOutput{}, err
 	}
@@ -6454,7 +6697,7 @@ func (r *Resolver) ListRiskAnalysesTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) GetRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisInput) (*mcp.CallToolResult, types.GetRiskAnalysisOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisOutput{}, err
 	}
@@ -6464,13 +6707,34 @@ func (r *Resolver) GetRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.GetRiskAnalysisOutput{}, fmt.Errorf("failed to get risk analysis: %w", err)
 	}
 
+	analysis := types.NewRiskAnalysis(ra)
+
+	listScope, listErr := r.Authorize(ctx, ra.ID, riskmanagement.ActionTreatmentPlanList)
+	if listErr != nil {
+		switch listErr.Error() {
+		case "permission denied", "insufficient scope", "assumption required":
+			return nil, types.GetRiskAnalysisOutput{
+				RiskAnalysis: analysis,
+			}, nil
+		default:
+			return nil, types.GetRiskAnalysisOutput{}, listErr
+		}
+	}
+
+	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, listScope, ra.ID, input.AsOf)
+	if err != nil {
+		return nil, types.GetRiskAnalysisOutput{}, fmt.Errorf("failed to get risk analysis matrix cells: %w", err)
+	}
+
+	analysis.MatrixCells = types.NewRiskAnalysisMatrixCells(counts)
+
 	return nil, types.GetRiskAnalysisOutput{
-		RiskAnalysis: types.NewRiskAnalysis(ra),
+		RiskAnalysis: analysis,
 	}, nil
 }
 
 func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAnalysisInput) (*mcp.CallToolResult, types.AddRiskAnalysisOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskAnalysisCreate)
+	scope, err := r.Authorize(ctx, input.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
 	if err != nil {
 		return nil, types.AddRiskAnalysisOutput{}, err
 	}
@@ -6491,10 +6755,15 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		}
 	}
 
+	description, err := optionalMarkdownToProseMirrorJSON(input.Description)
+	if err != nil {
+		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAnalysisRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
-		Description:    input.Description,
+		Description:    description,
 		Period:         period,
 		MatrixSize:     matrixSize,
 	})
@@ -6508,7 +6777,7 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 }
 
 func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAnalysisInput) (*mcp.CallToolResult, types.UpdateRiskAnalysisOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisUpdate)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisUpdate)
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisOutput{}, err
 	}
@@ -6521,20 +6790,16 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
-	var matrixSize *riskmanagement.MatrixSize
-	if input.MatrixSize != nil {
-		matrixSize = &riskmanagement.MatrixSize{
-			Rows: input.MatrixSize.Rows,
-			Cols: input.MatrixSize.Cols,
-		}
+	description, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Description))
+	if err != nil {
+		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
 	}
 
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAnalysisRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: UnwrapOmittable(input.Description),
+		Description: description,
 		Period:      period,
-		MatrixSize:  matrixSize,
 	})
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("failed to update risk analysis: %w", err)
@@ -6546,7 +6811,7 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) DeleteRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAnalysisInput) (*mcp.CallToolResult, types.DeleteRiskAnalysisOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisDelete)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisDelete)
 	if err != nil {
 		return nil, types.DeleteRiskAnalysisOutput{}, err
 	}
@@ -6559,8 +6824,77 @@ func (r *Resolver) DeleteRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		DeletedRiskAnalysisID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) ForkRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ForkRiskAnalysisInput) (*mcp.CallToolResult, types.ForkRiskAnalysisOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisGet)
+	if err != nil {
+		return nil, types.ForkRiskAnalysisOutput{}, err
+	}
+
+	source, err := r.riskManagement.Get(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load risk analysis", log.Error(err))
+
+		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("internal server error")
+	}
+
+	scope, err = r.Authorize(ctx, source.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
+	if err != nil {
+		return nil, types.ForkRiskAnalysisOutput{}, err
+	}
+
+	var period *riskmanagement.Period
+	if input.Period != nil {
+		period = &riskmanagement.Period{
+			Start: input.Period.Start,
+			End:   input.Period.End,
+		}
+	}
+
+	description, err := optionalMarkdownToProseMirrorJSON(input.Description)
+	if err != nil {
+		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
+	ra, err := r.riskManagement.Fork(
+		ctx,
+		scope,
+		riskmanagement.ForkRiskAnalysisRequest{
+			RiskAnalysisID: input.ID,
+			Name:           input.Name,
+			Description:    description,
+			Period:         period,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.ForkRiskAnalysisOutput{}, validationErrors
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("resource already exists")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot fork risk analysis", log.Error(err))
+
+		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.ForkRiskAnalysisOutput{
+		RiskAnalysis: types.NewRiskAnalysis(ra),
+	}, nil
+}
+
 func (r *Resolver) ListRiskAnalysisDiagramsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysisDiagramsInput) (*mcp.CallToolResult, types.ListRiskAnalysisDiagramsOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisID, probo.ActionRiskAnalysisDiagramList)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisDiagramList)
 	if err != nil {
 		return nil, types.ListRiskAnalysisDiagramsOutput{}, err
 	}
@@ -6587,7 +6921,7 @@ func (r *Resolver) ListRiskAnalysisDiagramsTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) GetRiskAnalysisDiagramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisDiagramInput) (*mcp.CallToolResult, types.GetRiskAnalysisDiagramOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisDiagramGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisDiagramGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisDiagramOutput{}, err
 	}
@@ -6603,7 +6937,7 @@ func (r *Resolver) GetRiskAnalysisDiagramTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) AddRiskAnalysisDiagramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAnalysisDiagramInput) (*mcp.CallToolResult, types.AddRiskAnalysisDiagramOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisID, probo.ActionRiskAnalysisDiagramCreate)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisDiagramCreate)
 	if err != nil {
 		return nil, types.AddRiskAnalysisDiagramOutput{}, err
 	}
@@ -6622,7 +6956,7 @@ func (r *Resolver) AddRiskAnalysisDiagramTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) UpdateRiskAnalysisDiagramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAnalysisDiagramInput) (*mcp.CallToolResult, types.UpdateRiskAnalysisDiagramOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisDiagramUpdate)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisDiagramUpdate)
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisDiagramOutput{}, err
 	}
@@ -6641,7 +6975,7 @@ func (r *Resolver) UpdateRiskAnalysisDiagramTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) DeleteRiskAnalysisDiagramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAnalysisDiagramInput) (*mcp.CallToolResult, types.DeleteRiskAnalysisDiagramOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisDiagramDelete)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisDiagramDelete)
 	if err != nil {
 		return nil, types.DeleteRiskAnalysisDiagramOutput{}, err
 	}
@@ -6655,7 +6989,7 @@ func (r *Resolver) DeleteRiskAnalysisDiagramTool(ctx context.Context, req *mcp.C
 	}, nil
 }
 func (r *Resolver) ListRiskAnalysisNodesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysisNodesInput) (*mcp.CallToolResult, types.ListRiskAnalysisNodesOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisNodeList)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisNodeList)
 	if err != nil {
 		return nil, types.ListRiskAnalysisNodesOutput{}, err
 	}
@@ -6682,7 +7016,7 @@ func (r *Resolver) ListRiskAnalysisNodesTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) GetRiskAnalysisNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisNodeInput) (*mcp.CallToolResult, types.GetRiskAnalysisNodeOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisNodeGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisNodeGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisNodeOutput{}, err
 	}
@@ -6698,7 +7032,7 @@ func (r *Resolver) GetRiskAnalysisNodeTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) AddRiskAnalysisNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAnalysisNodeInput) (*mcp.CallToolResult, types.AddRiskAnalysisNodeOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisNodeCreate)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisNodeCreate)
 	if err != nil {
 		return nil, types.AddRiskAnalysisNodeOutput{}, err
 	}
@@ -6719,7 +7053,7 @@ func (r *Resolver) AddRiskAnalysisNodeTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) UpdateRiskAnalysisNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAnalysisNodeInput) (*mcp.CallToolResult, types.UpdateRiskAnalysisNodeOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisNodeUpdate)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisNodeUpdate)
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisNodeOutput{}, err
 	}
@@ -6745,7 +7079,7 @@ func (r *Resolver) UpdateRiskAnalysisNodeTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) DeleteRiskAnalysisNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAnalysisNodeInput) (*mcp.CallToolResult, types.DeleteRiskAnalysisNodeOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisNodeDelete)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisNodeDelete)
 	if err != nil {
 		return nil, types.DeleteRiskAnalysisNodeOutput{}, err
 	}
@@ -6759,7 +7093,7 @@ func (r *Resolver) DeleteRiskAnalysisNodeTool(ctx context.Context, req *mcp.Call
 	}, nil
 }
 func (r *Resolver) ListRiskAnalysisProcessesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysisProcessesInput) (*mcp.CallToolResult, types.ListRiskAnalysisProcessesOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisProcessList)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisProcessList)
 	if err != nil {
 		return nil, types.ListRiskAnalysisProcessesOutput{}, err
 	}
@@ -6786,7 +7120,7 @@ func (r *Resolver) ListRiskAnalysisProcessesTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) GetRiskAnalysisProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisProcessInput) (*mcp.CallToolResult, types.GetRiskAnalysisProcessOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisProcessGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisProcessGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisProcessOutput{}, err
 	}
@@ -6802,7 +7136,7 @@ func (r *Resolver) GetRiskAnalysisProcessTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) AddRiskAnalysisProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAnalysisProcessInput) (*mcp.CallToolResult, types.AddRiskAnalysisProcessOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisProcessCreate)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisProcessCreate)
 	if err != nil {
 		return nil, types.AddRiskAnalysisProcessOutput{}, err
 	}
@@ -6823,7 +7157,7 @@ func (r *Resolver) AddRiskAnalysisProcessTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) UpdateRiskAnalysisProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAnalysisProcessInput) (*mcp.CallToolResult, types.UpdateRiskAnalysisProcessOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisProcessUpdate)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisProcessUpdate)
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisProcessOutput{}, err
 	}
@@ -6844,7 +7178,7 @@ func (r *Resolver) UpdateRiskAnalysisProcessTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) DeleteRiskAnalysisProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAnalysisProcessInput) (*mcp.CallToolResult, types.DeleteRiskAnalysisProcessOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisProcessDelete)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisProcessDelete)
 	if err != nil {
 		return nil, types.DeleteRiskAnalysisProcessOutput{}, err
 	}
@@ -6858,7 +7192,7 @@ func (r *Resolver) DeleteRiskAnalysisProcessTool(ctx context.Context, req *mcp.C
 	}, nil
 }
 func (r *Resolver) ListRiskAnalysisThreatsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysisThreatsInput) (*mcp.CallToolResult, types.ListRiskAnalysisThreatsOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisThreatList)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisThreatList)
 	if err != nil {
 		return nil, types.ListRiskAnalysisThreatsOutput{}, err
 	}
@@ -6885,7 +7219,7 @@ func (r *Resolver) ListRiskAnalysisThreatsTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) GetRiskAnalysisThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisThreatInput) (*mcp.CallToolResult, types.GetRiskAnalysisThreatOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisThreatGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisThreatGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisThreatOutput{}, err
 	}
@@ -6901,7 +7235,7 @@ func (r *Resolver) GetRiskAnalysisThreatTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) AddRiskAnalysisThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAnalysisThreatInput) (*mcp.CallToolResult, types.AddRiskAnalysisThreatOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisThreatCreate)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisThreatCreate)
 	if err != nil {
 		return nil, types.AddRiskAnalysisThreatOutput{}, err
 	}
@@ -6922,7 +7256,7 @@ func (r *Resolver) AddRiskAnalysisThreatTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) UpdateRiskAnalysisThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAnalysisThreatInput) (*mcp.CallToolResult, types.UpdateRiskAnalysisThreatOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisThreatUpdate)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisThreatUpdate)
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisThreatOutput{}, err
 	}
@@ -6943,7 +7277,7 @@ func (r *Resolver) UpdateRiskAnalysisThreatTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) DeleteRiskAnalysisThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAnalysisThreatInput) (*mcp.CallToolResult, types.DeleteRiskAnalysisThreatOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisThreatDelete)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisThreatDelete)
 	if err != nil {
 		return nil, types.DeleteRiskAnalysisThreatOutput{}, err
 	}
@@ -6957,7 +7291,7 @@ func (r *Resolver) DeleteRiskAnalysisThreatTool(ctx context.Context, req *mcp.Ca
 	}, nil
 }
 func (r *Resolver) ListRiskAnalysisScenariosTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysisScenariosInput) (*mcp.CallToolResult, types.ListRiskAnalysisScenariosOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisScenarioList)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, types.ListRiskAnalysisScenariosOutput{}, err
 	}
@@ -6984,7 +7318,7 @@ func (r *Resolver) ListRiskAnalysisScenariosTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) GetRiskAnalysisScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisScenarioInput) (*mcp.CallToolResult, types.GetRiskAnalysisScenarioOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisScenarioGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisScenarioGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisScenarioOutput{}, err
 	}
@@ -7000,7 +7334,7 @@ func (r *Resolver) GetRiskAnalysisScenarioTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) AddRiskAnalysisScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAnalysisScenarioInput) (*mcp.CallToolResult, types.AddRiskAnalysisScenarioOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisScenarioCreate)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisScenarioCreate)
 	if err != nil {
 		return nil, types.AddRiskAnalysisScenarioOutput{}, err
 	}
@@ -7020,7 +7354,7 @@ func (r *Resolver) AddRiskAnalysisScenarioTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) UpdateRiskAnalysisScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAnalysisScenarioInput) (*mcp.CallToolResult, types.UpdateRiskAnalysisScenarioOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisScenarioUpdate)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisScenarioUpdate)
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisScenarioOutput{}, err
 	}
@@ -7040,7 +7374,7 @@ func (r *Resolver) UpdateRiskAnalysisScenarioTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) DeleteRiskAnalysisScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAnalysisScenarioInput) (*mcp.CallToolResult, types.DeleteRiskAnalysisScenarioOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisScenarioDelete)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisScenarioDelete)
 	if err != nil {
 		return nil, types.DeleteRiskAnalysisScenarioOutput{}, err
 	}
@@ -7054,7 +7388,7 @@ func (r *Resolver) DeleteRiskAnalysisScenarioTool(ctx context.Context, req *mcp.
 	}, nil
 }
 func (r *Resolver) LinkRiskAnalysisScenarioThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskAnalysisScenarioThreatInput) (*mcp.CallToolResult, types.LinkRiskAnalysisScenarioThreatOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioThreatLink)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioThreatLink)
 	if err != nil {
 		return nil, types.LinkRiskAnalysisScenarioThreatOutput{}, err
 	}
@@ -7071,7 +7405,7 @@ func (r *Resolver) LinkRiskAnalysisScenarioThreatTool(ctx context.Context, req *
 }
 
 func (r *Resolver) UnlinkRiskAnalysisScenarioThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskAnalysisScenarioThreatInput) (*mcp.CallToolResult, types.UnlinkRiskAnalysisScenarioThreatOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioThreatUnlink)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioThreatUnlink)
 	if err != nil {
 		return nil, types.UnlinkRiskAnalysisScenarioThreatOutput{}, err
 	}
@@ -7091,7 +7425,7 @@ func (r *Resolver) UnlinkRiskAnalysisScenarioThreatTool(ctx context.Context, req
 }
 
 func (r *Resolver) LinkRiskAnalysisScenarioRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskAnalysisScenarioRiskInput) (*mcp.CallToolResult, types.LinkRiskAnalysisScenarioRiskOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioRiskLink)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioRiskLink)
 	if err != nil {
 		return nil, types.LinkRiskAnalysisScenarioRiskOutput{}, err
 	}
@@ -7111,7 +7445,7 @@ func (r *Resolver) LinkRiskAnalysisScenarioRiskTool(ctx context.Context, req *mc
 }
 
 func (r *Resolver) UnlinkRiskAnalysisScenarioRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskAnalysisScenarioRiskInput) (*mcp.CallToolResult, types.UnlinkRiskAnalysisScenarioRiskOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioRiskUnlink)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioRiskUnlink)
 	if err != nil {
 		return nil, types.UnlinkRiskAnalysisScenarioRiskOutput{}, err
 	}
@@ -7131,7 +7465,7 @@ func (r *Resolver) UnlinkRiskAnalysisScenarioRiskTool(ctx context.Context, req *
 }
 
 func (r *Resolver) GetRiskAnalysisDiagramMermaidChartTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisDiagramMermaidChartInput) (*mcp.CallToolResult, types.GetRiskAnalysisDiagramMermaidChartOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisDiagramGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisDiagramGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisDiagramMermaidChartOutput{}, err
 	}
@@ -7147,7 +7481,7 @@ func (r *Resolver) GetRiskAnalysisDiagramMermaidChartTool(ctx context.Context, r
 }
 
 func (r *Resolver) ListRiskAnalysisBoundariesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysisBoundariesInput) (*mcp.CallToolResult, types.ListRiskAnalysisBoundariesOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisBoundaryList)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisBoundaryList)
 	if err != nil {
 		return nil, types.ListRiskAnalysisBoundariesOutput{}, err
 	}
@@ -7174,7 +7508,7 @@ func (r *Resolver) ListRiskAnalysisBoundariesTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) GetRiskAnalysisBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAnalysisBoundaryInput) (*mcp.CallToolResult, types.GetRiskAnalysisBoundaryOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisBoundaryGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisBoundaryGet)
 	if err != nil {
 		return nil, types.GetRiskAnalysisBoundaryOutput{}, err
 	}
@@ -7190,7 +7524,7 @@ func (r *Resolver) GetRiskAnalysisBoundaryTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) AddRiskAnalysisBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAnalysisBoundaryInput) (*mcp.CallToolResult, types.AddRiskAnalysisBoundaryOutput, error) {
-	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisBoundaryCreate)
+	scope, err := r.Authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisBoundaryCreate)
 	if err != nil {
 		return nil, types.AddRiskAnalysisBoundaryOutput{}, err
 	}
@@ -7210,7 +7544,7 @@ func (r *Resolver) AddRiskAnalysisBoundaryTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) UpdateRiskAnalysisBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAnalysisBoundaryInput) (*mcp.CallToolResult, types.UpdateRiskAnalysisBoundaryOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisBoundaryUpdate)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisBoundaryUpdate)
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisBoundaryOutput{}, err
 	}
@@ -7235,7 +7569,7 @@ func (r *Resolver) UpdateRiskAnalysisBoundaryTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) DeleteRiskAnalysisBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAnalysisBoundaryInput) (*mcp.CallToolResult, types.DeleteRiskAnalysisBoundaryOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisBoundaryDelete)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisBoundaryDelete)
 	if err != nil {
 		return nil, types.DeleteRiskAnalysisBoundaryOutput{}, err
 	}
@@ -8980,4 +9314,1322 @@ func (r *Resolver) PublishAiSystemListTool(ctx context.Context, req *mcp.CallToo
 		DocumentID:        document.ID,
 		DocumentVersionID: documentVersion.ID,
 	}, nil
+}
+
+func (r *Resolver) ListTreatmentPlansTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTreatmentPlansInput) (*mcp.CallToolResult, types.ListTreatmentPlansOutput, error) {
+	if input.RiskID != nil && input.RiskAnalysisID != nil {
+		return nil, types.ListTreatmentPlansOutput{}, validator.ValidationErrors{
+			{
+				Field:   "risk_id",
+				Code:    validator.ErrorCodeCustom,
+				Message: "cannot be set together with risk_analysis_id",
+			},
+		}
+	}
+
+	if input.AsOf != nil && input.RiskAnalysisID == nil {
+		return nil, types.ListTreatmentPlansOutput{}, validator.ValidationErrors{
+			{
+				Field:   "as_of",
+				Code:    validator.ErrorCodeCustom,
+				Message: "can only be set together with risk_analysis_id",
+			},
+		}
+	}
+
+	scope, err := r.Authorize(ctx, input.OrganizationID, riskmanagement.ActionTreatmentPlanList)
+	if err != nil {
+		return nil, types.ListTreatmentPlansOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TreatmentPlanOrderField]{
+		Field:     coredata.TreatmentPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var p *page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField]
+
+	var planFilter *coredata.TreatmentPlanFilter
+	if input.Filter != nil {
+		planFilter = coredata.NewTreatmentPlanFilter(
+			input.Filter.ScoreType,
+			input.Filter.Likelihood,
+			input.Filter.Impact,
+		)
+	}
+
+	switch {
+	case input.RiskID != nil:
+		p, err = r.riskManagement.ListTreatmentPlansForRiskID(ctx, scope, *input.RiskID, cursor, planFilter)
+	case input.RiskAnalysisID != nil && input.AsOf != nil:
+		asOfPage, listErr := r.riskManagement.ListTreatmentPlansAsOf(
+			ctx,
+			scope,
+			*input.RiskAnalysisID,
+			*input.AsOf,
+			cursor,
+			planFilter,
+			true,
+		)
+		if listErr != nil {
+			return nil, types.ListTreatmentPlansOutput{}, mapTreatmentPlanError(ctx, r.logger, "list", listErr)
+		}
+
+		return nil, types.NewListTreatmentPlansAsOfOutput(
+			asOfPage.Page,
+			asOfPage.ProgressByID,
+			asOfPage.MeasuresByID,
+		), nil
+	case input.RiskAnalysisID != nil:
+		p, err = r.riskManagement.ListTreatmentPlansForRiskAnalysisID(ctx, scope, *input.RiskAnalysisID, cursor, planFilter)
+	default:
+		p, err = r.riskManagement.ListTreatmentPlansForOrganizationID(ctx, scope, input.OrganizationID, cursor, planFilter)
+	}
+
+	if err != nil {
+		return nil, types.ListTreatmentPlansOutput{}, mapTreatmentPlanError(ctx, r.logger, "list", err)
+	}
+
+	ids := make([]gid.GID, 0, len(p.Data))
+	for _, tp := range p.Data {
+		ids = append(ids, tp.ID)
+	}
+
+	progressByID, err := r.riskManagement.GetTreatmentProgressByIDs(ctx, scope, ids)
+	if err != nil {
+		return nil, types.ListTreatmentPlansOutput{}, mapTreatmentPlanError(ctx, r.logger, "list", err)
+	}
+
+	return nil, types.NewListTreatmentPlansOutput(p, progressByID), nil
+}
+
+func (r *Resolver) GetTreatmentPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTreatmentPlanInput) (*mcp.CallToolResult, types.GetTreatmentPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionTreatmentPlanGet)
+	if err != nil {
+		return nil, types.GetTreatmentPlanOutput{}, err
+	}
+
+	tp, err := r.riskManagement.GetTreatmentPlan(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetTreatmentPlanOutput{}, mapTreatmentPlanError(ctx, r.logger, "get", err)
+	}
+
+	progress, err := r.riskManagement.GetTreatmentProgress(ctx, scope, tp.ID)
+	if err != nil {
+		return nil, types.GetTreatmentPlanOutput{}, mapTreatmentPlanError(ctx, r.logger, "get", err)
+	}
+
+	return nil, types.GetTreatmentPlanOutput{
+		TreatmentPlan: types.NewTreatmentPlan(tp, progress),
+	}, nil
+}
+
+func (r *Resolver) AddTreatmentPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTreatmentPlanInput) (*mcp.CallToolResult, types.AddTreatmentPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionTreatmentPlanCreate)
+	if err != nil {
+		return nil, types.AddTreatmentPlanOutput{}, err
+	}
+
+	tp, err := r.riskManagement.CreateTreatmentPlan(
+		ctx,
+		scope,
+		riskmanagement.CreateTreatmentPlanRequest{
+			RiskID:             input.RiskID,
+			RiskAnalysisID:     input.RiskAnalysisID,
+			Treatment:          input.Treatment,
+			OwnerID:            input.OwnerID,
+			InherentLikelihood: input.InherentLikelihood,
+			InherentImpact:     input.InherentImpact,
+			ResidualLikelihood: input.ResidualLikelihood,
+			ResidualImpact:     input.ResidualImpact,
+		},
+	)
+	if err != nil {
+		return nil, types.AddTreatmentPlanOutput{}, mapTreatmentPlanError(ctx, r.logger, "create", err)
+	}
+
+	return nil, types.AddTreatmentPlanOutput{
+		TreatmentPlan: types.NewTreatmentPlan(tp, riskmanagement.TreatmentProgress{}),
+	}, nil
+}
+
+func (r *Resolver) UpdateTreatmentPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTreatmentPlanInput) (*mcp.CallToolResult, types.UpdateTreatmentPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionTreatmentPlanUpdate)
+	if err != nil {
+		return nil, types.UpdateTreatmentPlanOutput{}, err
+	}
+
+	tp, err := r.riskManagement.UpdateTreatmentPlan(
+		ctx,
+		scope,
+		riskmanagement.UpdateTreatmentPlanRequest{
+			ID:                 input.ID,
+			Treatment:          input.Treatment,
+			OwnerID:            UnwrapOmittable(input.OwnerID),
+			InherentLikelihood: input.InherentLikelihood,
+			InherentImpact:     input.InherentImpact,
+			ResidualLikelihood: input.ResidualLikelihood,
+			ResidualImpact:     input.ResidualImpact,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateTreatmentPlanOutput{}, mapTreatmentPlanError(ctx, r.logger, "update", err)
+	}
+
+	progress, err := r.riskManagement.GetTreatmentProgress(ctx, scope, tp.ID)
+	if err != nil {
+		return nil, types.UpdateTreatmentPlanOutput{}, mapTreatmentPlanError(ctx, r.logger, "update", err)
+	}
+
+	return nil, types.UpdateTreatmentPlanOutput{
+		TreatmentPlan: types.NewTreatmentPlan(tp, progress),
+	}, nil
+}
+
+func (r *Resolver) DeleteTreatmentPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTreatmentPlanInput) (*mcp.CallToolResult, types.DeleteTreatmentPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionTreatmentPlanDelete)
+	if err != nil {
+		return nil, types.DeleteTreatmentPlanOutput{}, err
+	}
+
+	if err := r.riskManagement.DeleteTreatmentPlan(ctx, scope, input.ID); err != nil {
+		return nil, types.DeleteTreatmentPlanOutput{}, mapTreatmentPlanError(ctx, r.logger, "delete", err)
+	}
+
+	return nil, types.DeleteTreatmentPlanOutput{
+		DeletedTreatmentPlanID: input.ID,
+	}, nil
+}
+
+func mapTreatmentPlanError(ctx context.Context, logger *log.Logger, op string, err error) error {
+	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+		return validationErrors
+	}
+
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("resource not found")
+	}
+
+	if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+		return fmt.Errorf("resource already exists")
+	}
+
+	logger.ErrorCtx(ctx, "cannot "+op+" treatment plan", log.Error(err))
+
+	return fmt.Errorf("internal server error")
+}
+
+func (r *Resolver) AwsConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AwsConnectorSetupInput) (*mcp.CallToolResult, types.AwsConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.AwsConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.AwsConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudaws.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.awsConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build aws connector setup", log.Error(err))
+
+		return nil, types.AwsConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.AwsConnectorSetupOutput{
+		Setup: types.NewAWSConnectorSetup(setup),
+	}, nil
+}
+
+func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateWorkloadIdentityConnectorInput) (*mcp.CallToolResult, types.CreateWorkloadIdentityConnectorOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	raw, err := r.workloadIdentitySettings(ctx, input)
+	if err != nil {
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
+	}
+
+	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       input.Provider,
+		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+		Connection:     &connector.WorkloadIdentityConnection{},
+		RawSettings:    raw,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create workload identity connector", log.Error(err))
+
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.CreateWorkloadIdentityConnectorOutput{
+		Connector: types.NewConnector(
+			cnnctr,
+			r.connectorConnectionStatus(ctx, scope, cnnctr.ID),
+		),
+	}, nil
+}
+
+func (r *Resolver) GcpConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GcpConnectorSetupInput) (*mcp.CallToolResult, types.GcpConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.GcpConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.GcpConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudgcp.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.gcpConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build gcp connector setup", log.Error(err))
+
+		return nil, types.GcpConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GcpConnectorSetupOutput{
+		Setup: types.NewGCPConnectorSetup(setup),
+	}, nil
+}
+
+func (r *Resolver) AzureConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AzureConnectorSetupInput) (*mcp.CallToolResult, types.AzureConnectorSetupOutput, error) {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, types.AzureConnectorSetupOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.AzureConnectorSetupOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	setup, err := cloudazure.ConnectorSetupFor(
+		r.identityFederation,
+		input.OrganizationID,
+		r.azureConnectorInstall,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build azure connector setup", log.Error(err))
+
+		return nil, types.AzureConnectorSetupOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.AzureConnectorSetupOutput{
+		Setup: types.NewAzureConnectorSetup(setup),
+	}, nil
+}
+
+func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTaskCommentsInput) (*mcp.CallToolResult, types.ListTaskCommentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskCommentList)
+	if err != nil {
+		return nil, types.ListTaskCommentsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskCommentOrderField]{
+		Field:     coredata.TaskCommentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskCommentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	commentPage, err := r.task.ListCommentsForTaskID(ctx, scope, input.TaskID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task comments", log.Error(err))
+		return nil, types.ListTaskCommentsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	output, err := types.NewListTaskCommentsOutput(commentPage)
+	if err != nil {
+		return nil, types.ListTaskCommentsOutput{}, err
+	}
+
+	return nil, output, nil
+}
+
+func (r *Resolver) GetTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskCommentInput) (*mcp.CallToolResult, types.GetTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskCommentGet)
+	if err != nil {
+		return nil, types.GetTaskCommentOutput{}, err
+	}
+
+	taskComment, err := r.task.GetComment(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get task comment", log.Error(err))
+
+		return nil, types.GetTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	converted, err := types.NewTaskComment(taskComment)
+	if err != nil {
+		return nil, types.GetTaskCommentOutput{}, err
+	}
+
+	return nil, types.GetTaskCommentOutput{
+		TaskComment: converted,
+	}, nil
+}
+
+func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskCommentInput) (*mcp.CallToolResult, types.AddTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskCommentCreate)
+	if err != nil {
+		return nil, types.AddTaskCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	content, err := markdownToProseMirrorJSON(input.Content)
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
+	taskComment, err := r.task.CreateComment(
+		ctx, scope,
+		task.CreateTaskCommentRequest{
+			TaskID:     input.TaskID,
+			OwnerID:    input.OwnerID,
+			IdentityID: identity.ID,
+			Content:    content,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.AddTaskCommentOutput{}, validationErrors
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create task comment", log.Error(err))
+
+		return nil, types.AddTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	converted, err := types.NewTaskComment(taskComment)
+	if err != nil {
+		return nil, types.AddTaskCommentOutput{}, err
+	}
+
+	return nil, types.AddTaskCommentOutput{
+		TaskComment: converted,
+	}, nil
+}
+
+func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskCommentInput) (*mcp.CallToolResult, types.UpdateTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskCommentUpdate)
+	if err != nil {
+		return nil, types.UpdateTaskCommentOutput{}, err
+	}
+
+	content, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Content))
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
+	taskComment, err := r.task.UpdateComment(
+		ctx, scope,
+		task.UpdateTaskCommentRequest{
+			ID:      input.ID,
+			OwnerID: optionalPtr(input.OwnerID),
+			Content: content,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.UpdateTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.UpdateTaskCommentOutput{}, validationErrors
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update task comment", log.Error(err))
+
+		return nil, types.UpdateTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	converted, err := types.NewTaskComment(taskComment)
+	if err != nil {
+		return nil, types.UpdateTaskCommentOutput{}, err
+	}
+
+	return nil, types.UpdateTaskCommentOutput{
+		TaskComment: converted,
+	}, nil
+}
+
+func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskCommentInput) (*mcp.CallToolResult, types.DeleteTaskCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskCommentDelete)
+	if err != nil {
+		return nil, types.DeleteTaskCommentOutput{}, err
+	}
+
+	if err := r.task.DeleteComment(ctx, scope, input.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.DeleteTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete task comment", log.Error(err))
+
+		return nil, types.DeleteTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.DeleteTaskCommentOutput{
+		DeletedTaskCommentID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListTaskActivitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTaskActivitiesInput) (*mcp.CallToolResult, types.ListTaskActivitiesOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskActivityList)
+	if err != nil {
+		return nil, types.ListTaskActivitiesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskActivityOrderField]{
+		Field:     coredata.TaskActivityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskActivityOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	activityPage, err := r.task.ListActivitiesForTaskID(ctx, scope, input.TaskID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task activities", log.Error(err))
+		return nil, types.ListTaskActivitiesOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListTaskActivitiesOutput(activityPage), nil
+}
+
+func (r *Resolver) GetTaskActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskActivityInput) (*mcp.CallToolResult, types.GetTaskActivityOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, task.ActionTaskActivityGet)
+	if err != nil {
+		return nil, types.GetTaskActivityOutput{}, err
+	}
+
+	taskActivity, err := r.task.GetActivity(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetTaskActivityOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get task activity", log.Error(err))
+
+		return nil, types.GetTaskActivityOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetTaskActivityOutput{
+		TaskActivity: types.NewTaskActivity(taskActivity),
+	}, nil
+}
+
+func (r *Resolver) CreateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCompliancePortalAccessInput) (*mcp.CallToolResult, types.CreateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalAccessCreate)
+	if err != nil {
+		return nil, types.CreateCompliancePortalAccessOutput{}, err
+	}
+
+	var email *mail.Addr
+
+	if input.Email != nil && *input.Email != "" {
+		parsed, err := mail.ParseAddr(*input.Email)
+		if err != nil {
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("invalid email")
+		}
+
+		email = &parsed
+	}
+
+	access, err := r.management.CreateAccess(
+		ctx,
+		scope,
+		&management.CreateAccessRequest{
+			CompliancePortalID:      input.CompliancePortalID,
+			ProfileID:               input.ProfileID,
+			Email:                   email,
+			DocumentIDs:             input.DocumentIds,
+			ReportFileIDs:           input.ReportIds,
+			CompliancePortalFileIDs: input.CompliancePortalFileIds,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		case errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("visitor already has access to this portal")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.CreateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
+
+			return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.CreateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.CreateCompliancePortalAccessOutput{
+		CompliancePortalAccess: out,
+	}, nil
+}
+
+func (r *Resolver) DeactivateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateCompliancePortalAccessInput) (*mcp.CallToolResult, types.DeactivateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, types.DeactivateCompliancePortalAccessOutput{}, err
+	}
+
+	access, err := r.management.DeactivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.DeactivateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot deactivate compliance portal access", log.Error(err))
+
+			return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.DeactivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.DeactivateCompliancePortalAccessOutput{
+		CompliancePortalAccess: out,
+	}, nil
+}
+
+func (r *Resolver) ActivateCompliancePortalAccessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ActivateCompliancePortalAccessInput) (*mcp.CallToolResult, types.ActivateCompliancePortalAccessOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, types.ActivateCompliancePortalAccessOutput{}, err
+	}
+
+	access, err := r.management.ActivateAccess(ctx, scope, input.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("resource not found")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.ActivateCompliancePortalAccessOutput{}, validationErrors
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot activate compliance portal access", log.Error(err))
+
+			return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
+
+		return nil, types.ActivateCompliancePortalAccessOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.ActivateCompliancePortalAccessOutput{
+		CompliancePortalAccess: out,
+	}, nil
+}
+
+func (r *Resolver) ListCommonGVLVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCommonGVLVendorsInput) (*mcp.CallToolResult, types.ListCommonGVLVendorsOutput, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.Authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, types.ListCommonGVLVendorsOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	})
+
+	var query *string
+	if input.Filter != nil {
+		query = input.Filter.Query
+	}
+
+	cdFilter := coredata.NewCommonGVLVendorFilter(query)
+
+	if input.Filter != nil && input.Filter.Membership != nil {
+		if input.Filter.CookieBannerID == nil {
+			return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("cookie_banner_id is required when filtering by membership")
+		}
+
+		if _, err := r.Authorize(ctx, *input.Filter.CookieBannerID, probo.ActionCookieBannerGet); err != nil {
+			return nil, types.ListCommonGVLVendorsOutput{}, err
+		}
+
+		cdFilter = cdFilter.WithMembership(input.Filter.CookieBannerID, input.Filter.Membership)
+	} else if input.Filter != nil && input.Filter.CookieBannerID != nil {
+		// cookie_banner_id only means anything alongside membership. Reject the
+		// lone value rather than silently dropping it and returning the
+		// unfiltered global catalog, which reads as a successful filter.
+		return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("membership is required when filtering by cookie_banner_id")
+	}
+
+	vendors, err := r.cookieBanner.ListCommonGVLVendors(ctx, cursor, cdFilter)
+	if err != nil {
+		return nil, types.ListCommonGVLVendorsOutput{}, fmt.Errorf("internal error")
+	}
+
+	p := page.NewPage(vendors, cursor)
+
+	return nil, types.NewListCommonGVLVendorsOutput(p), nil
+}
+
+func (r *Resolver) ListCookieBannerGVLVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerGVLVendorsInput) (*mcp.CallToolResult, types.ListCookieBannerGVLVendorsOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.ListCookieBannerGVLVendorsOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CommonGVLVendorOrderField]{
+		Field:     coredata.CommonGVLVendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	})
+
+	vendors, err := r.cookieBanner.ListCookieBannerGVLVendors(ctx, scope, input.CookieBannerID, cursor)
+	if err != nil {
+		return nil, types.ListCookieBannerGVLVendorsOutput{}, fmt.Errorf("internal error")
+	}
+
+	p := page.NewPage(vendors, cursor)
+
+	return nil, types.NewListCookieBannerGVLVendorsOutput(p), nil
+}
+
+func (r *Resolver) AddCookieBannerGVLVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieBannerGVLVendorInput) (*mcp.CallToolResult, types.AddCookieBannerGVLVendorOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.AddCookieBannerGVLVendorOutput{}, err
+	}
+
+	vendor, err := r.cookieBanner.AddCookieBannerGVLVendor(ctx, scope, cookiebanner.AddCookieBannerGVLVendorRequest{
+		CookieBannerID: input.CookieBannerID,
+		IABVendorID:    input.IabVendorID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound), errors.Is(err, cookiebanner.ErrGVLVendorNotFound):
+			return nil, types.AddCookieBannerGVLVendorOutput{}, err
+		case errors.Is(err, cookiebanner.ErrGVLVendorDeleted), errors.Is(err, cookiebanner.ErrTCFNotEnabled):
+			return nil, types.AddCookieBannerGVLVendorOutput{}, err
+		default:
+			if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.AddCookieBannerGVLVendorOutput{}, err
+			}
+
+			return nil, types.AddCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.AddCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.AddCookieBannerGVLVendorOutput{
+		CommonGvlVendor: types.NewCommonGVLVendor(vendor),
+		CookieBanner:    types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID()),
+	}, nil
+}
+
+func (r *Resolver) RemoveCookieBannerGVLVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveCookieBannerGVLVendorInput) (*mcp.CallToolResult, types.RemoveCookieBannerGVLVendorOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+	}
+
+	err = r.cookieBanner.RemoveCookieBannerGVLVendor(ctx, scope, cookiebanner.RemoveCookieBannerGVLVendorRequest{
+		CookieBannerID: input.CookieBannerID,
+		IABVendorID:    input.IabVendorID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+		default:
+			if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, types.RemoveCookieBannerGVLVendorOutput{}, err
+			}
+
+			return nil, types.RemoveCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.RemoveCookieBannerGVLVendorOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.RemoveCookieBannerGVLVendorOutput{
+		CookieBanner: types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID()),
+	}, nil
+}
+
+func (r *Resolver) GetCommonGVLCatalogTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCommonGVLCatalogInput) (*mcp.CallToolResult, types.GetCommonGVLCatalogOutput, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.Authorize(ctx, identity.ID, probo.ActionCommonGVLVendorList); err != nil {
+		return nil, types.GetCommonGVLCatalogOutput{}, err
+	}
+
+	catalog, err := r.cookieBanner.GetCommonGVLCatalog(ctx)
+	if err != nil {
+		return nil, types.GetCommonGVLCatalogOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.GetCommonGVLCatalogOutput{
+		CommonGvlCatalog: types.NewCommonGVLCatalog(catalog),
+	}, nil
+}
+func (r *Resolver) PublishRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishRiskAnalysisInput) (*mcp.CallToolResult, types.PublishRiskAnalysisOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisPublish)
+	if err != nil {
+		return nil, types.PublishRiskAnalysisOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskAnalysis(ctx, scope, input.ID, input.ApproverIds, input.Minor)
+	if err != nil {
+		return nil, types.PublishRiskAnalysisOutput{}, fmt.Errorf("cannot publish risk analysis: %w", err)
+	}
+
+	return nil, types.PublishRiskAnalysisOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) ListLinearTeamsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListLinearTeamsInput) (*mcp.CallToolResult, types.ListLinearTeamsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListLinearTeamsOutput{}, err
+	}
+
+	page, err := r.task.Sync.SearchLinearTeams(
+		ctx,
+		scope,
+		input.OrganizationID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		input.Cursor,
+	)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
+			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+			return nil, types.ListLinearTeamsOutput{Teams: []*types.LinearTeam{}}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot search Linear teams", log.Error(err))
+
+		return nil, types.ListLinearTeamsOutput{}, fmt.Errorf("internal error")
+	}
+
+	teams := make([]*types.LinearTeam, 0, len(page.Teams))
+	for _, team := range page.Teams {
+		teams = append(teams, &types.LinearTeam{
+			ID:   team.ID,
+			Name: team.Name,
+			Key:  team.Key,
+		})
+	}
+
+	return nil, types.ListLinearTeamsOutput{
+		Teams:      teams,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishTaskToLinearInput) (*mcp.CallToolResult, types.PublishTaskToLinearOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.PublishTaskToLinearOutput{}, err
+	}
+
+	if input.TeamID == "" {
+		return nil, types.PublishTaskToLinearOutput{}, tasksync.ErrLinearTeamIDRequired
+	}
+
+	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task not found")
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear team id is required")
+		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear team was not found")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
+
+			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task external link", log.Error(err))
+		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishTaskToLinearOutput{
+		Task: taskWithLink,
+	}, nil
+}
+
+func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkTaskExternalInput) (*mcp.CallToolResult, types.UnlinkTaskExternalOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.UnlinkTaskExternalOutput{}, err
+	}
+
+	if err := r.task.Sync.Unlink(ctx, scope, input.TaskID); err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound), errors.Is(err, tasksync.ErrTaskNotLinked):
+			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("task is not linked to an external issue")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
+			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, input.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
+		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task external link", log.Error(err))
+		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.UnlinkTaskExternalOutput{
+		Task: taskWithLink,
+	}, nil
+}
+
+func (r *Resolver) taskExternalLinksByTasks(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tasks []*coredata.Task,
+) (map[gid.GID]*coredata.TaskExternalLink, error) {
+	if r.task.Sync == nil || len(tasks) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]gid.GID, 0, len(tasks))
+	for _, task := range tasks {
+		ids = append(ids, task.ID)
+	}
+
+	return r.task.Sync.GetLinksByTaskIDs(ctx, scope, ids)
+}
+
+func (r *Resolver) taskWithExternalLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) (*types.Task, error) {
+	result := types.NewTask(task)
+	if r.task.Sync == nil {
+		return result, nil
+	}
+
+	link, err := r.task.Sync.GetLinkByTaskID(ctx, scope, task.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return result, nil
+		}
+
+		return nil, err
+	}
+
+	result.ExternalLink = types.NewTaskExternalLink(link)
+
+	return result, nil
+}
+
+func (r *Resolver) ListConnectorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListConnectorsInput) (*mcp.CallToolResult, types.ListConnectorsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorList)
+	if err != nil {
+		return nil, types.ListConnectorsOutput{}, err
+	}
+
+	connectors, err := r.proboSvc.Connectors.ListAllForOrganizationID(ctx, scope, input.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list connectors", log.Error(err))
+
+		return nil, types.ListConnectorsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	result := make([]*types.Connector, len(connectors))
+	for i, cnnctr := range connectors {
+		result[i] = types.NewConnector(cnnctr, r.connectorConnectionStatus(ctx, scope, cnnctr.ID))
+	}
+
+	return nil, types.ListConnectorsOutput{Connectors: result}, nil
+}
+
+func (r *Resolver) GetConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetConnectorInput) (*mcp.CallToolResult, types.GetConnectorOutput, error) {
+	scope, err := r.Authorize(ctx, input.ConnectorID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, types.GetConnectorOutput{}, err
+	}
+
+	cnnctr, err := r.proboSvc.Connectors.Get(ctx, scope, input.ConnectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetConnectorOutput{}, fmt.Errorf("connector not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+
+		return nil, types.GetConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetConnectorOutput{
+		Connector: types.NewConnector(cnnctr, r.connectorConnectionStatus(ctx, scope, cnnctr.ID)),
+	}, nil
+}
+
+func (r *Resolver) CreateOrganizationConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateOrganizationConnectorInput) (*mcp.CallToolResult, types.CreateOrganizationConnectorOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, types.CreateOrganizationConnectorOutput{}, err
+	}
+
+	if r.identityFederation == nil {
+		return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
+	}
+
+	raw, err := r.organizationConnectorSettings(ctx, input)
+	if err != nil {
+		return nil, types.CreateOrganizationConnectorOutput{}, err
+	}
+
+	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       input.Provider,
+		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+		Connection:     &connector.WorkloadIdentityConnection{},
+		RawSettings:    raw,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create organization connector", log.Error(err))
+
+		return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("internal server error")
+	}
+
+	discovered := []*types.DiscoveredConnectorAccount{}
+
+	if err := r.accessReview.ProbeConnector(ctx, scope, cnnctr.ID); err != nil {
+		r.logger.WarnCtx(ctx, "organization connector probe failed", log.String("connector_id", cnnctr.ID.String()))
+	} else {
+		accounts, err := r.accessReview.DiscoverAccounts(ctx, scope, cnnctr.ID)
+		if err != nil {
+			r.logger.WarnCtx(ctx, "cannot discover organization connector accounts", log.String("connector_id", cnnctr.ID.String()))
+		} else {
+			discovered = types.NewDiscoveredConnectorAccounts(accounts)
+		}
+	}
+
+	return nil, types.CreateOrganizationConnectorOutput{
+		Connector:          types.NewConnector(cnnctr, r.connectorConnectionStatus(ctx, scope, cnnctr.ID)),
+		DiscoveredAccounts: discovered,
+	}, nil
+}
+
+func (r *Resolver) DiscoverConnectorAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DiscoverConnectorAccountsInput) (*mcp.CallToolResult, types.DiscoverConnectorAccountsOutput, error) {
+	scope, err := r.Authorize(ctx, input.ConnectorID, probo.ActionConnectorDiscover)
+	if err != nil {
+		return nil, types.DiscoverConnectorAccountsOutput{}, err
+	}
+
+	accounts, err := r.accessReview.DiscoverAccounts(ctx, scope, input.ConnectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.DiscoverConnectorAccountsOutput{}, fmt.Errorf("connector not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot discover connector accounts", log.Error(err))
+
+		return nil, types.DiscoverConnectorAccountsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.DiscoverConnectorAccountsOutput{
+		Accounts: types.NewDiscoveredConnectorAccounts(accounts),
+	}, nil
+}
+
+func (r *Resolver) EnableConnectorAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.EnableConnectorAccountsInput) (*mcp.CallToolResult, types.EnableConnectorAccountsOutput, error) {
+	scope, err := r.Authorize(ctx, input.ConnectorID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, types.EnableConnectorAccountsOutput{}, err
+	}
+
+	reqAccounts := make([]probo.EnableConnectorAccount, 0, len(input.Accounts))
+	for _, account := range input.Accounts {
+		if account == nil {
+			continue
+		}
+
+		reqAccounts = append(reqAccounts, probo.EnableConnectorAccount{
+			ExternalAccountID: account.ExternalAccountID,
+			Name:              account.Name,
+		})
+	}
+
+	enabled, err := r.proboSvc.Connectors.EnableAccounts(ctx, scope, input.ConnectorID, reqAccounts)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.EnableConnectorAccountsOutput{}, validationErrors
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.EnableConnectorAccountsOutput{}, fmt.Errorf("connector not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot enable connector accounts", log.Error(err))
+
+		return nil, types.EnableConnectorAccountsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	accounts := make([]*types.ConnectorAccount, len(enabled))
+	for i, account := range enabled {
+		accounts[i] = types.NewConnectorAccount(account)
+	}
+
+	return nil, types.EnableConnectorAccountsOutput{ConnectorAccounts: accounts}, nil
+}
+
+func (r *Resolver) LinkTaskToLinearTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkTaskToLinearInput) (*mcp.CallToolResult, types.LinkTaskToLinearOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.LinkTaskToLinearOutput{}, err
+	}
+
+	if input.TeamID == "" {
+		return nil, types.LinkTaskToLinearOutput{}, tasksync.ErrLinearTeamIDRequired
+	}
+
+	if input.IssueID == "" {
+		return nil, types.LinkTaskToLinearOutput{}, tasksync.ErrLinearIssueIDRequired
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	link, err := r.task.Sync.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("task not found")
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear team id is required")
+		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear team was not found")
+		case errors.Is(err, tasksync.ErrLinearIssueIDRequired):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear issue id is required")
+		case errors.Is(err, tasksync.ErrLinearIssueNotFound):
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear issue was not found")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot link task to Linear", log.Error(err))
+
+			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	linkedTask, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+		return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, linkedTask)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task external link", log.Error(err))
+		return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.LinkTaskToLinearOutput{
+		Task: taskWithLink,
+	}, nil
+}
+
+func (r *Resolver) ListLinearIssuesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListLinearIssuesInput) (*mcp.CallToolResult, types.ListLinearIssuesOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListLinearIssuesOutput{}, err
+	}
+
+	if input.TeamID == "" {
+		return nil, types.ListLinearIssuesOutput{}, tasksync.ErrLinearTeamIDRequired
+	}
+
+	page, err := r.task.Sync.SearchLinearIssues(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.TeamID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		input.Cursor,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, tasksync.ErrLinearNotConnected),
+			errors.Is(err, tasksync.ErrLinearReconnectRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, types.ListLinearIssuesOutput{Issues: []*types.LinearIssue{}}, nil
+		default:
+			r.logger.ErrorCtx(ctx, "cannot search Linear issues", log.Error(err))
+
+			return nil, types.ListLinearIssuesOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	issues := make([]*types.LinearIssue, 0, len(page.Issues))
+	for _, issue := range page.Issues {
+		node, err := linearMCPIssue(issue)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot map Linear issue", log.Error(err))
+
+			return nil, types.ListLinearIssuesOutput{}, fmt.Errorf("internal error")
+		}
+
+		issues = append(issues, node)
+	}
+
+	return nil, types.ListLinearIssuesOutput{
+		Issues:     issues,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func optionalString(value *string) string {
+	if value == nil {
+		return ""
+	}
+
+	return *value
+}
+
+func optionalInt(value *int) int {
+	if value == nil {
+		return 0
+	}
+
+	return *value
+}
+
+func linearNextCursor(endCursor string, hasNextPage bool) *string {
+	if !hasNextPage || endCursor == "" {
+		return nil
+	}
+
+	return &endCursor
+}
+
+func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
+	node := &types.LinearIssue{
+		ID:         issue.ID,
+		Identifier: issue.Identifier,
+		Title:      issue.Title,
+	}
+
+	content, err := tasksync.MarkdownToContent(issue.Description)
+	if err != nil {
+		return nil, err
+	}
+
+	node.Content = &content
+
+	if issue.StateType != "" {
+		state := tasksync.LinearTypeToTaskState(issue.StateType)
+		node.State = &state
+	}
+
+	if priority, ok := tasksync.LinearPriorityToTask(issue.Priority); ok {
+		node.Priority = &priority
+	}
+
+	return node, nil
 }

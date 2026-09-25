@@ -32,7 +32,12 @@ import (
 
 func sentryRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderSentry,
+		Provider: coredata.ConnectorProviderSentry,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.SentryConnectorSettings) string {
+				return s.OrganizationSlug
+			},
+		),
 		DisplayName: "Sentry",
 		Endpoints: Endpoints{
 			Auth:  "https://sentry.io/oauth/authorize/",
@@ -44,10 +49,13 @@ func sentryRegistration() *Registration {
 			// joins on, never to APIBase.
 			APIBase: "https://sentry.io/api/0",
 		},
-		OAuth2Scopes:   []string{"org:read", "member:read"},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"org:read", "member:read"},
+		},
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+			},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)

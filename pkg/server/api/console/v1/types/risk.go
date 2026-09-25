@@ -72,6 +72,7 @@ func NewRiskEdge(r *coredata.Risk, orderBy coredata.RiskOrderField) *RiskEdge {
 func NewRisk(r *coredata.Risk) *Risk {
 	risk := &Risk{
 		ID:                 r.ID,
+		ReferenceID:        r.ReferenceID,
 		Name:               r.Name,
 		Description:        r.Description,
 		Treatment:          r.Treatment,

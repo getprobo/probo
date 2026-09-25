@@ -39,18 +39,24 @@ import (
 // omitted.
 func renderRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderRender,
+		Provider: coredata.ConnectorProviderRender,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.RenderConnectorSettings) string {
+				return s.OwnerID
+			},
+		),
 		DisplayName:      "Render",
 		DocumentationURL: accessReviewDocsURL("render"),
-		SupportsAPIKey:   true,
-		BuildProbeURL:    buildRenderProbeURL,
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "workspaceId", Label: "Workspace ID", Required: true},
+			},
+		},
+		BuildProbeURL: buildRenderProbeURL,
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /v1 prefix,
 			// so the version segment stays in APIBase.
 			APIBase: "https://api.render.com/v1",
-		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "workspaceId", Label: "Workspace ID", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)

@@ -51,14 +51,7 @@ func ComplianceCustomLinkOrderFields() []ComplianceCustomLinkOrderField {
 }
 
 func (v ComplianceCustomLinkOrderField) IsValid() bool {
-	switch v {
-	case
-		ComplianceCustomLinkOrderFieldCreatedAt,
-		ComplianceCustomLinkOrderFieldRank:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ComplianceCustomLinkOrderFields())
 }
 
 func (v ComplianceCustomLinkOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ComplianceCustomLinkOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ComplianceCustomLinkOrderField) UnmarshalText(text []byte) error {
-	val := ComplianceCustomLinkOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ComplianceCustomLinkOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ComplianceCustomLinkOrderFields())
 }
 
 func (p ComplianceCustomLinkOrderField) Column() string {

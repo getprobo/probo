@@ -31,6 +31,8 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
+	taskpkg "go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -55,7 +57,8 @@ type (
 	}
 
 	ImportMeasureRequest struct {
-		Measures []struct {
+		IdentityID *gid.GID
+		Measures   []struct {
 			Name        string `json:"name"`
 			Category    string `json:"category"`
 			ReferenceID string `json:"reference-id"`
@@ -144,6 +147,66 @@ func (s MeasureService) ListForRiskID(
 			}
 
 			err := measures.LoadByRiskID(ctx, conn, scope, risk.ID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load measures: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(measures, cursor), nil
+}
+
+func (s MeasureService) CountForTreatmentPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	treatmentPlanID gid.GID,
+	filter *coredata.MeasureFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			measures := &coredata.Measures{}
+
+			count, err = measures.CountByTreatmentPlanID(ctx, conn, scope, treatmentPlanID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count measures: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s MeasureService) ListForTreatmentPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	treatmentPlanID gid.GID,
+	cursor *page.Cursor[coredata.MeasureOrderField],
+	filter *coredata.MeasureFilter,
+) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
+	var measures coredata.Measures
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			tp := &coredata.TreatmentPlan{}
+			if err := tp.LoadByID(ctx, conn, scope, treatmentPlanID); err != nil {
+				return fmt.Errorf("cannot load treatment plan: %w", err)
+			}
+
+			err := measures.LoadByTreatmentPlanID(ctx, conn, scope, tp.ID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load measures: %w", err)
 			}
@@ -384,6 +447,17 @@ func (s MeasureService) Import(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
+			actorID, err := taskpkg.ResolveActivityActorID(
+				ctx,
+				tx,
+				scope,
+				req.IdentityID,
+				organization.ID,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot resolve task activity actor: %w", err)
+			}
+
 			for i := range req.Measures {
 				now := time.Now()
 
@@ -403,8 +477,25 @@ func (s MeasureService) Import(
 
 				importedMeasures = append(importedMeasures, measure)
 
+				originalID := measure.ID
 				if err := measure.Upsert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot upsert measure: %w", err)
+				}
+
+				eventType := coredata.MeasureEventTypeCreated
+				if originalID != measure.ID {
+					eventType = coredata.MeasureEventTypeUpdated
+				}
+
+				if err := insertMeasureEvent(
+					ctx,
+					tx,
+					scope,
+					measure,
+					eventType,
+					now,
+				); err != nil {
+					return fmt.Errorf("cannot record measure event: %w", err)
 				}
 
 				for j := range req.Measures[i].Tasks {
@@ -416,7 +507,7 @@ func (s MeasureService) Import(
 						OrganizationID: organizationID,
 						MeasureID:      &measure.ID,
 						Name:           req.Measures[i].Tasks[j].Name,
-						Description:    &taskDescription,
+						Content:        prosemirror.FromPlainText(taskDescription),
 						ReferenceID:    req.Measures[i].Tasks[j].ReferenceID,
 						State:          coredata.TaskStateTodo,
 						Priority:       coredata.TaskPriorityMedium,
@@ -424,8 +515,47 @@ func (s MeasureService) Import(
 						UpdatedAt:      now,
 					}
 
+					existingTask := &coredata.Task{}
+
+					existingErr := existingTask.LoadByMeasureIDAndReferenceID(
+						ctx,
+						tx,
+						scope,
+						measure.ID,
+						req.Measures[i].Tasks[j].ReferenceID,
+					)
+					if existingErr != nil && !errors.Is(existingErr, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load task: %w", existingErr)
+					}
+
+					originalTaskID := task.ID
 					if err := task.Upsert(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot upsert task: %w", err)
+					}
+
+					if originalTaskID == task.ID {
+						if err := taskpkg.InsertCreatedActivity(
+							ctx,
+							tx,
+							scope,
+							task,
+							actorID,
+							now,
+						); err != nil {
+							return fmt.Errorf("cannot record task created event: %w", err)
+						}
+					} else if existingErr == nil {
+						if err := taskpkg.InsertUpdateActivities(
+							ctx,
+							tx,
+							scope,
+							existingTask,
+							task,
+							actorID,
+							now,
+						); err != nil {
+							return fmt.Errorf("cannot record task update events: %w", err)
+						}
 					}
 
 					for k := range req.Measures[i].Tasks[j].RequestedEvidences {
@@ -511,6 +641,10 @@ func (s MeasureService) Update(
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
+			previousName := measure.Name
+			previousState := measure.State
+			previousCategory := measure.Category
+
 			if req.Name != nil {
 				measure.Name = *req.Name
 			}
@@ -531,6 +665,19 @@ func (s MeasureService) Update(
 
 			if err := measure.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update measure: %w", err)
+			}
+
+			if measure.Name != previousName || measure.State != previousState || measure.Category != previousCategory {
+				if err := insertMeasureEvent(
+					ctx,
+					conn,
+					scope,
+					measure,
+					coredata.MeasureEventTypeUpdated,
+					measure.UpdatedAt,
+				); err != nil {
+					return fmt.Errorf("cannot record measure event: %w", err)
+				}
 			}
 
 			return nil
@@ -585,6 +732,17 @@ func (s MeasureService) Create(
 				return fmt.Errorf("cannot insert measure: %w", err)
 			}
 
+			if err := insertMeasureEvent(
+				ctx,
+				conn,
+				scope,
+				measure,
+				coredata.MeasureEventTypeCreated,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot record measure event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -601,6 +759,25 @@ func (s MeasureService) Delete(
 ) error {
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		measure := &coredata.Measure{}
+		if err := measure.LoadByID(ctx, conn, scope, measureID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil
+			}
+
+			return fmt.Errorf("cannot load measure: %w", err)
+		}
+
+		now := time.Now()
+		if err := insertMeasureEvent(
+			ctx,
+			conn,
+			scope,
+			measure,
+			coredata.MeasureEventTypeDeleted,
+			now,
+		); err != nil {
+			return fmt.Errorf("cannot record measure event: %w", err)
+		}
 
 		if err := measure.Delete(ctx, conn, scope, measureID); err != nil {
 			return fmt.Errorf("cannot delete measure: %w", err)
@@ -817,4 +994,20 @@ func (s MeasureService) DeleteDocumentMapping(
 	}
 
 	return measure, document, nil
+}
+
+func insertMeasureEvent(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	measure *coredata.Measure,
+	eventType coredata.MeasureEventType,
+	now time.Time,
+) error {
+	event := coredata.NewMeasureEvent(measure, eventType, now)
+	if err := event.Insert(ctx, conn, scope); err != nil {
+		return fmt.Errorf("cannot insert measure event: %w", err)
+	}
+
+	return nil
 }

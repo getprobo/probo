@@ -238,16 +238,22 @@ func (p *CommonTrackerPattern) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
 ) (inserted bool, err error) {
-	// On insert, a description-less row is immediately queued for the
-	// enrichment worker (enrichment_requested_at = NOW()). On conflict the
-	// enrichment columns are otherwise left untouched, and an empty incoming
-	// description never overwrites an existing one — descriptions are owned
-	// by the enrichment worker, so mapping-side upserts must not clobber a
-	// researched description with an empty string. The one exception is a
-	// blank, unlinked row that gains a third party: it is re-armed for
-	// enrichment, and re-arming resets the attempt counter and drops the
-	// prior payload so the row reads as not-yet-completed again (see the
-	// enrichment CASE below).
+	// On insert, a description-less non-terminal row is immediately queued
+	// for the enrichment worker (enrichment_requested_at = NOW()). A
+	// terminal insert is not: there is no vendor to research. On conflict
+	// the enrichment columns are otherwise left untouched, and an empty
+	// incoming description never overwrites an existing one — descriptions
+	// are owned by the enrichment worker, so mapping-side upserts must not
+	// clobber a researched description with an empty string. The one
+	// exception is a blank, unlinked row that gains a non-terminal third
+	// party: it is re-armed for enrichment, and re-arming resets the
+	// attempt counter and drops the prior payload so the row reads as
+	// not-yet-completed again (see the enrichment CASE below). An incoming
+	// terminal verdict that still names a vendor does not count as gaining
+	// one: the vendor is discarded, and any existing queue stamp is
+	// cleared. The worker claims solely on enrichment_requested_at, then
+	// UpdateEnrichment COALESCE-links a vendor, so leaving a terminal row
+	// queued would let a later claim violate the vendor-free invariant.
 	if p.Attribution == "" {
 		p.Attribution = CommonTrackerPatternAttributionUndetermined
 	}
@@ -271,15 +277,28 @@ INSERT INTO common_tracker_patterns (
     updated_at
 ) VALUES (
     @id,
-    @common_third_party_id,
+    CASE
+        WHEN @attribution::common_tracker_pattern_attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
+        ELSE @common_third_party_id
+    END,
     @tracker_type,
     @pattern,
     @match_type,
     @description,
     @max_age_seconds,
     @confidence,
-    @attribution,
-    CASE WHEN @description = '' THEN NOW() ELSE NULL END,
+    @attribution::common_tracker_pattern_attribution,
+    CASE
+        WHEN @description = ''
+         AND NOT (
+            @attribution::common_tracker_pattern_attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
+        THEN NOW()
+        ELSE NULL
+    END,
     NULL,
     0,
     NULL,
@@ -289,7 +308,11 @@ INSERT INTO common_tracker_patterns (
 ON CONFLICT (tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO UPDATE
 SET
     common_third_party_id = CASE
-        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY' THEN NULL
+        WHEN common_tracker_patterns.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+          OR EXCLUDED.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
         ELSE EXCLUDED.common_third_party_id
     END,
     match_type            = EXCLUDED.match_type,
@@ -299,20 +322,32 @@ SET
     END,
     confidence            = EXCLUDED.confidence,
     attribution           = CASE
-        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY'
+        WHEN common_tracker_patterns.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
         THEN common_tracker_patterns.attribution
         ELSE EXCLUDED.attribution
     END,
     enrichment_requested_at = CASE
-        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
-         AND common_tracker_patterns.description = ''
+        WHEN common_tracker_patterns.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+          OR EXCLUDED.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
+        WHEN common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN NOW()
         ELSE common_tracker_patterns.enrichment_requested_at
     END,
     enrichment_attempts   = CASE
-        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+        WHEN NOT (
+            common_tracker_patterns.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
+         AND NOT (
+            EXCLUDED.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
@@ -320,7 +355,14 @@ SET
         ELSE common_tracker_patterns.enrichment_attempts
     END,
     enrichment            = CASE
-        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+        WHEN NOT (
+            common_tracker_patterns.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
+         AND NOT (
+            EXCLUDED.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
@@ -360,6 +402,10 @@ RETURNING
 		"attribution":           p.Attribution,
 		"created_at":            p.CreatedAt,
 		"updated_at":            p.UpdatedAt,
+		// A terminal verdict is never overwritten by a later mapping-side
+		// upsert. Passed as a set rather than compared against one value, so
+		// adding a terminal verdict does not silently make it re-probeable.
+		"terminal_attributions": terminalAttributions(),
 	}
 
 	rows, err := conn.Query(ctx, q, args)
@@ -516,6 +562,83 @@ LIMIT @limit;
 	return results, nil
 }
 
+// PatternSummary is the part of a pattern a reviewer reads to judge what the
+// software actually did: the key, where it was stored, and the verdict already
+// on it. The description is deliberately absent — it is agent prose that names
+// a vendor, which is what a review is meant to check rather than trust.
+type PatternSummary struct {
+	Pattern     string
+	TrackerType TrackerType
+	Attribution CommonTrackerPatternAttribution
+	Confidence  float32
+}
+
+// LoadSummariesGroupedByCommonThirdPartyID returns a short pattern summary for
+// every catalog entry in one round trip, keyed by the entry that owns it.
+//
+// Judging a row means reading its keys — a device id means a vendor, a theme
+// preference means local state — and doing that per row is one query each. A
+// backlog of a hundred rows makes the correct method slow enough that batching
+// by name becomes tempting, which is where misjudgements come from. Loading
+// them together removes the reason to guess.
+//
+// Capped per entry by the caller: a handful of keys is enough to classify a
+// row, and loglevel-style namespaces run to dozens.
+func (ps *CommonTrackerPatterns) LoadSummariesGroupedByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+) (map[gid.GID][]PatternSummary, error) {
+	q := `
+SELECT
+    common_third_party_id,
+    pattern,
+    tracker_type,
+    attribution,
+    confidence
+FROM
+    common_tracker_patterns
+WHERE
+    common_third_party_id IS NOT NULL
+ORDER BY
+    common_third_party_id,
+    confidence DESC,
+    pattern
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common tracker pattern summaries: %w", err)
+	}
+	defer rows.Close()
+
+	byParty := make(map[gid.GID][]PatternSummary)
+
+	for rows.Next() {
+		var (
+			partyID gid.GID
+			summary PatternSummary
+		)
+
+		if err := rows.Scan(
+			&partyID,
+			&summary.Pattern,
+			&summary.TrackerType,
+			&summary.Attribution,
+			&summary.Confidence,
+		); err != nil {
+			return nil, fmt.Errorf("cannot scan common tracker pattern summary: %w", err)
+		}
+
+		byParty[partyID] = append(byParty[partyID], summary)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate common tracker pattern summaries: %w", err)
+	}
+
+	return byParty, nil
+}
+
 func (ps *CommonTrackerPatterns) LoadByCommonThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -667,7 +790,12 @@ RETURNING enrichment_attempts, last_enrichment_attempt_at
 // third-party link re-arms enrichment for a second attempt. When
 // thirdPartyID is non-nil it links the row to that third party, but only
 // when none is set yet (COALESCE) — the enrichment worker links, it never
-// overrides an attribution the mapping pipeline already resolved.
+// overrides an attribution the mapping pipeline already resolved. A
+// terminal verdict is stronger still: claim only clears the queue stamp,
+// so a worker that already held the row can finish after an upsert
+// settles FIRST_PARTY or NOT_ATTRIBUTABLE. The persist step therefore
+// re-reads attribution and discards any incoming vendor rather than
+// COALESCE-linking it onto a vendor-free row.
 func (p *CommonTrackerPattern) UpdateEnrichment(
 	ctx context.Context,
 	tx pg.Tx,
@@ -679,36 +807,55 @@ func (p *CommonTrackerPattern) UpdateEnrichment(
 UPDATE common_tracker_patterns
 SET
     description = @description,
-    common_third_party_id = COALESCE(common_third_party_id, @third_party_id),
+    common_third_party_id = CASE
+        WHEN attribution = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
+        ELSE COALESCE(common_third_party_id, @third_party_id)
+    END,
     enrichment = @enrichment,
     enrichment_requested_at = NULL,
     updated_at = NOW()
 WHERE id = @id
+RETURNING
+    description,
+    common_third_party_id,
+    enrichment,
+    enrichment_requested_at
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":             p.ID,
-		"description":    description,
-		"third_party_id": thirdPartyID,
-		"enrichment":     enrichment,
+		"id":                    p.ID,
+		"description":           description,
+		"third_party_id":        thirdPartyID,
+		"enrichment":            enrichment,
+		"terminal_attributions": terminalAttributions(),
 	}
 
-	result, err := tx.Exec(ctx, q, args)
+	var (
+		storedDescription string
+		storedThirdParty  *gid.GID
+		storedEnrichment  json.RawMessage
+		storedRequestedAt *time.Time
+	)
+
+	err := tx.QueryRow(ctx, q, args).Scan(
+		&storedDescription,
+		&storedThirdParty,
+		&storedEnrichment,
+		&storedRequestedAt,
+	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot mark common tracker pattern enriched: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
-
-	p.Description = description
-	p.Enrichment = enrichment
-	p.EnrichmentRequestedAt = nil
-
-	if p.CommonThirdPartyID == nil {
-		p.CommonThirdPartyID = thirdPartyID
-	}
+	p.Description = storedDescription
+	p.CommonThirdPartyID = storedThirdParty
+	p.Enrichment = storedEnrichment
+	p.EnrichmentRequestedAt = storedRequestedAt
 
 	return nil
 }
@@ -983,6 +1130,110 @@ WHERE
 	}
 
 	return result.RowsAffected(), nil
+}
+
+// CountByCommonThirdPartyID returns how many catalog patterns are
+// attributed to each catalog third party, keyed by catalog id.
+//
+// Catalog cleanup ranks merge winners on how much each candidate is
+// referenced, so the whole histogram is aggregated in one round trip rather
+// than counted per candidate.
+func (ps *CommonTrackerPatterns) CountByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+) (map[gid.GID]int, error) {
+	q := `
+SELECT
+    common_third_party_id,
+    COUNT(id)
+FROM
+    common_tracker_patterns
+WHERE
+    common_third_party_id IS NOT NULL
+GROUP BY
+    common_third_party_id
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("cannot count common tracker patterns by third party: %w", err)
+	}
+	defer rows.Close()
+
+	counts := make(map[gid.GID]int)
+
+	for rows.Next() {
+		var (
+			id    gid.GID
+			count int
+		)
+
+		if err := rows.Scan(&id, &count); err != nil {
+			return nil, fmt.Errorf("cannot scan common tracker pattern count: %w", err)
+		}
+
+		counts[id] = count
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate common tracker pattern counts: %w", err)
+	}
+
+	return counts, nil
+}
+
+// RepointCommonThirdPartyID moves every catalog pattern attributed to
+// fromID onto toID. It backs the catalog merge, which folds one vendor row
+// into another.
+//
+// Unlike RelinkCommonThirdPartyByIDs this preserves confidence. That method
+// is an operator attribution and promotes the row to full confidence; a
+// merge is a statement that two catalog rows are the same vendor, which
+// says nothing new about how well any pattern was attributed, so a
+// low-confidence link must stay low-confidence.
+//
+// Attribution is forced to THIRD_PARTY because a row carrying a vendor must
+// record that verdict, which every affected row already did — they held
+// fromID. Selecting by the vendor id rather than a list of pattern ids
+// keeps the whole repoint in one statement.
+//
+// Returns the ids of the rows moved, so the caller can re-queue exactly
+// those for enrichment: their descriptions were researched against the
+// vendor that no longer exists.
+func (ps *CommonTrackerPatterns) RepointCommonThirdPartyID(
+	ctx context.Context,
+	tx pg.Tx,
+	fromID gid.GID,
+	toID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    common_third_party_id = @to_id,
+    attribution = @attribution,
+    updated_at = NOW()
+WHERE
+    common_third_party_id = @from_id
+RETURNING id
+`
+
+	args := pgx.StrictNamedArgs{
+		"from_id":     fromID,
+		"to_id":       toID,
+		"attribution": CommonTrackerPatternAttributionThirdParty,
+	}
+
+	rows, err := tx.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot repoint common tracker pattern third party: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect repointed common tracker patterns: %w", err)
+	}
+
+	return ids, nil
 }
 
 // SetAttributionByIDs records a terminal attribution verdict on the given

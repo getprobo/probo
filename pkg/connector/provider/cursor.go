@@ -39,7 +39,9 @@ func cursorRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderCursor,
 		DisplayName:      "Cursor",
 		DocumentationURL: accessReviewDocsURL("cursor"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthBasic},
+		},
 		// Cursor's Admin API has no third-party OAuth2 flow; it
 		// authenticates with a team admin key (key_...) presented as the
 		// HTTP Basic auth username with an empty password ("-u <key>:")
@@ -47,7 +49,6 @@ func cursorRegistration() *Registration {
 		// on the APIKeyConnection. The key is bound to a single team, so
 		// there is nothing to pick (Pattern 3): no settings struct, no
 		// picker, and no SetOrganizationSettings.
-		APIKeyBasicAuth: true,
 		Endpoints: Endpoints{
 			APIBase: cursorAPIBaseURL,
 			Probe:   cursorMembersEndpoint,

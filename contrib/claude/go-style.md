@@ -5,7 +5,7 @@
 - HTTP server: `go.gearno.de/kit/httpserver`
 - HTTP client: `go.gearno.de/kit/httpclient`
 - Tracing: OpenTelemetry (`go.opentelemetry.io/otel`)
-- Pointers: Go 1.26 — use `new(expr)` to create pointers to values (e.g. `new(1)`, `new("foo")`, `new(time.Now())`). Use `go.gearno.de/x/ref` only for dereference helpers (`ref.UnrefOrZero`, etc.)
+- Pointers: use `new(expr)` to create pointers to values (e.g. `new(1)`, `new("foo")`, `new(time.Now())`). Use `go.gearno.de/x/ref` only for dereference helpers (`ref.UnrefOrZero`, etc.)
 
 ## Grouped declarations
 
@@ -189,6 +189,18 @@ func (s *Service) DoSomething(ctx context.Context) error {
 	}
 
 	return nil
+}
+```
+
+Do **not** return a defensive error for a broken invariant that cannot happen on the real call path (for example a claimed agent execution with no `ProcessingOwnerToken`). That is a programming error: **panic**. Return errors for recoverable operational failures (not found, lease lost, upstream, validation). Panic when continuing would mean the program is in an impossible state.
+
+```go
+// Good — Claim always sets the token; a nil token is unrecoverable
+ownerToken := *execution.ProcessingOwnerToken
+
+// Bad — pretends an impossible state is a normal failure
+if execution.ProcessingOwnerToken == nil || *execution.ProcessingOwnerToken == "" {
+	return fmt.Errorf("claimed agent execution has no owner token")
 }
 ```
 

@@ -22,7 +22,12 @@ package tray
 
 import "strings"
 
-const agentExeBaseName = "probo-agent.exe"
+const (
+	// NOTE: Remove agentExeBaseName after all supported installs run the
+	// tray from probo-agentw.exe.
+	agentExeBaseName    = "probo-agent.exe"
+	agentGUIExeBaseName = "probo-agentw.exe"
+)
 
 func shouldStopInteractiveAgentProcess(
 	baseName string,
@@ -38,5 +43,6 @@ func shouldStopInteractiveAgentProcess(
 		return false
 	}
 
-	return strings.EqualFold(baseName, agentExeBaseName)
+	return strings.EqualFold(baseName, agentExeBaseName) ||
+		strings.EqualFold(baseName, agentGUIExeBaseName)
 }

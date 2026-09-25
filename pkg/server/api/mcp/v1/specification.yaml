@@ -10,10 +10,10 @@ components:
       format: string
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/mail.Addr
 
-    Duration:
+    TimeSpan:
       type: string
-      description: A duration
-      go.probo.inc/mcpgen/type: time.Duration
+      description: An ISO-8601 duration
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/timespan.TimeSpan
 
     OrderDirection:
       type: string
@@ -558,18 +558,9 @@ components:
             - string
             - "null"
           description: Position
-        contract_start_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Contract start date
-        contract_end_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Contract end date
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
         created_at:
           type: string
           format: date-time
@@ -1624,14 +1615,9 @@ components:
         position:
           type: ["string", "null"]
           description: Position
-        contract_start_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract start date
-        contract_end_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract end date
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
 
     CreateUserOutput:
       type: object
@@ -1692,16 +1678,9 @@ components:
           type: ["string", "null"]
           description: Position
           go.probo.inc/mcpgen/omittable: true
-        contract_start_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract start date
-          go.probo.inc/mcpgen/omittable: true
-        contract_end_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract end date
-          go.probo.inc/mcpgen/omittable: true
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
 
     UpdateUserOutput:
       type: object
@@ -1843,16 +1822,9 @@ components:
           type: ["string", "null"]
           description: Position
           go.probo.inc/mcpgen/omittable: true
-        contract_start_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract start date
-          go.probo.inc/mcpgen/omittable: true
-        contract_end_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract end date
-          go.probo.inc/mcpgen/omittable: true
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
 
     UpdateProfileOutput:
       type: object
@@ -1868,6 +1840,7 @@ components:
         - CREATED_AT
         - UPDATED_AT
         - NAME
+        - REFERENCE_ID
         - CATEGORY
         - TREATMENT
         - INHERENT_RISK_SCORE
@@ -1902,15 +1875,9 @@ components:
       required:
         - id
         - organization_id
+        - reference_id
         - name
         - category
-        - treatment
-        - inherent_likelihood
-        - inherent_impact
-        - inherent_risk_score
-        - residual_likelihood
-        - residual_impact
-        - residual_risk_score
         - note
         - created_at
         - updated_at
@@ -1921,6 +1888,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        reference_id:
+          type: string
+          description: Organization-scoped display ID (RSK-001)
         name:
           type: string
           description: Risk name
@@ -1933,25 +1903,39 @@ components:
           type: string
           description: Risk category
         treatment:
-          $ref: "#/components/schemas/RiskTreatment"
+          anyOf:
+            - $ref: "#/components/schemas/RiskTreatment"
+            - type: "null"
           description: Risk treatment
         inherent_likelihood:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Initial likelihood
         inherent_impact:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Initial impact
         inherent_risk_score:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Initial risk score
         residual_likelihood:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Residual likelihood
         residual_impact:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Residual impact
         residual_risk_score:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Residual risk score
         note:
           type: string
@@ -1979,6 +1963,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        risk_analysis_id:
+          $ref: "#/components/schemas/GID"
+          description: List unplanned scenario-linked risks on this analysis
         order_by:
           $ref: "#/components/schemas/RiskOrderBy"
           description: Risk order by
@@ -2146,6 +2133,346 @@ components:
         deleted_risk_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk ID
+
+    TreatmentPlanOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - TREATMENT
+        - CATEGORY
+        - INHERENT_RISK_SCORE
+        - RESIDUAL_RISK_SCORE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderField
+
+    TreatmentPlanOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TreatmentPlanOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    TreatmentPlanScoreType:
+      type: string
+      enum:
+        - INHERENT
+        - NET
+        - RESIDUAL
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TreatmentPlanScoreType
+
+    TreatmentPlanFilter:
+      type: object
+      description: >
+        Matrix cell to match. When set, score_type, likelihood, and impact are
+        all required.
+      properties:
+        score_type:
+          $ref: "#/components/schemas/TreatmentPlanScoreType"
+          description: Score type to match (inherent, net, or residual)
+        likelihood:
+          type: integer
+          description: Likelihood axis of the cell
+        impact:
+          type: integer
+          description: Impact axis of the cell
+
+    RiskAnalysisMatrixCell:
+      type: object
+      required:
+        - type
+        - likelihood
+        - impact
+        - count
+      properties:
+        type:
+          $ref: "#/components/schemas/TreatmentPlanScoreType"
+        likelihood:
+          type: integer
+        impact:
+          type: integer
+        count:
+          type: integer
+
+    TreatmentPlan:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_id
+        - risk_analysis_id
+        - treatment
+        - category
+        - inherent_likelihood
+        - inherent_impact
+        - inherent_risk_score
+        - residual_likelihood
+        - residual_impact
+        - residual_risk_score
+        - net_likelihood
+        - net_impact
+        - net_risk_score
+        - measures_total
+        - measures_done
+        - measures_in_progress
+        - measures_not_implemented
+        - owner_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        risk_analysis_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk analysis ID
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        category:
+          type: string
+          description: Risk category stored on the treatment plan
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        inherent_risk_score:
+          type: integer
+          description: Inherent risk score
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+        residual_risk_score:
+          type: integer
+          description: Residual risk score
+        net_likelihood:
+          type: integer
+          description: Net likelihood after linked measures
+        net_impact:
+          type: integer
+          description: Net impact after linked measures
+        net_risk_score:
+          type: integer
+          description: Net risk score after linked measures
+        measures_total:
+          type: integer
+          description: Number of linked measures
+        measures_done:
+          type: integer
+          description: Number of completed linked measures
+        measures_in_progress:
+          type: integer
+          description: Number of in-progress linked measures
+        measures_not_implemented:
+          type: integer
+          description: Number of not-implemented linked measures
+        measures:
+          type: array
+          description: Linked measures as of the requested instant. Present when listing with as_of.
+          items:
+            $ref: "#/components/schemas/TreatmentPlanMeasure"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    ListTreatmentPlansInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Filter by risk ID
+        risk_analysis_id:
+          $ref: "#/components/schemas/GID"
+          description: Filter by risk analysis ID
+        order_by:
+          $ref: "#/components/schemas/TreatmentPlanOrderBy"
+          description: Treatment plan order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          $ref: "#/components/schemas/TreatmentPlanFilter"
+          description: Filter treatment plans by matrix cell. All three fields are required when set.
+        as_of:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Reconstruct plans as of this instant. Only valid with risk_analysis_id. Omit to use live tables.
+
+    ListTreatmentPlansOutput:
+      type: object
+      required:
+        - treatment_plans
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        treatment_plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/TreatmentPlan"
+
+    GetTreatmentPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+
+    GetTreatmentPlanOutput:
+      type: object
+      required:
+        - treatment_plan
+      properties:
+        treatment_plan:
+          $ref: "#/components/schemas/TreatmentPlan"
+
+    AddTreatmentPlanInput:
+      type: object
+      required:
+        - risk_id
+        - risk_analysis_id
+        - treatment
+        - inherent_likelihood
+        - inherent_impact
+        - owner_id
+      properties:
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        risk_analysis_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk analysis ID
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+
+    AddTreatmentPlanOutput:
+      type: object
+      required:
+        - treatment_plan
+      properties:
+        treatment_plan:
+          $ref: "#/components/schemas/TreatmentPlan"
+
+    UpdateTreatmentPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+
+    UpdateTreatmentPlanOutput:
+      type: object
+      required:
+        - treatment_plan
+      properties:
+        treatment_plan:
+          $ref: "#/components/schemas/TreatmentPlan"
+
+    DeleteTreatmentPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+
+    DeleteTreatmentPlanOutput:
+      type: object
+      required:
+        - deleted_treatment_plan_id
+      properties:
+        deleted_treatment_plan_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted treatment plan ID
+
+    TreatmentPlanMeasure:
+      type: object
+      required:
+        - id
+        - state
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        name:
+          type: string
+          description: Measure name. Absent when the measure has been deleted.
+        state:
+          $ref: "#/components/schemas/MeasureState"
+          description: Measure state as of the requested instant
 
     MeasureState:
       type: string
@@ -2367,6 +2694,15 @@ components:
         order_by:
           $ref: "#/components/schemas/TaskOrderBy"
           description: Task order by
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
+            state:
+              $ref: "#/components/schemas/TaskState"
+              description: Task state filter
 
     ListMeasureTasksOutput:
       type: object
@@ -2492,7 +2828,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (control, risk, document, or third party)
+          description: ID of the resource to link (control, risk, document, third party, or treatment plan)
 
     LinkMeasureOutput:
       type: object
@@ -2508,7 +2844,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (control, risk, document, or third party)
+          description: ID of the resource to unlink (control, risk, document, third party, or treatment plan)
 
     UnlinkMeasureOutput:
       type: object
@@ -3007,6 +3343,13 @@ components:
         - WINDOWS
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePlatform
 
+    DevicePostureVersion:
+      type: string
+      description: Server schema version that produced this posture row (v1, v2, ...).
+      enum:
+        - v1
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePostureVersion
+
     DevicePostureStatus:
       type: string
       description: Posture check verdict. PASS and FAIL are compliance outcomes; UNKNOWN means the agent could not determine a result; NOT_APPLICABLE means the check does not apply on this host or platform (for example no screen-lock tool on a headless Linux host).
@@ -3080,6 +3423,8 @@ components:
         - check_key
         - status
         - value
+        - version
+        - agent_version
         - observed_at
       properties:
         id:
@@ -3097,6 +3442,12 @@ components:
         value:
           $ref: "#/components/schemas/DevicePostureValue"
           description: Observed posture value for this check_key; use value.kind to interpret value.text and value.number.
+        version:
+          $ref: "#/components/schemas/DevicePostureVersion"
+          description: Server schema version that produced this posture row.
+        agent_version:
+          type: string
+          description: Agent version that observed this posture.
         observed_at:
           type: string
           format: date-time
@@ -3713,6 +4064,11 @@ components:
                 - $ref: "#/components/schemas/GID"
                 - type: "null"
               description: Filter by owner profile ID. Defaults to null which returns all owners.
+            audit_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by the audit the finding is linked to. Defaults to null which returns findings of all audits.
 
     ListFindingsOutput:
       type: object
@@ -5747,6 +6103,8 @@ components:
     AuditState:
       type: string
       enum:
+        - TO_BOOK
+        - AUDIT_BOOKED
         - NOT_STARTED
         - IN_PROGRESS
         - COMPLETED
@@ -5862,30 +6220,17 @@ components:
             - string
             - "null"
           description: Audit name
-        valid_from:
+        firm:
           type:
             - string
             - "null"
-          format: date-time
-          description: Valid from date
-        valid_until:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Valid until date
-        audit_start_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit start date
-        audit_end_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit end date
+          description: Audit firm
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Certificate validity period
+        audit_dates:
+          $ref: "#/components/schemas/Period"
+          description: Audit dates
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
@@ -6009,22 +6354,15 @@ components:
         name:
           type: string
           description: Audit name
-        valid_from:
+        firm:
           type: string
-          format: date-time
-          description: Valid from date
-        valid_until:
-          type: string
-          format: date-time
-          description: Valid until date
-        audit_start_date:
-          type: string
-          format: date-time
-          description: Audit start date
-        audit_end_date:
-          type: string
-          format: date-time
-          description: Audit end date
+          description: Audit firm
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Certificate validity period
+        audit_dates:
+          $ref: "#/components/schemas/Period"
+          description: Audit dates
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
@@ -6049,30 +6387,16 @@ components:
           type: ["string", "null"]
           description: Audit name
           go.probo.inc/mcpgen/omittable: true
-        valid_from:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Valid from date
-        valid_until:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Valid until date
-        audit_start_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit start date
-        audit_end_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit end date
+        firm:
+          type: ["string", "null"]
+          description: Audit firm
+          go.probo.inc/mcpgen/omittable: true
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Certificate validity period
+        audit_dates:
+          $ref: "#/components/schemas/Period"
+          description: Audit dates
         state:
           anyOf:
             - $ref: "#/components/schemas/AuditState"
@@ -6595,9 +6919,12 @@ components:
     TaskState:
       type: string
       enum:
+        - BACKLOG
         - TODO
         - IN_PROGRESS
         - DONE
+        - CANCELED
+        - DUPLICATE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskState
 
     TaskOrderField:
@@ -6635,6 +6962,7 @@ components:
         - id
         - organization_id
         - name
+        - content
         - state
         - priority
         - rank
@@ -6657,13 +6985,9 @@ components:
         name:
           type: string
           description: Task name
-        description:
-          anyOf:
-            - type: string
-              description: Task description
-            - type: "null"
-              description: No description
-          description: Task description
+        content:
+          type: string
+          description: Task content in markdown (converted from stored ProseMirror JSON)
         state:
           $ref: "#/components/schemas/TaskState"
           description: Task state
@@ -6675,7 +6999,7 @@ components:
           description: Task rank within state
         time_estimate:
           anyOf:
-            - $ref: "#/components/schemas/Duration"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
               description: No time estimate
           description: Time estimate
@@ -6687,6 +7011,12 @@ components:
             - type: "null"
               description: No deadline
           description: Deadline
+        recurrence_interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -6702,6 +7032,217 @@ components:
           type: string
           format: date-time
           description: Update timestamp
+        external_link:
+          anyOf:
+            - $ref: "#/components/schemas/TaskExternalLink"
+            - type: "null"
+          description: Linked external issue
+
+    TaskExternalLinkOrigin:
+      type: string
+      enum:
+        - PROBO
+        - LINEAR
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskExternalLinkOrigin
+
+    TaskExternalLink:
+      type: object
+      required:
+        - provider
+        - identifier
+        - url
+        - origin
+      properties:
+        provider:
+          type: string
+          description: External provider
+        identifier:
+          type: string
+          description: Provider issue identifier
+        url:
+          type: string
+          description: Provider issue URL
+        origin:
+          $ref: "#/components/schemas/TaskExternalLinkOrigin"
+          description: Which side created the link
+
+    LinearTeam:
+      type: object
+      required:
+        - id
+        - name
+        - key
+      properties:
+        id:
+          type: string
+          description: Linear team ID
+        name:
+          type: string
+          description: Linear team name
+        key:
+          type: string
+          description: Linear team key
+
+    LinearIssue:
+      type: object
+      required:
+        - id
+        - identifier
+        - title
+      properties:
+        id:
+          type: string
+          description: Linear issue ID
+        identifier:
+          type: string
+          description: Linear issue identifier
+        title:
+          type: string
+          description: Linear issue title
+        content:
+          type: string
+          description: Issue description as Probo task content
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Probo task state mapped from the Linear issue
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+          description: Probo task priority mapped from the Linear issue
+
+    ListLinearTeamsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        size:
+          type: integer
+          description: Page size. Linear caps a page at 50. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor. Linear cursors are opaque strings.
+        query:
+          type: string
+          description: Search teams by name or key
+
+    ListLinearTeamsOutput:
+      type: object
+      required:
+        - teams
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinearTeam"
+          description: Linear teams
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    ListLinearIssuesInput:
+      type: object
+      required:
+        - organization_id
+        - team_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        team_id:
+          type: string
+          description: Linear team ID
+        size:
+          type: integer
+          description: Page size. Linear caps a page at 50. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor. Linear cursors are opaque strings.
+        query:
+          type: string
+          description: Search issues in the team
+
+    ListLinearIssuesOutput:
+      type: object
+      required:
+        - issues
+      properties:
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinearIssue"
+          description: Linear issues
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    PublishTaskToLinearInput:
+      type: object
+      required:
+        - task_id
+        - team_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        team_id:
+          type: string
+          description: Linear team ID
+
+    PublishTaskToLinearOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    LinkTaskToLinearInput:
+      type: object
+      required:
+        - task_id
+        - team_id
+        - issue_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        team_id:
+          type: string
+          description: Linear team ID
+        issue_id:
+          type: string
+          description: Linear issue ID
+
+    LinkTaskToLinearOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    UnlinkTaskExternalInput:
+      type: object
+      required:
+        - task_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    UnlinkTaskExternalOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
 
     ListTasksInput:
       type: object
@@ -6723,6 +7264,15 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
+            state:
+              $ref: "#/components/schemas/TaskState"
+              description: Task state filter
 
     ListTasksOutput:
       type: object
@@ -6776,16 +7326,19 @@ components:
         name:
           type: string
           description: Task name
-        description:
+        content:
           type: string
-          description: Task description
+          description: Task content in markdown format
         time_estimate:
-          $ref: "#/components/schemas/Duration"
+          $ref: "#/components/schemas/TimeSpan"
           description: Time estimate
         deadline:
           type: string
           format: date-time
           description: Deadline
+        recurrence_interval:
+          $ref: "#/components/schemas/TimeSpan"
+          description: Recurrence interval (requires deadline to be set)
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -6793,6 +7346,10 @@ components:
             - type: "null"
               description: Not assigned
           description: Assigned to person ID
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Task state (defaults to TODO if not specified)
+          default: TODO
         priority:
           $ref: "#/components/schemas/TaskPriority"
           description: Task priority level (defaults to MEDIUM if not specified)
@@ -6817,9 +7374,9 @@ components:
         name:
           type: string
           description: Task name
-        description:
+        content:
           type: ["string", "null"]
-          description: Task description
+          description: Task content in markdown format
           go.probo.inc/mcpgen/omittable: true
         state:
           anyOf:
@@ -6840,7 +7397,7 @@ components:
           description: Task rank within state
         time_estimate:
           anyOf:
-            - $ref: "#/components/schemas/Duration"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
               description: No time estimate
           description: Time estimate
@@ -6853,6 +7410,13 @@ components:
             - type: "null"
               description: No deadline
           description: Deadline
+          go.probo.inc/mcpgen/omittable: true
+        recurrence_interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval
           go.probo.inc/mcpgen/omittable: true
         assigned_to_id:
           anyOf:
@@ -6878,6 +7442,9 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
+        next_task:
+          $ref: "#/components/schemas/Task"
+          description: Next occurrence created when a recurring task is marked done
 
     AssignTaskInput:
       type: object
@@ -6934,6 +7501,321 @@ components:
         deleted_task_id:
           $ref: "#/components/schemas/GID"
           description: Deleted task ID
+
+    TaskCommentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskCommentOrderField
+
+    TaskCommentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TaskCommentOrderField"
+          description: Task comment order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Task comment order direction
+
+    TaskComment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - task_id
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner membership profile ID. Absent when a Linear comment author is not a Probo member.
+          nullable: true
+        content:
+          type: string
+          description: Task comment body in markdown (converted from stored ProseMirror JSON)
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListTaskCommentsInput:
+      type: object
+      required:
+        - task_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        order_by:
+          $ref: "#/components/schemas/TaskCommentOrderBy"
+          description: Task comment order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTaskCommentsOutput:
+      type: object
+      required:
+        - task_comments
+      properties:
+        task_comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskComment"
+          description: List of task comments
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetTaskCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+
+    GetTaskCommentOutput:
+      type: object
+      required:
+        - task_comment
+      properties:
+        task_comment:
+          $ref: "#/components/schemas/TaskComment"
+
+    AddTaskCommentInput:
+      type: object
+      required:
+        - task_id
+        - content
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner membership profile ID. Defaults to the caller's profile in the task organization when omitted.
+        content:
+          type: string
+          description: Task comment content in markdown format
+
+    AddTaskCommentOutput:
+      type: object
+      required:
+        - task_comment
+      properties:
+        task_comment:
+          $ref: "#/components/schemas/TaskComment"
+
+    UpdateTaskCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner membership profile ID
+        content:
+          type: ["string", "null"]
+          description: Task comment content in markdown format
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTaskCommentOutput:
+      type: object
+      required:
+        - task_comment
+      properties:
+        task_comment:
+          $ref: "#/components/schemas/TaskComment"
+
+    DeleteTaskCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task comment ID
+
+    DeleteTaskCommentOutput:
+      type: object
+      required:
+        - deleted_task_comment_id
+      properties:
+        deleted_task_comment_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted task comment ID
+
+    TaskActivityType:
+      type: string
+      enum:
+        - CREATED
+        - UPDATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityType
+
+    TaskActivityField:
+      type: string
+      enum:
+        - NAME
+        - DESCRIPTION
+        - STATE
+        - PRIORITY
+        - ASSIGNED_TO
+        - MEASURE
+        - DEADLINE
+        - TIME_ESTIMATE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityField
+
+    TaskActivityOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityOrderField
+
+    TaskActivityOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TaskActivityOrderField"
+          description: Task activity order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Task activity order direction
+
+    TaskActivity:
+      type: object
+      required:
+        - id
+        - organization_id
+        - task_id
+        - activity_type
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task activity ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        actor_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Actor membership profile ID
+            - type: "null"
+              description: No actor
+          description: Actor membership profile ID
+        activity_type:
+          $ref: "#/components/schemas/TaskActivityType"
+          description: Task activity type
+        field:
+          anyOf:
+            - $ref: "#/components/schemas/TaskActivityField"
+              description: Changed field
+            - type: "null"
+              description: No field
+          description: Changed field
+        old_value:
+          anyOf:
+            - type: string
+              description: Previous value
+            - type: "null"
+              description: No previous value
+          description: Previous value
+        new_value:
+          anyOf:
+            - type: string
+              description: New value
+            - type: "null"
+              description: No new value
+          description: New value
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    ListTaskActivitiesInput:
+      type: object
+      required:
+        - task_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        order_by:
+          $ref: "#/components/schemas/TaskActivityOrderBy"
+          description: Task activity order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTaskActivitiesOutput:
+      type: object
+      required:
+        - task_activities
+      properties:
+        task_activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskActivity"
+          description: List of task activities
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetTaskActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task activity ID
+
+    GetTaskActivityOutput:
+      type: object
+      required:
+        - task_activity
+      properties:
+        task_activity:
+          $ref: "#/components/schemas/TaskActivity"
 
     DocumentType:
       type: string
@@ -7924,6 +8806,12 @@ components:
         - "right-request:created"
         - "right-request:updated"
         - "right-request:deleted"
+        - "task:created"
+        - "task:updated"
+        - "task:deleted"
+        - "task-comment:created"
+        - "task-comment:updated"
+        - "task-comment:deleted"
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.WebhookEventType
 
     WebhookEventStatus:
@@ -8022,6 +8910,11 @@ components:
         status:
           $ref: "#/components/schemas/WebhookEventStatus"
           description: Delivery status
+        payload:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Outbound webhook payload posted to the endpoint
         response:
           anyOf:
             - type: string
@@ -8170,6 +9063,9 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        status:
+          $ref: "#/components/schemas/WebhookEventStatus"
+          description: Filter by delivery status
 
     ListWebhookEventsOutput:
       type: object
@@ -8718,6 +9614,37 @@ components:
           $ref: "#/components/schemas/GID"
           description: Created document version ID
 
+    PublishRiskAnalysisInput:
+      type: object
+      required:
+        - id
+        - minor
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk analysis ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version and ignore approver_ids. If the document has no published version yet, this is a first release at 0.1; otherwise the version is currentMajor.currentMinor+1. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+
+    PublishRiskAnalysisOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
     ApplicabilityStatementOrderField:
       type: string
       enum:
@@ -8940,20 +9867,14 @@ components:
         - SHARED_ACCOUNT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewEntryFlag
 
-    AccessReviewEntryIncrementalTag:
-      type: string
-      enum:
-        - NEW
-        - REMOVED
-        - UNCHANGED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewEntryIncrementalTag
-
     AccessReviewEntryAuthMethod:
       type: string
       enum:
         - SSO
         - PASSWORD
         - API_KEY
+        - OAUTH2
+        - SSH
         - SERVICE_ACCOUNT
         - UNKNOWN
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethod
@@ -9073,7 +9994,6 @@ components:
         - auth_method
         - account_type
         - external_id
-        - incremental_tag
         - flags
         - decision
         - created_at
@@ -9144,9 +10064,6 @@ components:
         external_id:
           type: string
           description: External ID in the source system
-        incremental_tag:
-          $ref: "#/components/schemas/AccessReviewEntryIncrementalTag"
-          description: Change tag compared to previous campaign
         flags:
           type: array
           items:
@@ -9191,7 +10108,6 @@ components:
         - total_count
         - decision_counts
         - flag_counts
-        - incremental_tag_counts
       properties:
         total_count:
           type: integer
@@ -9206,11 +10122,6 @@ components:
           additionalProperties:
             type: integer
           description: Count of entries per flag type
-        incremental_tag_counts:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Count of entries per incremental tag
 
     ListAccessReviewCampaignsInput:
       type: object
@@ -9270,9 +10181,6 @@ components:
             flag:
               $ref: "#/components/schemas/AccessReviewEntryFlag"
               description: Filter by flag
-            incremental_tag:
-              $ref: "#/components/schemas/AccessReviewEntryIncrementalTag"
-              description: Filter by incremental tag
             is_admin:
               type: boolean
               description: Filter by admin status
@@ -9457,6 +10365,11 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Connector ID
+        connector_account_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Connector account ID bound to this source (null for CSV sources)
         name:
           type: string
           description: Access source name
@@ -9517,6 +10430,9 @@ components:
         connector_id:
           $ref: "#/components/schemas/GID"
           description: Connector ID (optional)
+        connector_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector account ID (optional; resolved from the connector when omitted)
         name:
           type: string
           description: Access source name
@@ -9527,10 +10443,17 @@ components:
     CreateAccessReviewSourceMCPOutput:
       type: object
       required:
-        - access_source
+        - access_review_source
+        - created
       properties:
         access_review_source:
           $ref: "#/components/schemas/AccessReviewSource"
+        created:
+          type: boolean
+          description: >-
+            False when a source already existed for the requested connector
+            account: creation is idempotent per connector account and the
+            existing source is returned instead of a duplicate.
 
     UpdateAccessReviewSourceMCPInput:
       type: object
@@ -9581,6 +10504,472 @@ components:
         deleted_access_review_source_id:
           $ref: "#/components/schemas/GID"
           description: Deleted access source ID
+
+    ConnectorConnectionStatus:
+      type: string
+      enum:
+        - CONNECTED
+        - DISCONNECTED
+        - RECONNECT_REQUIRED
+        - NOT_AUTHORIZED
+      description: >-
+        Whether the connector credential is usable right now. NOT_AUTHORIZED
+        means the provider accepted the credential and refused the operation,
+        which the customer fixes on their plan or their roles rather than by
+        supplying another credential. DISCONNECTED covers every other reason it
+        did not work, because the underlying failure wraps provider-controlled
+        text and stays server-side.
+
+    Connector:
+      type: object
+      required:
+        - id
+        - provider
+        - protocol
+        - connection_status
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+        provider:
+          type: string
+          description: Connector provider
+        protocol:
+          type: string
+          description: Connector protocol
+        connection_status:
+          $ref: "#/components/schemas/ConnectorConnectionStatus"
+          description: Whether the connector credential is usable right now
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    AWSConnectorSetup:
+      type: object
+      required:
+        - issuer
+        - audience
+        - subject
+        - suggested_role_name
+        - terraform_snippet
+        - cloud_formation_quick_create_url
+      properties:
+        issuer:
+          type: string
+          description: Organization issuer URL
+        audience:
+          type: string
+          description: Token audience
+        subject:
+          type: string
+          description: Token subject
+        suggested_role_name:
+          type: string
+          description: Default IAM role name
+        terraform_snippet:
+          type: string
+          description: Terraform module block with issuer, subject and role name filled
+        cloud_formation_quick_create_url:
+          type: string
+          description: AWS console quick-create URL with issuer, subject and role name prefilled
+
+    AWSConnectorSetupMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    AWSConnectorSetupMCPOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AWSConnectorSetup"
+
+    GCPConnectorSetup:
+      type: object
+      required:
+        - issuer
+        - audience
+        - subject
+        - suggested_service_account_name
+        - terraform_snippet
+      properties:
+        issuer:
+          type: string
+          description: Organization issuer URL
+        audience:
+          type: string
+          description: Token audience template
+        subject:
+          type: string
+          description: Token subject
+        suggested_service_account_name:
+          type: string
+          description: Default service account name
+        terraform_snippet:
+          type: string
+          description: Terraform module block with issuer, subject and service account name filled
+
+    GCPConnectorSetupMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    GCPConnectorSetupMCPOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/GCPConnectorSetup"
+
+    AzureEnvironment:
+      type: string
+      enum:
+        - AZURE_PUBLIC
+        - AZURE_GOVERNMENT
+        - AZURE_GOVERNMENT_DOD
+        - AZURE_CHINA
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cloud/azure.Environment
+      description: Azure cloud environment. Defaults to AZURE_PUBLIC. GCC uses AZURE_PUBLIC; only GCC High and DoD use Government.
+
+    AzureConnectorSetup:
+      type: object
+      required:
+        - issuer
+        - audience
+        - subject
+        - suggested_application_name
+        - terraform_snippet
+      properties:
+        issuer:
+          type: string
+          description: Organization issuer URL
+        audience:
+          type: string
+          description: Token audience
+        subject:
+          type: string
+          description: Token subject
+        suggested_application_name:
+          type: string
+          description: Default Entra application display name
+        terraform_snippet:
+          type: string
+          description: Terraform module block with issuer, subject and application name filled
+
+    AzureConnectorSetupMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    AzureConnectorSetupMCPOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AzureConnectorSetup"
+
+    WorkloadIdentityConnectorProvider:
+      type: string
+      enum:
+        - AWS
+        - GCP
+        - AZURE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConnectorProvider
+      description: Connector provider that supports workload identity
+
+    CreateWorkloadIdentityConnectorMCPInput:
+      type: object
+      required:
+        - organization_id
+        - provider
+      oneOf:
+        - title: AWS
+          properties:
+            provider:
+              type: string
+              enum:
+                - AWS
+          required:
+            - aws_role_arn
+        - title: GCP
+          properties:
+            provider:
+              type: string
+              enum:
+                - GCP
+          required:
+            - gcp_workload_identity_provider
+            - gcp_service_account_email
+        - title: Azure
+          properties:
+            provider:
+              type: string
+              enum:
+                - AZURE
+          required:
+            - azure_tenant_id
+            - azure_client_id
+            - azure_subscription_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        provider:
+          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
+          description: Connector provider (AWS, GCP, or Azure)
+        aws_role_arn:
+          type: string
+          description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
+        gcp_workload_identity_provider:
+          type: string
+          description: Workload identity provider resource, including the S3NS IAM host when applicable. Required when provider is GCP.
+        gcp_service_account_email:
+          type: string
+          description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
+        azure_tenant_id:
+          type: string
+          description: Entra directory (tenant) ID. Required when provider is Azure.
+        azure_client_id:
+          type: string
+          description: Entra application (client) ID. Required when provider is Azure.
+        azure_subscription_id:
+          type: string
+          description: Azure subscription ID. Required when provider is Azure.
+        azure_environment:
+          $ref: "#/components/schemas/AzureEnvironment"
+          description: Azure cloud environment. Defaults to AZURE_PUBLIC when omitted.
+
+    CreateWorkloadIdentityConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+
+    ConnectorAccount:
+      type: object
+      required:
+        - id
+        - connector_id
+        - external_account_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Connector account ID
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+        external_account_id:
+          type: string
+          description: Provider-specific external account identifier. AWS account ID, GCP project number, or Azure subscription ID.
+        name:
+          type: string
+          description: Display name
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DiscoveredConnectorAccount:
+      type: object
+      required:
+        - external_account_id
+        - name
+      properties:
+        external_account_id:
+          type: string
+          description: Provider-specific external account identifier. AWS account ID, GCP project number, or Azure subscription ID.
+        name:
+          type: string
+
+    ListConnectorsMCPInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    ListConnectorsMCPOutput:
+      type: object
+      required:
+        - connectors
+      properties:
+        connectors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Connector"
+
+    GetConnectorMCPInput:
+      type: object
+      required:
+        - connector_id
+      properties:
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+
+    GetConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+
+    CreateOrganizationConnectorMCPInput:
+      type: object
+      required:
+        - organization_id
+        - provider
+      oneOf:
+        - title: AWS
+          properties:
+            provider:
+              type: string
+              enum:
+                - AWS
+          required:
+            - aws_role_arn
+        - title: GCP
+          properties:
+            provider:
+              type: string
+              enum:
+                - GCP
+          required:
+            - gcp_workload_identity_provider
+            - gcp_service_account_email
+        - title: Azure
+          properties:
+            provider:
+              type: string
+              enum:
+                - AZURE
+          required:
+            - azure_tenant_id
+            - azure_client_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        provider:
+          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
+          description: Connector provider (AWS, GCP, or Azure)
+        aws_role_arn:
+          type: string
+          description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
+        aws_member_role_name:
+          type: string
+        gcp_workload_identity_provider:
+          type: string
+          description: Workload identity provider resource, including the S3NS IAM host when applicable. Required when provider is GCP.
+        gcp_service_account_email:
+          type: string
+          description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
+        gcp_parent:
+          type: string
+          description: Cloud Asset parent (organizations/{number} or folders/{number})
+        azure_tenant_id:
+          type: string
+          description: Entra directory (tenant) ID. Required when provider is Azure.
+        azure_client_id:
+          type: string
+          description: Entra application (client) ID. Required when provider is Azure.
+        azure_environment:
+          $ref: "#/components/schemas/AzureEnvironment"
+          description: Azure cloud environment. Defaults to AZURE_PUBLIC when omitted.
+
+    CreateOrganizationConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+        - discovered_accounts
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+        discovered_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveredConnectorAccount"
+
+    DiscoverConnectorAccountsMCPInput:
+      type: object
+      required:
+        - connector_id
+      properties:
+        connector_id:
+          $ref: "#/components/schemas/GID"
+
+    DiscoverConnectorAccountsMCPOutput:
+      type: object
+      required:
+        - accounts
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveredConnectorAccount"
+
+    EnableConnectorAccountInput:
+      type: object
+      required:
+        - external_account_id
+        - name
+      properties:
+        external_account_id:
+          type: string
+          description: Provider-specific external account identifier. AWS account ID, GCP project number, or Azure subscription ID.
+        name:
+          type: string
+
+    EnableConnectorAccountsMCPInput:
+      type: object
+      required:
+        - connector_id
+        - accounts
+      properties:
+        connector_id:
+          $ref: "#/components/schemas/GID"
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnableConnectorAccountInput"
+
+    EnableConnectorAccountsMCPOutput:
+      type: object
+      required:
+        - connector_accounts
+      properties:
+        connector_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorAccount"
 
     CreateAccessReviewCampaignMCPInput:
       type: object
@@ -10612,6 +12001,115 @@ components:
       properties:
         compliance_portal:
           $ref: "#/components/schemas/CompliancePortal"
+
+    CreateCompliancePortalAccessInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Existing organization profile ID. Provide exactly one of profile_id or email.
+        email:
+          type: string
+          description: Visitor email address. Provide exactly one of profile_id or email.
+        document_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Document IDs to grant immediately
+        report_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Report file IDs to grant immediately
+        compliance_portal_file_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Compliance portal file IDs to grant immediately
+
+    CreateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    DeactivateCompliancePortalAccessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+
+    DeactivateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    ActivateCompliancePortalAccessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+
+    ActivateCompliancePortalAccessOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    CompliancePortalAccessState:
+      type: string
+      enum:
+        - ACTIVE
+        - DEACTIVATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalAccessState
+
+    CompliancePortalAccess:
+      type: object
+      required:
+        - id
+        - state
+        - email
+        - full_name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        state:
+          $ref: "#/components/schemas/CompliancePortalAccessState"
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+        full_name:
+          type: string
+        authenticated_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     GetCompliancePortalInput:
       type: object
@@ -11667,10 +13165,14 @@ components:
       type: object
       required:
         - resource_reporting
+        - tcf
       properties:
         resource_reporting:
           type: boolean
           description: Whether the SDK reports detected resources
+        tcf:
+          type: boolean
+          description: Whether IAB TCF is enabled for this banner
 
     CookieBannerCapabilitiesInput:
       type: object
@@ -11695,6 +13197,8 @@ components:
         - show_branding
         - capabilities
         - default_language
+        - publisher_country_code
+        - tcf_cmp_id
         - created_at
         - updated_at
       properties:
@@ -11734,6 +13238,12 @@ components:
         default_language:
           type: string
           description: Default language code
+        publisher_country_code:
+          type: string
+          description: IAB TCF publisher country of establishment (ISO 3166-1 alpha-2, or AA)
+        tcf_cmp_id:
+          type: integer
+          description: IAB TCF CMP ID used by this instance (placeholder 4095 until IAB issues a registered ID)
         created_at:
           type: string
           format: date-time
@@ -11742,6 +13252,181 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        published_version:
+          $ref: "#/components/schemas/CookieBannerVersion"
+          description: Latest published cookie banner version, if any
+
+    CommonGVLVendorMembership:
+      type: string
+      enum:
+        - ON_BANNER
+        - NOT_ON_BANNER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CommonGVLVendorMembership
+
+    CommonGVLVendor:
+      type: object
+      required:
+        - id
+        - iab_vendor_id
+        - name
+        - purposes
+        - leg_int_purposes
+        - special_features
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Common GVL vendor ID
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+        name:
+          type: string
+          description: Vendor name
+        policy_url:
+          type:
+            - string
+            - "null"
+          description: Vendor privacy policy URL
+        purposes:
+          type: array
+          items:
+            type: integer
+          description: IAB purposes the vendor declares
+        leg_int_purposes:
+          type: array
+          items:
+            type: integer
+          description: IAB purposes the vendor declares under legitimate interest
+        special_features:
+          type: array
+          items:
+            type: integer
+          description: IAB special features the vendor declares
+
+    CommonGVLCatalog:
+      type: object
+      properties:
+        vendor_list_version:
+          type:
+            - integer
+            - "null"
+          description: Latest IAB vendor list version
+        tcf_policy_version:
+          type:
+            - integer
+            - "null"
+          description: TCF policy version of the latest GVL snapshot
+
+    GetCommonGVLCatalogInput:
+      type: object
+
+    GetCommonGVLCatalogOutput:
+      type: object
+      required:
+        - common_gvl_catalog
+      properties:
+        common_gvl_catalog:
+          $ref: "#/components/schemas/CommonGVLCatalog"
+
+    ListCommonGVLVendorsInput:
+      type: object
+      properties:
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search by vendor name or IAB vendor ID
+            cookie_banner_id:
+              $ref: "#/components/schemas/GID"
+              description: Cookie banner ID required when filtering by membership
+            membership:
+              $ref: "#/components/schemas/CommonGVLVendorMembership"
+              description: Restrict to vendors already on the banner, or not on it
+
+    ListCommonGVLVendorsOutput:
+      type: object
+      required:
+        - common_gvl_vendors
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        common_gvl_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommonGVLVendor"
+
+    ListCookieBannerGVLVendorsInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookieBannerGVLVendorsOutput:
+      type: object
+      required:
+        - common_gvl_vendors
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        common_gvl_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommonGVLVendor"
+
+    AddCookieBannerGVLVendorInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - iab_vendor_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+
+    AddCookieBannerGVLVendorOutput:
+      type: object
+      required:
+        - common_gvl_vendor
+        - cookie_banner
+      properties:
+        common_gvl_vendor:
+          $ref: "#/components/schemas/CommonGVLVendor"
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    RemoveCookieBannerGVLVendorInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - iab_vendor_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        iab_vendor_id:
+          type: integer
+          description: IAB GVL vendor ID
+
+    RemoveCookieBannerGVLVendorOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
 
     CookieCategory:
       type: object
@@ -11787,6 +13472,12 @@ components:
           items:
             type: string
           description: Google Consent Mode types
+        tcf_purpose_ids:
+          type: array
+          items:
+            type: integer
+          description: IAB TCF purpose IDs this category requires (AND, fail-closed)
+          go.probo.inc/mcpgen/type: "[]int"
         posthog_consent:
           type: boolean
           description: Whether this category controls PostHog consent
@@ -11852,7 +13543,7 @@ components:
           description: Pattern description
         source:
           type: string
-          enum: [SCRIPT, PRE_EXISTING, EXTENSION]
+          enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           description: How the pattern was discovered
         excluded:
           type: boolean
@@ -11868,6 +13559,12 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Linked common tracker-pattern catalog ID, if any. Non-null indicates the pattern was matched to the global catalog (description may originate from the seed or agents); null means no catalog link.
+        attribution:
+          anyOf:
+            - type: string
+              enum: [UNDETERMINED, THIRD_PARTY, FIRST_PARTY, NOT_ATTRIBUTABLE]
+            - type: "null"
+          description: Catalog verdict inherited from the linked common tracker pattern. Null when the org pattern has no catalog link.
         created_at:
           type: string
           format: date-time
@@ -11946,6 +13643,8 @@ components:
         - cookie_banner_id
         - version
         - state
+        - gvl_vendor_count
+        - gvl_vendor_ids
         - created_at
         - updated_at
       properties:
@@ -11970,6 +13669,14 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        gvl_vendor_count:
+          type: integer
+          description: Number of IAB GVL vendors snapshotted on this version
+        gvl_vendor_ids:
+          type: array
+          items:
+            type: integer
+          description: IAB GVL vendor IDs snapshotted on this version
 
     CookieBannerTranslation:
       type: object
@@ -12063,6 +13770,11 @@ components:
             - string
             - "null"
           description: Visitor subdivision code (ISO 3166-2)
+        tc:
+          type:
+            - string
+            - "null"
+          description: IAB TCF consent string
         created_at:
           type: string
           format: date-time
@@ -12181,6 +13893,12 @@ components:
             - string
             - "null"
           go.probo.inc/mcpgen/omittable: true
+        publisher_country_code:
+          type:
+            - string
+            - "null"
+          description: IAB TCF publisher country of establishment (ISO 3166-1 alpha-2, or AA)
+          go.probo.inc/mcpgen/omittable: true
         capabilities:
           anyOf:
             - $ref: "#/components/schemas/CookieBannerCapabilitiesInput"
@@ -12272,7 +13990,7 @@ components:
           properties:
             exclude_kind:
               $ref: "#/components/schemas/CookieCategoryKind"
-              description: Exclude categories of this kind. Defaults to UNCATEGORISED when omitted.
+              description: Exclude categories of this kind. UNCATEGORISED is excluded when no filter object is given; pass an empty filter object to exclude nothing.
 
     ListCookieCategoriesOutput:
       type: object
@@ -12351,6 +14069,15 @@ components:
           type:
             - string
             - "null"
+          go.probo.inc/mcpgen/omittable: true
+        tcf_purpose_ids:
+          type:
+            - array
+            - "null"
+          items:
+            type: integer
+          description: IAB TCF purpose IDs this category requires (AND, fail-closed)
+          go.probo.inc/mcpgen/type: "[]int"
           go.probo.inc/mcpgen/omittable: true
 
     UpdateCookieCategoryOutput:
@@ -13111,6 +14838,23 @@ components:
         scim_bridge:
           $ref: "#/components/schemas/SCIMBridge"
 
+    ReactivateSCIMBridgeInput:
+      type: object
+      required:
+        - scim_bridge_id
+      properties:
+        scim_bridge_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM bridge ID
+
+    ReactivateSCIMBridgeOutput:
+      type: object
+      required:
+        - scim_bridge
+      properties:
+        scim_bridge:
+          $ref: "#/components/schemas/SCIMBridge"
+
     ListSCIMEventsInput:
       type: object
       required:
@@ -13296,12 +15040,18 @@ components:
           type:
             - string
             - "null"
+          description: Risk analysis description in markdown (converted from stored ProseMirror JSON)
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
         matrix_size:
           $ref: "#/components/schemas/MatrixSize"
           description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
+        matrix_cells:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAnalysisMatrixCell"
+          description: Occupied inherent, net, and residual matrix cells
         created_at:
           type: string
           format: date-time
@@ -13523,6 +15273,11 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Risk analysis ID
+        as_of:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Reconstruct matrix cells as of this instant. Omit to use live tables.
 
     GetRiskAnalysisOutput:
       type: object
@@ -13547,7 +15302,7 @@ components:
           description: Risk analysis name
         description:
           type: string
-          description: Risk analysis description
+          description: Risk analysis description in markdown format
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
@@ -13576,14 +15331,11 @@ components:
           description: Risk analysis name
         description:
           type: ["string", "null"]
-          description: Risk analysis description
+          description: Risk analysis description in markdown format
           go.probo.inc/mcpgen/omittable: true
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
-        matrix_size:
-          $ref: "#/components/schemas/MatrixSize"
-          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
 
     UpdateRiskAnalysisOutput:
       type: object
@@ -13610,6 +15362,33 @@ components:
         deleted_risk_analysis_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment ID
+
+    ForkRiskAnalysisInput:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Source risk analysis ID
+        name:
+          type: string
+          description: Forked risk analysis name
+        description:
+          type: string
+          description: Forked risk analysis description in markdown format
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period (not copied from the source)
+
+    ForkRiskAnalysisOutput:
+      type: object
+      required:
+        - risk_analysis
+      properties:
+        risk_analysis:
+          $ref: "#/components/schemas/RiskAnalysis"
 
     ListRiskAnalysisDiagramsInput:
       type: object
@@ -15165,7 +16944,7 @@ tools:
       $ref: "#/components/schemas/VetThirdPartyOutput"
   - name: listRisks
     title: List Risks
-    description: List all risks for the organization
+    description: List risks for the organization, or unplanned scenario-linked risks when risk_analysis_id is set
     hints:
       readonly: true
       destructive: false
@@ -15213,7 +16992,7 @@ tools:
       $ref: "#/components/schemas/UpdateRiskOutput"
   - name: deleteRisk
     title: Delete Risk
-    description: Delete a risk
+    description: Delete a risk. Deleting a risk also deletes its history in risk analyses.
     hints:
       readonly: false
       destructive: true
@@ -15345,7 +17124,7 @@ tools:
       $ref: "#/components/schemas/DeleteEvidenceOutput"
   - name: linkMeasure
     title: Link Measure
-    description: Link a measure to a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
+    description: Link a measure to a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
@@ -15357,7 +17136,7 @@ tools:
       $ref: "#/components/schemas/LinkMeasureOutput"
   - name: unlinkMeasure
     title: Unlink Measure
-    description: Unlink a measure from a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
+    description: Unlink a measure from a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
@@ -16435,6 +18214,150 @@ tools:
       $ref: "#/components/schemas/DeleteTaskInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTaskOutput"
+  - name: listLinearTeams
+    title: List Linear Teams
+    description: Search Linear teams for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListLinearTeamsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListLinearTeamsOutput"
+  - name: listLinearIssues
+    title: List Linear Issues
+    description: Search Linear issues in a team
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListLinearIssuesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListLinearIssuesOutput"
+  - name: publishTaskToLinear
+    title: Publish Task To Linear
+    description: Publish a Probo task as a new Linear issue
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/PublishTaskToLinearInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishTaskToLinearOutput"
+  - name: linkTaskToLinear
+    title: Link Task To Linear
+    description: Link a Probo task to an existing Linear issue. This updates the Probo task with the Linear issue.
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/LinkTaskToLinearInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkTaskToLinearOutput"
+  - name: unlinkTaskExternal
+    title: Unlink Task External
+    description: Unlink a task from its external issue
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkTaskExternalInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkTaskExternalOutput"
+  - name: listTaskComments
+    title: List Task Comments
+    description: List comments for a task, oldest first
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTaskCommentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTaskCommentsOutput"
+  - name: getTaskComment
+    title: Get Task Comment
+    description: Get a task comment by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTaskCommentOutput"
+  - name: addTaskComment
+    title: Add Task Comment
+    description: Add a comment to a task
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTaskCommentOutput"
+  - name: updateTaskComment
+    title: Update Task Comment
+    description: Update an existing task comment
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTaskCommentOutput"
+  - name: deleteTaskComment
+    title: Delete Task Comment
+    description: Delete a task comment
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTaskCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTaskCommentOutput"
+  - name: listTaskActivities
+    title: List Task Activities
+    description: List activities for a task, newest first
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTaskActivitiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTaskActivitiesOutput"
+  - name: getTaskActivity
+    title: Get Task Activity
+    description: Get a task activity by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetTaskActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTaskActivityOutput"
   - name: listDocuments
     title: List Documents
     description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.
@@ -16867,6 +18790,18 @@ tools:
       $ref: "#/components/schemas/PublishStatementOfApplicabilityInput"
     outputSchema:
       $ref: "#/components/schemas/PublishStatementOfApplicabilityOutput"
+  - name: publishRiskAnalysis
+    title: Publish Risk Analysis
+    description: Publish a risk analysis as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishRiskAnalysisInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishRiskAnalysisOutput"
   - name: listApplicabilityStatements
     title: List Applicability Statements
     description: List all applicability statements for a statement of applicability
@@ -16941,7 +18876,7 @@ tools:
       $ref: "#/components/schemas/ListAccessReviewCampaignsOutput"
   - name: listAccessEntries
     title: List Access Entries
-    description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, active, auth_method, account_type)
+    description: List access entries for a campaign with optional filters (decision, flag, is_admin, active, auth_method, account_type)
     hints:
       readonly: true
       destructive: false
@@ -16953,7 +18888,7 @@ tools:
       $ref: "#/components/schemas/ListAccessEntriesOutput"
   - name: getAccessReviewStatistics
     title: Get Access Review Statistics
-    description: Get statistics for an access review campaign including counts by decision, flag, and incremental tag
+    description: Get statistics for an access review campaign including counts by decision and flag
     hints:
       readonly: true
       destructive: false
@@ -17059,6 +18994,114 @@ tools:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPOutput"
+  - name: awsConnectorSetup
+    title: AWS Connector Setup
+    description: Return issuer, subject, audience and deploy artifacts for connecting an AWS account
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AWSConnectorSetupMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/AWSConnectorSetupMCPOutput"
+  - name: gcpConnectorSetup
+    title: GCP Connector Setup
+    description: Return issuer, subject, audience template and deploy artifacts for connecting a GCP project
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GCPConnectorSetupMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/GCPConnectorSetupMCPOutput"
+  - name: azureConnectorSetup
+    title: Azure Connector Setup
+    description: Return issuer, subject, audience and deploy artifacts for connecting an Azure subscription
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AzureConnectorSetupMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/AzureConnectorSetupMCPOutput"
+  - name: createWorkloadIdentityConnector
+    title: Create Workload Identity Connector
+    description: Create a workload-identity connector (AWS, GCP, or Azure) and report whether the audit identity can be assumed
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPOutput"
+  - name: listConnectors
+    title: List Connectors
+    description: List connectors for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListConnectorsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListConnectorsMCPOutput"
+  - name: getConnector
+    title: Get Connector
+    description: Get a connector by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/GetConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetConnectorMCPOutput"
+  - name: createOrganizationConnector
+    title: Create Organization Connector
+    description: Create an organization-scoped workload-identity connector and list discovered accounts
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/CreateOrganizationConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateOrganizationConnectorMCPOutput"
+  - name: discoverConnectorAccounts
+    title: Discover Connector Accounts
+    description: List vendor accounts a connector can enable
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/DiscoverConnectorAccountsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/DiscoverConnectorAccountsMCPOutput"
+  - name: enableConnectorAccounts
+    title: Enable Connector Accounts
+    description: Enable vendor accounts on a connector without creating an access source
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/EnableConnectorAccountsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/EnableConnectorAccountsMCPOutput"
   - name: createAccessReviewCampaign
     title: Create Access Review Campaign
     description: Create a new access review campaign for an organization
@@ -17419,6 +19462,42 @@ tools:
       $ref: "#/components/schemas/CreateCompliancePortalInput"
     outputSchema:
       $ref: "#/components/schemas/CreateCompliancePortalOutput"
+  - name: createCompliancePortalAccess
+    title: Create Compliance Portal Access
+    description: Add a visitor to a compliance portal by profile ID or email
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalAccessOutput"
+  - name: deactivateCompliancePortalAccess
+    title: Deactivate Compliance Portal Access
+    description: Deactivate a compliance portal visitor. Grants stay; protected reads and requests fail until reactivation.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeactivateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeactivateCompliancePortalAccessOutput"
+  - name: activateCompliancePortalAccess
+    title: Activate Compliance Portal Access
+    description: Activate a deactivated compliance portal visitor
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ActivateCompliancePortalAccessInput"
+    outputSchema:
+      $ref: "#/components/schemas/ActivateCompliancePortalAccessOutput"
   - name: getCompliancePortal
     title: Get Compliance Portal
     description: Get a compliance portal by ID
@@ -18175,6 +20254,66 @@ tools:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationInput"
     outputSchema:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationOutput"
+  - name: getCommonGVLCatalog
+    title: Get Common GVL Catalog
+    description: Get the current IAB GVL catalog versions
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetCommonGVLCatalogInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCommonGVLCatalogOutput"
+  - name: listCommonGVLVendors
+    title: List Common GVL Vendors
+    description: List IAB GVL vendors from the global catalog
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCommonGVLVendorsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCommonGVLVendorsOutput"
+  - name: listCookieBannerGVLVendors
+    title: List Cookie Banner GVL Vendors
+    description: List IAB GVL vendors selected on a cookie banner
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannerGVLVendorsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannerGVLVendorsOutput"
+  - name: addCookieBannerGVLVendor
+    title: Add Cookie Banner GVL Vendor
+    description: Add an IAB GVL vendor to a cookie banner's disclosed set
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookieBannerGVLVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookieBannerGVLVendorOutput"
+  - name: removeCookieBannerGVLVendor
+    title: Remove Cookie Banner GVL Vendor
+    description: Remove an IAB GVL vendor from a cookie banner's disclosed set
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RemoveCookieBannerGVLVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/RemoveCookieBannerGVLVendorOutput"
   - name: listCookieConsentRecords
     title: List Cookie Consent Records
     description: List consent records for a cookie banner
@@ -18271,6 +20410,18 @@ tools:
       $ref: "#/components/schemas/UpdateSCIMBridgeInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateSCIMBridgeOutput"
+  - name: reactivateSCIMBridge
+    title: Reactivate SCIM Bridge
+    description: Schedule the next SCIM bridge sync for now, clear consecutive failures, and set a non-active bridge back to active
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ReactivateSCIMBridgeInput"
+    outputSchema:
+      $ref: "#/components/schemas/ReactivateSCIMBridgeOutput"
   - name: listSCIMEvents
     title: List SCIM Events
     description: List SCIM events for a configuration
@@ -18297,7 +20448,7 @@ tools:
       $ref: "#/components/schemas/ListRiskAnalysesOutput"
   - name: getRiskAnalysis
     title: Get Risk Analysis
-    description: Get a risk assessment by ID
+    description: Get a risk assessment by ID. Optionally reconstruct matrix cells as of a given instant.
     hints:
       readonly: true
       destructive: false
@@ -18343,6 +20494,18 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAnalysisInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAnalysisOutput"
+  - name: forkRiskAnalysis
+    title: Fork Risk Analysis
+    description: Fork a risk analysis, copying diagrams, treatment plans, and their relations
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ForkRiskAnalysisInput"
+    outputSchema:
+      $ref: "#/components/schemas/ForkRiskAnalysisOutput"
   - name: listRiskAnalysisDiagrams
     title: List Risk Analysis Diagrams
     description: List all diagrams for a risk analysis
@@ -18763,6 +20926,66 @@ tools:
       $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioRiskInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioRiskOutput"
+  - name: listTreatmentPlans
+    title: List Treatment Plans
+    description: List treatment plans for an organization, risk, or risk analysis
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTreatmentPlansInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTreatmentPlansOutput"
+  - name: getTreatmentPlan
+    title: Get Treatment Plan
+    description: Get a treatment plan by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTreatmentPlanOutput"
+  - name: addTreatmentPlan
+    title: Add Treatment Plan
+    description: Create a treatment plan for a risk on a risk analysis
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTreatmentPlanOutput"
+  - name: updateTreatmentPlan
+    title: Update Treatment Plan
+    description: Update an existing treatment plan
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTreatmentPlanOutput"
+  - name: deleteTreatmentPlan
+    title: Delete Treatment Plan
+    description: Delete a treatment plan
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTreatmentPlanOutput"
   - name: getMailingList
     title: Get Mailing List
     description: Get the mailing list for a compliance portal

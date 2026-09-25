@@ -65,7 +65,6 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionFrameworkGet, ActionFrameworkList,
 		ActionControlGet, ActionControlList,
 		ActionMeasureGet, ActionMeasureList,
-		ActionTaskGet, ActionTaskList,
 		ActionEvidenceList,
 		ActionDocumentGet, ActionDocumentList,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
@@ -95,13 +94,6 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCookieCategoryGet, ActionCookieCategoryList,
 		ActionCookieGet, ActionCookieList,
 		ActionCookieConsentRecordList,
-		ActionRiskAnalysisGet, ActionRiskAnalysisList,
-		ActionRiskAnalysisDiagramGet, ActionRiskAnalysisDiagramList,
-		ActionRiskAnalysisNodeGet, ActionRiskAnalysisNodeList,
-		ActionRiskAnalysisBoundaryGet, ActionRiskAnalysisBoundaryList,
-		ActionRiskAnalysisProcessGet, ActionRiskAnalysisProcessList,
-		ActionRiskAnalysisThreatGet, ActionRiskAnalysisThreatList,
-		ActionRiskAnalysisScenarioGet, ActionRiskAnalysisScenarioList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
@@ -164,13 +156,6 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionFileGet,
 		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
-		ActionRiskAnalysisGet, ActionRiskAnalysisList,
-		ActionRiskAnalysisDiagramGet, ActionRiskAnalysisDiagramList,
-		ActionRiskAnalysisNodeGet, ActionRiskAnalysisNodeList,
-		ActionRiskAnalysisBoundaryGet, ActionRiskAnalysisBoundaryList,
-		ActionRiskAnalysisProcessGet, ActionRiskAnalysisProcessList,
-		ActionRiskAnalysisThreatGet, ActionRiskAnalysisThreatList,
-		ActionRiskAnalysisScenarioGet, ActionRiskAnalysisScenarioList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -195,6 +180,18 @@ var CommonThirdPartyCatalogPolicy = policy.NewPolicy(
 		ActionCommonThirdPartyList,
 	).WithSID("read-common-third-party-catalog"),
 ).WithDescription("Allows every authenticated user to read the global common third-party catalog")
+
+// CommonGVLVendorCatalogPolicy grants every authenticated identity
+// read access to the global IAB GVL vendor catalog. The catalog is
+// shared across all tenants and has no organization scoping, so the
+// allow has no condition.
+var CommonGVLVendorCatalogPolicy = policy.NewPolicy(
+	"probo:common-gvl-vendor-catalog",
+	"Probo Common GVL Vendor Catalog",
+	policy.Allow(
+		ActionCommonGVLVendorList,
+	).WithSID("read-common-gvl-vendor-catalog"),
+).WithDescription("Allows every authenticated user to read the global IAB GVL vendor catalog")
 
 // EmployeePolicy defines permissions for employee role.
 var EmployeePolicy = policy.NewPolicy(
@@ -283,5 +280,6 @@ func ProboPolicySet() *iam.PolicySet {
 		AddRolePolicy("EMPLOYEE", EmployeePolicy).
 		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", CompliancePortalManagerPolicy).
 		AddRolePolicy("COMPLIANCE_PORTAL_ACCESS_MANAGER", CompliancePortalAccessManagerPolicy).
-		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy)
+		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy).
+		AddIdentityScopedPolicy(CommonGVLVendorCatalogPolicy)
 }

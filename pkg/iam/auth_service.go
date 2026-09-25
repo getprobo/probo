@@ -357,35 +357,31 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 func (s AuthService) CreateIdentityWithPassword(
 	ctx context.Context,
 	req *CreateIdentityWithPasswordRequest,
-) (*coredata.Identity, *coredata.Session, error) {
+) (*coredata.Identity, error) {
 	if s.disableSignup { // TODO Rename this one to disableSignup
-		return nil, nil, NewErrSignupDisabled()
+		return nil, NewErrSignupDisabled()
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, fmt.Errorf("invalid request: %w", err)
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	hashedPassword, err := s.hp.HashPassword([]byte(req.Password))
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot hash password: %w", err)
+		return nil, fmt.Errorf("cannot hash password: %w", err)
 	}
 
-	var (
-		now = time.Now()
+	now := time.Now()
 
-		identity = &coredata.Identity{
-			ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
-			EmailAddress:         req.Email,
-			FullName:             req.FullName,
-			HashedPassword:       hashedPassword,
-			EmailAddressVerified: false,
-			CreatedAt:            now,
-			UpdatedAt:            now,
-		}
-
-		session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, 24*time.Hour*7)
-	)
+	identity := &coredata.Identity{
+		ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
+		EmailAddress:         req.Email,
+		FullName:             req.FullName,
+		HashedPassword:       hashedPassword,
+		EmailAddressVerified: false,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+	}
 
 	confirmationToken, err := statelesstoken.NewToken(
 		s.tokenSecret,
@@ -394,14 +390,14 @@ func (s AuthService) CreateIdentityWithPassword(
 		EmailConfirmationData{IdentityID: identity.ID, Email: identity.EmailAddress},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot generate confirmation token: %w", err)
+		return nil, fmt.Errorf("cannot generate confirmation token: %w", err)
 	}
 
 	emailPresenter := emails.NewPresenter(s.baseURL, req.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot render confirmation email: %w", err)
+		return nil, fmt.Errorf("cannot render confirmation email: %w", err)
 	}
 
 	confirmationEmail := coredata.NewEmail(
@@ -429,15 +425,14 @@ func (s AuthService) CreateIdentityWithPassword(
 				return fmt.Errorf("cannot insert email: %w", err)
 			}
 
-			if err := session.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert session: %w", err)
-			}
-
 			return nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return identity, session, err
+	return identity, nil
 }
 
 func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID) (*coredata.Session, error) {

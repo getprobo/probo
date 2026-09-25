@@ -59,18 +59,7 @@ func MembershipProfileOrderFields() []MembershipProfileOrderField {
 }
 
 func (v MembershipProfileOrderField) IsValid() bool {
-	switch v {
-	case
-		MembershipProfileOrderFieldCreatedAt,
-		MembershipProfileOrderFieldFullName,
-		MembershipProfileOrderFieldEmailAddress,
-		MembershipProfileOrderFieldKind,
-		MembershipProfileOrderFieldOrganizationName,
-		MembershipProfileOrderFieldState:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, MembershipProfileOrderFields())
 }
 
 func (v MembershipProfileOrderField) String() string {
@@ -82,16 +71,28 @@ func (v MembershipProfileOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *MembershipProfileOrderField) UnmarshalText(text []byte) error {
-	val := MembershipProfileOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid MembershipProfileOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, MembershipProfileOrderFields())
 }
 
 func (p MembershipProfileOrderField) Column() string {
-	return string(p)
+	switch p {
+	case MembershipProfileOrderFieldCreatedAt:
+		// Rank non-deactivated rows first on DESC (the users-list default),
+		// then created_at. Encoded as one text key so cursor pagination stays
+		// single-field.
+		return "(CASE WHEN state = '" + string(ProfileStateDeactivated) + "' THEN '0' ELSE '1' END)" +
+			" || to_char(timezone('UTC', created_at), 'YYYYMMDDHH24MISSUS')"
+	case MembershipProfileOrderFieldFullName:
+		return "full_name"
+	case MembershipProfileOrderFieldEmailAddress:
+		return "email_address"
+	case MembershipProfileOrderFieldKind:
+		return "kind"
+	case MembershipProfileOrderFieldOrganizationName:
+		return "organization_name"
+	case MembershipProfileOrderFieldState:
+		return "state"
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", p))
 }

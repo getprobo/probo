@@ -48,6 +48,7 @@ export const callout = tv({
       green: {},
       amber: {},
       sky: {},
+      indigo: {},
     },
     highContrast: {
       true: {},
@@ -62,6 +63,7 @@ export const callout = tv({
     { variant: "soft", color: "green", class: { root: "bg-green-3 text-green-11" } },
     { variant: "soft", color: "amber", class: { root: "bg-amber-3 text-amber-11" } },
     { variant: "soft", color: "sky", class: { root: "bg-sky-3 text-sky-11" } },
+    { variant: "soft", color: "indigo", class: { root: "bg-indigo-3 text-indigo-11" } },
 
     // surface: subtle background + border
     { variant: "surface", color: "neutral", class: { root: "bg-sand-2 border-sand-6 text-sand-11" } },
@@ -70,6 +72,7 @@ export const callout = tv({
     { variant: "surface", color: "green", class: { root: "bg-green-2 border-green-6 text-green-11" } },
     { variant: "surface", color: "amber", class: { root: "bg-amber-2 border-amber-6 text-amber-11" } },
     { variant: "surface", color: "sky", class: { root: "bg-sky-2 border-sky-6 text-sky-11" } },
+    { variant: "surface", color: "indigo", class: { root: "bg-indigo-2 border-indigo-6 text-indigo-11" } },
 
     // outline: border only
     { variant: "outline", color: "neutral", class: { root: "border-sand-6 text-sand-11" } },
@@ -78,6 +81,7 @@ export const callout = tv({
     { variant: "outline", color: "green", class: { root: "border-green-6 text-green-11" } },
     { variant: "outline", color: "amber", class: { root: "border-amber-6 text-amber-11" } },
     { variant: "outline", color: "sky", class: { root: "border-sky-6 text-sky-11" } },
+    { variant: "outline", color: "indigo", class: { root: "border-indigo-6 text-indigo-11" } },
 
     // high-contrast text (icon + body inherit the root color)
     { color: "neutral", highContrast: true, class: { root: "text-sand-12" } },
@@ -86,6 +90,7 @@ export const callout = tv({
     { color: "green", highContrast: true, class: { root: "text-green-12" } },
     { color: "amber", highContrast: true, class: { root: "text-amber-12" } },
     { color: "sky", highContrast: true, class: { root: "text-sky-12" } },
+    { color: "indigo", highContrast: true, class: { root: "text-indigo-12" } },
   ],
   defaultVariants: {
     size: 2,

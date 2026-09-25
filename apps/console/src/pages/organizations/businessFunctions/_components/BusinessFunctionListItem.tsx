@@ -41,6 +41,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 import {
   businessFunctionListConnectionFilters,
   BusinessFunctionsConnectionKey,
+  formatContinuityMinutes,
   getClassificationLabel,
   getClassificationVariant,
 } from "../_lib/businessFunctionHelpers";
@@ -148,7 +149,7 @@ export function BusinessFunctionListItem({
   };
 
   const detailsUrl
-    = `/organizations/${organizationId}/business-functions/${businessFunction.id}`;
+    = `/organizations/${organizationId}/registries/business-functions/${businessFunction.id}`;
   const assets = businessFunction.assets?.edges.map(edge => edge.node) ?? [];
   const thirdParties = businessFunction.thirdParties?.edges.map(edge => edge.node) ?? [];
 
@@ -163,9 +164,9 @@ export function BusinessFunctionListItem({
           {getClassificationLabel(businessFunction.classification, t, "businessFunctionsPage")}
         </Badge>
       </Td>
-      <Td>{businessFunction.mtdMinutes}</Td>
-      <Td>{businessFunction.rtoMinutes}</Td>
-      <Td>{businessFunction.rpoMinutes}</Td>
+      <Td>{formatContinuityMinutes(businessFunction.mtdMinutes, t)}</Td>
+      <Td>{formatContinuityMinutes(businessFunction.rtoMinutes, t)}</Td>
+      <Td>{formatContinuityMinutes(businessFunction.rpoMinutes, t)}</Td>
       <Td>{businessFunction.owner?.fullName || "-"}</Td>
       <Td>
         <EntityBadgeList

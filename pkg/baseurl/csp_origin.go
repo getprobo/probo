@@ -22,6 +22,7 @@ package baseurl
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"strings"
 )
@@ -83,7 +84,7 @@ func cspOriginFromURL(u *url.URL) (string, error) {
 		return "", fmt.Errorf("CSP origin host contains invalid characters")
 	}
 
-	if strings.HasSuffix(host, ":") {
+	if _, port, err := net.SplitHostPort(host); err == nil && port == "" {
 		return "", fmt.Errorf("CSP origin host has an empty port")
 	}
 

@@ -21,7 +21,7 @@
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import type { ComponentProps, ReactNode } from "react";
 
-import { Button } from "../Button/Button";
+import { Button, type ButtonProps } from "../Button/Button";
 import { Text } from "../typography/Text";
 
 import { pagination } from "./variants";
@@ -31,9 +31,15 @@ export type PaginationProps = Omit<ComponentProps<"nav">, "onChange"> & {
   hasNext: boolean;
   // Current-position label rendered between the arrows (e.g. "Page 2").
   label?: ReactNode;
-  // Accessible labels for the arrow controls.
+  // Accessible labels for the arrow controls. Also used as visible copy when
+  // `showLabels` is true.
   previousLabel?: string;
   nextLabel?: string;
+  // Renders previousLabel / nextLabel as button text next to the carets.
+  showLabels?: boolean;
+  variant?: ButtonProps["variant"];
+  // Disables both controls, e.g. while a page change is in flight.
+  disabled?: boolean;
   onPrevious: () => void;
   onNext: () => void;
 };
@@ -49,6 +55,7 @@ export function Pagination(props: PaginationProps) {
   const {
     hasPrevious, hasNext, label,
     previousLabel = "Previous page", nextLabel = "Next page",
+    showLabels = false, variant = "ghost", disabled = false,
     onPrevious, onNext, className, ...rest
   } = props;
   const { root, label: labelSlot } = pagination();
@@ -60,28 +67,34 @@ export function Pagination(props: PaginationProps) {
   return (
     <nav className={root({ className })} {...rest}>
       <Button
-        variant="ghost"
+        variant={variant}
         color="neutral"
         size={2}
         iconStart={<CaretLeftIcon />}
         aria-label={previousLabel}
         className={hasPrevious ? undefined : "invisible"}
+        disabled={disabled}
         onClick={onPrevious}
-      />
+      >
+        {showLabels ? previousLabel : undefined}
+      </Button>
       {label != null && (
         <Text size={2} color="faint" className={labelSlot()}>
           {label}
         </Text>
       )}
       <Button
-        variant="ghost"
+        variant={variant}
         color="neutral"
         size={2}
         iconEnd={<CaretRightIcon />}
         aria-label={nextLabel}
         className={hasNext ? undefined : "invisible"}
+        disabled={disabled}
         onClick={onNext}
-      />
+      >
+        {showLabels ? nextLabel : undefined}
+      </Button>
     </nav>
   );
 }

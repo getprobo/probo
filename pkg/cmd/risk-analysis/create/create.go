@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const createMutation = `
@@ -134,7 +135,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				if !cmd.Flags().Changed("matrix-rows") && !cmd.Flags().Changed("matrix-cols") {
-					var matrixSize string
+					matrixSize := "5"
 
 					err := huh.NewSelect[string]().
 						Title("Matrix size").
@@ -170,7 +171,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagDescription != "" {
-				input["description"] = flagDescription
+				input["description"] = prosemirror.FromPlainText(flagDescription)
 			}
 
 			if flagPeriodStart != "" || flagPeriodEnd != "" {
@@ -186,11 +187,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["period"] = period
 			}
 
-			rowsSet := cmd.Flags().Changed("matrix-rows") || flagMatrixRows != 0
-			colsSet := cmd.Flags().Changed("matrix-cols") || flagMatrixCols != 0
+			rowsChanged := cmd.Flags().Changed("matrix-rows")
+			colsChanged := cmd.Flags().Changed("matrix-cols")
 
-			if !rowsSet || !colsSet {
-				return fmt.Errorf("both --matrix-rows and --matrix-cols are required; pass flags or run interactively")
+			switch {
+			case rowsChanged && !colsChanged:
+				flagMatrixCols = flagMatrixRows
+			case colsChanged && !rowsChanged:
+				flagMatrixRows = flagMatrixCols
+			case flagMatrixRows != flagMatrixCols:
+				return fmt.Errorf("--matrix-rows and --matrix-cols must match")
 			}
 
 			input["matrixSize"] = map[string]any{
@@ -228,8 +234,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description")
 	cmd.Flags().StringVar(&flagPeriodStart, "period-start", "", "Period start date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
-	cmd.Flags().IntVar(&flagMatrixRows, "matrix-rows", 0, "Matrix rows (3, 4, or 5; required)")
-	cmd.Flags().IntVar(&flagMatrixCols, "matrix-cols", 0, "Matrix cols (3, 4, or 5; required, must match --matrix-rows)")
+	cmd.Flags().IntVar(&flagMatrixRows, "matrix-rows", 5, "Matrix rows (3, 4, or 5; default 5)")
+	cmd.Flags().IntVar(&flagMatrixCols, "matrix-cols", 5, "Matrix cols (3, 4, or 5; default 5, must match --matrix-rows)")
 
 	return cmd
 }

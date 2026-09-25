@@ -173,6 +173,7 @@ type (
 		Version     int                          `json:"version"`
 		Action      coredata.CookieConsentAction `json:"action"`
 		ConsentData json.RawMessage              `json:"consent_data"`
+		TC          *string                      `json:"tc,omitempty"`
 	}
 
 	postConsentResponse struct {
@@ -215,6 +216,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		Regulation:       &regulation,
 		RegulationSource: regulationSource,
 		ConsentMode:      &cm,
+		TC:               body.TC,
 	}
 	if location != nil {
 		req.CountryCode = &location.CountryCode
@@ -425,6 +427,9 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	var body reportDetectedTrackersBody
+	// The unload-safe Beacon transport sends JSON bytes as text/plain so
+	// cross-origin reports remain CORS-safelisted and avoid a preflight.
+	// Decode the body independently of Content-Type to preserve that contract.
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		jsonx.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return

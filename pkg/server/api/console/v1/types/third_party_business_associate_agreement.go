@@ -30,10 +30,9 @@ func NewThirdPartyBusinessAssociateAgreement(v *coredata.ThirdPartyBusinessAssoc
 		ThirdParty: &ThirdParty{
 			ID: v.ThirdPartyID,
 		},
-		ValidFrom:  v.ValidFrom,
-		ValidUntil: v.ValidUntil,
-		File:       &File{ID: v.FileID},
-		CreatedAt:  v.CreatedAt,
-		UpdatedAt:  v.UpdatedAt,
+		Validity:  NewPeriod(v.ValidFrom, v.ValidUntil),
+		File:      &File{ID: v.FileID},
+		CreatedAt: v.CreatedAt,
+		UpdatedAt: v.UpdatedAt,
 	}
 }

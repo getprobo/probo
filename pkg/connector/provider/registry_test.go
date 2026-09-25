@@ -21,20 +21,66 @@
 package provider_test
 
 import (
+	"context"
+	"net/http"
+	"net/url"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/identityfederation"
 )
+
+func stubNewCloudSession(
+	context.Context,
+	*identityfederation.Issuer,
+	*coredata.Connector,
+	string,
+) (cloud.Session, error) {
+	return nil, nil
+}
+
+func stubNewCloudDriver(
+	context.Context,
+	cloud.Session,
+	*coredata.Connector,
+	*log.Logger,
+) (drivers.Driver, error) {
+	return nil, nil
+}
+
+func stubNewDriver(
+	context.Context,
+	*http.Client,
+	*coredata.Connector,
+	*log.Logger,
+	provider.Endpoints,
+) (drivers.Driver, error) {
+	return nil, nil
+}
+
+func stubWorkloadIdentity() *provider.WorkloadIdentityConfig {
+	return &provider.WorkloadIdentityConfig{
+		NewSession: stubNewCloudSession,
+		NewDriver:  stubNewCloudDriver,
+		Probe: func(context.Context, cloud.Session, *coredata.Connector) error {
+			return nil
+		},
+	}
+}
 
 // TestEveryProviderRegistered asserts that every
 // coredata.ConnectorProvider constant has a matching Registration in
 // the registry, that the registration carries the minimum metadata
-// (Provider, DisplayName), and that the access-review NewDriver
-// closure is wired — so the provider can actually drive a review.
+// (Provider, DisplayName), and that an access-review driver is wired
+// except for OAuth-only providers such as LINEAR_SYNC.
 func TestEveryProviderRegistered(t *testing.T) {
 	t.Parallel()
 
@@ -49,6 +95,26 @@ func TestEveryProviderRegistered(t *testing.T) {
 			require.NotNil(t, reg, "provider %q Registration is nil", p)
 			require.Equalf(t, p, reg.Provider, "provider %q has mismatching Registration.Provider", p)
 			assert.NotEmptyf(t, reg.DisplayName, "provider %q has empty DisplayName", p)
+
+			// A workload identity provider builds its driver from a cloud
+			// session rather than an *http.Client, so it wires the factory
+			// inside its connect path and leaves NewDriver nil — Register
+			// rejects a provider that sets both.
+			if reg.SupportsWorkloadIdentity() {
+				assert.NotNilf(t, reg.WorkloadIdentity.NewDriver, "provider %q has nil WorkloadIdentity.NewDriver", p)
+
+				return
+			}
+
+			// LINEAR_SYNC is an OAuth app for task issue write, not an
+			// access-review source. AccessReviewDrivers skips NewDriver
+			// nil, so this factory must stay unset.
+			if p == coredata.ConnectorProviderLinearSync {
+				assert.Nilf(t, reg.NewDriver, "provider %q must not register an access-review driver", p)
+
+				return
+			}
+
 			assert.NotNilf(t, reg.NewDriver, "provider %q has nil NewDriver", p)
 		})
 	}
@@ -70,20 +136,29 @@ func TestEveryProviderSettingsReachADialog(t *testing.T) {
 		t.Run(string(reg.Provider), func(t *testing.T) {
 			t.Parallel()
 
-			if len(reg.APIKeyExtraSettings) > 0 {
+			if len(reg.APIKeyExtraSettings()) > 0 {
 				assert.Truef(
 					t,
-					reg.SupportsAPIKey || reg.ManagedAPIKey,
+					reg.OffersAPIKeyForm(),
 					"provider %q declares APIKeyExtraSettings but offers no API-key path",
 					reg.Provider,
 				)
 			}
 
-			if len(reg.ClientCredentialsExtraSettings) > 0 {
+			if len(reg.ClientCredentialsExtraSettings()) > 0 {
 				assert.Truef(
 					t,
-					reg.SupportsClientCredentials,
+					reg.SupportsClientCredentials(),
 					"provider %q declares ClientCredentialsExtraSettings but offers no client-credentials path",
+					reg.Provider,
+				)
+			}
+
+			if len(reg.WorkloadIdentityExtraSettings()) > 0 {
+				assert.Truef(
+					t,
+					reg.SupportsWorkloadIdentity(),
+					"provider %q declares WorkloadIdentityExtraSettings but offers no workload-identity path",
 					reg.Provider,
 				)
 			}
@@ -125,46 +200,114 @@ func TestRegistry_Register(t *testing.T) {
 		assert.Contains(t, err.Error(), "missing DisplayName")
 	})
 
-	t.Run("APIKeyBasicAuth and APIKeyHeader mutually exclusive", func(t *testing.T) {
+	// The three "these two presentations are mutually exclusive" cases this
+	// replaces are gone: APIKeyAuth.Mode holds one value, so two presentations
+	// cannot be written down. What remains checkable is mode/payload agreement.
+	t.Run("API-key auth mode and its payload must agree", func(t *testing.T) {
 		t.Parallel()
 
-		r := provider.NewRegistry()
-		err := r.Register(&provider.Registration{
-			Provider:        coredata.ConnectorProviderSlack,
-			DisplayName:     "Slack",
-			APIKeyBasicAuth: true,
-			APIKeyHeader:    "x-api-key",
-		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "mutually exclusive")
+		for name, tc := range map[string]struct {
+			auth provider.APIKeyAuth
+			want string
+		}{
+			"header without a name": {
+				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthHeader},
+				want: `mode "header" requires a Name`,
+			},
+			"scheme without a name": {
+				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthScheme},
+				want: `mode "scheme" requires a Name`,
+			},
+			"bearer with a name": {
+				auth: provider.APIKeyAuth{Name: "x-api-key"},
+				want: `mode "" ignores Name`,
+			},
+			"basic with a name": {
+				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthBasic, Name: "x-api-key"},
+				want: `mode "basic" ignores Name`,
+			},
+			"unknown mode": {
+				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthMode("wat")},
+				want: `unknown API-key auth mode "wat"`,
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderSlack,
+					DisplayName: "Slack",
+					APIKey:      &provider.APIKeyConfig{Auth: tc.auth},
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.want)
+			})
+		}
 	})
 
-	t.Run("APIKeyAuthScheme and APIKeyHeader mutually exclusive", func(t *testing.T) {
+	// A KeyFormat is a promise to the customer, shown as the field's
+	// placeholder and echoed in the rejection: Register refuses every way that
+	// promise can be a lie.
+	t.Run("KeyFormat rules", func(t *testing.T) {
 		t.Parallel()
 
-		r := provider.NewRegistry()
-		err := r.Register(&provider.Registration{
-			Provider:         coredata.ConnectorProviderSlack,
-			DisplayName:      "Slack",
-			APIKeyAuthScheme: "SSWS",
-			APIKeyHeader:     "x-api-key",
-		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "mutually exclusive")
-	})
+		for name, tc := range map[string]struct {
+			apiKey *provider.APIKeyConfig
+			want   string
+		}{
+			"example its own pattern rejects": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{
+						Pattern: regexp.MustCompile(`^pk-lf-.+:sk-lf-.+$`),
+						Example: "sk-lf-…",
+					},
+				},
+				want: "example does not match its own pattern",
+			},
+			"pattern not written with a leading caret": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{
+						Pattern: regexp.MustCompile(`sk-admin-`),
+						Example: "sk-admin-…",
+					},
+				},
+				want: "must be written starting with ^",
+			},
+			"example missing": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{Pattern: regexp.MustCompile(`.`)},
+				},
+				want: "needs both a Pattern and an Example",
+			},
+			"pattern missing": {
+				apiKey: &provider.APIKeyConfig{
+					KeyFormat: &provider.KeyFormat{Example: "pk-lf-…"},
+				},
+				want: "needs both a Pattern and an Example",
+			},
+			"shape declared for a key the customer never types": {
+				apiKey: &provider.APIKeyConfig{
+					Managed: &provider.ManagedAPIKey{},
+					KeyFormat: &provider.KeyFormat{
+						Pattern: regexp.MustCompile(`^k-.+$`),
+						Example: "k-…",
+					},
+				},
+				want: "no customer-supplied key to shape",
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
 
-	t.Run("APIKeyBasicAuthUserPass and APIKeyHeader mutually exclusive", func(t *testing.T) {
-		t.Parallel()
-
-		r := provider.NewRegistry()
-		err := r.Register(&provider.Registration{
-			Provider:                coredata.ConnectorProviderSlack,
-			DisplayName:             "Slack",
-			APIKeyBasicAuthUserPass: true,
-			APIKeyHeader:            "x-api-key",
-		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "mutually exclusive")
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderSlack,
+					DisplayName: "Slack",
+					APIKey:      tc.apiKey,
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.want)
+			})
+		}
 	})
 
 	t.Run("BuildTokenURLForDomain and BuildTokenURLForSite mutually exclusive", func(t *testing.T) {
@@ -172,87 +315,253 @@ func TestRegistry_Register(t *testing.T) {
 
 		r := provider.NewRegistry()
 		err := r.Register(&provider.Registration{
-			Provider:               coredata.ConnectorProviderSlack,
-			DisplayName:            "Slack",
-			BuildTokenURLForDomain: func(string) (string, error) { return "", nil },
-			BuildTokenURLForSite:   func(string) (string, error) { return "", nil },
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			Endpoints:   provider.Endpoints{Auth: "https://slack.com/oauth/v2/authorize"},
+			OAuth2: &provider.OAuth2Config{
+				BuildTokenURLForDomain: func(string) (string, error) { return "", nil },
+				BuildTokenURLForSite:   func(string) (string, error) { return "", nil },
+			},
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "mutually exclusive")
 	})
 
-	t.Run("APIKeyExtraSettings requires an API-key path", func(t *testing.T) {
+	// The OAuth2 block and an authorization URL imply each other, so that a nil
+	// block reliably means "no OAuth2 path" rather than "no metadata".
+	t.Run("OAuth2 block and Endpoints.Auth imply each other", func(t *testing.T) {
 		t.Parallel()
 
-		r := provider.NewRegistry()
-		err := r.Register(&provider.Registration{
-			Provider:            coredata.ConnectorProviderSlack,
-			DisplayName:         "Slack",
-			APIKeyExtraSettings: []provider.ExtraSetting{{Key: "baseUrl", Label: "Base URL"}},
+		t.Run("auth without block", func(t *testing.T) {
+			t.Parallel()
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderSlack,
+				DisplayName: "Slack",
+				Endpoints:   provider.Endpoints{Auth: "https://slack.com/oauth/v2/authorize"},
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "Endpoints.Auth requires an OAuth2 block")
 		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "APIKeyExtraSettings requires SupportsAPIKey or ManagedAPIKey")
+
+		t.Run("block without any authorization URL", func(t *testing.T) {
+			t.Parallel()
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderSlack,
+				DisplayName: "Slack",
+				OAuth2:      &provider.OAuth2Config{Scopes: []string{"users:read"}},
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "OAuth2 requires Endpoints.Auth, BuildAuthURL or BuildAuthURLForSite")
+		})
 	})
 
-	// A ManagedAPIKey provider (Crisp) collects settings without a customer
-	// key, so its API-key list is legitimate even with SupportsAPIKey false.
-	t.Run("APIKeyExtraSettings accepted on a ManagedAPIKey provider", func(t *testing.T) {
+	// Same pairing rule as OAuth2/Endpoints.Auth above, plus the two things an
+	// install ceremony cannot work without: something to verify the vendor's
+	// proof against, and Probo's own app credential to verify it with.
+	t.Run("Install block and Endpoints.Install imply each other", func(t *testing.T) {
 		t.Parallel()
 
-		r := provider.NewRegistry()
-		err := r.Register(&provider.Registration{
-			Provider:            coredata.ConnectorProviderSlack,
-			DisplayName:         "Slack",
-			ManagedAPIKey:       true,
-			APIKeyExtraSettings: []provider.ExtraSetting{{Key: "websiteId", Label: "Website ID"}},
+		installConfig := func() *provider.InstallConfig {
+			return &provider.InstallConfig{
+				StateParam:          "payload",
+				SettingsResourceKey: "website_id",
+				Verify: func(context.Context, *http.Client, string, url.Values) (string, error) {
+					return "", nil
+				},
+			}
+		}
+
+		managedAPIKey := func() *provider.APIKeyConfig {
+			return &provider.APIKeyConfig{
+				Managed: &provider.ManagedAPIKey{RequiresResourceID: true},
+			}
+		}
+
+		t.Run("endpoint without block", func(t *testing.T) {
+			t.Parallel()
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderCrisp,
+				DisplayName: "Crisp",
+				Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "Endpoints.Install requires an Install block")
 		})
-		require.NoError(t, err)
+
+		t.Run("block without endpoint", func(t *testing.T) {
+			t.Parallel()
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderCrisp,
+				DisplayName: "Crisp",
+				APIKey:      managedAPIKey(),
+				Install:     installConfig(),
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "Install requires Endpoints.Install")
+		})
+
+		// Each of these leaves the callback with nothing to do: no proof to
+		// check, no parameter to find the state in, or no key to file the
+		// verified tenant id under.
+		for name, mutate := range map[string]func(*provider.InstallConfig){
+			"no Verify":              func(c *provider.InstallConfig) { c.Verify = nil },
+			"no StateParam":          func(c *provider.InstallConfig) { c.StateParam = "" },
+			"no SettingsResourceKey": func(c *provider.InstallConfig) { c.SettingsResourceKey = "" },
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				cfg := installConfig()
+				mutate(cfg)
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+					APIKey:      managedAPIKey(),
+					Install:     cfg,
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "Install requires Verify, StateParam and SettingsResourceKey")
+			})
+		}
+
+		// Endpoints.Install is the one endpoint that is not a URL until it is
+		// expanded, so nothing downstream would catch a bad template: the
+		// customer would simply land on a vendor page with no app id, or with
+		// a literal placeholder left in.
+		for name, template := range map[string]string{
+			"no placeholder":   "https://app.crisp.chat/initiate/plugin/",
+			"two placeholders": "https://app.crisp.chat/initiate/plugin/%s/%s/",
+		} {
+			t.Run("install endpoint with "+name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: template},
+					APIKey:      managedAPIKey(),
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "exactly one %s placeholder")
+			})
+		}
+
+		// url.Parse accepts a relative reference and any scheme, so parsing
+		// alone is not enough: a hostless template would send the customer
+		// back into Probo's own origin rather than out to the vendor.
+		for name, template := range map[string]string{
+			"a relative reference": "/initiate/plugin/%s/",
+			"no host":              "https:///initiate/plugin/%s/",
+			// A port-only authority has a non-empty Host and no host at all.
+			"a port with no host": "https://:8080/initiate/plugin/%s/",
+			"plain http":          "http://app.crisp.chat/initiate/plugin/%s/",
+			"a javascript scheme": "javascript:alert(%s)",
+		} {
+			t.Run("install endpoint that is "+name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: template},
+					APIKey:      managedAPIKey(),
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "absolute https URL")
+			})
+		}
+
+		// The redirect is the only way in, so these would render nowhere and
+		// the completion path would persist only the resource id — the
+		// customer's values dropped without a word.
+		t.Run("extra settings with no dialog to collect them", func(t *testing.T) {
+			t.Parallel()
+
+			apiKey := managedAPIKey()
+			apiKey.ExtraSettings = []provider.ExtraSetting{
+				{Key: "workspace", Label: "Workspace"},
+			}
+
+			err := provider.NewRegistry().Register(&provider.Registration{
+				Provider:    coredata.ConnectorProviderCrisp,
+				DisplayName: "Crisp",
+				Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+				APIKey:      apiKey,
+				Install:     installConfig(),
+			})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "no dialog to collect")
+		})
+
+		// A customer-pasted key has nothing to verify the vendor's proof
+		// against, and no app id for the redirect to interpolate.
+		for name, apiKey := range map[string]*provider.APIKeyConfig{
+			"no API-key block at all": nil,
+			"a customer-pasted key":   {},
+			"a managed key with no resource id": {
+				Managed: &provider.ManagedAPIKey{},
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:    coredata.ConnectorProviderCrisp,
+					DisplayName: "Crisp",
+					Endpoints:   provider.Endpoints{Install: "https://app.crisp.chat/initiate/plugin/%s/"},
+					APIKey:      apiKey,
+					Install:     installConfig(),
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "Install requires a managed API key with RequiresResourceID")
+			})
+		}
 	})
 
-	t.Run("ClientCredentialsExtraSettings requires SupportsClientCredentials", func(t *testing.T) {
-		t.Parallel()
-
-		r := provider.NewRegistry()
-		err := r.Register(&provider.Registration{
-			Provider:                       coredata.ConnectorProviderSlack,
-			DisplayName:                    "Slack",
-			SupportsAPIKey:                 true,
-			ClientCredentialsExtraSettings: []provider.ExtraSetting{{Key: "region", Label: "Region"}},
-		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "ClientCredentialsExtraSettings requires SupportsClientCredentials")
-	})
-
+	// The two "a settings list needs the path that renders it" rules this
+	// replaces are gone: each list lives inside the block that offers the path,
+	// so a list without its path cannot be written down.
 	t.Run("duplicate setting key within one list", func(t *testing.T) {
 		t.Parallel()
 
 		r := provider.NewRegistry()
 		err := r.Register(&provider.Registration{
-			Provider:       coredata.ConnectorProviderSlack,
-			DisplayName:    "Slack",
-			SupportsAPIKey: true,
-			APIKeyExtraSettings: []provider.ExtraSetting{
-				{Key: "region", Label: "Region"},
-				{Key: "region", Label: "Region (again)"},
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			APIKey: &provider.APIKeyConfig{
+				ExtraSettings: []provider.ExtraSetting{
+					{Key: "region", Label: "Region"},
+					{Key: "region", Label: "Region (again)"},
+				},
 			},
 		})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), `APIKeyExtraSettings declares duplicate setting key "region"`)
+		assert.Contains(t, err.Error(), `APIKey.ExtraSettings declares duplicate setting key "region"`)
 	})
 
-	// One setting both dialogs need is declared in both lists; that is not a
-	// duplicate, because each list keys a separate form.
-	t.Run("setting key repeated across the two lists", func(t *testing.T) {
+	// One setting more than one dialog needs is declared in each of those
+	// lists; that is not a duplicate, because each list keys a separate form.
+	t.Run("setting key repeated across lists", func(t *testing.T) {
 		t.Parallel()
 
 		r := provider.NewRegistry()
 		err := r.Register(&provider.Registration{
-			Provider:                       coredata.ConnectorProviderSlack,
-			DisplayName:                    "Slack",
-			SupportsAPIKey:                 true,
-			SupportsClientCredentials:      true,
-			APIKeyExtraSettings:            []provider.ExtraSetting{{Key: "region", Label: "Region"}},
-			ClientCredentialsExtraSettings: []provider.ExtraSetting{{Key: "region", Label: "Region"}},
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			APIKey: &provider.APIKeyConfig{
+				ExtraSettings: []provider.ExtraSetting{{Key: "region", Label: "Region"}},
+			},
+			ClientCredentials: &provider.ClientCredentialsConfig{
+				ExtraSettings: []provider.ExtraSetting{{Key: "region", Label: "Region"}},
+			},
 		})
 		require.NoError(t, err)
 	})
@@ -262,13 +571,33 @@ func TestRegistry_Register(t *testing.T) {
 
 		r := provider.NewRegistry()
 		err := r.Register(&provider.Registration{
-			Provider:            coredata.ConnectorProviderSlack,
-			DisplayName:         "Slack",
-			SupportsAPIKey:      true,
-			APIKeyExtraSettings: []provider.ExtraSetting{{Label: "Region"}},
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			APIKey: &provider.APIKeyConfig{
+				ExtraSettings: []provider.ExtraSetting{{Label: "Region"}},
+			},
 		})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "APIKeyExtraSettings declares a setting with an empty Key or Label")
+		assert.Contains(t, err.Error(), "APIKey.ExtraSettings declares a setting with an empty Key or Label")
+	})
+
+	t.Run("setting with an empty Key on WorkloadIdentity", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			WorkloadIdentity: &provider.WorkloadIdentityConfig{
+				NewSession: stubNewCloudSession,
+				NewDriver:  stubNewCloudDriver,
+				ExtraSettings: []provider.ExtraSetting{
+					{Label: "Account ID"},
+				},
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "WorkloadIdentity.ExtraSettings declares a setting with an empty Key or Label")
 	})
 
 	t.Run("setting with an empty Label", func(t *testing.T) {
@@ -276,26 +605,121 @@ func TestRegistry_Register(t *testing.T) {
 
 		r := provider.NewRegistry()
 		err := r.Register(&provider.Registration{
-			Provider:                       coredata.ConnectorProviderSlack,
-			DisplayName:                    "Slack",
-			SupportsClientCredentials:      true,
-			ClientCredentialsExtraSettings: []provider.ExtraSetting{{Key: "region"}},
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			ClientCredentials: &provider.ClientCredentialsConfig{
+				ExtraSettings: []provider.ExtraSetting{{Key: "region"}},
+			},
 		})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "ClientCredentialsExtraSettings declares a setting with an empty Key or Label")
+		assert.Contains(t, err.Error(), "ClientCredentials.ExtraSettings declares a setting with an empty Key or Label")
 	})
 
-	t.Run("RequiresManagedResourceID requires ManagedAPIKey", func(t *testing.T) {
+	t.Run("a managed API key excludes client credentials", func(t *testing.T) {
 		t.Parallel()
 
 		r := provider.NewRegistry()
 		err := r.Register(&provider.Registration{
-			Provider:                  coredata.ConnectorProviderSlack,
-			DisplayName:               "Slack",
-			RequiresManagedResourceID: true,
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			APIKey: &provider.APIKeyConfig{
+				Managed: &provider.ManagedAPIKey{RequiresResourceID: true},
+			},
+			ClientCredentials: &provider.ClientCredentialsConfig{},
 		})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "RequiresManagedResourceID requires ManagedAPIKey")
+		assert.Contains(t, err.Error(), "a managed API key is mutually exclusive with ClientCredentials")
+	})
+
+	t.Run("NewDriver and WorkloadIdentity mutually exclusive", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:         coredata.ConnectorProviderSlack,
+			DisplayName:      "Slack",
+			NewDriver:        stubNewDriver,
+			WorkloadIdentity: stubWorkloadIdentity(),
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "NewDriver and WorkloadIdentity are mutually exclusive")
+	})
+
+	t.Run("workload identity excludes credential-bearing paths", func(t *testing.T) {
+		t.Parallel()
+
+		for name, mutate := range map[string]func(*provider.Registration){
+			"APIKey": func(reg *provider.Registration) {
+				reg.APIKey = &provider.APIKeyConfig{}
+			},
+			"ClientCredentials": func(reg *provider.Registration) {
+				reg.ClientCredentials = &provider.ClientCredentialsConfig{}
+			},
+			"managed APIKey": func(reg *provider.Registration) {
+				reg.APIKey = &provider.APIKeyConfig{Managed: &provider.ManagedAPIKey{}}
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				reg := &provider.Registration{
+					Provider:         coredata.ConnectorProviderSlack,
+					DisplayName:      "Slack",
+					WorkloadIdentity: stubWorkloadIdentity(),
+				}
+				mutate(reg)
+
+				err := provider.NewRegistry().Register(reg)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "cannot also declare APIKey or ClientCredentials")
+			})
+		}
+	})
+
+	// Grouping the closures makes a dangling Probe unrepresentable, so the only
+	// half-configured shape left to reject is a missing required closure.
+	t.Run("WorkloadIdentity requires both closures", func(t *testing.T) {
+		t.Parallel()
+
+		for name, wi := range map[string]*provider.WorkloadIdentityConfig{
+			"driver without session": {NewDriver: stubNewCloudDriver},
+			"session without driver": {NewSession: stubNewCloudSession},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:         coredata.ConnectorProviderSlack,
+					DisplayName:      "Slack",
+					WorkloadIdentity: wi,
+				})
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "requires both NewSession and NewDriver")
+			})
+		}
+	})
+
+	// SupportsWorkloadIdentity is derived from the connect path rather than
+	// declared, so the two can never disagree.
+	t.Run("workload identity Registration round-trips", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		reg := &provider.Registration{
+			Provider:         coredata.ConnectorProviderSlack,
+			DisplayName:      "Slack",
+			WorkloadIdentity: stubWorkloadIdentity(),
+		}
+		require.NoError(t, r.Register(reg))
+		assert.True(t, reg.SupportsWorkloadIdentity())
+
+		httpOnly := &provider.Registration{
+			Provider:    coredata.ConnectorProviderGitHub,
+			DisplayName: "GitHub",
+			NewDriver:   stubNewDriver,
+		}
+		require.NoError(t, r.Register(httpOnly))
+		assert.False(t, httpOnly.SupportsWorkloadIdentity())
 	})
 
 	t.Run("duplicate registration", func(t *testing.T) {
@@ -423,10 +847,18 @@ func TestCrispIsManagedAPIKey(t *testing.T) {
 	r := provider.NewBuiltinRegistry()
 	reg, ok := r.Get(coredata.ConnectorProviderCrisp)
 	require.True(t, ok)
-	assert.True(t, reg.ManagedAPIKey)
-	assert.False(t, reg.SupportsAPIKey)
-	assert.True(t, reg.APIKeyBasicAuthUserPass)
-	assert.True(t, reg.RequiresManagedResourceID, "crisp needs the plugin ID before it can connect")
+
+	// Managed and customer-supplied are the two variants of the one API-key
+	// path, so these two predicates read the same field in opposite directions
+	// and can never both be true.
+	assert.True(t, reg.IsManagedAPIKey())
+	assert.False(t, reg.SupportsAPIKey(), "the customer pastes no key for crisp")
+	assert.Equal(
+		t,
+		provider.APIKeyAuth{Mode: provider.APIKeyAuthBasicUserPass},
+		reg.APIKey.Auth,
+	)
+	assert.True(t, reg.APIKey.Managed.RequiresResourceID, "crisp needs the plugin ID before it can connect")
 }
 
 // TestRegistry_ManagedConnectorReady pins that a provider requiring a resource
@@ -457,60 +889,110 @@ func TestRegistry_ManagedConnectorReady(t *testing.T) {
 	})
 }
 
-// TestRegistry_RejectsManagedPlusCustomerCredential pins that a
-// ManagedAPIKey registration cannot also advertise a customer-supplied
-// credential path, whose value would be silently discarded.
-func TestRegistry_RejectsManagedPlusCustomerCredential(t *testing.T) {
+// TestCrispOffersNoAPIKeyForm pins the rule the catalog resolver and the
+// settings-reach-a-dialog invariant both read: a provider whose connect path is
+// an app install never reports an API-key dialog, not even fully configured.
+// Crisp is that provider, so "configured" and "offers the dialog" have to come
+// apart here.
+func TestCrispOffersNoAPIKeyForm(t *testing.T) {
 	t.Parallel()
 
-	r := provider.NewRegistry()
-	err := r.Register(&provider.Registration{
-		Provider:       coredata.ConnectorProviderCrisp,
-		DisplayName:    "Crisp",
-		ManagedAPIKey:  true,
-		SupportsAPIKey: true,
-	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "mutually exclusive")
+	r := provider.NewBuiltinRegistry()
+	r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
+	r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "plugin-id")
+
+	require.True(t, r.ManagedConnectorReady(coredata.ConnectorProviderCrisp))
+
+	reg, ok := r.Get(coredata.ConnectorProviderCrisp)
+	require.True(t, ok)
+	assert.False(
+		t,
+		reg.OffersAPIKeyForm(),
+		"an install provider is connected by the redirect, never by the API-key dialog",
+	)
 }
 
-// TestRegistry_ApplyManagedAPIKey verifies the key is injected fresh into a
-// managed provider's connection (so rotation propagates and the key is not
-// persisted), while non-managed providers are left untouched.
-func TestRegistry_ApplyManagedAPIKey(t *testing.T) {
+func TestRegistry_InstallURL(t *testing.T) {
+	t.Parallel()
+
+	t.Run("interpolates the app id and attaches the state", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewBuiltinRegistry()
+		r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
+		r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "plugin-id")
+
+		raw, err := r.InstallURL(coredata.ConnectorProviderCrisp, "signed.state")
+		require.NoError(t, err)
+
+		u, err := url.Parse(raw)
+		require.NoError(t, err)
+		assert.Equal(t, "https", u.Scheme)
+		assert.Equal(t, "app.crisp.chat", u.Host)
+		assert.Equal(t, "/initiate/plugin/plugin-id/", u.Path)
+
+		// Crisp echoes this parameter back byte-identically; the callback finds
+		// the state under the same name.
+		assert.Equal(t, "signed.state", u.Query().Get("payload"))
+	})
+
+	// Without the app id there is no URL to build: Endpoints.Install is a %s
+	// template, so the deployment's plugin id is what makes it a real address.
+	t.Run("refuses a provider with no managed resource id", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := provider.NewBuiltinRegistry().InstallURL(coredata.ConnectorProviderCrisp, "signed.state")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no managed resource id configured")
+	})
+
+	t.Run("refuses a provider with no install path", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := provider.NewBuiltinRegistry().InstallURL(coredata.ConnectorProviderSlack, "signed.state")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "has no install path")
+	})
+}
+
+// A managed key can no longer be paired with a customer-supplied one: Managed
+// is a variant of the single API-key path, so the conflict the old
+// TestRegistry_RejectsManagedPlusCustomerCredential asserted cannot be written
+// down. Its surviving half — managed versus client credentials — is covered by
+// TestRegistry_Register.
+
+// TestRegistry_APIKeyFor verifies a managed provider resolves the
+// Probo-held key without mutating the stored connection, while a
+// non-managed provider returns the key already on the connection.
+func TestRegistry_APIKeyFor(t *testing.T) {
 	t.Parallel()
 
 	r := provider.NewBuiltinRegistry()
 	r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
 
-	managed := &coredata.Connector{
-		Provider:   coredata.ConnectorProviderCrisp,
-		Connection: &connector.APIKeyConnection{BasicAuthUserPass: true},
-	}
-	require.NoError(t, r.ApplyManagedAPIKey(managed))
-	assert.Equal(t, "identifier:secret", managed.Connection.(*connector.APIKeyConnection).APIKey)
+	managed := &connector.APIKeyConnection{BasicAuthUserPass: true}
+	key, err := r.APIKeyFor(coredata.ConnectorProviderCrisp, managed)
+	require.NoError(t, err)
+	assert.Equal(t, "identifier:secret", key)
+	assert.Empty(t, managed.APIKey)
 
-	// Non-managed provider: the connection is left untouched.
-	other := &coredata.Connector{
-		Provider:   coredata.ConnectorProviderSlack,
-		Connection: &connector.APIKeyConnection{APIKey: "customer-key"},
-	}
-	require.NoError(t, r.ApplyManagedAPIKey(other))
-	assert.Equal(t, "customer-key", other.Connection.(*connector.APIKeyConnection).APIKey)
+	other := &connector.APIKeyConnection{APIKey: "customer-key"}
+	key, err = r.APIKeyFor(coredata.ConnectorProviderSlack, other)
+	require.NoError(t, err)
+	assert.Equal(t, "customer-key", key)
+	assert.Equal(t, "customer-key", other.APIKey)
 }
 
-// TestRegistry_ApplyManagedAPIKey_Unconfigured verifies that a managed
-// provider whose key was never configured (deactivated) errors rather than
+// TestRegistry_APIKeyFor_Unconfigured verifies that a managed provider
+// whose key was never configured (deactivated) errors rather than
 // silently building a keyless client.
-func TestRegistry_ApplyManagedAPIKey_Unconfigured(t *testing.T) {
+func TestRegistry_APIKeyFor_Unconfigured(t *testing.T) {
 	t.Parallel()
 
 	r := provider.NewBuiltinRegistry()
-	managed := &coredata.Connector{
-		Provider:   coredata.ConnectorProviderCrisp,
-		Connection: &connector.APIKeyConnection{BasicAuthUserPass: true},
-	}
-	err := r.ApplyManagedAPIKey(managed)
+	managed := &connector.APIKeyConnection{BasicAuthUserPass: true}
+	_, err := r.APIKeyFor(coredata.ConnectorProviderCrisp, managed)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not configured")
+	assert.Empty(t, managed.APIKey)
 }

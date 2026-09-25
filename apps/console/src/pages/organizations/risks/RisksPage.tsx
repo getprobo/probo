@@ -72,8 +72,8 @@ const risksFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    canCreateRisk: permission(action: "core:risk:create")
-    canPublishRisk: permission(action: "core:risk:publish")
+    canCreateRisk: permission(action: "risk-management:risk:create")
+    canPublishRisk: permission(action: "risk-management:risk:publish")
     risksDocument {
       id
       defaultApprovers {
@@ -91,13 +91,14 @@ const risksFragment = graphql`
       edges {
         node {
           id
+          referenceId
           name
           inherentLikelihood
           inherentImpact
           residualLikelihood
           residualImpact
-          canUpdate: permission(action: "core:risk:update")
-          canDelete: permission(action: "core:risk:delete")
+          canUpdate: permission(action: "risk-management:risk:update")
+          canDelete: permission(action: "risk-management:risk:delete")
           ...RiskRow_risk
         }
       }
@@ -128,21 +129,32 @@ export default function RisksPage(props: RisksPageProps) {
   const risks = fragmentData.risks?.edges.map(edge => edge.node) ?? [];
   const connectionId = fragmentData.risks.__id;
 
-  const chartRisks = risks.map(({
+  const chartRisks = risks.flatMap(({
     id,
     name,
     inherentLikelihood,
     inherentImpact,
     residualLikelihood,
     residualImpact,
-  }) => ({
-    id,
-    name,
-    inherentLikelihood,
-    inherentImpact,
-    residualLikelihood,
-    residualImpact,
-  }));
+  }) => {
+    if (
+      inherentLikelihood == null
+      || inherentImpact == null
+      || residualLikelihood == null
+      || residualImpact == null
+    ) {
+      return [];
+    }
+
+    return [{
+      id,
+      name,
+      inherentLikelihood,
+      inherentImpact,
+      residualLikelihood,
+      residualImpact,
+    }];
+  });
 
   const refetch = ({
     order,
@@ -154,6 +166,7 @@ export default function RisksPage(props: RisksPageProps) {
         order: {
           direction: order.direction as "ASC" | "DESC",
           field: order.field as
+          | "REFERENCE_ID"
           | "NAME"
           | "CATEGORY"
           | "TREATMENT"
@@ -167,7 +180,7 @@ export default function RisksPage(props: RisksPageProps) {
     );
   };
 
-  usePageTitle(t("risksPage.title"));
+  usePageTitle(t("nav.risks"));
 
   const hasAnyAction = risks.some(
     ({ canDelete, canUpdate }) => canUpdate || canDelete,
@@ -179,7 +192,7 @@ export default function RisksPage(props: RisksPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("risksPage.title")}
+        title={t("nav.risks")}
         description={t("risksPage.description")}
       >
         <div className="flex gap-2">
@@ -188,7 +201,7 @@ export default function RisksPage(props: RisksPageProps) {
               variant="secondary"
               icon={IconPageTextLine}
               onClick={() => void navigate(
-                `/organizations/${organizationId}/documents/${risksDocument.id}`,
+                `/organizations/${organizationId}/governance/documents/${risksDocument.id}`,
               )}
             >
               {t("risksPage.actions.document")}
@@ -199,7 +212,7 @@ export default function RisksPage(props: RisksPageProps) {
               organizationId={organizationId}
               defaultApproverIds={defaultApproverIds}
               onPublished={documentId => void navigate(
-                `/organizations/${organizationId}/documents/${documentId}`,
+                `/organizations/${organizationId}/governance/documents/${documentId}`,
               )}
             >
               <Button variant="secondary" icon={IconUpload}>
@@ -234,6 +247,7 @@ export default function RisksPage(props: RisksPageProps) {
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
+            <SortableTh field="REFERENCE_ID">{t("risksPage.columns.referenceId")}</SortableTh>
             <SortableTh field="NAME">{t("risksPage.columns.name")}</SortableTh>
             <SortableTh field="CATEGORY">{t("risksPage.columns.category")}</SortableTh>
             <SortableTh field="TREATMENT">{t("risksPage.columns.treatment")}</SortableTh>

@@ -29,7 +29,7 @@ import {
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 
-import { useDeleteCompliancePortalReferenceMutation } from "#/pages/organizations/compliance-portals/configuration/_lib/compliancePortalReferenceMutations";
+import { useDeleteCompliancePortalReferenceMutation } from "#/pages/organizations/compliance-portals/_lib/compliancePortalReferenceMutations";
 
 type Props = {
   children: React.ReactNode;

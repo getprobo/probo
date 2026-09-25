@@ -7,11 +7,11 @@ type Profile implements Node {
   additionalEmailAddresses: [EmailAddr!]!
   kind: String
   position: String
-  contractStartDate: Datetime
-  contractEndDate: Datetime
+  contract: Period
   createdAt: Datetime!
   updatedAt: Datetime!
 
+  avatar: File @goField(forceResolver: true)
   identity: Identity @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   membership: Membership @goField(forceResolver: true)
@@ -117,8 +117,7 @@ input CreateUserInput {
   additionalEmailAddresses: [EmailAddr!]
   kind: String
   position: String
-  contractStartDate: Datetime @goField(omittable: true)
-  contractEndDate: Datetime @goField(omittable: true)
+  contract: PeriodInput
 }
 
 input ActivateUserInput {
@@ -137,8 +136,7 @@ input UpdateUserInput {
   additionalEmailAddresses: [EmailAddr!]
   kind: String
   position: String
-  contractStartDate: Datetime @goField(omittable: true)
-  contractEndDate: Datetime @goField(omittable: true)
+  contract: PeriodInput
 }
 
 input RemoveUserInput {

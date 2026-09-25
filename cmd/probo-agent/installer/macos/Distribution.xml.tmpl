@@ -5,8 +5,9 @@
 
   Placeholders are substituted by build.sh:
 
-    @@VERSION@@       agent version, e.g. 0.1.0
-    @@IDENTIFIER@@    package identifier (default com.probo.agent)
+    @@VERSION@@              agent version, e.g. 0.1.0 or 0.1.0-rc.1
+    @@INSTALLER_VERSION@@    X.Y.Z stripped of -rc.N (pkg-ref)
+    @@IDENTIFIER@@           package identifier (default com.probo.agent)
 
   hostArchitectures is fixed to arm64,x86_64 (fat binary installer).
 -->
@@ -39,7 +40,7 @@
     <conclusion file="conclusion.html" mime-type="text/html"/>
 
     <pkg-ref id="@@IDENTIFIER@@"
-             version="@@VERSION@@"
+             version="@@INSTALLER_VERSION@@"
              onConclusion="none">probo-agent-component.pkg</pkg-ref>
 
     <choices-outline>

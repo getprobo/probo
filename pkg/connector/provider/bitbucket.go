@@ -35,7 +35,12 @@ func bitbucketRegistration() *Registration {
 	// time (`account` for workspace membership). They are not passed in
 	// the authorize URL.
 	return &Registration{
-		Provider:    coredata.ConnectorProviderBitbucket,
+		Provider: coredata.ConnectorProviderBitbucket,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.BitbucketConnectorSettings) string {
+				return s.Workspace
+			},
+		),
 		DisplayName: "Bitbucket",
 		Endpoints: Endpoints{
 			Auth:  "https://bitbucket.org/site/oauth2/authorize",
@@ -45,6 +50,7 @@ func bitbucketRegistration() *Registration {
 			// so the version segment stays in APIBase.
 			APIBase: "https://api.bitbucket.org/2.0",
 		},
+		OAuth2: &OAuth2Config{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {

@@ -43,17 +43,19 @@ func NewGraphQLHandler(
 	baseURL *baseurl.BaseURL,
 	cookieConfig securecookie.Config,
 	limits gqlutils.Limits,
+	slackbotAvailable bool,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:      authz.NewAuthorizeFunc(svc, logger),
-			batchAuthorize: authz.NewBatchAuthorizeFunc(svc, logger),
-			logger:         logger,
-			iam:            svc,
-			scopeRegistry:  svc.OAuth2ScopeRegistry,
-			fileManager:    fileManagerSvc,
-			baseURL:        baseURL,
-			sessionCookie:  authn.NewCookie(&cookieConfig),
+			authorize:         authz.NewAuthorizeFunc(svc, logger),
+			batchAuthorize:    authz.NewBatchAuthorizeFunc(svc, logger),
+			logger:            logger,
+			iam:               svc,
+			scopeRegistry:     svc.OAuth2ScopeRegistry,
+			fileManager:       fileManagerSvc,
+			baseURL:           baseURL,
+			sessionCookie:     authn.NewCookie(&cookieConfig),
+			slackbotAvailable: slackbotAvailable,
 		},
 		Directives: schema.DirectiveRoot{
 			Authentication: authentication.Directive,

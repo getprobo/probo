@@ -25,6 +25,7 @@ export { IconBell2 } from "./IconBell2";
 export { IconMedal } from "./IconMedal";
 export { IconMail } from "./IconMail";
 export { IconArrowInbox1 } from "./IconArrowInbox1";
+export { IconCircleSlashes } from "./IconCircleSlashes";
 export { IconCircleX } from "./IconCircleX";
 export { IconFire3 } from "./IconFire3";
 export { IconMagnifyingGlass } from "./IconMagnifyingGlass";

@@ -94,6 +94,8 @@ export async function execute(
 				text
 				number
 			}
+			version
+			agentVersion
 			observedAt
 		}`
 		: '';

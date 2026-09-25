@@ -45,11 +45,10 @@ type (
 	thirdPartyAgreementKind string
 
 	thirdPartyAgreementWireNode struct {
-		ID         string     `json:"id"`
-		ValidFrom  *time.Time `json:"validFrom"`
-		ValidUntil *time.Time `json:"validUntil"`
-		CreatedAt  time.Time  `json:"createdAt"`
-		UpdatedAt  time.Time  `json:"updatedAt"`
+		ID         string      `json:"id"`
+		Validity   *periodWire `json:"validity"`
+		CreatedAt  time.Time   `json:"createdAt"`
+		UpdatedAt  time.Time   `json:"updatedAt"`
 		ThirdParty struct {
 			ID string `json:"id"`
 		} `json:"thirdParty"`
@@ -59,6 +58,11 @@ type (
 		} `json:"file"`
 		CanUpdate bool `json:"canUpdate"`
 		CanDelete bool `json:"canDelete"`
+	}
+
+	periodWire struct {
+		Start *time.Time `json:"start"`
+		End   *time.Time `json:"end"`
 	}
 
 	thirdPartyRiskAssessmentWireNode struct {
@@ -90,6 +94,39 @@ func requireParseRFC3339Time(t *testing.T, value string) time.Time {
 	return parsed
 }
 
+func (n thirdPartyAgreementWireNode) ValidFrom() *time.Time {
+	if n.Validity == nil {
+		return nil
+	}
+
+	return n.Validity.Start
+}
+
+func (n thirdPartyAgreementWireNode) ValidUntil() *time.Time {
+	if n.Validity == nil {
+		return nil
+	}
+
+	return n.Validity.End
+}
+
+func thirdPartyAgreementPeriodInput(validFrom, validUntil *string) map[string]any {
+	period := map[string]any{}
+	if validFrom != nil {
+		period["start"] = *validFrom
+	}
+
+	if validUntil != nil {
+		period["end"] = *validUntil
+	}
+
+	if len(period) == 0 {
+		return nil
+	}
+
+	return period
+}
+
 func thirdPartyAgreementUploadPDF(fileName string) testutil.UploadFile {
 	return testutil.UploadFile{
 		Filename:    fileName,
@@ -113,8 +150,10 @@ func uploadThirdPartyAgreement(
 
 	const nodeSelection = `
 		id
-		validFrom
-		validUntil
+		validity {
+			start
+			end
+		}
 		createdAt
 		updatedAt
 		thirdParty { id }
@@ -135,9 +174,11 @@ func uploadThirdPartyAgreement(
 			"input": map[string]any{
 				"thirdPartyId": thirdPartyID,
 				"fileName":     fileName,
-				"validFrom":    validFrom,
-				"validUntil":   validUntil,
-				"file":         nil,
+				"validity": map[string]any{
+					"start": validFrom,
+					"end":   validUntil,
+				},
+				"file": nil,
 			},
 		},
 		"input.file",
@@ -167,8 +208,10 @@ func queryThirdPartyAgreementField(
 					id
 					FIELD {
 						id
-						validFrom
-						validUntil
+						validity {
+							start
+							end
+						}
 						createdAt
 						updatedAt
 						thirdParty { id }
@@ -206,8 +249,10 @@ func updateThirdPartyAgreement(
 
 	const nodeSelection = `
 		id
-		validFrom
-		validUntil
+		validity {
+			start
+			end
+		}
 		createdAt
 		updatedAt
 		thirdParty { id }
@@ -223,12 +268,8 @@ func updateThirdPartyAgreement(
 	input := map[string]any{
 		"thirdPartyId": thirdPartyID,
 	}
-	if validFrom != nil {
-		input["validFrom"] = *validFrom
-	}
-
-	if validUntil != nil {
-		input["validUntil"] = *validUntil
+	if period := thirdPartyAgreementPeriodInput(validFrom, validUntil); period != nil {
+		input["validity"] = period
 	}
 
 	var result thirdPartyAgreementUpdateResult
@@ -264,12 +305,8 @@ func updateThirdPartyAgreementExpectError(
 	input := map[string]any{
 		"thirdPartyId": thirdPartyID,
 	}
-	if validFrom != nil {
-		input["validFrom"] = *validFrom
-	}
-
-	if validUntil != nil {
-		input["validUntil"] = *validUntil
+	if period := thirdPartyAgreementPeriodInput(validFrom, validUntil); period != nil {
+		input["validity"] = period
 	}
 
 	var result thirdPartyAgreementUpdateResult
@@ -389,9 +426,11 @@ func uploadThirdPartyAgreementExpectError(
 			"input": map[string]any{
 				"thirdPartyId": thirdPartyID,
 				"fileName":     fileName,
-				"validFrom":    validFrom,
-				"validUntil":   validUntil,
-				"file":         nil,
+				"validity": map[string]any{
+					"start": validFrom,
+					"end":   validUntil,
+				},
+				"file": nil,
 			},
 		},
 		"input.file",

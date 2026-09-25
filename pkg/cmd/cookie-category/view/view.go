@@ -42,6 +42,7 @@ query($id: ID!) {
       kind
       rank
       gcmConsentTypes
+      tcfPurposeIds
       posthogConsent
       createdAt
       updatedAt
@@ -60,6 +61,7 @@ type viewResponse struct {
 		Kind            string   `json:"kind"`
 		Rank            int      `json:"rank"`
 		GcmConsentTypes []string `json:"gcmConsentTypes"`
+		TcfPurposeIds   []int    `json:"tcfPurposeIds"`
 		PosthogConsent  string   `json:"posthogConsent"`
 		CreatedAt       string   `json:"createdAt"`
 		UpdatedAt       string   `json:"updatedAt"`
@@ -129,6 +131,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Rank:"), v.Rank)
 			if len(v.GcmConsentTypes) > 0 {
 				_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("GCM Consent Types:"), v.GcmConsentTypes)
+			}
+
+			if len(v.TcfPurposeIds) > 0 {
+				_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("TCF Purpose IDs:"), v.TcfPurposeIds)
 			}
 
 			if v.PosthogConsent != "" {

@@ -58,20 +58,22 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 type (
 	Resolver struct {
-		authorize      authz.AuthorizeFunc
-		batchAuthorize authz.BatchAuthorizeFunc
-		logger         *log.Logger
-		iam            *iam.Service
-		scopeRegistry  *oauth2scope.Registry
-		fileManager    *filemanager.Service
-		baseURL        *baseurl.BaseURL
-		sessionCookie  *authn.Cookie
+		authorize         authz.AuthorizeFunc
+		batchAuthorize    authz.BatchAuthorizeFunc
+		logger            *log.Logger
+		iam               *iam.Service
+		scopeRegistry     *oauth2scope.Registry
+		fileManager       *filemanager.Service
+		baseURL           *baseurl.BaseURL
+		sessionCookie     *authn.Cookie
+		slackbotAvailable bool
 	}
 )
 
@@ -85,6 +87,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	graphqlLimits gqlutils.Limits,
+	slackbotAvailable bool,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -92,7 +95,15 @@ func NewMux(
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
-	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig, graphqlLimits)
+	graphqlHandler := NewGraphQLHandler(
+		svc,
+		logger,
+		fileManagerSvc,
+		baseURL,
+		cookieConfig,
+		graphqlLimits,
+		slackbotAvailable,
+	)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 
@@ -119,7 +130,7 @@ func NewMux(
 		logger,
 	)
 
-	router.Handle("/graphql", graphqlHandler)
+	router.With(dataloader.NewMiddleware(svc)).Handle("/graphql", graphqlHandler)
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)
 	router.Post("/saml/2.0/consume", samlHandler.ConsumeHandler)
 	router.Get("/saml/2.0/{samlConfigID}", samlHandler.LoginHandler)
@@ -127,7 +138,8 @@ func NewMux(
 	router.Get("/oidc/{provider}/callback", oidcHandler.CallbackHandler)
 
 	r.Post("/magic-link/send", magicLinkHandler.SendHandler)
-	r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)
+	r.Get("/magic-link/verify", magicLinkHandler.ConfirmRedirectHandler)
+	r.Post("/magic-link/verify", magicLinkHandler.VerifyHandler)
 
 	// SCIM 2.0 endpoints - these use their own bearer token authentication
 	scimServer := NewSCIMServer(scimHandler)
@@ -170,8 +182,15 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	return r.permission(ctx, obj, action, nil)
 }
 
-func (r *Resolver) permission(ctx context.Context, obj types.Node, action string, attributes map[string]any) (bool, error) {
+func (r *Resolver) permission(
+	ctx context.Context,
+	obj types.Node,
+	action string,
+	attributes map[string]any,
+	extra ...authz.AuthorizeFuncOption,
+) (bool, error) {
 	opts := []authz.AuthorizeFuncOption{authz.WithDryRun()}
+	opts = append(opts, extra...)
 
 	for key, value := range attributes {
 		if s, ok := value.(string); ok {

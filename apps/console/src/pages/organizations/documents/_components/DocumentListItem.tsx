@@ -254,7 +254,7 @@ export function DocumentListItem(props: {
   return (
     <>
       <Tr
-        to={`/organizations/${organizationId}/documents/${document.id}`}
+        to={`/organizations/${organizationId}/governance/documents/${document.id}`}
       >
         <Td noLink className="w-18">
           <Checkbox checked={checked} onChange={onCheck} />

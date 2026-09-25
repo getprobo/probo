@@ -1,9 +1,24 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
 @import "tailwindcss";
+
+/* Pin dark mode to `.dark` before either kit is imported: v1 defaults the
+ * variant to prefers-color-scheme while the v2 Radix scales flip on the class. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* v1 first: it clears the Tailwind palette on the way in. theme-tokens.css is
+ * the reset-free v2 entry, so it adds its scales without wiping the v1 ones. */
 @import "@probo/ui/src/theme.css";
+@import "@probo/ui/src/v2/theme-tokens.css";
 @import "tw-animate-css";
 @source "../../../packages/ui/src";
 @source "../../../packages/helpers/src";
+
+/* The v1 Layout used to wrap every page in this; the new shell only paints a
+ * background, so uncoloured headings fell back to CanvasText in dark mode. */
+@layer base {
+  body {
+    @apply text-txt-primary;
+  }
+}
 
 /* Hide scrollbar utility */
 .scrollbar-hide {

@@ -1,0 +1,125 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package console_v1
+
+import (
+	"context"
+	"errors"
+
+	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
+)
+
+func newAWSConnectorSetup(setup cloudaws.ConnectorSetup) *types.AWSConnectorSetup {
+	return &types.AWSConnectorSetup{
+		Issuer:                       setup.Issuer,
+		Audience:                     setup.Audience,
+		Subject:                      setup.Subject,
+		SuggestedRoleName:            setup.SuggestedRoleName,
+		TerraformSnippet:             setup.TerraformSnippet,
+		CloudFormationQuickCreateURL: setup.CloudFormationQuickCreateURL,
+	}
+}
+
+func newGCPConnectorSetup(setup cloudgcp.ConnectorSetup) *types.GCPConnectorSetup {
+	return &types.GCPConnectorSetup{
+		Issuer:                      setup.Issuer,
+		Audience:                    setup.Audience,
+		Subject:                     setup.Subject,
+		SuggestedServiceAccountName: setup.SuggestedServiceAccountName,
+		TerraformSnippet:            setup.TerraformSnippet,
+	}
+}
+
+func newAzureConnectorSetup(setup cloudazure.ConnectorSetup) *types.AzureConnectorSetup {
+	return &types.AzureConnectorSetup{
+		Issuer:                   setup.Issuer,
+		Audience:                 setup.Audience,
+		Subject:                  setup.Subject,
+		SuggestedApplicationName: setup.SuggestedApplicationName,
+		TerraformSnippet:         setup.TerraformSnippet,
+	}
+}
+
+func (r *Resolver) workloadIdentitySettings(
+	ctx context.Context,
+	input types.CreateWorkloadIdentityConnectorInput,
+) ([]byte, error) {
+	raw, err := probo.MarshalWorkloadIdentitySettings(
+		probo.WorkloadIdentitySettingsInput{
+			Provider:                    input.Provider,
+			AWSRoleARN:                  ref.UnrefOrZero(input.AWSRoleArn),
+			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GCPWorkloadIdentityProvider),
+			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GCPServiceAccountEmail),
+			AzureTenantID:               ref.UnrefOrZero(input.AzureTenantID),
+			AzureClientID:               ref.UnrefOrZero(input.AzureClientID),
+			AzureSubscriptionID:         ref.UnrefOrZero(input.AzureSubscriptionID),
+			AzureEnvironment:            ref.UnrefOrZero(input.AzureEnvironment),
+		},
+	)
+	if err != nil {
+		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
+			r.logger.ErrorCtx(ctx, "cannot marshal workload identity connector settings", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	return raw, nil
+}
+
+func (r *Resolver) organizationConnectorSettings(
+	ctx context.Context,
+	input types.CreateOrganizationConnectorInput,
+) ([]byte, error) {
+	raw, err := probo.MarshalWorkloadIdentitySettings(
+		probo.WorkloadIdentitySettingsInput{
+			Provider:                    input.Provider,
+			AWSRoleARN:                  ref.UnrefOrZero(input.AWSRoleArn),
+			AWSMemberRoleName:           ref.UnrefOrZero(input.AWSMemberRoleName),
+			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GCPWorkloadIdentityProvider),
+			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GCPServiceAccountEmail),
+			GCPParent:                   ref.UnrefOrZero(input.GCPParent),
+			AzureTenantID:               ref.UnrefOrZero(input.AzureTenantID),
+			AzureClientID:               ref.UnrefOrZero(input.AzureClientID),
+			AzureEnvironment:            ref.UnrefOrZero(input.AzureEnvironment),
+		},
+	)
+	if err != nil {
+		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
+			r.logger.ErrorCtx(ctx, "cannot marshal organization connector settings", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	return raw, nil
+}

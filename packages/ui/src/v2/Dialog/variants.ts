@@ -20,9 +20,10 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Modal dialog (Radix "Dialog" over Base UI). The popup is centered and gets
-// vertical padding + a 16px gap; each region (header, body, footer) carries its
-// own horizontal padding so a full-bleed body slot stays possible.
+// Modal dialog (Radix "Dialog" over Base UI). `placement` pins the popup to the
+// center or near the top. The popup gets vertical padding + a 16px gap; each
+// region (header, body, footer) carries its own horizontal padding so a
+// full-bleed body slot stays possible.
 export const dialog = tv({
   slots: {
     backdrop: [
@@ -31,9 +32,9 @@ export const dialog = tv({
       "data-starting-style:opacity-0 data-ending-style:opacity-0",
     ],
     popup: [
-      "fixed left-1/2 top-1/2 z-5 -translate-x-1/2 -translate-y-1/2",
+      "fixed left-1/2 z-5 -translate-x-1/2",
       "flex w-[calc(100vw-2rem)] max-w-150 flex-col gap-4",
-      "max-h-[calc(100vh-2rem)] overflow-y-auto overflow-x-clip",
+      "max-h-[calc(100vh-2rem)] overflow-x-clip",
       "rounded-5 border border-sand-6 bg-sand-1 py-6 shadow-6 outline-none",
       "transition-all duration-150",
       "data-starting-style:scale-95 data-starting-style:opacity-0",
@@ -44,6 +45,21 @@ export const dialog = tv({
     description: "text-2 text-sand-11",
     body: "px-6",
     footer: "flex flex-wrap items-center justify-end gap-3 px-6 max-sm:flex-col-reverse max-sm:items-stretch",
+    overlayRoot: "relative z-5",
+  },
+  variants: {
+    lockScroll: {
+      true: { popup: "overflow-y-hidden" },
+      false: { popup: "overflow-y-auto" },
+    },
+    placement: {
+      center: { popup: "top-1/2 -translate-y-1/2" },
+      top: { popup: "top-24" },
+    },
+  },
+  defaultVariants: {
+    lockScroll: false,
+    placement: "center",
   },
 });
 

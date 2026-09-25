@@ -253,7 +253,7 @@ export default function StatementOfApplicabilityControlsTab({
             {linkedControls.map(control => (
               <Tr
                 key={control.controlId}
-                to={`/organizations/${organizationId}/frameworks/${control.frameworkId}/controls/${control.controlId}`}
+                to={`/organizations/${organizationId}/governance/frameworks/${control.frameworkId}/controls/${control.controlId}`}
               >
                 <Td className="font-medium text-txt-secondary">
                   {control.frameworkName}
@@ -298,10 +298,10 @@ export default function StatementOfApplicabilityControlsTab({
                             variant={control.maturityLevel !== "NONE" ? "success" : "neutral"}
                             size="sm"
                           >
-                            {t(`statementOfApplicabilityControlsTab.maturity.${control.maturityLevel.toLowerCase()}`)}
+                            {t(`statementOfApplicabilityControlsTab.maturity.${(control.maturityLevel ?? "NONE").toLowerCase()}`)}
                           </Badge>
                           {control.maturityLevel === "NONE" && control.notImplementedJustification && (
-                            <p className="text-xs text-txt-secondary break-words">
+                            <p className="text-xs text-txt-secondary wrap-break-word">
                               {control.notImplementedJustification}
                             </p>
                           )}

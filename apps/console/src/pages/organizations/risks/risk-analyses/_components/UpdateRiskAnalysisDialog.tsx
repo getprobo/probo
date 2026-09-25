@@ -20,34 +20,38 @@
 
 import { formatDatetime, toDateInput } from "@probo/helpers";
 import {
-  ActionDropdown,
   Breadcrumb,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
-  DropdownItem,
   Field,
-  IconPencil,
-  IconTrashCan,
   Input,
-  Option,
+  RichEditor,
   useDialogRef,
 } from "@probo/ui";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { graphql, useMutation } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 
+import type { UpdateRiskAnalysisDialog_riskAnalysis$key } from "#/__generated__/core/UpdateRiskAnalysisDialog_riskAnalysis.graphql";
 import type { UpdateRiskAnalysisDialogMutation } from "#/__generated__/core/UpdateRiskAnalysisDialogMutation.graphql";
-import { ControlledField } from "#/components/form/ControlledField";
+import { useMutation } from "#/lib/relay/useMutation";
+import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
-import {
-  type MatrixSize,
-  matrixSizeFromOption,
-  matrixSizeKey,
-  type RiskAnalysisMatrixSizeOption,
-  riskAnalysisMatrixSizeOptions,
-} from "./matrixSize";
+import { riskAnalysisDescriptionField } from "../variants";
+
+export const updateRiskAnalysisDialogFragment = graphql`
+  fragment UpdateRiskAnalysisDialog_riskAnalysis on RiskAnalysis {
+    id
+    name
+    description
+    period {
+      start
+      end
+    }
+  }
+`;
 
 const updateMutation = graphql`
   mutation UpdateRiskAnalysisDialogMutation(
@@ -77,144 +81,116 @@ type FormData = {
   description: string;
   periodStart: string;
   periodEnd: string;
-  matrixSize: RiskAnalysisMatrixSizeOption;
 };
 
-export function UpdateRiskAnalysisDialog(props: {
-  riskAnalysis: {
-    id: string;
-    name: string;
-    description: string | null | undefined;
-    period: {
-      start: string | null | undefined;
-      end: string | null | undefined;
-    } | null | undefined;
-    matrixSize: MatrixSize;
-  };
-  canDelete?: boolean;
-  onDelete?: () => void;
-}) {
+interface UpdateRiskAnalysisDialogProps {
+  riskAnalysisKey: UpdateRiskAnalysisDialog_riskAnalysis$key;
+  dialogRef: ReturnType<typeof useDialogRef>;
+}
+
+export function UpdateRiskAnalysisDialog({
+  riskAnalysisKey,
+  dialogRef,
+}: UpdateRiskAnalysisDialogProps) {
   const { t } = useTranslation();
-  const dialogRef = useDialogRef();
+  const riskAnalysis = useFragment(updateRiskAnalysisDialogFragment, riskAnalysisKey);
   const [updateRiskAnalysis, isUpdating] = useMutation<UpdateRiskAnalysisDialogMutation>(updateMutation);
   const { register, handleSubmit, control, formState } = useForm<FormData>({
     values: {
-      name: props.riskAnalysis.name,
-      description: props.riskAnalysis.description ?? "",
-      periodStart: toDateInput(props.riskAnalysis.period?.start),
-      periodEnd: toDateInput(props.riskAnalysis.period?.end),
-      matrixSize: matrixSizeKey(props.riskAnalysis.matrixSize),
+      name: riskAnalysis.name,
+      description: riskAnalysis.description ?? "",
+      periodStart: toDateInput(riskAnalysis.period?.start),
+      periodEnd: toDateInput(riskAnalysis.period?.end),
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    updateRiskAnalysis({
-      variables: {
-        input: {
-          id: props.riskAnalysis.id,
-          name: data.name,
-          description: data.description || null,
-          period: {
-            start: formatDatetime(data.periodStart) ?? null,
-            end: formatDatetime(data.periodEnd) ?? null,
+  const onSubmit = async (data: FormData) => {
+    try {
+      await updateRiskAnalysis({
+        variables: {
+          input: {
+            id: riskAnalysis.id,
+            name: data.name,
+            description: isRichEditorContentEmpty(data.description) ? null : data.description,
+            period: {
+              start: formatDatetime(data.periodStart) ?? null,
+              end: formatDatetime(data.periodEnd) ?? null,
+            },
           },
-          matrixSize: matrixSizeFromOption(data.matrixSize),
         },
-      },
-      onCompleted: () => {
-        dialogRef.current?.close();
-      },
-    });
+      });
+      dialogRef.current?.close();
+    } catch {
+      // Error toast is handled by useMutation.
+    }
   };
 
   return (
-    <>
-      <ActionDropdown variant="secondary">
-        <DropdownItem
-          icon={IconPencil}
-          onSelect={() => dialogRef.current?.open()}
-        >
-          {t("riskAnalysisDetailPage.actions.edit")}
-        </DropdownItem>
-        {props.canDelete && props.onDelete && (
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={props.onDelete}
-          >
-            {t("riskAnalysisDetailPage.actions.delete")}
-          </DropdownItem>
-        )}
-      </ActionDropdown>
-      <Dialog
-        className="max-w-lg"
-        ref={dialogRef}
-        title={(
-          <Breadcrumb
-            items={[
-              t("updateRiskAnalysisDialog.breadcrumb.riskAnalyses"),
-              t("updateRiskAnalysisDialog.title"),
-            ]}
+    <Dialog
+      className="max-w-2xl"
+      ref={dialogRef}
+      title={(
+        <Breadcrumb
+          items={[
+            t("updateRiskAnalysisDialog.breadcrumb.riskAnalyses"),
+            t("updateRiskAnalysisDialog.title"),
+          ]}
+        />
+      )}
+    >
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
+        <DialogContent padded className="space-y-4">
+          <Field
+            label={t("updateRiskAnalysisDialog.fields.name")}
+            {...register("name", { required: t("updateRiskAnalysisDialog.validation.nameRequired") })}
+            type="text"
+            error={formState.errors.name?.message}
+            placeholder={t("updateRiskAnalysisDialog.placeholders.name")}
           />
-        )}
-      >
-        <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-          <DialogContent padded className="space-y-4">
-            <Field
-              label={t("updateRiskAnalysisDialog.fields.name")}
-              {...register("name", { required: t("updateRiskAnalysisDialog.validation.nameRequired") })}
-              type="text"
-              error={formState.errors.name?.message}
-              placeholder={t("updateRiskAnalysisDialog.placeholders.name")}
-            />
-            <Field
-              label={t("updateRiskAnalysisDialog.fields.description")}
-              {...register("description")}
-              type="textarea"
-              rows={3}
-              placeholder={t("updateRiskAnalysisDialog.placeholders.description")}
-            />
-            <ControlledField
+          <Field label={t("updateRiskAnalysisDialog.fields.description")}>
+            <Controller
               control={control}
-              name="matrixSize"
-              type="select"
-              label={t("updateRiskAnalysisDialog.fields.matrixSize")}
-            >
-              {riskAnalysisMatrixSizeOptions.map(size => (
-                <Option key={size.key} value={size.key}>
-                  {t(`updateRiskAnalysisDialog.matrixSizes.${size.key}`)}
-                </Option>
-              ))}
-            </ControlledField>
-            <Field
-              label={t("updateRiskAnalysisDialog.fields.periodStart")}
-              error={formState.errors.periodStart?.message}
-            >
-              <Input {...register("periodStart")} type="date" />
-            </Field>
-            <Field
-              label={t("updateRiskAnalysisDialog.fields.periodEnd")}
-              error={formState.errors.periodEnd?.message}
-            >
-              <Input
-                {...register("periodEnd", {
-                  validate: (value, formValues) =>
-                    !value
-                    || !formValues.periodStart
-                    || value >= formValues.periodStart
-                    || t("updateRiskAnalysisDialog.validation.periodEndBeforeStart"),
-                })}
-                type="date"
-              />
-            </Field>
-          </DialogContent>
-          <DialogFooter>
-            <Button type="submit" disabled={isUpdating}>
-              {t("updateRiskAnalysisDialog.actions.save")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
-    </>
+              name="description"
+              render={({ field }) => (
+                <RichEditor
+                  className={riskAnalysisDescriptionField().editor()}
+                  content={field.value}
+                  disabled={isUpdating}
+                  placeholder={t("updateRiskAnalysisDialog.placeholders.description")}
+                  aria-label={t("updateRiskAnalysisDialog.fields.description")}
+                  onChangeContent={field.onChange}
+                />
+              )}
+            />
+          </Field>
+          <Field
+            label={t("updateRiskAnalysisDialog.fields.periodStart")}
+            error={formState.errors.periodStart?.message}
+          >
+            <Input {...register("periodStart")} type="date" />
+          </Field>
+          <Field
+            label={t("updateRiskAnalysisDialog.fields.periodEnd")}
+            error={formState.errors.periodEnd?.message}
+          >
+            <Input
+              {...register("periodEnd", {
+                validate: (value, formValues) =>
+                  !value
+                  || !formValues.periodStart
+                  || value >= formValues.periodStart
+                  || t("updateRiskAnalysisDialog.validation.periodEndBeforeStart"),
+              })}
+              type="date"
+            />
+          </Field>
+        </DialogContent>
+        <DialogFooter>
+          <Button type="submit" disabled={isUpdating}>
+            {t("updateRiskAnalysisDialog.actions.save")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 }

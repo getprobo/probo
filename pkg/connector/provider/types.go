@@ -22,12 +22,17 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"net/url"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/identityfederation"
 )
 
 // Endpoints groups every host-bearing URL a provider owns, so a deployment
@@ -84,13 +89,31 @@ type Endpoints struct {
 	// — the NewDriver closure resolves those, with
 	// pkg/accessreview/drivers/posthog.go as the reference implementation.
 	APIBase string
+
+	// Install is the vendor page a customer is sent to in order to install
+	// Probo's marketplace app, written as a %s TEMPLATE for this deployment's
+	// app id (Crisp's plugin id). That makes it the ONE endpoint field that is
+	// not a parseable URL as written — url.Parse rejects a bare %s with
+	// `invalid URL escape` — so anything reading it, tests included, must
+	// expand the template before parsing.
+	//
+	// Like Auth, it is frequently a DIFFERENT host from APIBase
+	// (app.crisp.chat vs api.crisp.chat) and must never be derived from it,
+	// which is also why it stays out of Register's Probe/APIBase/Identity
+	// host-agreement check. Empty for every provider with no install path.
+	Install string
 }
 
 // Registration is the per-provider metadata + factory bundle. Each
 // provider returns one of these from a private constructor (e.g.
 // slackRegistration) that NewBuiltinRegistry assembles into the
-// runtime *Registry. Fields are grouped by concern: identity, OAuth2
-// metadata, supported protocols, extra settings, and factory closures.
+// runtime *Registry.
+//
+// Fields are grouped by concern: identity, endpoints, connect paths, the
+// connection check, and the factory closures. Each connect path is one
+// nil-able block, so which paths a provider offers is answered by which blocks
+// are present rather than by a parallel set of booleans that could disagree
+// with them.
 type Registration struct {
 	// Identity.
 	Provider    coredata.ConnectorProvider
@@ -109,114 +132,37 @@ type Registration struct {
 	// partly moved. Empty for a provider whose every host comes from Endpoints.
 	EndpointOverrideUnsupported string
 
-	// OAuth2 metadata.
-	ExtraAuthParams         map[string]string
-	TokenEndpointAuth       string // "post-form" (default), "basic-form", or "basic-json"
-	SupportsIncrementalAuth bool
-	OAuth2Scopes            []string
-	// RequiresPKCE enables RFC 7636 PKCE (S256) on the authorization
-	// request and replays the verifier on the token exchange. Default
-	// false; non-PKCE providers are unaffected.
-	RequiresPKCE bool
-	// PublicClient marks an OAuth2 provider that authenticates as a public
-	// client (no client_secret) via PKCE, using the Client ID Metadata
-	// Document (CIMD) flow. probod auto-registers such providers with no
-	// operator credentials: the client_id is the deployment's hosted CIMD
-	// URL (baseURL + connector.CIMDMetadataPath) and the state token is
-	// signed with a server-derived key. Set TokenEndpointAuth to "none"
-	// alongside this.
-	PublicClient bool
-	// BuildAuthURL derives the authorization URL from an operator-supplied
-	// integration slug, for providers (e.g. Vercel) whose AuthURL embeds
-	// it as a path segment. It must construct the URL with net/url and
-	// escape the slug. Nil for providers with a fully static AuthURL.
-	BuildAuthURL func(slug string) (string, error)
-	// BuildAuthURLForSite builds the authorize URL for a per-customer
-	// site supplied at initiate time (multi-site providers, e.g.
-	// Datadog). It MUST validate site against a fixed allow-list and
-	// construct the URL with net/url. Nil for single-site providers.
-	BuildAuthURLForSite func(site string) (string, error)
-	// BuildTokenURLForDomain builds the token endpoint URL from the API
-	// domain the provider returns on the OAuth callback (multi-site
-	// providers, e.g. Datadog). It MUST validate domain. Nil otherwise.
-	BuildTokenURLForDomain func(domain string) (string, error)
-	// BuildTokenURLForSite builds the token endpoint URL from the
-	// per-customer site/subdomain carried in the signed OAuth state, for
-	// multi-site providers whose token host the provider does NOT echo back
-	// on the callback (e.g. Zendesk's <subdomain>.zendesk.com). It MUST
-	// validate site. A provider sets at most one of BuildTokenURLForDomain /
-	// BuildTokenURLForSite. Nil otherwise.
-	BuildTokenURLForSite func(site string) (string, error)
+	// OAuth2 is the OAuth2 connect path. Non-nil for exactly those providers
+	// that offer one, even when every field inside takes its default, so that
+	// a nil block reliably means "no OAuth2 path" — Register enforces the
+	// agreement with Endpoints.Auth.
+	OAuth2 *OAuth2Config
 
-	// Protocol support / GraphQL surface.
-	SupportsAPIKey            bool
-	SupportsClientCredentials bool
-	// APIKeyExtraSettings declares the per-provider settings fields the
-	// console's API-key connect dialog renders and submits, in render order.
-	// It covers a ManagedAPIKey provider too (Crisp): the customer supplies
-	// the settings, Probo supplies the key. Nil for a provider with no
-	// API-key path.
-	APIKeyExtraSettings []ExtraSetting
-	// ClientCredentialsExtraSettings declares the settings fields the
-	// client-credentials connect dialog renders and submits. The two lists are
-	// independent because a different create resolver and a different driver
-	// sit behind each path: 1Password needs SCIMBridgeURL on the API key
-	// (SCIM-bridge driver) and AccountID + Region on client credentials (Users
-	// API driver). A setting genuinely needed on both paths is declared in
-	// both lists.
-	ClientCredentialsExtraSettings []ExtraSetting
-	// APIKeyHeader selects how an API-key connection presents its key
-	// on outbound requests. Empty (the default) uses the standard
-	// `Authorization: Bearer <key>` scheme; a value such as "x-api-key"
-	// sends the raw key in that header instead and omits Authorization
-	// (Anthropic). It is consumed when the create-connector resolver
-	// builds the APIKeyConnection.
-	APIKeyHeader string
-	// APIKeyBasicAuth, when true, presents the API key as the username
-	// of an HTTP Basic credential with an empty password instead of a
-	// Bearer token — required by providers such as Cursor whose Admin
-	// API documents `-u <key>:` Basic auth. Mutually exclusive with
-	// APIKeyHeader. Consumed when the create-connector resolver builds
-	// the APIKeyConnection.
-	APIKeyBasicAuth bool
-	// APIKeyAuthScheme selects a non-Bearer Authorization scheme for an
-	// API-key connection: the key is sent as `Authorization: <scheme>
-	// <key>` instead of `Authorization: Bearer <key>`. Required by
-	// providers such as Okta whose API tokens use the `SSWS` scheme and
-	// reject Bearer. Empty (the default) keeps the standard Bearer
-	// scheme. Mutually exclusive with APIKeyHeader and APIKeyBasicAuth.
-	// Consumed when the create-connector resolver builds the
-	// APIKeyConnection.
-	APIKeyAuthScheme string
-	// APIKeyBasicAuthUserPass, when true, presents the API key as a complete
-	// HTTP Basic credential whose `username:password` pair is already
-	// encoded in the key (base64 of the verbatim string) — required by
-	// providers such as ClickHouse Cloud (keyId:keySecret) and Langfuse
-	// (publicKey:secretKey) whose Basic credential carries a real
-	// password, unlike APIKeyBasicAuth's empty-password form. Mutually
-	// exclusive with the other API-key auth modes. Consumed when the
-	// create-connector resolver builds the APIKeyConnection.
-	APIKeyBasicAuthUserPass bool
-	// ManagedAPIKey marks a provider whose API key is supplied by Probo
-	// from bootstrap config (a single, Probo-held credential shared across
-	// all connections) rather than pasted per-connection by the customer.
-	// The connection carries only the APIKeyExtraSettings (e.g. a Crisp
-	// Website ID); the create-connector resolver injects the managed key
-	// registered via (*Registry).SetManagedAPIKey. Such a provider stays
-	// hidden from the driver catalog until the operator configures the key,
-	// so it ships deactivated and activates with no code change. Orthogonal
-	// to the APIKey*/SupportsAPIKey auth-mode flags, which still select how
-	// the injected key is presented on the wire.
-	ManagedAPIKey bool
+	// APIKey is the API-key connect path, covering both a customer-pasted key
+	// and a Probo-held one. Nil for a provider with no API-key path.
+	APIKey *APIKeyConfig
 
-	// RequiresManagedResourceID marks a ManagedAPIKey provider that also needs
-	// a Probo-supplied resource ID (Crisp's plugin ID, registered via
-	// (*Registry).SetManagedResourceID) before a connection can succeed. Such a
-	// provider stays out of the driver catalog until BOTH the managed key and
-	// the resource ID are configured, so the operator never sees it as
-	// connectable while a connect attempt would fail at verify time. See
-	// (*Registry).ManagedConnectorReady.
-	RequiresManagedResourceID bool
+	// ClientCredentials is the OAuth2 client-credentials connect path. Nil for
+	// a provider with no such path.
+	ClientCredentials *ClientCredentialsConfig
+
+	// WorkloadIdentity is the connect path for a provider reached by federated
+	// workload identity. Nil for every provider that uses a stored credential.
+	WorkloadIdentity *WorkloadIdentityConfig
+
+	// Install is the app-install connect path: Probo redirects the customer to
+	// the vendor, the customer installs Probo's marketplace app there, and the
+	// vendor redirects the browser back with a proof Probo verifies
+	// server-side before binding the result to an organization. Non-nil for
+	// exactly those providers that offer one — Register enforces the agreement
+	// with Endpoints.Install, exactly as it does for OAuth2 and Endpoints.Auth.
+	//
+	// Orthogonal to the credential blocks: this says how a connector is
+	// ACQUIRED, not how its credential is held. Crisp pairs Install with
+	// APIKey.Managed, because what the ceremony yields is a vendor tenant id
+	// bound to Probo's own plugin token — the customer never holds a
+	// credential at all.
+	Install *InstallConfig
 
 	// BuildProbeURL derives a per-connector probe URL when the API host or
 	// path depends on connector settings (e.g. a customer subdomain or
@@ -236,6 +182,16 @@ type Registration struct {
 	// ProbeURL and BuildProbeURL when set. It receives the registration's
 	// resolved Endpoints for the same reason BuildProbeURL does.
 	Probe func(context.Context, *http.Client, *coredata.Connector, Endpoints) error
+	// ClassifyRejection refines a 403 by reading the provider's own
+	// explanation of it: it reports whether the provider accepted the
+	// credential and refused the operation (true, the customer fixes the plan
+	// or the permissions) or refused the credential itself (false, the
+	// customer fixes the key). Nil for a provider that does not explain
+	// itself, which leaves 403 meaning refused-operation.
+	//
+	// It receives the response body and must map it onto that one bit:
+	// provider text is never carried any further than this closure.
+	ClassifyRejection func(body []byte) bool
 
 	// Factory closures — wired by Stages 2 and 3.
 	// NewDriver and NewNameResolver receive the registration's resolved
@@ -248,6 +204,452 @@ type Registration struct {
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) (drivers.Driver, error)
 	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) drivers.NameResolver
 	SetOrganizationSettings func(*coredata.Connector, string) error
+
+	// InitialAccountFunc is the account present from the start, before any
+	// account discovered or enabled later. Register sets a func that returns
+	// empty strings when the provider has no such field. A settings payload
+	// that cannot be decoded is an error, distinct from an empty field.
+	// Callers use ResolveInitialAccount.
+	InitialAccountFunc func(*coredata.Connector) (externalID string, name string, err error)
+}
+
+// APIKeyAuthMode selects how an API key is presented on outbound requests. The
+// modes are mutually exclusive by construction, which is what the four
+// independent booleans and strings this replaces could only achieve by counting
+// them at startup.
+type APIKeyAuthMode string
+
+const (
+	// APIKeyAuthBearer sends `Authorization: Bearer <key>`. The default, used by
+	// every OAuth-style and standard API-key connector.
+	APIKeyAuthBearer APIKeyAuthMode = ""
+
+	// APIKeyAuthHeader sends the raw key in the header named by
+	// APIKeyAuth.Name and omits Authorization entirely — required by providers
+	// such as Anthropic that reject Bearer auth and return 400 when both
+	// x-api-key and Authorization are present.
+	APIKeyAuthHeader APIKeyAuthMode = "header"
+
+	// APIKeyAuthBasic presents the key as the username of an HTTP Basic
+	// credential with an empty password — required by providers such as Cursor
+	// whose Admin API documents `-u <key>:` and rejects Bearer.
+	APIKeyAuthBasic APIKeyAuthMode = "basic"
+
+	// APIKeyAuthBasicUserPass presents the key as a complete HTTP Basic
+	// credential whose `username:password` pair is already encoded in it —
+	// required by ClickHouse Cloud (keyId:keySecret) and Langfuse
+	// (publicKey:secretKey), whose credential carries a real password that
+	// APIKeyAuthBasic's empty-password form cannot express.
+	APIKeyAuthBasicUserPass APIKeyAuthMode = "basic-user-pass"
+
+	// APIKeyAuthScheme sends `Authorization: <Name> <key>` — required by
+	// providers such as Okta whose API tokens use the SSWS scheme.
+	APIKeyAuthScheme APIKeyAuthMode = "scheme"
+)
+
+// APIKeyAuth is how a provider's API key goes on the wire. It is consumed by
+// (*Registry).NewAPIKeyConnection, which is the single place the mode is
+// translated into the connection's presentation fields.
+type APIKeyAuth struct {
+	Mode APIKeyAuthMode
+
+	// Name is the request header name for APIKeyAuthHeader and the
+	// Authorization scheme for APIKeyAuthScheme. The two never coexist, so one
+	// field serves both. Empty and unused for every other mode; Register
+	// rejects a Name that would be ignored or a mode that needs one and lacks
+	// it.
+	Name string
+}
+
+// APIKeyConfig is the API-key connect path of a provider.
+type APIKeyConfig struct {
+	// Auth is how the key is presented on the wire.
+	Auth APIKeyAuth
+
+	// ExtraSettings declares the per-provider settings fields the console's
+	// API-key connect dialog renders and submits, in render order. It covers a
+	// Managed provider too (Crisp): the customer supplies the settings, Probo
+	// supplies the key.
+	ExtraSettings []ExtraSetting
+
+	// Managed is non-nil for a provider whose key Probo supplies from bootstrap
+	// config (a single, Probo-held credential shared across all connections)
+	// rather than one the customer pastes per connection. The connection then
+	// carries only ExtraSettings (e.g. a Crisp Website ID); the
+	// create-connector resolver injects the key registered via
+	// (*Registry).SetManagedAPIKey. Such a provider stays hidden from the
+	// driver catalog until the operator configures the key, so it ships
+	// deactivated and activates with no code change.
+	//
+	// Orthogonal to Auth, which still selects how the injected key goes on the
+	// wire.
+	Managed *ManagedAPIKey
+
+	// KeyFormat is the shape a customer-pasted key must have. Nil for a
+	// provider whose keys have no shape worth asserting — an opaque token is
+	// the common case, and a guess at its format would reject valid keys the
+	// day the provider mints a new one.
+	KeyFormat *KeyFormat
+}
+
+// KeyFormat is the shape the customer has to paste: the prefix that marks the
+// one credential this connector can use, and the separator where the credential
+// joins two halves. So it catches a credential pasted wrong, and one of the
+// provider's other credential classes that could never have worked here. It
+// cannot catch a key of the right class that is dead, revoked or too narrowly
+// scoped, which is what the probe is for.
+//
+// It is data rather than a closure because both sides of the API evaluate it.
+type KeyFormat struct {
+	// Pattern asserts the prefix and the separator, and nothing else. It must
+	// not constrain the length or the alphabet of the random part: a provider
+	// that changes those would otherwise lock out customers holding valid
+	// keys, with no way around it.
+	//
+	// The console compiles this same source as a JavaScript RegExp. The two
+	// dialects only overlap, so keep to what both read the same way — literals,
+	// character classes, quantifiers, anchors, alternation and (?:. A pattern
+	// the browser will not compile costs the client-side check and nothing
+	// more: the server applies the rule either way.
+	//
+	// . is not one of them, since the two exclude different line terminators
+	// from it. Write [\s\S] where any character will do.
+	Pattern *regexp.Regexp
+
+	// Example is the shape shown to the customer, as the field's placeholder
+	// and in the rejection message. Register enforces that it matches Pattern,
+	// so the two cannot drift into telling the customer to paste something the
+	// check refuses. It stands in for the pattern, which is unreadable to the
+	// people who need to act on it, so it carries no real key material.
+	Example string
+}
+
+// apiKeyPrefix is the KeyFormat of a provider that mints every key with one
+// fixed prefix. It quotes and anchors the prefix and asks for one character
+// after it, so a registration cannot reach past the prefix into the random
+// part and a key copied no further than the prefix is not well formed. Stop
+// the prefix short of any version segment the provider can bump; Example still
+// shows the whole of today's shape.
+func apiKeyPrefix(prefix, example string) *KeyFormat {
+	return &KeyFormat{
+		Pattern: regexp.MustCompile("^" + regexp.QuoteMeta(prefix) + "[\\s\\S]"),
+		Example: example,
+	}
+}
+
+// ManagedAPIKey is the Probo-held variant of the API-key path. Nesting it under
+// APIKeyConfig.Managed is what makes RequiresResourceID unreachable for a
+// customer-supplied key, a pairing Register used to police at startup.
+type ManagedAPIKey struct {
+	// RequiresResourceID marks a provider that also needs a Probo-supplied
+	// resource ID (Crisp's plugin ID, registered via
+	// (*Registry).SetManagedResourceID) before a connection can succeed. Such a
+	// provider stays out of the driver catalog until BOTH the key and the
+	// resource ID are configured, so the operator never sees it as connectable
+	// while a connect attempt would fail at verify time. See
+	// (*Registry).ManagedConnectorReady.
+	RequiresResourceID bool
+}
+
+// ClientCredentialsConfig is the OAuth2 client-credentials connect path.
+type ClientCredentialsConfig struct {
+	// ExtraSettings declares the settings fields the client-credentials connect
+	// dialog renders and submits. It is independent of APIKeyConfig.ExtraSettings
+	// because a different create resolver and a different driver sit behind each
+	// path: 1Password needs SCIMBridgeURL on the API key (SCIM-bridge driver)
+	// and AccountID + Region on client credentials (Users API driver). A setting
+	// genuinely needed on both paths is declared in both lists.
+	ExtraSettings []ExtraSetting
+}
+
+// ErrInstallVerificationTransient marks an install verification that failed for
+// a reason a retry could fix (429, 5xx, transport). The callback releases its
+// single-use claim on this and burns it on anything else, so a vendor blip does
+// not cost the customer their ten-minute window while a forged proof still
+// spends its state exactly once.
+var ErrInstallVerificationTransient = errors.New("install verification temporarily unavailable")
+
+// InstallConfig is the app-install connect path of a provider.
+type InstallConfig struct {
+	// StateParam names the callback parameter the vendor echoes Probo's signed
+	// state back in (Crisp: "payload", echoed byte-identical). The handler must
+	// find the state before it can trust anything else, so this one parameter
+	// name cannot live inside Verify.
+	StateParam string
+
+	// SettingsResourceKey is the JSON key, inside the settings this ceremony
+	// persists, that carries the vendor tenant id (Crisp: "website_id"). It is
+	// the ceremony's durable output, the idempotency key, and part of the
+	// advisory-lock key, so Verify MUST return it in one canonical spelling.
+	//
+	// The settings row is built from this key and Verify's resourceID by
+	// (*ConnectorService).CompleteInstall, never by the provider. The
+	// idempotency lookup reads `settings ->> SettingsResourceKey` back and the
+	// advisory lock keys on resourceID; a provider free to marshal its own
+	// settings could put a different value under that key, and every
+	// re-install would then insert another row instead of finding the first.
+	SettingsResourceKey string
+
+	// Verify proves the browser really came from the vendor's own dashboard,
+	// using Probo's app credential (already on c) and appID — this deployment's
+	// app id at the vendor. It receives the whole callback query rather than
+	// named parameters because vendors disagree on the shape of the proof:
+	// Crisp names one token, others sign the entire query.
+	//
+	// It returns the verified tenant id. That id MUST be canonical — one vendor
+	// tenant must map to exactly one string, or the same tenant binds twice
+	// (see the uuid.Parse round-trip in crisp.go). It must compare secrets in
+	// constant time and validate the tenant id's shape before it can reach a
+	// URL or the database.
+	//
+	// The callback's single-use claim turns this classification into a
+	// customer-visible outcome, so it must be total and explicit — BURN or
+	// RELEASE, never whatever the error string happens to say.
+	//
+	// The dividing line is whether the CUSTOMER could ever succeed by trying
+	// again inside their window, not whose fault it is.
+	//
+	// TERMINAL (burn): a refused proof, a missing proof parameter, a malformed
+	// tenant id, a 404 saying the app is not installed on that tenant, and any
+	// other 4xx describing the request itself. Retrying reproduces it exactly,
+	// and burning is what holds a forgery to one attempt.
+	//
+	// RETRYABLE (release, wrapped in ErrInstallVerificationTransient): 429, any
+	// 5xx, any transport failure, AND a 401/403 on Probo's own app credential.
+	// That last one looks like a hard failure but is not the customer's to fix
+	// — a token mid-rotation or a half-propagated deploy is something an
+	// operator can correct inside the ten-minute window, and it can never be
+	// reached by a forged proof, which is compared rather than rejected by the
+	// vendor.
+	Verify func(ctx context.Context, c *http.Client, appID string, q url.Values) (resourceID string, err error)
+}
+
+// OAuth2Config is the OAuth2 connect path of a provider: everything the
+// authorization-code flow needs beyond the Auth and Token endpoints, which live
+// in Endpoints because a deployment can override them.
+//
+// The whole block is consumed by (*Registry).ApplyOAuth2Defaults, which copies
+// it onto a connector.OAuth2Connector at startup. It has no reader outside this
+// package.
+type OAuth2Config struct {
+	// Scopes are the scopes the access-review driver needs to list accounts.
+	// Nil for a provider that needs none (Notion, Intercom).
+	Scopes []string
+
+	// ExtraAuthParams are provider-specific query parameters added to the
+	// authorization request. Copied per connector, never aliased.
+	ExtraAuthParams map[string]string
+
+	// TokenEndpointAuth selects how the client authenticates at the token
+	// endpoint: "post-form" (default), "basic-form", "basic-json", or "none"
+	// alongside PublicClient.
+	TokenEndpointAuth string
+
+	// SupportsIncrementalAuth allows an authorize request to ask for the union
+	// of the connector's existing grant and the newly required scopes.
+	SupportsIncrementalAuth bool
+
+	// ExclusiveScopes marks a provider whose authorization server refuses any
+	// scope outside Scopes, so a reconnect must request exactly that set rather
+	// than the union with the connector's earlier grant. Asana is one: once its
+	// app moved to Full Permissions, replaying a stored "users:read" fails the
+	// whole authorize with forbidden_scopes.
+	ExclusiveScopes bool
+
+	// ScopeSeparator joins Scopes on the authorize URL. Empty means a single
+	// space (RFC 6749 §3.3). Linear requires a comma.
+	ScopeSeparator string
+
+	// RequiresPKCE enables RFC 7636 PKCE (S256) on the authorization request
+	// and replays the verifier on the token exchange. Default false; non-PKCE
+	// providers are unaffected.
+	RequiresPKCE bool
+
+	// PublicClient marks a provider that authenticates as a public client (no
+	// client_secret) via PKCE, using the Client ID Metadata Document (CIMD)
+	// flow. probod auto-registers such providers with no operator credentials:
+	// the client_id is the deployment's hosted CIMD URL (baseURL +
+	// connector.CIMDMetadataPath) and the state token is signed with a
+	// server-derived key. Set TokenEndpointAuth to "none" alongside this.
+	PublicClient bool
+
+	// BuildAuthURL derives the authorization URL from an operator-supplied
+	// integration slug, for providers (e.g. Vercel) whose AuthURL embeds it as
+	// a path segment. It must construct the URL with net/url and escape the
+	// slug. Nil for providers with a fully static Endpoints.Auth.
+	BuildAuthURL func(slug string) (string, error)
+
+	// BuildAuthURLForSite builds the authorize URL for a per-customer site
+	// supplied at initiate time (multi-site providers, e.g. Datadog). It MUST
+	// validate site against a fixed allow-list and construct the URL with
+	// net/url. Nil for single-site providers.
+	BuildAuthURLForSite func(site string) (string, error)
+
+	// BuildTokenURLForDomain builds the token endpoint URL from the API domain
+	// the provider returns on the OAuth callback (multi-site providers, e.g.
+	// Datadog). It MUST validate domain. Nil otherwise.
+	BuildTokenURLForDomain func(domain string) (string, error)
+
+	// BuildTokenURLForSite builds the token endpoint URL from the per-customer
+	// site/subdomain carried in the signed OAuth state, for multi-site
+	// providers whose token host the provider does NOT echo back on the
+	// callback (e.g. Zendesk's <subdomain>.zendesk.com). It MUST validate site.
+	// A provider sets at most one of BuildTokenURLForDomain /
+	// BuildTokenURLForSite. Nil otherwise.
+	BuildTokenURLForSite func(site string) (string, error)
+}
+
+// WorkloadIdentityConfig is the connect path of a provider Probo reaches by
+// minting a short-lived OIDC assertion (pkg/identityfederation) that the
+// customer's cloud STS exchanges for temporary credentials.
+//
+// Grouping the three closures is what makes a half-configured cloud provider
+// unrepresentable: a Probe with no driver, or a driver with no way to open a
+// session, cannot be written down. Such a provider also needs no operator
+// configuration at all — the customer grants access in their own cloud account
+// — which is why the driver catalog admits it on the presence of this block.
+type WorkloadIdentityConfig struct {
+	// NewSession opens authenticated access to the cloud account this connector
+	// points at, by exchanging an assertion the issuer mints for the connector's
+	// organization. Which role, region and account to reach is per-provider
+	// knowledge read from the connector's settings, which is why it lives here
+	// rather than in a cross-cloud switch the access-review service would own.
+	//
+	// accountID selects a member account of an organization install. Empty
+	// keeps the initial account (the RoleARN account, the WIF hub project,
+	// the stored subscription).
+	//
+	// The framework calls it once and hands the session to NewDriver, Probe,
+	// and NewNameResolver, mirroring how it hands one *http.Client to
+	// Registration.NewDriver and Registration.Probe. Required.
+	NewSession func(context.Context, *identityfederation.Issuer, *coredata.Connector, string) (cloud.Session, error)
+
+	// DiscoverAccounts lists the vendor accounts this connector can enable.
+	// Nil means the provider has no discover path (standalone-only, or GitHub
+	// App which is not a workload-identity session). An empty result is a
+	// successful listing of nothing, never an error.
+	DiscoverAccounts func(context.Context, cloud.Session, *coredata.Connector) ([]DiscoveredAccount, error)
+
+	// NewDriver builds the access-review driver from a cloud session rather
+	// than an *http.Client, because cloud SDK credentials sign requests the SDK
+	// builds itself. Endpoints is absent because a cloud SDK resolves its own
+	// endpoints from the region in the session.
+	//
+	// cloud.Session deliberately exposes only the cloud and the account: the
+	// two SDKs diverge too far to share driver code, so a closure asserts the
+	// concrete session type (*cloud/aws.Session) to reach its SDK config.
+	// Required.
+	NewDriver func(context.Context, cloud.Session, *coredata.Connector, *log.Logger) (drivers.Driver, error)
+
+	// Probe is the connection check, replacing the HTTP Probe/BuildProbeURL
+	// path. Nil means the check is skipped, matching an empty Endpoints.Probe.
+	Probe func(context.Context, cloud.Session, *coredata.Connector) error
+
+	// NewNameResolver builds the source-name resolver from a cloud session
+	// rather than an *http.Client. Nil means the worker keeps the generic
+	// provider display name, matching a nil Registration.NewNameResolver.
+	NewNameResolver func(context.Context, cloud.Session, *coredata.Connector, *log.Logger) drivers.NameResolver
+
+	// ExtraSettings declares the per-provider settings fields the console's
+	// workload-identity connect dialog renders and submits, in render order.
+	// Empty when the provider needs none beyond the grant in the customer's
+	// own cloud account.
+	ExtraSettings []ExtraSetting
+}
+
+// DiscoveredAccount is one vendor account a live DiscoverAccounts call
+// returned. It is not a persisted ConnectorAccount: enable writes that row.
+type DiscoveredAccount struct {
+	ExternalAccountID string
+	Name              string
+}
+
+// The Supports* predicates below are derived from the presence of a connect
+// path rather than declared beside it, so a flag can never disagree with the
+// block it describes.
+
+// SupportsWorkloadIdentity reports whether this provider is reached by federated
+// workload identity rather than by a stored credential.
+func (r *Registration) SupportsWorkloadIdentity() bool {
+	return r.WorkloadIdentity != nil
+}
+
+// SupportsAPIKey reports whether the CUSTOMER supplies this provider's API key,
+// which is what decides whether the console renders a key field. It is false for
+// a managed provider, whose key Probo injects — so the old pairing this replaces
+// (a managed key alongside a customer-supplied one) is now unrepresentable:
+// both answers come from the same field, in opposite directions.
+func (r *Registration) SupportsAPIKey() bool {
+	return r.APIKey != nil && r.APIKey.Managed == nil
+}
+
+// SupportsClientCredentials reports whether this provider can be connected with
+// an OAuth2 client-credentials grant.
+func (r *Registration) SupportsClientCredentials() bool {
+	return r.ClientCredentials != nil
+}
+
+// SupportsInstall reports whether this provider is connected by installing
+// Probo's app at the vendor.
+func (r *Registration) SupportsInstall() bool {
+	return r.Install != nil
+}
+
+// SupportsOrganizationInstall reports whether this provider can connect as an
+// organization (discover + enable accounts) rather than a single tenant. It is
+// the presence of a discover closure, so a workload-identity provider with no
+// listing stays standalone. A later non-WI path adds its own closure here.
+func (r *Registration) SupportsOrganizationInstall() bool {
+	return r.WorkloadIdentity != nil && r.WorkloadIdentity.DiscoverAccounts != nil
+}
+
+// IsManagedAPIKey reports whether Probo, rather than the customer, supplies this
+// provider's API key.
+func (r *Registration) IsManagedAPIKey() bool {
+	return r.APIKey != nil && r.APIKey.Managed != nil
+}
+
+// OffersAPIKeyForm reports whether the API-key dialog is a connect path the
+// customer can actually reach for this provider, and is the single definition
+// of that rule — the catalog resolver, the settings-reach-a-dialog invariant
+// and the console row all answer it from here.
+//
+// A provider with an install ceremony is connected by the redirect, so its
+// API-key dialog has no entry point and (its extra settings being empty by
+// construction) no fields to render either. Managed-key providers are the only
+// ones this can exclude: a customer-pasted key is always a form.
+func (r *Registration) OffersAPIKeyForm() bool {
+	return r.SupportsAPIKey() || (r.IsManagedAPIKey() && !r.SupportsInstall())
+}
+
+// APIKeyExtraSettings returns the API-key dialog's settings fields, or nil when
+// the provider has no API-key path.
+func (r *Registration) APIKeyExtraSettings() []ExtraSetting {
+	if r.APIKey == nil {
+		return nil
+	}
+
+	return r.APIKey.ExtraSettings
+}
+
+// ClientCredentialsExtraSettings returns the client-credentials dialog's
+// settings fields, or nil when the provider has no such path.
+func (r *Registration) ClientCredentialsExtraSettings() []ExtraSetting {
+	if r.ClientCredentials == nil {
+		return nil
+	}
+
+	return r.ClientCredentials.ExtraSettings
+}
+
+// WorkloadIdentityExtraSettings returns the workload-identity dialog's
+// settings fields, or nil when the provider has no such path.
+func (r *Registration) WorkloadIdentityExtraSettings() []ExtraSetting {
+	if r.WorkloadIdentity == nil {
+		return nil
+	}
+
+	return r.WorkloadIdentity.ExtraSettings
 }
 
 // ExtraSetting describes one extra per-provider settings field

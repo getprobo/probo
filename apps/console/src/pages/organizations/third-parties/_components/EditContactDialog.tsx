@@ -41,6 +41,7 @@ import { z } from "#/lib/zod";
 type Props = {
   contactKey: EditContactDialog_contact$key;
   onClose: () => void;
+  onSaved?: () => void;
 };
 
 const editContactDialogFragment = graphql`
@@ -66,7 +67,7 @@ const updateContactMutation = graphql`
 
 const phoneRegex = /^\+[0-9]{8,15}$/;
 
-export function EditContactDialog({ contactKey, onClose }: Props) {
+export function EditContactDialog({ contactKey, onClose, onSaved }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const contact = useFragment(editContactDialogFragment, contactKey);
@@ -125,6 +126,7 @@ export function EditContactDialog({ contactKey, onClose }: Props) {
           description: t("editThirdPartyContactDialog.messages.updated"),
           variant: "success",
         });
+        onSaved?.();
         onClose();
       },
       onError(error) {

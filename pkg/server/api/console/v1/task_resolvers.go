@@ -15,36 +15,48 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
+	scope, err := r.authorize(ctx, input.OrganizationID, task.ActionTaskCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	task, err := r.probo.Tasks.Create(
+	identity := authn.IdentityFromContext(ctx)
+
+	task, err := r.task.Create(
 		ctx, scope,
-		probo.CreateTaskRequest{
-			MeasureID:      input.MeasureID,
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Description:    input.Description,
-			Priority:       input.Priority,
-			TimeEstimate:   input.TimeEstimate,
-			AssignedToID:   input.AssignedToID,
-			Deadline:       input.Deadline,
+		task.CreateTaskRequest{
+			MeasureID:          input.MeasureID,
+			OrganizationID:     input.OrganizationID,
+			Name:               input.Name,
+			Content:            input.Content,
+			State:              input.State,
+			Priority:           input.Priority,
+			TimeEstimate:       input.TimeEstimate,
+			AssignedToID:       input.AssignedToID,
+			Deadline:           input.Deadline,
+			IdentityID:         &identity.ID,
+			RecurrenceInterval: input.RecurrenceInterval,
 		},
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -63,27 +75,35 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error) {
-	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	task, err := r.probo.Tasks.Update(
+	identity := authn.IdentityFromContext(ctx)
+
+	result, err := r.task.Update(
 		ctx, scope,
-		probo.UpdateTaskRequest{
-			TaskID:       input.TaskID,
-			Name:         input.Name,
-			Description:  gqlutils.UnwrapOmittable(input.Description),
-			State:        input.State,
-			Priority:     input.Priority,
-			Rank:         input.Rank,
-			TimeEstimate: gqlutils.UnwrapOmittable(input.TimeEstimate),
-			Deadline:     gqlutils.UnwrapOmittable(input.Deadline),
-			AssignedToID: gqlutils.UnwrapOmittable(input.AssignedToID),
-			MeasureID:    gqlutils.UnwrapOmittable(input.MeasureID),
+		task.UpdateTaskRequest{
+			TaskID:             input.TaskID,
+			Name:               input.Name,
+			Content:            gqlutils.UnwrapOmittable(input.Content),
+			State:              input.State,
+			Priority:           input.Priority,
+			Rank:               input.Rank,
+			TimeEstimate:       gqlutils.UnwrapOmittable(input.TimeEstimate),
+			Deadline:           gqlutils.UnwrapOmittable(input.Deadline),
+			AssignedToID:       gqlutils.UnwrapOmittable(input.AssignedToID),
+			MeasureID:          gqlutils.UnwrapOmittable(input.MeasureID),
+			IdentityID:         &identity.ID,
+			RecurrenceInterval: gqlutils.UnwrapOmittable(input.RecurrenceInterval),
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -93,25 +113,154 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateTaskPayload{
-		Task: types.NewTask(task),
-	}, nil
+	payload := &types.UpdateTaskPayload{
+		Task: types.NewTask(result.Task),
+	}
+	if result.NextTask != nil {
+		payload.NextTaskEdge = types.NewTaskEdge(result.NextTask, coredata.TaskOrderFieldCreatedAt)
+	}
+
+	return payload, nil
 }
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error) {
-	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete)
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.Tasks.Delete(ctx, scope, input.TaskID); err != nil {
+	if err := r.task.Delete(ctx, scope, input.TaskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteTaskPayload{
 		DeletedTaskID: input.TaskID,
+	}, nil
+}
+
+// PublishTaskToLinear is the resolver for the publishTaskToLinear field.
+func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.PublishTaskToLinearInput) (*types.PublishTaskToLinearPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.TeamID == "" {
+		return nil, gqlutils.Invalid(ctx, tasksync.ErrLinearTeamIDRequired)
+	}
+
+	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, gqlutils.Conflict(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishTaskToLinearPayload{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+// LinkTaskToLinear is the resolver for the linkTaskToLinear field.
+func (r *mutationResolver) LinkTaskToLinear(ctx context.Context, input types.LinkTaskToLinearInput) (*types.LinkTaskToLinearPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.TeamID == "" {
+		return nil, gqlutils.Invalid(ctx, tasksync.ErrLinearTeamIDRequired)
+	}
+
+	if input.IssueID == "" {
+		return nil, gqlutils.Invalid(ctx, tasksync.ErrLinearIssueIDRequired)
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	link, err := r.task.Sync.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearNotConnected):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+			return nil, gqlutils.Invalid(ctx, err)
+		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+			errors.Is(err, coredata.ErrResourceAlreadyExists):
+			return nil, gqlutils.Conflict(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound),
+			errors.Is(err, tasksync.ErrLinearIssueIDRequired),
+			errors.Is(err, tasksync.ErrLinearIssueNotFound):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot link task to Linear", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.LinkTaskToLinearPayload{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+// UnlinkTaskExternal is the resolver for the unlinkTaskExternal field.
+func (r *mutationResolver) UnlinkTaskExternal(ctx context.Context, input types.UnlinkTaskExternalInput) (*types.UnlinkTaskExternalPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.task.Sync.Unlink(ctx, scope, input.TaskID); err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, tasksync.ErrTaskNotLinked):
+			return nil, gqlutils.NotFound(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	task, err := r.task.Get(ctx, scope, input.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UnlinkTaskExternalPayload{
+		Task: types.NewTask(task),
 	}, nil
 }
 
@@ -219,6 +368,86 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
 }
 
+// Comments is the resolver for the comments field.
+func (r *taskResolver) Comments(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskCommentOrderBy) (*types.TaskCommentConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskCommentList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskCommentOrderField]{
+		Field:     coredata.TaskCommentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskCommentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.task.ListCommentsForTaskID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task comments", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskCommentConnection(page, r, obj.ID), nil
+}
+
+// Activities is the resolver for the activities field.
+func (r *taskResolver) Activities(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskActivityOrderBy) (*types.TaskActivityConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskActivityList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskActivityOrderField]{
+		Field:     coredata.TaskActivityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskActivityOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.task.ListActivitiesForTaskID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task activities", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskActivityConnection(page, r, obj.ID), nil
+}
+
+// ExternalLink is the resolver for the externalLink field.
+func (r *taskResolver) ExternalLink(ctx context.Context, obj *types.Task) (*types.TaskExternalLink, error) {
+	if _, err := r.authorize(ctx, obj.ID, task.ActionTaskGet); err != nil {
+		return nil, err
+	}
+
+	link, err := dataloader.FromContext(ctx).TaskExternalLink.Load(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskExternalLink(link), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -226,14 +455,14 @@ func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList)
+	scope, err := r.authorize(ctx, obj.ParentID, task.ActionTaskList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := r.probo.Tasks.CountForMeasureID(ctx, scope, obj.ParentID)
+		count, err := r.task.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -241,7 +470,7 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 		return count, nil
 	case *organizationResolver:
-		count, err := r.probo.Tasks.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.task.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

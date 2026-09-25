@@ -1,0 +1,31 @@
+import "react";
+
+type CE<T = object> = React.DetailedHTMLProps<
+  React.HTMLAttributes<HTMLElement> & T,
+  HTMLElement
+>;
+
+declare module "react" {
+  namespace JSX {
+    interface IntrinsicElements {
+      "probo-cookie-banner-root": CE<{
+        "banner-id"?: string;
+        "base-url"?: string;
+        lang?: string;
+        "gcm-enabled"?: string;
+      }>;
+      "probo-banner": CE;
+      "probo-preference-panel": CE;
+      "probo-category-list": CE;
+      "probo-category-toggle": CE;
+      "probo-cookie-list": CE;
+      "probo-accept-button": CE;
+      "probo-reject-button": CE;
+      "probo-customize-button": CE;
+      "probo-acknowledge-button": CE;
+      "probo-save-button": CE;
+      "probo-privacy-choices": CE;
+      "probo-settings-link": CE;
+    }
+  }
+}

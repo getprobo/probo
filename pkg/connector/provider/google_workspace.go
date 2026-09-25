@@ -48,15 +48,17 @@ func googleWorkspaceRegistration() *Registration {
 			Token: "https://oauth2.googleapis.com/token",
 			Probe: "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
 		},
-		ExtraAuthParams: map[string]string{
-			"access_type": "offline",
-			"prompt":      "consent",
-		},
-		SupportsIncrementalAuth: true,
-		OAuth2Scopes: []string{
-			"https://www.googleapis.com/auth/admin.directory.user.readonly",
-			"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
-			"https://www.googleapis.com/auth/admin.directory.customer.readonly",
+		OAuth2: &OAuth2Config{
+			ExtraAuthParams: map[string]string{
+				"access_type": "offline",
+				"prompt":      "consent",
+			},
+			SupportsIncrementalAuth: true,
+			Scopes: []string{
+				"https://www.googleapis.com/auth/admin.directory.user.readonly",
+				"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+				"https://www.googleapis.com/auth/admin.directory.customer.readonly",
+			},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewGoogleWorkspaceDriver(c), nil

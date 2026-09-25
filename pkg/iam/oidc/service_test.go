@@ -21,7 +21,12 @@
 package oidc
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,6 +110,7 @@ func TestValidateIDTokenClaims_PersonalAccounts(t *testing.T) {
 				Email:         "user@gmail.com",
 				EmailVerified: true,
 			},
+			false,
 		)
 		_, ok := errors.AsType[*ErrPersonalAccountNotAllowed](err)
 		assert.True(t, ok, "got %T: %v", err, err)
@@ -119,6 +125,7 @@ func TestValidateIDTokenClaims_PersonalAccounts(t *testing.T) {
 				Issuer: "https://login.microsoftonline.com/" + microsoftConsumerTenantID + "/v2.0",
 				Email:  "user@outlook.com",
 			},
+			false,
 		)
 		_, ok := errors.AsType[*ErrPersonalAccountNotAllowed](err)
 		assert.True(t, ok, "got %T: %v", err, err)
@@ -134,6 +141,7 @@ func TestValidateIDTokenClaims_PersonalAccounts(t *testing.T) {
 				EmailVerified: true,
 				HostedDomain:  "acme.com",
 			},
+			false,
 		)
 		assert.NoError(t, err)
 	})
@@ -147,8 +155,175 @@ func TestValidateIDTokenClaims_PersonalAccounts(t *testing.T) {
 				Issuer: "https://login.microsoftonline.com/tenant-id/v2.0",
 				Email:  "user@acme.com",
 			},
+			false,
 		)
 		_, ok := errors.AsType[*ErrEmailNotVerified](err)
 		assert.True(t, ok, "got %T: %v", err, err)
 	})
+}
+
+func TestPortalAuthorizeStateID(t *testing.T) {
+	t.Parallel()
+
+	cimdClientID := "https://trust.example.com/.well-known/oauth-client-metadata"
+	stateID := "portal-oauth-state"
+
+	tests := []struct {
+		name        string
+		continueURL string
+		wantState   string
+		wantOK      bool
+	}{
+		{
+			name: "authorize plus cimd plus source plus state",
+			continueURL: "/api/connect/v1/oauth2/authorize?client_id=" +
+				url.QueryEscape(cimdClientID) +
+				"&source=compliance-portal&state=" +
+				url.QueryEscape(stateID),
+			wantState: stateID,
+			wantOK:    true,
+		},
+		{
+			name: "absolute authorize plus cimd plus source plus state",
+			continueURL: "https://auth.example.com/api/connect/v1/oauth2/authorize?client_id=" +
+				url.QueryEscape(cimdClientID) +
+				"&source=compliance-portal&state=" +
+				url.QueryEscape(stateID),
+			wantState: stateID,
+			wantOK:    true,
+		},
+		{
+			name:        "authorize plus gid client",
+			continueURL: "/api/connect/v1/oauth2/authorize?client_id=gid://probo/oauth2_client/abc&source=compliance-portal&state=" + url.QueryEscape(stateID),
+			wantOK:      false,
+		},
+		{
+			name:        "overview path",
+			continueURL: "/overview",
+			wantOK:      false,
+		},
+		{
+			name:        "path suffix lookalike",
+			continueURL: "/evil/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID) + "&source=compliance-portal&state=" + url.QueryEscape(stateID),
+			wantOK:      false,
+		},
+		{
+			name:        "authorize plus cimd without source",
+			continueURL: "/api/connect/v1/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID) + "&state=" + url.QueryEscape(stateID),
+			wantOK:      false,
+		},
+		{
+			name:        "authorize plus cimd plus source without state",
+			continueURL: "/api/connect/v1/oauth2/authorize?client_id=" + url.QueryEscape(cimdClientID) + "&source=compliance-portal",
+			wantOK:      false,
+		},
+		{
+			name:        "login page source alone",
+			continueURL: "/auth/login?source=compliance-portal",
+			wantOK:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				gotState, ok := portalAuthorizeStateID(tt.continueURL)
+				assert.Equal(t, tt.wantOK, ok)
+				assert.Equal(t, tt.wantState, gotState)
+			},
+		)
+	}
+}
+
+func TestValidateIDTokenClaims_AllowPersonal(t *testing.T) {
+	t.Parallel()
+
+	s := newTestService(t)
+
+	t.Run("accepts Google personal account with verified email", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderGoogle],
+			&idTokenClaims{
+				Email:         "user@gmail.com",
+				EmailVerified: true,
+			},
+			true,
+		)
+		assert.NoError(t, err)
+	})
+
+	t.Run("rejects Google personal account without verified email", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderGoogle],
+			&idTokenClaims{
+				Email:         "user@gmail.com",
+				EmailVerified: false,
+			},
+			true,
+		)
+		_, ok := errors.AsType[*ErrEmailNotVerified](err)
+		assert.True(t, ok, "got %T: %v", err, err)
+	})
+
+	t.Run("accepts Microsoft personal account without xms_edov", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderMicrosoft],
+			&idTokenClaims{
+				Issuer: "https://login.microsoftonline.com/" + microsoftConsumerTenantID + "/v2.0",
+				Email:  "user@outlook.com",
+			},
+			true,
+		)
+		assert.NoError(t, err)
+	})
+
+	t.Run("still requires xms_edov for Microsoft work account", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderMicrosoft],
+			&idTokenClaims{
+				Issuer: "https://login.microsoftonline.com/tenant-id/v2.0",
+				Email:  "user@acme.com",
+			},
+			true,
+		)
+		_, ok := errors.AsType[*ErrEmailNotVerified](err)
+		assert.True(t, ok, "got %T: %v", err, err)
+	})
+}
+
+func TestParseJWK_EC(t *testing.T) {
+	t.Parallel()
+
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	point, err := privateKey.PublicKey.Bytes()
+	require.NoError(t, err)
+
+	coordinateLen := (len(point) - 1) / 2
+
+	key, err := parseJWK(
+		jwk{
+			Kty: "EC",
+			Crv: "P-256",
+			X:   base64.RawURLEncoding.EncodeToString(point[1 : 1+coordinateLen]),
+			Y:   base64.RawURLEncoding.EncodeToString(point[1+coordinateLen:]),
+		},
+	)
+	require.NoError(t, err)
+
+	publicKey, ok := key.(*ecdsa.PublicKey)
+	require.True(t, ok, "got %T", key)
+	assert.True(t, publicKey.Equal(&privateKey.PublicKey))
 }

@@ -39,7 +39,8 @@ func intercomRegistration() *Registration {
 			Probe:   "https://api.intercom.io/me",
 			APIBase: "https://api.intercom.io",
 		},
-		SupportsAPIKey: true,
+		OAuth2: &OAuth2Config{},
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewIntercomDriver(c, ep.APIBase), nil
 		},

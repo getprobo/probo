@@ -49,13 +49,7 @@ func AccessReviewCampaignOrderFields() []AccessReviewCampaignOrderField {
 }
 
 func (v AccessReviewCampaignOrderField) IsValid() bool {
-	switch v {
-	case
-		AccessReviewCampaignOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AccessReviewCampaignOrderFields())
 }
 
 func (v AccessReviewCampaignOrderField) String() string {
@@ -67,14 +61,7 @@ func (v AccessReviewCampaignOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *AccessReviewCampaignOrderField) UnmarshalText(text []byte) error {
-	val := AccessReviewCampaignOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AccessReviewCampaignOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AccessReviewCampaignOrderFields())
 }
 
 func (p AccessReviewCampaignOrderField) Column() string {

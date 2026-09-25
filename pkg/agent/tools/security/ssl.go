@@ -90,7 +90,10 @@ func CheckSSLCertificateTool() agent.Tool {
 			// This pattern is safe here because we never send any
 			// credentials or confidential data over the connection.
 			dialer := &tls.Dialer{
-				NetDialer: &net.Dialer{Timeout: 10 * time.Second},
+				NetDialer: &net.Dialer{
+					Timeout: 10 * time.Second,
+					Control: netcheck.DialControl,
+				},
 				Config: &tls.Config{
 					InsecureSkipVerify: true, //nolint:gosec // cert inspector; verification happens manually below
 					ServerName:         p.Domain,

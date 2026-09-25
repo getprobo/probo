@@ -383,7 +383,7 @@ DELETE FROM organizations
 WHERE id = @id
 `
 
-	args := pgx.StrictNamedArgs{"id": o.ID}
+	args := pgx.StrictNamedArgs{"id": organizationID}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

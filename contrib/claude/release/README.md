@@ -1,9 +1,9 @@
 # Release
 
-The repository ships nine independently-versioned tracks. Each has its own
-version source, its own `CHANGELOG.md`, its own tag pattern, and its own
-release workflow. Cutting a release means: bump the version, write a
-changelog entry, commit, tag, push.
+The repository ships fourteen independently-versioned tracks. Each has its own
+version source, its own `CHANGELOG.md`, and its own tag pattern. Most have a
+release workflow that creates a GitHub Release. Cutting a release means:
+bump the version, write a changelog entry, commit, tag, push.
 
 | Track                   | Tag pattern                    | Entrypoint                       |
 | ----------------------- | ------------------------------ | -------------------------------- |
@@ -11,11 +11,16 @@ changelog entry, commit, tag, push.
 | Server (`probod` group) | `probod/v*`                    | [probod.md](./probod.md)         |
 | `probod-bootstrap`      | `probod-bootstrap/v*`          | [probod-bootstrap.md](./probod-bootstrap.md) |
 | `proboctl`              | `proboctl/v*`                  | [proboctl.md](./proboctl.md)     |
-| `probo-agent`           | `probo-agent/v*`               | [probo-agent.md](./probo-agent.md) ([Windows signing setup](./probo-agent-windows-signing.md)) |
+| `probo-agent`           | `probo-agent/v*` (or `…-rc.N`) | [probo-agent.md](./probo-agent.md) ([Windows signing setup](./probo-agent-windows-signing.md); [RC](./probo-agent.md#rc-release)) |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
+| `@probo/cookie-banner-tcf` | `@probo/cookie-banner-tcf/v*` | [cookie-banner-tcf.md](./cookie-banner-tcf.md) |
 | `@probo/skills`         | `@probo/skills/v*`             | [skills.md](./skills.md)           |
 | Helm chart (`probo`)    | `helm/v*`                      | [helm.md](./helm.md)                   |
+| CloudFormation (`aws-audit-role`) | `cloudformation-aws-audit-role/v*` | [cloudformation-aws-audit-role.md](./cloudformation-aws-audit-role.md) |
+| Terraform (`aws-audit-role`) | `terraform-aws-audit-role/v*` | [terraform-aws-audit-role.md](./terraform-aws-audit-role.md) |
+| Terraform (`gcp-audit-role`) | `terraform-gcp-audit-role/v*` | [terraform-gcp-audit-role.md](./terraform-gcp-audit-role.md) |
+| Terraform (`azurerm-audit-role`) | `terraform-azurerm-audit-role/v*` | [terraform-azurerm-audit-role.md](./terraform-azurerm-audit-role.md) |
 
 When the user asks for a release **without specifying a track**, follow
 [Step 1](#1-decide-which-tracks-to-release) below to detect which tracks
@@ -27,6 +32,10 @@ last tag.
 When the user asks for a release **for a specific track** (e.g. "release
 the CLI", "release probod"), open the corresponding entrypoint above and
 follow it.
+
+`probo-agent` is the only track that may ship an RC. When that track is
+in the release set, follow the ask in [probo-agent.md](./probo-agent.md)
+before bumping its version.
 
 Versions are SemVer in the **0.x** series. Never bump MAJOR.
 Bug fixes only -> bump PATCH; new features or non-breaking changes -> bump
@@ -53,9 +62,9 @@ track's paths:
 git log $(git describe --tags --abbrev=0 --match='prb/v*')..HEAD --oneline \
   -- cmd/prb pkg/cli pkg/cmd
 
-# probod (server group: probod + console + compliance-portal + ui)
+# probod (server group: probod + console + compliance-portal + employee-portal + ui)
 git log $(git describe --tags --abbrev=0 --match='probod/v*')..HEAD --oneline \
-  -- cmd/probod apps/console apps/compliance-portal packages/ui pkg
+  -- cmd/probod apps/console apps/compliance-portal apps/employee-portal packages/ui pkg
 
 # probod-bootstrap
 git log $(git describe --tags --abbrev=0 --match='probod-bootstrap/v*')..HEAD --oneline \
@@ -77,6 +86,10 @@ git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..H
 git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner/v*')..HEAD --oneline \
   -- packages/cookie-banner
 
+# @probo/cookie-banner-tcf
+git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner-tcf/v*')..HEAD --oneline \
+  -- packages/cookie-banner-tcf
+
 # @probo/skills
 git log $(git describe --tags --abbrev=0 --match='@probo/skills/v*')..HEAD --oneline \
   -- packages/skills
@@ -84,11 +97,28 @@ git log $(git describe --tags --abbrev=0 --match='@probo/skills/v*')..HEAD --one
 # helm chart
 git log $(git describe --tags --abbrev=0 --match='helm/v*')..HEAD --oneline \
   -- contrib/helm
+
+# cloudformation aws-audit-role
+git log $(git describe --tags --abbrev=0 --match='cloudformation-aws-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/cloudformation/aws-audit-role
+
+# terraform aws-audit-role
+git log $(git describe --tags --abbrev=0 --match='terraform-aws-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/terraform/aws-audit-role
+
+# terraform gcp-audit-role
+git log $(git describe --tags --abbrev=0 --match='terraform-gcp-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/terraform/gcp-audit-role
+
+# terraform azurerm-audit-role
+git log $(git describe --tags --abbrev=0 --match='terraform-azurerm-audit-role/v*' 2>/dev/null)..HEAD --oneline \
+  -- contrib/terraform/azurerm-audit-role
 ```
 
-If a track returns no commits, skip it. If all commits for a track are
-non-user-facing, skip it (and tell the user). For each remaining track,
-proceed with its entrypoint.
+If `git describe` fails because the track has no tag yet, the empty range
+lists every commit on that path (the first release). If a track returns no
+commits, skip it. If all commits for a track are non-user-facing, skip it
+(and tell the user). For each remaining track, proceed with its entrypoint.
 
 ## 2. Writing a changelog entry
 

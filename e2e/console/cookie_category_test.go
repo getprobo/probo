@@ -231,6 +231,44 @@ func TestCookieCategory_Update(t *testing.T) {
 		assert.Equal(t, []string{"ad_storage", "analytics_storage"}, result.UpdateCookieCategory.CookieCategory.GcmConsentTypes)
 	})
 
+	t.Run("update tcfPurposeIds", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+
+		const query = `
+			mutation UpdateCookieCategory($input: UpdateCookieCategoryInput!) {
+				updateCookieCategory(input: $input) {
+					cookieCategory {
+						id
+						tcfPurposeIds
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateCookieCategory struct {
+				CookieCategory struct {
+					ID            string `json:"id"`
+					TcfPurposeIds []int  `json:"tcfPurposeIds"`
+				} `json:"cookieCategory"`
+			} `json:"updateCookieCategory"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieCategoryId": categoryID,
+				"tcfPurposeIds":    []int{1, 3, 4},
+			},
+		}, &result)
+
+		require.NoError(t, err)
+		assert.Equal(t, []int{1, 3, 4}, result.UpdateCookieCategory.CookieCategory.TcfPurposeIds)
+	})
+
 	t.Run("update posthogConsent", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)

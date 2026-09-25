@@ -26,6 +26,9 @@ const (
 	BrandDarkLogoPath = visitor.BrandDarkLogoPath
 	OAuthInitiatePath = "/initiate"
 	OAuthCallbackPath = visitor.OAuthCallbackPath
+
+	SignInSourceQueryKey         = visitor.SignInSourceQueryKey
+	SignInSourceCompliancePortal = visitor.SignInSourceCompliancePortal
 )
 
 func CIMDClientIDURL(portalBaseURL string) (string, error) {

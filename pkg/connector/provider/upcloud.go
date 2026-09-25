@@ -34,7 +34,9 @@ func upcloudRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderUpCloud,
 		DisplayName:      "UpCloud",
 		DocumentationURL: accessReviewDocsURL("upcloud"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			KeyFormat: apiKeyPrefix("ucat_", "ucat_…"),
+		},
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /1.3
 			// prefix, so the version segment stays in APIBase.

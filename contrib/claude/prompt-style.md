@@ -53,7 +53,6 @@ fmt.Fprintf(&b, "<website> %s </website>\n", website)
 
 ## Examples
 
-- `pkg/thirdparty/prompts/disambiguation.txt.tmpl`
 - `pkg/cookiebanner/prompts/tracker_identification.txt.tmpl`
 - `pkg/cookiebanner/prompts/tracker_enrichment.txt.tmpl`
 - `pkg/thirdparty/prompts/common_third_party_company_profile.txt.tmpl`

@@ -70,20 +70,14 @@ func MergePDFs(pdfs ...[]byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte, error) {
+func AddWatermarkWithTimestamp(pdfData []byte, classification string, watermarkText string) ([]byte, error) {
 	if err := ValidateWatermarkText(watermarkText); err != nil {
 		return nil, fmt.Errorf("cannot validate watermark text: %w", err)
 	}
 
 	reader := bytes.NewReader(pdfData)
 
-	watermarkLines := []string{
-		"Confidential",
-		watermarkText,
-		time.Now().Format("2006-01-02"),
-	}
-
-	textImage, err := generateTextImage(watermarkLines)
+	textImage, err := generateTextImage(buildWatermarkLines(classification, watermarkText, time.Now()))
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate watermark image: %w", err)
 	}
@@ -115,6 +109,14 @@ func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte,
 	}
 
 	return buf.Bytes(), nil
+}
+
+func buildWatermarkLines(classification string, watermarkText string, timestamp time.Time) []string {
+	return []string{
+		classification,
+		watermarkText,
+		timestamp.Format("2006-01-02"),
+	}
 }
 
 func ValidateWatermarkText(watermarkText string) error {

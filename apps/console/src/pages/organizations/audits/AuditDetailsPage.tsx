@@ -24,12 +24,12 @@ import {
   formatError,
   getAuditStateVariant,
   type GraphQLError,
+  toPeriod,
 } from "@probo/helpers";
 import { dateFormat, fileSize } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -67,17 +67,12 @@ import {
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
+  firm: z.string().nullable().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
   auditStartDate: z.string().optional(),
   auditEndDate: z.string().optional(),
-  state: z.enum([
-    "NOT_STARTED",
-    "IN_PROGRESS",
-    "COMPLETED",
-    "REJECTED",
-    "OUTDATED",
-  ]),
+  state: z.enum(auditStates),
 });
 
 type Props = {
@@ -97,17 +92,18 @@ export default function AuditDetailsPage(props: Props) {
   const deleteAudit = useDeleteAudit(
     { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
-    () => void navigate(`/organizations/${organizationId}/audits`),
+    () => void navigate(`/organizations/${organizationId}/governance/audits`),
   );
 
   const { control, formState, handleSubmit, register, reset }
     = useFormWithSchema(updateAuditSchema, {
       defaultValues: {
         name: auditEntry.name || null,
-        validFrom: auditEntry.validFrom?.split("T")[0] || "",
-        validUntil: auditEntry.validUntil?.split("T")[0] || "",
-        auditStartDate: auditEntry.auditStartDate?.split("T")[0] || "",
-        auditEndDate: auditEntry.auditEndDate?.split("T")[0] || "",
+        firm: auditEntry.firm || null,
+        validFrom: auditEntry.validity?.start?.split("T")[0] || "",
+        validUntil: auditEntry.validity?.end?.split("T")[0] || "",
+        auditStartDate: auditEntry.auditDates?.start?.split("T")[0] || "",
+        auditEndDate: auditEntry.auditDates?.end?.split("T")[0] || "",
         state: auditEntry.state || "NOT_STARTED",
       },
     });
@@ -125,10 +121,15 @@ export default function AuditDetailsPage(props: Props) {
       await updateAudit({
         id: auditEntry.id,
         name: formData.name || null,
-        validFrom: formatDatetime(formData.validFrom) ?? null,
-        validUntil: formatDatetime(formData.validUntil) ?? null,
-        auditStartDate: formatDatetime(formData.auditStartDate) ?? null,
-        auditEndDate: formatDatetime(formData.auditEndDate) ?? null,
+        firm: formData.firm || null,
+        validity: toPeriod(
+          formatDatetime(formData.validFrom),
+          formatDatetime(formData.validUntil),
+        ),
+        auditDates: toPeriod(
+          formatDatetime(formData.auditStartDate),
+          formatDatetime(formData.auditEndDate),
+        ),
         state: formData.state,
       });
       reset(formData);
@@ -176,20 +177,6 @@ export default function AuditDetailsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("auditDetailsPage.breadcrumb.audits"),
-            to: `/organizations/${organizationId}/audits`,
-          },
-          {
-            label:
-              (auditEntry.name || auditEntry.framework?.name)
-              ?? t("auditDetailsPage.unknownAudit"),
-          },
-        ]}
-      />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
@@ -225,6 +212,13 @@ export default function AuditDetailsPage(props: Props) {
             <Input
               {...register("name")}
               placeholder={t("auditDetailsPage.fields.namePlaceholder")}
+            />
+          </Field>
+
+          <Field label={t("auditDetailsPage.fields.firm")}>
+            <Input
+              {...register("firm")}
+              placeholder={t("auditDetailsPage.fields.firmPlaceholder")}
             />
           </Field>
 

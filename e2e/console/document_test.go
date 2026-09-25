@@ -523,6 +523,102 @@ func TestDocument_List(t *testing.T) {
 	assert.GreaterOrEqual(t, result.Node.Documents.TotalCount, 3)
 }
 
+func TestDocument_ListByTitle(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	cryptographicAccessID := factory.NewDocument(owner).
+		WithTitle("Cryptographic Access Policy").
+		Create()
+	cryptographicRetentionID := factory.NewDocument(owner).
+		WithTitle("Cryptographic Retention Procedure").
+		Create()
+	vendorAccessID := factory.NewDocument(owner).
+		WithTitle("Vendor Access Policy").
+		Create()
+
+	const query = `
+		query GetDocuments($id: ID!, $query: String) {
+			node(id: $id) {
+				... on Organization {
+					documents(first: 10, filter: { query: $query }) {
+						edges {
+							node {
+								id
+							}
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	tests := []struct {
+		name        string
+		searchQuery string
+		expectedIDs []string
+	}{
+		{
+			name:        "matches a title prefix",
+			searchQuery: "Crypto",
+			expectedIDs: []string{cryptographicAccessID, cryptographicRetentionID},
+		},
+		{
+			name:        "matches every word prefix",
+			searchQuery: "Crypto Acc",
+			expectedIDs: []string{cryptographicAccessID},
+		},
+		{
+			name:        "matches a complete title word",
+			searchQuery: "Vendor",
+			expectedIDs: []string{vendorAccessID},
+		},
+		{
+			name:        "returns no unrelated documents",
+			searchQuery: "Incident",
+			expectedIDs: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var result struct {
+				Node struct {
+					Documents struct {
+						Edges []struct {
+							Node struct {
+								ID string `json:"id"`
+							} `json:"node"`
+						} `json:"edges"`
+						TotalCount int `json:"totalCount"`
+					} `json:"documents"`
+				} `json:"node"`
+			}
+
+			err := owner.Execute(
+				query,
+				map[string]any{
+					"id":    owner.GetOrganizationID().String(),
+					"query": tt.searchQuery,
+				},
+				&result,
+			)
+			require.NoError(t, err)
+
+			actualIDs := make([]string, len(result.Node.Documents.Edges))
+			for i, edge := range result.Node.Documents.Edges {
+				actualIDs[i] = edge.Node.ID
+			}
+
+			assert.ElementsMatch(t, tt.expectedIDs, actualIDs)
+			assert.Equal(t, len(tt.expectedIDs), result.Node.Documents.TotalCount)
+		})
+	}
+}
+
 func TestDocument_Query(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -619,9 +715,6 @@ func TestDocument_Timestamps(t *testing.T) {
 
 		initialCreatedAt := getResult.Node.CreatedAt
 		initialUpdatedAt := getResult.Node.UpdatedAt
-
-		// Wait long enough for timestamp to change (database may have second precision)
-		time.Sleep(1100 * time.Millisecond)
 
 		updateQuery := `
 			mutation UpdateDocument($input: UpdateDocumentInput!) {

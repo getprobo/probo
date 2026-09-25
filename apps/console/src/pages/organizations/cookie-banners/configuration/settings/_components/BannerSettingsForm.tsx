@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { countries, formatError } from "@probo/helpers";
 import { Button, Card, Field, Input, Label, Option, Select, Toggle, useToast } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -37,6 +37,7 @@ const bannerSettingsFormFragment = graphql`
     privacyPolicyUrl
     consentExpiryDays
     defaultLanguage
+    publisherCountryCode
     capabilities {
       resourceReporting
     }
@@ -53,6 +54,7 @@ const updateBannerMutation = graphql`
         privacyPolicyUrl
         consentExpiryDays
         defaultLanguage
+        publisherCountryCode
         capabilities {
           resourceReporting
         }
@@ -72,6 +74,7 @@ interface BannerSettingsFormValues {
   privacyPolicyUrl: string;
   consentExpiryDays: string;
   defaultLanguage: string;
+  publisherCountryCode: string;
   resourceReportingEnabled: boolean;
 }
 
@@ -87,13 +90,19 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
 
   const [updateBanner, isUpdating] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
 
-  const { register, handleSubmit, control } = useForm<BannerSettingsFormValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<BannerSettingsFormValues>({
     defaultValues: {
       name: banner.name,
       cookiePolicyUrl: banner.cookiePolicyUrl,
       privacyPolicyUrl: banner.privacyPolicyUrl ?? "",
       consentExpiryDays: String(banner.consentExpiryDays),
       defaultLanguage: banner.defaultLanguage,
+      publisherCountryCode: banner.publisherCountryCode,
       resourceReportingEnabled: banner.capabilities.resourceReporting,
     },
   });
@@ -108,6 +117,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           privacyPolicyUrl: data.privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(data.consentExpiryDays, 10),
           defaultLanguage: data.defaultLanguage,
+          publisherCountryCode: data.publisherCountryCode.trim().toUpperCase() || "AA",
           capabilities: { resourceReporting: data.resourceReportingEnabled },
         },
       },
@@ -169,6 +179,34 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>{t("bannerSettingsForm.fields.publisherCountryCode")}</Label>
+            <p className="text-sm text-txt-tertiary">
+              {t("bannerSettingsForm.fields.publisherCountryCodeHelp")}
+            </p>
+            <Input
+              {...register("publisherCountryCode", {
+                required: true,
+                minLength: 2,
+                maxLength: 2,
+                pattern: /^[A-Za-z]{2}$/,
+                validate: value =>
+                  isPublisherCountryCode(value) || t("bannerSettingsForm.errors.publisherCountryCode"),
+              })}
+              required
+              minLength={2}
+              maxLength={2}
+              pattern="[A-Za-z]{2}"
+              className="uppercase"
+              placeholder="AA"
+            />
+            {errors.publisherCountryCode
+              ? (
+                  <p className="text-sm text-txt-danger">{t("bannerSettingsForm.errors.publisherCountryCode")}</p>
+                )
+              : null}
+          </div>
+
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <Label>{t("bannerSettingsForm.fields.resourceReportingEnabled")}</Label>
@@ -196,4 +234,9 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
       </Card>
     </div>
   );
+}
+
+function isPublisherCountryCode(value: string): boolean {
+  const code = value.trim().toUpperCase();
+  return code === "AA" || (countries as readonly string[]).includes(code);
 }

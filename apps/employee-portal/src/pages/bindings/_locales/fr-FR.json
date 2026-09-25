@@ -1,0 +1,57 @@
+{
+  "bind": {
+    "title": "Connectez Slack à Probo",
+    "description": "Liez ce compte Slack à votre identité Probo pour que Probot puisse vous aider.",
+    "breadcrumb": "Connecter",
+    "fields": {
+      "tenant": "Espace de travail",
+      "account": "Compte"
+    },
+    "actions": {
+      "confirm": "Lier le compte Slack"
+    },
+    "messages": {
+      "linked": "Votre compte Slack est maintenant lié à Probo."
+    },
+    "missingToken": {
+      "title": "Aucun lien de confirmation",
+      "description": "Dans Slack, exécutez /probot login pour recevoir un lien de confirmation privé."
+    },
+    "errors": {
+      "linkFailed": "Échec de la liaison",
+      "invalidOrExpiredTokenTitle": "Ce lien a expiré",
+      "invalidOrExpiredToken": "Demandez un nouveau lien de confirmation privé au bot."
+    }
+  },
+  "list": {
+    "title": "Slack",
+    "breadcrumb": "Slack",
+    "description": "Liez votre compte Slack pour que Probot puisse vous aider depuis cette organisation.",
+    "connectedDescription": "{{account}} · {{workspace}}",
+    "providers": {
+      "slack": "Slack"
+    },
+    "columns": {
+      "account": "Compte",
+      "action": "Action"
+    },
+    "actions": {
+      "unlink": "Délier",
+      "cancel": "Annuler"
+    },
+    "empty": {
+      "title": "Aucun compte Slack lié",
+      "description": "Dans Slack, exécutez <cmd>/probot login</cmd> pour recevoir un lien de confirmation privé."
+    },
+    "messages": {
+      "unlinked": "Compte Slack délié."
+    },
+    "errors": {
+      "unlinkFailed": "Impossible de délier ce compte."
+    },
+    "confirmations": {
+      "unlinkTitle": "Délier le compte Slack",
+      "unlink": "Délier ce compte Slack ? Probot ne pourra plus vous aider tant que vous ne le lierez pas à nouveau."
+    }
+  }
+}

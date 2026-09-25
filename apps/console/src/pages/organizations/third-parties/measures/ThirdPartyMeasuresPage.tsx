@@ -20,9 +20,11 @@
 
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
+import type { ThirdPartyMeasuresPageAttachMutation } from "#/__generated__/core/ThirdPartyMeasuresPageAttachMutation.graphql";
+import type { ThirdPartyMeasuresPageDetachMutation } from "#/__generated__/core/ThirdPartyMeasuresPageDetachMutation.graphql";
 import type { ThirdPartyMeasuresPageQuery } from "#/__generated__/core/ThirdPartyMeasuresPageQuery.graphql";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
-import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
+import { useMutation } from "#/lib/relay/useMutation";
 
 export const thirdPartyMeasuresPageQuery = graphql`
   query ThirdPartyMeasuresPageQuery($thirdPartyId: ID!) {
@@ -95,23 +97,11 @@ export default function ThirdPartyMeasuresPage(props: ThirdPartyMeasuresPageProp
   const canUnlink = thirdParty.canDeleteMeasureThirdPartyMapping;
   const readOnly = !canLink && !canUnlink;
 
-  const incrementOptions = {
-    id: thirdParty.id,
-    node: "measures(first:0)",
-  };
-  const [detachMeasure, isDetaching] = useMutationWithIncrement(
+  const [detachMeasure, isDetaching] = useMutation<ThirdPartyMeasuresPageDetachMutation>(
     detachMeasureMutation,
-    {
-      ...incrementOptions,
-      value: -1,
-    },
   );
-  const [attachMeasure, isAttaching] = useMutationWithIncrement(
+  const [attachMeasure, isAttaching] = useMutation<ThirdPartyMeasuresPageAttachMutation>(
     attachMeasureMutation,
-    {
-      ...incrementOptions,
-      value: 1,
-    },
   );
   const isLoading = isDetaching || isAttaching;
 
@@ -119,8 +109,12 @@ export default function ThirdPartyMeasuresPage(props: ThirdPartyMeasuresPageProp
     <LinkedMeasuresCard
       disabled={isLoading}
       measures={measures}
-      onAttach={attachMeasure}
-      onDetach={detachMeasure}
+      onAttach={(args) => {
+        void attachMeasure(args).catch(() => undefined);
+      }}
+      onDetach={(args) => {
+        void detachMeasure(args).catch(() => undefined);
+      }}
       params={{ thirdPartyId: thirdParty.id }}
       connectionId={connectionId}
       readOnly={readOnly}

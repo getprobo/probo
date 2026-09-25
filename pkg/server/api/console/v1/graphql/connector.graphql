@@ -6,6 +6,8 @@ enum ConnectorProvider
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace"
         )
     LINEAR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinear")
+    LINEAR_SYNC
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinearSync")
     ONE_PASSWORD
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOnePassword"
@@ -58,6 +60,10 @@ enum ConnectorProvider
     MONDAY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMonday")
     METABASE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMetabase")
+    MONGODB_ATLAS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMongoDBAtlas"
+        )
     TAILSCALE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTailscale")
     ANTHROPIC
@@ -112,6 +118,58 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUpCloud")
     FRONT @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderFront")
     NUKI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNuki")
+    AUTHENTIK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAuthentik"
+        )
+    CAL_COM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalCom")
+    CALENDLY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalendly")
+    AWS @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAWS")
+    GCP @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGCP")
+    ELEVENLABS @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderElevenLabs")
+    NEW_RELIC @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNewRelic")
+    RETOOL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRetool")
+    TWINGATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTwingate")
+    ATTIO @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAttio")
+    AZURE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAzure")
+}
+
+enum AzureEnvironment
+    @goModel(model: "go.probo.inc/probo/pkg/cloud/azure.Environment") {
+    AZURE_PUBLIC
+        @goEnum(value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentPublic")
+    AZURE_GOVERNMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentGovernment"
+        )
+    AZURE_GOVERNMENT_DOD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentGovernmentDoD"
+        )
+    AZURE_CHINA
+        @goEnum(value: "go.probo.inc/probo/pkg/cloud/azure.EnvironmentChina")
+}
+
+enum ConnectorProtocol
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ConnectorProtocol") {
+    OAUTH2
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolOAuth2"
+        )
+    API_KEY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolAPIKey"
+        )
+    GITHUB_APP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolGitHubApp"
+        )
+    WORKLOAD_IDENTITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolWorkloadIdentity"
+        )
 }
 
 type ConnectorProviderInfo {
@@ -122,14 +180,27 @@ type ConnectorProviderInfo {
     provider as an access source, or null when no doc page exists yet.
     """
     documentationUrl: String
+    """
+    oauthConfigured is retained for v1 clients that have not migrated to
+    configuredProtocols.
+    """
     oauthConfigured: Boolean!
+        @deprecated(reason: "Use configuredProtocols instead.")
+    """
+    configuredProtocols lists the connector protocols that are ready to use
+    for this provider in this deployment (for example OAUTH2 or GITHUB_APP).
+    Empty when the provider is only reachable via customer-supplied
+    credentials (API key or client credentials).
+    """
+    configuredProtocols: [ConnectorProtocol!]!
     apiKeySupported: Boolean!
     """
     apiKeyManaged is true when the provider connects with a Probo-supplied
-    API key (Model B, e.g. Crisp's marketplace plugin token) that the
-    operator has configured. The customer supplies only the extra settings
-    (e.g. a Website ID), not the key. False until the key is configured,
-    which keeps such a provider out of the catalog.
+    API key (Model B) that the operator has configured, through the API-key
+    form: the customer supplies only the extra settings, not the key. False
+    until the key is configured, which keeps such a provider out of the
+    catalog, and false for a managed provider whose connect path is an app
+    install (installSupported), which has no form at all.
     """
     apiKeyManaged: Boolean!
     clientCredentialsSupported: Boolean!
@@ -141,6 +212,14 @@ type ConnectorProviderInfo {
     """
     apiKeyExtraSettings: [ConnectorProviderSettingInfo!]!
     """
+    apiKeyFormat is the shape a pasted API key must have, for the connect form
+    to check as the customer leaves the field and to show as its placeholder.
+    Null when the provider's keys have no shape worth asserting, which is the
+    common case. The create mutation applies the same rule, so a client that
+    skips this check is refused rather than trusted.
+    """
+    apiKeyFormat: ConnectorAPIKeyFormat
+    """
     clientCredentialsExtraSettings lists the settings the client-credentials
     connect form must render and submit. A provider offering both paths
     (1Password) returns different fields here than in apiKeyExtraSettings,
@@ -148,6 +227,68 @@ type ConnectorProviderInfo {
     client cannot render one path's settings on the other.
     """
     clientCredentialsExtraSettings: [ConnectorProviderSettingInfo!]!
+    """
+    clientCredentialsTokenUrl is the token endpoint this provider pins, for the
+    connect form to omit the Token URL field entirely. Null when the token host
+    follows a per-connection setting (1Password, whose host follows its region),
+    which is the only case where the customer has a value to supply. When it is
+    set the create mutation uses it and ignores whatever the client sends, so a
+    form that renders the field anyway is asking for something that cannot take
+    effect.
+    """
+    clientCredentialsTokenUrl: String
+    """
+    workloadIdentitySupported is true when this provider connects by federating
+    a Probo-issued OIDC token into the customer's cloud account, and this
+    deployment has the identity federation issuer enabled.
+    """
+    workloadIdentitySupported: Boolean!
+    """
+    workloadIdentityExtraSettings lists the settings the workload-identity
+    connect form must render and submit, in render order. Empty when the
+    provider has no workload-identity path.
+    """
+    workloadIdentityExtraSettings: [ConnectorProviderSettingInfo!]!
+    """
+    installSupported is true when this provider is connected by installing
+    Probo's app at the vendor: the client redirects to the install ceremony
+    instead of rendering a credential form, and the vendor tenant is proven
+    server-side on the way back. False until the operator has configured the
+    Probo-held credentials the ceremony needs.
+    """
+    installSupported: Boolean!
+    """
+    organizationInstallSupported is true when this provider can connect as an
+    organization (discover and enable member accounts) rather than a single
+    tenant, and this deployment can open that session. Today that is a
+    workload-identity provider with a discover path.
+    """
+    organizationInstallSupported: Boolean!
+}
+
+type AWSConnectorSetup {
+    issuer: String!
+    audience: String!
+    subject: String!
+    suggestedRoleName: String!
+    terraformSnippet: String!
+    cloudFormationQuickCreateURL: String!
+}
+
+type GCPConnectorSetup {
+    issuer: String!
+    audience: String!
+    subject: String!
+    suggestedServiceAccountName: String!
+    terraformSnippet: String!
+}
+
+type AzureConnectorSetup {
+    issuer: String!
+    audience: String!
+    subject: String!
+    suggestedApplicationName: String!
+    terraformSnippet: String!
 }
 
 type ConnectorProviderSettingInfo {
@@ -156,15 +297,149 @@ type ConnectorProviderSettingInfo {
     required: Boolean!
 }
 
+"""
+The shape of a pasted API key. It catches a half-copied credential, never a
+well-formed key that is simply the wrong one — only the provider can answer
+that, which is what connectionStatus is for.
+"""
+type ConnectorAPIKeyFormat {
+    """
+    pattern is an RE2 regular expression asserting the key's prefix and
+    separator, and deliberately nothing about the random part. It is written to
+    the subset RE2 and JavaScript read alike; a client that cannot compile it
+    should skip its own check rather than reject the key, since the server
+    applies the same rule on create.
+    """
+    pattern: String!
+    """
+    example is the shape to show the customer — as the field's placeholder and
+    in the rejection message. It matches pattern, and carries no real key.
+    """
+    example: String!
+}
+
 input ConnectorFilter {
     providers: [ConnectorProvider!]
 }
 
-type Connector {
+"""
+Why a connector's credential is or is not usable right now.
+
+DISCONNECTED covers every reason the credential itself did not work —
+revoked, expired, a role Probo cannot assume, a provider outage — because
+the underlying failure wraps provider-controlled text and stays
+server-side. A credential the provider took before refusing the operation
+is NOT_AUTHORIZED instead: a different thing for the customer to fix.
+"""
+enum ConnectorConnectionStatus {
+    CONNECTED
+    DISCONNECTED
+    """
+    NOT_AUTHORIZED means the provider accepted the credential and refused the
+    operation anyway — a plan that excludes the endpoint, a role without the
+    permission. Supplying another credential does not fix it, so it is kept
+    apart from DISCONNECTED.
+    """
+    NOT_AUTHORIZED
+    RECONNECT_REQUIRED
+}
+
+type Connector implements Node {
     id: ID!
     provider: ConnectorProvider!
+    protocol: ConnectorProtocol!
+    canReconnect: Boolean! @goField(forceResolver: true)
     oauth2Scopes: [String!]! @goField(forceResolver: true)
+    """
+    connectionStatus probes the provider live on every read, so selecting it
+    across a list of connectors costs one outbound call per connector. Select
+    it on a single connector, or on the one a mutation just returned.
+    """
+    connectionStatus: ConnectorConnectionStatus! @goField(forceResolver: true)
+    """
+    displayName is the provider's own name as it should be shown to a user
+    ("Google Workspace", not GOOGLE_WORKSPACE).
+    """
+    displayName: String! @goField(forceResolver: true)
+    """
+    documentationUrl is the public probo.com docs page for connecting this
+    provider as an access source, or null when no doc page exists yet.
+    """
+    documentationUrl: String @goField(forceResolver: true)
+    """
+    accounts are the enabled tenant rows this connector owns.
+    """
+    accounts(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ConnectorAccountOrder
+    ): ConnectorAccountConnection! @goField(forceResolver: true)
+    """
+    discoveredAccounts probes the provider live on every read, so selecting it
+    across a list of connectors costs one outbound call per connector. Select
+    it on a single connector, or on the one a mutation just returned.
+    """
+    discoveredAccounts: [DiscoveredConnectorAccount!]!
+        @goField(forceResolver: true)
     createdAt: Datetime!
+}
+
+type ConnectorAccount implements Node {
+    id: ID!
+    connector: Connector! @goField(forceResolver: true)
+    externalAccountId: String!
+    name: String!
+    """
+    connectionStatus probes the provider live on every read. Phase 1 still
+    probes the connector's initial account, never this row's
+    externalAccountId.
+    """
+    connectionStatus: ConnectorConnectionStatus! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type DiscoveredConnectorAccount {
+    externalAccountId: String!
+    name: String!
+}
+
+enum ConnectorAccountOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ConnectorAccountOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorAccountOrderFieldCreatedAt"
+        )
+    EXTERNAL_ACCOUNT_ID
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorAccountOrderFieldExternalAccountID"
+        )
+}
+
+input ConnectorAccountOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ConnectorAccountOrderBy"
+    ) {
+    field: ConnectorAccountOrderField!
+    direction: OrderDirection!
+}
+
+type ConnectorAccountConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ConnectorAccountConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ConnectorAccountEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ConnectorAccountEdge {
+    cursor: CursorKey!
+    node: ConnectorAccount!
 }
 
 type SlackConnection implements Node {
@@ -194,6 +469,18 @@ extend type Mutation {
     createClientCredentialsConnector(
         input: CreateClientCredentialsConnectorInput!
     ): CreateClientCredentialsConnectorPayload!
+    createWorkloadIdentityConnector(
+        input: CreateWorkloadIdentityConnectorInput!
+    ): CreateWorkloadIdentityConnectorPayload!
+    createOrganizationConnector(
+        input: CreateOrganizationConnectorInput!
+    ): CreateOrganizationConnectorPayload!
+    enableConnectorAccounts(
+        input: EnableConnectorAccountsInput!
+    ): EnableConnectorAccountsPayload!
+    disableConnectorAccount(
+        input: DisableConnectorAccountInput!
+    ): DisableConnectorAccountPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
     deleteSlackConnection(
         input: DeleteSlackConnectionInput!
@@ -210,7 +497,6 @@ input CreateAPIKeyConnectorInput {
     settings.
     """
     apiKey: String
-    tallyOrganizationId: String
     sentryOrganizationSlug: String
     supabaseOrganizationSlug: String
     githubOrganization: String
@@ -227,8 +513,11 @@ input CreateAPIKeyConnectorInput {
     neonOrganizationId: String
     langfuseBaseUrl: String
     scalewayOrganizationId: String
-    crispWebsiteId: String
     segmentRegion: String
+    authentikBaseUrl: String
+    newRelicRegion: String
+    retoolBaseUrl: String
+    twingateNetwork: String
 }
 
 type CreateAPIKeyConnectorPayload {
@@ -240,7 +529,13 @@ input CreateClientCredentialsConnectorInput {
     provider: ConnectorProvider!
     clientId: String!
     clientSecret: String!
-    tokenUrl: String!
+    """
+    Token endpoint for the client-credentials exchange. Optional: a provider
+    that declares a constant token endpoint pins it server-side and ignores any
+    value sent here. Required only for a provider whose token host follows a
+    per-connection setting, and then it must be an absolute https URL.
+    """
+    tokenUrl: String
     scope: String
     onePasswordAccountId: String
     onePasswordRegion: String
@@ -248,6 +543,62 @@ input CreateClientCredentialsConnectorInput {
 
 type CreateClientCredentialsConnectorPayload {
     connector: Connector
+}
+
+input CreateWorkloadIdentityConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    awsRoleArn: String
+    gcpWorkloadIdentityProvider: String
+    gcpServiceAccountEmail: String
+    azureTenantId: String
+    azureClientId: String
+    azureSubscriptionId: String
+    azureEnvironment: AzureEnvironment
+}
+
+type CreateWorkloadIdentityConnectorPayload {
+    connector: Connector!
+}
+
+input CreateOrganizationConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    awsRoleArn: String
+    awsMemberRoleName: String
+    gcpWorkloadIdentityProvider: String
+    gcpServiceAccountEmail: String
+    gcpParent: String
+    azureTenantId: String
+    azureClientId: String
+    azureEnvironment: AzureEnvironment
+}
+
+type CreateOrganizationConnectorPayload {
+    connector: Connector!
+    discoveredAccounts: [DiscoveredConnectorAccount!]!
+}
+
+input EnableConnectorAccountInput {
+    externalAccountId: String!
+    name: String!
+}
+
+input EnableConnectorAccountsInput {
+    connectorId: ID!
+    accounts: [EnableConnectorAccountInput!]!
+}
+
+type EnableConnectorAccountsPayload {
+    connectorAccounts: [ConnectorAccount!]!
+}
+
+input DisableConnectorAccountInput {
+    connectorAccountId: ID!
+}
+
+type DisableConnectorAccountPayload {
+    disabledConnectorAccountId: ID!
 }
 
 input DeleteConnectorInput {

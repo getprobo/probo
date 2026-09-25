@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/deviceagent"
 )
 
 func TestEnrollURLPreflight(t *testing.T) {
@@ -36,7 +37,7 @@ func TestEnrollURLPreflight(t *testing.T) {
 		"enroll-url",
 		"--preflight",
 		"--dir", t.TempDir(),
-		"probo://enroll?server=https%3A%2F%2Fexample.com&token=abc123",
+		"probo://enroll?server=http%3A%2F%2Flocalhost%3A3000&token=abc123",
 	})
 
 	var stdout bytes.Buffer
@@ -51,10 +52,17 @@ func TestEnrollURLPreflight(t *testing.T) {
 
 	err = json.Unmarshal(bytes.TrimSpace(stdout.Bytes()), &payload)
 	require.NoError(t, err)
-	require.Equal(t, "https://example.com", payload.Server)
+	require.Equal(t, "http://localhost:3000", payload.Server)
 	require.Equal(t, "abc123", payload.Token)
 	require.False(t, payload.AlreadyEnrolled)
 	require.Contains(t, payload.ConfigDir, "TestEnrollURLPreflight")
+	require.Equal(t, string(deviceagent.TrustUnknown), payload.Trust)
+	require.Equal(t, deviceagent.EnrollmentConfirmTitle, payload.ConfirmTitle)
+	require.Equal(
+		t,
+		deviceagent.EnrollmentConfirmMessage(payload.Server, deviceagent.TrustUnknown),
+		payload.ConfirmMessage,
+	)
 }
 
 func TestWriteEnrollPreflight(t *testing.T) {
@@ -68,6 +76,7 @@ func TestWriteEnrollPreflight(t *testing.T) {
 		"token-value",
 		"/var/lib/probo-agent",
 		true,
+		deviceagent.TrustUnverified,
 	)
 	require.NoError(t, err)
 
@@ -77,4 +86,11 @@ func TestWriteEnrollPreflight(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, payload.AlreadyEnrolled)
 	require.Equal(t, "token-value", payload.Token)
+	require.Equal(t, string(deviceagent.TrustUnverified), payload.Trust)
+	require.Equal(t, deviceagent.EnrollmentConfirmTitle, payload.ConfirmTitle)
+	require.Equal(
+		t,
+		deviceagent.EnrollmentConfirmMessage("https://example.com", deviceagent.TrustUnverified),
+		payload.ConfirmMessage,
+	)
 }

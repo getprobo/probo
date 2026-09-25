@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "probo.labels" . | nindent 4 }}
+{{- if eq .Values.probo.trustCenter.tlsMode "external" }}
+data: {}
+{{- else }}
 data:
   # TCP passthrough for port 80 (HTTP)
   # Format: "<port>": "<namespace>/<service>:<port>"
@@ -13,4 +16,5 @@ data:
 
   # TCP passthrough for port 443 (HTTPS)
   "443": "{{ .Release.Namespace }}/{{ include "probo.fullname" . }}:{{ .Values.service.httpsPort }}"
+{{- end }}
 {{- end }}

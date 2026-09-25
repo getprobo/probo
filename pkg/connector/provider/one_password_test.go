@@ -48,21 +48,21 @@ func TestOnePasswordRegistrationMetadata(t *testing.T) {
 	require.True(t, ok, "1Password provider must be registered")
 
 	assert.Equal(t, "1Password", reg.DisplayName)
-	assert.True(t, reg.SupportsAPIKey)
-	assert.True(t, reg.SupportsClientCredentials)
+	assert.True(t, reg.SupportsAPIKey())
+	assert.True(t, reg.SupportsClientCredentials())
 
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	assert.Equal(t, "scimBridgeUrl", reg.APIKeyExtraSettings[0].Key)
-	assert.Equal(t, "SCIM Bridge URL", reg.APIKeyExtraSettings[0].Label)
-	assert.True(t, reg.APIKeyExtraSettings[0].Required)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	assert.Equal(t, "scimBridgeUrl", reg.APIKeyExtraSettings()[0].Key)
+	assert.Equal(t, "SCIM Bridge URL", reg.APIKeyExtraSettings()[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings()[0].Required)
 
-	require.Len(t, reg.ClientCredentialsExtraSettings, 2)
-	assert.Equal(t, "accountId", reg.ClientCredentialsExtraSettings[0].Key)
-	assert.Equal(t, "Account ID", reg.ClientCredentialsExtraSettings[0].Label)
-	assert.True(t, reg.ClientCredentialsExtraSettings[0].Required)
-	assert.Equal(t, "region", reg.ClientCredentialsExtraSettings[1].Key)
-	assert.Equal(t, "Region", reg.ClientCredentialsExtraSettings[1].Label)
-	assert.True(t, reg.ClientCredentialsExtraSettings[1].Required)
+	require.Len(t, reg.ClientCredentialsExtraSettings(), 2)
+	assert.Equal(t, "accountId", reg.ClientCredentialsExtraSettings()[0].Key)
+	assert.Equal(t, "Account ID", reg.ClientCredentialsExtraSettings()[0].Label)
+	assert.True(t, reg.ClientCredentialsExtraSettings()[0].Required)
+	assert.Equal(t, "region", reg.ClientCredentialsExtraSettings()[1].Key)
+	assert.Equal(t, "Region", reg.ClientCredentialsExtraSettings()[1].Label)
+	assert.True(t, reg.ClientCredentialsExtraSettings()[1].Required)
 }
 
 // TestOnePassword_NewDriver_DispatchByGrantType is the pre-merge gate

@@ -32,12 +32,14 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/httpx"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -112,7 +114,7 @@ func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request)
 		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
 	)
 
-	PublicCache(w, 1*time.Hour)
+	httpx.PublicCache(w, 1*time.Hour)
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
 }
 
@@ -121,7 +123,7 @@ func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request)
 func (h *OAuth2Handler) JWKSHandler(w http.ResponseWriter, r *http.Request) {
 	jwks := h.iam.OAuth2ServerService.JWKS()
 
-	PublicCache(w, 1*time.Hour)
+	httpx.PublicCache(w, 1*time.Hour)
 	httpserver.RenderJSON(w, http.StatusOK, jwks)
 }
 
@@ -144,16 +146,27 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		}
 
 		loginURL := h.baseURL.WithPath("/auth/login").
-			WithQuery("continue", continueURL).
-			MustString()
-		http.Redirect(w, r, loginURL, http.StatusFound)
+			WithQuery("continue", continueURL)
+
+		if source := r.URL.Query().Get(visitor.SignInSourceQueryKey); source == visitor.SignInSourceCompliancePortal {
+			loginURL = loginURL.WithQuery(visitor.SignInSourceQueryKey, source)
+		}
+
+		http.Redirect(w, r, loginURL.MustString(), http.StatusFound)
 
 		return
 	}
 
 	var in types.OAuth2AuthorizeInput
 	if err := in.DecodeQuery(r.URL.Query()); err != nil {
-		h.handleAuthorizeError(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err)), "", "")
+		oauthErr := oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err))
+		if targetErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok &&
+			errors.Is(targetErr, oauth2.ErrInvalidTarget) {
+			oauthErr = targetErr
+		}
+
+		h.handleAuthorizeError(w, r, oauthErr, "", "")
+
 		return
 	}
 
@@ -164,7 +177,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		authTime = session.CreatedAt
 	}
 
-	code, err := h.iam.OAuth2ServerService.Authorize(
+	code, redirectValidated, err := h.iam.OAuth2ServerService.Authorize(
 		r.Context(),
 		&oauth2.AuthorizeRequest{
 			IdentityID:          identity.ID,
@@ -172,6 +185,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			ResponseType:        in.ResponseType,
 			ClientIDRaw:         in.ClientIDRaw,
 			RedirectURI:         in.RedirectURI,
+			Resources:           in.Resources,
 			Scopes:              in.Scopes,
 			CodeChallenge:       in.CodeChallenge,
 			CodeChallengeMethod: in.CodeChallengeMethod,
@@ -192,12 +206,16 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		oauthErr := toOAuth2Error(err)
-		h.handleAuthorizeError(w, r, oauthErr, in.RedirectURI, in.State)
+		if redirectValidated {
+			h.handleAuthorizeError(w, r, oauthErr, in.RedirectURI, in.State)
+		} else {
+			h.handleAuthorizeError(w, r, oauthErr, "", "")
+		}
 
 		return
 	}
 
-	redirectWithCode(w, r, in.RedirectURI, code, in.State)
+	redirectWithCode(w, r, in.RedirectURI, code, in.State, h.baseURL.String())
 }
 
 func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -460,7 +478,13 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 
 	var in types.OAuth2AuthorizationCodeGrantInput
 	if err := in.DecodeForm(r); err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
+
 		return
 	}
 
@@ -469,14 +493,21 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		client.ID.String(),
 		in.Code,
 		in.RedirectURI,
+		in.Resources,
 		in.CodeVerifier,
 	)
 	if err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired code")))
+
 		return
 	}
 
-	NoCache(w)
+	httpx.NoCache(w)
 	httpserver.RenderJSON(w, http.StatusOK, tokenResultToResponse(result))
 }
 
@@ -489,17 +520,34 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 
 	var in types.OAuth2RefreshTokenGrantInput
 	if err := in.DecodeForm(r); err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
+
 		return
 	}
 
-	result, err := h.iam.OAuth2ServerService.RefreshToken(r.Context(), client, in.RefreshToken)
+	result, err := h.iam.OAuth2ServerService.RefreshToken(
+		r.Context(),
+		client,
+		in.RefreshToken,
+		in.Resources,
+	)
 	if err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired refresh token")))
+
 		return
 	}
 
-	NoCache(w)
+	httpx.NoCache(w)
 	httpserver.RenderJSON(w, http.StatusOK, tokenResultToResponse(result))
 }
 
@@ -520,7 +568,7 @@ func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	NoCache(w)
+	httpx.NoCache(w)
 	httpserver.RenderJSON(w, http.StatusOK, tokenResultToResponse(result))
 }
 
@@ -535,10 +583,18 @@ func tokenResultToResponse(r *oauth2.TokenResult) *types.OAuth2TokenResponse {
 	}
 }
 
-func redirectWithCode(w http.ResponseWriter, r *http.Request, redirectURI, code, state string) {
+func redirectWithCode(
+	w http.ResponseWriter,
+	r *http.Request,
+	redirectURI string,
+	code string,
+	state string,
+	issuer string,
+) {
 	u, _ := url.Parse(redirectURI)
 	q := u.Query()
 	q.Set("code", code)
+	q.Set("iss", issuer)
 
 	if state != "" {
 		q.Set("state", state)

@@ -32,6 +32,11 @@ import (
 
 // AsanaDriver fetches workspace memberships via the Asana REST API.
 // MFA and last-login are not available from the API.
+//
+// The workspace-scoped memberships query filters to active memberships, so
+// deactivated members are absent rather than returned with is_active false,
+// and is_active covers invitees who never accepted. Removals therefore reach a
+// campaign as entries missing from the fetch, not as inactive ones.
 type AsanaDriver struct {
 	httpClient   *http.Client
 	workspaceGID string
@@ -67,12 +72,16 @@ type (
 		Email string `json:"email"`
 	}
 
+	// The membership flags are pointers: this endpoint answers with
+	// WorkspaceMembershipCompact and only adds them because opt_fields asks
+	// for them, so an absent flag must stay unknown rather than decode to
+	// false.
 	asanaMembership struct {
 		User       asanaMembershipUser `json:"user"`
-		IsAdmin    bool                `json:"is_admin"`
-		IsGuest    bool                `json:"is_guest"`
-		IsViewOnly bool                `json:"is_view_only"`
-		IsActive   bool                `json:"is_active"`
+		IsAdmin    *bool               `json:"is_admin"`
+		IsGuest    *bool               `json:"is_guest"`
+		IsViewOnly *bool               `json:"is_view_only"`
+		IsActive   *bool               `json:"is_active"`
 		CreatedAt  string              `json:"created_at"`
 	}
 
@@ -122,8 +131,8 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 					FullName:    m.User.Name,
 					ExternalID:  m.User.GID,
 					Roles:       asanaRoles(m.IsAdmin, m.IsGuest, m.IsViewOnly),
-					Active:      new(m.IsActive),
-					IsAdmin:     new(m.IsAdmin),
+					Active:      m.IsActive,
+					IsAdmin:     m.IsAdmin,
 					MFAStatus:   coredata.MFAStatusUnknown,
 					AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 					AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -172,16 +181,23 @@ func (d *AsanaDriver) queryMemberships(ctx context.Context, endpoint string) (*a
 	return &page, nil
 }
 
-func asanaRoles(isAdmin, isGuest, isViewOnly bool) []string {
+// asanaRoles derives the workspace role from the membership flags. A set flag
+// classifies on its own, but "Member" means "none of the three", so it is only
+// reachable once all three came back false. Inferring it from a partial
+// response would assert precisely what Asana withheld: an account whose
+// is_guest was omitted could be a guest.
+func asanaRoles(isAdmin, isGuest, isViewOnly *bool) []string {
 	switch {
-	case isAdmin:
+	case isAdmin != nil && *isAdmin:
 		return []string{"Admin"}
-	case isGuest:
+	case isGuest != nil && *isGuest:
 		return []string{"Guest"}
-	case isViewOnly:
+	case isViewOnly != nil && *isViewOnly:
 		return []string{"View only"}
-	default:
+	case isAdmin != nil && isGuest != nil && isViewOnly != nil:
 		return []string{"Member"}
+	default:
+		return nil
 	}
 }
 

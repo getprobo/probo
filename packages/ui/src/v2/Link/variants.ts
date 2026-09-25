@@ -44,6 +44,7 @@ export const link = tv({
       green: "",
       amber: "",
       sky: "",
+      indigo: "",
     },
     highContrast: {
       true: "",
@@ -68,6 +69,8 @@ export const link = tv({
     { color: "amber", highContrast: true, class: "text-amber-12 hover:text-amber-12" },
     { color: "sky", highContrast: false, class: "text-sky-11 hover:text-sky-12" },
     { color: "sky", highContrast: true, class: "text-sky-12 hover:text-sky-12" },
+    { color: "indigo", highContrast: false, class: "text-indigo-11 hover:text-indigo-12" },
+    { color: "indigo", highContrast: true, class: "text-indigo-12 hover:text-indigo-12" },
   ],
   defaultVariants: {
     size: 2,

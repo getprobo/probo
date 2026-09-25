@@ -49,13 +49,7 @@ func FrameworkOrderFields() []FrameworkOrderField {
 }
 
 func (v FrameworkOrderField) IsValid() bool {
-	switch v {
-	case
-		FrameworkOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, FrameworkOrderFields())
 }
 
 func (v FrameworkOrderField) String() string {
@@ -67,14 +61,7 @@ func (v FrameworkOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *FrameworkOrderField) UnmarshalText(text []byte) error {
-	val := FrameworkOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid FrameworkOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, FrameworkOrderFields())
 }
 
 func (p FrameworkOrderField) Column() string {

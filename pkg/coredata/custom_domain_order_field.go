@@ -51,15 +51,7 @@ func CustomDomainOrderFields() []CustomDomainOrderField {
 }
 
 func (v CustomDomainOrderField) IsValid() bool {
-	switch v {
-	case
-		CustomDomainOrderFieldCreatedAt,
-		CustomDomainOrderFieldDomain,
-		CustomDomainOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CustomDomainOrderFields())
 }
 
 func (v CustomDomainOrderField) String() string {
@@ -71,14 +63,7 @@ func (v CustomDomainOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CustomDomainOrderField) UnmarshalText(text []byte) error {
-	val := CustomDomainOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CustomDomainOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CustomDomainOrderFields())
 }
 
 func (f CustomDomainOrderField) Column() string {

@@ -26,6 +26,7 @@ import (
 )
 
 type runContextKey struct{}
+type toolCallIDContextKey struct{}
 
 func WithRunContext(ctx context.Context, val any) context.Context {
 	return context.WithValue(ctx, runContextKey{}, val)
@@ -57,4 +58,19 @@ func TryRunContextFrom[C any](ctx context.Context) (C, bool) {
 	typed, ok := val.(C)
 
 	return typed, ok
+}
+
+// WithToolCallID stores the provider-issued tool-call ID on ctx so tools can
+// include it in a stable operation key.
+func WithToolCallID(ctx context.Context, toolCallID string) context.Context {
+	return context.WithValue(ctx, toolCallIDContextKey{}, toolCallID)
+}
+
+// ToolCallIDFrom returns the stable provider-issued ID of the tool call that
+// is currently executing. Side-effecting tools can use it as part of an
+// idempotency key so checkpoint restoration cannot repeat an external effect.
+func ToolCallIDFrom(ctx context.Context) (string, bool) {
+	toolCallID, ok := ctx.Value(toolCallIDContextKey{}).(string)
+
+	return toolCallID, ok && toolCallID != ""
 }

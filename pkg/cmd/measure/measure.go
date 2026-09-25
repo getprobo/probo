@@ -26,8 +26,10 @@ import (
 	"go.probo.inc/probo/pkg/cmd/measure/create"
 	"go.probo.inc/probo/pkg/cmd/measure/delete"
 	linkthirdparty "go.probo.inc/probo/pkg/cmd/measure/link-third-party"
+	linktreatmentplan "go.probo.inc/probo/pkg/cmd/measure/link-treatment-plan"
 	"go.probo.inc/probo/pkg/cmd/measure/list"
 	unlinkthirdparty "go.probo.inc/probo/pkg/cmd/measure/unlink-third-party"
+	unlinktreatmentplan "go.probo.inc/probo/pkg/cmd/measure/unlink-treatment-plan"
 	"go.probo.inc/probo/pkg/cmd/measure/update"
 	"go.probo.inc/probo/pkg/cmd/measure/view"
 )
@@ -45,6 +47,8 @@ func NewCmdMeasure(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(linkthirdparty.NewCmdLinkThirdParty(f))
 	cmd.AddCommand(unlinkthirdparty.NewCmdUnlinkThirdParty(f))
+	cmd.AddCommand(linktreatmentplan.NewCmdLinkTreatmentPlan(f))
+	cmd.AddCommand(unlinktreatmentplan.NewCmdUnlinkTreatmentPlan(f))
 
 	return cmd
 }

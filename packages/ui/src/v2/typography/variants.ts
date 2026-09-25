@@ -53,14 +53,17 @@ const typographyVariants = {
   // Hue only; the resolved text step comes from the color × highContrast
   // compound variants below (step 11 low-contrast, step 12 high-contrast).
   // `faint` is a de-emphasized neutral (sand alpha 8) for fine-print metadata.
+  // `current` emits no color class so the text inherits from its parent.
   color: {
     neutral: "",
     faint: "",
+    current: "",
     gold: "",
     red: "",
     green: "",
     amber: "",
     sky: "",
+    indigo: "",
   },
   highContrast: {
     true: "",
@@ -84,6 +87,8 @@ const colorCompoundVariants = [
   { color: "amber", highContrast: true, class: "text-amber-12" },
   { color: "sky", highContrast: false, class: "text-sky-11" },
   { color: "sky", highContrast: true, class: "text-sky-12" },
+  { color: "indigo", highContrast: false, class: "text-indigo-11" },
+  { color: "indigo", highContrast: true, class: "text-indigo-12" },
 ] as const;
 
 export const text = tv({
@@ -127,5 +132,54 @@ export const headingSkeleton = tv({
   },
   defaultVariants: {
     size: 6,
+  },
+});
+
+// Inline code (Radix "Code"). Accent-only (gold), matching the Figma. Soft is
+// the default surface; extra hues are omitted until a consumer needs them.
+export const code = tv({
+  base: "inline font-mono rounded-1",
+  variants: {
+    size,
+    weight: {
+      regular: "font-normal",
+      bold: "font-bold",
+    },
+    variant: {
+      solid: "px-1",
+      soft: "px-1",
+      outline: "border px-1",
+      ghost: "",
+    },
+    highContrast: {
+      true: "",
+      false: "",
+    },
+  },
+  compoundVariants: [
+    { variant: "soft", highContrast: false, class: "bg-gold-3 text-gold-11" },
+    { variant: "soft", highContrast: true, class: "bg-gold-3 text-gold-12" },
+    { variant: "solid", highContrast: false, class: "bg-gold-9 text-white" },
+    { variant: "solid", highContrast: true, class: "bg-gold-12 text-gold-1" },
+    { variant: "outline", highContrast: false, class: "border-gold-6 text-gold-11" },
+    { variant: "outline", highContrast: true, class: "border-gold-6 text-gold-12" },
+    { variant: "ghost", highContrast: false, class: "text-gold-11" },
+    { variant: "ghost", highContrast: true, class: "text-gold-12" },
+  ],
+  defaultVariants: {
+    size: 2,
+    variant: "soft",
+    weight: "regular",
+    highContrast: false,
+  },
+});
+
+export const codeSkeleton = tv({
+  base: "inline-block animate-pulse select-none rounded-1 bg-sand-3 text-transparent",
+  variants: {
+    size,
+  },
+  defaultVariants: {
+    size: 2,
   },
 });

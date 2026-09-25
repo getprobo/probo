@@ -127,7 +127,7 @@ export function AiSystemListItem({
     );
   };
 
-  const detailsUrl = `/organizations/${organizationId}/ai-systems/${aiSystem.id}`;
+  const detailsUrl = `/organizations/${organizationId}/registries/ai-systems/${aiSystem.id}`;
 
   return (
     <Tr to={detailsUrl}>

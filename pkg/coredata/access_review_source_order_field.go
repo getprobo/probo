@@ -49,13 +49,7 @@ func AccessReviewSourceOrderFields() []AccessReviewSourceOrderField {
 }
 
 func (v AccessReviewSourceOrderField) IsValid() bool {
-	switch v {
-	case
-		AccessReviewSourceOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AccessReviewSourceOrderFields())
 }
 
 func (v AccessReviewSourceOrderField) String() string {
@@ -67,14 +61,7 @@ func (v AccessReviewSourceOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *AccessReviewSourceOrderField) UnmarshalText(text []byte) error {
-	val := AccessReviewSourceOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AccessReviewSourceOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AccessReviewSourceOrderFields())
 }
 
 func (p AccessReviewSourceOrderField) Column() string {

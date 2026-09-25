@@ -25,24 +25,29 @@ import (
 	"path/filepath"
 )
 
+func windowsProgramData() string {
+	programData := os.Getenv("ProgramData")
+	if programData == "" {
+		return `C:\ProgramData`
+	}
+
+	return programData
+}
+
+// DefaultProgramDataRoot returns %ProgramData%\Probo, the parent of the
+// agent keystore and the public enrollment run directory.
+func DefaultProgramDataRoot() string {
+	return filepath.Join(windowsProgramData(), "Probo")
+}
+
 // DefaultConfigDir returns the directory under which the agent's config
 // and keystore live on Windows.
 func DefaultConfigDir() string {
-	programData := os.Getenv("ProgramData")
-	if programData == "" {
-		programData = `C:\ProgramData`
-	}
-
-	return filepath.Join(programData, "Probo", "agent")
+	return filepath.Join(DefaultProgramDataRoot(), "agent")
 }
 
 // DefaultEnrollmentRunDir returns the runtime directory for the public
 // enrollment marker and enrolling.lock on Windows.
 func DefaultEnrollmentRunDir() string {
-	programData := os.Getenv("ProgramData")
-	if programData == "" {
-		programData = `C:\ProgramData`
-	}
-
-	return filepath.Join(programData, "Probo", "run")
+	return filepath.Join(DefaultProgramDataRoot(), "run")
 }

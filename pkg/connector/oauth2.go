@@ -42,6 +42,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// clientCredentialsTokenTimeout bounds the token exchange. The callers reach
+// it on a worker context with no deadline of its own, so an unbounded exchange
+// is an unbounded worker.
+const clientCredentialsTokenTimeout = 30 * time.Second
+
 // NOTE: the OAuth2 state token (and, for PKCE providers, the code verifier)
 // is keyed by stateSalt(). Public clients (CIMD, no client_secret) set
 // StateSigningKey to a server-side derived key; confidential clients fall
@@ -60,6 +65,22 @@ type (
 		ExtraAuthParams         map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
 		TokenEndpointAuth       string            // "post-form" (default), "basic-form", or "basic-json"
 		SupportsIncrementalAuth bool
+		// ExclusiveScopes marks a provider whose authorization server
+		// refuses any scope its app registration does not currently
+		// offer, failing the whole authorize request rather than
+		// ignoring the extras. Such a provider asks for RegisteredScopes
+		// verbatim instead of the union with what the connector was
+		// granted earlier.
+		ExclusiveScopes bool
+		// RegisteredScopes mirrors the provider registration's
+		// OAuth2Scopes. It is authoritative for an ExclusiveScopes
+		// provider, whose authorize request must carry exactly the set
+		// the app is registered for. A first-time connect with no
+		// explicit scopes also falls back to this set.
+		RegisteredScopes []string
+		// ScopeSeparator joins scopes on the authorize URL. Empty means
+		// a single space (RFC 6749 §3.3). Linear requires a comma.
+		ScopeSeparator string
 		// RequiresPKCE enables RFC 7636 PKCE (S256). When true,
 		// InitiateWithState generates a verifier, persists it in the
 		// OAuth2State, and adds code_challenge / code_challenge_method
@@ -161,8 +182,9 @@ type (
 )
 
 var (
-	_ Connector  = (*OAuth2Connector)(nil)
-	_ Connection = (*OAuth2Connection)(nil)
+	_ Connector      = (*OAuth2Connector)(nil)
+	_ Connection     = (*OAuth2Connection)(nil)
+	_ HTTPConnection = (*OAuth2Connection)(nil)
 
 	OAuth2TokenType = "probo/connector/oauth2"
 	OAuth2TokenTTL  = 10 * time.Minute
@@ -177,6 +199,48 @@ func DecodeOAuth2StatePayload(tokenString string) (*statelesstoken.Payload[OAuth
 	return statelesstoken.DecodePayload[OAuth2State](tokenString)
 }
 
+// effectiveScopes resolves what the authorize request will ask for. It backs
+// both the request itself and the RequestedScopes recorded in the state token,
+// which the callback falls back to when a token response omits `scope` — the
+// two must not disagree, or a reconnect persists a narrower grant than it
+// actually obtained.
+//
+// Reconnects normally ask for the union of (old granted ∪ new requested),
+// because most providers replace the grant rather than merge into it. A
+// provider with ExclusiveScopes instead accepts only what its registration
+// declares: it rejects the whole authorize request over a scope it no longer
+// offers, so neither the older grant nor a stale scope carried in by the
+// caller may widen the set.
+func (c *OAuth2Connector) effectiveScopes(opts InitiateOptions) []string {
+	if c.ExclusiveScopes {
+		if len(c.RegisteredScopes) > 0 {
+			return c.RegisteredScopes
+		}
+
+		return opts.Scopes
+	}
+
+	requested := opts.Scopes
+	if len(requested) == 0 {
+		requested = c.RegisteredScopes
+	}
+
+	if len(opts.GrantedScopes) == 0 {
+		return requested
+	}
+
+	return UnionScopes(opts.GrantedScopes, requested)
+}
+
+func (c *OAuth2Connector) joinAuthorizeScopes(scopes []string) string {
+	sep := c.ScopeSeparator
+	if sep == "" {
+		sep = " "
+	}
+
+	return strings.Join(scopes, sep)
+}
+
 func (c *OAuth2Connector) Initiate(
 	ctx context.Context,
 	provider string,
@@ -184,11 +248,12 @@ func (c *OAuth2Connector) Initiate(
 	opts InitiateOptions,
 	r *http.Request,
 ) (string, error) {
+	// RequestedScopes is filled in by InitiateWithState, which owns the
+	// resolution so the signed state and the authorize request cannot drift.
 	stateData := OAuth2State{
-		OrganizationID:  organizationID.String(),
-		Provider:        provider,
-		ConnectorID:     opts.ConnectorID,
-		RequestedScopes: opts.Scopes,
+		OrganizationID: organizationID.String(),
+		Provider:       provider,
+		ConnectorID:    opts.ConnectorID,
 	}
 
 	if r != nil {
@@ -235,6 +300,13 @@ func (c *OAuth2Connector) InitiateWithState(
 		stateData.PKCENonce = nonce
 	}
 
+	// Record what is actually being asked for, overriding whatever the
+	// caller put in the state: the callback falls back to RequestedScopes
+	// when a token response omits `scope`, so a state that disagrees with
+	// the request would persist a grant the connector never asked for.
+	scopes := c.effectiveScopes(opts)
+	stateData.RequestedScopes = scopes
+
 	state, err := statelesstoken.NewToken(salt, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create state token: %w", err)
@@ -246,8 +318,8 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("redirect_uri", c.RedirectURI)
 	authCodeQuery.Set("response_type", "code")
 
-	if len(opts.Scopes) > 0 {
-		authCodeQuery.Set("scope", strings.Join(opts.Scopes, " "))
+	if len(scopes) > 0 {
+		authCodeQuery.Set("scope", c.joinAuthorizeScopes(scopes))
 	}
 
 	if c.RequiresPKCE {
@@ -534,6 +606,14 @@ func DeriveConnectorStateKey(serverSecret string) string {
 	return deriveHMACKey(serverSecret, "probo/connector/oauth2-state-key")
 }
 
+// DeriveInstallStateKey derives the HMAC key signing app-install state tokens
+// from the active OAuth2 server signing key. Same rotation caveat as
+// DeriveConnectorStateKey: a state in flight inside the TTL fails validation
+// across a rotation and the customer must retry.
+func DeriveInstallStateKey(serverSecret string) string {
+	return deriveHMACKey(serverSecret, "probo/connector/install-state-key")
+}
+
 func basicAuthHeader(clientID, clientSecret string) string {
 	credentials := clientID + ":" + clientSecret
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
@@ -665,17 +745,28 @@ func (c *OAuth2Connection) Client(ctx context.Context) (*http.Client, error) {
 // are refused. Hardcoded provider hosts on public IPs are
 // unaffected.
 func (c *OAuth2Connection) ClientWithOptions(ctx context.Context, opts ...httpclient.Option) (*http.Client, error) {
-	opts = append(opts, httpclient.WithSSRFProtection())
-	transport := &oauth2Transport{
-		token:      c.AccessToken,
-		tokenType:  c.TokenType,
-		underlying: httpclient.DefaultPooledTransport(opts...),
-	}
-	client := &http.Client{
-		Transport: transport,
+	// A client-credentials connection stores no access token: it mints one per
+	// use. Returning the stored (empty) token here would 401 every request.
+	if c.GrantType == OAuth2GrantTypeClientCredentials {
+		return c.clientCredentialsClient(ctx, opts...)
 	}
 
-	return client, nil
+	return c.staticTokenClient(opts...), nil
+}
+
+// staticTokenClient returns a client bearing the access token the connection
+// already holds. Kept separate so the client-credentials cached-token path can
+// reuse it without recursing back through ClientWithOptions.
+func (c *OAuth2Connection) staticTokenClient(opts ...httpclient.Option) *http.Client {
+	opts = append(opts, httpclient.WithSSRFProtection())
+
+	return &http.Client{
+		Transport: &oauth2Transport{
+			token:      c.AccessToken,
+			tokenType:  c.TokenType,
+			underlying: httpclient.DefaultPooledTransport(opts...),
+		},
+	}
 }
 
 // RefreshableClient returns an HTTP client that automatically refreshes the token when expired.
@@ -777,7 +868,7 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...httpclient.Option) (*http.Client, error) {
 	// If we have a valid token that hasn't expired, reuse it
 	if c.AccessToken != "" && !c.ExpiresAt.IsZero() && c.ExpiresAt.After(time.Now()) {
-		return c.ClientWithOptions(ctx, opts...)
+		return c.staticTokenClient(opts...), nil
 	}
 
 	// TokenURL is stored from customer-supplied connector settings;
@@ -808,6 +899,9 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 	httpClient := &http.Client{
 		Transport: httpclient.DefaultPooledTransport(opts...),
+		// The callers run on a worker context with no deadline, so an
+		// unbounded exchange holds a worker slot and its database connection.
+		Timeout: clientCredentialsTokenTimeout,
 	}
 
 	resp, err := httpClient.Do(req)
@@ -817,13 +911,16 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("client credentials token response status: %d", resp.StatusCode)
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read client credentials token response body: %w", err)
+	}
+
+	// RetrieveError is the shape accessreview.IsProviderVerdict recognises: a
+	// refused exchange is the provider's verdict on the customer's credential,
+	// and an untyped error here is charged to Probo instead.
+	if resp.StatusCode != http.StatusOK {
+		return nil, &oauth2.RetrieveError{Response: resp, Body: body}
 	}
 
 	var rawToken struct {
@@ -848,13 +945,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 		c.ExpiresAt = time.Now().Add(time.Duration(rawToken.ExpiresIn) * time.Second)
 	}
 
-	return &http.Client{
-		Transport: &oauth2Transport{
-			token:      c.AccessToken,
-			tokenType:  c.TokenType,
-			underlying: httpclient.DefaultPooledTransport(opts...),
-		},
-	}, nil
+	return c.staticTokenClient(opts...), nil
 }
 
 func (c OAuth2Connection) MarshalJSON() ([]byte, error) {

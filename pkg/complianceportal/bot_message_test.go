@@ -1,0 +1,127 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package complianceportal
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/bot"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+)
+
+func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	portalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
+	accessID := gid.New(tenantID, coredata.CompliancePortalAccessEntityType)
+	messageID := gid.New(tenantID, coredata.AgentExecutionEntityType)
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	intent, err := NewRenderer("https://app.example.com").RenderMessage(
+		t.Context(),
+		bot.Message{
+			ID:             messageID,
+			OrganizationID: organizationID,
+			Type:           AccessMessageType,
+			Attributes: map[string]any{
+				CompliancePortalIDAttribute: portalID.String(),
+				AccessIDAttribute:           accessID.String(),
+				RequesterEmailAttribute:     "requester@example.com",
+				DocumentsAttribute: []MessageResource{{
+					ID:     documentID.String(),
+					Title:  "Security policy",
+					Status: "REQUESTED",
+				}},
+			},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, intent.Actions, 3)
+	assert.Equal(t, AccessCapability+".approve_all", intent.Actions[0].ID)
+	assert.Equal(
+		t,
+		"https://app.example.com/organizations/"+organizationID.String()+"/compliance-portals/"+portalID.String()+"/visitors/"+accessID.String(),
+		intent.Actions[2].URL,
+	)
+
+	require.Len(t, intent.Groups, 1)
+	assert.Equal(t, "Documents (1)", intent.Groups[0].Title)
+
+	require.Len(t, intent.Groups[0].Items, 1)
+	item := intent.Groups[0].Items[0]
+	assert.Equal(t, "Security policy", item.Label)
+	assert.Equal(
+		t,
+		"https://app.example.com/organizations/"+organizationID.String()+"/governance/documents/"+documentID.String(),
+		item.URL,
+	)
+	assert.Empty(t, item.Status)
+
+	require.NotNil(t, item.Action)
+	assert.Equal(t, AccessCapability+".review_item", item.Action.ID)
+	assert.Equal(
+		t,
+		[]bot.ActionOptionIntent{
+			{Label: "Grant", Value: "approve/" + item.ID},
+			{Label: "Reject", Value: "reject/" + item.ID},
+		},
+		item.Action.Options,
+	)
+}
+
+func TestRenderer_AuditURLUsesGovernancePath(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	auditID := gid.New(tenantID, coredata.AuditEntityType)
+	reportID := gid.New(tenantID, coredata.FileEntityType)
+	intent, err := NewRenderer("https://app.example.com").RenderMessage(
+		t.Context(),
+		bot.Message{
+			OrganizationID: organizationID,
+			Type:           AccessMessageType,
+			Attributes: map[string]any{
+				CompliancePortalIDAttribute: gid.New(tenantID, coredata.CompliancePortalEntityType).String(),
+				AccessIDAttribute:           gid.New(tenantID, coredata.CompliancePortalAccessEntityType).String(),
+				RequesterEmailAttribute:     "requester@example.com",
+				ReportsAttribute: []MessageResource{{
+					ID:      reportID.String(),
+					Title:   "SOC 2 - 2026",
+					AuditID: auditID.String(),
+					Status:  "REQUESTED",
+				}},
+			},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, intent.Groups, 1)
+	require.Len(t, intent.Groups[0].Items, 1)
+	assert.Equal(
+		t,
+		"https://app.example.com/organizations/"+organizationID.String()+"/governance/audits/"+auditID.String(),
+		intent.Groups[0].Items[0].URL,
+	)
+}

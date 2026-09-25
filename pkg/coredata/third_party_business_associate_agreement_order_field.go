@@ -51,14 +51,7 @@ func ThirdPartyBusinessAssociateAgreementOrderFields() []ThirdPartyBusinessAssoc
 }
 
 func (v ThirdPartyBusinessAssociateAgreementOrderField) IsValid() bool {
-	switch v {
-	case
-		ThirdPartyBusinessAssociateAgreementOrderFieldValidFrom,
-		ThirdPartyBusinessAssociateAgreementOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ThirdPartyBusinessAssociateAgreementOrderFields())
 }
 
 func (v ThirdPartyBusinessAssociateAgreementOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ThirdPartyBusinessAssociateAgreementOrderField) MarshalText() ([]byte, e
 }
 
 func (v *ThirdPartyBusinessAssociateAgreementOrderField) UnmarshalText(text []byte) error {
-	val := ThirdPartyBusinessAssociateAgreementOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ThirdPartyBusinessAssociateAgreementOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ThirdPartyBusinessAssociateAgreementOrderFields())
 }
 
 func (p ThirdPartyBusinessAssociateAgreementOrderField) Column() string {

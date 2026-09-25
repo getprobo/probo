@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"html"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -224,8 +225,8 @@ func renderText(buf *bytes.Buffer, n Node) error {
 
 	buf.WriteString(html.EscapeString(*n.Text))
 
-	for i := len(n.Marks) - 1; i >= 0; i-- {
-		closeMark(buf, n.Marks[i])
+	for _, v := range slices.Backward(n.Marks) {
+		closeMark(buf, v)
 	}
 
 	return nil

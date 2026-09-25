@@ -37,12 +37,15 @@ import (
 
 type (
 	DocumentVersionApprovalQuorum struct {
-		ID             gid.GID                             `db:"id"`
-		OrganizationID gid.GID                             `db:"organization_id"`
-		VersionID      gid.GID                             `db:"version_id"`
-		Status         DocumentVersionApprovalQuorumStatus `db:"status"`
-		CreatedAt      time.Time                           `db:"created_at"`
-		UpdatedAt      time.Time                           `db:"updated_at"`
+		ID              gid.GID                             `db:"id"`
+		OrganizationID  gid.GID                             `db:"organization_id"`
+		VersionID       gid.GID                             `db:"version_id"`
+		FileID          *gid.GID                            `db:"file_id"`
+		PdfAttemptCount int                                 `db:"pdf_attempt_count"`
+		PdfClaimedAt    *time.Time                          `db:"pdf_claimed_at"`
+		Status          DocumentVersionApprovalQuorumStatus `db:"status"`
+		CreatedAt       time.Time                           `db:"created_at"`
+		UpdatedAt       time.Time                           `db:"updated_at"`
 	}
 
 	DocumentVersionApprovalQuorums []*DocumentVersionApprovalQuorum
@@ -107,6 +110,9 @@ SELECT
 	id,
 	organization_id,
 	version_id,
+	file_id,
+	pdf_attempt_count,
+	pdf_claimed_at,
 	status,
 	created_at,
 	updated_at
@@ -152,6 +158,9 @@ SELECT
 	id,
 	organization_id,
 	version_id,
+	file_id,
+	pdf_attempt_count,
+	pdf_claimed_at,
 	status,
 	created_at,
 	updated_at
@@ -204,6 +213,9 @@ SELECT
 	document_version_approval_quorums.id,
 	document_version_approval_quorums.organization_id,
 	document_version_approval_quorums.version_id,
+	document_version_approval_quorums.file_id,
+	document_version_approval_quorums.pdf_attempt_count,
+	document_version_approval_quorums.pdf_claimed_at,
 	document_version_approval_quorums.status,
 	document_version_approval_quorums.created_at,
 	document_version_approval_quorums.updated_at
@@ -259,6 +271,9 @@ SELECT
 	document_version_approval_quorums.id,
 	document_version_approval_quorums.organization_id,
 	document_version_approval_quorums.version_id,
+	document_version_approval_quorums.file_id,
+	document_version_approval_quorums.pdf_attempt_count,
+	document_version_approval_quorums.pdf_claimed_at,
 	document_version_approval_quorums.status,
 	document_version_approval_quorums.created_at,
 	document_version_approval_quorums.updated_at
@@ -340,6 +355,9 @@ INSERT INTO document_version_approval_quorums (
 	tenant_id,
 	organization_id,
 	version_id,
+	file_id,
+	pdf_attempt_count,
+	pdf_claimed_at,
 	status,
 	created_at,
 	updated_at
@@ -348,6 +366,9 @@ INSERT INTO document_version_approval_quorums (
 	@tenant_id,
 	@organization_id,
 	@version_id,
+	@file_id,
+	@pdf_attempt_count,
+	@pdf_claimed_at,
 	@status,
 	@created_at,
 	@updated_at
@@ -355,13 +376,16 @@ INSERT INTO document_version_approval_quorums (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              q.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": q.OrganizationID,
-		"version_id":      q.VersionID,
-		"status":          q.Status,
-		"created_at":      q.CreatedAt,
-		"updated_at":      q.UpdatedAt,
+		"id":                q.ID,
+		"tenant_id":         scope.GetTenantID(),
+		"organization_id":   q.OrganizationID,
+		"version_id":        q.VersionID,
+		"file_id":           q.FileID,
+		"pdf_attempt_count": q.PdfAttemptCount,
+		"pdf_claimed_at":    q.PdfClaimedAt,
+		"status":            q.Status,
+		"created_at":        q.CreatedAt,
+		"updated_at":        q.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, query, args)
@@ -432,6 +456,231 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update approval quorum: %w", err)
 	}
+
+	return nil
+}
+
+func (q *DocumentVersionApprovalQuorum) ClaimNextWithoutFileForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	maxAttempts int,
+	now time.Time,
+	lease time.Duration,
+) error {
+	query := `
+SELECT
+	q.id,
+	q.organization_id,
+	q.version_id,
+	q.file_id,
+	q.pdf_attempt_count,
+	q.pdf_claimed_at,
+	q.status,
+	q.created_at,
+	q.updated_at
+FROM
+	document_version_approval_quorums q
+INNER JOIN
+	document_versions dv ON dv.id = q.version_id AND dv.tenant_id = q.tenant_id
+INNER JOIN
+	documents d ON d.id = dv.document_id AND d.tenant_id = q.tenant_id
+WHERE
+	q.file_id IS NULL
+	AND q.pdf_attempt_count < @max_pdf_attempts
+	AND q.status = @status
+	AND d.deleted_at IS NULL
+	AND (
+		q.pdf_claimed_at IS NULL
+		OR q.pdf_claimed_at < @claimed_before
+	)
+ORDER BY q.created_at ASC
+LIMIT 1
+FOR UPDATE OF q SKIP LOCKED
+`
+
+	rows, err := conn.Query(
+		ctx,
+		query,
+		pgx.StrictNamedArgs{
+			"max_pdf_attempts": maxAttempts,
+			"status":           DocumentVersionApprovalQuorumStatusPending,
+			"claimed_before":   now.Add(-lease),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot query approval quorums: %w", err)
+	}
+
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersionApprovalQuorum])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoDocumentPDFJobAvailable
+		}
+
+		return fmt.Errorf("cannot collect approval quorum: %w", err)
+	}
+
+	result.PdfAttemptCount++
+	result.PdfClaimedAt = new(now)
+	result.UpdatedAt = now
+
+	updateQuery := `
+UPDATE document_version_approval_quorums SET
+	pdf_attempt_count = @pdf_attempt_count,
+	pdf_claimed_at = @pdf_claimed_at,
+	updated_at = @updated_at
+WHERE
+	tenant_id = @tenant_id
+	AND id = @id
+`
+
+	_, err = conn.Exec(
+		ctx,
+		updateQuery,
+		pgx.StrictNamedArgs{
+			"id":                result.ID,
+			"tenant_id":         result.ID.TenantID(),
+			"pdf_attempt_count": result.PdfAttemptCount,
+			"pdf_claimed_at":    result.PdfClaimedAt,
+			"updated_at":        result.UpdatedAt,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot mark approval quorum as generating PDF: %w", err)
+	}
+
+	*q = result
+
+	return nil
+}
+
+func (q *DocumentVersionApprovalQuorum) HasPDFClaim(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+) (bool, error) {
+	if q.PdfClaimedAt == nil {
+		return false, nil
+	}
+
+	query := `
+SELECT EXISTS (
+	SELECT 1
+	FROM document_version_approval_quorums
+	WHERE
+		%s
+		AND id = @id
+		AND file_id IS NULL
+		AND status = @status
+		AND pdf_claimed_at = @pdf_claimed_at
+)
+`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":             q.ID,
+		"status":         DocumentVersionApprovalQuorumStatusPending,
+		"pdf_claimed_at": q.PdfClaimedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	var exists bool
+	if err := conn.QueryRow(ctx, query, args).Scan(&exists); err != nil {
+		return false, fmt.Errorf("cannot check approval quorum PDF claim: %w", err)
+	}
+
+	return exists, nil
+}
+
+func (q *DocumentVersionApprovalQuorum) AttachPDFFile(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	fileID gid.GID,
+	now time.Time,
+) (bool, error) {
+	if q.PdfClaimedAt == nil {
+		return false, nil
+	}
+
+	query := `
+UPDATE document_version_approval_quorums
+SET
+	file_id = @file_id,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+	AND file_id IS NULL
+	AND status = @status
+	AND pdf_claimed_at = @pdf_claimed_at
+`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":             q.ID,
+		"file_id":        fileID,
+		"status":         DocumentVersionApprovalQuorumStatusPending,
+		"pdf_claimed_at": q.PdfClaimedAt,
+		"updated_at":     now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	commandTag, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot attach approval quorum PDF: %w", err)
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		return false, nil
+	}
+
+	q.FileID = new(fileID)
+	q.UpdatedAt = now
+
+	return true, nil
+}
+
+func (q *DocumentVersionApprovalQuorum) ReleasePDFClaim(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	now time.Time,
+) error {
+	if q.PdfClaimedAt == nil {
+		return nil
+	}
+
+	query := `
+UPDATE document_version_approval_quorums
+SET
+	pdf_claimed_at = NULL,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+	AND file_id IS NULL
+	AND pdf_claimed_at = @pdf_claimed_at
+`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":             q.ID,
+		"pdf_claimed_at": q.PdfClaimedAt,
+		"updated_at":     now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot release approval quorum PDF claim: %w", err)
+	}
+
+	q.PdfClaimedAt = nil
+	q.UpdatedAt = now
 
 	return nil
 }

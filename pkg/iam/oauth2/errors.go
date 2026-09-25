@@ -80,15 +80,17 @@ func NewError(code *OAuth2Error, opts ...ErrorOption) *OAuth2Error {
 
 var (
 	// OAuth2 error codes per RFC 6749 §5.2 and RFC 8628 §3.5.
-	ErrInvalidRequest       = &OAuth2Error{code: "invalid_request"}
-	ErrInvalidClient        = &OAuth2Error{code: "invalid_client"}
-	ErrInvalidGrant         = &OAuth2Error{code: "invalid_grant"}
-	ErrUnauthorizedClient   = &OAuth2Error{code: "unauthorized_client"}
-	ErrUnsupportedGrantType = &OAuth2Error{code: "unsupported_grant_type"}
-	ErrInvalidScope         = &OAuth2Error{code: "invalid_scope"}
-	ErrAccessDenied         = &OAuth2Error{code: "access_denied"}
-	ErrServerError          = &OAuth2Error{code: "server_error"}
-	ErrInvalidRedirectURI   = &OAuth2Error{code: "invalid_redirect_uri"}
+	ErrInvalidRequest          = &OAuth2Error{code: "invalid_request"}
+	ErrInvalidClient           = &OAuth2Error{code: "invalid_client"}
+	ErrInvalidGrant            = &OAuth2Error{code: "invalid_grant"}
+	ErrUnauthorizedClient      = &OAuth2Error{code: "unauthorized_client"}
+	ErrUnsupportedGrantType    = &OAuth2Error{code: "unsupported_grant_type"}
+	ErrUnsupportedResponseType = &OAuth2Error{code: "unsupported_response_type"}
+	ErrInvalidScope            = &OAuth2Error{code: "invalid_scope"}
+	ErrInvalidTarget           = &OAuth2Error{code: "invalid_target"}
+	ErrAccessDenied            = &OAuth2Error{code: "access_denied"}
+	ErrServerError             = &OAuth2Error{code: "server_error"}
+	ErrInvalidRedirectURI      = &OAuth2Error{code: "invalid_redirect_uri"}
 
 	// RFC 7009 revocation errors.
 	ErrUnsupportedTokenType = &OAuth2Error{code: "unsupported_token_type"}

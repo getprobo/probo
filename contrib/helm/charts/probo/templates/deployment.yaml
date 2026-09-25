@@ -1,3 +1,4 @@
+{{- include "probo.validateTrustCenterTLSMode" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -70,6 +71,10 @@ spec:
               value: {{ include "probo.chrome.addr" . | quote }}
             - name: PROBOD_BRANDING
               value: {{ .Values.probo.branding | quote }}
+            - name: PROBOD_COOKIE_BANNER_TCF_CMP_ID
+              value: {{ .Values.probo.cookieBanner.tcfCmpId | default 4095 | quote }}
+            - name: PROBOD_TRUST_CENTER_TLS_MODE
+              value: {{ .Values.probo.trustCenter.tlsMode | quote }}
             # API Configuration
             - name: PROBOD_API_ADDR
               value: ":{{ .Values.service.port }}"
@@ -150,6 +155,49 @@ spec:
             {{- if .Values.probo.oauth2.cimdAllowedClientIds }}
             - name: PROBOD_OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS
               value: {{ join "," .Values.probo.oauth2.cimdAllowedClientIds | quote }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.enabled }}
+            # Identity federation issuer
+            - name: PROBOD_IDENTITY_FEDERATION_ENABLED
+              value: "true"
+            {{- if .Values.probo.identityFederation.issuerBaseUrl }}
+            - name: PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL
+              value: {{ .Values.probo.identityFederation.issuerBaseUrl | quote }}
+            {{- end }}
+            - name: PROBOD_IDENTITY_FEDERATION_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: identity-federation-signing-key
+            {{- if .Values.probo.identityFederation.signingKeyKid }}
+            - name: PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID
+              value: {{ .Values.probo.identityFederation.signingKeyKid | quote }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.previousSigningKey }}
+            - name: PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: identity-federation-previous-signing-key
+            - name: PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID
+              value: {{ required "probo.identityFederation.previousSigningKeyKid is required when probo.identityFederation.previousSigningKey is set" .Values.probo.identityFederation.previousSigningKeyKid | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.cloudformationTemplateUrl }}
+            - name: PROBOD_IDENTITY_FEDERATION_CLOUDFORMATION_TEMPLATE_URL
+              value: {{ .Values.probo.identityFederation.cloudformationTemplateUrl | quote }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.terraformModuleSource }}
+            - name: PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE
+              value: {{ .Values.probo.identityFederation.terraformModuleSource | quote }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.gcpTerraformModuleSource }}
+            - name: PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE
+              value: {{ .Values.probo.identityFederation.gcpTerraformModuleSource | quote }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.azureTerraformModuleSource }}
+            - name: PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE
+              value: {{ .Values.probo.identityFederation.azureTerraformModuleSource | quote }}
             {{- end }}
             - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
@@ -247,6 +295,21 @@ spec:
             - name: PROBOD_SMTP_HELLO_NAME
               value: {{ .Values.probo.mailer.smtp.helloName | quote }}
             {{- end }}
+            # Outbound Webhooks
+            - name: PROBOD_WEBHOOK_SENDER_INTERVAL
+              value: {{ .Values.probo.webhook.senderInterval | quote }}
+            - name: PROBOD_WEBHOOK_REQUEST_TIMEOUT
+              value: {{ .Values.probo.webhook.requestTimeout | quote }}
+            - name: PROBOD_WEBHOOK_CACHE_TTL
+              value: {{ .Values.probo.webhook.cacheTTL | quote }}
+            - name: PROBOD_WEBHOOK_STALE_AFTER
+              value: {{ .Values.probo.webhook.staleAfter | quote }}
+            - name: PROBOD_WEBHOOK_RETRY_BASE
+              value: {{ .Values.probo.webhook.retryBase | quote }}
+            - name: PROBOD_WEBHOOK_RETRY_MAX
+              value: {{ .Values.probo.webhook.retryMax | quote }}
+            - name: PROBOD_WEBHOOK_MAX_CONCURRENCY
+              value: {{ .Values.probo.webhook.maxConcurrency | quote }}
             # OpenAI Integration
             {{- if .Values.probo.openai.apiKey }}
             - name: PROBOD_OPENAI_API_KEY
@@ -260,6 +323,13 @@ spec:
               value: {{ .Values.probo.openai.modelName | quote }}
             - name: PROBOD_OPENAI_MAX_TOKENS
               value: {{ .Values.probo.openai.maxTokens | quote }}
+            {{- end }}
+            {{- if .Values.probo.anthropic.apiKey }}
+            - name: PROBOD_ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: anthropic-api-key
             {{- end }}
             # Agent Tools
             {{- if .Values.probo.agentTools.firecrawlApiKey }}
@@ -298,23 +368,6 @@ spec:
             {{- if .Values.probo.thirdPartyVettingWorker.staleAfter }}
             - name: PROBOD_THIRD_PARTY_VETTING_STALE_AFTER
               value: {{ .Values.probo.thirdPartyVettingWorker.staleAfter | quote }}
-            {{- end }}
-            # Third-party Disambiguation Agent
-            {{- if .Values.probo.thirdPartyDisambiguation.provider }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER
-              value: {{ .Values.probo.thirdPartyDisambiguation.provider | quote }}
-            {{- end }}
-            {{- if .Values.probo.thirdPartyDisambiguation.modelName }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME
-              value: {{ .Values.probo.thirdPartyDisambiguation.modelName | quote }}
-            {{- end }}
-            {{- if .Values.probo.thirdPartyDisambiguation.temperature }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE
-              value: {{ .Values.probo.thirdPartyDisambiguation.temperature | quote }}
-            {{- end }}
-            {{- if .Values.probo.thirdPartyDisambiguation.maxTokens }}
-            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS
-              value: {{ .Values.probo.thirdPartyDisambiguation.maxTokens | quote }}
             {{- end }}
             # Tracker Mapping Agent
             {{- if .Values.probo.trackerMapping.provider }}
@@ -370,10 +423,6 @@ spec:
             {{- if .Values.probo.trackerMappingWorker.agentMaxTurns }}
             - name: PROBOD_TRACKER_MAPPING_AGENT_MAX_TURNS
               value: {{ .Values.probo.trackerMappingWorker.agentMaxTurns | quote }}
-            {{- end }}
-            {{- if .Values.probo.trackerMappingWorker.disambiguationAgentTimeout }}
-            - name: PROBOD_TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT
-              value: {{ .Values.probo.trackerMappingWorker.disambiguationAgentTimeout | quote }}
             {{- end }}
             # Common Pattern Enrichment Worker
             {{- if .Values.probo.commonPatternEnrichmentWorker.interval }}
@@ -443,7 +492,7 @@ spec:
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.maxAttempts | quote }}
             {{- end }}
             # Custom Domains
-            {{- if .Values.probo.customDomains.enabled }}
+            {{- if and .Values.probo.customDomains.enabled (ne .Values.probo.trustCenter.tlsMode "external") }}
             - name: PROBOD_CUSTOM_DOMAINS_RENEWAL_INTERVAL
               value: {{ .Values.probo.customDomains.renewalInterval | quote }}
             - name: PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL
@@ -464,7 +513,47 @@ spec:
                   key: acme-account-key
             {{- end }}
             {{- end }}
-            # Connectors (Slack OAuth2)
+            # Slackbot assistant
+            {{- if .Values.probo.slackbot.enabled }}
+            {{- if eq .Values.probo.slackbot.provider "openai" }}
+            {{- $_ := required "probo.openai.apiKey is required when Slackbot uses the OpenAI provider" .Values.probo.openai.apiKey }}
+            {{- end }}
+            {{- if eq .Values.probo.slackbot.provider "anthropic" }}
+            {{- $_ := required "probo.anthropic.apiKey is required when Slackbot uses the Anthropic provider" .Values.probo.anthropic.apiKey }}
+            {{- end }}
+            - name: PROBOD_SLACKBOT_ENABLED
+              value: "true"
+            - name: PROBOD_SLACKBOT_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-signing-secret
+            - name: PROBOD_SLACKBOT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-client-id
+            - name: PROBOD_SLACKBOT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-client-secret
+            - name: PROBOD_SLACKBOT_REDIRECT_URI
+              value: {{ required "probo.slackbot.redirectUri is required when Slackbot is enabled" .Values.probo.slackbot.redirectUri | quote }}
+            - name: PROBOD_AGENT_SLACKBOT_PROVIDER
+              value: {{ required "probo.slackbot.provider is required when Slackbot is enabled" .Values.probo.slackbot.provider | quote }}
+            - name: PROBOD_AGENT_SLACKBOT_MODEL_NAME
+              value: {{ required "probo.slackbot.modelName is required when Slackbot is enabled" .Values.probo.slackbot.modelName | quote }}
+            {{- if .Values.probo.slackbot.temperature }}
+            - name: PROBOD_AGENT_SLACKBOT_TEMPERATURE
+              value: {{ .Values.probo.slackbot.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.slackbot.maxTokens }}
+            - name: PROBOD_AGENT_SLACKBOT_MAX_TOKENS
+              value: {{ .Values.probo.slackbot.maxTokens | quote }}
+            {{- end }}
+            {{- end }}
+            # Connectors
             {{- range .Values.probo.connectors }}
             {{- if eq .name "slack" }}
             - name: PROBOD_CONNECTOR_SLACK_CLIENT_ID
@@ -481,13 +570,20 @@ spec:
             - name: PROBOD_CONNECTOR_SLACK_REDIRECT_URI
               value: {{ .config.redirectUri | quote }}
             {{- end }}
-            {{- if .config.authUrl }}
-            - name: PROBOD_CONNECTOR_SLACK_AUTH_URL
-              value: {{ .config.authUrl | quote }}
+            {{- if .config.endpointAuth }}
+            - name: PROBOD_CONNECTOR_SLACK_ENDPOINT_AUTH
+              value: {{ .config.endpointAuth | quote }}
             {{- end }}
-            {{- if .config.tokenUrl }}
-            - name: PROBOD_CONNECTOR_SLACK_TOKEN_URL
-              value: {{ .config.tokenUrl | quote }}
+            {{- if .config.endpointToken }}
+            - name: PROBOD_CONNECTOR_SLACK_ENDPOINT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-slack-endpoint-token
+            {{- end }}
+            {{- if .config.endpointApiBase }}
+            - name: PROBOD_CONNECTOR_SLACK_ENDPOINT_API_BASE
+              value: {{ .config.endpointApiBase | quote }}
             {{- end }}
             {{- if .config.signingSecret }}
             - name: PROBOD_CONNECTOR_SLACK_SIGNING_SECRET
@@ -497,14 +593,68 @@ spec:
                   key: connector-slack-signing-secret
             {{- end }}
             {{- end }}
+            {{- if and (eq .name "github") (eq .type "github-app") }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_ID
+              value: {{ .config.appId | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID
+              value: {{ .config.clientId | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-github-app-client-secret
+            - name: PROBOD_CONNECTOR_GITHUB_APP_SLUG
+              value: {{ .config.slug | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-github-app-private-key
+            {{- end }}
+            {{- if eq .name "linear" }}
+            {{- $_ := required "probo.connectors linear config.clientId is required when the linear connector is declared" .config.clientId }}
+            {{- $_ := required "probo.connectors linear config.clientSecret is required when the linear connector is declared" .config.clientSecret }}
+            - name: PROBOD_CONNECTOR_LINEAR_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-client-id
+            - name: PROBOD_CONNECTOR_LINEAR_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-client-secret
+            {{- end }}
+            {{- if eq .name "linear-sync" }}
+            {{- $_ := required "probo.connectors linear-sync config.clientId is required when the linear-sync connector is declared" .config.clientId }}
+            {{- $_ := required "probo.connectors linear-sync config.clientSecret is required when the linear-sync connector is declared" .config.clientSecret }}
+            {{- $_ := required "probo.connectors linear-sync config.webhookSecret is required when the linear-sync connector is declared" .config.webhookSecret }}
+            - name: PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-sync-client-id
+            - name: PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-sync-client-secret
+            - name: PROBOD_CONNECTOR_LINEAR_SYNC_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-linear-sync-webhook-secret
+            {{- end }}
             {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.httpPort }}
               protocol: TCP
+            {{- if ne .Values.probo.trustCenter.tlsMode "external" }}
             - name: https
               containerPort: {{ .Values.service.httpsPort }}
               protocol: TCP
+            {{- end }}
             - name: backoffice
               containerPort: {{ .Values.service.port }}
               protocol: TCP

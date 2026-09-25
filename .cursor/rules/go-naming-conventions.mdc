@@ -54,5 +54,5 @@ func WithDryRun(dryRun bool) Option {
 
 ## Pointers
 
-Go 1.26: use `new(expr)` for pointer-to-value (e.g. `new(1)`, `new("foo")`, `new(time.Now())`).
+Use `new(expr)` for pointer-to-value (e.g. `new(1)`, `new("foo")`, `new(time.Now())`).
 Use `go.gearno.de/x/ref` only for dereference helpers (`ref.UnrefOrZero`).

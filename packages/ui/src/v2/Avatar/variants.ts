@@ -61,6 +61,7 @@ export const avatar = tv({
       green: {},
       amber: {},
       sky: {},
+      indigo: {},
     },
     highContrast: {
       true: {},
@@ -81,6 +82,8 @@ export const avatar = tv({
     { variant: "soft", color: "amber", highContrast: true, class: { fallback: "bg-amber-3 text-amber-12" } },
     { variant: "soft", color: "sky", highContrast: false, class: { fallback: "bg-sky-3 text-sky-11" } },
     { variant: "soft", color: "sky", highContrast: true, class: { fallback: "bg-sky-3 text-sky-12" } },
+    { variant: "soft", color: "indigo", highContrast: false, class: { fallback: "bg-indigo-3 text-indigo-11" } },
+    { variant: "soft", color: "indigo", highContrast: true, class: { fallback: "bg-indigo-3 text-indigo-12" } },
 
     // Solid: filled background (step 9, or 10 high-contrast). Most hues take
     // white text; amber/sky steps 9-10 are light and take dark text.
@@ -96,6 +99,8 @@ export const avatar = tv({
     { variant: "solid", color: "amber", highContrast: true, class: { fallback: "bg-amber-10 text-amber-12" } },
     { variant: "solid", color: "sky", highContrast: false, class: { fallback: "bg-sky-9 text-sky-12" } },
     { variant: "solid", color: "sky", highContrast: true, class: { fallback: "bg-sky-10 text-sky-12" } },
+    { variant: "solid", color: "indigo", highContrast: false, class: { fallback: "bg-indigo-9 text-white" } },
+    { variant: "solid", color: "indigo", highContrast: true, class: { fallback: "bg-indigo-10 text-white" } },
   ],
   defaultVariants: {
     size: 3,

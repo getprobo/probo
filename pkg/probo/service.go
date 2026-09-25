@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -39,7 +40,6 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/slack"
 )
 
 const (
@@ -84,13 +84,11 @@ type (
 		html2pdfConverter                     *html2pdf.Converter
 		fileManager                           *filemanager.Service
 		logger                                *log.Logger
-		slack                                 *slack.Service
 		esign                                 *esign.Service
-		connectorRegistry                     *connector.ConnectorRegistry
+		connectorRegistry                     *connector.Registry
 		invitationTokenValidity               time.Duration
 		Frameworks                            *FrameworkService
 		Measures                              *MeasureService
-		Tasks                                 *TaskService
 		Evidences                             *EvidenceService
 		Organizations                         *OrganizationService
 		ThirdParties                          *ThirdPartyService
@@ -119,7 +117,6 @@ type (
 		StatementsOfApplicability             *StatementOfApplicabilityService
 		GeneratedDocuments                    *GeneratedDocumentService
 		Files                                 *FileService
-		SlackMessages                         *slack.Service
 		LogExports                            ExportService
 	}
 )
@@ -137,10 +134,10 @@ func NewService(
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
-	slackService *slack.Service,
 	iamService *iam.Service,
 	esignService *esign.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
+	providerRegistry *provider.Registry,
 	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	if bucket == "" {
@@ -161,7 +158,6 @@ func NewService(
 		html2pdfConverter:       html2pdfConverter,
 		fileManager:             fileManagerService,
 		logger:                  logger,
-		slack:                   slackService,
 		esign:                   esignService,
 		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
@@ -172,7 +168,6 @@ func NewService(
 		html2pdfConverter: html2pdfConverter,
 	}
 	svc.Measures = &MeasureService{svc: svc}
-	svc.Tasks = &TaskService{svc: svc}
 	svc.Evidences = &EvidenceService{
 		svc: svc,
 		fileValidator: filevalidation.NewValidator(
@@ -219,7 +214,7 @@ func NewService(
 	svc.ThirdPartyContacts = &ThirdPartyContactService{svc: svc}
 	svc.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: svc}
 	svc.ThirdPartyServices = &ThirdPartyServiceService{svc: svc}
-	svc.Connectors = &ConnectorService{svc: svc}
+	svc.Connectors = &ConnectorService{svc: svc, providerRegistry: providerRegistry}
 	svc.Assets = &AssetService{svc: svc}
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}
@@ -235,7 +230,6 @@ func NewService(
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}
 	svc.GeneratedDocuments = &GeneratedDocumentService{svc: svc}
 	svc.Files = &FileService{svc: svc}
-	svc.SlackMessages = slackService
 	svc.LogExports = iamService.LogExports
 
 	return svc, nil

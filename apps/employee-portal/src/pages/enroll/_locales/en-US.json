@@ -1,0 +1,20 @@
+{
+  "title": "Enroll device",
+  "unavailable": {
+    "title": "Enrollment unavailable",
+    "description": "You do not have permission to enroll devices in any organization.",
+    "home": "Back to organizations"
+  },
+  "steps": {
+    "organization": {
+      "title": "Choose organization",
+      "description": "Pick which organization will own this device."
+    }
+  },
+  "organization": {
+    "title": "Choose organization",
+    "description": "Pick which organization will own and manage this device.",
+    "placeholder": "Select an organization",
+    "continue": "Continue"
+  }
+}

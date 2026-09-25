@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -50,11 +50,17 @@ export async function execute(
 				... on Task {
 					id
 					name
-					description
+					content
 					state
 					priority
 					timeEstimate
 					deadline
+					externalLink {
+						provider
+						identifier
+						url
+						origin
+					}
 					createdAt
 					updatedAt
 				}
@@ -67,6 +73,11 @@ export async function execute(
 	};
 
 	const responseData = await proboApiRequest.call(this, query, variables);
+	const data = responseData.data as IDataObject | undefined;
+	const node = data?.node as IDataObject | undefined;
+	if (data && node) {
+		data.node = withPlainTextContent(node);
+	}
 
 	return {
 		json: responseData,

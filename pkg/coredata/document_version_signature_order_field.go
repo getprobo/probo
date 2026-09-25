@@ -51,14 +51,7 @@ func DocumentVersionSignatureOrderFields() []DocumentVersionSignatureOrderField 
 }
 
 func (v DocumentVersionSignatureOrderField) IsValid() bool {
-	switch v {
-	case
-		DocumentVersionSignatureOrderFieldCreatedAt,
-		DocumentVersionSignatureOrderFieldSignedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DocumentVersionSignatureOrderFields())
 }
 
 func (v DocumentVersionSignatureOrderField) String() string {
@@ -70,14 +63,7 @@ func (v DocumentVersionSignatureOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DocumentVersionSignatureOrderField) UnmarshalText(text []byte) error {
-	val := DocumentVersionSignatureOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DocumentVersionSignatureOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DocumentVersionSignatureOrderFields())
 }
 
 func (p DocumentVersionSignatureOrderField) Column() string {

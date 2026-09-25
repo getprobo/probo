@@ -46,6 +46,7 @@ query($id: ID!) {
       excluded
       lastMatchedAt
       commonTrackerPatternId
+      attribution
       createdAt
       updatedAt
     }
@@ -67,6 +68,7 @@ type viewResponse struct {
 		Excluded               bool    `json:"excluded"`
 		LastMatchedAt          *string `json:"lastMatchedAt"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
+		Attribution            *string `json:"attribution"`
 		CreatedAt              string  `json:"createdAt"`
 		UpdatedAt              string  `json:"updatedAt"`
 	} `json:"node"`
@@ -150,6 +152,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Common Pattern:"), *v.CommonTrackerPatternID)
 			} else {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Origin:"), "Manual (no catalog link)")
+			}
+
+			if v.Attribution != nil && *v.Attribution != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Attribution:"), *v.Attribution)
 			}
 
 			_, _ = fmt.Fprintln(out)

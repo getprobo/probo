@@ -44,4 +44,7 @@ var (
 	ErrTrackerResourceNotFound    = errors.New("tracker resource not found")
 	ErrResourceAlreadyExists      = errors.New("a resource with this origin and path already exists in this banner")
 	ErrSameResourceCategoryMove   = errors.New("source and target cookie categories must be different")
+	ErrTCFNotEnabled              = errors.New("tcf is not enabled for this cookie banner")
+	ErrGVLVendorNotFound          = errors.New("gvl vendor not found")
+	ErrGVLVendorDeleted           = errors.New("gvl vendor has been deleted from the catalog")
 )

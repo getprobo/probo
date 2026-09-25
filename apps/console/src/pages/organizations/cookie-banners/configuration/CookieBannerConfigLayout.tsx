@@ -18,28 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ClipboardTextIcon, CodeIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import {
+  ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
-  IconGlobe,
-  IconPageTextLine,
-  IconSettingsGear2,
+  DropdownItem,
   IconSquareBehindSquare2,
+  IconTrashCan,
   PageHeader,
-  TabLink,
-  Tabs,
+  useConfirm,
   useToast,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { Link, Outlet, useParams } from "react-router";
-import { graphql } from "relay-runtime";
+import { Link, Outlet, useNavigate } from "react-router";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayoutActivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutActivateMutation.graphql";
 import type { CookieBannerConfigLayoutDeactivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutDeactivateMutation.graphql";
+import type { CookieBannerConfigLayoutDeleteMutation } from "#/__generated__/core/CookieBannerConfigLayoutDeleteMutation.graphql";
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -53,6 +52,7 @@ export const cookieBannerConfigLayoutQuery = graphql`
         name
         origin
         state
+        canDelete: permission(action: "core:cookie-banner:delete")
         latestVersion {
           id
           version
@@ -88,6 +88,17 @@ const deactivateMutation = graphql`
   }
 `;
 
+const deleteMutation = graphql`
+  mutation CookieBannerConfigLayoutDeleteMutation(
+    $input: DeleteCookieBannerInput!
+    $connections: [ID!]!
+  ) {
+    deleteCookieBanner(input: $input) {
+      deletedCookieBannerId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
 const publishMutation = graphql`
   mutation CookieBannerConfigLayoutPublishMutation($input: PublishCookieBannerVersionInput!) {
     publishCookieBannerVersion(input: $input) {
@@ -115,8 +126,9 @@ interface CookieBannerConfigLayoutProps {
 export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfigLayoutProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
+  const confirm = useConfirm();
+  const navigate = useNavigate();
   const organizationId = useOrganizationId();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(cookieBannerConfigLayoutQuery, queryRef);
   if (data.node.__typename !== "CookieBanner") {
@@ -124,12 +136,19 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
   }
 
   const banner = data.node;
+  usePageTitle(banner.name);
 
   const [activate, isActivating] = useMutation<CookieBannerConfigLayoutActivateMutation>(activateMutation);
   const [deactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(
     deactivateMutation,
   );
   const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(publishMutation);
+  const [deleteCookieBanner] = useMutation<CookieBannerConfigLayoutDeleteMutation>(deleteMutation);
+
+  const connectionId = ConnectionHandler.getConnectionID(
+    organizationId,
+    "CookieBannerSwitcherMenu_cookieBanners",
+  );
 
   const handleToggleState = () => {
     if (banner.state === "ACTIVE") {
@@ -167,22 +186,69 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
     });
   };
 
+  const handleDelete = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          let nextPath = `/organizations/${organizationId}/privacy/cookie-banners/new`;
+          deleteCookieBanner({
+            variables: {
+              input: { cookieBannerId: banner.id },
+              connections: [connectionId],
+            },
+            updater(store) {
+              const connection = store.get(connectionId);
+              if (connection == null) {
+                return;
+              }
+              const edges = connection.getLinkedRecords("edges") ?? [];
+              for (const edge of edges) {
+                const id = edge?.getLinkedRecord("node")?.getDataID();
+                if (typeof id === "string" && id !== banner.id) {
+                  nextPath = `/organizations/${organizationId}/privacy/cookie-banners/${id}/configure`;
+                  return;
+                }
+              }
+            },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({
+                  title: t("configLayout.errors.title"),
+                  description: errors[0].message,
+                  variant: "error",
+                });
+              } else {
+                toast({
+                  title: t("configLayout.messages.successTitle"),
+                  description: t("configLayout.messages.deleted"),
+                  variant: "success",
+                });
+                void navigate(nextPath);
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({
+                title: t("configLayout.errors.title"),
+                description: formatError(t("configLayout.errors.delete"), error),
+                variant: "error",
+              });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: t("configLayout.deleteConfirmation", { name: banner.name }),
+        variant: "danger",
+        label: t("configLayout.actions.delete"),
+      },
+    );
+  };
+
   const hasDraft = banner.latestVersion?.state === "DRAFT";
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("configLayout.breadcrumbs.index"),
-            to: `/organizations/${organizationId}/cookie-banners`,
-          },
-          {
-            label: banner.name,
-          },
-        ]}
-      />
-
       <PageHeader
         title={(
           <div className="align-baseline">
@@ -226,7 +292,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
               <>
                 <span className="text-border-primary">·</span>
                 <Link
-                  to={`/organizations/${organizationId}/documents/${banner.policyDocument.id}`}
+                  to={`/organizations/${organizationId}/governance/documents/${banner.policyDocument.id}`}
                   className="font-medium text-txt-primary underline"
                 >
                   {t("configLayout.metadata.cookiePolicy")}
@@ -251,34 +317,18 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         >
           {banner.state === "ACTIVE" ? t("configLayout.actions.deactivate") : t("configLayout.actions.activate")}
         </Button>
+        {banner.canDelete && banner.state !== "ACTIVE" && (
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={handleDelete}
+            >
+              {t("configLayout.actions.delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </PageHeader>
-
-      <Tabs>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/display`}>
-          <IconPageTextLine size={20} />
-          {t("configLayout.tabs.display")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/settings`}>
-          <IconSettingsGear2 size={20} />
-          {t("configLayout.tabs.settings")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/translations`}>
-          <IconGlobe size={20} />
-          {t("configLayout.tabs.translations")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/trackers`}>
-          <MagnifyingGlassIcon size={20} />
-          {t("configLayout.tabs.trackers")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/resources`}>
-          <CodeIcon size={20} />
-          {t("configLayout.tabs.resources")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/consent-records`}>
-          <ClipboardTextIcon size={20} />
-          {t("configLayout.tabs.consentRecords")}
-        </TabLink>
-      </Tabs>
 
       <Outlet />
     </div>

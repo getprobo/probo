@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import {
   Button,
   Card,
@@ -25,6 +26,7 @@ import {
   IconCrossLargeX,
   IconPencil,
   Markdown,
+  PageHeader,
   Textarea,
 } from "@probo/ui";
 import { useRef, useState } from "react";
@@ -81,10 +83,12 @@ type Props = {
   organization: ContextPageFragment$key;
 };
 
-export default function ContextPage(props: Props) {
+export function ContextPage(props: Props) {
   const { t } = useTranslation();
   const organization = useFragment(fragment, props.organization);
   const context = organization.context;
+
+  usePageTitle(t("context.title"));
 
   const sections: SectionConfig[] = [
     {
@@ -129,6 +133,10 @@ export default function ContextPage(props: Props) {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title={t("context.title")}
+        description={t("context.description")}
+      />
       {sections.map(section => (
         <ContextSection
           key={section.key}

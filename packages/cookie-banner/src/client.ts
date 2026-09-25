@@ -23,7 +23,7 @@ import {
   observeAndActivate,
 } from "./activation";
 import { getConsent } from "./consent";
-import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
+import { COOKIE_NAME, getConsentCookie, setConsentCookie, type ConsentCookie } from "./cookie";
 import type { Detector } from "./detectors";
 import {
   CookieDetector,
@@ -34,12 +34,15 @@ import {
   StorageDetector,
 } from "./detectors";
 import { NotFoundError } from "./errors";
+import { rewriteLegacyConsoleHost } from "./hosted-url";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
 import type { ConsentIntegration } from "./integrations";
 import { createDefaultIntegrations } from "./integrations";
 import { resolveLayout } from "./layout";
 import { enqueue, flush } from "./queue";
+import { getTCFRuntime } from "./addons";
+import { projectConsentFromTCF } from "./project-consent";
 import type {
   BannerConfig,
   ConsentAction,
@@ -49,6 +52,11 @@ import type {
   VisitorConsent,
 } from "./types";
 import { getOrCreateVisitorId, getVisitorId } from "./visitor";
+
+function tcfProjects(config: BannerConfig): boolean {
+  return !!config.tcf?.gvl &&
+    (config.regulation === "GDPR" || config.regulation === "UK_GDPR");
+}
 
 export type {
   BannerConfig,
@@ -91,11 +99,11 @@ export class CookieBannerClient {
     if (!base.endsWith("/")) {
       base += "/";
     }
-    this.baseUrl = new URL(base);
+    this.baseUrl = rewriteLegacyConsoleHost(new URL(base));
     this.bannerId = config.bannerId;
     this.visitorId = getVisitorId(config.bannerId);
     this.lang = detectLanguage(config.lang);
-    this.integrations = createDefaultIntegrations();
+    this.integrations = createDefaultIntegrations(config.integrations);
   }
 
   get loaded(): boolean {
@@ -146,10 +154,13 @@ export class CookieBannerClient {
           action: cookie.action,
           consent_data: cookie.data,
           created_at: "",
+          tc: cookie.tc,
         };
         this._gpcApplied = cookie.action === "GPC";
-        this.activate(cookie.data);
-        getConsent()._setReady(cookie.data, true);
+        const cookieData = this.projectedConsent(cookie.data, cookie.tc);
+        this.activate(cookieData);
+        getConsent()._setReady(cookieData, true);
+        getTCFRuntime()?.onConfig(config, cookie.tc);
         void flush(this.bannerId);
         return;
       }
@@ -170,21 +181,27 @@ export class CookieBannerClient {
       if (apiConsent && apiConsent.version === config.version) {
         this.consent = apiConsent;
         this._gpcApplied = apiConsent.action === "GPC";
-        setConsentCookie(
-          {
-            bid: this.bannerId,
-            v: apiConsent.version,
-            vid: apiConsent.visitor_id,
-            action: apiConsent.action,
-            data: apiConsent.consent_data,
-          },
-          config.consent_expiry_days,
-        );
-        this.activate(apiConsent.consent_data);
-        getConsent()._setReady(apiConsent.consent_data, true);
+        const restored: ConsentCookie = {
+          bid: this.bannerId,
+          v: apiConsent.version,
+          vid: apiConsent.visitor_id,
+          action: apiConsent.action,
+          data: apiConsent.consent_data,
+        };
+        if (apiConsent.tc) {
+          restored.tc = apiConsent.tc;
+        }
+        setConsentCookie(restored, config.consent_expiry_days);
+        const restoredData = this.projectedConsent(apiConsent.consent_data, apiConsent.tc);
+        this.activate(restoredData);
+        getConsent()._setReady(restoredData, true);
+        getTCFRuntime()?.onConfig(config, apiConsent.tc);
       } else {
         this.consent = null;
+        getTCFRuntime()?.onConfig(config);
       }
+    } else {
+      getTCFRuntime()?.onConfig(config);
     }
 
     if (!this.consent && this.gpcDetected) {
@@ -281,11 +298,15 @@ export class CookieBannerClient {
 
   customize(categories: Record<string, boolean>): void {
     const cfg = this.config;
-
-    const consentData: Record<string, boolean> = {};
-    for (const cat of cfg.categories) {
-      consentData[cat.slug] = cat.kind === "NECESSARY" || !!categories[cat.slug];
-    }
+    const pendingChoices = getTCFRuntime()?.getPendingChoices?.();
+    const consentData = tcfProjects(cfg) && pendingChoices
+      ? projectConsentFromTCF(cfg.categories, pendingChoices)
+      : Object.fromEntries(
+          cfg.categories.map(cat => [
+            cat.slug,
+            cat.kind === "NECESSARY" || !!categories[cat.slug],
+          ]),
+        );
 
     this.recordConsent("CUSTOMIZE", consentData);
   }
@@ -306,6 +327,8 @@ export class CookieBannerClient {
     const cfg = this.config;
     const visitorId = this.ensureVisitorId();
 
+    const tc = getTCFRuntime()?.onConsent(action, cfg);
+
     this.consent = {
       visitor_id: visitorId,
       version: cfg.version,
@@ -313,31 +336,57 @@ export class CookieBannerClient {
       consent_data: consentData,
       created_at: "",
     };
+    if (tc) {
+      this.consent.tc = tc;
+    }
 
-    setConsentCookie(
-      {
-        bid: this.bannerId,
-        v: cfg.version,
-        vid: visitorId,
-        action,
-        data: consentData,
-      },
-      cfg.consent_expiry_days,
-    );
+    const cookie: ConsentCookie = {
+      bid: this.bannerId,
+      v: cfg.version,
+      vid: visitorId,
+      action,
+      data: consentData,
+    };
+    if (tc) {
+      cookie.tc = tc;
+    }
+
+    setConsentCookie(cookie, cfg.consent_expiry_days);
 
     this.activate(consentData);
     getConsent()._notify(consentData);
 
     const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
-    const body = {
+    const body: {
+      visitor_id: string;
+      version: number;
+      action: ConsentAction;
+      consent_data: Record<string, boolean>;
+      tc?: string;
+    } = {
       visitor_id: visitorId,
       version: cfg.version,
       action,
       consent_data: consentData,
     };
+    if (tc) {
+      body.tc = tc;
+    }
     void fetchJSON<ConsentRecord>(url, { method: "POST", body })
       .then(() => void flush(this.bannerId))
       .catch(() => enqueue(this.bannerId, url.href, body));
+  }
+
+  private projectedConsent(
+    stored: Record<string, boolean>,
+    tc?: string,
+  ): Record<string, boolean> {
+    if (!tc || !tcfProjects(this.config) || !getTCFRuntime()?.decodeChoices) {
+      return stored;
+    }
+
+    const choices = getTCFRuntime()?.decodeChoices?.(tc) ?? null;
+    return projectConsentFromTCF(this.config.categories, choices);
   }
 
   private buildDefaultConsentData(): Record<string, boolean> {

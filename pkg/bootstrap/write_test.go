@@ -184,9 +184,6 @@ func TestWriteConfig_OmitsEmptyOptionalBlocks(t *testing.T) {
 					Provider:  "openai",
 					ModelName: "gpt-4o",
 				},
-				ThirdPartyDisambiguation: probodconfig.LLMAgentConfig{
-					MaxTokens: new(4096),
-				},
 			},
 		},
 	}
@@ -229,7 +226,6 @@ func TestWriteConfig_OmitsEmptyOptionalBlocks(t *testing.T) {
 	llm, ok := probod["llm"].(map[string]any)
 	require.True(t, ok)
 	assert.NotContains(t, llm, "probo")
-	assert.NotContains(t, llm, "third-party-disambiguation")
 	assert.NotContains(t, llm, "tools")
 }
 

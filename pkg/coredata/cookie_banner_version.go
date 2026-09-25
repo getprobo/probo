@@ -42,6 +42,7 @@ type (
 		ConsentExpiryDays int                                   `json:"consent_expiry_days"`
 		DefaultLanguage   string                                `json:"default_language"`
 		Categories        []CookieBannerVersionSnapshotCategory `json:"categories"`
+		IABVendorIDs      []int                                 `json:"iab_vendor_ids,omitempty"`
 	}
 
 	CookieBannerVersionSnapshotTranslation struct {
@@ -61,6 +62,7 @@ type (
 		Kind            CookieCategoryKind `json:"kind"`
 		Cookies         CookieItems        `json:"cookies"`
 		GCMConsentTypes []string           `json:"gcm_consent_types"`
+		TCFPurposeIDs   []int              `json:"tcf_purpose_ids"`
 		PostHogConsent  bool               `json:"posthog_consent"`
 	}
 
@@ -132,11 +134,19 @@ func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error)
 		return snapshot, fmt.Errorf("cannot unmarshal cookie banner version snapshot: %w", err)
 	}
 
+	if snapshot.IABVendorIDs == nil {
+		snapshot.IABVendorIDs = []int{}
+	}
+
 	// Snapshots created before tracker types were captured only ever held
 	// cookie-type trackers, so their cookie items carry an empty tracker
 	// type. Backfill them as cookies so downstream consumers (policy
 	// generation, GraphQL, served banner config) see a valid type.
 	for i := range snapshot.Categories {
+		if snapshot.Categories[i].TCFPurposeIDs == nil {
+			snapshot.Categories[i].TCFPurposeIDs = []int{}
+		}
+
 		for j := range snapshot.Categories[i].Cookies {
 			if snapshot.Categories[i].Cookies[j].TrackerType == "" {
 				snapshot.Categories[i].Cookies[j].TrackerType = TrackerTypeCookie

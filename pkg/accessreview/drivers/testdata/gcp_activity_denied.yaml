@@ -1,0 +1,69 @@
+---
+# Policy Analyzer and Admin Activity are both denied, then Directory MFA
+# is denied. Identities must still be returned with last login nil and
+# MFA unknown. Call order is the contract.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: policyanalyzer.googleapis.com
+        url: https://policyanalyzer.googleapis.com/v1/projects/123456789012/locations/global/activityTypes/serviceAccountLastAuthentication/activities:query
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 403 Forbidden
+        code: 403
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: logging.googleapis.com
+        url: https://logging.googleapis.com/v2/entries:list
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 403 Forbidden
+        code: 403
+        duration: 1ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: admin.googleapis.com
+        url: https://admin.googleapis.com/admin/directory/v1/users/alice@example.com
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 403 Forbidden
+        code: 403
+        duration: 1ms

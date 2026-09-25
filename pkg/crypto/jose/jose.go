@@ -110,6 +110,38 @@ func SignJWT(privateKey *rsa.PrivateKey, kid string, claims any) (string, error)
 	return signingInput + "." + signatureB64, nil
 }
 
+// ValidateRSAPublicKey reports whether pub is acceptable for RS256 JWK use.
+func ValidateRSAPublicKey(pub *rsa.PublicKey) error {
+	if pub == nil || pub.N == nil {
+		return fmt.Errorf("cannot validate rsa public key: public key is required")
+	}
+
+	// BitLen reports the size of the absolute value, so a negative modulus
+	// would otherwise pass the size floor below.
+	if pub.N.Sign() != 1 {
+		return fmt.Errorf("cannot validate rsa public key: modulus must be positive")
+	}
+
+	if pub.N.BitLen() < minRSAModulusBits {
+		return fmt.Errorf(
+			"cannot validate rsa public key: modulus is %d bits, minimum is %d",
+			pub.N.BitLen(),
+			minRSAModulusBits,
+		)
+	}
+
+	// RFC 8017 section 3.1: e is an odd integer between 3 and n-1. An even
+	// exponent is not invertible modulo λ(n), so the key cannot verify.
+	if pub.E < 3 || pub.E&1 == 0 {
+		return fmt.Errorf(
+			"cannot validate rsa public key: exponent must be an odd integer at least 3, got %d",
+			pub.E,
+		)
+	}
+
+	return nil
+}
+
 // RSAPublicKeyFromJWK reconstructs an RSA public key from a JWK.
 func RSAPublicKeyFromJWK(jwk JWK) (*rsa.PublicKey, error) {
 	if jwk.KeyType != "RSA" {
@@ -131,15 +163,16 @@ func RSAPublicKeyFromJWK(jwk JWK) (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("cannot convert jwk to rsa public key: invalid rsa exponent")
 	}
 
-	n := new(big.Int).SetBytes(nBytes)
-	if n.BitLen() < minRSAModulusBits {
-		return nil, fmt.Errorf("cannot convert jwk to rsa public key: modulus is %d bits, minimum is %d", n.BitLen(), minRSAModulusBits)
+	pub := &rsa.PublicKey{
+		N: new(big.Int).SetBytes(nBytes),
+		E: int(e.Int64()),
 	}
 
-	return &rsa.PublicKey{
-		N: n,
-		E: int(e.Int64()),
-	}, nil
+	if err := ValidateRSAPublicKey(pub); err != nil {
+		return nil, fmt.Errorf("cannot convert jwk to rsa public key: %w", err)
+	}
+
+	return pub, nil
 }
 
 // PublicKeyFromJWKS returns the RSA public key matching the given key ID.

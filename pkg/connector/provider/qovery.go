@@ -24,27 +24,43 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// qoveryKeyPattern covers both organization token classes, which ride the
+// same Token scheme: a regular API token and a policy token. What it turns
+// away is the Console's own JWT, which the API takes only as a Bearer.
+var qoveryKeyPattern = regexp.MustCompile(`^(?:qov_|sk-qov-)[\s\S]`)
+
 func qoveryRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderQovery,
+		Provider: coredata.ConnectorProviderQovery,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.QoveryConnectorSettings) string {
+				return s.OrganizationID
+			},
+		),
 		DisplayName:      "Qovery",
 		DocumentationURL: accessReviewDocsURL("qovery"),
-		SupportsAPIKey:   true,
-		APIKeyAuthScheme: "Token",
-		BuildProbeURL:    buildQoveryProbeURL,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthScheme, Name: "Token"},
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
+			KeyFormat: &KeyFormat{
+				Pattern: qoveryKeyPattern,
+				Example: "qov_… or sk-qov-…",
+			},
+		},
+		BuildProbeURL: buildQoveryProbeURL,
 		Endpoints: Endpoints{
 			// Qovery's API is unversioned in the path; the driver joins the
 			// resource segments onto this origin.
 			APIBase: "https://api.qovery.com",
-		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)

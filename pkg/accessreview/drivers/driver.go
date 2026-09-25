@@ -272,7 +272,27 @@ func (rt *retryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	var lastResp *http.Response
 
 	for attempt := range rt.maxRetries {
-		resp, err := transport.RoundTrip(req)
+		// The previous attempt read the body to the end, so a POST resent as
+		// it stands carries nothing: the provider answers 400 and the retry
+		// turns a recoverable 5xx into a failed sync. Rewind onto a clone,
+		// which also keeps this transport from mutating its caller's request.
+		attemptReq := req
+
+		if attempt > 0 && req.Body != nil {
+			if req.GetBody == nil {
+				break
+			}
+
+			body, err := req.GetBody()
+			if err != nil {
+				return nil, fmt.Errorf("cannot rewind request body for retry: %w", err)
+			}
+
+			attemptReq = req.Clone(req.Context())
+			attemptReq.Body = body
+		}
+
+		resp, err := transport.RoundTrip(attemptReq)
 		if err != nil {
 			return nil, err
 		}

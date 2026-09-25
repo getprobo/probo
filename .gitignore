@@ -37,3 +37,6 @@ e2e-artifacts/
 coverage-e2e.txt
 coverage-e2e-core.txt
 coverage-e2e-packages.txt
+
+.terraform/
+.terraform.lock.hcl

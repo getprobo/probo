@@ -49,13 +49,7 @@ func WebhookEventOrderFields() []WebhookEventOrderField {
 }
 
 func (v WebhookEventOrderField) IsValid() bool {
-	switch v {
-	case
-		WebhookEventOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, WebhookEventOrderFields())
 }
 
 func (v WebhookEventOrderField) String() string {
@@ -67,14 +61,7 @@ func (v WebhookEventOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *WebhookEventOrderField) UnmarshalText(text []byte) error {
-	val := WebhookEventOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid WebhookEventOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, WebhookEventOrderFields())
 }
 
 func (p WebhookEventOrderField) Column() string {

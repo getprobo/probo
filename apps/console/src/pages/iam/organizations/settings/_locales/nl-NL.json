@@ -1,0 +1,76 @@
+{
+  "workspaceSettingsPage": {
+    "title": "Werkruimte"
+  },
+  "identity": {
+    "title": "Identiteit",
+    "description": "Deze gegevens worden gebruikt in de console, documenten en exports.",
+    "fields": {
+      "logo": "Logo",
+      "logoPlaceholder": "Sleep of klik",
+      "horizontalLogo": "Horizontaal logo",
+      "horizontalLogoPlaceholder": "Sleep of klik",
+      "acceptedFiles": "JPEG, PNG, SVG of WebP. Maximaal 5 MB.",
+      "name": "Naam"
+    },
+    "actions": {
+      "save": "Opslaan",
+      "clearHorizontalLogo": "Horizontaal logo verwijderen"
+    },
+    "messages": {
+      "updated": "Werkruimte bijgewerkt",
+      "horizontalLogoDeleted": "Horizontaal logo verwijderd"
+    },
+    "errors": {
+      "update": "Bijwerken van werkruimte mislukt",
+      "deleteHorizontalLogo": "Verwijderen van horizontaal logo mislukt",
+      "nameRequired": "Voer een naam in",
+      "invalidFileType": {
+        "title": "Bestandstype niet ondersteund",
+        "description": "Upload een JPEG-, PNG-, SVG- of WebP-afbeelding."
+      },
+      "fileTooLarge": {
+        "title": "Bestand te groot",
+        "description": "Upload een afbeelding kleiner dan 5 MB."
+      },
+      "tooManyFiles": {
+        "title": "Te veel bestanden",
+        "description": "Upload één afbeelding tegelijk."
+      }
+    },
+    "deleteHorizontalLogo": {
+      "title": "Horizontaal logo verwijderen",
+      "description": "Het horizontale logo van deze werkruimte verwijderen?",
+      "actions": {
+        "cancel": "Annuleren",
+        "confirm": "Verwijderen"
+      }
+    }
+  },
+  "dangerZone": {
+    "title": "Gevarenzone",
+    "delete": {
+      "title": "Werkruimte verwijderen",
+      "description": "Verwijder deze werkruimte en alle bijbehorende gegevens permanent.",
+      "warning": "Dit kan niet ongedaan worden gemaakt.",
+      "action": "Werkruimte verwijderen"
+    }
+  },
+  "deleteWorkspaceDialog": {
+    "title": "Werkruimte verwijderen",
+    "description": "Hiermee worden {{organizationName}} en alle bijbehorende gegevens permanent verwijderd.",
+    "warning": "Dit kan niet ongedaan worden gemaakt.",
+    "confirmationLabel": "Typ \"{{organizationName}}\" om te bevestigen:",
+    "confirmationMismatch": "De naam komt niet overeen.",
+    "actions": {
+      "cancel": "Annuleren",
+      "delete": "Werkruimte verwijderen"
+    },
+    "messages": {
+      "deleted": "Werkruimte verwijderd"
+    },
+    "errors": {
+      "delete": "Verwijderen van werkruimte mislukt"
+    }
+  }
+}

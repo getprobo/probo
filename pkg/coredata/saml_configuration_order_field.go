@@ -49,13 +49,7 @@ func SAMLConfigurationOrderFields() []SAMLConfigurationOrderField {
 }
 
 func (v SAMLConfigurationOrderField) IsValid() bool {
-	switch v {
-	case
-		SAMLConfigurationOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, SAMLConfigurationOrderFields())
 }
 
 func (v SAMLConfigurationOrderField) String() string {
@@ -67,14 +61,7 @@ func (v SAMLConfigurationOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *SAMLConfigurationOrderField) UnmarshalText(text []byte) error {
-	val := SAMLConfigurationOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid SAMLConfigurationOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, SAMLConfigurationOrderFields())
 }
 
 func (p SAMLConfigurationOrderField) Column() string {

@@ -23,6 +23,7 @@ package bridge
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/scim/bridge/reactivate"
 	"go.probo.inc/probo/pkg/cmd/scim/bridge/update"
 	"go.probo.inc/probo/pkg/cmd/scim/bridge/view"
 )
@@ -35,6 +36,7 @@ func NewCmdBridge(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
+	cmd.AddCommand(reactivate.NewCmdReactivate(f))
 
 	return cmd
 }

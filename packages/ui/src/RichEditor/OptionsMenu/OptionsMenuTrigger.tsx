@@ -90,6 +90,7 @@ export function OptionsMenuTrigger({
       onDragStart={onDragStart}
       onDragEnd={() => setHoveredBlock(null)}
       type="button"
+      data-rich-editor-floating=""
       style={{
         ...triggerStyles,
         visibility: isPositioned ? "visible" : "hidden",

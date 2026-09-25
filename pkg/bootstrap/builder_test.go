@@ -24,11 +24,55 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/probodconfig"
+)
+
+// The configuration decodes key material as it is read, so a test that reaches
+// Build must hand it a real key. Generating one costs enough that the suite
+// shares them; a second signing key lets a test tell two keys apart.
+var (
+	testSigningKeyPEM = sync.OnceValue(func() string {
+		keyPEM, err := GenerateOAuth2SigningKey()
+		if err != nil {
+			panic(err)
+		}
+
+		return keyPEM
+	})
+
+	testOtherSigningKeyPEM = sync.OnceValue(func() string {
+		keyPEM, err := GenerateOAuth2SigningKey()
+		if err != nil {
+			panic(err)
+		}
+
+		return keyPEM
+	})
+
+	testECKeyPEM = sync.OnceValue(func() string {
+		key, err := keys.Generate(keys.TypeEC256)
+		if err != nil {
+			panic(err)
+		}
+
+		keyPEM, err := pem.EncodePrivateKey(key)
+		if err != nil {
+			panic(err)
+		}
+
+		return string(keyPEM)
+	})
 )
 
 func mockEnv(env map[string]string) EnvGetter {
@@ -56,7 +100,7 @@ func requiredEnv() map[string]string {
 		"PROBOD_ENCRYPTION_KEY":            "test-encryption-key-32-bytes-long",
 		"PROBOD_AUTH_COOKIE_SECRET":        "test-cookie-secret-32-bytes-long!",
 		"PROBOD_AUTH_PASSWORD_PEPPER":      "test-password-pepper-32-bytes-lo",
-		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "test-oauth2-signing-key",
+		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": testSigningKeyPEM(),
 	}
 }
 
@@ -107,6 +151,23 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			wantMissing: []string{"PROBOD_CONNECTOR_SLACK_CLIENT_SECRET", "PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"},
 		},
 		{
+			name: "enabled slackbot missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":            "key",
+				"PROBOD_AUTH_COOKIE_SECRET":        "secret",
+				"PROBOD_AUTH_PASSWORD_PEPPER":      "pepper",
+				"PROBOD_SLACKBOT_ENABLED":          "true",
+				"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "signing-key",
+			},
+			wantMissing: []string{
+				"PROBOD_SLACKBOT_SIGNING_SECRET",
+				"PROBOD_SLACKBOT_CLIENT_ID",
+				"PROBOD_SLACKBOT_CLIENT_SECRET",
+				"PROBOD_SLACKBOT_REDIRECT_URI",
+				"PROBOD_OPENAI_API_KEY",
+			},
+		},
+		{
 			name: "google workspace connector missing required fields",
 			env: map[string]string{
 				"PROBOD_ENCRYPTION_KEY":                       "key",
@@ -126,6 +187,26 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			},
 			wantMissing: []string{"PROBOD_CONNECTOR_MICROSOFT_365_CLIENT_SECRET"},
 		},
+		{
+			name: "cal.com connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":              "key",
+				"PROBOD_AUTH_COOKIE_SECRET":          "secret",
+				"PROBOD_AUTH_PASSWORD_PEPPER":        "pepper",
+				"PROBOD_CONNECTOR_CAL_COM_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"PROBOD_CONNECTOR_CAL_COM_CLIENT_SECRET"},
+		},
+		{
+			name: "calendly connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":               "key",
+				"PROBOD_AUTH_COOKIE_SECRET":           "secret",
+				"PROBOD_AUTH_PASSWORD_PEPPER":         "pepper",
+				"PROBOD_CONNECTOR_CALENDLY_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"PROBOD_CONNECTOR_CALENDLY_CLIENT_SECRET"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -142,10 +223,45 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 	}
 }
 
+func TestBuilder_Build_InvalidCookieBannerTCFCmpID(t *testing.T) {
+	t.Parallel()
+
+	for _, id := range []string{"1", "4096"} {
+		t.Run(
+			id,
+			func(t *testing.T) {
+				t.Parallel()
+
+				env := requiredEnv()
+				env["PROBOD_COOKIE_BANNER_TCF_CMP_ID"] = id
+
+				b := NewBuilder(NewResolver(mockEnv(env)))
+				_, err := b.Build()
+
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "PROBOD_COOKIE_BANNER_TCF_CMP_ID must be between 2 and 4095")
+			},
+		)
+	}
+}
+
+func TestBuilder_Build_InvalidCompliancePortalTLSMode(t *testing.T) {
+	t.Parallel()
+
+	env := requiredEnv()
+	env["PROBOD_TRUST_CENTER_TLS_MODE"] = "passthrough"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	_, err := b.Build()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot parse PROBOD_TRUST_CENTER_TLS_MODE")
+}
+
 func TestBuilder_Build_Defaults(t *testing.T) {
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -209,6 +325,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPAddr)
 	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPSAddr)
 	assert.Empty(t, cfg.Probod.CompliancePortal.BaseDomain)
+	assert.Equal(t, probodconfig.CompliancePortalTLSModeDirect, cfg.Probod.CompliancePortal.TLSMode)
 	assert.Nil(t, cfg.Probod.CompliancePortal.ProxyProtocol.TrustedProxies)
 
 	// AWS config
@@ -226,7 +343,12 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 60, cfg.Probod.Notifications.Slack.SenderInterval)
 	assert.Empty(t, cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
+	assert.Equal(t, 15, cfg.Probod.Notifications.Webhook.RequestTimeout)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, 300, cfg.Probod.Notifications.Webhook.StaleAfter)
+	assert.Equal(t, 30, cfg.Probod.Notifications.Webhook.RetryBase)
+	assert.Equal(t, 14400, cfg.Probod.Notifications.Webhook.RetryMax)
+	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.MaxConcurrency)
 	assert.Equal(t, 300, cfg.Probod.Notifications.Document.Interval)
 	assert.Equal(t, 900, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Document.ReminderInterval)
@@ -253,10 +375,6 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
-	assert.Empty(t, cfg.Probod.Agents.ThirdPartyDisambiguation.Provider)
-	assert.Empty(t, cfg.Probod.Agents.ThirdPartyDisambiguation.ModelName)
-	assert.Nil(t, cfg.Probod.Agents.ThirdPartyDisambiguation.Temperature)
-	assert.Equal(t, new(4096), cfg.Probod.Agents.ThirdPartyDisambiguation.MaxTokens)
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.Provider)
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.Temperature)
@@ -272,7 +390,6 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 600, cfg.Probod.TrackerMappingWorker.StaleAfter)
 	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.AgentTimeout)
 	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
-	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.DisambiguationAgentTimeout)
 	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
 	assert.Equal(t, 2, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
 	assert.Equal(t, 600, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
@@ -307,6 +424,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 
 	// Branding
 	assert.True(t, cfg.Probod.Branding)
+
+	// Cookie banner
+	assert.Equal(t, 4095, cfg.Probod.CookieBanner.TCFCMPID)
 
 	// No connectors by default
 	assert.Empty(t, cfg.Probod.Connectors)
@@ -357,6 +477,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_TRUST_CENTER_HTTP_ADDR"] = ":8080"
 	env["PROBOD_TRUST_CENTER_HTTPS_ADDR"] = ":8443"
 	env["PROBOD_TRUST_CENTER_BASE_DOMAIN"] = "probopage.example.com"
+	env["PROBOD_TRUST_CENTER_TLS_MODE"] = "external"
 	env["PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES"] = "10.0.1.1,10.0.1.2"
 	// AWS
 	env["PROBOD_AWS_REGION"] = "eu-west-1"
@@ -367,7 +488,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_AWS_USE_PATH_STYLE"] = "true"
 	// Notifications
 	env["PROBOD_WEBHOOK_SENDER_INTERVAL"] = "10"
+	env["PROBOD_WEBHOOK_REQUEST_TIMEOUT"] = "20"
 	env["PROBOD_WEBHOOK_CACHE_TTL"] = "3600"
+	env["PROBOD_WEBHOOK_STALE_AFTER"] = "600"
+	env["PROBOD_WEBHOOK_RETRY_BASE"] = "60"
+	env["PROBOD_WEBHOOK_RETRY_MAX"] = "7200"
+	env["PROBOD_WEBHOOK_MAX_CONCURRENCY"] = "8"
 	env["PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
 	env["PROBOD_DOCUMENT_NOTIFICATION_INTERVAL"] = "120"
 	env["PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY"] = "60"
@@ -392,11 +518,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_AGENT_THIRD_PARTY_VETTER_MODEL_NAME"] = "gpt-4o"
 	env["PROBOD_AGENT_THIRD_PARTY_VETTER_TEMPERATURE"] = "0.3"
 	env["PROBOD_AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"] = "8192"
-	// Agents — third-party-disambiguation override
-	env["PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER"] = "anthropic"
-	env["PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME"] = "claude-sonnet-4-20250514"
-	env["PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE"] = "0.4"
-	env["PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS"] = "2048"
 	// Agents — tracker-mapping override
 	env["PROBOD_AGENT_TRACKER_MAPPING_PROVIDER"] = "openai"
 	env["PROBOD_AGENT_TRACKER_MAPPING_MODEL_NAME"] = "gpt-4o-mini"
@@ -413,7 +534,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_TRACKER_MAPPING_STALE_AFTER"] = "1200"
 	env["PROBOD_TRACKER_MAPPING_AGENT_TIMEOUT"] = "30"
 	env["PROBOD_TRACKER_MAPPING_AGENT_MAX_TURNS"] = "6"
-	env["PROBOD_TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT"] = "35"
 	env["PROBOD_COMMON_PATTERN_ENRICHMENT_INTERVAL"] = "15"
 	env["PROBOD_COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY"] = "4"
 	env["PROBOD_COMMON_PATTERN_ENRICHMENT_STALE_AFTER"] = "900"
@@ -435,7 +555,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
 	// Custom domains
 	env["PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
-	env["PROBOD_ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
+	env["PROBOD_ACME_ACCOUNT_KEY"] = testECKeyPEM()
 	// SCIM bridge
 	env["PROBOD_SCIM_BRIDGE_SYNC_INTERVAL"] = "1800"
 	env["PROBOD_SCIM_BRIDGE_POLL_INTERVAL"] = "60"
@@ -443,10 +563,21 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_ESIGN_TSA_URL"] = "http://custom.tsa.example.com"
 	// Branding
 	env["PROBOD_BRANDING"] = "false"
+	// Cookie banner
+	env["PROBOD_COOKIE_BANNER_TCF_CMP_ID"] = "123"
+	// Slackbot
+	env["PROBOD_SLACKBOT_ENABLED"] = "true"
+	env["PROBOD_SLACKBOT_SIGNING_SECRET"] = "slackbot-signing-secret"
+	env["PROBOD_SLACKBOT_CLIENT_ID"] = "slackbot-client-id"
+	env["PROBOD_SLACKBOT_CLIENT_SECRET"] = "slackbot-client-secret"
+	env["PROBOD_SLACKBOT_REDIRECT_URI"] = "https://console.example.com/api/console/v1/slackbot/install/complete"
+	env["PROBOD_AGENT_SLACKBOT_PROVIDER"] = "openai"
+	env["PROBOD_AGENT_SLACKBOT_MODEL_NAME"] = "gpt-4o-mini"
+	env["PROBOD_AGENT_SLACKBOT_MAX_TOKENS"] = "2048"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -494,6 +625,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, ":8080", cfg.Probod.CompliancePortal.HTTPAddr)
 	assert.Equal(t, ":8443", cfg.Probod.CompliancePortal.HTTPSAddr)
 	assert.Equal(t, "probopage.example.com", cfg.Probod.CompliancePortal.BaseDomain)
+	assert.Equal(t, probodconfig.CompliancePortalTLSModeExternal, cfg.Probod.CompliancePortal.TLSMode)
 	assert.Equal(t, []string{"10.0.1.1", "10.0.1.2"}, cfg.Probod.CompliancePortal.ProxyProtocol.TrustedProxies)
 	// AWS
 	assert.Equal(t, "eu-west-1", cfg.Probod.AWS.Region)
@@ -505,7 +637,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Notifications
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
+	assert.Equal(t, 20, cfg.Probod.Notifications.Webhook.RequestTimeout)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, 600, cfg.Probod.Notifications.Webhook.StaleAfter)
+	assert.Equal(t, 60, cfg.Probod.Notifications.Webhook.RetryBase)
+	assert.Equal(t, 7200, cfg.Probod.Notifications.Webhook.RetryMax)
+	assert.Equal(t, 8, cfg.Probod.Notifications.Webhook.MaxConcurrency)
 	assert.Equal(t, 120, cfg.Probod.Notifications.Document.Interval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 43200, cfg.Probod.Notifications.Document.ReminderInterval)
@@ -534,11 +671,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.ThirdPartyVetter.ModelName)
 	assert.Equal(t, new(0.3), cfg.Probod.Agents.ThirdPartyVetter.Temperature)
 	assert.Equal(t, new(8192), cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
-	// Agents — third-party-disambiguation overrides
-	assert.Equal(t, "anthropic", cfg.Probod.Agents.ThirdPartyDisambiguation.Provider)
-	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.ThirdPartyDisambiguation.ModelName)
-	assert.Equal(t, new(0.4), cfg.Probod.Agents.ThirdPartyDisambiguation.Temperature)
-	assert.Equal(t, new(2048), cfg.Probod.Agents.ThirdPartyDisambiguation.MaxTokens)
 	// Agents — tracker-mapping overrides
 	assert.Equal(t, "openai", cfg.Probod.Agents.TrackerMapping.Provider)
 	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.TrackerMapping.ModelName)
@@ -555,7 +687,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 1200, cfg.Probod.TrackerMappingWorker.StaleAfter)
 	assert.Equal(t, 30, cfg.Probod.TrackerMappingWorker.AgentTimeout)
 	assert.Equal(t, 6, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
-	assert.Equal(t, 35, cfg.Probod.TrackerMappingWorker.DisambiguationAgentTimeout)
 	assert.Equal(t, 15, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
 	assert.Equal(t, 4, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
 	assert.Equal(t, 900, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
@@ -577,7 +708,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 2, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
-	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
+	assert.Equal(t, testECKeyPEM(), cfg.Probod.CustomDomains.ACME.AccountKey.PEM())
 	// SCIM bridge
 	assert.Equal(t, 1800, cfg.Probod.SCIMBridge.SyncInterval)
 	assert.Equal(t, 60, cfg.Probod.SCIMBridge.PollInterval)
@@ -585,6 +716,18 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "http://custom.tsa.example.com", cfg.Probod.ESign.TSAURL)
 	// Branding
 	assert.False(t, cfg.Probod.Branding)
+	// Cookie banner
+	assert.Equal(t, 123, cfg.Probod.CookieBanner.TCFCMPID)
+	// Slackbot
+	assert.True(t, cfg.Probod.Slackbot.Enabled)
+	assert.Equal(t, "slackbot-signing-secret", cfg.Probod.Slackbot.SigningSecret)
+	assert.Equal(t, "slackbot-client-id", cfg.Probod.Slackbot.ClientID)
+	assert.Equal(t, "slackbot-client-secret", cfg.Probod.Slackbot.ClientSecret)
+	assert.Equal(t, "https://console.example.com/api/console/v1/slackbot/install/complete", cfg.Probod.Slackbot.RedirectURI)
+	assert.Equal(t, "openai", cfg.Probod.Agents.Slackbot.Provider)
+	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.Slackbot.ModelName)
+	require.NotNil(t, cfg.Probod.Agents.Slackbot.MaxTokens)
+	assert.Equal(t, 2048, *cfg.Probod.Agents.Slackbot.MaxTokens)
 }
 
 func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
@@ -594,7 +737,7 @@ func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -608,6 +751,36 @@ func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
 	assert.Equal(t, "gw-client-secret", rawConfig.ClientSecret)
 }
 
+func TestBuilder_Build_GitHubAppConnector(t *testing.T) {
+	t.Parallel()
+
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_GITHUB_APP_ID"] = "123456"
+	env["PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID"] = "Iv1.example"
+	env["PROBOD_CONNECTOR_GITHUB_APP_CLIENT_SECRET"] = "client-secret"
+	env["PROBOD_CONNECTOR_GITHUB_APP_SLUG"] = "probo"
+	env["PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY"] = "private-key"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = testSigningKeyPEM()
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	c := cfg.Probod.Connectors[0]
+	assert.Equal(t, "GITHUB", c.Provider)
+	assert.Equal(t, connector.ProtocolGitHubApp, c.Protocol)
+
+	raw := c.RawConfig.(probodconfig.ConnectorConfigGitHubApp)
+	assert.Equal(t, "123456", raw.AppID)
+	assert.Equal(t, "Iv1.example", raw.ClientID)
+	assert.Equal(t, "client-secret", raw.ClientSecret)
+	assert.Equal(t, "probo", raw.Slug)
+	assert.Equal(t, "private-key", raw.PrivateKey)
+}
+
 func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_CONNECTOR_MICROSOFT_365_CLIENT_ID"] = "ms365-client-id"
@@ -615,7 +788,7 @@ func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -637,6 +810,8 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE", "FRONT",
+		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
+		"CAL_COM", "CALENDLY", "ATTIO",
 	}
 
 	env := requiredEnv()
@@ -647,7 +822,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -678,7 +853,7 @@ func TestBuilder_Build_VercelConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -693,6 +868,29 @@ func TestBuilder_Build_VercelConnector(t *testing.T) {
 	assert.Equal(t, "probo-app", raw.IntegrationSlug)
 }
 
+func TestBuilder_Build_LinearWebhookSecret(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_ID"] = "linear-sync-client-id"
+	env["PROBOD_CONNECTOR_LINEAR_SYNC_CLIENT_SECRET"] = "linear-sync-client-secret"
+	env["PROBOD_CONNECTOR_LINEAR_SYNC_WEBHOOK_SECRET"] = "linear-sync-webhook-secret"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = testSigningKeyPEM()
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	c := cfg.Probod.Connectors[0]
+	assert.Equal(t, "LINEAR_SYNC", c.Provider)
+	assert.Equal(t, "oauth2", string(c.Protocol))
+	raw := c.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+	assert.Equal(t, "linear-sync-client-id", raw.ClientID)
+	assert.Equal(t, "linear-sync-client-secret", raw.ClientSecret)
+	assert.Equal(t, "linear-sync-webhook-secret", cfg.Probod.GetLinearWebhookSecret())
+}
+
 func TestBuilder_Build_SlackConnector(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"
@@ -701,7 +899,7 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -725,7 +923,7 @@ func TestBuilder_Build_CrispConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -744,7 +942,7 @@ func TestBuilder_Build_CrispConnectorAbsentWithoutToken(t *testing.T) {
 	// is what keeps Crisp deactivated until Crisp validates the plugin.
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -763,7 +961,7 @@ func TestBuilder_Build_CrispConnectorAbsentWithoutPluginID(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -781,14 +979,15 @@ func TestBuilder_Build_SAMLAutoGeneration(t *testing.T) {
 
 	assert.Contains(t, cfg.Probod.Auth.SAML.Certificate, "-----BEGIN CERTIFICATE-----")
 	assert.Contains(t, cfg.Probod.Auth.SAML.Certificate, "-----END CERTIFICATE-----")
-	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey, "-----BEGIN RSA PRIVATE KEY-----")
-	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey, "-----END RSA PRIVATE KEY-----")
+	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey.PEM(), "-----BEGIN RSA PRIVATE KEY-----")
+	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey.PEM(), "-----END RSA PRIVATE KEY-----")
+	assert.NotNil(t, cfg.Probod.Auth.SAML.PrivateKey.PrivateKey())
 }
 
 func TestBuilder_Build_SAMLFromEnv(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_SAML_CERTIFICATE"] = "env-cert"
-	env["PROBOD_SAML_PRIVATE_KEY"] = "env-key"
+	env["PROBOD_SAML_PRIVATE_KEY"] = testOtherSigningKeyPEM()
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -796,19 +995,19 @@ func TestBuilder_Build_SAMLFromEnv(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "env-cert", cfg.Probod.Auth.SAML.Certificate)
-	assert.Equal(t, "env-key", cfg.Probod.Auth.SAML.PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), cfg.Probod.Auth.SAML.PrivateKey.PEM())
 }
 
 func TestBuilder_Build_SAMLPreset(t *testing.T) {
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "preset-cert"
-	b.samlPrivateKey = "preset-key"
+	b.samlPrivateKey = testOtherSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
 
 	assert.Equal(t, "preset-cert", cfg.Probod.Auth.SAML.Certificate)
-	assert.Equal(t, "preset-key", cfg.Probod.Auth.SAML.PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), cfg.Probod.Auth.SAML.PrivateKey.PEM())
 }
 
 func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
@@ -819,7 +1018,8 @@ func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
 
 	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
 	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
-	assert.Equal(t, "test-oauth2-signing-key", sk.PrivateKey)
+	assert.Equal(t, testSigningKeyPEM(), sk.PrivateKey.PEM())
+	assert.NotNil(t, sk.PrivateKey.PrivateKey())
 	assert.Equal(t, "default", sk.KID)
 	assert.True(t, sk.Active)
 
@@ -832,7 +1032,7 @@ func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
 
 func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
 	env := requiredEnv()
-	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY"] = "env-signing-key"
+	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY"] = testOtherSigningKeyPEM()
 	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY_KID"] = "env-kid"
 	env["PROBOD_OAUTH2_SERVER_ACCESS_TOKEN_DURATION"] = "10"
 	env["PROBOD_OAUTH2_SERVER_REFRESH_TOKEN_DURATION"] = "20"
@@ -847,7 +1047,7 @@ func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
 
 	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
 	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
-	assert.Equal(t, "env-signing-key", sk.PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), sk.PrivateKey.PEM())
 	assert.Equal(t, "env-kid", sk.KID)
 	assert.True(t, sk.Active)
 
@@ -870,13 +1070,233 @@ func TestBuilder_Build_OAuth2Preset(t *testing.T) {
 	delete(env, "OAUTH2_SERVER_SIGNING_KEY")
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
-	b.oauth2SigningKey = "preset-signing-key"
+	b.oauth2SigningKey = testOtherSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
-	assert.Equal(t, "preset-signing-key", cfg.Probod.Auth.OAuth2Server.SigningKeys[0].PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), cfg.Probod.Auth.OAuth2Server.SigningKeys[0].PrivateKey.PEM())
+}
+
+// A key that cannot be decoded fails in probod-bootstrap, rather than at the
+// next start of probod.
+func TestBuilder_Build_InvalidSigningKey(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY"] = "not-a-pem-key"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	_, err := b.Build()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot get OAuth2 server signing key")
+}
+
+func TestBuilder_Build_IdentityFederationDisabledByDefault(t *testing.T) {
+	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Probod.IdentityFederation.Enabled)
+	assert.Empty(t, cfg.Probod.IdentityFederation.IssuerBaseURL)
+	assert.Empty(t, cfg.Probod.IdentityFederation.SigningKeys)
+	assert.Equal(t, cloudaws.DefaultCloudFormationTemplateURL, cfg.Probod.IdentityFederation.CloudFormationTemplateURL)
+	assert.Equal(t, cloudaws.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.TerraformModuleSource)
+	assert.Equal(t, cloudgcp.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
+	assert.Equal(t, cloudazure.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
+}
+
+func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_CLOUDFORMATION_TEMPLATE_URL"] = "https://example.com/audit-role.yaml"
+	env["PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE"] = "example/terraform-aws-audit-role"
+	env["PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE"] = "example/terraform-gcp-audit-role"
+	env["PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE"] = "example/terraform-azurerm-audit-role"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.Equal(t, "https://example.com/audit-role.yaml", cfg.Probod.IdentityFederation.CloudFormationTemplateURL)
+	assert.Equal(t, "example/terraform-aws-audit-role", cfg.Probod.IdentityFederation.TerraformModuleSource)
+	assert.Equal(t, "example/terraform-gcp-audit-role", cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
+	assert.Equal(t, "example/terraform-azurerm-audit-role", cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
+}
+
+func TestBuilder_Build_IdentityFederationDisabledSkipsSigningKey(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "false"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "unused-identity-federation-key"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Probod.IdentityFederation.Enabled)
+	assert.Empty(t, cfg.Probod.IdentityFederation.SigningKeys)
+}
+
+func TestBuilder_Build_IdentityFederationEnabledFromEnv(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+	env["PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL"] = "https://proboidentity.com"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = testSigningKeyPEM()
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID"] = "env-identity-federation-kid"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.True(t, cfg.Probod.IdentityFederation.Enabled)
+	assert.Equal(t, "https://proboidentity.com", cfg.Probod.IdentityFederation.IssuerBaseURL)
+
+	require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 1)
+	sk := cfg.Probod.IdentityFederation.SigningKeys[0]
+	assert.Equal(t, testSigningKeyPEM(), sk.PrivateKey.PEM())
+	assert.NotNil(t, sk.PrivateKey.PrivateKey())
+	assert.Equal(t, "env-identity-federation-kid", sk.KID)
+	assert.True(t, sk.Active)
+}
+
+func TestBuilder_Build_IdentityFederationEnabledDefaultsKID(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = testSigningKeyPEM()
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 1)
+	assert.Equal(t, "default", cfg.Probod.IdentityFederation.SigningKeys[0].KID)
+}
+
+func TestBuilder_Build_IdentityFederationEnabledRequiresSigningKey(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	_, err := b.Build()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "PROBOD_IDENTITY_FEDERATION_SIGNING_KEY")
+}
+
+func TestBuilder_Build_IdentityFederationPreviousSigningKey(t *testing.T) {
+	t.Parallel()
+
+	enabledEnv := func() map[string]string {
+		env := requiredEnv()
+		env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+		env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = testSigningKeyPEM()
+		env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID"] = "current"
+
+		return env
+	}
+
+	t.Run(
+		"retired key stays published as inactive",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = testOtherSigningKeyPEM()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "retired"
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			cfg, err := b.Build()
+			require.NoError(t, err)
+
+			require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 2)
+
+			active := cfg.Probod.IdentityFederation.SigningKeys[0]
+			assert.Equal(t, testSigningKeyPEM(), active.PrivateKey.PEM())
+			assert.Equal(t, "current", active.KID)
+			assert.True(t, active.Active)
+
+			// Published but never signing: a cloud provider that already cached
+			// the key set can still verify a token minted before the rotation.
+			retired := cfg.Probod.IdentityFederation.SigningKeys[1]
+			assert.Equal(t, testOtherSigningKeyPEM(), retired.PrivateKey.PEM())
+			assert.Equal(t, "retired", retired.KID)
+			assert.False(t, retired.Active)
+		},
+	)
+
+	t.Run(
+		"omitted leaves a single active key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			b := NewBuilder(NewResolver(mockEnv(enabledEnv())))
+
+			cfg, err := b.Build()
+			require.NoError(t, err)
+
+			require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 1)
+			assert.True(t, cfg.Probod.IdentityFederation.SigningKeys[0].Active)
+		},
+	)
+
+	t.Run(
+		"key without kid",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = testOtherSigningKeyPEM()
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			_, err := b.Build()
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID is required")
+		},
+	)
+
+	t.Run(
+		"kid without key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "retired"
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			_, err := b.Build()
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY is required")
+		},
+	)
+
+	t.Run(
+		"kid equal to the active kid",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = testOtherSigningKeyPEM()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "current"
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			_, err := b.Build()
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "must differ from PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID")
+		},
+	)
 }
 
 func TestBuilder_Build_PgCABundleFromEnv(t *testing.T) {
@@ -885,7 +1305,7 @@ func TestBuilder_Build_PgCABundleFromEnv(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -904,7 +1324,7 @@ func TestBuilder_Build_PgCABundleFromFile(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -918,7 +1338,7 @@ func TestBuilder_Build_AuthCookieSameSiteInvalid(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)
@@ -932,7 +1352,7 @@ func TestBuilder_Build_AuthCookieSameSiteNoneRequiresSecure(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)
@@ -993,15 +1413,18 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_TOKEN"] = "https://account-d.docusign.com/oauth/token"
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_PROBE"] = "https://account-d.docusign.com/oauth/userinfo"
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_IDENTITY"] = "https://account-d.docusign.com/oauth/userinfo"
+	env["PROBOD_CONNECTOR_SLACK_ENDPOINT_AUTH"] = "https://auth.slack.test/oauth/v2/authorize"
+	env["PROBOD_CONNECTOR_SLACK_ENDPOINT_TOKEN"] = "https://api.slack.test/oauth.v2.access"
+	env["PROBOD_CONNECTOR_SLACK_ENDPOINT_API_BASE"] = "https://api.slack.test"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
 
-	require.Len(t, cfg.Probod.ConnectorEndpoints, 1, "only the configured provider should appear")
+	require.Len(t, cfg.Probod.ConnectorEndpoints, 2, "only the configured providers should appear")
 
 	got, ok := cfg.Probod.ConnectorEndpoints["DOCUSIGN"]
 	require.True(t, ok)
@@ -1011,6 +1434,13 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 	assert.Equal(t, "https://account-d.docusign.com/oauth/userinfo", got.Probe)
 	assert.Equal(t, "https://account-d.docusign.com/oauth/userinfo", got.Identity)
 	assert.Empty(t, got.APIBase, "an unset field must stay empty so the compiled default survives")
+
+	got, ok = cfg.Probod.ConnectorEndpoints["SLACK"]
+	require.True(t, ok)
+
+	assert.Equal(t, "https://auth.slack.test/oauth/v2/authorize", got.Auth)
+	assert.Equal(t, "https://api.slack.test/oauth.v2.access", got.Token)
+	assert.Equal(t, "https://api.slack.test", got.APIBase)
 }
 
 // TestBuilder_Build_NoConnectorEndpointOverrides pins the default: a
@@ -1021,7 +1451,7 @@ func TestBuilder_Build_NoConnectorEndpointOverrides(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -1045,7 +1475,7 @@ func TestBuilder_Build_ConnectorEndpointTypoUnknownProvider(t *testing.T) {
 
 	b := NewBuilder(resolver)
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)
@@ -1067,7 +1497,7 @@ func TestBuilder_Build_ConnectorEndpointTypoUnknownField(t *testing.T) {
 
 	b := NewBuilder(resolver)
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)

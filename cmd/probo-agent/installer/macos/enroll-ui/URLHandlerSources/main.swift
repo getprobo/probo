@@ -66,6 +66,19 @@ private final class URLHandlerApp: NSObject, NSApplicationDelegate {
                     return
                 }
 
+                if preflight.trust != "probo_cloud" {
+                    let confirmed = DispatchQueue.main.sync {
+                        self.presentEnrollmentConfirm(preflight: preflight)
+                    }
+                    if !confirmed {
+                        NSLog("probo-agent url-handler: enrollment canceled")
+                        DispatchQueue.main.async {
+                            NSApp.terminate(nil)
+                        }
+                        return
+                    }
+                }
+
                 NSLog("probo-agent url-handler: install via helper…")
                 try EnrollmentFlow.installViaHelper(preflight: preflight)
                 NSLog("probo-agent url-handler: install completed")
@@ -83,6 +96,23 @@ private final class URLHandlerApp: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    private func presentEnrollmentConfirm(preflight: EnrollPreflightResult) -> Bool {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.messageText = preflight.confirmTitle
+        alert.informativeText = preflight.confirmMessage
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Enroll")
+        alert.addButton(withTitle: "Cancel")
+
+        let response = alert.runModal()
+        NSApp.setActivationPolicy(.accessory)
+
+        return response == .alertFirstButtonReturn
     }
 
     private func presentFailure(_ message: String) {

@@ -52,17 +52,19 @@ func microsoft365Registration() *Registration {
 			// identifiers, not endpoints, and must not be derived from this.
 			APIBase: "https://graph.microsoft.com/v1.0",
 		},
-		ExtraAuthParams: map[string]string{
-			"prompt": "consent",
-		},
-		OAuth2Scopes: []string{
-			"openid",
-			"profile",
-			"offline_access",
-			"https://graph.microsoft.com/AuditLog.Read.All",
-			"https://graph.microsoft.com/User.Read.All",
-			"https://graph.microsoft.com/Directory.Read.All",
-			"https://graph.microsoft.com/RoleManagement.Read.Directory",
+		OAuth2: &OAuth2Config{
+			ExtraAuthParams: map[string]string{
+				"prompt": "consent",
+			},
+			Scopes: []string{
+				"openid",
+				"profile",
+				"offline_access",
+				"https://graph.microsoft.com/AuditLog.Read.All",
+				"https://graph.microsoft.com/User.Read.All",
+				"https://graph.microsoft.com/Directory.Read.All",
+				"https://graph.microsoft.com/RoleManagement.Read.Directory",
+			},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewMicrosoft365Driver(c, logger.Named("microsoft365"), ep.APIBase), nil

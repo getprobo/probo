@@ -119,6 +119,11 @@ export class Probo implements INodeType {
 						description: 'Manage compliance portal',
 					},
 					{
+						name: 'Connector',
+						value: 'connector',
+						description: 'Manage connectors and connector accounts',
+					},
+					{
 						name: 'Control',
 						value: 'control',
 						description: 'Manage controls',
@@ -234,6 +239,16 @@ export class Probo implements INodeType {
 						description: 'Manage tasks',
 					},
 					{
+						name: 'Task Activity',
+						value: 'taskActivity',
+						description: 'List task activities',
+					},
+					{
+						name: 'Task Comment',
+						value: 'taskComment',
+						description: 'Manage task comments',
+					},
+					{
 						name: 'Third Party',
 						value: 'thirdParty',
 						description: 'Manage third parties',
@@ -247,6 +262,11 @@ export class Probo implements INodeType {
 						name: 'Tracker Pattern',
 						value: 'trackerPattern',
 						description: 'Manage tracker patterns',
+					},
+					{
+						name: 'Treatment Plan',
+						value: 'treatmentPlan',
+						description: 'Manage treatment plans',
 					},
 					{
 						name: 'User',

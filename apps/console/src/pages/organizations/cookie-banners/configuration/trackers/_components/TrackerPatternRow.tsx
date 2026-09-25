@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DownloadSimpleIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
 import { dateTimeFormat, humanizeSeconds } from "@probo/i18n";
 import {
@@ -35,15 +35,16 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
+import { useParams } from "react-router";
 
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
-import type { TrackerPatternRowImportMutation } from "#/__generated__/core/TrackerPatternRowImportMutation.graphql";
 import type { TrackerPatternRowMoveMutation } from "#/__generated__/core/TrackerPatternRowMoveMutation.graphql";
 import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/TrackerPatternRowUpdateMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { MoveToCategorySelect } from "./MoveToCategorySelect";
+import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
 import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
 
 const trackerPatternFragment = graphql`
@@ -61,14 +62,11 @@ const trackerPatternFragment = graphql`
       name
       kind
     }
-    thirdParty {
-      id
-      name
-    }
     commonThirdParty {
       id
       name
     }
+    attribution
   }
 `;
 
@@ -141,22 +139,6 @@ const updatePatternMutation = graphql`
   }
 `;
 
-const importThirdPartyMutation = graphql`
-  mutation TrackerPatternRowImportMutation(
-    $input: ImportThirdPartyFromCommonInput!
-  ) {
-    importThirdPartyFromCommon(input: $input) {
-      created
-      thirdPartyEdge {
-        node {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
-
 interface TrackerPatternRowProps {
   patternKey: TrackerPatternRowFragment$key;
   connectionId: string;
@@ -167,6 +149,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const { toast } = useToast();
   const confirm = useConfirm();
   const organizationId = useOrganizationId();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -177,8 +160,6 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     = useMutation<TrackerPatternRowMoveMutation>(movePatternMutation);
   const [updatePattern, isUpdating]
     = useMutation<TrackerPatternRowUpdateMutation>(updatePatternMutation);
-  const [importThirdParty, isImporting]
-    = useMutation<TrackerPatternRowImportMutation>(importThirdPartyMutation);
 
   const handleDelete = () => {
     confirm(
@@ -255,49 +236,6 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     });
   };
 
-  const handleImport = () => {
-    const commonThirdParty = pattern.commonThirdParty;
-    if (!commonThirdParty || isImporting) {
-      return;
-    }
-
-    importThirdParty({
-      variables: {
-        input: {
-          organizationId,
-          commonThirdPartyId: commonThirdParty.id,
-        },
-      },
-      updater(store) {
-        const node = store
-          .getRootField("importThirdPartyFromCommon")
-          ?.getLinkedRecord("thirdPartyEdge")
-          ?.getLinkedRecord("node");
-        if (!node) {
-          return;
-        }
-
-        // Reflect the import on the clicked pattern immediately. Sibling
-        // patterns of the same vendor are backfilled server-side and pick
-        // up the link on the next fetch of the list.
-        const patternRecord = store.get(pattern.id);
-        if (patternRecord) {
-          patternRecord.setLinkedRecord(node, "thirdParty");
-        }
-      },
-      onCompleted(_, errors) {
-        if (errors?.length) {
-          toast({ title: t("trackerPatternRow.errors.title"), description: errors[0].message, variant: "error" });
-          return;
-        }
-        toast({ title: t("trackerPatternRow.messages.successTitle"), description: t("trackerPatternRow.messages.thirdPartyImported"), variant: "success" });
-      },
-      onError(error) {
-        toast({ title: t("trackerPatternRow.errors.title"), description: formatError(t("trackerPatternRow.errors.importThirdParty"), error), variant: "error" });
-      },
-    });
-  };
-
   const handleSaveEdit = (data: { description: string; maxAgeSeconds: number | null }) => {
     updatePattern({
       variables: {
@@ -366,7 +304,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
 
   return (
     <Tr
-      to={pattern.id}
+      to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/trackers/${pattern.id}`}
       className={
         pattern.excluded
           ? "bg-txt-quaternary/70 line-through"
@@ -387,18 +325,9 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         </div>
       </Td>
       <Td>
-        {pattern.thirdParty
-          ? (
-              <span className="truncate">{pattern.thirdParty.name}</span>
-            )
-          : pattern.commonThirdParty
-            ? (
-                <div>
-                  <Badge variant="info">{t("trackerPatternRow.commonCatalog")}</Badge>
-                  <span className="truncate">{pattern.commonThirdParty.name}</span>
-                </div>
-              )
-            : <span className="text-txt-tertiary">-</span>}
+        {pattern.commonThirdParty
+          ? <span className="truncate">{pattern.commonThirdParty.name}</span>
+          : <TrackerAttributionLabel attribution={pattern.attribution} />}
       </Td>
       <Td>
         {srcBadge
@@ -438,14 +367,6 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             <IconPencil size={14} />
           </button>
           <ActionDropdown>
-            {!pattern.thirdParty && pattern.commonThirdParty && (
-              <DropdownItem
-                icon={DownloadSimpleIcon}
-                onSelect={handleImport}
-              >
-                {t("trackerPatternRow.actions.importThirdParties")}
-              </DropdownItem>
-            )}
             <DropdownItem
               icon={pattern.excluded ? EyeIcon : EyeSlashIcon}
               onSelect={handleToggleExcluded}

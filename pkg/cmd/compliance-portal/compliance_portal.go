@@ -23,6 +23,7 @@ package complianceportal
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/access"
 	"go.probo.inc/probo/pkg/cmd/compliance-portal/audit"
 	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitment"
 	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitmentgroup"
@@ -49,6 +50,7 @@ func NewCmdCompliancePortal(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(access.NewCmdAccess(f))
 	cmd.AddCommand(reference.NewCmdReference(f))
 	cmd.AddCommand(commitmentgroup.NewCmdCommitmentGroup(f))
 	cmd.AddCommand(commitment.NewCmdCommitment(f))

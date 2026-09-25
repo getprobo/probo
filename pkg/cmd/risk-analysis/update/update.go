@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const updateMutation = `
@@ -77,8 +78,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagDescription string
 		flagPeriodStart string
 		flagPeriodEnd   string
-		flagMatrixRows  int
-		flagMatrixCols  int
 	)
 
 	cmd := &cobra.Command{
@@ -113,7 +112,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("description") {
-				input["description"] = flagDescription
+				if flagDescription == "" {
+					input["description"] = nil
+				} else {
+					input["description"] = prosemirror.FromPlainText(flagDescription)
+				}
 			}
 
 			if cmd.Flags().Changed("period-start") || cmd.Flags().Changed("period-end") {
@@ -127,20 +130,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				input["period"] = period
-			}
-
-			rowsChanged := cmd.Flags().Changed("matrix-rows")
-			colsChanged := cmd.Flags().Changed("matrix-cols")
-
-			if rowsChanged || colsChanged {
-				if !rowsChanged || !colsChanged {
-					return fmt.Errorf("both --matrix-rows and --matrix-cols are required")
-				}
-
-				input["matrixSize"] = map[string]any{
-					"rows": flagMatrixRows,
-					"cols": flagMatrixCols,
-				}
 			}
 
 			if len(input) == 1 {
@@ -176,8 +165,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description")
 	cmd.Flags().StringVar(&flagPeriodStart, "period-start", "", "Period start date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
-	cmd.Flags().IntVar(&flagMatrixRows, "matrix-rows", 0, "Matrix rows (3, 4, or 5)")
-	cmd.Flags().IntVar(&flagMatrixCols, "matrix-cols", 0, "Matrix cols (3, 4, or 5)")
 
 	return cmd
 }

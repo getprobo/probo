@@ -42,6 +42,7 @@ type Props = {
   children: ReactNode;
   connectionId: string;
   thirdPartyId: string;
+  onCreated?: () => void;
 };
 
 const createContactMutation = graphql`
@@ -67,6 +68,7 @@ export function CreateContactDialog({
   children,
   connectionId,
   thirdPartyId,
+  onCreated,
 }: Props) {
   const { t } = useTranslation();
 
@@ -131,6 +133,7 @@ export function CreateContactDialog({
         });
         dialogRef.current?.close();
         reset();
+        onCreated?.();
       },
       onError(error) {
         toast({

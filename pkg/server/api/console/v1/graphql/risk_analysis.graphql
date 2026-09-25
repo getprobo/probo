@@ -196,13 +196,46 @@ input RiskAnalysisScenarioOrder
 
 # Types
 
+type RiskAnalysisMatrixCell
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisMatrixCell"
+    ) {
+    type: TreatmentPlanScoreType!
+    likelihood: Int!
+    impact: Int!
+    count: Int!
+}
+
 type RiskAnalysis implements Node {
     id: ID!
     name: String!
     description: String
     period: Period
     matrixSize: MatrixSize!
+    document: Document @goField(forceResolver: true)
     organization: Organization @goField(forceResolver: true)
+
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+        filter: TreatmentPlanFilter
+        asOf: Datetime
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
+    matrixCells(asOf: Datetime): [RiskAnalysisMatrixCell!]!
+        @goField(forceResolver: true)
+
+    scenarioRisks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+        filter: RiskFilter
+    ): RiskConnection! @goField(forceResolver: true)
 
     diagrams(
         first: Int
@@ -446,6 +479,9 @@ extend type Mutation {
     deleteRiskAnalysis(
         input: DeleteRiskAnalysisInput!
     ): DeleteRiskAnalysisPayload!
+    forkRiskAnalysis(
+        input: ForkRiskAnalysisInput!
+    ): ForkRiskAnalysisPayload!
 
     createRiskAnalysisDiagram(
         input: CreateRiskAnalysisDiagramInput!
@@ -520,6 +556,10 @@ extend type Mutation {
     unlinkRiskAnalysisScenarioRisk(
         input: UnlinkRiskAnalysisScenarioRiskInput!
     ): UnlinkRiskAnalysisScenarioRiskPayload!
+
+    publishRiskAnalysis(
+        input: PublishRiskAnalysisInput!
+    ): PublishRiskAnalysisPayload!
 }
 
 # Mutation inputs & payloads
@@ -537,7 +577,6 @@ input UpdateRiskAnalysisInput {
     name: String
     description: String @goField(omittable: true)
     period: PeriodInput
-    matrixSize: MatrixSizeInput
 }
 
 input DeleteRiskAnalysisInput {
@@ -554,6 +593,17 @@ type UpdateRiskAnalysisPayload {
 
 type DeleteRiskAnalysisPayload {
     deletedRiskAnalysisId: ID!
+}
+
+input ForkRiskAnalysisInput {
+    riskAnalysisId: ID!
+    name: String!
+    description: String
+    period: PeriodInput
+}
+
+type ForkRiskAnalysisPayload {
+    riskAnalysisEdge: RiskAnalysisConnectionEdge!
 }
 
 input CreateRiskAnalysisDiagramInput {
@@ -764,4 +814,15 @@ input UnlinkRiskAnalysisScenarioRiskInput {
 type UnlinkRiskAnalysisScenarioRiskPayload {
     riskAnalysisScenario: RiskAnalysisScenario!
     deletedRiskAnalysisScenarioId: ID!
+}
+
+input PublishRiskAnalysisInput {
+    riskAnalysisId: ID!
+    approverIds: [ID!]
+    minor: Boolean!
+}
+
+type PublishRiskAnalysisPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }

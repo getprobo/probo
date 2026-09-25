@@ -24,6 +24,7 @@ import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
+import * as forkOp from './fork.operation';
 import * as createDiagramOp from './createDiagram.operation';
 import * as getDiagramOp from './getDiagram.operation';
 import * as getAllDiagramsOp from './getAllDiagrams.operation';
@@ -59,6 +60,7 @@ import * as linkScenarioThreatOp from './linkScenarioThreat.operation';
 import * as unlinkScenarioThreatOp from './unlinkScenarioThreat.operation';
 import * as linkScenarioRiskOp from './linkScenarioRisk.operation';
 import * as unlinkScenarioRiskOp from './unlinkScenarioRisk.operation';
+import * as publishOp from './publish.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -157,6 +159,12 @@ export const description: INodeProperties[] = [
 				action: 'Delete a threat',
 			},
 			{
+				name: 'Fork',
+				value: 'fork',
+				description: 'Fork a risk analysis, copying diagrams and treatment plans',
+				action: 'Fork a risk analysis',
+			},
+			{
 				name: 'Get',
 				value: 'get',
 				description: 'Get a risk analysis',
@@ -253,6 +261,12 @@ export const description: INodeProperties[] = [
 				action: 'Link a scenario to a threat',
 			},
 			{
+				name: 'Publish',
+				value: 'publish',
+				description: 'Publish a risk analysis as a document',
+				action: 'Publish a risk analysis',
+			},
+			{
 				name: 'Unlink Scenario Risk',
 				value: 'unlinkScenarioRisk',
 				description: 'Unlink a scenario from a risk',
@@ -314,6 +328,7 @@ export const description: INodeProperties[] = [
 	...getAllOp.description,
 	...updateOp.description,
 	...deleteOp.description,
+	...forkOp.description,
 	...createDiagramOp.description,
 	...getDiagramOp.description,
 	...getAllDiagramsOp.description,
@@ -349,6 +364,7 @@ export const description: INodeProperties[] = [
 	...unlinkScenarioThreatOp.description,
 	...linkScenarioRiskOp.description,
 	...unlinkScenarioRiskOp.description,
+	...publishOp.description,
 ];
 
 export {
@@ -357,6 +373,7 @@ export {
 	getAllOp as getAll,
 	updateOp as update,
 	deleteOp as delete,
+	forkOp as fork,
 	createDiagramOp as createDiagram,
 	getDiagramOp as getDiagram,
 	getAllDiagramsOp as getAllDiagrams,
@@ -392,4 +409,5 @@ export {
 	unlinkScenarioThreatOp as unlinkScenarioThreat,
 	linkScenarioRiskOp as linkScenarioRisk,
 	unlinkScenarioRiskOp as unlinkScenarioRisk,
+	publishOp as publish,
 };

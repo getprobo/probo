@@ -49,7 +49,13 @@ func (f *RiskFilter) SQLFragment() string {
 		WHEN @query::text IS NOT NULL AND @query::text != '' THEN
 			search_vector @@ (
 				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+				FROM unnest(
+					regexp_split_to_array(
+						trim(regexp_replace(@query, '-', ' ', 'g')),
+						'\s+'
+					)
+				) AS lexeme
+				WHERE lexeme <> ''
 			)
 		ELSE TRUE
 	END

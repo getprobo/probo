@@ -46,6 +46,8 @@
  *   green  — success / positive
  *   amber  — warning
  *   sky    — informational
+ *   indigo — action / brand accent
+ *   lime   — brand wash (step 9 only; not a Radix scale)
  *
  * Dark mode: toggle .dark on <html>. Radix dark imports handle the rest.
  * P3 wide gamut: included automatically via @radix-ui/colors @supports blocks.
@@ -71,23 +73,34 @@
 @import "@radix-ui/colors/amber-dark.css";
 @import "@radix-ui/colors/sky.css";
 @import "@radix-ui/colors/sky-dark.css";
+@import "@radix-ui/colors/indigo.css";
+@import "@radix-ui/colors/indigo-dark.css";
 
 /* Alpha scales + black alpha — power the sand-a* utilities and the shadows. */
 @import "@radix-ui/colors/sand-alpha.css";
 @import "@radix-ui/colors/sand-dark-alpha.css";
 @import "@radix-ui/colors/black-alpha.css";
 
+/* Brand lime wash. Dark is the same hue at L=0.50 so it does not bloom. */
+:root,
+.light,
+.light-theme {
+    --lime-9: #e6ff03;
+}
+
+.dark,
+.dark-theme {
+    --lime-9: oklch(from #e6ff03 0.50 c h);
+}
+
 /* ---------------------------------------------------------------------------
- * Reset the default Tailwind palette
+ * Base colors
  *
- * v2 is a standalone theme: an app opts in by importing the v2 theme instead
- * of the v1 theme.css. Wiping --color-* removes Tailwind's default palette so
- * the only colors available are the v2 Radix scales below, plus the three base
- * colors kept here. This must precede the @theme inline block so it does not
- * wipe the scales registered after it.
+ * The three non-scale colors the kit relies on. `--color-*: initial` (which
+ * removes Tailwind's default palette) lives in ./reset.css, imported ahead of
+ * this file by ../theme.css — see that file for why the reset is separate.
  * ------------------------------------------------------------------------- */
 @theme {
-    --color-*: initial;
     --color-transparent: transparent;
     --color-black: #000000;
     --color-white: #ffffff;
@@ -199,4 +212,30 @@
     --color-sky-10: var(--sky-10);
     --color-sky-11: var(--sky-11);
     --color-sky-12: var(--sky-12);
+
+    /* indigo */
+    --color-indigo-1: var(--indigo-1);
+    --color-indigo-2: var(--indigo-2);
+    --color-indigo-3: var(--indigo-3);
+    --color-indigo-4: var(--indigo-4);
+    --color-indigo-5: var(--indigo-5);
+    --color-indigo-6: var(--indigo-6);
+    --color-indigo-7: var(--indigo-7);
+    --color-indigo-8: var(--indigo-8);
+    --color-indigo-9: var(--indigo-9);
+    --color-indigo-10: var(--indigo-10);
+    --color-indigo-11: var(--indigo-11);
+    --color-indigo-12: var(--indigo-12);
+
+    /* lime — brand wash solid (step 9 only) */
+    --color-lime-9: var(--lime-9);
+}
+
+@layer base {
+    html {
+        color-scheme: light;
+    }
+    html.dark {
+        color-scheme: dark;
+    }
 }

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { WebhooksSettingsPageQuery } from "#/__generated__/core/WebhooksSettingsPageQuery.graphql";
@@ -27,6 +27,7 @@ import {
   WebhooksSettingsPage,
   webhooksSettingsPageQuery,
 } from "#/pages/organizations/settings/WebhooksSettingsPage";
+import { WebhooksSettingsPageSkeleton } from "#/pages/organizations/settings/WebhooksSettingsPageSkeleton";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 function WebhooksSettingsPageQueryLoader() {
@@ -36,16 +37,23 @@ function WebhooksSettingsPageQueryLoader() {
   );
 
   useEffect(() => {
-    loadQuery({
-      organizationId,
-    });
+    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) {
-    return null;
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <WebhooksSettingsPageSkeleton />;
   }
 
-  return <WebhooksSettingsPage queryRef={queryRef} />;
+  return (
+    <Suspense fallback={<WebhooksSettingsPageSkeleton />}>
+      <WebhooksSettingsPage key={organizationId} queryRef={currentQueryRef} />
+    </Suspense>
+  );
 }
 
 export default function WebhooksSettingsPageLoader() {

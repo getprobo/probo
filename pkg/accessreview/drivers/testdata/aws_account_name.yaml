@@ -1,0 +1,27 @@
+---
+# Hand-authored Account Management cassette. Never recorded against a live
+# account. GetAccountInformation is REST-JSON and is matched by host and
+# path (see awsAPIMatcher).
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        host: account.us-east-1.amazonaws.com
+        url: https://account.us-east-1.amazonaws.com/getAccountInformation
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: -1
+        uncompressed: true
+        body: '{"AccountId":"123456789012","AccountName":"acme-prod","AccountState":"ACTIVE"}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

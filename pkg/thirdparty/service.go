@@ -88,7 +88,13 @@ func (s *Service) GetCommonThirdPartiesByIDs(
 func (s *Service) Search(ctx context.Context, name string) ([]*coredata.CommonThirdParty, error) {
 	var parties coredata.CommonThirdParties
 
-	filter := coredata.NewCommonThirdPartyFilter(&name)
+	// This backs the catalog import, so a rejected row must not be offered:
+	// a bundled library or a browser extension is not something an
+	// organization can put in its register, and once imported the tenant row
+	// outlives the catalog row that explains it.
+	rejected := coredata.CommonThirdPartyReviewRejected
+
+	filter := coredata.NewCommonThirdPartyFilter(&name).WithoutReview(&rejected)
 
 	err := s.pg.WithConn(
 		ctx,

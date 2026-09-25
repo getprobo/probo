@@ -460,13 +460,19 @@ func (s *Service) upsertCampaignSource(
 	now := time.Now()
 	sourceID := source.ID
 
+	connectorID, err := accountConnectorID(ctx, tx, scope, source.ConnectorAccountID)
+	if err != nil {
+		return err
+	}
+
 	campaignSource := &coredata.AccessReviewCampaignSource{
 		ID:                     gid.New(scope.GetTenantID(), coredata.AccessReviewCampaignSourceEntityType),
 		OrganizationID:         source.OrganizationID,
 		AccessReviewCampaignID: campaignID,
 		AccessReviewSourceID:   &sourceID,
 		Name:                   source.Name,
-		ConnectorID:            source.ConnectorID,
+		ConnectorID:            connectorID,
+		ConnectorAccountID:     source.ConnectorAccountID,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}

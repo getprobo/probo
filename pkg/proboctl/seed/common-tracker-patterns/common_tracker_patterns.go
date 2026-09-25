@@ -331,8 +331,15 @@ func resolveThirdParty(
 		Slug:           platformSlug,
 		Category:       mapOCDCategory(p.Category),
 		Certifications: []string{},
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		// Left nil rather than UNREVIEWED: this path is reached only after
+		// LoadBySlug found nothing, so Upsert's insert branch supplies
+		// UNREVIEWED, and if a concurrent writer created the slug first its
+		// conflict branch keeps the verdict already there rather than letting
+		// this caller erase it. The column is NOT NULL with no database
+		// default — omitting it outside Upsert fails.
+		Review:    nil,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	if _, err := party.Upsert(ctx, tx); err != nil {

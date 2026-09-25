@@ -1,7 +1,10 @@
 enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
+    BACKLOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateBacklog")
     TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateTodo")
     IN_PROGRESS @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateInProgress")
     DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDone")
+    CANCELED @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateCanceled")
+    DUPLICATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDuplicate")
 }
 
 enum TaskPriority
@@ -38,15 +41,21 @@ input TaskOrder
     field: TaskOrderField!
 }
 
+input TaskFilter {
+    query: String
+    state: TaskState
+}
+
 type Task implements Node {
     id: ID!
     name: String!
-    description: String
+    content: String!
     state: TaskState!
     priority: TaskPriority!
     rank: Int!
-    timeEstimate: Duration
+    timeEstimate: TimeSpan
     deadline: Datetime
+    recurrenceInterval: TimeSpan
     assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
@@ -60,10 +69,87 @@ type Task implements Node {
         orderBy: EvidenceOrder
     ): EvidenceConnection! @goField(forceResolver: true)
 
+    comments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskCommentOrder
+    ): TaskCommentConnection! @goField(forceResolver: true)
+
+    activities(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskActivityOrder
+    ): TaskActivityConnection! @goField(forceResolver: true)
+
+    externalLink: TaskExternalLink @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum TaskExternalLinkOrigin
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOrigin") {
+    PROBO
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOriginProbo")
+    LINEAR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOriginLinear"
+        )
+}
+
+type TaskExternalLink {
+    provider: ConnectorProvider!
+    identifier: String!
+    url: String!
+    origin: TaskExternalLinkOrigin!
+}
+
+type LinearTeam {
+    id: String!
+    name: String!
+    key: String!
+}
+
+type LinearPageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type LinearTeamEdge {
+    cursor: String!
+    node: LinearTeam!
+}
+
+type LinearTeamConnection {
+    edges: [LinearTeamEdge!]!
+    pageInfo: LinearPageInfo!
+}
+
+type LinearIssue {
+    id: String!
+    identifier: String!
+    title: String!
+    content: String
+    state: TaskState
+    priority: TaskPriority
+}
+
+type LinearIssueEdge {
+    cursor: String!
+    node: LinearIssue!
+}
+
+type LinearIssueConnection {
+    edges: [LinearIssueEdge!]!
+    pageInfo: LinearPageInfo!
 }
 
 type TaskConnection
@@ -84,30 +170,36 @@ extend type Mutation {
     createTask(input: CreateTaskInput!): CreateTaskPayload!
     updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
     deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
+    publishTaskToLinear(input: PublishTaskToLinearInput!): PublishTaskToLinearPayload!
+    linkTaskToLinear(input: LinkTaskToLinearInput!): LinkTaskToLinearPayload!
+    unlinkTaskExternal(input: UnlinkTaskExternalInput!): UnlinkTaskExternalPayload!
 }
 
 input CreateTaskInput {
     organizationId: ID!
     measureId: ID
     name: String!
-    description: String
+    content: String
+    state: TaskState
     priority: TaskPriority!
-    timeEstimate: Duration
+    timeEstimate: TimeSpan
     assignedToId: ID
     deadline: Datetime
+    recurrenceInterval: TimeSpan
 }
 
 input UpdateTaskInput {
     taskId: ID!
     name: String
-    description: String @goField(omittable: true)
+    content: String @goField(omittable: true)
     state: TaskState
     priority: TaskPriority
     rank: Int
-    timeEstimate: Duration @goField(omittable: true)
+    timeEstimate: TimeSpan @goField(omittable: true)
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
     measureId: ID @goField(omittable: true)
+    recurrenceInterval: TimeSpan @goField(omittable: true)
 }
 
 input DeleteTaskInput {
@@ -120,8 +212,36 @@ type CreateTaskPayload {
 
 type UpdateTaskPayload {
     task: Task!
+    nextTaskEdge: TaskEdge
 }
 
 type DeleteTaskPayload {
     deletedTaskId: ID!
+}
+
+input PublishTaskToLinearInput {
+    taskId: ID!
+    teamId: String!
+}
+
+type PublishTaskToLinearPayload {
+    task: Task!
+}
+
+input LinkTaskToLinearInput {
+    taskId: ID!
+    teamId: String!
+    issueId: String!
+}
+
+type LinkTaskToLinearPayload {
+    task: Task!
+}
+
+input UnlinkTaskExternalInput {
+    taskId: ID!
+}
+
+type UnlinkTaskExternalPayload {
+    task: Task!
 }

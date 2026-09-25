@@ -27,7 +27,7 @@ const sample = "The quick brown fox jumps over the lazy dog.";
 
 const sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 const weights = ["light", "regular", "medium", "bold"] as const;
-const colors = ["neutral", "gold", "red", "green", "amber", "sky"] as const;
+const colors = ["neutral", "gold", "red", "green", "amber", "sky", "indigo"] as const;
 
 export default {
   title: "v2/Typography/Text",

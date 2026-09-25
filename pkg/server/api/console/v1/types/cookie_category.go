@@ -89,6 +89,11 @@ func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 		gcmConsentTypes = []string{}
 	}
 
+	tcfPurposeIDs := c.TCFPurposeIDs
+	if tcfPurposeIDs == nil {
+		tcfPurposeIDs = []int{}
+	}
+
 	return &CookieCategory{
 		ID: c.ID,
 		CookieBanner: &CookieBanner{
@@ -100,6 +105,7 @@ func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 		Kind:            c.Kind,
 		Rank:            c.Rank,
 		GcmConsentTypes: gcmConsentTypes,
+		TcfPurposeIds:   tcfPurposeIDs,
 		PosthogConsent:  c.PostHogConsent,
 		CreatedAt:       c.CreatedAt,
 		UpdatedAt:       c.UpdatedAt,

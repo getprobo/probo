@@ -21,6 +21,8 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -37,6 +39,7 @@ type (
 		Resolver any
 		ParentID gid.GID
 		Filters  *coredata.MeasureFilter
+		AsOf     *time.Time
 	}
 )
 
@@ -62,6 +65,33 @@ func NewMeasureConnection(
 	}
 }
 
+func NewMeasureConnectionAsOf(
+	p *page.Page[*coredata.Measure, coredata.MeasureOrderField],
+	parentType any,
+	parentID gid.GID,
+	filters *coredata.MeasureFilter,
+	asOf time.Time,
+	totalCount int,
+) *MeasureConnection {
+	edges := make([]*MeasureEdge, len(p.Data))
+	for i := range edges {
+		edges[i] = &MeasureEdge{
+			Cursor: p.Data[i].CursorKey(p.Cursor.OrderBy.Field),
+			Node:   NewMeasureAsOf(p.Data[i], asOf),
+		}
+	}
+
+	return &MeasureConnection{
+		Edges:      edges,
+		PageInfo:   *NewPageInfo(p),
+		Resolver:   parentType,
+		ParentID:   parentID,
+		Filters:    filters,
+		AsOf:       new(asOf),
+		TotalCount: totalCount,
+	}
+}
+
 func NewMeasureEdge(c *coredata.Measure, orderBy coredata.MeasureOrderField) *MeasureEdge {
 	return &MeasureEdge{
 		Cursor: c.CursorKey(orderBy),
@@ -79,4 +109,11 @@ func NewMeasure(c *coredata.Measure) *Measure {
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}
+}
+
+func NewMeasureAsOf(c *coredata.Measure, asOf time.Time) *Measure {
+	measure := NewMeasure(c)
+	measure.AsOf = new(asOf)
+
+	return measure
 }

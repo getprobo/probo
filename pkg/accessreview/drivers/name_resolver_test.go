@@ -80,8 +80,10 @@ func TestNameResolversTerminalOnClientError(t *testing.T) {
 		name     string
 		resolver NameResolver
 	}{
+		{name: "attio", resolver: NewAttioNameResolver(srv.Client(), srv.URL)},
 		{name: "grafana", resolver: NewGrafanaNameResolver(srv.Client(), srv.URL)},
 		{name: "metabase", resolver: NewMetabaseNameResolver(srv.Client(), srv.URL)},
+		{name: "tally", resolver: NewTallyNameResolver(srv.Client(), srv.URL)},
 		{name: "tailscale", resolver: NewTailscaleNameResolver(&http.Client{Transport: &hostRewriter{target: srv.URL}}, "https://api.tailscale.com/api/v2")},
 	}
 

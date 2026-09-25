@@ -53,15 +53,7 @@ func OrganizationOrderFields() []OrganizationOrderField {
 }
 
 func (v OrganizationOrderField) IsValid() bool {
-	switch v {
-	case
-		OrganizationOrderFieldName,
-		OrganizationOrderFieldCreatedAt,
-		OrganizationOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, OrganizationOrderFields())
 }
 
 func (v OrganizationOrderField) String() string {
@@ -73,14 +65,7 @@ func (v OrganizationOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *OrganizationOrderField) UnmarshalText(text []byte) error {
-	val := OrganizationOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid OrganizationOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, OrganizationOrderFields())
 }
 
 func (p OrganizationOrderField) Column() string {

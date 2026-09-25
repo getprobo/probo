@@ -51,14 +51,7 @@ func ConnectorOrderFields() []ConnectorOrderField {
 }
 
 func (v ConnectorOrderField) IsValid() bool {
-	switch v {
-	case
-		ConnectorOrderFieldCreatedAt,
-		ConnectorOrderFieldProvider:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ConnectorOrderFields())
 }
 
 func (v ConnectorOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ConnectorOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ConnectorOrderField) UnmarshalText(text []byte) error {
-	val := ConnectorOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ConnectorOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ConnectorOrderFields())
 }
 
 func (p ConnectorOrderField) Column() string {

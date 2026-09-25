@@ -119,15 +119,6 @@ const (
 	ActionMeasureThirdPartyMappingCreate = "core:measure:create-third-party-mapping"
 	ActionMeasureThirdPartyMappingDelete = "core:measure:delete-third-party-mapping"
 
-	// Task actions
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
-
 	// Evidence actions
 	ActionEvidenceList   = "core:evidence:list"
 	ActionEvidenceDelete = "core:evidence:delete"
@@ -167,18 +158,18 @@ const (
 	ActionDocumentVersionSignatureList    = "core:document-version-signature:list"
 
 	// Risk actions
-	ActionRiskGet                     = "core:risk:get"
-	ActionRiskList                    = "core:risk:list"
-	ActionRiskCreate                  = "core:risk:create"
-	ActionRiskUpdate                  = "core:risk:update"
-	ActionRiskDelete                  = "core:risk:delete"
-	ActionRiskMeasureMappingCreate    = "core:risk:create-measure-mapping"
-	ActionRiskMeasureMappingDelete    = "core:risk:delete-measure-mapping"
-	ActionRiskDocumentMappingCreate   = "core:risk:create-document-mapping"
-	ActionRiskDocumentMappingDelete   = "core:risk:delete-document-mapping"
-	ActionRiskObligationMappingCreate = "core:risk:create-obligation-mapping"
-	ActionRiskObligationMappingDelete = "core:risk:delete-obligation-mapping"
-	ActionRiskPublish                 = "core:risk:publish"
+	ActionRiskGet                     = "risk-management:risk:get"
+	ActionRiskList                    = "risk-management:risk:list"
+	ActionRiskCreate                  = "risk-management:risk:create"
+	ActionRiskUpdate                  = "risk-management:risk:update"
+	ActionRiskDelete                  = "risk-management:risk:delete"
+	ActionRiskMeasureMappingCreate    = "risk-management:risk:create-measure-mapping"
+	ActionRiskMeasureMappingDelete    = "risk-management:risk:delete-measure-mapping"
+	ActionRiskDocumentMappingCreate   = "risk-management:risk:create-document-mapping"
+	ActionRiskDocumentMappingDelete   = "risk-management:risk:delete-document-mapping"
+	ActionRiskObligationMappingCreate = "risk-management:risk:create-obligation-mapping"
+	ActionRiskObligationMappingDelete = "risk-management:risk:delete-obligation-mapping"
+	ActionRiskPublish                 = "risk-management:risk:publish"
 
 	// Asset actions
 	ActionAssetGet     = "core:asset:get"
@@ -262,10 +253,11 @@ const (
 	ActionSlackConnectionList = "core:slack-connection:list"
 
 	// Connector actions (generic)
-	ActionConnectorCreate = "core:connector:create"
-	ActionConnectorGet    = "core:connector:get"
-	ActionConnectorList   = "core:connector:list"
-	ActionConnectorDelete = "core:connector:delete"
+	ActionConnectorCreate   = "core:connector:create"
+	ActionConnectorGet      = "core:connector:get"
+	ActionConnectorList     = "core:connector:list"
+	ActionConnectorDelete   = "core:connector:delete"
+	ActionConnectorDiscover = "core:connector:discover"
 
 	// DataProtectionImpactAssessment actions
 	ActionDataProtectionImpactAssessmentList    = "core:data-protection-impact-assessment:list"
@@ -334,63 +326,6 @@ const (
 	ActionCookieCategoryUpdate = "core:cookie-category:update"
 	ActionCookieCategoryDelete = "core:cookie-category:delete"
 
-	// RiskAnalysis actions
-	ActionRiskAnalysisGet    = "core:risk-analysis:get"
-	ActionRiskAnalysisList   = "core:risk-analysis:list"
-	ActionRiskAnalysisCreate = "core:risk-analysis:create"
-	ActionRiskAnalysisUpdate = "core:risk-analysis:update"
-	ActionRiskAnalysisDelete = "core:risk-analysis:delete"
-
-	// RiskAnalysisDiagram actions
-	ActionRiskAnalysisDiagramGet    = "core:risk-analysis-diagram:get"
-	ActionRiskAnalysisDiagramList   = "core:risk-analysis-diagram:list"
-	ActionRiskAnalysisDiagramCreate = "core:risk-analysis-diagram:create"
-	ActionRiskAnalysisDiagramUpdate = "core:risk-analysis-diagram:update"
-	ActionRiskAnalysisDiagramDelete = "core:risk-analysis-diagram:delete"
-
-	// RiskAnalysisNode actions
-	ActionRiskAnalysisNodeGet    = "core:risk-analysis-node:get"
-	ActionRiskAnalysisNodeList   = "core:risk-analysis-node:list"
-	ActionRiskAnalysisNodeCreate = "core:risk-analysis-node:create"
-	ActionRiskAnalysisNodeUpdate = "core:risk-analysis-node:update"
-	ActionRiskAnalysisNodeDelete = "core:risk-analysis-node:delete"
-
-	// RiskAnalysisBoundary actions
-	ActionRiskAnalysisBoundaryGet    = "core:risk-analysis-boundary:get"
-	ActionRiskAnalysisBoundaryList   = "core:risk-analysis-boundary:list"
-	ActionRiskAnalysisBoundaryCreate = "core:risk-analysis-boundary:create"
-	ActionRiskAnalysisBoundaryUpdate = "core:risk-analysis-boundary:update"
-	ActionRiskAnalysisBoundaryDelete = "core:risk-analysis-boundary:delete"
-
-	// RiskAnalysisProcess actions
-	ActionRiskAnalysisProcessGet    = "core:risk-analysis-process:get"
-	ActionRiskAnalysisProcessList   = "core:risk-analysis-process:list"
-	ActionRiskAnalysisProcessCreate = "core:risk-analysis-process:create"
-	ActionRiskAnalysisProcessUpdate = "core:risk-analysis-process:update"
-	ActionRiskAnalysisProcessDelete = "core:risk-analysis-process:delete"
-
-	// RiskAnalysisThreat actions
-	ActionRiskAnalysisThreatGet    = "core:risk-analysis-threat:get"
-	ActionRiskAnalysisThreatList   = "core:risk-analysis-threat:list"
-	ActionRiskAnalysisThreatCreate = "core:risk-analysis-threat:create"
-	ActionRiskAnalysisThreatUpdate = "core:risk-analysis-threat:update"
-	ActionRiskAnalysisThreatDelete = "core:risk-analysis-threat:delete"
-
-	// RiskAnalysisScenario actions
-	ActionRiskAnalysisScenarioGet    = "core:risk-analysis-scenario:get"
-	ActionRiskAnalysisScenarioList   = "core:risk-analysis-scenario:list"
-	ActionRiskAnalysisScenarioCreate = "core:risk-analysis-scenario:create"
-	ActionRiskAnalysisScenarioUpdate = "core:risk-analysis-scenario:update"
-	ActionRiskAnalysisScenarioDelete = "core:risk-analysis-scenario:delete"
-
-	// RiskAnalysisScenarioThreat actions
-	ActionRiskAnalysisScenarioThreatLink   = "core:risk-analysis-scenario-threat:create"
-	ActionRiskAnalysisScenarioThreatUnlink = "core:risk-analysis-scenario-threat:delete"
-
-	// RiskAnalysisScenarioRisk actions
-	ActionRiskAnalysisScenarioRiskLink   = "core:risk-analysis-scenario-risk:create"
-	ActionRiskAnalysisScenarioRiskUnlink = "core:risk-analysis-scenario-risk:delete"
-
 	// Cookie actions
 	ActionCookieGet    = "core:cookie:get"
 	ActionCookieList   = "core:cookie:list"
@@ -418,6 +353,9 @@ const (
 	// CommonThirdParty actions (global catalog, no organization scope).
 	ActionCommonThirdPartyGet  = "core:common-third-party:get"
 	ActionCommonThirdPartyList = "core:common-third-party:list"
+
+	// CommonGVLVendor actions (global IAB GVL catalog, no organization scope).
+	ActionCommonGVLVendorList = "core:common-gvl-vendor:list"
 
 	// ElectronicSignature actions (tenant-scoped via the related document
 	// version signature / compliance portal access).

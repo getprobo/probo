@@ -57,17 +57,7 @@ func MembershipOrderFields() []MembershipOrderField {
 }
 
 func (v MembershipOrderField) IsValid() bool {
-	switch v {
-	case
-		MembershipOrderFieldOrganizationName,
-		MembershipOrderFieldFullName,
-		MembershipOrderFieldEmailAddress,
-		MembershipOrderFieldRole,
-		MembershipOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, MembershipOrderFields())
 }
 
 func (v MembershipOrderField) String() string {
@@ -79,14 +69,7 @@ func (v MembershipOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *MembershipOrderField) UnmarshalText(text []byte) error {
-	val := MembershipOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid MembershipOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, MembershipOrderFields())
 }
 
 func (p MembershipOrderField) Column() string {

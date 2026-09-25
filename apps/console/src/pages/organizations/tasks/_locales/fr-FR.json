@@ -1,0 +1,200 @@
+{
+  "detailsPage": {
+    "notFound": "Tâche introuvable",
+    "empty": "—",
+    "none": "Aucun",
+    "noDescription": "Aucune description",
+    "unassigned": "Non assigné",
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "state": "État",
+      "priority": "Priorité",
+      "assignedTo": "Assigné à",
+      "linear": "Linear",
+      "measure": "Mesure",
+      "timeEstimate": "Estimation de temps",
+      "timeEstimateUnit": "Unité d'estimation",
+      "deadline": "Échéance",
+      "recurrence": "Répétition",
+      "recurrenceUnit": "Unité de répétition",
+      "createdAt": "Créé le",
+      "updatedAt": "Mis à jour le"
+    },
+    "duration": {
+      "S": "Secondes",
+      "M": "Minutes",
+      "H": "Heures",
+      "D": "Jours",
+      "W": "Semaines",
+      "MO": "Mois",
+      "Y": "Années"
+    },
+    "states": {
+      "backlog": "Backlog",
+      "todo": "À faire",
+      "inProgress": "En cours",
+      "done": "Terminé",
+      "canceled": "Annulé",
+      "duplicate": "Doublon"
+    },
+    "priorities": {
+      "urgent": "Urgente",
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Basse"
+    },
+    "doesNotRepeat": "Ne se répète pas",
+    "hints": {
+      "recurrenceNeedsDeadline": "Définissez une échéance avant d'ajouter un intervalle de répétition"
+    },
+    "actions": {
+      "addEstimate": "Ajouter une estimation",
+      "clearEstimate": "Effacer l'estimation",
+      "addRecurrence": "Ajouter un intervalle",
+      "clearRecurrence": "Effacer l'intervalle",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "more": "Plus d'actions"
+    },
+    "delete": {
+      "title": "Supprimer la tâche",
+      "description": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
+      "confirm": "Supprimer"
+    },
+    "messages": {
+      "updated": "Tâche mise à jour avec succès.",
+      "deleted": "Tâche supprimée avec succès."
+    },
+    "linear": {
+      "connect": "Connecter Linear Sync",
+      "reconnect": "Reconnecter Linear Sync",
+      "publish": "Publier",
+      "link": "Lier",
+      "unlink": "Dissocier",
+      "team": "Équipe Linear",
+      "chooseTeam": "Choisir une équipe",
+      "chooseIssue": "Choisir une issue",
+      "newIssue": "Nouvelle issue",
+      "searchTeam": "Rechercher une équipe",
+      "searchIssue": "Rechercher une issue",
+      "noResults": "Aucun résultat",
+      "loadMore": "Charger plus",
+      "published": "Tâche publiée sur Linear.",
+      "linked": "Tâche liée à Linear.",
+      "confirmLink": {
+        "title": "Lier l'issue Linear",
+        "description": "Cela mettra à jour la tâche Probo avec l'issue Linear."
+      },
+      "unlinked": "Issue Linear dissociée.",
+      "errors": {
+        "publish": "Échec de la publication vers Linear",
+        "link": "Échec de la liaison vers Linear",
+        "unlink": "Échec de la dissociation de l'issue Linear",
+        "load": "Impossible d'afficher Linear"
+      }
+    },
+    "errors": {
+      "delete": "Échec de la suppression de la tâche",
+      "update": "Échec de la mise à jour de la tâche",
+      "content": "Impossible d'afficher cette description"
+    },
+    "comments": {
+      "title": "Commentaires",
+      "empty": "Aucun commentaire pour le moment",
+      "authorFallback": "Quelqu'un",
+      "fields": {
+        "comment": "Commentaire",
+        "leaveAComment": "Laisser un commentaire"
+      },
+      "actions": {
+        "submit": "Ajouter un commentaire",
+        "delete": "Supprimer le commentaire",
+        "showMore": "Afficher plus"
+      },
+      "delete": {
+        "title": "Supprimer le commentaire",
+        "description": "Voulez-vous vraiment supprimer ce commentaire ?",
+        "confirm": "Supprimer"
+      },
+      "messages": {
+        "created": "Commentaire ajouté avec succès.",
+        "updated": "Commentaire mis à jour avec succès.",
+        "deleted": "Commentaire supprimé avec succès."
+      },
+      "errors": {
+        "create": "Échec de l'ajout du commentaire",
+        "update": "Échec de la mise à jour du commentaire",
+        "delete": "Échec de la suppression du commentaire",
+        "content": "Impossible d'afficher ce commentaire",
+        "contentRequired": "Saisissez un commentaire",
+        "contentTooLong": "Le commentaire ne doit pas dépasser {{max}} caractères"
+      }
+    },
+    "activity": {
+      "title": "Activité",
+      "empty": "Aucune activité pour le moment",
+      "actorFallback": "Quelqu'un",
+      "actions": {
+        "showMore": "Afficher plus"
+      },
+      "sentences": {
+        "created": "{{actor}} a créé cette tâche",
+        "updated": "{{actor}} a mis à jour cette tâche",
+        "renamed": "{{actor}} a renommé de {{oldValue}} en {{newValue}}",
+        "descriptionUpdated": "{{actor}} a mis à jour la description",
+        "stateChanged": "{{actor}} a changé le statut de {{oldValue}} à {{newValue}}",
+        "priorityChanged": "{{actor}} a changé la priorité de {{oldValue}} à {{newValue}}",
+        "assigned": "{{actor}} a assigné {{newValue}}",
+        "reassigned": "{{actor}} a réassigné de {{oldValue}} à {{newValue}}",
+        "unassigned": "{{actor}} a retiré l'assignation de {{oldValue}}",
+        "measureLinked": "{{actor}} a lié {{newValue}}",
+        "measureChanged": "{{actor}} a déplacé de {{oldValue}} à {{newValue}}",
+        "measureUnlinked": "{{actor}} a délié {{oldValue}}",
+        "deadlineSet": "{{actor}} a défini l'échéance au {{newValue}}",
+        "deadlineChanged": "{{actor}} a changé l'échéance de {{oldValue}} à {{newValue}}",
+        "deadlineRemoved": "{{actor}} a retiré l'échéance",
+        "timeEstimateSet": "{{actor}} a défini l'estimation à {{newValue}}",
+        "timeEstimateChanged": "{{actor}} a changé l'estimation de {{oldValue}} à {{newValue}}",
+        "timeEstimateRemoved": "{{actor}} a retiré l'estimation"
+      }
+    }
+  },
+  "settingsDialog": {
+    "trigger": "Paramètres",
+    "title": "Paramètres",
+    "integrations": {
+      "title": "Intégrations des tâches",
+      "description": "Connectez des outils pour publier les tâches et les synchroniser."
+    },
+    "linear": {
+      "name": "Linear Sync",
+      "description": "Publiez une tâche sur Linear et synchronisez le nom, le contenu, l'état, la priorité, l'échéance et l'assigné lorsque les e-mails correspondent."
+    },
+    "status": {
+      "connected": "Connecté",
+      "notConnected": "Non connecté"
+    },
+    "actions": {
+      "connect": "Connecter",
+      "reconnect": "Reconnecter",
+      "close": "Fermer"
+    }
+  },
+  "createDialog": {
+    "title": "Ajouter une tâche",
+    "fields": {
+      "namePlaceholder": "Nom de la tâche"
+    },
+    "actions": {
+      "create": "Créer la tâche"
+    },
+    "messages": {
+      "created": "Tâche créée avec succès."
+    },
+    "errors": {
+      "create": "Échec de la création de la tâche",
+      "nameRequired": "Saisissez un nom de tâche"
+    }
+  }
+}

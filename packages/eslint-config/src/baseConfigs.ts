@@ -27,6 +27,7 @@ export const baseConfigs: FlatConfig.ConfigArray = [
   globalIgnores([
     ".turbo/",
     "**/dist/",
+    "**/storybook-static/",
     "**/node_modules/",
     "**/__generated__/",
     "**/*.d.ts",

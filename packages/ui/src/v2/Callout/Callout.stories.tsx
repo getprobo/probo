@@ -28,7 +28,7 @@ const message = "You will need admin privileges to install and access this appli
 
 const sizes = [1, 2, 3] as const;
 const variants = ["soft", "surface", "outline"] as const;
-const colors = ["neutral", "gold", "red", "green", "amber", "sky"] as const;
+const colors = ["neutral", "gold", "red", "green", "amber", "sky", "indigo"] as const;
 
 export default {
   title: "v2/Callout",

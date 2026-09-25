@@ -51,15 +51,16 @@ const (
 
 type (
 	ClientMetadataDocument struct {
-		ClientID                string   `json:"client_id"`
-		ClientName              string   `json:"client_name"`
-		ClientURI               string   `json:"client_uri"`
-		LogoURI                 string   `json:"logo_uri"`
-		RedirectURIs            []string `json:"redirect_uris"`
-		GrantTypes              []string `json:"grant_types"`
-		ResponseTypes           []string `json:"response_types"`
-		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-		Scope                   string   `json:"scope,omitempty"`
+		ClientID                          string   `json:"client_id"`
+		ClientName                        string   `json:"client_name"`
+		ClientURI                         string   `json:"client_uri"`
+		LogoURI                           string   `json:"logo_uri"`
+		RedirectURIs                      []string `json:"redirect_uris"`
+		GrantTypes                        []string `json:"grant_types"`
+		ResponseTypes                     []string `json:"response_types"`
+		TokenEndpointAuthMethod           string   `json:"token_endpoint_auth_method"`
+		TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
+		Scope                             string   `json:"scope,omitempty"`
 	}
 
 	cimdCacheEntry struct {
@@ -266,22 +267,42 @@ func validateClientMetadataDocument(clientIDURL string, doc *ClientMetadataDocum
 		return err
 	}
 
-	authMethod := doc.TokenEndpointAuthMethod
-	if authMethod == "" {
-		authMethod = string(coredata.OAuth2ClientTokenEndpointAuthMethodNone)
+	if _, err := selectCIMDTokenEndpointAuthMethod(doc); err != nil {
+		return err
 	}
 
-	switch coredata.OAuth2ClientTokenEndpointAuthMethod(authMethod) {
-	case coredata.OAuth2ClientTokenEndpointAuthMethodNone:
-		// Public MCP clients (ChatGPT, Claude) authenticate with PKCE.
-	default:
-		return NewError(
+	return nil
+}
+
+func selectCIMDTokenEndpointAuthMethod(
+	doc *ClientMetadataDocument,
+) (coredata.OAuth2ClientTokenEndpointAuthMethod, error) {
+	none := coredata.OAuth2ClientTokenEndpointAuthMethodNone
+
+	if len(doc.TokenEndpointAuthMethodsSupported) > 0 {
+		if slices.Contains(doc.TokenEndpointAuthMethodsSupported, none.String()) {
+			return none, nil
+		}
+
+		return "", NewError(
+			ErrInvalidClient,
+			WithDescription("client metadata document has no supported token endpoint auth method"),
+		)
+	}
+
+	authMethod := doc.TokenEndpointAuthMethod
+	if authMethod == "" {
+		authMethod = none.String()
+	}
+
+	if authMethod != none.String() {
+		return "", NewError(
 			ErrInvalidClient,
 			WithDescription("unsupported token_endpoint_auth_method in client metadata document"),
 		)
 	}
 
-	return nil
+	return none, nil
 }
 
 func validateCIMDRedirectURI(redirectURI string) error {
@@ -378,33 +399,49 @@ func (s *Service) resolveClient(
 	tx pg.Tx,
 	clientIDRaw string,
 ) (*coredata.OAuth2Client, error) {
+	client, _, err := s.resolveClientWithAllowance(ctx, tx, clientIDRaw)
+
+	return client, err
+}
+
+func (s *Service) resolveClientWithAllowance(
+	ctx context.Context,
+	tx pg.Tx,
+	clientIDRaw string,
+) (*coredata.OAuth2Client, CIMDAllowance, error) {
 	if clientID, err := gid.ParseGID(clientIDRaw); err == nil {
 		if tx != nil {
 			client := coredata.OAuth2Client{}
 			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), clientID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil, NewError(ErrInvalidClient, WithDescription("client not found"))
+					return nil, CIMDAllowanceDenied, NewError(ErrInvalidClient, WithDescription("client not found"))
 				}
 
-				return nil, fmt.Errorf("cannot load oauth2 client: %w", err)
+				return nil, CIMDAllowanceDenied, fmt.Errorf("cannot load oauth2 client: %w", err)
 			}
 
-			return &client, nil
+			return &client, CIMDAllowanceDenied, nil
 		}
 
-		return s.GetClientByID(ctx, clientID)
+		client, err := s.GetClientByID(ctx, clientID)
+		if err != nil {
+			return nil, CIMDAllowanceDenied, err
+		}
+
+		return client, CIMDAllowanceDenied, nil
 	}
 
 	if !IsCIMDClientID(clientIDRaw) {
-		return nil, NewError(ErrInvalidClient, WithDescription("invalid client_id"))
+		return nil, CIMDAllowanceDenied, NewError(ErrInvalidClient, WithDescription("invalid client_id"))
 	}
 
-	if allowance, err := s.cimdAllowance(ctx, clientIDRaw); err != nil || !allowance.Allowed() {
+	allowance, err := s.cimdAllowance(ctx, clientIDRaw)
+	if err != nil || !allowance.Allowed() {
 		if err != nil {
 			s.logger.WarnCtx(ctx, "cannot check cimd client allowance", log.Error(err))
 		}
 
-		return nil, NewError(
+		return nil, allowance, NewError(
 			ErrInvalidClient,
 			WithDescription("client_id is not allowed for client metadata documents"),
 		)
@@ -412,20 +449,20 @@ func (s *Service) resolveClient(
 
 	doc, err := s.cimd.fetch(ctx, clientIDRaw)
 	if err != nil {
-		return nil, err
+		return nil, allowance, err
 	}
 
 	scopes, err := s.cimdScopes(doc)
 	if err != nil {
-		return nil, err
+		return nil, allowance, err
 	}
 
 	client, err := s.upsertCIMDClient(ctx, tx, clientIDRaw, doc, scopes)
 	if err != nil {
-		return nil, err
+		return nil, allowance, err
 	}
 
-	return client, nil
+	return client, allowance, nil
 }
 
 func (s *Service) upsertCIMDClient(

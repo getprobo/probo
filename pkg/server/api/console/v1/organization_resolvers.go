@@ -12,7 +12,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -20,11 +20,15 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/riskmanagement"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
-	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
+	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -419,15 +423,17 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 		status   *coredata.FindingStatus
 		priority *coredata.FindingPriority
 		ownerID  *gid.GID
+		auditID  *gid.GID
 	)
 	if filter != nil {
 		kind = filter.Kind
 		status = filter.Status
 		priority = filter.Priority
 		ownerID = filter.OwnerID
+		auditID = filter.AuditID
 	}
 
-	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID)
 
 	page, err := r.probo.Findings.ListForOrganizationID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {
@@ -513,11 +519,6 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 	return types.NewSlackConnectionConnection(page), nil
 }
 
-// SlackOAuth2Scopes is the resolver for the slackOAuth2Scopes field.
-func (r *organizationResolver) SlackOAuth2Scopes(ctx context.Context, obj *types.Organization) ([]string, error) {
-	return slack.OAuth2Scopes, nil
-}
-
 // Connectors is the resolver for the connectors field.
 func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, filter *types.ConnectorFilter) ([]*types.Connector, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList)
@@ -547,6 +548,213 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 	}
 
 	return types.NewConnectors(connectors), nil
+}
+
+// LinearTeams is the resolver for the linearTeams field.
+func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organization, first *int, after *string, query *string) (*types.LinearTeamConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	pageSize := 0
+	if first != nil {
+		pageSize = *first
+	}
+
+	search := ""
+	if query != nil {
+		search = *query
+	}
+
+	page, err := r.task.Sync.SearchLinearTeams(ctx, scope, obj.ID, search, pageSize, after)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
+			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+			return emptyLinearTeamConnection(), nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot search Linear teams", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	edges := make([]*types.LinearTeamEdge, 0, len(page.Teams))
+	for _, team := range page.Teams {
+		edges = append(edges, &types.LinearTeamEdge{
+			Cursor: team.ID,
+			Node: &types.LinearTeam{
+				ID:   team.ID,
+				Name: team.Name,
+				Key:  team.Key,
+			},
+		})
+	}
+
+	startCursor := ""
+	if len(edges) > 0 {
+		startCursor = edges[0].Cursor
+	}
+
+	return &types.LinearTeamConnection{
+		Edges:    edges,
+		PageInfo: linearPageInfo(startCursor, page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+// LinearIssues is the resolver for the linearIssues field.
+func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Organization, teamID string, first *int, after *string, query *string) (*types.LinearIssueConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	pageSize := 0
+	if first != nil {
+		pageSize = *first
+	}
+
+	search := ""
+	if query != nil {
+		search = *query
+	}
+
+	page, err := r.task.Sync.SearchLinearIssues(ctx, scope, obj.ID, teamID, search, pageSize, after)
+	if err != nil {
+		switch {
+		case errors.Is(err, tasksync.ErrLinearNotConnected),
+			errors.Is(err, tasksync.ErrLinearReconnectRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return emptyLinearIssueConnection(), nil
+		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot search Linear issues", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	edges := make([]*types.LinearIssueEdge, 0, len(page.Issues))
+	for _, issue := range page.Issues {
+		node, err := linearIssueNode(issue)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot map Linear issue", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		edges = append(edges, &types.LinearIssueEdge{
+			Cursor: issue.ID,
+			Node:   node,
+		})
+	}
+
+	startCursor := ""
+	if len(edges) > 0 {
+		startCursor = edges[0].Cursor
+	}
+
+	return &types.LinearIssueConnection{
+		Edges:    edges,
+		PageInfo: linearPageInfo(startCursor, page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+// SlackbotAvailable is the resolver for the slackbotAvailable field.
+func (r *organizationResolver) SlackbotAvailable(ctx context.Context, obj *types.Organization) (bool, error) {
+	return r.slackbotInstallations != nil, nil
+}
+
+// SlackbotInstallation is the resolver for the slackbotInstallation field.
+func (r *organizationResolver) SlackbotInstallation(ctx context.Context, obj *types.Organization) (*types.SlackbotInstallation, error) {
+	if r.slackbotInstallations == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorInitiate)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	installation, err := r.slackbotInstallations.GetByOrganizationID(
+		ctx,
+		scope,
+		obj.ID,
+	)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Slackbot installation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SlackbotInstallation{
+		TeamID:    installation.TeamID,
+		BotUserID: installation.BotUserID,
+		Scopes:    installation.Scopes,
+		Active:    installation.Status == coredata.SlackbotInstallationStatusActive,
+	}, nil
+}
+
+// SlackbotChannels is the resolver for the slackbotChannels field.
+func (r *organizationResolver) SlackbotChannels(ctx context.Context, obj *types.Organization, cursor *string) (*types.SlackbotChannelPage, error) {
+	if r.slackbotInstallations == nil {
+		return &types.SlackbotChannelPage{Channels: []*types.SlackbotChannel{}}, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorInitiate)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return &types.SlackbotChannelPage{Channels: []*types.SlackbotChannel{}}, nil
+		}
+
+		return nil, err
+	}
+
+	slackCursor := ""
+	if cursor != nil {
+		slackCursor = *cursor
+	}
+
+	page, err := r.slackbotInstallations.ListMemberConversations(
+		ctx,
+		scope,
+		obj.ID,
+		slackCursor,
+	)
+	if errors.Is(err, slackchannel.ErrSlackbotNotInstalled) {
+		return &types.SlackbotChannelPage{Channels: []*types.SlackbotChannel{}}, nil
+	}
+
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list Slackbot channels", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	channels := make([]*types.SlackbotChannel, len(page.Conversations))
+	for i, channel := range page.Conversations {
+		channels[i] = &types.SlackbotChannel{
+			ID:   channel.ID,
+			Name: channel.Name,
+		}
+	}
+
+	var nextCursor *string
+	if page.NextCursor != "" {
+		nextCursor = new(page.NextCursor)
+	}
+
+	return &types.SlackbotChannelPage{
+		Channels:   channels,
+		NextCursor: nextCursor,
+	}, nil
 }
 
 // Controls is the resolver for the controls field.
@@ -1195,7 +1403,7 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 
 // RiskAnalyses is the resolver for the riskAnalyses field.
 func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisOrderBy) (*types.RiskAnalysisConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisList)
 	if err != nil {
 		return nil, err
 	}
@@ -1223,9 +1431,49 @@ func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Orga
 	return types.NewRiskAnalysisConnection(p, r, obj.ID), nil
 }
 
+// TreatmentPlans is the resolver for the treatmentPlans field.
+func (r *organizationResolver) TreatmentPlans(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter) (*types.TreatmentPlanConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TreatmentPlanOrderField]{
+		Field:     coredata.TreatmentPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	planFilter := coredata.NewTreatmentPlanFilter(nil, nil, nil)
+	if filter != nil {
+		planFilter = coredata.NewTreatmentPlanFilter(filter.ScoreType, filter.Likelihood, filter.Impact)
+	}
+
+	p, err := r.riskManagement.ListTreatmentPlansForOrganizationID(ctx, scope, obj.ID, cursor, planFilter)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list treatment plans", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTreatmentPlanConnection(p, r, obj.ID, planFilter), nil
+}
+
 // RiskAnalysisScenarios is the resolver for the riskAnalysisScenarios field.
 func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
@@ -1254,8 +1502,8 @@ func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *t
 }
 
 // Tasks is the resolver for the tasks field.
-func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskList)
+func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy, filter *types.TaskFilter) (*types.TaskConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskList)
 	if err != nil {
 		return nil, err
 	}
@@ -1274,29 +1522,34 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Tasks.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	taskFilter := coredata.NewTaskFilter(nil, nil)
+	if filter != nil {
+		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State)
+	}
+
+	page, err := r.task.ListForOrganizationID(ctx, scope, obj.ID, cursor, taskFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewTaskConnection(page, r, obj.ID), nil
+	return types.NewTaskConnection(page, r, obj.ID, taskFilter), nil
 }
 
-// AgentRuns is the resolver for the agentRuns field.
-func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AgentRunOrderBy) (*types.AgentRunConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, agentrun.ActionAgentRunList)
+// AgentExecutions is the resolver for the agentExecutions field.
+func (r *organizationResolver) AgentExecutions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AgentExecutionOrderBy) (*types.AgentExecutionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, agentexecution.ActionAgentExecutionList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AgentRunOrderField]{
-		Field:     coredata.AgentRunOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.AgentExecutionOrderField]{
+		Field:     coredata.AgentExecutionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AgentRunOrderField]{
+		pageOrderBy = page.OrderBy[coredata.AgentExecutionOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1304,13 +1557,13 @@ func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organiz
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.agentRun.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	page, err := r.agentExecution.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization agent runs", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list organization agent executions", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewAgentRunConnection(page, r, obj.ID), nil
+	return types.NewAgentExecutionConnection(page, r, obj.ID), nil
 }
 
 // CompliancePortals is the resolver for the compliancePortals field.
@@ -1509,6 +1762,33 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 // Permission is the resolver for the permission field.
 func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// Avatar is the resolver for the avatar field.
+func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	profile, err := loaders.Profile.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load profile", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	identity, err := loaders.Identity.Load(ctx, profile.IdentityID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load profile identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if identity.AvatarFileID == nil {
+		return nil, nil
+	}
+
+	return r.loadFile(ctx, *identity.AvatarFileID)
 }
 
 // Permission is the resolver for the permission field.

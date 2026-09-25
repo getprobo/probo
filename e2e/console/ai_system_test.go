@@ -441,6 +441,8 @@ func TestAiSystem_Create_Validation(t *testing.T) {
 func TestAiSystem_RBAC(t *testing.T) {
 	t.Parallel()
 
+	org := testutil.NewOrganizationRoles(t)
+
 	baseCreateInput := func(client *testutil.Client) map[string]any {
 		return map[string]any{
 			"organizationId":     client.GetOrganizationID().String(),
@@ -456,7 +458,7 @@ func TestAiSystem_RBAC(t *testing.T) {
 		t.Run("owner can create", func(t *testing.T) {
 			t.Parallel()
 
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+			owner := org.Client(t, testutil.RoleOwner)
 
 			_, err := owner.Do(`
 				mutation CreateAiSystem($input: CreateAiSystemInput!) {
@@ -471,8 +473,7 @@ func TestAiSystem_RBAC(t *testing.T) {
 		t.Run("viewer cannot create", func(t *testing.T) {
 			t.Parallel()
 
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			viewer := org.Client(t, testutil.RoleViewer)
 
 			_, err := viewer.Do(`
 				mutation CreateAiSystem($input: CreateAiSystemInput!) {
@@ -488,8 +489,8 @@ func TestAiSystem_RBAC(t *testing.T) {
 	t.Run("read", func(t *testing.T) {
 		t.Parallel()
 
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		owner := org.Client(t, testutil.RoleOwner)
+		viewer := org.Client(t, testutil.RoleViewer)
 		aiSystemID := createAiSystem(t, owner, map[string]any{
 			"name":               "RBAC Read Test",
 			"status":             "ACTIVE",
@@ -520,7 +521,7 @@ func TestAiSystem_RBAC(t *testing.T) {
 		t.Run("owner can update", func(t *testing.T) {
 			t.Parallel()
 
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+			owner := org.Client(t, testutil.RoleOwner)
 			aiSystemID := createAiSystem(t, owner, map[string]any{
 				"name":               "RBAC Update Test",
 				"status":             "ACTIVE",
@@ -545,8 +546,8 @@ func TestAiSystem_RBAC(t *testing.T) {
 		t.Run("viewer cannot update", func(t *testing.T) {
 			t.Parallel()
 
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			owner := org.Client(t, testutil.RoleOwner)
+			viewer := org.Client(t, testutil.RoleViewer)
 			aiSystemID := createAiSystem(t, owner, map[string]any{
 				"name":               "RBAC Update Test",
 				"status":             "ACTIVE",
@@ -575,7 +576,7 @@ func TestAiSystem_RBAC(t *testing.T) {
 		t.Run("owner can delete", func(t *testing.T) {
 			t.Parallel()
 
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+			owner := org.Client(t, testutil.RoleOwner)
 			aiSystemID := createAiSystem(t, owner, map[string]any{
 				"name":               "RBAC Delete Test",
 				"status":             "ACTIVE",
@@ -597,8 +598,8 @@ func TestAiSystem_RBAC(t *testing.T) {
 		t.Run("viewer cannot delete", func(t *testing.T) {
 			t.Parallel()
 
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			owner := org.Client(t, testutil.RoleOwner)
+			viewer := org.Client(t, testutil.RoleViewer)
 			aiSystemID := createAiSystem(t, owner, map[string]any{
 				"name":               "RBAC Delete Test",
 				"status":             "ACTIVE",

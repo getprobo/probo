@@ -40,13 +40,10 @@
  * A local z-1 inside the page will otherwise paint above a portaled popup
  * that has no z-index of its own.
  *
- * --z-index-* is reset to initial so the v2 build exposes only this numeric
- * scale (not Tailwind's z-10 / z-20 / … defaults). z-auto stays available as
- * a static utility.
+ * `--z-index-*: initial`, which drops Tailwind's z-10 / z-20 / … defaults,
+ * lives in ./reset.css. z-auto stays available as a static utility.
  * ------------------------------------------------------------------------- */
 @theme {
-    --z-index-*: initial;
-
     --z-index-1: 1;
     --z-index-2: 10;
     --z-index-3: 30;

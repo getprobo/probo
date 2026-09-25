@@ -23,33 +23,39 @@ package probod
 import "go.probo.inc/probo/pkg/probodconfig"
 
 type (
-	FullConfig                    = probodconfig.FullConfig
-	Config                        = probodconfig.Config
-	UnitConfig                    = probodconfig.UnitConfig
-	MetricsConfig                 = probodconfig.MetricsConfig
-	TracingConfig                 = probodconfig.TracingConfig
-	ESignConfig                   = probodconfig.ESignConfig
-	CompliancePortalConfig        = probodconfig.CompliancePortalConfig
-	APIConfig                     = probodconfig.APIConfig
-	CorsConfig                    = probodconfig.CorsConfig
-	GraphQLConfig                 = probodconfig.GraphQLConfig
-	ProxyProtocolConfig           = probodconfig.ProxyProtocolConfig
-	AuthConfig                    = probodconfig.AuthConfig
-	OAuth2ServerConfig            = probodconfig.OAuth2ServerConfig
-	OAuth2SigningKeyConfig        = probodconfig.OAuth2SigningKeyConfig
-	CookieConfig                  = probodconfig.CookieConfig
-	CookieSameSite                = probodconfig.CookieSameSite
-	PasswordConfig                = probodconfig.PasswordConfig
-	AWSConfig                     = probodconfig.AWSConfig
-	ConnectorConfig               = probodconfig.ConnectorConfig
-	ConnectorConfigOAuth2         = probodconfig.ConnectorConfigOAuth2
-	CustomDomainsConfig           = probodconfig.CustomDomainsConfig
-	ACMEConfig                    = probodconfig.ACMEConfig
-	LLMProviderConfig             = probodconfig.LLMProviderConfig
-	LLMAgentConfig                = probodconfig.LLMAgentConfig
-	EvidenceDescriberConfig       = probodconfig.EvidenceDescriberConfig
-	ThirdPartyVettingWorkerConfig = probodconfig.ThirdPartyVettingWorkerConfig
-	AgentsConfig                  = probodconfig.AgentsConfig
+	FullConfig                         = probodconfig.FullConfig
+	Config                             = probodconfig.Config
+	UnitConfig                         = probodconfig.UnitConfig
+	MetricsConfig                      = probodconfig.MetricsConfig
+	TracingConfig                      = probodconfig.TracingConfig
+	ESignConfig                        = probodconfig.ESignConfig
+	CompliancePortalConfig             = probodconfig.CompliancePortalConfig
+	CompliancePortalTLSMode            = probodconfig.CompliancePortalTLSMode
+	APIConfig                          = probodconfig.APIConfig
+	CorsConfig                         = probodconfig.CorsConfig
+	GraphQLConfig                      = probodconfig.GraphQLConfig
+	ProxyProtocolConfig                = probodconfig.ProxyProtocolConfig
+	AuthConfig                         = probodconfig.AuthConfig
+	IdentityFederationConfig           = probodconfig.IdentityFederationConfig
+	IdentityFederationSigningKeyConfig = probodconfig.IdentityFederationSigningKeyConfig
+	OAuth2ServerConfig                 = probodconfig.OAuth2ServerConfig
+	OAuth2SigningKeyConfig             = probodconfig.OAuth2SigningKeyConfig
+	CookieConfig                       = probodconfig.CookieConfig
+	CookieSameSite                     = probodconfig.CookieSameSite
+	PasswordConfig                     = probodconfig.PasswordConfig
+	PrivateKey                         = probodconfig.PrivateKey
+	RSAPrivateKey                      = probodconfig.RSAPrivateKey
+	AWSConfig                          = probodconfig.AWSConfig
+	ConnectorConfig                    = probodconfig.ConnectorConfig
+	ConnectorConfigOAuth2              = probodconfig.ConnectorConfigOAuth2
+	ConnectorConfigGitHubApp           = probodconfig.ConnectorConfigGitHubApp
+	CustomDomainsConfig                = probodconfig.CustomDomainsConfig
+	ACMEConfig                         = probodconfig.ACMEConfig
+	LLMProviderConfig                  = probodconfig.LLMProviderConfig
+	LLMAgentConfig                     = probodconfig.LLMAgentConfig
+	EvidenceDescriberConfig            = probodconfig.EvidenceDescriberConfig
+	ThirdPartyVettingWorkerConfig      = probodconfig.ThirdPartyVettingWorkerConfig
+	AgentsConfig                       = probodconfig.AgentsConfig
 
 	TrackerMappingWorkerConfig             = probodconfig.TrackerMappingWorkerConfig
 	CommonPatternEnrichmentWorkerConfig    = probodconfig.CommonPatternEnrichmentWorkerConfig
@@ -67,10 +73,14 @@ type (
 	SCIMBridgeConfig           = probodconfig.SCIMBridgeConfig
 	ITAMConfig                 = probodconfig.ITAMConfig
 	SlackConfig                = probodconfig.SlackConfig
+	SlackbotConfig             = probodconfig.SlackbotConfig
+	CookieBannerConfig         = probodconfig.CookieBannerConfig
 )
 
 const (
-	CookieSameSiteLax    = probodconfig.CookieSameSiteLax
-	CookieSameSiteStrict = probodconfig.CookieSameSiteStrict
-	CookieSameSiteNone   = probodconfig.CookieSameSiteNone
+	CompliancePortalTLSModeDirect   = probodconfig.CompliancePortalTLSModeDirect
+	CompliancePortalTLSModeExternal = probodconfig.CompliancePortalTLSModeExternal
+	CookieSameSiteLax               = probodconfig.CookieSameSiteLax
+	CookieSameSiteStrict            = probodconfig.CookieSameSiteStrict
+	CookieSameSiteNone              = probodconfig.CookieSameSiteNone
 )

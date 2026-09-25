@@ -21,7 +21,6 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
 export const contextRoutes = [
@@ -29,16 +28,7 @@ export const contextRoutes = [
     path: "context",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("#/pages/organizations/context/ContextLayoutLoader"),
+      () => import("#/pages/organizations/context/ContextPageLoader"),
     ),
-    children: [
-      {
-        index: true,
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("#/pages/organizations/context/ContextPageLoader"),
-        ),
-      },
-    ],
   },
 ] satisfies AppRoute[];

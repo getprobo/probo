@@ -55,16 +55,7 @@ func CompliancePortalReferenceOrderFields() []CompliancePortalReferenceOrderFiel
 }
 
 func (v CompliancePortalReferenceOrderField) IsValid() bool {
-	switch v {
-	case
-		CompliancePortalReferenceOrderFieldRank,
-		CompliancePortalReferenceOrderFieldName,
-		CompliancePortalReferenceOrderFieldCreatedAt,
-		CompliancePortalReferenceOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CompliancePortalReferenceOrderFields())
 }
 
 func (v CompliancePortalReferenceOrderField) String() string {
@@ -76,14 +67,7 @@ func (v CompliancePortalReferenceOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CompliancePortalReferenceOrderField) UnmarshalText(text []byte) error {
-	val := CompliancePortalReferenceOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CompliancePortalReferenceOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CompliancePortalReferenceOrderFields())
 }
 
 func (p CompliancePortalReferenceOrderField) Column() string {

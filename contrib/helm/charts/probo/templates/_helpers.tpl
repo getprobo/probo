@@ -188,3 +188,13 @@ Validate a required PEM private key.
 {{- end -}}
 {{- $value -}}
 {{- end }}
+
+{{/*
+Validate the trust center TLS mode.
+*/}}
+{{- define "probo.validateTrustCenterTLSMode" -}}
+{{- $mode := .Values.probo.trustCenter.tlsMode -}}
+{{- if not (has $mode (list "direct" "external")) -}}
+{{- fail (printf "probo.trustCenter.tlsMode must be direct or external, got %q" $mode) -}}
+{{- end -}}
+{{- end }}

@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -60,8 +61,18 @@ type (
 		Enrichment                    json.RawMessage    `db:"enrichment"`
 		EnrichmentAttempts            int                `db:"enrichment_attempts"`
 		LastEnrichmentAttemptAt       *time.Time         `db:"last_enrichment_attempt_at"`
-		CreatedAt                     time.Time          `db:"created_at"`
-		UpdatedAt                     time.Time          `db:"updated_at"`
+
+		// Review is the human verdict on whether this row names an
+		// engageable entity. RejectedVerdict is set only when Review is
+		// REJECTED. Nil means "do not assert": Insert/Upsert supply
+		// UNREVIEWED, and Upsert's conflict branch leaves a stored
+		// verdict alone. The column is NOT NULL with no default.
+		Review          *CommonThirdPartyReview          `db:"review"`
+		RejectedVerdict *CommonTrackerPatternAttribution `db:"rejected_verdict"`
+		ReviewedAt      *time.Time                       `db:"reviewed_at"`
+
+		CreatedAt time.Time `db:"created_at"`
+		UpdatedAt time.Time `db:"updated_at"`
 	}
 
 	CommonThirdParties []*CommonThirdParty
@@ -139,6 +150,9 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 FROM
@@ -170,6 +184,13 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByName loads the catalog row matching a name case-insensitively.
+//
+// lower(name) is not unique: the index enforcing it was dropped when slug
+// became the identity key, so a name shared by several rows is possible
+// and is exactly what catalog cleanup is meant to resolve. The oldest row
+// wins so repeated resolutions of one name converge on a single row
+// instead of oscillating across a duplicate set between calls.
 func (t *CommonThirdParty) LoadByName(
 	ctx context.Context,
 	conn pg.Querier,
@@ -200,12 +221,18 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 FROM
     common_third_parties
 WHERE
     lower(name) = lower(@name)
+ORDER BY
+    created_at ASC,
+    id ASC
 LIMIT 1;
 `
 
@@ -261,6 +288,9 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 FROM
@@ -321,6 +351,9 @@ INSERT INTO common_third_parties (
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 ) VALUES (
@@ -347,6 +380,9 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
+    COALESCE(@review, @default_review::common_third_party_review),
+    @rejected_verdict,
+    @reviewed_at,
     @created_at,
     @updated_at
 )
@@ -376,6 +412,10 @@ INSERT INTO common_third_parties (
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
+		"review":                           t.Review,
+		"default_review":                   CommonThirdPartyReviewUnreviewed,
+		"rejected_verdict":                 t.RejectedVerdict,
+		"reviewed_at":                      t.ReviewedAt,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -390,7 +430,13 @@ INSERT INTO common_third_parties (
 
 // Upsert inserts a row, or on slug conflict updates every column except
 // id and created_at. Returns true if a new row was inserted, false if an
-// existing row was updated.
+// existing row was updated, which holds for a caller that mints a fresh id
+// before calling — the seed's path.
+//
+// A caller that loads the row first must not rely on this: its receiver
+// already carries the row's own id, so the comparison cannot distinguish
+// the branches and always reports an insert. Such a caller already knows
+// the answer from its own load and should use that instead.
 func (t *CommonThirdParty) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -420,6 +466,9 @@ INSERT INTO common_third_parties (
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 ) VALUES (
@@ -446,6 +495,9 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
+    COALESCE(@review, @default_review::common_third_party_review),
+    @rejected_verdict,
+    @reviewed_at,
     @created_at,
     @updated_at
 )
@@ -467,6 +519,11 @@ SET
     terms_of_service_url             = EXCLUDED.terms_of_service_url,
     security_page_url                = EXCLUDED.security_page_url,
     trust_page_url                   = EXCLUDED.trust_page_url,
+    review                           = COALESCE(@review, common_third_parties.review),
+    rejected_verdict                 = CASE
+        WHEN @review IS NULL THEN common_third_parties.rejected_verdict
+        ELSE EXCLUDED.rejected_verdict
+    END,
     updated_at                       = EXCLUDED.updated_at
 RETURNING
     id,
@@ -492,6 +549,9 @@ RETURNING
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 `
@@ -522,6 +582,10 @@ RETURNING
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
+		"review":                           t.Review,
+		"default_review":                   CommonThirdPartyReviewUnreviewed,
+		"rejected_verdict":                 t.RejectedVerdict,
+		"reviewed_at":                      t.ReviewedAt,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -589,6 +653,9 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 FROM
@@ -614,11 +681,38 @@ WHERE
 	return nil
 }
 
+// defaultCommonThirdPartyLoadAllLimit caps an unpaginated catalog lookup.
+// LoadAll is a name-search convenience, not a full scan: callers that need
+// every row page through Load instead.
+const defaultCommonThirdPartyLoadAllLimit = 20
+
+// LoadAll returns catalog rows matching the filter, ordered by name and
+// capped at defaultCommonThirdPartyLoadAllLimit.
+//
+// Note the cap interacts with the ordering: it keeps the alphabetically
+// first matches, not the most relevant ones, so a broad fragment can hide
+// a specific match behind earlier names. Callers that surface results to a
+// consumer choosing among them should raise the cap accordingly.
 func (t *CommonThirdParties) LoadAll(
 	ctx context.Context,
 	conn pg.Querier,
 	filter *CommonThirdPartyFilter,
 ) error {
+	return t.LoadAllWithLimit(ctx, conn, filter, defaultCommonThirdPartyLoadAllLimit)
+}
+
+// LoadAllWithLimit is LoadAll with an explicit row cap. A limit of zero or
+// less falls back to the default.
+func (t *CommonThirdParties) LoadAllWithLimit(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonThirdPartyFilter,
+	limit int,
+) error {
+	if limit <= 0 {
+		limit = defaultCommonThirdPartyLoadAllLimit
+	}
+
 	q := `
 SELECT
     id,
@@ -644,6 +738,9 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 FROM
@@ -651,12 +748,12 @@ FROM
 WHERE
     %s
 ORDER BY name ASC
-LIMIT 20
+LIMIT @limit
 `
 
 	q = fmt.Sprintf(q, filter.SQLFragment())
 
-	args := pgx.StrictNamedArgs{}
+	args := pgx.StrictNamedArgs{"limit": limit}
 	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -708,6 +805,279 @@ ORDER BY name ASC
 	}
 
 	return ids, nil
+}
+
+// LoadAllUnreferencedIDs returns catalog entries that nothing points at: no
+// catalog tracker pattern and no organization third party in any tenant.
+//
+// These are the leftovers of a bad attribution — an entry created for a
+// vendor that turned out not to exist, which nothing ever linked. They are
+// not duplicates of anything, so merging cannot clean them up.
+//
+// Owned domains deliberately do not count as a reference. A domain is not
+// something pointing at the vendor, it is part of the vendor's own record:
+// enrichment output that means nothing once the entry is gone, and the
+// foreign key cascades it away with the row. Treating it as a reference only
+// stranded the entries most worth deleting, since an enriched entry usually
+// has one.
+//
+// createdBefore excludes entries still in flight: an entry is created
+// before the enrichment worker fills it in and before the pattern that
+// triggered it is linked, so a brand-new entry legitimately has no
+// references yet. unenrichedOnly further narrows to entries that never
+// completed enrichment.
+func (t *CommonThirdParties) LoadAllUnreferencedIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	createdBefore time.Time,
+	unenrichedOnly bool,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    ctp.id
+FROM
+    common_third_parties AS ctp
+WHERE
+    ctp.created_at < @created_before
+    AND (NOT @unenriched_only OR ctp.enrichment IS NULL)
+    AND NOT EXISTS (
+        SELECT 1 FROM common_tracker_patterns AS p
+        WHERE p.common_third_party_id = ctp.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM third_parties AS tp
+        WHERE tp.common_third_party_id = ctp.id
+    )
+ORDER BY
+    ctp.created_at ASC,
+    ctp.id ASC
+`
+
+	args := pgx.StrictNamedArgs{
+		"created_before":  createdBefore,
+		"unenriched_only": unenrichedOnly,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query unreferenced common third parties: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect unreferenced common third parties: %w", err)
+	}
+
+	return ids, nil
+}
+
+// DeleteIfUnreferenced deletes a catalog entry only while it still matches
+// the prune selection, reporting whether it did.
+//
+// The predicates repeat LoadAllUnreferencedIDs deliberately. Selecting
+// candidates and deleting them are separate statements, so a tracker pattern or
+// an organization third party can start referencing an entry in between — and a
+// plain delete would then clear that new link through ON DELETE SET NULL,
+// silently unlinking a row somebody just created. The same window lets
+// enrichment complete under --unenriched-only, so that predicate is repeated
+// too. Re-checking inside the delete closes both: the statement is atomic, so
+// a concurrent write either lands first and the delete matches nothing, or
+// lands after and its link or payload survives.
+func (t CommonThirdParty) DeleteIfUnreferenced(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	unenrichedOnly bool,
+) (bool, error) {
+	q := `
+DELETE FROM common_third_parties AS ctp
+WHERE
+    ctp.id = @id
+    AND (NOT @unenriched_only OR ctp.enrichment IS NULL)
+    AND NOT EXISTS (
+        SELECT 1 FROM common_tracker_patterns AS p
+        WHERE p.common_third_party_id = ctp.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM third_parties AS tp
+        WHERE tp.common_third_party_id = ctp.id
+    )
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":              id,
+		"unenriched_only": unenrichedOnly,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot delete unreferenced common third party: %w", err)
+	}
+
+	return result.RowsAffected() > 0, nil
+}
+
+// UpdateName renames a catalog entry, leaving its slug alone.
+//
+// The slug is the identity key that dedup and the seed both match on, so a
+// rename is display-only: correcting a name never silently moves an entry's
+// identity. Use UpdateSlug for that, deliberately and separately.
+func (t CommonThirdParty) UpdateName(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	name string,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    name = @name,
+    updated_at = NOW()
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":   id,
+		"name": name,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update common third party name: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// LoadReviewForUpdate reads the review under FOR UPDATE so a concurrent
+// review cannot commit between this read and the caller's write. Returns
+// ErrResourceNotFound when the row was pruned or merged away.
+func (t *CommonThirdParty) LoadReviewForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+) (CommonThirdPartyReview, *CommonTrackerPatternAttribution, error) {
+	q := `
+SELECT
+    review,
+    rejected_verdict
+FROM
+    common_third_parties
+WHERE
+    id = @id
+FOR UPDATE
+`
+
+	var (
+		review  CommonThirdPartyReview
+		verdict *CommonTrackerPatternAttribution
+	)
+
+	err := conn.QueryRow(ctx, q, pgx.StrictNamedArgs{"id": id}).Scan(&review, &verdict)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil, ErrResourceNotFound
+		}
+
+		return "", nil, fmt.Errorf("cannot load common third party review: %w", err)
+	}
+
+	return review, verdict, nil
+}
+
+// UpdateReview records a human verdict. A rejection requires a terminal
+// verdict; any other state must carry none.
+func (t CommonThirdParty) UpdateReview(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	review CommonThirdPartyReview,
+	verdict *CommonTrackerPatternAttribution,
+) error {
+	if review == CommonThirdPartyReviewRejected {
+		if verdict == nil || !verdict.IsTerminal() {
+			return fmt.Errorf("cannot update common third party review: rejected review requires a terminal verdict")
+		}
+	} else if verdict != nil {
+		return fmt.Errorf("cannot update common third party review: verdict only applies to a rejected review")
+	}
+
+	q := `
+UPDATE common_third_parties
+SET
+    review = @review,
+    rejected_verdict = @rejected_verdict,
+    reviewed_at = NOW(),
+    updated_at = NOW()
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":               id,
+		"review":           review,
+		"rejected_verdict": verdict,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update common third party review: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// UpdateSlug changes a catalog entry's slug.
+//
+// The slug is the entry's identity: dedup resolves against it and the seed
+// upserts on it, so changing it changes both which future resolutions land
+// on this entry and whether a seed run recreates the old one. Returns
+// ErrResourceAlreadyExists when another entry already holds the slug.
+func (t CommonThirdParty) UpdateSlug(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	slug string,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    slug = @slug,
+    updated_at = NOW()
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":   id,
+		"slug": slug,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok &&
+			pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "common_third_parties_slug_key" {
+			return ErrResourceAlreadyExists
+		}
+
+		return fmt.Errorf("cannot update common third party slug: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (t CommonThirdParty) UpdateLogoFileID(
@@ -789,6 +1159,9 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 FROM
@@ -883,6 +1256,9 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
     created_at,
     updated_at
 FROM

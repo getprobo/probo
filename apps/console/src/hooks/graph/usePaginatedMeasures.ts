@@ -27,11 +27,15 @@ import type { usePaginatedMeasuresQuery_fragment } from "#/__generated__/core/us
 /* eslint-disable relay/unused-fields */
 
 const measuresQuery = graphql`
-  query usePaginatedMeasuresQuery($organizationId: ID!) {
+  query usePaginatedMeasuresQuery(
+    $organizationId: ID!
+    $first: Int = 20
+    $order: MeasureOrder
+  ) {
     organization: node(id: $organizationId) {
       id
       ... on Organization {
-        ...usePaginatedMeasuresFragment
+        ...usePaginatedMeasuresFragment @arguments(first: $first, order: $order)
       }
     }
   }
@@ -70,11 +74,19 @@ const measuresFragment = graphql`
 /**
  * Hook to retrieve measured paginated (used for link dialog and measure selectors)
  */
-export function usePaginatedMeasures(organizationId: string) {
+export function usePaginatedMeasures(
+  organizationId: string,
+  options?: {
+    first?: number;
+    order?: { field: "CREATED_AT" | "NAME"; direction: "ASC" | "DESC" };
+  },
+) {
   const query = useLazyLoadQuery<usePaginatedMeasuresQuery>(
     measuresQuery,
     {
       organizationId,
+      first: options?.first,
+      order: options?.order,
     },
     { fetchPolicy: "network-only" },
   );

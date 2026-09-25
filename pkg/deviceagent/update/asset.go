@@ -38,6 +38,9 @@ type AssetLayout struct {
 	// BinaryName is the agent binary file name inside the archive
 	// (e.g. probo-agent or probo-agent.exe).
 	BinaryName string
+	// GUIBinaryName is the Windows GUI-subsystem binary inside the archive.
+	// It is empty on platforms that ship one binary.
+	GUIBinaryName string
 	// IsZip is true for Windows builds, which ship as zip archives.
 	// Other platforms ship as gzipped tar.
 	IsZip bool
@@ -58,20 +61,23 @@ func LayoutFor(goos, goarch string) (AssetLayout, error) {
 	dir := fmt.Sprintf("probo-agent_%s_%s", osLabel, archLabel)
 
 	binary := "probo-agent"
+	guiBinary := ""
 	isZip := false
 	ext := "tar.gz"
 
 	if goos == "windows" {
 		binary += ".exe"
+		guiBinary = "probo-agentw.exe"
 		isZip = true
 		ext = "zip"
 	}
 
 	return AssetLayout{
-		ArchiveName: fmt.Sprintf("%s.%s", dir, ext),
-		ArchiveDir:  dir,
-		BinaryName:  binary,
-		IsZip:       isZip,
+		ArchiveName:   fmt.Sprintf("%s.%s", dir, ext),
+		ArchiveDir:    dir,
+		BinaryName:    binary,
+		GUIBinaryName: guiBinary,
+		IsZip:         isZip,
 	}, nil
 }
 

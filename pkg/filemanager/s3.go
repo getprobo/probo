@@ -34,6 +34,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
+	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -300,6 +301,7 @@ func (s *Service) GeneratePresignedURL(
 			ResponseContentType:        new(file.MimeType),
 			ResponseContentDisposition: &contentDisposition,
 		},
+		awsconfig.UnsignedChecksumMode,
 		func(opts *s3.PresignOptions) {
 			opts.Expires = expiresIn
 		},

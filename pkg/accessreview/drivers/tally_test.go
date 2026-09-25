@@ -50,3 +50,22 @@ func TestTallyDriver(t *testing.T) {
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
 }
+
+// TestTallyCurrentUser covers the /users/me fetch shared by the
+// create-connector validation (organization id derivation) and the name
+// resolver (source label). Both calls replay from the same cassette.
+func TestTallyCurrentUser(t *testing.T) {
+	t.Parallel()
+
+	rec := newRecorder(t, "testdata/tally_user", "TALLY_TOKEN")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("TALLY_TOKEN")))
+
+	user, err := GetTallyCurrentUser(context.Background(), client, "https://api.tally.so")
+	require.NoError(t, err)
+	assert.NotEmpty(t, user.OrganizationID)
+
+	resolver := NewTallyNameResolver(client, "https://api.tally.so")
+	name, err := resolver.ResolveInstanceName(context.Background())
+	require.NoError(t, err)
+	assert.NotEmpty(t, name)
+}

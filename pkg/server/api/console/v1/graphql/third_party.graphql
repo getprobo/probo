@@ -341,8 +341,7 @@ type ThirdPartyComplianceReport implements Node {
 type ThirdPartyBusinessAssociateAgreement implements Node {
     id: ID!
     thirdParty: ThirdParty! @goField(forceResolver: true)
-    validFrom: Datetime
-    validUntil: Datetime
+    validity: Period
     file: File! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -377,8 +376,7 @@ type ThirdPartyService implements Node {
 type ThirdPartyDataPrivacyAgreement implements Node {
     id: ID!
     thirdParty: ThirdParty! @goField(forceResolver: true)
-    validFrom: Datetime
-    validUntil: Datetime
+    validity: Period
     file: File! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -625,16 +623,14 @@ input DeleteThirdPartyComplianceReportInput {
 
 input UploadThirdPartyBusinessAssociateAgreementInput {
     thirdPartyId: ID!
-    validFrom: Datetime
-    validUntil: Datetime
+    validity: PeriodInput
     fileName: String!
     file: Upload!
 }
 
 input UpdateThirdPartyBusinessAssociateAgreementInput {
     thirdPartyId: ID!
-    validFrom: Datetime @goField(omittable: true)
-    validUntil: Datetime @goField(omittable: true)
+    validity: PeriodInput
 }
 
 input DeleteThirdPartyBusinessAssociateAgreementInput {
@@ -643,16 +639,14 @@ input DeleteThirdPartyBusinessAssociateAgreementInput {
 
 input UploadThirdPartyDataPrivacyAgreementInput {
     thirdPartyId: ID!
-    validFrom: Datetime
-    validUntil: Datetime
+    validity: PeriodInput
     fileName: String!
     file: Upload!
 }
 
 input UpdateThirdPartyDataPrivacyAgreementInput {
     thirdPartyId: ID!
-    validFrom: Datetime @goField(omittable: true)
-    validUntil: Datetime @goField(omittable: true)
+    validity: PeriodInput
 }
 
 input DeleteThirdPartyDataPrivacyAgreementInput {

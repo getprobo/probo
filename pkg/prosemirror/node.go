@@ -129,8 +129,14 @@ func Parse(s string) (Node, error) {
 }
 
 // HeadingAttrs parses and returns the heading attributes from a heading node.
+// Attributes are optional in the Tiptap schema: a node that omits them, or
+// omits individual keys, takes the schema defaults.
 func (n Node) HeadingAttrs() (HeadingAttrs, error) {
-	var a HeadingAttrs
+	a := HeadingAttrs{Level: 1}
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse heading attrs: %w", err)
 	}
@@ -154,7 +160,11 @@ func (n Node) CodeBlockAttrs() (CodeBlockAttrs, error) {
 
 // OrderedListAttrs parses and returns the ordered list attributes.
 func (n Node) OrderedListAttrs() (OrderedListAttrs, error) {
-	var a OrderedListAttrs
+	a := OrderedListAttrs{Start: 1}
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse ordered list attrs: %w", err)
 	}
@@ -165,6 +175,10 @@ func (n Node) OrderedListAttrs() (OrderedListAttrs, error) {
 // ImageAttrs parses and returns the image attributes.
 func (n Node) ImageAttrs() (ImageAttrs, error) {
 	var a ImageAttrs
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse image attrs: %w", err)
 	}
@@ -174,7 +188,11 @@ func (n Node) ImageAttrs() (ImageAttrs, error) {
 
 // TableCellAttrs parses and returns the table cell/header attributes.
 func (n Node) TableCellAttrs() (TableCellAttrs, error) {
-	var a TableCellAttrs
+	a := TableCellAttrs{Colspan: 1, Rowspan: 1}
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse table cell attrs: %w", err)
 	}

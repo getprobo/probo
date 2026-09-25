@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { ConnectorProtocol } from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+
 // DATADOG_SITES labels are technical identifiers (region code + hostname),
 // intentionally not translated. The dialog's prose strings are.
 export const DATADOG_SITES: { value: string; label: string }[] = [
@@ -35,9 +37,6 @@ export function mapAPIKeyExtraSettingToField(
   settingKey: string,
 ): string | null {
   switch (provider) {
-    case "TALLY":
-      if (settingKey === "organizationId") return "tallyOrganizationId";
-      break;
     case "SENTRY":
       if (settingKey === "organizationSlug") return "sentryOrganizationSlug";
       break;
@@ -55,6 +54,9 @@ export function mapAPIKeyExtraSettingToField(
       break;
     case "LANGFUSE":
       if (settingKey === "baseUrl") return "langfuseBaseUrl";
+      break;
+    case "AUTHENTIK":
+      if (settingKey === "baseUrl") return "authentikBaseUrl";
       break;
     case "ONE_PASSWORD":
       if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
@@ -87,11 +89,112 @@ export function mapAPIKeyExtraSettingToField(
     case "SEGMENT":
       if (settingKey === "region") return "segmentRegion";
       break;
-    case "CRISP":
-      if (settingKey === "websiteId") return "crispWebsiteId";
+    case "NEW_RELIC":
+      if (settingKey === "region") return "newRelicRegion";
+      break;
+    case "RETOOL":
+      if (settingKey === "baseUrl") return "retoolBaseUrl";
+      break;
+    case "TWINGATE":
+      if (settingKey === "network") return "twingateNetwork";
       break;
   }
   return null;
+}
+
+// Same grammar as pkg/awsx/arn.RoleARNPattern, with the three supported
+// partitions inlined so the field rejects other partitions immediately.
+export const AWS_IAM_ROLE_ARN_PATTERN
+  = "arn:(aws-us-gov|aws-cn|aws):iam::([0-9]{12}):role(?:/[\\w+=,.@\\-]+)*/[\\w+=,.@\\-]{1,64}";
+
+const awsIAMRoleARN = new RegExp(`^${AWS_IAM_ROLE_ARN_PATTERN}$`);
+
+export function isAWSRoleARN(value: string): boolean {
+  return awsIAMRoleARN.test(value.trim());
+}
+
+export function awsAccountIDFromRoleARN(value: string): string | null {
+  const match = value.trim().match(awsIAMRoleARN);
+  if (!match) {
+    return null;
+  }
+
+  return match[2] ?? null;
+}
+
+// Immediate name while the worker assumes the role and replaces the
+// account ID with the official account name (or the sign-in alias).
+export function awsAccessReviewSourceName(
+  displayName: string,
+  roleArn: string,
+): string {
+  const accountID = awsAccountIDFromRoleARN(roleArn);
+  if (!accountID) {
+    return displayName;
+  }
+
+  return `${displayName} / ${accountID}`;
+}
+
+const GCP_PROVIDER_RESOURCE_PATTERN
+  = /^(?:(?:https:)?\/\/iam\.(?:googleapis\.com|s3nsapis\.fr)\/)?projects\/([1-9][0-9]*)\/locations\/global\/workloadIdentityPools\/([a-z0-9][a-z0-9-]{2,30}[a-z0-9])\/providers\/([a-z0-9][a-z0-9-]{2,30}[a-z0-9])\/?$/;
+
+const GCP_SERVICE_ACCOUNT_EMAIL_PATTERN
+  = /^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9](?:\.s3ns)?\.iam\.gserviceaccount\.com$/;
+
+export function isGCPWorkloadIdentityProvider(value: string): boolean {
+  return GCP_PROVIDER_RESOURCE_PATTERN.test(value.trim());
+}
+
+export function isGCPServiceAccountEmail(value: string): boolean {
+  return GCP_SERVICE_ACCOUNT_EMAIL_PATTERN.test(value.trim());
+}
+
+export function gcpProjectNumberFromProvider(value: string): string | null {
+  const match = value.trim().match(GCP_PROVIDER_RESOURCE_PATTERN);
+  if (!match) {
+    return null;
+  }
+
+  return match[1] ?? null;
+}
+
+export function gcpAccessReviewSourceName(
+  displayName: string,
+  providerResource: string,
+): string {
+  const projectNumber = gcpProjectNumberFromProvider(providerResource);
+  if (!projectNumber) {
+    return displayName;
+  }
+
+  return `${displayName} / ${projectNumber}`;
+}
+
+const AZURE_GUID_PATTERN
+  = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+const AZURE_NIL_GUID = "00000000-0000-0000-0000-000000000000";
+
+export function isAzureGUID(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed === "" || trimmed === AZURE_NIL_GUID) {
+    return false;
+  }
+
+  return AZURE_GUID_PATTERN.test(trimmed);
+}
+
+export function azureAccessReviewSourceName(
+  displayName: string,
+  subscriptionId: string,
+): string {
+  const trimmed = subscriptionId.trim();
+  if (!isAzureGUID(trimmed)) {
+    return displayName;
+  }
+
+  return `${displayName} / ${trimmed}`;
 }
 
 export function mapClientCredentialsExtraSettingToField(
@@ -163,21 +266,94 @@ export function connectOAuthProvider(
   oauth2Scopes: ReadonlyArray<string>,
   extras?: Record<string, string>,
 ) {
+  connectProviderProtocol(organizationId, provider, "OAUTH2", {
+    oauth2Scopes,
+    extras,
+  });
+}
+
+// buildConnectorInitiateURL builds the start-connect URL for a protocol.
+// OAuth2 uses /connectors/initiate; GitHub App has its own endpoint.
+export function buildConnectorInitiateURL(
+  organizationId: string,
+  provider: string,
+  protocol: ConnectorProtocol,
+  options?: {
+    oauth2Scopes?: ReadonlyArray<string>;
+    connectorId?: string;
+    extras?: Record<string, string>;
+  },
+): string {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
-  const url = new URL("/api/console/v1/connectors/initiate", baseURL);
+  const path
+    = protocol === "GITHUB_APP"
+      ? "/api/console/v1/connectors/github-app/initiate"
+      : "/api/console/v1/connectors/initiate";
+  const url = new URL(path, baseURL);
   url.searchParams.append("organization_id", organizationId);
-  url.searchParams.append("provider", provider);
-  for (const scope of oauth2Scopes) {
-    url.searchParams.append("scope", scope);
+  if (protocol !== "GITHUB_APP") {
+    url.searchParams.append("provider", provider);
   }
-  if (extras) {
-    for (const [k, v] of Object.entries(extras)) {
-      url.searchParams.append(k, v);
+  if (options?.connectorId) {
+    url.searchParams.append("connector_id", options.connectorId);
+  }
+  if (protocol !== "GITHUB_APP") {
+    for (const scope of options?.oauth2Scopes ?? []) {
+      url.searchParams.append("scope", scope);
+    }
+    if (options?.extras) {
+      for (const [k, v] of Object.entries(options.extras)) {
+        url.searchParams.append(k, v);
+      }
     }
   }
   url.searchParams.append(
     "continue",
-    `/organizations/${organizationId}/access-reviews/sources`,
+    `/organizations/${organizationId}/access-reviews/connections`,
   );
-  window.location.assign(url.toString());
+  return url.toString();
+}
+
+// buildConnectorInstallInitiateURL builds the start-install URL for a provider
+// connected by installing Probo's app at the vendor. No continue parameter: the
+// vendor redirects to Probo's own callback, which rebuilds the connections URL
+// server-side.
+export function buildConnectorInstallInitiateURL(
+  organizationId: string,
+  provider: string,
+): string {
+  const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
+  const url = new URL("/api/console/v1/connectors/install/initiate", baseURL);
+  url.searchParams.append("organization_id", organizationId);
+  url.searchParams.append("provider", provider);
+  return url.toString();
+}
+
+// connectProviderInstall navigates the browser to the install ceremony. The
+// customer proves control of the vendor tenant there, so no value is collected
+// in Probo first.
+export function connectProviderInstall(
+  organizationId: string,
+  provider: string,
+) {
+  window.location.assign(
+    buildConnectorInstallInitiateURL(organizationId, provider),
+  );
+}
+
+// connectProviderProtocol builds the connector-initiate URL for any configured
+// protocol and navigates the browser to it.
+export function connectProviderProtocol(
+  organizationId: string,
+  provider: string,
+  protocol: ConnectorProtocol,
+  options?: {
+    oauth2Scopes?: ReadonlyArray<string>;
+    connectorId?: string;
+    extras?: Record<string, string>;
+  },
+) {
+  window.location.assign(
+    buildConnectorInitiateURL(organizationId, provider, protocol, options),
+  );
 }

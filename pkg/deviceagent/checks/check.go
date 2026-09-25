@@ -31,6 +31,9 @@ type Result struct {
 	Status     Status
 	Evidence   map[string]any
 	ObservedAt time.Time
+	// Rememberable marks an UNKNOWN that is a missing observation, not a
+	// failed probe. The agent may substitute the last PASS or FAIL.
+	Rememberable bool
 }
 
 // Check runs a single posture check.

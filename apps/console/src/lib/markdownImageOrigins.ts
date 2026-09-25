@@ -35,7 +35,11 @@ export function consoleMarkdownImageOrigins(): string[] {
 
   const appOrigin = trimViteEnv("VITE_APP_ORIGIN");
   if (appOrigin !== "") {
-    origins.add(appOrigin.replace(/\/$/, ""));
+    for (const origin of appOrigin.split(/\s+/)) {
+      if (origin !== "") {
+        origins.add(origin.replace(/\/$/, ""));
+      }
+    }
   } else {
     const apiURL = trimViteEnv("VITE_API_URL");
     if (apiURL !== "") {

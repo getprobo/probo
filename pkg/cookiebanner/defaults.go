@@ -20,6 +20,8 @@
 
 package cookiebanner
 
+import "maps"
+
 import "go.probo.inc/probo/pkg/coredata"
 
 var SupportedLanguages = []string{"en", "de", "es", "fr", "id", "it", "ja", "ko", "nl", "pl", "pt", "tr", "uk", "zh"}
@@ -31,6 +33,7 @@ var defaultCategories = []struct {
 	Kind            coredata.CookieCategoryKind
 	Rank            int
 	GCMConsentTypes []string
+	TCFPurposeIDs   []int
 	PostHogConsent  bool
 }{
 	{
@@ -40,6 +43,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNecessary,
 		Rank:            0,
 		GCMConsentTypes: []string{"security_storage"},
+		TCFPurposeIDs:   []int{},
 		PostHogConsent:  false,
 	},
 	{
@@ -49,6 +53,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNormal,
 		Rank:            1,
 		GCMConsentTypes: []string{"analytics_storage"},
+		TCFPurposeIDs:   []int{1, 7, 8, 9, 10},
 		PostHogConsent:  true,
 	},
 	{
@@ -58,6 +63,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNormal,
 		Rank:            2,
 		GCMConsentTypes: []string{"ad_storage", "ad_user_data", "ad_personalization"},
+		TCFPurposeIDs:   []int{1, 3, 4},
 		PostHogConsent:  false,
 	},
 	{
@@ -67,6 +73,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindNormal,
 		Rank:            3,
 		GCMConsentTypes: []string{"functionality_storage", "personalization_storage"},
+		TCFPurposeIDs:   []int{},
 		PostHogConsent:  false,
 	},
 	{
@@ -76,6 +83,7 @@ var defaultCategories = []struct {
 		Kind:            coredata.CookieCategoryKindUncategorised,
 		Rank:            4,
 		GCMConsentTypes: nil,
+		TCFPurposeIDs:   []int{},
 		PostHogConsent:  false,
 	},
 }
@@ -696,4 +704,221 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_notice": "Este sitio utiliza cookies para mejorar su experiencia. {{cookie_policy_link}}",
 		"button_dismiss":            "Entendido",
 	},
+}
+
+var tcfUIStringsByLanguage = map[string]map[string]string{
+	"en": {
+		"tcf_disclosure_store":         "This site stores and/or accesses information on a device and processes personal data.",
+		"tcf_disclosure_data":          "Personal data processed includes unique identifiers and browsing data.",
+		"tcf_disclosure_scope":         "These choices apply to this site only (service-specific).",
+		"tcf_disclosure_withdraw":      "You can withdraw or change your consent at any time via Cookie settings.",
+		"tcf_disclosure_object":        "Some partners process personal data on the basis of legitimate interest. You can object to that processing.",
+		"tcf_panel_description":        "Choose which purposes and partners to allow. Consent and legitimate interest can be set separately when both apply.",
+		"tcf_label_purposes":           "Purposes",
+		"tcf_label_special_features":   "Special features",
+		"tcf_disclosure_partners":      "We work with {{partners}}.",
+		"tcf_partner_one":              "{{count}} partner",
+		"tcf_partners":                 "{{count}} partners",
+		"tcf_view_partners":            "View partners",
+		"tcf_purpose_consent_one":      "{{count}} partner seeking consent",
+		"tcf_purpose_consent":          "{{count}} partners seeking consent",
+		"tcf_purpose_li_one":           "{{count}} partner relying on legitimate interest",
+		"tcf_purpose_li":               "{{count}} partners relying on legitimate interest",
+		"tcf_section_purposes":         "Purposes",
+		"tcf_section_other_purposes":   "Other purposes",
+		"tcf_section_special_purposes": "Special purposes",
+		"tcf_section_features":         "Features",
+		"tcf_section_special_features": "Special features",
+		"tcf_section_data_categories":  "Data categories",
+		"tcf_section_partners":         "Partners",
+		"tcf_section_storage":          "Storage",
+		"tcf_section_more":             "More information",
+		"tcf_label_consent":            "Consent",
+		"tcf_label_li":                 "Legitimate interest",
+		"tcf_label_optin":              "Opt-in",
+		"tcf_label_always_on":          "Always on",
+		"tcf_label_cookie_refresh":     "may be refreshed",
+		"tcf_label_cookie_no_refresh":  "not refreshed",
+		"tcf_label_non_cookie":         "Non-cookie storage",
+		"tcf_label_std_retention":      "Standard retention",
+		"tcf_label_purpose_storage":    "Purpose-specific storage",
+		"tcf_label_device_storage":     "Device storage details",
+		"tcf_storage":                  "Your choices are stored in the probo_consent cookie for {{days}} days.",
+	},
+	"fr": {
+		"tcf_disclosure_store":         "Ce site stocke et/ou accède à des informations sur un appareil et traite des données personnelles.",
+		"tcf_disclosure_data":          "Les données personnelles traitées incluent des identifiants uniques et des données de navigation.",
+		"tcf_disclosure_scope":         "Ces choix s'appliquent uniquement à ce site (spécifiques au service).",
+		"tcf_disclosure_withdraw":      "Vous pouvez retirer ou modifier votre consentement à tout moment via les paramètres des cookies.",
+		"tcf_disclosure_object":        "Certains partenaires traitent des données personnelles sur la base de l'intérêt légitime. Vous pouvez vous opposer à ce traitement.",
+		"tcf_panel_description":        "Choisissez les finalités et les partenaires à autoriser. Le consentement et l'intérêt légitime peuvent être réglés séparément lorsque les deux s'appliquent.",
+		"tcf_label_purposes":           "Finalités",
+		"tcf_label_special_features":   "Fonctionnalités spéciales",
+		"tcf_disclosure_partners":      "Nous travaillons avec {{partners}}.",
+		"tcf_partner_one":              "{{count}} partenaire",
+		"tcf_partners":                 "{{count}} partenaires",
+		"tcf_view_partners":            "Voir les partenaires",
+		"tcf_purpose_consent_one":      "{{count}} partenaire demandant le consentement",
+		"tcf_purpose_consent":          "{{count}} partenaires demandant le consentement",
+		"tcf_purpose_li_one":           "{{count}} partenaire se fondant sur l'intérêt légitime",
+		"tcf_purpose_li":               "{{count}} partenaires se fondant sur l'intérêt légitime",
+		"tcf_section_purposes":         "Finalités",
+		"tcf_section_other_purposes":   "Autres finalités",
+		"tcf_section_special_purposes": "Finalités spéciales",
+		"tcf_section_features":         "Fonctionnalités",
+		"tcf_section_special_features": "Fonctionnalités spéciales",
+		"tcf_section_data_categories":  "Catégories de données",
+		"tcf_section_partners":         "Partenaires",
+		"tcf_section_storage":          "Stockage",
+		"tcf_section_more":             "Plus d'informations",
+		"tcf_label_consent":            "Consentement",
+		"tcf_label_li":                 "Intérêt légitime",
+		"tcf_label_optin":              "Opt-in",
+		"tcf_label_always_on":          "Toujours actif",
+		"tcf_label_cookie_refresh":     "peut être renouvelée",
+		"tcf_label_cookie_no_refresh":  "non renouvelée",
+		"tcf_label_non_cookie":         "Stockage hors cookie",
+		"tcf_label_std_retention":      "Conservation standard",
+		"tcf_label_purpose_storage":    "Stockage spécifique à la finalité",
+		"tcf_label_device_storage":     "Détails du stockage sur l'appareil",
+		"tcf_storage":                  "Vos choix sont stockés dans le cookie probo_consent pendant {{days}} jours.",
+	},
+	"de": {
+		"tcf_disclosure_store":         "Diese Website speichert und/oder greift auf Informationen auf einem Gerät zu und verarbeitet personenbezogene Daten.",
+		"tcf_disclosure_data":          "Zu den verarbeiteten personenbezogenen Daten gehören eindeutige Kennungen und Browserdaten.",
+		"tcf_disclosure_scope":         "Diese Auswahl gilt nur für diese Website (dienstspezifisch).",
+		"tcf_disclosure_withdraw":      "Sie können Ihre Einwilligung jederzeit über die Cookie-Einstellungen widerrufen oder ändern.",
+		"tcf_disclosure_object":        "Einige Partner verarbeiten personenbezogene Daten auf Grundlage eines berechtigten Interesses. Sie können dieser Verarbeitung widersprechen.",
+		"tcf_panel_description":        "Wählen Sie, welche Zwecke und Partner zugelassen werden sollen. Einwilligung und berechtigtes Interesse können getrennt festgelegt werden, wenn beides zutrifft.",
+		"tcf_label_purposes":           "Zwecke",
+		"tcf_label_special_features":   "Besondere Funktionen",
+		"tcf_disclosure_partners":      "Wir arbeiten mit {{partners}}.",
+		"tcf_partner_one":              "{{count}} Partner",
+		"tcf_partners":                 "{{count}} Partner",
+		"tcf_view_partners":            "Partner anzeigen",
+		"tcf_purpose_consent_one":      "{{count}} Partner, der eine Einwilligung einholt",
+		"tcf_purpose_consent":          "{{count}} Partner, die eine Einwilligung einholen",
+		"tcf_purpose_li_one":           "{{count}} Partner, der sich auf berechtigtes Interesse stützt",
+		"tcf_purpose_li":               "{{count}} Partner, die sich auf berechtigtes Interesse stützen",
+		"tcf_section_purposes":         "Zwecke",
+		"tcf_section_other_purposes":   "Weitere Zwecke",
+		"tcf_section_special_purposes": "Besondere Zwecke",
+		"tcf_section_features":         "Funktionen",
+		"tcf_section_special_features": "Besondere Funktionen",
+		"tcf_section_data_categories":  "Datenkategorien",
+		"tcf_section_partners":         "Partner",
+		"tcf_section_storage":          "Speicherung",
+		"tcf_section_more":             "Weitere Informationen",
+		"tcf_label_consent":            "Einwilligung",
+		"tcf_label_li":                 "Berechtigtes Interesse",
+		"tcf_label_optin":              "Opt-in",
+		"tcf_label_always_on":          "Immer aktiv",
+		"tcf_label_cookie_refresh":     "kann erneuert werden",
+		"tcf_label_cookie_no_refresh":  "wird nicht erneuert",
+		"tcf_label_non_cookie":         "Speicherung ohne Cookies",
+		"tcf_label_std_retention":      "Standardaufbewahrung",
+		"tcf_label_purpose_storage":    "Zweckbezogene Speicherung",
+		"tcf_label_device_storage":     "Angaben zur Gerätespeicherung",
+		"tcf_storage":                  "Ihre Auswahl wird {{days}} Tage im Cookie probo_consent gespeichert.",
+	},
+	"es": {
+		"tcf_disclosure_store":         "Este sitio almacena y/o accede a información en un dispositivo y trata datos personales.",
+		"tcf_disclosure_data":          "Los datos personales tratados incluyen identificadores únicos y datos de navegación.",
+		"tcf_disclosure_scope":         "Estas elecciones se aplican solo a este sitio (específicas del servicio).",
+		"tcf_disclosure_withdraw":      "Puede retirar o cambiar su consentimiento en cualquier momento a través de Configuración de cookies.",
+		"tcf_disclosure_object":        "Algunos socios tratan datos personales sobre la base del interés legítimo. Puede oponerse a ese tratamiento.",
+		"tcf_panel_description":        "Elija qué finalidades y socios permitir. El consentimiento y el interés legítimo se pueden configurar por separado cuando ambos aplican.",
+		"tcf_label_purposes":           "Finalidades",
+		"tcf_label_special_features":   "Características especiales",
+		"tcf_disclosure_partners":      "Trabajamos con {{partners}}.",
+		"tcf_partner_one":              "{{count}} socio",
+		"tcf_partners":                 "{{count}} socios",
+		"tcf_view_partners":            "Ver socios",
+		"tcf_purpose_consent_one":      "{{count}} socio que solicita consentimiento",
+		"tcf_purpose_consent":          "{{count}} socios que solicitan consentimiento",
+		"tcf_purpose_li_one":           "{{count}} socio que se basa en el interés legítimo",
+		"tcf_purpose_li":               "{{count}} socios que se basan en el interés legítimo",
+		"tcf_section_purposes":         "Finalidades",
+		"tcf_section_other_purposes":   "Otras finalidades",
+		"tcf_section_special_purposes": "Finalidades especiales",
+		"tcf_section_features":         "Características",
+		"tcf_section_special_features": "Características especiales",
+		"tcf_section_data_categories":  "Categorías de datos",
+		"tcf_section_partners":         "Socios",
+		"tcf_section_storage":          "Almacenamiento",
+		"tcf_section_more":             "Más información",
+		"tcf_label_consent":            "Consentimiento",
+		"tcf_label_li":                 "Interés legítimo",
+		"tcf_label_optin":              "Opt-in",
+		"tcf_label_always_on":          "Siempre activo",
+		"tcf_label_cookie_refresh":     "puede renovarse",
+		"tcf_label_cookie_no_refresh":  "no se renueva",
+		"tcf_label_non_cookie":         "Almacenamiento sin cookies",
+		"tcf_label_std_retention":      "Conservación estándar",
+		"tcf_label_purpose_storage":    "Almacenamiento específico de la finalidad",
+		"tcf_label_device_storage":     "Detalles del almacenamiento en el dispositivo",
+		"tcf_storage":                  "Sus elecciones se almacenan en la cookie probo_consent durante {{days}} días.",
+	},
+	"nl": {
+		"tcf_disclosure_store":         "Deze site slaat informatie op een apparaat op en/of opent die, en verwerkt persoonsgegevens.",
+		"tcf_disclosure_data":          "Verwerkte persoonsgegevens omvatten unieke identificatoren en browsegegevens.",
+		"tcf_disclosure_scope":         "Deze keuzes gelden alleen voor deze site (dienstspecifiek).",
+		"tcf_disclosure_withdraw":      "U kunt uw toestemming op elk moment intrekken of wijzigen via Cookie-instellingen.",
+		"tcf_disclosure_object":        "Sommige partners verwerken persoonsgegevens op basis van gerechtvaardigd belang. U kunt tegen die verwerking bezwaar maken.",
+		"tcf_panel_description":        "Kies welke doeleinden en partners u wilt toestaan. Toestemming en gerechtvaardigd belang kunnen afzonderlijk worden ingesteld wanneer beide van toepassing zijn.",
+		"tcf_label_purposes":           "Doeleinden",
+		"tcf_label_special_features":   "Speciale functies",
+		"tcf_disclosure_partners":      "Wij werken samen met {{partners}}.",
+		"tcf_partner_one":              "{{count}} partner",
+		"tcf_partners":                 "{{count}} partners",
+		"tcf_view_partners":            "Partners bekijken",
+		"tcf_purpose_consent_one":      "{{count}} partner die toestemming vraagt",
+		"tcf_purpose_consent":          "{{count}} partners die toestemming vragen",
+		"tcf_purpose_li_one":           "{{count}} partner die zich beroept op gerechtvaardigd belang",
+		"tcf_purpose_li":               "{{count}} partners die zich beroepen op gerechtvaardigd belang",
+		"tcf_section_purposes":         "Doeleinden",
+		"tcf_section_other_purposes":   "Overige doeleinden",
+		"tcf_section_special_purposes": "Speciale doeleinden",
+		"tcf_section_features":         "Functies",
+		"tcf_section_special_features": "Speciale functies",
+		"tcf_section_data_categories":  "Gegevenscategorieën",
+		"tcf_section_partners":         "Partners",
+		"tcf_section_storage":          "Opslag",
+		"tcf_section_more":             "Meer informatie",
+		"tcf_label_consent":            "Toestemming",
+		"tcf_label_li":                 "Gerechtvaardigd belang",
+		"tcf_label_optin":              "Opt-in",
+		"tcf_label_always_on":          "Altijd aan",
+		"tcf_label_cookie_refresh":     "kan worden vernieuwd",
+		"tcf_label_cookie_no_refresh":  "wordt niet vernieuwd",
+		"tcf_label_non_cookie":         "Opslag zonder cookies",
+		"tcf_label_std_retention":      "Standaardbewaartermijn",
+		"tcf_label_purpose_storage":    "Doeleinde-specifieke opslag",
+		"tcf_label_device_storage":     "Details apparaatopslag",
+		"tcf_storage":                  "Uw keuzes worden {{days}} dagen bewaard in de cookie probo_consent.",
+	},
+}
+
+func mergeTCFTexts(lang string, texts map[string]string) {
+	extras := tcfUIStringsByLanguage[lang]
+	if extras == nil {
+		extras = tcfUIStringsByLanguage["en"]
+	}
+
+	for key, value := range extras {
+		if texts[key] == "" {
+			texts[key] = value
+		}
+	}
+}
+
+func init() {
+	for lang, ui := range defaultUIStringsByLanguage {
+		extras := tcfUIStringsByLanguage[lang]
+		if extras == nil {
+			extras = tcfUIStringsByLanguage["en"]
+		}
+
+		maps.Copy(ui, extras)
+	}
 }

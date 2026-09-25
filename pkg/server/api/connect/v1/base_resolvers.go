@@ -241,6 +241,13 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 	}
 
 	samlConfig := samlConfigs[0]
+	if samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyOff {
+		return nil, graphql.ErrorOnPath(
+			ctx,
+			fmt.Errorf("no SAML configuration for email"),
+		)
+	}
+
 	loginURL := r.SSOLoginURL(samlConfig.ID)
 
 	return &loginURL, nil
@@ -264,6 +271,11 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 // SignUpEnabled is the resolver for the signUpEnabled field.
 func (r *queryResolver) SignUpEnabled(ctx context.Context) (bool, error) {
 	return r.iam.IsSignUpEnabled(), nil
+}
+
+// SlackbotAvailable is the resolver for the slackbotAvailable field.
+func (r *queryResolver) SlackbotAvailable(ctx context.Context) (bool, error) {
+	return r.slackbotAvailable, nil
 }
 
 // Oauth2ScopesSupported is the resolver for the oauth2ScopesSupported field.

@@ -36,33 +36,32 @@ import (
 
 type (
 	AccessReviewEntry struct {
-		ID                           gid.GID                         `db:"id"`
-		OrganizationID               gid.GID                         `db:"organization_id"`
-		AccessReviewCampaignID       gid.GID                         `db:"access_review_campaign_id"`
-		AccessReviewCampaignSourceID gid.GID                         `db:"access_review_campaign_source_id"`
-		IdentityID                   *gid.GID                        `db:"identity_id"`
-		Email                        string                          `db:"email"`
-		FullName                     string                          `db:"full_name"`
-		Roles                        []string                        `db:"roles"`
-		JobTitle                     string                          `db:"job_title"`
-		IsAdmin                      *bool                           `db:"is_admin"`
-		MFAStatus                    MFAStatus                       `db:"mfa_status"`
-		AuthMethod                   AccessReviewEntryAuthMethod     `db:"auth_method"`
-		AccountType                  AccessReviewEntryAccountType    `db:"account_type"`
-		Active                       *bool                           `db:"active"`
-		LastLogin                    *time.Time                      `db:"last_login"`
-		AccountCreatedAt             *time.Time                      `db:"account_created_at"`
-		ExternalID                   string                          `db:"external_id"`
-		AccountKey                   string                          `db:"account_key"`
-		IncrementalTag               AccessReviewEntryIncrementalTag `db:"incremental_tag"`
-		Flags                        []AccessReviewEntryFlag         `db:"flags"`
-		FlagReasons                  []string                        `db:"flag_reasons"`
-		Decision                     AccessReviewEntryDecision       `db:"decision"`
-		DecisionNote                 *string                         `db:"decision_note"`
-		DecidedBy                    *gid.GID                        `db:"decided_by"`
-		DecidedAt                    *time.Time                      `db:"decided_at"`
-		CreatedAt                    time.Time                       `db:"created_at"`
-		UpdatedAt                    time.Time                       `db:"updated_at"`
+		ID                           gid.GID                      `db:"id"`
+		OrganizationID               gid.GID                      `db:"organization_id"`
+		AccessReviewCampaignID       gid.GID                      `db:"access_review_campaign_id"`
+		AccessReviewCampaignSourceID gid.GID                      `db:"access_review_campaign_source_id"`
+		IdentityID                   *gid.GID                     `db:"identity_id"`
+		Email                        string                       `db:"email"`
+		FullName                     string                       `db:"full_name"`
+		Roles                        []string                     `db:"roles"`
+		JobTitle                     string                       `db:"job_title"`
+		IsAdmin                      *bool                        `db:"is_admin"`
+		MFAStatus                    MFAStatus                    `db:"mfa_status"`
+		AuthMethod                   AccessReviewEntryAuthMethod  `db:"auth_method"`
+		AccountType                  AccessReviewEntryAccountType `db:"account_type"`
+		Active                       *bool                        `db:"active"`
+		LastLogin                    *time.Time                   `db:"last_login"`
+		AccountCreatedAt             *time.Time                   `db:"account_created_at"`
+		ExternalID                   string                       `db:"external_id"`
+		AccountKey                   string                       `db:"account_key"`
+		Flags                        []AccessReviewEntryFlag      `db:"flags"`
+		FlagReasons                  []string                     `db:"flag_reasons"`
+		Decision                     AccessReviewEntryDecision    `db:"decision"`
+		DecisionNote                 *string                      `db:"decision_note"`
+		DecidedBy                    *gid.GID                     `db:"decided_by"`
+		DecidedAt                    *time.Time                   `db:"decided_at"`
+		CreatedAt                    time.Time                    `db:"created_at"`
+		UpdatedAt                    time.Time                    `db:"updated_at"`
 	}
 
 	AccessReviewEntries []*AccessReviewEntry
@@ -142,7 +141,6 @@ SELECT
     account_created_at,
     external_id,
     account_key,
-    incremental_tag,
     flags,
     flag_reasons,
     decision,
@@ -209,7 +207,6 @@ INSERT INTO
         account_created_at,
         external_id,
         account_key,
-        incremental_tag,
         flags,
         flag_reasons,
         decision,
@@ -239,7 +236,6 @@ VALUES (
     @account_created_at,
     @external_id,
     @account_key,
-    @incremental_tag,
     @flags,
     @flag_reasons,
     @decision,
@@ -271,7 +267,6 @@ VALUES (
 		"account_created_at":               e.AccountCreatedAt,
 		"external_id":                      e.ExternalID,
 		"account_key":                      e.AccountKey,
-		"incremental_tag":                  e.IncrementalTag,
 		"flags":                            e.Flags,
 		"flag_reasons":                     e.FlagReasons,
 		"decision":                         e.Decision,
@@ -363,7 +358,6 @@ SELECT
     account_created_at,
     external_id,
     account_key,
-    incremental_tag,
     flags,
     flag_reasons,
     decision,
@@ -431,7 +425,6 @@ SELECT
     account_created_at,
     external_id,
     account_key,
-    incremental_tag,
     flags,
     flag_reasons,
     decision,
@@ -620,7 +613,6 @@ INSERT INTO access_review_entries (
     account_created_at,
     external_id,
     account_key,
-    incremental_tag,
     flags,
     flag_reasons,
     decision,
@@ -649,7 +641,6 @@ INSERT INTO access_review_entries (
     @account_created_at,
     @external_id,
     @account_key,
-    @incremental_tag,
     @flags,
     @flag_reasons,
     @decision,
@@ -672,7 +663,6 @@ ON CONFLICT (access_review_campaign_source_id, account_key) DO UPDATE SET
     last_login         = EXCLUDED.last_login,
     account_created_at = EXCLUDED.account_created_at,
     external_id        = EXCLUDED.external_id,
-    incremental_tag    = EXCLUDED.incremental_tag,
     updated_at         = EXCLUDED.updated_at
 `
 
@@ -696,7 +686,6 @@ ON CONFLICT (access_review_campaign_source_id, account_key) DO UPDATE SET
 		"account_created_at":               e.AccountCreatedAt,
 		"external_id":                      e.ExternalID,
 		"account_key":                      e.AccountKey,
-		"incremental_tag":                  e.IncrementalTag,
 		"flags":                            e.Flags,
 		"flag_reasons":                     e.FlagReasons,
 		"decision":                         e.Decision,
@@ -712,63 +701,6 @@ ON CONFLICT (access_review_campaign_source_id, account_key) DO UPDATE SET
 	}
 
 	return nil
-}
-
-// BaselineAccountEntry holds minimal data from a previous campaign's entries
-// for incremental diffing.
-type BaselineAccountEntry struct {
-	AccountKey string
-	Email      string
-	FullName   string
-}
-
-func (entries *AccessReviewEntries) LoadBaselineBySourceID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	campaignID gid.GID,
-	sourceID gid.GID,
-) ([]BaselineAccountEntry, error) {
-	q := fmt.Sprintf(`
-SELECT account_key, email, full_name
-FROM access_review_entries
-WHERE %s
-  AND access_review_campaign_source_id IN (
-    SELECT id
-    FROM access_review_campaign_sources
-    WHERE access_review_campaign_id = @campaign_id
-      AND access_review_source_id = @source_id
-  )
-`, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"campaign_id": campaignID,
-		"source_id":   sourceID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load baseline entries: %w", err)
-	}
-	defer rows.Close()
-
-	var result []BaselineAccountEntry
-
-	for rows.Next() {
-		var entry BaselineAccountEntry
-		if err := rows.Scan(&entry.AccountKey, &entry.Email, &entry.FullName); err != nil {
-			return nil, fmt.Errorf("cannot scan baseline entry: %w", err)
-		}
-
-		result = append(result, entry)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("cannot iterate baseline entries: %w", err)
-	}
-
-	return result, nil
 }
 
 // LoadMembershipAccountsByOrganizationID loads IAM membership accounts for the

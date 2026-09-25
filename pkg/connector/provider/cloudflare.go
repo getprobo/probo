@@ -32,14 +32,19 @@ import (
 
 func cloudflareRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderCloudflare,
+		Provider: coredata.ConnectorProviderCloudflare,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.CloudflareConnectorSettings) string {
+				return s.AccountID
+			},
+		),
 		DisplayName:      "Cloudflare",
 		DocumentationURL: accessReviewDocsURL("cloudflare"),
 		Endpoints: Endpoints{
 			Probe:   "https://api.cloudflare.com/client/v4/user/tokens/verify",
 			APIBase: "https://api.cloudflare.com/client/v4",
 		},
-		SupportsAPIKey: true,
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
 			if err != nil {

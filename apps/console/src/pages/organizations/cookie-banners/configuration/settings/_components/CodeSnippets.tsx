@@ -20,21 +20,36 @@
 
 import { Button, Card, useToast } from "@probo/ui";
 import { Trans, useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-export function CodeSnippets() {
+import type { CodeSnippets_cookieBanner$key } from "#/__generated__/core/CodeSnippets_cookieBanner.graphql";
+
+import { cookieBannerEmbedSnippet } from "../_lib/embedSnippet";
+
+const codeSnippetsFragment = graphql`
+  fragment CodeSnippets_cookieBanner on CookieBanner {
+    id
+    capabilities {
+      tcf
+    }
+  }
+`;
+
+interface CodeSnippetsProps {
+  cookieBannerKey: CodeSnippets_cookieBanner$key;
+}
+
+export function CodeSnippets({ cookieBannerKey }: CodeSnippetsProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-
-  const baseUrl = `${window.location.origin}/api/cookie-banner/v1`;
-
-  const code = `<script
-  src="https://cdn.jsdelivr.net/npm/@probo/cookie-banner/dist/cookie-banner.iife.js"
-  data-banner-id="${cookieBannerId}"
-  data-base-url="${baseUrl}"
-  data-position="bottom-left"
-></script>`;
+  const banner = useFragment(codeSnippetsFragment, cookieBannerKey);
+  const baseUrl = new URL("/api/cookie-banner/v1", window.location.origin).href;
+  const code = cookieBannerEmbedSnippet({
+    bannerId: banner.id,
+    baseUrl,
+    tcf: banner.capabilities.tcf,
+  });
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(
@@ -58,6 +73,11 @@ export function CodeSnippets() {
   return (
     <div className="space-y-3">
       <h3 className="font-medium">{t("codeSnippets.title")}</h3>
+      {banner.capabilities.tcf
+        ? (
+            <p className="text-sm text-txt-secondary">{t("codeSnippets.tcfNote")}</p>
+          )
+        : null}
       <Card className="rounded-lg border">
         <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
           <Button variant="secondary" onClick={handleCopy}>

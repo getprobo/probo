@@ -21,20 +21,14 @@
 package slack
 
 import (
-	"context"
-	"fmt"
-
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 type Service struct {
 	pg                 *pg.Client
 	logger             *log.Logger
 	slackSigningSecret string
-	baseURL            string
-	tokenSecret        string
 	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
 	// threaded in by probod so a deployment that repoints the Slack connector
 	// moves these calls too. See NewClient.
@@ -44,8 +38,6 @@ type Service struct {
 func NewService(
 	pg *pg.Client,
 	slackSigningSecret string,
-	baseURL string,
-	tokenSecret string,
 	slackAPIBaseURL string,
 	logger *log.Logger,
 ) *Service {
@@ -53,8 +45,6 @@ func NewService(
 		pg:                 pg,
 		logger:             logger,
 		slackSigningSecret: slackSigningSecret,
-		baseURL:            baseURL,
-		tokenSecret:        tokenSecret,
 		slackAPIBaseURL:    slackAPIBaseURL,
 	}
 }
@@ -65,25 +55,4 @@ func (s *Service) GetSlackClient() *Client {
 
 func (s *Service) GetSlackSigningSecret() string {
 	return s.slackSigningSecret
-}
-
-func (s *Service) GetInitialSlackMessageByChannelAndTS(
-	ctx context.Context,
-	channelID string,
-	messageTS string,
-) (*coredata.SlackMessage, error) {
-	var slackMessage coredata.SlackMessage
-
-	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := slackMessage.LoadInitialByChannelAndTS(ctx, conn, coredata.NewNoScope(), channelID, messageTS); err != nil {
-			return fmt.Errorf("cannot load slack message: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &slackMessage, nil
 }

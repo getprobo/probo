@@ -114,6 +114,17 @@ func TestSnapshotsEqual(t *testing.T) {
 		assert.False(t, snapshotsEqual(a, b))
 	})
 
+	t.Run("differing TCFPurposeIDs order is not equal", func(t *testing.T) {
+		t.Parallel()
+
+		a := baseSnapshot()
+		a.Categories[0].TCFPurposeIDs = []int{1, 7, 8}
+		b := baseSnapshot()
+		b.Categories[0].TCFPurposeIDs = []int{7, 1, 8}
+
+		assert.False(t, snapshotsEqual(a, b))
+	})
+
 	t.Run("nil vs set PrivacyPolicyURL is not equal", func(t *testing.T) {
 		t.Parallel()
 
@@ -262,8 +273,8 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 	t.Run("snapshot is identical regardless of rank values", func(t *testing.T) {
 		t.Parallel()
 
-		original := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil)
-		shuffled := buildSnapshot(banner, mkCategories(99, 50, 25, 10), nil)
+		original := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, nil)
+		shuffled := buildSnapshot(banner, mkCategories(99, 50, 25, 10), nil, nil)
 
 		assert.True(t, snapshotsEqual(original, shuffled), "rank changes must not affect the snapshot")
 	})
@@ -274,8 +285,8 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		ordered := mkCategories(0, 1, 2, 3)
 		reversed := coredata.CookieCategories{ordered[3], ordered[2], ordered[1], ordered[0]}
 
-		a := buildSnapshot(banner, ordered, nil)
-		b := buildSnapshot(banner, reversed, nil)
+		a := buildSnapshot(banner, ordered, nil, nil)
+		b := buildSnapshot(banner, reversed, nil, nil)
 
 		assert.True(t, snapshotsEqual(a, b))
 	})
@@ -284,10 +295,35 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		t.Parallel()
 
 		consentOnly := mkCategories(0, 1, 2, 3)[:3]
-		snap := buildSnapshot(banner, consentOnly, nil)
+		snap := buildSnapshot(banner, consentOnly, nil, nil)
 
 		require.Len(t, snap.Categories, 3)
 		assert.Equal(t, coredata.CookieCategoryKindNecessary, snap.Categories[0].Kind)
+	})
+
+	t.Run("sorts iab vendor ids so selection order does not matter", func(t *testing.T) {
+		t.Parallel()
+
+		a := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, []int{755, 52})
+		b := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, []int{52, 755})
+
+		assert.True(t, snapshotsEqual(a, b))
+		assert.Equal(t, []int{52, 755}, a.IABVendorIDs)
+	})
+
+	t.Run("nil TCFPurposeIDs equals an empty-slice snapshot", func(t *testing.T) {
+		t.Parallel()
+
+		nilIDs := mkCategories(0, 1, 2, 3)[:1]
+		emptyIDs := mkCategories(0, 1, 2, 3)[:1]
+		nilIDs[0].TCFPurposeIDs = nil
+		emptyIDs[0].TCFPurposeIDs = []int{}
+
+		a := buildSnapshot(banner, nilIDs, nil, nil)
+		b := buildSnapshot(banner, emptyIDs, nil, nil)
+
+		assert.Equal(t, []int{}, a.Categories[0].TCFPurposeIDs)
+		assert.True(t, snapshotsEqual(a, b))
 	})
 }
 
@@ -327,4 +363,71 @@ func TestRecordConsentRequest_Validate(t *testing.T) {
 		require.True(t, ok)
 		assert.NotEmpty(t, validationErrors.ByField("action"))
 	})
+}
+
+func TestBuildBannerConfig_TCF(t *testing.T) {
+	t.Parallel()
+
+	tenant := gid.NewTenantID()
+	bannerID := gid.New(tenant, coredata.CookieBannerEntityType)
+	snapshot := coredata.CookieBannerVersionSnapshot{
+		CookiePolicyURL:   "https://example.com/cookies",
+		ConsentExpiryDays: 365,
+		DefaultLanguage:   "en",
+	}
+	version := &coredata.CookieBannerVersion{Version: 1}
+
+	t.Run("leaves tcf unset until attach", func(t *testing.T) {
+		t.Parallel()
+
+		banner := &coredata.CookieBanner{
+			ID: bannerID,
+			Capabilities: coredata.CookieBannerCapabilities{
+				ResourceReporting: true,
+				TCF:               true,
+			},
+		}
+
+		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
+		assert.Nil(t, config.TCF)
+		assert.True(t, config.ResourceReportingEnabled)
+	})
+
+	t.Run("defaults to disabled", func(t *testing.T) {
+		t.Parallel()
+
+		banner := &coredata.CookieBanner{
+			ID:           bannerID,
+			Capabilities: coredata.DefaultCookieBannerCapabilities(),
+		}
+
+		config := buildBannerConfig(banner, version, &snapshot, nil, "en")
+		assert.Nil(t, config.TCF)
+	})
+}
+
+func TestTCFServesGVL_Scenario(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		regulation Regulation
+		want       bool
+	}{
+		{name: "gdpr", regulation: RegulationGDPR, want: true},
+		{name: "uk gdpr", regulation: RegulationUKGDPR, want: true},
+		{name: "ccpa", regulation: RegulationCCPA, want: false},
+		{name: "none", regulation: RegulationNone, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, tcfServesGVL(tt.regulation))
+			},
+		)
+	}
 }

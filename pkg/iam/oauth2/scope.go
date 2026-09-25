@@ -43,6 +43,26 @@ func IsStandardScope(scope coredata.OAuth2Scope) bool {
 	return false
 }
 
+// IsIdentityOnlyScopes reports whether every requested scope is an OIDC
+// identity scope (openid, profile, or email). Write scopes and
+// offline_access are excluded so skip-consent cannot grant API access or
+// long-lived refresh tokens without an explicit consent screen.
+func IsIdentityOnlyScopes(scopes coredata.OAuth2Scopes) bool {
+	if len(scopes) == 0 {
+		return false
+	}
+
+	for _, scope := range scopes {
+		switch scope {
+		case ScopeOpenID, ScopeProfile, ScopeEmail:
+		default:
+			return false
+		}
+	}
+
+	return true
+}
+
 func IsValid(scope coredata.OAuth2Scope) bool {
 	return IsStandardScope(scope)
 }

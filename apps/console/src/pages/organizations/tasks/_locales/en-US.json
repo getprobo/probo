@@ -1,0 +1,200 @@
+{
+  "detailsPage": {
+    "notFound": "Task not found",
+    "empty": "—",
+    "none": "None",
+    "noDescription": "No description",
+    "unassigned": "Unassigned",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "state": "State",
+      "priority": "Priority",
+      "assignedTo": "Assigned to",
+      "linear": "Linear",
+      "measure": "Measure",
+      "timeEstimate": "Time estimate",
+      "timeEstimateUnit": "Time estimate unit",
+      "deadline": "Deadline",
+      "recurrence": "Repeats",
+      "recurrenceUnit": "Recurrence unit",
+      "createdAt": "Created",
+      "updatedAt": "Updated"
+    },
+    "duration": {
+      "S": "Seconds",
+      "M": "Minutes",
+      "H": "Hours",
+      "D": "Days",
+      "W": "Weeks",
+      "MO": "Months",
+      "Y": "Years"
+    },
+    "states": {
+      "backlog": "Backlog",
+      "todo": "To do",
+      "inProgress": "In progress",
+      "done": "Done",
+      "canceled": "Canceled",
+      "duplicate": "Duplicate"
+    },
+    "priorities": {
+      "urgent": "Urgent",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "doesNotRepeat": "Does not repeat",
+    "hints": {
+      "recurrenceNeedsDeadline": "Set a deadline before adding a recurrence interval"
+    },
+    "actions": {
+      "addEstimate": "Add estimate",
+      "clearEstimate": "Clear estimate",
+      "addRecurrence": "Add interval",
+      "clearRecurrence": "Clear interval",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "more": "More actions"
+    },
+    "delete": {
+      "title": "Delete task",
+      "description": "Are you sure you want to delete this task?",
+      "confirm": "Delete"
+    },
+    "messages": {
+      "updated": "Task updated successfully.",
+      "deleted": "Task deleted successfully."
+    },
+    "linear": {
+      "connect": "Connect Linear Sync",
+      "reconnect": "Reconnect Linear Sync",
+      "publish": "Publish",
+      "link": "Link",
+      "unlink": "Unlink",
+      "team": "Linear team",
+      "chooseTeam": "Choose team",
+      "chooseIssue": "Choose issue",
+      "newIssue": "New issue",
+      "searchTeam": "Search teams",
+      "searchIssue": "Search issues",
+      "noResults": "No results",
+      "loadMore": "Load more",
+      "published": "Task published to Linear.",
+      "linked": "Task linked to Linear.",
+      "confirmLink": {
+        "title": "Link Linear issue",
+        "description": "This will update the Probo task with the Linear issue."
+      },
+      "unlinked": "Linear issue unlinked.",
+      "errors": {
+        "publish": "Failed to publish task to Linear",
+        "link": "Failed to link task to Linear",
+        "unlink": "Failed to unlink Linear issue",
+        "load": "Could not display Linear"
+      }
+    },
+    "errors": {
+      "delete": "Failed to delete task",
+      "update": "Failed to update task",
+      "content": "Could not display this description"
+    },
+    "comments": {
+      "title": "Comments",
+      "empty": "No comments yet",
+      "authorFallback": "Someone",
+      "fields": {
+        "comment": "Comment",
+        "leaveAComment": "Leave a comment"
+      },
+      "actions": {
+        "submit": "Add comment",
+        "delete": "Delete comment",
+        "showMore": "Show more"
+      },
+      "delete": {
+        "title": "Delete comment",
+        "description": "Are you sure you want to delete this comment?",
+        "confirm": "Delete"
+      },
+      "messages": {
+        "created": "Comment added successfully.",
+        "updated": "Comment updated successfully.",
+        "deleted": "Comment deleted successfully."
+      },
+      "errors": {
+        "create": "Failed to add comment",
+        "update": "Failed to update comment",
+        "delete": "Failed to delete comment",
+        "content": "Could not display this comment",
+        "contentRequired": "Enter a comment",
+        "contentTooLong": "Comment must be at most {{max}} characters"
+      }
+    },
+    "activity": {
+      "title": "Activity",
+      "empty": "No activity yet",
+      "actorFallback": "Someone",
+      "actions": {
+        "showMore": "Show more"
+      },
+      "sentences": {
+        "created": "{{actor}} created this task",
+        "updated": "{{actor}} updated this task",
+        "renamed": "{{actor}} renamed from {{oldValue}} to {{newValue}}",
+        "descriptionUpdated": "{{actor}} updated the description",
+        "stateChanged": "{{actor}} changed status from {{oldValue}} to {{newValue}}",
+        "priorityChanged": "{{actor}} changed priority from {{oldValue}} to {{newValue}}",
+        "assigned": "{{actor}} assigned {{newValue}}",
+        "reassigned": "{{actor}} reassigned from {{oldValue}} to {{newValue}}",
+        "unassigned": "{{actor}} unassigned {{oldValue}}",
+        "measureLinked": "{{actor}} linked {{newValue}}",
+        "measureChanged": "{{actor}} moved from {{oldValue}} to {{newValue}}",
+        "measureUnlinked": "{{actor}} unlinked {{oldValue}}",
+        "deadlineSet": "{{actor}} set the deadline to {{newValue}}",
+        "deadlineChanged": "{{actor}} changed the deadline from {{oldValue}} to {{newValue}}",
+        "deadlineRemoved": "{{actor}} removed the deadline",
+        "timeEstimateSet": "{{actor}} set the time estimate to {{newValue}}",
+        "timeEstimateChanged": "{{actor}} changed the time estimate from {{oldValue}} to {{newValue}}",
+        "timeEstimateRemoved": "{{actor}} removed the time estimate"
+      }
+    }
+  },
+  "settingsDialog": {
+    "trigger": "Settings",
+    "title": "Settings",
+    "integrations": {
+      "title": "Task integrations",
+      "description": "Connect tools to publish tasks and keep them in sync."
+    },
+    "linear": {
+      "name": "Linear Sync",
+      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, and assignee when emails match."
+    },
+    "status": {
+      "connected": "Connected",
+      "notConnected": "Not connected"
+    },
+    "actions": {
+      "connect": "Connect",
+      "reconnect": "Reconnect",
+      "close": "Close"
+    }
+  },
+  "createDialog": {
+    "title": "Add Task",
+    "fields": {
+      "namePlaceholder": "Task name"
+    },
+    "actions": {
+      "create": "Create task"
+    },
+    "messages": {
+      "created": "Task created successfully."
+    },
+    "errors": {
+      "create": "Failed to create task",
+      "nameRequired": "Enter a task name"
+    }
+  }
+}

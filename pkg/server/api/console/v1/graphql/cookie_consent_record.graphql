@@ -248,6 +248,7 @@ type CookieConsentRecord implements Node {
     regulationSource: RegulationSource
     countryCode: CountryCode
     subdivisionCode: String
+    tc: String
     createdAt: Datetime!
 }
 

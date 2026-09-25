@@ -48,6 +48,10 @@ func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {
 		return parseLinuxDiskEncryptionValue(ev, present)
 	}
 
+	if backendOf(ev) == "get-bitlockervolume" {
+		return parseWindowsBitLockerValue(ev)
+	}
+
 	raw := lowerStringEvidence(ev, "raw")
 	switch {
 	case raw == "":
@@ -56,14 +60,6 @@ func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {
 		return onOffValue(true)
 	case strings.Contains(raw, "filevault is off"):
 		return onOffValue(false)
-	case strings.Contains(raw, "percentage encrypted: 100"),
-		strings.Contains(raw, "fully encrypted"),
-		strings.Contains(raw, "protection on"):
-		return onOffValue(true)
-	case strings.Contains(raw, "percentage encrypted: 0"),
-		strings.Contains(raw, "fully decrypted"),
-		strings.Contains(raw, "protection off"):
-		return onOffValue(false)
 	case strings.Contains(raw, "components"):
 		// FreeBSD geli prints a "Name Status Components" table with one row per
 		// encrypted provider; ACTIVE is the only status meaning attached.
@@ -71,6 +67,20 @@ func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {
 	}
 
 	return unknownValue()
+}
+
+func parseWindowsBitLockerValue(ev map[string]any) DevicePostureValue {
+	if stringEvidence(ev, "error") != "" {
+		return unknownValue()
+	}
+
+	allOn, any := allValuesMatch(stringMapEvidence(ev, "volumes"), "on")
+	if !any {
+		// No OS volumes, or the BitLocker cmdlet is missing (Home).
+		return onOffValue(false)
+	}
+
+	return onOffValue(allOn)
 }
 
 func parseLinuxDiskEncryptionValue(
@@ -106,6 +116,13 @@ func lsblkHasCryptDevice(raw string) bool {
 }
 
 func parseScreenLockValue(ev map[string]any) DevicePostureValue {
+	// Windows resolves a layered policy where the deciding source varies per
+	// host, so the agent states the outcome rather than the server guessing
+	// which key to read. Agents before 0.6.5 set no such key.
+	if enforced, ok := boolEvidence(ev, "screen_lock_enforced"); ok {
+		return onOffValue(enforced)
+	}
+
 	switch backendOf(ev) {
 	case "sysadminctl":
 		return parseDarwinScreenLockModeValue(ev)
@@ -205,9 +222,10 @@ func parseFirewallValue(ev map[string]any) DevicePostureValue {
 		return parseNftablesValue(ev)
 	case "iptables":
 		return parseIptablesValue(ev)
-	case "get-netfirewallprofile":
+	case "get-netfirewallprofile", "hnetcfg.fwpolicy2":
 		return parseWindowsFirewallProfilesValue(ev)
 	case "netsh":
+		// Sent by agents before 0.6.5, which fell back to localized netsh output.
 		return parseNetshFirewallValue(ev)
 	}
 
@@ -333,6 +351,14 @@ func parseNetshFirewallValue(ev map[string]any) DevicePostureValue {
 }
 
 func parseTimeSyncValue(ev map[string]any) DevicePostureValue {
+	if start := stringEvidence(ev, "w32time_service_start"); start != "" {
+		return parseWindowsTimeSyncStartValue(start, stringEvidence(ev, "w32time_type"))
+	}
+
+	if status := stringEvidence(ev, "w32time_status"); status != "" {
+		return parseWindowsTimeSyncValue(status, stringEvidence(ev, "w32time_type"))
+	}
+
 	raw := lowerStringEvidence(ev, "raw")
 	switch {
 	case raw == "":
@@ -349,14 +375,40 @@ func parseTimeSyncValue(ev map[string]any) DevicePostureValue {
 		return onOffValue(false)
 	case strings.Contains(raw, "is running"):
 		return onOffValue(true)
-	case strings.Contains(raw, "local cmos clock"):
-		// Windows w32tm: the local clock is not a synchronisation source.
-		return onOffValue(false)
-	case strings.Contains(raw, "source:"):
-		return onOffValue(true)
 	}
 
 	return unknownValue()
+}
+
+// parseWindowsTimeSyncStartValue reads the W32Time service Start value, where 2
+// is automatic and 3 is manual with a start trigger.
+func parseWindowsTimeSyncStartValue(serviceStart, typ string) DevicePostureValue {
+	switch strings.TrimSpace(serviceStart) {
+	case "2", "3":
+	default:
+		return onOffValue(false)
+	}
+
+	return windowsTimeSyncTypeValue(typ)
+}
+
+// parseWindowsTimeSyncValue reads the transient service status sent by agents
+// before 0.6.4, which report the Start value under w32time_service_start.
+func parseWindowsTimeSyncValue(status, typ string) DevicePostureValue {
+	if !strings.EqualFold(status, "Running") {
+		return onOffValue(false)
+	}
+
+	return windowsTimeSyncTypeValue(typ)
+}
+
+func windowsTimeSyncTypeValue(typ string) DevicePostureValue {
+	switch strings.ToUpper(strings.TrimSpace(typ)) {
+	case "NTP", "NT5DS", "ALLSYNC":
+		return onOffValue(true)
+	}
+
+	return onOffValue(false)
 }
 
 func parseAutoUpdateValue(ev map[string]any) DevicePostureValue {
@@ -371,7 +423,7 @@ func parseAutoUpdateValue(ev map[string]any) DevicePostureValue {
 	}
 
 	// The Windows Update policy read sets no backend key.
-	if hasAnyKey(ev, "no_auto_update", "au_options", "wuauserv") {
+	if hasAnyKey(ev, "no_auto_update", "au_options", "wuauserv", "wuauserv_service_start") {
 		return parseWindowsAutoUpdateValue(ev)
 	}
 
@@ -393,6 +445,10 @@ func parseDarwinSoftwareUpdateValue(ev map[string]any) DevicePostureValue {
 }
 
 func parseWindowsAutoUpdateValue(ev map[string]any) DevicePostureValue {
+	if start := stringEvidence(ev, "wuauserv_service_start"); start != "" {
+		return parseWindowsAutoUpdateStartValue(ev, start)
+	}
+
 	if stringEvidence(ev, "no_auto_update") == "1" {
 		return onOffValue(false)
 	}
@@ -406,12 +462,41 @@ func parseWindowsAutoUpdateValue(ev map[string]any) DevicePostureValue {
 		return onOffValue(false)
 	}
 
-	// With no managed policy the value is whether the Windows Update service is
-	// running to apply the OS default.
+	// Agents before 0.6.4 reported whether the Windows Update service happened
+	// to be running rather than its Start configuration.
 	switch stringEvidence(ev, "wuauserv") {
 	case "running":
 		return onOffValue(true)
 	case "stopped":
+		return onOffValue(false)
+	}
+
+	return unknownValue()
+}
+
+// parseWindowsAutoUpdateStartValue mirrors the agent ordering: a disabled
+// wuauserv (Start 4) beats any policy, then NoAutoUpdate, then AUOptions, where
+// an unset AUOptions leaves the OS default of automatic install in place.
+func parseWindowsAutoUpdateStartValue(
+	ev map[string]any,
+	serviceStart string,
+) DevicePostureValue {
+	switch strings.TrimSpace(serviceStart) {
+	case "4":
+		return onOffValue(false)
+	case "2", "3":
+	default:
+		return unknownValue()
+	}
+
+	if stringEvidence(ev, "no_auto_update") == "1" {
+		return onOffValue(false)
+	}
+
+	switch stringEvidence(ev, "au_options") {
+	case "", "3", "4", "5":
+		return onOffValue(true)
+	case "2":
 		return onOffValue(false)
 	}
 
@@ -428,20 +513,18 @@ func parsePasswordPolicyValue(ev map[string]any) DevicePostureValue {
 		return minPasswordLengthValue(minLen)
 	}
 
+	// Windows reports the stricter of secedit and MDM DeviceLock as
+	// min_password_length. Older agents sent that key with no backend.
+	if minLen, ok := numberEvidence(ev, "min_password_length"); ok {
+		return minPasswordLengthValue(minLen)
+	}
+
 	if parseError := lowerStringEvidence(ev, "parse_error"); parseError != "" {
 		if strings.Contains(parseError, "not set") {
 			return noneValue()
 		}
 
 		return unknownValue()
-	}
-
-	// Windows `net accounts`.
-	if minLen, ok := parseLabeledInt(
-		stringEvidence(ev, "raw"),
-		"minimum password length",
-	); ok {
-		return minPasswordLengthValue(minLen)
 	}
 
 	// FreeBSD /etc/login.conf.

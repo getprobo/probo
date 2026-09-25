@@ -1,6 +1,22 @@
 // Copyright (c) 2026 Probo Inc <hello@probo.com>.
-// Use of this source code is governed by the MIT license
-// that can be found in the LICENSE file.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
@@ -17,8 +33,8 @@ import { TableKit } from "@tiptap/extension-table";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
-import { type Content, Editor, EditorContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect } from "react";
+import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
+import { type ComponentProps, useCallback, useEffect, useLayoutEffect } from "react";
 import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu/BlockMenu";
@@ -27,7 +43,7 @@ import { CodeBlockExtension } from "./CodeBlockExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
-import { PlaceholderExtension } from "./PlaceholderExtension";
+import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
@@ -47,7 +63,6 @@ const extensions = [
   CodeBlockExtension,
   LinkExtension,
   SlashCommandExtension,
-  PlaceholderExtension,
   Blockquote,
   BulletList,
   OrderedList,
@@ -64,6 +79,7 @@ const extensions = [
     table: { resizable: true },
   }),
   MarkdownPasteExtension,
+  PlaceholderExtension,
 ];
 
 const richEditorVariants = tv({
@@ -76,18 +92,50 @@ const richEditorVariants = tv({
   },
 });
 
+function stripNonTextMarks(node: JSONContent) {
+  if (node.type !== "text") delete node.marks;
+  node.content?.forEach(stripNonTextMarks);
+}
+
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
-  onChangeContent: (content: string) => void;
+  placeholder?: string;
+  onChangeContent?: (content: string) => void;
 };
 
+function parseContent(content: string): Content {
+  if (!content) {
+    return "";
+  }
+
+  try {
+    return JSON.parse(content) as Content;
+  } catch {
+    return "";
+  }
+}
+
 export function RichEditor(props: RichEditorProps) {
-  const { className, content, disabled = false, onChangeContent, ...divProps } = props;
+  const {
+    className,
+    content,
+    disabled = false,
+    placeholder,
+    onChangeContent,
+    ...divProps
+  } = props;
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
-      onChangeContent(JSON.stringify(editor.getJSON()));
+      if (editor.isDestroyed) {
+        return;
+      }
+
+      const json = editor.getJSON();
+      stripNonTextMarks(json);
+
+      onChangeContent?.(JSON.stringify(json));
     },
     [onChangeContent],
   );
@@ -100,12 +148,23 @@ export function RichEditor(props: RichEditorProps) {
     },
     editable: !disabled,
     extensions,
-    content: (content ? JSON.parse(content) : "") as Content,
+    content: parseContent(content),
     onUpdate: handleUpdate,
   });
 
+  useLayoutEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    setPlaceholder(editor, placeholder);
+  }, [editor, placeholder]);
+
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
+
     editor.setEditable(!disabled, false);
   }, [editor, disabled]);
 

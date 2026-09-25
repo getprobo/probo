@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,6 +40,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 				displayName
 				documentationUrl
 				oauthConfigured
+				configuredProtocols
 				apiKeySupported
 				clientCredentialsSupported
 				apiKeyExtraSettings {
@@ -46,7 +48,17 @@ func TestAccessReviewDrivers(t *testing.T) {
 					label
 					required
 				}
+				apiKeyFormat {
+					pattern
+					example
+				}
 				clientCredentialsExtraSettings {
+					key
+					label
+					required
+				}
+				workloadIdentitySupported
+				workloadIdentityExtraSettings {
 					key
 					label
 					required
@@ -61,16 +73,25 @@ func TestAccessReviewDrivers(t *testing.T) {
 		Required bool   `json:"required"`
 	}
 
+	type keyFormat struct {
+		Pattern string `json:"pattern"`
+		Example string `json:"example"`
+	}
+
 	var result struct {
 		AccessReviewDrivers []struct {
 			Provider                       string        `json:"provider"`
 			DisplayName                    string        `json:"displayName"`
 			DocumentationURL               *string       `json:"documentationUrl"`
-			OauthConfigured                bool          `json:"oauthConfigured"`
+			OAuthConfigured                bool          `json:"oauthConfigured"`
+			ConfiguredProtocols            []string      `json:"configuredProtocols"`
 			APIKeySupported                bool          `json:"apiKeySupported"`
 			ClientCredentialsSupported     bool          `json:"clientCredentialsSupported"`
 			APIKeyExtraSettings            []settingInfo `json:"apiKeyExtraSettings"`
+			APIKeyFormat                   *keyFormat    `json:"apiKeyFormat"`
 			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
+			WorkloadIdentitySupported      bool          `json:"workloadIdentitySupported"`
+			WorkloadIdentityExtraSettings  []settingInfo `json:"workloadIdentityExtraSettings"`
 		} `json:"accessReviewDrivers"`
 	}
 
@@ -80,16 +101,25 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
+	keyFormatByProvider := make(map[string]*keyFormat)
+	protocolsByProvider := make(map[string][]string)
 	apiKeySettingKeys := make(map[string][]string)
 	clientCredentialsSettingKeys := make(map[string][]string)
+	workloadIdentitySettingKeys := make(map[string][]string)
+	workloadIdentitySupported := make(map[string]bool)
 
 	for _, info := range result.AccessReviewDrivers {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
 		assert.NotNil(t, info.APIKeyExtraSettings)
 		assert.NotNil(t, info.ClientCredentialsExtraSettings)
+		assert.NotNil(t, info.WorkloadIdentityExtraSettings)
 		providerNames[info.Provider] = true
 		docURLByProvider[info.Provider] = info.DocumentationURL
+		keyFormatByProvider[info.Provider] = info.APIKeyFormat
+		protocolsByProvider[info.Provider] = info.ConfiguredProtocols
+		workloadIdentitySupported[info.Provider] = info.WorkloadIdentitySupported
+		assert.Equal(t, slices.Contains(info.ConfiguredProtocols, "OAUTH2"), info.OAuthConfigured)
 
 		for _, s := range info.APIKeyExtraSettings {
 			apiKeySettingKeys[info.Provider] = append(apiKeySettingKeys[info.Provider], s.Key)
@@ -98,10 +128,34 @@ func TestAccessReviewDrivers(t *testing.T) {
 		for _, s := range info.ClientCredentialsExtraSettings {
 			clientCredentialsSettingKeys[info.Provider] = append(clientCredentialsSettingKeys[info.Provider], s.Key)
 		}
+
+		for _, s := range info.WorkloadIdentityExtraSettings {
+			workloadIdentitySettingKeys[info.Provider] = append(workloadIdentitySettingKeys[info.Provider], s.Key)
+		}
 	}
 
 	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
+	assert.True(t, providerNames["AWS"], "expected AWS provider to be present when identity federation is enabled")
+	assert.True(t, providerNames["GCP"], "expected GCP provider to be present when identity federation is enabled")
+	assert.True(t, providerNames["AZURE"], "expected AZURE provider to be present when identity federation is enabled")
+	assert.Equal(t, []string{"OAUTH2"}, protocolsByProvider["GITHUB"])
+	assert.True(t, workloadIdentitySupported["AWS"])
+	assert.Equal(t, []string{"roleArn"}, workloadIdentitySettingKeys["AWS"])
+	assert.True(t, workloadIdentitySupported["GCP"])
+	assert.Equal(
+		t,
+		[]string{"workloadIdentityProvider", "serviceAccountEmail"},
+		workloadIdentitySettingKeys["GCP"],
+	)
+	assert.True(t, workloadIdentitySupported["AZURE"])
+	assert.Equal(
+		t,
+		[]string{"tenantId", "clientId", "subscriptionId", "environment"},
+		workloadIdentitySettingKeys["AZURE"],
+	)
+	assert.False(t, workloadIdentitySupported["BREX"])
+	assert.Empty(t, workloadIdentitySettingKeys["BREX"])
 
 	// 1Password is the only provider offering both connect paths, and each path
 	// needs different settings: the SCIM-bridge driver behind the API key, the
@@ -122,7 +176,40 @@ func TestAccessReviewDrivers(t *testing.T) {
 		assert.Equal(t, "https://www.probo.com/docs/product/access-review/anthropic", *url)
 	}
 
-	assert.Nil(t, docURLByProvider["BREX"], "BREX has no doc page, documentationUrl must be null")
+	// A slug that is not the lowercased enum is the case worth pinning: Cal.com
+	// publishes at /calcom, so deriving the URL from CAL_COM would 404.
+	if url := docURLByProvider["CAL_COM"]; assert.NotNil(t, url) {
+		assert.Equal(t, "https://www.probo.com/docs/product/access-review/calcom", *url)
+	}
+
+	if url := docURLByProvider["AWS"]; assert.NotNil(t, url) {
+		assert.Equal(t, "https://www.probo.com/docs/product/access-review/aws", *url)
+	}
+
+	// Sentry carries the null case: it is an API-key provider, so the catalog
+	// never skips it, and it still has no page. A provider picked here purely
+	// for being undocumented today gets documented eventually and breaks this
+	// assertion, as BREX and AWS did.
+	//
+	// Contains first: a bare Nil on a missing key passes whether or not the
+	// field is really null, which would let the null path rot unnoticed.
+	require.Contains(t, docURLByProvider, "SENTRY")
+	assert.Nil(t, docURLByProvider["SENTRY"], "SENTRY has no doc page, documentationUrl must be null")
+
+	// apiKeyFormat is what the connect dialog checks the pasted key against and
+	// shows as its placeholder, so it has to reach the client. Langfuse pins
+	// that projection; the per-provider shapes belong to the registry's own
+	// tests. Sentry carries the null case, on the same Contains-first reasoning
+	// as the doc URL above.
+	require.Contains(t, keyFormatByProvider, "LANGFUSE")
+
+	if format := keyFormatByProvider["LANGFUSE"]; assert.NotNil(t, format) {
+		assert.Equal(t, `^pk-lf-[^:]+:sk-lf-[^:]+$`, format.Pattern)
+		assert.Equal(t, "pk-lf-…:sk-lf-…", format.Example)
+	}
+
+	require.Contains(t, keyFormatByProvider, "SENTRY")
+	assert.Nil(t, keyFormatByProvider["SENTRY"], "SENTRY declares no key shape, apiKeyFormat must be null")
 
 	t.Run("viewer can list access review drivers", func(t *testing.T) {
 		t.Parallel()
@@ -146,12 +233,17 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
+	// displayName and documentationUrl are selected here and connectionStatus
+	// is not: the first two read the provider registration, while the third
+	// would probe Brex live from a test.
 	const query = `
 		mutation($input: CreateAPIKeyConnectorInput!) {
 			createAPIKeyConnector(input: $input) {
 				connector {
 					id
 					provider
+					displayName
+					documentationUrl
 				}
 			}
 		}
@@ -160,8 +252,10 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	var result struct {
 		CreateAPIKeyConnector struct {
 			Connector struct {
-				ID       string `json:"id"`
-				Provider string `json:"provider"`
+				ID               string  `json:"id"`
+				Provider         string  `json:"provider"`
+				DisplayName      string  `json:"displayName"`
+				DocumentationURL *string `json:"documentationUrl"`
 			} `json:"connector"`
 		} `json:"createAPIKeyConnector"`
 	}
@@ -170,7 +264,7 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": orgID,
 			"provider":       "BREX",
-			"apiKey":         "test-key-123",
+			"apiKey":         "bxt_test-key-123",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -178,46 +272,14 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	connector := result.CreateAPIKeyConnector.Connector
 	assert.NotEmpty(t, connector.ID)
 	assert.Equal(t, "BREX", connector.Provider)
-}
-
-func TestCreateAPIKeyConnectorWithSettings(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	orgID := owner.GetOrganizationID().String()
-
-	const query = `
-		mutation($input: CreateAPIKeyConnectorInput!) {
-			createAPIKeyConnector(input: $input) {
-				connector {
-					id
-					provider
-				}
-			}
-		}
-	`
-
-	var result struct {
-		CreateAPIKeyConnector struct {
-			Connector struct {
-				ID       string `json:"id"`
-				Provider string `json:"provider"`
-			} `json:"connector"`
-		} `json:"createAPIKeyConnector"`
-	}
-
-	err := owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"organizationId":      orgID,
-			"provider":            "TALLY",
-			"apiKey":              "test-key",
-			"tallyOrganizationId": "org-123",
-		},
-	}, &result)
-	require.NoError(t, err)
-
-	connector := result.CreateAPIKeyConnector.Connector
-	assert.NotEmpty(t, connector.ID)
-	assert.Equal(t, "TALLY", connector.Provider)
+	// The name a user reads, which is the registration's and not the enum.
+	assert.Equal(t, "Brex", connector.DisplayName)
+	require.NotNil(t, connector.DocumentationURL)
+	assert.Equal(
+		t,
+		"https://www.probo.com/docs/product/access-review/brex",
+		*connector.DocumentationURL,
+	)
 }
 
 // TestCreateAPIKeyConnectorSentryMissingSlug asserts that creating a
@@ -246,6 +308,74 @@ func TestCreateAPIKeyConnectorSentryMissingSlug(t *testing.T) {
 		},
 	})
 	testutil.RequireErrorCode(t, err, "INVALID", "missing sentryOrganizationSlug must return INVALID not INTERNAL")
+}
+
+// TestCreateAPIKeyConnectorMalformedKey asserts that a key whose shape its
+// provider could never have minted is refused before anything is written.
+// Langfuse pastes two keys as one colon-joined string and the transport
+// base64s it verbatim, so half a credential is otherwise stored and then
+// authenticates as nothing.
+func TestCreateAPIKeyConnectorMalformedKey(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const query = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`
+
+	_, err := owner.Do(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"provider":       "LANGFUSE",
+			// The public half alone: the colon and the secret key are missing.
+			"apiKey":          "pk-lf-11111111-2222-3333-4444-555555555555",
+			"langfuseBaseUrl": "https://cloud.langfuse.com",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a half-pasted key must return INVALID, not create a connector")
+}
+
+// TestCreateAPIKeyConnectorLangfuseKeyPair asserts the counterpart: a
+// well-formed pair is accepted. It says nothing about the key working —
+// only Langfuse can judge that, and it is not called here.
+func TestCreateAPIKeyConnectorLangfuseKeyPair(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const query = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id provider }
+			}
+		}
+	`
+
+	var result struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID       string `json:"id"`
+				Provider string `json:"provider"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId":  orgID,
+			"provider":        "LANGFUSE",
+			"apiKey":          "pk-lf-11111111-2222-3333-4444-555555555555:sk-lf-66666666-7777-8888-9999-000000000000",
+			"langfuseBaseUrl": "https://cloud.langfuse.com",
+		},
+	}, &result)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result.CreateAPIKeyConnector.Connector.ID)
+	assert.Equal(t, "LANGFUSE", result.CreateAPIKeyConnector.Connector.Provider)
 }
 
 // TestCreateAPIKeyConnectorSentryRoundTrip asserts that supplying
@@ -359,7 +489,7 @@ func TestDeleteConnector(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": orgID,
 			"provider":       "BREX",
-			"apiKey":         "key-to-delete",
+			"apiKey":         "bxt_key-to-delete",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -391,83 +521,68 @@ func TestDeleteConnector(t *testing.T) {
 	assert.Equal(t, connectorID, deleteResult.DeleteConnector.DeletedConnectorID)
 }
 
-// TestCrispVerificationCode exercises the crispVerificationCode query end to end
-// through the live schema and authorization stack. The code is a deterministic
-// HMAC bound to (organization, website), so the query needs only the managed
-// token secret (always set) and organization authorization — no Crisp
-// credentials — and asserts the code's shape, determinism, org-binding, and the
-// INVALID / FORBIDDEN error paths.
-func TestCrispVerificationCode(t *testing.T) {
+// TestCrispConnectsByAppInstall pins the connect path Crisp actually offers,
+// through the live schema. The provider is a managed API key AND an app
+// install, and those two must not both surface: the redirect is the only way in
+// (its API-key dialog would have no fields and would create a connector with no
+// website id), so installSupported is true exactly where apiKeyManaged and
+// apiKeySupported are false.
+//
+// It is in the catalog at all only because the e2e probod configures the plugin
+// token and plugin id; without both, Crisp ships deactivated and is absent.
+func TestCrispConnectsByAppInstall(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	orgID := owner.GetOrganizationID().String()
 
 	const query = `
-		query($organizationId: ID!, $websiteId: String!) {
-			crispVerificationCode(organizationId: $organizationId, websiteId: $websiteId)
+		query {
+			accessReviewDrivers {
+				provider
+				apiKeySupported
+				apiKeyManaged
+				installSupported
+				apiKeyExtraSettings {
+					key
+				}
+			}
 		}
 	`
 
-	getCode := func(t *testing.T, client *testutil.Client, org, website string) string {
-		t.Helper()
-
-		var result struct {
-			CrispVerificationCode string `json:"crispVerificationCode"`
-		}
-
-		err := client.Execute(query, map[string]any{
-			"organizationId": org,
-			"websiteId":      website,
-		}, &result)
-		require.NoError(t, err)
-
-		return result.CrispVerificationCode
+	var result struct {
+		AccessReviewDrivers []struct {
+			Provider            string `json:"provider"`
+			APIKeySupported     bool   `json:"apiKeySupported"`
+			APIKeyManaged       bool   `json:"apiKeyManaged"`
+			InstallSupported    bool   `json:"installSupported"`
+			APIKeyExtraSettings []struct {
+				Key string `json:"key"`
+			} `json:"apiKeyExtraSettings"`
+		} `json:"accessReviewDrivers"`
 	}
 
-	const website = "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+	require.NoError(t, owner.Execute(query, nil, &result))
 
-	t.Run("owner gets a 12-char base32 code, deterministic per input", func(t *testing.T) {
-		t.Parallel()
+	crispFound := false
 
-		code := getCode(t, owner, orgID, website)
-		assert.Regexp(t, "^[A-Z2-7]{12}$", code)
+	for _, driver := range result.AccessReviewDrivers {
+		if driver.Provider != "CRISP" {
+			assert.Falsef(
+				t,
+				driver.InstallSupported,
+				"provider %q reports an install path; crisp is the only one",
+				driver.Provider,
+			)
 
-		// The same inputs re-derive the same code; nothing is stored.
-		assert.Equal(t, code, getCode(t, owner, orgID, website))
+			continue
+		}
 
-		// A different website under the same organization yields a different code.
-		assert.NotEqual(t, code, getCode(t, owner, orgID, "99999999-0000-0000-0000-000000000000"))
-	})
+		crispFound = true
 
-	t.Run("code is organization-bound", func(t *testing.T) {
-		t.Parallel()
+		assert.True(t, driver.InstallSupported, "crisp connects by app install")
+		assert.False(t, driver.APIKeyManaged, "an install provider must not also offer the API-key dialog")
+		assert.False(t, driver.APIKeySupported, "the customer pastes no crisp key")
+		assert.Empty(t, driver.APIKeyExtraSettings, "the ceremony supplies the website id, not a form")
+	}
 
-		otherOwner := testutil.NewClient(t, testutil.RoleOwner)
-
-		mine := getCode(t, owner, orgID, website)
-		theirs := getCode(t, otherOwner, otherOwner.GetOrganizationID().String(), website)
-		assert.NotEqual(t, mine, theirs, "same website under different organizations must not share a code")
-	})
-
-	t.Run("blank websiteId is rejected as INVALID", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := owner.Do(query, map[string]any{
-			"organizationId": orgID,
-			"websiteId":      "   ",
-		})
-		testutil.RequireErrorCode(t, err, "INVALID", "blank websiteId must return INVALID not INTERNAL")
-	})
-
-	t.Run("viewer cannot read the verification code", func(t *testing.T) {
-		t.Parallel()
-
-		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-		_, err := viewer.Do(query, map[string]any{
-			"organizationId": viewer.GetOrganizationID().String(),
-			"websiteId":      website,
-		})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to read the crisp verification code")
-	})
+	assert.True(t, crispFound, "crisp is configured in the e2e probod and must be in the catalog")
 }

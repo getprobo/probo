@@ -45,6 +45,13 @@ type (
 	CommonThirdPartyDomains []*CommonThirdPartyDomain
 )
 
+// LoadByDomain resolves a host to the catalog entry that owns it.
+//
+// A domain is unique per catalog entry, not globally: two entries for the same
+// vendor each carry it until one is merged away. The ordering makes the choice
+// deterministic in that window, so attribution cannot flip between two calls
+// or after a vacuum. Collapsing the duplicate is `proboctl common-third-party
+// merge`; this only keeps the answer stable until it runs.
 func (d *CommonThirdPartyDomain) LoadByDomain(
 	ctx context.Context,
 	conn pg.Querier,
@@ -61,6 +68,8 @@ FROM
     common_third_party_domains
 WHERE
     domain = @domain
+ORDER BY
+    created_at, id
 LIMIT 1;
 `
 
@@ -237,6 +246,56 @@ LIMIT @limit;
 	*ds = domains
 
 	return nil
+}
+
+// LoadAllGroupedByCommonThirdPartyID returns every owned domain in the
+// catalog, grouped by the catalog entry that owns it.
+//
+// Duplicate detection compares domain sets across the whole catalog, so it
+// needs all of them at once; loading per entry would be one round trip per
+// candidate. Only the domain strings are returned because that is all the
+// comparison uses.
+func (ds *CommonThirdPartyDomains) LoadAllGroupedByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+) (map[gid.GID][]string, error) {
+	q := `
+SELECT
+    common_third_party_id,
+    domain
+FROM
+    common_third_party_domains
+ORDER BY
+    common_third_party_id,
+    domain
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common third party domains: %w", err)
+	}
+	defer rows.Close()
+
+	byParty := make(map[gid.GID][]string)
+
+	for rows.Next() {
+		var (
+			partyID gid.GID
+			domain  string
+		)
+
+		if err := rows.Scan(&partyID, &domain); err != nil {
+			return nil, fmt.Errorf("cannot scan common third party domain: %w", err)
+		}
+
+		byParty[partyID] = append(byParty[partyID], domain)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate common third party domains: %w", err)
+	}
+
+	return byParty, nil
 }
 
 func (ds *CommonThirdPartyDomains) LoadByCommonThirdPartyID(

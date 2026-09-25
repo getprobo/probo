@@ -27,15 +27,24 @@ import (
 )
 
 // ValidateDocumentContentJSON returns nil if s is empty or whitespace-only.
-// Otherwise s must be valid ProseMirror JSON whose root node has type "doc".
+// Otherwise s must be valid ProseMirror JSON whose root node has type "doc"
+// and whose node tree matches the Tiptap schema, including parent-child
+// content rules.
 func ValidateDocumentContentJSON(s string) error {
 	if strings.TrimSpace(s) == "" {
 		return nil
 	}
 
-	_, err := parseDocRoot(s)
+	n, err := parseDocRoot(s)
+	if err != nil {
+		return err
+	}
 
-	return err
+	if err := validateDocument(n); err != nil {
+		return fmt.Errorf("cannot validate document content: %w", err)
+	}
+
+	return nil
 }
 
 func parseDocRoot(s string) (Node, error) {
@@ -51,6 +60,16 @@ func parseDocRoot(s string) (Node, error) {
 	return n, nil
 }
 
+// DefaultDocumentJSON sanitizes a ProseMirror document. A nil or
+// whitespace-only value becomes an empty document (one empty paragraph).
+func DefaultDocumentJSON(s *string) (string, error) {
+	if s == nil || strings.TrimSpace(*s) == "" {
+		return FromPlainText(""), nil
+	}
+
+	return SanitizeDocumentJSON(*s)
+}
+
 // SanitizeDocumentJSON parses a ProseMirror/Tiptap JSON document, replaces
 // unsafe link mark href values using the same rules as RenderHTML, and
 // re-serializes the document. Whitespace-only input is returned unchanged.
@@ -63,6 +82,10 @@ func SanitizeDocumentJSON(s string) (string, error) {
 	n, err := parseDocRoot(s)
 	if err != nil {
 		return "", err
+	}
+
+	if err := validateDocument(n); err != nil {
+		return "", fmt.Errorf("cannot sanitize document content: %w", err)
 	}
 
 	sanitizeNode(&n)

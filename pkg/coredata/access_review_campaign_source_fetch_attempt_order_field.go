@@ -49,12 +49,7 @@ func AccessReviewCampaignSourceFetchAttemptOrderFields() []AccessReviewCampaignS
 }
 
 func (v AccessReviewCampaignSourceFetchAttemptOrderField) IsValid() bool {
-	switch v {
-	case AccessReviewCampaignSourceFetchAttemptOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AccessReviewCampaignSourceFetchAttemptOrderFields())
 }
 
 func (v AccessReviewCampaignSourceFetchAttemptOrderField) String() string {
@@ -66,14 +61,7 @@ func (v AccessReviewCampaignSourceFetchAttemptOrderField) MarshalText() ([]byte,
 }
 
 func (v *AccessReviewCampaignSourceFetchAttemptOrderField) UnmarshalText(text []byte) error {
-	val := AccessReviewCampaignSourceFetchAttemptOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AccessReviewCampaignSourceFetchAttemptOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AccessReviewCampaignSourceFetchAttemptOrderFields())
 }
 
 func (p AccessReviewCampaignSourceFetchAttemptOrderField) Column() string {

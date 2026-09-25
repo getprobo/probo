@@ -21,16 +21,11 @@
 import { usePageTitle } from "@probo/hooks";
 import {
   ActionDropdown,
-  Avatar,
-  Badge,
-  Breadcrumb,
   Button,
-  Drawer,
   DropdownItem,
   IconPencil,
   IconTrashCan,
   PageHeader,
-  PropertyRow,
   TabBadge,
   TabLink,
   Tabs,
@@ -53,15 +48,9 @@ export const riskDetailLayoutQuery = graphql`
     node(id: $riskId) {
       __typename
       ... on Risk {
+        referenceId
         name
         description
-        treatment
-        owner {
-          fullName
-        }
-        note
-        inherentRiskScore
-        residualRiskScore
         measuresInfo: measures(first: 0) {
           totalCount
         }
@@ -77,8 +66,12 @@ export const riskDetailLayoutQuery = graphql`
         scenariosInfo: scenarios(first: 0) {
           totalCount
         }
-        canUpdate: permission(action: "core:risk:update")
-        canDelete: permission(action: "core:risk:delete")
+        treatmentPlansInfo: treatmentPlans(first: 0) {
+          totalCount
+        }
+        riskAnalysisHistoryCount
+        canUpdate: permission(action: "risk-management:risk:update")
+        canDelete: permission(action: "risk-management:risk:delete")
         ...FormRiskDialog_risk
       }
     }
@@ -120,7 +113,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
 
   const [deleteRisk] = useMutation<RiskDetailLayoutDeleteMutation>(deleteRiskMutation);
 
-  usePageTitle(risk.name);
+  usePageTitle(`${risk.referenceId} ${risk.name}`);
   const confirm = useConfirm();
 
   const onDelete = () => {
@@ -137,7 +130,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
               connections: [connectionId],
             },
             onCompleted() {
-              void navigate(`/organizations/${organizationId}/risks`);
+              void navigate(`/organizations/${organizationId}/risk-management/risks`);
               resolve();
             },
             onError(error) {
@@ -146,7 +139,16 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
           });
         }),
       {
-        message: t("riskDetailLayout.deleteConfirmation", { name: risk.name }),
+        message: t(
+          risk.riskAnalysisHistoryCount > 0
+            ? "riskDetailLayout.deleteConfirmationWithHistory"
+            : "riskDetailLayout.deleteConfirmation",
+          {
+            name: risk.name,
+            referenceId: risk.referenceId,
+            count: risk.riskAnalysisHistoryCount,
+          },
+        ),
       },
     );
   };
@@ -156,24 +158,13 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
   const scenariosCount = risk.scenariosInfo?.totalCount ?? 0;
+  const treatmentPlansCount = risk.treatmentPlansInfo?.totalCount ?? 0;
 
-  const risksUrl = `/organizations/${organizationId}/risks`;
-  const baseTabUrl = `/organizations/${organizationId}/risks/${riskId}`;
+  const baseTabUrl = `/organizations/${organizationId}/risk-management/risks/${riskId}`;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <Breadcrumb
-          items={[
-            {
-              label: t("riskDetailLayout.breadcrumb.risks"),
-              to: risksUrl,
-            },
-            {
-              label: t("riskDetailLayout.breadcrumb.detail"),
-            },
-          ]}
-        />
+      <div className="flex justify-end items-center mb-4">
         <div className="flex gap-2">
           {risk.canUpdate && (
             <FormRiskDialog
@@ -199,7 +190,15 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
         </div>
       </div>
 
-      <PageHeader title={risk.name} description={risk.description} />
+      <PageHeader
+        title={(
+          <span className="flex items-baseline gap-3">
+            <span className="font-mono text-txt-secondary">{risk.referenceId}</span>
+            <span>{risk.name}</span>
+          </span>
+        )}
+        description={risk.description}
+      />
       <Tabs>
         <TabLink to={`${baseTabUrl}/overview`}>{t("riskDetailLayout.tabs.overview")}</TabLink>
         <TabLink to={`${baseTabUrl}/measures`}>
@@ -222,36 +221,13 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
           {t("riskDetailLayout.tabs.scenarios")}
           <TabBadge>{scenariosCount}</TabBadge>
         </TabLink>
+        <TabLink to={`${baseTabUrl}/treatment-plans`}>
+          {t("riskDetailLayout.tabs.treatmentPlans")}
+          <TabBadge>{treatmentPlansCount}</TabBadge>
+        </TabLink>
       </Tabs>
 
       <Outlet />
-
-      <Drawer>
-        <PropertyRow label={t("riskDetailLayout.fields.owner")}>
-          <Badge variant="highlight" size="md" className="gap-2">
-            <Avatar name={risk.owner?.fullName ?? ""} />
-            {risk.owner?.fullName}
-          </Badge>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.treatment")}>
-          <Badge variant="highlight" size="md" className="gap-2">
-            {t(`riskDetailLayout.treatments.${(risk.treatment ?? "UNKNOWN").toLowerCase()}`)}
-          </Badge>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.initialRiskScore")}>
-          <div className="text-sm text-txt-secondary">
-            {risk.inherentRiskScore}
-          </div>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.residualRiskScore")}>
-          <div className="text-sm text-txt-secondary">
-            {risk.residualRiskScore}
-          </div>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.note")}>
-          <div className="text-sm text-txt-secondary">{risk.note}</div>
-        </PropertyRow>
-      </Drawer>
     </div>
   );
 }

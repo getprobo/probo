@@ -87,6 +87,8 @@ export function AccessEntriesToolbar({
             { value: "SSO", label: t("campaignDetailPage.authMethod.sso") },
             { value: "PASSWORD", label: t("campaignDetailPage.authMethod.password") },
             { value: "API_KEY", label: t("campaignDetailPage.authMethod.api_key") },
+            { value: "OAUTH2", label: t("campaignDetailPage.authMethod.oauth2") },
+            { value: "SSH", label: t("campaignDetailPage.authMethod.ssh") },
             {
               value: "SERVICE_ACCOUNT",
               label: t("campaignDetailPage.authMethod.service_account"),

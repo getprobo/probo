@@ -43,10 +43,11 @@ const (
 
 type (
 	CreateAccessReviewSourceRequest struct {
-		OrganizationID gid.GID
-		ConnectorID    *gid.GID
-		Name           string
-		CsvData        *string
+		OrganizationID     gid.GID
+		ConnectorID        *gid.GID
+		ConnectorAccountID *gid.GID
+		Name               string
+		CsvData            *string
 	}
 
 	UpdateAccessReviewSourceRequest struct {
@@ -95,49 +96,230 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 	return v.Error()
 }
 
-func (s *Service) CreateSource(
+// EnsureSource returns the access source for the resolved connector
+// account, creating it when absent. An existing source is returned
+// untouched with created=false. The partial unique index on
+// connector_account_id arbitrates concurrent callers, so exactly one
+// inserts and the others load the winner. CSV sources (no account)
+// are always created.
+func (s *Service) EnsureSource(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CreateAccessReviewSourceRequest,
-) (*coredata.AccessReviewSource, error) {
+) (*coredata.AccessReviewSource, bool, error) {
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	now := time.Now()
 	source := &coredata.AccessReviewSource{
 		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
 		OrganizationID: req.OrganizationID,
-		ConnectorID:    req.ConnectorID,
 		Name:           req.Name,
 		CsvData:        req.CsvData,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
 
+	created := false
+
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			// Validate connector exists if provided
-			if req.ConnectorID != nil {
-				connector := &coredata.Connector{}
-				if err := connector.LoadMetadataByID(ctx, conn, scope, *req.ConnectorID); err != nil {
-					return fmt.Errorf("cannot load connector: %w", err)
+			account, err := s.resolveCreateAccount(ctx, conn, scope, req)
+			if err != nil {
+				return err
+			}
+
+			if account != nil {
+				source.ConnectorAccountID = &account.ID
+
+				// Unlocked read: a concurrent bridge bind could in theory
+				// race this check. Organic flows only ever bind their own
+				// freshly created connector, so the race is accepted
+				// rather than serialized.
+				bridges := &coredata.SCIMBridges{}
+
+				bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, account.ConnectorID)
+				if err != nil {
+					return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+				}
+
+				if bridgeCount > 0 {
+					return fmt.Errorf("cannot create access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
 				}
 			}
 
-			if err := source.Insert(ctx, conn, scope); err != nil {
+			inserted, err := source.Insert(ctx, conn, scope)
+			if err != nil {
 				return fmt.Errorf("cannot insert access source: %w", err)
 			}
+
+			if inserted {
+				created = true
+				return nil
+			}
+
+			existing := &coredata.AccessReviewSource{}
+			if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
+				return fmt.Errorf("cannot load access source by connector account: %w", err)
+			}
+
+			*source = *existing
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create access source: %w", err)
+		return nil, false, fmt.Errorf("cannot create access source: %w", err)
 	}
 
-	return source, nil
+	return source, created, nil
+}
+
+func (s *Service) resolveCreateAccount(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	req CreateAccessReviewSourceRequest,
+) (*coredata.ConnectorAccount, error) {
+	if req.ConnectorAccountID != nil {
+		account := &coredata.ConnectorAccount{}
+		if err := account.LoadByID(ctx, conn, scope, *req.ConnectorAccountID); err != nil {
+			return nil, fmt.Errorf("cannot load connector account: %w", err)
+		}
+
+		if account.OrganizationID != req.OrganizationID {
+			return nil, fmt.Errorf("cannot load connector account: %w", coredata.ErrResourceNotFound)
+		}
+
+		return account, nil
+	}
+
+	if req.ConnectorID == nil {
+		return nil, nil
+	}
+
+	cnnctr := &coredata.Connector{}
+	if err := cnnctr.LoadByID(ctx, conn, scope, *req.ConnectorID, s.encryptionKey); err != nil {
+		return nil, fmt.Errorf("cannot load connector: %w", err)
+	}
+
+	if cnnctr.OrganizationID != req.OrganizationID {
+		return nil, fmt.Errorf("cannot load connector: %w", coredata.ErrResourceNotFound)
+	}
+
+	return resolveSourceAccount(ctx, s, conn, scope, cnnctr)
+}
+
+func accountConnectorID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	accountID *gid.GID,
+) (*gid.GID, error) {
+	if accountID == nil {
+		return nil, nil
+	}
+
+	account := &coredata.ConnectorAccount{}
+	if err := account.LoadByID(ctx, conn, scope, *accountID); err != nil {
+		return nil, fmt.Errorf("cannot load connector account: %w", err)
+	}
+
+	return &account.ConnectorID, nil
+}
+
+func (s *Service) ConnectorIDForAccount(
+	ctx context.Context,
+	scope coredata.Scoper,
+	accountID gid.GID,
+) (*gid.GID, error) {
+	var connectorID *gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			id, err := accountConnectorID(ctx, conn, scope, &accountID)
+			if err != nil {
+				return err
+			}
+
+			connectorID = id
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return connectorID, nil
+}
+
+func (s *Service) ConnectorIDsByAccountIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	accountIDs []gid.GID,
+) (map[gid.GID]gid.GID, error) {
+	var connectorIDs map[gid.GID]gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			connectorIDs, err = coredata.ConnectorIDsByAccountIDs(ctx, conn, scope, accountIDs)
+
+			return err
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load connector accounts: %w", err)
+	}
+
+	return connectorIDs, nil
+}
+
+func resolveSourceAccount(
+	ctx context.Context,
+	s *Service,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+) (*coredata.ConnectorAccount, error) {
+	externalID, _, err := s.initialAccount(cnnctr)
+	if err != nil {
+		return nil, err
+	}
+
+	if externalID != "" {
+		account := &coredata.ConnectorAccount{}
+
+		err := account.LoadByConnectorAndExternalID(ctx, conn, scope, cnnctr.ID, externalID)
+		if err == nil {
+			return account, nil
+		}
+
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, fmt.Errorf("cannot load connector account: %w", err)
+		}
+
+		return nil, ErrNoConnectorAccount
+	}
+
+	standalone := &coredata.ConnectorAccount{}
+
+	err = standalone.LoadStandaloneByConnectorID(ctx, conn, scope, cnnctr.ID)
+	if err == nil {
+		return standalone, nil
+	}
+
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, ErrNoConnectorAccount
+	}
+
+	return nil, err
 }
 
 func (s *Service) GetSource(
@@ -174,8 +356,15 @@ func (s *Service) UpdateSource(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
+			// The row lock keeps the connector handoff below stable
+			// against a concurrent relink or delete.
+			if err := source.LoadByIDForUpdate(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
+			}
+
+			previousConnectorID, err := accountConnectorID(ctx, conn, scope, source.ConnectorAccountID)
+			if err != nil {
+				return err
 			}
 
 			if req.Name != nil {
@@ -187,17 +376,56 @@ func (s *Service) UpdateSource(
 			if req.ConnectorID != nil {
 				if *req.ConnectorID != nil {
 					connector := &coredata.Connector{}
-					if err := connector.LoadMetadataByID(ctx, conn, scope, **req.ConnectorID); err != nil {
+					if err := connector.LoadByID(ctx, conn, scope, **req.ConnectorID, s.encryptionKey); err != nil {
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
-				}
 
-				source.ConnectorID = *req.ConnectorID
+					if connector.OrganizationID != source.OrganizationID {
+						return fmt.Errorf("cannot load connector: %w", coredata.ErrResourceNotFound)
+					}
+
+					account, err := resolveSourceAccount(ctx, s, conn, scope, connector)
+					if err != nil {
+						return err
+					}
+
+					if account.OrganizationID != source.OrganizationID {
+						return fmt.Errorf("cannot load connector account: %w", coredata.ErrResourceNotFound)
+					}
+
+					source.ConnectorAccountID = &account.ID
+
+					bridges := &coredata.SCIMBridges{}
+
+					bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, account.ConnectorID)
+					if err != nil {
+						return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+					}
+
+					if bridgeCount > 0 {
+						return fmt.Errorf("cannot update access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
+					}
+
+					// Unique on connector_account_id. This pre-check only
+					// produces a clearer error than the index 23505.
+					other := &coredata.AccessReviewSource{}
+
+					err = other.LoadByConnectorAccountID(ctx, conn, scope, account.ID)
+					if err == nil && other.ID != source.ID {
+						return fmt.Errorf("cannot update access source: connector account already referenced by another source")
+					}
+
+					if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load access source by connector account: %w", err)
+					}
+				} else {
+					source.ConnectorAccountID = nil
+				}
 
 				// A (re)linked connector may resolve to a different instance
 				// name; clear the synced flag so the source-name worker picks
-				// the row up and re-resolves it.
-				source.NameSyncedAt = nil
+				// the row up and re-resolves it, with a fresh retry budget.
+				source.ResetNameSync()
 			}
 
 			if req.CsvData != nil {
@@ -208,6 +436,18 @@ func (s *Service) UpdateSource(
 
 			if err := source.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update access source: %w", err)
+			}
+
+			nextConnectorID, err := accountConnectorID(ctx, conn, scope, source.ConnectorAccountID)
+			if err != nil {
+				return err
+			}
+
+			if req.ConnectorID != nil && previousConnectorID != nil &&
+				(nextConnectorID == nil || *nextConnectorID != *previousConnectorID) {
+				if err := deleteConnectorIfUnreferenced(ctx, conn, scope, *previousConnectorID); err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -225,73 +465,69 @@ func (s *Service) DeleteSource(
 	scope coredata.Scoper,
 	accessSourceID gid.GID,
 ) error {
-	source := &coredata.AccessReviewSource{}
+	source := &coredata.AccessReviewSource{ID: accessSourceID}
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := source.LoadByID(ctx, conn, scope, accessSourceID); err != nil {
-				return fmt.Errorf("cannot load access source: %w", err)
-			}
-
-			if err := source.Delete(ctx, conn, scope); err != nil {
+			// RETURNING reads the connector under the DELETE's own row
+			// lock, so a concurrent relink cannot swap it unobserved.
+			connectorID, err := source.DeleteReturningConnectorID(ctx, conn, scope)
+			if err != nil {
 				return fmt.Errorf("cannot delete access source: %w", err)
 			}
 
-			// Garbage-collect the underlying connector once nothing else
-			// references it. The connectors table is unique per
-			// (organization_id, provider), so leaving an orphaned connector
-			// behind would block re-adding a source for the same provider.
-			if source.ConnectorID == nil {
+			if connectorID == nil {
 				return nil
 			}
 
-			accessSources := &coredata.AccessReviewSources{}
-
-			sourceCount, err := accessSources.CountByConnectorID(ctx, conn, scope, *source.ConnectorID)
-			if err != nil {
-				return fmt.Errorf("cannot count access sources for connector: %w", err)
-			}
-
-			if sourceCount > 0 {
-				return nil
-			}
-
-			bridges := &coredata.SCIMBridges{}
-
-			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, *source.ConnectorID)
-			if err != nil {
-				return fmt.Errorf("cannot count scim bridges for connector: %w", err)
-			}
-
-			if bridgeCount > 0 {
-				return nil
-			}
-
-			// Garbage-collecting the connector is best-effort. A
-			// concurrent transaction may insert a new access source or
-			// SCIM bridge referencing this connector between the counts
-			// above and the DELETE, producing a foreign-key violation.
-			// Run the delete inside a savepoint so such a failure rolls
-			// back only the GC attempt and still commits the access
-			// source deletion instead of aborting the whole transaction.
-			if err := conn.Savepoint(
-				ctx,
-				func(ctx context.Context, conn pg.Tx) error {
-					cnnctr := &coredata.Connector{ID: *source.ConnectorID}
-					if err := cnnctr.Delete(ctx, conn, scope); err != nil {
-						return fmt.Errorf("cannot delete connector: %w", err)
-					}
-
-					return nil
-				},
-			); err != nil {
-				return err
-			}
-
-			return nil
+			return deleteConnectorIfUnreferenced(ctx, conn, scope, *connectorID)
 		},
 	)
+}
+
+// deleteConnectorIfUnreferenced deletes the connector when no access
+// source and no SCIM bridge still reference it. The caller must already
+// have moved or removed its own source row.
+func deleteConnectorIfUnreferenced(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	sources := &coredata.AccessReviewSources{}
+
+	sourceCount, err := sources.CountByConnectorID(ctx, conn, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count access sources for connector: %w", err)
+	}
+
+	if sourceCount > 0 {
+		return nil
+	}
+
+	bridges := &coredata.SCIMBridges{}
+
+	bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+	}
+
+	if bridgeCount > 0 {
+		return nil
+	}
+
+	cnnctr := &coredata.Connector{ID: connectorID}
+	if err := cnnctr.Delete(ctx, conn, scope); err != nil {
+		// A reference that lands after the counts must not roll the caller back.
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot delete connector: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) ListSourcesForOrganizationID(
@@ -338,68 +574,97 @@ func (s *Service) CountSourcesForOrganizationID(
 	return count, nil
 }
 
-// ConnectorHTTPClient loads a connector by ID with decrypted credentials
-// and returns an HTTP client with token refresh support. If the token was
-// refreshed during client creation, the updated credentials are persisted.
-func (s *Service) ConnectorHTTPClient(
+// loadConfiguredConnector loads a connector by ID with its connection decrypted
+// and the deployment's runtime configuration injected. The raw
+// ErrResourceNotFound is propagated so callers can decide how to treat a missing
+// connector.
+func (s *Service) loadConfiguredConnector(
 	ctx context.Context,
 	scope coredata.Scoper,
 	connectorID gid.GID,
-) (*http.Client, *coredata.Connector, error) {
-	var dbConnector coredata.Connector
+) (*coredata.Connector, error) {
+	dbConnector := &coredata.Connector{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey); err != nil {
-				return fmt.Errorf("cannot load connector: %w", err)
-			}
-
-			return nil
+			return dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey)
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.connectorRegistry.ConfigureConnection(
+		string(dbConnector.Provider),
+		dbConnector.Connection,
+	); err != nil {
+		return nil, fmt.Errorf("cannot configure connector connection: %w", err)
+	}
+
+	return dbConnector, nil
+}
+
+// BuildHTTPClient loads a connector by ID with decrypted credentials
+// and returns an HTTP client with token refresh support. If the token was
+// refreshed during client creation, the updated credentials are persisted.
+//
+// It fails for a connector whose credential does not ride on HTTP (workload
+// identity). Callers that must handle both kinds should branch on the protocol
+// from loadConnectorMetadata first, as ProbeConnector does.
+func (s *Service) BuildHTTPClient(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (*http.Client, *coredata.Connector, error) {
+	dbConnector, err := s.loadConfiguredConnector(ctx, scope, connectorID)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	conn, ok := dbConnector.Connection.(connector.HTTPConnection)
+	if !ok {
+		return nil, nil, fmt.Errorf(
+			"cannot create HTTP client for %s connector: credential does not ride on HTTP",
+			dbConnector.Provider,
+		)
+	}
+
+	httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return httpClient, dbConnector, nil
+}
+
+// httpClientFor builds the client for an already-loaded HTTP connection,
+// persisting an OAuth2 access token the refresh replaced so later calls and
+// other workers use it.
+func (s *Service) httpClientFor(
+	ctx context.Context,
+	scope coredata.Scoper,
+	dbConnector *coredata.Connector,
+	conn connector.HTTPConnection,
+) (*http.Client, error) {
 	var tokenBefore string
 
-	oauth2Conn, isOAuth2 := dbConnector.Connection.(*connector.OAuth2Connection)
+	oauth2Conn, isOAuth2 := conn.(*connector.OAuth2Connection)
 	if isOAuth2 {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
-	var httpClient *http.Client
-
-	if isOAuth2 && s.connectorRegistry != nil {
-		refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
-		if refreshCfg != nil {
-			var err error
-
-			httpClient, err = oauth2Conn.RefreshableClient(ctx, *refreshCfg)
-			if err != nil {
-				return nil, nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
-			}
-		}
+	httpClient, err := buildHTTPClient(
+		ctx,
+		s.connectorRegistry,
+		s.providerRegistry,
+		dbConnector.Provider,
+		conn,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 	}
 
-	if httpClient == nil {
-		// Inject the Probo-held key for ManagedAPIKey providers (no-op
-		// otherwise), resolving it fresh at use time rather than from the
-		// connection row.
-		if err := s.providerRegistry.ApplyManagedAPIKey(&dbConnector); err != nil {
-			return nil, nil, err
-		}
-
-		var err error
-
-		httpClient, err = dbConnector.Connection.Client(ctx)
-		if err != nil {
-			return nil, nil, fmt.Errorf("cannot create HTTP client: %w", err)
-		}
-	}
-
-	// Persist refreshed token if it changed.
 	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
 
@@ -409,11 +674,11 @@ func (s *Service) ConnectorHTTPClient(
 				return dbConnector.Update(ctx, tx, scope, s.encryptionKey)
 			},
 		); err != nil {
-			return nil, nil, fmt.Errorf("cannot persist refreshed token: %w", err)
+			return nil, fmt.Errorf("cannot persist refreshed token: %w", err)
 		}
 	}
 
-	return httpClient, &dbConnector, nil
+	return httpClient, nil
 }
 
 func (s *Service) ConfigureAccessReviewSource(
@@ -434,12 +699,17 @@ func (s *Service) ConfigureAccessReviewSource(
 				return fmt.Errorf("cannot load access source: %w", err)
 			}
 
-			if source.ConnectorID == nil {
+			if source.ConnectorAccountID == nil {
 				return fmt.Errorf("cannot configure access source: no connector attached")
 			}
 
+			connectorID, err := accountConnectorID(ctx, conn, scope, source.ConnectorAccountID)
+			if err != nil {
+				return err
+			}
+
 			dbConnector := &coredata.Connector{}
-			if err := dbConnector.LoadByID(ctx, conn, scope, *source.ConnectorID, s.encryptionKey); err != nil {
+			if err := dbConnector.LoadByID(ctx, conn, scope, *connectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
@@ -467,10 +737,19 @@ func (s *Service) ConfigureAccessReviewSource(
 				return fmt.Errorf("cannot update connector: %w", err)
 			}
 
+			externalID, name, err := s.initialAccount(dbConnector)
+			if err != nil {
+				return err
+			}
+
+			if _, err := coredata.SyncStandaloneAccount(ctx, conn, scope, dbConnector, externalID, name); err != nil {
+				return err
+			}
+
 			// The selected org changed, so the resolvable instance name may
 			// have too; clear the synced flag so the source-name worker
-			// re-resolves the display name.
-			source.NameSyncedAt = nil
+			// re-resolves the display name, with a fresh retry budget.
+			source.ResetNameSync()
 			source.UpdatedAt = time.Now()
 
 			if err := source.Update(ctx, conn, scope); err != nil {
@@ -510,6 +789,71 @@ func (s *Service) loadConnectorMetadata(
 	return dbConnector, nil
 }
 
+// ProbeConnector verifies the connector's credential is still accepted by the
+// provider, taking the HTTP or the cloud path according to the connection's own
+// credential model. A nil return means connected (or that the provider
+// registers no probe); coredata.ErrResourceNotFound means the connector is
+// gone. Keeping the branch here rather than in the resolver is what stops a
+// healthy workload identity connector from reporting itself disconnected.
+func (s *Service) ProbeConnector(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	dbConnector, err := s.loadConfiguredConnector(ctx, scope, connectorID)
+	if err != nil {
+		return err
+	}
+
+	// Only a ProbeError means the credential or the provider is at fault;
+	// everything else returned here is Probo's own.
+	switch conn := dbConnector.Connection.(type) {
+	case *connector.WorkloadIdentityConnection:
+		session, err := s.OpenSession(ctx, dbConnector, "")
+		if err != nil {
+			return err
+		}
+
+		if err := s.providerRegistry.ProbeCloudConnection(ctx, session, dbConnector); err != nil {
+			if !IsProviderVerdict(err) {
+				return err
+			}
+
+			return NewProbeError(dbConnector.Provider, err)
+		}
+
+		return nil
+
+	case connector.HTTPConnection:
+		// The eager token refresh runs here, so a revoked grant fails the
+		// probe before any request is made.
+		httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
+		if err != nil {
+			if !IsProviderVerdict(err) {
+				return err
+			}
+
+			return NewProbeError(dbConnector.Provider, err)
+		}
+
+		if err := s.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector); err != nil {
+			if !IsProviderVerdict(err) {
+				return err
+			}
+
+			return NewProbeError(dbConnector.Provider, err)
+		}
+
+		return nil
+
+	default:
+		return fmt.Errorf(
+			"cannot probe %s connector: credential is of no known kind",
+			dbConnector.Provider,
+		)
+	}
+}
+
 // ProviderOrganizations lists the orgs/workspaces the connector backing the
 // source can be scoped to, for the picker UI. Returns an empty list when the
 // connector is gone or the provider has no picker.
@@ -518,18 +862,31 @@ func (s *Service) ProviderOrganizations(
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) ([]drivers.Organization, error) {
-	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, connectorID)
+	// Resolve the picker from cheap metadata first. Only a provider that has one
+	// should pay for the connector decrypt, token refresh, and HTTP-client build
+	// below — and a workload identity connector, which has no picker and no HTTP
+	// credential, must not reach them at all.
+	dbMeta, err := s.loadConnectorMetadata(ctx, scope, connectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load connector metadata: %w", err)
+	}
+
+	cfg, ok := providerOrgConfigs[dbMeta.Provider]
+	if !ok || !ProviderSupportsOrganizationPicker(dbMeta.Provider, dbMeta.Protocol) {
+		return nil, nil
+	}
+
+	httpClient, dbConnector, err := s.BuildHTTPClient(ctx, scope, connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
 
 		return nil, fmt.Errorf("cannot get connector HTTP client: %w", err)
-	}
-
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || cfg.ListOrgs == nil {
-		return nil, nil
 	}
 
 	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerListBaseURL(dbConnector.Provider))
@@ -597,7 +954,7 @@ func (s *Service) SourceNeedsConfiguration(
 	}
 
 	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !cfg.NeedsPicker {
+	if !ok || !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
 		return false, nil
 	}
 
@@ -653,14 +1010,18 @@ func (s *Service) SourceNeedsReconnect(
 }
 
 // missingOAuthScopesForConnector returns scopes in required that are absent
-// from the connector's stored OAuth grant. Non-OAuth connectors and empty
-// required lists yield an empty result. A nil Connection is treated as
-// granting nothing.
+// from the connector's stored OAuth grant. Connections that do not support
+// scope-grant checks (API key, install-scoped apps, …) and empty required
+// lists yield an empty result. A nil Connection falls back to the protocol
+// capability probe.
 func missingOAuthScopesForConnector(
 	dbConnector coredata.Connector,
 	required []string,
 ) []string {
-	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
+	if !connector.SupportsScopeGrantCheckFor(
+		dbConnector.Connection,
+		connector.ProtocolType(dbConnector.Protocol),
+	) {
 		return []string{}
 	}
 
@@ -709,14 +1070,21 @@ func (s *Service) AutoSelectDefaultOrganization(
 	scope coredata.Scoper,
 	source *coredata.AccessReviewSource,
 ) {
-	if source == nil || source.ConnectorID == nil {
+	if source == nil || source.ConnectorAccountID == nil {
+		return
+	}
+
+	connectorID, err := s.ConnectorIDForAccount(ctx, scope, *source.ConnectorAccountID)
+	if err != nil {
+		s.logger.WarnCtx(ctx, "cannot load connector account for default organization", log.Error(err))
+
 		return
 	}
 
 	// Resolve the provider from cheap metadata first: only picker providers
 	// that still need defaulting should pay for the connector decrypt, token
 	// refresh, and HTTP-client build below (all ~50 other providers skip it).
-	dbMeta, err := s.loadConnectorMetadata(ctx, scope, *source.ConnectorID)
+	dbMeta, err := s.loadConnectorMetadata(ctx, scope, *connectorID)
 	if err != nil {
 		// A missing connector is not worth logging: the picker simply never
 		// surfaces a default.
@@ -728,7 +1096,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 	}
 
 	cfg, ok := providerOrgConfigs[dbMeta.Provider]
-	if !ok || !cfg.NeedsPicker || cfg.ListOrgs == nil {
+	if !ok || !ProviderSupportsOrganizationPicker(dbMeta.Provider, dbMeta.Protocol) {
 		return
 	}
 
@@ -737,7 +1105,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 		return
 	}
 
-	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, *source.ConnectorID)
+	httpClient, dbConnector, err := s.BuildHTTPClient(ctx, scope, *connectorID)
 	if err != nil {
 		if !errors.Is(err, coredata.ErrResourceNotFound) {
 			s.logger.WarnCtx(ctx, "cannot load connector for default organization", log.Error(err))
@@ -801,7 +1169,7 @@ func (s *Service) ResetSourceNameSyncForConnector(
 		func(ctx context.Context, conn pg.Tx) error {
 			sources := &coredata.AccessReviewSources{}
 
-			return sources.ClearNameSyncedAtByConnectorID(ctx, conn, scope, connectorID)
+			return sources.ResetNameSyncByConnectorID(ctx, conn, scope, connectorID)
 		},
 	)
 }

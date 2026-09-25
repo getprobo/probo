@@ -1,0 +1,33 @@
+{
+  "title": "Firmas",
+  "breadcrumb": "Firmas",
+  "pending": {
+    "heading": "Pendientes de su firma ({{count}})",
+    "summaryTitle_one": "{{count}} documento por firmar",
+    "summaryTitle_other": "{{count}} documentos por firmar",
+    "summaryDescription": "Revise y firme los documentos necesarios para completar su incorporación.",
+    "action": "Empezar a firmar",
+    "itemAction": "Firmar"
+  },
+  "history": {
+    "heading": "Firmados ({{count}})"
+  },
+  "empty": {
+    "none": {
+      "title": "Todavía no hay solicitudes de firma",
+      "description": "Los documentos que necesiten su firma aparecerán aquí."
+    },
+    "allDone": {
+      "title": "Ya está todo listo",
+      "description": "Está al día. Los documentos firmados anteriormente aparecen abajo."
+    }
+  },
+  "document": {
+    "instruction": "Revise este documento antes de firmarlo.",
+    "reviewAndSign": "Revisar y firmar",
+    "signed": "Ha firmado este documento.",
+    "goToNext": "Ir al documento siguiente",
+    "finish": "Finalizar las firmas",
+    "backToList": "Volver a las firmas"
+  }
+}

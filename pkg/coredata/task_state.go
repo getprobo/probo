@@ -30,9 +30,12 @@ type (
 )
 
 const (
+	TaskStateBacklog    TaskState = "BACKLOG"
 	TaskStateTodo       TaskState = "TODO"
 	TaskStateInProgress TaskState = "IN_PROGRESS"
 	TaskStateDone       TaskState = "DONE"
+	TaskStateCanceled   TaskState = "CANCELED"
+	TaskStateDuplicate  TaskState = "DUPLICATE"
 )
 
 var (
@@ -43,18 +46,24 @@ var (
 
 func TaskStates() []TaskState {
 	return []TaskState{
+		TaskStateBacklog,
 		TaskStateTodo,
 		TaskStateInProgress,
 		TaskStateDone,
+		TaskStateCanceled,
+		TaskStateDuplicate,
 	}
 }
 
 func (v TaskState) IsValid() bool {
 	switch v {
 	case
+		TaskStateBacklog,
 		TaskStateTodo,
 		TaskStateInProgress,
-		TaskStateDone:
+		TaskStateDone,
+		TaskStateCanceled,
+		TaskStateDuplicate:
 		return true
 	}
 

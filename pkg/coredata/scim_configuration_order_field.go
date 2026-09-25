@@ -49,13 +49,7 @@ func SCIMConfigurationOrderFields() []SCIMConfigurationOrderField {
 }
 
 func (v SCIMConfigurationOrderField) IsValid() bool {
-	switch v {
-	case
-		SCIMConfigurationOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, SCIMConfigurationOrderFields())
 }
 
 func (v SCIMConfigurationOrderField) String() string {
@@ -67,14 +61,7 @@ func (v SCIMConfigurationOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *SCIMConfigurationOrderField) UnmarshalText(text []byte) error {
-	val := SCIMConfigurationOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid SCIMConfigurationOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, SCIMConfigurationOrderFields())
 }
 
 func (p SCIMConfigurationOrderField) Column() string {

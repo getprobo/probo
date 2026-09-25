@@ -32,3 +32,19 @@ func NewPeriod(start, end *time.Time) *Period {
 		End:   end,
 	}
 }
+
+func PeriodDates(p *Period) (start, end *time.Time) {
+	if p == nil {
+		return nil, nil
+	}
+
+	return p.Start, p.End
+}
+
+func PeriodOmittableDates(p *Period) (start, end **time.Time) {
+	if p == nil {
+		return nil, nil
+	}
+
+	return &p.Start, &p.End
+}

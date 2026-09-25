@@ -13,6 +13,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import { CellSelection, TableMap } from "@tiptap/pm/tables";
 import { type Editor } from "@tiptap/react";
 
+import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
 import { MenuButton } from "../MenuButton";
 
@@ -228,43 +229,46 @@ export function TableRowMenuContent({
   };
 
   return (
-    <div
-      ref={(node) => {
-        setDropdownEl(node);
-        menuRefs.setFloating(node);
-      }}
-      data-row-menu
-      style={menuStyles}
-      {...getFloatingProps()}
-      onMouseDown={e => e.preventDefault()}
-      className={menu()}
-    >
-      {isFirstRow && (
-        <MenuButton active={isHeaderRow()} onClick={handleToggleHeaderRow}>
-          <CrownSimpleIcon size={16} weight="bold" />
-          Header row
+    <EditorFloatingPortal>
+      <div
+        ref={(node) => {
+          setDropdownEl(node);
+          menuRefs.setFloating(node);
+        }}
+        data-row-menu
+        data-rich-editor-floating=""
+        style={menuStyles}
+        {...getFloatingProps()}
+        onMouseDown={e => e.preventDefault()}
+        className={menu()}
+      >
+        {isFirstRow && (
+          <MenuButton active={isHeaderRow()} onClick={handleToggleHeaderRow}>
+            <CrownSimpleIcon size={16} weight="bold" />
+            Header row
+          </MenuButton>
+        )}
+        <MenuButton onClick={handleInsertAbove}>
+          <PlusIcon size={16} weight="bold" />
+          Insert row above
         </MenuButton>
-      )}
-      <MenuButton onClick={handleInsertAbove}>
-        <PlusIcon size={16} weight="bold" />
-        Insert row above
-      </MenuButton>
-      <MenuButton onClick={handleInsertBelow}>
-        <PlusIcon size={16} weight="bold" />
-        Insert row below
-      </MenuButton>
-      <MenuButton onClick={handleDuplicateRow}>
-        <CopyIcon size={16} weight="bold" />
-        Duplicate row
-      </MenuButton>
-      <MenuButton onClick={handleClearContents}>
-        <BroomIcon size={16} weight="bold" />
-        Clear contents
-      </MenuButton>
-      <MenuButton onClick={handleDeleteRow}>
-        <TrashIcon size={16} weight="bold" />
-        Delete row
-      </MenuButton>
-    </div>
+        <MenuButton onClick={handleInsertBelow}>
+          <PlusIcon size={16} weight="bold" />
+          Insert row below
+        </MenuButton>
+        <MenuButton onClick={handleDuplicateRow}>
+          <CopyIcon size={16} weight="bold" />
+          Duplicate row
+        </MenuButton>
+        <MenuButton onClick={handleClearContents}>
+          <BroomIcon size={16} weight="bold" />
+          Clear contents
+        </MenuButton>
+        <MenuButton onClick={handleDeleteRow}>
+          <TrashIcon size={16} weight="bold" />
+          Delete row
+        </MenuButton>
+      </div>
+    </EditorFloatingPortal>
   );
 }

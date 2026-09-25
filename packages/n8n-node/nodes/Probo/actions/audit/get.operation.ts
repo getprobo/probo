@@ -50,11 +50,16 @@ export async function execute(
 				... on Audit {
 					id
 					name
+					firm
 					state
-					validFrom
-					validUntil
-					auditStartDate
-					auditEndDate
+					validity {
+						start
+						end
+					}
+					auditDates {
+						start
+						end
+					}
 					reportUrl
 					createdAt
 					updatedAt

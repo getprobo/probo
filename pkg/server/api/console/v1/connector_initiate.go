@@ -41,7 +41,7 @@ func handleConnectorInitiate(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")
@@ -50,7 +50,7 @@ func handleConnectorInitiate(
 			return
 		}
 
-		if _, err := connectorRegistry.Get(provider); err != nil {
+		if _, err := connectorRegistry.Lookup(provider, connector.ProtocolOAuth2); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}
@@ -92,11 +92,12 @@ func handleConnectorInitiate(
 		requestedScopes := r.URL.Query()["scope"]
 		prb := proboSvc
 
-		// Look up any existing connector so we can union its stored scopes
-		// into the new auth request. Cross-org/provider/protocol mismatches
-		// are caught inside Reconnect at callback time; this handler only
-		// needs the scope set.
-		existing, err := loadExistingConnector(r, prb, scope, organizationID, provider)
+		// Look up the connector this flow reconnects, if any, so we can
+		// union its stored scopes into the new auth request.
+		// Cross-org/provider/protocol mismatches are caught inside
+		// Reconnect at callback time; this handler only needs the scope
+		// set.
+		existing, err := loadExistingConnector(r, prb, scope)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
@@ -114,18 +115,25 @@ func handleConnectorInitiate(
 			return
 		}
 
-		// Always request the union of (old granted ∪ new requested).
-		// Union-not-delta because most providers replace rather than
-		// merge. No short-circuit: every reconnect runs the full OAuth
+		// Hand the earlier grant to the connector rather than unioning it
+		// here: whether a reconnect may widen the request or must ask for
+		// exactly the registered scopes is a per-provider OAuth trait. No
+		// short-circuit either way — every reconnect runs the full OAuth
 		// flow so revoked or stale tokens are never silently reused.
 		opts := connector.InitiateOptions{Scopes: requestedScopes, Site: r.URL.Query().Get("site")}
 		if existing != nil {
-			opts.Scopes = connector.UnionScopes(existing.Connection.Scopes(), requestedScopes)
+			opts.GrantedScopes = existing.Connection.Scopes()
 			opts.IncludeGrantedScopes = true
 			opts.ConnectorID = existing.ID.String()
 		}
 
-		redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, opts, r)
+		redirectURL, err := connectorRegistry.Initiate(
+			r.Context(),
+			provider,
+			organizationID,
+			opts,
+			r,
+		)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot initiate connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
@@ -138,41 +146,26 @@ func handleConnectorInitiate(
 }
 
 // loadExistingConnector returns the connector the initiate handler
-// should reconnect, or nil if this is a fresh install. An explicit
-// `connector_id` query parameter selects a specific row; otherwise the
-// handler falls back to the widest-scope (org, provider) row. Callers
-// must distinguish ErrResourceNotFound (explicit id not found — 400)
-// from nil (no existing row — fresh install path).
+// should reconnect, or nil for a fresh connect. Reconnect is explicit:
+// only a connector_id query parameter selects a row — a bare initiate
+// always creates a new connector, so an organization can connect the
+// same provider several times. Callers must distinguish
+// ErrResourceNotFound (explicit id not found — 400) from nil
+// (fresh-connect path).
 func loadExistingConnector(
 	r *http.Request,
 	prb *probo.Service,
 	scope coredata.Scoper,
-	organizationID gid.GID,
-	provider string,
 ) (*coredata.Connector, error) {
-	if explicitID := r.URL.Query().Get("connector_id"); explicitID != "" {
-		parsedID, err := gid.ParseGID(explicitID)
-		if err != nil {
-			return nil, fmt.Errorf("%w: cannot parse connector id: %w", errInvalidReconnectConnector, err)
-		}
-
-		found, err := prb.Connectors.GetWithConnection(r.Context(), scope, parsedID)
-		if err != nil {
-			return nil, err
-		}
-
-		return found, nil
-	}
-
-	found, err := prb.Connectors.GetByOrganizationIDAndProvider(
-		r.Context(),
-		scope,
-		organizationID,
-		coredata.ConnectorProvider(provider),
-	)
-	if errors.Is(err, coredata.ErrResourceNotFound) {
+	explicitID := r.URL.Query().Get("connector_id")
+	if explicitID == "" {
 		return nil, nil
 	}
 
-	return found, err
+	parsedID, err := gid.ParseGID(explicitID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: cannot parse connector id: %w", errInvalidReconnectConnector, err)
+	}
+
+	return prb.Connectors.GetWithConnection(r.Context(), scope, parsedID)
 }

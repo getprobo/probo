@@ -28,10 +28,14 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/apps/console"
+	employeeportalstatics "go.probo.inc/probo/apps/employee-portal"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
+	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
+	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -41,95 +45,138 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	server_identityfederation "go.probo.inc/probo/pkg/server/identityfederation"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
+	employeeportal_web "go.probo.inc/probo/pkg/server/web/employeeportal"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
 )
 
 type Config struct {
-	BaseURL           *baseurl.BaseURL
-	FileStorageOrigin string
-	AllowedOrigins    []string
-	ExtraHeaderFields map[string]string
-	Probo             *probo.Service
-	ResourceAlias     *resourcealias.Service
-	File              *filemanager.Service
-	IAM               *iam.Service
-	Visitor           *visitor.Service
-	ESign             *esign.Service
-	Management        *management.Service
-	CertManager       *certmanager.Service
-	AccessReview      *accessreview.Service
-	AgentRun          *agentrun.Service
-	Slack             *slack.Service
-	Mailman           *mailman.Service
-	CookieBanner      *cookiebanner.Service
-	Geoloc            *geoloc.Service
-	ThirdParty        *thirdparty.Service
-	RiskManagement    *riskmanagement.Service
-	ITAM              *itam.Service
-	Cookie            securecookie.Config
-	TokenSecret       string
-	ConnectorRegistry *connector.ConnectorRegistry
+	BaseURL                 *baseurl.BaseURL
+	FileStorageOrigin       string
+	AllowedOrigins          []string
+	ExtraHeaderFields       map[string]string
+	Probo                   *probo.Service
+	ResourceAlias           *resourcealias.Service
+	File                    *filemanager.Service
+	IAM                     *iam.Service
+	Visitor                 *visitor.Service
+	ESign                   *esign.Service
+	Management              *management.Service
+	CertManager             *certmanager.Service
+	AccessReview            *accessreview.Service
+	AgentExecution          *agentexecution.Service
+	Slack                   *slack.Service
+	BotDeliveryDestinations api.BotDeliveryDestinations
+	ComplianceMessages      api.ComplianceMessages
+	Slackbot                *slackchannel.Service
+	SlackInteractiveInbox   *slackchannel.InteractiveCommandInbox
+	ProbotIdentityBindings  *identitybinding.Service
+	SlackbotInstallations   *slackchannel.InstallationService
+	ProbotCapabilities      *probot.CapabilityRegistry
+	Mailman                 *mailman.Service
+	CookieBanner            *cookiebanner.Service
+	Geoloc                  *geoloc.Service
+	ThirdParty              *thirdparty.Service
+	RiskManagement          *riskmanagement.Service
+	ITAM                    *itam.Service
+	Task                    *task.Service
+	Cookie                  securecookie.Config
+	TokenSecret             string
+	// InstallStateKey signs the app-install state tokens the connector install
+	// ceremony carries across the vendor.
+	InstallStateKey   string
+	ConnectorRegistry *connector.Registry
 	ProviderRegistry  *provider.Registry
 	CustomDomainCname string
 	GraphQLLimits     gqlutils.Limits
 	Logger            *log.Logger
+
+	// IdentityFederationIssuer serves the outbound OIDC documents. It is nil when the
+	// identity federation issuer is disabled, in which case no /federation route exists.
+	IdentityFederationIssuer *identityfederation.Issuer
+	AWSConnectorInstall      cloudaws.ConnectorInstallConfig
+	GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
+	AzureConnectorInstall    cloudazure.ConnectorInstallConfig
+	LinearWebhookSecret      string
 }
 
 type Server struct {
-	cfg                   Config
-	apiServer             *api.Server
-	mailActionsHandler    http.Handler
-	consoleWebServer      *console_web.Server
-	consoleSecurityPolicy string
-	router                *chi.Mux
-	extraHeaderFields     map[string]string
-	baseURL               string
-	proboService          *probo.Service
-	iamService            *iam.Service
-	logger                *log.Logger
+	cfg                          Config
+	apiServer                    *api.Server
+	mailActionsHandler           http.Handler
+	identityFederationHandler    http.Handler
+	consoleWebServer             *console_web.Server
+	consoleSecurityPolicy        string
+	employeePortalWebServer      *employeeportal_web.Server
+	employeePortalSecurityPolicy string
+	router                       *chi.Mux
+	extraHeaderFields            map[string]string
+	baseURL                      string
+	proboService                 *probo.Service
+	iamService                   *iam.Service
+	logger                       *log.Logger
 }
 
 func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
-		BaseURL:           cfg.BaseURL,
-		AllowedOrigins:    cfg.AllowedOrigins,
-		Probo:             cfg.Probo,
-		ResourceAlias:     cfg.ResourceAlias,
-		File:              cfg.File,
-		IAM:               cfg.IAM,
-		Visitor:           cfg.Visitor,
-		ESign:             cfg.ESign,
-		Management:        cfg.Management,
-		CertManager:       cfg.CertManager,
-		AccessReview:      cfg.AccessReview,
-		AgentRun:          cfg.AgentRun,
-		Slack:             cfg.Slack,
-		Mailman:           cfg.Mailman,
-		CookieBanner:      cfg.CookieBanner,
-		Geoloc:            cfg.Geoloc,
-		ThirdParty:        cfg.ThirdParty,
-		RiskManagement:    cfg.RiskManagement,
-		ITAM:              cfg.ITAM,
-		Cookie:            cfg.Cookie,
-		TokenSecret:       cfg.TokenSecret,
-		ConnectorRegistry: cfg.ConnectorRegistry,
-		ProviderRegistry:  cfg.ProviderRegistry,
-		CustomDomainCname: cfg.CustomDomainCname,
-		GraphQLLimits:     cfg.GraphQLLimits,
-		Logger:            cfg.Logger.Named("api"),
+		BaseURL:                  cfg.BaseURL,
+		AllowedOrigins:           cfg.AllowedOrigins,
+		Probo:                    cfg.Probo,
+		ResourceAlias:            cfg.ResourceAlias,
+		File:                     cfg.File,
+		IAM:                      cfg.IAM,
+		Visitor:                  cfg.Visitor,
+		ESign:                    cfg.ESign,
+		Management:               cfg.Management,
+		CertManager:              cfg.CertManager,
+		AccessReview:             cfg.AccessReview,
+		AgentExecution:           cfg.AgentExecution,
+		Slack:                    cfg.Slack,
+		BotDeliveryDestinations:  cfg.BotDeliveryDestinations,
+		ComplianceMessages:       cfg.ComplianceMessages,
+		Slackbot:                 cfg.Slackbot,
+		SlackInteractiveInbox:    cfg.SlackInteractiveInbox,
+		ProbotIdentityBindings:   cfg.ProbotIdentityBindings,
+		SlackbotInstallations:    cfg.SlackbotInstallations,
+		ProbotCapabilities:       cfg.ProbotCapabilities,
+		Mailman:                  cfg.Mailman,
+		CookieBanner:             cfg.CookieBanner,
+		Geoloc:                   cfg.Geoloc,
+		ThirdParty:               cfg.ThirdParty,
+		RiskManagement:           cfg.RiskManagement,
+		ITAM:                     cfg.ITAM,
+		Task:                     cfg.Task,
+		Cookie:                   cfg.Cookie,
+		TokenSecret:              cfg.TokenSecret,
+		InstallStateKey:          cfg.InstallStateKey,
+		ConnectorRegistry:        cfg.ConnectorRegistry,
+		ProviderRegistry:         cfg.ProviderRegistry,
+		CustomDomainCname:        cfg.CustomDomainCname,
+		GraphQLLimits:            cfg.GraphQLLimits,
+		Logger:                   cfg.Logger.Named("api"),
+		IdentityFederationIssuer: cfg.IdentityFederationIssuer,
+		AWSConnectorInstall:      cfg.AWSConnectorInstall,
+		GCPConnectorInstall:      cfg.GCPConnectorInstall,
+		AzureConnectorInstall:    cfg.AzureConnectorInstall,
+		LinearWebhookSecret:      cfg.LinearWebhookSecret,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)
@@ -138,6 +185,11 @@ func NewServer(cfg Config) (*Server, error) {
 	}
 
 	consoleWebServer, err := console_web.NewServer()
+	if err != nil {
+		return nil, err
+	}
+
+	employeePortalWebServer, err := employeeportal_web.NewServer()
 	if err != nil {
 		return nil, err
 	}
@@ -158,20 +210,42 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, fmt.Errorf("cannot build console content security policy: %w", err)
 	}
 
+	employeePortalCSP, err := employeeportalstatics.ContentSecurityPolicy(appOrigin, cfg.FileStorageOrigin)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build employee portal content security policy: %w", err)
+	}
+
 	router := chi.NewRouter()
 
+	var identityFederationHandler http.Handler
+
+	if cfg.IdentityFederationIssuer != nil {
+		if cfg.Probo == nil || cfg.Probo.Organizations == nil {
+			return nil, fmt.Errorf("cannot create server: identity federation issuer needs an organization service")
+		}
+
+		identityFederationHandler = server_identityfederation.NewMux(
+			cfg.Logger.Named("identityfederation"),
+			cfg.IdentityFederationIssuer,
+			cfg.Probo.Organizations,
+		)
+	}
+
 	server := &Server{
-		cfg:                   cfg,
-		apiServer:             apiServer,
-		mailActionsHandler:    mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
-		consoleWebServer:      consoleWebServer,
-		consoleSecurityPolicy: consoleCSP,
-		router:                router,
-		extraHeaderFields:     cfg.ExtraHeaderFields,
-		baseURL:               cfg.BaseURL.String(),
-		proboService:          cfg.Probo,
-		iamService:            cfg.IAM,
-		logger:                cfg.Logger,
+		cfg:                          cfg,
+		apiServer:                    apiServer,
+		mailActionsHandler:           mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
+		identityFederationHandler:    identityFederationHandler,
+		consoleWebServer:             consoleWebServer,
+		consoleSecurityPolicy:        consoleCSP,
+		employeePortalWebServer:      employeePortalWebServer,
+		employeePortalSecurityPolicy: employeePortalCSP,
+		router:                       router,
+		extraHeaderFields:            cfg.ExtraHeaderFields,
+		baseURL:                      cfg.BaseURL.String(),
+		proboService:                 cfg.Probo,
+		iamService:                   cfg.IAM,
+		logger:                       cfg.Logger,
 	}
 
 	server.setupRoutes()
@@ -185,9 +259,33 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-protected-resource", s.protectedResourceMetadataHandler)
+	s.router.Get(
+		"/.well-known/oauth-protected-resource/api/mcp/v1",
+		s.mcpProtectedResourceMetadataHandler,
+	)
 
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
+
+	// The identity federation route tree is mounted at the same prefix in every
+	// deployment; only the advertised issuer differs, and it comes from
+	// configuration. The SaaS edge maps its public apex onto this prefix.
+	if s.identityFederationHandler != nil {
+		s.router.Mount(
+			identityfederation.PathPrefix,
+			http.StripPrefix(identityfederation.PathPrefix, s.identityFederationHandler),
+		)
+	}
+
+	s.router.Mount(
+		employeeportal_web.PathPrefix,
+		NewSecurityHeadersMiddleware(
+			SecurityHeadersOptions{
+				ExtraHeaderFields:     s.extraHeaderFields,
+				ContentSecurityPolicy: s.employeePortalSecurityPolicy,
+			},
+		)(http.StripPrefix(employeeportal_web.PathPrefix, s.employeePortalWebServer)),
+	)
 
 	s.router.Mount(
 		"/",
@@ -196,7 +294,7 @@ func (s *Server) setupRoutes() {
 				ExtraHeaderFields:     s.extraHeaderFields,
 				ContentSecurityPolicy: s.consoleSecurityPolicy,
 			},
-		)(s.consoleWebServer),
+		)(employeeportal_web.LegacyRedirectMiddleware(s.consoleWebServer)),
 	)
 }
 
@@ -220,7 +318,20 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) protectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	resource := uri.URI(s.baseURL)
+	s.renderProtectedResourceMetadata(w, uri.URI(s.baseURL))
+}
+
+func (s *Server) mcpProtectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
+	resource, err := s.iamService.OAuth2MCPResource()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	s.renderProtectedResourceMetadata(w, resource)
+}
+
+func (s *Server) renderProtectedResourceMetadata(w http.ResponseWriter, resource uri.URI) {
 	metadata := s.iamService.OAuth2ProtectedResourceMetadata(resource)
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")

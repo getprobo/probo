@@ -39,15 +39,21 @@ import (
 // and no OAuth metadata. BuildProbeURL targets the org's own API host.
 func oktaRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderOkta,
+		Provider: coredata.ConnectorProviderOkta,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.OktaConnectorSettings) string {
+				return s.Domain
+			},
+		),
 		DisplayName:      "Okta",
 		DocumentationURL: accessReviewDocsURL("okta"),
-		SupportsAPIKey:   true,
-		APIKeyAuthScheme: "SSWS",
-		BuildProbeURL:    buildOktaProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "domain", Label: "Okta Domain", Required: true},
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthScheme, Name: "SSWS"},
+			ExtraSettings: []ExtraSetting{
+				{Key: "domain", Label: "Okta Domain", Required: true},
+			},
 		},
+		BuildProbeURL: buildOktaProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
 			if err != nil {

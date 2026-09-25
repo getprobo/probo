@@ -33,24 +33,26 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/timespan"
 )
 
 type (
 	Task struct {
-		ID             gid.GID        `db:"id"`
-		OrganizationID gid.GID        `db:"organization_id"`
-		MeasureID      *gid.GID       `db:"measure_id"`
-		Name           string         `db:"name"`
-		Description    *string        `db:"description"`
-		State          TaskState      `db:"state"`
-		Priority       TaskPriority   `db:"priority"`
-		ReferenceID    string         `db:"reference_id"`
-		TimeEstimate   *time.Duration `db:"time_estimate"`
-		AssignedToID   *gid.GID       `db:"assigned_to_profile_id"`
-		Deadline       *time.Time     `db:"deadline"`
-		Rank           int            `db:"rank"`
-		CreatedAt      time.Time      `db:"created_at"`
-		UpdatedAt      time.Time      `db:"updated_at"`
+		ID             gid.GID            `db:"id"`
+		OrganizationID gid.GID            `db:"organization_id"`
+		MeasureID      *gid.GID           `db:"measure_id"`
+		Name           string             `db:"name"`
+		Content        string             `db:"content"`
+		State          TaskState          `db:"state"`
+		Priority       TaskPriority       `db:"priority"`
+		ReferenceID    string             `db:"reference_id"`
+		TimeEstimate   *timespan.TimeSpan `db:"time_estimate"`
+		AssignedToID   *gid.GID           `db:"assigned_to_profile_id"`
+		Deadline       *time.Time         `db:"deadline"`
+		Recurrence     *timespan.TimeSpan `db:"recurrence"`
+		Rank           int                `db:"rank"`
+		CreatedAt      time.Time          `db:"created_at"`
+		UpdatedAt      time.Time          `db:"updated_at"`
 
 		// ordering only
 		PriorityRank int `db:"priority_rank"`
@@ -121,13 +123,14 @@ SELECT
 	organization_id,
     measure_id,
     name,
-    description,
+    content,
     state,
     priority,
     reference_id,
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -138,6 +141,126 @@ WHERE
     %s
     AND id = @task_id
 LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"task_id": taskID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tasks: %w", err)
+	}
+
+	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect tasks: %w", err)
+	}
+
+	*t = task
+
+	return nil
+}
+
+func (t *Task) LoadByMeasureIDAndReferenceID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureID gid.GID,
+	referenceID string,
+) error {
+	q := `
+SELECT
+    id,
+	organization_id,
+    measure_id,
+    name,
+    content,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    recurrence,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    %s
+    AND measure_id = @measure_id
+    AND reference_id = @reference_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"measure_id":   measureID,
+		"reference_id": referenceID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tasks: %w", err)
+	}
+
+	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect tasks: %w", err)
+	}
+
+	*t = task
+
+	return nil
+}
+
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so completing a recurring
+// task cannot race another complete and insert two next occurrences.
+func (t *Task) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	taskID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+	organization_id,
+    measure_id,
+    name,
+    content,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    recurrence,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    %s
+    AND id = @task_id
+LIMIT 1
+FOR UPDATE;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -176,13 +299,14 @@ SELECT
     organization_id,
     measure_id,
     name,
-    description,
+    content,
     state,
     priority,
     reference_id,
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -218,11 +342,41 @@ WHERE
 	return nil
 }
 
+func lockTaskRank(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+	state TaskState,
+	priority TaskPriority,
+) error {
+	q := `
+SELECT pg_advisory_xact_lock(
+    hashtext(@organization_id::text || ':' || @state::text || ':' || @priority::text)
+)
+`
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"state":           state,
+		"priority":        priority,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot acquire task rank lock: %w", err)
+	}
+
+	return nil
+}
+
 func (t *Task) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	if err := lockTaskRank(ctx, conn, t.OrganizationID, t.State, t.Priority); err != nil {
+		return fmt.Errorf("cannot insert task: %w", err)
+	}
+
 	q := `
 WITH next_rank AS (
     SELECT COALESCE(MAX(rank), 0) + 1 AS value
@@ -236,13 +390,14 @@ INSERT INTO
 		organization_id,
         measure_id,
         name,
-        description,
+        content,
         reference_id,
         state,
         priority,
         time_estimate,
         assigned_to_profile_id,
         deadline,
+        recurrence,
         rank,
         created_at,
         updated_at
@@ -253,13 +408,14 @@ VALUES (
 	@organization_id,
     @measure_id,
     @name,
-    @description,
+    @content,
     @reference_id,
     @state,
     @priority,
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
+    @recurrence,
     (SELECT value FROM next_rank),
     @created_at,
     @updated_at
@@ -273,13 +429,14 @@ RETURNING rank, priority_rank;
 		"organization_id":        t.OrganizationID,
 		"measure_id":             t.MeasureID,
 		"name":                   t.Name,
-		"description":            t.Description,
+		"content":                t.Content,
 		"reference_id":           t.ReferenceID,
 		"state":                  t.State,
 		"priority":               t.Priority,
 		"time_estimate":          t.TimeEstimate,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
+		"recurrence":             t.Recurrence,
 		"created_at":             t.CreatedAt,
 		"updated_at":             t.UpdatedAt,
 	}
@@ -303,6 +460,10 @@ func (t *Task) Upsert(
 	conn pg.Querier,
 	scope Scoper,
 ) error {
+	if err := lockTaskRank(ctx, conn, t.OrganizationID, t.State, t.Priority); err != nil {
+		return fmt.Errorf("cannot upsert task: %w", err)
+	}
+
 	q := `
 WITH next_rank AS (
     SELECT COALESCE(MAX(rank), 0) + 1 AS value
@@ -316,13 +477,14 @@ INSERT INTO
 		organization_id,
         measure_id,
         name,
-        description,
+        content,
         reference_id,
         state,
         priority,
         time_estimate,
         assigned_to_profile_id,
         deadline,
+        recurrence,
         rank,
         created_at,
         updated_at
@@ -333,20 +495,21 @@ VALUES (
 	@organization_id,
     @measure_id,
     @name,
-    @description,
+    @content,
     @reference_id,
     @state,
     @priority,
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
+    @recurrence,
     (SELECT value FROM next_rank),
     @created_at,
     @updated_at
 )
 ON CONFLICT (measure_id, reference_id) DO UPDATE SET
     name = @name,
-    description = @description,
+    content = @content,
     updated_at = @updated_at,
     deadline = @deadline
 RETURNING
@@ -354,13 +517,14 @@ RETURNING
     organization_id,
     measure_id,
     name,
-    description,
+    content,
     reference_id,
     state,
     priority,
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -373,13 +537,14 @@ RETURNING
 		"organization_id":        t.OrganizationID,
 		"measure_id":             t.MeasureID,
 		"name":                   t.Name,
-		"description":            t.Description,
+		"content":                t.Content,
 		"reference_id":           t.ReferenceID,
 		"state":                  t.State,
 		"priority":               t.Priority,
 		"time_estimate":          t.TimeEstimate,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
+		"recurrence":             t.Recurrence,
 		"created_at":             t.CreatedAt,
 		"updated_at":             t.UpdatedAt,
 	}
@@ -404,6 +569,7 @@ func (t *Tasks) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *TaskFilter,
 ) (int, error) {
 	q := `
 	SELECT
@@ -413,12 +579,14 @@ func (t *Tasks) CountByOrganizationID(
 	WHERE
 		%s
 		AND organization_id = @organization_id
+		AND %s
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -438,6 +606,7 @@ func (t *Tasks) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
+	filter *TaskFilter,
 ) error {
 	q := `
 	SELECT
@@ -445,13 +614,14 @@ func (t *Tasks) LoadByOrganizationID(
 		measure_id,
 		organization_id,
 		name,
-		description,
+		content,
 		state,
 		priority,
 		reference_id,
 		time_estimate,
 		assigned_to_profile_id,
 		deadline,
+		recurrence,
 		rank,
 		priority_rank,
 		created_at,
@@ -462,11 +632,13 @@ func (t *Tasks) LoadByOrganizationID(
 		%s
 		AND organization_id = @organization_id
 		AND %s
+		AND %s
 	`
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -489,6 +661,7 @@ func (t *Tasks) CountByMeasureID(
 	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
+	filter *TaskFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -498,12 +671,14 @@ FROM
 WHERE
     %s
     AND measure_id = @measure_id
+    AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -523,6 +698,7 @@ func (t *Tasks) LoadByMeasureID(
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
+	filter *TaskFilter,
 ) error {
 	q := `
 SELECT
@@ -530,13 +706,14 @@ SELECT
     measure_id,
 	organization_id,
     name,
-    description,
+    content,
     state,
     priority,
     reference_id,
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence,
     rank,
     priority_rank,
     created_at,
@@ -547,11 +724,13 @@ WHERE
     %s
     AND measure_id = @measure_id
     AND %s
+    AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -578,7 +757,7 @@ func (t *Task) Update(
 UPDATE tasks
 SET
   name = @name,
-  description = @description,
+  content = @content,
   state = @state,
   priority = @priority,
   rank = @rank,
@@ -586,7 +765,8 @@ SET
   updated_at = @updated_at,
   assigned_to_profile_id = @assigned_to_profile_id,
   deadline = @deadline,
-  measure_id = @measure_id
+  measure_id = @measure_id,
+  recurrence = @recurrence
 WHERE %s
     AND id = @task_id
 `
@@ -595,7 +775,7 @@ WHERE %s
 	args := pgx.NamedArgs{
 		"task_id":                t.ID,
 		"name":                   t.Name,
-		"description":            t.Description,
+		"content":                t.Content,
 		"state":                  t.State,
 		"priority":               t.Priority,
 		"rank":                   t.Rank,
@@ -604,6 +784,7 @@ WHERE %s
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
 		"measure_id":             t.MeasureID,
+		"recurrence":             t.Recurrence,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -618,6 +799,10 @@ func (t *Task) NextRankForStatePriority(
 	conn pg.Querier,
 	scope Scoper,
 ) error {
+	if err := lockTaskRank(ctx, conn, t.OrganizationID, t.State, t.Priority); err != nil {
+		return fmt.Errorf("cannot get next rank: %w", err)
+	}
+
 	q := `
 SELECT COALESCE(MAX(rank), 0) + 1
 FROM tasks

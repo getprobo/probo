@@ -23,6 +23,7 @@ package view
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!) {
+query($id: ID!, $asOf: Datetime) {
   node(id: $id) {
     __typename
     ... on RiskAnalysis {
@@ -45,6 +46,12 @@ query($id: ID!) {
       matrixSize {
         rows
         cols
+      }
+      matrixCells(asOf: $asOf) {
+        type
+        likelihood
+        impact
+        count
       }
       createdAt
       updatedAt
@@ -67,13 +74,22 @@ type viewResponse struct {
 			Rows int `json:"rows"`
 			Cols int `json:"cols"`
 		} `json:"matrixSize"`
+		MatrixCells []struct {
+			Type       string `json:"type"`
+			Likelihood int    `json:"likelihood"`
+			Impact     int    `json:"impact"`
+			Count      int    `json:"count"`
+		} `json:"matrixCells"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagAsOf   string
+		flagOutput *string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
@@ -102,9 +118,22 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
+			var asOf *string
+
+			if flagAsOf != "" {
+				if _, err := time.Parse(time.RFC3339, flagAsOf); err != nil {
+					return fmt.Errorf(
+						"--as-of must be RFC3339 (e.g. 2026-01-15T23:59:59Z): %w",
+						err,
+					)
+				}
+
+				asOf = &flagAsOf
+			}
+
 			data, err := client.Do(
 				viewQuery,
-				map[string]any{"id": args[0]},
+				map[string]any{"id": args[0], "asOf": asOf},
 			)
 			if err != nil {
 				return err
@@ -138,7 +167,14 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
 
 			if r.Description != nil && *r.Description != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)
+				description, err := cmdutil.FormatRichText(*r.Description)
+				if err != nil {
+					return fmt.Errorf("cannot format description: %w", err)
+				}
+
+				if description != "" {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), description)
+				}
 			}
 
 			if r.Period != nil {
@@ -153,6 +189,21 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s%d×%d\n", label.Render("Matrix size:"), r.MatrixSize.Rows, r.MatrixSize.Cols)
 
+			if len(r.MatrixCells) > 0 {
+				_, _ = fmt.Fprintf(out, "%s%d occupied cells\n", label.Render("Matrix cells:"), len(r.MatrixCells))
+				for _, cell := range r.MatrixCells {
+					_, _ = fmt.Fprintf(
+						out,
+						"%s%s %d×%d (%d)\n",
+						label.Render(""),
+						cell.Type,
+						cell.Likelihood,
+						cell.Impact,
+						cell.Count,
+					)
+				}
+			}
+
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(r.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(r.UpdatedAt))
@@ -162,6 +213,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(
+		&flagAsOf,
+		"as-of",
+		"",
+		"Reconstruct matrix cells as of this RFC3339 instant (omit for live tables)",
+	)
 
 	return cmd
 }

@@ -20,7 +20,7 @@
 
 import { documentClassifications, documentTypes, documentWriteModes } from "@probo/helpers";
 import { useList } from "@probo/hooks";
-import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconSignature, IconTrashCan, IconUpload, Option, Select, Tbody, Th, Thead, Tr } from "@probo/ui";
+import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconMagnifyingGlass, IconSignature, IconTrashCan, IconUpload, Input, Option, Select, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { type ComponentProps, use, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { usePaginationFragment } from "react-relay";
@@ -36,6 +36,9 @@ import { useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
+
+import { useDocumentListFilters } from "../_lib/useDocumentListFilters";
+import { useDocumentListSearch } from "../_lib/useDocumentListSearch";
 
 import { type DeleteDocumentDialogRef, DeleteDocumentsDialog } from "./DeleteDocumentDialog";
 import { DocumentListItem } from "./DocumentListItem";
@@ -58,6 +61,7 @@ const fragment = graphql`
     documentTypes: { type: "[DocumentType!]", defaultValue: null }
     classifications: { type: "[DocumentClassification!]", defaultValue: null }
     writeModes: { type: "[DocumentWriteMode!]", defaultValue: null }
+    query: { type: "String", defaultValue: null }
   ) {
     documents(
       first: $first
@@ -65,7 +69,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { status: $status documentTypes: $documentTypes classifications: $classifications writeModes: $writeModes }
+      filter: { status: $status documentTypes: $documentTypes classifications: $classifications writeModes: $writeModes query: $query }
     ) @connection(key: "DocumentsListQuery_documents" filters: ["orderBy", "filter"]) {
       __id
       edges {
@@ -136,6 +140,9 @@ export function DocumentList(props: {
   const [documentTypeFilter, setDocumentTypeFilter] = useState<DocumentType | null>(null);
   const [classificationFilter, setClassificationFilter] = useState<DocumentClassification | null>(null);
   const [writeModeFilter, setWriteModeFilter] = useState<DocumentWriteMode | null>(null);
+  const { query } = useDocumentListFilters();
+  const [queryInput, setQueryInput] = useDocumentListSearch();
+  const queryFilter = query || null;
   const [isPending, startTransition] = useTransition();
 
   const refetch = pagination.refetch;
@@ -147,11 +154,12 @@ export function DocumentList(props: {
           documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
           classifications: classificationFilter ? [classificationFilter] : null,
           writeModes: writeModeFilter ? [writeModeFilter] : null,
+          query: queryFilter,
         },
         { fetchPolicy: "store-and-network" },
       );
     });
-  }, [tab, refetch, documentTypeFilter, classificationFilter, writeModeFilter]);
+  }, [tab, refetch, documentTypeFilter, classificationFilter, writeModeFilter, queryFilter]);
 
   const documents = pagination.data.documents.edges.map(({ node }) => node);
   const connectionId = pagination.data.documents.__id;
@@ -193,6 +201,7 @@ export function DocumentList(props: {
             documentTypes: newType ? [newType] : null,
             classifications: classificationFilter ? [classificationFilter] : null,
             writeModes: writeModeFilter ? [writeModeFilter] : null,
+            query: queryFilter,
           },
         },
       ),
@@ -214,6 +223,7 @@ export function DocumentList(props: {
             documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
             classifications: newClassification ? [newClassification] : null,
             writeModes: writeModeFilter ? [writeModeFilter] : null,
+            query: queryFilter,
           },
         },
       ),
@@ -235,6 +245,7 @@ export function DocumentList(props: {
             documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
             classifications: classificationFilter ? [classificationFilter] : null,
             writeModes: newWriteMode ? [newWriteMode] : null,
+            query: queryFilter,
           },
         },
       ),
@@ -298,6 +309,7 @@ export function DocumentList(props: {
             documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
             classifications: classificationFilter ? [classificationFilter] : null,
             writeModes: writeModeFilter ? [writeModeFilter] : null,
+            query: queryFilter,
           },
         },
       ),
@@ -311,6 +323,7 @@ export function DocumentList(props: {
       documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
       classifications: classificationFilter ? [classificationFilter] : null,
       writeModes: writeModeFilter ? [writeModeFilter] : null,
+      query: queryFilter,
     });
   };
 
@@ -323,6 +336,12 @@ export function DocumentList(props: {
         onSuccess={clear}
       />
       <div className="flex items-center gap-4">
+        <Input
+          icon={IconMagnifyingGlass}
+          placeholder={t("documentList.filters.searchPlaceholder")}
+          value={queryInput}
+          onValueChange={setQueryInput}
+        />
         <Select
           value={writeModeFilter ?? "ALL"}
           onValueChange={handleWriteModeFilterChange}

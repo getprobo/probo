@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // Layouts
-export { Drawer, Layout } from "./Layouts/Layout";
+export { Drawer, Layout, LayoutContext } from "./Layouts/Layout";
 export {
   ErrorDetailMessage,
   ErrorDetails,
@@ -66,7 +66,6 @@ export { Dropzone } from "./Atoms/Dropzone/Dropzone";
 export { ControlItem } from "./Atoms/ControlItem/ControlItem";
 export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScrollTrigger";
 export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel";
-export { TaskStateIcon } from "./Atoms/Icons/TaskStateIcon";
 export { Checkbox } from "./Atoms/Checkbox/Checkbox";
 export { Toggle } from "./Atoms/Toggle/Toggle";
 export {

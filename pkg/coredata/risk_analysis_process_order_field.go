@@ -49,14 +49,7 @@ func RiskAnalysisProcessOrderFields() []RiskAnalysisProcessOrderField {
 }
 
 func (v RiskAnalysisProcessOrderField) IsValid() bool {
-	switch v {
-	case
-		RiskAnalysisProcessOrderFieldCreatedAt,
-		RiskAnalysisProcessOrderFieldName:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, RiskAnalysisProcessOrderFields())
 }
 
 func (v RiskAnalysisProcessOrderField) String() string {
@@ -68,14 +61,7 @@ func (v RiskAnalysisProcessOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *RiskAnalysisProcessOrderField) UnmarshalText(text []byte) error {
-	val := RiskAnalysisProcessOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid RiskAnalysisProcessOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, RiskAnalysisProcessOrderFields())
 }
 
 func (p RiskAnalysisProcessOrderField) Column() string { return string(p) }

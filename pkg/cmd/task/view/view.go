@@ -37,11 +37,17 @@ query($id: ID!) {
     ... on Task {
       id
       name
-      description
+      content
       state
       priority
       timeEstimate
       deadline
+      externalLink {
+        provider
+        identifier
+        url
+        origin
+      }
       createdAt
       updatedAt
     }
@@ -54,13 +60,19 @@ type viewResponse struct {
 		Typename     string  `json:"__typename"`
 		ID           string  `json:"id"`
 		Name         string  `json:"name"`
-		Description  *string `json:"description"`
+		Content      string  `json:"content"`
 		State        string  `json:"state"`
 		Priority     string  `json:"priority"`
 		TimeEstimate *string `json:"timeEstimate"`
 		Deadline     *string `json:"deadline"`
-		CreatedAt    string  `json:"createdAt"`
-		UpdatedAt    string  `json:"updatedAt"`
+		ExternalLink *struct {
+			Provider   string `json:"provider"`
+			Identifier string `json:"identifier"`
+			URL        string `json:"url"`
+			Origin     string `json:"origin"`
+		} `json:"externalLink"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -131,8 +143,13 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), t.State)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Priority:"), t.Priority)
 
-			if t.Description != nil && *t.Description != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *t.Description)
+			content, err := cmdutil.FormatRichText(t.Content)
+			if err != nil {
+				return fmt.Errorf("cannot format task content: %w", err)
+			}
+
+			if content != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Content:"), content)
 			}
 
 			if t.TimeEstimate != nil && *t.TimeEstimate != "" {
@@ -141,6 +158,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if t.Deadline != nil && *t.Deadline != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Deadline:"), *t.Deadline)
+			}
+
+			if t.ExternalLink != nil {
+				_, _ = fmt.Fprintf(
+					out,
+					"%s%s (%s)\n",
+					label.Render("External:"),
+					t.ExternalLink.Identifier,
+					t.ExternalLink.URL,
+				)
 			}
 
 			_, _ = fmt.Fprintln(out)

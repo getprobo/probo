@@ -49,14 +49,7 @@ func RiskAnalysisThreatOrderFields() []RiskAnalysisThreatOrderField {
 }
 
 func (v RiskAnalysisThreatOrderField) IsValid() bool {
-	switch v {
-	case
-		RiskAnalysisThreatOrderFieldCreatedAt,
-		RiskAnalysisThreatOrderFieldName:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, RiskAnalysisThreatOrderFields())
 }
 
 func (v RiskAnalysisThreatOrderField) String() string {
@@ -68,14 +61,7 @@ func (v RiskAnalysisThreatOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *RiskAnalysisThreatOrderField) UnmarshalText(text []byte) error {
-	val := RiskAnalysisThreatOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid RiskAnalysisThreatOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, RiskAnalysisThreatOrderFields())
 }
 
 func (p RiskAnalysisThreatOrderField) Column() string { return string(p) }

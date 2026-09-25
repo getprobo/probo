@@ -1,0 +1,109 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { PlusIcon } from "@phosphor-icons/react";
+import { usePageTitle } from "@probo/hooks";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql } from "relay-runtime";
+
+import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/CompliancePortalVisitorsPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
+
+import { AddVisitorPopover } from "./_components/AddVisitorPopover";
+import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
+import { CompliancePortalAccessListSearch } from "./_components/CompliancePortalAccessListSearch";
+import { CompliancePortalAccessListSort } from "./_components/CompliancePortalAccessListSort";
+import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
+import { accessSection, visitorsPage } from "./variants";
+
+export const compliancePortalVisitorsPageQuery = graphql`
+  query CompliancePortalVisitorsPageQuery($compliancePortalId: ID!) {
+    compliancePortal: node(id: $compliancePortalId) {
+      __typename
+      ... on CompliancePortal {
+        id
+        canGetNDA: permission(action: "compliance-portal:portal:get-nda")
+        canListAccesses: permission(action: "compliance-portal:portal-access:list")
+        canCreateAccess: permission(action: "compliance-portal:portal-access:create")
+        ...CompliancePortalNDASectionFragment
+      }
+    }
+  }
+`;
+
+interface CompliancePortalVisitorsPageProps {
+  queryRef: PreloadedQuery<CompliancePortalVisitorsPageQuery>;
+}
+
+export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisitorsPageProps) {
+  const { t } = useTranslation("organizations/compliance-portals");
+  const title = t("visitorsPage.title");
+  usePageTitle(title);
+  const { root, intro, tools, actions } = accessSection();
+
+  const { compliancePortal } = usePreloadedQuery<CompliancePortalVisitorsPageQuery>(
+    compliancePortalVisitorsPageQuery,
+    queryRef,
+  );
+  if (compliancePortal.__typename !== "CompliancePortal") {
+    throw new NotFoundError("Compliance portal not found");
+  }
+
+  return (
+    <div className={visitorsPage()}>
+      <CompliancePortalPageHeader
+        title={title}
+        description={t("visitorsPage.description")}
+      />
+      {compliancePortal.canGetNDA && (
+        <CompliancePortalNDASection compliancePortalKey={compliancePortal} />
+      )}
+
+      {compliancePortal.canListAccesses && (
+        <section className={root()}>
+          <div className={intro()}>
+            <Text size={2} color="neutral">
+              {t("accessPage.description")}
+            </Text>
+            <div className={tools()}>
+              <CompliancePortalAccessListSearch />
+              <div className={actions()}>
+                <CompliancePortalAccessListSort />
+                {compliancePortal.canCreateAccess && (
+                  <AddVisitorPopover compliancePortalId={compliancePortal.id}>
+                    <Button size={2} color="neutral" highContrast iconStart={<PlusIcon />}>
+                      {t("addVisitorDialog.actions.open")}
+                    </Button>
+                  </AddVisitorPopover>
+                )}
+              </div>
+            </div>
+          </div>
+          <CompliancePortalAccessList />
+        </section>
+      )}
+    </div>
+  );
+}

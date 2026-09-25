@@ -201,7 +201,7 @@ export function DocumentActionsDropdown(props: {
               } else {
                 toast({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.draftDeleted"), variant: "success" });
                 onVersionChanged();
-                void navigate(`/organizations/${organizationId}/documents/${document.id}/description`);
+                void navigate(`/organizations/${organizationId}/governance/documents/${document.id}/description`);
               }
               resolve();
             },
@@ -278,7 +278,7 @@ export function DocumentActionsDropdown(props: {
         documentId={document.id}
         documentTitle={version.title}
         connections={[documentsConnectionId]}
-        onSuccess={() => void navigate(`/organizations/${organizationId}/documents`)}
+        onSuccess={() => void navigate(`/organizations/${organizationId}/governance/documents`)}
       />
       <ActionDropdown variant="secondary">
         <DropdownItem

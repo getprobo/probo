@@ -1,0 +1,76 @@
+{
+  "workspaceSettingsPage": {
+    "title": "Espace de travail"
+  },
+  "identity": {
+    "title": "Identité",
+    "description": "Ces informations sont utilisées dans la console, les documents et les exports.",
+    "fields": {
+      "logo": "Logo",
+      "logoPlaceholder": "Déposer ou cliquer",
+      "horizontalLogo": "Logo horizontal",
+      "horizontalLogoPlaceholder": "Déposer ou cliquer",
+      "acceptedFiles": "JPEG, PNG, SVG ou WebP. 5 Mo maximum.",
+      "name": "Nom"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "clearHorizontalLogo": "Supprimer le logo horizontal"
+    },
+    "messages": {
+      "updated": "Espace de travail mis à jour",
+      "horizontalLogoDeleted": "Logo horizontal supprimé"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de l’espace de travail",
+      "deleteHorizontalLogo": "Échec de la suppression du logo horizontal",
+      "nameRequired": "Saisissez un nom",
+      "invalidFileType": {
+        "title": "Type de fichier non pris en charge",
+        "description": "Téléversez une image JPEG, PNG, SVG ou WebP."
+      },
+      "fileTooLarge": {
+        "title": "Fichier trop volumineux",
+        "description": "Téléversez une image de moins de 5 Mo."
+      },
+      "tooManyFiles": {
+        "title": "Trop de fichiers",
+        "description": "Téléversez une seule image à la fois."
+      }
+    },
+    "deleteHorizontalLogo": {
+      "title": "Supprimer le logo horizontal",
+      "description": "Supprimer le logo horizontal de cet espace de travail ?",
+      "actions": {
+        "cancel": "Annuler",
+        "confirm": "Supprimer"
+      }
+    }
+  },
+  "dangerZone": {
+    "title": "Zone de danger",
+    "delete": {
+      "title": "Supprimer l’espace de travail",
+      "description": "Supprimer définitivement cet espace de travail et toutes ses données.",
+      "warning": "Cette action est irréversible.",
+      "action": "Supprimer l’espace de travail"
+    }
+  },
+  "deleteWorkspaceDialog": {
+    "title": "Supprimer l’espace de travail",
+    "description": "Cette action supprimera définitivement {{organizationName}} et toutes ses données.",
+    "warning": "Cette action est irréversible.",
+    "confirmationLabel": "Saisissez « {{organizationName}} » pour confirmer :",
+    "confirmationMismatch": "Le nom ne correspond pas.",
+    "actions": {
+      "cancel": "Annuler",
+      "delete": "Supprimer l’espace de travail"
+    },
+    "messages": {
+      "deleted": "Espace de travail supprimé"
+    },
+    "errors": {
+      "delete": "Échec de la suppression de l’espace de travail"
+    }
+  }
+}

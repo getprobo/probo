@@ -5,6 +5,18 @@ this file.
 
 ## Unreleased
 
+## [0.3.2] - 2026-09-04
+
+### Changed
+
+- Access review decision rubric no longer keys on `incremental_tag`, matching campaigns that are now independent snapshots
+
+## [0.3.1] - 2026-08-24
+
+### Fixed
+
+- `access-review` skill reference: `auth_method` now lists `SSO`, `PASSWORD`, `API_KEY`, `OAUTH2`, `SSH`, and `SERVICE_ACCOUNT`, matching the API's actual values instead of omitting `OAUTH2` and `SSH`
+
 ## [0.3.0] - 2026-08-10
 
 ### Added

@@ -18,50 +18,80 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { Button, IconPlusLarge, PageHeader } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
-import TaskFormDialog from "#/components/tasks/TaskFormDialog";
 import { OrganizationTasksCard } from "#/components/tasks/TasksCard";
 
+import { CreateTaskDialog } from "./_components/CreateTaskDialog";
+import { TasksSettingsDialog } from "./_components/TasksSettingsDialog";
+import { tasksPage } from "./variants";
+
 export const tasksPageQuery = graphql`
-  query TasksPageQuery($organizationId: ID!) {
+  query TasksPageQuery($organizationId: ID!, $filter: TaskFilter) {
     organization: node(id: $organizationId) {
+      __typename
       ... on Organization {
-        ...TasksCardOrganizationFragment
+        ...TasksCardOrganizationFragment @arguments(filter: $filter)
+        ...TasksSettingsDialog_organization
       }
     }
   }
 `;
 
-interface Props {
+interface TasksPageProps {
   queryRef: PreloadedQuery<TasksPageQuery>;
+  onReady?: () => void;
 }
 
-export default function TasksPage({ queryRef }: Props) {
+export function TasksPage({ queryRef, onReady }: TasksPageProps) {
   const { t } = useTranslation();
   const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
   usePageTitle(t("tasks.title"));
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
+
+  const { organization } = query;
+  if (organization.__typename !== "Organization") {
+    throw new Error("invalid type for node");
+  }
+
+  const { root, header, intro, actions } = tasksPage();
 
   return (
-    <div className="space-y-6">
+    <div className={root()}>
       <OrganizationTasksCard
-        organizationRef={query.organization}
+        organizationRef={organization}
         header={({ connectionId, canCreateTask, refetch }) => (
-          <PageHeader
-            title={t("tasks.title")}
-            description={t("tasks.description")}
-          >
-            {canCreateTask && (
-              <TaskFormDialog connection={connectionId} onCompleted={refetch}>
-                <Button icon={IconPlusLarge}>{t("tasks.actions.create")}</Button>
-              </TaskFormDialog>
-            )}
-          </PageHeader>
+          <div className={header()}>
+            <div className={intro()}>
+              <Heading level={1} size={6} weight="medium" highContrast>
+                {t("tasks.title")}
+              </Heading>
+              <Text size={2} color="faint">
+                {t("tasks.description")}
+              </Text>
+            </div>
+            <div className={actions()}>
+              <TasksSettingsDialog organizationKey={organization} />
+              {canCreateTask && (
+                <CreateTaskDialog connectionId={connectionId} onCompleted={refetch}>
+                  <Button variant="solid" iconStart={<PlusIcon />}>
+                    {t("tasks.actions.create")}
+                  </Button>
+                </CreateTaskDialog>
+              )}
+            </div>
+          </div>
         )}
       />
     </div>

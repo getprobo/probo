@@ -117,6 +117,7 @@ export const THEMED_STYLES = `
     flex-direction: column;
   }
 
+  probo-preference-panel .panel-body,
   probo-preference-panel probo-category-list,
   probo-privacy-choices .privacy-choices-body {
     overflow-y: auto;
@@ -211,9 +212,28 @@ export const THEMED_STYLES = `
     color: var(--_text);
   }
 
-  probo-category-list {
+  probo-category-list,
+  .panel-body {
     display: flex;
     flex-direction: column;
+  }
+
+  .panel-body .section-title {
+    font-size: var(--_font-size);
+    font-weight: 600;
+    padding: 16px 24px 8px;
+  }
+
+  .panel-body .category-header {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--_border);
+  }
+
+  .toggle-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
   probo-preference-panel .footer,
