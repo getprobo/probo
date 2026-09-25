@@ -4,6 +4,28 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.297.0] - 2026-09-25
+
+### Added
+
+- Tasks can link to an existing Linear issue. Console, GraphQL, and MCP
+  can search Linear issues in a team and link a task to one. The
+  new-task dialog offers the same choice when Linear Sync is connected
+- SigNoz access reviews list service accounts and their API keys,
+  including admin accounts. Deleted accounts stay in the listing as
+  inactive, and last login is the latest real use of an account's
+  current keys
+
+### Changed
+
+- Linear teams are a paginated, searchable connection (`linearTeams` /
+  `listLinearTeams`). The unpaginated team list is gone
+
+### Fixed
+
+- Status and priority menus in the task dialog open in the dialog
+  overlay, so they no longer break the layout
+
 ## [0.296.0] - 2026-09-24
 
 ### Added
