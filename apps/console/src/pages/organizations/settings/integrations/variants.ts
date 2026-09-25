@@ -23,43 +23,49 @@ import { tv } from "tailwind-variants/lite";
 export const integrationsPage = tv({
   slots: {
     root: "flex flex-col gap-6",
-    sections: "flex flex-col gap-8",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
   },
 });
 
-export const integrationSection = tv({
+export const integrationsList = tv({
   slots: {
-    root: "flex flex-col gap-3",
-    header: "flex items-center gap-2.5",
-    title: "text-sm font-medium uppercase tracking-wide text-txt-primary",
-    count: "text-sm text-txt-tertiary",
-    list: "list-none overflow-hidden rounded-[10px] border border-border-low bg-level-1",
-    item: "flex flex-wrap items-center gap-4 border-b border-border-low px-4 py-3 last:border-b-0",
-    content: "flex min-w-48 flex-1 flex-col gap-0.5 sm:max-w-64",
-    name: "text-sm font-medium text-txt-primary",
-    description: "text-xs text-txt-tertiary",
-    trailing: "ml-auto flex min-w-40 flex-1 items-center justify-end gap-2",
+    root: "flex flex-col gap-4",
+    tools: "flex flex-wrap items-center justify-between gap-2",
+    search: "w-80 max-sm:min-w-0 max-sm:w-full",
+    filters: "flex flex-wrap items-center justify-end gap-2",
+    filter: "w-48 shrink-0",
+    section: "flex flex-col gap-3",
+    sectionTitle: "flex items-center gap-2.5",
+    grid: "grid grid-cols-3 gap-3 max-xl:grid-cols-2 max-lg:grid-cols-1",
+    marketplaceGrid: "grid grid-cols-4 gap-3 max-xl:grid-cols-2 max-lg:grid-cols-1",
+    empty: "flex flex-col items-center py-8 text-center",
   },
 });
 
-export const connectorDetailsPage = tv({
+export const connectorProviderStack = tv({
   slots: {
-    root: "flex flex-col gap-6",
-    header: "flex flex-col gap-2",
-    titleRow: "flex flex-wrap items-start justify-between gap-3",
-    title: "flex min-w-0 flex-1 flex-col gap-1",
-    status: "text-sm text-txt-tertiary",
-    actions: "flex shrink-0 flex-wrap items-center gap-2",
-    body: "flex flex-col gap-6",
+    root: "relative min-w-0",
+    deck: "isolate grid",
+    slide: "relative col-start-1 row-start-1 min-w-0",
+    page: "pointer-events-none absolute right-3 bottom-3 z-1",
+    next: "absolute bottom-2 left-1/2 z-1 -translate-x-1/2 translate-y-1/2",
   },
 });
 
-export const connectorDetailsPageSkeleton = tv({
+export const connectorCard = tv({
   slots: {
-    root: "flex flex-col gap-6",
-    header: "flex flex-col gap-2",
-    titleRow: "flex flex-wrap items-start justify-between gap-3",
-    title: "flex min-w-0 items-center gap-2",
-    body: "flex flex-col gap-6",
+    card: "relative flex h-full min-w-0 flex-col",
+    person: "flex items-center gap-4 px-4 py-4 pr-12",
+    identity: "flex min-w-0 flex-1 flex-col gap-0.5",
+    title: "min-w-0 truncate",
+    menu: "absolute top-3 right-3",
+    meta: "flex flex-col gap-1.5 px-4 py-3",
+    metaRow: "flex flex-wrap items-center justify-between gap-2",
+    controls: "flex items-center gap-1",
+    usedBy: "flex items-center gap-2",
+    usedByIcons: "flex items-center gap-1.5",
+    connectActions: "ml-auto",
+    organizationSelect: "w-44 shrink-0",
   },
 });

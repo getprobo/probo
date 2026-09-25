@@ -1,18 +1,83 @@
 {
+  "marketplacePage": {
+    "title": "Marketplace",
+    "description": "Les fournisseurs auxquels Probo peut se connecter.",
+    "connect": "Connecter",
+    "connectTitle": "Connecter {{provider}}",
+    "choose": "Choisissez comment connecter {{provider}}.",
+    "back": "Retour",
+    "methods": {
+      "WORKLOAD_IDENTITY": "Identité de charge de travail",
+      "GITHUB_APP": "Application GitHub",
+      "INSTALL": "Installation de l'application",
+      "OAUTH2": "OAuth",
+      "CLIENT_CREDENTIALS": "Identifiants client",
+      "API_KEY": "Clé API"
+    },
+    "methodDescriptions": {
+      "WORKLOAD_IDENTITY": "Faites confiance à Probo avec un rôle cloud, sans secret de longue durée.",
+      "GITHUB_APP": "Installez l'application GitHub Probo.",
+      "INSTALL": "Installez l'application Probo chez le fournisseur.",
+      "OAUTH2": "Connectez-vous chez le fournisseur et accordez l'accès.",
+      "CLIENT_CREDENTIALS": "Utilisez un identifiant client et un secret client.",
+      "API_KEY": "Collez une clé API du fournisseur."
+    },
+    "fields": {
+      "apiKey": "Clé API",
+      "clientId": "Identifiant client",
+      "clientSecret": "Secret client",
+      "tokenUrl": "URL du jeton",
+      "scope": "Périmètre",
+      "datadogSite": "Site Datadog",
+      "zendeskSubdomain": "Sous-domaine Zendesk"
+    },
+    "connected": "Fournisseur connecté.",
+    "connectFailed": "Connexion impossible"
+  },
   "listPage": {
-    "title": "Intégrations",
-    "description": "Les fournisseurs pour lesquels Probo détient un identifiant, et ce à quoi il peut encore se connecter.",
+    "title": "Connecteurs",
+    "description": "Les fournisseurs pour lesquels Probo détient un identifiant.",
     "notFound": "Organisation introuvable",
     "sections": {
       "connected": "Connectés",
       "available": "Disponibles"
     },
+    "addMore": "Ajouter plus",
     "emptyConnected": "Aucun fournisseur n'est encore connecté.",
+    "emptyConnectedSearch": "Aucun fournisseur connecté ne correspond à votre recherche.",
     "emptyAvailable": "Tous les fournisseurs disponibles sont déjà connectés.",
+    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche.",
+    "searchPlaceholder": "Rechercher des fournisseurs...",
+    "searchConnectorsPlaceholder": "Rechercher des connecteurs...",
+    "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts"
+    },
+    "created": "Créé le {{date}}",
+    "usedBy": "Utilisé par :",
+    "notUsedYet": "Pas encore utilisé",
+    "modules": {
+      "ACCESS_REVIEW": "Revue d’accès",
+      "SCIM": "Auth. et provisionnement"
+    },
+    "organization": "Organisation",
+    "organizationPlaceholder": "Sélectionner une organisation",
     "comingSoon": "Bientôt disponible",
     "connectElsewhere": "Pour connecter un fournisseur, ouvrez les <connections>connexions des revues d'accès</connections>.",
     "actions": {
-      "manage": "Gérer"
+      "add": "Ajouter un connecteur",
+      "manage": "Gérer",
+      "connectMore": "Connecter un autre",
+      "nextConnector": "Connecteur suivant ({{current}} sur {{total}})"
+    },
+    "messages": {
+      "connected": "Fournisseur connecté.",
+      "connectedDescription": "Ajoutez-le comme source dans les revues d'accès quand vous êtes prêt.",
+      "error": "Connexion impossible",
+      "organizationUpdated": "Organisation mise à jour."
+    },
+    "errors": {
+      "organization": "Échec de la mise à jour de l'organisation"
     }
   },
   "detailsPage": {

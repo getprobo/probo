@@ -1762,17 +1762,6 @@ func (s OrganizationService) CreateSCIMConfiguration(
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
-			sources := &coredata.AccessReviewSources{}
-
-			sourceCount, err := sources.CountByConnectorID(ctx, tx, scope, *connectorID)
-			if err != nil {
-				return fmt.Errorf("cannot count access sources for connector: %w", err)
-			}
-
-			if sourceCount > 0 {
-				return fmt.Errorf("cannot create SCIM bridge: connector is used by an access review source: %w", coredata.ErrResourceInUse)
-			}
-
 			var bridgeType coredata.SCIMBridgeType
 
 			switch existingConnector.Provider {
@@ -1782,6 +1771,15 @@ func (s OrganizationService) CreateSCIMConfiguration(
 				bridgeType = coredata.SCIMBridgeTypeMicrosoft365
 			default:
 				return fmt.Errorf("connector provider %s is not supported for SCIM bridge", existingConnector.Provider)
+			}
+
+			auditCount, err := connectorAuditSourceCount(ctx, tx, scope, *connectorID)
+			if err != nil {
+				return err
+			}
+
+			if auditCount > 0 {
+				return fmt.Errorf("cannot create SCIM bridge: connector is used by an access review source: %w", coredata.ErrResourceInUse)
 			}
 
 			bridge = &coredata.SCIMBridge{
@@ -1810,6 +1808,25 @@ func (s OrganizationService) CreateSCIMConfiguration(
 	return config, bridge, token, nil
 }
 
+// connectorAuditSourceCount is the audit modules that must not share a
+// connector with SCIM. Access review is the only one today; a later asset
+// or security source adds its count here.
+func connectorAuditSourceCount(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (int, error) {
+	sources := &coredata.AccessReviewSources{}
+
+	count, err := sources.CountByConnectorID(ctx, conn, scope, connectorID)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count access review sources for connector: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s OrganizationService) DeleteSCIMConfiguration(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -1823,8 +1840,7 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			config := &coredata.SCIMConfiguration{}
 
 			// A concurrent bridge insert FK-blocks on this row lock, so
-			// no bridge can appear after the lookup below and die via
-			// the cascade with its connector stranded.
+			// the lookup below sees every bridge this delete must remove.
 			err := config.LoadByIDForUpdate(ctx, tx, scope, configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -1853,18 +1869,9 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			}
 
 			if err == nil {
-				// The bridge FK restricts the connector delete: bridge
-				// first, then its connector, in the same transaction.
 				err = bridge.Delete(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot delete SCIM bridge: %w", err)
-				}
-
-				if bridge.ConnectorID != nil {
-					connector := &coredata.Connector{ID: *bridge.ConnectorID}
-					if err := connector.Delete(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot delete connector: %w", err)
-					}
 				}
 			}
 

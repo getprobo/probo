@@ -330,6 +330,11 @@ the underlying failure wraps provider-controlled text and stays
 server-side. A credential the provider took before refusing the operation
 is NOT_AUTHORIZED instead: a different thing for the customer to fix.
 """
+enum ConnectorModule {
+    ACCESS_REVIEW
+    SCIM
+}
+
 enum ConnectorConnectionStatus {
     CONNECTED
     DISCONNECTED
@@ -383,6 +388,18 @@ type Connector implements Node {
     discoveredAccounts: [DiscoveredConnectorAccount!]!
         @goField(forceResolver: true)
     createdAt: Datetime!
+    """
+    modules are the product modules that currently hold this credential.
+    Database counts only; selecting it does not probe the vendor.
+    """
+    modules: [ConnectorModule!]! @goField(forceResolver: true)
+    """
+    providerOrganizations lists the orgs a picker connector can be scoped to.
+    NOT_APPLICABLE when this provider has no picker. Listing probes the
+    provider, so select it on one connector at a time.
+    """
+    providerOrganizations: ProviderOrganizations! @goField(forceResolver: true)
+    selectedOrganization: String @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -483,6 +500,9 @@ extend type Mutation {
         input: DisableConnectorAccountInput!
     ): DisableConnectorAccountPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
+    configureConnectorOrganization(
+        input: ConfigureConnectorOrganizationInput!
+    ): ConfigureConnectorOrganizationPayload!
     deleteSlackConnection(
         input: DeleteSlackConnectionInput!
     ): DeleteSlackConnectionPayload!
@@ -600,6 +620,15 @@ input DisableConnectorAccountInput {
 
 type DisableConnectorAccountPayload {
     disabledConnectorAccountId: ID!
+}
+
+input ConfigureConnectorOrganizationInput {
+    connectorId: ID!
+    organizationSlug: String!
+}
+
+type ConfigureConnectorOrganizationPayload {
+    connector: Connector!
 }
 
 input DeleteConnectorInput {

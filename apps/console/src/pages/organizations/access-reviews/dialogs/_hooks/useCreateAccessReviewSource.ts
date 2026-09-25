@@ -18,87 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
 import { useToast } from "@probo/ui";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
+import { useNavigate } from "react-router";
 
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
-
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../accessReviewSourceMutations";
+import { integrationListPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 
 type UseCreateAccessReviewSourceParams = {
   organizationId: string;
-  connectionId: string;
   onSuccess: () => void;
 };
 
-// useCreateAccessReviewSource wraps the shared "after a connector is created,
-// create the access source, toast the outcome, and close the main dialog on
-// success" flow. It returns createSourceAfterConnector, which runs the source
-// mutation and invokes onDone on both success and error (for the caller's own
-// cleanup) before toasting; onSuccess is called to close the MAIN dialog.
+// After a connector is created, open its Settings page. Connecting does not
+// create an access-review source.
 export function useCreateAccessReviewSource({
   organizationId,
-  connectionId,
   onSuccess,
 }: UseCreateAccessReviewSourceParams) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/settings/integrations");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const [createAccessReviewSource]
-    = useMutation<accessReviewSourceMutationsCreateMutation>(
-      createAccessReviewSourceMutation,
-    );
-
-  const createSourceAfterConnector = (
-    connectorId: string,
-    displayName: string,
+  const openConnector = (
+    _connectorId: string,
+    _displayName: string,
     onDone: () => void,
   ) => {
-    createAccessReviewSource({
-      variables: {
-        input: {
-          organizationId,
-          connectorId,
-          name: displayName,
-          csvData: null,
-        },
-      },
-      updater: store => prependCreatedSourceEdge(store, connectionId),
-      onCompleted(_, errors) {
-        onDone();
-        if (errors?.length) {
-          toast({
-            title: t("useCreateAccessReviewSource.messages.error"),
-            description: formatError(
-              t("useCreateAccessReviewSource.errors.create"),
-              errors,
-            ),
-            variant: "error",
-          });
-          return;
-        }
-        toast({
-          title: t("useCreateAccessReviewSource.messages.success"),
-          description: t("useCreateAccessReviewSource.messages.created"),
-          variant: "success",
-        });
-        onSuccess();
-      },
-      onError(error) {
-        onDone();
-        toast({
-          title: t("useCreateAccessReviewSource.messages.error"),
-          description: formatError(
-            t("useCreateAccessReviewSource.errors.create"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
+    onDone();
+    toast({
+      title: t("listPage.messages.connected"),
+      description: t("listPage.messages.connectedDescription"),
+      variant: "success",
     });
+    onSuccess();
+    void navigate(integrationListPath(organizationId));
   };
 
-  return createSourceAfterConnector;
+  return openConnector;
 }

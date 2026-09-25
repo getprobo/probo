@@ -18,37 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import {
+  connectProviderInstall,
+  connectProviderProtocol,
+} from "#/pages/organizations/access-reviews/dialogs/_lib/connectorSettings";
 
-import type { ConnectorAccountListItem_account$key } from "#/__generated__/core/ConnectorAccountListItem_account.graphql";
+import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
 
-import { integrationSection } from "../variants";
-
-// connectionStatus is omitted: the field probes the connector, not this row,
-// so every account would show the same live answer.
-const connectorAccountListItemFragment = graphql`
-  fragment ConnectorAccountListItem_account on ConnectorAccount {
-    name
-    externalAccountId
-  }
-`;
-
-interface ConnectorAccountListItemProps {
-  accountKey: ConnectorAccountListItem_account$key;
-}
-
-export function ConnectorAccountListItem({
-  accountKey,
-}: ConnectorAccountListItemProps) {
-  const account = useFragment(connectorAccountListItemFragment, accountKey);
-  const { item, content, name, description } = integrationSection();
-
+export function StartConnectForm({
+  organizationId,
+  driver,
+  method,
+}: {
+  organizationId: string;
+  driver: ConnectVendorDriver;
+  method: "GITHUB_APP" | "INSTALL";
+}) {
   return (
-    <li className={item()}>
-      <div className={content()}>
-        <span className={name()}>{account.name}</span>
-        <span className={description()}>{account.externalAccountId}</span>
-      </div>
-    </li>
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (method === "INSTALL") {
+          connectProviderInstall(organizationId, driver.provider);
+          return;
+        }
+        connectProviderProtocol(organizationId, driver.provider, method);
+      }}
+    >
+      <ConnectFormFooter documentationUrl={driver.documentationUrl} />
+    </form>
   );
 }

@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, IconArrowLink } from "@probo/ui";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
+import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
+import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
 import { useTranslation } from "react-i18next";
 
 type Props = {
@@ -43,24 +45,28 @@ export function ConnectorDocumentationLink({ url, variant = "link" }: Props) {
     // asChild styles the anchor as a secondary button (matching Cancel); the
     // button base supplies the flex + gap that spaces the label and icon.
     return (
-      <Button variant="secondary" asChild>
-        <a href={url} target="_blank" rel="noopener noreferrer">
-          {t("accessReviewSource.documentation")}
-          <IconArrowLink size={16} />
-        </a>
-      </Button>
+      <ButtonAnchor
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="soft"
+        iconEnd={<ArrowSquareOutIcon />}
+      >
+        {t("accessReviewSource.documentation")}
+      </ButtonAnchor>
     );
   }
 
   return (
-    <a
+    <Anchor
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-txt-tertiary underline hover:no-underline"
+      size={1}
+      color="neutral"
+      iconEnd={<ArrowSquareOutIcon size={12} />}
     >
       {t("accessReviewSource.documentation")}
-      <IconArrowLink size={12} />
-    </a>
+    </Anchor>
   );
 }

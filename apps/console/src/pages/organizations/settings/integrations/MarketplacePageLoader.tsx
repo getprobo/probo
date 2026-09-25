@@ -20,44 +20,34 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
-import type { ConnectorDetailsPageQuery } from "#/__generated__/core/ConnectorDetailsPageQuery.graphql";
+import type { MarketplacePageQuery } from "#/__generated__/core/MarketplacePageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import {
-  ConnectorDetailsPage,
-  connectorDetailsPageQuery,
-} from "./ConnectorDetailsPage";
-import { ConnectorDetailsPageSkeleton } from "./ConnectorDetailsPageSkeleton";
+import { MarketplacePage, marketplacePageQuery } from "./MarketplacePage";
 
-export default function ConnectorDetailsPageLoader() {
-  const { connectorId } = useParams<{ connectorId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<ConnectorDetailsPageQuery>(
-    connectorDetailsPageQuery,
-  );
+export default function MarketplacePageLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<MarketplacePageQuery>(marketplacePageQuery);
 
   useEffect(() => {
-    if (connectorId) {
-      loadQuery({ connectorId });
-    }
-  }, [loadQuery, connectorId]);
-
-  if (connectorId == null) {
-    throw new Error(":connectorId missing in route params");
-  }
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
 
   const currentQueryRef = queryRef != null
-    && queryRef.variables.connectorId === connectorId
+    && queryRef.variables.organizationId === organizationId
     ? queryRef
     : null;
 
   if (currentQueryRef == null) {
-    return <ConnectorDetailsPageSkeleton />;
+    return <PageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<ConnectorDetailsPageSkeleton />}>
-      <ConnectorDetailsPage key={connectorId} queryRef={currentQueryRef} />
+    <Suspense fallback={<PageSkeleton />}>
+      <MarketplacePage queryRef={currentQueryRef} />
     </Suspense>
   );
 }

@@ -375,9 +375,6 @@ func finishConnectorCompletion(
 			logger.WarnCtx(r.Context(), "cannot reset access source name sync after reconnect", log.Error(err))
 		}
 	} else {
-		// The source referencing this connector is created by the
-		// console after the redirect; a flow abandoned in between
-		// strands the connector row.
 		createReq := probo.CreateConnectorRequest{
 			OrganizationID: organizationID,
 			Provider:       connectorProvider,
@@ -423,6 +420,8 @@ func finishConnectorCompletion(
 
 			return
 		}
+
+		accessReviewSvc.SelectSoleOrganization(r.Context(), scope, cnnctr.ID)
 	}
 
 	parsedURL := continueRedirectURL(r.Context(), logger, baseURL, completion.ContinueURL, organizationID)
@@ -431,7 +430,8 @@ func finishConnectorCompletion(
 	q.Set("connector_id", cnnctr.ID.String())
 	q.Set("provider", string(connectorProvider))
 
-	if strings.Contains(completion.ContinueURL, "/access-reviews/connections") {
+	if strings.Contains(completion.ContinueURL, "/access-reviews/connections") ||
+		strings.Contains(completion.ContinueURL, "/settings/integrations") {
 		missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
 		if err != nil {
 			logger.WarnCtx(r.Context(), "cannot determine missing OAuth scopes after connector callback", log.Error(err))

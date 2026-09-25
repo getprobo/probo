@@ -39,8 +39,8 @@ const connectMethodPreference: ReadonlyArray<ConnectMethod> = [
   "GITHUB_APP",
   "INSTALL",
   "OAUTH2",
-  "API_KEY",
   "CLIENT_CREDENTIALS",
+  "API_KEY",
 ];
 
 export function connectMethods({

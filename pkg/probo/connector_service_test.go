@@ -346,3 +346,93 @@ func TestConnectorService_Delete(t *testing.T) {
 		assert.Len(t, loadConnectorAccountsForDelete(t, client, scope, cnnctr.ID), 1)
 	})
 }
+
+func TestConnectorService_Modules(t *testing.T) {
+	t.Parallel()
+
+	t.Run("an unused connector has no modules", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+
+		modules, err := service.Modules(t.Context(), scope, cnnctr.ID)
+		require.NoError(t, err)
+		assert.Empty(t, modules)
+	})
+
+	t.Run("an access review source names the access review module", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+		account := insertConnectorAccountForDelete(t, client, scope, organizationID, cnnctr.ID)
+
+		now := time.Now().UTC()
+		source := &coredata.AccessReviewSource{
+			ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+			OrganizationID:     organizationID,
+			ConnectorAccountID: &account.ID,
+			Name:               "Production",
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+
+		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := source.Insert(ctx, tx, scope)
+
+			return err
+		}))
+
+		modules, err := service.Modules(t.Context(), scope, cnnctr.ID)
+		require.NoError(t, err)
+		assert.Equal(t, []ConnectorModule{ConnectorModuleAccessReview}, modules)
+	})
+
+	t.Run("a SCIM bridge names the SCIM module", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+
+		now := time.Now().UTC()
+
+		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			config := &coredata.SCIMConfiguration{
+				ID:             gid.New(scope.GetTenantID(), coredata.SCIMConfigurationEntityType),
+				OrganizationID: organizationID,
+				HashedToken:    []byte{0x01},
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := config.Insert(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			bridge := &coredata.SCIMBridge{
+				ID:                  gid.New(scope.GetTenantID(), coredata.SCIMBridgeEntityType),
+				OrganizationID:      organizationID,
+				ScimConfigurationID: config.ID,
+				ConnectorID:         &cnnctr.ID,
+				Type:                coredata.SCIMBridgeTypeGoogleWorkspace,
+				State:               coredata.SCIMBridgeStateActive,
+				ExcludedUserNames:   []string{},
+				CreatedAt:           now,
+				UpdatedAt:           now,
+			}
+
+			return bridge.Insert(ctx, tx, scope)
+		}))
+
+		modules, err := service.Modules(t.Context(), scope, cnnctr.ID)
+		require.NoError(t, err)
+		assert.Equal(t, []ConnectorModule{ConnectorModuleSCIM}, modules)
+	})
+}

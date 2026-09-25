@@ -73,7 +73,6 @@ const createClientCredentialsConnectorMutation = graphql`
 type Props = {
   providerKey: ClientCredentialsConnectorDialog_provider$key | null;
   organizationId: string;
-  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
 };
@@ -81,7 +80,6 @@ type Props = {
 export function ClientCredentialsConnectorDialog({
   providerKey,
   organizationId,
-  connectionId,
   onClose,
   onSuccess,
 }: Props) {
@@ -107,7 +105,6 @@ export function ClientCredentialsConnectorDialog({
 
   const createSourceAfterConnector = useCreateAccessReviewSource({
     organizationId,
-    connectionId,
     onSuccess,
   });
 

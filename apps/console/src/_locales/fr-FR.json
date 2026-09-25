@@ -2228,7 +2228,9 @@
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Demandes d’exercice de droits",
     "campaigns": "Campagnes",
-    "connections": "Connexions",
+    "connections": "Connecteurs",
+    "marketplace": "Marketplace",
+    "sources": "Sources",
     "compliancePortals": "Portails de conformité",
     "compliancePortalsSettings": "Paramètres",
     "compliancePortalsHosting": "Hébergement",
@@ -3106,46 +3108,6 @@
       "connecting": "Connexion..."
     }
   },
-  "createAwsAccessReviewSourcePage": {
-    "pageTitle": "Connecter AWS",
-    "title": "Connecter AWS",
-    "description": "Déployez le rôle d’audit. Saisissez ensuite son ARN.",
-    "permissionDenied": "Vous n’avez pas la permission de créer des sources d’accès.",
-    "fields": {
-      "roleArn": "ARN du rôle",
-      "issuer": "Émetteur",
-      "audience": "Audience",
-      "subject": "Sujet",
-      "roleArnHelp": "ex. arn:aws:iam::123456789012:role/ProboAudit"
-    },
-    "messages": {
-      "copyFailed": "Échec de la copie",
-      "copied": "Copié dans le presse-papiers",
-      "copiedIssuer": "Émetteur copié.",
-      "copiedAudience": "Audience copiée.",
-      "copiedSubject": "Sujet copié.",
-      "copiedTerraform": "Extrait Terraform copié.",
-      "error": "Erreur",
-      "success": "Succès",
-      "created": "Source d’accès créée avec succès."
-    },
-    "errors": {
-      "roleArn": "Saisissez un ARN de rôle IAM valide.",
-      "create": "Échec de la création du connecteur. Vérifiez l’ARN du rôle et réessayez.",
-      "disconnected": "Probo n’a pas pu endosser le rôle d’audit. Vérifiez que la stack est déployée dans ce compte et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration.",
-      "delete": "Impossible de supprimer le connecteur. Réessayez.",
-      "source": "Échec de la création de la source d’accès",
-      "copy": "Copiez la valeur manuellement."
-    },
-    "actions": {
-      "copy": "Copier",
-      "connect": "Connecter",
-      "back": "Retour",
-      "installViaCloudFormation": "Installer via CloudFormation",
-      "installViaTerraform": "Installer via Terraform",
-      "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
-    }
-  },
   "oauthExtraDialog": {
     "actions": {
       "continue": "Continuer"
@@ -3175,12 +3137,14 @@
     }
   },
   "accessReviewConnectionsPage": {
-    "title": "Connexions",
-    "description": "Connectez les systèmes dont vous souhaitez revoir les accès.",
+    "title": "Sources",
+    "description": "Ajoutez une source à partir d'un compte déjà connecté dans les paramètres.",
     "errors": { "create": "Échec de la création de la source d’accès" },
     "messages": { "error": "Erreur", "success": "Succès", "created": "Source d’accès créée avec succès." },
-    "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer" },
-    "sections": { "connected": "Connectées", "available": "Disponibles" },
+    "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer", "add": "Ajouter une source" },
+    "sections": { "connected": "Sources", "available": "Disponibles", "addSource": "Ajouter une source" },
+    "needsOrganization": "Choisissez d'abord une organisation dans les paramètres.",
+    "emptyAccounts": "Aucun compte n'est prêt. Connectez d'abord un fournisseur dans les paramètres.",
     "searchPlaceholder": "Rechercher des sources et des fournisseurs...",
     "emptyConnected": "Aucune source d’accès n’est encore connectée.",
     "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",

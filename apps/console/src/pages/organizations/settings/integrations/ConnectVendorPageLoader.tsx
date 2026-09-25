@@ -18,27 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { connectorDetailsPageSkeleton } from "./variants";
+import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export function ConnectorDetailsPageSkeleton() {
-  const { root, header, titleRow, title, body }
-    = connectorDetailsPageSkeleton();
+import { ConnectVendorPage, connectVendorPageQuery } from "./ConnectVendorPage";
+
+export default function ConnectVendorPageLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<ConnectVendorPageQuery>(connectVendorPageQuery);
+
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <PageSkeleton />;
+  }
 
   return (
-    <div className={root()}>
-      <div className={header()}>
-        <div className={titleRow()}>
-          <div className={title()}>
-            <HeadingSkeleton size={6} className="w-40" />
-          </div>
-        </div>
-      </div>
-      <div className={body()}>
-        <ListSkeleton count={1} />
-      </div>
-    </div>
+    <Suspense fallback={<PageSkeleton />}>
+      <ConnectVendorPage queryRef={currentQueryRef} />
+    </Suspense>
   );
 }

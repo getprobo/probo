@@ -32,14 +32,14 @@ import { type ChangeEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { CreateAwsAccessReviewSourcePageCreateMutation } from "#/__generated__/core/CreateAwsAccessReviewSourcePageCreateMutation.graphql";
 import type { CreateAwsAccessReviewSourcePageDeleteMutation } from "#/__generated__/core/CreateAwsAccessReviewSourcePageDeleteMutation.graphql";
 import type { CreateAwsAccessReviewSourcePageQuery } from "#/__generated__/core/CreateAwsAccessReviewSourcePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { integrationListPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 
 import {
   ActionSplitButton,
@@ -48,10 +48,8 @@ import {
 import { ConnectorDocumentationLink } from "../dialogs/_components/ConnectorDocumentationLink";
 import {
   AWS_IAM_ROLE_ARN_PATTERN,
-  awsAccessReviewSourceName,
   isAWSRoleARN,
 } from "../dialogs/_lib/connectorSettings";
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
 export const createAwsAccessReviewSourcePageQuery = graphql`
   query CreateAwsAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -108,7 +106,7 @@ interface CreateAwsAccessReviewSourcePageProps {
 export function CreateAwsAccessReviewSourcePage({
   queryRef,
 }: CreateAwsAccessReviewSourcePageProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/access-reviews");
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
@@ -133,20 +131,12 @@ export function CreateAwsAccessReviewSourcePage({
     throw new Error("AWS access review driver not found");
   }
 
-  const connectionId = ConnectionHandler.getConnectionID(
-    organization.id,
-    "AccessReviewConnectionsPage_accessReviewSources",
-  );
-
   const [createWorkloadIdentityConnector] = useMutation<
     CreateAwsAccessReviewSourcePageCreateMutation
   >(createWorkloadIdentityConnectorMutation);
   const [deleteConnector] = useMutation<
     CreateAwsAccessReviewSourcePageDeleteMutation
   >(deleteConnectorMutation);
-  const [createAccessReviewSource] = useMutation<
-    accessReviewSourceMutationsCreateMutation
-  >(createAccessReviewSourceMutation);
 
   if (!organization.canCreateSource) {
     return (
@@ -230,36 +220,12 @@ export function CreateAwsAccessReviewSourcePage({
         return;
       }
 
-      try {
-        await createAccessReviewSource(
-          {
-            variables: {
-              input: {
-                organizationId,
-                connectorId,
-                name: awsAccessReviewSourceName(awsDriver.displayName, roleArn),
-                csvData: null,
-              },
-            },
-            updater: (store) => {
-              if (connectionId) {
-                prependCreatedSourceEdge(store, connectionId);
-              }
-            },
-          },
-          { errorToast: t("createAwsAccessReviewSourcePage.errors.source") },
-        );
-      } catch {
-        await discardConnector();
-        return;
-      }
-
       toast({
         title: t("createAwsAccessReviewSourcePage.messages.success"),
         description: t("createAwsAccessReviewSourcePage.messages.created"),
         variant: "success",
       });
-      void navigate(`/organizations/${organizationId}/access-reviews/connections`);
+      void navigate(integrationListPath(organizationId));
     } catch {
       return;
     } finally {

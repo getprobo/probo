@@ -19,46 +19,18 @@
 // SOFTWARE.
 
 import { ThirdPartyLogo } from "@probo/ui";
-import { useState } from "react";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { graphql, useFragment } from "react-relay";
 
 import type { AccessReviewSourceProviderListItem_provider$key } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
 
-import {
-  ActionSplitButton,
-  type ActionSplitButtonAction,
-} from "../../_components/ActionSplitButton";
-import { APIKeyConnectorDialog } from "../../dialogs/_components/APIKeyConnectorDialog";
-import { ClientCredentialsConnectorDialog } from "../../dialogs/_components/ClientCredentialsConnectorDialog";
+import { connectorCard } from "#/pages/organizations/settings/integrations/variants";
+import { connectVendorPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 import { ConnectorDocumentationLink } from "../../dialogs/_components/ConnectorDocumentationLink";
-import {
-  DatadogConnectDialog,
-  ZendeskConnectDialog,
-} from "../../dialogs/_components/OAuthExtraDialog";
-import {
-  connectOAuthProvider,
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../../dialogs/_lib/connectorSettings";
-import {
-  type ConnectMethod,
-  connectMethods,
-  workloadIdentityPath,
-} from "../_lib/connectMethods";
-
-import { accessReviewSourceSection } from "./variants";
-
-const connectMethodActionLabelKey: Record<ConnectMethod, string> = {
-  OAUTH2: "addAccessReviewSourceDialog.actions.connectWithOAuth",
-  API_KEY: "addAccessReviewSourceDialog.actions.connectWithApiKey",
-  GITHUB_APP: "addAccessReviewSourceDialog.actions.connectWithGitHubApp",
-  WORKLOAD_IDENTITY:
-    "addAccessReviewSourceDialog.actions.connectWithWorkloadIdentity",
-  CLIENT_CREDENTIALS:
-    "addAccessReviewSourceDialog.actions.connectWithClientCredentials",
-  INSTALL: "addAccessReviewSourceDialog.actions.connectWithAppInstall",
-};
+import { connectMethods } from "../_lib/connectMethods";
 
 export const accessReviewSourceProviderListItemFragment = graphql`
   fragment AccessReviewSourceProviderListItem_provider on ConnectorProviderInfo {
@@ -81,36 +53,19 @@ export const accessReviewSourceProviderListItemFragment = graphql`
 interface AccessReviewSourceProviderListItemProps {
   providerKey: AccessReviewSourceProviderListItem_provider$key;
   organizationId: string;
-  connectionId: string;
 }
 
 export function AccessReviewSourceProviderListItem({
   providerKey,
   organizationId,
-  connectionId,
 }: AccessReviewSourceProviderListItemProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/settings/integrations");
+  const navigate = useNavigate();
   const provider = useFragment(
     accessReviewSourceProviderListItemFragment,
     providerKey,
   );
-  const { item, content, trailing } = accessReviewSourceSection();
-  const [activeDialog, setActiveDialog] = useState<
-    | "apiKey"
-    | "clientCredentials"
-    | "datadog"
-    | "zendesk"
-    | null
-  >(null);
-
-  // Every row renders the dialogs its provider can actually reach, so a list of
-  // providers does not mount three unusable dialogs per row.
-  const supportsAPIKey = provider.apiKeySupported || provider.apiKeyManaged;
-  const supportsOAuth = provider.configuredProtocols.includes("OAUTH2");
-  const supportsDatadogOAuth
-    = supportsOAuth && provider.provider === "DATADOG";
-  const supportsZendeskOAuth
-    = supportsOAuth && provider.provider === "ZENDESK";
+  const { card, identity, title } = connectorCard();
   const methods = connectMethods({
     configuredProtocols: provider.configuredProtocols,
     apiKeySupported: provider.apiKeySupported,
@@ -119,112 +74,40 @@ export function AccessReviewSourceProviderListItem({
     workloadIdentitySupported: provider.workloadIdentitySupported,
     installSupported: provider.installSupported,
   });
-
-  const connectWithOAuth = () => {
-    if (provider.provider === "DATADOG") {
-      setActiveDialog("datadog");
-    } else if (provider.provider === "ZENDESK") {
-      setActiveDialog("zendesk");
-    } else {
-      connectOAuthProvider(
-        organizationId,
-        provider.provider,
-        provider.oauth2Scopes,
-      );
-    }
-  };
-
-  const connect = (method: Exclude<ConnectMethod, "WORKLOAD_IDENTITY">) => {
-    switch (method) {
-      case "OAUTH2":
-        connectWithOAuth();
-        break;
-      case "API_KEY":
-        setActiveDialog("apiKey");
-        break;
-      case "CLIENT_CREDENTIALS":
-        setActiveDialog("clientCredentials");
-        break;
-      case "GITHUB_APP":
-        connectProviderProtocol(
-          organizationId,
-          provider.provider,
-          method,
-        );
-        break;
-      case "INSTALL":
-        connectProviderInstall(organizationId, provider.provider);
-        break;
-    }
-  };
-  const actions = methods.flatMap((method): ActionSplitButtonAction[] => {
-    const label = t(connectMethodActionLabelKey[method]);
-    if (method === "WORKLOAD_IDENTITY") {
-      const to = workloadIdentityPath(organizationId, provider.provider);
-      if (!to) {
-        return [];
-      }
-      return [{ id: method, label, to }];
-    }
-    return [{
-      id: method,
-      label,
-      onSelect: () => connect(method),
-    }];
-  });
+  const connectLabel = t("marketplacePage.connect");
 
   return (
-    <li className={item()}>
-      <ThirdPartyLogo
-        thirdParty={provider.provider}
-        className="size-6 shrink-0"
-      />
-      <div className={content()}>
-        <span className="text-sm font-medium text-txt-primary">
-          {provider.displayName}
-        </span>
-        <ConnectorDocumentationLink url={provider.documentationUrl} />
+    <Card
+      variant="soft"
+      size={2}
+      padding="none"
+      interactive={methods.length > 0}
+      className={card()}
+    >
+      <div className="pointer-events-none flex items-center gap-4 px-4 py-4">
+        <ThirdPartyLogo
+          thirdParty={provider.provider}
+          className="size-8 shrink-0"
+        />
+        <div className={identity()}>
+          <Heading level={2} size={3} weight="medium" highContrast className={title()}>
+            {provider.displayName}
+          </Heading>
+          <div className="pointer-events-auto relative z-1">
+            <ConnectorDocumentationLink url={provider.documentationUrl} />
+          </div>
+        </div>
       </div>
-      <div className={trailing()}>
-        <ActionSplitButton
-          actions={actions}
-          chooseAnotherMethodLabel={t(
-            "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
-          )}
-        />
-      </div>
-      {supportsAPIKey && (
-        <APIKeyConnectorDialog
-          providerKey={activeDialog === "apiKey" ? provider : null}
-          organizationId={organizationId}
-          connectionId={connectionId}
-          onClose={() => setActiveDialog(null)}
-          onSuccess={() => setActiveDialog(null)}
+      {methods.length > 0 && (
+        <button
+          type="button"
+          className="absolute inset-0 z-0 cursor-pointer"
+          aria-label={connectLabel}
+          onClick={() => {
+            void navigate(connectVendorPath(organizationId, provider.provider));
+          }}
         />
       )}
-      {provider.clientCredentialsSupported && (
-        <ClientCredentialsConnectorDialog
-          providerKey={activeDialog === "clientCredentials" ? provider : null}
-          organizationId={organizationId}
-          connectionId={connectionId}
-          onClose={() => setActiveDialog(null)}
-          onSuccess={() => setActiveDialog(null)}
-        />
-      )}
-      {supportsDatadogOAuth && (
-        <DatadogConnectDialog
-          providerKey={activeDialog === "datadog" ? provider : null}
-          organizationId={organizationId}
-          onClose={() => setActiveDialog(null)}
-        />
-      )}
-      {supportsZendeskOAuth && (
-        <ZendeskConnectDialog
-          providerKey={activeDialog === "zendesk" ? provider : null}
-          organizationId={organizationId}
-          onClose={() => setActiveDialog(null)}
-        />
-      )}
-    </li>
+    </Card>
   );
 }
