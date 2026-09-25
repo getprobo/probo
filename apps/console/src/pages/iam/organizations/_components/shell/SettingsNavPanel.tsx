@@ -110,8 +110,14 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
           )}
           {organization.canUpdateOrganization && (
             <NavPanelItem
-              label={t("nav.authProvisioning")}
-              to={navHref(organizationId, group, "auth")}
+              label={t("nav.samlSso")}
+              to={navHref(organizationId, group, "auth/saml-sso")}
+            />
+          )}
+          {organization.canUpdateOrganization && (
+            <NavPanelItem
+              label={t("nav.scim")}
+              to={navHref(organizationId, group, "auth/scim")}
             />
           )}
           {organization.canListAuditLogEntries && (

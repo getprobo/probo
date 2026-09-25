@@ -18,8 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Outlet } from "react-router";
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-export default function AuthLayout() {
-  return <Outlet />;
+import { samlSsoPageSkeleton } from "./variants";
+
+export function SAMLSSOPageSkeleton() {
+  const { root, header, intro, grid } = samlSsoPageSkeleton();
+
+  return (
+    <div className={root()}>
+      <div className={header()}>
+        <div className={intro()}>
+          <HeadingSkeleton size={6} className="w-52" />
+          <TextSkeleton size={2} className="w-96" />
+        </div>
+        <ButtonSkeleton size={2} className="w-44" />
+      </div>
+      <div className={grid()}>
+        <CardSkeleton size={4} />
+        <CardSkeleton size={4} />
+        <CardSkeleton size={4} />
+        <CardSkeleton size={4} />
+      </div>
+    </div>
+  );
 }

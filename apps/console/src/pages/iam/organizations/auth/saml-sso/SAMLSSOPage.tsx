@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
+import { Breadcrumb, Dialog, useDialogRef } from "@probo/ui";
 import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -39,16 +39,14 @@ import {
 import { NewSAMLConfigurationForm } from "./_components/NewSAMLConfigurationForm";
 import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
 import { SAMLDomainVerifyDialog } from "./_components/SAMLDomainVerifyDialog";
+import { samlSsoPage } from "./variants";
 
 export const samlSSOPageQuery = graphql`
   query SAMLSSOPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        canCreateSAMLConfiguration: permission(
-          action: "iam:saml-configuration:create"
-        )
-        ...SAMLConfigurationListFragment
+        ...SAMLConfigurationList_organization
       }
     }
   }
@@ -66,6 +64,7 @@ export function SAMLSSOPage(props: {
     = useState<string>();
 
   const { t } = useTranslation();
+  const { root } = samlSsoPage();
   usePageTitle(t("samlSsoPage.title"));
 
   const { organization } = usePreloadedQuery<SAMLSSOPageQuery>(samlSSOPageQuery, queryRef);
@@ -98,17 +97,10 @@ export function SAMLSSOPage(props: {
 
   return (
     <>
-      <div className="space-y-4">
-        {organization.canCreateSAMLConfiguration && (
-          <div className="flex justify-end">
-            <Button onClick={() => handleOpenFormDialog()}>
-              {t("samlSsoPage.actions.addConfiguration")}
-            </Button>
-          </div>
-        )}
-
+      <div className={root()}>
         <SAMLConfigurationList
-          fKey={organization}
+          organizationKey={organization}
+          onAdd={() => handleOpenFormDialog()}
           onEdit={(id: string) => handleOpenFormDialog(id)}
           onVerifyDomain={handleOpenVerifyDomainDialog}
         />
