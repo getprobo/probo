@@ -18,49 +18,107 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, ThirdPartyLogo } from "@probo/ui";
+import { PlugIcon } from "@phosphor-icons/react";
+import { ThirdPartyLogo } from "@probo/ui";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
-import { ConnectorDocumentationLink } from "#/pages/organizations/access-reviews/dialogs/_components/ConnectorDocumentationLink";
 
-import { integrationSection } from "../variants";
+import { connectMethods } from "../_lib/connectMethods";
+import { connectVendorPath } from "../_lib/integrationPath";
+import { connectorCard } from "../variants";
 
-const connectorProviderListItemFragment = graphql`
+import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
+
+export const connectorProviderListItemFragment = graphql`
   fragment ConnectorProviderListItem_provider on ConnectorProviderInfo {
     provider
     displayName
     documentationUrl
+    configuredProtocols
+    apiKeySupported
+    apiKeyManaged
+    clientCredentialsSupported
+    workloadIdentitySupported
+    installSupported
+    oauth2Scopes
+    ...APIKeyConnectorDialog_provider
+    ...ClientCredentialsConnectorDialog_provider
+    ...OAuthExtraDialog_provider
   }
 `;
 
 interface ConnectorProviderListItemProps {
   providerKey: ConnectorProviderListItem_provider$key;
+  organizationId: string;
+  credentialCount: number;
 }
 
 export function ConnectorProviderListItem({
   providerKey,
+  organizationId,
+  credentialCount,
 }: ConnectorProviderListItemProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const provider = useFragment(connectorProviderListItemFragment, providerKey);
-  const { item, content, trailing } = integrationSection();
+  const { card, title } = connectorCard();
+  const methods = connectMethods({
+    configuredProtocols: provider.configuredProtocols,
+    apiKeySupported: provider.apiKeySupported,
+    apiKeyManaged: provider.apiKeyManaged,
+    clientCredentialsSupported: provider.clientCredentialsSupported,
+    workloadIdentitySupported: provider.workloadIdentitySupported,
+    installSupported: provider.installSupported,
+  });
+  const connectLabel = t("marketplacePage.connect");
 
   return (
-    <li className={item()}>
-      <ThirdPartyLogo
-        thirdParty={provider.provider}
-        className="size-6 shrink-0"
-      />
-      <div className={content()}>
-        <span className="text-sm font-medium text-txt-primary">
-          {provider.displayName}
-        </span>
-        <ConnectorDocumentationLink url={provider.documentationUrl} />
+    <Card
+      variant="soft"
+      size={2}
+      padding="none"
+      interactive={methods.length > 0}
+      className={card()}
+    >
+      {methods.length > 0 && (
+        <Link
+          to={connectVendorPath(organizationId, provider.provider)}
+          underline={false}
+          className="absolute inset-0 z-0"
+          aria-label={connectLabel}
+        />
+      )}
+      <div className="pointer-events-none flex items-center gap-6 px-4 py-4">
+        <ThirdPartyLogo
+          thirdParty={provider.provider}
+          className="size-8 shrink-0"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <Heading level={2} size={3} weight="medium" highContrast className={title()}>
+            {provider.displayName}
+          </Heading>
+          <div className="pointer-events-auto relative z-1">
+            <ConnectorDocumentationLink url={provider.documentationUrl} />
+          </div>
+        </div>
+        {credentialCount > 0 && (
+          <Badge
+            variant="soft"
+            color="sky"
+            size={1}
+            iconStart={<PlugIcon />}
+            aria-label={t("marketplacePage.credentialCount", { count: credentialCount })}
+            className="shrink-0"
+          >
+            {credentialCount}
+          </Badge>
+        )}
       </div>
-      <div className={trailing()}>
-        <Badge variant="info">{t("listPage.comingSoon")}</Badge>
-      </div>
-    </li>
+    </Card>
   );
 }

@@ -124,7 +124,7 @@ export function awsAccountIDFromRoleARN(value: string): string | null {
 
 // Immediate name while the worker assumes the role and replaces the
 // account ID with the official account name (or the sign-in alias).
-export function awsAccessReviewSourceName(
+export function awsConnectorName(
   displayName: string,
   roleArn: string,
 ): string {
@@ -159,7 +159,7 @@ export function gcpProjectNumberFromProvider(value: string): string | null {
   return match[1] ?? null;
 }
 
-export function gcpAccessReviewSourceName(
+export function gcpConnectorName(
   displayName: string,
   providerResource: string,
 ): string {
@@ -185,7 +185,7 @@ export function isAzureGUID(value: string): boolean {
   return AZURE_GUID_PATTERN.test(trimmed);
 }
 
-export function azureAccessReviewSourceName(
+export function azureConnectorName(
   displayName: string,
   subscriptionId: string,
 ): string {
@@ -309,7 +309,7 @@ export function buildConnectorInitiateURL(
   }
   url.searchParams.append(
     "continue",
-    `/organizations/${organizationId}/access-reviews/connections`,
+    `/organizations/${organizationId}/settings/integrations`,
   );
   return url.toString();
 }

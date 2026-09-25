@@ -159,7 +159,7 @@ export function SCIMConfiguration({
   return (
     <TonedCard
       tone="green"
-      icon={<PlugsConnectedIcon className="size-6" />}
+      icon={<PlugsConnectedIcon />}
       lead={(
         <Text size={3} weight="medium" color="green">
           {t("scimPage.setup.manual.title")}

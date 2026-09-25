@@ -18,22 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { IntegrationsPageQuery } from "#/__generated__/core/IntegrationsPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import {
+  integrationsListFilter,
+  useIntegrationsListFilters,
+} from "./_lib/useIntegrationsListFilters";
 import { IntegrationsPage, integrationsPageQuery } from "./IntegrationsPage";
 
 export default function IntegrationsPageLoader() {
   const organizationId = useOrganizationId();
+  const { query } = useIntegrationsListFilters();
+  const searchRef = useRef(query);
   const [queryRef, loadQuery]
     = useQueryLoader<IntegrationsPageQuery>(integrationsPageQuery);
 
   useEffect(() => {
-    loadQuery({ organizationId });
+    searchRef.current = query;
+  }, [query]);
+
+  useEffect(() => {
+    loadQuery({
+      organizationId,
+      filter: integrationsListFilter(searchRef.current),
+    }, { fetchPolicy: "store-and-network" });
   }, [loadQuery, organizationId]);
 
   const currentQueryRef = queryRef != null

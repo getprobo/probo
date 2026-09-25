@@ -1,4 +1,44 @@
 {
+  "createAwsAccessReviewSourcePage": {
+    "pageTitle": "Connect AWS",
+    "title": "Connect AWS",
+    "description": "Deploy the audit role. Then enter its ARN.",
+    "permissionDenied": "You do not have permission to create access sources.",
+    "fields": {
+      "roleArn": "Role ARN",
+      "issuer": "Issuer",
+      "audience": "Audience",
+      "subject": "Subject",
+      "roleArnHelp": "e.g. arn:aws:iam::123456789012:role/ProboAudit"
+    },
+    "messages": {
+      "copyFailed": "Copy failed",
+      "copied": "Copied to clipboard",
+      "copiedIssuer": "Issuer copied.",
+      "copiedAudience": "Audience copied.",
+      "copiedSubject": "Subject copied.",
+      "copiedTerraform": "Terraform snippet copied.",
+      "error": "Error",
+      "success": "Success",
+      "created": "Access source created successfully."
+    },
+    "errors": {
+      "roleArn": "Enter a valid IAM role ARN.",
+      "create": "Could not create the connector. Check the role ARN and try again.",
+      "disconnected": "Probo could not assume the audit role. Confirm the stack is deployed in this account and that the issuer and subject match the values shown during setup.",
+      "delete": "Could not delete the connector. Try again.",
+      "source": "Failed to create access source",
+      "copy": "Copy the value manually."
+    },
+    "actions": {
+      "copy": "Copy",
+      "connect": "Connect",
+      "back": "Back",
+      "installViaCloudFormation": "Install via CloudFormation",
+      "installViaTerraform": "Install via Terraform",
+      "chooseAnotherInstallMethod": "Choose another install method"
+    }
+  },
   "createGcpAccessReviewSourcePage": {
     "pageTitle": "Connect GCP",
     "title": "Connect GCP",

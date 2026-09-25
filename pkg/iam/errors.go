@@ -470,6 +470,18 @@ func (e ErrSCIMBridgeNotFound) Error() string {
 	return fmt.Sprintf("SCIM bridge %q not found", e.BridgeID)
 }
 
+type ErrSCIMBridgeProviderNotSupported struct {
+	Provider coredata.ConnectorProvider
+}
+
+func NewSCIMBridgeProviderNotSupportedError(provider coredata.ConnectorProvider) error {
+	return &ErrSCIMBridgeProviderNotSupported{Provider: provider}
+}
+
+func (e ErrSCIMBridgeProviderNotSupported) Error() string {
+	return fmt.Sprintf("connector provider %s is not supported for SCIM bridge", e.Provider)
+}
+
 type ErrConnectorNotFound struct{ ConnectorID gid.GID }
 
 func NewConnectorNotFoundError(connectorID gid.GID) error {

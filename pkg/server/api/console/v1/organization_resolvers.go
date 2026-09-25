@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -526,25 +527,30 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 		return nil, err
 	}
 
-	connectors, err := r.probo.Connectors.ListAllForOrganizationID(ctx, scope, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organization connectors: %w", err))
-	}
-
-	if filter != nil && len(filter.Providers) > 0 {
-		allowed := make(map[coredata.ConnectorProvider]struct{}, len(filter.Providers))
-		for _, provider := range filter.Providers {
-			allowed[provider] = struct{}{}
-		}
-
-		filtered := make(coredata.Connectors, 0, len(connectors))
-		for _, cnnctr := range connectors {
-			if _, ok := allowed[cnnctr.Provider]; ok {
-				filtered = append(filtered, cnnctr)
+	var (
+		providers      []coredata.ConnectorProvider
+		query          *string
+		queryProviders []coredata.ConnectorProvider
+	)
+	if filter != nil {
+		providers = filter.Providers
+		if filter.Query != nil {
+			trimmed := strings.TrimSpace(*filter.Query)
+			if trimmed != "" {
+				query = &trimmed
+				queryProviders = connectorSearchProviders(r.providerRegistry, trimmed)
 			}
 		}
+	}
 
-		connectors = filtered
+	connectors, err := r.probo.Connectors.ListAllForOrganizationID(
+		ctx,
+		scope,
+		obj.ID,
+		coredata.NewConnectorListFilter(providers, query, queryProviders),
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization connectors: %w", err))
 	}
 
 	return types.NewConnectors(connectors), nil

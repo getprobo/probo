@@ -10293,7 +10293,12 @@ func (r *Resolver) ListConnectorsTool(ctx context.Context, req *mcp.CallToolRequ
 		return nil, types.ListConnectorsOutput{}, err
 	}
 
-	connectors, err := r.proboSvc.Connectors.ListAllForOrganizationID(ctx, scope, input.OrganizationID)
+	connectors, err := r.proboSvc.Connectors.ListAllForOrganizationID(
+		ctx,
+		scope,
+		input.OrganizationID,
+		nil,
+	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list connectors", log.Error(err))
 

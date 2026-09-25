@@ -756,8 +756,8 @@ func (r *queryResolver) CommonGVLCatalog(ctx context.Context) (*types.CommonGVLC
 	return types.NewCommonGVLCatalog(catalog), nil
 }
 
-// AccessReviewDrivers is the resolver for the accessReviewDrivers field.
-func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.ConnectorProviderInfo, error) {
+// ConnectorProviders is the resolver for the connectorProviders field.
+func (r *queryResolver) ConnectorProviders(ctx context.Context) ([]*types.ConnectorProviderInfo, error) {
 	identity := authn.IdentityFromContext(ctx)
 
 	if _, err := r.authorize(ctx, identity.ID, accessreview.ActionDriverCatalogList); err != nil {

@@ -21,12 +21,17 @@
 package coredata
 
 import (
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 )
 
 type (
 	ConnectorFilter struct {
-		provider *ConnectorProvider
+		provider       *ConnectorProvider
+		providers      []ConnectorProvider
+		query          *string
+		queryProviders []ConnectorProvider
 	}
 )
 
@@ -36,10 +41,51 @@ func NewConnectorProviderFilter(provider *ConnectorProvider) *ConnectorFilter {
 	}
 }
 
-func (f *ConnectorFilter) SQLArguments() pgx.NamedArgs {
-	return pgx.NamedArgs{
-		"provider": f.provider,
+// NewConnectorListFilter restricts a connector list. An empty providers
+// slice does not constrain the provider. query matches connectors.name;
+// queryProviders are the providers whose display name or slug matched query,
+// resolved by the caller because display names are not stored.
+func NewConnectorListFilter(
+	providers []ConnectorProvider,
+	query *string,
+	queryProviders []ConnectorProvider,
+) *ConnectorFilter {
+	filter := &ConnectorFilter{
+		queryProviders: queryProviders,
 	}
+
+	if len(providers) > 0 {
+		filter.providers = providers
+	}
+
+	if query != nil {
+		trimmed := strings.TrimSpace(*query)
+		if trimmed != "" {
+			filter.query = &trimmed
+		}
+	}
+
+	return filter
+}
+
+func (f *ConnectorFilter) SQLArguments() pgx.NamedArgs {
+	var filterProviders []string
+	if len(f.providers) > 0 {
+		filterProviders = connectorProviderStrings(f.providers)
+	}
+
+	args := pgx.NamedArgs{
+		"provider":               f.provider,
+		"filter_providers":       filterProviders,
+		"filter_query":           nil,
+		"filter_query_providers": connectorProviderStrings(f.queryProviders),
+	}
+
+	if f.query != nil && *f.query != "" {
+		args["filter_query"] = escapeLikePattern(*f.query)
+	}
+
+	return args
 }
 
 func (f *ConnectorFilter) SQLFragment() string {
@@ -51,6 +97,26 @@ func (f *ConnectorFilter) SQLFragment() string {
 		ELSE
 			provider = @provider::connector_provider
 	END
-)
-	`
+	AND CASE
+		WHEN @filter_providers::connector_provider[] IS NULL THEN
+			TRUE
+		ELSE
+			provider = ANY(@filter_providers::connector_provider[])
+	END
+	AND CASE
+		WHEN @filter_query::text IS NOT NULL AND @filter_query::text <> '' THEN
+			name ILIKE '%' || @filter_query || '%' ESCAPE '\'
+			OR provider = ANY(@filter_query_providers::connector_provider[])
+		ELSE TRUE
+	END
+)`
+}
+
+func connectorProviderStrings(providers []ConnectorProvider) []string {
+	out := make([]string, len(providers))
+	for i, provider := range providers {
+		out[i] = string(provider)
+	}
+
+	return out
 }

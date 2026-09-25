@@ -23,43 +23,77 @@ import { tv } from "tailwind-variants/lite";
 export const integrationsPage = tv({
   slots: {
     root: "flex flex-col gap-6",
-    sections: "flex flex-col gap-8",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
   },
 });
 
-export const integrationSection = tv({
+export const integrationsList = tv({
   slots: {
-    root: "flex flex-col gap-3",
-    header: "flex items-center gap-2.5",
-    title: "text-sm font-medium uppercase tracking-wide text-txt-primary",
-    count: "text-sm text-txt-tertiary",
-    list: "list-none overflow-hidden rounded-[10px] border border-border-low bg-level-1",
-    item: "flex flex-wrap items-center gap-4 border-b border-border-low px-4 py-3 last:border-b-0",
-    content: "flex min-w-48 flex-1 flex-col gap-0.5 sm:max-w-64",
-    name: "text-sm font-medium text-txt-primary",
-    description: "text-xs text-txt-tertiary",
-    trailing: "ml-auto flex min-w-40 flex-1 items-center justify-end gap-2",
+    root: "flex flex-col gap-4",
+    tools: "flex flex-wrap items-center justify-between gap-2",
+    search: "w-80 max-sm:min-w-0 max-sm:w-full",
+    filters: "flex flex-wrap items-center justify-end gap-2",
+    filter: "w-48 shrink-0",
+    section: "flex flex-col gap-3",
+    sectionTitle: "flex items-center gap-2.5",
+    results: "transition-opacity",
+    grid: "grid grid-cols-3 gap-3 max-xl:grid-cols-2 max-lg:grid-cols-1",
+    marketplaceGrid: "grid grid-cols-4 gap-3 max-xl:grid-cols-2 max-lg:grid-cols-1",
+    empty: "flex flex-col items-center py-8 text-center",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
+  },
+});
+
+export const connectorCard = tv({
+  slots: {
+    card: "relative h-full min-w-0",
+    identity: "flex min-w-0 flex-1 flex-col gap-2",
+    name: "flex min-w-0 items-baseline gap-1.5",
+    title: "min-w-0 truncate leading-tight",
+    controls: "flex items-center gap-1",
+    metaRow: "flex flex-wrap items-center justify-between gap-2",
+    tags: "flex flex-wrap items-center gap-2",
+    organizationSelect: "w-44 shrink-0",
+    probeError: "pointer-events-auto flex flex-col gap-2 rounded-2 bg-sand-3 p-3",
+    probeErrorHeader: "flex items-center justify-between gap-2",
+    probeErrorRow: "flex min-w-0 items-start gap-1",
+    probeErrorText: "min-w-0 flex-1",
   },
 });
 
 export const connectorDetailsPage = tv({
   slots: {
     root: "flex flex-col gap-6",
-    header: "flex flex-col gap-2",
-    titleRow: "flex flex-wrap items-start justify-between gap-3",
-    title: "flex min-w-0 flex-1 flex-col gap-1",
-    status: "text-sm text-txt-tertiary",
-    actions: "flex shrink-0 flex-wrap items-center gap-2",
-    body: "flex flex-col gap-6",
+    back: "self-start",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    title: "flex min-w-0 flex-wrap items-center gap-2",
+    grid: "grid grid-cols-2 gap-3 max-lg:grid-cols-1",
+  },
+});
+
+export const connectorAccountsDrawer = tv({
+  slots: {
+    heading: "flex min-w-0 flex-1 flex-col gap-1",
+    title: "flex min-w-0 items-center gap-2.5",
+    list: "flex flex-col gap-3",
+    empty: "flex flex-col items-center py-8 text-center",
+    actions: "flex items-center gap-2",
   },
 });
 
 export const connectorDetailsPageSkeleton = tv({
   slots: {
     root: "flex flex-col gap-6",
-    header: "flex flex-col gap-2",
-    titleRow: "flex flex-wrap items-start justify-between gap-3",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
     title: "flex min-w-0 items-center gap-2",
-    body: "flex flex-col gap-6",
   },
 });

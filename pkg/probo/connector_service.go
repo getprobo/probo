@@ -235,8 +235,10 @@ func (s *ConnectorService) ListForOrganizationID(
 }
 
 func (s *ConnectorService) ListAllForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
+	filter *coredata.ConnectorFilter,
 ) (coredata.Connectors, error) {
 	var connectors coredata.Connectors
 
@@ -248,6 +250,7 @@ func (s *ConnectorService) ListAllForOrganizationID(
 				conn,
 				scope,
 				organizationID,
+				filter,
 			)
 		},
 	)
@@ -417,6 +420,11 @@ func (s *ConnectorService) Reconnect(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			cnnctr.ID = req.ConnectorID
+			if err := cnnctr.LockByID(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot lock connector: %w", err)
+			}
+
 			if err := cnnctr.LoadByID(ctx, conn, scope, req.ConnectorID, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}

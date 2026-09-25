@@ -216,8 +216,9 @@ func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ConnectorFilter,
 ) error {
-	return c.loadAllByOrganizationID(ctx, conn, scope, organizationID)
+	return c.loadAllByOrganizationID(ctx, conn, scope, organizationID, filter)
 }
 
 func (c *Connector) LoadByID(
@@ -621,7 +622,12 @@ func (c *Connectors) loadAllByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ConnectorFilter,
 ) error {
+	if filter == nil {
+		filter = &ConnectorFilter{}
+	}
+
 	q := `
 SELECT
     id,
@@ -637,14 +643,16 @@ FROM
 WHERE
 	%s
     AND organization_id = @organization_id
+	AND %s
 ORDER BY
 	created_at ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

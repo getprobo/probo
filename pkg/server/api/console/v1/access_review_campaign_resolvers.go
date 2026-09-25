@@ -755,7 +755,9 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		},
 	)
 	if err != nil {
-		if errors.Is(err, accessreview.ErrNoConnectorAccount) || errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
+		if errors.Is(err, accessreview.ErrNoConnectorAccount) ||
+			errors.Is(err, accessreview.ErrConnectorAccountNeedsOrganization) ||
+			errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -867,6 +869,10 @@ func (r *mutationResolver) ConfigureAccessReviewSource(ctx context.Context, inpu
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, accessreview.ErrOrganizationPickerUnsupported) {
+			return nil, gqlutils.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot configure access source", log.Error(err))

@@ -29,7 +29,7 @@ import (
 
 // connectorProviderSettingInfos projects one connect path's settings list onto
 // the GraphQL type. A Registration declares one list per connect path, so
-// AccessReviewDrivers calls this once per path. The result is never nil: both
+// ConnectorProviders calls this once per path. The result is never nil: both
 // schema fields are non-null lists, and a provider with no settings on a path
 // returns an empty one.
 func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.ConnectorProviderSettingInfo {

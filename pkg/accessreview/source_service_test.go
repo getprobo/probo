@@ -514,6 +514,28 @@ func TestUpdateSource_RelinkDeletesAbandonedConnectorWhenLastSource(t *testing.T
 	requireConnectorMissing(t, env, connectorID)
 }
 
+func TestEnsureSource_RefusesBridgedConnector(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := env.insertConnector(t, coredata.ConnectorProviderGoogleWorkspace)
+	accountID := env.insertAccount(t, connectorID, "workspace")
+	env.insertBridge(t, connectorID)
+
+	_, _, err := env.svc.EnsureSource(
+		env.ctx,
+		env.scope,
+		accessreview.CreateAccessReviewSourceRequest{
+			OrganizationID:     env.organizationID,
+			ConnectorAccountID: &accountID,
+			Name:               "shared",
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceInUse)
+	require.ErrorContains(t, err, "SCIM configuration")
+	requireConnectorPresent(t, env, connectorID)
+}
+
 func TestDeleteSource_KeepsConnectorWhenBridgeReferencesIt(t *testing.T) {
 	t.Parallel()
 
@@ -524,6 +546,98 @@ func TestDeleteSource_KeepsConnectorWhenBridgeReferencesIt(t *testing.T) {
 	env.insertBridge(t, connectorID)
 
 	require.NoError(t, env.svc.DeleteSource(env.ctx, env.scope, source.ID))
+
+	requireMissingSource(t, env, source.ID)
+	requireConnectorPresent(t, env, connectorID)
+}
+
+// Counts and the connector delete are separate statements. Hold the connector
+// row so a bridge can commit after the counts and before the delete.
+func TestDeleteSource_IgnoresConnectorReferenceAddedDuringCleanup(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := env.insertConnector(t, coredata.ConnectorProviderGoogleWorkspace)
+	accountID := env.insertAccount(t, connectorID, "only")
+	source := env.insertLinkedSource(t, accountID, "only source")
+
+	deleted := make(chan error, 1)
+
+	err := env.client.WithTx(
+		env.ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			cnnctr := &coredata.Connector{ID: connectorID}
+			if err := cnnctr.LockByID(ctx, tx, env.scope); err != nil {
+				return err
+			}
+
+			go func() {
+				deleted <- env.svc.DeleteSource(context.Background(), env.scope, source.ID)
+			}()
+
+			deadline := time.Now().Add(5 * time.Second)
+			for {
+				var blocked bool
+
+				err := tx.QueryRow(
+					ctx,
+					`
+SELECT EXISTS (
+    SELECT 1
+    FROM pg_stat_activity
+    WHERE pg_backend_pid() = ANY (pg_blocking_pids(pid))
+)
+`,
+				).Scan(&blocked)
+				if err != nil {
+					return fmt.Errorf("cannot check connector lock waiters: %w", err)
+				}
+
+				if blocked {
+					break
+				}
+
+				if time.Now().After(deadline) {
+					return fmt.Errorf("connector delete never waited on the row lock")
+				}
+
+				time.Sleep(10 * time.Millisecond)
+			}
+
+			config := &coredata.SCIMConfiguration{
+				ID:             gid.New(env.scope.GetTenantID(), coredata.SCIMConfigurationEntityType),
+				OrganizationID: env.organizationID,
+				HashedToken:    []byte{0x01},
+				CreatedAt:      env.now,
+				UpdatedAt:      env.now,
+			}
+			if err := config.Insert(ctx, tx, env.scope); err != nil {
+				return err
+			}
+
+			bridge := &coredata.SCIMBridge{
+				ID:                  gid.New(env.scope.GetTenantID(), coredata.SCIMBridgeEntityType),
+				OrganizationID:      env.organizationID,
+				ScimConfigurationID: config.ID,
+				ConnectorID:         &connectorID,
+				Type:                coredata.SCIMBridgeTypeGoogleWorkspace,
+				State:               coredata.SCIMBridgeStateActive,
+				ExcludedUserNames:   []string{},
+				CreatedAt:           env.now,
+				UpdatedAt:           env.now,
+			}
+
+			return bridge.Insert(ctx, tx, env.scope)
+		},
+	)
+	require.NoError(t, err)
+
+	select {
+	case deleteErr := <-deleted:
+		require.NoError(t, deleteErr)
+	case <-time.After(5 * time.Second):
+		t.Fatal("DeleteSource did not finish after the bridge committed")
+	}
 
 	requireMissingSource(t, env, source.ID)
 	requireConnectorPresent(t, env, connectorID)
@@ -626,6 +740,52 @@ func TestSourceNeedsReconnect_Slack(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestSetConnectorOrganization_GitHubApp(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := gid.New(env.scope.GetTenantID(), coredata.ConnectorEntityType)
+
+	var key cipher.EncryptionKey
+
+	require.NoError(t, env.client.WithTx(
+		env.ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			cnnctr := &coredata.Connector{
+				ID:             connectorID,
+				OrganizationID: env.organizationID,
+				Provider:       coredata.ConnectorProviderGitHub,
+				Protocol:       coredata.ConnectorProtocolGitHubApp,
+				Connection:     &connector.GitHubAppConnection{InstallationID: 42},
+				CreatedAt:      env.now,
+				UpdatedAt:      env.now,
+			}
+
+			if err := cnnctr.SetSettings(&coredata.GitHubConnectorSettings{Organization: "acme"}); err != nil {
+				return err
+			}
+
+			return cnnctr.Insert(ctx, tx, env.scope, key)
+		},
+	))
+
+	err := env.svc.SetConnectorOrganization(env.ctx, env.scope, connectorID, "other")
+	require.ErrorIs(t, err, accessreview.ErrOrganizationPickerUnsupported)
+
+	stored := &coredata.Connector{}
+
+	require.NoError(t, env.client.WithConn(
+		env.ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return stored.LoadMetadataByID(ctx, conn, env.scope, connectorID)
+		},
+	))
+
+	settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](stored)
+	require.NoError(t, err)
+	assert.Equal(t, "acme", settings.Organization)
 }
 
 func newAccessSourceEnv(t *testing.T) *accessSourceEnv {
