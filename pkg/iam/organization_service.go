@@ -82,6 +82,7 @@ type (
 		AttributeLastname  *string
 		AttributeRole      *string
 		AutoSignupEnabled  bool
+		EnforcementPolicy  *coredata.SAMLEnforcementPolicy
 	}
 
 	UpdateSAMLConfigurationRequest struct {
@@ -2080,10 +2081,11 @@ func (s OrganizationService) CreateSAMLConfiguration(
 		now                     = time.Now()
 		scope                   = coredata.NewScopeFromObjectID(organizationID)
 		domainVerificationToken = uuid.MustNewV4().String()
+		enforcementPolicy       = coredata.SAMLEnforcementPolicyOptional
 		config                  = &coredata.SAMLConfiguration{
 			ID:                      gid.New(scope.GetTenantID(), coredata.SAMLConfigurationEntityType),
 			OrganizationID:          organizationID,
-			EnforcementPolicy:       coredata.SAMLEnforcementPolicyOff,
+			EnforcementPolicy:       enforcementPolicy,
 			IdPEntityID:             req.IdPEntityID,
 			IdPSsoURL:               req.IdPSsoURL,
 			IdPCertificate:          req.IdPCertificate,
@@ -2098,6 +2100,10 @@ func (s OrganizationService) CreateSAMLConfiguration(
 			UpdatedAt:               now,
 		}
 	)
+
+	if req.EnforcementPolicy != nil {
+		config.EnforcementPolicy = *req.EnforcementPolicy
+	}
 
 	if req.AttributeEmail != nil {
 		config.AttributeEmail = *req.AttributeEmail
@@ -2173,10 +2179,6 @@ func (s OrganizationService) UpdateSAMLConfiguration(
 			}
 
 			if req.EnforcementPolicy != nil {
-				if config.DomainVerifiedAt == nil {
-					return NewSAMLConfigurationDomainNotVerifiedError(configID)
-				}
-
 				config.EnforcementPolicy = *req.EnforcementPolicy
 			}
 

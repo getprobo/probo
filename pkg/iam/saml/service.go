@@ -130,7 +130,7 @@ func (s *Service) InitiateLogin(
 				return fmt.Errorf("cannot load SAML configuration: %w", err)
 			}
 
-			if config.EnforcementPolicy == coredata.SAMLEnforcementPolicyOff {
+			if !config.SSOEnabled() {
 				return NewSAMLDisabledError()
 			}
 
@@ -198,7 +198,7 @@ func (s *Service) HandleAssertion(
 				return fmt.Errorf("cannot load SAML configuration: %w", err)
 			}
 
-			if config.EnforcementPolicy == coredata.SAMLEnforcementPolicyOff {
+			if !config.SSOEnabled() {
 				return NewSAMLDisabledError()
 			}
 

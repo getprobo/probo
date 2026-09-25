@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { PlusIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -78,12 +78,10 @@ export const samlConfigurationListFragment = graphql`
 
 interface SAMLConfigurationListProps {
   organizationKey: SAMLConfigurationList_organization$key;
-  onAdd: () => void;
 }
 
 export function SAMLConfigurationList({
   organizationKey,
-  onAdd,
 }: SAMLConfigurationListProps) {
   const { t } = useTranslation();
   const [isRefetchPending, startRefetchTransition] = useTransition();
@@ -138,9 +136,9 @@ export function SAMLConfigurationList({
           </Text>
         </div>
         {organization.canCreateSAMLConfiguration && (
-          <Button variant="solid" iconStart={<PlusIcon />} onClick={onAdd}>
-            {t("samlSsoPage.actions.addConfiguration")}
-          </Button>
+          <ButtonLink to="new" variant="solid" iconStart={<PlusIcon />}>
+            {t("samlSsoPage.actions.add")}
+          </ButtonLink>
         )}
       </div>
       {edges.length === 0

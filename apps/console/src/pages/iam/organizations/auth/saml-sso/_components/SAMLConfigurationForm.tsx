@@ -18,252 +18,346 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  Button,
-  Checkbox,
-  DialogContent,
-  DialogFooter,
-  Field,
-  Label,
-  Option,
-  Select,
-  Textarea,
-} from "@probo/ui";
-import { Controller } from "react-hook-form";
+import { Form } from "@base-ui/react/form";
+import { DialogContent, DialogFooter } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { Textarea } from "@probo/ui/src/v2/form/Textarea";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
+import { newSamlSsoPage } from "../variants";
+
+const EMAIL_DOMAIN_PATTERN = "^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+
+const defaultAttributeMappings = {
+  email: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+  firstName: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+  lastName: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+  role: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
+};
+
+export type SAMLEnforcementPolicy = "OFF" | "OPTIONAL" | "REQUIRED";
+
+export interface SAMLConfigurationFormData {
+  emailDomain: string;
+  enforcementPolicy: SAMLEnforcementPolicy;
+  idpEntityId: string;
+  idpSsoUrl: string;
+  idpCertificate: string;
+  attributeMappings: {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    role?: string;
+  };
+  autoSignupEnabled: boolean;
+}
 
 const defaultValues: SAMLConfigurationFormData = {
   emailDomain: "",
-  enforcementPolicy: "OPTIONAL" as const,
+  enforcementPolicy: "OPTIONAL",
   idpEntityId: "",
   idpSsoUrl: "",
   idpCertificate: "",
-  attributeMappings: {
-    email: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
-    firstName:
-      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
-    lastName: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
-    role: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-  },
+  attributeMappings: defaultAttributeMappings,
   autoSignupEnabled: false,
 };
 
-const getEnforcementPolicyLabel = (
-  policy: string,
-  t: (key: string) => string,
-) => {
-  switch (policy) {
-    case "OFF":
-      return t("samlConfigurationForm.enforcementDescriptions.off");
-    case "REQUIRED":
-      return t("samlConfigurationForm.enforcementDescriptions.required");
-    case "OPTIONAL":
-    default:
-      return t("samlConfigurationForm.enforcementDescriptions.optional");
-  }
-};
+function isEnforcementPolicy(value: unknown): value is SAMLEnforcementPolicy {
+  return value === "OFF" || value === "OPTIONAL" || value === "REQUIRED";
+}
 
-const samlConfigSchema = z.object({
-  emailDomain: z
-    .string()
-    .min(1, "Email domain is required")
-    .regex(
-      /^[a-z0-9.-]+\.[a-z]{2,}$/i,
-      "Must be a valid domain (e.g., example.com)",
-    ),
-  enforcementPolicy: z.enum(["OFF", "OPTIONAL", "REQUIRED"]),
-  spCertificate: z.string().optional(),
-  spPrivateKey: z.string().optional(),
-  idpEntityId: z.string().min(1, "IdP Entity ID is required"),
-  idpSsoUrl: z.string().url("IdP SSO URL must be a valid URL"),
-  idpCertificate: z.string().min(1, "IdP Certificate is required"),
-  attributeMappings: z.object({
-    email: z.string().optional(),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    role: z.string().optional(),
-  }),
-  autoSignupEnabled: z.boolean().default(false),
-});
+function emptyToUndefined(value: string): string | undefined {
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
 
-export type SAMLConfigurationFormData = z.infer<typeof samlConfigSchema>;
-
-export function SAMLConfigurationForm(props: {
+interface SAMLConfigurationFormProps {
   isEditing?: boolean;
   disabled: boolean;
+  variant?: "dialog" | "page";
   initialValues?: SAMLConfigurationFormData;
-  onSubmit: (data: SAMLConfigurationFormData) => Promise<void>;
-}) {
-  const {
-    disabled,
-    initialValues = defaultValues,
-    isEditing,
-    onSubmit,
-  } = props;
-  const { t } = useTranslation();
+  onSubmit: (data: SAMLConfigurationFormData) => void | Promise<void>;
+}
 
-  const form = useFormWithSchema(samlConfigSchema, {
-    defaultValues: initialValues,
-  });
+export function SAMLConfigurationForm({
+  isEditing = false,
+  disabled,
+  variant = "dialog",
+  initialValues = defaultValues,
+  onSubmit,
+}: SAMLConfigurationFormProps) {
+  const { t } = useTranslation();
+  const { form, section, fields, check, actions } = newSamlSsoPage();
+
+  const [emailDomain, setEmailDomain] = useState(initialValues.emailDomain);
+  const [enforcementPolicy, setEnforcementPolicy] = useState<SAMLEnforcementPolicy>(
+    initialValues.enforcementPolicy,
+  );
+  const [idpEntityId, setIdpEntityId] = useState(initialValues.idpEntityId);
+  const [idpSsoUrl, setIdpSsoUrl] = useState(initialValues.idpSsoUrl);
+  const [idpCertificate, setIdpCertificate] = useState(initialValues.idpCertificate);
+  const [emailAttribute, setEmailAttribute] = useState(
+    initialValues.attributeMappings.email ?? defaultAttributeMappings.email,
+  );
+  const [firstNameAttribute, setFirstNameAttribute] = useState(
+    initialValues.attributeMappings.firstName ?? defaultAttributeMappings.firstName,
+  );
+  const [lastNameAttribute, setLastNameAttribute] = useState(
+    initialValues.attributeMappings.lastName ?? defaultAttributeMappings.lastName,
+  );
+  const [roleAttribute, setRoleAttribute] = useState(
+    initialValues.attributeMappings.role ?? defaultAttributeMappings.role,
+  );
+  const [autoSignupEnabled, setAutoSignupEnabled] = useState(
+    initialValues.autoSignupEnabled,
+  );
+
+  function handleSubmit() {
+    void onSubmit({
+      emailDomain: emailDomain.trim(),
+      enforcementPolicy,
+      idpEntityId: idpEntityId.trim(),
+      idpSsoUrl: idpSsoUrl.trim(),
+      idpCertificate: idpCertificate.trim(),
+      attributeMappings: {
+        email: emptyToUndefined(emailAttribute),
+        firstName: emptyToUndefined(firstNameAttribute),
+        lastName: emptyToUndefined(lastNameAttribute),
+        role: emptyToUndefined(roleAttribute),
+      },
+      autoSignupEnabled,
+    });
+  }
+
+  const submit = (
+    <Button
+      type="submit"
+      variant="solid"
+      color="neutral"
+      highContrast
+      loading={disabled}
+    >
+      {isEditing
+        ? t("samlConfigurationForm.actions.update")
+        : t("samlSsoPage.actions.add")}
+    </Button>
+  );
+
+  function sectionBlock(title: string | null, children: ReactNode) {
+    const content = <div className={fields()}>{children}</div>;
+    const card = variant === "page"
+      ? <Card variant="soft" size={2}>{content}</Card>
+      : content;
+
+    if (title == null) {
+      return card;
+    }
+
+    return (
+      <section className={section()}>
+        <Heading level={2} size={4} weight="medium" highContrast>
+          {title}
+        </Heading>
+        {card}
+      </section>
+    );
+  }
+
+  const body = (
+    <>
+      {sectionBlock(null, (
+        <>
+          <Field required label={t("samlConfigurationForm.fields.emailDomain")}>
+            <TextField
+              name="emailDomain"
+              required
+              pattern={EMAIL_DOMAIN_PATTERN}
+              size={2}
+              value={emailDomain}
+              disabled={disabled || isEditing}
+              placeholder="example.com"
+              onValueChange={setEmailDomain}
+            />
+          </Field>
+          <Text size={1} color="faint">
+            {isEditing
+              ? t("samlConfigurationForm.fields.emailDomainLocked")
+              : t("samlConfigurationForm.fields.emailDomainHelp")}
+          </Text>
+          <Field required label={t("samlConfigurationForm.fields.enforcementPolicy")}>
+            <Select
+              value={enforcementPolicy}
+              disabled={disabled}
+              onValueChange={(value) => {
+                if (isEnforcementPolicy(value)) {
+                  setEnforcementPolicy(value);
+                }
+              }}
+            >
+              <SelectTrigger
+                size={2}
+                aria-label={t("samlConfigurationForm.fields.enforcementPolicy")}
+              >
+                {(value: SAMLEnforcementPolicy | null) => (
+                  value != null
+                    ? t(`samlConfigurationForm.enforcement.${value.toLowerCase()}`)
+                    : null
+                )}
+              </SelectTrigger>
+              <SelectPopup>
+                <SelectItem value="OPTIONAL">
+                  {t("samlConfigurationForm.enforcement.optional")}
+                </SelectItem>
+                <SelectItem value="REQUIRED">
+                  {t("samlConfigurationForm.enforcement.required")}
+                </SelectItem>
+                {isEditing && (
+                  <SelectItem value="OFF">
+                    {t("samlConfigurationForm.enforcement.off")}
+                  </SelectItem>
+                )}
+              </SelectPopup>
+            </Select>
+          </Field>
+          <Text size={1} color="faint">
+            {t(`samlConfigurationForm.enforcementDescriptions.${enforcementPolicy.toLowerCase()}`)}
+          </Text>
+          <label className={check()}>
+            <Checkbox
+              checked={autoSignupEnabled}
+              disabled={disabled}
+              onCheckedChange={(checked) => {
+                setAutoSignupEnabled(checked === true);
+              }}
+            />
+            <Text size={2}>
+              {t("samlConfigurationForm.fields.autoSignupEnabled")}
+            </Text>
+          </label>
+        </>
+      ))}
+      {sectionBlock(t("samlConfigurationForm.sections.identityProvider"), (
+        <>
+          <Field required label={t("samlConfigurationForm.fields.idpEntityId")}>
+            <TextField
+              name="idpEntityId"
+              required
+              size={2}
+              value={idpEntityId}
+              disabled={disabled}
+              placeholder="https://idp.example.com/metadata"
+              onValueChange={setIdpEntityId}
+            />
+          </Field>
+          <Field required label={t("samlConfigurationForm.fields.idpSsoUrl")}>
+            <TextField
+              name="idpSsoUrl"
+              type="url"
+              required
+              size={2}
+              value={idpSsoUrl}
+              disabled={disabled}
+              placeholder="https://idp.example.com/sso"
+              onValueChange={setIdpSsoUrl}
+            />
+          </Field>
+          <Field required label={t("samlConfigurationForm.fields.idpCertificate")}>
+            <Textarea
+              name="idpCertificate"
+              required
+              rows={6}
+              value={idpCertificate}
+              disabled={disabled}
+              placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+              className="font-mono"
+              onChange={(event) => {
+                setIdpCertificate(event.target.value);
+              }}
+            />
+          </Field>
+        </>
+      ))}
+      {sectionBlock(t("samlConfigurationForm.sections.attributeMapping"), (
+        <>
+          <Field label={t("samlConfigurationForm.fields.emailAttribute")}>
+            <TextField
+              name="emailAttribute"
+              size={2}
+              value={emailAttribute}
+              disabled={disabled}
+              placeholder={defaultAttributeMappings.email}
+              onValueChange={setEmailAttribute}
+            />
+          </Field>
+          <Field label={t("samlConfigurationForm.fields.firstNameAttribute")}>
+            <TextField
+              name="firstNameAttribute"
+              size={2}
+              value={firstNameAttribute}
+              disabled={disabled}
+              placeholder={defaultAttributeMappings.firstName}
+              onValueChange={setFirstNameAttribute}
+            />
+          </Field>
+          <Field label={t("samlConfigurationForm.fields.lastNameAttribute")}>
+            <TextField
+              name="lastNameAttribute"
+              size={2}
+              value={lastNameAttribute}
+              disabled={disabled}
+              placeholder={defaultAttributeMappings.lastName}
+              onValueChange={setLastNameAttribute}
+            />
+          </Field>
+          <Field label={t("samlConfigurationForm.fields.roleAttribute")}>
+            <TextField
+              name="roleAttribute"
+              size={2}
+              value={roleAttribute}
+              disabled={disabled}
+              placeholder={defaultAttributeMappings.role}
+              onValueChange={setRoleAttribute}
+            />
+          </Field>
+        </>
+      ))}
+    </>
+  );
+
+  function wrapFields(content: ReactNode) {
+    if (variant === "page") {
+      return (
+        <>
+          {content}
+          <div className={actions()}>{submit}</div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <DialogContent padded>
+          <div className={form()}>{content}</div>
+        </DialogContent>
+        <DialogFooter>{submit}</DialogFooter>
+      </>
+    );
+  }
 
   return (
-    <form
-      onSubmit={(e) => {
-        void form.handleSubmit(onSubmit)(e);
-        form.reset(form.getValues());
-      }}
-    >
-      <DialogContent padded className="space-y-6">
-        <div>
-          <h3 className="text-base font-medium mb-4">
-            {t("samlConfigurationForm.sections.basic")}
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <Field
-                {...form.register("emailDomain")}
-                label={t("samlConfigurationForm.fields.emailDomain")}
-                placeholder="example.com"
-                disabled={isEditing}
-                error={form.formState.errors.emailDomain?.message}
-              />
-              <p className="text-xs text-gray-600 mt-1">
-                {isEditing
-                  ? t("samlConfigurationForm.fields.emailDomainLocked")
-                  : t("samlConfigurationForm.fields.emailDomainHelp")}
-              </p>
-            </div>
-            {isEditing && (
-              <div>
-                <Label htmlFor="enforcementPolicy">
-                  {t("samlConfigurationForm.fields.enforcementPolicy")}
-                </Label>
-                <Controller
-                  control={form.control}
-                  name="enforcementPolicy"
-                  render={({ field }) => (
-                    <div className="mt-2">
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <Option value="OPTIONAL">{t("samlConfigurationForm.enforcement.optional")}</Option>
-                        <Option value="REQUIRED">{t("samlConfigurationForm.enforcement.required")}</Option>
-                        <Option value="OFF">{t("samlConfigurationForm.enforcement.off")}</Option>
-                      </Select>
-                    </div>
-                  )}
-                />
-                {form.watch("enforcementPolicy") && (
-                  <p className="text-xs text-gray-600 mt-2">
-                    {getEnforcementPolicyLabel(
-                      form.watch("enforcementPolicy"),
-                      t,
-                    )}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-base font-medium mb-4">
-            {t("samlConfigurationForm.sections.identityProvider")}
-          </h3>
-          <div className="space-y-4">
-            <Field
-              {...form.register("idpEntityId")}
-              label={t("samlConfigurationForm.fields.idpEntityId")}
-              placeholder="https://idp.example.com/metadata"
-              error={form.formState.errors.idpEntityId?.message}
-            />
-            <Field
-              {...form.register("idpSsoUrl")}
-              label={t("samlConfigurationForm.fields.idpSsoUrl")}
-              placeholder="https://idp.example.com/sso"
-              error={form.formState.errors.idpSsoUrl?.message}
-            />
-            <div>
-              <Label htmlFor="idpCertificate">
-                {t("samlConfigurationForm.fields.idpCertificate")}
-              </Label>
-              <Textarea
-                {...form.register("idpCertificate")}
-                id="idpCertificate"
-                rows={6}
-                placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                className="font-mono text-sm"
-              />
-              {form.formState.errors.idpCertificate && (
-                <p className="text-sm text-red-600 mt-1">
-                  {form.formState.errors.idpCertificate.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-base font-medium mb-4">
-            {t("samlConfigurationForm.sections.attributeMapping")}
-          </h3>
-          <div className="space-y-4">
-            <Field
-              {...form.register("attributeMappings.email")}
-              label={t("samlConfigurationForm.fields.emailAttribute")}
-              placeholder={defaultValues.attributeMappings.email}
-              error={form.formState.errors.attributeMappings?.email?.message}
-            />
-            <Field
-              {...form.register("attributeMappings.firstName")}
-              label={t("samlConfigurationForm.fields.firstNameAttribute")}
-              placeholder={defaultValues.attributeMappings.firstName}
-              error={
-                form.formState.errors.attributeMappings?.firstName?.message
-              }
-            />
-            <Field
-              {...form.register("attributeMappings.lastName")}
-              label={t("samlConfigurationForm.fields.lastNameAttribute")}
-              placeholder={defaultValues.attributeMappings.lastName}
-              error={form.formState.errors.attributeMappings?.lastName?.message}
-            />
-            <Field
-              {...form.register("attributeMappings.role")}
-              label={t("samlConfigurationForm.fields.roleAttribute")}
-              placeholder={defaultValues.attributeMappings.role}
-              error={form.formState.errors.attributeMappings?.role?.message}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Controller
-            control={form.control}
-            name="autoSignupEnabled"
-            render={({ field }) => (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={field.value ?? false}
-                  onChange={field.onChange}
-                />
-                <Label htmlFor="autoSignupEnabled" className="cursor-pointer">
-                  {t("samlConfigurationForm.fields.autoSignupEnabled")}
-                </Label>
-              </div>
-            )}
-          />
-        </div>
-      </DialogContent>
-      <DialogFooter>
-        <Button type="submit" disabled={disabled}>
-          {isEditing ? t("samlConfigurationForm.actions.update") : t("samlConfigurationForm.actions.create")}
-        </Button>
-      </DialogFooter>
-    </form>
+    <Form className={form()} onFormSubmit={handleSubmit}>
+      {wrapFields(body)}
+    </Form>
   );
 }
