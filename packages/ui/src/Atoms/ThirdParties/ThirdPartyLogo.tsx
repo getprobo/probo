@@ -45,6 +45,7 @@ import { DocuSign } from "./DocuSign";
 import { Dotfile } from "./Dotfile";
 import { ElevenLabs } from "./ElevenLabs";
 import { Figma } from "./Figma";
+import { Front } from "./Front";
 import { GCP } from "./GCP";
 import { GitHub } from "./GitHub";
 import { GitLab } from "./GitLab";
@@ -121,6 +122,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   DOTFILE: Dotfile,
   ELEVENLABS: ElevenLabs,
   FIGMA: Figma,
+  FRONT: Front,
   GCP: GCP,
   GITHUB: GitHub,
   GITLAB: GitLab,

@@ -64,7 +64,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 
 		assert.Equal(t, http.MethodPost, req.Method)
 		assert.Equal(t, "https://provider.example.com/oauth/token", req.URL.String())
-		assert.Equal(t, "application/x-www-form-urlencoded; charset=utf-8", req.Header.Get("Content-Type"))
+		assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		assert.Empty(t, req.Header.Get("Authorization"))
 
 		body, err := io.ReadAll(req.Body)
@@ -137,7 +137,7 @@ func TestBuildTokenRequest_BasicForm(t *testing.T) {
 
 	assert.Equal(t, http.MethodPost, req.Method)
 	assert.Equal(t, "https://provider.example.com/oauth/token", req.URL.String())
-	assert.Equal(t, "application/x-www-form-urlencoded; charset=utf-8", req.Header.Get("Content-Type"))
+	assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 
 	// Verify Basic auth header
 	authHeader := req.Header.Get("Authorization")

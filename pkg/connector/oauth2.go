@@ -634,7 +634,11 @@ func (c *OAuth2Connector) newFormTokenRequest(ctx context.Context, form url.Valu
 		return nil, fmt.Errorf("cannot create token request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+	// No charset parameter: the media type defines none, and Front's token
+	// endpoint drops every field after `code` when one is present, failing
+	// with 501 unsupported_grant_type. x/oauth2 sends the same bare type on
+	// refresh, so every provider already accepts it.
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Probo Connector")
 
