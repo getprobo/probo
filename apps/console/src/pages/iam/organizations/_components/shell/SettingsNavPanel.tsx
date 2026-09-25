@@ -41,6 +41,7 @@ const settingsNavPanelQuery = graphql`
         canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
         canConnectSlack: permission(action: "core:connector:initiate")
         canUninstallSlack: permission(action: "core:connector:delete")
+        canListConnectors: permission(action: "core:connector:list")
         canListMembers: permission(action: "iam:membership:list")
         canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
       }
@@ -120,6 +121,14 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
               to={navHref(organizationId, group, "audit-log")}
             />
           )}
+        </NavPanelGroup>
+      )}
+      {organization.canListConnectors && (
+        <NavPanelGroup label={t("nav.integrations")}>
+          <NavPanelItem
+            label={t("nav.connections")}
+            to={navHref(organizationId, group, "integrations")}
+          />
         </NavPanelGroup>
       )}
     </>
