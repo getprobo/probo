@@ -4,6 +4,18 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.237.0] - 2026-09-25
+
+### Added
+
+- Task `Link To Linear` links a task to an existing Linear issue
+- Task `List Linear Issues` searches Linear issues in a team
+
+### Changed
+
+- Task `List Linear Teams` searches and pages teams instead of returning
+  the full list
+
 ## [0.236.0] - 2026-09-24
 
 ### Added
