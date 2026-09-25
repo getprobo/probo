@@ -48,10 +48,9 @@ import (
 // `teammates:read` when registering the app.
 func frontRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderFront,
-		DisplayName: "Front",
-		// No probo.com docs page for Front yet; a 404-ing link is worse than
-		// none, so this stays empty until the page ships.
+		Provider:         coredata.ConnectorProviderFront,
+		DisplayName:      "Front",
+		DocumentationURL: accessReviewDocsURL("front"),
 		Endpoints: Endpoints{
 			Auth:  "https://app.frontapp.com/oauth/authorize",
 			Token: "https://app.frontapp.com/oauth/token",

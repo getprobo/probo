@@ -40,6 +40,7 @@ func TestFrontRegistrationMetadata(t *testing.T) {
 	require.True(t, ok, "front provider must be registered")
 
 	assert.Equal(t, "Front", reg.DisplayName)
+	assert.Equal(t, "https://www.probo.com/docs/product/access-review/front", reg.DocumentationURL)
 
 	// Both credential paths are offered: OAuth and a company API token.
 	assert.Equal(t, "https://app.frontapp.com/oauth/authorize", reg.Endpoints.Auth)
