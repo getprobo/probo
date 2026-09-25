@@ -230,10 +230,17 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListMembers,
   },
   {
-    id: "auth",
+    id: "saml-sso",
     group: "settings",
-    labelKey: "nav.authProvisioning",
-    path: "auth",
+    labelKey: "nav.samlSso",
+    path: "auth/saml-sso",
+    isVisible: permissions => permissions.canUpdateOrganization,
+  },
+  {
+    id: "scim",
+    group: "settings",
+    labelKey: "nav.scim",
+    path: "auth/scim",
     isVisible: permissions => permissions.canUpdateOrganization,
   },
   {

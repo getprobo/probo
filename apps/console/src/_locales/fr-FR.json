@@ -2199,6 +2199,8 @@
     "iam": "IAM",
     "users": "Utilisateurs",
     "authProvisioning": "Auth. et provisionnement",
+    "samlSso": "SSO SAML",
+    "scim": "SCIM",
     "auditLog": "Journal d’audit",
     "allThirdParties": "Tous les tiers",
     "thirdParties": "Tiers",
@@ -2422,7 +2424,8 @@
   },
   "samlSsoPage": {
     "title": "Authentification unique SAML",
-    "actions": { "addConfiguration": "Ajouter une configuration" },
+    "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",
+    "actions": { "addConfiguration": "Ajouter une configuration", "previous": "Préc.", "next": "Suiv." },
     "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer", "verifyDomain": "Vérifier le domaine" }
   },
   "scimPage": {
@@ -2601,10 +2604,12 @@
   },
   "samlConfigurationList": {
     "messages": {
-      "deleted": "Configuration SAML supprimée avec succès."
+      "deleted": "Configuration SAML supprimée avec succès.",
+      "copied": "Copié dans le presse-papiers"
     },
     "errors": {
-      "delete": "Échec de la suppression de la configuration SAML. Veuillez réessayer."
+      "delete": "Échec de la suppression de la configuration SAML. Veuillez réessayer.",
+      "copy": "Échec de la copie de l’URL SSO"
     },
     "delete": {
       "title": "Supprimer la configuration SAML",
@@ -2613,6 +2618,19 @@
     "empty": {
       "title": "Aucune configuration SAML",
       "description": "Configurez l’authentification unique SAML 2.0 pour votre organisation en ajoutant une configuration pour chaque domaine de messagerie."
+    },
+    "pending": {
+      "description": "Ajoutez un enregistrement TXT DNS pour vérifier que vous contrôlez ce domaine."
+    },
+    "enforcement": {
+      "optional": "Le SSO est <policy>facultatif</policy>. Les membres peuvent utiliser l’authentification unique ou un mot de passe.",
+      "required": "Le SSO est <policy>obligatoire</policy>. Les membres doivent utiliser l’authentification unique pour se connecter.",
+      "off": "Le SSO est <policy>désactivé</policy>. Les membres doivent utiliser leur mot de passe."
+    },
+    "fields": {
+      "domain": "Domaine",
+      "sso": "SSO",
+      "ssoUrl": "URL SSO"
     },
     "columns": {
       "configurationId": "ID de configuration",
@@ -2630,6 +2648,7 @@
     },
     "actions": {
       "delete": "Supprimer",
+      "cancel": "Annuler",
       "clickToCopy": "Cliquer pour copier",
       "copied": "Copié !",
       "copyUrl": "Copier l’URL",

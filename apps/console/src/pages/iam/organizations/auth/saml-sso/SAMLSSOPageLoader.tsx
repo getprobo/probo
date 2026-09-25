@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { SAMLSSOPageQuery } from "#/__generated__/iam/SAMLSSOPageQuery.graphql";
@@ -26,6 +26,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { SAMLSSOPage, samlSSOPageQuery } from "./SAMLSSOPage";
+import { SAMLSSOPageSkeleton } from "./SAMLSSOPageSkeleton";
 
 function SAMLSSOPageQueryLoader() {
   const organizationId = useOrganizationId();
@@ -36,14 +37,23 @@ function SAMLSSOPageQueryLoader() {
   useEffect(() => {
     loadQuery({
       organizationId,
-    });
+    }, { fetchPolicy: "network-only" });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) {
-    return null;
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <SAMLSSOPageSkeleton />;
   }
 
-  return <SAMLSSOPage queryRef={queryRef} />;
+  return (
+    <Suspense fallback={<SAMLSSOPageSkeleton />}>
+      <SAMLSSOPage key={organizationId} queryRef={currentQueryRef} />
+    </Suspense>
+  );
 }
 
 export default function SAMLSSOPageLoader() {

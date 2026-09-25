@@ -2199,6 +2199,8 @@
     "iam": "IAM",
     "users": "Gebruikers",
     "authProvisioning": "Auth & provisioning",
+    "samlSso": "SAML SSO",
+    "scim": "SCIM",
     "auditLog": "Auditlogboek",
     "allThirdParties": "Alle derde partijen",
     "thirdParties": "Derde partijen",
@@ -2422,7 +2424,8 @@
   },
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
-    "actions": { "addConfiguration": "Configuratie toevoegen" },
+    "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein.",
+    "actions": { "addConfiguration": "Configuratie toevoegen", "previous": "Vorige", "next": "Volgende" },
     "breadcrumb": {
       "settings": "SAML-instellingen",
       "configure": "Configureren",
@@ -2605,10 +2608,12 @@
   },
   "samlConfigurationList": {
     "messages": {
-      "deleted": "SAML-configuratie succesvol verwijderd."
+      "deleted": "SAML-configuratie succesvol verwijderd.",
+      "copied": "Gekopieerd naar klembord"
     },
     "errors": {
-      "delete": "Verwijderen van SAML-configuratie mislukt. Probeer het opnieuw."
+      "delete": "Verwijderen van SAML-configuratie mislukt. Probeer het opnieuw.",
+      "copy": "Kopiëren van SSO-URL mislukt"
     },
     "delete": {
       "title": "SAML-configuratie verwijderen",
@@ -2617,6 +2622,19 @@
     "empty": {
       "title": "Geen SAML-configuraties",
       "description": "Stel SAML 2.0 single sign-on in voor uw organisatie door voor elk e-maildomein een configuratie toe te voegen."
+    },
+    "pending": {
+      "description": "Voeg een DNS-TXT-record toe om te verifiëren dat u dit domein beheert."
+    },
+    "enforcement": {
+      "optional": "SSO is <policy>optioneel</policy>. Leden kunnen single sign-on of een wachtwoord gebruiken.",
+      "required": "SSO is <policy>verplicht</policy>. Leden moeten single sign-on gebruiken om in te loggen.",
+      "off": "SSO is <policy>uit</policy>. Leden moeten hun wachtwoord gebruiken."
+    },
+    "fields": {
+      "domain": "Domein",
+      "sso": "SSO",
+      "ssoUrl": "SSO-URL"
     },
     "columns": {
       "configurationId": "Configuratie-ID",
@@ -2634,6 +2652,7 @@
     },
     "actions": {
       "delete": "Verwijderen",
+      "cancel": "Annuleren",
       "clickToCopy": "Klik om te kopiëren",
       "copied": "Gekopieerd!",
       "copyUrl": "URL kopiëren",

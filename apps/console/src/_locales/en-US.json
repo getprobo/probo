@@ -1407,6 +1407,8 @@
     "iam": "IAM",
     "users": "Users",
     "authProvisioning": "Auth & Provisioning",
+    "samlSso": "SAML SSO",
+    "scim": "SCIM",
     "auditLog": "Audit Log",
     "allThirdParties": "All Third Parties",
     "thirdParties": "Third parties",
@@ -1556,7 +1558,8 @@
   },
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
-    "actions": { "addConfiguration": "Add Configuration" },
+    "description": "Set up SAML 2.0 single sign-on for each email domain.",
+    "actions": { "addConfiguration": "Add Configuration", "previous": "Prev", "next": "Next" },
     "breadcrumb": { "settings": "SAML Settings", "configure": "Configure", "verifyDomain": "Verify Domain" }
   },
   "scimPage": {
@@ -1630,13 +1633,20 @@
     "actions": { "update": "Update Configuration", "create": "Create Configuration" }
   },
   "samlConfigurationList": {
-    "messages": { "deleted": "SAML configuration deleted successfully." },
-    "errors": { "delete": "Failed to delete SAML configuration. Please try again." },
+    "messages": { "deleted": "SAML configuration deleted successfully.", "copied": "Copied to clipboard" },
+    "errors": { "delete": "Failed to delete SAML configuration. Please try again.", "copy": "Failed to copy SSO URL" },
     "delete": { "title": "Delete SAML Configuration", "description": "Are you sure you want to delete the SAML configuration for {{domain}}? This action cannot be undone." },
     "empty": { "title": "No SAML Configurations", "description": "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain." },
+    "pending": { "description": "Add a DNS TXT record to verify you control this domain." },
+    "enforcement": {
+      "optional": "SSO is <policy>optional</policy>. Members may use single sign-on or a password.",
+      "required": "SSO is <policy>required</policy>. Members must use single sign-on to log in.",
+      "off": "SSO is <policy>off</policy>. Members must use their password."
+    },
+    "fields": { "domain": "Domain", "sso": "SSO", "ssoUrl": "SSO URL" },
     "columns": { "configurationId": "Configuration ID", "emailDomain": "Email Domain", "domainStatus": "Domain Status", "samlStatus": "SAML Status", "enforcement": "Enforcement", "ssoUrl": "SSO URL" },
     "status": { "verified": "Verified", "pendingVerification": "Pending Verification", "enabled": "Enabled", "disabled": "Disabled" },
-    "actions": { "delete": "Delete", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "edit": "Edit", "verifyDomain": "Verify Domain" }
+    "actions": { "delete": "Delete", "cancel": "Cancel", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "edit": "Edit", "verifyDomain": "Verify Domain" }
   },
   "samlDomainVerifyDialog": {
     "title": "Verify Domain Ownership",

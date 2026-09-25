@@ -28,6 +28,7 @@ import {
   Field,
   IconArrowDown,
   Input,
+  PageHeader,
   Spinner,
   useDialogRef,
   useToast,
@@ -209,7 +210,7 @@ export function SCIMPage(props: {
 }) {
   const { queryRef } = props;
   const { t } = useTranslation();
-  usePageTitle(t("authLayout.tabs.scim"));
+  usePageTitle(t("nav.scim"));
   const [searchParams, setSearchParams] = useSearchParams();
   const connectorId = searchParams.get("connector_id");
   const mutationTriggeredRef = useRef(false);
@@ -298,6 +299,7 @@ export function SCIMPage(props: {
 
   return (
     <div className="space-y-8">
+      <PageHeader title={t("nav.scim")} />
       {showIdentityProviderSection && (
         <ConnectorList fKey={organization} />
       )}

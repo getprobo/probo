@@ -18,265 +18,175 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCopy } from "@probo/hooks";
-import {
-  Button,
-  Card,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-  useConfirm,
-} from "@probo/ui";
-import { useCallback, useRef, useState } from "react";
+import { PlusIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useCallback, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useFragment } from "react-relay";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { useRefetchableFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import type { SAMLConfigurationList_deleteMutation } from "#/__generated__/iam/SAMLConfigurationList_deleteMutation.graphql";
-import type {
-  SAMLConfigurationListFragment$data,
-  SAMLConfigurationListFragment$key,
-} from "#/__generated__/iam/SAMLConfigurationListFragment.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-import type { NodeOf } from "#/types";
+import type { SAMLConfigurationList_organization$key } from "#/__generated__/iam/SAMLConfigurationList_organization.graphql";
+import type { SAMLConfigurationListRefetchQuery } from "#/__generated__/iam/SAMLConfigurationListRefetchQuery.graphql";
+import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
+import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
-const fragment = graphql`
-  fragment SAMLConfigurationListFragment on Organization {
-    samlConfigurations(first: 1000)
+import { samlConfigurationList, samlSsoPage } from "../variants";
+
+import { SAMLConfigurationListItem } from "./SAMLConfigurationListItem";
+
+export const SAML_CONFIGURATION_PAGE_SIZE = 15;
+
+export const samlConfigurationListFragment = graphql`
+  fragment SAMLConfigurationList_organization on Organization
+  @refetchable(queryName: "SAMLConfigurationListRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 15 }
+    after: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+  ) {
+    canCreateSAMLConfiguration: permission(
+      action: "iam:saml-configuration:create"
+    )
+    samlConfigurations(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+    )
       @required(action: THROW)
       @connection(key: "SAMLConfigurationListFragment_samlConfigurations") {
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
       edges @required(action: THROW) {
         node {
           id
-          emailDomain
-          enforcementPolicy
-          domainVerificationToken
-          domainVerifiedAt
-          testLoginUrl
-          canUpdate: permission(action: "iam:saml-configuration:update")
-          canDelete: permission(action: "iam:saml-configuration:delete")
+          ...SAMLConfigurationListItem_samlConfiguration
         }
       }
     }
   }
 `;
 
-const deleteMutation = graphql`
-  mutation SAMLConfigurationList_deleteMutation(
-    $input: DeleteSAMLConfigurationInput!
-    $connections: [ID!]!
-  ) {
-    deleteSAMLConfiguration(input: $input) {
-      deletedSamlConfigurationId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
-export function SAMLConfigurationList(props: {
-  fKey: SAMLConfigurationListFragment$key;
+interface SAMLConfigurationListProps {
+  organizationKey: SAMLConfigurationList_organization$key;
+  onAdd: () => void;
   onEdit: (id: string) => void;
   onVerifyDomain: (dnsVerificationToken: string) => void;
-}) {
-  const { fKey, onEdit, onVerifyDomain } = props;
+}
 
-  const organizationId = useOrganizationId();
+export function SAMLConfigurationList({
+  organizationKey,
+  onAdd,
+  onEdit,
+  onVerifyDomain,
+}: SAMLConfigurationListProps) {
   const { t } = useTranslation();
+  const [isRefetchPending, startRefetchTransition] = useTransition();
+  const [organization, refetch] = useRefetchableFragment<
+    SAMLConfigurationListRefetchQuery,
+    SAMLConfigurationList_organization$key
+  >(samlConfigurationListFragment, organizationKey);
 
-  const confirm = useConfirm();
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const copiedIdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const copyId = useCallback((id: string) => {
-    void navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    clearTimeout(copiedIdTimer.current);
-    copiedIdTimer.current = setTimeout(() => setCopiedId(null), 2000);
-  }, []);
-  const [isCopied, copy] = useCopy();
+  const pageVariablesRef = useRef<CursorPaginationVariables>({
+    first: SAML_CONFIGURATION_PAGE_SIZE,
+    after: null,
+    last: null,
+    before: null,
+  });
 
-  const {
-    samlConfigurations: { edges: samlConfigurations },
-  } = useFragment<SAMLConfigurationListFragment$key>(fragment, fKey);
+  const refetchPage = useCallback((variables: CursorPaginationVariables) => {
+    pageVariablesRef.current = variables;
+    refetch(variables, { fetchPolicy: "store-or-network" });
+  }, [refetch]);
 
-  const [deleteSAMLConfiguration]
-    = useMutationWithToasts<SAMLConfigurationList_deleteMutation>(
-      deleteMutation,
-      {
-        successMessage: t("samlConfigurationList.messages.deleted"),
-        errorMessage: t("samlConfigurationList.errors.delete"),
-      },
-    );
+  const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
+    refetchPage,
+    organization.samlConfigurations.pageInfo,
+    SAML_CONFIGURATION_PAGE_SIZE,
+  );
 
-  const handleDelete = (
-    config: NodeOf<SAMLConfigurationListFragment$data["samlConfigurations"]>,
-  ) => {
-    confirm(
-      async () => {
-        await deleteSAMLConfiguration({
-          variables: {
-            input: {
-              organizationId,
-              samlConfigurationId: config.id,
-            },
-            connections: [
-              ConnectionHandler.getConnectionID(
-                organizationId,
-                "SAMLConfigurationListFragment_samlConfigurations",
-              ),
-            ],
-          },
-        });
-      },
-      {
-        title: t("samlConfigurationList.delete.title"),
-        message: t("samlConfigurationList.delete.description", { domain: config.emailDomain }),
-        label: t("samlConfigurationList.actions.delete"),
-        variant: "danger",
-      },
-    );
-  };
+  const edges = organization.samlConfigurations.edges;
+  const pageInfo = organization.samlConfigurations.pageInfo;
+  const isPending = isRefetchPending || isPagePending;
+  const { header, intro } = samlSsoPage();
+  const { root, results, grid, empty, pager } = samlConfigurationList({ pending: isPending });
 
-  if (samlConfigurations.length === 0) {
-    return (
-      <Card padded>
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {t("samlConfigurationList.empty.title")}
-          </h3>
-          <p className="text-gray-600 mb-6">
-            {t("samlConfigurationList.empty.description")}
-          </p>
-        </div>
-      </Card>
-    );
+  function handleDeleted() {
+    if (edges.length === 1 && pageInfo.hasPreviousPage) {
+      goPrevious();
+      return;
+    }
+    startRefetchTransition(() => {
+      refetch(pageVariablesRef.current, { fetchPolicy: "network-only" });
+    });
   }
 
   return (
-    <Table>
-      <Thead>
-        <Tr>
-          <Th>{t("samlConfigurationList.columns.configurationId")}</Th>
-          <Th>{t("samlConfigurationList.columns.emailDomain")}</Th>
-          <Th>{t("samlConfigurationList.columns.domainStatus")}</Th>
-          <Th>{t("samlConfigurationList.columns.samlStatus")}</Th>
-          <Th>{t("samlConfigurationList.columns.enforcement")}</Th>
-          <Th>{t("samlConfigurationList.columns.ssoUrl")}</Th>
-          <Th></Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {samlConfigurations.map(({ node: config }) => (
-          <Tr key={config.id}>
-            <Td>
-              <button
-                onClick={() => copyId(config.id)}
-                className="font-mono text-xs text-gray-600 hover:text-gray-900"
-                title={t("samlConfigurationList.actions.clickToCopy")}
-              >
-                {copiedId === config.id ? t("samlConfigurationList.actions.copied") : config.id}
-              </button>
-            </Td>
-            <Td>
-              <button
-                onClick={() => onEdit(config.id)}
-                className="font-semibold text-blue-600 hover:text-blue-800"
-              >
-                {config.emailDomain}
-              </button>
-            </Td>
-            <Td>
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  config.domainVerifiedAt
-                    ? "bg-green-100 text-green-800"
-                    : "bg-yellow-100 text-yellow-800"
-                }`}
-              >
-                {config.domainVerifiedAt
-                  ? t("samlConfigurationList.status.verified")
-                  : t("samlConfigurationList.status.pendingVerification")}
-              </span>
-            </Td>
-            <Td>
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  config.enforcementPolicy !== "OFF"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {config.enforcementPolicy !== "OFF"
-                  ? t("samlConfigurationList.status.enabled")
-                  : t("samlConfigurationList.status.disabled")}
-              </span>
-            </Td>
-            <Td>{config.enforcementPolicy}</Td>
-            <Td>
-              {config.domainVerifiedAt && config.enforcementPolicy !== "OFF"
-                ? (
-                    <button
-                      onClick={() => copy(config.testLoginUrl)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      {isCopied ? t("samlConfigurationList.actions.copied") : t("samlConfigurationList.actions.copyUrl")}
-                    </button>
-                  )
-                : (
-                    <span className="text-gray-400">—</span>
-                  )}
-            </Td>
-            <Td width={180} className="text-end">
-              <div className="flex gap-2 justify-end">
-                {config.domainVerifiedAt
-                  ? (
-                      <>
-                        {config.canUpdate && (
-                          <Button
-                            variant="secondary"
-                            onClick={() => onEdit(config.id)}
-                          >
-                            {t("samlConfigurationList.actions.edit")}
-                          </Button>
-                        )}
-                        {config.canDelete && (
-                          <Button
-                            variant="danger"
-                            onClick={() => handleDelete(config)}
-                          >
-                            {t("samlConfigurationList.actions.delete")}
-                          </Button>
-                        )}
-                      </>
-                    )
-                  : (
-                      <>
-                        {config.canUpdate && !!config.domainVerificationToken && (
-                          <Button
-                            variant="primary"
-                            onClick={() =>
-                              onVerifyDomain(config.domainVerificationToken!)}
-                          >
-                            {t("samlConfigurationList.actions.verifyDomain")}
-                          </Button>
-                        )}
-                        {config.canDelete && (
-                          <Button
-                            variant="danger"
-                            onClick={() => handleDelete(config)}
-                          >
-                            {t("samlConfigurationList.actions.delete")}
-                          </Button>
-                        )}
-                      </>
-                    )}
+    <>
+      <div className={header()}>
+        <div className={intro()}>
+          <Heading level={1} size={6} weight="medium" highContrast>
+            {t("samlSsoPage.title")}
+          </Heading>
+          <Text size={2} color="faint">
+            {t("samlSsoPage.description")}
+          </Text>
+        </div>
+        {organization.canCreateSAMLConfiguration && (
+          <Button variant="solid" iconStart={<PlusIcon />} onClick={onAdd}>
+            {t("samlSsoPage.actions.addConfiguration")}
+          </Button>
+        )}
+      </div>
+      {edges.length === 0
+        ? (
+            <Card variant="soft" size={2}>
+              <div className={empty()}>
+                <Text size={2} color="faint">
+                  {t("samlConfigurationList.empty.description")}
+                </Text>
               </div>
-            </Td>
-          </Tr>
-        ))}
-      </Tbody>
-    </Table>
+            </Card>
+          )
+        : (
+            <div className={root()}>
+              <div aria-busy={isPending} className={results()}>
+                <div className={grid()}>
+                  {edges.map(({ node }) => (
+                    <SAMLConfigurationListItem
+                      key={node.id}
+                      samlConfigurationKey={node}
+                      onEdit={onEdit}
+                      onVerifyDomain={onVerifyDomain}
+                      onDeleted={handleDeleted}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className={pager()}>
+                <Pagination
+                  hasPrevious={pageInfo.hasPreviousPage}
+                  hasNext={pageInfo.hasNextPage}
+                  previousLabel={t("samlSsoPage.actions.previous")}
+                  nextLabel={t("samlSsoPage.actions.next")}
+                  showLabels
+                  variant="soft"
+                  disabled={isPending}
+                  onPrevious={goPrevious}
+                  onNext={goNext}
+                />
+              </div>
+            </div>
+          )}
+    </>
   );
 }
