@@ -4,6 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.237.0] - 2026-09-25
+
+### Added
+
+- `task list` accepts `--query` (`-q`) and `--state` to filter by name
+  and state
+
+### Changed
+
+- `task comment list` and `task comment view` leave the owner blank when
+  a comment has none, which is how a Linear comment from a non-member
+  is stored
+
 ## [0.236.0] - 2026-09-25
 
 ### Added
