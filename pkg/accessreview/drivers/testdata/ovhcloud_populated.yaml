@@ -361,31 +361,6 @@ interactions:
         headers:
             Accept:
                 - application/json
-        url: https://eu.api.ovh.com/1.0/me/api/application
-        method: GET
-      response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '[7001,7002]'
-        headers:
-            Content-Type:
-                - application/json; charset=utf-8
-        status: 200 OK
-        code: 200
-        duration: 1ms
-    - id: 15
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: 0
-        host: eu.api.ovh.com
-        headers:
-            Accept:
-                - application/json
         url: https://eu.api.ovh.com/1.0/me/api/credential/900001
         method: GET
       response:
@@ -401,7 +376,7 @@ interactions:
         status: 200 OK
         code: 200
         duration: 1ms
-    - id: 16
+    - id: 15
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -426,7 +401,7 @@ interactions:
         status: 200 OK
         code: 200
         duration: 1ms
-    - id: 17
+    - id: 16
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -436,7 +411,7 @@ interactions:
         headers:
             Accept:
                 - application/json
-        url: https://eu.api.ovh.com/1.0/me/api/application/7001
+        url: https://eu.api.ovh.com/1.0/me/api/credential/900001/application
         method: GET
       response:
         proto: HTTP/2.0
@@ -451,7 +426,7 @@ interactions:
         status: 200 OK
         code: 200
         duration: 1ms
-    - id: 18
+    - id: 17
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -461,7 +436,7 @@ interactions:
         headers:
             Accept:
                 - application/json
-        url: https://eu.api.ovh.com/1.0/me/api/application/7002
+        url: https://eu.api.ovh.com/1.0/me/api/credential/900002/application
         method: GET
       response:
         proto: HTTP/2.0
