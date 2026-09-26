@@ -442,10 +442,7 @@ func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
 // requests. A provider that declares scopes wins outright: the registration
 // already knows what the grant needs, and the customer has no way to know
 // better. Only a provider that declares none falls back to the input.
-//
-// Without this the scope reached the exchange only when a customer typed it
-// into the create dialog, so a provider whose token endpoint REQUIRES one
-// (OVHcloud answers invalid_scope with no scope at all) could never connect.
+// A token endpoint may require one: OVHcloud answers invalid_scope with none.
 func clientCredentialsScope(
 	registry *provider.Registry,
 	p coredata.ConnectorProvider,

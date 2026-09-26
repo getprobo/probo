@@ -79,9 +79,6 @@ func TestOVHcloudRoles(t *testing.T) {
 func TestOVHcloudIsAdmin(t *testing.T) {
 	t.Parallel()
 
-	// The role, not the group name, carries the privilege: a group called
-	// "Billing Admin" whose role is REGULAR must not read as an admin, and a
-	// group with an unremarkable name whose role is ADMIN must.
 	roles := map[string]string{
 		"ADMIN":         "ADMIN",
 		"Billing Admin": "REGULAR",
@@ -101,9 +98,6 @@ func TestOVHcloudIsAdmin(t *testing.T) {
 		{"admin via one of several groups", ovhcloudUser{Groups: []string{"DEFAULT", "ADMIN"}}, new(true)},
 		{"every group resolved and none is admin", ovhcloudUser{Groups: []string{"DEFAULT", "UNPRIVILEGED"}}, new(false)},
 		{"no groups at all is a confirmed non-admin", ovhcloudUser{}, new(false)},
-		// An unresolvable group means the answer is unknown, not "no". Showing
-		// a reviewer a cleared row for an identity we could not evaluate is
-		// the one failure mode worth being unable to express.
 		{"unknown group leaves it unknown", ovhcloudUser{Groups: []string{"ghost"}}, nil},
 		{"admin wins over an unresolvable sibling", ovhcloudUser{Groups: []string{"ghost", "ADMIN"}}, new(true)},
 	} {
@@ -144,8 +138,6 @@ func TestOVHcloudServiceAccountRecord(t *testing.T) {
 	assert.Equal(t, "ci-deploy", got.FullName)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, got.AccountType)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodServiceAccount, got.AuthMethod)
-	// Privilege comes from IAM policy the API does not expose per client, so
-	// it must stay unknown rather than be asserted false.
 	assert.Nil(t, got.IsAdmin)
 	assert.Empty(t, got.Email)
 
@@ -167,8 +159,6 @@ func TestOVHcloudFederatedRecord(t *testing.T) {
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, got.AuthMethod)
 	assert.Equal(t, coredata.MFAStatusEnabled, got.MFAStatus)
 	require.NotNil(t, got.LastLogin)
-	// OVHcloud does not manage federated users, so nothing beyond the sign-in
-	// evidence is knowable — asserting a status would be invention.
 	assert.Nil(t, got.Active)
 	assert.Nil(t, got.IsAdmin)
 
@@ -319,13 +309,8 @@ func TestOVHcloudOwnerRecord(t *testing.T) {
 	assert.Nil(t, got.LastLogin)
 }
 
-// TestOVHcloudDriver exercises the whole merge against a real account: the
-// owner comes from /me, the (empty) local-user list from /me/identity/user,
-// the role map from /me/identity/group, and the sign-in from /me/logs/audit.
-//
-// The fixture account has no local users, so this asserts the owner-synthesis
-// path only. Re-record with local users present to cover ovhcloudUserRecord
-// end to end; until then that mapping is covered by the unit tests above.
+// TestOVHcloudDriver exercises the merge against a recorded account. It has no
+// local users, so only the owner-synthesis path is covered here.
 func TestOVHcloudDriver(t *testing.T) {
 	t.Parallel()
 
@@ -467,14 +452,10 @@ func rewriteOVHcloudBody(i *cassette.Interaction) error {
 	return nil
 }
 
-// assertNoRealOVHcloudIdentifiers refuses to save an interaction that still
-// carries a real identifier, on EVERY path including a non-JSON body.
-//
-// Checking only the rewrite map is not enough: it is hand-maintained, so an
-// identifier minted after it was written passes straight through. That is not
-// hypothetical — the staging OAuth client was created later and leaked into a
-// re-record. So the shapes are matched structurally as well, and a value only
-// passes when it is one of the synthetic stand-ins.
+// assertNoRealOVHcloudIdentifiers refuses to save an interaction still carrying
+// a real identifier, on every path including a non-JSON body. The rewrite map
+// alone is not enough — it is hand-maintained and an identifier minted later
+// passes through — so shapes are matched structurally too.
 func assertNoRealOVHcloudIdentifiers(i *cassette.Interaction) error {
 	haystack := i.Response.Body + " " + i.Request.URL
 	for _, values := range i.Response.Headers {
@@ -563,19 +544,10 @@ func replaceOVHcloudIdentifiers(node any) any {
 	}
 }
 
-// TestOVHcloudDriverPopulatedAccount covers what the recorded cassette cannot.
-//
-// The fixture account Probo records against holds no local users, so the
-// recorded cassette cannot reach the per-user fan-out, a USER-keyed sign-in or
-// a federated record. It does now carry a real ACCOUNT sign-in, which
-// TestOVHcloudDriver asserts, so the audit-log reduction itself is covered
-// against wire data; what is missing here is the per-identity join.
-//
-// This cassette is therefore hand-authored rather than recorded. Its shapes come
-// from OVHcloud's published API schema and from the responses the recorded
-// cassette does contain, but the populated user details have never been seen on
-// the wire. Re-record against an account with real local users when one exists,
-// and treat this as covering the merge logic rather than the payload shape.
+// TestOVHcloudDriverPopulatedAccount covers the per-identity join the recorded
+// cassette cannot reach: the fixture account has no local users and no
+// federated sign-in. Its cassette is hand-authored from OVHcloud's published
+// schema, so it pins the merge logic, not the payload shape.
 func TestOVHcloudDriverPopulatedAccount(t *testing.T) {
 	t.Parallel()
 
