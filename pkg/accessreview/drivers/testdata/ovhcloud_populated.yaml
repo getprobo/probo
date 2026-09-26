@@ -326,3 +326,153 @@ interactions:
         status: 200 OK
         code: 200
         duration: 1ms
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/credential
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[900001,900002]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 14
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/application
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[7001,7002]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 15
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/credential/900001
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"credentialId":900001,"applicationId":7001,"status":"expired","creation":"2025-01-05T09:00:00+01:00","expiration":"2025-02-05T09:00:00+01:00","lastUse":"2025-01-30T14:20:00+01:00","ovhSupport":false,"allowedIPs":null,"rules":[{"method":"GET","path":"/*"}]}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 16
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/credential/900002
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"credentialId":900002,"applicationId":7002,"status":"validated","creation":"2026-08-01T09:00:00+02:00","expiration":null,"lastUse":"2026-09-20T08:00:00+02:00","ovhSupport":true,"allowedIPs":null,"rules":[{"method":"GET","path":"/*"},{"method":"POST","path":"/*"}]}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 17
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/application/7001
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"applicationId":7001,"name":"terraform","description":"IaC pipeline","status":"active","applicationKey":"0000000000000001"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 18
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/application/7002
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"applicationId":7002,"name":"OVHcloud support","description":"support session","status":"active","applicationKey":"0000000000000002"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms

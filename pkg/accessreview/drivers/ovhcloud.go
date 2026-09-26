@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,10 +36,11 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// maxOVHcloudUsers bounds the per-user fan-out below. OVHcloud lists local
-// users as bare logins, so each one costs a request; the cap keeps a runaway
-// account from issuing unbounded calls.
-const maxOVHcloudUsers = 2000
+// maxOVHcloudCollection bounds every per-item fan-out below. OVHcloud lists
+// local users, OAuth2 clients and API credentials as bare identifiers, so each
+// one costs a request; the cap keeps a runaway account from issuing unbounded
+// calls.
+const maxOVHcloudCollection = 2000
 
 // ovhcloudFanout is the number of concurrent per-user detail requests.
 const ovhcloudFanout = 8
@@ -81,6 +83,35 @@ type (
 		Name     string  `json:"name"`
 		Flow     string  `json:"flow"`
 		Identity *string `json:"identity"`
+	}
+
+	// ovhcloudAPIApplication is api.Application, the registration a classic
+	// API credential belongs to. It carries the only human-readable name a
+	// credential has.
+	ovhcloudAPIApplication struct {
+		ApplicationID int64  `json:"applicationId"`
+		Name          string `json:"name"`
+		Description   string `json:"description"`
+		Status        string `json:"status"`
+	}
+
+	// ovhcloudAPICredential is api.Credential: one issued consumer key, which
+	// is standing API access to the account independent of any IAM identity.
+	ovhcloudAPICredential struct {
+		CredentialID  int64      `json:"credentialId"`
+		ApplicationID int64      `json:"applicationId"`
+		Status        string     `json:"status"`
+		Creation      *time.Time `json:"creation"`
+		Expiration    *time.Time `json:"expiration"`
+		LastUse       *time.Time `json:"lastUse"`
+		// OVHSupport marks a credential OVHcloud's own support team created
+		// rather than the customer, which is third-party access a review has
+		// to surface.
+		OVHSupport bool `json:"ovhSupport"`
+		Rules      []struct {
+			Method string `json:"method"`
+			Path   string `json:"path"`
+		} `json:"rules"`
 	}
 
 	// ovhcloudAuditLog is audit.Log, narrowed to the LOGIN_SUCCESS fields.
@@ -140,7 +171,7 @@ func NewOVHcloudDriver(httpClient *http.Client, baseURL string) *OVHcloudDriver 
 
 // ListAccounts returns every identity that can reach the OVHcloud account.
 //
-// Four sources are merged, because no single endpoint holds the roster:
+// Five sources are merged, because no single endpoint holds the roster:
 //   - /me/identity/user lists LOCAL users only, and only as bare logins, so
 //     each one needs its own detail request.
 //   - /me holds the account owner (the NIC handle), who is a distinct identity
@@ -149,6 +180,10 @@ func NewOVHcloudDriver(httpClient *http.Client, baseURL string) *OVHcloudDriver 
 //   - /me/api/oauth2/client holds the service accounts. They authenticate
 //     machine-to-machine against the same account, so omitting them would hide
 //     standing non-human access.
+//   - /me/api/credential holds the classic API credentials, which predate IAM
+//     and appear in no identity endpoint. Each is a consumer key that can call
+//     the API on its own, and one may have been created by OVHcloud support
+//     rather than by the customer.
 //   - /me/logs/audit supplies last-login, the MFA actually used, and how each
 //     identity authenticated. It is also the ONLY place a federated (SSO) user
 //     appears: OVHcloud does not manage them and maps them to groups rather
@@ -182,7 +217,12 @@ func (d *OVHcloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 		return nil, err
 	}
 
-	records := make([]AccountRecord, 0, len(users)+len(serviceAccounts)+1)
+	apiCredentials, err := d.fetchAPICredentials(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]AccountRecord, 0, len(users)+len(serviceAccounts)+len(apiCredentials)+1)
 	records = append(records, ovhcloudOwnerRecord(owner, signIns[ovhcloudOwnerSignInKey]))
 
 	for _, u := range users {
@@ -192,6 +232,8 @@ func (d *OVHcloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	for _, sa := range serviceAccounts {
 		records = append(records, ovhcloudServiceAccountRecord(sa))
 	}
+
+	records = append(records, apiCredentials...)
 
 	// Federated identities exist only as audit evidence, so they are emitted
 	// from what signed in rather than from a roster endpoint. Sorted, because
@@ -234,8 +276,8 @@ func (d *OVHcloudDriver) fetchUsers(ctx context.Context) ([]ovhcloudUser, error)
 		return nil, fmt.Errorf("cannot list ovhcloud identity users: %w", err)
 	}
 
-	if len(logins) > maxOVHcloudUsers {
-		return nil, fmt.Errorf("cannot list ovhcloud identity users: %d exceeds the supported maximum of %d", len(logins), maxOVHcloudUsers)
+	if len(logins) > maxOVHcloudCollection {
+		return nil, fmt.Errorf("cannot list ovhcloud identity users: %d exceeds the supported maximum of %d", len(logins), maxOVHcloudCollection)
 	}
 
 	users := make([]ovhcloudUser, len(logins))
@@ -278,8 +320,8 @@ func (d *OVHcloudDriver) fetchServiceAccounts(ctx context.Context) ([]ovhcloudOA
 		return nil, fmt.Errorf("cannot list ovhcloud oauth2 clients: %w", err)
 	}
 
-	if len(ids) > maxOVHcloudUsers {
-		return nil, fmt.Errorf("cannot list ovhcloud oauth2 clients: %d exceeds the supported maximum of %d", len(ids), maxOVHcloudUsers)
+	if len(ids) > maxOVHcloudCollection {
+		return nil, fmt.Errorf("cannot list ovhcloud oauth2 clients: %d exceeds the supported maximum of %d", len(ids), maxOVHcloudCollection)
 	}
 
 	clients := make([]ovhcloudOAuth2Client, len(ids))
@@ -307,6 +349,103 @@ func (d *OVHcloudDriver) fetchServiceAccounts(ctx context.Context) ([]ovhcloudOA
 	return slices.DeleteFunc(clients, func(c ovhcloudOAuth2Client) bool {
 		return c.Flow != "CLIENT_CREDENTIALS"
 	}), nil
+}
+
+// fetchAPICredentials lists the classic API credentials issued on the account.
+// These predate IAM and are invisible to /me/identity/user: each one is a
+// consumer key that can call the API on its own, so a roster that omits them
+// misses standing access, including any credential OVHcloud support holds.
+//
+// A credential carries no name of its own, so the application it belongs to
+// supplies one. Applications are fetched once and shared, since several
+// credentials commonly belong to the same application.
+func (d *OVHcloudDriver) fetchAPICredentials(ctx context.Context) ([]AccountRecord, error) {
+	var ids []int64
+	if err := d.get(ctx, &ids, "me", "api", "credential"); err != nil {
+		return nil, fmt.Errorf("cannot list ovhcloud api credentials: %w", err)
+	}
+
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	if len(ids) > maxOVHcloudCollection {
+		return nil, fmt.Errorf("cannot list ovhcloud api credentials: %d exceeds the supported maximum of %d", len(ids), maxOVHcloudCollection)
+	}
+
+	applications, err := d.fetchAPIApplications(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	credentials := make([]ovhcloudAPICredential, len(ids))
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(ovhcloudFanout)
+
+	for i, id := range ids {
+		group.Go(func() error {
+			var c ovhcloudAPICredential
+			if err := d.get(groupCtx, &c, "me", "api", "credential", strconv.FormatInt(id, 10)); err != nil {
+				return fmt.Errorf("cannot fetch ovhcloud api credential: %w", err)
+			}
+
+			credentials[i] = c
+
+			return nil
+		})
+	}
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	records := make([]AccountRecord, 0, len(credentials))
+	for _, c := range credentials {
+		records = append(records, ovhcloudAPICredentialRecord(c, applications[c.ApplicationID]))
+	}
+
+	return records, nil
+}
+
+func (d *OVHcloudDriver) fetchAPIApplications(ctx context.Context) (map[int64]ovhcloudAPIApplication, error) {
+	var ids []int64
+	if err := d.get(ctx, &ids, "me", "api", "application"); err != nil {
+		return nil, fmt.Errorf("cannot list ovhcloud api applications: %w", err)
+	}
+
+	if len(ids) > maxOVHcloudCollection {
+		return nil, fmt.Errorf("cannot list ovhcloud api applications: %d exceeds the supported maximum of %d", len(ids), maxOVHcloudCollection)
+	}
+
+	applications := make([]ovhcloudAPIApplication, len(ids))
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(ovhcloudFanout)
+
+	for i, id := range ids {
+		group.Go(func() error {
+			var a ovhcloudAPIApplication
+			if err := d.get(groupCtx, &a, "me", "api", "application", strconv.FormatInt(id, 10)); err != nil {
+				return fmt.Errorf("cannot fetch ovhcloud api application: %w", err)
+			}
+
+			applications[i] = a
+
+			return nil
+		})
+	}
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	byID := make(map[int64]ovhcloudAPIApplication, len(applications))
+	for _, a := range applications {
+		byID[a.ApplicationID] = a
+	}
+
+	return byID, nil
 }
 
 // fetchGroupRoles maps each group name to the role it confers. Roles are the
@@ -502,6 +641,43 @@ func ovhcloudFederatedRecord(login string, signIn ovhcloudSignIn) AccountRecord 
 
 	if !signIn.lastLogin.IsZero() {
 		record.LastLogin = &signIn.lastLogin
+	}
+
+	return record
+}
+
+// ovhcloudAPICredentialRecord describes one classic API credential. Its
+// privilege is the access rules it was granted, which is the only thing
+// OVHcloud says about what it can reach, so they stand in for a role.
+func ovhcloudAPICredentialRecord(c ovhcloudAPICredential, app ovhcloudAPIApplication) AccountRecord {
+	// validated is the only state that can still call the API. An expired or
+	// refused credential is kept in the roster so a reviewer sees it existed.
+	active := c.Status == "validated"
+
+	roles := make([]string, 0, len(c.Rules)+1)
+	if c.OVHSupport {
+		// The customer did not create this one. Say so where a reviewer reads
+		// the row rather than burying it.
+		roles = append(roles, "Created by OVHcloud support")
+	}
+
+	for _, rule := range c.Rules {
+		roles = append(roles, strings.TrimSpace(rule.Method+" "+rule.Path))
+	}
+
+	slices.Sort(roles)
+
+	record := AccountRecord{
+		FullName:    app.Name,
+		JobTitle:    app.Description,
+		Roles:       slices.Compact(roles),
+		Active:      &active,
+		MFAStatus:   coredata.MFAStatusUnknown,
+		AuthMethod:  coredata.AccessReviewEntryAuthMethodAPIKey,
+		AccountType: coredata.AccessReviewEntryAccountTypeServiceAccount,
+		CreatedAt:   c.Creation,
+		LastLogin:   c.LastUse,
+		ExternalID:  strconv.FormatInt(c.CredentialID, 10),
 	}
 
 	return record
