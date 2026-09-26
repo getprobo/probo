@@ -141,6 +141,11 @@ func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.C
 	return types.NewDiscoveredConnectorAccounts(accounts), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Connector is the resolver for the connector field.
 func (r *connectorAccountResolver) Connector(ctx context.Context, obj *types.ConnectorAccount) (*types.Connector, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
@@ -478,10 +483,12 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 
 	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflictf(ctx, "connector is in use")
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		panic(fmt.Errorf("cannot delete connector: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteConnectorPayload{

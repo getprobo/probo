@@ -238,7 +238,7 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 		ActionThirdPartyGet, ActionThirdPartyList, ActionThirdPartyUpdate,
 		ActionFileGet,
 		ActionElectronicSignatureGet,
-		ActionSlackConnectionList, ActionConnectorList,
+		ActionSlackConnectionList, ActionConnectorList, ActionConnectorGet,
 		ActionConnectorInitiate, ActionConnectorDelete,
 	).WithSID("compliance-portal-related-access").When(organizationCondition),
 ).WithDescription("Access required to manage the compliance portal and related entity visibility")

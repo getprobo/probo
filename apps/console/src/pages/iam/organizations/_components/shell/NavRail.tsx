@@ -110,6 +110,7 @@ function isSettingsVisible(
     || permissions.canGetContext
     || permissions.canListWebhookSubscriptions
     || (slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack))
+    || permissions.canListConnectors
     || permissions.canListMembers
     || permissions.canListAuditLogEntries;
 }
@@ -245,6 +246,12 @@ function settingsHref(
   }
   if (permissions.canListMembers) {
     return groupHref(organizationId, "settings", "users");
+  }
+  if (permissions.canListAuditLogEntries) {
+    return groupHref(organizationId, "settings", "audit-log");
+  }
+  if (permissions.canListConnectors) {
+    return groupHref(organizationId, "settings", "integrations");
   }
   return groupHref(organizationId, "settings", "audit-log");
 }
