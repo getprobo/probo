@@ -104,7 +104,7 @@ export function OAuthTokensPage(props: {
   const totalCount = data.oauth2AccessTokens.totalCount;
 
   return (
-    <div className="space-y-6 w-full py-6">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-8 py-8">
       <PageHeader
         title={t("oauthTokensPage.title")}
         description={t("oauthTokensPage.description")}
@@ -171,6 +171,6 @@ export function OAuthTokensPage(props: {
               )}
             </Card>
           )}
-    </div>
+    </main>
   );
 }

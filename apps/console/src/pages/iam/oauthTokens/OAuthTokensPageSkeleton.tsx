@@ -20,7 +20,7 @@
 
 export default function OAuthTokensPageSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="mx-auto flex w-full max-w-5xl animate-pulse flex-col gap-6 px-8 py-8">
       <div className="space-y-2">
         <div className="h-8 w-48 rounded bg-bg-subtle" />
         <div className="h-4 w-96 max-w-full rounded bg-bg-subtle" />
