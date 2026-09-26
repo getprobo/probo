@@ -353,6 +353,11 @@ func TestOVHcloudDriver(t *testing.T) {
 	require.NotNil(t, owner.IsAdmin)
 	assert.True(t, *owner.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
+	// The recorded audit log holds a real owner sign-in, so the reduction and
+	// the MFA mapping are exercised against wire data rather than a fixture.
+	require.NotNil(t, owner.LastLogin)
+	assert.Equal(t, coredata.MFAStatusEnabled, owner.MFAStatus)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, owner.AuthMethod)
 
 	service := records[1]
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, service.AccountType)
@@ -400,10 +405,27 @@ func sanitizeOVHcloud(i *cassette.Interaction) error {
 	// commit them.
 	i.Request.URL = rewriteOVHcloudIdentifiers(i.Request.URL)
 
+	// X-Iplb-Request-Id opens with the caller's public IP in hex
+	// (53C7FE47 is 83.199.254.71), so the body sanitiser scrubbing the
+	// decimal form is not enough. These headers carry nothing a replay needs.
+	for _, header := range []string{"X-Iplb-Request-Id", "X-Iplb-Instance", "X-Ovh-Queryid"} {
+		i.Response.Headers.Del(header)
+	}
+
+	if err := rewriteOVHcloudBody(i); err != nil {
+		return err
+	}
+
+	return assertNoRealOVHcloudIdentifiers(i)
+}
+
+// rewriteOVHcloudBody substitutes identifiers inside a JSON body and scrubs the
+// account holder's billing record. A non-JSON body is left alone, but it is
+// still verified by the caller.
+func rewriteOVHcloudBody(i *cassette.Interaction) error {
 	var body any
 	if err := json.Unmarshal([]byte(i.Response.Body), &body); err != nil {
-		// Not JSON: nothing to scrub, and the recorder must not fail on it.
-		return nil //nolint:nilerr
+		return nil //nolint:nilerr // not JSON: nothing to rewrite, still verified below
 	}
 
 	// Identifiers leak through free-form strings (URNs above all), so they are
@@ -442,20 +464,30 @@ func sanitizeOVHcloud(i *cassette.Interaction) error {
 
 	i.Response.Body = string(out)
 
-	// Refuse to save an interaction that still carries a real identifier.
-	//
-	// Checking only the rewrite map is not enough: it is hand-maintained, so an
-	// identifier minted after it was written passes straight through. That is
-	// not hypothetical — the staging OAuth client was created later and leaked
-	// into a re-record. So the shapes are matched structurally as well, and a
-	// value only passes when it is one of the synthetic stand-ins.
+	return nil
+}
+
+// assertNoRealOVHcloudIdentifiers refuses to save an interaction that still
+// carries a real identifier, on EVERY path including a non-JSON body.
+//
+// Checking only the rewrite map is not enough: it is hand-maintained, so an
+// identifier minted after it was written passes straight through. That is not
+// hypothetical — the staging OAuth client was created later and leaked into a
+// re-record. So the shapes are matched structurally as well, and a value only
+// passes when it is one of the synthetic stand-ins.
+func assertNoRealOVHcloudIdentifiers(i *cassette.Interaction) error {
+	haystack := i.Response.Body + " " + i.Request.URL
+	for _, values := range i.Response.Headers {
+		haystack += " " + strings.Join(values, " ")
+	}
+
 	for real := range ovhcloudCassetteRewrites {
-		if strings.Contains(i.Response.Body, real) || strings.Contains(i.Request.URL, real) {
+		if strings.Contains(haystack, real) {
 			return fmt.Errorf("refusing to save ovhcloud cassette: a known real identifier survived sanitizing")
 		}
 	}
 
-	for _, candidate := range ovhcloudIdentifierShapes.FindAllString(i.Response.Body+" "+i.Request.URL, -1) {
+	for _, candidate := range ovhcloudIdentifierShapes.FindAllString(haystack, -1) {
 		if !ovhcloudSyntheticIdentifier(candidate) {
 			return fmt.Errorf("refusing to save ovhcloud cassette: an unrecognised real identifier survived sanitizing (add it to ovhcloudCassetteRewrites)")
 		}
@@ -482,15 +514,14 @@ var ovhcloudCassetteRewrites = map[string]string{
 
 // ovhcloudIdentifierShapes matches the identifier formats OVHcloud mints that
 // would identify a real account: an OAuth2 client id and a NIC handle.
-var ovhcloudIdentifierShapes = regexp.MustCompile(`EU\.[0-9a-f]{16}|[a-z]{2}[0-9]{6}-ovh`)
+// A bare 16-hex run matches an application key; an IPv4 pattern is deliberately
+// NOT matched, because a browser version string ("Chrome/152.0.0.0") in a
+// recorded user agent looks identical and would fail every save.
+var ovhcloudIdentifierShapes = regexp.MustCompile(`EU\.[0-9a-f]{16}|[a-z]{2}[0-9]{1,8}-ovh|\b[0-9a-f]{16}\b`)
 
 // ovhcloudSyntheticIdentifier reports whether a matched identifier is one of
 // the stand-ins this file substitutes, rather than a real value.
 func ovhcloudSyntheticIdentifier(v string) bool {
-	if v == "ab1234-ovh" {
-		return true
-	}
-
 	for _, synthetic := range ovhcloudCassetteRewrites {
 		if v == synthetic {
 			return true
@@ -534,11 +565,11 @@ func replaceOVHcloudIdentifiers(node any) any {
 
 // TestOVHcloudDriverPopulatedAccount covers what the recorded cassette cannot.
 //
-// The fixture account Probo records against holds no local users and has never
-// been signed into, so the recorded cassette exercises neither the per-user
-// fan-out nor the audit-log reduction: a coverage run showed fetchSignIns, the
-// errgroup body and the federated emission at zero. Those paths run on every
-// real customer's first sync.
+// The fixture account Probo records against holds no local users, so the
+// recorded cassette cannot reach the per-user fan-out, a USER-keyed sign-in or
+// a federated record. It does now carry a real ACCOUNT sign-in, which
+// TestOVHcloudDriver asserts, so the audit-log reduction itself is covered
+// against wire data; what is missing here is the per-identity join.
 //
 // This cassette is therefore hand-authored rather than recorded. Its shapes come
 // from OVHcloud's published API schema and from the responses the recorded
@@ -642,4 +673,108 @@ func TestOVHcloudDriverPopulatedAccount(t *testing.T) {
 	// Federated records are sorted, so the roster does not reorder per sync.
 	assert.Equal(t, "CORP\\erin", records[7].ExternalID)
 	assert.Equal(t, "dave@corp.example.com", records[8].ExternalID)
+}
+
+func TestOVHcloudAuditLogin(t *testing.T) {
+	t.Parallel()
+
+	// auth.User.login is the login SUFFIX, and a local user signs in as
+	// "<nichandle>/<suffix>", so the audit log may name either form. The join
+	// has to land on the suffix whichever arrives.
+	for _, tt := range []struct {
+		name, login, nichandle, want string
+	}{
+		{"prefixed with the handle", "ab1234-ovh/alice", "ab1234-ovh", "alice"},
+		{"already a bare suffix", "alice", "ab1234-ovh", "alice"},
+		{"a different handle is not stripped", "zz9999-ovh/alice", "ab1234-ovh", "zz9999-ovh/alice"},
+		{"no handle known", "ab1234-ovh/alice", "", "ab1234-ovh/alice"},
+		{"a federated subject is left alone", "alice@corp.example.com", "ab1234-ovh", "alice@corp.example.com"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, ovhcloudAuditLogin(tt.login, tt.nichandle))
+		})
+	}
+}
+
+func TestOVHcloudAPICredentialRecord(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 9, 26, 12, 0, 0, 0, time.UTC)
+	past := now.Add(-24 * time.Hour)
+	future := now.Add(24 * time.Hour)
+	app := ovhcloudAPIApplication{ApplicationID: 42, Name: "terraform", Description: "IaC", Status: "active"}
+
+	t.Run("validated and unexpired is active", func(t *testing.T) {
+		t.Parallel()
+
+		got := ovhcloudAPICredentialRecord(ovhcloudAPICredential{
+			CredentialID: 1, ApplicationID: 42, Status: "validated", Expiration: &future,
+		}, app, now)
+
+		require.NotNil(t, got.Active)
+		assert.True(t, *got.Active)
+		assert.Equal(t, "terraform", got.FullName)
+		assert.Equal(t, "1", got.ExternalID)
+	})
+
+	t.Run("a passed expiry is inactive even while validated", func(t *testing.T) {
+		t.Parallel()
+
+		got := ovhcloudAPICredentialRecord(ovhcloudAPICredential{
+			CredentialID: 2, Status: "validated", Expiration: &past,
+		}, app, now)
+
+		require.NotNil(t, got.Active)
+		assert.False(t, *got.Active)
+	})
+
+	t.Run("no expiry means it never expires", func(t *testing.T) {
+		t.Parallel()
+
+		got := ovhcloudAPICredentialRecord(ovhcloudAPICredential{CredentialID: 3, Status: "validated"}, app, now)
+
+		require.NotNil(t, got.Active)
+		assert.True(t, *got.Active)
+	})
+
+	t.Run("a blocked application deactivates its credential", func(t *testing.T) {
+		t.Parallel()
+
+		blocked := ovhcloudAPIApplication{ApplicationID: 42, Name: "terraform", Status: "blocked"}
+		got := ovhcloudAPICredentialRecord(ovhcloudAPICredential{CredentialID: 4, Status: "validated"}, blocked, now)
+
+		require.NotNil(t, got.Active)
+		assert.False(t, *got.Active)
+	})
+
+	t.Run("an unresolved application still names the row", func(t *testing.T) {
+		t.Parallel()
+
+		// A consumer key granted to somebody else's application: the reviewer
+		// must see which application rather than a blank the console renders
+		// as "N/A".
+		got := ovhcloudAPICredentialRecord(ovhcloudAPICredential{
+			CredentialID: 5, ApplicationID: 987, Status: "validated",
+		}, ovhcloudAPIApplication{}, now)
+
+		assert.Equal(t, "Application 987", got.FullName)
+		require.NotNil(t, got.Active)
+		assert.True(t, *got.Active, "an unknown application must not silently deactivate the credential")
+	})
+
+	t.Run("a support credential leads its roles with that fact", func(t *testing.T) {
+		t.Parallel()
+
+		got := ovhcloudAPICredentialRecord(ovhcloudAPICredential{
+			CredentialID: 6, Status: "validated", OVHSupport: true,
+			Rules: []struct {
+				Method string `json:"method"`
+				Path   string `json:"path"`
+			}{{Method: "GET", Path: "/*"}},
+		}, app, now)
+
+		assert.Equal(t, []string{"Created by OVHcloud support", "GET /*"}, got.Roles)
+	})
 }

@@ -197,7 +197,12 @@ func (d *OVHcloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 		return nil, err
 	}
 
-	signIns, err := d.fetchSignIns(ctx)
+	owner, err := d.fetchOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	signIns, err := d.fetchSignIns(ctx, owner.Nichandle)
 	if err != nil {
 		return nil, err
 	}
@@ -208,11 +213,6 @@ func (d *OVHcloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	}
 
 	serviceAccounts, err := d.fetchServiceAccounts(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	owner, err := d.fetchOwner(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -269,35 +269,30 @@ func (d *OVHcloudDriver) fetchOwner(ctx context.Context) (ovhcloudAccount, error
 	return account, nil
 }
 
-// fetchUsers lists local users and resolves each one's detail concurrently.
-func (d *OVHcloudDriver) fetchUsers(ctx context.Context) ([]ovhcloudUser, error) {
-	var logins []string
-	if err := d.get(ctx, &logins, "me", "identity", "user"); err != nil {
-		return nil, fmt.Errorf("cannot list ovhcloud identity users: %w", err)
+// ovhcloudFetchEach resolves one detail document per identifier, bounded and
+// cancelling its siblings on the first failure. OVHcloud lists every collection
+// as bare identifiers, so each of them needs this shape; a partial result must
+// never be returned as if it were the whole roster.
+func ovhcloudFetchEach[T any](ctx context.Context, d *OVHcloudDriver, noun string, ids []string, segments ...string) ([]T, error) {
+	if len(ids) > maxOVHcloudCollection {
+		return nil, fmt.Errorf("cannot list ovhcloud %s: %d exceeds the supported maximum of %d", noun, len(ids), maxOVHcloudCollection)
 	}
 
-	if len(logins) > maxOVHcloudCollection {
-		return nil, fmt.Errorf("cannot list ovhcloud identity users: %d exceeds the supported maximum of %d", len(logins), maxOVHcloudCollection)
-	}
+	out := make([]T, len(ids))
 
-	users := make([]ovhcloudUser, len(logins))
-
-	// errgroup bounds goroutine CREATION, not just requests in flight, and
-	// cancels the siblings as soon as one detail fetch fails — a partial
-	// roster must never be returned as if it were complete.
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.SetLimit(ovhcloudFanout)
 
-	for i, login := range logins {
+	for i, id := range ids {
 		group.Go(func() error {
-			var u ovhcloudUser
-			if err := d.get(groupCtx, &u, "me", "identity", "user", login); err != nil {
-				return fmt.Errorf("cannot fetch ovhcloud identity user: %w", err)
+			path := append(slices.Clone(segments), id)
+
+			var v T
+			if err := d.get(groupCtx, &v, path...); err != nil {
+				return fmt.Errorf("cannot fetch ovhcloud %s: %w", noun, err)
 			}
 
-			// The detail payload omits the login it was addressed by.
-			u.Login = login
-			users[i] = u
+			out[i] = v
 
 			return nil
 		})
@@ -305,6 +300,60 @@ func (d *OVHcloudDriver) fetchUsers(ctx context.Context) ([]ovhcloudUser, error)
 
 	if err := group.Wait(); err != nil {
 		return nil, err
+	}
+
+	return out, nil
+}
+
+// ovhcloudFetchEachSub is ovhcloudFetchEach for a sub-resource hanging off each
+// identifier, e.g. /me/api/credential/{id}/application.
+func ovhcloudFetchEachSub[T any](ctx context.Context, d *OVHcloudDriver, noun, sub string, ids []string, segments ...string) ([]T, error) {
+	if len(ids) > maxOVHcloudCollection {
+		return nil, fmt.Errorf("cannot list ovhcloud %s: %d exceeds the supported maximum of %d", noun, len(ids), maxOVHcloudCollection)
+	}
+
+	out := make([]T, len(ids))
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(ovhcloudFanout)
+
+	for i, id := range ids {
+		group.Go(func() error {
+			path := append(slices.Clone(segments), id, sub)
+
+			var v T
+			if err := d.get(groupCtx, &v, path...); err != nil {
+				return fmt.Errorf("cannot fetch ovhcloud %s: %w", noun, err)
+			}
+
+			out[i] = v
+
+			return nil
+		})
+	}
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+// fetchUsers lists local users and resolves each one's detail concurrently.
+func (d *OVHcloudDriver) fetchUsers(ctx context.Context) ([]ovhcloudUser, error) {
+	var logins []string
+	if err := d.get(ctx, &logins, "me", "identity", "user"); err != nil {
+		return nil, fmt.Errorf("cannot list ovhcloud identity users: %w", err)
+	}
+
+	users, err := ovhcloudFetchEach[ovhcloudUser](ctx, d, "identity users", logins, "me", "identity", "user")
+	if err != nil {
+		return nil, err
+	}
+
+	// The detail payload omits the login it was addressed by.
+	for i := range users {
+		users[i].Login = logins[i]
 	}
 
 	return users, nil
@@ -320,29 +369,8 @@ func (d *OVHcloudDriver) fetchServiceAccounts(ctx context.Context) ([]ovhcloudOA
 		return nil, fmt.Errorf("cannot list ovhcloud oauth2 clients: %w", err)
 	}
 
-	if len(ids) > maxOVHcloudCollection {
-		return nil, fmt.Errorf("cannot list ovhcloud oauth2 clients: %d exceeds the supported maximum of %d", len(ids), maxOVHcloudCollection)
-	}
-
-	clients := make([]ovhcloudOAuth2Client, len(ids))
-
-	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(ovhcloudFanout)
-
-	for i, id := range ids {
-		group.Go(func() error {
-			var c ovhcloudOAuth2Client
-			if err := d.get(groupCtx, &c, "me", "api", "oauth2", "client", id); err != nil {
-				return fmt.Errorf("cannot fetch ovhcloud oauth2 client: %w", err)
-			}
-
-			clients[i] = c
-
-			return nil
-		})
-	}
-
-	if err := group.Wait(); err != nil {
+	clients, err := ovhcloudFetchEach[ovhcloudOAuth2Client](ctx, d, "oauth2 clients", ids, "me", "api", "oauth2", "client")
+	if err != nil {
 		return nil, err
 	}
 
@@ -356,9 +384,13 @@ func (d *OVHcloudDriver) fetchServiceAccounts(ctx context.Context) ([]ovhcloudOA
 // consumer key that can call the API on its own, so a roster that omits them
 // misses standing access, including any credential OVHcloud support holds.
 //
-// A credential carries no name of its own, so the application it belongs to
-// supplies one. Applications are fetched once and shared, since several
-// credentials commonly belong to the same application.
+// A credential carries no name of its own, so the application it was granted to
+// supplies one. That application is resolved through the credential itself
+// rather than through /me/api/application, because a consumer key is commonly
+// granted to an application somebody ELSE registered, which the account's own
+// application list does not contain. Those externally held keys are precisely
+// the ones a review most needs labelled. The per-credential route also returns
+// the application key redacted, which the account-wide one does not.
 func (d *OVHcloudDriver) fetchAPICredentials(ctx context.Context) ([]AccountRecord, error) {
 	var ids []int64
 	if err := d.get(ctx, &ids, "me", "api", "credential"); err != nil {
@@ -369,83 +401,27 @@ func (d *OVHcloudDriver) fetchAPICredentials(ctx context.Context) ([]AccountReco
 		return nil, nil
 	}
 
-	if len(ids) > maxOVHcloudCollection {
-		return nil, fmt.Errorf("cannot list ovhcloud api credentials: %d exceeds the supported maximum of %d", len(ids), maxOVHcloudCollection)
+	keys := make([]string, len(ids))
+	for i, id := range ids {
+		keys[i] = strconv.FormatInt(id, 10)
 	}
 
-	applications, err := d.fetchAPIApplications(ctx)
+	credentials, err := ovhcloudFetchEach[ovhcloudAPICredential](ctx, d, "api credentials", keys, "me", "api", "credential")
 	if err != nil {
 		return nil, err
 	}
 
-	credentials := make([]ovhcloudAPICredential, len(ids))
-
-	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(ovhcloudFanout)
-
-	for i, id := range ids {
-		group.Go(func() error {
-			var c ovhcloudAPICredential
-			if err := d.get(groupCtx, &c, "me", "api", "credential", strconv.FormatInt(id, 10)); err != nil {
-				return fmt.Errorf("cannot fetch ovhcloud api credential: %w", err)
-			}
-
-			credentials[i] = c
-
-			return nil
-		})
-	}
-
-	if err := group.Wait(); err != nil {
+	applications, err := ovhcloudFetchEachSub[ovhcloudAPIApplication](ctx, d, "api credential applications", "application", keys, "me", "api", "credential")
+	if err != nil {
 		return nil, err
 	}
 
 	records := make([]AccountRecord, 0, len(credentials))
-	for _, c := range credentials {
-		records = append(records, ovhcloudAPICredentialRecord(c, applications[c.ApplicationID]))
+	for i, c := range credentials {
+		records = append(records, ovhcloudAPICredentialRecord(c, applications[i], time.Now()))
 	}
 
 	return records, nil
-}
-
-func (d *OVHcloudDriver) fetchAPIApplications(ctx context.Context) (map[int64]ovhcloudAPIApplication, error) {
-	var ids []int64
-	if err := d.get(ctx, &ids, "me", "api", "application"); err != nil {
-		return nil, fmt.Errorf("cannot list ovhcloud api applications: %w", err)
-	}
-
-	if len(ids) > maxOVHcloudCollection {
-		return nil, fmt.Errorf("cannot list ovhcloud api applications: %d exceeds the supported maximum of %d", len(ids), maxOVHcloudCollection)
-	}
-
-	applications := make([]ovhcloudAPIApplication, len(ids))
-
-	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(ovhcloudFanout)
-
-	for i, id := range ids {
-		group.Go(func() error {
-			var a ovhcloudAPIApplication
-			if err := d.get(groupCtx, &a, "me", "api", "application", strconv.FormatInt(id, 10)); err != nil {
-				return fmt.Errorf("cannot fetch ovhcloud api application: %w", err)
-			}
-
-			applications[i] = a
-
-			return nil
-		})
-	}
-
-	if err := group.Wait(); err != nil {
-		return nil, err
-	}
-
-	byID := make(map[int64]ovhcloudAPIApplication, len(applications))
-	for _, a := range applications {
-		byID[a.ApplicationID] = a
-	}
-
-	return byID, nil
 }
 
 // fetchGroupRoles maps each group name to the role it confers. Roles are the
@@ -456,15 +432,14 @@ func (d *OVHcloudDriver) fetchGroupRoles(ctx context.Context) (map[string]string
 		return nil, fmt.Errorf("cannot list ovhcloud identity groups: %w", err)
 	}
 
-	roles := make(map[string]string, len(names))
+	groups, err := ovhcloudFetchEach[ovhcloudGroup](ctx, d, "identity groups", names, "me", "identity", "group")
+	if err != nil {
+		return nil, err
+	}
 
-	for _, name := range names {
-		var g ovhcloudGroup
-		if err := d.get(ctx, &g, "me", "identity", "group", name); err != nil {
-			return nil, fmt.Errorf("cannot fetch ovhcloud identity group: %w", err)
-		}
-
-		roles[name] = g.Role
+	roles := make(map[string]string, len(groups))
+	for i, g := range groups {
+		roles[names[i]] = g.Role
 	}
 
 	return roles, nil
@@ -473,7 +448,7 @@ func (d *OVHcloudDriver) fetchGroupRoles(ctx context.Context) (map[string]string
 // fetchSignIns reduces the audit log to the most recent successful sign-in per
 // identity. The MFA reading is what the login actually used, not what the
 // identity has enrolled — OVHcloud exposes no per-user enrolment state.
-func (d *OVHcloudDriver) fetchSignIns(ctx context.Context) (map[ovhcloudSignInKey]ovhcloudSignIn, error) {
+func (d *OVHcloudDriver) fetchSignIns(ctx context.Context, nichandle string) (map[ovhcloudSignInKey]ovhcloudSignIn, error) {
 	var logs []ovhcloudAuditLog
 	if err := d.get(ctx, &logs, "me", "logs", "audit"); err != nil {
 		return nil, fmt.Errorf("cannot fetch ovhcloud audit log: %w", err)
@@ -498,7 +473,7 @@ func (d *OVHcloudDriver) fetchSignIns(ctx context.Context) (map[ovhcloudSignInKe
 				continue
 			}
 
-			key = ovhcloudSignInKey{kind: details.Type, login: *details.User}
+			key = ovhcloudSignInKey{kind: details.Type, login: ovhcloudAuditLogin(*details.User, nichandle)}
 		default:
 			continue
 		}
@@ -516,6 +491,23 @@ func (d *OVHcloudDriver) fetchSignIns(ctx context.Context) (map[ovhcloudSignInKe
 	}
 
 	return signIns, nil
+}
+
+// ovhcloudAuditLogin reduces the identity the audit log names to the login
+// /me/identity/user is keyed by. auth.User.login is documented as the login
+// SUFFIX, and a local user signs in as "<nichandle>/<suffix>", so the audit
+// value may carry the handle. Strip it when present; a value that does not
+// carry it is already the suffix and is returned untouched.
+func ovhcloudAuditLogin(login, nichandle string) string {
+	if nichandle == "" {
+		return login
+	}
+
+	if suffix, ok := strings.CutPrefix(login, nichandle+"/"); ok {
+		return suffix
+	}
+
+	return login
 }
 
 // ovhcloudMFAStatus reads audit.LogAuthMFATypeEnum. NONE means the sign-in
@@ -649,10 +641,12 @@ func ovhcloudFederatedRecord(login string, signIn ovhcloudSignIn) AccountRecord 
 // ovhcloudAPICredentialRecord describes one classic API credential. Its
 // privilege is the access rules it was granted, which is the only thing
 // OVHcloud says about what it can reach, so they stand in for a role.
-func ovhcloudAPICredentialRecord(c ovhcloudAPICredential, app ovhcloudAPIApplication) AccountRecord {
-	// validated is the only state that can still call the API. An expired or
-	// refused credential is kept in the roster so a reviewer sees it existed.
-	active := c.Status == "validated"
+func ovhcloudAPICredentialRecord(c ovhcloudAPICredential, app ovhcloudAPIApplication, now time.Time) AccountRecord {
+	// A credential can still call the API only while it is validated, its
+	// expiry has not passed, and the application it belongs to is active.
+	active := c.Status == "validated" &&
+		(c.Expiration == nil || c.Expiration.After(now)) &&
+		(app.Status == "" || app.Status == "active" || app.Status == "trusted")
 
 	roles := make([]string, 0, len(c.Rules)+1)
 	if c.OVHSupport {
@@ -667,8 +661,15 @@ func ovhcloudAPICredentialRecord(c ovhcloudAPICredential, app ovhcloudAPIApplica
 
 	slices.Sort(roles)
 
+	name := app.Name
+	if name == "" {
+		// The application did not resolve. Say which one rather than leaving
+		// the reviewer a blank row, which the console renders as "N/A".
+		name = fmt.Sprintf("Application %d", c.ApplicationID)
+	}
+
 	record := AccountRecord{
-		FullName:    app.Name,
+		FullName:    name,
 		JobTitle:    app.Description,
 		Roles:       slices.Compact(roles),
 		Active:      &active,

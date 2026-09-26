@@ -36,7 +36,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:45 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -45,73 +45,12 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B1_1752A7:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-3.6ab7a4b1.3172118.8e3f82136f0c68f05c860767d5105ffd
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 93.636458ms
+        duration: 108.786375ms
     - id: 1
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: 0
-        host: eu.api.ovh.com
-        headers:
-            Accept:
-                - application/json
-        url: https://eu.api.ovh.com/1.0/me/identity/group/ADMIN
-        method: GET
-      response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '{"creation":"2026-09-26T10:55:45.907142282Z","defaultGroup":true,"description":"Default Group with ADMIN role","lastUpdate":"2026-09-26T10:55:45.907142655Z","name":"ADMIN","role":"ADMIN","urn":"urn:v1:eu:identity:group:ab1234-ovh/ADMIN"}'
-        headers:
-            Access-Control-Allow-Headers:
-                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
-            Access-Control-Allow-Methods:
-                - DELETE, GET, PUT
-            Access-Control-Allow-Origin:
-                - '*'
-            Access-Control-Expose-Headers:
-                - X-Pagination-Cursor-Next, X-Ovh-Queryid
-            Access-Control-Max-Age:
-                - "60"
-            Cache-Control:
-                - no-cache, no-store
-            Content-Type:
-                - application/json; charset=utf-8
-            Date:
-                - Sat, 26 Sep 2026 10:55:45 GMT
-            Server:
-                - nginx
-            Vary:
-                - Accept-Encoding
-            X-Content-Type-Options:
-                - nosniff
-            X-Frame-Options:
-                - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B1_1752CB:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-5.6ab7a4b1.600086.1b5e05e3c8b4a0348d8a44fb1fe41424
-            X-Xss-Protection:
-                - 1; mode=block
-        status: 200 OK
-        code: 200
-        duration: 24.707458ms
-    - id: 2
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -129,7 +68,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"creation":"2026-09-26T10:55:45.9336064Z","defaultGroup":true,"description":"Default Group with REGULAR role","lastUpdate":"2026-09-26T10:55:45.933606579Z","name":"DEFAULT","role":"REGULAR","urn":"urn:v1:eu:identity:group:ab1234-ovh/DEFAULT"}'
+        body: '{"creation":"2026-09-26T11:29:49.715007761Z","defaultGroup":true,"description":"Default Group with REGULAR role","lastUpdate":"2026-09-26T11:29:49.715008044Z","name":"DEFAULT","role":"REGULAR","urn":"urn:v1:eu:identity:group:ab1234-ovh/DEFAULT"}'
         headers:
             Access-Control-Allow-Headers:
                 - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
@@ -146,7 +85,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:45 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -155,18 +94,12 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B1_1752D4:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-5.6ab7a4b1.600086.4366ed15482ed69896e472945625963c
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 24.598625ms
-    - id: 3
+        duration: 33.544458ms
+    - id: 2
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -184,7 +117,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"creation":"2026-09-26T10:55:45.972880639Z","defaultGroup":true,"description":"Default group with UNPRIVILEGED role","lastUpdate":"2026-09-26T10:55:45.972880809Z","name":"UNPRIVILEGED","role":"UNPRIVILEGED","urn":"urn:v1:eu:identity:group:ab1234-ovh/UNPRIVILEGED"}'
+        body: '{"creation":"2026-09-26T11:29:49.715337196Z","defaultGroup":true,"description":"Default group with UNPRIVILEGED role","lastUpdate":"2026-09-26T11:29:49.715337404Z","name":"UNPRIVILEGED","role":"UNPRIVILEGED","urn":"urn:v1:eu:identity:group:ab1234-ovh/UNPRIVILEGED"}'
         headers:
             Access-Control-Allow-Headers:
                 - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
@@ -201,7 +134,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:45 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -210,18 +143,110 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B1_1752E4:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-4.6ab7a4b1.630041.f1b1543ac775d12ba5e65d105bd19ed3
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 38.084458ms
+        duration: 33.867875ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/identity/group/ADMIN
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"creation":"2026-09-26T11:29:49.721880164Z","defaultGroup":true,"description":"Default Group with ADMIN role","lastUpdate":"2026-09-26T11:29:49.721880459Z","name":"ADMIN","role":"ADMIN","urn":"urn:v1:eu:identity:group:ab1234-ovh/ADMIN"}'
+        headers:
+            Access-Control-Allow-Headers:
+                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
+            Access-Control-Allow-Methods:
+                - DELETE, GET, PUT
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - X-Pagination-Cursor-Next, X-Ovh-Queryid
+            Access-Control-Max-Age:
+                - "60"
+            Cache-Control:
+                - no-cache, no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Sat, 26 Sep 2026 11:29:49 GMT
+            Server:
+                - nginx
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 40.816459ms
     - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"address":"1 Test Street","area":null,"birthCity":null,"birthDay":null,"city":"Testville","companyNationalIdentificationNumber":null,"complementaryAddress":null,"corporationType":null,"country":"FR","currency":{"code":"EUR","symbol":"€"},"customerCode":"0000-0000-00","displayName":null,"einvoicingBillingAddress":null,"email":"owner@example.com","fax":"+33.000000000","firstname":"Ada","italianSDI":null,"kycValidated":true,"language":"en_IE","legalform":"individual","name":"Lovelace","nationalIdentificationNumber":null,"nichandle":"ab1234-ovh","organisation":"Example Ltd","ovhCompany":"ovh","ovhSubsidiary":"IE","phone":"+33.000000000","phoneCountry":"FR","phoneType":"mobile","purposeOfPurchase":null,"sex":null,"spareEmail":"spare@example.com","state":"complete","vat":null,"zip":"00000"}'
+        headers:
+            Access-Control-Allow-Headers:
+                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
+            Access-Control-Allow-Methods:
+                - GET, PUT
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - X-Pagination-Cursor-Next, X-Ovh-Queryid
+            Access-Control-Max-Age:
+                - "60"
+            Cache-Control:
+                - no-cache, no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Sat, 26 Sep 2026 11:29:49 GMT
+            Server:
+                - nginx
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 29.648458ms
+    - id: 5
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -256,7 +281,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -265,18 +290,12 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B1_1752FE:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-1.6ab7a4b1.762403.f9a753f929b678b2c56387ee281bc2d2
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 37.036542ms
-    - id: 5
+        duration: 32.413209ms
+    - id: 6
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -312,25 +331,19 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             X-Content-Type-Options:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_17530F:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-5.6ab7a4b2.600086.d98891a3a7e3ab8ae7f896a8437911ea
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 27.116666ms
-    - id: 6
+        duration: 37.772542ms
+    - id: 7
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -365,7 +378,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -374,128 +387,12 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_175323:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-1.6ab7a4b2.762403.f1830778e1572d0e72dc0b59a9cfbd20
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 32.049958ms
-    - id: 7
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: 0
-        host: eu.api.ovh.com
-        headers:
-            Accept:
-                - application/json
-        url: https://eu.api.ovh.com/1.0/me/api/oauth2/client/EU.1111111111111111
-        method: GET
-      response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '{"callbackUrls":["https://localhost:8080/api/console/v1/connectors/complete"],"clientId":"EU.1111111111111111","createdAt":"2026-09-22T17:45:32.533Z","description":"Probo access-review connector, OAuth2 auth-code (dev / local)","flow":"AUTHORIZATION_CODE","identity":null,"name":"probo-connector-oauth-dev"}'
-        headers:
-            Access-Control-Allow-Headers:
-                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
-            Access-Control-Allow-Methods:
-                - DELETE, GET, PUT
-            Access-Control-Allow-Origin:
-                - '*'
-            Access-Control-Expose-Headers:
-                - X-Pagination-Cursor-Next, X-Ovh-Queryid
-            Access-Control-Max-Age:
-                - "60"
-            Cache-Control:
-                - no-cache, no-store
-            Content-Type:
-                - application/json; charset=utf-8
-            Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
-            Server:
-                - nginx
-            Vary:
-                - Accept-Encoding
-            X-Content-Type-Options:
-                - nosniff
-            X-Frame-Options:
-                - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_17533A:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-5.6ab7a4b2.600086.bbb11416d073b9caa61338d7fc694470
-            X-Xss-Protection:
-                - 1; mode=block
-        status: 200 OK
-        code: 200
-        duration: 20.584584ms
+        duration: 25.550458ms
     - id: 8
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: 0
-        host: eu.api.ovh.com
-        headers:
-            Accept:
-                - application/json
-        url: https://eu.api.ovh.com/1.0/me/api/oauth2/client/EU.0000000000000000
-        method: GET
-      response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '{"callbackUrls":[],"clientId":"EU.0000000000000000","createdAt":"2026-09-22T12:50:00.938Z","description":"Probo access-review connector development and cassette recording","flow":"CLIENT_CREDENTIALS","identity":"urn:v1:eu:identity:credential:ab1234-ovh/oauth2-EU.0000000000000000","name":"probo-access-review-dev"}'
-        headers:
-            Access-Control-Allow-Headers:
-                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
-            Access-Control-Allow-Methods:
-                - DELETE, GET, PUT
-            Access-Control-Allow-Origin:
-                - '*'
-            Access-Control-Expose-Headers:
-                - X-Pagination-Cursor-Next, X-Ovh-Queryid
-            Access-Control-Max-Age:
-                - "60"
-            Cache-Control:
-                - no-cache, no-store
-            Content-Type:
-                - application/json; charset=utf-8
-            Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
-            Server:
-                - nginx
-            Vary:
-                - Accept-Encoding
-            X-Content-Type-Options:
-                - nosniff
-            X-Frame-Options:
-                - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_17533C:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-4.6ab7a4b2.630041.37d77d3713c7aef2497d44064730280c
-            X-Xss-Protection:
-                - 1; mode=block
-        status: 200 OK
-        code: 200
-        duration: 20.8105ms
-    - id: 9
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -530,7 +427,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -539,18 +436,12 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_17533B:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-3.6ab7a4b2.3172118.eba03dea9b474825bef1315c51e909cb
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 21.010875ms
-    - id: 10
+        duration: 22.048625ms
+    - id: 9
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -585,7 +476,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -594,18 +485,12 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_175339:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-2.6ab7a4b2.2221206.6b406c28fe284fa6664e25a83c557f66
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 29.948125ms
-    - id: 11
+        duration: 21.54625ms
+    - id: 10
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -615,7 +500,7 @@ interactions:
         headers:
             Accept:
                 - application/json
-        url: https://eu.api.ovh.com/1.0/me
+        url: https://eu.api.ovh.com/1.0/me/api/oauth2/client/EU.1111111111111111
         method: GET
       response:
         proto: HTTP/2.0
@@ -623,12 +508,12 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"address":"1 Test Street","area":null,"birthCity":null,"birthDay":null,"city":"Testville","companyNationalIdentificationNumber":null,"complementaryAddress":null,"corporationType":null,"country":"FR","currency":{"code":"EUR","symbol":"€"},"customerCode":"0000-0000-00","displayName":null,"einvoicingBillingAddress":null,"email":"owner@example.com","fax":"+33.000000000","firstname":"Ada","italianSDI":null,"kycValidated":true,"language":"en_IE","legalform":"individual","name":"Lovelace","nationalIdentificationNumber":null,"nichandle":"ab1234-ovh","organisation":"Example Ltd","ovhCompany":"ovh","ovhSubsidiary":"IE","phone":"+33.000000000","phoneCountry":"FR","phoneType":"mobile","purposeOfPurchase":null,"sex":null,"spareEmail":"spare@example.com","state":"complete","vat":null,"zip":"00000"}'
+        body: '{"callbackUrls":["https://localhost:8080/api/console/v1/connectors/complete"],"clientId":"EU.1111111111111111","createdAt":"2026-09-22T17:45:32.533Z","description":"Probo access-review connector, OAuth2 auth-code (dev / local)","flow":"AUTHORIZATION_CODE","identity":null,"name":"probo-connector-oauth-dev"}'
         headers:
             Access-Control-Allow-Headers:
                 - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
             Access-Control-Allow-Methods:
-                - GET, PUT
+                - DELETE, GET, PUT
             Access-Control-Allow-Origin:
                 - '*'
             Access-Control-Expose-Headers:
@@ -640,7 +525,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -649,17 +534,60 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_175345:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-3.6ab7a4b2.3172118.8e6588284c5044792f9fea77944990a7
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 25.214959ms
+        duration: 21.794792ms
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/oauth2/client/EU.0000000000000000
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"callbackUrls":[],"clientId":"EU.0000000000000000","createdAt":"2026-09-22T12:50:00.938Z","description":"Probo access-review connector development and cassette recording","flow":"CLIENT_CREDENTIALS","identity":"urn:v1:eu:identity:credential:ab1234-ovh/oauth2-EU.0000000000000000","name":"probo-access-review-dev"}'
+        headers:
+            Access-Control-Allow-Headers:
+                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
+            Access-Control-Allow-Methods:
+                - DELETE, GET, PUT
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - X-Pagination-Cursor-Next, X-Ovh-Queryid
+            Access-Control-Max-Age:
+                - "60"
+            Cache-Control:
+                - no-cache, no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Sat, 26 Sep 2026 11:29:49 GMT
+            Server:
+                - nginx
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 21.792208ms
     - id: 12
       request:
         proto: HTTP/1.1
@@ -696,134 +624,19 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             X-Content-Type-Options:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_17535F:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-5.6ab7a4b2.600086.4b980a9a7dd918e423205e925c0cb7f2
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 31.026959ms
+        duration: 21.798834ms
     - id: 13
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: 0
-        host: eu.api.ovh.com
-        headers:
-            Accept:
-                - application/json
-        url: https://eu.api.ovh.com/1.0/me/api/application
-        method: GET
-      response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: 8
-        body: '[473684]'
-        headers:
-            Access-Control-Allow-Headers:
-                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
-            Access-Control-Allow-Methods:
-                - GET
-            Access-Control-Allow-Origin:
-                - '*'
-            Access-Control-Expose-Headers:
-                - X-Pagination-Cursor-Next, X-Ovh-Queryid
-            Access-Control-Max-Age:
-                - "60"
-            Cache-Control:
-                - no-cache, no-store
-            Content-Length:
-                - "8"
-            Content-Type:
-                - application/json; charset=utf-8
-            Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
-            Server:
-                - nginx
-            X-Content-Type-Options:
-                - nosniff
-            X-Frame-Options:
-                - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_17536F:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-2.6ab7a4b2.2221206.d0201a1c3e75e7e9df50992cbf60b124
-            X-Xss-Protection:
-                - 1; mode=block
-        status: 200 OK
-        code: 200
-        duration: 27.94325ms
-    - id: 14
-      request:
-        proto: HTTP/1.1
-        proto_major: 1
-        proto_minor: 1
-        content_length: 0
-        host: eu.api.ovh.com
-        headers:
-            Accept:
-                - application/json
-        url: https://eu.api.ovh.com/1.0/me/api/application/473684
-        method: GET
-      response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '{"applicationId":473684,"applicationKey":"0000000000000000","description":"test","name":"test","status":"active"}'
-        headers:
-            Access-Control-Allow-Headers:
-                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
-            Access-Control-Allow-Methods:
-                - DELETE, GET
-            Access-Control-Allow-Origin:
-                - '*'
-            Access-Control-Expose-Headers:
-                - X-Pagination-Cursor-Next, X-Ovh-Queryid
-            Access-Control-Max-Age:
-                - "60"
-            Cache-Control:
-                - no-cache, no-store
-            Content-Type:
-                - application/json; charset=utf-8
-            Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
-            Server:
-                - nginx
-            Vary:
-                - Accept-Encoding
-            X-Content-Type-Options:
-                - nosniff
-            X-Frame-Options:
-                - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_175384:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-5.6ab7a4b2.600086.f0226bc19084e5883ac82decfc13f699
-            X-Xss-Protection:
-                - 1; mode=block
-        status: 200 OK
-        code: 200
-        duration: 25.579958ms
-    - id: 15
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -858,7 +671,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Sat, 26 Sep 2026 10:55:46 GMT
+                - Sat, 26 Sep 2026 11:29:49 GMT
             Server:
                 - nginx
             Vary:
@@ -867,14 +680,57 @@ interactions:
                 - nosniff
             X-Frame-Options:
                 - DENY
-            X-Iplb-Instance:
-                - "47055"
-            X-Iplb-Request-Id:
-                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B2_175395:2233C2
-            X-Ovh-Queryid:
-                - EU.ext-2.6ab7a4b2.2221206.884d7dfc89ad0d8958a23b7a7cccf184
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 28.420417ms
+        duration: 23.769625ms
+    - id: 14
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me/api/credential/635061199/application
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"applicationId":473684,"applicationKey":"***","description":"test","name":"test","status":"active"}'
+        headers:
+            Access-Control-Allow-Headers:
+                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
+            Access-Control-Allow-Methods:
+                - GET
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - X-Pagination-Cursor-Next, X-Ovh-Queryid
+            Access-Control-Max-Age:
+                - "60"
+            Cache-Control:
+                - no-cache, no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Sat, 26 Sep 2026 11:29:49 GMT
+            Server:
+                - nginx
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 24.153917ms
