@@ -36,13 +36,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// maxOVHcloudCollection bounds every per-item fan-out below. OVHcloud lists
-// local users, OAuth2 clients and API credentials as bare identifiers, so each
-// one costs a request; the cap keeps a runaway account from issuing unbounded
-// calls.
+// maxOVHcloudCollection bounds every per-item fan-out: OVHcloud lists
+// collections as bare identifiers, so each entry costs one request.
 const maxOVHcloudCollection = 2000
 
-// ovhcloudFanout is the number of concurrent per-user detail requests.
 const ovhcloudFanout = 8
 
 type (
@@ -170,27 +167,14 @@ func NewOVHcloudDriver(httpClient *http.Client, baseURL string) *OVHcloudDriver 
 }
 
 // ListAccounts returns every identity that can reach the OVHcloud account.
+// Five endpoints are merged because no single one holds the roster:
+// /me/identity/user (local users), /me (the owner, absent from the user list),
+// /me/api/oauth2/client, /me/api/credential (classic keys, invisible to IAM)
+// and /me/logs/audit.
 //
-// Five sources are merged, because no single endpoint holds the roster:
-//   - /me/identity/user lists LOCAL users only, and only as bare logins, so
-//     each one needs its own detail request.
-//   - /me holds the account owner (the NIC handle), who is a distinct identity
-//     class and is absent from the list above — verified live against an
-//     account whose owner exists and whose /me/identity/user returns [].
-//   - /me/api/oauth2/client holds the service accounts. They authenticate
-//     machine-to-machine against the same account, so omitting them would hide
-//     standing non-human access.
-//   - /me/api/credential holds the classic API credentials, which predate IAM
-//     and appear in no identity endpoint. Each is a consumer key that can call
-//     the API on its own, and one may have been created by OVHcloud support
-//     rather than by the customer.
-//   - /me/logs/audit supplies last-login, the MFA actually used, and how each
-//     identity authenticated. It is also the ONLY place a federated (SSO) user
-//     appears: OVHcloud does not manage them and maps them to groups rather
-//     than users, so one is listed here only once it has signed in.
-//
-// The roster is therefore a floor, not a census: a federated user who has not
-// signed in within the audit log's retention is reachable by no endpoint.
+// The roster is a floor, not a census: a federated (SSO) user appears only in
+// the audit log, so one who has not signed in within its retention is reachable
+// by no endpoint.
 func (d *OVHcloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	roles, err := d.fetchGroupRoles(ctx)
 	if err != nil {
@@ -235,9 +219,8 @@ func (d *OVHcloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 
 	records = append(records, apiCredentials...)
 
-	// Federated identities exist only as audit evidence, so they are emitted
-	// from what signed in rather than from a roster endpoint. Sorted, because
-	// ranging a map would order the roster differently on every sync.
+	// Federated identities exist only as audit evidence. Sorted, because ranging
+	// a map would reorder the roster on every sync.
 	federated := make([]string, 0, len(signIns))
 
 	for key := range signIns {
@@ -270,9 +253,8 @@ func (d *OVHcloudDriver) fetchOwner(ctx context.Context) (ovhcloudAccount, error
 }
 
 // ovhcloudFetchEach resolves one detail document per identifier, bounded and
-// cancelling its siblings on the first failure. OVHcloud lists every collection
-// as bare identifiers, so each of them needs this shape; a partial result must
-// never be returned as if it were the whole roster.
+// cancelling its siblings on the first failure: a partial roster must never be
+// returned as a whole one.
 func ovhcloudFetchEach[T any](ctx context.Context, d *OVHcloudDriver, noun string, ids []string, segments ...string) ([]T, error) {
 	if len(ids) > maxOVHcloudCollection {
 		return nil, fmt.Errorf("cannot list ovhcloud %s: %d exceeds the supported maximum of %d", noun, len(ids), maxOVHcloudCollection)
@@ -339,7 +321,6 @@ func ovhcloudFetchEachSub[T any](ctx context.Context, d *OVHcloudDriver, noun, s
 	return out, nil
 }
 
-// fetchUsers lists local users and resolves each one's detail concurrently.
 func (d *OVHcloudDriver) fetchUsers(ctx context.Context) ([]ovhcloudUser, error) {
 	var logins []string
 	if err := d.get(ctx, &logins, "me", "identity", "user"); err != nil {
@@ -359,10 +340,9 @@ func (d *OVHcloudDriver) fetchUsers(ctx context.Context) ([]ovhcloudUser, error)
 	return users, nil
 }
 
-// fetchServiceAccounts lists the account's OAuth2 clients. A client-credentials
-// client authenticates as a machine identity bound to this account, so it holds
-// standing access a review has to see; an authorization-code client acts as
-// whoever authorises it and binds to no identity, so it is not one.
+// fetchServiceAccounts lists the account's OAuth2 clients, keeping only
+// CLIENT_CREDENTIALS: an authorization-code client binds to no identity and
+// acts as whoever authorises it.
 func (d *OVHcloudDriver) fetchServiceAccounts(ctx context.Context) ([]ovhcloudOAuth2Client, error) {
 	var ids []string
 	if err := d.get(ctx, &ids, "me", "api", "oauth2", "client"); err != nil {
@@ -380,17 +360,10 @@ func (d *OVHcloudDriver) fetchServiceAccounts(ctx context.Context) ([]ovhcloudOA
 }
 
 // fetchAPICredentials lists the classic API credentials issued on the account.
-// These predate IAM and are invisible to /me/identity/user: each one is a
-// consumer key that can call the API on its own, so a roster that omits them
-// misses standing access, including any credential OVHcloud support holds.
-//
-// A credential carries no name of its own, so the application it was granted to
-// supplies one. That application is resolved through the credential itself
-// rather than through /me/api/application, because a consumer key is commonly
-// granted to an application somebody ELSE registered, which the account's own
-// application list does not contain. Those externally held keys are precisely
-// the ones a review most needs labelled. The per-credential route also returns
-// the application key redacted, which the account-wide one does not.
+// A credential carries no name, so the application it was granted to supplies
+// one. The application is resolved per credential rather than from
+// /me/api/application, because a key is commonly granted to an application
+// another account registered, which that list does not contain.
 func (d *OVHcloudDriver) fetchAPICredentials(ctx context.Context) ([]AccountRecord, error) {
 	var ids []int64
 	if err := d.get(ctx, &ids, "me", "api", "credential"); err != nil {
@@ -424,8 +397,7 @@ func (d *OVHcloudDriver) fetchAPICredentials(ctx context.Context) ([]AccountReco
 	return records, nil
 }
 
-// fetchGroupRoles maps each group name to the role it confers. Roles are the
-// privilege signal; the group is only the assignment that carries it.
+// fetchGroupRoles maps each group name to the role it confers.
 func (d *OVHcloudDriver) fetchGroupRoles(ctx context.Context) (map[string]string, error) {
 	var names []string
 	if err := d.get(ctx, &names, "me", "identity", "group"); err != nil {
@@ -493,11 +465,9 @@ func (d *OVHcloudDriver) fetchSignIns(ctx context.Context, nichandle string) (ma
 	return signIns, nil
 }
 
-// ovhcloudAuditLogin reduces the identity the audit log names to the login
-// /me/identity/user is keyed by. auth.User.login is documented as the login
-// SUFFIX, and a local user signs in as "<nichandle>/<suffix>", so the audit
-// value may carry the handle. Strip it when present; a value that does not
-// carry it is already the suffix and is returned untouched.
+// ovhcloudAuditLogin maps an audit identity onto the login /me/identity/user is
+// keyed by: auth.User.login is the SUFFIX, but a local user signs in as
+// "<nichandle>/<suffix>", so strip the handle when present.
 func ovhcloudAuditLogin(login, nichandle string) string {
 	if nichandle == "" {
 		return login
@@ -510,9 +480,8 @@ func ovhcloudAuditLogin(login, nichandle string) string {
 	return login
 }
 
-// ovhcloudMFAStatus reads audit.LogAuthMFATypeEnum. NONE means the sign-in
-// completed without a second factor, which is the closest OVHcloud comes to
-// reporting that an identity is unprotected.
+// ovhcloudMFAStatus reads audit.LogAuthMFATypeEnum. NONE means the sign-in used
+// no second factor, which is as close as OVHcloud comes to reporting unprotected.
 func ovhcloudMFAStatus(mfaType string) coredata.MFAStatus {
 	switch mfaType {
 	case "TOTP", "U2F", "SMS", "BACKUP_CODE", "MAIL":
@@ -584,9 +553,8 @@ func ovhcloudUserRecord(u ovhcloudUser, roles map[string]string, signIn ovhcloud
 }
 
 // ovhcloudServiceAccountRecord describes a client-credentials OAuth2 client.
-// It is a machine identity: it has no email, no group and therefore no role,
-// and its privilege comes from IAM policy the API does not expose per client,
-// so IsAdmin stays unknown rather than being asserted false.
+// Its privilege lives in IAM policy the API does not expose per client, so
+// IsAdmin stays unknown rather than false.
 func ovhcloudServiceAccountRecord(c ovhcloudOAuth2Client) AccountRecord {
 	active := true
 
@@ -608,9 +576,8 @@ func ovhcloudServiceAccountRecord(c ovhcloudOAuth2Client) AccountRecord {
 }
 
 // ovhcloudFederatedRecord describes an SSO identity known only from the audit
-// log. Everything but the sign-in evidence is unknown: OVHcloud does not manage
-// federated users, so there is no status, group or creation date to read, and
-// asserting any of them would be invention.
+// log. OVHcloud does not manage federated users, so nothing beyond the sign-in
+// evidence is knowable.
 func ovhcloudFederatedRecord(login string, signIn ovhcloudSignIn) AccountRecord {
 	record := AccountRecord{
 		Roles:       []string{},
@@ -620,9 +587,7 @@ func ovhcloudFederatedRecord(login string, signIn ovhcloudSignIn) AccountRecord 
 		ExternalID:  login,
 	}
 
-	// The login OVHcloud records for a federated sign-in is the identity the
-	// third-party directory asserted, which is an email in every provider
-	// configuration OVHcloud documents.
+	// A federated login is the subject the IdP asserted, usually an email.
 	if strings.Contains(login, "@") {
 		record.Email = login
 	}
@@ -638,20 +603,15 @@ func ovhcloudFederatedRecord(login string, signIn ovhcloudSignIn) AccountRecord 
 	return record
 }
 
-// ovhcloudAPICredentialRecord describes one classic API credential. Its
-// privilege is the access rules it was granted, which is the only thing
-// OVHcloud says about what it can reach, so they stand in for a role.
+// ovhcloudAPICredentialRecord describes one classic API credential. Its access
+// rules stand in for a role: they are all OVHcloud says about its reach.
 func ovhcloudAPICredentialRecord(c ovhcloudAPICredential, app ovhcloudAPIApplication, now time.Time) AccountRecord {
-	// A credential can still call the API only while it is validated, its
-	// expiry has not passed, and the application it belongs to is active.
 	active := c.Status == "validated" &&
 		(c.Expiration == nil || c.Expiration.After(now)) &&
 		(app.Status == "" || app.Status == "active" || app.Status == "trusted")
 
 	roles := make([]string, 0, len(c.Rules)+1)
 	if c.OVHSupport {
-		// The customer did not create this one. Say so where a reviewer reads
-		// the row rather than burying it.
 		roles = append(roles, "Created by OVHcloud support")
 	}
 
@@ -663,8 +623,7 @@ func ovhcloudAPICredentialRecord(c ovhcloudAPICredential, app ovhcloudAPIApplica
 
 	name := app.Name
 	if name == "" {
-		// The application did not resolve. Say which one rather than leaving
-		// the reviewer a blank row, which the console renders as "N/A".
+		// A blank name renders as "N/A" in the console, so name the id instead.
 		name = fmt.Sprintf("Application %d", c.ApplicationID)
 	}
 
@@ -684,10 +643,6 @@ func ovhcloudAPICredentialRecord(c ovhcloudAPICredential, app ovhcloudAPIApplica
 	return record
 }
 
-// ovhcloudAuthMethod reports how the identity was last seen authenticating.
-// PROVIDER is a federated sign-in through the account's SSO provider; ACCOUNT
-// and USER are OVHcloud's own login. With no recorded sign-in there is no
-// evidence either way.
 func ovhcloudAuthMethod(signIn ovhcloudSignIn) coredata.AccessReviewEntryAuthMethod {
 	switch signIn.kind {
 	case "PROVIDER":
@@ -699,9 +654,8 @@ func ovhcloudAuthMethod(signIn ovhcloudSignIn) coredata.AccessReviewEntryAuthMet
 	}
 }
 
-// ovhcloudRoles reports the groups an identity belongs to. The group names are
-// what an operator grants and revokes, so they are more actionable than the
-// three roles they collapse into; the role itself drives IsAdmin instead.
+// ovhcloudRoles reports group names rather than the three roles they collapse
+// into: the group is what an operator grants and revokes.
 func ovhcloudRoles(u ovhcloudUser) []string {
 	groups := slices.Clone(u.Groups)
 	if len(groups) == 0 && u.Group != "" {
@@ -709,8 +663,7 @@ func ovhcloudRoles(u ovhcloudUser) []string {
 	}
 
 	if groups == nil {
-		// An identity in no group at all still gets an empty slice rather
-		// than nil, so callers never have to distinguish the two.
+		// Empty slice, not nil, so callers need not distinguish the two.
 		return []string{}
 	}
 
@@ -719,13 +672,10 @@ func ovhcloudRoles(u ovhcloudUser) []string {
 	return slices.Compact(groups)
 }
 
-// ovhcloudIsAdmin is true when ANY of the identity's groups confers ADMIN.
-// auth.User carries both `group` (the main one) and `groups` (all of them);
-// reading only the former would under-report privilege.
-//
-// It returns nil rather than false when a group cannot be resolved to a role:
-// "we could not tell" and "confirmed not an admin" are different answers, and
-// only one of them is safe to show a reviewer as a cleared row.
+// ovhcloudIsAdmin is true when ANY group confers ADMIN: auth.User carries both
+// `group` (the main one) and `groups`, and reading only the former under-reports
+// privilege. An unresolvable group returns nil, not false — "unknown" must not
+// read as a cleared row.
 func ovhcloudIsAdmin(u ovhcloudUser, roles map[string]string) *bool {
 	groups := ovhcloudRoles(u)
 
@@ -759,9 +709,6 @@ func ovhcloudAccountType(userType string) coredata.AccessReviewEntryAccountType 
 	return coredata.AccessReviewEntryAccountTypeUser
 }
 
-// get fetches one JSON document, joining segments onto the driver's base URL so
-// a deployment's endpoint override moves with it and no caller interpolates a
-// path by hand.
 func (d *OVHcloudDriver) get(ctx context.Context, out any, segments ...string) error {
 	endpoint, err := ovhcloudURL(d.baseURL, segments...)
 	if err != nil {
@@ -783,8 +730,7 @@ func (d *OVHcloudDriver) get(ctx context.Context, out any, segments ...string) e
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		// The body carries the provider's own wording (and, on 403, the IAM
-		// action the credential lacks); it never reaches the returned error.
+		// Never embed the body: it carries provider wording and IAM detail.
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
@@ -820,9 +766,8 @@ func NewOVHcloudNameResolver(httpClient *http.Client, baseURL string) NameResolv
 	return &ovhcloudNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
-// ResolveInstanceName names the source after the NIC handle, which is the
-// identifier an OVHcloud operator recognises and the only stable one /me
-// carries — organisation is null on individual accounts.
+// ResolveInstanceName names the source after the NIC handle: organisation is
+// null on individual accounts.
 func (r *ovhcloudNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
 	endpoint, err := ovhcloudURL(r.baseURL, "me")
 	if err != nil {
