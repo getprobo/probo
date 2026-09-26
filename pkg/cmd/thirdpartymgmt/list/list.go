@@ -34,7 +34,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ThirdPartyOrder, $filt
   node(id: $id) {
     __typename
     ... on Organization {
-      third_parties(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+      thirdParties(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -71,13 +71,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List thirdParties in an organization",
+		Short:   "List third parties in an organization",
 		Aliases: []string{"ls"},
-		Example: `  # List third_parties in the default organization
-  prb third_party list
+		Example: `  # List third parties in the default organization
+  prb thirdParty list
 
-  # List third_parties sorted by name
-  prb third_party ls --order-by NAME --json`,
+  # List third parties sorted by name
+  prb thirdParty ls --order-by NAME --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -144,7 +144,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					var resp struct {
 						Node *struct {
 							Typename     string                     `json:"__typename"`
-							ThirdParties api.Connection[thirdParty] `json:"third_parties"`
+							ThirdParties api.Connection[thirdParty] `json:"thirdParties"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {

@@ -43,8 +43,8 @@ query($id: ID!) {
       description
       file {
         id
-        filename
-        contentType
+        fileName
+        mimeType
       }
       measure {
         id
@@ -69,9 +69,9 @@ type viewResponse struct {
 		URL         string  `json:"url"`
 		Description *string `json:"description"`
 		File        *struct {
-			ID          string `json:"id"`
-			Filename    string `json:"filename"`
-			ContentType string `json:"contentType"`
+			ID       string `json:"id"`
+			FileName string `json:"fileName"`
+			MimeType string `json:"mimeType"`
 		} `json:"file"`
 		Measure struct {
 			ID string `json:"id"`
@@ -152,7 +152,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Measure:"), n.Measure.ID)
 
 			if n.File != nil {
-				_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("File:"), n.File.Filename, n.File.ContentType)
+				_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("File:"), n.File.FileName, n.File.MimeType)
 			}
 
 			if n.URL != "" {

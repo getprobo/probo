@@ -32,12 +32,10 @@ import (
 const createMutation = `
 mutation($input: CreateTransferImpactAssessmentInput!) {
   createTransferImpactAssessment(input: $input) {
-    transferImpactAssessmentEdge {
-      node {
-        id
-        dataSubjects
-        legalMechanism
-      }
+    transferImpactAssessment {
+      id
+      dataSubjects
+      legalMechanism
     }
   }
 }
@@ -45,13 +43,11 @@ mutation($input: CreateTransferImpactAssessmentInput!) {
 
 type createResponse struct {
 	CreateTransferImpactAssessment struct {
-		TransferImpactAssessmentEdge struct {
-			Node struct {
-				ID             string `json:"id"`
-				DataSubjects   string `json:"dataSubjects"`
-				LegalMechanism string `json:"legalMechanism"`
-			} `json:"node"`
-		} `json:"transferImpactAssessmentEdge"`
+		TransferImpactAssessment struct {
+			ID             string `json:"id"`
+			DataSubjects   string `json:"dataSubjects"`
+			LegalMechanism string `json:"legalMechanism"`
+		} `json:"transferImpactAssessment"`
 	} `json:"createTransferImpactAssessment"`
 }
 
@@ -133,7 +129,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			r := resp.CreateTransferImpactAssessment.TransferImpactAssessmentEdge.Node
+			r := resp.CreateTransferImpactAssessment.TransferImpactAssessment
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Created transfer impact assessment %s\n",

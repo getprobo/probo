@@ -33,23 +33,21 @@ const listQuery = `
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalCommitmentGroupOrder) {
   node(id: $id) {
     __typename
-    ... on Organization {
-      trustCenter {
-        commitmentGroups(first: $first, after: $after, orderBy: $orderBy) {
-          totalCount
-          edges {
-            node {
-              id
-              title
-              description
-              rank
-              createdAt
-            }
+    ... on CompliancePortal {
+      commitmentGroups(first: $first, after: $after, orderBy: $orderBy) {
+        totalCount
+        edges {
+          node {
+            id
+            title
+            description
+            rank
+            createdAt
           }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
     }
@@ -67,7 +65,7 @@ type commitmentGroup struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
+		flagPortal   string
 		flagLimit    int
 		flagOrderBy  string
 		flagOrderDir string
@@ -78,11 +76,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Use:     "list",
 		Short:   "List compliance portal commitment groups",
 		Aliases: []string{"ls"},
-		Example: `  # List commitment groups in the default organization
-  prb trust-center commitment-group list
+		Example: `  # List commitment groups in a compliance portal
+  prb compliance-portal commitment-group list --portal <compliance-portal-id>
 
   # List commitment groups sorted by rank
-  prb trust-center cg ls --order-by RANK`,
+  prb compliance-portal cg ls --portal <compliance-portal-id> --order-by RANK`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -107,16 +105,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
 			variables := map[string]any{
-				"id": flagOrg,
+				"id": flagPortal,
 			}
 
 			if flagOrderBy != "" {
@@ -138,10 +128,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				func(data json.RawMessage) (*api.Connection[commitmentGroup], error) {
 					var resp struct {
 						Node *struct {
-							Typename    string `json:"__typename"`
-							TrustCenter *struct {
-								CommitmentGroups api.Connection[commitmentGroup] `json:"commitmentGroups"`
-							} `json:"trustCenter"`
+							Typename         string                          `json:"__typename"`
+							CommitmentGroups api.Connection[commitmentGroup] `json:"commitmentGroups"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -149,18 +137,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					}
 
 					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
+						return nil, fmt.Errorf("compliance portal %s not found", flagPortal)
 					}
 
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
+					if resp.Node.Typename != "CompliancePortal" {
+						return nil, fmt.Errorf("expected CompliancePortal node, got %s", resp.Node.Typename)
 					}
 
-					if resp.Node.TrustCenter == nil {
-						return nil, fmt.Errorf("trust center not found for organization %s", flagOrg)
-					}
-
-					return &resp.Node.TrustCenter.CommitmentGroups, nil
+					return &resp.Node.CommitmentGroups, nil
 				},
 			)
 			if err != nil {
@@ -202,7 +186,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID")
+	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of commitment groups to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (RANK, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")

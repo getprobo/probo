@@ -30,11 +30,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AssetOrder, $filter: AssetFilter) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AssetOrder) {
   node(id: $id) {
     __typename
     ... on Organization {
-      assets(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+      assets(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {

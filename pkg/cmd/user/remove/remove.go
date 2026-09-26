@@ -89,7 +89,7 @@ func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
 			client := api.NewClient(
 				host,
 				hc.Token,
-				"/api/console/v1/graphql",
+				"/api/connect/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
