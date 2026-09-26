@@ -343,3 +343,46 @@ func TestApiKeyConnectorSettings_InstanceBaseURL(t *testing.T) {
 		}
 	})
 }
+
+func TestClientCredentialsScope(t *testing.T) {
+	t.Parallel()
+
+	registry := provider.NewBuiltinRegistry()
+	supplied := func(s string) *string { return &s }
+
+	t.Run("a provider that declares scopes wins over client input", func(t *testing.T) {
+		t.Parallel()
+
+		// OVHcloud's token endpoint refuses a grant with no scope, so the
+		// registration has to reach the exchange whatever the dialog sent.
+		got := clientCredentialsScope(registry, coredata.ConnectorProviderOVHcloud, supplied("account/read"))
+		assert.Equal(t, "account/all", got)
+	})
+
+	t.Run("and still wins when the client sends nothing", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, "account/all", clientCredentialsScope(registry, coredata.ConnectorProviderOVHcloud, nil))
+	})
+
+	t.Run("a provider that declares none falls back to the supplied value", func(t *testing.T) {
+		t.Parallel()
+
+		// 1Password offers client credentials without an OAuth2 block, so
+		// nothing is pinned and the customer's value is authoritative.
+		got := clientCredentialsScope(registry, coredata.ConnectorProviderOnePassword, supplied("  read:users  "))
+		assert.Equal(t, "read:users", got, "the supplied value is trimmed")
+	})
+
+	t.Run("nil input on an unpinned provider yields no scope", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Empty(t, clientCredentialsScope(registry, coredata.ConnectorProviderOnePassword, nil))
+	})
+
+	t.Run("an unknown provider cannot pin anything", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, "x", clientCredentialsScope(registry, coredata.ConnectorProvider("NOPE"), supplied("x")))
+	})
+}
