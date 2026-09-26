@@ -1,0 +1,52 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: eu.api.ovh.com
+        headers:
+            Accept:
+                - application/json
+        url: https://eu.api.ovh.com/1.0/me
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"address":"1 Test Street","area":null,"birthCity":null,"birthDay":null,"city":"Testville","companyNationalIdentificationNumber":null,"complementaryAddress":null,"corporationType":null,"country":"FR","currency":{"code":"EUR","symbol":"€"},"customerCode":"0000-0000-00","displayName":null,"einvoicingBillingAddress":null,"email":"owner@example.com","fax":"+33.000000000","firstname":"Ada","italianSDI":null,"kycValidated":true,"language":"en_IE","legalform":"individual","name":"Lovelace","nationalIdentificationNumber":null,"nichandle":"ab1234-ovh","organisation":"Example Ltd","ovhCompany":"ovh","ovhSubsidiary":"IE","phone":"+33.000000000","phoneCountry":"FR","phoneType":"mobile","purposeOfPurchase":null,"sex":null,"spareEmail":"spare@example.com","state":"complete","vat":null,"zip":"00000"}'
+        headers:
+            Access-Control-Allow-Headers:
+                - X-Ovh-Timestamp, X-Ovh-Consumer, X-Ovh-Application, X-Ovh-Signature, X-Ovh-Session, Authorization, Content-Type, X-Challenge-Response, X-Challenge-Payload, User-Agent
+            Access-Control-Allow-Methods:
+                - GET, PUT
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - X-Pagination-Cursor-Next, X-Ovh-Queryid
+            Access-Control-Max-Age:
+                - "60"
+            Cache-Control:
+                - no-cache, no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Sat, 26 Sep 2026 11:30:44 GMT
+            Server:
+                - nginx
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 82.24725ms

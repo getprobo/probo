@@ -438,6 +438,29 @@ func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
 	return reg.Endpoints.Token
 }
 
+// clientCredentialsScope decides which scope a client-credentials connector
+// requests. A provider that declares scopes wins outright: the registration
+// already knows what the grant needs, and the customer has no way to know
+// better. Only a provider that declares none falls back to the input.
+// A token endpoint may require one: OVHcloud answers invalid_scope with none.
+func clientCredentialsScope(
+	registry *provider.Registry,
+	p coredata.ConnectorProvider,
+	supplied *string,
+) string {
+	if reg, ok := registry.Get(p); ok && reg.OAuth2 != nil {
+		if scope := connector.FormatScopeString(reg.OAuth2.Scopes); scope != "" {
+			return scope
+		}
+	}
+
+	if supplied == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(*supplied)
+}
+
 // clientCredentialsTokenURL decides which token endpoint a client-credentials
 // connector will POST its client secret to.
 //

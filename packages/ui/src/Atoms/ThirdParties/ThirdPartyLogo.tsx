@@ -71,6 +71,7 @@ import { Okta } from "./Okta";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
 import { OpenRouter } from "./OpenRouter";
+import { OVHcloud } from "./OVHcloud";
 import { PagerDuty } from "./PagerDuty";
 import { PostHog } from "./PostHog";
 import { Pylon } from "./Pylon";
@@ -150,6 +151,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ONEPASSWORD: OnePassword,
   OPENAI: OpenAI,
   OPENROUTER: OpenRouter,
+  OVHCLOUD: OVHcloud,
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,
   PYLON: Pylon,
