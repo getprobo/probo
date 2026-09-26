@@ -425,6 +425,17 @@ func sanitizeOVHcloud(i *cassette.Interaction) error {
 
 	i.Response.Body = string(out)
 
+	// Refuse to save an interaction that still carries a real identifier.
+	// The rewrite map is hand-maintained, so a re-record against an account
+	// holding identities it does not know about would otherwise commit them
+	// silently. This is the guard that would have caught the client ids the
+	// first version of this sanitizer left in the request URLs.
+	for real := range ovhcloudCassetteRewrites {
+		if strings.Contains(i.Response.Body, real) || strings.Contains(i.Request.URL, real) {
+			return fmt.Errorf("refusing to save ovhcloud cassette: a real identifier survived sanitizing")
+		}
+	}
+
 	return nil
 }
 
