@@ -127,6 +127,10 @@ enum ConnectorProvider
     AWS @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAWS")
     GCP @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGCP")
     ELEVENLABS @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderElevenLabs")
+    ELASTIC_CLOUD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderElasticCloud"
+        )
     NEW_RELIC @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNewRelic")
     RETOOL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRetool")
     TWINGATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTwingate")
@@ -506,6 +510,7 @@ input CreateAPIKeyConnectorInput {
     posthogRegion: String
     posthogInstanceUrl: String
     oktaDomain: String
+    elasticCloudOrganizationId: String
     betterStackTeamName: String
     qoveryOrganizationId: String
     renderWorkspaceId: String

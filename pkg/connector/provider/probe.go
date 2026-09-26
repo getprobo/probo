@@ -415,6 +415,28 @@ func buildOktaProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	return endpoint.String(), nil
 }
 
+func buildElasticCloudProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
+	settings, err := coredata.ConnectorSettings[coredata.ElasticCloudConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read elastic cloud connector settings: %w", err)
+	}
+
+	if settings.OrganizationID == "" {
+		return "", fmt.Errorf("missing elastic cloud organization_id")
+	}
+
+	endpoint, err := url.JoinPath(
+		ep.APIBase,
+		"organizations",
+		url.PathEscape(settings.OrganizationID),
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot build elastic cloud probe URL: %w", err)
+	}
+
+	return endpoint, nil
+}
+
 func buildNeonProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
 	if err != nil {

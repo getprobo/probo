@@ -94,6 +94,32 @@ func TestApiKeyConnectorSettings_OnePasswordSCIMBridgeURL(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestApiKeyConnectorSettings_ElasticCloudOrganizationID(t *testing.T) {
+	t.Parallel()
+
+	reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderElasticCloud)
+	require.True(t, ok)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	require.Equal(t, "organization_id", reg.APIKeyExtraSettings()[0].Key)
+
+	organizationID := "00000000000000000000000000000000"
+
+	raw, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider:                   coredata.ConnectorProviderElasticCloud,
+		ElasticCloudOrganizationID: &organizationID,
+	})
+	require.NoError(t, err)
+
+	var settings coredata.ElasticCloudConnectorSettings
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, organizationID, settings.OrganizationID)
+
+	_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider: coredata.ConnectorProviderElasticCloud,
+	})
+	require.Error(t, err)
+}
+
 func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 	t.Parallel()
 

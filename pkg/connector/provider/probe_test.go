@@ -171,6 +171,25 @@ func TestBuildOktaProbeURL(t *testing.T) {
 	assert.Equal(t, "https://acme.okta.com/api/v1/users?limit=1", probeURL)
 }
 
+func TestBuildElasticCloudProbeURL(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderElasticCloud}
+	require.NoError(t, conn.SetSettings(&coredata.ElasticCloudConnectorSettings{
+		OrganizationID: "00000000000000000000000000000000",
+	}))
+
+	probeURL, err := buildElasticCloudProbeURL(conn, Endpoints{
+		APIBase: "https://api.elastic-cloud.com/api/v1",
+	})
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		"https://api.elastic-cloud.com/api/v1/organizations/00000000000000000000000000000000",
+		probeURL,
+	)
+}
+
 func TestBuildLangfuseProbeURL(t *testing.T) {
 	t.Parallel()
 
