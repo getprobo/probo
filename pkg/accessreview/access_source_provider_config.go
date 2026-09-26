@@ -130,6 +130,14 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
+	coredata.ConnectorProviderDaytona: {
+		ListOrgs: drivers.ListDaytonaOrganizations,
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.DaytonaConnectorSettings](c)
+			return s.OrganizationID
+		},
+		NeedsPicker: true,
+	},
 	coredata.ConnectorProviderCloudflare: {
 		ListOrgs: drivers.ListCloudflareOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {

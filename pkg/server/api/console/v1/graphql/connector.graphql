@@ -72,6 +72,8 @@ enum ConnectorProvider
         )
     CURSOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCursor")
     DATADOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDatadog")
+    DAYTONA
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDaytona")
     OKTA @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOkta")
     ZENDESK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderZendesk")
     QOVERY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderQovery")

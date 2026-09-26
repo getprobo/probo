@@ -76,6 +76,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		crispRegistration(),
 		cursorRegistration(),
 		datadogRegistration(),
+		daytonaRegistration(),
 		deepgramRegistration(),
 		docusignRegistration(),
 		dotfileRegistration(),

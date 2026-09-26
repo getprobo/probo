@@ -74,6 +74,18 @@ func TestConnectorSettings_RoundTrip(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 
+	t.Run("DaytonaConnectorSettings", func(t *testing.T) {
+		t.Parallel()
+
+		want := coredata.DaytonaConnectorSettings{OrganizationID: "aaaaaaaa-1111-2222-3333-000000000001"}
+		c := &coredata.Connector{}
+		require.NoError(t, c.SetSettings(&want))
+
+		got, err := coredata.ConnectorSettings[coredata.DaytonaConnectorSettings](c)
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	})
+
 	t.Run("AWSConnectorSettings", func(t *testing.T) {
 		t.Parallel()
 
