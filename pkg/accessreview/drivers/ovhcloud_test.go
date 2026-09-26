@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -336,10 +337,11 @@ func TestOVHcloudDriver(t *testing.T) {
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 
-	// The fixture account holds the owner and one client-credentials service
-	// account. Its two authorization-code clients are deliberately absent:
-	// they bind to no identity and act as whoever authorises them.
-	require.Len(t, records, 2)
+	// The fixture account holds the owner, one client-credentials service
+	// account and one classic API credential. Its two authorization-code
+	// clients are deliberately absent: they bind to no identity and act as
+	// whoever authorises them.
+	require.Len(t, records, 3)
 
 	owner := records[0]
 	assert.Equal(t, "ab1234-ovh", owner.ExternalID)
@@ -359,6 +361,21 @@ func TestOVHcloudDriver(t *testing.T) {
 	// Its privilege lives in IAM policy the API does not expose per client.
 	assert.Nil(t, service.IsAdmin)
 	assert.NotEmpty(t, service.ExternalID)
+
+	// A classic API credential: standing access that appears in no identity
+	// endpoint, named after the application it belongs to and described by the
+	// access rules it was granted.
+	credential := records[2]
+	assert.Equal(t, "635061199", credential.ExternalID)
+	assert.Equal(t, "test", credential.FullName)
+	assert.Equal(t, []string{"GET", "PUT"}, credential.Roles)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodAPIKey, credential.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, credential.AccountType)
+	require.NotNil(t, credential.Active)
+	assert.True(t, *credential.Active, "a validated credential can still call the API")
+	assert.NotNil(t, credential.CreatedAt)
+	// It has never been used, so there is no last-use timestamp to report.
+	assert.Nil(t, credential.LastLogin)
 }
 
 func TestOVHcloudNameResolver(t *testing.T) {
@@ -426,13 +443,21 @@ func sanitizeOVHcloud(i *cassette.Interaction) error {
 	i.Response.Body = string(out)
 
 	// Refuse to save an interaction that still carries a real identifier.
-	// The rewrite map is hand-maintained, so a re-record against an account
-	// holding identities it does not know about would otherwise commit them
-	// silently. This is the guard that would have caught the client ids the
-	// first version of this sanitizer left in the request URLs.
+	//
+	// Checking only the rewrite map is not enough: it is hand-maintained, so an
+	// identifier minted after it was written passes straight through. That is
+	// not hypothetical — the staging OAuth client was created later and leaked
+	// into a re-record. So the shapes are matched structurally as well, and a
+	// value only passes when it is one of the synthetic stand-ins.
 	for real := range ovhcloudCassetteRewrites {
 		if strings.Contains(i.Response.Body, real) || strings.Contains(i.Request.URL, real) {
-			return fmt.Errorf("refusing to save ovhcloud cassette: a real identifier survived sanitizing")
+			return fmt.Errorf("refusing to save ovhcloud cassette: a known real identifier survived sanitizing")
+		}
+	}
+
+	for _, candidate := range ovhcloudIdentifierShapes.FindAllString(i.Response.Body+" "+i.Request.URL, -1) {
+		if !ovhcloudSyntheticIdentifier(candidate) {
+			return fmt.Errorf("refusing to save ovhcloud cassette: an unrecognised real identifier survived sanitizing (add it to ovhcloudCassetteRewrites)")
 		}
 	}
 
@@ -448,7 +473,31 @@ var ovhcloudCassetteRewrites = map[string]string{
 	"EU.28d43fdfc0f81aee": "EU.0000000000000000",
 	"EU.605fa850d354b921": "EU.1111111111111111",
 	"EU.d13f320e69d836ff": "EU.2222222222222222",
+	"EU.a21f12032ce38dfa": "EU.3333333333333333",
 	"83.199.254.71":       "203.0.113.1",
+	// The classic API application's key. The driver never reads it, but it
+	// rides along in the /me/api/application response.
+	"3f1c18a4c1221636": "0000000000000000",
+}
+
+// ovhcloudIdentifierShapes matches the identifier formats OVHcloud mints that
+// would identify a real account: an OAuth2 client id and a NIC handle.
+var ovhcloudIdentifierShapes = regexp.MustCompile(`EU\.[0-9a-f]{16}|[a-z]{2}[0-9]{6}-ovh`)
+
+// ovhcloudSyntheticIdentifier reports whether a matched identifier is one of
+// the stand-ins this file substitutes, rather than a real value.
+func ovhcloudSyntheticIdentifier(v string) bool {
+	if v == "ab1234-ovh" {
+		return true
+	}
+
+	for _, synthetic := range ovhcloudCassetteRewrites {
+		if v == synthetic {
+			return true
+		}
+	}
+
+	return false
 }
 
 // rewriteOVHcloudIdentifiers applies the rewrites to a plain string.
@@ -505,9 +554,10 @@ func TestOVHcloudDriverPopulatedAccount(t *testing.T) {
 	records, err := NewOVHcloudDriver(client, "https://eu.api.ovh.com/1.0").ListAccounts(context.Background())
 	require.NoError(t, err)
 
-	// owner + three local users + one client-credentials client + two federated.
-	// The authorization-code client is excluded: it binds to no identity.
-	require.Len(t, records, 7)
+	// owner + three local users + one client-credentials client + two classic
+	// API credentials + two federated. The authorization-code client is
+	// excluded: it binds to no identity.
+	require.Len(t, records, 9)
 
 	byID := make(map[string]AccountRecord, len(records))
 	for _, r := range records {
@@ -572,7 +622,24 @@ func TestOVHcloudDriverPopulatedAccount(t *testing.T) {
 	assert.Empty(t, erin.Email)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, erin.AuthMethod)
 
+	// An expired classic API credential stays in the roster so a reviewer sees
+	// it existed, but it can no longer call the API.
+	expired := byID["900001"]
+	assert.Equal(t, "terraform", expired.FullName)
+	assert.Equal(t, []string{"GET /*"}, expired.Roles)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodAPIKey, expired.AuthMethod)
+	require.NotNil(t, expired.Active)
+	assert.False(t, *expired.Active)
+	require.NotNil(t, expired.LastLogin)
+
+	// A live credential OVHcloud's own support team created. The reviewer has
+	// to see that the customer did not create this one, so it leads the roles.
+	support := byID["900002"]
+	require.NotNil(t, support.Active)
+	assert.True(t, *support.Active)
+	assert.Equal(t, []string{"Created by OVHcloud support", "GET /*", "POST /*"}, support.Roles)
+
 	// Federated records are sorted, so the roster does not reorder per sync.
-	assert.Equal(t, "CORP\\erin", records[5].ExternalID)
-	assert.Equal(t, "dave@corp.example.com", records[6].ExternalID)
+	assert.Equal(t, "CORP\\erin", records[7].ExternalID)
+	assert.Equal(t, "dave@corp.example.com", records[8].ExternalID)
 }

@@ -36,7 +36,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Tue, 22 Sep 2026 18:10:38 GMT
+                - Sat, 26 Sep 2026 10:55:45 GMT
             Server:
                 - nginx
             Vary:
@@ -46,13 +46,13 @@ interactions:
             X-Frame-Options:
                 - DENY
             X-Iplb-Instance:
-                - "49211"
+                - "47055"
             X-Iplb-Request-Id:
-                - 53C7FE47:D1ED_8D5FBADF:01BB_6AB2C49E_A1EB8CC:2E5C9B
+                - 53C7FE47:DB9F_8D5FBADF:01BB_6AB7A4B1_1752A6:2233C2
             X-Ovh-Queryid:
-                - EU.ext-1.6ab2c49e.2579093.7f94fb208787a5f74bf0ce1e3993b0f4
+                - EU.ext-5.6ab7a4b1.600086.f48052610acb49894e17a9aa2bc73aa6
             X-Xss-Protection:
                 - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 108.472792ms
+        duration: 98.617875ms
