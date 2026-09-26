@@ -677,6 +677,29 @@ func TestStreamAccumulator(t *testing.T) {
 		assert.Empty(t, resp.Message.ToolCalls)
 	})
 
+	t.Run("signature without thinking text", func(t *testing.T) {
+		t.Parallel()
+
+		events := []llm.ChatCompletionStreamEvent{
+			{Delta: llm.MessageDelta{Content: "done"}},
+			{
+				Delta:        llm.MessageDelta{ThinkingSignature: "opaque"},
+				FinishReason: new(llm.FinishReasonStop),
+			},
+		}
+
+		acc := llm.NewStreamAccumulator(&mockStream{events: events})
+		for acc.Next() {
+		}
+
+		require.NoError(t, acc.Err())
+
+		resp := acc.Response()
+		require.Len(t, resp.Message.Parts, 2)
+		assert.Equal(t, llm.ThinkingPart{Signature: "opaque"}, resp.Message.Parts[0])
+		assert.Equal(t, "done", resp.Message.Text())
+	})
+
 	t.Run("proxies events transparently", func(t *testing.T) {
 		t.Parallel()
 

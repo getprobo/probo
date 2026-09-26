@@ -56,6 +56,8 @@ type (
 const (
 	anthropicThinkingMinBudgetTokens    = 1024
 	anthropicThinkingOutputTokenReserve = 1024
+
+	thinkingProvider = "anthropic"
 )
 
 func WithHTTPClient(c *http.Client) Option {
@@ -269,6 +271,11 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 			for _, p := range msg.Parts {
 				switch part := p.(type) {
 				case llm.ThinkingPart:
+					// Anthropic cannot verify another provider's thinking.
+					if part.Provider != "" && part.Provider != thinkingProvider {
+						continue
+					}
+
 					blocks = append(blocks, anthropic.NewThinkingBlock(part.Signature, part.Text))
 				case llm.TextPart:
 					if part.Text != "" {
@@ -284,6 +291,10 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 				}
 
 				blocks = append(blocks, anthropic.NewToolUseBlock(tc.ID, input, tc.Function.Name))
+			}
+
+			if len(blocks) == 0 {
+				continue
 			}
 
 			out = append(out, anthropic.NewAssistantMessage(blocks...))
@@ -388,6 +399,7 @@ func mapResponse(msg *anthropic.Message) *llm.ChatCompletionResponse {
 			resp.Message.Parts = append(resp.Message.Parts, llm.ThinkingPart{
 				Text:      tb.Thinking,
 				Signature: tb.Signature,
+				Provider:  thinkingProvider,
 			})
 		case "text":
 			resp.Message.Parts = append(resp.Message.Parts, llm.TextPart{Text: block.Text})
@@ -542,7 +554,10 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 			s.thinkingSignature = delta.Signature
 
 			return llm.ChatCompletionStreamEvent{
-				Delta: llm.MessageDelta{ThinkingSignature: delta.Signature},
+				Delta: llm.MessageDelta{
+					ThinkingSignature: delta.Signature,
+					ThinkingProvider:  thinkingProvider,
+				},
 			}, true
 		case "input_json_delta":
 			return llm.ChatCompletionStreamEvent{
