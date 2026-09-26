@@ -71,9 +71,13 @@ export function DocumentViewerToolbar({
   dataUri,
   downloadName,
 }: DocumentViewerToolbarProps) {
-  const { t } = useTranslation("documents");
+  const { t, i18n } = useTranslation("documents");
   const copyDocumentLink = useCopyDocumentLink();
   const slots = documentViewerToolbar();
+  const zoomLabel = new Intl.NumberFormat(i18n.language, {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(scale);
 
   const handleCopyLink = () => {
     copyDocumentLink(window.location.href);
@@ -124,7 +128,7 @@ export function DocumentViewerToolbar({
                 <MagnifyingGlassMinusIcon />
               </IconButton>
               <Text size={2} color="neutral">
-                {`${Math.round(scale * 100)}%`}
+                {zoomLabel}
               </Text>
               <IconButton
                 variant="ghost"
