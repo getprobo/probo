@@ -22,7 +22,7 @@ import type { ComponentProps } from "react";
 
 // The mark only, lifted from OVHcloud's 2024 wordmark. The viewBox is the
 // glyph's bounding box squared off around its centre, because the mark is
-// wider than it is tall and every sibling logo here is square.
+// wider than it is tall and the sibling logos are square.
 export function OVHcloud(props: ComponentProps<"svg">) {
   return (
     <svg

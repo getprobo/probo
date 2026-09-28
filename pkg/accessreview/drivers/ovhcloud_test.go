@@ -361,10 +361,11 @@ func TestOVHcloudDriver(t *testing.T) {
 	assert.Equal(t, []string{"GET", "PUT"}, credential.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodAPIKey, credential.AuthMethod)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, credential.AccountType)
-	// The recorded credential carries an expiry, so whether it is still active
-	// tracks the wall clock. TestOVHcloudAPICredentialRecord pins a clock and
-	// owns the expiry rules; here only the plumbing has to hold.
+	// The recorded credential's expiry has passed, so it replays as inactive
+	// whatever the clock says. TestOVHcloudAPICredentialRecord pins a clock and
+	// owns the rules for a credential that has not expired yet.
 	require.NotNil(t, credential.Active)
+	assert.False(t, *credential.Active, "the recorded credential expired on 2026-09-27")
 	assert.NotNil(t, credential.CreatedAt)
 	// It has never been used, so there is no last-use timestamp to report.
 	assert.Nil(t, credential.LastLogin)
