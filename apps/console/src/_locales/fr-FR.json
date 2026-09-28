@@ -2617,8 +2617,7 @@
       "optional": "Les membres de votre équipe peuvent utiliser soit l’authentification unique, soit leur mot de passe pour se connecter"
     },
     "actions": {
-      "update": "Mettre à jour la configuration",
-      "create": "Créer la configuration"
+      "update": "Mettre à jour la configuration"
     }
   },
   "samlConfigurationList": {
@@ -2635,7 +2634,6 @@
       "description": "Voulez-vous vraiment supprimer la configuration SAML pour {{domain}} ? Cette action est irréversible."
     },
     "empty": {
-      "title": "Aucun SSO SAML",
       "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie."
     },
     "pending": {
@@ -2658,16 +2656,6 @@
       "disabled": "L’inscription via SAML est <policy>désactivée</policy>. Seuls les utilisateurs existants peuvent se connecter."
     },
     "fields": {
-      "domain": "Domaine",
-      "sso": "SSO",
-      "ssoUrl": "URL SSO"
-    },
-    "columns": {
-      "configurationId": "ID de configuration",
-      "emailDomain": "Domaine de messagerie",
-      "domainStatus": "Statut du domaine",
-      "samlStatus": "Statut SAML",
-      "enforcement": "Application",
       "ssoUrl": "URL SSO"
     },
     "title": {
@@ -2675,17 +2663,9 @@
       "active": "Le SSO est actif",
       "off": "Le SSO est désactivé"
     },
-    "status": {
-      "verified": "Vérifié",
-      "pendingVerification": "Vérification en attente",
-      "enabled": "Activé",
-      "disabled": "Désactivé"
-    },
     "actions": {
       "delete": "Supprimer",
       "cancel": "Annuler",
-      "clickToCopy": "Cliquer pour copier",
-      "copied": "Copié !",
       "copyUrl": "Copier l’URL",
       "open": "Ouvrir"
     }

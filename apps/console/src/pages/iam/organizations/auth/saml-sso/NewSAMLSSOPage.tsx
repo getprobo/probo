@@ -91,7 +91,6 @@ export function NewSAMLSSOPage({ queryRef }: NewSAMLSSOPageProps) {
         </Text>
       </div>
       <NewSAMLConfigurationForm
-        variant="page"
         onCreate={(samlConfigurationId) => {
           void navigate(`../${samlConfigurationId}`);
         }}

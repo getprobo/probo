@@ -1644,13 +1644,13 @@
     "fields": { "emailDomain": "Email Domain", "emailDomainLocked": "Email domain cannot be changed after creation", "emailDomainHelp": "The email domain this SAML configuration applies to (e.g., example.com)", "enforcementPolicy": "Enforcement Policy", "idpEntityId": "IdP Entity ID", "idpSsoUrl": "IdP SSO URL", "idpCertificate": "IdP X.509 Certificate", "emailAttribute": "Email Attribute", "firstNameAttribute": "First Name Attribute", "lastNameAttribute": "Last Name Attribute", "roleAttribute": "Role Attribute", "autoSignupEnabled": "Enable automatic user signup via SAML" },
     "enforcement": { "optional": "Optional", "required": "Required", "off": "Off" },
     "enforcementDescriptions": { "off": "Your team members can't use single sign-on and must use their password", "required": "Your team members must use single sign-on to log in", "optional": "Your team members may use either single sign-on or their password to log in" },
-    "actions": { "update": "Update Configuration", "create": "Create Configuration" }
+    "actions": { "update": "Update Configuration" }
   },
   "samlConfigurationList": {
     "messages": { "deleted": "SAML configuration deleted successfully.", "copied": "Copied to clipboard" },
     "errors": { "delete": "Failed to delete SAML configuration. Please try again.", "copy": "Failed to copy to clipboard" },
     "delete": { "title": "Delete SAML Configuration", "description": "Are you sure you want to delete the SAML configuration for {{domain}}? This action cannot be undone." },
-    "empty": { "title": "No SAML SSO", "description": "Set up SAML 2.0 single sign-on for each email domain." },
+    "empty": { "description": "Set up SAML 2.0 single sign-on for each email domain." },
     "pending": { "description": "Add a DNS <type>TXT</type> record to verify you control this domain." },
     "dns": {
       "name": "Name",
@@ -1668,15 +1668,13 @@
       "enabled": "Signup through SAML is <policy>on</policy>. New users on this domain can join automatically.",
       "disabled": "Signup through SAML is <policy>off</policy>. Only existing users can sign in."
     },
-    "fields": { "domain": "Domain", "sso": "SSO", "ssoUrl": "SSO URL" },
-    "columns": { "configurationId": "Configuration ID", "emailDomain": "Email Domain", "domainStatus": "Domain Status", "samlStatus": "SAML Status", "enforcement": "Enforcement", "ssoUrl": "SSO URL" },
+    "fields": { "ssoUrl": "SSO URL" },
     "title": {
       "pending": "Verify this domain",
       "active": "SSO is active",
       "off": "SSO is off"
     },
-    "status": { "verified": "Verified", "pendingVerification": "Pending Verification", "enabled": "Enabled", "disabled": "Disabled" },
-    "actions": { "delete": "Delete", "cancel": "Cancel", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "open": "Open" }
+    "actions": { "delete": "Delete", "cancel": "Cancel", "copyUrl": "Copy URL", "open": "Open" }
   },
   "scimConfiguration": {
     "errors": { "title": "Error", "create": "Manual SCIM configuration failed" },

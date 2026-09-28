@@ -386,16 +386,6 @@ func (e ErrPersonalAPIKeyExpired) Error() string {
 	return fmt.Sprintf("personal API key %q expired", e.PersonalAPIKeyID)
 }
 
-type ErrSAMLConfigurationDomainNotVerified struct{ ConfigID gid.GID }
-
-func NewSAMLConfigurationDomainNotVerifiedError(configID gid.GID) error {
-	return &ErrSAMLConfigurationDomainNotVerified{ConfigID: configID}
-}
-
-func (e ErrSAMLConfigurationDomainNotVerified) Error() string {
-	return fmt.Sprintf("SAML configuration %q domain not verified", e.ConfigID)
-}
-
 type ErrUnsupportedPrincipalType struct{ EntityType uint16 }
 
 func NewUnsupportedPrincipalTypeError(entityType uint16) error {

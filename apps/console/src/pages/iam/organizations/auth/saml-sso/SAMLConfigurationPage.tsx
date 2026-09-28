@@ -123,7 +123,6 @@ export function SAMLConfigurationPage({ queryRef }: SAMLConfigurationPageProps) 
           </Callout>
         )}
         <EditSAMLConfigurationForm
-          variant="page"
           samlConfigurationKey={samlConfiguration}
           ssoLoginUrl={ssoLoginUrl}
         />

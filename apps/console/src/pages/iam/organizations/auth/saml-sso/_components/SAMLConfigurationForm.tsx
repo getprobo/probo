@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { DialogContent, DialogFooter } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
@@ -35,6 +34,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { SAMLEnforcementPolicy } from "../_lib/samlConfigurationCardTone";
 import { newSamlSsoPage } from "../variants";
 
 import { SAMLConfigurationSsoUrl } from "./SAMLConfigurationSsoUrl";
@@ -47,8 +47,6 @@ const defaultAttributeMappings = {
   lastName: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
   role: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
 };
-
-export type SAMLEnforcementPolicy = "OFF" | "OPTIONAL" | "REQUIRED";
 
 export interface SAMLConfigurationFormData {
   emailDomain: string;
@@ -88,7 +86,6 @@ interface SAMLConfigurationFormProps {
   isEditing?: boolean;
   disabled: boolean;
   hideSubmit?: boolean;
-  variant?: "dialog" | "page";
   initialValues?: SAMLConfigurationFormData;
   ssoLoginUrl?: string | null;
   onSubmit: (data: SAMLConfigurationFormData) => void | Promise<void>;
@@ -98,7 +95,6 @@ export function SAMLConfigurationForm({
   isEditing = false,
   disabled,
   hideSubmit = false,
-  variant = "dialog",
   initialValues = defaultValues,
   ssoLoginUrl,
   onSubmit,
@@ -161,10 +157,11 @@ export function SAMLConfigurationForm({
   );
 
   function sectionBlock(title: string | null, children: ReactNode) {
-    const content = <div className={fields()}>{children}</div>;
-    const card = variant === "page"
-      ? <Card variant="soft" size={2}>{content}</Card>
-      : content;
+    const card = (
+      <Card variant="soft" size={2}>
+        <div className={fields()}>{children}</div>
+      </Card>
+    );
 
     if (title == null) {
       return card;
@@ -344,29 +341,10 @@ export function SAMLConfigurationForm({
     </>
   );
 
-  function wrapFields(content: ReactNode) {
-    if (variant === "page") {
-      return (
-        <>
-          {content}
-          {!hideSubmit && <div className={actions()}>{submit}</div>}
-        </>
-      );
-    }
-
-    return (
-      <>
-        <DialogContent padded>
-          <div className={form()}>{content}</div>
-        </DialogContent>
-        {!hideSubmit && <DialogFooter>{submit}</DialogFooter>}
-      </>
-    );
-  }
-
   return (
     <Form className={form()} onFormSubmit={handleSubmit}>
-      {wrapFields(body)}
+      {body}
+      {!hideSubmit && <div className={actions()}>{submit}</div>}
     </Form>
   );
 }

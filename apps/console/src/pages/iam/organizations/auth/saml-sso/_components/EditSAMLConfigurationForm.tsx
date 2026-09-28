@@ -69,14 +69,10 @@ const updateSAMLConfigurationMutation = graphql`
 
 export function EditSAMLConfigurationForm({
   samlConfigurationKey,
-  variant,
   ssoLoginUrl,
-  onUpdate,
 }: {
   samlConfigurationKey: EditSAMLConfigurationForm_samlConfiguration$key;
-  variant?: "dialog" | "page";
   ssoLoginUrl?: string | null;
-  onUpdate?: () => void;
 }) {
   const samlConfiguration = useFragment(
     editSAMLConfigurationFormFragment,
@@ -124,17 +120,14 @@ export function EditSAMLConfigurationForm({
             });
             return;
           }
-
-          onUpdate?.();
         },
       });
     },
-    [onUpdate, organizationId, samlConfiguration.id, update, t, toast],
+    [organizationId, samlConfiguration.id, update, t, toast],
   );
 
   return (
     <SAMLConfigurationForm
-      variant={variant}
       disabled={!canUpdate || isUpdating}
       hideSubmit={!canUpdate}
       initialValues={{

@@ -2617,8 +2617,7 @@
       "optional": "Uw teamleden kunnen inloggen met single sign-on of met hun wachtwoord"
     },
     "actions": {
-      "update": "Configuratie bijwerken",
-      "create": "Configuratie aanmaken"
+      "update": "Configuratie bijwerken"
     }
   },
   "samlConfigurationList": {
@@ -2635,7 +2634,6 @@
       "description": "Weet u zeker dat u de SAML-configuratie voor {{domain}} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt."
     },
     "empty": {
-      "title": "Geen SAML SSO",
       "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein."
     },
     "pending": {
@@ -2658,16 +2656,6 @@
       "disabled": "Registratie via SAML is <policy>uit</policy>. Alleen bestaande gebruikers kunnen inloggen."
     },
     "fields": {
-      "domain": "Domein",
-      "sso": "SSO",
-      "ssoUrl": "SSO-URL"
-    },
-    "columns": {
-      "configurationId": "Configuratie-ID",
-      "emailDomain": "E-maildomein",
-      "domainStatus": "Domeinstatus",
-      "samlStatus": "SAML-status",
-      "enforcement": "Handhaving",
       "ssoUrl": "SSO-URL"
     },
     "title": {
@@ -2675,17 +2663,9 @@
       "active": "SSO is actief",
       "off": "SSO is uit"
     },
-    "status": {
-      "verified": "Geverifieerd",
-      "pendingVerification": "In afwachting van verificatie",
-      "enabled": "Ingeschakeld",
-      "disabled": "Uitgeschakeld"
-    },
     "actions": {
       "delete": "Verwijderen",
       "cancel": "Annuleren",
-      "clickToCopy": "Klik om te kopiëren",
-      "copied": "Gekopieerd!",
       "copyUrl": "URL kopiëren",
       "open": "Openen"
     }

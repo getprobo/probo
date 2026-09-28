@@ -49,11 +49,11 @@ const createSAMLConfigurationMutation = graphql`
   }
 `;
 
-export function NewSAMLConfigurationForm(props: {
+export function NewSAMLConfigurationForm({
+  onCreate,
+}: {
   onCreate: (samlConfigurationId: string) => void;
-  variant?: "dialog" | "page";
 }) {
-  const { onCreate, variant } = props;
   const organizationId = useOrganizationId();
 
   const { t } = useTranslation();
@@ -115,7 +115,6 @@ export function NewSAMLConfigurationForm(props: {
 
   return (
     <SAMLConfigurationForm
-      variant={variant}
       onSubmit={handleCreate}
       disabled={isCreating}
     />
