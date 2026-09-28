@@ -28,7 +28,6 @@ import { useTranslation } from "react-i18next";
 import { samlConfigurationListItem } from "../variants";
 
 const TXT_HOST = "@";
-const TXT_TYPE = "TXT";
 
 interface SAMLConfigurationDnsRecordProps {
   domainVerificationToken: string;
@@ -39,7 +38,7 @@ export function SAMLConfigurationDnsRecord({
 }: SAMLConfigurationDnsRecordProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { record, recordHeader, recordField, recordValue, code } = samlConfigurationListItem();
+  const { record, recordField, recordValue, code } = samlConfigurationListItem();
   const value = `probo-verification=${domainVerificationToken}`;
 
   async function copyToClipboard(text: string, description: string) {
@@ -61,9 +60,6 @@ export function SAMLConfigurationDnsRecord({
 
   return (
     <div className={record()}>
-      <div className={recordHeader()}>
-        <Text size={2} weight="medium">{TXT_TYPE}</Text>
-      </div>
       <div className={recordField()}>
         <Text size={1} color="faint">{t("samlConfigurationList.dns.name")}</Text>
         <div className={recordValue()}>

@@ -2638,7 +2638,7 @@
       "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein."
     },
     "pending": {
-      "description": "Voeg een DNS-TXT-record toe om te verifiëren dat u dit domein beheert."
+      "description": "Voeg een DNS-<type>TXT</type>-record toe om te verifiëren dat u dit domein beheert."
     },
     "dns": {
       "name": "Naam",
@@ -2671,8 +2671,7 @@
     },
     "title": {
       "pending": "Verifieer dit domein",
-      "optional": "SSO is optioneel",
-      "required": "SSO is verplicht",
+      "active": "SSO is actief",
       "off": "SSO is uit"
     },
     "status": {

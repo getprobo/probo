@@ -2635,7 +2635,7 @@
       "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie."
     },
     "pending": {
-      "description": "Ajoutez un enregistrement TXT DNS pour vérifier que vous contrôlez ce domaine."
+      "description": "Ajoutez un enregistrement <type>TXT</type> DNS pour vérifier que vous contrôlez ce domaine."
     },
     "dns": {
       "name": "Nom",
@@ -2668,8 +2668,7 @@
     },
     "title": {
       "pending": "Vérifiez ce domaine",
-      "optional": "Le SSO est facultatif",
-      "required": "Le SSO est obligatoire",
+      "active": "Le SSO est actif",
       "off": "Le SSO est désactivé"
     },
     "status": {

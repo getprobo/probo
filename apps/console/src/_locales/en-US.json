@@ -1647,7 +1647,7 @@
     "errors": { "delete": "Failed to delete SAML configuration. Please try again.", "copy": "Failed to copy to clipboard" },
     "delete": { "title": "Delete SAML Configuration", "description": "Are you sure you want to delete the SAML configuration for {{domain}}? This action cannot be undone." },
     "empty": { "title": "No SAML SSO", "description": "Set up SAML 2.0 single sign-on for each email domain." },
-    "pending": { "description": "Add a DNS TXT record to verify you control this domain." },
+    "pending": { "description": "Add a DNS <type>TXT</type> record to verify you control this domain." },
     "dns": {
       "name": "Name",
       "value": "Value",
@@ -1668,8 +1668,7 @@
     "columns": { "configurationId": "Configuration ID", "emailDomain": "Email Domain", "domainStatus": "Domain Status", "samlStatus": "SAML Status", "enforcement": "Enforcement", "ssoUrl": "SSO URL" },
     "title": {
       "pending": "Verify this domain",
-      "optional": "SSO is optional",
-      "required": "SSO is required",
+      "active": "SSO is active",
       "off": "SSO is off"
     },
     "status": { "verified": "Verified", "pendingVerification": "Pending Verification", "enabled": "Enabled", "disabled": "Disabled" },

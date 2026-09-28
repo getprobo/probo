@@ -130,30 +130,39 @@ export function SAMLConfigurationListItem({
         <Text size={3} weight="medium" highContrast>
           {config.emailDomain}
         </Text>
-        <Text size={2} color="neutral">
-          <Trans
-            i18nKey={`samlConfigurationList.enforcement.${config.enforcementPolicy.toLowerCase()}`}
-            components={{
-              policy: <Text size={2} weight="medium" highContrast color="current" />,
-            }}
-          />
-        </Text>
-        <Text size={2} color="neutral">
-          <Trans
-            i18nKey={
-              config.autoSignupEnabled
-                ? "samlConfigurationList.signup.enabled"
-                : "samlConfigurationList.signup.disabled"
-            }
-            components={{
-              policy: <Text size={2} weight="medium" highContrast color="current" />,
-            }}
-          />
-        </Text>
+        {config.domainVerifiedAt != null && (
+          <>
+            <Text size={2} color="neutral">
+              <Trans
+                i18nKey={`samlConfigurationList.enforcement.${config.enforcementPolicy.toLowerCase()}`}
+                components={{
+                  policy: <Text size={2} weight="medium" highContrast color="current" />,
+                }}
+              />
+            </Text>
+            <Text size={2} color="neutral">
+              <Trans
+                i18nKey={
+                  config.autoSignupEnabled
+                    ? "samlConfigurationList.signup.enabled"
+                    : "samlConfigurationList.signup.disabled"
+                }
+                components={{
+                  policy: <Text size={2} weight="medium" highContrast color="current" />,
+                }}
+              />
+            </Text>
+          </>
+        )}
         {config.domainVerifiedAt == null && (
           <div className={callout()}>
             <Text size={2} color="neutral">
-              {t("samlConfigurationList.pending.description")}
+              <Trans
+                i18nKey="samlConfigurationList.pending.description"
+                components={{
+                  type: <Text size={2} weight="medium" highContrast color="current" />,
+                }}
+              />
             </Text>
             {domainVerificationToken != null && (
               <SAMLConfigurationDnsRecord

@@ -48,18 +48,14 @@ export function showsSamlLoginUrl(
 export function samlConfigurationStatusKey(
   domainVerifiedAt: string | null | undefined,
   enforcementPolicy: SAMLEnforcementPolicy,
-): "pending" | "optional" | "required" | "off" {
+): "pending" | "active" | "off" {
   if (domainVerifiedAt == null) {
     return "pending";
   }
-  switch (enforcementPolicy) {
-    case "REQUIRED":
-      return "required";
-    case "OFF":
-      return "off";
-    default:
-      return "optional";
+  if (enforcementPolicy === "OFF") {
+    return "off";
   }
+  return "active";
 }
 
 export function SAMLConfigurationStatusIcon({
