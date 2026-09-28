@@ -129,7 +129,7 @@ func decomposeGlobs(
 	globMatchType := coredata.TrackerPatternMatchTypeGlob
 	notExcluded := false
 
-	globs, err := page.LoadAll(
+	return page.WalkAll(
 		ctx,
 		page.OrderBy[coredata.TrackerPatternOrderField]{
 			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
@@ -143,54 +143,70 @@ func decomposeGlobs(
 
 			return batch, nil
 		},
+		func(globs []*coredata.TrackerPattern) error {
+			for _, glob := range globs {
+				if err := decomposeGlob(ctx, tx, scope, uncategorisedID, glob, result); err != nil {
+					return err
+				}
+
+				result.GlobsDecomposed++
+			}
+
+			return nil
+		},
+	)
+}
+
+func decomposeGlob(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	uncategorisedID gid.GID,
+	glob *coredata.TrackerPattern,
+	result *ResetTrackersResult,
+) error {
+	err := page.WalkAll(
+		ctx,
+		page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+			var batch coredata.DetectedTrackers
+			if err := batch.LoadByTrackerPatternID(ctx, tx, scope, glob.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load detections for glob %q: %w", glob.Pattern, err)
+			}
+
+			return batch, nil
+		},
+		func(detections []*coredata.DetectedTracker) error {
+			for _, detection := range detections {
+				exactID, created, err := ensureExactPattern(ctx, tx, scope, glob, uncategorisedID, detection)
+				if err != nil {
+					return err
+				}
+
+				if created {
+					result.ExactsCreated++
+				}
+
+				detection.TrackerPatternID = &exactID
+				if err := detection.UpdateTrackerPatternID(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot relink detection %s: %w", detection.ID, err)
+				}
+
+				result.DetectionsRelinked++
+			}
+
+			return nil
+		},
 	)
 	if err != nil {
 		return err
 	}
 
-	for _, glob := range globs {
-		detections, err := page.LoadAll(
-			ctx,
-			page.OrderBy[coredata.DetectedTrackerOrderField]{
-				Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
-				Direction: page.OrderDirectionAsc,
-			},
-			func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
-				var batch coredata.DetectedTrackers
-				if err := batch.LoadByTrackerPatternID(ctx, tx, scope, glob.ID, cursor); err != nil {
-					return nil, fmt.Errorf("cannot load detections for glob %q: %w", glob.Pattern, err)
-				}
-
-				return batch, nil
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		for _, detection := range detections {
-			exactID, created, err := ensureExactPattern(ctx, tx, scope, glob, uncategorisedID, detection)
-			if err != nil {
-				return err
-			}
-
-			if created {
-				result.ExactsCreated++
-			}
-
-			detection.TrackerPatternID = &exactID
-			if err := detection.UpdateTrackerPatternID(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot relink detection %s: %w", detection.ID, err)
-			}
-
-			result.DetectionsRelinked++
-		}
-
-		if err := glob.Delete(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot delete glob pattern %q: %w", glob.Pattern, err)
-		}
-
-		result.GlobsDecomposed++
+	if err := glob.Delete(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot delete glob pattern %q: %w", glob.Pattern, err)
 	}
 
 	return nil
