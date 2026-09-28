@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -1045,6 +1046,72 @@ func probeStubClient(seen *[]*http.Request, status int, body string) *http.Clien
 				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}, nil
 		}),
+	}
+}
+
+func TestProbeSlack(t *testing.T) {
+	t.Parallel()
+
+	for body, wantRejected := range map[string]bool{
+		`{"ok":true,"members":[]}`:            false,
+		`{"ok":false,"error":"invalid_auth"}`: true,
+	} {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/users.list", r.URL.Path)
+
+			_, _ = w.Write([]byte(body))
+		}))
+		t.Cleanup(server.Close)
+
+		conn := &coredata.Connector{Provider: coredata.ConnectorProviderSlack}
+		err := slackRegistration().Probe(context.Background(), server.Client(), conn, Endpoints{APIBase: server.URL})
+
+		if !wantRejected {
+			require.NoError(t, err, body)
+
+			continue
+		}
+
+		_, rejected := errors.AsType[*CredentialRejectedError](err)
+		assert.True(t, rejected, body)
+	}
+}
+
+func TestSlackProbeVerdict(t *testing.T) {
+	t.Parallel()
+
+	rejections := []struct {
+		name    string
+		err     error
+		status  int
+		refused bool
+	}{
+		{"revoked token", &drivers.SlackAPIError{Method: "/users.list", Code: "token_revoked"}, http.StatusUnauthorized, false},
+		{"missing scope", &drivers.SlackAPIError{Method: "/users.list", Code: "missing_scope"}, http.StatusForbidden, true},
+		{"2FA setup required", &drivers.SlackAPIError{Method: "/users.list", Code: "two_factor_setup_required"}, http.StatusForbidden, true},
+		{"HTTP 401", &drivers.SlackStatusError{Method: "/users.list", StatusCode: http.StatusUnauthorized}, http.StatusUnauthorized, false},
+	}
+
+	for _, tc := range rejections {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			rejected, ok := errors.AsType[*CredentialRejectedError](slackProbeVerdict(tc.err))
+			require.True(t, ok)
+			assert.Equal(t, tc.status, rejected.StatusCode)
+			assert.Equal(t, tc.refused, rejected.OperationRefused)
+		})
+	}
+
+	// Throttling, outages and migrations say nothing about the credential.
+	for _, err := range []error{
+		nil,
+		&drivers.SlackAPIError{Method: "/users.list", Code: "ratelimited"},
+		&drivers.SlackAPIError{Method: "/users.list", Code: "team_added_to_org"},
+		&drivers.SlackStatusError{Method: "/users.list", StatusCode: http.StatusTooManyRequests},
+		&drivers.SlackStatusError{Method: "/users.list", StatusCode: http.StatusBadGateway},
+	} {
+		assert.NoError(t, slackProbeVerdict(err))
 	}
 }
 

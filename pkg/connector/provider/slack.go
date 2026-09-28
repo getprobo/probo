@@ -22,6 +22,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"go.gearno.de/kit/log"
@@ -37,11 +38,13 @@ func slackRegistration() *Registration {
 		Endpoints: Endpoints{
 			Auth:    "https://slack.com/oauth/v2/authorize",
 			Token:   "https://slack.com/api/oauth.v2.access",
-			Probe:   "https://slack.com/api/users.list?limit=1",
 			APIBase: "https://slack.com/api",
 		},
 		OAuth2: &OAuth2Config{
 			Scopes: []string{"users:read", "users:read.email"},
+		},
+		Probe: func(ctx context.Context, c *http.Client, _ *coredata.Connector, ep Endpoints) error {
+			return slackProbeVerdict(drivers.CheckSlackToken(ctx, c, ep.APIBase))
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewSlackDriver(c, ep.APIBase), nil
@@ -50,4 +53,36 @@ func slackRegistration() *Registration {
 			return drivers.NewSlackNameResolver(c, ep.APIBase)
 		},
 	}
+}
+
+// slackProbeVerdict maps a Slack check onto the probe's verdicts. Slack
+// answers a dead token with HTTP 200 and ok=false. Any other failure, such as
+// throttling, an outage or a workspace migration, stays inconclusive, as it
+// is for the plain GET probe.
+func slackProbeVerdict(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if statusErr, ok := errors.AsType[*drivers.SlackStatusError](err); ok {
+		switch statusErr.StatusCode {
+		case http.StatusUnauthorized, http.StatusForbidden:
+			return newCredentialRejected(statusErr.StatusCode)
+		default:
+			return nil
+		}
+	}
+
+	if apiErr, ok := errors.AsType[*drivers.SlackAPIError](err); ok {
+		switch apiErr.Code {
+		case "invalid_auth", "not_authed", "token_revoked", "token_expired", "account_inactive":
+			return newCredentialRejected(http.StatusUnauthorized)
+		case "missing_scope", "no_permission", "two_factor_setup_required":
+			return newCredentialRejected(http.StatusForbidden)
+		default:
+			return nil
+		}
+	}
+
+	return err
 }
