@@ -20,19 +20,21 @@
 
 import type { ComponentProps } from "react";
 
-// The mark only, lifted from OVHcloud's own wordmark. The viewBox is the
+// The mark only, lifted from OVHcloud's 2024 wordmark. The viewBox is the
 // glyph's bounding box squared off around its centre, because the mark is
 // wider than it is tall and every sibling logo here is square.
 export function OVHcloud(props: ComponentProps<"svg">) {
   return (
     <svg
-      viewBox="36.97 22.12 78.18 78.18"
+      viewBox="33.99 21.63 78.15 78.15"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
       <path
         fill="#000E9C"
-        d="M110.11,40.31a40.1,40.1,0,0,1-3.74,44.49H84.93l6.6-11.67H82.8L93.09,55h8.78l8.24-14.67ZM67.77,84.8H45.91a39.59,39.59,0,0,1-3.79-44.59L56.3,64.84,71.93,37.62h23L67.78,84.78h0v0Z"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M107.1,39.8c7.9,14.2,6.4,31.8-3.7,44.5H81.9l6.6-11.7h-8.7l10.3-18.1h8.8L107.1,39.8z M64.8,84.3H42.9c-10.3-12.7-11.8-30.4-3.8-44.6l14.2,24.6l15.6-27.2h23L64.8,84.3z"
       />
     </svg>
   );
