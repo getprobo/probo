@@ -3079,6 +3079,7 @@
     "managedDescription": "Verbind {{provider}} als toegangsbron. Vul hieronder de gegevens in om af te ronden.",
     "apiKeyDescription": "Voer de API-sleutel voor {{provider}} in om deze te verbinden als toegangsbron.",
     "apiKey": "API-sleutel",
+    "credentialPage": "Maak een API-sleutel aan in {{provider}}",
     "messages": {
       "connectionFailed": "Verbinding mislukt"
     },
@@ -3096,6 +3097,7 @@
     "title": "Provider verbinden",
     "titleWithProvider": "{{provider}} verbinden",
     "description": "Voer de clientreferenties voor {{provider}} in om deze te verbinden als toegangsbron.",
+    "credentialPage": "Maak clientreferenties aan in {{provider}}",
     "messages": {
       "connectionFailed": "Verbinding mislukt"
     },

@@ -50,6 +50,7 @@ func betterStackRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "teamName", Label: "Team Name", Required: true},
 			},
+			CredentialPage: &CredentialPage{URL: "https://betterstack.com/settings/global-api-tokens"},
 		},
 		Endpoints: Endpoints{
 			APIBase: "https://betterstack.com/api/v2",

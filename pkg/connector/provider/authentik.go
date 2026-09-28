@@ -52,6 +52,10 @@ func authentikRegistration() *Registration {
 					Required: true,
 				},
 			},
+			CredentialPage: &CredentialPage{
+				URL:         "if/admin/#/core/tokens",
+				BaseSetting: "baseUrl",
+			},
 		},
 		BuildProbeURL: buildAuthentikProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {

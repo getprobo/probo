@@ -55,7 +55,9 @@ func squareRegistration() *Registration {
 		// token. A Square token — OAuth or PAT — is always scoped to one
 		// merchant, so there is nothing to pick (Pattern 3): no settings
 		// struct, no picker, no OAuth-callback capture.
-		APIKey: &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			CredentialPage: &CredentialPage{URL: "https://developer.squareup.com/apps"},
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewSquareDriver(c, ep.APIBase), nil
 		},

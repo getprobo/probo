@@ -1829,6 +1829,7 @@
     "managedDescription": "Connect {{provider}} as an access source. Provide the details below to finish.",
     "apiKeyDescription": "Enter the API key for {{provider}} to connect it as an access source.",
     "apiKey": "API Key",
+    "credentialPage": "Create an API key in {{provider}}",
     "messages": { "connectionFailed": "Connection failed" },
     "errors": { "managedConnect": "Failed to connect provider. Please check your settings and try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}" },
     "actions": { "connect": "Connect", "connecting": "Connecting..." }
@@ -1837,6 +1838,7 @@
     "title": "Connect provider",
     "titleWithProvider": "Connect {{provider}}",
     "description": "Enter the client credentials for {{provider}} to connect it as an access source.",
+    "credentialPage": "Create client credentials in {{provider}}",
     "messages": { "connectionFailed": "Connection failed" },
     "errors": { "connect": "Failed to connect provider. Please check your credentials and try again." },
     "fields": { "clientId": "Client ID", "clientSecret": "Client Secret", "tokenUrl": "Token URL", "scope": "Scope" },

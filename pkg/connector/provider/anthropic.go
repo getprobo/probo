@@ -35,8 +35,9 @@ func anthropicRegistration() *Registration {
 		DisplayName:      "Anthropic",
 		DocumentationURL: accessReviewDocsURL("anthropic"),
 		APIKey: &APIKeyConfig{
-			Auth:      APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
-			KeyFormat: apiKeyPrefix("sk-ant-", "sk-ant-…"),
+			Auth:           APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+			KeyFormat:      apiKeyPrefix("sk-ant-", "sk-ant-…"),
+			CredentialPage: &CredentialPage{URL: "https://platform.claude.com/settings/admin-keys"},
 		},
 		Endpoints: Endpoints{
 			// Every Admin API endpoint the driver calls shares the /v1

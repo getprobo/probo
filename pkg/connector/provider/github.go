@@ -57,6 +57,7 @@ func githubRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "organization", Label: "Organization", Required: true},
 			},
+			CredentialPage: &CredentialPage{URL: "https://github.com/settings/personal-access-tokens/new?name=Probo+access+review"},
 		},
 		Probe: probeGitHub,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {

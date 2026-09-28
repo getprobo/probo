@@ -34,7 +34,9 @@ func yousignRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderYousign,
 		DisplayName:      "Yousign",
 		DocumentationURL: accessReviewDocsURL("yousign"),
-		APIKey:           &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			CredentialPage: &CredentialPage{URL: "https://yousign.app/auth/workspace/integrations/apikeys"},
+		},
 		Endpoints: Endpoints{
 			APIBase: "https://api.yousign.app/v3",
 			// Yousign authenticates with an API key as Authorization: Bearer. The

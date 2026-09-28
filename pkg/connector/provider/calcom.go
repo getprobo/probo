@@ -35,7 +35,8 @@ func calComRegistration() *Registration {
 		DisplayName:      "Cal.com",
 		DocumentationURL: accessReviewDocsURL("calcom"),
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("cal_", "cal_live_…"),
+			KeyFormat:      apiKeyPrefix("cal_", "cal_live_…"),
+			CredentialPage: &CredentialPage{URL: "https://app.cal.com/settings/developer/api-keys"},
 		},
 		Endpoints: Endpoints{
 			Auth:    "https://app.cal.com/auth/oauth2/authorize",

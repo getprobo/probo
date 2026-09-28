@@ -48,6 +48,10 @@ func metabaseRegistration() *Registration {
 				{Key: "instanceUrl", Label: "Instance URL", Required: true},
 			},
 			KeyFormat: apiKeyPrefix("mb_", "mb_…"),
+			CredentialPage: &CredentialPage{
+				URL:         "admin/settings/authentication/api-keys",
+				BaseSetting: "instanceUrl",
+			},
 		},
 		BuildProbeURL: buildMetabaseProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {

@@ -146,6 +146,18 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
+	if reg.IsManagedAPIKey() && reg.APIKey.CredentialPage != nil {
+		return fmt.Errorf("cannot register connector provider %q: a managed API key has no customer credential to create", reg.Provider)
+	}
+
+	if err := validateCredentialPage(reg.APIKeyCredentialPage(), reg.APIKeyExtraSettings()); err != nil {
+		return fmt.Errorf("cannot register connector provider %q: invalid API-key credential page: %w", reg.Provider, err)
+	}
+
+	if err := validateCredentialPage(reg.ClientCredentialsCredentialPage(), reg.ClientCredentialsExtraSettings()); err != nil {
+		return fmt.Errorf("cannot register connector provider %q: invalid client-credentials credential page: %w", reg.Provider, err)
+	}
+
 	// A Probo-held key ignores any customer credential, so pairing it with the
 	// client-credentials path would advertise a credential field whose value is
 	// silently discarded. Its former conflict with a customer-supplied API key
@@ -287,10 +299,7 @@ func (r *Registry) Register(reg *Registration) error {
 		// initiate handler would redirect the customer to Probo's own origin,
 		// or worse. The destination is a vendor's install page; it is always
 		// absolute and always https.
-		//
-		// Hostname(), not Host: a port-only authority ("https://:8080/") has a
-		// non-empty Host and no host at all.
-		if installURL.Scheme != "https" || installURL.Hostname() == "" {
+		if !isAbsoluteHTTPS(installURL) {
 			return fmt.Errorf(
 				"cannot register connector provider %q: Endpoints.Install must expand to an absolute https URL, got %q",
 				reg.Provider,
@@ -361,6 +370,53 @@ func (r *Registry) Register(reg *Registration) error {
 	r.providers[reg.Provider] = reg
 
 	return nil
+}
+
+// validateCredentialPage checks a connect path's credential page against the
+// settings that path declares. A nil page is valid.
+func validateCredentialPage(page *CredentialPage, settings []ExtraSetting) error {
+	if page == nil {
+		return nil
+	}
+
+	u, err := url.Parse(page.URL)
+	if err != nil {
+		return fmt.Errorf("cannot parse URL: %w", err)
+	}
+
+	if page.BaseSetting == "" {
+		if !isAbsoluteHTTPS(u) {
+			return fmt.Errorf("URL must be an absolute https URL, got %q", page.URL)
+		}
+
+		return nil
+	}
+
+	if !slices.ContainsFunc(settings, func(s ExtraSetting) bool { return s.Key == page.BaseSetting }) {
+		return fmt.Errorf("BaseSetting %q is not an extra setting of this connect path", page.BaseSetting)
+	}
+
+	// The browser resolves the path against the customer's instance: without a
+	// path it lands on the instance root, a leading slash would drop the path
+	// of an instance served under one, a dot-dot segment would climb out of it,
+	// and a backslash reads as a slash there though not here.
+	if u.Path == "" ||
+		u.Scheme != "" ||
+		u.Host != "" ||
+		strings.HasPrefix(u.Path, "/") ||
+		strings.Contains(page.URL, `\`) ||
+		slices.Contains(strings.Split(u.Path, "/"), "..") {
+		return fmt.Errorf("URL must be a path relative to the base setting, got %q", page.URL)
+	}
+
+	return nil
+}
+
+// isAbsoluteHTTPS reports whether u is an https URL naming a host. Hostname(),
+// not Host: a port-only authority ("https://:8080/") has a non-empty Host and
+// no host at all.
+func isAbsoluteHTTPS(u *url.URL) bool {
+	return u.Scheme == "https" && u.Hostname() != ""
 }
 
 // Get returns the Registration for the given provider, or false if

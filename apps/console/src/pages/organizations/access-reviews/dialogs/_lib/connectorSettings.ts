@@ -219,6 +219,48 @@ export function hasRequiredExtraSettings(
     .every(s => values[s.key]?.trim());
 }
 
+// resolveCredentialPageURL returns the vendor page where the customer creates
+// a connect path's credential. A page relative to the customer's own instance
+// is null until that instance's URL has been typed.
+export function resolveCredentialPageURL(
+  url: string | undefined,
+  baseSetting: string | null | undefined,
+  values: Record<string, string>,
+): string | null {
+  if (!url) {
+    return null;
+  }
+
+  if (!baseSetting) {
+    return url;
+  }
+
+  // The server needs an http(s) URL with an authority, which "https:host"
+  // lacks even though the browser would supply one.
+  const typed = values[baseSetting]?.trim() ?? "";
+  if (!/^https?:\/\//i.test(typed)) {
+    return null;
+  }
+
+  let base: URL;
+  try {
+    base = new URL(typed);
+  } catch {
+    return null;
+  }
+
+  // Resolved as a directory, so an instance served under a subpath keeps it.
+  if (!base.pathname.endsWith("/")) {
+    base.pathname += "/";
+  }
+  base.username = "";
+  base.password = "";
+  base.search = "";
+  base.hash = "";
+
+  return new URL(url, base).toString();
+}
+
 // buildExtraFields flattens one connect path's extra settings into the
 // input-field map that path's create mutation expects: each non-empty, trimmed
 // value keyed by its provider-specific input field name (via mapFn), skipping

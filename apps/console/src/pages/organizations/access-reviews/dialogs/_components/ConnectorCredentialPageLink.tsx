@@ -18,35 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package provider
+import { ArrowUpRightIcon } from "@phosphor-icons/react";
+import { externalLinkProps } from "@probo/helpers";
+import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
+import type { PropsWithChildren } from "react";
 
-import (
-	"context"
-	"net/http"
+type ConnectorCredentialPageLinkProps = PropsWithChildren<{ url: string | null }>;
 
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/coredata"
-)
+// A link to the vendor page where the customer creates the credential a
+// connect dialog asks for, or nothing until that page is known.
+export function ConnectorCredentialPageLink({
+  url,
+  children,
+}: ConnectorCredentialPageLinkProps) {
+  if (!url) {
+    return null;
+  }
 
-func sendgridRegistration() *Registration {
-	return &Registration{
-		Provider:         coredata.ConnectorProviderSendGrid,
-		DisplayName:      "SendGrid",
-		DocumentationURL: accessReviewDocsURL("sendgrid"),
-		Endpoints: Endpoints{
-			Probe:   "https://api.sendgrid.com/v3/teammates?limit=1&offset=0",
-			APIBase: "https://api.sendgrid.com/v3",
-		},
-		APIKey: &APIKeyConfig{
-			KeyFormat:      apiKeyPrefix("SG.", "SG.…"),
-			CredentialPage: &CredentialPage{URL: "https://app.sendgrid.com/settings/api_keys"},
-		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewSendGridDriver(c, logger.Named("sendgrid"), ep.APIBase), nil
-		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewSendGridNameResolver(c, ep.APIBase)
-		},
-	}
+  const link = externalLinkProps(url);
+  if (!link.href) {
+    return null;
+  }
+
+  return (
+    <Anchor
+      {...link}
+      size={2}
+      iconEnd={<ArrowUpRightIcon aria-hidden />}
+    >
+      {children}
+    </Anchor>
+  );
 }
