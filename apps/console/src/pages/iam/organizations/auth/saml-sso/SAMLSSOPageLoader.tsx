@@ -37,7 +37,7 @@ function SAMLSSOPageQueryLoader() {
   useEffect(() => {
     loadQuery({
       organizationId,
-    }, { fetchPolicy: "network-only" });
+    });
   }, [loadQuery, organizationId]);
 
   const currentQueryRef = queryRef != null

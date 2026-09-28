@@ -77,11 +77,6 @@ function isEnforcementPolicy(value: unknown): value is SAMLEnforcementPolicy {
   return value === "OFF" || value === "OPTIONAL" || value === "REQUIRED";
 }
 
-function emptyToUndefined(value: string): string | undefined {
-  const trimmed = value.trim();
-  return trimmed === "" ? undefined : trimmed;
-}
-
 interface SAMLConfigurationFormProps {
   isEditing?: boolean;
   disabled: boolean;
@@ -133,10 +128,10 @@ export function SAMLConfigurationForm({
       idpSsoUrl: idpSsoUrl.trim(),
       idpCertificate: idpCertificate.trim(),
       attributeMappings: {
-        email: emptyToUndefined(emailAttribute),
-        firstName: emptyToUndefined(firstNameAttribute),
-        lastName: emptyToUndefined(lastNameAttribute),
-        role: emptyToUndefined(roleAttribute),
+        email: emailAttribute.trim(),
+        firstName: firstNameAttribute.trim(),
+        lastName: lastNameAttribute.trim(),
+        role: roleAttribute.trim(),
       },
       autoSignupEnabled,
     });

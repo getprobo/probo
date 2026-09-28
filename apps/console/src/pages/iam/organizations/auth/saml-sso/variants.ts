@@ -74,6 +74,7 @@ export const newSamlSsoPageSkeleton = tv({
     form: "flex flex-col gap-6",
     section: "flex flex-col gap-4",
     fields: "flex min-w-0 flex-1 flex-col gap-3",
+    check: "flex items-center gap-2",
   },
 });
 
