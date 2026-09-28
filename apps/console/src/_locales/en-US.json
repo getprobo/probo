@@ -2964,6 +2964,7 @@
   },
   "thirdPartiesPage": {
     "description": "Third parties are external services and providers that your company uses. Add them to keep track of their risk and compliance status.",
+    "searchPlaceholder": "Search third parties...",
     "actions": { "document": "Document", "publish": "Publish", "add": "Add third party" },
     "columns": { "thirdParty": "Third party", "assessedAt": "Assessed At", "dataRisk": "Data Risk", "businessRisk": "Business Risk" }
   },

@@ -5494,6 +5494,7 @@
   },
   "thirdPartiesPage": {
     "description": "Les tiers sont des services et fournisseurs externes utilisés par votre entreprise. Ajoutez-les pour suivre leur risque et leur statut de conformité.",
+    "searchPlaceholder": "Rechercher des tiers...",
     "actions": {
       "document": "Document",
       "publish": "Publier",

@@ -5480,6 +5480,7 @@
   },
   "thirdPartiesPage": {
     "description": "Derde partijen zijn externe diensten en leveranciers die uw bedrijf gebruikt. Voeg ze toe om hun risico- en compliancestatus bij te houden.",
+    "searchPlaceholder": "Zoek derde partijen...",
     "actions": {
       "document": "Document",
       "publish": "Publiceren",
