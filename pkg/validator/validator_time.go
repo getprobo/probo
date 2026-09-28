@@ -64,6 +64,41 @@ func After(t any) ValidatorFunc {
 	}
 }
 
+// AfterOrEqual validates that a time is the same as or after the specified
+// reference time. The reference time can be either time.Time or *time.Time.
+func AfterOrEqual(t any) ValidatorFunc {
+	return func(value any) *ValidationError {
+		refValue, refIsNil := dereferenceValue(t)
+		if refIsNil {
+			return nil
+		}
+
+		refTime, ok := refValue.(time.Time)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "reference time must be time.Time")
+		}
+
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		timeVal, ok := actualValue.(time.Time)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Time")
+		}
+
+		if timeVal.Before(refTime) {
+			return newValidationError(
+				ErrorCodeOutOfRange,
+				fmt.Sprintf("must be on or after %s", refTime.Format(time.RFC3339)),
+			)
+		}
+
+		return nil
+	}
+}
+
 // Before validates that a time is before the specified reference time.
 // The reference time can be either time.Time or *time.Time.
 func Before(t any) ValidatorFunc {

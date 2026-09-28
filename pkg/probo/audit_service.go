@@ -76,7 +76,7 @@ func (car *CreateAuditRequest) Validate() error {
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.Firm, "firm", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
-	v.Check(car.AuditEndDate, "audit_end_date", validator.After(car.AuditStartDate))
+	v.Check(car.AuditEndDate, "audit_end_date", validator.AfterOrEqual(car.AuditStartDate))
 	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
 
 	return v.Error()
@@ -89,8 +89,33 @@ func (uar *UpdateAuditRequest) Validate() error {
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.Firm, "firm", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
-	v.Check(uar.AuditEndDate, "audit_end_date", validator.After(uar.AuditStartDate))
+	v.Check(uar.AuditEndDate, "audit_end_date", validator.AfterOrEqual(uar.AuditStartDate))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
+
+	return v.Error()
+}
+
+// validateStoredAuditDates checks the dates Update would persist. A one-sided
+// update leaves the other request date nil, and AfterOrEqual skips that side.
+func (uar *UpdateAuditRequest) validateStoredAuditDates(storedStart, storedEnd *time.Time) error {
+	if uar.AuditStartDate == nil && uar.AuditEndDate == nil {
+		return nil
+	}
+
+	start := storedStart
+
+	if uar.AuditStartDate != nil {
+		start = uar.AuditStartDate
+	}
+
+	end := storedEnd
+
+	if uar.AuditEndDate != nil {
+		end = uar.AuditEndDate
+	}
+
+	v := validator.New()
+	v.Check(end, "audit_end_date", validator.AfterOrEqual(start))
 
 	return v.Error()
 }
@@ -256,6 +281,10 @@ func (s *AuditService) Update(
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := audit.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			if err := req.validateStoredAuditDates(audit.AuditStartDate, audit.AuditEndDate); err != nil {
+				return fmt.Errorf("invalid request: %w", err)
 			}
 
 			if req.Name != nil {
