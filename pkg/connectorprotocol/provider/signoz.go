@@ -45,6 +45,10 @@ func signozRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "baseUrl", Label: "Base URL", Required: true},
 			},
+			CredentialPage: &CredentialPage{
+				URL:         "settings/service-accounts",
+				BaseSetting: "baseUrl",
+			},
 		},
 		BuildProbeURL: buildSigNozProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {

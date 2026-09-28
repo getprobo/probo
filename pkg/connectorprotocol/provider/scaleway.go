@@ -45,6 +45,7 @@ func scalewayRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "organizationId", Label: "Organization ID", Required: true},
 			},
+			CredentialPage: &CredentialPage{URL: "https://console.scaleway.com/iam/api-keys"},
 		},
 		// Scaleway authenticates with the secret key in the X-Auth-Token header
 		// rather than Authorization: Bearer. APIKeyHeader makes the

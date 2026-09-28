@@ -46,7 +46,8 @@ func elevenLabsRegistration() *Registration {
 		DisplayName:      "ElevenLabs",
 		DocumentationURL: accessReviewDocsURL("elevenlabs"),
 		APIKey: &APIKeyConfig{
-			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "xi-api-key"},
+			Auth:           APIKeyAuth{Mode: APIKeyAuthHeader, Name: "xi-api-key"},
+			CredentialPage: &CredentialPage{URL: "https://elevenlabs.io/app/developers/api-keys"},
 			// No KeyFormat: ElevenLabs documents no prefix for its keys, and a
 			// shape inferred from a sample would reject valid keys the day it
 			// mints a different one. probeElevenLabs names a bad key instead,

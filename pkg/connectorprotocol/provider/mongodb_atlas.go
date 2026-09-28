@@ -47,8 +47,10 @@ func mongoDBAtlasRegistration() *Registration {
 		},
 		// A closure rather than Endpoints.Probe: the check must send Atlas's
 		// versioned Accept header.
-		Probe:             probeMongoDBAtlas,
-		ClientCredentials: &ClientCredentialsConfig{},
+		Probe: probeMongoDBAtlas,
+		ClientCredentials: &ClientCredentialsConfig{
+			CredentialPage: &CredentialPage{URL: "https://cloud.mongodb.com/go?l=https%3A%2F%2Fcloud.mongodb.com%2Fv2%23%2Forg%2F%3Corganization%3E%2Faccess%2FserviceAccounts"},
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewMongoDBAtlasDriver(c, ep.APIBase), nil
 		},

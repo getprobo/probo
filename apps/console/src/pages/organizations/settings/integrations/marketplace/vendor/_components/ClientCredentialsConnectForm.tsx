@@ -29,11 +29,13 @@ import type { ClientCredentialsConnectFormCreateMutation } from "#/__generated__
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { ConnectorCredentialPageLink } from "../../../_components/ConnectorCredentialPageLink";
 import { integrationListPath } from "../../../_lib/integrationPath";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapClientCredentialsExtraSettingToField,
+  resolveCredentialPageURL,
 } from "../_lib/extraSettings";
 
 import { ConnectForm } from "./ConnectForm";
@@ -42,11 +44,16 @@ import { ExtraSettingField } from "./ExtraSettingField";
 const clientCredentialsConnectFormFragment = graphql`
   fragment ClientCredentialsConnectForm_provider on ConnectorProviderInfo {
     provider
+    displayName
     clientCredentialsTokenUrlRequired
     clientCredentialsExtraSettings {
       key
       required
       ...ExtraSettingField_setting
+    }
+    clientCredentialsPage {
+      url
+      baseSetting
     }
     ...ConnectForm_provider
   }
@@ -86,6 +93,11 @@ export function ClientCredentialsConnectForm({
     required: setting.required,
   }));
   const extrasValid = hasRequiredExtraSettings(extraSettings, extras);
+  const credentialPageURL = resolveCredentialPageURL(
+    provider.clientCredentialsPage?.url,
+    provider.clientCredentialsPage?.baseSetting,
+    extras,
+  );
   const canSubmit = clientId.trim() !== "" && clientSecret.trim() !== "" && tokenReady && extrasValid;
   // OVHcloud declares account/all and the create mutation uses that, so a
   // typed scope cannot take effect. Each region is its own provider.
@@ -161,6 +173,11 @@ export function ClientCredentialsConnectForm({
           onValueChange={value => setExtras({ ...extras, [setting.key]: value })}
         />
       ))}
+      <ConnectorCredentialPageLink url={credentialPageURL}>
+        {t("marketplacePage.credentialPage.clientCredentials", {
+          provider: provider.displayName,
+        })}
+      </ConnectorCredentialPageLink>
     </ConnectForm>
   );
 }

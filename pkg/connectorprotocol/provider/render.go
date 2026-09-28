@@ -51,6 +51,7 @@ func renderRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "workspaceId", Label: "Workspace ID", Required: true},
 			},
+			CredentialPage: &CredentialPage{URL: "https://dashboard.render.com/u/settings?add-api-key"},
 		},
 		BuildProbeURL: buildRenderProbeURL,
 		Endpoints: Endpoints{

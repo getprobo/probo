@@ -35,7 +35,8 @@ func apolloRegistration() *Registration {
 		DisplayName:      "Apollo.io",
 		DocumentationURL: accessReviewDocsURL("apollo"),
 		APIKey: &APIKeyConfig{
-			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+			Auth:           APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+			CredentialPage: &CredentialPage{URL: "https://developer.apollo.io/#/keys"},
 		},
 		// Apollo's REST API authenticates with a master API key in the
 		// x-api-key header; it rejects Authorization: Bearer (and, since

@@ -77,6 +77,12 @@ func posthogRegistration() *Registration {
 				{Key: "region", Label: "Region"},
 				{Key: "instanceUrl", Label: "Instance URL"},
 			},
+			// Only a self-hosted instance yields a link: a Cloud region is not
+			// a URL, and the same page on the wrong region's host is a login.
+			CredentialPage: &CredentialPage{
+				URL:         "settings/user-api-keys",
+				BaseSetting: "instanceUrl",
+			},
 		},
 		// API-key connections are either PostHog Cloud (a region, us/eu) or
 		// self-hosted (an instance URL). The two are mutually exclusive, so

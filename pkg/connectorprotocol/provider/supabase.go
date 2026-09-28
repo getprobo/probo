@@ -52,8 +52,9 @@ func supabaseRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: supabaseOrganizationSlugSetting, Label: "Organization Slug", Required: true},
 			},
-			CheckSettings: true,
-			KeyFormat:     apiKeyPrefix("sbp_", "sbp_…"),
+			CheckSettings:  true,
+			KeyFormat:      apiKeyPrefix("sbp_", "sbp_…"),
+			CredentialPage: &CredentialPage{URL: "https://supabase.com/dashboard/account/tokens"},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)

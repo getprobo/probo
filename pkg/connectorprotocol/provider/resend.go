@@ -47,7 +47,8 @@ func resendRegistration() *Registration {
 			Probe:   "https://api.resend.com/domains",
 		},
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("re_", "re_…"),
+			KeyFormat:      apiKeyPrefix("re_", "re_…"),
+			CredentialPage: &CredentialPage{URL: "https://resend.com/api-keys"},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewResendDriver(c, ep.APIBase), nil

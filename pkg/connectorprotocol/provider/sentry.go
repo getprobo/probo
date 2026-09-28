@@ -56,6 +56,7 @@ func sentryRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "organizationSlug", Label: "Organization Slug", Required: true},
 			},
+			CredentialPage: &CredentialPage{URL: "https://sentry.io/settings/account/api/auth-tokens/"},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)

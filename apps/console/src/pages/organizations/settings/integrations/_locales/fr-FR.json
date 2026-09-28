@@ -41,6 +41,10 @@
       "API_KEY": "Collez une clé API du fournisseur."
     },
     "documentation": "Documentation",
+    "credentialPage": {
+      "apiKey": "Créer une clé API dans {{provider}}",
+      "clientCredentials": "Créer des identifiants client dans {{provider}}"
+    },
     "fields": {
       "apiKey": "Clé API",
       "clientId": "Identifiant client",

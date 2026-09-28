@@ -29,11 +29,13 @@ import type { APIKeyConnectFormCreateMutation } from "#/__generated__/core/APIKe
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { ConnectorCredentialPageLink } from "../../../_components/ConnectorCredentialPageLink";
 import { integrationListPath } from "../../../_lib/integrationPath";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapAPIKeyExtraSettingToField,
+  resolveCredentialPageURL,
 } from "../_lib/extraSettings";
 
 import { APIKeyExtraFields } from "./APIKeyExtraFields";
@@ -43,10 +45,15 @@ import { isPostHogDeploymentSelected } from "./PostHogDeploymentField";
 const apiKeyConnectFormFragment = graphql`
   fragment APIKeyConnectForm_provider on ConnectorProviderInfo {
     provider
+    displayName
     apiKeyManaged
     apiKeyExtraSettings {
       key
       required
+    }
+    apiKeyPage {
+      url
+      baseSetting
     }
     ...APIKeyExtraFields_provider
     ...ConnectForm_provider
@@ -82,6 +89,11 @@ export function APIKeyConnectForm({
   );
   const postHogValid = provider.provider !== "POSTHOG" || isPostHogDeploymentSelected(extras);
   const extrasValid = hasRequiredExtraSettings(extraSettings, extras);
+  const credentialPageURL = resolveCredentialPageURL(
+    provider.apiKeyPage?.url,
+    provider.apiKeyPage?.baseSetting,
+    extras,
+  );
   const canSubmit = (provider.apiKeyManaged || apiKey.trim() !== "") && extrasValid && postHogValid;
 
   return (
@@ -125,6 +137,11 @@ export function APIKeyConnectForm({
         extras={extras}
         onChange={setExtras}
       />
+      <ConnectorCredentialPageLink url={credentialPageURL}>
+        {t("marketplacePage.credentialPage.apiKey", {
+          provider: provider.displayName,
+        })}
+      </ConnectorCredentialPageLink>
     </ConnectForm>
   );
 }

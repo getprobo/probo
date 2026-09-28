@@ -39,7 +39,8 @@ func sendgridRegistration() *Registration {
 			APIBase: "https://api.sendgrid.com/v3",
 		},
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("SG.", "SG.…"),
+			KeyFormat:      apiKeyPrefix("SG.", "SG.…"),
+			CredentialPage: &CredentialPage{URL: "https://app.sendgrid.com/settings/api_keys"},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewSendGridDriver(c, logger.Named("sendgrid"), ep.APIBase), nil

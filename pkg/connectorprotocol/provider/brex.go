@@ -50,7 +50,8 @@ func brexRegistration() *Registration {
 			Scopes: []string{"openid", "offline_access", "users.readonly", "companies.readonly"},
 		},
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("bxt_", "bxt_…"),
+			KeyFormat:      apiKeyPrefix("bxt_", "bxt_…"),
+			CredentialPage: &CredentialPage{URL: "https://dashboard.brex.com/settings/developer"},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewBrexDriver(c, ep.APIBase), nil

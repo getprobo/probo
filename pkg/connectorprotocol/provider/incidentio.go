@@ -34,7 +34,9 @@ func incidentioRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderIncidentIO,
 		DisplayName:      "incident.io",
 		DocumentationURL: accessReviewDocsURL("incident-io"),
-		APIKey:           &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			CredentialPage: &CredentialPage{URL: "https://app.incident.io/~/settings/api-keys"},
+		},
 		Endpoints: Endpoints{
 			APIBase: "https://api.incident.io/v2",
 			// incident.io publishes an OAuth2 flow, but it is outbound-only (for

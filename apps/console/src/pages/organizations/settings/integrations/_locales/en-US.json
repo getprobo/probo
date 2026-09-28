@@ -41,6 +41,10 @@
       "API_KEY": "Paste an API key from the vendor."
     },
     "documentation": "Documentation",
+    "credentialPage": {
+      "apiKey": "Create an API key in {{provider}}",
+      "clientCredentials": "Create client credentials in {{provider}}"
+    },
     "fields": {
       "apiKey": "API key",
       "clientId": "Client ID",

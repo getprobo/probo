@@ -41,6 +41,10 @@
       "API_KEY": "Plak een API-sleutel van de leverancier."
     },
     "documentation": "Documentatie",
+    "credentialPage": {
+      "apiKey": "Maak een API-sleutel aan in {{provider}}",
+      "clientCredentials": "Maak clientreferenties aan in {{provider}}"
+    },
     "fields": {
       "apiKey": "API-sleutel",
       "clientId": "Client-ID",

@@ -47,7 +47,8 @@ func tallyRegistration() *Registration {
 			APIBase: "https://api.tally.so",
 		},
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("tly-", "tly-…"),
+			KeyFormat:      apiKeyPrefix("tly-", "tly-…"),
+			CredentialPage: &CredentialPage{URL: "https://tally.so/settings/api-keys"},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
