@@ -74,6 +74,16 @@ const maxPaginationPages = 500
 // number of pagination pages without reaching the end of the result set.
 var ErrPaginationLimitReached = fmt.Errorf("pagination limit of %d pages reached", maxPaginationPages)
 
+// InstallRejectedError marks a connection the provider accepted but Probo
+// refuses to keep. Message is shown to the user who connected it.
+type InstallRejectedError struct {
+	Message string
+}
+
+func (e *InstallRejectedError) Error() string {
+	return "connection rejected: " + e.Message
+}
+
 // sameHostNextPageURL pins a server-supplied next-page URL to the host the
 // driver was configured with, returning it unchanged when it is safe to
 // follow. The connection's bearer token is attached to every request, so an

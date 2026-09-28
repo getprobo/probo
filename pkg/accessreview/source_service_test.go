@@ -566,6 +566,68 @@ type accessSourceEnv struct {
 	svc            *accessreview.Service
 }
 
+func TestSourceNeedsReconnect_Slack(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+
+	insertSlack := func(t *testing.T, tokenType string, scope string, channelID string) gid.GID {
+		t.Helper()
+
+		connectorID := gid.New(env.scope.GetTenantID(), coredata.ConnectorEntityType)
+
+		var key cipher.EncryptionKey
+
+		require.NoError(t, env.client.WithTx(
+			env.ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				conn := &connector.SlackConnection{
+					AccessToken: "xox-test",
+					TokenType:   tokenType,
+					Scope:       scope,
+				}
+				// Insert stores the channel in the connector settings.
+				conn.Settings.ChannelID = channelID
+
+				cnnctr := &coredata.Connector{
+					ID:             connectorID,
+					OrganizationID: env.organizationID,
+					Provider:       coredata.ConnectorProviderSlack,
+					Protocol:       coredata.ConnectorProtocolOAuth2,
+					Connection:     conn,
+					CreatedAt:      env.now,
+					UpdatedAt:      env.now,
+				}
+
+				return cnnctr.Insert(ctx, tx, env.scope, key)
+			},
+		))
+
+		return connectorID
+	}
+
+	for name, tc := range map[string]struct {
+		tokenType string
+		scope     string
+		channelID string
+		want      bool
+	}{
+		"user token":           {tokenType: "user", scope: "users:read,users:read.email", want: false},
+		"bot token":            {tokenType: "bot", scope: "users:read,users:read.email", want: true},
+		"legacy messaging bot": {tokenType: "bot", scope: "chat:write,incoming-webhook", channelID: "C123", want: false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			connectorID := insertSlack(t, tc.tokenType, tc.scope, tc.channelID)
+
+			got, err := env.svc.SourceNeedsReconnect(env.ctx, env.scope, connectorID)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
 func newAccessSourceEnv(t *testing.T) *accessSourceEnv {
 	t.Helper()
 

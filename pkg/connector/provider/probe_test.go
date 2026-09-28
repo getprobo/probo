@@ -28,12 +28,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -1049,32 +1051,145 @@ func probeStubClient(seen *[]*http.Request, status int, body string) *http.Clien
 	}
 }
 
+func TestSlackNeedsReconnect(t *testing.T) {
+	t.Parallel()
+
+	withToken := func(tokenType string, channelID string) *coredata.Connector {
+		conn := &connector.SlackConnection{TokenType: tokenType}
+		conn.Settings.ChannelID = channelID
+
+		return &coredata.Connector{Provider: coredata.ConnectorProviderSlack, Connection: conn}
+	}
+
+	missing := []string{"users:read"}
+	needsReconnect := slackRegistration().NeedsReconnect
+
+	assert.True(t, needsReconnect(withToken("bot", ""), nil))
+	assert.False(t, needsReconnect(withToken(connector.SlackTokenTypeUser, ""), nil))
+	assert.True(t, needsReconnect(withToken(connector.SlackTokenTypeUser, ""), missing))
+	// A reconnect would swap the token that posts legacy messages, whatever
+	// scopes that bot token misses.
+	assert.False(t, needsReconnect(withToken("bot", "C123"), missing))
+}
+
 func TestProbeSlack(t *testing.T) {
 	t.Parallel()
 
-	for body, wantRejected := range map[string]bool{
-		`{"ok":true,"members":[]}`:            false,
-		`{"ok":false,"error":"invalid_auth"}`: true,
-	} {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "/users.list", r.URL.Path)
+	newServer := func(t *testing.T, authTest string, usersInfo string) (*httptest.Server, func() []string) {
+		t.Helper()
 
-			_, _ = w.Write([]byte(body))
+		var (
+			mu    sync.Mutex
+			paths []string
+		)
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+
+			paths = append(paths, r.URL.Path)
+			mu.Unlock()
+
+			switch r.URL.Path {
+			case "/auth.test":
+				_, _ = w.Write([]byte(authTest))
+			case "/users.info", "/users.list":
+				_, _ = w.Write([]byte(usersInfo))
+			default:
+				http.NotFound(w, r)
+			}
 		}))
 		t.Cleanup(server.Close)
 
-		conn := &coredata.Connector{Provider: coredata.ConnectorProviderSlack}
-		err := slackRegistration().Probe(context.Background(), server.Client(), conn, Endpoints{APIBase: server.URL})
+		requested := func() []string {
+			mu.Lock()
+			defer mu.Unlock()
 
-		if !wantRejected {
-			require.NoError(t, err, body)
-
-			continue
+			return append([]string(nil), paths...)
 		}
 
-		_, rejected := errors.AsType[*CredentialRejectedError](err)
-		assert.True(t, rejected, body)
+		return server, requested
 	}
+
+	probe := func(server *httptest.Server, tokenType string) error {
+		conn := &coredata.Connector{
+			Provider:   coredata.ConnectorProviderSlack,
+			Connection: &connector.SlackConnection{TokenType: tokenType},
+		}
+
+		return slackRegistration().Probe(context.Background(), server.Client(), conn, Endpoints{APIBase: server.URL})
+	}
+
+	t.Run("admin user token", func(t *testing.T) {
+		t.Parallel()
+
+		server, requested := newServer(t, `{"ok":true,"user_id":"U1"}`, `{"ok":true,"user":{"id":"U1","is_admin":true}}`)
+		require.NoError(t, probe(server, connector.SlackTokenTypeUser))
+		assert.Equal(t, []string{"/auth.test", "/users.info"}, requested())
+	})
+
+	t.Run("demoted installer", func(t *testing.T) {
+		t.Parallel()
+
+		server, _ := newServer(t, `{"ok":true,"user_id":"U1"}`, `{"ok":true,"user":{"id":"U1"}}`)
+		rejected, ok := errors.AsType[*CredentialRejectedError](probe(server, connector.SlackTokenTypeUser))
+		require.True(t, ok)
+		assert.True(t, rejected.OperationRefused)
+	})
+
+	t.Run("live bot token", func(t *testing.T) {
+		t.Parallel()
+
+		server, requested := newServer(t, "", `{"ok":true,"members":[]}`)
+		require.NoError(t, probe(server, "bot"))
+		// A bot is never an admin, so its probe skips the installer check.
+		assert.Equal(t, []string{"/users.list"}, requested())
+	})
+
+	t.Run("revoked bot token", func(t *testing.T) {
+		t.Parallel()
+
+		server, _ := newServer(t, "", `{"ok":false,"error":"invalid_auth"}`)
+		_, ok := errors.AsType[*CredentialRejectedError](probe(server, "bot"))
+		assert.True(t, ok)
+	})
+
+	legacyProbe := func(server *httptest.Server) error {
+		conn := &connector.SlackConnection{TokenType: "bot"}
+		conn.Settings.ChannelID = "C123"
+
+		return slackRegistration().Probe(
+			context.Background(),
+			server.Client(),
+			&coredata.Connector{Provider: coredata.ConnectorProviderSlack, Connection: conn},
+			Endpoints{APIBase: server.URL},
+		)
+	}
+
+	t.Run("live legacy messaging row", func(t *testing.T) {
+		t.Parallel()
+
+		// users.list would answer missing_scope, which must not show up.
+		server, requested := newServer(t, `{"ok":true,"user_id":"B1"}`, `{"ok":false,"error":"missing_scope"}`)
+		require.NoError(t, legacyProbe(server))
+		assert.Equal(t, []string{"/auth.test"}, requested())
+	})
+
+	t.Run("revoked legacy messaging row", func(t *testing.T) {
+		t.Parallel()
+
+		server, _ := newServer(t, `{"ok":false,"error":"token_revoked"}`, "")
+		_, ok := errors.AsType[*CredentialRejectedError](legacyProbe(server))
+		assert.True(t, ok)
+	})
+
+	t.Run("bot token without users:read", func(t *testing.T) {
+		t.Parallel()
+
+		server, _ := newServer(t, "", `{"ok":false,"error":"missing_scope"}`)
+		rejected, ok := errors.AsType[*CredentialRejectedError](probe(server, "bot"))
+		require.True(t, ok)
+		assert.True(t, rejected.OperationRefused)
+	})
 }
 
 func TestSlackProbeVerdict(t *testing.T) {
@@ -1086,10 +1201,11 @@ func TestSlackProbeVerdict(t *testing.T) {
 		status  int
 		refused bool
 	}{
-		{"revoked token", &drivers.SlackAPIError{Method: "/users.list", Code: "token_revoked"}, http.StatusUnauthorized, false},
-		{"missing scope", &drivers.SlackAPIError{Method: "/users.list", Code: "missing_scope"}, http.StatusForbidden, true},
-		{"2FA setup required", &drivers.SlackAPIError{Method: "/users.list", Code: "two_factor_setup_required"}, http.StatusForbidden, true},
-		{"HTTP 401", &drivers.SlackStatusError{Method: "/users.list", StatusCode: http.StatusUnauthorized}, http.StatusUnauthorized, false},
+		{"revoked token", &drivers.SlackAPIError{Method: "/auth.test", Code: "token_revoked"}, http.StatusUnauthorized, false},
+		{"installer lost admin", &drivers.InstallRejectedError{Message: "not an admin"}, http.StatusForbidden, true},
+		{"missing scope", &drivers.SlackAPIError{Method: "/users.info", Code: "missing_scope"}, http.StatusForbidden, true},
+		{"2FA setup required", &drivers.SlackAPIError{Method: "/auth.test", Code: "two_factor_setup_required"}, http.StatusForbidden, true},
+		{"HTTP 401", &drivers.SlackStatusError{Method: "/auth.test", StatusCode: http.StatusUnauthorized}, http.StatusUnauthorized, false},
 	}
 
 	for _, tc := range rejections {
@@ -1106,10 +1222,10 @@ func TestSlackProbeVerdict(t *testing.T) {
 	// Throttling, outages and migrations say nothing about the credential.
 	for _, err := range []error{
 		nil,
-		&drivers.SlackAPIError{Method: "/users.list", Code: "ratelimited"},
-		&drivers.SlackAPIError{Method: "/users.list", Code: "team_added_to_org"},
-		&drivers.SlackStatusError{Method: "/users.list", StatusCode: http.StatusTooManyRequests},
-		&drivers.SlackStatusError{Method: "/users.list", StatusCode: http.StatusBadGateway},
+		&drivers.SlackAPIError{Method: "/auth.test", Code: "ratelimited"},
+		&drivers.SlackAPIError{Method: "/auth.test", Code: "team_added_to_org"},
+		&drivers.SlackStatusError{Method: "/auth.test", StatusCode: http.StatusTooManyRequests},
+		&drivers.SlackStatusError{Method: "/auth.test", StatusCode: http.StatusBadGateway},
 	} {
 		assert.NoError(t, slackProbeVerdict(err))
 	}

@@ -22,6 +22,7 @@ package connector
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/hmac"
 	"crypto/rand"
@@ -87,6 +88,9 @@ type (
 		// to the authorize URL; CompleteWithState replays the verifier
 		// on the token exchange.
 		RequiresPKCE bool
+		// ScopeParam names the authorize query parameter carrying the
+		// scopes, "scope" when empty. Slack asks for user_scope.
+		ScopeParam string
 		// IntegrationSlug is an operator-supplied identifier used by
 		// providers whose authorization URL embeds it as a path segment
 		// (Vercel-style integrations). It is consumed by the provider's
@@ -319,7 +323,7 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("response_type", "code")
 
 	if len(scopes) > 0 {
-		authCodeQuery.Set("scope", c.joinAuthorizeScopes(scopes))
+		authCodeQuery.Set(cmp.Or(c.ScopeParam, "scope"), c.joinAuthorizeScopes(scopes))
 	}
 
 	if c.RequiresPKCE {

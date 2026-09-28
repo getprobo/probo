@@ -73,6 +73,7 @@ type slackProfile struct {
 
 const (
 	slackUsersListPath = "/users.list"
+	slackUsersInfoPath = "/users.info"
 	slackAuthTestPath  = "/auth.test"
 )
 
@@ -225,6 +226,72 @@ func CheckSlackToken(ctx context.Context, httpClient *http.Client, baseURL strin
 
 	if !resp.OK {
 		return &SlackAPIError{Method: slackUsersListPath, Code: resp.Error}
+	}
+
+	return nil
+}
+
+// CheckSlackTokenAlive checks that Slack still accepts the token. It needs no
+// scope, so it suits a token that may never have been granted users:read.
+func CheckSlackTokenAlive(ctx context.Context, httpClient *http.Client, baseURL string) error {
+	if _, err := slackTokenUserID(ctx, httpClient, baseURL); err != nil {
+		return fmt.Errorf("cannot check slack token: %w", err)
+	}
+
+	return nil
+}
+
+// slackTokenUserID returns the user a token acts as.
+func slackTokenUserID(ctx context.Context, httpClient *http.Client, baseURL string) (string, error) {
+	var identity struct {
+		OK     bool   `json:"ok"`
+		Error  string `json:"error"`
+		UserID string `json:"user_id"`
+	}
+	if err := slackGet(ctx, httpClient, baseURL, slackAuthTestPath, nil, &identity); err != nil {
+		return "", fmt.Errorf("cannot identify slack token: %w", err)
+	}
+
+	if !identity.OK {
+		return "", &SlackAPIError{Method: slackAuthTestPath, Code: identity.Error}
+	}
+
+	return identity.UserID, nil
+}
+
+// CheckSlackInstallerIsAdmin rejects a token whose user is not a workspace
+// admin or owner: Slack hides has_2fa from anyone else, so such an install
+// could never report MFA.
+func CheckSlackInstallerIsAdmin(ctx context.Context, httpClient *http.Client, baseURL string) error {
+	userID, err := slackTokenUserID(ctx, httpClient, baseURL)
+	if err != nil {
+		return fmt.Errorf("cannot identify slack installer: %w", err)
+	}
+
+	var info struct {
+		OK    bool        `json:"ok"`
+		Error string      `json:"error"`
+		User  slackMember `json:"user"`
+	}
+	if err := slackGet(
+		ctx,
+		httpClient,
+		baseURL,
+		slackUsersInfoPath,
+		url.Values{"user": {userID}},
+		&info,
+	); err != nil {
+		return fmt.Errorf("cannot load slack installer: %w", err)
+	}
+
+	if !info.OK {
+		return &SlackAPIError{Method: slackUsersInfoPath, Code: info.Error}
+	}
+
+	if !info.User.IsAdmin && !info.User.IsOwner && !info.User.IsPrimaryOwner {
+		return &InstallRejectedError{
+			Message: "Slack must be connected by a workspace admin or owner, the only role Slack shares MFA status with.",
+		}
 	}
 
 	return nil

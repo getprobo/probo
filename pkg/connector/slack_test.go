@@ -85,6 +85,35 @@ func TestParseSlackTokenResponse(t *testing.T) {
 		assert.ErrorContains(t, err, "invalid_code")
 	})
 
+	t.Run("user token install", func(t *testing.T) {
+		t.Parallel()
+
+		body := []byte(`{"ok":true,"app_id":"A1","authed_user":{"id":"U1","scope":"users:read,users:read.email","access_token":"xoxp-test","token_type":"user"},"team":{"id":"T1","name":"Acme"}}`)
+
+		conn, _, err := ParseSlackTokenResponse(body, OAuth2Connection{}, orgID)
+		require.NoError(t, err)
+
+		assert.Equal(t, "xoxp-test", conn.AccessToken)
+		assert.Equal(t, SlackTokenTypeUser, conn.TokenType)
+		assert.Equal(t, "users:read,users:read.email", conn.Scope)
+		assert.Empty(t, conn.RefreshToken)
+		assert.True(t, conn.ExpiresAt.IsZero())
+	})
+
+	t.Run("rotating user token install", func(t *testing.T) {
+		t.Parallel()
+
+		body := []byte(`{"ok":true,"authed_user":{"id":"U1","scope":"users:read","access_token":"xoxe.xoxp-test","token_type":"user","refresh_token":"xoxe-1-refresh","expires_in":43200}}`)
+
+		before := time.Now()
+		conn, _, err := ParseSlackTokenResponse(body, OAuth2Connection{}, orgID)
+		require.NoError(t, err)
+
+		assert.Equal(t, "xoxe.xoxp-test", conn.AccessToken)
+		assert.Equal(t, "xoxe-1-refresh", conn.RefreshToken)
+		assert.WithinDuration(t, before.Add(12*time.Hour), conn.ExpiresAt, time.Minute)
+	})
+
 	t.Run("missing access token", func(t *testing.T) {
 		t.Parallel()
 
