@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -111,6 +112,22 @@ func TestBetterStackDriverListAccountsError(t *testing.T) {
 	_, err := NewBetterStackDriver(client, "acme", "https://betterstack.com/api/v2").ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected status 401")
+}
+
+func TestBetterStackDriverUnknownTeam(t *testing.T) {
+	t.Parallel()
+
+	// Record with a global token: a team token ignores team_name.
+	rec := newRecorder(t, "testdata/better_stack_unknown_team", "BETTER_STACK_TOKEN", dropResponseHeaders("Set-Cookie", "Reporting-Endpoints", "Report-To", "Nel"))
+	client := newVCRClient(rec, bearerAuth(os.Getenv("BETTER_STACK_TOKEN")))
+
+	_, err := NewBetterStackDriver(client, "Acme", "https://betterstack.com/api/v2").ListAccounts(context.Background())
+
+	rejected, ok := errors.AsType[*SettingRejectedError](err)
+	require.Truef(t, ok, "expected a rejected team name, got %v", err)
+	assert.Equal(t, BetterStackTeamNotFound, rejected.Code)
+	assert.Equal(t, http.StatusUnprocessableEntity, rejected.StatusCode)
+	assert.NotContains(t, err.Error(), "Available teams", "provider text must stay out of the error")
 }
 
 func TestBetterStackRoles(t *testing.T) {

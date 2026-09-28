@@ -310,6 +310,36 @@ func TestRegistry_Register(t *testing.T) {
 		}
 	})
 
+	t.Run("CheckSettings needs a Probe closure and ExtraSettings", func(t *testing.T) {
+		t.Parallel()
+
+		probe := func(context.Context, *http.Client, *coredata.Connector, provider.Endpoints) error {
+			return nil
+		}
+		settings := []provider.ExtraSetting{{Key: "teamName", Label: "Team Name", Required: true}}
+
+		for name, reg := range map[string]*provider.Registration{
+			"no probe closure": {
+				APIKey: &provider.APIKeyConfig{ExtraSettings: settings, CheckSettings: true},
+			},
+			"no extra settings": {
+				APIKey: &provider.APIKeyConfig{CheckSettings: true},
+				Probe:  probe,
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				reg.Provider = coredata.ConnectorProviderSlack
+				reg.DisplayName = "Slack"
+
+				err := provider.NewRegistry().Register(reg)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "CheckSettings needs a Probe closure and ExtraSettings")
+			})
+		}
+	})
+
 	t.Run("BuildTokenURLForDomain and BuildTokenURLForSite mutually exclusive", func(t *testing.T) {
 		t.Parallel()
 

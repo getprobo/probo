@@ -285,6 +285,10 @@ type APIKeyConfig struct {
 	// wire.
 	Managed *ManagedAPIKey
 
+	// CheckSettings runs the connection check before a new connector is saved,
+	// for a provider whose check reads its ExtraSettings.
+	CheckSettings bool
+
 	// KeyFormat is the shape a customer-pasted key must have. Nil for a
 	// provider whose keys have no shape worth asserting — an opaque token is
 	// the common case, and a guess at its format would reject valid keys the
@@ -607,6 +611,12 @@ func (r *Registration) SupportsOrganizationInstall() bool {
 // provider's API key.
 func (r *Registration) IsManagedAPIKey() bool {
 	return r.APIKey != nil && r.APIKey.Managed != nil
+}
+
+// ChecksSettingsBeforeSave reports whether a new API-key connector for this
+// provider is checked with the provider before it is saved.
+func (r *Registration) ChecksSettingsBeforeSave() bool {
+	return r.APIKey != nil && r.APIKey.CheckSettings
 }
 
 // OffersAPIKeyForm reports whether the API-key dialog is a connect path the

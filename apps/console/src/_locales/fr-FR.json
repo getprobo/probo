@@ -2811,7 +2811,7 @@
         "reconnectDescription": "Reconnectez cette source pour rétablir l’accès aux organisations.",
         "credentialsDescription": "Probo ne peut pas lire cette source avec les identifiants actuels. Vérifiez les identifiants et les permissions dont ils disposent sur {{provider}}.",
         "notAuthorizedTitle": "{{provider}} a refusé cette requête",
-        "notAuthorizedDescription": "{{provider}} a accepté les identifiants mais a refusé la requête envoyée par Probo. Vérifiez les permissions dont ils disposent sur {{provider}}, et si votre offre inclut l’API utilisée par Probo."
+        "notAuthorizedDescription": "{{provider}} a accepté les identifiants mais a refusé la requête envoyée par Probo. Vérifiez les paramètres saisis pour cette source, les permissions dont disposent ces identifiants sur {{provider}}, et si votre offre inclut l’API utilisée par Probo."
       }
     }
   },
@@ -3086,7 +3086,12 @@
     "errors": {
       "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres, puis réessayez.",
       "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
-      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}"
+      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}",
+      "rejected": {
+        "better_stack_team_not_found": "Better Stack n’a aucune équipe portant ce nom pour ce jeton API. Les noms d’équipe sont sensibles à la casse : copiez le nom exact depuis Settings > Teams dans Better Stack, ou utilisez un jeton API d’équipe.",
+        "supabase_organization_not_found": "Supabase n’a aucune organisation avec ce slug. Copiez-le depuis l’URL de l’organisation dans le tableau de bord Supabase (supabase.com/dashboard/org/<slug>).",
+        "supabase_organization_not_accessible": "Ce jeton d’accès ne peut pas lire les membres de cette organisation. Créez un jeton avec un accès aux ressources de type Organization incluant cette organisation, et Organization Members réglé sur Read."
+      }
     },
     "actions": {
       "connect": "Connecter",

@@ -223,11 +223,13 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		return nil, gqlutils.Invalid(ctx, err)
 	}
 
+	conn := r.newAPIKeyConnection(input.Provider, apiKey)
+
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolAPIKey,
-		Connection:     r.newAPIKeyConnection(input.Provider, apiKey),
+		Connection:     conn,
 	}
 
 	raw, err := apiKeyConnectorSettings(input)
@@ -247,6 +249,10 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 	}
 
 	req.RawSettings = raw
+
+	if rejected := r.accessReview.CheckNewAPIKeyConnector(ctx, input.Provider, conn, raw); rejected != nil {
+		return nil, settingRejectedError(ctx, rejected)
+	}
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {

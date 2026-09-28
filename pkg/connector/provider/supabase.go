@@ -30,6 +30,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// supabaseOrganizationSlugSetting is the ExtraSetting the connection check
+// reports a refused slug against.
+const supabaseOrganizationSlugSetting = "organizationSlug"
+
 func supabaseRegistration() *Registration {
 	return &Registration{
 		Provider: coredata.ConnectorProviderSupabase,
@@ -42,13 +46,14 @@ func supabaseRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("supabase"),
 		Endpoints: Endpoints{
 			APIBase: "https://api.supabase.com/v1",
-			Probe:   "https://api.supabase.com/v1/organizations",
 		},
+		Probe: probeSupabase,
 		APIKey: &APIKeyConfig{
 			ExtraSettings: []ExtraSetting{
-				{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+				{Key: supabaseOrganizationSlugSetting, Label: "Organization Slug", Required: true},
 			},
-			KeyFormat: apiKeyPrefix("sbp_", "sbp_…"),
+			CheckSettings: true,
+			KeyFormat:     apiKeyPrefix("sbp_", "sbp_…"),
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)

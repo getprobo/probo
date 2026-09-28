@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { toFieldRejections } from "@probo/helpers";
 import {
   Button,
   Dialog,
@@ -81,6 +82,19 @@ const createAPIKeyConnectorMutation = graphql`
   }
 `;
 
+// PostHog and Segment render their extra settings through a dedicated selector;
+// every other provider gets one generic field per setting.
+function extraSettingsKind(provider: string): "posthog" | "segment" | "generic" {
+  switch (provider) {
+    case "POSTHOG":
+      return "posthog";
+    case "SEGMENT":
+      return "segment";
+    default:
+      return "generic";
+  }
+}
+
 type Props = {
   providerKey: APIKeyConnectorDialog_provider$key | null;
   organizationId: string;
@@ -107,6 +121,8 @@ export function APIKeyConnectorDialog({
   // partial paste as wrong.
   const [apiKeyBlurred, setApiKeyBlurred] = useState(false);
   const [extraSettingValues, setExtraSettingValues] = useState<Record<string, string>>({});
+  // Values the provider refused on connect, by field.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isConnectingAPIKey, setIsConnectingAPIKey] = useState(false);
 
   const [createAPIKeyConnector]
@@ -145,6 +161,10 @@ export function APIKeyConnectorDialog({
       return null;
     }
   }, [provider?.apiKeyFormat?.pattern]);
+
+  const clearFieldErrors = () => {
+    setFieldErrors(prev => (Object.keys(prev).length > 0 ? {} : prev));
+  };
 
   const trimmedAPIKey = apiKeyValue.trim();
   const apiKeyMalformed
@@ -196,13 +216,39 @@ export function APIKeyConnectorDialog({
             setApiKeyValue("");
             setApiKeyBlurred(false);
             setExtraSettingValues({});
+            setFieldErrors({});
             dialogRef.current?.close();
             onClose();
           },
         );
       },
-      onError: () => {
+      onError: (error) => {
         setIsConnectingAPIKey(false);
+
+        const inlineFields = new Set([
+          ...(provider.apiKeyManaged ? [] : ["apiKey"]),
+          ...(extraSettingsKind(provider.provider) === "generic"
+            ? provider.apiKeyExtraSettings.map(s => s.key)
+            : []),
+        ]);
+        const rejected = Object.entries(toFieldRejections(error) ?? {})
+          .filter(([field]) => inlineFields.has(field));
+
+        if (rejected.length > 0) {
+          setFieldErrors(Object.fromEntries(
+            rejected.map(([field, { cause, message }]) => [
+              field,
+              cause
+                ? t(`apiKeyConnectorDialog.errors.rejected.${cause}`, {
+                    defaultValue: message,
+                  })
+                : message,
+            ]),
+          ));
+
+          return;
+        }
+
         toast({
           title: t("apiKeyConnectorDialog.messages.connectionFailed"),
           // Managed providers never show an API key field, so pointing the
@@ -225,18 +271,21 @@ export function APIKeyConnectorDialog({
       return null;
     }
 
-    if (provider.provider === "POSTHOG") {
+    const kind = extraSettingsKind(provider.provider);
+
+    if (kind === "posthog") {
       return (
         <PostHogDeploymentField
           values={extraSettingValues}
           onChange={setExtraSettingValues}
+          disabled={isConnectingAPIKey}
         />
       );
     }
 
     // The server maps this to a regional API host and rejects anything outside
     // the allow-list, so it must not be typed by hand.
-    if (provider.provider === "SEGMENT") {
+    if (kind === "segment") {
       return (
         <div className="space-y-1.5">
           <label className="text-sm font-medium">{t("accessReviewSource.regions.label")}</label>
@@ -245,6 +294,7 @@ export function APIKeyConnectorDialog({
             onValueChange={(val: string) =>
               setExtraSettingValues(prev => ({ ...prev, region: val }))}
             placeholder={t("accessReviewSource.regions.placeholder")}
+            disabled={isConnectingAPIKey}
           >
             <Option value="US">{t("accessReviewSource.regions.unitedStates")}</Option>
             <Option value="EU">{t("accessReviewSource.regions.europe")}</Option>
@@ -260,8 +310,12 @@ export function APIKeyConnectorDialog({
           key={setting.key}
           label={setting.label}
           value={value}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setExtraSettingValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setExtraSettingValues(prev => ({ ...prev, [setting.key]: e.target.value }));
+            clearFieldErrors();
+          }}
+          error={fieldErrors[setting.key]}
+          disabled={isConnectingAPIKey}
           required={setting.required}
         />
       );
@@ -281,12 +335,14 @@ export function APIKeyConnectorDialog({
   return (
     <Dialog
       ref={dialogRef}
+      closable={!isConnectingAPIKey}
       onClose={() => {
         // Reset on dismiss so the next open starts fresh (the imperative
         // close() on success does not fire onClose, so success resets inline).
         setApiKeyValue("");
         setApiKeyBlurred(false);
         setExtraSettingValues({});
+        setFieldErrors({});
         setIsConnectingAPIKey(false);
         onClose();
       }}
@@ -317,7 +373,10 @@ export function APIKeyConnectorDialog({
               label={t("apiKeyConnectorDialog.apiKey")}
               type="password"
               value={apiKeyValue}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKeyValue(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setApiKeyValue(e.target.value);
+                clearFieldErrors();
+              }}
               onBlur={() => setApiKeyBlurred(true)}
               placeholder={provider?.apiKeyFormat?.example}
               error={
@@ -325,8 +384,9 @@ export function APIKeyConnectorDialog({
                   ? t("apiKeyConnectorDialog.errors.apiKeyFormat", {
                       example: provider.apiKeyFormat.example,
                     })
-                  : undefined
+                  : fieldErrors.apiKey
               }
+              disabled={isConnectingAPIKey}
               required
               autoFocus
             />

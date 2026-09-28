@@ -149,6 +149,18 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 	return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: user.OrganizationID})
 }
 
+// settingRejectedError shows a setting the provider refused on the Connect
+// dialog field it concerns: the setting's own, or the key's when the
+// credential cannot reach what the setting names.
+func settingRejectedError(ctx context.Context, rejected *drivers.SettingRejectedError) error {
+	field := rejected.Setting
+	if field == "" {
+		field = "apiKey"
+	}
+
+	return gqlutils.InvalidField(ctx, field, rejected.Code, rejected.Message)
+}
+
 // instanceBaseURL trims space and one trailing slash. A query or fragment
 // is refused: those are not the same instance URL the user typed.
 func instanceBaseURL(raw *string, provider, field string, required bool) (string, error) {

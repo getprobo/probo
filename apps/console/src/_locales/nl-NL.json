@@ -2811,7 +2811,7 @@
         "reconnectDescription": "Verbind deze bron opnieuw om de toegang tot organisaties te herstellen.",
         "credentialsDescription": "Probo kan deze bron niet lezen met de huidige inloggegevens. Controleer de inloggegevens en de rechten die ze bij {{provider}} hebben.",
         "notAuthorizedTitle": "{{provider}} heeft dit verzoek geweigerd",
-        "notAuthorizedDescription": "{{provider}} accepteert de inloggegevens, maar weigerde het verzoek van Probo. Controleer de rechten die ze bij {{provider}} hebben en of uw abonnement de API bevat die Probo gebruikt."
+        "notAuthorizedDescription": "{{provider}} accepteert de inloggegevens, maar weigerde het verzoek van Probo. Controleer de instellingen die voor deze bron zijn ingevoerd, de rechten die deze inloggegevens bij {{provider}} hebben en of uw abonnement de API bevat die Probo gebruikt."
       }
     }
   },
@@ -3086,7 +3086,12 @@
     "errors": {
       "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en probeer het opnieuw.",
       "apiKeyConnect": "Verbinden met provider mislukt. Controleer uw API-sleutel en probeer het opnieuw.",
-      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}"
+      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}",
+      "rejected": {
+        "better_stack_team_not_found": "Better Stack heeft geen team met deze naam voor dit API-token. Teamnamen zijn hoofdlettergevoelig: kopieer de exacte naam uit Settings > Teams in Better Stack, of gebruik een teamgebonden API-token.",
+        "supabase_organization_not_found": "Supabase heeft geen organisatie met deze slug. Kopieer deze uit de URL van de organisatie in het Supabase-dashboard (supabase.com/dashboard/org/<slug>).",
+        "supabase_organization_not_accessible": "Dit toegangstoken kan de leden van deze organisatie niet lezen. Maak een token aan met Organization-resourcetoegang die deze organisatie omvat, en Organization Members ingesteld op Read."
+      }
     },
     "actions": {
       "connect": "Verbinden",

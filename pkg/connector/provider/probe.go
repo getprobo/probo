@@ -49,10 +49,11 @@ const (
 	squareVersion       = "2026-05-20"
 )
 
-// ProbeConnection verifies that the connector credential is accepted by the
-// provider. It dispatches to a provider-specific Probe closure when
-// registered, otherwise issues a lightweight GET against ProbeURL or
-// BuildProbeURL. An empty probe URL means the check is skipped.
+// ProbeConnection verifies that the connector credential, and for some
+// providers its settings, are accepted by the provider. It dispatches to a
+// provider-specific Probe closure when registered, otherwise issues a
+// lightweight GET against ProbeURL or BuildProbeURL. An empty probe URL means
+// the check is skipped.
 func (r *Registry) ProbeConnection(
 	ctx context.Context,
 	httpClient *http.Client,
@@ -147,14 +148,23 @@ func probeGET(ctx context.Context, httpClient *http.Client, probeURL string) err
 		return nil
 	}
 
+	req, err := newProbeGET(ctx, probeURL)
+	if err != nil {
+		return err
+	}
+
+	return doProbeRequest(httpClient, req)
+}
+
+func newProbeGET(ctx context.Context, probeURL string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, probeURL, nil)
 	if err != nil {
-		return fmt.Errorf("cannot create probe request: %w", err)
+		return nil, fmt.Errorf("cannot create probe request: %w", err)
 	}
 
 	req.Header.Set("Accept", "application/json")
 
-	return doProbeRequest(httpClient, req)
+	return req, nil
 }
 
 func probePOSTJSON(
@@ -268,6 +278,18 @@ const rejectionBodyLimit = 4 << 10
 // keep their existing verdict, so a provider's 5xx maintenance page stays a
 // transient failure rather than flipping a working connector to disconnected.
 func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...int) error {
+	return sendProbe(
+		httpClient,
+		req,
+		func(resp *http.Response) error {
+			return probeVerdict(resp, extraReject...)
+		},
+	)
+}
+
+// sendProbe executes a probe request and returns what verdict makes of the
+// response, draining and closing the body either way.
+func sendProbe(httpClient *http.Client, req *http.Request, verdict func(*http.Response) error) error {
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("probe request failed: %w", err)
@@ -278,6 +300,10 @@ func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...i
 		_ = resp.Body.Close()
 	}()
 
+	return verdict(resp)
+}
+
+func probeVerdict(resp *http.Response, extraReject ...int) error {
 	if resp.StatusCode == http.StatusUnauthorized ||
 		resp.StatusCode == http.StatusForbidden ||
 		slices.Contains(extraReject, resp.StatusCode) {
@@ -438,6 +464,95 @@ func buildNeonProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	q := url.Values{"limit": {"1"}}
 
 	return endpoint + "?" + q.Encode(), nil
+}
+
+// probeSupabase asks for the configured organization's members, as the driver
+// does. A refused slug is blamed on the slug; an organization the token cannot
+// reach is left unassigned, for the key.
+func probeSupabase(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	ep Endpoints,
+) error {
+	s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read supabase connector settings: %w", err)
+	}
+
+	if s.OrganizationSlug == "" {
+		return fmt.Errorf("missing supabase organization_slug")
+	}
+
+	endpoint, err := drivers.SupabaseMembersURL(ep.APIBase, s.OrganizationSlug)
+	if err != nil {
+		return fmt.Errorf("cannot build supabase probe URL: %w", err)
+	}
+
+	req, err := newProbeGET(ctx, endpoint)
+	if err != nil {
+		return err
+	}
+
+	return sendProbe(
+		httpClient,
+		req,
+		func(resp *http.Response) error {
+			rejected := drivers.SupabaseMembersRejection(resp)
+			if rejected == nil {
+				return probeVerdict(resp)
+			}
+
+			if rejected.Code == drivers.SupabaseOrganizationNotFound {
+				rejected.Setting = supabaseOrganizationSlugSetting
+			}
+
+			return rejected
+		},
+	)
+}
+
+// probeBetterStack asks for the configured team's members, as the driver does.
+func probeBetterStack(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	ep Endpoints,
+) error {
+	s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read better stack connector settings: %w", err)
+	}
+
+	teamName := strings.TrimSpace(s.TeamName)
+	if teamName == "" {
+		return fmt.Errorf("missing better stack team_name")
+	}
+
+	endpoint, err := drivers.BetterStackTeamMembersURL(ep.APIBase, teamName, 1)
+	if err != nil {
+		return fmt.Errorf("cannot build better stack probe URL: %w", err)
+	}
+
+	req, err := newProbeGET(ctx, endpoint)
+	if err != nil {
+		return err
+	}
+
+	return sendProbe(
+		httpClient,
+		req,
+		func(resp *http.Response) error {
+			rejected := drivers.BetterStackTeamMembersRejection(resp)
+			if rejected == nil {
+				return probeVerdict(resp)
+			}
+
+			rejected.Setting = betterStackTeamNameSetting
+
+			return rejected
+		},
+	)
 }
 
 func buildScalewayProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {

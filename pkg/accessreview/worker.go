@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -37,6 +38,16 @@ import (
 // failed fetch attempt. The raw error is only ever written to the logs so that
 // internal connector details are never surfaced through the API or UI.
 const sourceFetchFailureMessage = "We couldn't fetch accounts from this source. Verify the source configuration and try again."
+
+// fetchFailureMessage is the user-facing message for a failed fetch: a refused
+// setting's own explanation, which is Probo's fixed text, or the generic one.
+func fetchFailureMessage(err error) string {
+	if rejected, ok := errors.AsType[*drivers.SettingRejectedError](err); ok && rejected != nil {
+		return rejected.Message
+	}
+
+	return sourceFetchFailureMessage
+}
 
 type sourceFetchHandler struct {
 	svc        *Service
@@ -196,7 +207,7 @@ func (h *sourceFetchHandler) loadCampaignSource(
 	)
 }
 
-// commitFailedSourceFetch marks the in-flight attempt as failed with a generic,
+// commitFailedSourceFetch marks the in-flight attempt as failed with a
 // user-facing message and logs the raw error so the internal detail stays in the
 // logs only.
 func (h *sourceFetchHandler) commitFailedSourceFetch(
@@ -223,7 +234,7 @@ func (h *sourceFetchHandler) commitFailedSourceFetch(
 
 	var (
 		now    = time.Now()
-		errMsg = sourceFetchFailureMessage
+		errMsg = fetchFailureMessage(failureErr)
 		scope  = coredata.NewScope(attempt.TenantID)
 	)
 

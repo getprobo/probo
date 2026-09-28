@@ -1751,7 +1751,7 @@
         "reconnectDescription": "Reconnect this source to restore access to organizations.",
         "credentialsDescription": "Probo cannot read this source with the current credentials. Check the credentials and the permissions they carry on {{provider}}.",
         "notAuthorizedTitle": "{{provider}} refused this request",
-        "notAuthorizedDescription": "{{provider}} accepted the credential but refused the request Probo made. Check the permissions this credential has on {{provider}}, and whether your plan includes the API Probo uses."
+        "notAuthorizedDescription": "{{provider}} accepted the credential but refused the request Probo made. Check the settings entered for this source, the permissions this credential has on {{provider}}, and whether your plan includes the API Probo uses."
       }
     }
   },
@@ -1856,7 +1856,7 @@
     "apiKeyDescription": "Enter the API key for {{provider}} to connect it as an access source.",
     "apiKey": "API Key",
     "messages": { "connectionFailed": "Connection failed" },
-    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}" },
+    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}", "rejected": { "better_stack_team_not_found": "Better Stack has no team with this name for this API token. Team names are case-sensitive: copy the exact name from Settings > Teams in Better Stack, or use a team-based API token.", "supabase_organization_not_found": "Supabase has no organization with this slug. Copy it from the organization URL in the Supabase dashboard (supabase.com/dashboard/org/<slug>).", "supabase_organization_not_accessible": "This access token cannot read the members of this organization. Create a token with Organization resource access that includes this organization, and Organization Members set to Read." } },
     "actions": { "connect": "Connect", "connecting": "Connecting..." }
   },
   "clientCredentialsConnectorDialog": {

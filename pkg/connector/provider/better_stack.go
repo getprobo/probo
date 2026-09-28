@@ -31,6 +31,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// betterStackTeamNameSetting is the ExtraSetting the connection check reports a
+// refused team name against.
+const betterStackTeamNameSetting = "teamName"
+
 // betterStackRegistration wires the Better Stack Uptime access-review
 // connector. Better Stack has no third-party OAuth app for listing team
 // members (its OAuth is an end-user MCP sign-in), so the connector is
@@ -48,13 +52,14 @@ func betterStackRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("better-stack"),
 		APIKey: &APIKeyConfig{
 			ExtraSettings: []ExtraSetting{
-				{Key: "teamName", Label: "Team Name", Required: true},
+				{Key: betterStackTeamNameSetting, Label: "Team Name", Required: true},
 			},
+			CheckSettings: true,
 		},
 		Endpoints: Endpoints{
 			APIBase: "https://betterstack.com/api/v2",
-			Probe:   "https://betterstack.com/api/v2/team-members",
 		},
+		Probe: probeBetterStack,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)
 			if err != nil {

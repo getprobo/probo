@@ -23,21 +23,27 @@ export interface GraphQLError {
   extensions?: {
     code?: string;
     field?: string;
+    cause?: string;
   };
   source?: {
-    errors?: Array<{ message: string; extensions?: { code?: string; field?: string } }>;
+    errors?: Array<{ message: string; extensions?: { code?: string; field?: string; cause?: string } }>;
   };
 }
 
-export function graphqlErrorField(error: unknown): string | undefined {
+function graphqlErrorExtension(error: unknown, key: "field" | "cause"): string | undefined {
   if (error == null || typeof error !== "object" || !("extensions" in error)) {
     return undefined;
   }
   const extensions = error.extensions;
-  if (extensions == null || typeof extensions !== "object" || !("field" in extensions)) {
+  if (extensions == null || typeof extensions !== "object") {
     return undefined;
   }
-  return typeof extensions.field === "string" ? extensions.field : undefined;
+  const value: unknown = Object.entries(extensions).find(([name]) => name === key)?.[1];
+  return typeof value === "string" ? value : undefined;
+}
+
+export function graphqlErrorField(error: unknown): string | undefined {
+  return graphqlErrorExtension(error, "field");
 }
 
 function graphqlErrorMessage(error: unknown): string | undefined {
@@ -62,19 +68,35 @@ function nestedGraphqlErrors(error: unknown): unknown[] {
   return [error];
 }
 
-export function toFieldErrors(error: unknown): Record<string, string> | undefined {
+export type FieldRejection = {
+  message: string;
+  cause?: string;
+};
+
+export function toFieldRejections(error: unknown): Record<string, FieldRejection> | undefined {
   const items = Array.isArray(error) ? error : [error];
-  const fieldErrors: Record<string, string> = {};
+  const rejections: Record<string, FieldRejection> = {};
 
   for (const item of items.flatMap(nestedGraphqlErrors)) {
     const field = graphqlErrorField(item);
     const message = graphqlErrorMessage(item);
     if (field != null && message != null) {
-      fieldErrors[field] = message;
+      rejections[field] = { message, cause: graphqlErrorExtension(item, "cause") };
     }
   }
 
-  return Object.keys(fieldErrors).length > 0 ? fieldErrors : undefined;
+  return Object.keys(rejections).length > 0 ? rejections : undefined;
+}
+
+export function toFieldErrors(error: unknown): Record<string, string> | undefined {
+  const rejections = toFieldRejections(error);
+  if (rejections == null) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(rejections).map(([field, { message }]) => [field, message]),
+  );
 }
 
 export function formatError(title: string, error: GraphQLError | GraphQLError[]): string {

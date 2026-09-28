@@ -1191,3 +1191,169 @@ func TestProbeNewRelic(t *testing.T) {
 	body := `{"data":{"actor":{"organization":{"userManagement":{"authenticationDomains":{"nextCursor":null}}}}}}`
 	require.NoError(t, probeNewRelic(t.Context(), probeStubClient(&okSeen, http.StatusOK, body), conn, Endpoints{}))
 }
+
+func TestProbeSupabase(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderSupabase}
+	require.NoError(t, conn.SetSettings(&coredata.SupabaseConnectorSettings{OrganizationSlug: "acmeorgslug"}))
+
+	probe := func(client *http.Client) error {
+		return NewBuiltinRegistry().ProbeConnection(t.Context(), client, conn)
+	}
+
+	t.Run("asks for the configured organization's members", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		require.NoError(t, probe(probeStubClient(&seen, http.StatusOK, `[]`)))
+		require.Len(t, seen, 1)
+		assert.Equal(t, "https://api.supabase.com/v1/organizations/acmeorgslug/members", seen[0].URL.String())
+	})
+
+	t.Run("dead token is the credential", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		err := probe(probeStubClient(&seen, http.StatusUnauthorized, `{}`))
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "401 should reject the credential, got %v", err)
+		assert.Equal(t, http.StatusUnauthorized, rejected.StatusCode)
+	})
+
+	// A 404 is the slug's fault; a 403 is the token's reach, left for the key.
+	for status, tc := range map[int]struct {
+		code    string
+		setting string
+	}{
+		http.StatusForbidden: {code: drivers.SupabaseOrganizationNotAccessible, setting: ""},
+		http.StatusNotFound:  {code: drivers.SupabaseOrganizationNotFound, setting: "organizationSlug"},
+	} {
+		t.Run(tc.code, func(t *testing.T) {
+			t.Parallel()
+
+			var seen []*http.Request
+
+			err := probe(probeStubClient(&seen, status, `{"message":"x"}`))
+
+			rejected, ok := errors.AsType[*drivers.SettingRejectedError](err)
+			require.Truef(t, ok, "status %d should be a refused setting, got %v", status, err)
+			assert.Equal(t, tc.code, rejected.Code)
+			assert.Equal(t, tc.setting, rejected.Setting)
+
+			_, isCredential := errors.AsType[*CredentialRejectedError](err)
+			assert.False(t, isCredential)
+		})
+	}
+
+	t.Run("edge page is not a refused setting", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{
+			Transport: probeRoundTripFunc(func(*http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusForbidden,
+					Body:       io.NopCloser(strings.NewReader("<!doctype html><title>Attention Required</title>")),
+					Header:     http.Header{"Content-Type": []string{"text/html; charset=UTF-8"}},
+				}, nil
+			}),
+		}
+
+		err := probe(client)
+
+		_, isSetting := errors.AsType[*drivers.SettingRejectedError](err)
+		assert.False(t, isSetting)
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "an edge 403 keeps the credential verdict, got %v", err)
+		assert.Equal(t, http.StatusForbidden, rejected.StatusCode)
+	})
+
+	t.Run("provider outage keeps the connected verdict", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		require.NoError(t, probe(probeStubClient(&seen, http.StatusBadGateway, `{}`)))
+	})
+
+	t.Run("escapes the slug", func(t *testing.T) {
+		t.Parallel()
+
+		slashed := &coredata.Connector{Provider: coredata.ConnectorProviderSupabase}
+		require.NoError(t, slashed.SetSettings(&coredata.SupabaseConnectorSettings{OrganizationSlug: "a/../b"}))
+
+		var seen []*http.Request
+
+		require.NoError(t, NewBuiltinRegistry().ProbeConnection(t.Context(), probeStubClient(&seen, http.StatusOK, `[]`), slashed))
+		require.Len(t, seen, 1)
+		assert.Equal(t, "https://api.supabase.com/v1/organizations/a%2F..%2Fb/members", seen[0].URL.String())
+	})
+}
+
+func TestSettingChecksBeforeSave(t *testing.T) {
+	t.Parallel()
+
+	for _, prvdr := range []coredata.ConnectorProvider{
+		coredata.ConnectorProviderSupabase,
+		coredata.ConnectorProviderBetterStack,
+	} {
+		reg, ok := NewBuiltinRegistry().Get(prvdr)
+		require.True(t, ok)
+		assert.Truef(t, reg.ChecksSettingsBeforeSave(), "%s must check its settings before save", prvdr)
+	}
+}
+
+func TestProbeBetterStack(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderBetterStack}
+	require.NoError(t, conn.SetSettings(&coredata.BetterStackConnectorSettings{TeamName: " Your team "}))
+
+	probe := func(client *http.Client) error {
+		return NewBuiltinRegistry().ProbeConnection(t.Context(), client, conn)
+	}
+
+	t.Run("asks for the configured team's members", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		require.NoError(t, probe(probeStubClient(&seen, http.StatusOK, `{"data":[]}`)))
+		require.Len(t, seen, 1)
+		assert.Equal(t, "betterstack.com", seen[0].URL.Host)
+		assert.Equal(t, "/api/v2/team-members", seen[0].URL.Path)
+		assert.Equal(t, "Your team", seen[0].URL.Query().Get("team_name"))
+		assert.Equal(t, "1", seen[0].URL.Query().Get("page"))
+	})
+
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			t.Parallel()
+
+			var seen []*http.Request
+
+			err := probe(probeStubClient(&seen, status, `{}`))
+
+			rejected, ok := errors.AsType[*CredentialRejectedError](err)
+			require.Truef(t, ok, "status %d should reject the credential, got %v", status, err)
+			assert.Equal(t, status, rejected.StatusCode)
+		})
+	}
+
+	t.Run("unknown team rejects the team name", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		err := probe(probeStubClient(&seen, http.StatusUnprocessableEntity, `{"errors":"Team not found"}`))
+
+		rejected, ok := errors.AsType[*drivers.SettingRejectedError](err)
+		require.Truef(t, ok, "422 should reject the team name, got %v", err)
+		assert.Equal(t, drivers.BetterStackTeamNotFound, rejected.Code)
+		assert.Equal(t, "teamName", rejected.Setting)
+	})
+}
