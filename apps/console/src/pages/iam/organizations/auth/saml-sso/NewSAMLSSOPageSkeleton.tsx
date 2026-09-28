@@ -39,11 +39,11 @@ export function NewSAMLSSOPageSkeleton() {
       </div>
       <div className={form()}>
         <Card variant="soft" size={2}>
-            <div className={fields()}>
-              <TextFieldSkeleton size={2} className="w-full" />
-              <SelectSkeleton size={2} className="w-full" />
-              <TextSkeleton size={2} className="w-72" />
-            </div>
+          <div className={fields()}>
+            <TextFieldSkeleton size={2} className="w-full" />
+            <SelectSkeleton size={2} className="w-full" />
+            <TextSkeleton size={2} className="w-72" />
+          </div>
         </Card>
         <section className={section()}>
           <HeadingSkeleton size={4} className="w-52" />
