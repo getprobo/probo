@@ -52,10 +52,18 @@ func TestAccessReviewDrivers(t *testing.T) {
 					pattern
 					example
 				}
+				apiKeyPage {
+					url
+					baseSetting
+				}
 				clientCredentialsExtraSettings {
 					key
 					label
 					required
+				}
+				clientCredentialsPage {
+					url
+					baseSetting
 				}
 				workloadIdentitySupported
 				workloadIdentityExtraSettings {
@@ -78,20 +86,27 @@ func TestAccessReviewDrivers(t *testing.T) {
 		Example string `json:"example"`
 	}
 
+	type credentialPage struct {
+		URL         string  `json:"url"`
+		BaseSetting *string `json:"baseSetting"`
+	}
+
 	var result struct {
 		AccessReviewDrivers []struct {
-			Provider                       string        `json:"provider"`
-			DisplayName                    string        `json:"displayName"`
-			DocumentationURL               *string       `json:"documentationUrl"`
-			OAuthConfigured                bool          `json:"oauthConfigured"`
-			ConfiguredProtocols            []string      `json:"configuredProtocols"`
-			APIKeySupported                bool          `json:"apiKeySupported"`
-			ClientCredentialsSupported     bool          `json:"clientCredentialsSupported"`
-			APIKeyExtraSettings            []settingInfo `json:"apiKeyExtraSettings"`
-			APIKeyFormat                   *keyFormat    `json:"apiKeyFormat"`
-			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
-			WorkloadIdentitySupported      bool          `json:"workloadIdentitySupported"`
-			WorkloadIdentityExtraSettings  []settingInfo `json:"workloadIdentityExtraSettings"`
+			Provider                       string          `json:"provider"`
+			DisplayName                    string          `json:"displayName"`
+			DocumentationURL               *string         `json:"documentationUrl"`
+			OAuthConfigured                bool            `json:"oauthConfigured"`
+			ConfiguredProtocols            []string        `json:"configuredProtocols"`
+			APIKeySupported                bool            `json:"apiKeySupported"`
+			ClientCredentialsSupported     bool            `json:"clientCredentialsSupported"`
+			APIKeyExtraSettings            []settingInfo   `json:"apiKeyExtraSettings"`
+			APIKeyFormat                   *keyFormat      `json:"apiKeyFormat"`
+			APIKeyPage                     *credentialPage `json:"apiKeyPage"`
+			ClientCredentialsExtraSettings []settingInfo   `json:"clientCredentialsExtraSettings"`
+			ClientCredentialsPage          *credentialPage `json:"clientCredentialsPage"`
+			WorkloadIdentitySupported      bool            `json:"workloadIdentitySupported"`
+			WorkloadIdentityExtraSettings  []settingInfo   `json:"workloadIdentityExtraSettings"`
 		} `json:"accessReviewDrivers"`
 	}
 
@@ -102,6 +117,8 @@ func TestAccessReviewDrivers(t *testing.T) {
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
 	keyFormatByProvider := make(map[string]*keyFormat)
+	apiKeyPageByProvider := make(map[string]*credentialPage)
+	clientCredentialsPageByProvider := make(map[string]*credentialPage)
 	protocolsByProvider := make(map[string][]string)
 	apiKeySettingKeys := make(map[string][]string)
 	clientCredentialsSettingKeys := make(map[string][]string)
@@ -117,6 +134,8 @@ func TestAccessReviewDrivers(t *testing.T) {
 		providerNames[info.Provider] = true
 		docURLByProvider[info.Provider] = info.DocumentationURL
 		keyFormatByProvider[info.Provider] = info.APIKeyFormat
+		apiKeyPageByProvider[info.Provider] = info.APIKeyPage
+		clientCredentialsPageByProvider[info.Provider] = info.ClientCredentialsPage
 		protocolsByProvider[info.Provider] = info.ConfiguredProtocols
 		workloadIdentitySupported[info.Provider] = info.WorkloadIdentitySupported
 		assert.Equal(t, slices.Contains(info.ConfiguredProtocols, "OAUTH2"), info.OAuthConfigured)
@@ -210,6 +229,31 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	require.Contains(t, keyFormatByProvider, "SENTRY")
 	assert.Nil(t, keyFormatByProvider["SENTRY"], "SENTRY declares no key shape, apiKeyFormat must be null")
+
+	// Each connect path links the vendor page that creates its credential: an
+	// absolute URL for a vendor with one web app, a path relative to the
+	// customer's own instance for a self-hosted one. AWS carries the null case,
+	// since it has neither path.
+	if page := apiKeyPageByProvider["ANTHROPIC"]; assert.NotNil(t, page) {
+		assert.Equal(t, "https://platform.claude.com/settings/admin-keys", page.URL)
+		assert.Nil(t, page.BaseSetting)
+	}
+
+	if page := apiKeyPageByProvider["GRAFANA"]; assert.NotNil(t, page) {
+		assert.Equal(t, "org/serviceaccounts", page.URL)
+
+		if assert.NotNil(t, page.BaseSetting) {
+			assert.Equal(t, "baseUrl", *page.BaseSetting)
+		}
+	}
+
+	require.Contains(t, clientCredentialsPageByProvider, "MONGODB_ATLAS")
+	assert.NotNil(t, clientCredentialsPageByProvider["MONGODB_ATLAS"])
+	assert.Nil(t, apiKeyPageByProvider["MONGODB_ATLAS"], "MONGODB_ATLAS has no API-key path, apiKeyPage must be null")
+
+	require.Contains(t, apiKeyPageByProvider, "AWS")
+	assert.Nil(t, apiKeyPageByProvider["AWS"], "AWS has no API-key path, apiKeyPage must be null")
+	assert.Nil(t, clientCredentialsPageByProvider["AWS"], "AWS has no client-credentials path, clientCredentialsPage must be null")
 
 	t.Run("viewer can list access review drivers", func(t *testing.T) {
 		t.Parallel()

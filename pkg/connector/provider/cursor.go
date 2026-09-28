@@ -40,7 +40,8 @@ func cursorRegistration() *Registration {
 		DisplayName:      "Cursor",
 		DocumentationURL: accessReviewDocsURL("cursor"),
 		APIKey: &APIKeyConfig{
-			Auth: APIKeyAuth{Mode: APIKeyAuthBasic},
+			Auth:           APIKeyAuth{Mode: APIKeyAuthBasic},
+			CredentialPage: &CredentialPage{URL: "https://cursor.com/dashboard/api"},
 		},
 		// Cursor's Admin API has no third-party OAuth2 flow; it
 		// authenticates with a team admin key (key_...) presented as the

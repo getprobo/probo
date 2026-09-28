@@ -60,6 +60,21 @@ func connectorAPIKeyFormat(reg *provider.Registration) *types.ConnectorAPIKeyFor
 	}
 }
 
+// connectorCredentialPage surfaces where the customer creates one connect
+// path's credential. Nil when the path declares no page.
+func connectorCredentialPage(page *provider.CredentialPage) *types.ConnectorCredentialPage {
+	if page == nil {
+		return nil
+	}
+
+	out := &types.ConnectorCredentialPage{URL: page.URL}
+	if page.BaseSetting != "" {
+		out.BaseSetting = new(page.BaseSetting)
+	}
+
+	return out
+}
+
 func connectorProtocols(protocols []connector.ProtocolType) []coredata.ConnectorProtocol {
 	out := make([]coredata.ConnectorProtocol, 0, len(protocols))
 	for _, protocol := range protocols {

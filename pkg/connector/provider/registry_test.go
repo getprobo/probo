@@ -166,6 +166,74 @@ func TestEveryProviderSettingsReachADialog(t *testing.T) {
 	}
 }
 
+// TestEveryCredentialPathLinksItsPage pins, per provider, that a connect path
+// asking the customer for a credential links to the vendor page that creates
+// it, or is listed below with the reason no single page fits.
+func TestEveryCredentialPathLinksItsPage(t *testing.T) {
+	t.Parallel()
+
+	pageless := map[coredata.ConnectorProvider]string{
+		coredata.ConnectorProviderAttio:      "the page sits under the workspace slug, which the form does not ask for",
+		coredata.ConnectorProviderClickHouse: "the page sits under the organization id, which is only discovered after connect",
+		coredata.ConnectorProviderDeepgram:   "keys are per project, and the project id is only discovered after connect",
+		coredata.ConnectorProviderDotfile:    "the page sits under the workspace id, which the form does not ask for",
+		coredata.ConnectorProviderHubSpot:    "private apps sit under the portal id, and HubSpot stops creating them on 2026-10-26",
+		coredata.ConnectorProviderIntercom:   "Intercom's terms forbid asking customers for their access token, so the path is not promoted while its future is decided",
+		coredata.ConnectorProviderLangfuse:   "the page sits under the organization id, which an organization key cannot read",
+		coredata.ConnectorProviderNeon:       "the organization API keys page has no documented URL",
+		coredata.ConnectorProviderNewRelic:   "the host follows the region, which is not a URL",
+		coredata.ConnectorProviderOkta:       "the admin console lives on the -admin host, not on the domain the form asks for",
+		coredata.ConnectorProviderQovery:     "the page sits under the organization id, which is not a URL",
+		coredata.ConnectorProviderRetool:     "Retool Cloud gives each org a host Probo never learns, and a self-hosted base URL may end in the API path",
+		coredata.ConnectorProviderSegment:    "the host follows the region, which is not a URL",
+		coredata.ConnectorProviderTwingate:   "the host embeds the network name, which is not a URL",
+	}
+
+	r := provider.NewBuiltinRegistry()
+
+	for p, reason := range pageless {
+		reg, ok := r.Get(p)
+		require.Truef(t, ok, "pageless provider %q is not registered", p)
+		assert.Truef(
+			t,
+			reg.SupportsAPIKey() || reg.SupportsClientCredentials(),
+			"pageless provider %q asks for no credential, so its entry is stale",
+			p,
+		)
+		assert.NotEmptyf(t, reason, "pageless provider %q gives no reason", p)
+	}
+
+	for _, reg := range r.All() {
+		t.Run(
+			string(reg.Provider),
+			func(t *testing.T) {
+				t.Parallel()
+
+				reason, excused := pageless[reg.Provider]
+
+				for _, path := range []struct {
+					name    string
+					offered bool
+					page    *provider.CredentialPage
+				}{
+					{name: "API-key", offered: reg.SupportsAPIKey(), page: reg.APIKeyCredentialPage()},
+					{name: "client-credentials", offered: reg.SupportsClientCredentials(), page: reg.ClientCredentialsCredentialPage()},
+				} {
+					if !path.offered {
+						continue
+					}
+
+					if excused {
+						assert.Nilf(t, path.page, "provider %q declares a %s credential page but is listed as pageless (%s)", reg.Provider, path.name, reason)
+					} else {
+						assert.NotNilf(t, path.page, "provider %q asks for a %s credential but links no page to create it", reg.Provider, path.name)
+					}
+				}
+			},
+		)
+	}
+}
+
 // TestRegistry_Register exercises the validation and duplicate-detection
 // paths on Register. Programmer errors at NewBuiltinRegistry time —
 // nil, empty Provider, empty DisplayName, duplicate — must all surface
@@ -309,6 +377,153 @@ func TestRegistry_Register(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run(
+		"CredentialPage rules",
+		func(t *testing.T) {
+			t.Parallel()
+
+			baseURL := []provider.ExtraSetting{{Key: "baseUrl", Label: "Base URL"}}
+
+			for name, tc := range map[string]struct {
+				apiKey            *provider.APIKeyConfig
+				clientCredentials *provider.ClientCredentialsConfig
+				want              string
+			}{
+				"relative URL without a base setting": {
+					apiKey: &provider.APIKeyConfig{CredentialPage: &provider.CredentialPage{URL: "settings/api"}},
+					want:   "must be an absolute https URL",
+				},
+				"http URL": {
+					apiKey: &provider.APIKeyConfig{CredentialPage: &provider.CredentialPage{URL: "http://example.com/keys"}},
+					want:   "must be an absolute https URL",
+				},
+				"port-only authority": {
+					apiKey: &provider.APIKeyConfig{CredentialPage: &provider.CredentialPage{URL: "https://:8080/keys"}},
+					want:   "must be an absolute https URL",
+				},
+				"javascript URL": {
+					apiKey: &provider.APIKeyConfig{CredentialPage: &provider.CredentialPage{URL: "javascript:alert(1)"}},
+					want:   "must be an absolute https URL",
+				},
+				"base setting the path does not declare": {
+					apiKey: &provider.APIKeyConfig{
+						CredentialPage: &provider.CredentialPage{URL: "settings/api", BaseSetting: "baseUrl"},
+					},
+					want: `BaseSetting "baseUrl" is not an extra setting`,
+				},
+				"absolute URL with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{URL: "https://example.com/keys", BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"rooted path with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{URL: "/settings/api", BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"network-path reference with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{URL: "//example.com/keys", BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"backslash with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{URL: `\\example.com/keys`, BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"dot-dot segment with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{URL: "settings/%2e%2e/../keys", BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"fragment-only reference with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{URL: "#/core/tokens", BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"query-only reference with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{URL: "?tab=keys", BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"empty URL with a base setting": {
+					apiKey: &provider.APIKeyConfig{
+						ExtraSettings:  baseURL,
+						CredentialPage: &provider.CredentialPage{BaseSetting: "baseUrl"},
+					},
+					want: "must be a path relative to the base setting",
+				},
+				"page for a key the customer never creates": {
+					apiKey: &provider.APIKeyConfig{
+						Managed:        &provider.ManagedAPIKey{},
+						CredentialPage: &provider.CredentialPage{URL: "https://example.com/keys"},
+					},
+					want: "no customer credential to create",
+				},
+				"client-credentials page": {
+					clientCredentials: &provider.ClientCredentialsConfig{
+						CredentialPage: &provider.CredentialPage{URL: "settings/api"},
+					},
+					want: "invalid client-credentials credential page",
+				},
+			} {
+				t.Run(
+					name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						err := provider.NewRegistry().Register(
+							&provider.Registration{
+								Provider:          coredata.ConnectorProviderSlack,
+								DisplayName:       "Slack",
+								APIKey:            tc.apiKey,
+								ClientCredentials: tc.clientCredentials,
+							},
+						)
+						require.Error(t, err)
+						assert.Contains(t, err.Error(), tc.want)
+					},
+				)
+			}
+
+			t.Run(
+				"absolute and base-relative pages register",
+				func(t *testing.T) {
+					t.Parallel()
+
+					err := provider.NewRegistry().Register(
+						&provider.Registration{
+							Provider:    coredata.ConnectorProviderSlack,
+							DisplayName: "Slack",
+							APIKey: &provider.APIKeyConfig{
+								ExtraSettings:  baseURL,
+								CredentialPage: &provider.CredentialPage{URL: "if/admin/#/core/tokens", BaseSetting: "baseUrl"},
+							},
+							ClientCredentials: &provider.ClientCredentialsConfig{
+								CredentialPage: &provider.CredentialPage{URL: "https://example.com/keys"},
+							},
+						},
+					)
+					require.NoError(t, err)
+				},
+			)
+		},
+	)
 
 	t.Run("BuildTokenURLForDomain and BuildTokenURLForSite mutually exclusive", func(t *testing.T) {
 		t.Parallel()

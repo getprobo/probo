@@ -44,7 +44,9 @@ func cloudflareRegistration() *Registration {
 			Probe:   "https://api.cloudflare.com/client/v4/user/tokens/verify",
 			APIBase: "https://api.cloudflare.com/client/v4",
 		},
-		APIKey: &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			CredentialPage: &CredentialPage{URL: "https://dash.cloudflare.com/profile/api-tokens"},
+		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
 			if err != nil {

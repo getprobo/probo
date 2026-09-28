@@ -39,7 +39,8 @@ func openaiRegistration() *Registration {
 			Probe:   "https://api.openai.com/v1/organization/users?limit=1",
 		},
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("sk-admin-", "sk-admin-…"),
+			KeyFormat:      apiKeyPrefix("sk-admin-", "sk-admin-…"),
+			CredentialPage: &CredentialPage{URL: "https://platform.openai.com/settings/organization/admin-keys"},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewOpenAIDriver(c, ep.APIBase), nil

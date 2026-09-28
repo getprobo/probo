@@ -35,7 +35,8 @@ func tailscaleRegistration() *Registration {
 		DisplayName:      "Tailscale",
 		DocumentationURL: accessReviewDocsURL("tailscale"),
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("tskey-api-", "tskey-api-…"),
+			KeyFormat:      apiKeyPrefix("tskey-api-", "tskey-api-…"),
+			CredentialPage: &CredentialPage{URL: "https://console.tailscale.com/admin/settings/keys"},
 		},
 		Endpoints: Endpoints{
 			Probe:   "https://api.tailscale.com/api/v2/tailnet/-/users",

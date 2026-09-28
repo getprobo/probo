@@ -42,7 +42,10 @@ import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapClientCredentialsExtraSettingToField,
+  resolveCredentialPageURL,
 } from "../_lib/connectorSettings";
+
+import { ConnectorCredentialPageLink } from "./ConnectorCredentialPageLink";
 
 const clientCredentialsConnectorDialogFragment = graphql`
   fragment ClientCredentialsConnectorDialog_provider on ConnectorProviderInfo {
@@ -53,6 +56,10 @@ const clientCredentialsConnectorDialogFragment = graphql`
       key
       label
       required
+    }
+    clientCredentialsPage {
+      url
+      baseSetting
     }
   }
 `;
@@ -199,6 +206,12 @@ export function ClientCredentialsConnectorDialog({
     ? hasRequiredExtraSettings(provider.clientCredentialsExtraSettings, clientCredentialsExtraValues)
     : true;
 
+  const credentialPageURL = resolveCredentialPageURL(
+    provider?.clientCredentialsPage?.url,
+    provider?.clientCredentialsPage?.baseSetting,
+    clientCredentialsExtraValues,
+  );
+
   return (
     <Dialog
       ref={dialogRef}
@@ -298,6 +311,11 @@ export function ClientCredentialsConnectorDialog({
                   />
                 ),
           )}
+          <ConnectorCredentialPageLink url={credentialPageURL}>
+            {t("clientCredentialsConnectorDialog.credentialPage", {
+              provider: provider?.displayName ?? "",
+            })}
+          </ConnectorCredentialPageLink>
         </DialogContent>
         <DialogFooter>
           <Button

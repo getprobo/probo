@@ -219,6 +219,12 @@ type ConnectorProviderInfo {
     """
     apiKeyFormat: ConnectorAPIKeyFormat
     """
+    apiKeyPage is the vendor page where the customer creates the key the
+    API-key connect form asks for. Null when no single page fits every
+    customer, and for a provider whose key Probo supplies.
+    """
+    apiKeyPage: ConnectorCredentialPage
+    """
     clientCredentialsExtraSettings lists the settings the client-credentials
     connect form must render and submit. A provider offering both paths
     (1Password) returns different fields here than in apiKeyExtraSettings,
@@ -236,6 +242,12 @@ type ConnectorProviderInfo {
     effect.
     """
     clientCredentialsTokenUrl: String
+    """
+    clientCredentialsPage is the vendor page where the customer creates the
+    client credentials the client-credentials connect form asks for. Null when
+    no single page fits every customer.
+    """
+    clientCredentialsPage: ConnectorCredentialPage
     """
     workloadIdentitySupported is true when this provider connects by federating
     a Probo-issued OIDC token into the customer's cloud account, and this
@@ -315,6 +327,23 @@ type ConnectorAPIKeyFormat {
     in the rejection message. It matches pattern, and carries no real key.
     """
     example: String!
+}
+
+"""
+A vendor web-app page where the customer creates a connector credential.
+"""
+type ConnectorCredentialPage {
+    """
+    url is the page's absolute https URL. When baseSetting is set it is instead
+    a path relative to the customer's own instance, which the client resolves
+    against the value typed into that setting, as a directory.
+    """
+    url: String!
+    """
+    baseSetting is the key of the connect form's extra setting holding the
+    customer's instance URL, or null when url is absolute.
+    """
+    baseSetting: String
 }
 
 input ConnectorFilter {

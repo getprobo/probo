@@ -34,7 +34,9 @@ func openrouterRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderOpenRouter,
 		DisplayName:      "OpenRouter",
 		DocumentationURL: accessReviewDocsURL("openrouter"),
-		APIKey:           &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			CredentialPage: &CredentialPage{URL: "https://openrouter.ai/settings/management-keys"},
+		},
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls shares the /api/v1 prefix, so
 			// the version segment stays in APIBase.

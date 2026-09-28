@@ -42,12 +42,14 @@ import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapAPIKeyExtraSettingToField,
+  resolveCredentialPageURL,
 } from "../_lib/connectorSettings";
 import {
   isPostHogDeploymentSelected,
   PostHogDeploymentField,
 } from "../PostHogDeploymentField";
 
+import { ConnectorCredentialPageLink } from "./ConnectorCredentialPageLink";
 import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
 
 const apiKeyConnectorDialogFragment = graphql`
@@ -64,6 +66,10 @@ const apiKeyConnectorDialogFragment = graphql`
     apiKeyFormat {
       pattern
       example
+    }
+    apiKeyPage {
+      url
+      baseSetting
     }
   }
 `;
@@ -145,6 +151,12 @@ export function APIKeyConnectorDialog({
       return null;
     }
   }, [provider?.apiKeyFormat?.pattern]);
+
+  const credentialPageURL = resolveCredentialPageURL(
+    provider?.apiKeyPage?.url,
+    provider?.apiKeyPage?.baseSetting,
+    extraSettingValues,
+  );
 
   const trimmedAPIKey = apiKeyValue.trim();
   const apiKeyMalformed
@@ -332,6 +344,11 @@ export function APIKeyConnectorDialog({
             />
           )}
           {renderAPIKeyExtraSettings()}
+          <ConnectorCredentialPageLink url={credentialPageURL}>
+            {t("apiKeyConnectorDialog.credentialPage", {
+              provider: provider?.displayName ?? "",
+            })}
+          </ConnectorCredentialPageLink>
         </DialogContent>
         <DialogFooter
           start={

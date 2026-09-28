@@ -3075,6 +3075,7 @@
     "managedDescription": "Connectez {{provider}} en tant que source d’accès. Renseignez les informations ci-dessous pour terminer.",
     "apiKeyDescription": "Saisissez la clé API de {{provider}} pour le connecter en tant que source d’accès.",
     "apiKey": "Clé API",
+    "credentialPage": "Créer une clé API dans {{provider}}",
     "messages": {
       "connectionFailed": "Connexion échouée"
     },
@@ -3092,6 +3093,7 @@
     "title": "Connecter un fournisseur",
     "titleWithProvider": "Connecter {{provider}}",
     "description": "Saisissez les identifiants client de {{provider}} pour le connecter comme source d’accès.",
+    "credentialPage": "Créer des identifiants client dans {{provider}}",
     "messages": {
       "connectionFailed": "Échec de la connexion"
     },

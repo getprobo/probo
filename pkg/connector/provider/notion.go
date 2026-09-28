@@ -43,7 +43,9 @@ func notionRegistration() *Registration {
 			ExtraAuthParams:   map[string]string{"owner": "user"},
 			TokenEndpointAuth: "basic-json",
 		},
-		APIKey: &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			CredentialPage: &CredentialPage{URL: "https://app.notion.com/developers/connections"},
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewNotionDriver(c, ep.APIBase), nil
 		},

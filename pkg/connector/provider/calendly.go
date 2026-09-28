@@ -34,7 +34,9 @@ func calendlyRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderCalendly,
 		DisplayName:      "Calendly",
 		DocumentationURL: accessReviewDocsURL("calendly"),
-		APIKey:           &APIKeyConfig{},
+		APIKey: &APIKeyConfig{
+			CredentialPage: &CredentialPage{URL: "https://calendly.com/integrations/api_webhooks"},
+		},
 		Endpoints: Endpoints{
 			Auth:    "https://auth.calendly.com/oauth/authorize",
 			Token:   "https://auth.calendly.com/oauth/token",

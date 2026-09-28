@@ -53,12 +53,14 @@ func onePasswordRegistration() *Registration {
 			ExtraSettings: []ExtraSetting{
 				{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
 			},
+			CredentialPage: &CredentialPage{URL: "https://start.1password.com/integrations/directory"},
 		},
 		ClientCredentials: &ClientCredentialsConfig{
 			ExtraSettings: []ExtraSetting{
 				{Key: "accountId", Label: "Account ID", Required: true},
 				{Key: "region", Label: "Region", Required: true},
 			},
+			CredentialPage: &CredentialPage{URL: "https://start.1password.com/integrations/directory"},
 		},
 		// Two settings shapes, one per connect path, because a different
 		// driver sits behind each:

@@ -290,6 +290,24 @@ type APIKeyConfig struct {
 	// the common case, and a guess at its format would reject valid keys the
 	// day the provider mints a new one.
 	KeyFormat *KeyFormat
+
+	// CredentialPage is the vendor page where the customer creates the key. Nil
+	// when no page fits every customer, and for a Managed key.
+	CredentialPage *CredentialPage
+}
+
+// CredentialPage is the vendor web-app page where the customer creates the
+// credential a connect path asks for, so the connect form can link straight to
+// it.
+type CredentialPage struct {
+	// URL is the page's absolute https URL or, when BaseSetting is set, a path
+	// relative to the customer's own instance.
+	URL string
+
+	// BaseSetting names the connect path's extra setting that holds the
+	// customer's instance URL, for a vendor the customer hosts or that serves
+	// each customer its own host. Empty when URL is absolute.
+	BaseSetting string
 }
 
 // KeyFormat is the shape the customer has to paste: the prefix that marks the
@@ -360,6 +378,10 @@ type ClientCredentialsConfig struct {
 	// and AccountID + Region on client credentials (Users API driver). A setting
 	// genuinely needed on both paths is declared in both lists.
 	ExtraSettings []ExtraSetting
+
+	// CredentialPage is the vendor page where the customer creates the client
+	// credentials. Nil when no page fits every customer.
+	CredentialPage *CredentialPage
 }
 
 // ErrInstallVerificationTransient marks an install verification that failed for
@@ -640,6 +662,26 @@ func (r *Registration) ClientCredentialsExtraSettings() []ExtraSetting {
 	}
 
 	return r.ClientCredentials.ExtraSettings
+}
+
+// APIKeyCredentialPage returns where the customer creates the API key, or nil
+// when the provider has no API-key path or declares no page.
+func (r *Registration) APIKeyCredentialPage() *CredentialPage {
+	if r.APIKey == nil {
+		return nil
+	}
+
+	return r.APIKey.CredentialPage
+}
+
+// ClientCredentialsCredentialPage returns where the customer creates the client
+// credentials, or nil when the provider has no such path or declares no page.
+func (r *Registration) ClientCredentialsCredentialPage() *CredentialPage {
+	if r.ClientCredentials == nil {
+		return nil
+	}
+
+	return r.ClientCredentials.CredentialPage
 }
 
 // WorkloadIdentityExtraSettings returns the workload-identity dialog's

@@ -35,7 +35,8 @@ func upcloudRegistration() *Registration {
 		DisplayName:      "UpCloud",
 		DocumentationURL: accessReviewDocsURL("upcloud"),
 		APIKey: &APIKeyConfig{
-			KeyFormat: apiKeyPrefix("ucat_", "ucat_…"),
+			KeyFormat:      apiKeyPrefix("ucat_", "ucat_…"),
+			CredentialPage: &CredentialPage{URL: "https://hub.upcloud.com/account/api-tokens"},
 		},
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /1.3
