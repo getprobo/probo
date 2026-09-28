@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -557,13 +558,7 @@ func ovhcloudSyntheticIdentifier(v string) bool {
 		return true
 	}
 
-	for _, synthetic := range ovhcloudStandInClientIDs {
-		if v == synthetic {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(ovhcloudStandInClientIDs, v)
 }
 
 // rewriteOVHcloudIdentifiers applies the rewrites to a plain string.
