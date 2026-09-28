@@ -392,9 +392,9 @@ func sanitizeOVHcloud(i *cassette.Interaction) error {
 	// commit them.
 	i.Request.URL = rewriteOVHcloudIdentifiers(i.Request.URL)
 
-	// X-Iplb-Request-Id opens with the caller's public IP in hex
-	// (53C7FE47 is 83.199.254.71), so the body sanitiser scrubbing the
-	// decimal form is not enough. These headers carry nothing a replay needs.
+	// X-Iplb-Request-Id opens with the caller's public IP in hex, so the body
+	// sanitiser scrubbing the decimal form is not enough. These headers carry
+	// nothing a replay needs.
 	for _, header := range []string{"X-Iplb-Request-Id", "X-Iplb-Instance", "X-Ovh-Queryid"} {
 		i.Response.Headers.Del(header)
 	}
@@ -472,27 +472,73 @@ func assertNoRealOVHcloudIdentifiers(i *cassette.Interaction) error {
 
 	for _, candidate := range ovhcloudIdentifierShapes.FindAllString(haystack, -1) {
 		if !ovhcloudSyntheticIdentifier(candidate) {
-			return fmt.Errorf("refusing to save ovhcloud cassette: an unrecognised real identifier survived sanitizing (add it to ovhcloudCassetteRewrites)")
+			return fmt.Errorf("refusing to save ovhcloud cassette: an unrecognised real identifier survived sanitizing (set OVHCLOUD_CASSETTE_CLIENT_IDS/_NICHANDLE)")
+		}
+	}
+
+	for _, match := range ovhcloudIPFields.FindAllStringSubmatch(haystack, -1) {
+		if match[1] != ovhcloudStandInIP {
+			return fmt.Errorf("refusing to save ovhcloud cassette: a real IP survived sanitizing (set OVHCLOUD_CASSETTE_IP)")
 		}
 	}
 
 	return nil
 }
 
-// ovhcloudCassetteRewrites maps every real identifier the fixture account
-// exposes to its synthetic stand-in. The OAuth2 client ids matter most: two of
-// them are Probo's own registered connector clients, and they appear in request
-// URLs as well as in response bodies.
-var ovhcloudCassetteRewrites = map[string]string{
-	"sn609323-ovh":        "ab1234-ovh",
-	"EU.28d43fdfc0f81aee": "EU.0000000000000000",
-	"EU.605fa850d354b921": "EU.1111111111111111",
-	"EU.d13f320e69d836ff": "EU.2222222222222222",
-	"EU.a21f12032ce38dfa": "EU.3333333333333333",
-	"83.199.254.71":       "203.0.113.1",
-	// The classic API application's key. The driver never reads it, but it
-	// rides along in the /me/api/application response.
-	"3f1c18a4c1221636": "0000000000000000",
+// ovhcloudIPFields matches the audit log's own ip field. The shape regexp below
+// deliberately leaves IPv4 alone, so this is what keeps a caller IP from being
+// saved when OVHCLOUD_CASSETTE_IP is unset.
+var ovhcloudIPFields = regexp.MustCompile(`"ip":"([0-9.]+)"`)
+
+// The synthetic identifiers the committed cassettes carry. The real values
+// they stand in for are supplied at record time, never stored here: committing
+// the mapping would publish exactly what sanitizing removes.
+const (
+	ovhcloudStandInNICHandle = "ab1234-ovh"
+	ovhcloudStandInIP        = "203.0.113.1"
+)
+
+var ovhcloudStandInClientIDs = []string{
+	"EU.0000000000000000",
+	"EU.1111111111111111",
+	"EU.2222222222222222",
+	"EU.3333333333333333",
+}
+
+// ovhcloudCassetteRewrites maps the fixture account's real identifiers onto the
+// stand-ins above. It is read from the environment and is empty on replay.
+//
+// To re-record, set these alongside OVHCLOUD_TOKEN:
+//
+//	OVHCLOUD_CASSETTE_NICHANDLE   the account's NIC handle
+//	OVHCLOUD_CASSETTE_IP          the public IP the recording is made from
+//	OVHCLOUD_CASSETTE_CLIENT_IDS  its OAuth2 client ids, comma-separated
+//
+// Missing one is not silent: assertNoRealOVHcloudIdentifiers matches the
+// identifier shapes structurally and refuses the save.
+var ovhcloudCassetteRewrites = loadOVHcloudCassetteRewrites()
+
+func loadOVHcloudCassetteRewrites() map[string]string {
+	rewrites := map[string]string{}
+
+	if handle := strings.TrimSpace(os.Getenv("OVHCLOUD_CASSETTE_NICHANDLE")); handle != "" {
+		rewrites[handle] = ovhcloudStandInNICHandle
+	}
+
+	if ip := strings.TrimSpace(os.Getenv("OVHCLOUD_CASSETTE_IP")); ip != "" {
+		rewrites[ip] = ovhcloudStandInIP
+	}
+
+	for i, clientID := range strings.Split(os.Getenv("OVHCLOUD_CASSETTE_CLIENT_IDS"), ",") {
+		clientID = strings.TrimSpace(clientID)
+		if clientID == "" || i >= len(ovhcloudStandInClientIDs) {
+			continue
+		}
+
+		rewrites[clientID] = ovhcloudStandInClientIDs[i]
+	}
+
+	return rewrites
 }
 
 // ovhcloudIdentifierShapes matches the identifier formats OVHcloud mints that
@@ -503,9 +549,14 @@ var ovhcloudCassetteRewrites = map[string]string{
 var ovhcloudIdentifierShapes = regexp.MustCompile(`EU\.[0-9a-f]{16}|[a-z]{2}[0-9]{1,8}-ovh|\b[0-9a-f]{16}\b`)
 
 // ovhcloudSyntheticIdentifier reports whether a matched identifier is one of
-// the stand-ins this file substitutes, rather than a real value.
+// the stand-ins rather than a real value. It reads the stand-ins and not the
+// rewrite map, which is empty unless we are recording.
 func ovhcloudSyntheticIdentifier(v string) bool {
-	for _, synthetic := range ovhcloudCassetteRewrites {
+	if v == ovhcloudStandInNICHandle {
+		return true
+	}
+
+	for _, synthetic := range ovhcloudStandInClientIDs {
 		if v == synthetic {
 			return true
 		}
