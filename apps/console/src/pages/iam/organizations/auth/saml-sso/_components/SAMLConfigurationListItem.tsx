@@ -18,10 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CopyIcon } from "@phosphor-icons/react";
-import { useToast } from "@probo/ui";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Code } from "@probo/ui/src/v2/typography/Code";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -32,15 +29,15 @@ import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 import {
   samlConfigurationCardTone,
-  samlConfigurationStatusKey,
   SAMLConfigurationStatusIcon,
+  samlConfigurationStatusKey,
   showsSamlLoginUrl,
 } from "../_lib/samlConfigurationCardTone";
 import { samlConfigurationListItem } from "../variants";
 
 import { DeleteSAMLConfigurationDialog } from "./DeleteSAMLConfigurationDialog";
-import { EditSAMLConfigurationDialog } from "./EditSAMLConfigurationDialog";
 import { SAMLConfigurationDnsRecord } from "./SAMLConfigurationDnsRecord";
+import { SAMLConfigurationSsoUrl } from "./SAMLConfigurationSsoUrl";
 
 const samlConfigurationListItemFragment = graphql`
   fragment SAMLConfigurationListItem_samlConfiguration on SAMLConfiguration {
@@ -51,7 +48,7 @@ const samlConfigurationListItemFragment = graphql`
     domainVerificationToken
     domainVerifiedAt
     testLoginUrl
-    canUpdate: permission(action: "iam:saml-configuration:update")
+    canGet: permission(action: "iam:saml-configuration:get")
     canDelete: permission(action: "iam:saml-configuration:delete")
     ...DeleteSAMLConfigurationDialog_samlConfiguration
   }
@@ -67,8 +64,7 @@ export function SAMLConfigurationListItem({
   onDeleted,
 }: SAMLConfigurationListItemProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const { actions, body, callout, url, urlRow, urlValue } = samlConfigurationListItem();
+  const { actions, body, callout } = samlConfigurationListItem();
   const config = useFragment(samlConfigurationListItemFragment, samlConfigurationKey);
   const tone = samlConfigurationCardTone(config.domainVerifiedAt, config.enforcementPolicy);
   const statusKey = samlConfigurationStatusKey(
@@ -77,24 +73,7 @@ export function SAMLConfigurationListItem({
   );
   const showLoginUrl = showsSamlLoginUrl(config.domainVerifiedAt, config.enforcementPolicy);
   const domainVerificationToken = config.domainVerificationToken;
-  const hasActions = config.canUpdate || config.canDelete;
-
-  async function handleCopyUrl() {
-    try {
-      await navigator.clipboard.writeText(config.testLoginUrl);
-      toast({
-        title: t("samlConfigurationList.messages.copied"),
-        description: t("samlConfigurationList.fields.ssoUrl"),
-        variant: "success",
-      });
-    } catch {
-      toast({
-        title: t("samlConfigurationList.errors.copy"),
-        description: t("samlConfigurationList.fields.ssoUrl"),
-        variant: "error",
-      });
-    }
-  }
+  const hasActions = config.canGet || config.canDelete;
 
   return (
     <TonedCard
@@ -113,8 +92,15 @@ export function SAMLConfigurationListItem({
       control={hasActions
         ? (
             <div className={actions()}>
-              {config.canUpdate && (
-                <EditSAMLConfigurationDialog samlConfigurationId={config.id} />
+              {config.canGet && (
+                <ButtonLink
+                  to={config.id}
+                  size={1}
+                  variant="surface"
+                  color="neutral"
+                >
+                  {t("samlConfigurationList.actions.open")}
+                </ButtonLink>
               )}
               {config.canDelete && (
                 <DeleteSAMLConfigurationDialog
@@ -172,27 +158,7 @@ export function SAMLConfigurationListItem({
           </div>
         )}
         {showLoginUrl && (
-          <div className={url()}>
-            <Text size={1} color="faint">
-              {t("samlConfigurationList.fields.ssoUrl")}
-            </Text>
-            <div className={urlRow()}>
-              <Code variant="ghost" size={1} className={urlValue()}>
-                {config.testLoginUrl}
-              </Code>
-              <IconButton
-                size={1}
-                variant="ghost"
-                color="neutral"
-                aria-label={t("samlConfigurationList.actions.copyUrl")}
-                onClick={() => {
-                  void handleCopyUrl();
-                }}
-              >
-                <CopyIcon />
-              </IconButton>
-            </div>
-          </div>
+          <SAMLConfigurationSsoUrl testLoginUrl={config.testLoginUrl} />
         )}
       </div>
     </TonedCard>

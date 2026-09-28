@@ -22,11 +22,11 @@ import { formatError } from "@probo/helpers";
 import { useToast } from "@probo/ui";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { EditSAMLConfigurationForm_samlConfiguration$key } from "#/__generated__/iam/EditSAMLConfigurationForm_samlConfiguration.graphql";
 import type { EditSAMLConfigurationForm_updateMutation } from "#/__generated__/iam/EditSAMLConfigurationForm_updateMutation.graphql";
-import type { EditSAMLConfigurationFormQuery } from "#/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -35,37 +35,22 @@ import {
   type SAMLConfigurationFormData,
 } from "./SAMLConfigurationForm";
 
-export const samlConfigurationFormQuery = graphql`
-  query EditSAMLConfigurationFormQuery($samlConfigurationId: ID!) {
-    samlConfiguration: node(id: $samlConfigurationId) @required(action: THROW) {
-      __typename
-      ... on SAMLConfiguration {
-        id
-        # eslint-disable-next-line relay/unused-fields
-        emailDomain
-        enforcementPolicy
-        # eslint-disable-next-line relay/unused-fields
-        domainVerificationToken
-        # eslint-disable-next-line relay/unused-fields
-        domainVerifiedAt
-        # eslint-disable-next-line relay/unused-fields
-        testLoginUrl
-        idpEntityId
-        idpSsoUrl
-        idpCertificate
-        attributeMappings {
-          # eslint-disable-next-line relay/unused-fields
-          email
-          # eslint-disable-next-line relay/unused-fields
-          firstName
-          # eslint-disable-next-line relay/unused-fields
-          lastName
-          # eslint-disable-next-line relay/unused-fields
-          role
-        }
-        autoSignupEnabled
-      }
+const editSAMLConfigurationFormFragment = graphql`
+  fragment EditSAMLConfigurationForm_samlConfiguration on SAMLConfiguration {
+    id
+    emailDomain
+    enforcementPolicy
+    idpEntityId
+    idpSsoUrl
+    idpCertificate
+    attributeMappings {
+      email
+      firstName
+      lastName
+      role
     }
+    autoSignupEnabled
+    canUpdate: permission(action: "iam:saml-configuration:update")
   }
 `;
 
@@ -75,30 +60,33 @@ const updateSAMLConfigurationMutation = graphql`
   ) {
     updateSAMLConfiguration(input: $input) {
       samlConfiguration {
+        ...EditSAMLConfigurationForm_samlConfiguration
         ...SAMLConfigurationListItem_samlConfiguration
       }
     }
   }
 `;
 
-export function EditSAMLConfigurationForm(props: {
-  onUpdate: () => void;
-  queryRef: PreloadedQuery<EditSAMLConfigurationFormQuery>;
+export function EditSAMLConfigurationForm({
+  samlConfigurationKey,
+  variant,
+  ssoLoginUrl,
+  onUpdate,
+}: {
+  samlConfigurationKey: EditSAMLConfigurationForm_samlConfiguration$key;
+  variant?: "dialog" | "page";
+  ssoLoginUrl?: string | null;
+  onUpdate?: () => void;
 }) {
-  const { onUpdate, queryRef } = props;
+  const samlConfiguration = useFragment(
+    editSAMLConfigurationFormFragment,
+    samlConfigurationKey,
+  );
+  const { canUpdate } = samlConfiguration;
 
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
   const { toast } = useToast();
-
-  const { samlConfiguration }
-    = usePreloadedQuery<EditSAMLConfigurationFormQuery>(
-      samlConfigurationFormQuery,
-      queryRef,
-    );
-  if (samlConfiguration.__typename !== "SAMLConfiguration") {
-    throw new Error("node is not a SAML configuration");
-  }
 
   const [update, isUpdating]
     = useMutationWithToasts<EditSAMLConfigurationForm_updateMutation>(
@@ -137,7 +125,7 @@ export function EditSAMLConfigurationForm(props: {
             return;
           }
 
-          onUpdate();
+          onUpdate?.();
         },
       });
     },
@@ -146,9 +134,25 @@ export function EditSAMLConfigurationForm(props: {
 
   return (
     <SAMLConfigurationForm
-      disabled={isUpdating}
-      initialValues={samlConfiguration}
+      variant={variant}
+      disabled={!canUpdate || isUpdating}
+      hideSubmit={!canUpdate}
+      initialValues={{
+        emailDomain: samlConfiguration.emailDomain,
+        enforcementPolicy: samlConfiguration.enforcementPolicy,
+        idpEntityId: samlConfiguration.idpEntityId,
+        idpSsoUrl: samlConfiguration.idpSsoUrl,
+        idpCertificate: samlConfiguration.idpCertificate,
+        attributeMappings: {
+          email: samlConfiguration.attributeMappings.email,
+          firstName: samlConfiguration.attributeMappings.firstName,
+          lastName: samlConfiguration.attributeMappings.lastName,
+          role: samlConfiguration.attributeMappings.role,
+        },
+        autoSignupEnabled: samlConfiguration.autoSignupEnabled,
+      }}
       isEditing
+      ssoLoginUrl={ssoLoginUrl}
       onSubmit={handleUpdate}
     />
   );

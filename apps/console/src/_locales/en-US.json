@@ -1563,8 +1563,7 @@
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Set up SAML 2.0 single sign-on for each email domain.",
-    "actions": { "add": "Add SAML SSO", "previous": "Prev", "next": "Next" },
-    "breadcrumb": { "settings": "SAML Settings", "configure": "Configure" }
+    "actions": { "add": "Add SAML SSO", "previous": "Prev", "next": "Next" }
   },
   "scimPage": {
     "manualScim": { "title": "Manual SCIM", "description": "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider." },
@@ -1631,6 +1630,11 @@
     "back": "SAML SSO",
     "notFound": "You cannot add SAML SSO to this organization"
   },
+  "samlConfigurationPage": {
+    "title": "SAML SSO",
+    "back": "SAML SSO",
+    "notFound": "SAML configuration not found"
+  },
   "newSamlConfigurationForm": {
     "messages": { "created": "SAML configuration created successfully." },
     "errors": { "create": "Failed to create SAML configuration" }
@@ -1672,7 +1676,7 @@
       "off": "SSO is off"
     },
     "status": { "verified": "Verified", "pendingVerification": "Pending Verification", "enabled": "Enabled", "disabled": "Disabled" },
-    "actions": { "delete": "Delete", "cancel": "Cancel", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "edit": "Edit" }
+    "actions": { "delete": "Delete", "cancel": "Cancel", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "open": "Open" }
   },
   "scimConfiguration": {
     "errors": { "title": "Error", "create": "Manual SCIM configuration failed" },

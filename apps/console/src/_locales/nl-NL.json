@@ -2435,11 +2435,7 @@
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein.",
-    "actions": { "add": "SAML SSO toevoegen", "previous": "Vorige", "next": "Volgende" },
-    "breadcrumb": {
-      "settings": "SAML-instellingen",
-      "configure": "Configureren"
-    }
+    "actions": { "add": "SAML SSO toevoegen", "previous": "Vorige", "next": "Volgende" }
   },
   "scimPage": {
     "manualScim": {
@@ -2578,6 +2574,11 @@
     "back": "SAML SSO",
     "notFound": "U kunt geen SAML SSO toevoegen aan deze organisatie"
   },
+  "samlConfigurationPage": {
+    "title": "SAML SSO",
+    "back": "SAML SSO",
+    "notFound": "SAML-configuratie niet gevonden"
+  },
   "newSamlConfigurationForm": {
     "messages": {
       "created": "SAML-configuratie succesvol aangemaakt."
@@ -2686,7 +2687,7 @@
       "clickToCopy": "Klik om te kopiëren",
       "copied": "Gekopieerd!",
       "copyUrl": "URL kopiëren",
-      "edit": "Bewerken"
+      "open": "Openen"
     }
   },
   "scimConfiguration": {

@@ -37,6 +37,8 @@ import { useTranslation } from "react-i18next";
 
 import { newSamlSsoPage } from "../variants";
 
+import { SAMLConfigurationSsoUrl } from "./SAMLConfigurationSsoUrl";
+
 const EMAIL_DOMAIN_PATTERN = "^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
 const defaultAttributeMappings = {
@@ -85,16 +87,20 @@ function emptyToUndefined(value: string): string | undefined {
 interface SAMLConfigurationFormProps {
   isEditing?: boolean;
   disabled: boolean;
+  hideSubmit?: boolean;
   variant?: "dialog" | "page";
   initialValues?: SAMLConfigurationFormData;
+  ssoLoginUrl?: string | null;
   onSubmit: (data: SAMLConfigurationFormData) => void | Promise<void>;
 }
 
 export function SAMLConfigurationForm({
   isEditing = false,
   disabled,
+  hideSubmit = false,
   variant = "dialog",
   initialValues = defaultValues,
+  ssoLoginUrl,
   onSubmit,
 }: SAMLConfigurationFormProps) {
   const { t } = useTranslation();
@@ -245,6 +251,9 @@ export function SAMLConfigurationForm({
               {t("samlConfigurationForm.fields.autoSignupEnabled")}
             </Text>
           </label>
+          {ssoLoginUrl != null && ssoLoginUrl !== "" && (
+            <SAMLConfigurationSsoUrl testLoginUrl={ssoLoginUrl} />
+          )}
         </>
       ))}
       {sectionBlock(t("samlConfigurationForm.sections.identityProvider"), (
@@ -340,7 +349,7 @@ export function SAMLConfigurationForm({
       return (
         <>
           {content}
-          <div className={actions()}>{submit}</div>
+          {!hideSubmit && <div className={actions()}>{submit}</div>}
         </>
       );
     }
@@ -350,7 +359,7 @@ export function SAMLConfigurationForm({
         <DialogContent padded>
           <div className={form()}>{content}</div>
         </DialogContent>
-        <DialogFooter>{submit}</DialogFooter>
+        {!hideSubmit && <DialogFooter>{submit}</DialogFooter>}
       </>
     );
   }

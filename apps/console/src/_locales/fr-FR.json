@@ -2435,8 +2435,7 @@
   "samlSsoPage": {
     "title": "Authentification unique SAML",
     "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",
-    "actions": { "add": "Ajouter le SSO SAML", "previous": "Préc.", "next": "Suiv." },
-    "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer" }
+    "actions": { "add": "Ajouter le SSO SAML", "previous": "Préc.", "next": "Suiv." }
   },
   "scimPage": {
     "manualScim": {
@@ -2575,6 +2574,11 @@
     "back": "SSO SAML",
     "notFound": "Vous ne pouvez pas ajouter le SSO SAML à cette organisation"
   },
+  "samlConfigurationPage": {
+    "title": "SSO SAML",
+    "back": "SSO SAML",
+    "notFound": "Configuration SAML introuvable"
+  },
   "newSamlConfigurationForm": {
     "messages": {
       "created": "Configuration SAML créée avec succès."
@@ -2683,7 +2687,7 @@
       "clickToCopy": "Cliquer pour copier",
       "copied": "Copié !",
       "copyUrl": "Copier l’URL",
-      "edit": "Modifier"
+      "open": "Ouvrir"
     }
   },
   "scimConfiguration": {

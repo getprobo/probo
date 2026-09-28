@@ -41,6 +41,7 @@ const createSAMLConfigurationMutation = graphql`
     createSAMLConfiguration(input: $input) {
       samlConfigurationEdge @prependEdge(connections: $connections) {
         node {
+          id
           ...SAMLConfigurationListItem_samlConfiguration
         }
       }
@@ -49,7 +50,7 @@ const createSAMLConfigurationMutation = graphql`
 `;
 
 export function NewSAMLConfigurationForm(props: {
-  onCreate: () => void;
+  onCreate: (samlConfigurationId: string) => void;
   variant?: "dialog" | "page";
 }) {
   const { onCreate, variant } = props;
@@ -88,7 +89,7 @@ export function NewSAMLConfigurationForm(props: {
           },
           connections: [connectionID],
         },
-        onCompleted: (_, e) => {
+        onCompleted: (response, e) => {
           if (e) {
             toast({
               variant: "error",
@@ -101,7 +102,11 @@ export function NewSAMLConfigurationForm(props: {
             return;
           }
 
-          onCreate();
+          const samlConfigurationId
+            = response.createSAMLConfiguration?.samlConfigurationEdge.node.id;
+          if (samlConfigurationId != null && samlConfigurationId !== "") {
+            onCreate(samlConfigurationId);
+          }
         },
       });
     },
