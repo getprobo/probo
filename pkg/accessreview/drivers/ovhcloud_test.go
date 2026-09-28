@@ -487,10 +487,11 @@ func assertNoRealOVHcloudIdentifiers(i *cassette.Interaction) error {
 	return nil
 }
 
-// ovhcloudIPFields matches the audit log's own ip field. The shape regexp below
-// deliberately leaves IPv4 alone, so this is what keeps a caller IP from being
-// saved when OVHCLOUD_CASSETTE_IP is unset.
-var ovhcloudIPFields = regexp.MustCompile(`"ip":"([0-9.]+)"`)
+// ovhcloudIPFields matches the audit log's own ip field. It captures the whole
+// value rather than an address shape, so an IPv6 caller is caught too, and the
+// shape regexp below can go on leaving bare IPv4 alone. This is what keeps a
+// caller IP from being saved when OVHCLOUD_CASSETTE_IP misses one.
+var ovhcloudIPFields = regexp.MustCompile(`"ip":"([^"]*)"`)
 
 // The synthetic identifiers the committed cassettes carry. The real values
 // they stand in for are supplied at record time, never stored here: committing
@@ -513,7 +514,9 @@ var ovhcloudStandInClientIDs = []string{
 // To re-record, set these alongside OVHCLOUD_TOKEN:
 //
 //	OVHCLOUD_CASSETTE_NICHANDLE   the account's NIC handle
-//	OVHCLOUD_CASSETTE_IP          the public IP the recording is made from
+//	OVHCLOUD_CASSETTE_IP          the public IPs the recording is made from,
+//	                              comma-separated; give both v4 and v6 if the
+//	                              connection has both
 //	OVHCLOUD_CASSETTE_CLIENT_IDS  its OAuth2 client ids, comma-separated
 //
 // Missing one is not silent: assertNoRealOVHcloudIdentifiers matches the
@@ -527,8 +530,10 @@ func loadOVHcloudCassetteRewrites() map[string]string {
 		rewrites[handle] = ovhcloudStandInNICHandle
 	}
 
-	if ip := strings.TrimSpace(os.Getenv("OVHCLOUD_CASSETTE_IP")); ip != "" {
-		rewrites[ip] = ovhcloudStandInIP
+	for ip := range strings.SplitSeq(os.Getenv("OVHCLOUD_CASSETTE_IP"), ",") {
+		if ip = strings.TrimSpace(ip); ip != "" {
+			rewrites[ip] = ovhcloudStandInIP
+		}
 	}
 
 	for i, clientID := range strings.Split(os.Getenv("OVHCLOUD_CASSETTE_CLIENT_IDS"), ",") {
