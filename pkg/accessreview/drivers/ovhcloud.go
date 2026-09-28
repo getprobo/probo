@@ -445,7 +445,7 @@ func (d *OVHcloudDriver) fetchSignIns(ctx context.Context, nichandle string) (ma
 				continue
 			}
 
-			key = ovhcloudSignInKey{kind: details.Type, login: ovhcloudAuditLogin(*details.User, nichandle)}
+			key = ovhcloudSignInKey{kind: details.Type, login: ovhcloudAuditLogin(details.Type, *details.User, nichandle)}
 		default:
 			continue
 		}
@@ -467,9 +467,10 @@ func (d *OVHcloudDriver) fetchSignIns(ctx context.Context, nichandle string) (ma
 
 // ovhcloudAuditLogin maps an audit identity onto the login /me/identity/user is
 // keyed by: auth.User.login is the SUFFIX, but a local user signs in as
-// "<nichandle>/<suffix>", so strip the handle when present.
-func ovhcloudAuditLogin(login, nichandle string) string {
-	if nichandle == "" {
+// "<nichandle>/<suffix>", so strip the handle when present. Only a USER login
+// follows that convention; a PROVIDER subject is opaque and passes through.
+func ovhcloudAuditLogin(kind, login, nichandle string) string {
+	if kind != "USER" || nichandle == "" {
 		return login
 	}
 

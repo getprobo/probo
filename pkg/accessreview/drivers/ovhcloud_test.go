@@ -361,8 +361,10 @@ func TestOVHcloudDriver(t *testing.T) {
 	assert.Equal(t, []string{"GET", "PUT"}, credential.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodAPIKey, credential.AuthMethod)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, credential.AccountType)
+	// The recorded credential carries an expiry, so whether it is still active
+	// tracks the wall clock. TestOVHcloudAPICredentialRecord pins a clock and
+	// owns the expiry rules; here only the plumbing has to hold.
 	require.NotNil(t, credential.Active)
-	assert.True(t, *credential.Active, "a validated credential can still call the API")
 	assert.NotNil(t, credential.CreatedAt)
 	// It has never been used, so there is no last-use timestamp to report.
 	assert.Nil(t, credential.LastLogin)
@@ -654,18 +656,19 @@ func TestOVHcloudAuditLogin(t *testing.T) {
 	// "<nichandle>/<suffix>", so the audit log may name either form. The join
 	// has to land on the suffix whichever arrives.
 	for _, tt := range []struct {
-		name, login, nichandle, want string
+		name, kind, login, nichandle, want string
 	}{
-		{"prefixed with the handle", "ab1234-ovh/alice", "ab1234-ovh", "alice"},
-		{"already a bare suffix", "alice", "ab1234-ovh", "alice"},
-		{"a different handle is not stripped", "zz9999-ovh/alice", "ab1234-ovh", "zz9999-ovh/alice"},
-		{"no handle known", "ab1234-ovh/alice", "", "ab1234-ovh/alice"},
-		{"a federated subject is left alone", "alice@corp.example.com", "ab1234-ovh", "alice@corp.example.com"},
+		{"prefixed with the handle", "USER", "ab1234-ovh/alice", "ab1234-ovh", "alice"},
+		{"already a bare suffix", "USER", "alice", "ab1234-ovh", "alice"},
+		{"a different handle is not stripped", "USER", "zz9999-ovh/alice", "ab1234-ovh", "zz9999-ovh/alice"},
+		{"no handle known", "USER", "ab1234-ovh/alice", "", "ab1234-ovh/alice"},
+		{"a federated subject is left alone", "PROVIDER", "alice@corp.example.com", "ab1234-ovh", "alice@corp.example.com"},
+		{"a federated subject keeps a handle-shaped prefix", "PROVIDER", "ab1234-ovh/alice", "ab1234-ovh", "ab1234-ovh/alice"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tt.want, ovhcloudAuditLogin(tt.login, tt.nichandle))
+			assert.Equal(t, tt.want, ovhcloudAuditLogin(tt.kind, tt.login, tt.nichandle))
 		})
 	}
 }
