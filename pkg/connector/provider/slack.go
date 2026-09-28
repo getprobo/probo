@@ -31,8 +31,9 @@ import (
 
 func slackRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderSlack,
-		DisplayName: "Slack",
+		Provider:         coredata.ConnectorProviderSlack,
+		DisplayName:      "Slack",
+		DocumentationURL: accessReviewDocsURL("slack"),
 		Endpoints: Endpoints{
 			Auth:    "https://slack.com/oauth/v2/authorize",
 			Token:   "https://slack.com/api/oauth.v2.access",
