@@ -202,9 +202,6 @@ export function SCIMConfiguration({
           </div>
           {visibleToken != null && (
             <>
-              <Callout color="amber">
-                {t("scimConfiguration.tokenWarning")}
-              </Callout>
               <div className={field()}>
                 <Text size={1} color="faint">
                   {t("scimConfiguration.fields.bearerToken")}
@@ -229,6 +226,9 @@ export function SCIMConfiguration({
                   </IconButton>
                 </div>
               </div>
+              <Callout color="amber">
+                {t("scimConfiguration.tokenWarning")}
+              </Callout>
             </>
           )}
         </div>

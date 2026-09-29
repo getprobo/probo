@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DownloadSimpleIcon } from "@phosphor-icons/react";
+import { FileCsvIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
@@ -103,9 +103,9 @@ export function ExportSCIMEventsDialog({
       <DialogTrigger
         render={(
           <Button
-            variant="surface"
-            color="neutral"
-            iconStart={<DownloadSimpleIcon />}
+            variant="soft"
+            color="gold"
+            iconStart={<FileCsvIcon />}
           >
             {t("scimPage.export.actions.export")}
           </Button>
@@ -155,7 +155,7 @@ export function ExportSCIMEventsDialog({
             highContrast
             loading={isExporting}
             disabled={fromDate === "" || toDate === "" || fromDate > toDate}
-            iconStart={<DownloadSimpleIcon />}
+            iconStart={<FileCsvIcon />}
             onClick={handleExport}
           >
             {t("scimPage.export.actions.export")}
