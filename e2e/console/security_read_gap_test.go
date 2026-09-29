@@ -24,6 +24,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/e2e/internal/factory"
@@ -50,6 +51,37 @@ func injectCrossTenantFK(t *testing.T, table, column, rowID, foreignID string) {
 		return err
 	})
 	require.NoError(t, err, "test setup: cannot inject cross-tenant FK into %s.%s", table, column)
+}
+
+func injectCrossTenantAuditFramework(t *testing.T, auditID, frameworkID string) {
+	t.Helper()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		_, err := conn.Exec(ctx, `
+			INSERT INTO audits_frameworks (
+				audit_id,
+				framework_id,
+				organization_id,
+				tenant_id,
+				created_at
+			)
+			SELECT
+				id,
+				$1,
+				organization_id,
+				tenant_id,
+				created_at
+			FROM
+				audits
+			WHERE
+				id = $2
+		`, frameworkID, auditID)
+		return err
+	})
+	require.NoError(t, err, "test setup: cannot inject cross-tenant audit framework link")
 }
 
 // TestSecurity_ReadGap_FindingRisk independently verifies the fix for
@@ -155,9 +187,9 @@ func TestSecurity_ReadGap_ProcessingActivityDataProtectionOfficer(t *testing.T) 
 	testutil.AssertNodeNotAccessible(t, err, readResult.Node.DataProtectionOfficer == nil, "cross-tenant profile PII via processingActivity.dataProtectionOfficer")
 }
 
-// TestSecurity_ReadGap_AuditFramework independently verifies the
-// defense-in-depth fix for auditResolver.Framework, which now authorizes
-// obj.Framework.ID instead of obj.ID.
+// TestSecurity_ReadGap_AuditFramework verifies that a junction row pointing
+// at another organization's framework does not leak that framework through
+// Audit.frameworks. The list is loaded in the caller's scope.
 func TestSecurity_ReadGap_AuditFramework(t *testing.T) {
 	t.Parallel()
 
@@ -169,13 +201,17 @@ func TestSecurity_ReadGap_AuditFramework(t *testing.T) {
 
 	org2FrameworkID := factory.CreateFramework(org2Owner, factory.Attrs{"name": "Org2 Secret Framework (read-gap probe)"})
 
-	injectCrossTenantFK(t, "audits", "framework_id", auditID, org2FrameworkID)
+	injectCrossTenantAuditFramework(t, auditID, org2FrameworkID)
 
 	var readResult struct {
 		Node struct {
-			Framework *struct {
-				ID string `json:"id"`
-			} `json:"framework"`
+			Frameworks struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"frameworks"`
 		} `json:"node"`
 	}
 
@@ -183,13 +219,22 @@ func TestSecurity_ReadGap_AuditFramework(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on Audit {
-					framework { id }
+					frameworks(first: 20) {
+						edges { node { id } }
+					}
 				}
 			}
 		}
 	`, map[string]any{"id": auditID}, &readResult)
+	require.NoError(t, err)
 
-	testutil.AssertNodeNotAccessible(t, err, readResult.Node.Framework == nil, "cross-tenant framework via audit.framework")
+	ids := make([]string, 0, len(readResult.Node.Frameworks.Edges))
+	for _, edge := range readResult.Node.Frameworks.Edges {
+		ids = append(ids, edge.Node.ID)
+	}
+
+	assert.Contains(t, ids, org1FrameworkID)
+	assert.NotContains(t, ids, org2FrameworkID)
 }
 
 // TestSecurity_ReadGap_ApplicabilityStatementControl independently verifies

@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -115,12 +116,27 @@ func loadResources(
 					return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
 				}
 
-				var framework coredata.Framework
-				if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
-					return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
+				var links coredata.AuditFrameworks
+				if err := links.LoadByAuditIDs(ctx, conn, scope, []gid.GID{audit.ID}); err != nil {
+					return nil, nil, nil, fmt.Errorf("cannot load audit frameworks: %w", err)
 				}
 
-				title := framework.Name
+				frameworkIDs := make([]gid.GID, 0, len(links))
+				for _, link := range links {
+					frameworkIDs = append(frameworkIDs, link.FrameworkID)
+				}
+
+				var frameworks coredata.Frameworks
+				if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+					return nil, nil, nil, fmt.Errorf("cannot load frameworks: %w", err)
+				}
+
+				names := make([]string, 0, len(frameworks))
+				for _, framework := range frameworks {
+					names = append(names, framework.Name)
+				}
+
+				title := strings.Join(names, ", ")
 				if audit.Name != nil && *audit.Name != "" {
 					title += " - " + *audit.Name
 				}

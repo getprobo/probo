@@ -37,17 +37,20 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Framework ID',
-		name: 'frameworkId',
+		displayName: 'Framework IDs',
+		name: 'frameworkIds',
 		type: 'string',
+		typeOptions: {
+			multipleValues: true,
+		},
 		displayOptions: {
 			show: {
 				resource: ['audit'],
 				operation: ['create'],
 			},
 		},
-		default: '',
-		description: 'The ID of the framework',
+		default: [],
+		description: 'The IDs of the frameworks this audit covers',
 		required: true,
 	},
 	{
@@ -150,7 +153,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
+	const frameworkIds = this.getNodeParameter('frameworkIds', itemIndex) as string[];
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
 		firm?: string;
@@ -189,7 +192,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = {
 		organizationId,
-		frameworkId,
+		frameworkIds,
 	};
 	if (additionalFields.name) input.name = additionalFields.name;
 	if (additionalFields.firm) input.firm = additionalFields.firm;

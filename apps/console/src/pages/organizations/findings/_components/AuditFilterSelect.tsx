@@ -57,8 +57,12 @@ const auditFilterSelectFragment = graphql`
         node {
           id
           name
-          framework {
-            name
+          frameworks(first: 20) {
+            edges {
+              node {
+                name
+              }
+            }
           }
         }
       }
@@ -121,7 +125,9 @@ export function AuditFilterSelect({
       <Option value="ALL">{t("findingsPage.filters.allAudits")}</Option>
       {audits.map(audit => (
         <Option key={audit.id} value={audit.id}>
-          {audit.name || audit.framework?.name || audit.id}
+          {audit.name
+            || audit.frameworks.edges.map(edge => edge.node.name).join(", ")
+            || audit.id}
         </Option>
       ))}
       {hasNext && (

@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -973,7 +974,7 @@ func reportAccessLabels(
 	}
 
 	auditByFileID := make(map[gid.GID]*coredata.Audit, len(audits))
-	frameworkIDSet := make(map[gid.GID]struct{})
+	auditIDs := make([]gid.GID, 0, len(audits))
 
 	for _, audit := range audits {
 		if audit.ReportFileID == nil {
@@ -985,7 +986,19 @@ func reportAccessLabels(
 		}
 
 		auditByFileID[*audit.ReportFileID] = audit
-		frameworkIDSet[audit.FrameworkID] = struct{}{}
+		auditIDs = append(auditIDs, audit.ID)
+	}
+
+	var links coredata.AuditFrameworks
+	if err := links.LoadByAuditIDs(ctx, conn, scope, auditIDs); err != nil {
+		return nil, fmt.Errorf("cannot load audit frameworks: %w", err)
+	}
+
+	frameworkIDsByAuditID := make(map[gid.GID][]gid.GID, len(auditIDs))
+	frameworkIDSet := make(map[gid.GID]struct{})
+	for _, link := range links {
+		frameworkIDsByAuditID[link.AuditID] = append(frameworkIDsByAuditID[link.AuditID], link.FrameworkID)
+		frameworkIDSet[link.FrameworkID] = struct{}{}
 	}
 
 	frameworkIDs := make([]gid.GID, 0, len(frameworkIDSet))
@@ -1020,18 +1033,28 @@ func reportAccessLabels(
 			continue
 		}
 
-		framework, ok := frameworkByID[audit.FrameworkID]
-		if !ok {
+		names := make([]string, 0, len(frameworkIDsByAuditID[audit.ID]))
+		for _, frameworkID := range frameworkIDsByAuditID[audit.ID] {
+			framework, ok := frameworkByID[frameworkID]
+			if !ok {
+				continue
+			}
+
+			names = append(names, framework.Name)
+		}
+
+		frameworkLabel := strings.Join(names, ", ")
+		if frameworkLabel == "" {
 			labels = append(labels, file.FileName)
 			continue
 		}
 
 		if audit.Name != nil && *audit.Name != "" {
-			labels = append(labels, fmt.Sprintf("%s - %s", framework.Name, *audit.Name))
+			labels = append(labels, fmt.Sprintf("%s - %s", frameworkLabel, *audit.Name))
 			continue
 		}
 
-		labels = append(labels, framework.Name)
+		labels = append(labels, frameworkLabel)
 	}
 
 	return labels, nil

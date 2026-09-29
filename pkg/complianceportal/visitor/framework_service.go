@@ -28,6 +28,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 func (s *Service) GetFramework(
@@ -108,4 +109,37 @@ func (s *Service) GetFrameworkForCompliancePortalID(
 	}
 
 	return framework, nil
+}
+
+func (s *Service) ListFrameworksForAuditID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditID gid.GID,
+) (coredata.Frameworks, error) {
+	return page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.FrameworkOrderField]{
+			Field:     coredata.FrameworkOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.FrameworkOrderField]) ([]*coredata.Framework, error) {
+			var batch coredata.Frameworks
+
+			err := s.pg.WithConn(
+				ctx,
+				func(ctx context.Context, conn pg.Querier) error {
+					if err := batch.LoadByAuditID(ctx, conn, scope, auditID, cursor); err != nil {
+						return fmt.Errorf("cannot load frameworks: %w", err)
+					}
+
+					return nil
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			return batch, nil
+		},
+	)
 }

@@ -1224,7 +1224,7 @@
     "errors": {
       "delete": "Échec de la suppression de l’audit",
       "createOrganizationRequired": "Échec de la création de l’audit : l’organisation est requise",
-      "createFrameworkRequired": "Échec de la création de l’audit : le référentiel est requis",
+      "createFrameworkRequired": "Échec de la création de l’audit : au moins un référentiel est requis",
       "updateIdRequired": "Échec de la mise à jour de l’audit : l’identifiant de l’audit est requis",
       "uploadReport": "Échec du téléversement du rapport d’audit",
       "uploadReportIdRequired": "Échec du téléversement du rapport : l’identifiant de l’audit est requis",
@@ -3490,6 +3490,16 @@
       "auditStartDate": "Date de début de l’audit",
       "auditEndDate": "Date de fin de l’audit"
     },
+    "frameworks": {
+      "title": "Référentiels",
+      "empty": "Aucun référentiel lié.",
+      "addPlaceholder": "Lier un référentiel",
+      "unlink": "Délier",
+      "linked": "Référentiel lié",
+      "unlinked": "Référentiel délié",
+      "linkError": "Échec de la liaison du référentiel",
+      "unlinkError": "Échec de la suppression du lien avec le référentiel"
+    },
     "actions": {
       "delete": "Supprimer",
       "update": "Mettre à jour",
@@ -3519,7 +3529,7 @@
     },
     "columns": {
       "name": "Nom",
-      "framework": "Référentiel",
+      "framework": "Référentiels",
       "state": "État",
       "auditPeriod": "Période d’audit",
       "validityPeriod": "Période de validité",
@@ -3552,7 +3562,7 @@
       "newAudit": "Nouvel audit"
     },
     "validation": {
-      "frameworkRequired": "Le référentiel est obligatoire"
+      "frameworkRequired": "Au moins un référentiel est obligatoire"
     },
     "messages": {
       "success": "Succès",
@@ -3566,8 +3576,8 @@
     "fileSize": "{{value}} Mo",
     "loading": "Chargement...",
     "fields": {
-      "framework": "Référentiel",
-      "frameworkPlaceholder": "Sélectionner un référentiel",
+      "framework": "Référentiels",
+      "frameworkPlaceholder": "Sélectionner des référentiels",
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
       "firm": "Cabinet d’audit",

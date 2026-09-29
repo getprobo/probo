@@ -18,33 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package audit
+type FrameworkEdge = {
+  node?: { name?: string | null } | null;
+} | null;
 
-import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/audit/create"
-	"go.probo.inc/probo/pkg/cmd/audit/delete"
-	"go.probo.inc/probo/pkg/cmd/audit/linkframework"
-	"go.probo.inc/probo/pkg/cmd/audit/list"
-	"go.probo.inc/probo/pkg/cmd/audit/unlinkframework"
-	"go.probo.inc/probo/pkg/cmd/audit/update"
-	"go.probo.inc/probo/pkg/cmd/audit/view"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-)
-
-func NewCmdAudit(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "audit <command>",
-		Short: "Manage audits",
-	}
-
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(linkframework.NewCmdLinkFramework(f))
-	cmd.AddCommand(unlinkframework.NewCmdUnlinkFramework(f))
-
-	return cmd
+export function auditFrameworkNames(
+  frameworks:
+    | { edges?: ReadonlyArray<FrameworkEdge> | null }
+    | null
+    | undefined,
+): string {
+  return frameworks?.edges
+    ?.flatMap((edge) => {
+      const name = edge?.node?.name;
+      return name ? [name] : [];
+    })
+    .join(", ") ?? "";
 }

@@ -40,7 +40,7 @@ type AuditService struct {
 type (
 	CreateAuditRequest struct {
 		OrganizationID gid.GID
-		FrameworkID    gid.GID
+		FrameworkIDs   []gid.GID
 		Name           *string
 		Firm           *string
 		ValidFrom      *time.Time
@@ -48,6 +48,11 @@ type (
 		AuditStartDate *time.Time
 		AuditEndDate   *time.Time
 		State          *coredata.AuditState
+	}
+
+	LinkAuditFrameworkRequest struct {
+		AuditID     gid.GID
+		FrameworkID gid.GID
 	}
 
 	UpdateAuditRequest struct {
@@ -71,7 +76,10 @@ func (car *CreateAuditRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	v.Check(car.FrameworkIDs, "framework_ids", validator.Required(), validator.NoDuplicates())
+	v.CheckEach(car.FrameworkIDs, "framework_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("framework_ids[%d]", index), validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	})
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.Firm, "firm", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
@@ -112,6 +120,15 @@ func (uarr *UploadAuditReportRequest) Validate() error {
 	}
 
 	return nil
+}
+
+func (r *LinkAuditFrameworkRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.AuditID, "audit_id", validator.Required(), validator.GID(coredata.AuditEntityType))
+	v.Check(r.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+
+	return v.Error()
 }
 
 func (s AuditService) Get(
@@ -174,7 +191,6 @@ func (s *AuditService) Create(
 		Name:           req.Name,
 		Firm:           req.Firm,
 		OrganizationID: req.OrganizationID,
-		FrameworkID:    req.FrameworkID,
 		ValidFrom:      req.ValidFrom,
 		ValidUntil:     req.ValidUntil,
 		AuditStartDate: req.AuditStartDate,
@@ -196,13 +212,31 @@ func (s *AuditService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, req.FrameworkID); err != nil {
-				return fmt.Errorf("cannot load framework: %w", err)
+			for _, frameworkID := range req.FrameworkIDs {
+				framework := &coredata.Framework{}
+				if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
+					return fmt.Errorf("cannot load framework: %w", err)
+				}
+
+				if framework.OrganizationID != organization.ID {
+					return fmt.Errorf("framework %q: %w", frameworkID, coredata.ErrResourceNotFound)
+				}
 			}
 
 			if err := audit.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert audit: %w", err)
+			}
+
+			for _, frameworkID := range req.FrameworkIDs {
+				link := &coredata.AuditFramework{
+					AuditID:        audit.ID,
+					FrameworkID:    frameworkID,
+					OrganizationID: organization.ID,
+					CreatedAt:      now,
+				}
+				if err := link.Insert(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot link framework: %w", err)
+				}
 			}
 
 			return nil
@@ -213,6 +247,187 @@ func (s *AuditService) Create(
 	}
 
 	return audit, nil
+}
+
+func (s *AuditService) LinkFramework(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req *LinkAuditFrameworkRequest,
+) (*coredata.Audit, *coredata.Framework, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	audit := &coredata.Audit{}
+	framework := &coredata.Framework{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := audit.LoadByID(ctx, conn, scope, req.AuditID); err != nil {
+				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			if err := framework.LoadByID(ctx, conn, scope, req.FrameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			if framework.OrganizationID != audit.OrganizationID {
+				return fmt.Errorf("framework %q: %w", req.FrameworkID, coredata.ErrResourceNotFound)
+			}
+
+			link := &coredata.AuditFramework{
+				AuditID:        audit.ID,
+				FrameworkID:    framework.ID,
+				OrganizationID: audit.OrganizationID,
+				CreatedAt:      time.Now(),
+			}
+			if err := link.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot link framework: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return audit, framework, nil
+}
+
+func (s *AuditService) UnlinkFramework(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req *LinkAuditFrameworkRequest,
+) (*coredata.Audit, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	audit := &coredata.Audit{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := audit.LoadByID(ctx, conn, scope, req.AuditID); err != nil {
+				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, conn, scope, req.FrameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			if framework.OrganizationID != audit.OrganizationID {
+				return fmt.Errorf("framework %q: %w", req.FrameworkID, coredata.ErrResourceNotFound)
+			}
+
+			link := &coredata.AuditFramework{
+				AuditID:     audit.ID,
+				FrameworkID: framework.ID,
+			}
+			if err := link.Delete(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot unlink framework: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return audit, nil
+}
+
+func (s AuditService) ListFrameworksForAuditID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditID gid.GID,
+	cursor *page.Cursor[coredata.FrameworkOrderField],
+) (*page.Page[*coredata.Framework, coredata.FrameworkOrderField], error) {
+	var frameworks coredata.Frameworks
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			audit := &coredata.Audit{}
+			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
+				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			if err := frameworks.LoadByAuditID(ctx, conn, scope, audit.ID, cursor); err != nil {
+				return fmt.Errorf("cannot load frameworks: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(frameworks, cursor), nil
+}
+
+func (s AuditService) CountFrameworksForAuditID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			frameworks := coredata.Frameworks{}
+
+			count, err = frameworks.CountByAuditID(ctx, conn, scope, auditID)
+			if err != nil {
+				return fmt.Errorf("cannot count frameworks: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s AuditService) ListFrameworkIDsByAuditIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditIDs []gid.GID,
+) (map[gid.GID][]gid.GID, error) {
+	frameworkIDs := make(map[gid.GID][]gid.GID, len(auditIDs))
+	for _, auditID := range auditIDs {
+		frameworkIDs[auditID] = []gid.GID{}
+	}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var links coredata.AuditFrameworks
+			if err := links.LoadByAuditIDs(ctx, conn, scope, auditIDs); err != nil {
+				return fmt.Errorf("cannot load audit frameworks: %w", err)
+			}
+
+			for _, link := range links {
+				frameworkIDs[link.AuditID] = append(frameworkIDs[link.AuditID], link.FrameworkID)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return frameworkIDs, nil
 }
 
 func (s *AuditService) Update(
@@ -580,4 +795,61 @@ func (s AuditService) ListForFindingID(
 	}
 
 	return page.NewPage(audits, cursor), nil
+}
+
+func (s AuditService) ListForFrameworkID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	frameworkID gid.GID,
+	cursor *page.Cursor[coredata.AuditOrderField],
+) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
+	var audits coredata.Audits
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			if err := audits.LoadByFrameworkID(ctx, conn, scope, framework.ID, cursor); err != nil {
+				return fmt.Errorf("cannot load audits: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(audits, cursor), nil
+}
+
+func (s AuditService) CountForFrameworkID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	frameworkID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			audits := coredata.Audits{}
+
+			count, err = audits.CountByFrameworkID(ctx, conn, scope, frameworkID)
+			if err != nil {
+				return fmt.Errorf("cannot count audits: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

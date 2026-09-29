@@ -80,9 +80,12 @@ const auditsFragment = graphql`
           id
           name
           state
-          framework {
-            id
-            name
+          frameworks(first: 20) {
+            edges {
+              node {
+                name
+              }
+            }
           }
         }
       }
@@ -141,7 +144,7 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
 
     return audits.filter((audit) => {
       return (audit.name || "").toLowerCase().includes(normalizedSearch)
-        || (audit.framework?.name || "")
+        || audit.frameworks.edges.map(edge => edge.node.name).join(", ")
           .toLowerCase()
           .includes(normalizedSearch);
     });
@@ -173,8 +176,10 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
       <div className="space-y-5 px-6 py-5">
         <div className="flex items-center gap-4 rounded-lg border border-border-low bg-subtle p-4">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="font-medium">{selectedAudit.framework?.name}</div>
-            {selectedAudit.name && (
+            <div className="font-medium">
+              {selectedAudit.frameworks.edges.map(edge => edge.node.name).join(", ") || selectedAudit.name}
+            </div>
+            {selectedAudit.frameworks.edges.length > 0 && selectedAudit.name && (
               <div className="text-sm text-txt-secondary">
                 {selectedAudit.name}
               </div>
@@ -280,8 +285,10 @@ function AuditRow(props: RowProps) {
       className="py-4 flex items-center gap-4 px-6 w-full h-[100px]"
     >
       <div className="flex flex-col items-start gap-1">
-        <div className="font-medium">{props.audit.framework?.name}</div>
-        {props.audit.name && (
+        <div className="font-medium">
+          {props.audit.frameworks.edges.map(edge => edge.node.name).join(", ") || props.audit.name}
+        </div>
+        {props.audit.frameworks.edges.length > 0 && props.audit.name && (
           <div className="text-sm text-txt-secondary">{props.audit.name}</div>
         )}
       </div>

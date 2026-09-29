@@ -123,9 +123,6 @@ func NewAudit(a *coredata.Audit) *Audit {
 		Organization: &Organization{
 			ID: a.OrganizationID,
 		},
-		Framework: &Framework{
-			ID: a.FrameworkID,
-		},
 		Validity:   NewPeriod(a.ValidFrom, a.ValidUntil),
 		AuditDates: NewPeriod(a.AuditStartDate, a.AuditEndDate),
 		State:      a.State,

@@ -1493,7 +1493,12 @@ func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest,
 		panic(fmt.Errorf("cannot list organization audits: %w", err))
 	}
 
-	return nil, types.NewListAuditsOutput(page), nil
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, auditIDs(page.Data))
+	if err != nil {
+		return nil, types.ListAuditsOutput{}, err
+	}
+
+	return nil, types.NewListAuditsOutput(page, frameworkIDs), nil
 }
 
 func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error) {
@@ -1517,8 +1522,13 @@ func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 		}
 	}
 
+	result, err := r.newAudit(ctx, scope, audit, file)
+	if err != nil {
+		return nil, types.GetAuditOutput{}, err
+	}
+
 	return nil, types.GetAuditOutput{
-		Audit: types.NewAudit(audit, file),
+		Audit: result,
 	}, nil
 }
 
@@ -1544,15 +1554,20 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 			AuditStartDate: auditStart,
 			AuditEndDate:   auditEnd,
 			State:          input.State,
-			FrameworkID:    input.FrameworkID,
+			FrameworkIDs:   input.FrameworkIds,
 		},
 	)
 	if err != nil {
 		return nil, types.AddAuditOutput{}, fmt.Errorf("failed to create audit: %w", err)
 	}
 
+	result, err := r.newAudit(ctx, scope, audit, nil)
+	if err != nil {
+		return nil, types.AddAuditOutput{}, err
+	}
+
 	return nil, types.AddAuditOutput{
-		Audit: types.NewAudit(audit, nil),
+		Audit: result,
 	}, nil
 }
 
@@ -1592,8 +1607,13 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		}
 	}
 
+	result, err := r.newAudit(ctx, scope, audit, file)
+	if err != nil {
+		return nil, types.UpdateAuditOutput{}, err
+	}
+
 	return nil, types.UpdateAuditOutput{
-		Audit: types.NewAudit(audit, file),
+		Audit: result,
 	}, nil
 }
 
@@ -1935,7 +1955,12 @@ func (r *Resolver) ListControlAuditsTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.ListControlAuditsOutput{}, fmt.Errorf("failed to list control audits: %w", err)
 	}
 
-	return nil, types.NewListControlAuditsOutput(auditPage), nil
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, auditIDs(auditPage.Data))
+	if err != nil {
+		return nil, types.ListControlAuditsOutput{}, err
+	}
+
+	return nil, types.NewListControlAuditsOutput(auditPage, frameworkIDs), nil
 }
 
 func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskObligationsInput) (*mcp.CallToolResult, types.ListRiskObligationsOutput, error) {
@@ -3531,9 +3556,14 @@ func (r *Resolver) LinkFindingAuditTool(ctx context.Context, req *mcp.CallToolRe
 		return nil, types.LinkFindingAuditOutput{}, fmt.Errorf("cannot link finding to audit: %w", err)
 	}
 
+	result, err := r.newAudit(ctx, scope, audit, nil)
+	if err != nil {
+		return nil, types.LinkFindingAuditOutput{}, err
+	}
+
 	return nil, types.LinkFindingAuditOutput{
 		Finding: types.NewFinding(finding),
-		Audit:   types.NewAudit(audit, nil),
+		Audit:   result,
 	}, nil
 }
 
@@ -3583,7 +3613,12 @@ func (r *Resolver) ListFindingAuditsTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.ListFindingAuditsOutput{}, fmt.Errorf("cannot list finding audits: %w", err)
 	}
 
-	return nil, types.NewListFindingAuditsOutput(auditPage), nil
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, auditIDs(auditPage.Data))
+	if err != nil {
+		return nil, types.ListFindingAuditsOutput{}, err
+	}
+
+	return nil, types.NewListFindingAuditsOutput(auditPage, frameworkIDs), nil
 }
 
 // ListAccessReviewCampaignsTool handles the listAccessReviewCampaigns tool
@@ -8186,8 +8221,13 @@ func (r *Resolver) DeleteAuditReportTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.DeleteAuditReportOutput{}, fmt.Errorf("cannot delete audit report: %w", err)
 	}
 
+	result, err := r.newAudit(ctx, scope, audit, nil)
+	if err != nil {
+		return nil, types.DeleteAuditReportOutput{}, err
+	}
+
 	return nil, types.DeleteAuditReportOutput{
-		Audit: types.NewAudit(audit, nil),
+		Audit: result,
 	}, nil
 }
 
@@ -8751,8 +8791,13 @@ func (r *Resolver) UpdateCompliancePortalAuditVisibilityTool(ctx context.Context
 		return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, fmt.Errorf("cannot get compliance portal audit: %w", err)
 	}
 
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, []gid.GID{entry.Audit.ID})
+	if err != nil {
+		return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, err
+	}
+
 	return nil, types.UpdateCompliancePortalAuditVisibilityOutput{
-		CatalogAudit: types.NewCompliancePortalCatalogAudit(entry, nil),
+		CatalogAudit: types.NewCompliancePortalCatalogAudit(entry, nil, types.FrameworkIDsFor(frameworkIDs, entry.Audit.ID)),
 	}, nil
 }
 func (r *Resolver) DeleteCompliancePortalAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalAuditInput) (*mcp.CallToolResult, types.DeleteCompliancePortalAuditOutput, error) {
@@ -8901,9 +8946,19 @@ func (r *Resolver) ListCompliancePortalAuditsTool(ctx context.Context, req *mcp.
 		return nil, types.ListCompliancePortalAuditsOutput{}, fmt.Errorf("cannot list compliance portal audits: %w", err)
 	}
 
+	ids := make([]gid.GID, 0, len(entryPage.Data))
+	for _, entry := range entryPage.Data {
+		ids = append(ids, entry.Audit.ID)
+	}
+
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, ids)
+	if err != nil {
+		return nil, types.ListCompliancePortalAuditsOutput{}, err
+	}
+
 	entries := make([]*types.CompliancePortalCatalogAudit, 0, len(entryPage.Data))
 	for _, entry := range entryPage.Data {
-		entries = append(entries, types.NewCompliancePortalCatalogAudit(entry, nil))
+		entries = append(entries, types.NewCompliancePortalCatalogAudit(entry, nil, types.FrameworkIDsFor(frameworkIDs, entry.Audit.ID)))
 	}
 
 	return nil, types.NewListCompliancePortalAuditsOutput(entries, entryPage), nil
@@ -10632,4 +10687,97 @@ func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
 	}
 
 	return node, nil
+}
+
+func (r *Resolver) LinkAuditFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkAuditFrameworkInput) (*mcp.CallToolResult, types.LinkAuditFrameworkOutput, error) {
+	scope, err := r.Authorize(ctx, input.AuditID, probo.ActionAuditUpdate)
+	if err != nil {
+		return nil, types.LinkAuditFrameworkOutput{}, err
+	}
+
+	audit, _, err := r.proboSvc.Audits.LinkFramework(
+		ctx,
+		scope,
+		&probo.LinkAuditFrameworkRequest{
+			AuditID:     input.AuditID,
+			FrameworkID: input.FrameworkID,
+		},
+	)
+	if err != nil {
+		return nil, types.LinkAuditFrameworkOutput{}, fmt.Errorf("cannot link framework to audit: %w", err)
+	}
+
+	result, err := r.newAudit(ctx, scope, audit, nil)
+	if err != nil {
+		return nil, types.LinkAuditFrameworkOutput{}, err
+	}
+
+	return nil, types.LinkAuditFrameworkOutput{
+		Audit: result,
+	}, nil
+}
+
+func (r *Resolver) UnlinkAuditFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkAuditFrameworkInput) (*mcp.CallToolResult, types.UnlinkAuditFrameworkOutput, error) {
+	scope, err := r.Authorize(ctx, input.AuditID, probo.ActionAuditUpdate)
+	if err != nil {
+		return nil, types.UnlinkAuditFrameworkOutput{}, err
+	}
+
+	audit, err := r.proboSvc.Audits.UnlinkFramework(
+		ctx,
+		scope,
+		&probo.LinkAuditFrameworkRequest{
+			AuditID:     input.AuditID,
+			FrameworkID: input.FrameworkID,
+		},
+	)
+	if err != nil {
+		return nil, types.UnlinkAuditFrameworkOutput{}, fmt.Errorf("cannot unlink framework from audit: %w", err)
+	}
+
+	result, err := r.newAudit(ctx, scope, audit, nil)
+	if err != nil {
+		return nil, types.UnlinkAuditFrameworkOutput{}, err
+	}
+
+	return nil, types.UnlinkAuditFrameworkOutput{
+		Audit:              result,
+		DeletedFrameworkID: input.FrameworkID,
+	}, nil
+}
+
+func auditIDs(audits []*coredata.Audit) []gid.GID {
+	ids := make([]gid.GID, 0, len(audits))
+	for _, audit := range audits {
+		ids = append(ids, audit.ID)
+	}
+
+	return ids
+}
+
+func (r *Resolver) auditFrameworkIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	ids []gid.GID,
+) (map[gid.GID][]gid.GID, error) {
+	frameworkIDs, err := r.proboSvc.Audits.ListFrameworkIDsByAuditIDs(ctx, scope, ids)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list audit frameworks: %w", err)
+	}
+
+	return frameworkIDs, nil
+}
+
+func (r *Resolver) newAudit(
+	ctx context.Context,
+	scope coredata.Scoper,
+	audit *coredata.Audit,
+	file *coredata.File,
+) (*types.Audit, error) {
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, []gid.GID{audit.ID})
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewAudit(audit, file, types.FrameworkIDsFor(frameworkIDs, audit.ID)), nil
 }

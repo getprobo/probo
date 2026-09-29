@@ -396,13 +396,22 @@ func insertTestReport(
 	audit := coredata.Audit{
 		ID:             gid.New(organizationID.TenantID(), coredata.AuditEntityType),
 		OrganizationID: organizationID,
-		FrameworkID:    framework.ID,
 		ReportFileID:   &reportFileID,
 		State:          coredata.AuditStateCompleted,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
 	if err := audit.Insert(ctx, tx, scope); err != nil {
+		return gid.Nil, err
+	}
+
+	link := coredata.AuditFramework{
+		AuditID:        audit.ID,
+		FrameworkID:    framework.ID,
+		OrganizationID: organizationID,
+		CreatedAt:      now,
+	}
+	if err := link.Insert(ctx, tx, scope); err != nil {
 		return gid.Nil, err
 	}
 

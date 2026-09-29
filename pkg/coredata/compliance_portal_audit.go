@@ -272,9 +272,9 @@ WHERE
 	AND compliance_portal_id = @compliance_portal_id
 	AND audit_id IN (
 		SELECT
-			id
+			audit_id
 		FROM
-			audits
+			audits_frameworks
 		WHERE %s
 			AND framework_id = @framework_id
 	)

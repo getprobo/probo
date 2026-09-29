@@ -45,7 +45,7 @@ func TestMCP_Audit_CRUD(t *testing.T) {
 	}
 	mc.CallToolInto("addAudit", map[string]any{
 		"organization_id": orgID,
-		"framework_id":    frameworkID,
+		"framework_ids":   []string{frameworkID},
 		"name":            factory.SafeName("Audit"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Audit.ID)
@@ -53,13 +53,40 @@ func TestMCP_Audit_CRUD(t *testing.T) {
 	// Get
 	var getResult struct {
 		Audit struct {
-			ID string `json:"id"`
+			ID           string   `json:"id"`
+			FrameworkIDs []string `json:"framework_ids"`
 		} `json:"audit"`
 	}
 	mc.CallToolInto("getAudit", map[string]any{
 		"id": addResult.Audit.ID,
 	}, &getResult)
 	assert.Equal(t, addResult.Audit.ID, getResult.Audit.ID)
+	assert.Equal(t, []string{frameworkID}, getResult.Audit.FrameworkIDs)
+
+	frameworkID2 := factory.CreateFramework(owner)
+	var linkResult struct {
+		Audit struct {
+			FrameworkIDs []string `json:"framework_ids"`
+		} `json:"audit"`
+	}
+	mc.CallToolInto("linkAuditFramework", map[string]any{
+		"audit_id":     addResult.Audit.ID,
+		"framework_id": frameworkID2,
+	}, &linkResult)
+	assert.ElementsMatch(t, []string{frameworkID, frameworkID2}, linkResult.Audit.FrameworkIDs)
+
+	var unlinkResult struct {
+		Audit struct {
+			FrameworkIDs []string `json:"framework_ids"`
+		} `json:"audit"`
+		DeletedFrameworkID string `json:"deleted_framework_id"`
+	}
+	mc.CallToolInto("unlinkAuditFramework", map[string]any{
+		"audit_id":     addResult.Audit.ID,
+		"framework_id": frameworkID2,
+	}, &unlinkResult)
+	assert.Equal(t, frameworkID2, unlinkResult.DeletedFrameworkID)
+	assert.ElementsMatch(t, []string{frameworkID}, unlinkResult.Audit.FrameworkIDs)
 
 	// Update
 	var updateResult struct {

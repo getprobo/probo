@@ -16,9 +16,9 @@
 {{ end }}{{ end }}{{ if .Audits }}
 ## Audits
 
-| Name | Framework | Valid From | Valid Until |
-|------|-----------|------------|-------------|
-{{ range .Audits }}| {{ cell .Name }} | {{ cell .Framework }} | {{ .ValidFrom }} | {{ .ValidUntil }} |
+| Name | Frameworks | Valid From | Valid Until |
+|------|------------|------------|-------------|
+{{ range .Audits }}| {{ cell .Name }} | {{ cell .Frameworks }} | {{ .ValidFrom }} | {{ .ValidUntil }} |
 {{ end }}{{ end }}{{ if .Vendors }}
 ## Subprocessors
 

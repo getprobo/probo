@@ -147,7 +147,7 @@ func TestAudit_Create(t *testing.T) {
 
 			input := map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"frameworkId":    frameworkID,
+				"frameworkIds":   []string{frameworkID},
 			}
 			maps.Copy(input, tt.input)
 
@@ -206,7 +206,7 @@ func TestAudit_AuditDates(t *testing.T) {
 
 	input := map[string]any{
 		"organizationId": owner.GetOrganizationID().String(),
-		"frameworkId":    frameworkID,
+		"frameworkIds":   []string{frameworkID},
 		"name":           "Audit with start and end dates",
 		"state":          "NOT_STARTED",
 		"auditDates": map[string]any{
@@ -305,12 +305,19 @@ func TestAudit_Create_Validation(t *testing.T) {
 			wantErrorContains: "organizationId",
 		},
 		{
-			name: "missing frameworkId",
+			name: "missing frameworkIds",
 			input: map[string]any{
 				"name": "Test Audit",
 			},
 			skipFramework:     true,
-			wantErrorContains: "frameworkId",
+			wantErrorContains: "frameworkIds",
+		},
+		{
+			name: "empty frameworkIds",
+			input: map[string]any{
+				"frameworkIds": []string{},
+			},
+			wantErrorContains: "framework_ids",
 		},
 		{
 			name: "name with HTML tags",
@@ -397,7 +404,7 @@ func TestAudit_Create_Validation(t *testing.T) {
 			}
 
 			if !tt.skipFramework {
-				input["frameworkId"] = frameworkID
+				input["frameworkIds"] = []string{frameworkID}
 			}
 
 			maps.Copy(input, tt.input)
@@ -870,7 +877,7 @@ func TestAudit_Timestamps(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"frameworkId":    frameworkID,
+				"frameworkIds":   []string{frameworkID},
 				"name":           "Timestamp Test Audit",
 			},
 		}, &result)
@@ -947,15 +954,19 @@ func TestAudit_SubResolvers(t *testing.T) {
 	frameworkID := factory.NewFramework(owner).WithName("Framework for Audit SubResolvers").Create()
 	auditID := factory.NewAudit(owner, frameworkID).WithName("SubResolver Test Audit").Create()
 
-	t.Run("framework sub-resolver", func(t *testing.T) {
+	t.Run("frameworks sub-resolver", func(t *testing.T) {
 		query := `
 			query($id: ID!) {
 				node(id: $id) {
 					... on Audit {
 						id
-						framework {
-							id
-							name
+						frameworks(first: 20) {
+							edges {
+								node {
+									id
+									name
+								}
+							}
 						}
 					}
 				}
@@ -964,17 +975,22 @@ func TestAudit_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID        string `json:"id"`
-				Framework struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"framework"`
+				ID         string `json:"id"`
+				Frameworks struct {
+					Edges []struct {
+						Node struct {
+							ID   string `json:"id"`
+							Name string `json:"name"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"frameworks"`
 			} `json:"node"`
 		}
 
 		err := owner.Execute(query, map[string]any{"id": auditID}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, frameworkID, result.Node.Framework.ID)
+		require.Len(t, result.Node.Frameworks.Edges, 1)
+		assert.Equal(t, frameworkID, result.Node.Frameworks.Edges[0].Node.ID)
 	})
 
 	t.Run("organization sub-resolver", func(t *testing.T) {
@@ -1030,7 +1046,7 @@ func TestAudit_MaxLength_Validation(t *testing.T) {
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"frameworkId":    frameworkID,
+				"frameworkIds":   []string{frameworkID},
 				"name":           longName,
 			},
 		})
@@ -1590,4 +1606,129 @@ func TestAudit_DeleteReport(t *testing.T) {
 		assert.Equal(t, auditID, deleteResult.DeleteAuditReport.Audit.ID)
 		assert.Nil(t, deleteResult.DeleteAuditReport.Audit.ReportFile, "Report file should be nil after deletion")
 	})
+}
+
+func TestAudit_MultipleFrameworks(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	frameworkID := factory.NewFramework(owner).WithName("Primary Audit Framework").Create()
+	otherFrameworkID := factory.NewFramework(owner).WithName("Secondary Audit Framework").Create()
+	auditID := factory.NewAudit(owner, frameworkID).WithName("Multi Framework Audit").Create()
+
+	linkQuery := `
+		mutation($input: CreateAuditFrameworkMappingInput!) {
+			createAuditFrameworkMapping(input: $input) {
+				frameworkEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	err := owner.Execute(linkQuery, map[string]any{
+		"input": map[string]any{
+			"auditId":     auditID,
+			"frameworkId": otherFrameworkID,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	_, err = owner.Do(linkQuery, map[string]any{
+		"input": map[string]any{
+			"auditId":     auditID,
+			"frameworkId": otherFrameworkID,
+		},
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already linked")
+
+	listQuery := `
+		query($auditId: ID!, $frameworkId: ID!) {
+			audit: node(id: $auditId) {
+				... on Audit {
+					frameworks(first: 20) {
+						edges { node { id } }
+					}
+				}
+			}
+			framework: node(id: $frameworkId) {
+				... on Framework {
+					audits(first: 20) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`
+
+	var listed struct {
+		Audit struct {
+			Frameworks struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"frameworks"`
+		} `json:"audit"`
+		Framework struct {
+			Audits struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"audits"`
+		} `json:"framework"`
+	}
+
+	err = owner.Execute(listQuery, map[string]any{
+		"auditId":     auditID,
+		"frameworkId": otherFrameworkID,
+	}, &listed)
+	require.NoError(t, err)
+
+	frameworkIDs := make([]string, 0, len(listed.Audit.Frameworks.Edges))
+	for _, edge := range listed.Audit.Frameworks.Edges {
+		frameworkIDs = append(frameworkIDs, edge.Node.ID)
+	}
+	assert.ElementsMatch(t, []string{frameworkID, otherFrameworkID}, frameworkIDs)
+
+	auditIDs := make([]string, 0, len(listed.Framework.Audits.Edges))
+	for _, edge := range listed.Framework.Audits.Edges {
+		auditIDs = append(auditIDs, edge.Node.ID)
+	}
+	assert.Contains(t, auditIDs, auditID)
+
+	unlinkQuery := `
+		mutation($input: DeleteAuditFrameworkMappingInput!) {
+			deleteAuditFrameworkMapping(input: $input) {
+				deletedFrameworkId
+			}
+		}
+	`
+
+	var unlinked struct {
+		DeleteAuditFrameworkMapping struct {
+			DeletedFrameworkID string `json:"deletedFrameworkId"`
+		} `json:"deleteAuditFrameworkMapping"`
+	}
+
+	err = owner.Execute(unlinkQuery, map[string]any{
+		"input": map[string]any{
+			"auditId":     auditID,
+			"frameworkId": frameworkID,
+		},
+	}, &unlinked)
+	require.NoError(t, err)
+	assert.Equal(t, frameworkID, unlinked.DeleteAuditFrameworkMapping.DeletedFrameworkID)
+
+	err = owner.Execute(listQuery, map[string]any{
+		"auditId":     auditID,
+		"frameworkId": otherFrameworkID,
+	}, &listed)
+	require.NoError(t, err)
+	require.Len(t, listed.Audit.Frameworks.Edges, 1)
+	assert.Equal(t, otherFrameworkID, listed.Audit.Frameworks.Edges[0].Node.ID)
 }

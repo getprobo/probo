@@ -40,18 +40,24 @@ import {
   IconTrashCan,
   Input,
   Option,
+  Select,
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
+  useLazyLoadQuery,
   usePreloadedQuery,
 } from "react-relay";
 import { useNavigate } from "react-router";
+import { graphql } from "relay-runtime";
 
+import type { AuditDetailsPageFrameworksQuery } from "#/__generated__/core/AuditDetailsPageFrameworksQuery.graphql";
 import type { AuditGraphNodeQuery } from "#/__generated__/core/AuditGraphNodeQuery.graphql";
+import { auditFrameworkNames } from "#/components/audits/auditFrameworkNames";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -61,9 +67,28 @@ import {
   auditNodeQuery,
   useDeleteAudit,
   useDeleteAuditReport,
+  useLinkAuditFramework,
+  useUnlinkAuditFramework,
   useUpdateAudit,
   useUploadAuditReport,
 } from "../../../hooks/graph/AuditGraph";
+
+const organizationFrameworksQuery = graphql`
+  query AuditDetailsPageFrameworksQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      ... on Organization {
+        frameworks(first: 100) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
@@ -88,9 +113,14 @@ export default function AuditDetailsPage(props: Props) {
   const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const frameworks = auditEntry.frameworks?.edges?.map(edge => edge.node) ?? [];
+  const frameworkLabel = auditFrameworkNames(auditEntry.frameworks);
+  const frameworksConnectionId = auditEntry.frameworks?.__id ?? "";
+  const linkFramework = useLinkAuditFramework(frameworksConnectionId);
+  const unlinkFramework = useUnlinkAuditFramework(frameworksConnectionId);
 
   const deleteAudit = useDeleteAudit(
-    { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
+    { id: auditEntry.id!, frameworks: auditEntry.frameworks },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
     () => void navigate(`/organizations/${organizationId}/governance/audits`),
   );
@@ -180,12 +210,17 @@ export default function AuditDetailsPage(props: Props) {
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <FrameworkLogo
-              name={auditEntry.framework?.name || ""}
-              lightLogoURL={auditEntry.framework?.lightLogo?.downloadUrl}
-              darkLogoURL={auditEntry.framework?.darkLogo?.downloadUrl}
-            />
-            <div className="text-2xl">{auditEntry.framework?.name}</div>
+            {frameworks.map(framework => (
+              <FrameworkLogo
+                key={framework.id}
+                name={framework.name}
+                lightLogoURL={framework.lightLogo?.downloadUrl}
+                darkLogoURL={framework.darkLogo?.downloadUrl}
+              />
+            ))}
+            <div className="text-2xl">
+              {frameworkLabel || t("auditsPage.row.unknownFramework")}
+            </div>
           </div>
           <Badge
             variant={getAuditStateVariant(auditEntry.state || "NOT_STARTED")}
@@ -205,6 +240,57 @@ export default function AuditDetailsPage(props: Props) {
           )}
         </ActionDropdown>
       </div>
+
+      <Card padded className="space-y-4">
+        <h3 className="text-lg font-medium">
+          {t("auditDetailsPage.frameworks.title")}
+        </h3>
+        {frameworks.length === 0 && (
+          <p className="text-txt-secondary">
+            {t("auditDetailsPage.frameworks.empty")}
+          </p>
+        )}
+        <ul className="space-y-2">
+          {frameworks.map(framework => (
+            <li
+              key={framework.id}
+              className="flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <FrameworkLogo
+                  name={framework.name}
+                  lightLogoURL={framework.lightLogo?.downloadUrl}
+                  darkLogoURL={framework.darkLogo?.downloadUrl}
+                />
+                <span>{framework.name}</span>
+              </div>
+              {auditEntry.canUpdate && (
+                <Button
+                  variant="secondary"
+                  icon={IconTrashCan}
+                  onClick={() => {
+                    if (!auditEntry.id) {
+                      return;
+                    }
+                    void unlinkFramework(auditEntry.id, framework.id);
+                  }}
+                >
+                  {t("auditDetailsPage.frameworks.unlink")}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {auditEntry.canUpdate && auditEntry.id && (
+          <Suspense fallback={null}>
+            <LinkFrameworkSelect
+              organizationId={organizationId}
+              linkedIds={frameworks.map(framework => framework.id)}
+              onLink={frameworkId => void linkFramework(auditEntry.id!, frameworkId)}
+            />
+          </Suspense>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <form onSubmit={e => void onSubmit(e)} className="space-y-6">
@@ -333,5 +419,45 @@ export default function AuditDetailsPage(props: Props) {
         </Card>
       </div>
     </div>
+  );
+}
+
+function LinkFrameworkSelect({
+  organizationId,
+  linkedIds,
+  onLink,
+}: {
+  organizationId: string;
+  linkedIds: string[];
+  onLink: (frameworkId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const data = useLazyLoadQuery<AuditDetailsPageFrameworksQuery>(
+    organizationFrameworksQuery,
+    { organizationId },
+  );
+  const linked = new Set(linkedIds);
+  const frameworks = data.organization?.frameworks?.edges
+    ?.map(edge => edge.node)
+    .filter((node): node is NonNullable<typeof node> => node != null)
+    .filter(framework => !linked.has(framework.id)) ?? [];
+
+  if (frameworks.length === 0) {
+    return null;
+  }
+
+  return (
+    <Select
+      variant="editor"
+      placeholder={t("auditDetailsPage.frameworks.addPlaceholder")}
+      onValueChange={onLink}
+      value=""
+    >
+      {frameworks.map(framework => (
+        <Option key={framework.id} value={framework.id}>
+          {framework.name}
+        </Option>
+      ))}
+    </Select>
   );
 }

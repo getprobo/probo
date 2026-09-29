@@ -23,8 +23,8 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-// Framework is the resolver for the framework field.
-func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
+// Frameworks is the resolver for the frameworks field.
+func (r *auditResolver) Frameworks(ctx context.Context, obj *types.Audit) ([]*types.Framework, error) {
 	visitorService := r.visitor
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
@@ -45,23 +45,19 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	framework, err := visitorService.GetFrameworkForCompliancePortalID(
-		ctx,
-		scope,
-		compliancePortal.ID,
-		audit.FrameworkID,
-	)
+	frameworks, err := visitorService.ListFrameworksForAuditID(ctx, scope, audit.ID)
 	if err != nil {
-		if errors.Is(err, visitor.ErrFrameworkNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "framework %q not found", audit.FrameworkID)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list audit frameworks", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFramework(framework), nil
+	result := make([]*types.Framework, 0, len(frameworks))
+	for _, framework := range frameworks {
+		result = append(result, types.NewFramework(framework))
+	}
+
+	return result, nil
 }
 
 // ReportFile is the resolver for the reportFile field.
