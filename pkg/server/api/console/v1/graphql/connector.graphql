@@ -373,6 +373,11 @@ type Connector implements Node {
     """
     documentationUrl: String @goField(forceResolver: true)
     """
+    initialAccountExternalId is the account this credential is. Null when an
+    organization install has no account yet. That account cannot be disabled.
+    """
+    initialAccountExternalId: String @goField(forceResolver: true)
+    """
     accounts are the enabled tenant rows this connector owns.
     """
     accounts(

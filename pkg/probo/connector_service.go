@@ -55,6 +55,56 @@ func (s *ConnectorService) initialAccount(c *coredata.Connector) (string, string
 	return externalID, name, nil
 }
 
+// resolveStoredInitialAccount is the account this credential is. A connector
+// with no tenant in settings is still that one account, keyed by the connector
+// id. Organization installs with nothing resolved yet have no such account.
+// DisableAccount refuses to delete it.
+func (s *ConnectorService) resolveStoredInitialAccount(c *coredata.Connector) (string, string, error) {
+	if c == nil {
+		return "", "", nil
+	}
+
+	externalID, name, err := s.initialAccount(c)
+	if err != nil {
+		return "", "", err
+	}
+
+	if externalID == "" && !s.organizationInstall(c) {
+		return c.ID.String(), s.implicitAccountName(c), nil
+	}
+
+	return externalID, name, nil
+}
+
+func (s *ConnectorService) InitialAccountExternalID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (string, error) {
+	var externalID string
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			cnnctr := &coredata.Connector{}
+			if err := cnnctr.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			var err error
+
+			externalID, _, err = s.resolveStoredInitialAccount(cnnctr)
+
+			return err
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve initial connector account: %w", err)
+	}
+
+	return externalID, nil
+}
+
 // recordInitialAccount stores the account present at create time. A connector
 // with no tenant in settings is still that one account. Organization installs
 // wait for discover.
@@ -64,14 +114,9 @@ func (s *ConnectorService) recordInitialAccount(
 	scope coredata.Scoper,
 	cnnctr *coredata.Connector,
 ) error {
-	externalID, name, err := s.initialAccount(cnnctr)
+	externalID, name, err := s.resolveStoredInitialAccount(cnnctr)
 	if err != nil {
 		return err
-	}
-
-	if externalID == "" && !s.organizationInstall(cnnctr) {
-		externalID = cnnctr.ID.String()
-		name = s.implicitAccountName(cnnctr)
 	}
 
 	if _, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {

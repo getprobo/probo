@@ -82,6 +82,83 @@ func TestCreate_RecordsSettingsAccount(t *testing.T) {
 	assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
 }
 
+func TestDisableAccount_RefusesInitialAccount(t *testing.T) {
+	t.Parallel()
+
+	t.Run("settings account", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created := createAWSConnector(t, svc, scope, organizationID)
+		account := loadConnectorAccount(t, svc, scope, created.ID, "123456789012")
+
+		err := svc.DisableAccount(t.Context(), scope, account.ID)
+		require.ErrorIs(t, err, ErrInitialConnectorAccount)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+
+	t.Run("implicit account", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created, err := svc.Create(
+			t.Context(),
+			scope,
+			CreateConnectorRequest{
+				OrganizationID: organizationID,
+				Provider:       coredata.ConnectorProviderBrex,
+				Protocol:       coredata.ConnectorProtocolAPIKey,
+				Connection:     &connector.APIKeyConnection{APIKey: "bxt_test-key"},
+			},
+		)
+		require.NoError(t, err)
+
+		account := loadConnectorAccount(t, svc, scope, created.ID, created.ID.String())
+
+		err = svc.DisableAccount(t.Context(), scope, account.ID)
+		require.ErrorIs(t, err, ErrInitialConnectorAccount)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+
+	t.Run("another account on the same connector", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created := createAWSConnector(t, svc, scope, organizationID)
+		member := insertConnectorAccount(t, svc.svc.pg, scope, created, "111111111111", "Member")
+
+		err := svc.DisableAccount(t.Context(), scope, member.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+
+		initial := loadConnectorAccount(t, svc, scope, created.ID, "123456789012")
+		assert.NotEqual(t, member.ID, initial.ID)
+	})
+
+	t.Run("organization install member account", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created, err := svc.Create(
+			t.Context(),
+			scope,
+			CreateConnectorRequest{
+				OrganizationID: organizationID,
+				Provider:       coredata.ConnectorProviderAWS,
+				Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+				Connection:     &connector.WorkloadIdentityConnection{},
+			},
+		)
+		require.NoError(t, err)
+
+		member := insertConnectorAccount(t, svc.svc.pg, scope, created, "111111111111", "Member")
+
+		err = svc.DisableAccount(t.Context(), scope, member.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 0, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+}
+
 func TestCreate_LeavesOrganizationInstallWithoutAccount(t *testing.T) {
 	t.Parallel()
 
@@ -99,6 +176,30 @@ func TestCreate_LeavesOrganizationInstallWithoutAccount(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, 0, countConnectorAccounts(t, svc, scope, created.ID))
+}
+
+func createAWSConnector(
+	t *testing.T,
+	svc *ConnectorService,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) *coredata.Connector {
+	t.Helper()
+
+	created, err := svc.Create(
+		t.Context(),
+		scope,
+		CreateConnectorRequest{
+			OrganizationID: organizationID,
+			Provider:       coredata.ConnectorProviderAWS,
+			Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+			Connection:     &connector.WorkloadIdentityConnection{},
+			RawSettings:    json.RawMessage(`{"role_arn":"arn:aws:iam::123456789012:role/ProboAudit"}`),
+		},
+	)
+	require.NoError(t, err)
+
+	return created
 }
 
 func newConnectorCreateEnv(t *testing.T) (*ConnectorService, coredata.Scoper, gid.GID) {
