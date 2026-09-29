@@ -211,7 +211,7 @@ export function SCIMPage(props: {
       <div className={section()}>
         <div className="flex items-start justify-between gap-4">
           <Heading level={2} size={4} weight="medium" highContrast>
-            {t("scimPage.provisioningEventHistory")}
+            {t("scimPage.eventHistory")}
           </Heading>
           {organization.canExportSCIMEvents && (
             <ExportSCIMEventsDialog organizationId={organization.id} />

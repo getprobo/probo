@@ -1585,19 +1585,16 @@
         "action": "Configure"
       }
     },
-    "manualScim": { "title": "Manual SCIM", "description": "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider." },
-    "provisioningEventHistory": "Provisioning Event History",
+    "eventHistory": "Event History",
     "export": {
       "title": "Export SCIM Events",
       "description": "Select a date range to export SCIM events as CSV. You will receive an email with a download link.",
       "fields": { "from": "From", "to": "To" },
-      "actions": { "export": "Export", "exporting": "Exporting...", "cancel": "Cancel" },
+      "actions": { "export": "Export", "cancel": "Cancel" },
       "messages": {
-        "successTitle": "Success",
         "success": "Export started. You will receive an email with a download link when it is ready."
       },
       "errors": {
-        "title": "Error",
         "request": "Failed to request SCIM event export"
       }
     }
@@ -1616,19 +1613,17 @@
     "errors": { "uninstall": "Failed to uninstall the Probo Slack app" },
     "actions": { "install": "Install", "configure": "Configure", "uninstall": "Uninstall", "uninstalling": "Uninstalling..." }
   },
-  "connectorList": { "title": "Identity Provider", "description": "Connect your identity provider to automatically sync users to your organization. Once connected, you don't need to configure SCIM manually." },
   "editSamlConfigurationForm": {
     "messages": { "updated": "SAML configuration updated successfully." },
     "errors": { "update": "Failed to update SAML configuration. Please try again." }
   },
   "googleWorkspaceConnector": {
     "name": "Google Workspace / Cloud Identity",
-    "connectDescription": "Connect Google Workspace or Google Cloud Identity to automatically sync users via SCIM.",
     "connectedOn": "Connected on {{date}}",
     "status": { "disabled": "Disabled", "error": "Error", "syncing": "Syncing", "connected": "Connected" },
     "messages": { "disconnected": "Google Workspace / Cloud Identity disconnected successfully", "excludedUsersUpdated": "Excluded user names updated successfully" },
-    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the provisioning event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
-    "actions": { "connect": "Connect", "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
+    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
+    "actions": { "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
     "excludedCount_one": "{{count}} excluded user",
     "excludedCount_other": "{{count}} excluded users",
     "settings": { "title": "Google Workspace / Cloud Identity Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Google Workspace / Cloud Identity.", "noExcludedUserNames": "No excluded user names. All Google Workspace / Cloud Identity users will be synced." },
@@ -1636,12 +1631,11 @@
   },
   "microsoft365Connector": {
     "name": "Microsoft 365",
-    "connectDescription": "Connect Microsoft 365 to automatically sync users via SCIM.",
     "connectedOn": "Connected on {{date}}",
     "status": { "disabled": "Disabled", "error": "Error", "syncing": "Syncing", "connected": "Connected" },
     "messages": { "disconnected": "Microsoft 365 disconnected successfully", "excludedUsersUpdated": "Excluded user names updated successfully" },
-    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the provisioning event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
-    "actions": { "connect": "Connect", "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
+    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
+    "actions": { "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
     "excludedCount_one": "{{count}} excluded user",
     "excludedCount_other": "{{count}} excluded users",
     "settings": { "title": "Microsoft 365 Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Microsoft 365.", "noExcludedUserNames": "No excluded user names. All Microsoft 365 users will be synced." },
@@ -1701,33 +1695,25 @@
   },
   "scimConfiguration": {
     "errors": {
-      "title": "Error",
       "create": "Manual SCIM configuration failed",
       "copy": "Could not copy to clipboard",
       "regenerate": "Failed to regenerate the bearer token",
       "delete": "Failed to delete the SCIM configuration"
     },
     "messages": {
-      "configured": { "title": "Manual SCIM Configured" },
       "copyToken": "Copy the bearer token now. It will not be shown again.",
-      "deleted": { "title": "Manual SCIM Configuration Deleted", "description": "All SCIM-provisioned memberships have been changed to manual source." },
-      "regenerated": { "title": "Bearer Token Regenerated", "description": "Copy the new bearer token now. It will not be shown again." },
+      "deleted": "All SCIM-provisioned memberships have been changed to manual source.",
+      "regenerated": "Copy the new bearer token now. It will not be shown again.",
       "copied": "Copied to clipboard"
     },
-    "empty": { "title": "Manual SCIM is not configured", "description": "Generate a SCIM endpoint and bearer token to configure your identity provider manually." },
-    "active": { "title": "Manual SCIM Active", "description": "Use these credentials to configure SCIM in your identity provider." },
     "configuredOn": "Configured on {{date}}",
     "fields": { "endpointUrl": "SCIM Endpoint URL", "bearerToken": "Bearer Token" },
     "tokenWarning": "This token will only be shown once. Copy it now.",
     "actions": {
-      "enable": "Enable SCIM",
-      "enabling": "Enabling...",
       "regenerateToken": "Regenerate Token",
-      "regenerating": "Regenerating...",
       "deleteConfiguration": "Delete Configuration",
       "cancel": "Cancel",
       "delete": "Delete",
-      "deleting": "Deleting...",
       "copyEndpointUrl": "Copy SCIM endpoint URL",
       "copyBearerToken": "Copy bearer token"
     },
@@ -1739,7 +1725,6 @@
     }
   },
   "scimEventList": {
-    "columns": { "time": "Time", "method": "Method", "path": "Path", "result": "Result" },
     "details": {
       "user": "User",
       "ipAddress": "IP address",

@@ -53,22 +53,11 @@ const createSCIMConfigurationMutation = graphql`
   mutation SCIMSetupCards_createMutation($input: CreateSCIMConfigurationInput!) {
     createSCIMConfiguration(input: $input) {
       scimConfiguration {
-        id
-        endpointUrl
-        bridge {
-          id
-        }
-        ...SCIMEventList_scimConfiguration
-        ...SCIMProviderCard_scimConfiguration
         organization {
           id
           ...SCIMConfiguration_organization
           scimConfiguration {
             id
-            endpointUrl
-            bridge {
-              id
-            }
             ...SCIMEventList_scimConfiguration
             ...SCIMProviderCard_scimConfiguration
           }

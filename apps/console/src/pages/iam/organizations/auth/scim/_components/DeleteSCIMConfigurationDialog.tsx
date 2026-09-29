@@ -76,7 +76,7 @@ export function DeleteSCIMConfigurationDialog({
     = useMutation<DeleteSCIMConfigurationDialog_deleteMutation>(
       deleteMutation,
       {
-        successMessage: t("scimConfiguration.messages.deleted.description"),
+        successMessage: t("scimConfiguration.messages.deleted"),
         errorToast: t("scimConfiguration.errors.delete"),
       },
     );

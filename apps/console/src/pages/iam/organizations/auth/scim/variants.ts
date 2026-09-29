@@ -27,6 +27,7 @@ export const scimPage = tv({
     intro: "flex min-w-0 flex-col gap-2",
     section: "flex flex-col gap-4",
     grid: "grid grid-cols-1 gap-3 md:grid-cols-3",
+    exportFields: "flex flex-col gap-3",
   },
 });
 
@@ -65,7 +66,6 @@ export const scimConfiguration = tv({
     actions: "flex flex-wrap items-center gap-2",
     effects: "flex flex-col gap-3",
     effectsList: "list-disc ps-5",
-    exportFields: "flex flex-col gap-3",
   },
 });
 

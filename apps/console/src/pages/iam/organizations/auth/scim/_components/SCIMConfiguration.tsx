@@ -98,7 +98,7 @@ export function SCIMConfiguration({
     = useMutation<SCIMConfiguration_regenerateMutation>(
       regenerateMutation,
       {
-        successMessage: t("scimConfiguration.messages.regenerated.description"),
+        successMessage: t("scimConfiguration.messages.regenerated"),
         errorToast: t("scimConfiguration.errors.regenerate"),
       },
     );

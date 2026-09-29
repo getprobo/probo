@@ -38,7 +38,7 @@ import { graphql } from "relay-runtime";
 import type { ExportSCIMEventsDialog_exportMutation } from "#/__generated__/iam/ExportSCIMEventsDialog_exportMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { scimConfiguration } from "../variants";
+import { scimPage } from "../variants";
 
 const exportMutation = graphql`
   mutation ExportSCIMEventsDialog_exportMutation(
@@ -63,7 +63,7 @@ export function ExportSCIMEventsDialog({
   const [open, setOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const { exportFields } = scimConfiguration();
+  const { exportFields } = scimPage();
   const [requestSCIMEventExport, isExporting]
     = useMutation<ExportSCIMEventsDialog_exportMutation>(
       exportMutation,

@@ -2457,21 +2457,16 @@
         "action": "Configureren"
       }
     },
-    "manualScim": {
-      "title": "Handmatige SCIM",
-      "description": "Configureer SCIM handmatig als uw identity provider niet hierboven vermeld staat. Hiervoor moet u de SCIM-eindpunt-URL en de bearer-token instellen in uw identity provider."
-    },
-    "provisioningEventHistory": "Geschiedenis van provisioning-gebeurtenissen",
+    "eventHistory": "Gebeurtenisgeschiedenis",
     "export": {
       "title": "SCIM-gebeurtenissen exporteren",
       "description": "Selecteer een datumbereik om SCIM-gebeurtenissen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
       "fields": { "from": "Van", "to": "Tot" },
-      "actions": { "export": "Exporteren", "exporting": "Bezig met exporteren...", "cancel": "Annuleren" },
+      "actions": { "export": "Exporteren", "cancel": "Annuleren" },
       "messages": {
-        "successTitle": "Succes",
         "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
       },
-      "errors": { "title": "Fout", "request": "Aanvragen van SCIM-gebeurtenisexport mislukt" }
+      "errors": { "request": "Aanvragen van SCIM-gebeurtenisexport mislukt" }
     }
   },
   "authLayout": {
@@ -2497,10 +2492,6 @@
       "uninstalling": "Verwijderen..."
     }
   },
-  "connectorList": {
-    "title": "Identity provider",
-    "description": "Verbind uw identity provider om gebruikers automatisch te synchroniseren met uw organisatie. Eenmaal verbonden hoeft u SCIM niet meer handmatig te configureren."
-  },
   "editSamlConfigurationForm": {
     "messages": {
       "updated": "SAML-configuratie succesvol bijgewerkt."
@@ -2511,7 +2502,6 @@
   },
   "googleWorkspaceConnector": {
     "name": "Google Workspace / Cloud Identity",
-    "connectDescription": "Verbind Google Workspace of Google Cloud Identity om gebruikers automatisch te synchroniseren via SCIM.",
     "connectedOn": "Verbonden op {{date}}",
     "status": {
       "disabled": "Uitgeschakeld",
@@ -2524,12 +2514,11 @@
       "excludedUsersUpdated": "Uitgesloten gebruikersnamen succesvol bijgewerkt"
     },
     "errors": {
-      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de geschiedenis van provisioning-gebeurtenissen voor meer details.",
+      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
       "bridgeDisabled": "Bridge is uitgeschakeld",
       "bridgeFailed": "Bridge bevindt zich in een foutstatus"
     },
     "actions": {
-      "connect": "Verbinden",
       "settings": "Instellingen",
       "add": "Toevoegen",
       "remove": "Verwijderen",
@@ -2552,7 +2541,6 @@
   },
   "microsoft365Connector": {
     "name": "Microsoft 365",
-    "connectDescription": "Verbind Microsoft 365 om gebruikers automatisch te synchroniseren via SCIM.",
     "connectedOn": "Verbonden op {{date}}",
     "status": {
       "disabled": "Uitgeschakeld",
@@ -2565,12 +2553,11 @@
       "excludedUsersUpdated": "Uitgesloten gebruikersnamen succesvol bijgewerkt"
     },
     "errors": {
-      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de geschiedenis van provisioning-gebeurtenissen voor meer details.",
+      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
       "bridgeDisabled": "Bridge is uitgeschakeld",
       "bridgeFailed": "Bridge bevindt zich in een foutstatus"
     },
     "actions": {
-      "connect": "Verbinden",
       "settings": "Instellingen",
       "add": "Toevoegen",
       "remove": "Verwijderen",
@@ -2695,34 +2682,16 @@
   },
   "scimConfiguration": {
     "errors": {
-      "title": "Fout",
       "create": "Handmatige SCIM-configuratie mislukt",
       "copy": "Kon niet naar klembord kopiëren",
       "regenerate": "Bearer-token opnieuw genereren mislukt",
       "delete": "Verwijderen van SCIM-configuratie mislukt"
     },
     "messages": {
-      "configured": {
-        "title": "Handmatige SCIM geconfigureerd"
-      },
       "copyToken": "Kopieer de bearer-token nu. Deze wordt niet opnieuw getoond.",
-      "deleted": {
-        "title": "Handmatige SCIM-configuratie verwijderd",
-        "description": "Alle via SCIM aangemaakte lidmaatschappen zijn gewijzigd naar handmatige bron."
-      },
-      "regenerated": {
-        "title": "Bearer-token opnieuw gegenereerd",
-        "description": "Kopieer de nieuwe bearer-token nu. Deze wordt niet opnieuw getoond."
-      },
+      "deleted": "Alle via SCIM aangemaakte lidmaatschappen zijn gewijzigd naar handmatige bron.",
+      "regenerated": "Kopieer de nieuwe bearer-token nu. Deze wordt niet opnieuw getoond.",
       "copied": "Gekopieerd naar klembord"
-    },
-    "empty": {
-      "title": "Handmatige SCIM is niet geconfigureerd",
-      "description": "Genereer een SCIM-eindpunt en bearer-token om uw identity provider handmatig te configureren."
-    },
-    "active": {
-      "title": "Handmatige SCIM actief",
-      "description": "Gebruik deze gegevens om SCIM te configureren in uw identity provider."
     },
     "configuredOn": "Geconfigureerd op {{date}}",
     "fields": {
@@ -2731,14 +2700,10 @@
     },
     "tokenWarning": "Deze token wordt maar één keer getoond. Kopieer deze nu.",
     "actions": {
-      "enable": "SCIM inschakelen",
-      "enabling": "Inschakelen...",
       "regenerateToken": "Token opnieuw genereren",
-      "regenerating": "Opnieuw genereren...",
       "deleteConfiguration": "Configuratie verwijderen",
       "cancel": "Annuleren",
       "delete": "Verwijderen",
-      "deleting": "Verwijderen...",
       "copyEndpointUrl": "SCIM-eindpunt-URL kopiëren",
       "copyBearerToken": "Bearer-token kopiëren"
     },
@@ -2754,12 +2719,6 @@
     }
   },
   "scimEventList": {
-    "columns": {
-      "time": "Tijd",
-      "method": "Methode",
-      "path": "Pad",
-      "result": "Resultaat"
-    },
     "details": {
       "user": "Gebruiker",
       "ipAddress": "IP-adres",
