@@ -2458,6 +2458,7 @@
       }
     },
     "eventHistory": "Historique des événements",
+    "connecting": "Connexion du fournisseur d’identité",
     "export": {
       "title": "Exporter les événements SCIM",
       "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
@@ -2516,14 +2517,15 @@
     "errors": {
       "bridgeSync": "Le pont ne parvient pas à se synchroniser actuellement. Consultez l’historique des événements pour plus de détails.",
       "bridgeDisabled": "Le pont est désactivé",
-      "bridgeFailed": "Le pont est en état d’erreur"
+      "bridgeFailed": "Le pont est en état d’erreur",
+      "update": "Échec de la mise à jour des utilisateurs exclus",
+      "disconnect": "Échec de la déconnexion de Google Workspace / Cloud Identity"
     },
     "actions": {
       "settings": "Paramètres",
       "add": "Ajouter",
       "remove": "Retirer",
-      "disconnect": "Déconnecter",
-      "disconnecting": "Déconnexion en cours..."
+      "disconnect": "Déconnecter"
     },
     "excludedCount_one": "{{count}} utilisateur exclu",
     "excludedCount_other": "{{count}} utilisateurs exclus",
@@ -2555,14 +2557,15 @@
     "errors": {
       "bridgeSync": "Le pont ne parvient actuellement pas à se synchroniser. Consultez l’historique des événements pour plus de détails.",
       "bridgeDisabled": "Le pont est désactivé",
-      "bridgeFailed": "Le pont est en état d’erreur"
+      "bridgeFailed": "Le pont est en état d’erreur",
+      "update": "Échec de la mise à jour des utilisateurs exclus",
+      "disconnect": "Échec de la déconnexion de Microsoft 365"
     },
     "actions": {
       "settings": "Paramètres",
       "add": "Ajouter",
       "remove": "Retirer",
-      "disconnect": "Déconnecter",
-      "disconnecting": "Déconnexion en cours..."
+      "disconnect": "Déconnecter"
     },
     "excludedCount_one": "{{count}} utilisateur exclu",
     "excludedCount_other": "{{count}} utilisateurs exclus",
@@ -6202,9 +6205,10 @@
     "notes": "Notes"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Réactiver", "reactivating": "Réactivation..." },
+    "actions": { "reactivate": "Réactiver" },
     "dialog": { "title": "Réactiver le pont SCIM", "description": "La prochaine synchronisation est planifiée pour maintenant. Les erreurs consécutives sont remises à zéro, et un pont en échec, désactivé ou bloqué redevient actif." },
-    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." }
+    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." },
+    "errors": { "reactivate": "Échec de la réactivation du pont SCIM" }
   },
   "country": {
     "GLOBAL": "Mondial",

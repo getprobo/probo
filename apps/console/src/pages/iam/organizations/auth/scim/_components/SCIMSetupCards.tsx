@@ -32,7 +32,7 @@ import type { SCIMSetupCards_organization$key } from "#/__generated__/iam/SCIMSe
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { initiateScimConnectorUrl } from "../_lib/initiateScimConnector";
-import { scimPage } from "../variants";
+import { scimPage, scimSetupCard } from "../variants";
 
 import { SCIMSetupCard } from "./SCIMSetupCard";
 
@@ -182,13 +182,15 @@ function connectAction({
     return undefined;
   }
 
+  const { action } = scimSetupCard();
+
   return (
     <Button
       size={2}
       variant="solid"
       color="neutral"
       highContrast
-      className="w-full"
+      className={action()}
       loading={loading}
       onClick={onClick}
     >

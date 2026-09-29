@@ -46,7 +46,7 @@ export const drawer = tv({
       right: {
         viewport: "justify-end",
         popup: [
-          "h-full w-[min(20rem,100%)]",
+          "h-full",
           "transform-[translateX(var(--drawer-swipe-movement-x,0px))]",
           "data-starting-style:translate-x-full data-ending-style:translate-x-full",
         ],
@@ -54,7 +54,7 @@ export const drawer = tv({
       left: {
         viewport: "justify-start",
         popup: [
-          "h-full w-[min(20rem,100%)]",
+          "h-full",
           "transform-[translateX(var(--drawer-swipe-movement-x,0px))]",
           "data-starting-style:-translate-x-full data-ending-style:-translate-x-full",
         ],
@@ -76,9 +76,18 @@ export const drawer = tv({
         ],
       },
     },
+    size: {
+      1: {},
+      2: {},
+    },
   },
+  compoundVariants: [
+    { side: ["right", "left"], size: 1, class: { popup: "w-[min(20rem,100%)]" } },
+    { side: ["right", "left"], size: 2, class: { popup: "w-[min(28rem,100%)]" } },
+  ],
   defaultVariants: {
     side: "right",
+    size: 1,
   },
 });
 

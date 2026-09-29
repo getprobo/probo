@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { FileCsvIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
@@ -29,67 +28,67 @@ import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
-import { DateField } from "@probo/ui/src/v2/form/DateField";
-import { Field } from "@probo/ui/src/v2/form/Field";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ExportSCIMEventsDialog_exportMutation } from "#/__generated__/iam/ExportSCIMEventsDialog_exportMutation.graphql";
+import type { DisconnectSCIMProviderDialog_deleteMutation } from "#/__generated__/iam/DisconnectSCIMProviderDialog_deleteMutation.graphql";
+import type { DisconnectSCIMProviderDialog_scimConfiguration$key } from "#/__generated__/iam/DisconnectSCIMProviderDialog_scimConfiguration.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { scimPage } from "../variants";
+import type { SCIMProviderCopy } from "../_lib/scimProviderCopy";
 
-const exportMutation = graphql`
-  mutation ExportSCIMEventsDialog_exportMutation(
-    $input: RequestSCIMEventExportInput!
+const fragment = graphql`
+  fragment DisconnectSCIMProviderDialog_scimConfiguration on SCIMConfiguration {
+    id
+  }
+`;
+
+const deleteMutation = graphql`
+  mutation DisconnectSCIMProviderDialog_deleteMutation(
+    $input: DeleteSCIMConfigurationInput!
   ) {
-    requestSCIMEventExport(input: $input) {
-      exportJobId
+    deleteSCIMConfiguration(input: $input) {
+      deletedScimConfigurationId @deleteRecord
     }
   }
 `;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export interface ExportSCIMEventsDialogProps {
-  organizationId: string;
+export interface DisconnectSCIMProviderDialogProps {
+  scimConfigurationKey: DisconnectSCIMProviderDialog_scimConfiguration$key;
+  copy: SCIMProviderCopy;
 }
 
-export function ExportSCIMEventsDialog({
-  organizationId,
-}: ExportSCIMEventsDialogProps) {
-  const { t, i18n } = useTranslation();
+export function DisconnectSCIMProviderDialog({
+  scimConfigurationKey,
+  copy,
+}: DisconnectSCIMProviderDialogProps) {
+  const { t } = useTranslation();
+  const organizationId = useOrganizationId();
+  const config = useFragment(fragment, scimConfigurationKey);
   const [open, setOpen] = useState(false);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const { exportFields } = scimPage();
-  const [requestSCIMEventExport, isExporting]
-    = useMutation<ExportSCIMEventsDialog_exportMutation>(
-      exportMutation,
+  const [deleteSCIMConfiguration, isDeleting]
+    = useMutation<DisconnectSCIMProviderDialog_deleteMutation>(
+      deleteMutation,
       {
-        successMessage: t("scimPage.export.messages.success"),
-        errorToast: t("scimPage.export.errors.request"),
+        successMessage: t(`${copy}.messages.disconnected`),
+        errorToast: t(`${copy}.errors.disconnect`),
       },
     );
 
-  function handleExport() {
-    if (fromDate === "" || toDate === "" || fromDate > toDate) {
-      return;
-    }
-
-    void requestSCIMEventExport({
+  function handleDisconnect() {
+    void deleteSCIMConfiguration({
       variables: {
         input: {
           organizationId,
-          fromTime: new Date(`${fromDate}T00:00:00Z`).toISOString(),
-          toTime: new Date(Date.parse(`${toDate}T00:00:00Z`) + DAY_MS).toISOString(),
+          scimConfigurationId: config.id,
         },
       },
     }).then(() => {
       setOpen(false);
-      setFromDate("");
-      setToDate("");
     }).catch(() => {
       // Error toast is already shown by useMutation.
     });
@@ -99,63 +98,38 @@ export function ExportSCIMEventsDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={(
-          <Button
-            variant="soft"
-            color="gold"
-            iconStart={<FileCsvIcon />}
-          >
-            {t("scimPage.export.actions.export")}
+          <Button size={2} variant="solid" color="red">
+            {t(`${copy}.actions.disconnect`)}
           </Button>
         )}
       />
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>{t("scimPage.export.title")}</DialogTitle>
+          <DialogTitle>{t(`${copy}.disconnect.title`)}</DialogTitle>
           <DialogDescription>
-            {t("scimPage.export.description")}
+            {t(`${copy}.disconnect.description`)}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <div className={exportFields()}>
-            <Field label={t("scimPage.export.fields.from")} required>
-              <DateField
-                size={2}
-                required
-                value={fromDate}
-                locale={i18n.language}
-                onValueChange={setFromDate}
-              />
-            </Field>
-            <Field label={t("scimPage.export.fields.to")} required>
-              <DateField
-                size={2}
-                required
-                value={toDate}
-                locale={i18n.language}
-                min={fromDate === "" ? undefined : fromDate}
-                onValueChange={setToDate}
-              />
-            </Field>
-          </div>
+          <Text size={2} color="red" highContrast>
+            {t(`${copy}.disconnect.warning`)}
+          </Text>
         </DialogBody>
         <DialogFooter>
           <DialogClose
             render={(
               <Button variant="soft" color="neutral">
-                {t("scimPage.export.actions.cancel")}
+                {t("common.actions.close")}
               </Button>
             )}
           />
           <Button
             variant="solid"
-            color="neutral"
-            highContrast
-            loading={isExporting}
-            disabled={fromDate === "" || toDate === "" || fromDate > toDate}
-            iconStart={<FileCsvIcon />}
-            onClick={handleExport}
+            color="red"
+            loading={isDeleting}
+            onClick={handleDisconnect}
           >
-            {t("scimPage.export.actions.export")}
+            {t(`${copy}.actions.disconnect`)}
           </Button>
         </DialogFooter>
       </DialogPopup>

@@ -89,15 +89,12 @@ export function DeleteSCIMConfigurationDialog({
           scimConfigurationId: config.id,
         },
       },
-    }).then(
-      () => {
-        setOpen(false);
-        onDeleted?.();
-      },
-      () => {
-        // Error toast is already shown by useMutation.
-      },
-    );
+    }).then(() => {
+      setOpen(false);
+      onDeleted?.();
+    }).catch(() => {
+      // Error toast is already shown by useMutation.
+    });
   }
 
   return (

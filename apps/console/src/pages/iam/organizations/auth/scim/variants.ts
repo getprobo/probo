@@ -23,11 +23,12 @@ import { tv } from "tailwind-variants/lite";
 export const scimPage = tv({
   slots: {
     root: "flex flex-col gap-6",
-    header: "flex items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-2",
     section: "flex flex-col gap-4",
+    sectionHead: "flex items-start justify-between gap-4",
     grid: "grid grid-cols-1 gap-3 md:grid-cols-3",
     exportFields: "flex flex-col gap-3",
+    loader: "flex items-center justify-center py-12",
   },
 });
 
@@ -44,6 +45,7 @@ export const scimSetupCard = tv({
     copy: "flex min-w-0 flex-1 flex-col justify-center gap-1",
     description: "text-sand-a9",
     body: "relative z-1 mt-auto flex flex-col items-stretch",
+    action: "w-full",
   },
 });
 
@@ -51,8 +53,15 @@ export const scimProviderCard = tv({
   slots: {
     actions: "flex flex-wrap items-center gap-2",
     body: "flex flex-col gap-4",
-    callout: "flex flex-col gap-1 rounded-2 bg-red-3 p-3",
+    errorCopy: "flex flex-col gap-1",
     hint: "flex-1",
+    reactivate: "flex flex-col gap-2",
+    settingsFields: "flex flex-col gap-4",
+    addRow: "flex items-end gap-2",
+    addField: "min-w-0 flex-1",
+    userList: "flex flex-col gap-2",
+    userRow: "flex items-center justify-between gap-2 rounded-2 bg-sand-3 px-2 py-1.5",
+    userEmpty: "py-4 text-center",
   },
 });
 

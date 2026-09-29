@@ -2458,6 +2458,7 @@
       }
     },
     "eventHistory": "Gebeurtenisgeschiedenis",
+    "connecting": "Identity provider verbinden",
     "export": {
       "title": "SCIM-gebeurtenissen exporteren",
       "description": "Selecteer een datumbereik om SCIM-gebeurtenissen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
@@ -2516,14 +2517,15 @@
     "errors": {
       "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
       "bridgeDisabled": "Bridge is uitgeschakeld",
-      "bridgeFailed": "Bridge bevindt zich in een foutstatus"
+      "bridgeFailed": "Bridge bevindt zich in een foutstatus",
+      "update": "Bijwerken van uitgesloten gebruikers mislukt",
+      "disconnect": "Verbinding met Google Workspace / Cloud Identity verbreken mislukt"
     },
     "actions": {
       "settings": "Instellingen",
       "add": "Toevoegen",
       "remove": "Verwijderen",
-      "disconnect": "Verbinding verbreken",
-      "disconnecting": "Verbinding verbreken..."
+      "disconnect": "Verbinding verbreken"
     },
     "excludedCount_one": "{{count}} uitgesloten gebruiker",
     "excludedCount_other": "{{count}} uitgesloten gebruikers",
@@ -2555,14 +2557,15 @@
     "errors": {
       "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
       "bridgeDisabled": "Bridge is uitgeschakeld",
-      "bridgeFailed": "Bridge bevindt zich in een foutstatus"
+      "bridgeFailed": "Bridge bevindt zich in een foutstatus",
+      "update": "Bijwerken van uitgesloten gebruikers mislukt",
+      "disconnect": "Verbinding met Microsoft 365 verbreken mislukt"
     },
     "actions": {
       "settings": "Instellingen",
       "add": "Toevoegen",
       "remove": "Verwijderen",
-      "disconnect": "Verbinding verbreken",
-      "disconnecting": "Verbinding verbreken..."
+      "disconnect": "Verbinding verbreken"
     },
     "excludedCount_one": "{{count}} uitgesloten gebruiker",
     "excludedCount_other": "{{count}} uitgesloten gebruikers",
@@ -6191,9 +6194,10 @@
     "notes": "Opmerkingen"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Opnieuw activeren", "reactivating": "Bezig met activeren..." },
+    "actions": { "reactivate": "Opnieuw activeren" },
     "dialog": { "title": "SCIM-brug opnieuw activeren", "description": "De volgende synchronisatie wordt nu ingepland. Opeenvolgende fouten worden gewist, en een mislukte, uitgeschakelde of vastgelopen brug wordt weer actief." },
-    "messages": { "success": "De SCIM-brug is opnieuw geactiveerd. De volgende run is nu ingepland." }
+    "messages": { "success": "De SCIM-brug is opnieuw geactiveerd. De volgende run is nu ingepland." },
+    "errors": { "reactivate": "SCIM-brug opnieuw activeren mislukt" }
   },
   "country": {
     "GLOBAL": "Wereldwijd",

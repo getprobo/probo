@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Spinner } from "@probo/ui";
+import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useRef, useState } from "react";
@@ -27,13 +27,13 @@ import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
-  useMutation,
   usePreloadedQuery,
 } from "react-relay";
 import { useSearchParams } from "react-router";
 
 import type { SCIMPageCreateSCIMConfigurationMutation } from "#/__generated__/iam/SCIMPageCreateSCIMConfigurationMutation.graphql";
 import type { SCIMPageQuery } from "#/__generated__/iam/SCIMPageQuery.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { ExportSCIMEventsDialog } from "./_components/ExportSCIMEventsDialog";
 import { SCIMConfiguration } from "./_components/SCIMConfiguration";
@@ -51,9 +51,8 @@ export const scimPageQuery = graphql`
         canExportSCIMEvents: permission(action: "iam:scim-event:export")
 
         scimConfiguration {
-          id
           bridge {
-            id
+            __typename
           }
           ...SCIMEventList_scimConfiguration
           ...SCIMProviderCard_scimConfiguration
@@ -74,9 +73,6 @@ const createSCIMConfigurationMutation = graphql`
       scimConfiguration {
         id
       }
-      scimBridge {
-        id
-      }
     }
   }
 `;
@@ -93,7 +89,7 @@ export function SCIMPage(props: {
 
   const { organization } = usePreloadedQuery<SCIMPageQuery>(scimPageQuery, queryRef);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
-  const { root, header, intro, section } = scimPage();
+  const { root, section, sectionHead, loader } = scimPage();
   const [createSCIMConfiguration]
     = useMutation<SCIMPageCreateSCIMConfigurationMutation>(
       createSCIMConfigurationMutation,
@@ -107,7 +103,7 @@ export function SCIMPage(props: {
     if (!connectorId || mutationTriggeredRef.current) return;
 
     // Don't create if SCIM config already exists
-    if (organization.scimConfiguration?.id) {
+    if (organization.scimConfiguration != null) {
       setSearchParams((params: URLSearchParams) => {
         params.delete("connector_id");
         return params;
@@ -117,26 +113,23 @@ export function SCIMPage(props: {
 
     mutationTriggeredRef.current = true;
 
-    createSCIMConfiguration({
+    void createSCIMConfiguration({
       variables: {
         input: {
           organizationId: organization.id,
           connectorId: connectorId,
         },
       },
-      onCompleted: () => {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("connector_id");
-        window.location.href = url.toString();
-      },
-      onError: (error) => {
-        console.error("Failed to create SCIM configuration:", error);
-        mutationTriggeredRef.current = false;
-        setSearchParams((params: URLSearchParams) => {
-          params.delete("connector_id");
-          return params;
-        });
-      },
+    }).then(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("connector_id");
+      window.location.assign(url.toString());
+    }).catch(() => {
+      mutationTriggeredRef.current = false;
+      setSearchParams((params: URLSearchParams) => {
+        params.delete("connector_id");
+        return params;
+      });
     });
   }, [
     connectorId,
@@ -152,8 +145,8 @@ export function SCIMPage(props: {
   // Show loader while creating SCIM configuration
   if (connectorId) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Spinner size={24} />
+      <div className={loader()}>
+        <Spinner size={3} aria-label={t("scimPage.connecting")} />
       </div>
     );
   }
@@ -161,16 +154,7 @@ export function SCIMPage(props: {
   if (organization.scimConfiguration == null) {
     return (
       <div className={root()}>
-        <div className={header()}>
-          <div className={intro()}>
-            <Heading level={1} size={6} weight="medium" highContrast>
-              {t("scimPage.title")}
-            </Heading>
-            <Text size={2} color="faint">
-              {t("scimPage.description")}
-            </Text>
-          </div>
-        </div>
+        <SCIMPageIntro />
         <SCIMSetupCards
           organizationKey={organization}
           onManualCreated={setCreatedToken}
@@ -183,16 +167,7 @@ export function SCIMPage(props: {
 
   return (
     <div className={root()}>
-      <div className={header()}>
-        <div className={intro()}>
-          <Heading level={1} size={6} weight="medium" highContrast>
-            {t("scimPage.title")}
-          </Heading>
-          <Text size={2} color="faint">
-            {t("scimPage.description")}
-          </Text>
-        </div>
-      </div>
+      <SCIMPageIntro />
       {hasIdentityProvider
         ? (
             <SCIMProviderCard
@@ -209,7 +184,7 @@ export function SCIMPage(props: {
             />
           )}
       <div className={section()}>
-        <div className="flex items-start justify-between gap-4">
+        <div className={sectionHead()}>
           <Heading level={2} size={4} weight="medium" highContrast>
             {t("scimPage.eventHistory")}
           </Heading>
@@ -219,6 +194,22 @@ export function SCIMPage(props: {
         </div>
         <SCIMEventList scimConfigurationKey={organization.scimConfiguration} />
       </div>
+    </div>
+  );
+}
+
+function SCIMPageIntro() {
+  const { t } = useTranslation();
+  const { intro } = scimPage();
+
+  return (
+    <div className={intro()}>
+      <Heading level={1} size={6} weight="medium" highContrast>
+        {t("scimPage.title")}
+      </Heading>
+      <Text size={2} color="faint">
+        {t("scimPage.description")}
+      </Text>
     </div>
   );
 }

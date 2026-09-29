@@ -140,18 +140,15 @@ export function SCIMConfiguration({
           scimConfigurationId: configurationId,
         },
       },
-    }).then(
-      (response) => {
-        const payload = response.regenerateSCIMToken;
-        if (payload == null || payload.token === "") {
-          return;
-        }
-        setToken(payload.token);
-      },
-      () => {
-        // Error toast is already shown by useMutation.
-      },
-    );
+    }).then((response) => {
+      const payload = response.regenerateSCIMToken;
+      if (payload == null || payload.token === "") {
+        return;
+      }
+      setToken(payload.token);
+    }).catch(() => {
+      // Error toast is already shown by useMutation.
+    });
   }
 
   function handleDeleted() {

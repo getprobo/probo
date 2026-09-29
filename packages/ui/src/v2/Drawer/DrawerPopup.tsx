@@ -38,8 +38,8 @@ export type DrawerPopupProps
 // swipe/enter animation, which would re-root `position: fixed` and misalign
 // Base UI's modal inert cutout so the trigger looks unclickable.
 export function DrawerPopup(props: DrawerPopupProps) {
-  const { className, children, side, ref, ...popupProps } = props;
-  const slots = drawer({ side });
+  const { className, children, side, size, ref, ...popupProps } = props;
+  const slots = drawer({ side, size });
 
   return (
     <BaseDrawer.Portal>
