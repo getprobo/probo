@@ -181,69 +181,6 @@ LIMIT 1;
 	return nil
 }
 
-// LoadByIDForUpdate is LoadByID under FOR UPDATE so a banner reset can
-// lock the glob before relinking detections and deleting it. Taking the
-// parent lock first avoids a deadlock with ReportDetectedTrackers,
-// which takes SHARE on the pattern (FK) before exclusive on the
-// detection.
-func (tp *TrackerPattern) LoadByIDForUpdate(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	trackerPatternID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	cookie_banner_id,
-	cookie_category_id,
-	common_tracker_pattern_id,
-	tracker_type,
-	pattern,
-	match_type,
-	display_name,
-	description,
-	excluded,
-	max_age_seconds,
-	source,
-	last_matched_at,
-	mapping_requested_at,
-	created_at,
-	updated_at
-FROM
-	tracker_patterns
-WHERE
-	%s
-	AND id = @tracker_pattern_id
-LIMIT 1
-FOR UPDATE;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query tracker patterns: %w", err)
-	}
-
-	pattern, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrackerPattern])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect tracker pattern: %w", err)
-	}
-
-	*tp = pattern
-
-	return nil
-}
-
 // LoadUncategorisedGlobsForUpdateSkipLocked locks a batch of
 // uncategorised, non-excluded glob patterns for a banner reset. SKIP
 // LOCKED skips rows a mapping worker already holds so the reset does

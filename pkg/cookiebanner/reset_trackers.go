@@ -34,8 +34,9 @@ import (
 )
 
 const (
-	decomposeGlobBatchSize = 100
-	decomposeGlobWait      = 200 * time.Millisecond
+	decomposeGlobBatchSize    = 100
+	decomposeGlobWait         = 200 * time.Millisecond
+	decomposeDeadlockAttempts = 3
 )
 
 // ResetTrackersResult summarizes what a banner reset changed.
@@ -156,7 +157,10 @@ func decomposeGlobs(
 	notExcluded := false
 	filter := coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded).WithPatternKeyword(keyword)
 
-	var emptyRounds int
+	var (
+		emptyRounds      int
+		deadlockAttempts int
+	)
 
 	for {
 		var (
@@ -192,11 +196,22 @@ func decomposeGlobs(
 		)
 		if err != nil {
 			if isDeadlock(err) {
+				deadlockAttempts++
+				if deadlockAttempts >= decomposeDeadlockAttempts {
+					return fmt.Errorf("cannot decompose glob patterns: %w", err)
+				}
+
+				if err := waitReset(ctx, decomposeGlobWait); err != nil {
+					return err
+				}
+
 				continue
 			}
 
 			return err
 		}
+
+		deadlockAttempts = 0
 
 		result.ExactsCreated += exacts
 		result.DetectionsRelinked += relinked
