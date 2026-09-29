@@ -23,6 +23,7 @@ package create
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -77,7 +78,7 @@ type createResponse struct {
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg            string
-		flagFramework      string
+		flagFrameworks     []string
 		flagName           string
 		flagFirm           string
 		flagState          string
@@ -157,13 +158,23 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
 
-			input := map[string]any{
-				"organizationId": flagOrg,
-				"name":           flagName,
+			if len(flagFrameworks) == 0 && f.IOStreams.IsInteractive() {
+				selected, err := promptFrameworkIDs(client, flagOrg)
+				if err != nil {
+					return err
+				}
+
+				flagFrameworks = selected
 			}
 
-			if flagFramework != "" {
-				input["frameworkId"] = flagFramework
+			if len(flagFrameworks) == 0 {
+				return fmt.Errorf("at least one framework is required; pass --framework")
+			}
+
+			input := map[string]any{
+				"organizationId": flagOrg,
+				"frameworkIds":   flagFrameworks,
+				"name":           flagName,
 			}
 
 			if flagFirm != "" {
@@ -226,7 +237,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().StringVar(&flagFramework, "framework", "", "Framework ID")
+	cmd.Flags().StringArrayVar(&flagFrameworks, "framework", nil, "Framework ID (repeat for each framework)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Audit name (required)")
 	cmd.Flags().StringVar(&flagFirm, "firm", "", "Audit firm")
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: TO_BOOK, AUDIT_BOOKED, NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
@@ -236,4 +247,99 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagAuditEndDate, "audit-end-date", "", "Audit end date (e.g. 2026-03-15)")
 
 	return cmd
+}
+
+const frameworksQuery = `
+query($id: ID!, $first: Int, $after: CursorKey) {
+  node(id: $id) {
+    __typename
+    ... on Organization {
+      frameworks(first: $first, after: $after) {
+        totalCount
+        edges {
+          node {
+            id
+            name
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+`
+
+type frameworkOption struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func promptFrameworkIDs(client *api.Client, organizationID string) ([]string, error) {
+	frameworks, _, err := api.Paginate(
+		client,
+		frameworksQuery,
+		map[string]any{"id": organizationID},
+		math.MaxInt32,
+		func(data json.RawMessage) (*api.Connection[frameworkOption], error) {
+			var resp struct {
+				Node *struct {
+					Typename   string                          `json:"__typename"`
+					Frameworks api.Connection[frameworkOption] `json:"frameworks"`
+				} `json:"node"`
+			}
+
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return nil, err
+			}
+
+			if resp.Node == nil || resp.Node.Typename != "Organization" {
+				return nil, fmt.Errorf("organization %s not found", organizationID)
+			}
+
+			return &resp.Node.Frameworks, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(frameworks) == 0 {
+		return nil, fmt.Errorf("organization %s has no frameworks", organizationID)
+	}
+
+	options := make([]huh.Option[string], len(frameworks))
+
+	for i, framework := range frameworks {
+		label := framework.Name
+
+		if label == "" {
+			label = framework.ID
+		}
+
+		options[i] = huh.NewOption(label, framework.ID)
+	}
+
+	var selected []string
+
+	err = huh.NewMultiSelect[string]().
+		Title("Frameworks").
+		Description("Select at least one framework").
+		Options(options...).
+		Validate(func(value []string) error {
+			if len(value) == 0 {
+				return fmt.Errorf("select at least one framework")
+			}
+
+			return nil
+		}).
+		Value(&selected).
+		Run()
+	if err != nil {
+		return nil, err
+	}
+
+	return selected, nil
 }

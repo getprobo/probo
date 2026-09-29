@@ -26,6 +26,8 @@ import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import type { AuditFilterSelectFragment$key } from "#/__generated__/core/AuditFilterSelectFragment.graphql";
 import type { AuditFilterSelectPaginationQuery } from "#/__generated__/core/AuditFilterSelectPaginationQuery.graphql";
 import type { AuditFilterSelectQuery } from "#/__generated__/core/AuditFilterSelectQuery.graphql";
+import type { AuditFrameworkNames_audit$key } from "#/__generated__/core/AuditFrameworkNames_audit.graphql";
+import { useAuditFrameworkNames } from "#/components/audits/AuditFrameworkNames";
 
 const PAGE_SIZE = 20;
 const LOAD_MORE_VALUE = "__LOAD_MORE__";
@@ -57,9 +59,7 @@ const auditFilterSelectFragment = graphql`
         node {
           id
           name
-          framework {
-            name
-          }
+          ...AuditFrameworkNames_audit
         }
       }
     }
@@ -120,9 +120,7 @@ export function AuditFilterSelect({
     >
       <Option value="ALL">{t("findingsPage.filters.allAudits")}</Option>
       {audits.map(audit => (
-        <Option key={audit.id} value={audit.id}>
-          {audit.name || audit.framework?.name || audit.id}
-        </Option>
+        <AuditFilterOption key={audit.id} audit={audit} />
       ))}
       {hasNext && (
         <Option
@@ -136,4 +134,18 @@ export function AuditFilterSelect({
       )}
     </Select>
   );
+}
+
+function AuditFilterOption({
+  audit,
+}: {
+  audit: AuditFrameworkNames_audit$key & {
+    id: string;
+    name?: string | null;
+  };
+}) {
+  const { label: frameworkLabel } = useAuditFrameworkNames(audit);
+  const label = audit.name || frameworkLabel || audit.id;
+
+  return <Option value={audit.id}>{label}</Option>;
 }

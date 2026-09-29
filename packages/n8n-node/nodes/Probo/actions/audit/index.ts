@@ -26,6 +26,8 @@ import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as uploadReportOp from './uploadReport.operation';
 import * as deleteReportOp from './deleteReport.operation';
+import * as linkFrameworkOp from './linkFramework.operation';
+import * as unlinkFrameworkOp from './unlinkFramework.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -70,6 +72,18 @@ export const description: INodeProperties[] = [
 				action: 'Get many audits',
 			},
 			{
+				name: 'Link Framework',
+				value: 'linkFramework',
+				description: 'Link a framework to an audit',
+				action: 'Link a framework to an audit',
+			},
+			{
+				name: 'Unlink Framework',
+				value: 'unlinkFramework',
+				description: 'Unlink a framework from an audit',
+				action: 'Unlink a framework from an audit',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing audit',
@@ -91,6 +105,8 @@ export const description: INodeProperties[] = [
 	...getAllOp.description,
 	...uploadReportOp.description,
 	...deleteReportOp.description,
+	...linkFrameworkOp.description,
+	...unlinkFrameworkOp.description,
 ];
 
 export {
@@ -101,4 +117,6 @@ export {
 	getAllOp as getAll,
 	uploadReportOp as uploadReport,
 	deleteReportOp as deleteReport,
+	linkFrameworkOp as linkFramework,
+	unlinkFrameworkOp as unlinkFramework,
 };

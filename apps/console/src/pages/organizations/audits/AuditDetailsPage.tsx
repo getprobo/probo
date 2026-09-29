@@ -40,30 +40,42 @@ import {
   IconTrashCan,
   Input,
   Option,
+  Select,
   useConfirm,
 } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { Suspense, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
+  usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 import { useNavigate } from "react-router";
 
+import type { AuditGraphFrameworks_audit$key } from "#/__generated__/core/AuditGraphFrameworks_audit.graphql";
+import type { AuditGraphFrameworksPaginationQuery } from "#/__generated__/core/AuditGraphFrameworksPaginationQuery.graphql";
 import type { AuditGraphNodeQuery } from "#/__generated__/core/AuditGraphNodeQuery.graphql";
+import { auditFrameworkNames } from "#/components/audits/formatAuditFrameworkNames";
+import { useOrganizationFrameworkOptions } from "#/components/audits/useOrganizationFrameworkOptions";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
 
 import {
+  auditFrameworksFragment,
   auditNodeQuery,
   useDeleteAudit,
   useDeleteAuditReport,
+  useLinkAuditFramework,
+  useUnlinkAuditFramework,
   useUpdateAudit,
   useUploadAuditReport,
 } from "../../../hooks/graph/AuditGraph";
+
+const FRAMEWORK_PAGE_SIZE = 100;
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
@@ -88,9 +100,49 @@ export default function AuditDetailsPage(props: Props) {
   const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const {
+    data: frameworkConnection,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+  } = usePaginationFragment<
+    AuditGraphFrameworksPaginationQuery,
+    AuditGraphFrameworks_audit$key
+  >(auditFrameworksFragment, audit.node as AuditGraphFrameworks_audit$key);
+  const frameworksFailedRef = useRef(false);
+  const auditId = auditEntry.id;
+  const previousAuditIdRef = useRef(auditId);
+
+  useEffect(() => {
+    if (previousAuditIdRef.current !== auditId) {
+      previousAuditIdRef.current = auditId;
+      frameworksFailedRef.current = false;
+    }
+
+    if (frameworksFailedRef.current || !hasNext || isLoadingNext) {
+      return;
+    }
+
+    loadNext(FRAMEWORK_PAGE_SIZE, {
+      onComplete: (error) => {
+        if (error != null) {
+          frameworksFailedRef.current = true;
+        }
+      },
+    });
+  }, [auditId, hasNext, isLoadingNext, loadNext]);
+
+  const frameworks = frameworkConnection.frameworks?.edges?.flatMap((edge) => {
+    const framework = edge?.node;
+    return framework ? [framework] : [];
+  }) ?? [];
+  const frameworkLabel = auditFrameworkNames(frameworkConnection.frameworks);
+  const frameworksConnectionId = frameworkConnection.frameworks?.__id ?? "";
+  const linkFramework = useLinkAuditFramework(frameworksConnectionId);
+  const unlinkFramework = useUnlinkAuditFramework(frameworksConnectionId);
 
   const deleteAudit = useDeleteAudit(
-    { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
+    { id: auditEntry.id!, frameworks: frameworkConnection.frameworks },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
     () => void navigate(`/organizations/${organizationId}/governance/audits`),
   );
@@ -180,12 +232,17 @@ export default function AuditDetailsPage(props: Props) {
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <FrameworkLogo
-              name={auditEntry.framework?.name || ""}
-              lightLogoURL={auditEntry.framework?.lightLogo?.downloadUrl}
-              darkLogoURL={auditEntry.framework?.darkLogo?.downloadUrl}
-            />
-            <div className="text-2xl">{auditEntry.framework?.name}</div>
+            {frameworks.map(framework => (
+              <FrameworkLogo
+                key={framework.id}
+                name={framework.name}
+                lightLogoURL={framework.lightLogo?.downloadUrl}
+                darkLogoURL={framework.darkLogo?.downloadUrl}
+              />
+            ))}
+            <div className="text-2xl">
+              {frameworkLabel || t("auditsPage.row.unknownFramework")}
+            </div>
           </div>
           <Badge
             variant={getAuditStateVariant(auditEntry.state || "NOT_STARTED")}
@@ -205,6 +262,57 @@ export default function AuditDetailsPage(props: Props) {
           )}
         </ActionDropdown>
       </div>
+
+      <Card padded className="space-y-4">
+        <h3 className="text-lg font-medium">
+          {t("auditDetailsPage.frameworks.title")}
+        </h3>
+        {frameworks.length === 0 && (
+          <p className="text-txt-secondary">
+            {t("auditDetailsPage.frameworks.empty")}
+          </p>
+        )}
+        <ul className="space-y-2">
+          {frameworks.map(framework => (
+            <li
+              key={framework.id}
+              className="flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <FrameworkLogo
+                  name={framework.name}
+                  lightLogoURL={framework.lightLogo?.downloadUrl}
+                  darkLogoURL={framework.darkLogo?.downloadUrl}
+                />
+                <span>{framework.name}</span>
+              </div>
+              {auditEntry.canUnlinkFramework && (
+                <Button
+                  variant="secondary"
+                  icon={IconTrashCan}
+                  onClick={() => {
+                    if (!auditEntry.id) {
+                      return;
+                    }
+                    void unlinkFramework(auditEntry.id, framework.id);
+                  }}
+                >
+                  {t("auditDetailsPage.frameworks.unlink")}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {auditEntry.canLinkFramework && auditEntry.id && (
+          <Suspense fallback={null}>
+            <LinkFrameworkSelect
+              organizationId={organizationId}
+              linkedIds={frameworks.map(framework => framework.id)}
+              onLink={frameworkId => void linkFramework(auditEntry.id!, frameworkId)}
+            />
+          </Suspense>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <form onSubmit={e => void onSubmit(e)} className="space-y-6">
@@ -332,6 +440,49 @@ export default function AuditDetailsPage(props: Props) {
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function LinkFrameworkSelect({
+  organizationId,
+  linkedIds,
+  onLink,
+}: {
+  organizationId: string;
+  linkedIds: string[];
+  onLink: (frameworkId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const { frameworks: organizationFrameworks, failed, retry } = useOrganizationFrameworkOptions(organizationId);
+  const linked = new Set(linkedIds);
+  const frameworks = organizationFrameworks.filter(framework => !linked.has(framework.id));
+
+  if (frameworks.length === 0 && !failed) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2">
+      {frameworks.length > 0 && (
+        <Select
+          variant="editor"
+          placeholder={t("auditDetailsPage.frameworks.addPlaceholder")}
+          onValueChange={onLink}
+          value=""
+        >
+          {frameworks.map(framework => (
+            <Option key={framework.id} value={framework.id}>
+              {framework.name}
+            </Option>
+          ))}
+        </Select>
+      )}
+      {failed && (
+        <Button type="button" variant="tertiary" onClick={retry}>
+          {t("auditDetailsPage.frameworks.retry")}
+        </Button>
+      )}
     </div>
   );
 }

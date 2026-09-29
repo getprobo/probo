@@ -188,13 +188,15 @@ const (
 	ActionDatumPublish = "core:datum:publish"
 
 	// Audit actions
-	ActionAuditGet          = "core:audit:get"
-	ActionAuditList         = "core:audit:list"
-	ActionAuditCreate       = "core:audit:create"
-	ActionAuditUpdate       = "core:audit:update"
-	ActionAuditDelete       = "core:audit:delete"
-	ActionAuditReportUpload = "core:audit:upload-report"
-	ActionAuditReportDelete = "core:audit:delete-report"
+	ActionAuditGet                    = "core:audit:get"
+	ActionAuditList                   = "core:audit:list"
+	ActionAuditCreate                 = "core:audit:create"
+	ActionAuditUpdate                 = "core:audit:update"
+	ActionAuditDelete                 = "core:audit:delete"
+	ActionAuditReportUpload           = "core:audit:upload-report"
+	ActionAuditReportDelete           = "core:audit:delete-report"
+	ActionAuditFrameworkMappingCreate = "core:audit:create-framework-mapping"
+	ActionAuditFrameworkMappingDelete = "core:audit:delete-framework-mapping"
 
 	// Report actions
 	ActionReportGet            = "core:report:get"

@@ -561,7 +561,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 	`, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"frameworkId":    frameworkID,
+			"frameworkIds":   []string{frameworkID},
 			"name":           "Audit for Control Mapping",
 		},
 	}, &createAuditResult)

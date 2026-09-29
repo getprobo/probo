@@ -30,7 +30,7 @@ import { DocumentEntry } from "./DocumentEntry";
 
 const auditReportListItemFragment = graphql`
   fragment AuditReportListItem_audit on Audit @throwOnFieldError {
-    framework {
+    frameworks {
       name
     }
     reportFile {
@@ -66,10 +66,11 @@ export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
   }
 
   const reportId = report.id;
+  const frameworkTitle = audit.frameworks.map(framework => framework.name).join(", ");
 
   return (
     <DocumentEntry
-      title={audit.framework.name}
+      title={frameworkTitle || report.fileName}
       meta={report.fileName}
       isAuthorized={report.isUserAuthorized}
       requested={report.access?.status === "REQUESTED"}

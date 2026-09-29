@@ -45,6 +45,40 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 	return types.NewOrganization(organization), nil
 }
 
+// Audits is the resolver for the audits field.
+func (r *frameworkResolver) Audits(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	auditPage, err := r.probo.Audits.ListForFrameworkID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list framework audits", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditConnection(auditPage, r, obj.ID), nil
+}
+
 // Controls is the resolver for the controls field.
 func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
@@ -121,6 +155,14 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		count, err := r.probo.Frameworks.CountForOrganizationID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *auditResolver:
+		count, err := r.probo.Audits.CountFrameworksForAuditID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

@@ -95,7 +95,7 @@ type (
 
 	compliancePageAudit struct {
 		Name       string
-		Framework  string
+		Frameworks string
 		ValidFrom  string
 		ValidUntil string
 	}
@@ -529,17 +529,21 @@ func (s *Service) fetchAudits(
 			return nil, fmt.Errorf("cannot list audits: %w", err)
 		}
 
+		auditIDs := make([]gid.GID, len(result.Data))
+
+		for i, audit := range result.Data {
+			auditIDs[i] = audit.ID
+		}
+
+		namesByAudit, err := s.frameworkNamesByAuditID(ctx, scope, auditIDs)
+		if err != nil {
+			return nil, fmt.Errorf("cannot list audit frameworks: %w", err)
+		}
+
 		for _, audit := range result.Data {
-			frameworkName := ""
-
-			fw, err := s.GetFramework(ctx, scope, audit.FrameworkID)
-			if err == nil {
-				frameworkName = fw.Name
-			}
-
 			ai := compliancePageAudit{
-				Name:      ref.UnrefOrZero(audit.Name),
-				Framework: frameworkName,
+				Name:       ref.UnrefOrZero(audit.Name),
+				Frameworks: strings.Join(namesByAudit[audit.ID], ", "),
 			}
 			if audit.ValidFrom != nil {
 				ai.ValidFrom = audit.ValidFrom.Format("2006-01-02")

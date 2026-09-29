@@ -113,13 +113,12 @@ SELECT
     audits.report_file_id AS id,
     @kind_report::text AS kind,
     files.file_name AS name,
-    frameworks.name AS category,
+    COALESCE(framework_names.category, '') AS category,
     da.status
 FROM (
     SELECT
         id,
-        report_file_id,
-        framework_id
+        report_file_id
     FROM
         audits
     WHERE
@@ -133,8 +132,21 @@ INNER JOIN cp_audits cpa
     AND cpa.visibility = @visibility_restricted::compliance_portal_visibility
 INNER JOIN files
     ON files.id = audits.report_file_id
-INNER JOIN frameworks
-    ON frameworks.id = audits.framework_id
+LEFT JOIN LATERAL (
+    SELECT
+        string_agg(
+            frameworks.name,
+            ', ' ORDER BY audits_frameworks.created_at, audits_frameworks.framework_id
+        ) AS category
+    FROM
+        audits_frameworks
+    INNER JOIN frameworks
+        ON frameworks.id = audits_frameworks.framework_id
+        AND frameworks.tenant_id = @tenant_id
+    WHERE
+        audits_frameworks.audit_id = audits.id
+        AND audits_frameworks.tenant_id = @tenant_id
+) framework_names ON TRUE
 LEFT JOIN cp_document_accesses da
     ON da.compliance_portal_access_id = @compliance_portal_access_id
     AND da.compliance_portal_audit_id = cpa.id

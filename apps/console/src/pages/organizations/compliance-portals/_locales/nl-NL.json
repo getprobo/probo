@@ -199,6 +199,7 @@
     },
     "noExpiry": "Geen vervaldatum",
     "untitled": "Zonder titel",
+    "noFrameworks": "Geen frameworks",
     "states": { "not_started": "Niet gestart", "in_progress": "In behandeling", "completed": "Voltooid", "rejected": "Afgewezen", "outdated": "Verouderd" }
   },
   "brandPage": {

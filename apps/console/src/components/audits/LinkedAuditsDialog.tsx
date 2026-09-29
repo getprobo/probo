@@ -33,11 +33,12 @@ import {
   Input,
   Spinner,
 } from "@probo/ui";
-import { type ReactNode, Suspense, useMemo, useState } from "react";
+import { type ReactNode, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { AuditFrameworkNames_audit$key } from "#/__generated__/core/AuditFrameworkNames_audit.graphql";
 import type {
   LinkedAuditsDialogFragment$data,
   LinkedAuditsDialogFragment$key,
@@ -46,6 +47,8 @@ import type { LinkedAuditsDialogQuery } from "#/__generated__/core/LinkedAuditsD
 import type { LinkedAuditsDialogQuery_fragment } from "#/__generated__/core/LinkedAuditsDialogQuery_fragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
+
+import { useAuditFrameworkNames } from "./AuditFrameworkNames";
 
 const auditsQuery = graphql`
   query LinkedAuditsDialogQuery($organizationId: ID!) {
@@ -80,10 +83,7 @@ const auditsFragment = graphql`
           id
           name
           state
-          framework {
-            id
-            name
-          }
+          ...AuditFrameworkNames_audit
         }
       }
     }
@@ -128,6 +128,16 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
   const [search, setSearch] = useState("");
   const [referenceId, setReferenceId] = useState("");
   const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
+  const [frameworkLabels, setFrameworkLabels] = useState<Record<string, string>>({});
+  const setFrameworkLabel = useCallback((auditId: string, label: string) => {
+    setFrameworkLabels((current) => {
+      if (current[auditId] === label) {
+        return current;
+      }
+
+      return { ...current, [auditId]: label };
+    });
+  }, []);
   const audits = useMemo(
     () => data.audits?.edges?.map(edge => edge.node) ?? [],
     [data.audits],
@@ -141,11 +151,11 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
 
     return audits.filter((audit) => {
       return (audit.name || "").toLowerCase().includes(normalizedSearch)
-        || (audit.framework?.name || "")
+        || (frameworkLabels[audit.id] || "")
           .toLowerCase()
           .includes(normalizedSearch);
     });
-  }, [audits, search]);
+  }, [audits, frameworkLabels, search]);
   const selectedAudit = audits.find(audit => audit.id === selectedAuditId);
 
   function onSelectAudit(auditId: string) {
@@ -171,10 +181,21 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
   if (selectedAudit && props.referenceIdRequired) {
     return (
       <div className="space-y-5 px-6 py-5">
+        <div className="hidden">
+          {audits.map(audit => (
+            <AuditFrameworkSearchIndex
+              key={audit.id}
+              audit={audit}
+              onLabel={setFrameworkLabel}
+            />
+          ))}
+        </div>
         <div className="flex items-center gap-4 rounded-lg border border-border-low bg-subtle p-4">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="font-medium">{selectedAudit.framework?.name}</div>
-            {selectedAudit.name && (
+            <div className="font-medium">
+              {frameworkLabels[selectedAudit.id] || selectedAudit.name}
+            </div>
+            {frameworkLabels[selectedAudit.id] && selectedAudit.name && (
               <div className="text-sm text-txt-secondary">
                 {selectedAudit.name}
               </div>
@@ -230,6 +251,15 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
           onValueChange={setSearch}
         />
       </div>
+      <div className="hidden">
+        {audits.map(audit => (
+          <AuditFrameworkSearchIndex
+            key={audit.id}
+            audit={audit}
+            onLabel={setFrameworkLabel}
+          />
+        ))}
+      </div>
       <div className="divide-y divide-border-low">
         {filteredAudits.length === 0 && (
           <div className="px-6 py-10 text-center text-sm text-txt-secondary">
@@ -240,6 +270,7 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
           <AuditRow
             key={audit.id}
             audit={audit}
+            frameworkLabel={frameworkLabels[audit.id] ?? ""}
             linkedAudits={linkedIds}
             onLink={onSelectAudit}
             onUnlink={props.onUnlink}
@@ -261,11 +292,28 @@ type Audit = NodeOf<LinkedAuditsDialogFragment$data["audits"]>;
 
 type RowProps = {
   audit: Audit;
+  frameworkLabel: string;
   linkedAudits: Set<string>;
   disabled?: boolean;
   onLink: (auditId: string) => void;
   onUnlink?: (auditId: string) => void;
 };
+
+function AuditFrameworkSearchIndex({
+  audit,
+  onLabel,
+}: {
+  audit: AuditFrameworkNames_audit$key & { id: string };
+  onLabel: (auditId: string, label: string) => void;
+}) {
+  const { label } = useAuditFrameworkNames(audit);
+
+  useEffect(() => {
+    onLabel(audit.id, label);
+  }, [audit.id, label, onLabel]);
+
+  return null;
+}
 
 function AuditRow(props: RowProps) {
   const { t } = useTranslation();
@@ -274,14 +322,17 @@ function AuditRow(props: RowProps) {
   const onClick = isLinked ? props.onUnlink : props.onLink;
   const IconComponent = isLinked ? IconTrashCan : IconPlusLarge;
   const disabled = props.disabled || (isLinked && !props.onUnlink);
+  const frameworkLabel = props.frameworkLabel;
 
   return (
     <div
       className="py-4 flex items-center gap-4 px-6 w-full h-[100px]"
     >
       <div className="flex flex-col items-start gap-1">
-        <div className="font-medium">{props.audit.framework?.name}</div>
-        {props.audit.name && (
+        <div className="font-medium">
+          {frameworkLabel || props.audit.name}
+        </div>
+        {frameworkLabel && props.audit.name && (
           <div className="text-sm text-txt-secondary">{props.audit.name}</div>
         )}
       </div>

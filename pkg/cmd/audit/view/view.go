@@ -23,6 +23,8 @@ package view
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -31,7 +33,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!) {
+query($id: ID!, $first: Int, $after: CursorKey) {
   node(id: $id) {
     __typename
     ... on Audit {
@@ -39,6 +41,19 @@ query($id: ID!) {
       name
       firm
       state
+      frameworks(first: $first, after: $after) {
+        totalCount
+        edges {
+          node {
+            id
+            name
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
       validity {
         start
         end
@@ -54,25 +69,36 @@ query($id: ID!) {
 }
 `
 
-type viewResponse struct {
-	Node *struct {
-		Typename string `json:"__typename"`
-		ID       string `json:"id"`
-		Name     string `json:"name"`
-		Firm     string `json:"firm"`
-		State    string `json:"state"`
-		Validity *struct {
-			Start *string `json:"start"`
-			End   *string `json:"end"`
-		} `json:"validity"`
-		AuditDates *struct {
-			Start *string `json:"start"`
-			End   *string `json:"end"`
-		} `json:"auditDates"`
-		CreatedAt string `json:"createdAt"`
-		UpdatedAt string `json:"updatedAt"`
-	} `json:"node"`
-}
+type (
+	frameworkNode struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+
+	frameworkEdge struct {
+		Node frameworkNode `json:"node"`
+	}
+
+	period struct {
+		Start *string `json:"start"`
+		End   *string `json:"end"`
+	}
+
+	auditNode struct {
+		Typename   string `json:"__typename"`
+		ID         string `json:"id"`
+		Name       string `json:"name"`
+		Firm       string `json:"firm"`
+		State      string `json:"state"`
+		Frameworks struct {
+			Edges []frameworkEdge `json:"edges"`
+		} `json:"frameworks"`
+		Validity   *period `json:"validity"`
+		AuditDates *period `json:"auditDates"`
+		CreatedAt  string  `json:"createdAt"`
+		UpdatedAt  string  `json:"updatedAt"`
+	}
+)
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	var flagOutput *string
@@ -104,32 +130,63 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(
+			var viewed *auditNode
+
+			frameworks, _, err := api.Paginate(
+				client,
 				viewQuery,
 				map[string]any{"id": args[0]},
+				math.MaxInt32,
+				func(data json.RawMessage) (*api.Connection[frameworkNode], error) {
+					var resp struct {
+						Node *struct {
+							auditNode
+
+							Frameworks api.Connection[frameworkNode] `json:"frameworks"`
+						} `json:"node"`
+					}
+
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return nil, err
+					}
+
+					if resp.Node == nil {
+						return nil, fmt.Errorf("audit %s not found", args[0])
+					}
+
+					if resp.Node.Typename != "Audit" {
+						return nil, fmt.Errorf("expected Audit node, got %s", resp.Node.Typename)
+					}
+
+					if viewed == nil {
+						node := resp.Node.auditNode
+						viewed = &node
+					}
+
+					return &resp.Node.Frameworks, nil
+				},
 			)
 			if err != nil {
 				return err
 			}
 
-			var resp viewResponse
-			if err := json.Unmarshal(data, &resp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if resp.Node == nil {
+			if viewed == nil {
 				return fmt.Errorf("audit %s not found", args[0])
 			}
 
-			if resp.Node.Typename != "Audit" {
-				return fmt.Errorf("expected Audit node, got %s", resp.Node.Typename)
+			edges := make([]frameworkEdge, len(frameworks))
+
+			for i, framework := range frameworks {
+				edges[i] = frameworkEdge{Node: framework}
 			}
+
+			viewed.Frameworks.Edges = edges
 
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, resp.Node)
+				return cmdutil.PrintJSON(f.IOStreams.Out, viewed)
 			}
 
-			a := resp.Node
+			a := viewed
 			out := f.IOStreams.Out
 
 			bold := lipgloss.NewStyle().Bold(true)
@@ -143,6 +200,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), a.State)
+
+			names := make([]string, 0, len(a.Frameworks.Edges))
+
+			for _, edge := range a.Frameworks.Edges {
+				if edge.Node.Name != "" {
+					names = append(names, edge.Node.Name)
+				}
+			}
+
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Frameworks:"), strings.Join(names, ", "))
 
 			if a.Validity != nil && a.Validity.Start != nil && *a.Validity.Start != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Valid From:"), *a.Validity.Start)

@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -112,18 +113,55 @@ func loadResources(
 				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
 			}
 
-			var framework coredata.Framework
-			if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
-				return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
-			}
-
 			if audit.ReportFileID == nil {
 				continue
 			}
 
-			title := framework.Name
+			var links coredata.AuditFrameworks
+			if err := links.LoadByAuditIDs(ctx, conn, scope, []gid.GID{audit.ID}); err != nil {
+				return nil, nil, nil, fmt.Errorf("cannot load audit frameworks: %w", err)
+			}
+
+			frameworkIDs := make([]gid.GID, 0, len(links))
+			for _, link := range links {
+				frameworkIDs = append(frameworkIDs, link.FrameworkID)
+			}
+
+			var names []string
+
+			if len(frameworkIDs) > 0 {
+				var frameworks coredata.Frameworks
+
+				if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+					return nil, nil, nil, fmt.Errorf("cannot load frameworks: %w", err)
+				}
+
+				names = frameworkNamesInLinkOrder(frameworkIDs, frameworks)
+			}
+
+			title := strings.Join(names, ", ")
 			if audit.Name != nil && *audit.Name != "" {
-				title += " - " + *audit.Name
+				if title != "" {
+					title += " - "
+				}
+
+				title += *audit.Name
+			}
+
+			if title == "" && audit.ReportFileID != nil {
+				var reportFile coredata.File
+
+				if err := reportFile.LoadByID(ctx, conn, scope, *audit.ReportFileID); err != nil {
+					if !errors.Is(err, coredata.ErrResourceNotFound) {
+						return nil, nil, nil, fmt.Errorf("cannot load audit report file: %w", err)
+					}
+				} else {
+					title = reportFile.FileName
+				}
+			}
+
+			if title == "" {
+				title = "Audit"
 			}
 
 			reports = append(
@@ -345,4 +383,25 @@ func filterFilesOnPortal(
 	}
 
 	return filtered, nil
+}
+
+func frameworkNamesInLinkOrder(frameworkIDs []gid.GID, frameworks coredata.Frameworks) []string {
+	byID := make(map[gid.GID]string, len(frameworks))
+
+	for _, framework := range frameworks {
+		byID[framework.ID] = framework.Name
+	}
+
+	names := make([]string, 0, len(frameworkIDs))
+
+	for _, frameworkID := range frameworkIDs {
+		name, ok := byID[frameworkID]
+		if !ok {
+			continue
+		}
+
+		names = append(names, name)
+	}
+
+	return names
 }

@@ -122,6 +122,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionAuditCreate,
 		ActionAuditUpdate,
 		ActionAuditDelete,
+		ActionAuditFrameworkMappingCreate,
+		ActionAuditFrameworkMappingDelete,
 		ActionAuditReportUpload,
 		ActionAuditReportDelete,
 		ActionFindingCreate,

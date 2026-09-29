@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { FindingAuditListItem_auditEdge$key } from "#/__generated__/core/FindingAuditListItem_auditEdge.graphql";
+import { useAuditFrameworkNames } from "#/components/audits/AuditFrameworkNames";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const findingAuditListItemFragment = graphql`
@@ -39,9 +40,7 @@ const findingAuditListItemFragment = graphql`
       id
       name
       state
-      framework {
-        name
-      }
+      ...AuditFrameworkNames_audit
     }
   }
 `;
@@ -63,13 +62,15 @@ export function FindingAuditListItem({
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
   const audit = auditEdge.node;
+  const { label: frameworkLabel } = useAuditFrameworkNames(audit);
+  const title = frameworkLabel || audit.name || t("auditsPage.row.untitled");
 
   return (
     <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td>
         <div className="flex flex-col">
-          <div className="font-medium">{audit.framework?.name}</div>
-          {audit.name && (
+          <div className="font-medium">{title}</div>
+          {frameworkLabel && audit.name && (
             <div className="text-sm text-txt-secondary">{audit.name}</div>
           )}
         </div>

@@ -445,3 +445,109 @@ WHERE
 
 	return err
 }
+
+func (f *Frameworks) LoadByAuditID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	auditID gid.GID,
+	cursor *page.Cursor[FrameworkOrderField],
+) error {
+	q := `
+WITH frameworks_by_audit AS (
+	SELECT
+		fw.id,
+		fw.tenant_id,
+		fw.organization_id,
+		fw.reference_id,
+		fw.name,
+		fw.description,
+		fw.light_logo_file_id,
+		fw.dark_logo_file_id,
+		fw.created_at,
+		fw.updated_at
+	FROM
+		frameworks fw
+	INNER JOIN
+		audits_frameworks af ON fw.id = af.framework_id
+	WHERE
+		af.audit_id = @audit_id
+)
+SELECT
+	id,
+	organization_id,
+	reference_id,
+	name,
+	description,
+	light_logo_file_id,
+	dark_logo_file_id,
+	created_at,
+	updated_at
+FROM
+	frameworks_by_audit
+WHERE
+	%s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"audit_id": auditID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query frameworks: %w", err)
+	}
+
+	frameworks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Framework])
+	if err != nil {
+		return fmt.Errorf("cannot collect frameworks: %w", err)
+	}
+
+	*f = frameworks
+
+	return nil
+}
+
+func (f *Frameworks) CountByAuditID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	auditID gid.GID,
+) (int, error) {
+	q := `
+WITH frameworks_by_audit AS (
+	SELECT
+		fw.id,
+		fw.tenant_id
+	FROM
+		frameworks fw
+	INNER JOIN
+		audits_frameworks af ON fw.id = af.framework_id
+	WHERE
+		af.audit_id = @audit_id
+)
+SELECT
+	COUNT(id)
+FROM
+	frameworks_by_audit
+WHERE
+	%s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"audit_id": auditID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}

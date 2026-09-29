@@ -243,7 +243,7 @@ func newCreateAuditRequest() CreateAuditRequest {
 
 	return CreateAuditRequest{
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
-		FrameworkID:    gid.New(tenantID, coredata.FrameworkEntityType),
+		FrameworkIDs:   []gid.GID{gid.New(tenantID, coredata.FrameworkEntityType)},
 	}
 }
 

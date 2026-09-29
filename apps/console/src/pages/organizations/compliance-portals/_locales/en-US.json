@@ -239,6 +239,7 @@
     },
     "noExpiry": "No expiry",
     "untitled": "Untitled",
+    "noFrameworks": "No frameworks",
     "states": {
       "not_started": "Not Started",
       "in_progress": "In Progress",

@@ -239,6 +239,7 @@
     },
     "noExpiry": "Aucune expiration",
     "untitled": "Sans titre",
+    "noFrameworks": "Aucun référentiel",
     "states": {
       "not_started": "Non commencé",
       "in_progress": "En cours",

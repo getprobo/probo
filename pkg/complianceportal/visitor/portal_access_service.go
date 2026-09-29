@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -1056,18 +1057,69 @@ func reportAccessLabels(
 			return nil, fmt.Errorf("cannot load audit: %w", err)
 		}
 
-		var framework coredata.Framework
-		if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
-			return nil, fmt.Errorf("cannot load framework: %w", err)
+		var links coredata.AuditFrameworks
+		if err := links.LoadByAuditIDs(ctx, conn, scope, []gid.GID{audit.ID}); err != nil {
+			return nil, fmt.Errorf("cannot load audit frameworks: %w", err)
 		}
 
+		frameworkIDs := make([]gid.GID, 0, len(links))
+		for _, link := range links {
+			frameworkIDs = append(frameworkIDs, link.FrameworkID)
+		}
+
+		var names []string
+
+		if len(frameworkIDs) > 0 {
+			var frameworks coredata.Frameworks
+
+			if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+				return nil, fmt.Errorf("cannot load frameworks: %w", err)
+			}
+
+			names = frameworkNamesInLinkOrder(frameworkIDs, frameworks)
+		}
+
+		frameworkLabel := strings.Join(names, ", ")
 		if audit.Name != nil && *audit.Name != "" {
-			labels = append(labels, fmt.Sprintf("%s - %s", framework.Name, *audit.Name))
+			if frameworkLabel == "" {
+				labels = append(labels, *audit.Name)
+				continue
+			}
+
+			labels = append(labels, fmt.Sprintf("%s - %s", frameworkLabel, *audit.Name))
+
 			continue
 		}
 
-		labels = append(labels, framework.Name)
+		if frameworkLabel == "" {
+			labels = append(labels, audit.ID.String())
+
+			continue
+		}
+
+		labels = append(labels, frameworkLabel)
 	}
 
 	return labels, nil
+}
+
+func frameworkNamesInLinkOrder(frameworkIDs []gid.GID, frameworks coredata.Frameworks) []string {
+	byID := make(map[gid.GID]string, len(frameworks))
+
+	for _, framework := range frameworks {
+		byID[framework.ID] = framework.Name
+	}
+
+	names := make([]string, 0, len(frameworkIDs))
+
+	for _, frameworkID := range frameworkIDs {
+		name, ok := byID[frameworkID]
+		if !ok {
+			continue
+		}
+
+		names = append(names, name)
+	}
+
+	return names
 }

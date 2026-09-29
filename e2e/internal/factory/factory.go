@@ -848,7 +848,7 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"frameworkId":    frameworkID,
+		"frameworkIds":   []string{frameworkID},
 		"name":           a.getString("name", SafeName("Audit")),
 	}
 	if state := a.getStringPtr("state"); state != nil {
