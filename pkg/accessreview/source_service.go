@@ -69,6 +69,11 @@ type (
 		// silently overwritten by the first listed org.
 		OnlyIfUnset bool
 	}
+
+	EnsuredAccessReviewSource struct {
+		Source  *coredata.AccessReviewSource
+		Created bool
+	}
 )
 
 func (r *CreateAccessReviewSourceRequest) Validate() error {
@@ -98,78 +103,270 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 	return v.Error()
 }
 
-// EnsureSource returns the access source for the resolved connector
-// account, creating it when absent. An existing source is returned
-// untouched with created=false. The partial unique index on
-// connector_account_id arbitrates concurrent callers, so exactly one
-// inserts and the others load the winner. CSV sources (no account)
-// are always created.
-func (s *Service) EnsureSource(
+// EnsureSources creates one access source per request in a single
+// transaction. A connector account whose provider and external account id
+// already have a source, in this list or already stored, returns that
+// source with Created false. CSV requests always insert. The partial
+// unique index on connector_account_id still skips a second insert for
+// the exact same account row.
+func (s *Service) EnsureSources(
 	ctx context.Context,
 	scope coredata.Scoper,
-	req CreateAccessReviewSourceRequest,
-) (*coredata.AccessReviewSource, bool, error) {
-	if err := req.Validate(); err != nil {
-		return nil, false, err
+	organizationID gid.GID,
+	reqs []CreateAccessReviewSourceRequest,
+) ([]EnsuredAccessReviewSource, error) {
+	v := validator.New()
+	v.Check(organizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(len(reqs), "sources", validator.Min(1))
+
+	if err := v.Error(); err != nil {
+		return nil, err
 	}
 
-	now := time.Now()
-	source := &coredata.AccessReviewSource{
-		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-		OrganizationID: req.OrganizationID,
-		Name:           req.Name,
-		CsvData:        req.CsvData,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+	for i := range reqs {
+		reqs[i].OrganizationID = organizationID
+
+		if err := reqs[i].Validate(); err != nil {
+			return nil, err
+		}
 	}
 
-	created := false
+	results := make([]EnsuredAccessReviewSource, len(reqs))
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			account, err := s.resolveCreateAccount(ctx, conn, scope, req)
+			prepared := make([]preparedAccessSource, len(reqs))
+
+			for i, req := range reqs {
+				account, err := s.resolveCreateAccount(ctx, conn, scope, req)
+				if err != nil {
+					return err
+				}
+
+				if account != nil {
+					if err := refuseSCIMConnector(ctx, conn, scope, account.ConnectorID); err != nil {
+						return err
+					}
+				}
+
+				now := time.Now()
+				source := &coredata.AccessReviewSource{
+					ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+					OrganizationID: organizationID,
+					Name:           req.Name,
+					CsvData:        req.CsvData,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if account != nil {
+					source.ConnectorAccountID = &account.ID
+				}
+
+				prepared[i] = preparedAccessSource{
+					account: account,
+					source:  source,
+				}
+			}
+
+			index, err := s.existingVendorSources(ctx, conn, scope, organizationID, prepared)
 			if err != nil {
 				return err
 			}
 
-			if account != nil {
-				if err := refuseImplicitPickerAccount(ctx, conn, scope, account); err != nil {
-					return err
+			for i, item := range prepared {
+				if item.account != nil {
+					if existing := index.byAccount[item.account.ID]; existing != nil {
+						results[i] = EnsuredAccessReviewSource{Source: existing, Created: false}
+						continue
+					}
+
+					key := vendorAccountKey{
+						provider:          index.providers[item.account.ConnectorID],
+						externalAccountID: item.account.ExternalAccountID,
+					}
+					if existing := index.byVendor[key]; existing != nil {
+						results[i] = EnsuredAccessReviewSource{Source: existing, Created: false}
+						continue
+					}
 				}
 
-				if err := refuseSCIMConnector(ctx, conn, scope, account.ConnectorID); err != nil {
-					return err
+				inserted, err := item.source.Insert(ctx, conn, scope)
+				if err != nil {
+					return fmt.Errorf("cannot insert access source: %w", err)
 				}
 
-				source.ConnectorAccountID = &account.ID
-			}
+				if !inserted {
+					existing := &coredata.AccessReviewSource{}
+					if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *item.source.ConnectorAccountID); err != nil {
+						return fmt.Errorf("cannot load access source by connector account: %w", err)
+					}
 
-			inserted, err := source.Insert(ctx, conn, scope)
-			if err != nil {
-				return fmt.Errorf("cannot insert access source: %w", err)
-			}
+					results[i] = EnsuredAccessReviewSource{Source: existing, Created: false}
+					index.remember(item.account, existing)
 
-			if inserted {
-				created = true
-				return nil
-			}
+					continue
+				}
 
-			existing := &coredata.AccessReviewSource{}
-			if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
-				return fmt.Errorf("cannot load access source by connector account: %w", err)
+				results[i] = EnsuredAccessReviewSource{Source: item.source, Created: true}
+				index.remember(item.account, item.source)
 			}
-
-			*source = *existing
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, false, fmt.Errorf("cannot create access source: %w", err)
+		return nil, fmt.Errorf("cannot create access source: %w", err)
 	}
 
-	return source, created, nil
+	return results, nil
+}
+
+type (
+	vendorAccountKey struct {
+		provider          coredata.ConnectorProvider
+		externalAccountID string
+	}
+
+	preparedAccessSource struct {
+		account *coredata.ConnectorAccount
+		source  *coredata.AccessReviewSource
+	}
+
+	vendorSourceIndex struct {
+		providers map[gid.GID]coredata.ConnectorProvider
+		byAccount map[gid.GID]*coredata.AccessReviewSource
+		byVendor  map[vendorAccountKey]*coredata.AccessReviewSource
+	}
+)
+
+func (index *vendorSourceIndex) remember(account *coredata.ConnectorAccount, source *coredata.AccessReviewSource) {
+	if account == nil || source == nil {
+		return
+	}
+
+	index.byAccount[account.ID] = source
+
+	key := vendorAccountKey{
+		provider:          index.providers[account.ConnectorID],
+		externalAccountID: account.ExternalAccountID,
+	}
+	if _, ok := index.byVendor[key]; !ok {
+		index.byVendor[key] = source
+	}
+}
+
+func (s *Service) existingVendorSources(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	prepared []preparedAccessSource,
+) (*vendorSourceIndex, error) {
+	index := &vendorSourceIndex{
+		providers: map[gid.GID]coredata.ConnectorProvider{},
+		byAccount: map[gid.GID]*coredata.AccessReviewSource{},
+		byVendor:  map[vendorAccountKey]*coredata.AccessReviewSource{},
+	}
+
+	for _, item := range prepared {
+		if item.account == nil {
+			continue
+		}
+
+		if _, ok := index.providers[item.account.ConnectorID]; ok {
+			continue
+		}
+
+		cnnctr := &coredata.Connector{}
+		if err := cnnctr.LoadMetadataByID(ctx, conn, scope, item.account.ConnectorID); err != nil {
+			return nil, fmt.Errorf("cannot load connector: %w", err)
+		}
+
+		index.providers[item.account.ConnectorID] = cnnctr.Provider
+	}
+
+	providers := make([]string, 0, len(prepared))
+	externalAccountIDs := make([]string, 0, len(prepared))
+
+	for _, item := range prepared {
+		if item.account == nil {
+			continue
+		}
+
+		providers = append(providers, string(index.providers[item.account.ConnectorID]))
+		externalAccountIDs = append(externalAccountIDs, item.account.ExternalAccountID)
+	}
+
+	var matched coredata.AccessReviewSources
+	if err := matched.LoadByProviderExternalAccounts(
+		ctx,
+		conn,
+		scope,
+		organizationID,
+		providers,
+		externalAccountIDs,
+	); err != nil {
+		return nil, fmt.Errorf("cannot load access sources by vendor account: %w", err)
+	}
+
+	if err := s.indexMatchedSources(ctx, conn, scope, index, matched); err != nil {
+		return nil, err
+	}
+
+	return index, nil
+}
+
+func (s *Service) indexMatchedSources(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	index *vendorSourceIndex,
+	matched coredata.AccessReviewSources,
+) error {
+	accountIDs := make([]gid.GID, 0, len(matched))
+	for _, source := range matched {
+		if source.ConnectorAccountID != nil {
+			accountIDs = append(accountIDs, *source.ConnectorAccountID)
+		}
+	}
+
+	var accounts coredata.ConnectorAccounts
+	if err := accounts.LoadByIDs(ctx, conn, scope, accountIDs); err != nil {
+		return fmt.Errorf("cannot load connector accounts: %w", err)
+	}
+
+	accountByID := make(map[gid.GID]*coredata.ConnectorAccount, len(accounts))
+	for _, account := range accounts {
+		accountByID[account.ID] = account
+
+		if _, ok := index.providers[account.ConnectorID]; ok {
+			continue
+		}
+
+		cnnctr := &coredata.Connector{}
+		if err := cnnctr.LoadMetadataByID(ctx, conn, scope, account.ConnectorID); err != nil {
+			return fmt.Errorf("cannot load connector: %w", err)
+		}
+
+		index.providers[account.ConnectorID] = cnnctr.Provider
+	}
+
+	for _, source := range matched {
+		if source.ConnectorAccountID == nil {
+			continue
+		}
+
+		account := accountByID[*source.ConnectorAccountID]
+		if account == nil {
+			continue
+		}
+
+		index.remember(account, source)
+	}
+
+	return nil
 }
 
 func (s *Service) resolveCreateAccount(
@@ -225,28 +422,6 @@ func refuseSCIMConnector(
 	}
 
 	return nil
-}
-
-func refuseImplicitPickerAccount(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	account *coredata.ConnectorAccount,
-) error {
-	if account.ExternalAccountID != account.ConnectorID.String() {
-		return nil
-	}
-
-	cnnctr := &coredata.Connector{}
-	if err := cnnctr.LoadMetadataByID(ctx, conn, scope, account.ConnectorID); err != nil {
-		return fmt.Errorf("cannot load connector: %w", err)
-	}
-
-	if !ProviderSupportsOrganizationPicker(cnnctr.Provider, cnnctr.Protocol) {
-		return nil
-	}
-
-	return fmt.Errorf("cannot create access source: %w", ErrConnectorAccountNeedsOrganization)
 }
 
 func accountConnectorID(
@@ -449,6 +624,24 @@ func (s *Service) UpdateSource(
 
 					if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 						return fmt.Errorf("cannot load access source by connector account: %w", err)
+					}
+
+					var matched coredata.AccessReviewSources
+					if err := matched.LoadByProviderExternalAccounts(
+						ctx,
+						conn,
+						scope,
+						source.OrganizationID,
+						[]string{string(connector.Provider)},
+						[]string{account.ExternalAccountID},
+					); err != nil {
+						return fmt.Errorf("cannot load access source by vendor account: %w", err)
+					}
+
+					for _, existing := range matched {
+						if existing.ID != source.ID {
+							return fmt.Errorf("cannot update access source: connector account already referenced by another source")
+						}
 					}
 				} else {
 					source.ConnectorAccountID = nil

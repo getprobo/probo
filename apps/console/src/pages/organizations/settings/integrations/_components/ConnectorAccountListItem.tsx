@@ -44,15 +44,12 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { connectorCard } from "../variants";
 
-import { UsedBy } from "./ConnectorModules";
-
 const connectorAccountListItemFragment = graphql`
   fragment ConnectorAccountListItem_account on ConnectorAccount {
     id
     name
     externalAccountId
     createdAt
-    modules
   }
 `;
 
@@ -173,9 +170,6 @@ export function ConnectorAccountListItem({
             )
           : undefined}
       >
-        {account.modules.length > 0 && (
-          <UsedBy modules={account.modules} />
-        )}
         <Text size={1} color="faint">
           <time dateTime={account.createdAt}>
             {t("listPage.created", {

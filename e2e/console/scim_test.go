@@ -427,26 +427,33 @@ func TestSCIMConfiguration_RefusesUnsupportedProvider(t *testing.T) {
 	connectorID := connectorResult.CreateAPIKeyConnector.Connector.ID
 
 	var sourceResult struct {
-		CreateAccessReviewSource struct {
-			Created bool `json:"created"`
-		} `json:"createAccessReviewSource"`
+		CreateAccessReviewSources struct {
+			Results []struct {
+				Created bool `json:"created"`
+			} `json:"results"`
+		} `json:"createAccessReviewSources"`
 	}
 
 	err = owner.Execute(`
-		mutation($input: CreateAccessReviewSourceInput!) {
-			createAccessReviewSource(input: $input) {
-				created
+		mutation($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results { created }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
-			"connectorId":    connectorID,
-			"name":           "Brex held by a source",
+			"sources": []any{
+				map[string]any{
+					"connectorId": connectorID,
+					"name":        "Brex held by a source",
+				},
+			},
 		},
 	}, &sourceResult)
 	require.NoError(t, err)
-	require.True(t, sourceResult.CreateAccessReviewSource.Created)
+	require.Len(t, sourceResult.CreateAccessReviewSources.Results, 1)
+	require.True(t, sourceResult.CreateAccessReviewSources.Results[0].Created)
 
 	const createConfigQuery = `
 		mutation($input: CreateSCIMConfigurationInput!) {
