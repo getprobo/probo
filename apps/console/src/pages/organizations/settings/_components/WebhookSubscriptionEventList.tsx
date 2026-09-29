@@ -423,7 +423,6 @@ export function WebhookSubscriptionEventList({
                   previousLabel={t("webhooksSettingsPage.actions.previous")}
                   nextLabel={t("webhooksSettingsPage.actions.next")}
                   showLabels
-                  variant="surface"
                   disabled={isPending}
                   onPrevious={goPrevious}
                   onNext={goNext}

@@ -27,6 +27,7 @@ export const pagination = tv({
   slots: {
     root: "flex items-center justify-center gap-2",
     label: "min-w-16 text-center",
+    button: "bg-sand-1",
     buttonPlaceholder: "size-8 shrink-0 animate-pulse rounded-2 bg-sand-3",
   },
 });

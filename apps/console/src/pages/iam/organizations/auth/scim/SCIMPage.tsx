@@ -28,7 +28,6 @@ import {
   Field,
   IconArrowDown,
   Input,
-  PageHeader,
   Spinner,
   useDialogRef,
   useToast,
@@ -49,9 +48,9 @@ import type { SCIMPageCreateSCIMConfigurationMutation } from "#/__generated__/ia
 import type { SCIMPageExportMutation } from "#/__generated__/iam/SCIMPageExportMutation.graphql";
 import type { SCIMPageQuery } from "#/__generated__/iam/SCIMPageQuery.graphql";
 
-import { ConnectorList } from "./_components/ConnectorList";
 import { SCIMConfiguration } from "./_components/SCIMConfiguration";
 import { SCIMEventList } from "./_components/SCIMEventList";
+import { SCIMProviderCard } from "./_components/SCIMProviderCard";
 import { SCIMSetupCards } from "./_components/SCIMSetupCards";
 import { scimPage } from "./variants";
 
@@ -68,11 +67,11 @@ export const scimPageQuery = graphql`
           bridge {
             id
           }
-          ...SCIMEventListFragment
+          ...SCIMEventList_scimConfiguration
+          ...SCIMProviderCard_scimConfiguration
         }
 
         ...SCIMConfigurationFragment
-        ...ConnectorListFragment
         ...SCIMSetupCards_organization
       }
     }
@@ -222,7 +221,7 @@ export function SCIMPage(props: {
 
   const { organization } = usePreloadedQuery<SCIMPageQuery>(scimPageQuery, queryRef);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
-  const { root, header, intro } = scimPage();
+  const { root, header, intro, section } = scimPage();
   const [createSCIMConfiguration]
     = useMutation<SCIMPageCreateSCIMConfigurationMutation>(
       createSCIMConfigurationMutation,
@@ -311,32 +310,44 @@ export function SCIMPage(props: {
   const hasIdentityProvider = organization.scimConfiguration.bridge != null;
 
   return (
-    <div className="space-y-8">
-      <PageHeader title={t("nav.scim")} />
-      {hasIdentityProvider && (
-        <ConnectorList fKey={organization} />
-      )}
-
-      {!hasIdentityProvider && (
-        <div className="space-y-4">
-          <h2 className="text-base font-medium">{t("scimPage.manualScim.title")}</h2>
-          <SCIMConfiguration
-            fKey={organization}
-            initialToken={createdToken}
-          />
+    <div className={root()}>
+      <div className={header()}>
+        <div className={intro()}>
+          <Heading level={1} size={6} weight="medium" highContrast>
+            {t("scimPage.title")}
+          </Heading>
+          <Text size={2} color="faint">
+            {t("scimPage.description")}
+          </Text>
         </div>
-      )}
-
-      <div className="space-y-4">
-        <div className="flex items-start justify-between">
-          <h2 className="text-base font-medium">
+      </div>
+      {hasIdentityProvider
+        ? (
+            <SCIMProviderCard
+              scimConfigurationKey={organization.scimConfiguration}
+            />
+          )
+        : (
+            <div className={section()}>
+              <Heading level={2} size={4} weight="medium" highContrast>
+                {t("scimPage.manualScim.title")}
+              </Heading>
+              <SCIMConfiguration
+                fKey={organization}
+                initialToken={createdToken}
+              />
+            </div>
+          )}
+      <div className={section()}>
+        <div className="flex items-start justify-between gap-4">
+          <Heading level={2} size={4} weight="medium" highContrast>
             {t("scimPage.provisioningEventHistory")}
-          </h2>
+          </Heading>
           {organization.canExportSCIMEvents && (
             <ExportSCIMEventsDialog organizationId={organization.id} />
           )}
         </div>
-        <SCIMEventList fKey={organization.scimConfiguration} />
+        <SCIMEventList scimConfigurationKey={organization.scimConfiguration} />
       </div>
     </div>
   );

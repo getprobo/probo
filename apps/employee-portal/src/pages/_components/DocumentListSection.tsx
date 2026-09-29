@@ -113,7 +113,6 @@ export function DocumentListSection({
               </div>
               <Pagination
                 className={slots.pager()}
-                variant="surface"
                 showLabels
                 hasPrevious={hasPrevious}
                 hasNext={hasNext}

@@ -58,18 +58,19 @@ const createSCIMConfigurationMutation = graphql`
         bridge {
           id
         }
-        ...SCIMEventListFragment
+        ...SCIMEventList_scimConfiguration
+        ...SCIMProviderCard_scimConfiguration
         organization {
           id
           ...SCIMConfigurationFragment
-          ...ConnectorListFragment
           scimConfiguration {
             id
             endpointUrl
             bridge {
               id
             }
-            ...SCIMEventListFragment
+            ...SCIMEventList_scimConfiguration
+            ...SCIMProviderCard_scimConfiguration
           }
         }
       }

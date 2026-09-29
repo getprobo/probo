@@ -2536,6 +2536,8 @@
       "disconnect": "Verbinding verbreken",
       "disconnecting": "Verbinding verbreken..."
     },
+    "excludedCount_one": "{{count}} uitgesloten gebruiker",
+    "excludedCount_other": "{{count}} uitgesloten gebruikers",
     "settings": {
       "title": "Instellingen Google Workspace / Cloud Identity",
       "excludedUserNames": "Uitgesloten gebruikersnamen",
@@ -2575,6 +2577,8 @@
       "disconnect": "Verbinding verbreken",
       "disconnecting": "Verbinding verbreken..."
     },
+    "excludedCount_one": "{{count}} uitgesloten gebruiker",
+    "excludedCount_other": "{{count}} uitgesloten gebruikers",
     "settings": {
       "title": "Instellingen Microsoft 365",
       "excludedUserNames": "Uitgesloten gebruikersnamen",
@@ -2750,7 +2754,19 @@
       "path": "Pad",
       "result": "Resultaat"
     },
-    "empty": "Nog geen SCIM-gebeurtenissen geregistreerd."
+    "details": {
+      "user": "Gebruiker",
+      "ipAddress": "IP-adres",
+      "statusCode": "Statuscode",
+      "error": "Fout"
+    },
+    "request": "Verzoek",
+    "response": "Antwoord",
+    "empty": "Nog geen SCIM-gebeurtenissen geregistreerd.",
+    "copiedToClipboard": "Gekopieerd naar klembord",
+    "copy": "Kopiëren",
+    "copyFailed": "Kon niet naar klembord kopiëren",
+    "actions": { "previous": "Vorige", "next": "Volgende" }
   },
   "accessReviewCampaignsPage": {
     "title": "Campagnes",

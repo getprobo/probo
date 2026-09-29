@@ -171,7 +171,6 @@ export function SAMLConfigurationList({
                   previousLabel={t("samlSsoPage.actions.previous")}
                   nextLabel={t("samlSsoPage.actions.next")}
                   showLabels
-                  variant="soft"
                   disabled={isPending}
                   onPrevious={goPrevious}
                   onNext={goNext}

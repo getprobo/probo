@@ -199,7 +199,6 @@ export function UsersList({ organizationKey }: UsersListProps) {
                     previousLabel={t("usersPage.actions.previous")}
                     nextLabel={t("usersPage.actions.next")}
                     showLabels
-                    variant="soft"
                     disabled={isPending}
                     onPrevious={goPrevious}
                     onNext={goNext}

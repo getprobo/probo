@@ -2536,6 +2536,8 @@
       "disconnect": "Déconnecter",
       "disconnecting": "Déconnexion en cours..."
     },
+    "excludedCount_one": "{{count}} utilisateur exclu",
+    "excludedCount_other": "{{count}} utilisateurs exclus",
     "settings": {
       "title": "Paramètres Google Workspace / Cloud Identity",
       "excludedUserNames": "Noms d’utilisateur exclus",
@@ -2575,6 +2577,8 @@
       "disconnect": "Déconnecter",
       "disconnecting": "Déconnexion en cours..."
     },
+    "excludedCount_one": "{{count}} utilisateur exclu",
+    "excludedCount_other": "{{count}} utilisateurs exclus",
     "settings": {
       "title": "Paramètres Microsoft 365",
       "excludedUserNames": "Noms d’utilisateur exclus",
@@ -2750,7 +2754,19 @@
       "path": "Chemin",
       "result": "Résultat"
     },
-    "empty": "Aucun événement SCIM enregistré pour le moment."
+    "details": {
+      "user": "Utilisateur",
+      "ipAddress": "Adresse IP",
+      "statusCode": "Code de statut",
+      "error": "Erreur"
+    },
+    "request": "Requête",
+    "response": "Réponse",
+    "empty": "Aucun événement SCIM enregistré pour le moment.",
+    "copiedToClipboard": "Copié dans le presse-papiers",
+    "copy": "Copier",
+    "copyFailed": "Impossible de copier dans le presse-papiers",
+    "actions": { "previous": "Précédent", "next": "Suivant" }
   },
   "accessReviewCampaignsPage": {
     "title": "Campagnes",

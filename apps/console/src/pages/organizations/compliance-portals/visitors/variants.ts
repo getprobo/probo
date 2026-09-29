@@ -72,6 +72,7 @@ export const accessSection = tv({
     actions: "flex shrink-0 items-center gap-2",
     sort: "shrink-0",
     more: "flex justify-center",
+    moreButton: "bg-sand-1",
     results: "transition-opacity",
   },
   variants: {
@@ -178,6 +179,7 @@ export const documentAccessList = tv({
     filter: "w-56 shrink-0",
     results: "transition-opacity",
     more: "flex justify-center",
+    moreButton: "bg-sand-1",
     titleRow: "flex min-w-0 items-center gap-2",
     title: "min-w-0 truncate",
     meta: "truncate",

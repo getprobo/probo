@@ -25,6 +25,7 @@ export const scimPage = tv({
     root: "flex flex-col gap-6",
     header: "flex items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-2",
+    section: "flex flex-col gap-4",
     grid: "grid grid-cols-1 gap-3 md:grid-cols-3",
   },
 });
@@ -42,5 +43,52 @@ export const scimSetupCard = tv({
     copy: "flex min-w-0 flex-1 flex-col justify-center gap-1",
     description: "text-sand-a9",
     body: "relative z-1 mt-auto flex flex-col items-stretch",
+  },
+});
+
+export const scimProviderCard = tv({
+  slots: {
+    actions: "flex flex-wrap items-center gap-2",
+    body: "flex flex-col gap-4",
+    callout: "flex flex-col gap-1 rounded-2 bg-red-3 p-3",
+    hint: "flex-1",
+  },
+});
+
+export const scimEventList = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    results: "transition-opacity",
+    empty: "flex flex-col items-center py-8 text-center",
+    item: "relative items-stretch",
+    row: "flex w-full min-w-0 flex-col",
+    trigger: [
+      "flex w-full items-center gap-3 text-start",
+      // Overlay stretches the trigger across the padded ListItem. The panel
+      // sits above it so request/response copy stays clickable when open.
+      "after:absolute after:inset-0 after:content-['']",
+      "data-open:[&_svg]:rotate-180",
+    ],
+    lead: "relative flex min-w-0 flex-1 flex-wrap items-center gap-2",
+    trail: "relative ml-auto flex shrink-0 items-center gap-2",
+    path: "min-w-0 truncate font-mono",
+    caret: "relative size-4 shrink-0 text-sand-11 transition-transform duration-150",
+    panel: "relative z-1 mt-2 flex flex-col gap-3",
+    meta: "flex flex-wrap gap-4",
+    metaField: "flex min-w-0 flex-col gap-0.5",
+    block: "flex flex-col gap-1",
+    blockHeading: "text-1 text-sand-11",
+    responseWrap: "relative",
+    response:
+      "whitespace-pre-wrap break-all rounded-2 bg-sand-2 p-2 pr-9 text-1 text-sand-12",
+    responseCopy: "absolute top-1.5 right-1.5",
+    pager: "flex justify-center",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
   },
 });

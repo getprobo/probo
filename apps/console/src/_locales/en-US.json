@@ -1629,6 +1629,8 @@
     "messages": { "disconnected": "Google Workspace / Cloud Identity disconnected successfully", "excludedUsersUpdated": "Excluded user names updated successfully" },
     "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the provisioning event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
     "actions": { "connect": "Connect", "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
+    "excludedCount_one": "{{count}} excluded user",
+    "excludedCount_other": "{{count}} excluded users",
     "settings": { "title": "Google Workspace / Cloud Identity Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Google Workspace / Cloud Identity.", "noExcludedUserNames": "No excluded user names. All Google Workspace / Cloud Identity users will be synced." },
     "disconnect": { "title": "Disconnect Google Workspace / Cloud Identity", "description": "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.", "warning": "This action cannot be undone." }
   },
@@ -1640,6 +1642,8 @@
     "messages": { "disconnected": "Microsoft 365 disconnected successfully", "excludedUsersUpdated": "Excluded user names updated successfully" },
     "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the provisioning event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
     "actions": { "connect": "Connect", "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
+    "excludedCount_one": "{{count}} excluded user",
+    "excludedCount_other": "{{count}} excluded users",
     "settings": { "title": "Microsoft 365 Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Microsoft 365.", "noExcludedUserNames": "No excluded user names. All Microsoft 365 users will be synced." },
     "disconnect": { "title": "Disconnect Microsoft 365", "description": "This will disconnect your Microsoft 365 integration. Users will no longer be automatically synced via SCIM.", "warning": "This action cannot be undone." }
   },
@@ -1718,7 +1722,19 @@
   },
   "scimEventList": {
     "columns": { "time": "Time", "method": "Method", "path": "Path", "result": "Result" },
-    "empty": "No SCIM events recorded yet."
+    "details": {
+      "user": "User",
+      "ipAddress": "IP address",
+      "statusCode": "Status code",
+      "error": "Error"
+    },
+    "request": "Request",
+    "response": "Response",
+    "empty": "No SCIM events recorded yet.",
+    "copiedToClipboard": "Copied to clipboard",
+    "copy": "Copy",
+    "copyFailed": "Could not copy to clipboard",
+    "actions": { "previous": "Previous", "next": "Next" }
   },
   "accessReviewCampaignsPage": {
     "title": "Campaigns",
