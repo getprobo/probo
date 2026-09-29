@@ -2438,6 +2438,25 @@
     "actions": { "add": "Ajouter le SSO SAML", "previous": "Préc.", "next": "Suiv." }
   },
   "scimPage": {
+    "title": "SCIM",
+    "description": "Connectez votre fournisseur d’identité pour synchroniser automatiquement les utilisateurs de votre organisation.",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Connectez Google Workspace ou Google Cloud Identity pour synchroniser automatiquement les utilisateurs via SCIM.",
+        "action": "Connecter"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Connectez Microsoft 365 pour synchroniser automatiquement les utilisateurs via SCIM.",
+        "action": "Connecter"
+      },
+      "manual": {
+        "title": "SCIM manuel",
+        "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé.",
+        "action": "Configurer"
+      }
+    },
     "manualScim": {
       "title": "SCIM manuel",
       "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé ci-dessus. Cela nécessite de configurer l’URL du point de terminaison SCIM et le jeton porteur dans votre fournisseur d’identité."

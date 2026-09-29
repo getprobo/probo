@@ -33,6 +33,8 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -50,6 +52,8 @@ import type { SCIMPageQuery } from "#/__generated__/iam/SCIMPageQuery.graphql";
 import { ConnectorList } from "./_components/ConnectorList";
 import { SCIMConfiguration } from "./_components/SCIMConfiguration";
 import { SCIMEventList } from "./_components/SCIMEventList";
+import { SCIMSetupCards } from "./_components/SCIMSetupCards";
+import { scimPage } from "./variants";
 
 export const scimPageQuery = graphql`
   query SCIMPageQuery($organizationId: ID!) {
@@ -69,6 +73,7 @@ export const scimPageQuery = graphql`
 
         ...SCIMConfigurationFragment
         ...ConnectorListFragment
+        ...SCIMSetupCards_organization
       }
     }
   }
@@ -216,10 +221,8 @@ export function SCIMPage(props: {
   const mutationTriggeredRef = useRef(false);
 
   const { organization } = usePreloadedQuery<SCIMPageQuery>(scimPageQuery, queryRef);
-  if (organization.__typename !== "Organization") {
-    throw new Error("invalid node type");
-  }
-
+  const [createdToken, setCreatedToken] = useState<string | null>(null);
+  const { root, header, intro } = scimPage();
   const [createSCIMConfiguration]
     = useMutation<SCIMPageCreateSCIMConfigurationMutation>(
       createSCIMConfigurationMutation,
@@ -227,6 +230,9 @@ export function SCIMPage(props: {
 
   // Auto-create SCIM configuration and bridge when connector_id is in URL
   useEffect(() => {
+    if (organization.__typename !== "Organization") {
+      return;
+    }
     if (!connectorId || mutationTriggeredRef.current) return;
 
     // Don't create if SCIM config already exists
@@ -263,11 +269,14 @@ export function SCIMPage(props: {
     });
   }, [
     connectorId,
-    organization.id,
-    organization.scimConfiguration?.id,
+    organization,
     createSCIMConfiguration,
     setSearchParams,
   ]);
+
+  if (organization.__typename !== "Organization") {
+    throw new Error("invalid node type");
+  }
 
   // Show loader while creating SCIM configuration
   if (connectorId) {
@@ -278,57 +287,57 @@ export function SCIMPage(props: {
     );
   }
 
-  // Check if connected via Identity Provider (SCIM config has a bridge)
-  const hasIdentityProvider = !!organization.scimConfiguration?.bridge;
+  if (organization.scimConfiguration == null) {
+    return (
+      <div className={root()}>
+        <div className={header()}>
+          <div className={intro()}>
+            <Heading level={1} size={6} weight="medium" highContrast>
+              {t("scimPage.title")}
+            </Heading>
+            <Text size={2} color="faint">
+              {t("scimPage.description")}
+            </Text>
+          </div>
+        </div>
+        <SCIMSetupCards
+          organizationKey={organization}
+          onManualCreated={setCreatedToken}
+        />
+      </div>
+    );
+  }
 
-  // Check if Manual SCIM is configured (SCIM config exists but no bridge)
-  const hasManualScim = !!organization.scimConfiguration && !organization.scimConfiguration.bridge;
-
-  // Show Identity Provider section when:
-  // - No SCIM config yet (user can connect)
-  // - Or SCIM config with bridge (already connected via IdP)
-  const showIdentityProviderSection = !organization.scimConfiguration || hasIdentityProvider;
-
-  // Show Manual SCIM section when:
-  // - Manual SCIM is configured (no bridge)
-  // - Or no SCIM config at all (user can choose to enable manual)
-  const showManualScimSection = hasManualScim || !organization.scimConfiguration;
-
-  // Show provisioning events when SCIM is configured (either manual or via IdP)
-  const showProvisioningEvents = !!organization.scimConfiguration;
+  const hasIdentityProvider = organization.scimConfiguration.bridge != null;
 
   return (
     <div className="space-y-8">
       <PageHeader title={t("nav.scim")} />
-      {showIdentityProviderSection && (
+      {hasIdentityProvider && (
         <ConnectorList fKey={organization} />
       )}
 
-      {showManualScimSection && (
+      {!hasIdentityProvider && (
         <div className="space-y-4">
           <h2 className="text-base font-medium">{t("scimPage.manualScim.title")}</h2>
-          {!hasManualScim && (
-            <p className="text-sm text-txt-secondary">
-              {t("scimPage.manualScim.description")}
-            </p>
-          )}
-          <SCIMConfiguration fKey={organization} />
+          <SCIMConfiguration
+            fKey={organization}
+            initialToken={createdToken}
+          />
         </div>
       )}
 
-      {showProvisioningEvents && (
-        <div className="space-y-4">
-          <div className="flex items-start justify-between">
-            <h2 className="text-base font-medium">
-              {t("scimPage.provisioningEventHistory")}
-            </h2>
-            {organization.canExportSCIMEvents && (
-              <ExportSCIMEventsDialog organizationId={organization.id} />
-            )}
-          </div>
-          <SCIMEventList fKey={organization.scimConfiguration} />
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
+          <h2 className="text-base font-medium">
+            {t("scimPage.provisioningEventHistory")}
+          </h2>
+          {organization.canExportSCIMEvents && (
+            <ExportSCIMEventsDialog organizationId={organization.id} />
+          )}
         </div>
-      )}
+        <SCIMEventList fKey={organization.scimConfiguration} />
+      </div>
     </div>
   );
 }

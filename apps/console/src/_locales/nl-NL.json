@@ -2438,6 +2438,25 @@
     "actions": { "add": "SAML SSO toevoegen", "previous": "Vorige", "next": "Volgende" }
   },
   "scimPage": {
+    "title": "SCIM",
+    "description": "Verbind uw identity provider om gebruikers automatisch te synchroniseren met uw organisatie.",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Verbind Google Workspace of Google Cloud Identity om gebruikers automatisch te synchroniseren via SCIM.",
+        "action": "Verbinden"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Verbind Microsoft 365 om gebruikers automatisch te synchroniseren via SCIM.",
+        "action": "Verbinden"
+      },
+      "manual": {
+        "title": "Handmatige SCIM",
+        "description": "Configureer SCIM handmatig als uw identity provider niet vermeld staat.",
+        "action": "Configureren"
+      }
+    },
     "manualScim": {
       "title": "Handmatige SCIM",
       "description": "Configureer SCIM handmatig als uw identity provider niet hierboven vermeld staat. Hiervoor moet u de SCIM-eindpunt-URL en de bearer-token instellen in uw identity provider."

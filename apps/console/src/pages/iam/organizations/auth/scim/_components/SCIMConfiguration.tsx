@@ -107,8 +107,9 @@ const regenerateSCIMTokenMutation = graphql`
 
 export function SCIMConfiguration(props: {
   fKey: SCIMConfigurationFragment$key;
+  initialToken?: string | null;
 }) {
-  const { fKey } = props;
+  const { fKey, initialToken } = props;
 
   const organizationId = useOrganizationId();
 
@@ -123,6 +124,7 @@ export function SCIMConfiguration(props: {
   const { toast } = useToast();
 
   const [token, setToken] = useState<string | null>(null);
+  const visibleToken = token ?? initialToken ?? null;
 
   const deleteDialogRef = useDialogRef();
 
@@ -313,7 +315,7 @@ export function SCIMConfiguration(props: {
               </div>
             </div>
 
-            {token && (
+            {visibleToken && (
               <div>
                 <label className="text-sm font-medium">
                   {t("scimConfiguration.fields.bearerToken")}
@@ -323,13 +325,13 @@ export function SCIMConfiguration(props: {
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <code className="flex-1 bg-subtle p-2 rounded text-sm font-mono break-all">
-                    {token}
+                    {visibleToken}
                   </code>
                   <Button
                     variant="secondary"
                     onClick={() =>
                       copyToClipboard(
-                        token,
+                        visibleToken,
                         t("scimConfiguration.fields.bearerToken"),
                       )}
                     icon={IconSquareBehindSquare2}

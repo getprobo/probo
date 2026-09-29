@@ -42,6 +42,8 @@ import type { Microsoft365ConnectorFragment$key } from "#/__generated__/iam/Micr
 import type { Microsoft365ConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/Microsoft365ConnectorUpdateSCIMBridgeMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { initiateScimConnectorUrl } from "../_lib/initiateScimConnector";
+
 import { ReactivateSCIMBridgeButton } from "./ReactivateSCIMBridgeButton";
 
 const microsoft365ConnectorFragment = graphql`
@@ -134,16 +136,11 @@ export function Microsoft365Connector(props: {
     );
 
   const handleConnect = () => {
-    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
-    const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
-    url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", "MICROSOFT_365");
-    for (const scope of oauth2Scopes) {
-      url.searchParams.append("scope", scope);
-    }
-    const continueUrl = `/organizations/${organizationId}/settings/auth/scim`;
-    url.searchParams.append("continue", continueUrl);
-    window.location.href = url.toString();
+    window.location.assign(initiateScimConnectorUrl({
+      organizationId,
+      provider: "MICROSOFT_365",
+      scopes: oauth2Scopes,
+    }));
   };
 
   const handleDisconnect = () => {

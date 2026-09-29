@@ -1566,6 +1566,25 @@
     "actions": { "add": "Add SAML SSO", "previous": "Prev", "next": "Next" }
   },
   "scimPage": {
+    "title": "SCIM",
+    "description": "Connect your identity provider to automatically sync users to your organization.",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Connect Google Workspace or Google Cloud Identity to automatically sync users via SCIM.",
+        "action": "Connect"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Connect Microsoft 365 to automatically sync users via SCIM.",
+        "action": "Connect"
+      },
+      "manual": {
+        "title": "Manual SCIM",
+        "description": "Configure SCIM manually if your identity provider is not listed.",
+        "action": "Configure"
+      }
+    },
     "manualScim": { "title": "Manual SCIM", "description": "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider." },
     "provisioningEventHistory": "Provisioning Event History",
     "export": {

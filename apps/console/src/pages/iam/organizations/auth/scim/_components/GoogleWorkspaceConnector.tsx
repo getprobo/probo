@@ -42,6 +42,8 @@ import type { GoogleWorkspaceConnectorFragment$key } from "#/__generated__/iam/G
 import type { GoogleWorkspaceConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorUpdateSCIMBridgeMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { initiateScimConnectorUrl } from "../_lib/initiateScimConnector";
+
 import { ReactivateSCIMBridgeButton } from "./ReactivateSCIMBridgeButton";
 
 const googleWorkspaceConnectorFragment = graphql`
@@ -134,16 +136,11 @@ export function GoogleWorkspaceConnector(props: {
     );
 
   const handleConnect = () => {
-    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
-    const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
-    url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", "GOOGLE_WORKSPACE");
-    for (const scope of oauth2Scopes) {
-      url.searchParams.append("scope", scope);
-    }
-    const continueUrl = `/organizations/${organizationId}/settings/auth/scim`;
-    url.searchParams.append("continue", continueUrl);
-    window.location.href = url.toString();
+    window.location.assign(initiateScimConnectorUrl({
+      organizationId,
+      provider: "GOOGLE_WORKSPACE",
+      scopes: oauth2Scopes,
+    }));
   };
 
   const handleDisconnect = () => {
