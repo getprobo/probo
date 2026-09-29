@@ -2466,7 +2466,7 @@
       "title": "SCIM-gebeurtenissen exporteren",
       "description": "Selecteer een datumbereik om SCIM-gebeurtenissen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
       "fields": { "from": "Van", "to": "Tot" },
-      "actions": { "export": "Exporteren", "exporting": "Bezig met exporteren..." },
+      "actions": { "export": "Exporteren", "exporting": "Bezig met exporteren...", "cancel": "Annuleren" },
       "messages": {
         "successTitle": "Succes",
         "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
@@ -2696,7 +2696,10 @@
   "scimConfiguration": {
     "errors": {
       "title": "Fout",
-      "create": "Handmatige SCIM-configuratie mislukt"
+      "create": "Handmatige SCIM-configuratie mislukt",
+      "copy": "Kon niet naar klembord kopiëren",
+      "regenerate": "Bearer-token opnieuw genereren mislukt",
+      "delete": "Verwijderen van SCIM-configuratie mislukt"
     },
     "messages": {
       "configured": {
@@ -2721,6 +2724,7 @@
       "title": "Handmatige SCIM actief",
       "description": "Gebruik deze gegevens om SCIM te configureren in uw identity provider."
     },
+    "configuredOn": "Geconfigureerd op {{date}}",
     "fields": {
       "endpointUrl": "SCIM-eindpunt-URL",
       "bearerToken": "Bearer-token"
@@ -2734,7 +2738,9 @@
       "deleteConfiguration": "Configuratie verwijderen",
       "cancel": "Annuleren",
       "delete": "Verwijderen",
-      "deleting": "Verwijderen..."
+      "deleting": "Verwijderen...",
+      "copyEndpointUrl": "SCIM-eindpunt-URL kopiëren",
+      "copyBearerToken": "Bearer-token kopiëren"
     },
     "delete": {
       "title": "Handmatige SCIM-configuratie verwijderen",

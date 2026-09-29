@@ -55,6 +55,20 @@ export const scimProviderCard = tv({
   },
 });
 
+export const scimConfiguration = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    fields: "flex flex-col gap-3",
+    field: "flex flex-col gap-1",
+    fieldValue: "flex min-w-0 items-center gap-1",
+    code: "min-w-0 flex-1 break-all",
+    actions: "flex flex-wrap items-center gap-2",
+    effects: "flex flex-col gap-3",
+    effectsList: "list-disc ps-5",
+    exportFields: "flex flex-col gap-3",
+  },
+});
+
 export const scimEventList = tv({
   slots: {
     root: "flex flex-col gap-4",

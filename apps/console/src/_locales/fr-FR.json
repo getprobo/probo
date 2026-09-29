@@ -2466,7 +2466,7 @@
       "title": "Exporter les événements SCIM",
       "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
       "fields": { "from": "Du", "to": "Au" },
-      "actions": { "export": "Exporter", "exporting": "Exportation..." },
+      "actions": { "export": "Exporter", "exporting": "Exportation...", "cancel": "Annuler" },
       "messages": {
         "successTitle": "Succès",
         "success": "Export démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
@@ -2696,7 +2696,10 @@
   "scimConfiguration": {
     "errors": {
       "title": "Erreur",
-      "create": "La configuration SCIM manuelle a échoué"
+      "create": "La configuration SCIM manuelle a échoué",
+      "copy": "Impossible de copier dans le presse-papiers",
+      "regenerate": "Échec de la régénération du jeton porteur",
+      "delete": "Échec de la suppression de la configuration SCIM"
     },
     "messages": {
       "configured": {
@@ -2721,6 +2724,7 @@
       "title": "SCIM manuel actif",
       "description": "Utilisez ces identifiants pour configurer SCIM dans votre fournisseur d’identité."
     },
+    "configuredOn": "Configuré le {{date}}",
     "fields": {
       "endpointUrl": "URL du point de terminaison SCIM",
       "bearerToken": "Jeton porteur"
@@ -2734,7 +2738,9 @@
       "deleteConfiguration": "Supprimer la configuration",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "deleting": "Suppression..."
+      "deleting": "Suppression...",
+      "copyEndpointUrl": "Copier l’URL du point de terminaison SCIM",
+      "copyBearerToken": "Copier le jeton porteur"
     },
     "delete": {
       "title": "Supprimer la configuration SCIM manuelle",

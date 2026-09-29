@@ -18,391 +18,242 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Card,
-  Dialog,
-  IconRotateCw,
-  IconSquareBehindSquare2,
-  IconTrashCan,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
+import { ArrowsClockwiseIcon, CopyIcon, PlugsConnectedIcon } from "@phosphor-icons/react";
+import { dateTimeFormat } from "@probo/i18n";
+import { useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Code } from "@probo/ui/src/v2/typography/Code";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useMutation } from "react-relay";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import type { SCIMConfigurationCreateMutation } from "#/__generated__/iam/SCIMConfigurationCreateMutation.graphql";
-import type { SCIMConfigurationDeleteMutation } from "#/__generated__/iam/SCIMConfigurationDeleteMutation.graphql";
-import type { SCIMConfigurationFragment$key } from "#/__generated__/iam/SCIMConfigurationFragment.graphql";
-import type { SCIMConfigurationRegenerateTokenMutation } from "#/__generated__/iam/SCIMConfigurationRegenerateTokenMutation.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { SCIMConfiguration_organization$key } from "#/__generated__/iam/SCIMConfiguration_organization.graphql";
+import type { SCIMConfiguration_regenerateMutation } from "#/__generated__/iam/SCIMConfiguration_regenerateMutation.graphql";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
+import { useMutation } from "#/lib/relay/useMutation";
 
-const SCIMConfigurationFragment = graphql`
-  fragment SCIMConfigurationFragment on Organization {
-    canCreateSCIMConfiguration: permission(
-      action: "iam:scim-configuration:create"
-    )
-    canDeleteSCIMConfiguration: permission(
-      action: "iam:scim-configuration:delete"
-    )
+import { scimConfiguration } from "../variants";
+
+import { DeleteSCIMConfigurationDialog } from "./DeleteSCIMConfigurationDialog";
+
+const fragment = graphql`
+  fragment SCIMConfiguration_organization on Organization {
+    id
     scimConfiguration {
       id
       endpointUrl
-      bridge {
-        id
-      }
+      createdAt
+      canUpdate: permission(action: "iam:scim-configuration:update")
+      canDelete: permission(action: "iam:scim-configuration:delete")
+      ...DeleteSCIMConfigurationDialog_scimConfiguration
     }
   }
 `;
 
-const createSCIMConfigurationMutation = graphql`
-  mutation SCIMConfigurationCreateMutation(
-    $input: CreateSCIMConfigurationInput!
-  ) {
-    createSCIMConfiguration(input: $input) {
-      scimConfiguration {
-        id
-        endpointUrl
-
-        organization {
-          id
-          scimConfiguration {
-            id
-            endpointUrl
-          }
-        }
-      }
-      token
-    }
-  }
-`;
-
-const deleteSCIMConfigurationMutation = graphql`
-  mutation SCIMConfigurationDeleteMutation(
-    $input: DeleteSCIMConfigurationInput!
-  ) {
-    deleteSCIMConfiguration(input: $input) {
-      deletedScimConfigurationId @deleteRecord
-    }
-  }
-`;
-
-const regenerateSCIMTokenMutation = graphql`
-  mutation SCIMConfigurationRegenerateTokenMutation(
+const regenerateMutation = graphql`
+  mutation SCIMConfiguration_regenerateMutation(
     $input: RegenerateSCIMTokenInput!
   ) {
     regenerateSCIMToken(input: $input) {
       scimConfiguration {
         id
         endpointUrl
-        createdAt
-        updatedAt
       }
       token
     }
   }
 `;
 
-export function SCIMConfiguration(props: {
-  fKey: SCIMConfigurationFragment$key;
+export interface SCIMConfigurationProps {
+  organizationKey: SCIMConfiguration_organization$key;
   initialToken?: string | null;
-}) {
-  const { fKey, initialToken } = props;
+  onDeleted?: () => void;
+}
 
-  const organizationId = useOrganizationId();
-
-  const organization = useFragment<SCIMConfigurationFragment$key>(SCIMConfigurationFragment, fKey);
-  const {
-    canCreateSCIMConfiguration: canCreate,
-    canDeleteSCIMConfiguration: canDelete,
-    scimConfiguration,
-  } = organization;
-  const hasIdentityProvider = !!scimConfiguration?.bridge;
-  const { t } = useTranslation();
+export function SCIMConfiguration({
+  organizationKey,
+  initialToken,
+  onDeleted,
+}: SCIMConfigurationProps) {
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
-
+  const organization = useFragment(fragment, organizationKey);
+  const configuration = organization.scimConfiguration;
   const [token, setToken] = useState<string | null>(null);
   const visibleToken = token ?? initialToken ?? null;
+  const {
+    root,
+    fields,
+    field,
+    fieldValue,
+    code,
+    actions,
+  } = scimConfiguration();
 
-  const deleteDialogRef = useDialogRef();
-
-  const [createSCIMConfiguration, isCreatingSAMLConfiguration]
-    = useMutation<SCIMConfigurationCreateMutation>(
-      createSCIMConfigurationMutation,
+  const [regenerateSCIMToken, isRegenerating]
+    = useMutation<SCIMConfiguration_regenerateMutation>(
+      regenerateMutation,
+      {
+        successMessage: t("scimConfiguration.messages.regenerated.description"),
+        errorToast: t("scimConfiguration.errors.regenerate"),
+      },
     );
-  const [deleteSCIMConfiguration, isDeletingSCIMConfiguration]
-    = useMutation<SCIMConfigurationDeleteMutation>(
-      deleteSCIMConfigurationMutation,
-    );
-  const [regenerateSCIMToken, isRegeneratingSCIMToken]
-    = useMutation<SCIMConfigurationRegenerateTokenMutation>(
-      regenerateSCIMTokenMutation,
-    );
 
-  const handleCreate = () => {
-    createSCIMConfiguration({
-      variables: {
-        input: {
-          organizationId,
-        },
-      },
-      onCompleted: (response, e) => {
-        if (e) {
-          toast({
-            variant: "error",
-            title: t("scimConfiguration.errors.title"),
-            description: formatError(
-              t("scimConfiguration.errors.create"),
-              e,
-            ),
-          });
-          return;
-        }
-
-        if (response.createSCIMConfiguration) {
-          setToken(response.createSCIMConfiguration.token);
-        }
-        toast({
-          title: t("scimConfiguration.messages.configured.title"),
-          description: t("scimConfiguration.messages.copyToken"),
-          variant: "success",
-        });
-      },
-      onError: (error: Error) => {
-        toast({
-          variant: "error",
-          title: t("scimConfiguration.errors.title"),
-          description: error.message,
-        });
-      },
-    });
-  };
-
-  const handleDelete = () => {
-    if (!scimConfiguration) return;
-
-    deleteSCIMConfiguration({
-      variables: {
-        input: {
-          organizationId,
-          scimConfigurationId: scimConfiguration.id,
-        },
-      },
-      onCompleted: () => {
-        deleteDialogRef.current?.close();
-        setToken(null);
-        toast({
-          title: t("scimConfiguration.messages.deleted.title"),
-          description: t("scimConfiguration.messages.deleted.description"),
-          variant: "success",
-        });
-      },
-      onError: (error: Error) => {
-        toast({
-          variant: "error",
-          title: t("scimConfiguration.errors.title"),
-          description: error.message,
-        });
-      },
-    });
-  };
-
-  const handleRegenerate = () => {
-    if (!scimConfiguration) return;
-
-    regenerateSCIMToken({
-      variables: {
-        input: {
-          organizationId,
-          scimConfigurationId: scimConfiguration.id,
-        },
-      },
-      onCompleted: (response) => {
-        if (response.regenerateSCIMToken) {
-          setToken(response.regenerateSCIMToken.token);
-        }
-        toast({
-          title: t("scimConfiguration.messages.regenerated.title"),
-          description: t("scimConfiguration.messages.regenerated.description"),
-          variant: "success",
-        });
-      },
-      onError: (error: Error) => {
-        toast({
-          variant: "error",
-          title: t("scimConfiguration.errors.title"),
-          description: error.message,
-        });
-      },
-    });
-  };
-
-  const copyToClipboard = (text: string, label: string) => {
-    void navigator.clipboard.writeText(text);
-    toast({
-      title: t("scimConfiguration.messages.copied"),
-      description: label,
-      variant: "success",
-    });
-  };
-
-  if (hasIdentityProvider) {
+  if (configuration == null) {
     return null;
   }
 
-  if (!scimConfiguration) {
-    return (
-      <Card padded>
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-medium">
-              {t("scimConfiguration.empty.title")}
-            </h3>
-            <p className="text-sm text-txt-secondary mt-1">
-              {t("scimConfiguration.empty.description")}
-            </p>
-          </div>
-          {canCreate && (
-            <Button
-              onClick={handleCreate}
-              disabled={isCreatingSAMLConfiguration}
-            >
-              {isCreatingSAMLConfiguration
-                ? t("scimConfiguration.actions.enabling")
-                : t("scimConfiguration.actions.enable")}
-            </Button>
-          )}
-        </div>
-      </Card>
+  const {
+    id: configurationId,
+    endpointUrl,
+    createdAt,
+    canUpdate,
+    canDelete,
+  } = configuration;
+
+  async function copyToClipboard(text: string, description: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: t("scimConfiguration.messages.copied"),
+        description,
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: t("scimConfiguration.errors.copy"),
+        description,
+        variant: "error",
+      });
+    }
+  }
+
+  function handleRegenerate() {
+    void regenerateSCIMToken({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          scimConfigurationId: configurationId,
+        },
+      },
+    }).then(
+      (response) => {
+        const payload = response.regenerateSCIMToken;
+        if (payload == null || payload.token === "") {
+          return;
+        }
+        setToken(payload.token);
+      },
+      () => {
+        // Error toast is already shown by useMutation.
+      },
     );
   }
 
+  function handleDeleted() {
+    setToken(null);
+    onDeleted?.();
+  }
+
   return (
-    <>
-      <Card padded>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">
-                {t("scimConfiguration.active.title")}
-              </h3>
-              <p className="text-sm text-txt-secondary">
-                {t("scimConfiguration.active.description")}
-              </p>
+    <TonedCard
+      tone="green"
+      icon={<PlugsConnectedIcon className="size-6" />}
+      lead={(
+        <Text size={3} weight="medium" color="green">
+          {t("scimPage.setup.manual.title")}
+        </Text>
+      )}
+    >
+      <div className={root()}>
+        <Text size={2} color="neutral">
+          {t("scimConfiguration.configuredOn", {
+            date: dateTimeFormat(i18n.language, createdAt),
+          })}
+        </Text>
+        <div className={fields()}>
+          <div className={field()}>
+            <Text size={1} color="faint">
+              {t("scimConfiguration.fields.endpointUrl")}
+            </Text>
+            <div className={fieldValue()}>
+              <Code size={1} className={code()}>
+                {endpointUrl}
+              </Code>
+              <IconButton
+                size={1}
+                variant="soft"
+                color="neutral"
+                aria-label={t("scimConfiguration.actions.copyEndpointUrl")}
+                onClick={() => {
+                  void copyToClipboard(
+                    endpointUrl,
+                    t("scimConfiguration.fields.endpointUrl"),
+                  );
+                }}
+              >
+                <CopyIcon />
+              </IconButton>
             </div>
           </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">
-                {t("scimConfiguration.fields.endpointUrl")}
-              </label>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="flex-1 bg-subtle p-2 rounded text-sm font-mono">
-                  {scimConfiguration.endpointUrl}
-                </code>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    copyToClipboard(
-                      scimConfiguration.endpointUrl,
-                      t("scimConfiguration.fields.endpointUrl"),
-                    )}
-                  icon={IconSquareBehindSquare2}
-                />
-              </div>
-            </div>
-
-            {visibleToken && (
-              <div>
-                <label className="text-sm font-medium">
+          {visibleToken != null && (
+            <>
+              <Callout color="amber">
+                {t("scimConfiguration.tokenWarning")}
+              </Callout>
+              <div className={field()}>
+                <Text size={1} color="faint">
                   {t("scimConfiguration.fields.bearerToken")}
-                </label>
-                <p className="text-xs text-txt-warning mb-1">
-                  {t("scimConfiguration.tokenWarning")}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <code className="flex-1 bg-subtle p-2 rounded text-sm font-mono break-all">
+                </Text>
+                <div className={fieldValue()}>
+                  <Code size={1} className={code()}>
                     {visibleToken}
-                  </code>
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      copyToClipboard(
+                  </Code>
+                  <IconButton
+                    size={1}
+                    variant="soft"
+                    color="neutral"
+                    aria-label={t("scimConfiguration.actions.copyBearerToken")}
+                    onClick={() => {
+                      void copyToClipboard(
                         visibleToken,
                         t("scimConfiguration.fields.bearerToken"),
-                      )}
-                    icon={IconSquareBehindSquare2}
-                  />
+                      );
+                    }}
+                  >
+                    <CopyIcon />
+                  </IconButton>
                 </div>
               </div>
-            )}
-
-            <div className="flex items-center gap-2 pt-4 border-t border-border-low">
+            </>
+          )}
+        </div>
+        {(canUpdate || canDelete) && (
+          <div className={actions()}>
+            {canUpdate && (
               <Button
-                variant="secondary"
+                variant="soft"
+                color="neutral"
+                loading={isRegenerating}
+                iconStart={<ArrowsClockwiseIcon />}
                 onClick={handleRegenerate}
-                disabled={isRegeneratingSCIMToken}
-                icon={IconRotateCw}
               >
-                {isRegeneratingSCIMToken
-                  ? t("scimConfiguration.actions.regenerating")
-                  : t("scimConfiguration.actions.regenerateToken")}
+                {t("scimConfiguration.actions.regenerateToken")}
               </Button>
-              {canDelete && (
-                <Button
-                  variant="danger"
-                  onClick={() => deleteDialogRef.current?.open()}
-                  icon={IconTrashCan}
-                >
-                  {t("scimConfiguration.actions.deleteConfiguration")}
-                </Button>
-              )}
-            </div>
+            )}
+            {canDelete && (
+              <DeleteSCIMConfigurationDialog
+                scimConfigurationKey={configuration}
+                onDeleted={handleDeleted}
+              />
+            )}
           </div>
-        </div>
-      </Card>
-
-      <Dialog
-        ref={deleteDialogRef}
-        title={t("scimConfiguration.delete.title")}
-        onClose={() => deleteDialogRef.current?.close()}
-      >
-        <div className="p-4 space-y-4">
-          <p>
-            {t("scimConfiguration.delete.description")}
-          </p>
-          <ul className="list-disc list-inside text-sm space-y-1">
-            <li>{t("scimConfiguration.delete.effects.disable")}</li>
-            <li>
-              {t("scimConfiguration.delete.effects.changeMembershipSource")}
-            </li>
-            <li>{t("scimConfiguration.delete.effects.invalidateToken")}</li>
-          </ul>
-          <p className="text-sm text-txt-secondary">
-            {t("scimConfiguration.delete.note")}
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => deleteDialogRef.current?.close()}
-            >
-              {t("scimConfiguration.actions.cancel")}
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDelete}
-              disabled={isDeletingSCIMConfiguration}
-            >
-              {isDeletingSCIMConfiguration
-                ? t("scimConfiguration.actions.deleting")
-                : t("scimConfiguration.actions.delete")}
-            </Button>
-          </div>
-        </div>
-      </Dialog>
-    </>
+        )}
+      </div>
+    </TonedCard>
   );
 }

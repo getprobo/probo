@@ -1591,7 +1591,7 @@
       "title": "Export SCIM Events",
       "description": "Select a date range to export SCIM events as CSV. You will receive an email with a download link.",
       "fields": { "from": "From", "to": "To" },
-      "actions": { "export": "Export", "exporting": "Exporting..." },
+      "actions": { "export": "Export", "exporting": "Exporting...", "cancel": "Cancel" },
       "messages": {
         "successTitle": "Success",
         "success": "Export started. You will receive an email with a download link when it is ready."
@@ -1700,7 +1700,13 @@
     "actions": { "delete": "Delete", "cancel": "Cancel", "copyUrl": "Copy URL", "open": "Open" }
   },
   "scimConfiguration": {
-    "errors": { "title": "Error", "create": "Manual SCIM configuration failed" },
+    "errors": {
+      "title": "Error",
+      "create": "Manual SCIM configuration failed",
+      "copy": "Could not copy to clipboard",
+      "regenerate": "Failed to regenerate the bearer token",
+      "delete": "Failed to delete the SCIM configuration"
+    },
     "messages": {
       "configured": { "title": "Manual SCIM Configured" },
       "copyToken": "Copy the bearer token now. It will not be shown again.",
@@ -1710,9 +1716,21 @@
     },
     "empty": { "title": "Manual SCIM is not configured", "description": "Generate a SCIM endpoint and bearer token to configure your identity provider manually." },
     "active": { "title": "Manual SCIM Active", "description": "Use these credentials to configure SCIM in your identity provider." },
+    "configuredOn": "Configured on {{date}}",
     "fields": { "endpointUrl": "SCIM Endpoint URL", "bearerToken": "Bearer Token" },
     "tokenWarning": "This token will only be shown once. Copy it now.",
-    "actions": { "enable": "Enable SCIM", "enabling": "Enabling...", "regenerateToken": "Regenerate Token", "regenerating": "Regenerating...", "deleteConfiguration": "Delete Configuration", "cancel": "Cancel", "delete": "Delete", "deleting": "Deleting..." },
+    "actions": {
+      "enable": "Enable SCIM",
+      "enabling": "Enabling...",
+      "regenerateToken": "Regenerate Token",
+      "regenerating": "Regenerating...",
+      "deleteConfiguration": "Delete Configuration",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "copyEndpointUrl": "Copy SCIM endpoint URL",
+      "copyBearerToken": "Copy bearer token"
+    },
     "delete": {
       "title": "Delete Manual SCIM Configuration",
       "description": "Are you sure you want to delete the manual SCIM configuration? This will:",

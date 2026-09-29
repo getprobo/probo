@@ -18,20 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  Field,
-  IconArrowDown,
-  Input,
-  Spinner,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
+import { Spinner } from "@probo/ui";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useRef, useState } from "react";
@@ -45,9 +33,9 @@ import {
 import { useSearchParams } from "react-router";
 
 import type { SCIMPageCreateSCIMConfigurationMutation } from "#/__generated__/iam/SCIMPageCreateSCIMConfigurationMutation.graphql";
-import type { SCIMPageExportMutation } from "#/__generated__/iam/SCIMPageExportMutation.graphql";
 import type { SCIMPageQuery } from "#/__generated__/iam/SCIMPageQuery.graphql";
 
+import { ExportSCIMEventsDialog } from "./_components/ExportSCIMEventsDialog";
 import { SCIMConfiguration } from "./_components/SCIMConfiguration";
 import { SCIMEventList } from "./_components/SCIMEventList";
 import { SCIMProviderCard } from "./_components/SCIMProviderCard";
@@ -71,7 +59,7 @@ export const scimPageQuery = graphql`
           ...SCIMProviderCard_scimConfiguration
         }
 
-        ...SCIMConfigurationFragment
+        ...SCIMConfiguration_organization
         ...SCIMSetupCards_organization
       }
     }
@@ -92,122 +80,6 @@ const createSCIMConfigurationMutation = graphql`
     }
   }
 `;
-
-const exportMutation = graphql`
-  mutation SCIMPageExportMutation(
-    $input: RequestSCIMEventExportInput!
-  ) {
-    requestSCIMEventExport(input: $input) {
-      exportJobId
-    }
-  }
-`;
-
-function ExportSCIMEventsDialog({
-  organizationId,
-}: {
-  organizationId: string;
-}) {
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const dialogRef = useDialogRef();
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [commitExport, isExporting] = useMutation<SCIMPageExportMutation>(exportMutation);
-
-  const handleExport = () => {
-    if (!fromDate || !toDate) return;
-
-    commitExport({
-      variables: {
-        input: {
-          organizationId,
-          fromTime: new Date(`${fromDate}T00:00:00Z`).toISOString(),
-          toTime: new Date(Date.parse(`${toDate}T00:00:00Z`) + 24 * 60 * 60 * 1000).toISOString(),
-        },
-      },
-      onCompleted: (_response, errors) => {
-        if (errors) {
-          toast({
-            title: t("scimPage.export.errors.title"),
-            description: formatError(t("scimPage.export.errors.request"), errors),
-            variant: "error",
-          });
-          return;
-        }
-        toast({
-          title: t("scimPage.export.messages.successTitle"),
-          description: t("scimPage.export.messages.success"),
-          variant: "success",
-        });
-        dialogRef.current?.close();
-        setFromDate("");
-        setToDate("");
-      },
-      onError: (error) => {
-        toast({
-          title: t("scimPage.export.errors.title"),
-          description: formatError(t("scimPage.export.errors.request"), error),
-          variant: "error",
-        });
-      },
-    });
-  };
-
-  return (
-    <>
-      <Button
-        variant="secondary"
-        icon={IconArrowDown}
-        onClick={() => dialogRef.current?.open()}
-      >
-        {t("scimPage.export.actions.export")}
-      </Button>
-      <Dialog
-        className="max-w-md"
-        ref={dialogRef}
-        title={t("scimPage.export.title")}
-      >
-        <DialogContent className="space-y-4" padded>
-          <p className="text-sm text-txt-secondary">
-            {t("scimPage.export.description")}
-          </p>
-          <Field label={t("scimPage.export.fields.from")}>
-            <Input
-              type="date"
-              value={fromDate}
-              onChange={e => setFromDate(e.target.value)}
-              required
-            />
-          </Field>
-          <Field label={t("scimPage.export.fields.to")}>
-            <Input
-              type="date"
-              value={toDate}
-              onChange={e => setToDate(e.target.value)}
-              required
-            />
-          </Field>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            onClick={handleExport}
-            disabled={isExporting || !fromDate || !toDate || fromDate > toDate}
-          >
-            {isExporting
-              ? (
-                  <>
-                    <Spinner size={16} />
-                    {t("scimPage.export.actions.exporting")}
-                  </>
-                )
-              : t("scimPage.export.actions.export")}
-          </Button>
-        </DialogFooter>
-      </Dialog>
-    </>
-  );
-}
 
 export function SCIMPage(props: {
   queryRef: PreloadedQuery<SCIMPageQuery>;
@@ -328,15 +200,13 @@ export function SCIMPage(props: {
             />
           )
         : (
-            <div className={section()}>
-              <Heading level={2} size={4} weight="medium" highContrast>
-                {t("scimPage.manualScim.title")}
-              </Heading>
-              <SCIMConfiguration
-                fKey={organization}
-                initialToken={createdToken}
-              />
-            </div>
+            <SCIMConfiguration
+              organizationKey={organization}
+              initialToken={createdToken}
+              onDeleted={() => {
+                setCreatedToken(null);
+              }}
+            />
           )}
       <div className={section()}>
         <div className="flex items-start justify-between gap-4">

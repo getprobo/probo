@@ -62,7 +62,7 @@ const createSCIMConfigurationMutation = graphql`
         ...SCIMProviderCard_scimConfiguration
         organization {
           id
-          ...SCIMConfigurationFragment
+          ...SCIMConfiguration_organization
           scimConfiguration {
             id
             endpointUrl
