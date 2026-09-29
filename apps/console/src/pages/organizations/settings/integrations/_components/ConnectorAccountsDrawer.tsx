@@ -71,6 +71,7 @@ const connectorAccountsDrawerQuery = graphql`
         canDiscover: permission(action: "core:connector:discover")
         canEnable: permission(action: "core:connector:create")
         canDelete: permission(action: "core:connector:delete")
+        initialAccountExternalId
         ...ConnectorAccountsDrawer_accounts
       }
     }
@@ -434,7 +435,10 @@ function ConnectorAccounts({
                     accountKey={node}
                     provider={provider}
                     connectorId={connectorId}
-                    canDisconnect={connector.canDelete}
+                    canDisconnect={
+                      connector.canDelete
+                      && node.externalAccountId !== connector.initialAccountExternalId
+                    }
                     onDisconnected={markAccountPending}
                   />
                 ))}

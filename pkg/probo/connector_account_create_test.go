@@ -82,6 +82,143 @@ func TestCreate_RecordsSettingsAccount(t *testing.T) {
 	assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
 }
 
+func TestDisableAccount_RefusesInitialAccount(t *testing.T) {
+	t.Parallel()
+
+	t.Run("settings account", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created := createAWSConnector(t, svc, scope, organizationID)
+		account := loadConnectorAccount(t, svc, scope, created.ID, "123456789012")
+
+		err := svc.DisableAccount(t.Context(), scope, account.ID)
+		require.ErrorIs(t, err, ErrInitialConnectorAccount)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+
+	t.Run("implicit account", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created, err := svc.Create(
+			t.Context(),
+			scope,
+			CreateConnectorRequest{
+				OrganizationID: organizationID,
+				Provider:       coredata.ConnectorProviderBrex,
+				Protocol:       coredata.ConnectorProtocolAPIKey,
+				Connection:     &connector.APIKeyConnection{APIKey: "bxt_test-key"},
+			},
+		)
+		require.NoError(t, err)
+
+		account := loadConnectorAccount(t, svc, scope, created.ID, created.ID.String())
+
+		err = svc.DisableAccount(t.Context(), scope, account.ID)
+		require.ErrorIs(t, err, ErrInitialConnectorAccount)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+
+	t.Run("another account on the same connector", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created := createAWSConnector(t, svc, scope, organizationID)
+		member := insertConnectorAccount(t, svc.svc.pg, scope, created, "111111111111", "Member")
+
+		err := svc.DisableAccount(t.Context(), scope, member.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+
+		initial := loadConnectorAccount(t, svc, scope, created.ID, "123456789012")
+		assert.NotEqual(t, member.ID, initial.ID)
+	})
+
+	t.Run("settings change leaves the earliest row protected", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created := createAWSConnector(t, svc, scope, organizationID)
+		original := loadConnectorAccount(t, svc, scope, created.ID, "123456789012")
+
+		rewriteConnectorSettings(
+			t,
+			svc,
+			scope,
+			created.ID,
+			&coredata.AWSConnectorSettings{RoleARN: "arn:aws:iam::999999999999:role/ProboAudit"},
+		)
+
+		err := svc.DisableAccount(t.Context(), scope, original.ID)
+		require.ErrorIs(t, err, ErrInitialConnectorAccount)
+
+		externalID, err := svc.InitialAccountExternalID(t.Context(), scope, created.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "123456789012", externalID)
+
+		other, err := svc.EnableAccounts(
+			t.Context(),
+			scope,
+			created.ID,
+			[]EnableConnectorAccount{{
+				ExternalAccountID: "999999999999",
+				Name:              "Other",
+			}},
+		)
+		require.NoError(t, err)
+		require.Len(t, other, 1)
+
+		err = svc.DisableAccount(t.Context(), scope, other[0].ID)
+		require.NoError(t, err)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+
+	t.Run("external id rewrite keeps the same row protected", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created := createAWSConnector(t, svc, scope, organizationID)
+		original := loadConnectorAccount(t, svc, scope, created.ID, "123456789012")
+
+		require.NoError(t, svc.svc.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := coredata.SyncStandaloneAccount(ctx, tx, scope, created, "999999999999", "Renamed")
+
+			return err
+		}))
+
+		err := svc.DisableAccount(t.Context(), scope, original.ID)
+		require.ErrorIs(t, err, ErrInitialConnectorAccount)
+
+		externalID, err := svc.InitialAccountExternalID(t.Context(), scope, created.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "999999999999", externalID)
+	})
+
+	t.Run("organization install member account", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created, err := svc.Create(
+			t.Context(),
+			scope,
+			CreateConnectorRequest{
+				OrganizationID: organizationID,
+				Provider:       coredata.ConnectorProviderAWS,
+				Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+				Connection:     &connector.WorkloadIdentityConnection{},
+			},
+		)
+		require.NoError(t, err)
+
+		member := insertConnectorAccount(t, svc.svc.pg, scope, created, "111111111111", "Member")
+
+		err = svc.DisableAccount(t.Context(), scope, member.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 0, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+}
+
 func TestCreate_LeavesOrganizationInstallWithoutAccount(t *testing.T) {
 	t.Parallel()
 
@@ -99,6 +236,55 @@ func TestCreate_LeavesOrganizationInstallWithoutAccount(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, 0, countConnectorAccounts(t, svc, scope, created.ID))
+}
+
+func rewriteConnectorSettings(
+	t *testing.T,
+	svc *ConnectorService,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+	settings any,
+) {
+	t.Helper()
+
+	require.NoError(t, svc.svc.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		cnnctr := &coredata.Connector{}
+		if err := cnnctr.LoadByID(ctx, tx, scope, connectorID, svc.svc.encryptionKey); err != nil {
+			return err
+		}
+
+		if err := cnnctr.SetSettings(settings); err != nil {
+			return err
+		}
+
+		cnnctr.UpdatedAt = time.Now()
+
+		return cnnctr.Update(ctx, tx, scope, svc.svc.encryptionKey)
+	}))
+}
+
+func createAWSConnector(
+	t *testing.T,
+	svc *ConnectorService,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) *coredata.Connector {
+	t.Helper()
+
+	created, err := svc.Create(
+		t.Context(),
+		scope,
+		CreateConnectorRequest{
+			OrganizationID: organizationID,
+			Provider:       coredata.ConnectorProviderAWS,
+			Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
+			Connection:     &connector.WorkloadIdentityConnection{},
+			RawSettings:    json.RawMessage(`{"role_arn":"arn:aws:iam::123456789012:role/ProboAudit"}`),
+		},
+	)
+	require.NoError(t, err)
+
+	return created
 }
 
 func newConnectorCreateEnv(t *testing.T) (*ConnectorService, coredata.Scoper, gid.GID) {
@@ -180,4 +366,30 @@ func countConnectorAccounts(
 	))
 
 	return count
+}
+
+func insertConnectorAccount(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+	externalID string,
+	name string,
+) *coredata.ConnectorAccount {
+	t.Helper()
+
+	var account *coredata.ConnectorAccount
+
+	require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		created, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name)
+		if err != nil {
+			return err
+		}
+
+		account = created
+
+		return nil
+	}))
+
+	return account
 }
