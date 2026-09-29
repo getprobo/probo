@@ -77,7 +77,7 @@ type createResponse struct {
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg            string
-		flagFramework      string
+		flagFrameworks     []string
 		flagName           string
 		flagFirm           string
 		flagState          string
@@ -157,13 +157,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
 
-			input := map[string]any{
-				"organizationId": flagOrg,
-				"name":           flagName,
+			if flagFrameworks == nil {
+				flagFrameworks = []string{}
 			}
 
-			if flagFramework != "" {
-				input["frameworkId"] = flagFramework
+			input := map[string]any{
+				"organizationId": flagOrg,
+				"frameworkIds":   flagFrameworks,
+				"name":           flagName,
 			}
 
 			if flagFirm != "" {
@@ -226,7 +227,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().StringVar(&flagFramework, "framework", "", "Framework ID")
+	cmd.Flags().StringArrayVar(&flagFrameworks, "framework", nil, "Framework ID (repeat for each framework)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Audit name (required)")
 	cmd.Flags().StringVar(&flagFirm, "firm", "", "Audit firm")
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: TO_BOOK, AUDIT_BOOKED, NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")

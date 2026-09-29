@@ -53,8 +53,12 @@ const auditFragment = graphql`
   @argumentDefinitions(compliancePortalId: { type: "ID!" }) {
     id
     name
-    framework {
-      name
+    frameworks(first: 20) {
+      edges {
+        node {
+          name
+        }
+      }
     }
     validity {
       end
@@ -237,7 +241,9 @@ export function CompliancePortalAuditListItem(props: {
         />
       </Td>
       <Td>
-        <div className="flex gap-4 items-center">{audit.framework?.name}</div>
+        <div className="flex gap-4 items-center">
+          {audit.frameworks.edges.map(edge => edge.node.name).join(", ")}
+        </div>
       </Td>
       <Td>{auditTitle}</Td>
       <Td>{validUntilFormatted}</Td>

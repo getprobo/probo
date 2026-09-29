@@ -52,9 +52,12 @@ const auditListItemFragment = graphql`
       id
     }
     state
-    framework {
-      id
-      name
+    frameworks(first: 20) {
+      edges {
+        node {
+          name
+        }
+      }
     }
     canDelete: permission(action: "core:audit:delete")
   }
@@ -75,6 +78,9 @@ export function AuditListItem({
   const organizationId = useOrganizationId();
   const { i18n, t } = useTranslation();
   const deleteAudit = useDeleteAudit(audit, connectionId);
+  const frameworkLabel = audit.frameworks.edges
+    .map(edge => edge.node.name)
+    .join(", ");
 
   function formatPeriod(
     start: string | null | undefined,
@@ -94,7 +100,7 @@ export function AuditListItem({
     <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td>{audit.name || t("auditsPage.row.untitled")}</Td>
       <Td>
-        {audit.framework?.name ?? t("auditsPage.row.unknownFramework")}
+        {frameworkLabel || t("auditsPage.row.unknownFramework")}
       </Td>
       <Td>
         <Badge variant={getAuditStateVariant(audit.state)}>

@@ -1224,7 +1224,7 @@
     "errors": {
       "delete": "Verwijderen van audit mislukt",
       "createOrganizationRequired": "Aanmaken van audit mislukt: organisatie is verplicht",
-      "createFrameworkRequired": "Aanmaken van audit mislukt: framework is verplicht",
+      "createFrameworkRequired": "Aanmaken van audit mislukt: minimaal één framework is verplicht",
       "updateIdRequired": "Bijwerken van audit mislukt: audit-ID is verplicht",
       "uploadReport": "Uploaden van auditrapport mislukt",
       "uploadReportIdRequired": "Uploaden van rapport mislukt: audit-ID is verplicht",
@@ -3486,6 +3486,16 @@
       "auditStartDate": "Startdatum audit",
       "auditEndDate": "Einddatum audit"
     },
+    "frameworks": {
+      "title": "Frameworks",
+      "empty": "Geen frameworks gekoppeld.",
+      "addPlaceholder": "Framework koppelen",
+      "unlink": "Ontkoppelen",
+      "linked": "Framework gekoppeld",
+      "unlinked": "Framework ontkoppeld",
+      "linkError": "Koppelen van framework mislukt",
+      "unlinkError": "Ontkoppelen van framework mislukt"
+    },
     "actions": {
       "delete": "Verwijderen",
       "update": "Bijwerken",
@@ -3515,7 +3525,7 @@
     },
     "columns": {
       "name": "Naam",
-      "framework": "Framework",
+      "framework": "Frameworks",
       "state": "Status",
       "auditPeriod": "Auditperiode",
       "validityPeriod": "Geldigheidsperiode",
@@ -3548,7 +3558,7 @@
       "newAudit": "Nieuwe audit"
     },
     "validation": {
-      "frameworkRequired": "Framework is verplicht"
+      "frameworkRequired": "Minimaal één framework is verplicht"
     },
     "messages": {
       "success": "Succes",
@@ -3562,8 +3572,8 @@
     "fileSize": "{{value}} MB",
     "loading": "Laden...",
     "fields": {
-      "framework": "Framework",
-      "frameworkPlaceholder": "Selecteer een framework",
+      "framework": "Frameworks",
+      "frameworkPlaceholder": "Selecteer frameworks",
       "name": "Naam",
       "namePlaceholder": "Auditnaam",
       "firm": "Auditkantoor",

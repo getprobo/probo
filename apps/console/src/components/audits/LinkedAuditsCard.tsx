@@ -50,9 +50,12 @@ const linkedAuditFragment = graphql`
     id
     name
     state
-    framework {
-      id
-      name
+    frameworks(first: 20) {
+      edges {
+        node {
+          name
+        }
+      }
     }
   }
 `;
@@ -196,13 +199,16 @@ function AuditRow(props: {
   const audit = useFragment(linkedAuditFragment, props.audit);
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
+  const frameworkLabel = audit.frameworks.edges
+    .map(edge => edge.node.name)
+    .join(", ");
 
   return (
     <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td>
         <div className="flex flex-col">
-          <div className="font-medium">{audit.framework?.name}</div>
-          {audit.name && (
+          <div className="font-medium">{frameworkLabel || audit.name}</div>
+          {frameworkLabel && audit.name && (
             <div className="text-sm text-txt-secondary">{audit.name}</div>
           )}
         </div>

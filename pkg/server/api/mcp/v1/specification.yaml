@@ -6200,7 +6200,7 @@ components:
       required:
         - id
         - organization_id
-        - framework_id
+        - framework_ids
         - state
         - has_report
         - created_at
@@ -6212,9 +6212,11 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        framework_id:
-          $ref: "#/components/schemas/GID"
-          description: Framework ID
+        framework_ids:
+          type: array
+          description: Framework IDs linked to the audit
+          items:
+            $ref: "#/components/schemas/GID"
         name:
           type:
             - string
@@ -6343,14 +6345,16 @@ components:
       type: object
       required:
         - organization_id
-        - framework_id
+        - framework_ids
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        framework_id:
-          $ref: "#/components/schemas/GID"
-          description: Framework ID
+        framework_ids:
+          type: array
+          description: Framework IDs linked to the audit
+          items:
+            $ref: "#/components/schemas/GID"
         name:
           type: string
           description: Audit name
@@ -6429,6 +6433,52 @@ components:
         deleted_audit_id:
           $ref: "#/components/schemas/GID"
           description: Deleted audit ID
+
+    LinkAuditFrameworkInput:
+      type: object
+      required:
+        - audit_id
+        - framework_id
+      properties:
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+
+    LinkAuditFrameworkOutput:
+      type: object
+      required:
+        - audit
+      properties:
+        audit:
+          $ref: "#/components/schemas/Audit"
+
+    UnlinkAuditFrameworkInput:
+      type: object
+      required:
+        - audit_id
+        - framework_id
+      properties:
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+
+    UnlinkAuditFrameworkOutput:
+      type: object
+      required:
+        - audit
+        - deleted_framework_id
+      properties:
+        audit:
+          $ref: "#/components/schemas/Audit"
+        deleted_framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Unlinked framework ID
 
     ControlOrderField:
       type: string
@@ -17926,6 +17976,30 @@ tools:
       $ref: "#/components/schemas/DeleteAuditInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAuditOutput"
+  - name: linkAuditFramework
+    title: Link Audit Framework
+    description: Link a framework to an audit
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkAuditFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkAuditFrameworkOutput"
+  - name: unlinkAuditFramework
+    title: Unlink Audit Framework
+    description: Unlink a framework from an audit
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkAuditFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkAuditFrameworkOutput"
   - name: getAuditReportUrl
     title: Get Audit Report URL
     description: Get a presigned download URL for an audit's attached report. Returns a time-limited URL valid for 15 minutes. The audit must have an attached report.

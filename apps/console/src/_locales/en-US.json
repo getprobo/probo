@@ -764,7 +764,7 @@
     "errors": {
       "delete": "Failed to delete audit",
       "createOrganizationRequired": "Failed to create audit: organization is required",
-      "createFrameworkRequired": "Failed to create audit: framework is required",
+      "createFrameworkRequired": "Failed to create audit: at least one framework is required",
       "updateIdRequired": "Failed to update audit: audit ID is required",
       "uploadReport": "Failed to upload audit report",
       "uploadReportIdRequired": "Failed to upload report: audit ID is required",
@@ -2148,6 +2148,7 @@
     "deleteReportConfirmation": "This will permanently delete the audit report \"{{name}}\". This action cannot be undone.",
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "fields": { "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "frameworks": { "title": "Frameworks", "empty": "No frameworks linked.", "addPlaceholder": "Link a framework", "unlink": "Unlink", "linked": "Framework linked", "unlinked": "Framework unlinked", "linkError": "Failed to link framework", "unlinkError": "Failed to unlink framework" },
     "actions": { "delete": "Delete", "update": "Update", "updating": "Updating...", "download": "Download" },
     "report": { "title": "Audit Report", "uploaded": "Uploaded {{date}}", "uploadDescription": "Upload the final audit report document (PDF recommended)", "dropzoneDescription": "Only PDF up to 25MB are allowed" }
   },
@@ -2159,7 +2160,7 @@
     },
     "dropzoneOverlay": "Drop a PDF to create an audit with a report",
     "actions": { "addAudit": "Add audit", "delete": "Delete" },
-    "columns": { "name": "Name", "framework": "Framework", "state": "State", "auditPeriod": "Audit period", "validityPeriod": "Validity period", "report": "Report" },
+    "columns": { "name": "Name", "framework": "Frameworks", "state": "State", "auditPeriod": "Audit period", "validityPeriod": "Validity period", "report": "Report" },
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "row": {
       "untitled": "Untitled",
@@ -2175,12 +2176,12 @@
   },
   "createAuditDialog": {
     "breadcrumb": { "audits": "Audits", "newAudit": "New Audit" },
-    "validation": { "frameworkRequired": "Framework is required" },
+    "validation": { "frameworkRequired": "At least one framework is required" },
     "messages": { "success": "Success", "error": "Error", "created": "Audit created successfully", "createdWithReport": "Audit created and report uploaded successfully" },
     "errors": { "create": "Failed to create audit" },
     "fileSize": "{{value}} MB",
     "loading": "Loading...",
-    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "fields": { "framework": "Frameworks", "frameworkPlaceholder": "Select frameworks", "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "actions": { "create": "Create" }
   },

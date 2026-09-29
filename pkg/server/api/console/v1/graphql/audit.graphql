@@ -162,7 +162,13 @@ type Audit implements Node {
     name: String
     firm: String
     organization: Organization @goField(forceResolver: true)
-    framework: Framework @goField(forceResolver: true)
+    frameworks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FrameworkOrder
+    ): FrameworkConnection! @goField(forceResolver: true)
     validity: Period
     auditDates: Period
     reportFile: File @goField(forceResolver: true)
@@ -276,6 +282,12 @@ extend type Mutation {
     deleteFindingAuditMapping(
         input: DeleteFindingAuditMappingInput!
     ): DeleteFindingAuditMappingPayload
+    createAuditFrameworkMapping(
+        input: CreateAuditFrameworkMappingInput!
+    ): CreateAuditFrameworkMappingPayload
+    deleteAuditFrameworkMapping(
+        input: DeleteAuditFrameworkMappingInput!
+    ): DeleteAuditFrameworkMappingPayload
     publishFindingList(
         input: PublishFindingListInput!
     ): PublishFindingListPayload!
@@ -294,7 +306,7 @@ type PublishFindingListPayload {
 
 input CreateAuditInput {
     organizationId: ID!
-    frameworkId: ID!
+    frameworkIds: [ID!]!
     name: String
     firm: String
     validity: PeriodInput
@@ -411,4 +423,24 @@ type CreateFindingAuditMappingPayload {
 type DeleteFindingAuditMappingPayload {
     deletedFindingId: ID
     deletedAuditId: ID
+}
+
+input CreateAuditFrameworkMappingInput {
+    auditId: ID!
+    frameworkId: ID!
+}
+
+input DeleteAuditFrameworkMappingInput {
+    auditId: ID!
+    frameworkId: ID!
+}
+
+type CreateAuditFrameworkMappingPayload {
+    audit: Audit!
+    frameworkEdge: FrameworkEdge!
+}
+
+type DeleteAuditFrameworkMappingPayload {
+    audit: Audit!
+    deletedFrameworkId: ID!
 }

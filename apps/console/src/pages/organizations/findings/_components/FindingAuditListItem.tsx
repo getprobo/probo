@@ -39,8 +39,12 @@ const findingAuditListItemFragment = graphql`
       id
       name
       state
-      framework {
-        name
+      frameworks(first: 20) {
+        edges {
+          node {
+            name
+          }
+        }
       }
     }
   }
@@ -63,13 +67,16 @@ export function FindingAuditListItem({
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
   const audit = auditEdge.node;
+  const frameworkLabel = audit.frameworks.edges
+    .map(edge => edge.node.name)
+    .join(", ");
 
   return (
     <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td>
         <div className="flex flex-col">
-          <div className="font-medium">{audit.framework?.name}</div>
-          {audit.name && (
+          <div className="font-medium">{frameworkLabel || audit.name}</div>
+          {frameworkLabel && audit.name && (
             <div className="text-sm text-txt-secondary">{audit.name}</div>
           )}
         </div>

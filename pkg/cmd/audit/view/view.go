@@ -23,6 +23,7 @@ package view
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -39,6 +40,14 @@ query($id: ID!) {
       name
       firm
       state
+      frameworks(first: 50) {
+        edges {
+          node {
+            id
+            name
+          }
+        }
+      }
       validity {
         start
         end
@@ -56,11 +65,19 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename string `json:"__typename"`
-		ID       string `json:"id"`
-		Name     string `json:"name"`
-		Firm     string `json:"firm"`
-		State    string `json:"state"`
+		Typename   string `json:"__typename"`
+		ID         string `json:"id"`
+		Name       string `json:"name"`
+		Firm       string `json:"firm"`
+		State      string `json:"state"`
+		Frameworks *struct {
+			Edges []struct {
+				Node struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"frameworks"`
 		Validity *struct {
 			Start *string `json:"start"`
 			End   *string `json:"end"`
@@ -143,6 +160,17 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), a.State)
+
+			if a.Frameworks != nil {
+				names := make([]string, 0, len(a.Frameworks.Edges))
+				for _, edge := range a.Frameworks.Edges {
+					if edge.Node.Name != "" {
+						names = append(names, edge.Node.Name)
+					}
+				}
+
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Frameworks:"), strings.Join(names, ", "))
+			}
 
 			if a.Validity != nil && a.Validity.Start != nil && *a.Validity.Start != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Valid From:"), *a.Validity.Start)

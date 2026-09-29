@@ -46,26 +46,38 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 	return types.NewOrganization(organization), nil
 }
 
-// Framework is the resolver for the framework field.
-func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	if _, err := r.authorize(ctx, obj.Framework.ID, probo.ActionFrameworkGet); err != nil {
+// Frameworks is the resolver for the frameworks field.
+func (r *auditResolver) Frameworks(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkList)
+	if err != nil {
 		return nil, err
 	}
 
-	loaders := dataloader.FromContext(ctx)
+	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
+		Field:     coredata.FrameworkOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.FrameworkOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
 
-	framework, err := loaders.Framework.Load(ctx, obj.Framework.ID)
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	frameworkPage, err := r.probo.Audits.ListFrameworksForAuditID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "audit %q not found", obj.ID)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list audit frameworks", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFramework(framework), nil
+	return types.NewFrameworkConnection(frameworkPage, r, obj.ID), nil
 }
 
 // ReportFile is the resolver for the reportFile field.
@@ -273,6 +285,14 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		}
 
 		return count, nil
+	case *frameworkResolver:
+		count, err := r.probo.Audits.CountForFrameworkID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
 	default:
 		r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 		return 0, gqlutils.Internal(ctx)
@@ -461,7 +481,7 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 
 	req := probo.CreateAuditRequest{
 		OrganizationID: input.OrganizationID,
-		FrameworkID:    input.FrameworkID,
+		FrameworkIDs:   input.FrameworkIds,
 		Name:           input.Name,
 		Firm:           input.Firm,
 		State:          input.State,
@@ -750,6 +770,80 @@ func (r *mutationResolver) DeleteFindingAuditMapping(ctx context.Context, input 
 	}, nil
 }
 
+// CreateAuditFrameworkMapping is the resolver for the createAuditFrameworkMapping field.
+func (r *mutationResolver) CreateAuditFrameworkMapping(ctx context.Context, input types.CreateAuditFrameworkMappingInput) (*types.CreateAuditFrameworkMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.AuditID, probo.ActionAuditUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	audit, framework, err := r.probo.Audits.LinkFramework(
+		ctx,
+		scope,
+		&probo.LinkAuditFrameworkRequest{
+			AuditID:     input.AuditID,
+			FrameworkID: input.FrameworkID,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "audit or framework not found")
+		}
+
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflictf(ctx, "framework is already linked to the audit")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot link framework to audit", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateAuditFrameworkMappingPayload{
+		Audit:         types.NewAudit(audit),
+		FrameworkEdge: types.NewFrameworkEdge(framework, coredata.FrameworkOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteAuditFrameworkMapping is the resolver for the deleteAuditFrameworkMapping field.
+func (r *mutationResolver) DeleteAuditFrameworkMapping(ctx context.Context, input types.DeleteAuditFrameworkMappingInput) (*types.DeleteAuditFrameworkMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.AuditID, probo.ActionAuditUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	audit, err := r.probo.Audits.UnlinkFramework(
+		ctx,
+		scope,
+		&probo.LinkAuditFrameworkRequest{
+			AuditID:     input.AuditID,
+			FrameworkID: input.FrameworkID,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "audit or framework not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot unlink framework from audit", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteAuditFrameworkMappingPayload{
+		Audit:              types.NewAudit(audit),
+		DeletedFrameworkID: input.FrameworkID,
+	}, nil
+}
+
 // PublishFindingList is the resolver for the publishFindingList field.
 func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.PublishFindingListInput) (*types.PublishFindingListPayload, error) {
 	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingPublish)
@@ -796,3 +890,32 @@ type (
 	findingResolver           struct{ *Resolver }
 	findingConnectionResolver struct{ *Resolver }
 )
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
+	if _, err := r.authorize(ctx, obj.Framework.ID, probo.ActionFrameworkGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	framework, err := loaders.Framework.Load(ctx, obj.Framework.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFramework(framework), nil
+}
+*/
