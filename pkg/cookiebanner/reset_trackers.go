@@ -33,7 +33,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-const decomposeGlobAttempts = 3
+const (
+	decomposeGlobBatchSize = 100
+	decomposeGlobWait      = 200 * time.Millisecond
+)
 
 // ResetTrackersResult summarizes what a banner reset changed.
 type ResetTrackersResult struct {
@@ -58,11 +61,11 @@ type ResetTrackersResult struct {
 // worker consumes (deletes) exact patterns when it merges them into
 // globs, so the only way to re-run analysis is to reconstruct the exacts
 // from detections. Each uncategorised, non-excluded glob is decomposed
-// in its own transaction — every detection it covers becomes (or
-// rejoins) an exact pattern keyed by its identifier — and the now-empty
-// glob is deleted. Per-glob commits keep lock lifetime short so a
-// long-running reset does not deadlock with live detection reporting.
-// User-categorised and excluded patterns are never touched.
+// — every detection it covers becomes (or rejoins) an exact pattern
+// keyed by its identifier — and the now-empty glob is deleted. Globs
+// are claimed in short SKIP LOCKED batches so the reset does not wait
+// on a mapping worker (and its statement timeout). User-categorised
+// and excluded patterns are never touched.
 //
 // When keyword is non-nil and non-empty, the reset is scoped to patterns
 // whose pattern or display name contains it (case-insensitive): only
@@ -138,8 +141,8 @@ func ResetBannerTrackers(
 // decomposeGlobs turns every uncategorised, non-excluded glob pattern of
 // the banner back into exact patterns derived from its detected trackers,
 // relinking each detection to its exact and deleting the emptied glob.
-// Listing is a read; each glob is locked and rewritten in its own
-// transaction.
+// Globs are claimed in SKIP LOCKED batches so a mapping worker holding
+// one row cannot stall the whole reset.
 func decomposeGlobs(
 	ctx context.Context,
 	pgClient *pg.Client,
@@ -151,144 +154,164 @@ func decomposeGlobs(
 ) error {
 	globMatchType := coredata.TrackerPatternMatchTypeGlob
 	notExcluded := false
+	filter := coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded).WithPatternKeyword(keyword)
 
-	return page.WalkAll(
-		ctx,
-		page.OrderBy[coredata.TrackerPatternOrderField]{
-			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
-			var batch coredata.TrackerPatterns
+	var emptyRounds int
 
-			err := pgClient.WithConn(
-				ctx,
-				func(ctx context.Context, conn pg.Querier) error {
-					if err := batch.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor, coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded).WithPatternKeyword(keyword)); err != nil {
-						return fmt.Errorf("cannot load glob patterns: %w", err)
-					}
-
-					return nil
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			return batch, nil
-		},
-		func(globs []*coredata.TrackerPattern) error {
-			for _, glob := range globs {
-				if err := decomposeGlob(ctx, pgClient, scope, uncategorisedID, glob, result); err != nil {
-					return err
-				}
-			}
-
-			return nil
-		},
-	)
-}
-
-func decomposeGlob(
-	ctx context.Context,
-	pgClient *pg.Client,
-	scope coredata.Scoper,
-	uncategorisedID gid.GID,
-	glob *coredata.TrackerPattern,
-	result *ResetTrackersResult,
-) error {
-	for attempt := 1; attempt <= decomposeGlobAttempts; attempt++ {
+	for {
 		var (
-			exactsCreated      int
-			detectionsRelinked int
-			decomposed         bool
+			batchLen   int
+			exacts     int
+			relinked   int
+			decomposed int
 		)
 
 		err := pgClient.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				locked := coredata.TrackerPattern{ID: glob.ID}
-				if err := locked.LoadByIDForUpdate(ctx, tx, scope, glob.ID); err != nil {
-					if errors.Is(err, coredata.ErrResourceNotFound) {
-						return nil
+				var globs coredata.TrackerPatterns
+				if err := globs.LoadUncategorisedGlobsForUpdateSkipLocked(ctx, tx, scope, bannerID, uncategorisedID, keyword, decomposeGlobBatchSize); err != nil {
+					return fmt.Errorf("cannot load glob patterns: %w", err)
+				}
+
+				batchLen = len(globs)
+
+				for _, glob := range globs {
+					created, moved, err := decomposeLockedGlob(ctx, tx, scope, uncategorisedID, glob)
+					if err != nil {
+						return err
 					}
 
-					return fmt.Errorf("cannot lock glob pattern %q: %w", glob.Pattern, err)
+					exacts += created
+					relinked += moved
+					decomposed++
 				}
-
-				if locked.MatchType != coredata.TrackerPatternMatchTypeGlob ||
-					locked.Excluded ||
-					locked.CookieCategoryID != uncategorisedID {
-					return nil
-				}
-
-				err := page.WalkAll(
-					ctx,
-					page.OrderBy[coredata.DetectedTrackerOrderField]{
-						Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
-						Direction: page.OrderDirectionAsc,
-					},
-					func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
-						var batch coredata.DetectedTrackers
-						if err := batch.LoadByTrackerPatternID(ctx, tx, scope, locked.ID, cursor); err != nil {
-							return nil, fmt.Errorf("cannot load detections for glob %q: %w", locked.Pattern, err)
-						}
-
-						return batch, nil
-					},
-					func(detections []*coredata.DetectedTracker) error {
-						for _, detection := range detections {
-							exactID, created, err := ensureExactPattern(ctx, tx, scope, &locked, uncategorisedID, detection)
-							if err != nil {
-								return err
-							}
-
-							if created {
-								exactsCreated++
-							}
-
-							detection.TrackerPatternID = &exactID
-							if err := detection.UpdateTrackerPatternID(ctx, tx, scope); err != nil {
-								return fmt.Errorf("cannot relink detection %s: %w", detection.ID, err)
-							}
-
-							detectionsRelinked++
-						}
-
-						return nil
-					},
-				)
-				if err != nil {
-					return err
-				}
-
-				if err := locked.Delete(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot delete glob pattern %q: %w", locked.Pattern, err)
-				}
-
-				decomposed = true
 
 				return nil
 			},
 		)
 		if err != nil {
-			if attempt < decomposeGlobAttempts && isDeadlock(err) {
+			if isDeadlock(err) {
 				continue
 			}
 
 			return err
 		}
 
-		if decomposed {
-			result.GlobsDecomposed++
-			result.ExactsCreated += exactsCreated
-			result.DetectionsRelinked += detectionsRelinked
+		result.ExactsCreated += exacts
+		result.DetectionsRelinked += relinked
+		result.GlobsDecomposed += decomposed
+
+		if batchLen > 0 {
+			emptyRounds = 0
+			continue
 		}
 
-		return nil
+		var remaining int
+
+		err = pgClient.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				var patterns coredata.TrackerPatterns
+
+				count, err := patterns.CountByCookieBannerID(ctx, conn, scope, bannerID, filter)
+				if err != nil {
+					return fmt.Errorf("cannot count remaining glob patterns: %w", err)
+				}
+
+				remaining = count
+
+				return nil
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if remaining == 0 {
+			return nil
+		}
+
+		emptyRounds++
+		if emptyRounds >= 25 {
+			return fmt.Errorf("cannot lock %d remaining glob pattern(s); mapping workers still hold them", remaining)
+		}
+
+		if err := waitReset(ctx, decomposeGlobWait); err != nil {
+			return err
+		}
+	}
+}
+
+func decomposeLockedGlob(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	uncategorisedID gid.GID,
+	glob *coredata.TrackerPattern,
+) (int, int, error) {
+	var (
+		exactsCreated      int
+		detectionsRelinked int
+	)
+
+	err := page.WalkAll(
+		ctx,
+		page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+			var batch coredata.DetectedTrackers
+			if err := batch.LoadByTrackerPatternID(ctx, tx, scope, glob.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load detections for glob %q: %w", glob.Pattern, err)
+			}
+
+			return batch, nil
+		},
+		func(detections []*coredata.DetectedTracker) error {
+			for _, detection := range detections {
+				exactID, created, err := ensureExactPattern(ctx, tx, scope, glob, uncategorisedID, detection)
+				if err != nil {
+					return err
+				}
+
+				if created {
+					exactsCreated++
+				}
+
+				detection.TrackerPatternID = &exactID
+				if err := detection.UpdateTrackerPatternID(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot relink detection %s: %w", detection.ID, err)
+				}
+
+				detectionsRelinked++
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, 0, err
 	}
 
-	return nil
+	if err := glob.Delete(ctx, tx, scope); err != nil {
+		return 0, 0, fmt.Errorf("cannot delete glob pattern %q: %w", glob.Pattern, err)
+	}
+
+	return exactsCreated, detectionsRelinked, nil
+}
+
+func waitReset(ctx context.Context, d time.Duration) error {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }
 
 func isDeadlock(err error) bool {

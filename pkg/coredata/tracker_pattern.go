@@ -244,6 +244,77 @@ FOR UPDATE;
 	return nil
 }
 
+// LoadUncategorisedGlobsForUpdateSkipLocked locks a batch of
+// uncategorised, non-excluded glob patterns for a banner reset. SKIP
+// LOCKED skips rows a mapping worker already holds so the reset does
+// not wait out the worker's statement timeout.
+func (tps *TrackerPatterns) LoadUncategorisedGlobsForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	cookieCategoryID gid.GID,
+	keyword *string,
+	limit int,
+) error {
+	globMatchType := TrackerPatternMatchTypeGlob
+	notExcluded := false
+	filter := NewTrackerPatternFilter(&globMatchType, &cookieCategoryID, &notExcluded).WithPatternKeyword(keyword)
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	common_tracker_pattern_id,
+	tracker_type,
+	pattern,
+	match_type,
+	display_name,
+	description,
+	excluded,
+	max_age_seconds,
+	source,
+	last_matched_at,
+	mapping_requested_at,
+	created_at,
+	updated_at
+FROM
+	tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND %s
+ORDER BY
+	id
+FOR UPDATE SKIP LOCKED
+LIMIT %d
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), limit)
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := tx.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tracker patterns: %w", err)
+	}
+
+	patterns, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrackerPattern])
+	if err != nil {
+		return fmt.Errorf("cannot collect tracker patterns: %w", err)
+	}
+
+	*tps = patterns
+
+	return nil
+}
+
 func (tp *TrackerPattern) LoadByBannerIDTypeAndPattern(
 	ctx context.Context,
 	conn pg.Querier,
