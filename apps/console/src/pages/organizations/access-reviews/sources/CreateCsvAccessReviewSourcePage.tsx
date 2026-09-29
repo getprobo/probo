@@ -18,17 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import {
   Button,
   Card,
   Field,
   PageHeader,
-  useToast,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -36,9 +34,10 @@ import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/
 import type { CreateCsvAccessReviewSourcePageQuery } from "#/__generated__/core/CreateCsvAccessReviewSourcePageQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 import { z } from "#/lib/zod";
 
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
+import { createAccessReviewSourcesMutation, prependCreatedSourceEdges } from "../dialogs/accessReviewSourceMutations";
 
 export const createCsvAccessReviewSourcePageQuery = graphql`
   query CreateCsvAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -65,7 +64,6 @@ export function CreateCsvAccessReviewSourcePage({
   queryRef,
 }: CreateCsvAccessReviewSourcePageProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const { register, handleSubmit }
@@ -88,12 +86,16 @@ export function CreateCsvAccessReviewSourcePage({
 
   const connectionId = ConnectionHandler.getConnectionID(
     organization.id,
-    "AccessReviewConnectionsPage_accessReviewSources",
+    "AccessReviewSourcesPage_accessReviewSources",
   );
 
-  const [createAccessReviewSource, isCreating]
+  const [createAccessReviewSources, isCreating]
     = useMutation<accessReviewSourceMutationsCreateMutation>(
-      createAccessReviewSourceMutation,
+      createAccessReviewSourcesMutation,
+      {
+        successMessage: t("createCsvAccessReviewSourcePage.messages.created"),
+        errorToast: t("createCsvAccessReviewSourcePage.errors.create"),
+      },
     );
 
   if (!organization.canCreateSource) {
@@ -107,50 +109,25 @@ export function CreateCsvAccessReviewSourcePage({
   }
 
   const onSubmit = (data: z.infer<typeof csvSchema>) => {
-    createAccessReviewSource({
+    void createAccessReviewSources({
       variables: {
         input: {
           organizationId,
-          connectorId: null,
-          name: data.name,
-          csvData: data.csvData,
+          sources: [{
+            connectorId: null,
+            name: data.name,
+            csvData: data.csvData,
+          }],
         },
       },
       updater: (store) => {
         if (connectionId) {
-          prependCreatedSourceEdge(store, connectionId);
+          prependCreatedSourceEdges(store, connectionId);
         }
       },
-      onCompleted(_, errors) {
-        if (errors?.length) {
-          toast({
-            title: t("createCsvAccessReviewSourcePage.messages.error"),
-            description: formatError(
-              t("createCsvAccessReviewSourcePage.errors.create"),
-              errors,
-            ),
-            variant: "error",
-          });
-          return;
-        }
-        toast({
-          title: t("createCsvAccessReviewSourcePage.messages.success"),
-          description: t("createCsvAccessReviewSourcePage.messages.created"),
-          variant: "success",
-        });
-        void navigate(`/organizations/${organizationId}/access-reviews/connections`);
-      },
-      onError(error) {
-        toast({
-          title: t("createCsvAccessReviewSourcePage.messages.error"),
-          description: formatError(
-            t("createCsvAccessReviewSourcePage.errors.create"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
-    });
+    }).then(() => {
+      void navigate(`/organizations/${organizationId}/access-reviews/sources`);
+    }).catch(() => undefined);
   };
 
   return (
@@ -182,7 +159,7 @@ export function CreateCsvAccessReviewSourcePage({
 
           <div className="flex items-center justify-end gap-2">
             <Button variant="secondary" asChild>
-              <Link to={`/organizations/${organizationId}/access-reviews/connections`}>
+              <Link to={`/organizations/${organizationId}/access-reviews/sources`}>
                 {t("createCsvAccessReviewSourcePage.actions.back")}
               </Link>
             </Button>

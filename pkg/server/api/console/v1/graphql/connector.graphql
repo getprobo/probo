@@ -396,7 +396,8 @@ type Connector implements Node {
     """
     discoveredAccounts probes the provider live on every read, so selecting it
     across a list of connectors costs one outbound call per connector. Select
-    it on a single connector, or on the one a mutation just returned.
+    it on a single connector, or on the one a mutation just returned. A caller
+    without permission to discover gets an empty list and no probe.
     """
     discoveredAccounts: [DiscoveredConnectorAccount!]!
         @goField(forceResolver: true)
@@ -430,6 +431,11 @@ type ConnectorAccount implements Node {
 type DiscoveredConnectorAccount {
     externalAccountId: String!
     name: String!
+    """
+    enabled is true when this external account is already stored on the
+    connector.
+    """
+    enabled: Boolean!
 }
 
 enum ConnectorAccountOrderField

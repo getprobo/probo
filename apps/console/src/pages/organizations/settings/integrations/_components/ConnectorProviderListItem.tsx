@@ -46,10 +46,6 @@ export const connectorProviderListItemFragment = graphql`
     clientCredentialsSupported
     workloadIdentitySupported
     installSupported
-    oauth2Scopes
-    ...APIKeyConnectorDialog_provider
-    ...ClientCredentialsConnectorDialog_provider
-    ...OAuthExtraDialog_provider
   }
 `;
 

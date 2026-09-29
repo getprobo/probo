@@ -90,6 +90,55 @@ func (s *ConnectorService) ListAccounts(
 	return page.NewPage(accounts, cursor), nil
 }
 
+// ExternalAccountIDs returns every external account id stored for the
+// connector. Callers use it to mark discovered accounts that are already
+// enabled, so the client does not page the connection itself.
+func (s *ConnectorService) ExternalAccountIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (map[string]struct{}, error) {
+	var accounts []*coredata.ConnectorAccount
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			accounts, err = page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.ConnectorAccountOrderField]{
+					Field:     coredata.ConnectorAccountOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(
+					ctx context.Context,
+					cursor *page.Cursor[coredata.ConnectorAccountOrderField],
+				) ([]*coredata.ConnectorAccount, error) {
+					var batch coredata.ConnectorAccounts
+					if err := batch.LoadByConnectorID(ctx, conn, scope, connectorID, cursor); err != nil {
+						return nil, err
+					}
+
+					return batch, nil
+				},
+			)
+
+			return err
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list connector account ids: %w", err)
+	}
+
+	ids := make(map[string]struct{}, len(accounts))
+	for _, account := range accounts {
+		ids[account.ExternalAccountID] = struct{}{}
+	}
+
+	return ids, nil
+}
+
 func (s *ConnectorService) CountAccounts(
 	ctx context.Context,
 	scope coredata.Scoper,

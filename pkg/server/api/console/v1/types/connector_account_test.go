@@ -18,32 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, readFragment } from "relay-runtime";
+package types_test
 
-import type {
-  ConnectorProtocol,
-  connectorProviderInfoFields_installableProtocols$key,
-} from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+import (
+	"testing"
 
-const PROTOCOL_OAUTH2 = "OAUTH2";
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+)
 
-/**
- * @relayField ConnectorProviderInfo.installableProtocols: [ConnectorProtocol!]
- * @rootFragment connectorProviderInfoFields_installableProtocols
- */
-export function installableProtocols(
-  key: connectorProviderInfoFields_installableProtocols$key,
-): ReadonlyArray<ConnectorProtocol> {
-  const provider = readFragment(
-    graphql`
-      fragment connectorProviderInfoFields_installableProtocols on ConnectorProviderInfo {
-        configuredProtocols
-      }
-    `,
-    key,
-  );
+func TestNewDiscoveredConnectorAccounts_Enabled(t *testing.T) {
+	t.Parallel()
 
-  return provider.configuredProtocols.filter(
-    protocol => protocol !== PROTOCOL_OAUTH2,
-  );
+	stored := map[string]struct{}{
+		"111111111111": {},
+	}
+	got := types.NewDiscoveredConnectorAccounts(
+		[]provider.DiscoveredAccount{
+			{ExternalAccountID: "111111111111", Name: "stored"},
+			{ExternalAccountID: "222222222222", Name: "new"},
+		},
+		stored,
+	)
+
+	require.Len(t, got, 2)
+	assert.Equal(t, "111111111111", got[0].ExternalAccountID)
+	assert.Equal(t, "stored", got[0].Name)
+	assert.True(t, got[0].Enabled)
+	assert.Equal(t, "222222222222", got[1].ExternalAccountID)
+	assert.Equal(t, "new", got[1].Name)
+	assert.False(t, got[1].Enabled)
 }

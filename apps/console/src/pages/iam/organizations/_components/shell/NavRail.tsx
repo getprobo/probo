@@ -226,7 +226,7 @@ function accessReviewHref(organizationId: string, permissions: NavPermissions): 
   if (permissions.canListAccessReviewCampaigns) {
     return groupHref(organizationId, "accessReview", "campaigns");
   }
-  return groupHref(organizationId, "accessReview", "connections");
+  return groupHref(organizationId, "accessReview", "sources");
 }
 
 function settingsHref(

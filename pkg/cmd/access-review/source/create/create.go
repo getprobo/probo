@@ -35,13 +35,15 @@ const connectionStatusConnected = "CONNECTED"
 
 const (
 	createMutation = `
-mutation($input: CreateAccessReviewSourceInput!) {
-  createAccessReviewSource(input: $input) {
-    created
-    accessReviewSourceEdge {
-      node {
-        id
-        name
+mutation($input: CreateAccessReviewSourcesInput!) {
+  createAccessReviewSources(input: $input) {
+    results {
+      created
+      accessReviewSourceEdge {
+        node {
+          id
+          name
+        }
       }
     }
   }
@@ -70,15 +72,17 @@ mutation($input: DeleteConnectorInput!) {
 
 type (
 	createResponse struct {
-		CreateAccessReviewSource struct {
-			Created                bool `json:"created"`
-			AccessReviewSourceEdge struct {
-				Node struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
-			} `json:"accessReviewSourceEdge"`
-		} `json:"createAccessReviewSource"`
+		CreateAccessReviewSources struct {
+			Results []struct {
+				Created                bool `json:"created"`
+				AccessReviewSourceEdge struct {
+					Node struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+					} `json:"node"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"results"`
+		} `json:"createAccessReviewSources"`
 	}
 
 	createWorkloadIdentityConnectorResponse struct {
@@ -239,9 +243,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			input := map[string]any{
-				"organizationId": flagOrg,
-				"name":           flagName,
+			source := map[string]any{
+				"name": flagName,
 			}
 
 			if flagCSVFile != "" {
@@ -250,15 +253,20 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					return fmt.Errorf("cannot read CSV file: %w", err)
 				}
 
-				input["csvData"] = string(csvData)
+				source["csvData"] = string(csvData)
 			}
 
 			if flagConnectorID != "" {
-				input["connectorId"] = flagConnectorID
+				source["connectorId"] = flagConnectorID
 			}
 
 			if flagConnectorAccountID != "" {
-				input["connectorAccountId"] = flagConnectorAccountID
+				source["connectorAccountId"] = flagConnectorAccountID
+			}
+
+			input := map[string]any{
+				"organizationId": flagOrg,
+				"sources":        []any{source},
 			}
 
 			data, err := client.Do(
@@ -278,10 +286,25 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				)
 			}
 
-			s := resp.CreateAccessReviewSource.AccessReviewSourceEdge.Node
+			if len(resp.CreateAccessReviewSources.Results) != 1 {
+				return abandonCreatedConnector(
+					client,
+					createdConnectorID,
+					fmt.Errorf("cannot parse response: expected one access source"),
+				)
+			}
+
+			result := resp.CreateAccessReviewSources.Results[0]
+			if !result.Created {
+				if err := abandonCreatedConnector(client, createdConnectorID, nil); err != nil {
+					return err
+				}
+			}
+
+			s := result.AccessReviewSourceEdge.Node
 			out := f.IOStreams.Out
 
-			if resp.CreateAccessReviewSource.Created {
+			if result.Created {
 				_, _ = fmt.Fprintf(out, "Created access source %s\n", s.ID)
 			} else {
 				_, _ = fmt.Fprintf(out, "Access source %s already exists for this connector\n", s.ID)

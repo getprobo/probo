@@ -70,6 +70,11 @@ type (
 		// silently overwritten by the first listed org.
 		OnlyIfUnset bool
 	}
+
+	EnsuredAccessReviewSource struct {
+		Source  *coredata.AccessReviewSource
+		Created bool
+	}
 )
 
 func (r *CreateAccessReviewSourceRequest) Validate() error {
@@ -99,78 +104,91 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 	return v.Error()
 }
 
-// EnsureSource returns the access source for the resolved connector
-// account, creating it when absent. An existing source is returned
-// untouched with created=false. The partial unique index on
-// connector_account_id arbitrates concurrent callers, so exactly one
-// inserts and the others load the winner. CSV sources (no account)
-// are always created.
-func (s *Service) EnsureSource(
+// EnsureSources creates one access source per request in a single
+// transaction. A connector account that already has a source, in this
+// list or already stored, returns that source with Created false. CSV
+// requests always insert. The partial unique index on
+// connector_account_id skips a second insert for the same account row.
+func (s *Service) EnsureSources(
 	ctx context.Context,
 	scope coredata.Scoper,
-	req CreateAccessReviewSourceRequest,
-) (*coredata.AccessReviewSource, bool, error) {
-	if err := req.Validate(); err != nil {
-		return nil, false, err
+	organizationID gid.GID,
+	reqs []CreateAccessReviewSourceRequest,
+) ([]EnsuredAccessReviewSource, error) {
+	v := validator.New()
+	v.Check(organizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(len(reqs), "sources", validator.Min(1))
+
+	if err := v.Error(); err != nil {
+		return nil, err
 	}
 
-	now := time.Now()
-	source := &coredata.AccessReviewSource{
-		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-		OrganizationID: req.OrganizationID,
-		Name:           req.Name,
-		CsvData:        req.CsvData,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+	for i := range reqs {
+		reqs[i].OrganizationID = organizationID
+
+		if err := reqs[i].Validate(); err != nil {
+			return nil, err
+		}
 	}
 
-	created := false
+	results := make([]EnsuredAccessReviewSource, len(reqs))
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			account, err := s.resolveCreateAccount(ctx, conn, scope, req)
-			if err != nil {
-				return err
-			}
-
-			if account != nil {
-				if err := refuseImplicitPickerAccount(ctx, conn, scope, account); err != nil {
+			for i, req := range reqs {
+				account, err := s.resolveCreateAccount(ctx, conn, scope, req)
+				if err != nil {
 					return err
 				}
 
-				if err := refuseSCIMConnector(ctx, conn, scope, account.ConnectorID); err != nil {
-					return err
+				if account != nil {
+					if err := refuseSCIMConnector(ctx, conn, scope, account.ConnectorID); err != nil {
+						return err
+					}
 				}
 
-				source.ConnectorAccountID = &account.ID
-			}
+				now := time.Now()
+				source := &coredata.AccessReviewSource{
+					ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+					OrganizationID: organizationID,
+					Name:           req.Name,
+					CsvData:        req.CsvData,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
 
-			inserted, err := source.Insert(ctx, conn, scope)
-			if err != nil {
-				return fmt.Errorf("cannot insert access source: %w", err)
-			}
+				if account != nil {
+					source.ConnectorAccountID = &account.ID
+				}
 
-			if inserted {
-				created = true
-				return nil
-			}
+				inserted, err := source.Insert(ctx, conn, scope)
+				if err != nil {
+					return fmt.Errorf("cannot insert access source: %w", err)
+				}
 
-			existing := &coredata.AccessReviewSource{}
-			if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
-				return fmt.Errorf("cannot load access source by connector account: %w", err)
-			}
+				if !inserted {
+					existing := &coredata.AccessReviewSource{}
+					if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
+						return fmt.Errorf("cannot load access source by connector account: %w", err)
+					}
 
-			*source = *existing
+					results[i] = EnsuredAccessReviewSource{Source: existing, Created: false}
+
+					continue
+				}
+
+				results[i] = EnsuredAccessReviewSource{Source: source, Created: true}
+			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, false, fmt.Errorf("cannot create access source: %w", err)
+		return nil, fmt.Errorf("cannot create access source: %w", err)
 	}
 
-	return source, created, nil
+	return results, nil
 }
 
 func (s *Service) resolveCreateAccount(
@@ -226,28 +244,6 @@ func refuseSCIMConnector(
 	}
 
 	return nil
-}
-
-func refuseImplicitPickerAccount(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	account *coredata.ConnectorAccount,
-) error {
-	if account.ExternalAccountID != account.ConnectorID.String() {
-		return nil
-	}
-
-	cnnctr := &coredata.Connector{}
-	if err := cnnctr.LoadMetadataByID(ctx, conn, scope, account.ConnectorID); err != nil {
-		return fmt.Errorf("cannot load connector: %w", err)
-	}
-
-	if !ProviderSupportsOrganizationPicker(cnnctr.Provider, cnnctr.Protocol) {
-		return nil
-	}
-
-	return fmt.Errorf("cannot create access source: %w", ErrConnectorAccountNeedsOrganization)
 }
 
 func accountConnectorID(
@@ -436,7 +432,7 @@ func (s *Service) UpdateSource(
 
 					err = other.LoadByConnectorAccountID(ctx, conn, scope, account.ID)
 					if err == nil && other.ID != source.ID {
-						return fmt.Errorf("cannot update access source: connector account already referenced by another source")
+						return fmt.Errorf("cannot update access source: connector account already referenced by another source: %w", coredata.ErrResourceInUse)
 					}
 
 					if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {

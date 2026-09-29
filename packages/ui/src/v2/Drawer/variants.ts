@@ -36,12 +36,14 @@ export const drawer = tv({
       "pointer-events-auto relative flex flex-col bg-sand-1 shadow-6 outline-none",
       "transition-transform duration-200",
     ],
-    content: "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4",
+    // The body scrolls. The header and footer stay outside that scroll, so a
+    // footer can sit over the body instead of scrolling away under the list.
+    content: "relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4",
     header: "flex items-center justify-between gap-3",
     title: "text-4 font-medium text-sand-12",
     description: "text-2 text-sand-11",
-    body: "flex min-h-0 flex-1 flex-col gap-1",
-    footer: "mt-auto flex flex-col gap-2 border-t border-sand-a3 pt-4",
+    body: "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto",
+    footer: "z-1 flex shrink-0 flex-col gap-2 border-t border-sand-a3 bg-sand-1 pt-4",
   },
   variants: {
     side: {

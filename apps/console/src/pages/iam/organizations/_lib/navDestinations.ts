@@ -187,10 +187,10 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListAccessReviewCampaigns,
   },
   {
-    id: "connections",
+    id: "sources",
     group: "accessReview",
     labelKey: "nav.sources",
-    path: "connections",
+    path: "sources",
     isVisible: permissions => permissions.canListAccessReviewSources,
   },
   {

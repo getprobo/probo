@@ -114,9 +114,8 @@ func TestMCP_AWSConnector_RBAC(t *testing.T) {
 	})
 	assert.Contains(t, msg, "permission denied")
 
-	// Connection status rides on the connector the create tool returns, and MCP
-	// exposes no other way to reach a connector, so refusing create is what
-	// keeps a viewer away from the status too.
+	// Create stays denied on its own. A viewer can list and get connectors,
+	// and connection status is on those reads.
 	msg = viewerMC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
 		"organization_id": orgID,
 		"name":            "Test",

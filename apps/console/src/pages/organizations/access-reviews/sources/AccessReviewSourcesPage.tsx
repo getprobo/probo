@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { formatError } from "@probo/helpers";
+import { CaretDownIcon, FileCsvIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -31,20 +30,22 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
-import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { graphql, usePaginationFragment, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
 
-import type { AccessReviewConnectionsPageFragment$key } from "#/__generated__/core/AccessReviewConnectionsPageFragment.graphql";
-import type { AccessReviewConnectionsPagePaginationQuery } from "#/__generated__/core/AccessReviewConnectionsPagePaginationQuery.graphql";
-import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
+import type { AccessReviewSourcesPageFragment$key } from "#/__generated__/core/AccessReviewSourcesPageFragment.graphql";
+import type { AccessReviewSourcesPagePaginationQuery } from "#/__generated__/core/AccessReviewSourcesPagePaginationQuery.graphql";
+import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessReviewSourcesPageQuery.graphql";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
+import { MarketplaceEntryCard } from "#/pages/organizations/settings/integrations/_components/MarketplaceEntryCard";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
+import { AddableConnectorListItem } from "./_components/AddableConnectorListItem";
 import { sourcesPage } from "./_components/variants";
+import { groupConnectorsByProvider, listedConnectorAccounts } from "./_lib/listedConnectorAccounts";
 
 function clearOAuthCallbackParams(params: URLSearchParams) {
   params.delete("connector_id");
@@ -53,34 +54,35 @@ function clearOAuthCallbackParams(params: URLSearchParams) {
   return params;
 }
 
-export const accessReviewConnectionsPageQuery = graphql`
-  query AccessReviewConnectionsPageQuery($organizationId: ID!) {
+export const accessReviewSourcesPageQuery = graphql`
+  query AccessReviewSourcesPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
         canCreateSource: permission(action: "access-review:source:create")
+        canCreateConnector: permission(action: "core:connector:create")
         connectors {
           id
           displayName
+          provider
           accounts(first: 50) {
             edges {
               node {
-                id
                 name
-                externalAccountId
               }
             }
           }
+          ...AddableConnectorListItem_connector
         }
-        ...AccessReviewConnectionsPageFragment
+        ...AccessReviewSourcesPageFragment
       }
     }
   }
 `;
 
 const sourcesFragment = graphql`
-  fragment AccessReviewConnectionsPageFragment on Organization
-  @refetchable(queryName: "AccessReviewConnectionsPagePaginationQuery")
+  fragment AccessReviewSourcesPageFragment on Organization
+  @refetchable(queryName: "AccessReviewSourcesPagePaginationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     order: {
@@ -97,8 +99,9 @@ const sourcesFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "AccessReviewConnectionsPage_accessReviewSources") {
+    ) @connection(key: "AccessReviewSourcesPage_accessReviewSources") {
       __id
+      totalCount
       edges {
         node {
           id
@@ -113,21 +116,21 @@ const sourcesFragment = graphql`
   }
 `;
 
-interface AccessReviewConnectionsPageProps {
-  queryRef: PreloadedQuery<AccessReviewConnectionsPageQuery>;
+interface AccessReviewSourcesPageProps {
+  queryRef: PreloadedQuery<AccessReviewSourcesPageQuery>;
 }
 
-export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnectionsPageProps) {
+export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
 
-  usePageTitle(t("accessReviewConnectionsPage.title"));
+  usePageTitle(t("accessReviewSourcesPage.title"));
 
-  const { organization } = usePreloadedQuery<AccessReviewConnectionsPageQuery>(
-    accessReviewConnectionsPageQuery,
+  const { organization } = usePreloadedQuery<AccessReviewSourcesPageQuery>(
+    accessReviewSourcesPageQuery,
     queryRef,
   );
   if (organization.__typename !== "Organization") {
@@ -140,8 +143,8 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     hasNext,
     isLoadingNext,
   } = usePaginationFragment<
-    AccessReviewConnectionsPagePaginationQuery,
-    AccessReviewConnectionsPageFragment$key
+    AccessReviewSourcesPagePaginationQuery,
+    AccessReviewSourcesPageFragment$key
   >(sourcesFragment, organization);
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -177,81 +180,35 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     }),
     [accessReviewSources.edges, normalizedSearch],
   );
-  const addableAccounts = useMemo(() => {
-    const accounts = organization.connectors.flatMap(connector =>
-      connector.accounts.edges.map(({ node }) => ({
-        id: node.id,
-        name: node.name,
-        connectorName: connector.displayName,
-        needsOrganization: node.externalAccountId === connector.id,
-      })),
-    );
-
-    return accounts.filter(account =>
-      !normalizedSearch
-      || account.name.toLowerCase().includes(normalizedSearch)
-      || account.connectorName.toLowerCase().includes(normalizedSearch),
-    );
-  }, [organization.connectors, normalizedSearch]);
+  // Server total, not adjusted after create or delete. A search count
+  // waits until every page has loaded.
+  const connectedCount = isSearching
+    ? (hasNext ? null : filteredSources.length)
+    : accessReviewSources.totalCount;
+  const addableVendors = useMemo(
+    () => groupConnectorsByProvider(organization.connectors).filter(group =>
+      group.some(connector =>
+        listedConnectorAccounts(
+          connector.accounts.edges.map(({ node }) => node),
+          {
+            displayName: connector.displayName,
+            provider: connector.provider,
+          },
+          normalizedSearch,
+        ) != null,
+      ),
+    ),
+    [organization.connectors, normalizedSearch],
+  );
   const showCSV = !normalizedSearch
     || "csv".includes(normalizedSearch)
     || t("addAccessReviewSourceDialog.csv.title")
       .toLowerCase()
       .includes(normalizedSearch);
-
-  const [createAccessReviewSource, isCreatingSource]
-    = useMutation<accessReviewSourceMutationsCreateMutation>(
-      createAccessReviewSourceMutation,
-    );
+  const showAddMore = organization.canCreateConnector
+    && (addableVendors.length > 0 || showCSV);
 
   const callbackError = searchParams.get("error");
-
-  const addSource = (accountId: string, name: string) => {
-    if (isCreatingSource) {
-      return;
-    }
-
-    createAccessReviewSource({
-      variables: {
-        input: {
-          organizationId,
-          connectorAccountId: accountId,
-          name,
-          csvData: null,
-        },
-      },
-      updater: store => prependCreatedSourceEdge(store, accessReviewSources.__id),
-      onCompleted(_data, errors) {
-        if (errors?.length) {
-          toast({
-            title: t("accessReviewConnectionsPage.messages.error"),
-            description: formatError(
-              t("accessReviewConnectionsPage.errors.create"),
-              errors,
-            ),
-            variant: "error",
-          });
-          return;
-        }
-
-        toast({
-          title: t("accessReviewConnectionsPage.messages.success"),
-          description: t("accessReviewConnectionsPage.messages.created"),
-          variant: "success",
-        });
-      },
-      onError(error) {
-        toast({
-          title: t("accessReviewConnectionsPage.messages.error"),
-          description: formatError(
-            t("accessReviewConnectionsPage.errors.create"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
-    });
-  };
 
   useEffect(() => {
     if (!callbackError) {
@@ -259,7 +216,7 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     }
 
     toast({
-      title: t("accessReviewConnectionsPage.messages.error"),
+      title: t("accessReviewSourcesPage.messages.error"),
       description: callbackError,
       variant: "error",
     });
@@ -274,27 +231,30 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     tools,
     search,
     section,
+    sectionTitle,
     grid,
     empty,
+    pager,
   } = sourcesPage();
   const sourcesEmpty = isLoadingRemainingSources
-    ? t("accessReviewConnectionsPage.actions.loading")
+    ? t("accessReviewSourcesPage.actions.loading")
     : hasFailedSearchLoad
-      ? t("accessReviewConnectionsPage.searchLoadFailed")
+      ? t("accessReviewSourcesPage.searchLoadFailed")
       : isSearching
-        ? t("accessReviewConnectionsPage.emptyConnectedSearch")
-        : t("accessReviewConnectionsPage.emptyConnected");
-  const addableCount = addableAccounts.length + (showCSV ? 1 : 0);
+        ? t("accessReviewSourcesPage.emptyConnectedSearch")
+        : t("accessReviewSourcesPage.emptyConnected");
+  const hasAddable = addableVendors.length > 0 || showCSV;
+  const availableCount = addableVendors.length + (showCSV ? 1 : 0);
 
   return (
     <div className={root()}>
       <div className={header()}>
         <div className={intro()}>
           <Heading level={1} size={6} weight="medium" highContrast>
-            {t("accessReviewConnectionsPage.title")}
+            {t("accessReviewSourcesPage.title")}
           </Heading>
           <Text size={2} color="faint">
-            {t("accessReviewConnectionsPage.description")}
+            {t("accessReviewSourcesPage.description")}
           </Text>
         </div>
       </div>
@@ -305,15 +265,20 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
               icon={<MagnifyingGlassIcon />}
               value={searchQuery}
               onValueChange={setSearchQuery}
-              placeholder={t("accessReviewConnectionsPage.searchPlaceholder")}
-              aria-label={t("accessReviewConnectionsPage.searchPlaceholder")}
+              placeholder={t("accessReviewSourcesPage.searchPlaceholder")}
+              aria-label={t("accessReviewSourcesPage.searchPlaceholder")}
             />
           </div>
         </div>
         <section className={section()}>
-          <Heading level={2} size={3} weight="medium">
-            {t("accessReviewConnectionsPage.sections.connected")}
-          </Heading>
+          <div className={sectionTitle()}>
+            <Heading level={2} size={3} weight="medium">
+              {t("accessReviewSourcesPage.sections.connected")}
+            </Heading>
+            {connectedCount != null && (
+              <Text size={2} color="faint">{connectedCount}</Text>
+            )}
+          </div>
           {filteredSources.length === 0
             ? (
                 <Card variant="soft" size={2}>
@@ -335,75 +300,57 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
                 </div>
               )}
           {hasNext && (!isSearching || hasFailedSearchLoad) && (
-            <Button
-              variant="soft"
-              color="neutral"
-              onClick={loadMoreSources}
-              disabled={isLoadingNext}
-              className="self-start"
-            >
-              {isLoadingNext
-                ? t("accessReviewConnectionsPage.actions.loading")
-                : hasFailedSearchLoad
-                  ? t("accessReviewConnectionsPage.actions.retry")
-                  : t("accessReviewConnectionsPage.actions.loadMore")}
-            </Button>
+            <div className={pager()}>
+              <Button
+                type="button"
+                size={2}
+                variant="soft"
+                color="neutral"
+                loading={isLoadingNext}
+                iconStart={<CaretDownIcon />}
+                onClick={loadMoreSources}
+              >
+                {hasFailedSearchLoad
+                  ? t("accessReviewSourcesPage.actions.retry")
+                  : t("accessReviewSourcesPage.actions.loadMore")}
+              </Button>
+            </div>
           )}
         </section>
         {organization.canCreateSource && (
           <section className={section()}>
-            <Heading level={2} size={3} weight="medium">
-              {t("accessReviewConnectionsPage.sections.addSource")}
-            </Heading>
-            {addableCount === 0
+            <div className={sectionTitle()}>
+              <Heading level={2} size={3} weight="medium">
+                {t("accessReviewSourcesPage.sections.addSource")}
+              </Heading>
+              <Text size={2} color="faint">{availableCount}</Text>
+            </div>
+            {!hasAddable
               ? (
                   <Card variant="soft" size={2}>
                     <div className={empty()}>
                       <Text size={2} color="faint">
-                        {t("accessReviewConnectionsPage.emptyAccounts")}
+                        {t("accessReviewSourcesPage.emptyAccounts")}
                       </Text>
                     </div>
                   </Card>
                 )
               : (
                   <div className={grid()}>
-                    {addableAccounts.map(account => (
-                      <Card key={account.id} variant="soft" size={2} className="flex h-full flex-col gap-3">
-                        <Heading level={2} size={3} weight="medium" highContrast>
-                          {account.connectorName}
-                        </Heading>
-                        <Text size={2} color="faint">
-                          {account.needsOrganization
-                            ? t("accessReviewConnectionsPage.needsOrganization")
-                            : account.name}
-                        </Text>
-                        <Button
-                          variant="soft"
-                          color="neutral"
-                          disabled={account.needsOrganization || isCreatingSource}
-                          onClick={() => addSource(account.id, account.name)}
-                          className="self-end"
-                        >
-                          {t("accessReviewConnectionsPage.actions.add")}
-                        </Button>
-                      </Card>
+                    {showAddMore && (
+                      <MarketplaceEntryCard organizationId={organizationId} />
+                    )}
+                    {addableVendors.map(connectors => (
+                      <AddableConnectorListItem
+                        key={connectors[0].provider}
+                        connectorKeys={connectors}
+                        organizationId={organizationId}
+                        connectionId={accessReviewSources.__id}
+                        normalizedSearch={normalizedSearch}
+                      />
                     ))}
                     {showCSV && (
-                      <Card variant="soft" size={2} className="flex h-full flex-col gap-3">
-                        <Heading level={2} size={3} weight="medium" highContrast>
-                          {t("addAccessReviewSourceDialog.csv.title")}
-                        </Heading>
-                        <Text size={2} color="faint">
-                          {t("addAccessReviewSourceDialog.csv.description")}
-                        </Text>
-                        <ButtonLink
-                          to={`/organizations/${organizationId}/access-reviews/connections/new/csv`}
-                          variant="solid"
-                          className="self-end"
-                        >
-                          {t("addAccessReviewSourceDialog.actions.open")}
-                        </ButtonLink>
-                      </Card>
+                      <CsvSourceCard organizationId={organizationId} />
                     )}
                   </div>
                 )}
@@ -411,5 +358,35 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
         )}
       </div>
     </div>
+  );
+}
+
+function CsvSourceCard({ organizationId }: { organizationId: string }) {
+  const { t } = useTranslation();
+
+  return (
+    <TonedCard
+      tone="sand"
+      iconSize={14}
+      icon={<FileCsvIcon className="size-8" />}
+      lead={(
+        <Heading level={3} size={3} weight="medium" highContrast>
+          {t("addAccessReviewSourceDialog.csv.title")}
+        </Heading>
+      )}
+      control={(
+        <ButtonLink
+          to={`/organizations/${organizationId}/access-reviews/sources/new/csv`}
+          variant="solid"
+          size={1}
+        >
+          {t("addAccessReviewSourceDialog.actions.open")}
+        </ButtonLink>
+      )}
+    >
+      <Text size={2} color="faint">
+        {t("addAccessReviewSourceDialog.csv.description")}
+      </Text>
+    </TonedCard>
   );
 }

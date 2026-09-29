@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { tv } from "tailwind-variants";
-import { tv as tvLite } from "tailwind-variants/lite";
+import { tv } from "tailwind-variants/lite";
 
 export const accessReviewSourceSection = tv({
   slots: {
@@ -39,7 +38,7 @@ export const accessReviewSourceSection = tv({
   },
 });
 
-export const sourcesPage = tvLite({
+export const sourcesPage = tv({
   slots: {
     root: "flex flex-col gap-6",
     header: "flex items-start justify-between gap-4",
@@ -48,7 +47,9 @@ export const sourcesPage = tvLite({
     tools: "flex flex-wrap items-center justify-between gap-2",
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
     section: "flex flex-col gap-3",
+    sectionTitle: "flex items-center gap-2.5",
     grid: "grid grid-cols-3 gap-3 max-xl:grid-cols-2 max-lg:grid-cols-1",
     empty: "flex flex-col items-center py-8 text-center",
+    pager: "flex justify-center",
   },
 });

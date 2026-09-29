@@ -407,7 +407,7 @@ function ConnectorAccounts({
           )}
         />
       </DrawerHeader>
-      <DrawerBody>
+      <DrawerBody className={failure == null && connector.canEnable && pending.length > 0 ? "pb-16" : undefined}>
         {failure != null && (
           <Card variant="soft" size={2}>
             <div className={empty()}>
@@ -477,7 +477,7 @@ function ConnectorAccounts({
         )}
       </DrawerBody>
       {failure == null && connector.canEnable && pending.length > 0 && (
-        <DrawerFooter>
+        <DrawerFooter className="absolute inset-x-4 bottom-4">
           <div className={actions()}>
             <Button
               variant="ghost"

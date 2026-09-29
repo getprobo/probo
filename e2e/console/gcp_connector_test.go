@@ -248,7 +248,7 @@ func TestGCPConnector_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create gcp connector")
 	})
 
-	t.Run("viewer cannot read connection status", func(t *testing.T) {
+	t.Run("viewer can read connection status", func(t *testing.T) {
 		t.Parallel()
 
 		var created createWorkloadIdentityConnectorResult
@@ -264,10 +264,16 @@ func TestGCPConnector_RBAC(t *testing.T) {
 		}, &created)
 		require.NoError(t, err)
 
+		connectorID := created.CreateWorkloadIdentityConnector.Connector.ID
+		require.NotEmpty(t, connectorID)
+
+		var listed organizationConnectorStatusResult
+
 		err = viewer.Execute(organizationConnectorStatusQuery, map[string]any{
 			"id": orgID,
-		}, &organizationConnectorStatusResult{})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to read gcp connector status")
+		}, &listed)
+		require.NoError(t, err)
+		assert.Equal(t, "DISCONNECTED", connectorStatus(t, listed, connectorID))
 	})
 }
 

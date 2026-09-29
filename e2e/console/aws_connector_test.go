@@ -130,6 +130,20 @@ type organizationConnectorStatusResult struct {
 	} `json:"node"`
 }
 
+func connectorStatus(t *testing.T, listed organizationConnectorStatusResult, connectorID string) string {
+	t.Helper()
+
+	for _, connector := range listed.Node.Connectors {
+		if connector.ID == connectorID {
+			return connector.ConnectionStatus
+		}
+	}
+
+	t.Fatalf("connector %s missing from organization list", connectorID)
+
+	return ""
+}
+
 func TestAWSConnectorSetup(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -291,9 +305,7 @@ func TestAWSConnector_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create aws connector")
 	})
 
-	// A viewer may list connectors but not read one, so the status field is
-	// what it is refused, not the listing around it.
-	t.Run("viewer cannot read connection status", func(t *testing.T) {
+	t.Run("viewer can read connection status", func(t *testing.T) {
 		t.Parallel()
 
 		var created createWorkloadIdentityConnectorResult
@@ -308,10 +320,16 @@ func TestAWSConnector_RBAC(t *testing.T) {
 		}, &created)
 		require.NoError(t, err)
 
+		connectorID := created.CreateWorkloadIdentityConnector.Connector.ID
+		require.NotEmpty(t, connectorID)
+
+		var listed organizationConnectorStatusResult
+
 		err = viewer.Execute(organizationConnectorStatusQuery, map[string]any{
 			"id": orgID,
-		}, &organizationConnectorStatusResult{})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to read aws connector status")
+		}, &listed)
+		require.NoError(t, err)
+		assert.Equal(t, "DISCONNECTED", connectorStatus(t, listed, connectorID))
 	})
 }
 

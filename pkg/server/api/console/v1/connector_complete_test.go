@@ -92,7 +92,7 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 				&connector.CompletionState{
 					Provider:       string(coredata.ConnectorProviderSlack),
 					OrganizationID: gid.New(gid.NewTenantID(), coredata.OrganizationEntityType).String(),
-					ContinueURL:    "https://console.example/organizations/acme/access-reviews/connections",
+					ContinueURL:    "https://console.example/organizations/acme/access-reviews/sources",
 					Connection: &connector.SlackConnection{
 						AccessToken: "xoxp-test",
 						TokenType:   "user",
@@ -106,7 +106,7 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 
 			location, err := url.Parse(recorder.Header().Get("Location"))
 			require.NoError(t, err)
-			assert.Equal(t, "/organizations/acme/access-reviews/connections", location.Path)
+			assert.Equal(t, "/organizations/acme/access-reviews/sources", location.Path)
 			assert.Equal(t, tc.want, location.Query().Get("error"))
 			assert.False(t, location.Query().Has("connector_id"))
 		})

@@ -211,9 +211,11 @@ const (
 		}`
 
 	createAccessReviewSourceMutation = `
-		mutation CreateAccessReviewSource($input: CreateAccessReviewSourceInput!) {
-			createAccessReviewSource(input: $input) {
-				accessReviewSourceEdge { node { id } }
+		mutation CreateAccessReviewSources($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results {
+					accessReviewSourceEdge { node { id } }
+				}
 			}
 		}`
 
@@ -786,7 +788,9 @@ func rbacVariables(
 			return map[string]any{
 				"input": map[string]any{
 					"organizationId": shared.orgID,
-					"name":           factory.SafeName("AccessReviewSource"),
+					"sources": []any{
+						map[string]any{"name": factory.SafeName("AccessReviewSource")},
+					},
 				},
 			}
 		case "update":

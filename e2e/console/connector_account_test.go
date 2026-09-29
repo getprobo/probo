@@ -311,7 +311,7 @@ func TestConnectorProviders_OrganizationInstallSupported(t *testing.T) {
 	assert.True(t, supported["AZURE"])
 }
 
-func TestDiscoveredAccounts_ViewerForbidden(t *testing.T) {
+func TestDiscoveredAccounts_ViewerGetsNone(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -320,16 +320,28 @@ func TestDiscoveredAccounts_ViewerForbidden(t *testing.T) {
 		WithAWSRoleARN(connectorAccountAWSRoleARN).
 		Create()
 
-	_, err := viewer.Do(`
+	var result struct {
+		Node *struct {
+			DiscoveredAccounts []struct {
+				ExternalAccountID string `json:"externalAccountId"`
+				Enabled           bool   `json:"enabled"`
+			} `json:"discoveredAccounts"`
+		} `json:"node"`
+	}
+
+	err := viewer.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
 				... on Connector {
 					discoveredAccounts {
 						externalAccountId
+						enabled
 					}
 				}
 			}
 		}
-	`, map[string]any{"id": connectorID})
-	testutil.RequireForbiddenError(t, err, "viewer should not discover connector accounts")
+	`, map[string]any{"id": connectorID}, &result)
+	require.NoError(t, err)
+	require.NotNil(t, result.Node)
+	assert.Empty(t, result.Node.DiscoveredAccounts)
 }

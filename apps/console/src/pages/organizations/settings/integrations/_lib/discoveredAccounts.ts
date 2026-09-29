@@ -33,7 +33,6 @@ export interface DiscoveredAccount {
 
 export interface CreatedConnectorLocationState {
   connectorId: string;
-  canEnable: boolean;
   discoveredAccounts: DiscoveredAccount[];
 }
 
@@ -102,7 +101,6 @@ export function createdConnectorLocationState(state: unknown): CreatedConnectorL
 
   return {
     connectorId: value.connectorId,
-    canEnable: value.canEnable === true,
     discoveredAccounts,
   };
 }

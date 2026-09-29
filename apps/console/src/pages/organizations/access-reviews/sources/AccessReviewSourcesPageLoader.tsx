@@ -21,19 +21,19 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
+import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessReviewSourcesPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
-  AccessReviewConnectionsPage,
-  accessReviewConnectionsPageQuery,
-} from "./AccessReviewConnectionsPage";
+  AccessReviewSourcesPage,
+  accessReviewSourcesPageQuery,
+} from "./AccessReviewSourcesPage";
 
-export default function AccessReviewConnectionsPageLoader() {
+export default function AccessReviewSourcesPageLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<AccessReviewConnectionsPageQuery>(
-    accessReviewConnectionsPageQuery,
+  const [queryRef, loadQuery] = useQueryLoader<AccessReviewSourcesPageQuery>(
+    accessReviewSourcesPageQuery,
   );
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function AccessReviewConnectionsPageLoader() {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <AccessReviewConnectionsPage queryRef={queryRef} />
+      <AccessReviewSourcesPage queryRef={queryRef} />
     </Suspense>
   );
 }

@@ -18,41 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+package console_v1
 
-import { integrationListPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
+import (
+	"context"
 
-type UseCreateAccessReviewSourceParams = {
-  organizationId: string;
-  onSuccess: () => void;
-};
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+)
 
-// After a connector is created, open its Settings page. Connecting does not
-// create an access-review source.
-export function useCreateAccessReviewSource({
-  organizationId,
-  onSuccess,
-}: UseCreateAccessReviewSourceParams) {
-  const { t } = useTranslation("organizations/settings/integrations");
-  const { toast } = useToast();
-  const navigate = useNavigate();
+func labelDiscoveredAccounts(
+	ctx context.Context,
+	connectors *probo.ConnectorService,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+	accounts []provider.DiscoveredAccount,
+) ([]*types.DiscoveredConnectorAccount, error) {
+	if len(accounts) == 0 {
+		return []*types.DiscoveredConnectorAccount{}, nil
+	}
 
-  const openConnector = (
-    _connectorId: string,
-    _displayName: string,
-    onDone: () => void,
-  ) => {
-    onDone();
-    toast({
-      title: t("listPage.messages.connected"),
-      description: t("listPage.messages.connectedDescription"),
-      variant: "success",
-    });
-    onSuccess();
-    void navigate(integrationListPath(organizationId));
-  };
+	stored, err := connectors.ExternalAccountIDs(ctx, scope, connectorID)
+	if err != nil {
+		return nil, err
+	}
 
-  return openConnector;
+	return types.NewDiscoveredConnectorAccounts(accounts, stored), nil
 }

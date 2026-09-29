@@ -57,6 +57,7 @@ mutation($input: CreateOrganizationConnectorInput!) {
     discoveredAccounts {
       externalAccountId
       name
+      enabled
     }
   }
 }
@@ -75,6 +76,7 @@ type (
 	discoveredAccount struct {
 		ExternalAccountID string `json:"externalAccountId"`
 		Name              string `json:"name"`
+		Enabled           bool   `json:"enabled"`
 	}
 
 	connectResult struct {
@@ -321,10 +323,17 @@ func printConnectResult(
 
 	rows := make([][]string, 0, len(result.DiscoveredAccounts))
 	for _, account := range result.DiscoveredAccounts {
-		rows = append(rows, []string{account.ExternalAccountID, account.Name})
+		rows = append(
+			rows,
+			[]string{
+				account.ExternalAccountID,
+				account.Name,
+				fmt.Sprintf("%t", account.Enabled),
+			},
+		)
 	}
 
-	t := cmdutil.NewTable("EXTERNAL ID", "NAME").Rows(rows...)
+	t := cmdutil.NewTable("EXTERNAL ID", "NAME", "ENABLED").Rows(rows...)
 	_, _ = fmt.Fprintln(out, t)
 
 	return nil

@@ -169,20 +169,6 @@ function presentConnection(signal: ConnectionSignal): ConnectionPresentation {
   return { status: "CONNECTED", issue: null };
 }
 
-// Account rows have no status of their own. The probe can still say connected
-// when the credential cannot be used, which is the case the card presents as
-// disconnected.
-export function isConnectorConnected(
-  connector: Parameters<typeof connectionSignalFrom>[0],
-): boolean {
-  const signal = connectionSignalFrom(connector);
-  if (signal == null) {
-    return false;
-  }
-
-  return presentConnection(signal).status === "CONNECTED";
-}
-
 function connectionIssueKeys(presented: readonly ConnectionPresentation[]): IssueKey[] {
   const present = new Set<IssueKey>();
   for (const item of presented) {

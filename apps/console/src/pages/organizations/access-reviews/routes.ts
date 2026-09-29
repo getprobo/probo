@@ -20,8 +20,26 @@
 
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
+import { Fragment } from "react";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+
+function redirectToSources({ params, request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  // eslint-disable-next-line
+  throw redirect(
+    `/organizations/${params.organizationId}/access-reviews/sources${url.search}`,
+  );
+}
+
+function redirectToCsvSource({ params, request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  // eslint-disable-next-line
+  throw redirect(
+    `/organizations/${params.organizationId}/access-reviews/sources/new/csv${url.search}`,
+  );
+}
 
 export const accessReviewRoutes = [
   {
@@ -39,38 +57,27 @@ export const accessReviewRoutes = [
     ),
   },
   {
-    path: "connections",
+    path: "sources",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("./connections/AccessReviewConnectionsPageLoader"),
+      () => import("./sources/AccessReviewSourcesPageLoader"),
     ),
+  },
+  {
+    path: "sources/new/csv",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./sources/CreateCsvAccessReviewSourcePageLoader"),
+    ),
+  },
+  {
+    path: "connections",
+    loader: redirectToSources,
+    Component: Fragment,
   },
   {
     path: "connections/new/csv",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateCsvAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/aws-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateAwsAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/gcp-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateGcpAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/azure-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateAzureAccessReviewSourcePageLoader"),
-    ),
+    loader: redirectToCsvSource,
+    Component: Fragment,
   },
 ] satisfies AppRoute[];
