@@ -289,6 +289,7 @@ export async function execute(
 				discoveredAccounts {
 					externalAccountId
 					name
+					enabled
 				}
 			}
 		}

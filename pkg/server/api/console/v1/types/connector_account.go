@@ -80,12 +80,17 @@ func NewConnectorAccountEdge(
 	}
 }
 
-func NewDiscoveredConnectorAccounts(accounts []provider.DiscoveredAccount) []*DiscoveredConnectorAccount {
+func NewDiscoveredConnectorAccounts(
+	accounts []provider.DiscoveredAccount,
+	stored map[string]struct{},
+) []*DiscoveredConnectorAccount {
 	result := make([]*DiscoveredConnectorAccount, len(accounts))
 	for i, account := range accounts {
+		_, enabled := stored[account.ExternalAccountID]
 		result[i] = &DiscoveredConnectorAccount{
 			ExternalAccountID: account.ExternalAccountID,
 			Name:              account.Name,
+			Enabled:           enabled,
 		}
 	}
 

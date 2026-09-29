@@ -488,6 +488,83 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByProviderExternalAccounts loads sources whose connector account
+// matches one of the (provider, external_account_id) pairs. connector_accounts
+// and connectors appear only in the filter subquery. An empty pair list
+// loads nothing.
+func (sources *AccessReviewSources) LoadByProviderExternalAccounts(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	providers []string,
+	externalAccountIDs []string,
+) error {
+	*sources = nil
+
+	if len(providers) == 0 {
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    connector_account_id,
+    name,
+    csv_data,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
+    created_at,
+    updated_at
+FROM
+    access_review_sources
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND connector_account_id IN (
+        SELECT ca.id
+        FROM connector_accounts ca
+        JOIN connectors c ON c.id = ca.connector_id
+        WHERE
+            ca.tenant_id = @tenant_id
+            AND c.tenant_id = @tenant_id
+            AND ca.organization_id = @organization_id
+            AND (c.provider, ca.external_account_id) IN (
+                SELECT pair.provider::connector_provider, pair.external_account_id
+                FROM unnest(@providers::text[], @external_account_ids::text[])
+                    AS pair(provider, external_account_id)
+            )
+    )
+ORDER BY
+    created_at,
+    id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id":      organizationID,
+		"providers":            providers,
+		"external_account_ids": externalAccountIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access sources by vendor account: %w", err)
+	}
+
+	loaded, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessReviewSource])
+	if err != nil {
+		return fmt.Errorf("cannot collect access sources by vendor account: %w", err)
+	}
+
+	*sources = loaded
+
+	return nil
+}
+
 func (sources *AccessReviewSources) CountByConnectorAccountID(
 	ctx context.Context,
 	conn pg.Querier,

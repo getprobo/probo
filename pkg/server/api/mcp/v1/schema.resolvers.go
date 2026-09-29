@@ -19,6 +19,7 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -3888,38 +3889,6 @@ func (r *Resolver) ListAccessReviewSourcesTool(ctx context.Context, req *mcp.Cal
 	}
 
 	return nil, out, nil
-}
-
-// CreateAccessReviewSourceTool handles the createAccessSource tool
-// Create a new access source for an organization
-func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAccessReviewSourceInput) (*mcp.CallToolResult, types.CreateAccessReviewSourceOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionSourceCreate)
-	if err != nil {
-		return nil, types.CreateAccessReviewSourceOutput{}, err
-	}
-
-	source, created, err := r.accessReview.EnsureSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
-		OrganizationID:     input.OrganizationID,
-		ConnectorID:        input.ConnectorID,
-		ConnectorAccountID: input.ConnectorAccountID,
-		Name:               input.Name,
-		CsvData:            input.CsvData,
-	})
-	if err != nil {
-		return nil, types.CreateAccessReviewSourceOutput{}, fmt.Errorf("cannot create access source: %w", err)
-	}
-
-	r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
-
-	mapped := types.NewAccessReviewSource(source)
-	if err := r.fillSourceConnectorIDs(ctx, scope, []*coredata.AccessReviewSource{source}, []*types.AccessReviewSource{mapped}); err != nil {
-		return nil, types.CreateAccessReviewSourceOutput{}, err
-	}
-
-	return nil, types.CreateAccessReviewSourceOutput{
-		AccessReviewSource: mapped,
-		Created:            created,
-	}, nil
 }
 
 // UpdateAccessReviewSourceTool handles the updateAccessSource tool
@@ -10399,7 +10368,17 @@ func (r *Resolver) CreateOrganizationConnectorTool(ctx context.Context, req *mcp
 		if err != nil {
 			r.logger.WarnCtx(ctx, "cannot discover organization connector accounts", log.String("connector_id", cnnctr.ID.String()))
 		} else {
-			discovered = types.NewDiscoveredConnectorAccounts(accounts)
+			discovered, err = labelDiscoveredAccounts(ctx, r.proboSvc.Connectors, scope, cnnctr.ID, accounts)
+			if err != nil {
+				r.logger.ErrorCtx(
+					ctx,
+					"cannot list connector account ids",
+					log.String("connector_id", cnnctr.ID.String()),
+					log.Error(err),
+				)
+
+				return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("internal server error")
+			}
 		}
 	}
 
@@ -10426,9 +10405,35 @@ func (r *Resolver) DiscoverConnectorAccountsTool(ctx context.Context, req *mcp.C
 		return nil, types.DiscoverConnectorAccountsOutput{}, fmt.Errorf("internal server error")
 	}
 
+	labeled, err := labelDiscoveredAccounts(ctx, r.proboSvc.Connectors, scope, input.ConnectorID, accounts)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list connector account ids", log.Error(err))
+
+		return nil, types.DiscoverConnectorAccountsOutput{}, fmt.Errorf("internal server error")
+	}
+
 	return nil, types.DiscoverConnectorAccountsOutput{
-		Accounts: types.NewDiscoveredConnectorAccounts(accounts),
+		Accounts: labeled,
 	}, nil
+}
+
+func labelDiscoveredAccounts(
+	ctx context.Context,
+	connectors *probo.ConnectorService,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+	accounts []provider.DiscoveredAccount,
+) ([]*types.DiscoveredConnectorAccount, error) {
+	if len(accounts) == 0 {
+		return []*types.DiscoveredConnectorAccount{}, nil
+	}
+
+	stored, err := connectors.ExternalAccountIDs(ctx, scope, connectorID)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewDiscoveredConnectorAccounts(accounts, stored), nil
 }
 
 func (r *Resolver) EnableConnectorAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.EnableConnectorAccountsInput) (*mcp.CallToolResult, types.EnableConnectorAccountsOutput, error) {
@@ -10667,3 +10672,101 @@ func connectorMCPWriteError(ctx context.Context, logger *log.Logger, message str
 
 	return fmt.Errorf("internal server error")
 }
+
+func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAccessReviewSourcesInput) (*mcp.CallToolResult, types.CreateAccessReviewSourcesOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionSourceCreate)
+	if err != nil {
+		return nil, types.CreateAccessReviewSourcesOutput{}, err
+	}
+
+	reqs := make([]accessreview.CreateAccessReviewSourceRequest, len(input.Sources))
+	for i, source := range input.Sources {
+		reqs[i] = accessreview.CreateAccessReviewSourceRequest{
+			ConnectorID:        source.ConnectorID,
+			ConnectorAccountID: source.ConnectorAccountID,
+			Name:               source.Name,
+			CsvData:            source.CsvData,
+		}
+	}
+
+	ensured, err := r.accessReview.EnsureSources(ctx, scope, input.OrganizationID, reqs)
+	if err != nil {
+		return nil, types.CreateAccessReviewSourcesOutput{}, fmt.Errorf("cannot create access source: %w", err)
+	}
+
+	rows := make([]*coredata.AccessReviewSource, len(ensured))
+	mapped := make([]*types.AccessReviewSource, len(ensured))
+
+	results := make([]*types.CreateAccessReviewSourceResultMCPOutput, len(ensured))
+	for i, item := range ensured {
+		if item.Created {
+			r.accessReview.AutoSelectDefaultOrganization(ctx, scope, item.Source)
+		}
+
+		rows[i] = item.Source
+		mapped[i] = types.NewAccessReviewSource(item.Source)
+		results[i] = &types.CreateAccessReviewSourceResultMCPOutput{
+			AccessReviewSource: mapped[i],
+			Created:            item.Created,
+		}
+	}
+
+	if err := r.fillSourceConnectorIDs(ctx, scope, rows, mapped); err != nil {
+		return nil, types.CreateAccessReviewSourcesOutput{}, err
+	}
+
+	return nil, types.CreateAccessReviewSourcesOutput{Results: results}, nil
+}
+
+// ==============================================================================
+// Orphaned Handlers
+// ==============================================================================
+// The following handlers were found in the resolver file but are no longer
+// defined in the MCP specification. They have been preserved here as comments
+// in case you need to reference or restore them.
+// ==============================================================================
+
+// Orphaned: taskExternalLinksByTasks
+// Uncomment and update signature if you want to restore this handler.
+// func (r *Resolver) taskExternalLinksByTasks(
+// 	ctx context.Context,
+// 	scope coredata.Scoper,
+// 	tasks []*coredata.Task,
+// ) (map[gid.GID]*coredata.TaskExternalLink, error) {
+// 	if r.task.Sync == nil || len(tasks) == 0 {
+// 		return nil, nil
+// 	}
+
+// 	ids := make([]gid.GID, 0, len(tasks))
+// 	for _, task := range tasks {
+// 		ids = append(ids, task.ID)
+// 	}
+
+// 	return r.task.Sync.GetLinksByTaskIDs(ctx, scope, ids)
+// }
+
+// Orphaned: taskWithExternalLink
+// Uncomment and update signature if you want to restore this handler.
+// func (r *Resolver) taskWithExternalLink(
+// 	ctx context.Context,
+// 	scope coredata.Scoper,
+// 	task *coredata.Task,
+// ) (*types.Task, error) {
+// 	result := types.NewTask(task)
+// 	if r.task.Sync == nil {
+// 		return result, nil
+// 	}
+
+// 	link, err := r.task.Sync.GetLinkByTaskID(ctx, scope, task.ID)
+// 	if err != nil {
+// 		if errors.Is(err, coredata.ErrResourceNotFound) {
+// 			return result, nil
+// 		}
+
+// 		return nil, err
+// 	}
+
+// 	result.ExternalLink = types.NewTaskExternalLink(link)
+
+// 	return result, nil
+// }

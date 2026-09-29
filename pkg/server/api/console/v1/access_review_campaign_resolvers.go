@@ -23,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // Organization is the resolver for the organization field.
@@ -736,24 +737,24 @@ func (r *accessReviewSourceConnectionResolver) TotalCount(ctx context.Context, o
 	return 0, gqlutils.Internal(ctx)
 }
 
-// CreateAccessReviewSource is the resolver for the createAccessReviewSource field.
-func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input types.CreateAccessReviewSourceInput) (*types.CreateAccessReviewSourcePayload, error) {
+// CreateAccessReviewSources is the resolver for the createAccessReviewSources field.
+func (r *mutationResolver) CreateAccessReviewSources(ctx context.Context, input types.CreateAccessReviewSourcesInput) (*types.CreateAccessReviewSourcesPayload, error) {
 	scope, err := r.authorize(ctx, input.OrganizationID, accessreview.ActionSourceCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	source, created, err := r.accessReview.EnsureSource(
-		ctx,
-		scope,
-		accessreview.CreateAccessReviewSourceRequest{
-			OrganizationID:     input.OrganizationID,
-			ConnectorID:        input.ConnectorID,
-			ConnectorAccountID: input.ConnectorAccountID,
-			Name:               input.Name,
-			CsvData:            input.CSVData,
-		},
-	)
+	reqs := make([]accessreview.CreateAccessReviewSourceRequest, len(input.Sources))
+	for i, source := range input.Sources {
+		reqs[i] = accessreview.CreateAccessReviewSourceRequest{
+			ConnectorID:        source.ConnectorID,
+			ConnectorAccountID: source.ConnectorAccountID,
+			Name:               source.Name,
+			CsvData:            source.CSVData,
+		}
+	}
+
+	ensured, err := r.accessReview.EnsureSources(ctx, scope, input.OrganizationID, reqs)
 	if err != nil {
 		if errors.Is(err, accessreview.ErrNoConnectorAccount) ||
 			errors.Is(err, accessreview.ErrConnectorAccountNeedsOrganization) ||
@@ -769,17 +770,28 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create access source", log.Error(err))
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create access sources", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
+	results := make([]*types.CreateAccessReviewSourceResult, len(ensured))
+	for i, item := range ensured {
+		if item.Created {
+			r.accessReview.AutoSelectDefaultOrganization(ctx, scope, item.Source)
+		}
 
-	return &types.CreateAccessReviewSourcePayload{
-		AccessReviewSourceEdge: types.NewAccessReviewSourceEdge(source, coredata.AccessReviewSourceOrderFieldCreatedAt),
-		Created:                created,
-	}, nil
+		results[i] = &types.CreateAccessReviewSourceResult{
+			AccessReviewSourceEdge: types.NewAccessReviewSourceEdge(item.Source, coredata.AccessReviewSourceOrderFieldCreatedAt),
+			Created:                item.Created,
+		}
+	}
+
+	return &types.CreateAccessReviewSourcesPayload{Results: results}, nil
 }
 
 // UpdateAccessReviewSource is the resolver for the updateAccessReviewSource field.
