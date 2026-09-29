@@ -199,6 +199,53 @@ WHERE
 	return connectorIDs, nil
 }
 
+func (accounts *ConnectorAccounts) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	ids []gid.GID,
+) error {
+	*accounts = nil
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    connector_id,
+    external_account_id,
+    name,
+    created_at,
+    updated_at
+FROM
+    connector_accounts
+WHERE
+    %s
+    AND id = ANY(@ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connector_accounts: %w", err)
+	}
+
+	loaded, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ConnectorAccount])
+	if err != nil {
+		return fmt.Errorf("cannot collect connector accounts: %w", err)
+	}
+
+	*accounts = loaded
+
+	return nil
+}
+
 func (a *ConnectorAccount) LoadByConnectorAndExternalID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -21,46 +21,52 @@
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
-export const createAccessReviewSourceMutation = graphql`
+export const createAccessReviewSourcesMutation = graphql`
   mutation accessReviewSourceMutationsCreateMutation(
-    $input: CreateAccessReviewSourceInput!
+    $input: CreateAccessReviewSourcesInput!
   ) {
-    createAccessReviewSource(input: $input) {
-      created
-      accessReviewSourceEdge {
-        node {
-          id
-          name
-          connectorId
-          createdAt
-          ...AccessReviewSourceListItem_source
+    createAccessReviewSources(input: $input) {
+      results {
+        created
+        accessReviewSourceEdge {
+          node {
+            id
+            name
+            connectorId
+            createdAt
+            ...AccessReviewSourceListItem_source
+          }
         }
       }
     }
   }
 `;
 
-// prependCreatedSourceEdge inserts the mutation's edge at the top of the
-// sources connection. Creation is idempotent per connector, so a call
-// that resolved to an existing source (created=false) inserts nothing,
+// prependCreatedSourceEdges inserts each created edge at the top of the
+// sources connection. A result with created=false is an existing source,
 // and a node already present in the connection is never duplicated.
-export function prependCreatedSourceEdge(
+export function prependCreatedSourceEdges(
   store: RecordSourceSelectorProxy,
   connectionId: string,
 ) {
-  const payload = store.getRootField("createAccessReviewSource");
-  if (!payload || payload.getValue("created") !== true) return;
-
-  const edge = payload.getLinkedRecord("accessReviewSourceEdge");
-  const node = edge?.getLinkedRecord("node");
+  const payload = store.getRootField("createAccessReviewSources");
   const connection = store.get(connectionId);
-  if (!edge || !node || !connection) return;
+  if (!payload || !connection) return;
 
-  const nodeId = node.getDataID();
+  const results = payload.getLinkedRecords("results") ?? [];
   const edges = connection.getLinkedRecords("edges") ?? [];
-  if (edges.some(e => e?.getLinkedRecord("node")?.getDataID() === nodeId)) {
-    return;
-  }
+  const present = new Set(
+    edges.map(edge => edge?.getLinkedRecord("node")?.getDataID()),
+  );
 
-  ConnectionHandler.insertEdgeBefore(connection, edge);
+  for (const result of results) {
+    if (result?.getValue("created") !== true) continue;
+
+    const edge = result.getLinkedRecord("accessReviewSourceEdge");
+    const nodeId = edge?.getLinkedRecord("node")?.getDataID();
+    if (!edge || nodeId == null || present.has(nodeId)) continue;
+
+    ConnectionHandler.insertEdgeBefore(connection, edge);
+    present.add(nodeId);
+  }
 }

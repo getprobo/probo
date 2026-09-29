@@ -38,7 +38,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
 
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
+import { createAccessReviewSourcesMutation, prependCreatedSourceEdges } from "../dialogs/accessReviewSourceMutations";
 
 export const createCsvAccessReviewSourcePageQuery = graphql`
   query CreateCsvAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -91,9 +91,9 @@ export function CreateCsvAccessReviewSourcePage({
     "AccessReviewConnectionsPage_accessReviewSources",
   );
 
-  const [createAccessReviewSource, isCreating]
+  const [createAccessReviewSources, isCreating]
     = useMutation<accessReviewSourceMutationsCreateMutation>(
-      createAccessReviewSourceMutation,
+      createAccessReviewSourcesMutation,
     );
 
   if (!organization.canCreateSource) {
@@ -107,18 +107,20 @@ export function CreateCsvAccessReviewSourcePage({
   }
 
   const onSubmit = (data: z.infer<typeof csvSchema>) => {
-    createAccessReviewSource({
+    createAccessReviewSources({
       variables: {
         input: {
           organizationId,
-          connectorId: null,
-          name: data.name,
-          csvData: data.csvData,
+          sources: [{
+            connectorId: null,
+            name: data.name,
+            csvData: data.csvData,
+          }],
         },
       },
       updater: (store) => {
         if (connectionId) {
-          prependCreatedSourceEdge(store, connectionId);
+          prependCreatedSourceEdges(store, connectionId);
         }
       },
       onCompleted(_, errors) {

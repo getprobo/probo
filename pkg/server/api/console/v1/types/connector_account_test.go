@@ -18,51 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+package types_test
 
-export const description: INodeProperties[] = [
-	{
-		displayName: 'Connector ID',
-		name: 'connectorId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['connector'],
-				operation: ['discover'],
-			},
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+)
+
+func TestNewDiscoveredConnectorAccounts_Enabled(t *testing.T) {
+	t.Parallel()
+
+	stored := map[string]struct{}{
+		"111111111111": {},
+	}
+	got := types.NewDiscoveredConnectorAccounts(
+		[]provider.DiscoveredAccount{
+			{ExternalAccountID: "111111111111", Name: "stored"},
+			{ExternalAccountID: "222222222222", Name: "new"},
 		},
-		default: '',
-		description: 'The ID of the connector',
-		required: true,
-	},
-];
+		stored,
+	)
 
-export async function execute(
-	this: IExecuteFunctions,
-	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const connectorId = this.getNodeParameter('connectorId', itemIndex) as string;
-
-	const query = `
-		query DiscoverConnectorAccounts($connectorId: ID!) {
-			node(id: $connectorId) {
-				... on Connector {
-					id
-					discoveredAccounts {
-						externalAccountId
-						name
-						enabled
-					}
-				}
-			}
-		}
-	`;
-
-	const responseData = await proboApiRequest.call(this, query, { connectorId });
-
-	return {
-		json: responseData,
-		pairedItem: { item: itemIndex },
-	};
+	require.Len(t, got, 2)
+	assert.Equal(t, "111111111111", got[0].ExternalAccountID)
+	assert.Equal(t, "stored", got[0].Name)
+	assert.True(t, got[0].Enabled)
+	assert.Equal(t, "222222222222", got[1].ExternalAccountID)
+	assert.Equal(t, "new", got[1].Name)
+	assert.False(t, got[1].Enabled)
 }

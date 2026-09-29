@@ -18,51 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+package console_v1
 
-export const description: INodeProperties[] = [
-	{
-		displayName: 'Connector ID',
-		name: 'connectorId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['connector'],
-				operation: ['discover'],
-			},
-		},
-		default: '',
-		description: 'The ID of the connector',
-		required: true,
-	},
-];
+import (
+	"context"
 
-export async function execute(
-	this: IExecuteFunctions,
-	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const connectorId = this.getNodeParameter('connectorId', itemIndex) as string;
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+)
 
-	const query = `
-		query DiscoverConnectorAccounts($connectorId: ID!) {
-			node(id: $connectorId) {
-				... on Connector {
-					id
-					discoveredAccounts {
-						externalAccountId
-						name
-						enabled
-					}
-				}
-			}
-		}
-	`;
+func labelDiscoveredAccounts(
+	ctx context.Context,
+	connectors *probo.ConnectorService,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+	accounts []provider.DiscoveredAccount,
+) ([]*types.DiscoveredConnectorAccount, error) {
+	if len(accounts) == 0 {
+		return []*types.DiscoveredConnectorAccount{}, nil
+	}
 
-	const responseData = await proboApiRequest.call(this, query, { connectorId });
+	stored, err := connectors.ExternalAccountIDs(ctx, scope, connectorID)
+	if err != nil {
+		return nil, err
+	}
 
-	return {
-		json: responseData,
-		pairedItem: { item: itemIndex },
-	};
+	return types.NewDiscoveredConnectorAccounts(accounts, stored), nil
 }

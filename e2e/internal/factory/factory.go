@@ -1154,45 +1154,54 @@ func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs .
 	}
 
 	const query = `
-		mutation($input: CreateAccessReviewSourceInput!) {
-			createAccessReviewSource(input: $input) {
-				accessReviewSourceEdge {
-					node { id }
+		mutation($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results {
+					accessReviewSourceEdge {
+						node { id }
+					}
 				}
 			}
 		}
 	`
 
-	input := map[string]any{
-		"organizationId": organizationID,
-		"name":           a.getString("name", SafeName("AccessReviewSource")),
+	source := map[string]any{
+		"name": a.getString("name", SafeName("AccessReviewSource")),
 	}
 	if csvData := a.getStringPtr("csvData"); csvData != nil {
-		input["csvData"] = *csvData
+		source["csvData"] = *csvData
 	}
 
 	if connectorID := a.getStringPtr("connectorId"); connectorID != nil {
-		input["connectorId"] = *connectorID
+		source["connectorId"] = *connectorID
 	}
 
 	if connectorAccountID := a.getStringPtr("connectorAccountId"); connectorAccountID != nil {
-		input["connectorAccountId"] = *connectorAccountID
+		source["connectorAccountId"] = *connectorAccountID
 	}
 
 	var result struct {
-		CreateAccessReviewSource struct {
-			AccessReviewSourceEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"accessReviewSourceEdge"`
-		} `json:"createAccessReviewSource"`
+		CreateAccessReviewSources struct {
+			Results []struct {
+				AccessReviewSourceEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"results"`
+		} `json:"createAccessReviewSources"`
 	}
 
-	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createAccessReviewSource mutation failed")
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": organizationID,
+			"sources":        []any{source},
+		},
+	}, &result)
+	require.NoError(c.T, err, "createAccessReviewSources mutation failed")
+	require.Len(c.T, result.CreateAccessReviewSources.Results, 1)
 
-	return result.CreateAccessReviewSource.AccessReviewSourceEdge.Node.ID
+	return result.CreateAccessReviewSources.Results[0].AccessReviewSourceEdge.Node.ID
 }
 
 type AccessReviewSourceBuilder struct {

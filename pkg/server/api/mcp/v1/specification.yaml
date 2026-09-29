@@ -10652,15 +10652,11 @@ components:
           items:
             $ref: "#/components/schemas/AccessReviewSource"
 
-    CreateAccessReviewSourceMCPInput:
+    AccessReviewSourceCreateMCPInput:
       type: object
       required:
-        - organization_id
         - name
       properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
         connector_id:
           $ref: "#/components/schemas/GID"
           description: Connector ID (optional)
@@ -10674,7 +10670,23 @@ components:
           type: string
           description: CSV data for manual sources (optional)
 
-    CreateAccessReviewSourceMCPOutput:
+    CreateAccessReviewSourcesMCPInput:
+      type: object
+      required:
+        - organization_id
+        - sources
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        sources:
+          type: array
+          minItems: 1
+          description: Access sources to create. A list of one creates a single source.
+          items:
+            $ref: "#/components/schemas/AccessReviewSourceCreateMCPInput"
+
+    CreateAccessReviewSourceResultMCPOutput:
       type: object
       required:
         - access_review_source
@@ -10685,9 +10697,19 @@ components:
         created:
           type: boolean
           description: >-
-            False when a source already existed for the requested connector
-            account: creation is idempotent per connector account and the
-            existing source is returned instead of a duplicate.
+            False when this connector account already has a source. The
+            existing source is returned instead of a duplicate. CSV items
+            always insert.
+
+    CreateAccessReviewSourcesMCPOutput:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateAccessReviewSourceResultMCPOutput"
 
     UpdateAccessReviewSourceMCPInput:
       type: object
@@ -11047,12 +11069,16 @@ components:
       required:
         - external_account_id
         - name
+        - enabled
       properties:
         external_account_id:
           type: string
           description: Provider-specific external account identifier. AWS account ID, GCP project number, or Azure subscription ID.
         name:
           type: string
+        enabled:
+          type: boolean
+          description: True when this external account is already stored on the connector.
 
     ListConnectorsMCPInput:
       type: object
@@ -19246,18 +19272,18 @@ tools:
       $ref: "#/components/schemas/ListAccessReviewSourcesInput"
     outputSchema:
       $ref: "#/components/schemas/ListAccessReviewSourcesOutput"
-  - name: createAccessReviewSource
-    title: Create Access Review Source
-    description: Create a new access source for an organization
+  - name: createAccessReviewSources
+    title: Create Access Review Sources
+    description: Create access sources for an organization. One call accepts the whole list and skips an account that already has a source.
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/CreateAccessReviewSourceMCPInput"
+      $ref: "#/components/schemas/CreateAccessReviewSourcesMCPInput"
     outputSchema:
-      $ref: "#/components/schemas/CreateAccessReviewSourceMCPOutput"
+      $ref: "#/components/schemas/CreateAccessReviewSourcesMCPOutput"
   - name: updateAccessReviewSource
     title: Update Access Review Source
     description: Update an existing access source

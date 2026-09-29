@@ -150,6 +150,12 @@ func (r *connectorResolver) Accounts(ctx context.Context, obj *types.Connector, 
 func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.Connector) ([]*types.DiscoveredConnectorAccount, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorDiscover)
 	if err != nil {
+		// The field sits on Connector next to data the caller can already
+		// read. A missing permission must not fail that query. Skip the probe.
+		if gqlutils.IsForbidden(err) {
+			return []*types.DiscoveredConnectorAccount{}, nil
+		}
+
 		return nil, err
 	}
 
@@ -160,7 +166,7 @@ func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.C
 		}
 
 		// A failed listing must not fail connector creation, which selects this
-		// field on the new connector. Authorization and not-found still error.
+		// field on the new connector. Not-found still errors.
 		r.logger.WarnCtx(
 			ctx,
 			"cannot discover connector accounts",
@@ -171,7 +177,19 @@ func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.C
 		return []*types.DiscoveredConnectorAccount{}, nil
 	}
 
-	return types.NewDiscoveredConnectorAccounts(accounts), nil
+	labeled, err := labelDiscoveredAccounts(ctx, r.probo.Connectors, scope, obj.ID, accounts)
+	if err != nil {
+		r.logger.ErrorCtx(
+			ctx,
+			"cannot list connector account ids",
+			log.String("connector_id", obj.ID.String()),
+			log.Error(err),
+		)
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return labeled, nil
 }
 
 // ProviderOrganizations is the resolver for the providerOrganizations field.
@@ -516,7 +534,17 @@ func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, inpu
 				log.String("connector_id", cnnctr.ID.String()),
 			)
 		} else {
-			discovered = types.NewDiscoveredConnectorAccounts(accounts)
+			discovered, err = labelDiscoveredAccounts(ctx, r.probo.Connectors, scope, cnnctr.ID, accounts)
+			if err != nil {
+				r.logger.ErrorCtx(
+					ctx,
+					"cannot list connector account ids",
+					log.String("connector_id", cnnctr.ID.String()),
+					log.Error(err),
+				)
+
+				return nil, gqlutils.Internal(ctx)
+			}
 		}
 	}
 

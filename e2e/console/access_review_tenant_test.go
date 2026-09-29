@@ -39,10 +39,12 @@ func TestAccessReview_TenantIsolation(t *testing.T) {
 		t.Parallel()
 
 		const query = `
-			mutation($input: CreateAccessReviewSourceInput!) {
-				createAccessReviewSource(input: $input) {
-					accessReviewSourceEdge {
-						node { id }
+			mutation($input: CreateAccessReviewSourcesInput!) {
+				createAccessReviewSources(input: $input) {
+					results {
+						accessReviewSourceEdge {
+							node { id }
+						}
 					}
 				}
 			}
@@ -51,7 +53,9 @@ func TestAccessReview_TenantIsolation(t *testing.T) {
 		_, err := org2Owner.Do(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": org1ID,
-				"name":           "Unauthorized Source",
+				"sources": []any{
+					map[string]any{"name": "Unauthorized Source"},
+				},
 			},
 		})
 		require.Error(t, err, "Should not be able to create access source in another organization")

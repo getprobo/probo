@@ -278,15 +278,17 @@ export async function execute(
 	const connectionStatus = connector?.connectionStatus as string | undefined;
 
 	const createSourceQuery = `
-		mutation CreateAccessReviewSource($input: CreateAccessReviewSourceInput!) {
-			createAccessReviewSource(input: $input) {
-				created
-				accessReviewSourceEdge {
-					node {
-						id
-						name
-						connectorId
-						createdAt
+		mutation CreateAccessReviewSources($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results {
+					created
+					accessReviewSourceEdge {
+						node {
+							id
+							name
+							connectorId
+							createdAt
+						}
 					}
 				}
 			}
@@ -313,10 +315,15 @@ export async function execute(
 		const sourceResponse = await proboApiRequest.call(this, createSourceQuery, {
 			input: {
 				organizationId,
-				name,
-				connectorId,
+				sources: [{ name, connectorId }],
 			},
 		});
+
+		if (accessReviewSourceCreated(sourceResponse) === false) {
+			await proboApiRequest.call(this, deleteConnectorQuery, {
+				input: { connectorId },
+			});
+		}
 
 		return {
 			json: sourceResponse,
@@ -343,4 +350,18 @@ export async function execute(
 
 		throw new NodeOperationError(this.getNode(), error as Error, { itemIndex });
 	}
+}
+
+function accessReviewSourceCreated(response: IDataObject): boolean | undefined {
+	const payload = (response.data as IDataObject | undefined)?.createAccessReviewSources as
+		| IDataObject
+		| undefined;
+	const results = payload?.results;
+	if (!Array.isArray(results) || results.length === 0) {
+		return undefined;
+	}
+
+	const created = (results[0] as IDataObject).created;
+
+	return typeof created === 'boolean' ? created : undefined;
 }
