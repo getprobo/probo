@@ -87,6 +87,31 @@ func (r *connectorResolver) DocumentationURL(ctx context.Context, obj *types.Con
 	return new(reg.DocumentationURL), nil
 }
 
+// InitialAccountExternalID is the resolver for the initialAccountExternalId field.
+func (r *connectorResolver) InitialAccountExternalID(ctx context.Context, obj *types.Connector) (*string, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	externalID, err := r.probo.Connectors.InitialAccountExternalID(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot resolve initial connector account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if externalID == "" {
+		return nil, nil
+	}
+
+	return new(externalID), nil
+}
+
 // Accounts is the resolver for the accounts field.
 func (r *connectorResolver) Accounts(ctx context.Context, obj *types.Connector, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorAccountOrderBy) (*types.ConnectorAccountConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
@@ -633,6 +658,10 @@ func (r *mutationResolver) DisableConnectorAccount(ctx context.Context, input ty
 
 		if errors.Is(err, coredata.ErrResourceInUse) {
 			return nil, gqlutils.Conflictf(ctx, "connector account is in use")
+		}
+
+		if errors.Is(err, probo.ErrInitialConnectorAccount) {
+			return nil, gqlutils.Conflictf(ctx, "connector account is the initial account")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot disable connector account", log.Error(err))
