@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,6 +32,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+// ErrInitialConnectorAccount is returned when a disable would remove the
+// account the credential itself is. That row stays for the life of the connector.
+var ErrInitialConnectorAccount = errors.New("initial connector account cannot be disabled")
 
 type (
 	EnableConnectorAccount struct {
@@ -207,6 +212,20 @@ func (s *ConnectorService) DisableAccount(
 			account := &coredata.ConnectorAccount{}
 			if err := account.LoadByID(ctx, tx, scope, accountID); err != nil {
 				return fmt.Errorf("cannot load connector account: %w", err)
+			}
+
+			cnnctr := &coredata.Connector{}
+			if err := cnnctr.LoadMetadataByID(ctx, tx, scope, account.ConnectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			protected, err := s.protectedAccount(ctx, tx, scope, cnnctr)
+			if err != nil {
+				return fmt.Errorf("cannot load protected connector account: %w", err)
+			}
+
+			if protected != nil && account.ID == protected.ID {
+				return ErrInitialConnectorAccount
 			}
 
 			sources := coredata.AccessReviewSources{}

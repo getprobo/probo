@@ -219,6 +219,39 @@ func TestDisableConnectorAccount_RefusedWhenSourceReferences(t *testing.T) {
 	assert.Equal(t, memberID, disabled.DisableConnectorAccount.DisabledConnectorAccountID)
 }
 
+func TestDisableConnectorAccount_RefusedWhenInitial(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	connectorID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	var accounts connectorAccountsResult
+
+	err := owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &accounts)
+	require.NoError(t, err)
+	require.Len(t, accounts.Node.Accounts.Edges, 1)
+
+	initialID := accounts.Node.Accounts.Edges[0].Node.ID
+
+	err = owner.Execute(
+		disableConnectorAccountMutation,
+		map[string]any{"input": map[string]any{"connectorAccountId": initialID}},
+		&struct {
+			DisableConnectorAccount struct {
+				DisabledConnectorAccountID string `json:"disabledConnectorAccountId"`
+			} `json:"disableConnectorAccount"`
+		}{},
+	)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+
+	err = owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &accounts)
+	require.NoError(t, err)
+	require.Len(t, accounts.Node.Accounts.Edges, 1)
+	assert.Equal(t, initialID, accounts.Node.Accounts.Edges[0].Node.ID)
+}
+
 func TestCreateAccessReviewSource_ConnectorIdOnlyResolvesAccount(t *testing.T) {
 	t.Parallel()
 

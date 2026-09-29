@@ -55,6 +55,101 @@ func (s *ConnectorService) initialAccount(c *coredata.Connector) (string, string
 	return externalID, name, nil
 }
 
+// resolveStoredInitialAccount is the account this credential is. A connector
+// with no tenant in settings is still that one account, keyed by the connector
+// id. Organization installs with nothing resolved yet have no such account.
+func (s *ConnectorService) resolveStoredInitialAccount(c *coredata.Connector) (string, string, error) {
+	if c == nil {
+		return "", "", nil
+	}
+
+	externalID, name, err := s.initialAccount(c)
+	if err != nil {
+		return "", "", err
+	}
+
+	if externalID == "" && !s.organizationInstall(c) {
+		return c.ID.String(), s.implicitAccountName(c), nil
+	}
+
+	return externalID, name, nil
+}
+
+// protectedAccount is the account recorded at creation. Create inserts that
+// row before any other, so it stays the earliest one when settings change.
+// An organization install with nothing resolved yet has none.
+func (s *ConnectorService) protectedAccount(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+) (*coredata.ConnectorAccount, error) {
+	externalID, _, err := s.resolveStoredInitialAccount(cnnctr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve initial connector account: %w", err)
+	}
+
+	if externalID == "" {
+		return nil, nil
+	}
+
+	var accounts coredata.ConnectorAccounts
+
+	cursor := page.NewCursor(
+		1,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.ConnectorAccountOrderField]{
+			Field:     coredata.ConnectorAccountOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	if err := accounts.LoadByConnectorID(ctx, conn, scope, cnnctr.ID, cursor); err != nil {
+		return nil, fmt.Errorf("cannot load initial connector account: %w", err)
+	}
+
+	if len(accounts) == 0 {
+		return nil, nil
+	}
+
+	return accounts[0], nil
+}
+
+func (s *ConnectorService) InitialAccountExternalID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (string, error) {
+	var externalID string
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			cnnctr := &coredata.Connector{}
+			if err := cnnctr.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			protected, err := s.protectedAccount(ctx, conn, scope, cnnctr)
+			if err != nil {
+				return fmt.Errorf("cannot load protected connector account: %w", err)
+			}
+
+			if protected != nil {
+				externalID = protected.ExternalAccountID
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve initial connector account: %w", err)
+	}
+
+	return externalID, nil
+}
+
 // recordInitialAccount stores the account present at create time. A connector
 // with no tenant in settings is still that one account. Organization installs
 // wait for discover.
@@ -64,14 +159,9 @@ func (s *ConnectorService) recordInitialAccount(
 	scope coredata.Scoper,
 	cnnctr *coredata.Connector,
 ) error {
-	externalID, name, err := s.initialAccount(cnnctr)
+	externalID, name, err := s.resolveStoredInitialAccount(cnnctr)
 	if err != nil {
 		return err
-	}
-
-	if externalID == "" && !s.organizationInstall(cnnctr) {
-		externalID = cnnctr.ID.String()
-		name = s.implicitAccountName(cnnctr)
 	}
 
 	if _, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {
