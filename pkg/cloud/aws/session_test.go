@@ -106,6 +106,7 @@ func TestNewSession(t *testing.T) {
 			assert.Equal(t, "123456789012", session.AccountID(), "account comes from the role ARN")
 			assert.Equal(t, tt.partition, session.Partition(), "partition comes from the role ARN")
 			assert.Equal(t, tt.region, session.Config().Region)
+			assert.Nil(t, session.Config().BaseEndpoint)
 		})
 	}
 }

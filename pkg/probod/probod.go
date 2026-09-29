@@ -387,7 +387,17 @@ func (impl *Implm) Run(
 		}
 	}
 
-	providerRegistry, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(endpointOverrides))
+	registryOpts := []provider.Option{
+		provider.WithEndpointOverrides(endpointOverrides),
+	}
+	if impl.cfg.IdentityFederation.AWSEndpoint != "" {
+		registryOpts = append(
+			registryOpts,
+			provider.WithAWSAPIEndpoint(impl.cfg.IdentityFederation.AWSEndpoint),
+		)
+	}
+
+	providerRegistry, err := provider.NewBuiltinRegistryWith(registryOpts...)
 	if err != nil {
 		return fmt.Errorf("cannot configure connector providers: %w", err)
 	}

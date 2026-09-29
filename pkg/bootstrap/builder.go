@@ -217,6 +217,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					"PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE",
 					cloudazure.DefaultTerraformModuleSource,
 				),
+				AWSEndpoint: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_AWS_ENDPOINT"),
 			},
 			ITAM: probodconfig.ITAMConfig{
 				DeviceEnrollmentTokenValidity: b.resolver.getEnvIntOrDefault(
