@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.239.0] - 2026-09-30
+
+### Added
+
+- Task `Get Many` can filter by `Assigned To ID`
+
 ## [0.238.0] - 2026-09-25
 
 ### Added
