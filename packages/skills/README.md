@@ -79,7 +79,7 @@ claude --plugin-dir ./packages/skills
 | Skills | `skills/` | Compliance workflows |
 | Commands | `commands/` | `access-review`, `missing-signatures` — semi-auto workflows (Claude Code) |
 
-Skills: `/probo:<skill-name>` (e.g. `/probo:open-source-compliance`, `/probo:missing-signatures`).
+Skills: `/probo:<skill-name>` (e.g. `/probo:documents`, `/probo:open-source-compliance`, `/probo:missing-signatures`).
 
 Commands: `/probo:<command-name>` (e.g. `/probo:access-review`, `/probo:missing-signatures`).
 

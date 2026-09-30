@@ -22,8 +22,9 @@ A **skills package** bundling:
 
 Individual capabilities are namespaced under `probo`:
 
-- Skills: `/probo:<skill-name>` (e.g. `/probo:open-source-compliance`,
-  `/probo:missing-signatures`, `/probo:access-review`)
+- Skills: `/probo:<skill-name>` (e.g. `/probo:documents`,
+  `/probo:open-source-compliance`, `/probo:missing-signatures`,
+  `/probo:access-review`)
 - Commands: `/probo:<command-name>` (e.g. `/probo:access-review`,
   `/probo:missing-signatures`)
 

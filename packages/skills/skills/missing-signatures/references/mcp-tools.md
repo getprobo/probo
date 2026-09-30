@@ -43,16 +43,24 @@ Primary iterator for the scan.
 | `cursor` | Store in notes as `last_document_cursor` |
 | `filter.status` | Optional — omit archived docs in post-processing or pass active-only if supported |
 
-Returns `documents[]` and `next_cursor`. Each document includes
-`current_published_major`, `current_published_minor`, `status`.
+Returns `documents[]` and `next_cursor`. Each document includes `title`,
+`document_type`, `current_published_major`, `current_published_minor`, and
+`status`. Use `title` in the report. It is metadata, not markdown.
 
 ### `getDocument`
 
-Use when you need fresh `current_published_*` fields for one document.
+Required: `id` (document id, not a version id). Use when you need fresh
+`title` and `current_published_*` fields for one document.
+
+### `readDocument`
+
+Use only when the report needs the markdown body. Required: `document_id` and
+`version` (`PUBLISHED` for the current published revision). The signature scan
+does not need this.
 
 ### `listDocumentVersions`
 
-Required: `document_id`
+Required: `document_id` (the document id, not a version id)
 
 | Field | Usage |
 | --- | --- |
