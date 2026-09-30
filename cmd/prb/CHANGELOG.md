@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.238.0] - 2026-09-30
+
+### Added
+
+- `task list` accepts `--assigned-to` to filter by the profile a task is
+  assigned to
+
 ## [0.237.0] - 2026-09-25
 
 ### Added
