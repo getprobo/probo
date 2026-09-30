@@ -132,8 +132,9 @@ Do not call unless the user explicitly asks after reviewing the report:
 - `publishDocument`
 - `voidDocumentVersionApproval`
 
-Signing and approving are GraphQL-only today (`signDocument`,
-`approveDocumentVersion`, `rejectDocumentVersion`) — not available via MCP.
+Signing and approving are MCP tools (`signDocument`,
+`approveDocumentVersion`, `rejectDocumentVersion`). Pass the document
+version id, not the document id.
 
 ## Pagination and resume
 

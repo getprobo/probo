@@ -54,13 +54,28 @@ func TestMCP_Document_CRUD(t *testing.T) {
 	// Get
 	var getResult struct {
 		Document struct {
-			ID string `json:"id"`
+			ID    string `json:"id"`
+			Title string `json:"title"`
 		} `json:"document"`
 	}
 	mc.CallToolInto("getDocument", map[string]any{
 		"id": addResult.Document.ID,
 	}, &getResult)
 	assert.Equal(t, addResult.Document.ID, getResult.Document.ID)
+	assert.Equal(t, addResult.Document.Title, getResult.Document.Title)
+
+	var readResult struct {
+		DocumentVersion struct {
+			Content string `json:"content"`
+			Title   string `json:"title"`
+		} `json:"document_version"`
+	}
+	mc.CallToolInto("readDocument", map[string]any{
+		"document_id": addResult.Document.ID,
+		"version":     "LATEST",
+	}, &readResult)
+	assert.Equal(t, "Document body", readResult.DocumentVersion.Content)
+	assert.Equal(t, addResult.Document.Title, readResult.DocumentVersion.Title)
 
 	// Update
 	var updateResult struct {
