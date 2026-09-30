@@ -3336,6 +3336,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty risk assessments: %w", err)
 	}
 
+	now := time.Now()
 	assessmentsByThirdParty := make(map[gid.GID]coredata.ThirdPartyRiskAssessments, len(thirdParties))
 	for _, ra := range allAssessments {
 		assessmentsByThirdParty[ra.ThirdPartyID] = append(assessmentsByThirdParty[ra.ThirdPartyID], ra)
@@ -3415,7 +3416,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 			})
 		}
 
-		for _, ra := range assessmentsByThirdParty[v.ID] {
+		if ra := latestActiveThirdPartyRiskAssessment(assessmentsByThirdParty[v.ID], now); ra != nil {
 			row.RiskAnalyses = append(row.RiskAnalyses, docgen.ThirdPartyListRiskAssessment{
 				AssessedAt:      ra.CreatedAt.Format("2006-01-02"),
 				ExpiresAt:       ra.ExpiresAt.Format("2006-01-02"),
@@ -3453,10 +3454,29 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	return docgen.ThirdPartyListData{
 		Title:             "ThirdParties",
 		OrganizationName:  organization.Name,
-		CreatedAt:         time.Now(),
+		CreatedAt:         now,
 		TotalThirdParties: len(thirdParties),
 		Rows:              rows,
 	}, nil
+}
+
+func latestActiveThirdPartyRiskAssessment(
+	assessments coredata.ThirdPartyRiskAssessments,
+	now time.Time,
+) *coredata.ThirdPartyRiskAssessment {
+	var latest *coredata.ThirdPartyRiskAssessment
+
+	for _, ra := range assessments {
+		if ra == nil || !ra.ExpiresAt.After(now) {
+			continue
+		}
+
+		if latest == nil || ra.CreatedAt.After(latest.CreatedAt) {
+			latest = ra
+		}
+	}
+
+	return latest
 }
 
 func stringOrNotSpecified(s string) string {
