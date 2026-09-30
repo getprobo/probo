@@ -5,15 +5,6 @@ this file.
 
 ## Unreleased
 
-### Added
-
-- `documents` skill: which id to pass when reading, editing, publishing, signing, or approving a Probo document
-
-### Changed
-
-- Compliance portal commitments read published policy markdown with `readDocument` and filter `listDocuments` under `filter`
-- Missing-signatures reference uses the document `title` returned by `listDocuments`
-
 ## [0.3.2] - 2026-09-04
 
 ### Changed

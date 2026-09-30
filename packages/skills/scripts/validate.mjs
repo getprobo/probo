@@ -75,8 +75,6 @@ const requiredPaths = [
   "skills/missing-signatures/SKILL.md",
   "skills/open-source-compliance/SKILL.md",
   "skills/compliance-portal-commitments/SKILL.md",
-  "skills/documents/SKILL.md",
-  "skills/documents/references/mcp-tools.md",
   "skills/access-review/references/mcp-tools.md",
   "skills/access-review/references/decision-rubric.md",
   "skills/access-review/references/notes-format.md",

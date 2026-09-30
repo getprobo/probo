@@ -51,15 +51,12 @@ Commitments must trace to controls the company genuinely has. The source of trut
    server (the plugin ships hosted `probo-us` and `probo-eu`, and self-hosted instances add their own).
    Call `listOrganizations` on each until you find the one that returns the target company, and use that
    server for every later call. Match the organization the user named and capture its `id`.
-2. **List the published policies.** Call `listDocuments` with
-   `filter: {document_types: ["POLICY"], published: true}`. Each result includes
-   `title` and `current_published_major`. `document_types` is inside `filter`, not a
-   top-level argument.
-3. **Read the actual content.** Call `readDocument` for each policy with
-   `document_id` set to the document id and `version: "PUBLISHED"`.
-   `document_version.content` is the markdown. Fetch the policies in parallel.
-   Do not call `getDocument` or `listDocumentVersions` for the text, and do not
-   pass a version id as `document_id`.
+2. **List the published policies.** Call `listDocuments` with `document_types: ["POLICY"]`. Policies with
+   a `current_published_major` are published.
+3. **Read the actual content.** `getDocument` returns metadata only. To get the text, call
+   `listDocumentVersions` for each policy with `filter: {statuses: ["PUBLISHED"]}`,
+   `order_by: {field: "CREATED_AT", direction: "DESC"}`, `size: 1`. The returned version includes the
+   `title` and the full `content`. Fetch the policies in parallel.
 
 Read the substance, not just the titles. The specific, quotable facts live inside the statements: exact
 algorithms (AES-256), protocols (TLS, SSH, VPN), tools (SAST, secret scanning), cadences (quarterly

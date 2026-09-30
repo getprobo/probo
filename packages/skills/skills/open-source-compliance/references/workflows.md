@@ -36,14 +36,6 @@ When unsure which MCP tool to use:
 2. Read the tool schema before calling it.
 3. Paginate list operations; default page sizes may truncate results.
 
-## Documents
-
-Load the `documents` skill before reading or editing a policy. A document id
-and a document version id are different. `listDocuments` returns `title` and
-no markdown. `readDocument` returns the markdown for `version` `LATEST`,
-`PUBLISHED`, or `DRAFT`. `publishDocument` takes `document_id`, `minor`, and
-`changelog`, and has no `approver_ids` argument.
-
 ## Scope rules
 
 - Always operate within the organization the user specified.
