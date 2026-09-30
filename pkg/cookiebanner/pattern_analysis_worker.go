@@ -155,7 +155,9 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(banner.ID)
 
-			exactPatterns, err := page.LoadAll(
+			var exactPatterns []*coredata.TrackerPattern
+
+			err := page.WalkAll(
 				ctx,
 				page.OrderBy[coredata.TrackerPatternOrderField]{
 					Field:     coredata.TrackerPatternOrderFieldCreatedAt,
@@ -168,6 +170,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					}
 
 					return batch, nil
+				},
+				func(rows []*coredata.TrackerPattern) error {
+					exactPatterns = append(exactPatterns, rows...)
+					return nil
 				},
 			)
 			if err != nil {
@@ -791,7 +797,9 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		return false, fmt.Errorf("cannot load uncategorised category: %w", err)
 	}
 
-	globPatterns, err := page.LoadAll(
+	var globPatterns []*coredata.TrackerPattern
+
+	err := page.WalkAll(
 		ctx,
 		page.OrderBy[coredata.TrackerPatternOrderField]{
 			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
@@ -804,6 +812,10 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			}
 
 			return batch, nil
+		},
+		func(rows []*coredata.TrackerPattern) error {
+			globPatterns = append(globPatterns, rows...)
+			return nil
 		},
 	)
 	if err != nil {
@@ -823,7 +835,9 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 
 	exactMatchType := coredata.TrackerPatternMatchTypeExact
 
-	uncategorisedExact, err := page.LoadAll(
+	var uncategorisedExact []*coredata.TrackerPattern
+
+	err = page.WalkAll(
 		ctx,
 		page.OrderBy[coredata.TrackerPatternOrderField]{
 			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
@@ -836,6 +850,10 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			}
 
 			return batch, nil
+		},
+		func(rows []*coredata.TrackerPattern) error {
+			uncategorisedExact = append(uncategorisedExact, rows...)
+			return nil
 		},
 	)
 	if err != nil {
