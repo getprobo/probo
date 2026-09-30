@@ -120,9 +120,8 @@ func TestCompliancePortal_LLMsTxt(t *testing.T) {
 	require.NoError(t, err)
 
 	trustHost := llmsTxtTrustHost(t, owner, portalID)
-	// Certificate polling waits out the provisioning lease before the CA
-	// validates the managed domain, so the shared 30s helper is too short.
-	waitForLLMsTxtPortal(t, trustHost)
+	// Poll lease is 2 minutes, so the certificate is not ready within 30s.
+	testutil.WaitForCompliancePortalHTTPSWithin(t, trustHost, 3*time.Minute)
 
 	client := testutil.TrustHTTPClient(trustHost)
 	resp, err := client.Get("https://" + trustHost + "/llms.txt")
@@ -151,29 +150,6 @@ func TestCompliancePortal_LLMsTxt(t *testing.T) {
 	assert.Contains(t, markdown, "## External Links")
 	assert.Contains(t, markdown, "| "+linkName+" | https://status.example |")
 	assert.NotContains(t, markdown, "internal server error")
-}
-
-func waitForLLMsTxtPortal(t *testing.T, host string) {
-	t.Helper()
-
-	client := testutil.TrustHTTPClient(host)
-
-	require.Eventually(
-		t,
-		func() bool {
-			resp, err := client.Get("https://" + host + "/.well-known/oauth-client-metadata")
-			if err != nil {
-				return false
-			}
-
-			defer func() { _ = resp.Body.Close() }()
-
-			return resp.StatusCode == http.StatusOK
-		},
-		3*time.Minute,
-		time.Second,
-		"compliance portal did not become servable on the dedicated listener",
-	)
 }
 
 func llmsTxtOrganizationName(t *testing.T, owner *testutil.Client) string {
