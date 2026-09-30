@@ -22,9 +22,11 @@ package accessreview
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -583,14 +585,7 @@ func (s *Service) loadConfiguredConnector(
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) (*coredata.Connector, error) {
-	dbConnector := &coredata.Connector{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey)
-		},
-	)
+	dbConnector, err := s.loadConnector(ctx, scope, connectorID)
 	if err != nil {
 		return nil, err
 	}
@@ -836,15 +831,7 @@ func (s *Service) ProbeConnector(
 			return NewProbeError(dbConnector.Provider, err)
 		}
 
-		if err := s.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector); err != nil {
-			if !IsProviderVerdict(err) {
-				return err
-			}
-
-			return NewProbeError(dbConnector.Provider, err)
-		}
-
-		return nil
+		return s.probeHTTPConnector(ctx, httpClient, dbConnector)
 
 	default:
 		return fmt.Errorf(
@@ -852,6 +839,108 @@ func (s *Service) ProbeConnector(
 			dbConnector.Provider,
 		)
 	}
+}
+
+// newConnectorCheckTimeout bounds how long a create waits on the provider.
+const newConnectorCheckTimeout = 15 * time.Second
+
+// CheckNewAPIKeyConnector probes an API-key connector that is not saved yet,
+// when its provider checks its settings. It returns the setting the provider
+// refused, or nil; any other outcome is logged and left to the saved
+// connector's connection status.
+func (s *Service) CheckNewAPIKeyConnector(
+	ctx context.Context,
+	prvdr coredata.ConnectorProvider,
+	conn *connector.APIKeyConnection,
+	rawSettings json.RawMessage,
+) *drivers.SettingRejectedError {
+	reg, ok := s.providerRegistry.Get(prvdr)
+	if !ok || !reg.ChecksSettingsBeforeSave() {
+		return nil
+	}
+
+	checkCtx, cancel := context.WithTimeout(ctx, newConnectorCheckTimeout)
+	defer cancel()
+
+	err := s.probeNewAPIKeyConnector(checkCtx, prvdr, conn, rawSettings)
+	if err == nil {
+		return nil
+	}
+
+	if rejected, ok := errors.AsType[*drivers.SettingRejectedError](err); ok && rejected != nil {
+		return rejected
+	}
+
+	providerField := log.String("provider", prvdr.String())
+
+	_, isProbeErr := errors.AsType[*ProbeError](err)
+	if isProbeErr || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot check connector before save, saving anyway",
+			providerField,
+			log.String("probe_failure", ProbeFailureCode(err)),
+		)
+
+		return nil
+	}
+
+	s.logger.ErrorCtx(
+		ctx,
+		"cannot check connector before save, saving anyway",
+		providerField,
+		log.String("probe_failure", ProbeFailureCode(err)),
+	)
+
+	return nil
+}
+
+func (s *Service) probeNewAPIKeyConnector(
+	ctx context.Context,
+	prvdr coredata.ConnectorProvider,
+	conn *connector.APIKeyConnection,
+	rawSettings json.RawMessage,
+) error {
+	httpClient, err := buildHTTPClient(ctx, s.connectorRegistry, s.providerRegistry, prvdr, conn)
+	if err != nil {
+		return fmt.Errorf("cannot create HTTP client: %w", err)
+	}
+
+	dbConnector := &coredata.Connector{
+		Provider:    prvdr,
+		Protocol:    coredata.ConnectorProtocolAPIKey,
+		RawSettings: []byte(rawSettings),
+		Connection:  conn,
+	}
+
+	return s.probeHTTPConnector(ctx, httpClient, dbConnector)
+}
+
+func (s *Service) probeHTTPConnector(
+	ctx context.Context,
+	httpClient *http.Client,
+	dbConnector *coredata.Connector,
+) error {
+	if err := s.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector); err != nil {
+		if !IsProviderVerdict(err) {
+			return withoutRequestURL(err)
+		}
+
+		return NewProbeError(dbConnector.Provider, err)
+	}
+
+	return nil
+}
+
+// withoutRequestURL drops the request URL a *url.Error prints, since it
+// carries connector settings, and keeps its cause.
+func withoutRequestURL(err error) error {
+	urlErr, ok := errors.AsType[*url.Error](err)
+	if !ok || urlErr == nil {
+		return err
+	}
+
+	return fmt.Errorf("cannot send probe request: %w", urlErr.Err)
 }
 
 // ProviderOrganizations lists the orgs/workspaces the connector backing the
@@ -972,41 +1061,88 @@ func (s *Service) SourceMissingOAuthScopes(
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) ([]string, error) {
-	var dbConnector coredata.Connector
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey); err != nil {
-				return err
-			}
-
-			return nil
-		},
-	)
+	dbConnector, err := s.loadConnector(ctx, scope, connectorID)
 	if err != nil {
 		return nil, err
 	}
 
 	required := s.providerRegistry.ProviderOAuth2Scopes(dbConnector.Provider)
 
-	return missingOAuthScopesForConnector(dbConnector, required), nil
+	return missingOAuthScopesForConnector(*dbConnector, required), nil
 }
 
-// SourceNeedsReconnect reports whether the connector is missing OAuth scopes
-// required by the current provider registration. ErrResourceNotFound is
+// SourceNeedsReconnect reports whether the connector must be reconnected:
+// it misses OAuth scopes the current provider registration requires, unless
+// the registration's NeedsReconnect decides otherwise. ErrResourceNotFound is
 // propagated for a missing connector.
 func (s *Service) SourceNeedsReconnect(
 	ctx context.Context,
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) (bool, error) {
-	missing, err := s.SourceMissingOAuthScopes(ctx, scope, connectorID)
+	dbConnector, err := s.loadConnector(ctx, scope, connectorID)
 	if err != nil {
 		return false, err
 	}
 
+	required := s.providerRegistry.ProviderOAuth2Scopes(dbConnector.Provider)
+	missing := missingOAuthScopesForConnector(*dbConnector, required)
+
+	if reg, ok := s.providerRegistry.Get(dbConnector.Provider); ok && reg.NeedsReconnect != nil {
+		return reg.NeedsReconnect(dbConnector, missing), nil
+	}
+
 	return len(missing) > 0, nil
+}
+
+// ValidateConnectorInstall runs the provider's install check against a
+// connection fresh from the OAuth callback, before it is saved. A
+// *drivers.InstallRejectedError carries a message for the user.
+func (s *Service) ValidateConnectorInstall(
+	ctx context.Context,
+	provider coredata.ConnectorProvider,
+	conn connector.Connection,
+) error {
+	reg, ok := s.providerRegistry.Get(provider)
+	if !ok || reg.ValidateInstall == nil {
+		return nil
+	}
+
+	httpConn, ok := conn.(connector.HTTPConnection)
+	if !ok {
+		return nil
+	}
+
+	httpClient, err := buildHTTPClient(ctx, s.connectorRegistry, s.providerRegistry, provider, httpConn)
+	if err != nil {
+		return fmt.Errorf("cannot create HTTP client for %s connector: %w", provider, err)
+	}
+
+	if err := reg.ValidateInstall(ctx, httpClient, reg.Endpoints); err != nil {
+		return fmt.Errorf("cannot validate %s connector install: %w", provider, err)
+	}
+
+	return nil
+}
+
+func (s *Service) loadConnector(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (*coredata.Connector, error) {
+	var dbConnector coredata.Connector
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load connector: %w", err)
+	}
+
+	return &dbConnector, nil
 }
 
 // missingOAuthScopesForConnector returns scopes in required that are absent

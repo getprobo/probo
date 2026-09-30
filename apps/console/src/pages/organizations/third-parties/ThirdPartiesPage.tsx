@@ -21,15 +21,18 @@
 import { usePageTitle } from "@probo/hooks";
 import {
   Button,
+  IconMagnifyingGlass,
   IconPageTextLine,
   IconPlusLarge,
   IconUpload,
+  Input,
   PageHeader,
   Tbody,
   Th,
   Thead,
   Tr,
 } from "@probo/ui";
+import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import {
   graphql,
@@ -38,6 +41,7 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 import { useNavigate } from "react-router";
+import { useDebounceCallback } from "usehooks-ts";
 
 import type { ThirdPartiesPageFragment$key } from "#/__generated__/core/ThirdPartiesPageFragment.graphql";
 import type { ThirdPartiesPageQuery } from "#/__generated__/core/ThirdPartiesPageQuery.graphql";
@@ -119,6 +123,14 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
     ThirdPartiesPageFragment$key
   >(thirdPartiesFragment, queryData.organization);
 
+  const [search, setSearch] = useState("");
+  const [, startTransition] = useTransition();
+
+  const filterFor = (query: string) => ({
+    ...ThirdPartiesConnectionFilter,
+    query: query.trim() || null,
+  });
+
   const refetch = ({
     order,
   }: {
@@ -130,9 +142,24 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
           direction: order.direction as "ASC" | "DESC",
           field: order.field as "NAME" | "CREATED_AT" | "UPDATED_AT",
         },
+        filter: filterFor(search),
       },
       { fetchPolicy: "network-only" },
     );
+  };
+
+  const refetchSearch = useDebounceCallback((query: string) => {
+    startTransition(() => {
+      pagination.refetch(
+        { filter: filterFor(query) },
+        { fetchPolicy: "network-only" },
+      );
+    });
+  }, 300);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    refetchSearch(value);
   };
 
   const thirdParties = fragmentData.thirdParties?.edges.map(edge => edge.node) ?? [];
@@ -187,6 +214,13 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
           )}
         </div>
       </PageHeader>
+      <Input
+        icon={IconMagnifyingGlass}
+        placeholder={t("thirdPartiesPage.searchPlaceholder")}
+        value={search}
+        onValueChange={handleSearchChange}
+        className="w-72"
+      />
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>

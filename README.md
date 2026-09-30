@@ -138,6 +138,8 @@ To report a security vulnerability, email [security@probo.com](mailto:security@p
 
 The local Go cache actions use the cache strategy from [CloudX](https://www.cloudx.ai). See [Scaling Golang CI by Replacing actions/setup-go](https://www.cloudx.ai/posts/setup-go) and [cloudx-io/setup-go](https://github.com/cloudx-io/setup-go). Thank you to Lukas Schwab, Peter Downs, and the CloudX team.
 
+The local stack runs [fakecloud](https://fakecloud.dev) so AWS workload identity can be tried without an AWS account. See [faiscadev/fakecloud](https://github.com/faiscadev/fakecloud). Thank you to the fakecloud team.
+
 ## License
 
 Probo is [MIT licensed](LICENSE).

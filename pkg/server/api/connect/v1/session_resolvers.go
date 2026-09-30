@@ -11,7 +11,6 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -218,7 +217,7 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 			continue
 		}
 
-		if samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyOff {
+		if !samlConfig.SSOEnabled() {
 			continue
 		}
 

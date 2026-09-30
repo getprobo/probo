@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -316,6 +317,10 @@ func continueRedirectURL(
 	return parsedURL
 }
 
+// connectorInstallCheckFailedMessage is shown when an install check fails
+// for a reason other than a rejection the provider explains.
+const connectorInstallCheckFailedMessage = "Cannot verify the connection, please try again."
+
 func finishConnectorCompletion(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -343,6 +348,32 @@ func finishConnectorCompletion(
 	}
 
 	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	if err := accessReviewSvc.ValidateConnectorInstall(r.Context(), connectorProvider, connection); err != nil {
+		message := connectorInstallCheckFailedMessage
+
+		if rejected, ok := errors.AsType[*drivers.InstallRejectedError](err); ok && rejected != nil {
+			message = rejected.Message
+
+			logger.WarnCtx(r.Context(), "connector install rejected", log.String("provider", string(connectorProvider)))
+		} else {
+			logger.ErrorCtx(
+				r.Context(),
+				"cannot validate connector install",
+				log.String("provider", string(connectorProvider)),
+				log.String("failure", accessreview.ProbeFailureCode(err)),
+			)
+		}
+
+		parsedURL := continueRedirectURL(r.Context(), logger, baseURL, completion.ContinueURL, organizationID)
+		q := parsedURL.Query()
+		q.Set("error", message)
+		parsedURL.RawQuery = q.Encode()
+
+		safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+
+		return
+	}
 
 	var cnnctr *coredata.Connector
 

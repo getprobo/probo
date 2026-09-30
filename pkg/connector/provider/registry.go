@@ -146,6 +146,12 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
+	// Only a Probe closure can refuse a setting, so a settings check on any
+	// other probe would hold every create open for a verdict it cannot give.
+	if reg.APIKey != nil && reg.APIKey.CheckSettings && (reg.Probe == nil || len(reg.APIKey.ExtraSettings) == 0) {
+		return fmt.Errorf("cannot register connector provider %q: CheckSettings needs a Probe closure and ExtraSettings", reg.Provider)
+	}
+
 	// A Probo-held key ignores any customer credential, so pairing it with the
 	// client-credentials path would advertise a credential field whose value is
 	// silently discarded. Its former conflict with a customer-supplied API key

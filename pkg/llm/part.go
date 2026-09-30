@@ -41,7 +41,8 @@ type (
 
 	ThinkingPart struct {
 		Text      string
-		Signature string // Anthropic thinking signature for multi-turn continuity
+		Signature string // provider-specific opaque state for multi-turn continuity
+		Provider  string // provider that produced Signature; empty for legacy Anthropic parts
 	}
 )
 

@@ -217,6 +217,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					"PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE",
 					cloudazure.DefaultTerraformModuleSource,
 				),
+				AWSEndpoint: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_AWS_ENDPOINT"),
 			},
 			ITAM: probodconfig.ITAMConfig{
 				DeviceEnrollmentTokenValidity: b.resolver.getEnvIntOrDefault(
@@ -590,6 +591,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"CAL_COM",
 		"CALENDLY",
 		"ATTIO",
+		"OVHCLOUD",
 	} {
 		clientID := b.resolver.getEnv("PROBOD_CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -816,6 +818,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_CALENDLY", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_ATTIO", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
+		{"CONNECTOR_OVHCLOUD", []string{"CLIENT_SECRET"}},
 	}
 
 	for _, p := range oauthProviders {

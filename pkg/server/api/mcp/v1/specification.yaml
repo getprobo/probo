@@ -2703,6 +2703,11 @@ components:
             state:
               $ref: "#/components/schemas/TaskState"
               description: Task state filter
+            assigned_to_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by assigned profile ID. Defaults to null which returns every assignee.
 
     ListMeasureTasksOutput:
       type: object
@@ -7273,6 +7278,11 @@ components:
             state:
               $ref: "#/components/schemas/TaskState"
               description: Task state filter
+            assigned_to_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by assigned profile ID. Defaults to null which returns every assignee.
 
     ListTasksOutput:
       type: object

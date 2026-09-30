@@ -35,6 +35,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -255,4 +256,22 @@ func gcpImpersonationDenied(status int, reason string) error {
 		"cannot reach gcp project: %w",
 		fmt.Errorf("cannot impersonate gcp service account: %w", apiErr),
 	)
+}
+
+func TestSettingRejectedIsARefusedOperation(t *testing.T) {
+	t.Parallel()
+
+	err := accessreview.NewProbeError(
+		coredata.ConnectorProviderBetterStack,
+		&drivers.SettingRejectedError{
+			Code:       "better_stack_team_not_found",
+			Setting:    "teamName",
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Better Stack has no team with this name for this API token.",
+		},
+	)
+
+	assert.True(t, accessreview.IsProviderVerdict(err))
+	assert.True(t, accessreview.IsProbeOperationRefused(err))
+	assert.Equal(t, "setting_rejected_better_stack_team_not_found", accessreview.ProbeFailureCode(err))
 }

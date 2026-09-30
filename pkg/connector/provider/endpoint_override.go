@@ -42,7 +42,8 @@ type EndpointOverrides map[coredata.ConnectorProvider]Endpoints
 type Option func(*registryOptions)
 
 type registryOptions struct {
-	endpoints EndpointOverrides
+	endpoints      EndpointOverrides
+	awsAPIEndpoint string
 }
 
 // WithEndpointOverrides substitutes deployment-supplied endpoints for the
@@ -52,6 +53,15 @@ type registryOptions struct {
 // for the overridden values too.
 func WithEndpointOverrides(overrides EndpointOverrides) Option {
 	return func(o *registryOptions) { o.endpoints = overrides }
+}
+
+// WithAWSAPIEndpoint points the AWS workload-identity session at endpoint.
+// An empty endpoint keeps the SDK's regional hosts. This is not an entry in
+// Registration.Endpoints: the AWS SDK does not read those.
+func WithAWSAPIEndpoint(endpoint string) Option {
+	return func(o *registryOptions) {
+		o.awsAPIEndpoint = endpoint
+	}
 }
 
 // applyEndpointOverride returns reg's endpoints with o's non-empty fields

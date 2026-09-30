@@ -75,9 +75,9 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	taskFilter := coredata.NewTaskFilter(nil, nil)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil)
 	if filter != nil {
-		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State)
+		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State, filter.AssignedToID)
 	}
 
 	page, err := r.task.ListForMeasureID(ctx, scope, obj.ID, cursor, taskFilter)

@@ -32,6 +32,7 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/api/googleapi"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -196,9 +197,9 @@ func (e *ProbeError) Unwrap() error {
 }
 
 // IsProviderVerdict reports whether err is the provider's answer rather than a
-// failure on Probo's side. Only a rejected credential, a host that answered
-// with a page instead of its API, a transport failure that reached the
-// provider, and a refused token refresh qualify. Everything else a
+// failure on Probo's side. Only a rejected credential, a refused setting, a
+// host that answered with a page instead of its API, a transport failure that
+// reached the provider, and a refused token refresh qualify. Everything else a
 // probe can return (settings that will not decode, a request that could not be
 // built, a registry misconfiguration) is ours, so the default is to treat a
 // failure as Probo's and report it in full.
@@ -213,6 +214,10 @@ func IsProviderVerdict(err error) bool {
 	}
 
 	if _, ok := errors.AsType[*provider.CredentialRejectedError](err); ok {
+		return true
+	}
+
+	if setting, ok := errors.AsType[*drivers.SettingRejectedError](err); ok && setting != nil {
 		return true
 	}
 
@@ -266,6 +271,11 @@ func IsProbeOperationRefused(err error) bool {
 		return true
 	}
 
+	// A refused setting comes after the credential was accepted.
+	if setting, ok := errors.AsType[*drivers.SettingRejectedError](err); ok && setting != nil {
+		return true
+	}
+
 	if apiErr, ok := errors.AsType[*googleapi.Error](err); ok && apiErr != nil {
 		return apiErr.Code == http.StatusForbidden
 	}
@@ -287,6 +297,10 @@ func ProbeFailureCode(err error) string {
 
 	if notAPI, ok := errors.AsType[*provider.NotAnAPIEndpointError](err); ok && notAPI != nil {
 		return fmt.Sprintf("not_an_api_endpoint_%d", notAPI.StatusCode)
+	}
+
+	if setting, ok := errors.AsType[*drivers.SettingRejectedError](err); ok && setting != nil {
+		return "setting_rejected_" + setting.Code
 	}
 
 	if _, ok := errors.AsType[*url.Error](err); ok {

@@ -175,6 +175,12 @@ services:
       - "./compose/keycloak:/opt/keycloak/data/import:ro"
       - "keycloak-data:/opt/keycloak/data/h2:rw"
 
+  fakecloud:
+    image: "ghcr.io/faiscadev/fakecloud@sha256:fef9be8a400c95c02cb8af894742558e6cb7987700d1acb2b0abbb4a4b916fdc"
+    pull_policy: missing
+    ports:
+      - "4566:4566"
+
 volumes:
   postgres-data:
   seaweedfs-data:

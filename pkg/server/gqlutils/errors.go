@@ -225,6 +225,21 @@ func Invalidf(ctx context.Context, format string, a ...any) *gqlerror.Error {
 	return Invalid(ctx, fmt.Errorf(format, a...))
 }
 
+// InvalidField reports a value refused by a check only the server can run,
+// such as asking a provider. The message is shown as-is next to field, so it
+// must be Probo's own words; cause is a stable code a client can key on.
+func InvalidField(ctx context.Context, field, cause, message string) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: message,
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code":  "INVALID",
+			"field": field,
+			"cause": cause,
+		},
+	}
+}
+
 func InvalidValidationErrors(ctx context.Context, errs validator.ValidationErrors) gqlerror.List {
 	gqlErrors := make(gqlerror.List, 0, len(errs))
 	for _, ve := range errs {

@@ -149,6 +149,18 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 	return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: user.OrganizationID})
 }
 
+// settingRejectedError shows a setting the provider refused on the Connect
+// dialog field it concerns: the setting's own, or the key's when the
+// credential cannot reach what the setting names.
+func settingRejectedError(ctx context.Context, rejected *drivers.SettingRejectedError) error {
+	field := rejected.Setting
+	if field == "" {
+		field = "apiKey"
+	}
+
+	return gqlutils.InvalidField(ctx, field, rejected.Code, rejected.Message)
+}
+
 // instanceBaseURL trims space and one trailing slash. A query or fragment
 // is refused: those are not the same instance URL the user typed.
 func instanceBaseURL(raw *string, provider, field string, required bool) (string, error) {
@@ -436,6 +448,29 @@ func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
 	}
 
 	return reg.Endpoints.Token
+}
+
+// clientCredentialsScope decides which scope a client-credentials connector
+// requests. A provider that declares scopes wins outright: the registration
+// already knows what the grant needs, and the customer has no way to know
+// better. Only a provider that declares none falls back to the input.
+// A token endpoint may require one: OVHcloud answers invalid_scope with none.
+func clientCredentialsScope(
+	registry *provider.Registry,
+	p coredata.ConnectorProvider,
+	supplied *string,
+) string {
+	if reg, ok := registry.Get(p); ok && reg.OAuth2 != nil {
+		if scope := connector.FormatScopeString(reg.OAuth2.Scopes); scope != "" {
+			return scope
+		}
+	}
+
+	if supplied == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(*supplied)
 }
 
 // clientCredentialsTokenURL decides which token endpoint a client-credentials

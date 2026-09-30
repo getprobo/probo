@@ -18,12 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, IconArrowsClockwise, useToast } from "@probo/ui";
+import { ArrowsClockwiseIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useMutation } from "react-relay";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { ReactivateSCIMBridgeButtonFragment$key } from "#/__generated__/iam/ReactivateSCIMBridgeButtonFragment.graphql";
 import type { ReactivateSCIMBridgeButtonMutation } from "#/__generated__/iam/ReactivateSCIMBridgeButtonMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
+
+import { scimProviderCard } from "../variants";
 
 const reactivateSCIMBridgeButtonFragment = graphql`
   fragment ReactivateSCIMBridgeButtonFragment on SCIMBridge {
@@ -45,64 +51,57 @@ const reactivateSCIMBridgeMutation = graphql`
   }
 `;
 
-export function ReactivateSCIMBridgeButton(props: { fKey: ReactivateSCIMBridgeButtonFragment$key }) {
-  const { fKey } = props;
-  const bridge = useFragment(reactivateSCIMBridgeButtonFragment, fKey);
-  const { t } = useTranslation();
-  const { toast } = useToast();
+export interface ReactivateSCIMBridgeButtonProps {
+  bridgeKey: ReactivateSCIMBridgeButtonFragment$key;
+}
 
+export function ReactivateSCIMBridgeButton({
+  bridgeKey,
+}: ReactivateSCIMBridgeButtonProps) {
+  const bridge = useFragment(reactivateSCIMBridgeButtonFragment, bridgeKey);
+  const { t } = useTranslation();
+  const { reactivate } = scimProviderCard();
   const [reactivateSCIMBridge, isReactivating]
     = useMutation<ReactivateSCIMBridgeButtonMutation>(
       reactivateSCIMBridgeMutation,
+      {
+        successMessage: t("reactivateSCIMBridge.messages.success"),
+        errorToast: t("reactivateSCIMBridge.errors.reactivate"),
+      },
     );
 
   if (!bridge.canUpdate || bridge.state === "ACTIVE") {
     return null;
   }
 
-  const handleReactivate = () => {
+  function handleReactivate() {
     void reactivateSCIMBridge({
       variables: {
         input: {
           scimBridgeId: bridge.id,
         },
       },
-      onCompleted(_, errors) {
-        if (errors?.length) {
-          toast({
-            title: t("common.error"),
-            description: errors.map(e => e.message).join(", "),
-            variant: "error",
-          });
-          return;
-        }
-        toast({
-          title: t("common.success"),
-          description: t("reactivateSCIMBridge.messages.success"),
-          variant: "success",
-        });
-      },
-      onError(error) {
-        toast({
-          title: t("common.error"),
-          description: error.message,
-          variant: "error",
-        });
-      },
+    }).catch(() => {
+      // Error toast is already shown by useMutation.
     });
-  };
+  }
 
   return (
-    <div className="space-y-2 border-t border-border-low pt-6">
-      <h4 className="text-sm font-medium">{t("reactivateSCIMBridge.dialog.title")}</h4>
-      <p className="text-sm text-txt-secondary">
+    <div className={reactivate()}>
+      <Text size={2} weight="medium" highContrast>
+        {t("reactivateSCIMBridge.dialog.title")}
+      </Text>
+      <Text size={2} color="faint">
         {t("reactivateSCIMBridge.dialog.description")}
-      </p>
-      <Button variant="secondary" onClick={handleReactivate} disabled={isReactivating}>
-        <IconArrowsClockwise size={16} />
-        {isReactivating
-          ? t("reactivateSCIMBridge.actions.reactivating")
-          : t("reactivateSCIMBridge.actions.reactivate")}
+      </Text>
+      <Button
+        variant="soft"
+        color="neutral"
+        loading={isReactivating}
+        iconStart={<ArrowsClockwiseIcon />}
+        onClick={handleReactivate}
+      >
+        {t("reactivateSCIMBridge.actions.reactivate")}
       </Button>
     </div>
   );

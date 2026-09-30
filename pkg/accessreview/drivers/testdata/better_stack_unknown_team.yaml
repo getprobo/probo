@@ -1,0 +1,70 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: betterstack.com
+        form:
+            page:
+                - "1"
+            team_name:
+                - Acme
+        headers:
+            Accept:
+                - application/json
+        url: https://betterstack.com/api/v2/team-members?page=1&team_name=Acme
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 68
+        body: '{"errors":"Team \"Acme\" not found. Available teams: \"Your team\""}'
+        headers:
+            Cache-Control:
+                - no-cache
+            Cf-Cache-Status:
+                - BYPASS
+            Cf-Ray:
+                - a425bf282c6642ba-CDG
+            Content-Length:
+                - "68"
+            Content-Security-Policy:
+                - 'base-uri ''self''; frame-ancestors ''self'' https://betterstack.com https://uptime.betterstack.com https://telemetry.betterstack.com https://cloud-dashboard-api.betterstack.com https://ci-dashboard-api.betterstack.com https://direct.betterstack.com https://cloud.betterstack.com https://cloud-telemetry-api.betterstack.com https://ci.betterstack.com https://chat.betterstack.com https://errors.betterstack.com https://rum.betterstack.com https://logs.betterstack.com https://warehouse.betterstack.com https://agents.betterstack.com; connect-src ''self'' betterstack.com uptime.betterstack.com telemetry.betterstack.com cloud-dashboard-api.betterstack.com ci-dashboard-api.betterstack.com direct.betterstack.com cloud.betterstack.com cloud-telemetry-api.betterstack.com ci.betterstack.com chat.betterstack.com errors.betterstack.com rum.betterstack.com logs.betterstack.com warehouse.betterstack.com agents.betterstack.com wss://betterstack.com wss://uptime.betterstack.com wss://telemetry.betterstack.com wss://cloud-dashboard-api.betterstack.com wss://ci-dashboard-api.betterstack.com wss://direct.betterstack.com wss://cloud.betterstack.com wss://cloud-telemetry-api.betterstack.com wss://ci.betterstack.com wss://chat.betterstack.com wss://errors.betterstack.com wss://rum.betterstack.com wss://logs.betterstack.com wss://warehouse.betterstack.com wss://agents.betterstack.com betterstackcdn.com cdnjs.betterstack.com cdnjs.betterstackcdn.com betterstack-organization-logos.s3.us-west-002.backblazeb2.com betterstack-team-logos.s3.us-west-002.backblazeb2.com betterstack-user-avatars.s3.us-west-002.backblazeb2.com *.okta.com *.sentry.io https://browser.sentry-cdn.com https://api.stripe.com https://chat-assets.frontapp.com https://chat.frontapp.com https://us-west-1-chat-server.frontapp.com https://us-west-2-chat-server.frontapp.com https://eu-west-1-chat-server.frontapp.com wss://front-us-realtime.ably.io wss://front-eu-realtime.ably.io https://chat-webhook.frontapp.com https://*.browser-intake-datadoghq.com https://internet-up.ably-realtime.com www.google.com www.google.ca www.google.co.uk www.google.de www.google.fr www.google.es www.google.it www.google.nl www.google.jp www.google.au www.google.ru www.google.br www.google.in www.google.cn www.google.sg www.google.com.ar www.google.com.au www.google.com.bd www.google.com.bh www.google.com.br www.google.com.co www.google.com.eg www.google.com.hk www.google.com.id www.google.com.il www.google.com.in www.google.com.jp www.google.com.kr www.google.com.mx www.google.com.my www.google.com.nz www.google.com.ph www.google.com.pk www.google.com.sg www.google.com.tr www.google.com.ua www.google.co.za https://betterstack.net *.google-analytics.com www.google-analytics.com *.analytics.google.com *.doubleclick.net www.google.com/pagead/ www.google.com/ccm/collect adservice.google.com www.googleadservices.com www.googletagmanager.com googleads.g.doubleclick.net https://connect.facebook.net https://www.facebook.com/tr https://www.facebook.com/tr/ ads.linkedin.com *.ads.linkedin.com pixel-config.reddit.com www.redditstatic.com conversions-config.reddit.com https://plausible.io bat.bing.com bat.bing.net https://static.ads-twitter.com https://analytics.twitter.com https://snap.licdn.com https://bzrcdn.openai.com https://bzr.openai.com https://upload.imagedelivery.net *.betterstackdata.com; font-src ''self'' betterstackcdn.com https://fonts.gstatic.com https://use.typekit.net https://chat-assets.frontapp.com; frame-src ''self'' https://betterstack.com https://uptime.betterstack.com https://telemetry.betterstack.com https://cloud-dashboard-api.betterstack.com https://ci-dashboard-api.betterstack.com https://direct.betterstack.com https://cloud.betterstack.com https://cloud-telemetry-api.betterstack.com https://ci.betterstack.com https://chat.betterstack.com https://errors.betterstack.com https://rum.betterstack.com https://logs.betterstack.com https://warehouse.betterstack.com https://agents.betterstack.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://www.googletagmanager.com https://td.doubleclick.net https://bid.g.doubleclick.net https://www.youtube.com https://www.facebook.com https://*.js.stripe.com https://js.stripe.com https://hooks.stripe.com newsletter.betterstack.com betterstack.substack.com www.loom.com www.youtube.com; form-action *; style-src ''report-sample'' ''self'' ''unsafe-inline'' betterstackcdn.com cdnjs.betterstack.com cdnjs.betterstackcdn.com https://fonts.googleapis.com blob:; script-src ''report-sample'' ''self'' ''unsafe-eval'' betterstackcdn.com cdnjs.betterstack.com cdnjs.betterstackcdn.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://browser.sentry-cdn.com https://js.sentry-cdn.com https://*.js.stripe.com https://js.stripe.com https://chat-assets.frontapp.com https://betterstack.net *.google-analytics.com www.google-analytics.com *.analytics.google.com *.doubleclick.net www.google.com/pagead/ www.google.com/ccm/collect adservice.google.com www.googleadservices.com www.googletagmanager.com googleads.g.doubleclick.net https://connect.facebook.net https://www.facebook.com/tr https://www.facebook.com/tr/ ads.linkedin.com *.ads.linkedin.com pixel-config.reddit.com www.redditstatic.com conversions-config.reddit.com https://plausible.io bat.bing.com bat.bing.net https://static.ads-twitter.com https://analytics.twitter.com https://snap.licdn.com https://bzrcdn.openai.com https://bzr.openai.com ''nonce-3b14e7315740e0efbbbed282225c1d82''; worker-src ''report-sample'' ''self'' blob: betterstackcdn.com cdnjs.betterstack.com cdnjs.betterstackcdn.com; img-src ''self'' blob: data: betterstackcdn.com cdnjs.betterstack.com cdnjs.betterstackcdn.com www.gravatar.com ui-avatars.com https://*.wp.com/ui-avatars.com/api/ betterstack-organization-logos.s3.us-west-002.backblazeb2.com betterstack-team-logos.s3.us-west-002.backblazeb2.com betterstack-user-avatars.s3.us-west-002.backblazeb2.com https://imagedelivery.net https://imagedelivery.betterstackcdn.com https://betterstack.com/cdn-cgi/image/ https://betterstackcdn.com/cdn-cgi/image/ https://chat.frontapp.com https://chat-assets.frontapp.com https://chat-assets.frontusercontent.com https://nibbler.frontapp.com www.google.com www.google.ca www.google.co.uk www.google.de www.google.fr www.google.es www.google.it www.google.nl www.google.jp www.google.au www.google.ru www.google.br www.google.in www.google.cn www.google.sg www.google.com.ar www.google.com.au www.google.com.bd www.google.com.bh www.google.com.br www.google.com.co www.google.com.eg www.google.com.hk www.google.com.id www.google.com.il www.google.com.in www.google.com.jp www.google.com.kr www.google.com.mx www.google.com.my www.google.com.nz www.google.com.ph www.google.com.pk www.google.com.sg www.google.com.tr www.google.com.ua www.google.co.za *.google-analytics.com *.analytics.google.com *.doubleclick.net www.google.com google.com https://alb.reddit.com linkedin.com *.linkedin.com bat.bing.com bat.bing.net https://www.facebook.com www.googletagmanager.com https://t.co/i/ https://t.co/1/ https://analytics.twitter.com img.youtube.com i.ytimg.com; default-src ''self'''
+            Content-Type:
+                - application/json; charset=utf-8
+            Cross-Origin-Embedder-Policy-Report-Only:
+                - require-corp; report-to csp-endpoint
+            Cross-Origin-Opener-Policy-Report-Only:
+                - same-origin; report-to csp-endpoint
+            Date:
+                - Mon, 28 Sep 2026 21:12:30 GMT
+            Feature-Policy:
+                - accelerometer 'none'; autoplay 'self' https://www.youtube.com; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; payment 'none'; picture-in-picture 'none'; usb 'none'
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - cloudflare
+            Strict-Transport-Security:
+                - max-age=63113904; includeSubDomains; preload
+            Vary:
+                - Accept, accept-encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Request-Id:
+                - bddb6d67-a8bb-4f1e-b3a3-ccfe6cf25a82
+            X-Runtime:
+                - "0.016666"
+            X-Xss-Protection:
+                - "0"
+        status: 422 Unprocessable Entity
+        code: 422
+        duration: 186.43825ms

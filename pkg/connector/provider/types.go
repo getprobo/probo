@@ -211,6 +211,15 @@ type Registration struct {
 	// that cannot be decoded is an error, distinct from an empty field.
 	// Callers use ResolveInitialAccount.
 	InitialAccountFunc func(*coredata.Connector) (externalID string, name string, err error)
+
+	// ValidateInstall runs on the OAuth callback before the connector is
+	// saved. A *drivers.InstallRejectedError discards the connection and
+	// shows its message to the user. Nil skips the check.
+	ValidateInstall func(context.Context, *http.Client, Endpoints) error
+
+	// NeedsReconnect decides whether a stored connection must be reconnected,
+	// given the OAuth scopes it misses. Nil means whenever any is missing.
+	NeedsReconnect func(conn *coredata.Connector, missingScopes []string) bool
 }
 
 // APIKeyAuthMode selects how an API key is presented on outbound requests. The
@@ -284,6 +293,10 @@ type APIKeyConfig struct {
 	// Orthogonal to Auth, which still selects how the injected key goes on the
 	// wire.
 	Managed *ManagedAPIKey
+
+	// CheckSettings runs the connection check before a new connector is saved,
+	// for a provider whose check reads its ExtraSettings.
+	CheckSettings bool
 
 	// KeyFormat is the shape a customer-pasted key must have. Nil for a
 	// provider whose keys have no shape worth asserting — an opaque token is
@@ -435,6 +448,10 @@ type OAuth2Config struct {
 	// Scopes are the scopes the access-review driver needs to list accounts.
 	// Nil for a provider that needs none (Notion, Intercom).
 	Scopes []string
+
+	// ScopeParam names the authorize query parameter carrying Scopes;
+	// "scope" when empty. Slack asks for user_scope to get a user token.
+	ScopeParam string
 
 	// ExtraAuthParams are provider-specific query parameters added to the
 	// authorization request. Copied per connector, never aliased.
@@ -607,6 +624,12 @@ func (r *Registration) SupportsOrganizationInstall() bool {
 // provider's API key.
 func (r *Registration) IsManagedAPIKey() bool {
 	return r.APIKey != nil && r.APIKey.Managed != nil
+}
+
+// ChecksSettingsBeforeSave reports whether a new API-key connector for this
+// provider is checked with the provider before it is saved.
+func (r *Registration) ChecksSettingsBeforeSave() bool {
+	return r.APIKey != nil && r.APIKey.CheckSettings
 }
 
 // OffersAPIKeyForm reports whether the API-key dialog is a connect path the

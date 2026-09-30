@@ -204,7 +204,6 @@ export function DevicesList({
               </div>
               <Pagination
                 className={slots.pager()}
-                variant="surface"
                 showLabels
                 hasPrevious={enrolledDevices.pageInfo.hasPreviousPage}
                 hasNext={enrolledDevices.pageInfo.hasNextPage}

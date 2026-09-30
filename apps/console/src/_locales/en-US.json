@@ -712,7 +712,7 @@
     "empty": "No tasks",
     "noResults": "No tasks match your filters",
     "searchPlaceholder": "Search tasks",
-    "filters": { "status": "Status", "allStatuses": "All statuses" },
+    "filters": { "status": "Status", "allStatuses": "All statuses", "user": "User", "allUsers": "All users" },
     "error": { "title": "Error", "reorder": "Failed to reorder task." },
     "dragInstructions": {
       "all": "Drag and drop to reorder tasks or move them between states",
@@ -1411,6 +1411,8 @@
     "iam": "IAM",
     "users": "Users",
     "authProvisioning": "Auth & Provisioning",
+    "samlSso": "SAML SSO",
+    "scim": "SCIM",
     "auditLog": "Audit Log",
     "allThirdParties": "All Third Parties",
     "thirdParties": "Third parties",
@@ -1560,24 +1562,42 @@
   },
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
-    "actions": { "addConfiguration": "Add Configuration" },
-    "breadcrumb": { "settings": "SAML Settings", "configure": "Configure", "verifyDomain": "Verify Domain" }
+    "description": "Set up SAML 2.0 single sign-on for each email domain.",
+    "actions": { "add": "Add SAML SSO", "previous": "Prev", "next": "Next" }
   },
   "scimPage": {
-    "manualScim": { "title": "Manual SCIM", "description": "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider." },
-    "provisioningEventHistory": "Provisioning Event History",
+    "title": "SCIM",
+    "description": "Connect your identity provider to automatically sync users to your organization.",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Connect Google Workspace or Google Cloud Identity to automatically sync users via SCIM.",
+        "action": "Connect"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Connect Microsoft 365 to automatically sync users via SCIM.",
+        "action": "Connect"
+      },
+      "manual": {
+        "title": "Manual SCIM",
+        "description": "Configure SCIM manually if your identity provider is not listed.",
+        "action": "Configure"
+      }
+    },
+    "eventHistory": "Event History",
+    "connecting": "Connecting identity provider",
     "export": {
       "title": "Export SCIM Events",
       "description": "Select a date range to export SCIM events as CSV. You will receive an email with a download link.",
       "fields": { "from": "From", "to": "To" },
-      "actions": { "export": "Export", "exporting": "Exporting..." },
+      "actions": { "export": "Export", "cancel": "Cancel" },
       "messages": {
-        "successTitle": "Success",
         "success": "Export started. You will receive an email with a download link when it is ready."
       },
       "errors": {
-        "title": "Error",
-        "request": "Failed to request SCIM event export"
+        "request": "Failed to request SCIM event export",
+        "range": "Date range cannot exceed one year"
       }
     }
   },
@@ -1595,75 +1615,110 @@
     "errors": { "uninstall": "Failed to uninstall the Probo Slack app" },
     "actions": { "install": "Install", "configure": "Configure", "uninstall": "Uninstall", "uninstalling": "Uninstalling..." }
   },
-  "connectorList": { "title": "Identity Provider", "description": "Connect your identity provider to automatically sync users to your organization. Once connected, you don't need to configure SCIM manually." },
   "editSamlConfigurationForm": {
     "messages": { "updated": "SAML configuration updated successfully." },
     "errors": { "update": "Failed to update SAML configuration. Please try again." }
   },
   "googleWorkspaceConnector": {
     "name": "Google Workspace / Cloud Identity",
-    "connectDescription": "Connect Google Workspace or Google Cloud Identity to automatically sync users via SCIM.",
     "connectedOn": "Connected on {{date}}",
     "status": { "disabled": "Disabled", "error": "Error", "syncing": "Syncing", "connected": "Connected" },
     "messages": { "disconnected": "Google Workspace / Cloud Identity disconnected successfully", "excludedUsersUpdated": "Excluded user names updated successfully" },
-    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the provisioning event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
-    "actions": { "connect": "Connect", "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
-    "settings": { "title": "Google Workspace / Cloud Identity Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Google Workspace / Cloud Identity.", "noExcludedUserNames": "No excluded user names. All Google Workspace / Cloud Identity users will be synced." },
+    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state", "update": "Failed to update excluded users", "disconnect": "Failed to disconnect Google Workspace / Cloud Identity" },
+    "actions": { "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect" },
+    "excludedCount_one": "{{count}} excluded user",
+    "excludedCount_other": "{{count}} excluded users",
+    "settings": { "title": "Google Workspace / Cloud Identity Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Google Workspace / Cloud Identity.", "noExcludedUserNames": "No excluded user names. All Google Workspace / Cloud Identity users will be synced.", "invalidEmail": "Enter a valid email address" },
     "disconnect": { "title": "Disconnect Google Workspace / Cloud Identity", "description": "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.", "warning": "This action cannot be undone." }
   },
   "microsoft365Connector": {
     "name": "Microsoft 365",
-    "connectDescription": "Connect Microsoft 365 to automatically sync users via SCIM.",
     "connectedOn": "Connected on {{date}}",
     "status": { "disabled": "Disabled", "error": "Error", "syncing": "Syncing", "connected": "Connected" },
     "messages": { "disconnected": "Microsoft 365 disconnected successfully", "excludedUsersUpdated": "Excluded user names updated successfully" },
-    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the provisioning event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state" },
-    "actions": { "connect": "Connect", "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect", "disconnecting": "Disconnecting..." },
-    "settings": { "title": "Microsoft 365 Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Microsoft 365.", "noExcludedUserNames": "No excluded user names. All Microsoft 365 users will be synced." },
+    "errors": { "bridgeSync": "The bridge is currently failing to sync. Check the event history for more details.", "bridgeDisabled": "Bridge is disabled", "bridgeFailed": "Bridge is in an error state", "update": "Failed to update excluded users", "disconnect": "Failed to disconnect Microsoft 365" },
+    "actions": { "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect" },
+    "excludedCount_one": "{{count}} excluded user",
+    "excludedCount_other": "{{count}} excluded users",
+    "settings": { "title": "Microsoft 365 Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Microsoft 365.", "noExcludedUserNames": "No excluded user names. All Microsoft 365 users will be synced.", "invalidEmail": "Enter a valid email address" },
     "disconnect": { "title": "Disconnect Microsoft 365", "description": "This will disconnect your Microsoft 365 integration. Users will no longer be automatically synced via SCIM.", "warning": "This action cannot be undone." }
+  },
+  "newSamlSsoPage": {
+    "title": "Add SAML SSO",
+    "description": "Set up SAML 2.0 single sign-on for an email domain.",
+    "back": "SAML SSO",
+    "notFound": "You cannot add SAML SSO to this organization"
+  },
+  "samlConfigurationPage": {
+    "title": "SAML SSO",
+    "back": "SAML SSO",
+    "notFound": "SAML configuration not found"
   },
   "newSamlConfigurationForm": {
     "messages": { "created": "SAML configuration created successfully." },
     "errors": { "create": "Failed to create SAML configuration" }
   },
   "samlConfigurationForm": {
-    "sections": { "basic": "Basic Configuration", "identityProvider": "Identity Provider Configuration", "attributeMapping": "Attribute Mapping" },
-    "fields": { "emailDomain": "Email Domain *", "emailDomainLocked": "Email domain cannot be changed after creation", "emailDomainHelp": "The email domain this SAML configuration applies to (e.g., example.com)", "enforcementPolicy": "Enforcement Policy *", "idpEntityId": "IdP Entity ID *", "idpSsoUrl": "IdP SSO URL *", "idpCertificate": "IdP X.509 Certificate *", "emailAttribute": "Email Attribute", "firstNameAttribute": "First Name Attribute", "lastNameAttribute": "Last Name Attribute", "roleAttribute": "Role Attribute", "autoSignupEnabled": "Enable automatic user signup via SAML" },
+    "sections": { "identityProvider": "Identity Provider", "attributeMapping": "Attribute Mapping" },
+    "fields": { "emailDomain": "Email Domain", "emailDomainLocked": "Email domain cannot be changed after creation", "emailDomainHelp": "The email domain this SAML configuration applies to (e.g., example.com)", "enforcementPolicy": "Enforcement Policy", "idpEntityId": "IdP Entity ID", "idpSsoUrl": "IdP SSO URL", "idpCertificate": "IdP X.509 Certificate", "emailAttribute": "Email Attribute", "firstNameAttribute": "First Name Attribute", "lastNameAttribute": "Last Name Attribute", "roleAttribute": "Role Attribute", "autoSignupEnabled": "Enable automatic user signup via SAML" },
     "enforcement": { "optional": "Optional", "required": "Required", "off": "Off" },
     "enforcementDescriptions": { "off": "Your team members can't use single sign-on and must use their password", "required": "Your team members must use single sign-on to log in", "optional": "Your team members may use either single sign-on or their password to log in" },
-    "actions": { "update": "Update Configuration", "create": "Create Configuration" }
+    "actions": { "update": "Update Configuration" }
   },
   "samlConfigurationList": {
-    "messages": { "deleted": "SAML configuration deleted successfully." },
-    "errors": { "delete": "Failed to delete SAML configuration. Please try again." },
+    "messages": { "deleted": "SAML configuration deleted successfully.", "copied": "Copied to clipboard" },
+    "errors": { "delete": "Failed to delete SAML configuration. Please try again.", "copy": "Failed to copy to clipboard" },
     "delete": { "title": "Delete SAML Configuration", "description": "Are you sure you want to delete the SAML configuration for {{domain}}? This action cannot be undone." },
-    "empty": { "title": "No SAML Configurations", "description": "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain." },
-    "columns": { "configurationId": "Configuration ID", "emailDomain": "Email Domain", "domainStatus": "Domain Status", "samlStatus": "SAML Status", "enforcement": "Enforcement", "ssoUrl": "SSO URL" },
-    "status": { "verified": "Verified", "pendingVerification": "Pending Verification", "enabled": "Enabled", "disabled": "Disabled" },
-    "actions": { "delete": "Delete", "clickToCopy": "Click to copy", "copied": "Copied!", "copyUrl": "Copy URL", "edit": "Edit", "verifyDomain": "Verify Domain" }
-  },
-  "samlDomainVerifyDialog": {
-    "title": "Verify Domain Ownership",
-    "description": "Add the following TXT record to your domain's DNS configuration to verify ownership:",
-    "fields": { "hostName": "Host/Name:", "type": "Type:", "value": "Value:" },
-    "hostHint": "or use your domain name",
-    "actions": { "copy": "Copy", "copied": "Copied!" },
-    "note": { "label": "Note:", "description": "DNS changes may take up to 48 hours to propagate, but typically complete within a few minutes." }
+    "empty": { "description": "Set up SAML 2.0 single sign-on for each email domain." },
+    "pending": { "description": "Add a DNS <type>TXT</type> record to verify you control this domain." },
+    "dns": {
+      "name": "Name",
+      "value": "Value",
+      "copyName": "Copy name",
+      "copyValue": "Copy value",
+      "note": "DNS changes may take up to 48 hours to propagate, but typically complete within a few minutes."
+    },
+    "enforcement": {
+      "optional": "SSO is <policy>optional</policy>. Members may use single sign-on or a password.",
+      "required": "SSO is <policy>required</policy>. Members must use single sign-on to log in.",
+      "off": "SSO is <policy>off</policy>. Members must use their password."
+    },
+    "signup": {
+      "enabled": "Signup through SAML is <policy>on</policy>. New users on this domain can join automatically.",
+      "disabled": "Signup through SAML is <policy>off</policy>. Only existing users can sign in."
+    },
+    "fields": { "ssoUrl": "SSO URL" },
+    "title": {
+      "pending": "Verify this domain",
+      "active": "SSO is active",
+      "off": "SSO is off"
+    },
+    "actions": { "delete": "Delete", "cancel": "Cancel", "copyUrl": "Copy URL", "open": "Open" }
   },
   "scimConfiguration": {
-    "errors": { "title": "Error", "create": "Manual SCIM configuration failed" },
+    "errors": {
+      "create": "Manual SCIM configuration failed",
+      "copy": "Could not copy to clipboard",
+      "regenerate": "Failed to regenerate the bearer token",
+      "delete": "Failed to delete the SCIM configuration"
+    },
     "messages": {
-      "configured": { "title": "Manual SCIM Configured" },
       "copyToken": "Copy the bearer token now. It will not be shown again.",
-      "deleted": { "title": "Manual SCIM Configuration Deleted", "description": "All SCIM-provisioned memberships have been changed to manual source." },
-      "regenerated": { "title": "Bearer Token Regenerated", "description": "Copy the new bearer token now. It will not be shown again." },
+      "deleted": "All SCIM-provisioned memberships have been changed to manual source.",
+      "regenerated": "Copy the new bearer token now. It will not be shown again.",
       "copied": "Copied to clipboard"
     },
-    "empty": { "title": "Manual SCIM is not configured", "description": "Generate a SCIM endpoint and bearer token to configure your identity provider manually." },
-    "active": { "title": "Manual SCIM Active", "description": "Use these credentials to configure SCIM in your identity provider." },
+    "configuredOn": "Configured on {{date}}",
     "fields": { "endpointUrl": "SCIM Endpoint URL", "bearerToken": "Bearer Token" },
     "tokenWarning": "This token will only be shown once. Copy it now.",
-    "actions": { "enable": "Enable SCIM", "enabling": "Enabling...", "regenerateToken": "Regenerate Token", "regenerating": "Regenerating...", "deleteConfiguration": "Delete Configuration", "cancel": "Cancel", "delete": "Delete", "deleting": "Deleting..." },
+    "actions": {
+      "regenerateToken": "Regenerate Token",
+      "deleteConfiguration": "Delete Configuration",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "copyEndpointUrl": "Copy SCIM endpoint URL",
+      "copyBearerToken": "Copy bearer token"
+    },
     "delete": {
       "title": "Delete Manual SCIM Configuration",
       "description": "Are you sure you want to delete the manual SCIM configuration? This will:",
@@ -1672,8 +1727,19 @@
     }
   },
   "scimEventList": {
-    "columns": { "time": "Time", "method": "Method", "path": "Path", "result": "Result" },
-    "empty": "No SCIM events recorded yet."
+    "details": {
+      "user": "User",
+      "ipAddress": "IP address",
+      "statusCode": "Status code",
+      "error": "Error"
+    },
+    "request": "Request",
+    "response": "Response",
+    "empty": "No SCIM events recorded yet.",
+    "copiedToClipboard": "Copied to clipboard",
+    "copy": "Copy",
+    "copyFailed": "Could not copy to clipboard",
+    "actions": { "previous": "Previous", "next": "Next" }
   },
   "accessReviewCampaignsPage": {
     "title": "Campaigns",
@@ -1725,7 +1791,7 @@
         "reconnectDescription": "Reconnect this source to restore access to organizations.",
         "credentialsDescription": "Probo cannot read this source with the current credentials. Check the credentials and the permissions they carry on {{provider}}.",
         "notAuthorizedTitle": "{{provider}} refused this request",
-        "notAuthorizedDescription": "{{provider}} accepted the credential but refused the request Probo made. Check the permissions this credential has on {{provider}}, and whether your plan includes the API Probo uses."
+        "notAuthorizedDescription": "{{provider}} accepted the credential but refused the request Probo made. Check the settings entered for this source, the permissions this credential has on {{provider}}, and whether your plan includes the API Probo uses."
       }
     }
   },
@@ -1830,7 +1896,7 @@
     "apiKeyDescription": "Enter the API key for {{provider}} to connect it as an access source.",
     "apiKey": "API Key",
     "messages": { "connectionFailed": "Connection failed" },
-    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}" },
+    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}", "rejected": { "better_stack_team_not_found": "Better Stack has no team with this name for this API token. Team names are case-sensitive: copy the exact name from Settings > Teams in Better Stack, or use a team-based API token.", "supabase_organization_not_found": "Supabase has no organization with this slug. Copy it from the organization URL in the Supabase dashboard (supabase.com/dashboard/org/<slug>).", "supabase_organization_not_accessible": "This access token cannot read the members of this organization. Create a token with Organization resource access that includes this organization, and Organization Members set to Read." } },
     "actions": { "connect": "Connect", "connecting": "Connecting..." }
   },
   "clientCredentialsConnectorDialog": {
@@ -2898,6 +2964,7 @@
   },
   "thirdPartiesPage": {
     "description": "Third parties are external services and providers that your company uses. Add them to keep track of their risk and compliance status.",
+    "searchPlaceholder": "Search third parties...",
     "actions": { "document": "Document", "publish": "Publish", "add": "Add third party" },
     "columns": { "thirdParty": "Third party", "assessedAt": "Assessed At", "dataRisk": "Data Risk", "businessRisk": "Business Risk" }
   },
@@ -3263,9 +3330,10 @@
     "notes": "Notes"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Reactivate", "reactivating": "Reactivating..." },
+    "actions": { "reactivate": "Reactivate" },
     "dialog": { "title": "Reactivate SCIM bridge", "description": "The next sync is scheduled for now. Consecutive errors are cleared, and a failed, disabled, or stuck bridge is set back to active." },
-    "messages": { "success": "SCIM bridge was reactivated. The next run is scheduled for now." }
+    "messages": { "success": "SCIM bridge was reactivated. The next run is scheduled for now." },
+    "errors": { "reactivate": "Failed to reactivate the SCIM bridge" }
   },
   "country": { "GLOBAL": "Global", "AD": "Andorra", "AE": "United Arab Emirates", "AF": "Afghanistan", "AG": "Antigua and Barbuda", "AI": "Anguilla", "AL": "Albania", "AM": "Armenia", "AO": "Angola", "AQ": "Antarctica", "AR": "Argentina", "AS": "American Samoa", "AT": "Austria", "AU": "Australia", "AW": "Aruba", "AX": "Åland Islands", "AZ": "Azerbaijan", "BA": "Bosnia and Herzegovina", "BB": "Barbados", "BD": "Bangladesh", "BE": "Belgium", "BF": "Burkina Faso", "BG": "Bulgaria", "BH": "Bahrain", "BI": "Burundi", "BJ": "Benin", "BL": "Saint Barthélemy", "BM": "Bermuda", "BN": "Brunei", "BO": "Bolivia", "BQ": "Bonaire, Sint Eustatius and Saba", "BR": "Brazil", "BS": "Bahamas", "BT": "Bhutan", "BV": "Bouvet Island", "BW": "Botswana", "BY": "Belarus", "BZ": "Belize", "CA": "Canada", "CC": "Cocos (Keeling) Islands", "CD": "Congo (DRC)", "CF": "Central African Republic", "CG": "Congo (Republic)", "CH": "Switzerland", "CI": "Côte d'Ivoire", "CK": "Cook Islands", "CL": "Chile", "CM": "Cameroon", "CN": "China", "CO": "Colombia", "CR": "Costa Rica", "CU": "Cuba", "CV": "Cape Verde", "CW": "Curaçao", "CX": "Christmas Island", "CY": "Cyprus", "CZ": "Czechia", "DE": "Germany", "DJ": "Djibouti", "DK": "Denmark", "DM": "Dominica", "DO": "Dominican Republic", "DZ": "Algeria", "EC": "Ecuador", "EE": "Estonia", "EG": "Egypt", "EH": "Western Sahara", "ER": "Eritrea", "ES": "Spain", "ET": "Ethiopia", "EU": "EU", "FI": "Finland", "FJ": "Fiji", "FK": "Falkland Islands", "FM": "Micronesia", "FO": "Faroe Islands", "FR": "France", "GA": "Gabon", "GB": "United Kingdom", "GD": "Grenada", "GE": "Georgia", "GF": "French Guiana", "GG": "Guernsey", "GH": "Ghana", "GI": "Gibraltar", "GL": "Greenland", "GM": "Gambia", "GN": "Guinea", "GP": "Guadeloupe", "GQ": "Equatorial Guinea", "GR": "Greece", "GT": "Guatemala", "GU": "Guam", "GW": "Guinea-Bissau", "GY": "Guyana", "HK": "Hong Kong", "HM": "Heard Island and McDonald Islands", "HN": "Honduras", "HR": "Croatia", "HT": "Haiti", "HU": "Hungary", "ID": "Indonesia", "IE": "Ireland", "IL": "Israel", "IM": "Isle of Man", "IN": "India", "IO": "British Indian Ocean Territory", "IQ": "Iraq", "IR": "Iran", "IS": "Iceland", "IT": "Italy", "JE": "Jersey", "JM": "Jamaica", "JO": "Jordan", "JP": "Japan", "KE": "Kenya", "KG": "Kyrgyzstan", "KH": "Cambodia", "KI": "Kiribati", "KM": "Comoros", "KN": "Saint Kitts and Nevis", "KP": "North Korea", "KR": "South Korea", "KW": "Kuwait", "KY": "Cayman Islands", "KZ": "Kazakhstan", "LA": "Laos", "LB": "Lebanon", "LC": "Saint Lucia", "LI": "Liechtenstein", "LK": "Sri Lanka", "LR": "Liberia", "LS": "Lesotho", "LT": "Lithuania", "LU": "Luxembourg", "LV": "Latvia", "LY": "Libya", "MA": "Morocco", "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro", "MF": "Saint Martin", "MG": "Madagascar", "MH": "Marshall Islands", "MK": "North Macedonia", "ML": "Mali", "MM": "Myanmar", "MN": "Mongolia", "MO": "Macau", "MP": "Northern Mariana Islands", "MQ": "Martinique", "MR": "Mauritania", "MS": "Montserrat", "MT": "Malta", "MU": "Mauritius", "MV": "Maldives", "MW": "Malawi", "MX": "Mexico", "MY": "Malaysia", "MZ": "Mozambique", "NA": "Namibia", "NC": "New Caledonia", "NE": "Niger", "NF": "Norfolk Island", "NG": "Nigeria", "NI": "Nicaragua", "NL": "Netherlands", "NO": "Norway", "NP": "Nepal", "NR": "Nauru", "NU": "Niue", "NZ": "New Zealand", "OM": "Oman", "PA": "Panama", "PE": "Peru", "PF": "French Polynesia", "PG": "Papua New Guinea", "PH": "Philippines", "PK": "Pakistan", "PL": "Poland", "PM": "Saint Pierre and Miquelon", "PN": "Pitcairn", "PR": "Puerto Rico", "PS": "Palestine", "PT": "Portugal", "PW": "Palau", "PY": "Paraguay", "QA": "Qatar", "RE": "Réunion", "RO": "Romania", "RS": "Serbia", "RU": "Russia", "RW": "Rwanda", "SA": "Saudi Arabia", "SB": "Solomon Islands", "SC": "Seychelles", "SD": "Sudan", "SE": "Sweden", "SG": "Singapore", "SH": "Saint Helena", "SI": "Slovenia", "SJ": "Svalbard and Jan Mayen", "SK": "Slovakia", "SL": "Sierra Leone", "SM": "San Marino", "SN": "Senegal", "SO": "Somalia", "SR": "Suriname", "SS": "South Sudan", "ST": "São Tomé and Príncipe", "SV": "El Salvador", "SX": "Sint Maarten", "SY": "Syria", "SZ": "Eswatini", "TC": "Turks and Caicos Islands", "TD": "Chad", "TF": "French Southern Territories", "TG": "Togo", "TH": "Thailand", "TJ": "Tajikistan", "TK": "Tokelau", "TL": "Timor-Leste", "TM": "Turkmenistan", "TN": "Tunisia", "TO": "Tonga", "TR": "Turkey", "TT": "Trinidad and Tobago", "TV": "Tuvalu", "TW": "Taiwan", "TZ": "Tanzania", "UA": "Ukraine", "UG": "Uganda", "UM": "United States Minor Outlying Islands", "US": "USA", "UY": "Uruguay", "UZ": "Uzbekistan", "VA": "Vatican City", "VC": "Saint Vincent and the Grenadines", "VE": "Venezuela", "VG": "Virgin Islands (British)", "VI": "Virgin Islands (U.S.)", "VN": "Vietnam", "VU": "Vanuatu", "WF": "Wallis and Futuna", "WS": "Samoa", "YE": "Yemen", "YT": "Mayotte", "ZA": "South Africa", "ZM": "Zambia", "ZW": "Zimbabwe" }
 }

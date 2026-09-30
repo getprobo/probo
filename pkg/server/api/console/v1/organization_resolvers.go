@@ -1522,9 +1522,9 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	taskFilter := coredata.NewTaskFilter(nil, nil)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil)
 	if filter != nil {
-		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State)
+		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State, filter.AssignedToID)
 	}
 
 	page, err := r.task.ListForOrganizationID(ctx, scope, obj.ID, cursor, taskFilter)

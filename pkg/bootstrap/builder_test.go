@@ -811,6 +811,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
 		"CAL_COM", "CALENDLY", "ATTIO",
+		"OVHCLOUD",
 	}
 
 	env := requiredEnv()
@@ -1105,6 +1106,7 @@ func TestBuilder_Build_IdentityFederationDisabledByDefault(t *testing.T) {
 	assert.Equal(t, cloudaws.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.TerraformModuleSource)
 	assert.Equal(t, cloudgcp.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
 	assert.Equal(t, cloudazure.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
+	assert.Empty(t, cfg.Probod.IdentityFederation.AWSEndpoint)
 }
 
 func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
@@ -1113,6 +1115,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	env["PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE"] = "example/terraform-aws-audit-role"
 	env["PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE"] = "example/terraform-gcp-audit-role"
 	env["PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE"] = "example/terraform-azurerm-audit-role"
+	env["PROBOD_IDENTITY_FEDERATION_AWS_ENDPOINT"] = "http://127.0.0.1:4566"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -1123,6 +1126,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	assert.Equal(t, "example/terraform-aws-audit-role", cfg.Probod.IdentityFederation.TerraformModuleSource)
 	assert.Equal(t, "example/terraform-gcp-audit-role", cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
 	assert.Equal(t, "example/terraform-azurerm-audit-role", cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
+	assert.Equal(t, "http://127.0.0.1:4566", cfg.Probod.IdentityFederation.AWSEndpoint)
 }
 
 func TestBuilder_Build_IdentityFederationDisabledSkipsSigningKey(t *testing.T) {

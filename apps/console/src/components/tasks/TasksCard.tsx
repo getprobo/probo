@@ -65,6 +65,7 @@ import {
 import { useTasksCardSearch } from "#/pages/organizations/tasks/_lib/useTasksCardSearch";
 
 import { TaskListItem } from "./TaskListItem";
+import { TaskUserFilter } from "./TaskUserFilter";
 import { tasksCard } from "./variants";
 
 function resolveDropPriority(
@@ -206,8 +207,14 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: TasksCar
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const relayEnv = useRelayEnvironment();
-  const { query, state: selectedState, graphqlFilter, setState }
-    = useTasksCardFilters();
+  const {
+    query,
+    state: selectedState,
+    assignedToId,
+    graphqlFilter,
+    setState,
+    setAssignedToId,
+  } = useTasksCardFilters();
   const [queryInput, setQueryInput] = useTasksCardSearch();
   const [, startTransition] = useTransition();
   const skipFirstFilterRefetch = useRef(true);
@@ -249,7 +256,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: TasksCar
     ]),
   );
   const filteredTasks = tasks;
-  const canDrag = !!canReorder && query === "";
+  const canDrag = !!canReorder && query === "" && assignedToId == null;
   const slots = tasksCard({ dragging: canDrag && draggedId !== null });
 
   // Get the task list for a given state section.
@@ -511,12 +518,18 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: TasksCar
               </SelectPopup>
             </Select>
           </div>
+          <div className={slots.userFilter()}>
+            <TaskUserFilter
+              value={assignedToId}
+              onValueChange={setAssignedToId}
+            />
+          </div>
         </div>
       </div>
       {filteredTasks.length === 0
         ? (
             <Text size={2} color="faint" align="center" className={slots.empty()}>
-              {query !== "" || selectedState != null
+              {query !== "" || selectedState != null || assignedToId != null
                 ? t("tasksCard.noResults")
                 : t("tasksCard.empty")}
             </Text>

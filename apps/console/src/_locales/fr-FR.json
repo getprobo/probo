@@ -1135,7 +1135,9 @@
     "searchPlaceholder": "Rechercher des tâches",
     "filters": {
       "status": "Statut",
-      "allStatuses": "Tous les statuts"
+      "allStatuses": "Tous les statuts",
+      "user": "Utilisateur",
+      "allUsers": "Tous les utilisateurs"
     },
     "error": {
       "title": "Erreur",
@@ -2209,6 +2211,8 @@
     "iam": "IAM",
     "users": "Utilisateurs",
     "authProvisioning": "Auth. et provisionnement",
+    "samlSso": "SSO SAML",
+    "scim": "SCIM",
     "auditLog": "Journal d’audit",
     "allThirdParties": "Tous les tiers",
     "thirdParties": "Tiers",
@@ -2432,25 +2436,43 @@
   },
   "samlSsoPage": {
     "title": "Authentification unique SAML",
-    "actions": { "addConfiguration": "Ajouter une configuration" },
-    "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer", "verifyDomain": "Vérifier le domaine" }
+    "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",
+    "actions": { "add": "Ajouter le SSO SAML", "previous": "Préc.", "next": "Suiv." }
   },
   "scimPage": {
-    "manualScim": {
-      "title": "SCIM manuel",
-      "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé ci-dessus. Cela nécessite de configurer l’URL du point de terminaison SCIM et le jeton porteur dans votre fournisseur d’identité."
+    "title": "SCIM",
+    "description": "Connectez votre fournisseur d’identité pour synchroniser automatiquement les utilisateurs de votre organisation.",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Connectez Google Workspace ou Google Cloud Identity pour synchroniser automatiquement les utilisateurs via SCIM.",
+        "action": "Connecter"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Connectez Microsoft 365 pour synchroniser automatiquement les utilisateurs via SCIM.",
+        "action": "Connecter"
+      },
+      "manual": {
+        "title": "SCIM manuel",
+        "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé.",
+        "action": "Configurer"
+      }
     },
-    "provisioningEventHistory": "Historique des événements de provisionnement",
+    "eventHistory": "Historique des événements",
+    "connecting": "Connexion du fournisseur d’identité",
     "export": {
       "title": "Exporter les événements SCIM",
       "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
       "fields": { "from": "Du", "to": "Au" },
-      "actions": { "export": "Exporter", "exporting": "Exportation..." },
+      "actions": { "export": "Exporter", "cancel": "Annuler" },
       "messages": {
-        "successTitle": "Succès",
         "success": "Export démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
       },
-      "errors": { "title": "Erreur", "request": "Échec de la demande d’export des événements SCIM" }
+      "errors": {
+        "request": "Échec de la demande d’export des événements SCIM",
+        "range": "La plage de dates ne peut pas dépasser un an"
+      }
     }
   },
   "authLayout": {
@@ -2476,10 +2498,6 @@
       "uninstalling": "Désinstallation..."
     }
   },
-  "connectorList": {
-    "title": "Fournisseur d’identité",
-    "description": "Connectez votre fournisseur d’identité pour synchroniser automatiquement les utilisateurs de votre organisation. Une fois connecté, vous n’avez plus besoin de configurer SCIM manuellement."
-  },
   "editSamlConfigurationForm": {
     "messages": {
       "updated": "Configuration SAML mise à jour avec succès."
@@ -2490,7 +2508,6 @@
   },
   "googleWorkspaceConnector": {
     "name": "Google Workspace / Cloud Identity",
-    "connectDescription": "Connectez Google Workspace ou Google Cloud Identity pour synchroniser automatiquement les utilisateurs via SCIM.",
     "connectedOn": "Connecté le {{date}}",
     "status": {
       "disabled": "Désactivé",
@@ -2503,23 +2520,26 @@
       "excludedUsersUpdated": "Noms d’utilisateur exclus mis à jour avec succès"
     },
     "errors": {
-      "bridgeSync": "Le pont ne parvient pas à se synchroniser actuellement. Consultez l’historique des événements de provisionnement pour plus de détails.",
+      "bridgeSync": "Le pont ne parvient pas à se synchroniser actuellement. Consultez l’historique des événements pour plus de détails.",
       "bridgeDisabled": "Le pont est désactivé",
-      "bridgeFailed": "Le pont est en état d’erreur"
+      "bridgeFailed": "Le pont est en état d’erreur",
+      "update": "Échec de la mise à jour des utilisateurs exclus",
+      "disconnect": "Échec de la déconnexion de Google Workspace / Cloud Identity"
     },
     "actions": {
-      "connect": "Connecter",
       "settings": "Paramètres",
       "add": "Ajouter",
       "remove": "Retirer",
-      "disconnect": "Déconnecter",
-      "disconnecting": "Déconnexion en cours..."
+      "disconnect": "Déconnecter"
     },
+    "excludedCount_one": "{{count}} utilisateur exclu",
+    "excludedCount_other": "{{count}} utilisateurs exclus",
     "settings": {
       "title": "Paramètres Google Workspace / Cloud Identity",
       "excludedUserNames": "Noms d’utilisateur exclus",
       "excludedUserNamesDescription": "Les utilisateurs portant ces noms ne seront pas synchronisés depuis Google Workspace / Cloud Identity.",
-      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Google Workspace / Cloud Identity seront synchronisés."
+      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Google Workspace / Cloud Identity seront synchronisés.",
+      "invalidEmail": "Saisissez une adresse e-mail valide"
     },
     "disconnect": {
       "title": "Déconnecter Google Workspace / Cloud Identity",
@@ -2529,7 +2549,6 @@
   },
   "microsoft365Connector": {
     "name": "Microsoft 365",
-    "connectDescription": "Connectez Microsoft 365 pour synchroniser automatiquement les utilisateurs via SCIM.",
     "connectedOn": "Connecté le {{date}}",
     "status": {
       "disabled": "Désactivé",
@@ -2542,29 +2561,43 @@
       "excludedUsersUpdated": "Noms d’utilisateur exclus mis à jour avec succès"
     },
     "errors": {
-      "bridgeSync": "Le pont ne parvient actuellement pas à se synchroniser. Consultez l’historique des événements de provisionnement pour plus de détails.",
+      "bridgeSync": "Le pont ne parvient actuellement pas à se synchroniser. Consultez l’historique des événements pour plus de détails.",
       "bridgeDisabled": "Le pont est désactivé",
-      "bridgeFailed": "Le pont est en état d’erreur"
+      "bridgeFailed": "Le pont est en état d’erreur",
+      "update": "Échec de la mise à jour des utilisateurs exclus",
+      "disconnect": "Échec de la déconnexion de Microsoft 365"
     },
     "actions": {
-      "connect": "Connecter",
       "settings": "Paramètres",
       "add": "Ajouter",
       "remove": "Retirer",
-      "disconnect": "Déconnecter",
-      "disconnecting": "Déconnexion en cours..."
+      "disconnect": "Déconnecter"
     },
+    "excludedCount_one": "{{count}} utilisateur exclu",
+    "excludedCount_other": "{{count}} utilisateurs exclus",
     "settings": {
       "title": "Paramètres Microsoft 365",
       "excludedUserNames": "Noms d’utilisateur exclus",
       "excludedUserNamesDescription": "Les utilisateurs portant ces noms d’utilisateur ne seront pas synchronisés depuis Microsoft 365.",
-      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Microsoft 365 seront synchronisés."
+      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Microsoft 365 seront synchronisés.",
+      "invalidEmail": "Saisissez une adresse e-mail valide"
     },
     "disconnect": {
       "title": "Déconnecter Microsoft 365",
       "description": "Cette action déconnectera votre intégration Microsoft 365. Les utilisateurs ne seront plus synchronisés automatiquement via SCIM.",
       "warning": "Cette action est irréversible."
     }
+  },
+  "newSamlSsoPage": {
+    "title": "Ajouter le SSO SAML",
+    "description": "Configurez l’authentification unique SAML 2.0 pour un domaine de messagerie.",
+    "back": "SSO SAML",
+    "notFound": "Vous ne pouvez pas ajouter le SSO SAML à cette organisation"
+  },
+  "samlConfigurationPage": {
+    "title": "SSO SAML",
+    "back": "SSO SAML",
+    "notFound": "Configuration SAML introuvable"
   },
   "newSamlConfigurationForm": {
     "messages": {
@@ -2576,18 +2609,17 @@
   },
   "samlConfigurationForm": {
     "sections": {
-      "basic": "Configuration de base",
-      "identityProvider": "Configuration du fournisseur d’identité",
+      "identityProvider": "Fournisseur d’identité",
       "attributeMapping": "Mappage des attributs"
     },
     "fields": {
-      "emailDomain": "Domaine e-mail *",
+      "emailDomain": "Domaine e-mail",
       "emailDomainLocked": "Le domaine e-mail ne peut pas être modifié après la création",
       "emailDomainHelp": "Le domaine e-mail auquel cette configuration SAML s’applique (par ex. example.com)",
-      "enforcementPolicy": "Politique d’application *",
-      "idpEntityId": "ID d’entité IdP *",
-      "idpSsoUrl": "URL SSO de l’IdP *",
-      "idpCertificate": "Certificat X.509 de l’IdP *",
+      "enforcementPolicy": "Politique d’application",
+      "idpEntityId": "ID d’entité IdP",
+      "idpSsoUrl": "URL SSO de l’IdP",
+      "idpCertificate": "Certificat X.509 de l’IdP",
       "emailAttribute": "Attribut e-mail",
       "firstNameAttribute": "Attribut prénom",
       "lastNameAttribute": "Attribut nom",
@@ -2605,108 +2637,85 @@
       "optional": "Les membres de votre équipe peuvent utiliser soit l’authentification unique, soit leur mot de passe pour se connecter"
     },
     "actions": {
-      "update": "Mettre à jour la configuration",
-      "create": "Créer la configuration"
+      "update": "Mettre à jour la configuration"
     }
   },
   "samlConfigurationList": {
     "messages": {
-      "deleted": "Configuration SAML supprimée avec succès."
+      "deleted": "Configuration SAML supprimée avec succès.",
+      "copied": "Copié dans le presse-papiers"
     },
     "errors": {
-      "delete": "Échec de la suppression de la configuration SAML. Veuillez réessayer."
+      "delete": "Échec de la suppression de la configuration SAML. Veuillez réessayer.",
+      "copy": "Échec de la copie dans le presse-papiers"
     },
     "delete": {
       "title": "Supprimer la configuration SAML",
       "description": "Voulez-vous vraiment supprimer la configuration SAML pour {{domain}} ? Cette action est irréversible."
     },
     "empty": {
-      "title": "Aucune configuration SAML",
-      "description": "Configurez l’authentification unique SAML 2.0 pour votre organisation en ajoutant une configuration pour chaque domaine de messagerie."
+      "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie."
     },
-    "columns": {
-      "configurationId": "ID de configuration",
-      "emailDomain": "Domaine de messagerie",
-      "domainStatus": "Statut du domaine",
-      "samlStatus": "Statut SAML",
-      "enforcement": "Application",
+    "pending": {
+      "description": "Ajoutez un enregistrement <type>TXT</type> DNS pour vérifier que vous contrôlez ce domaine."
+    },
+    "dns": {
+      "name": "Nom",
+      "value": "Valeur",
+      "copyName": "Copier le nom",
+      "copyValue": "Copier la valeur",
+      "note": "Les modifications DNS peuvent prendre jusqu’à 48 heures pour se propager, mais se terminent généralement en quelques minutes."
+    },
+    "enforcement": {
+      "optional": "Le SSO est <policy>facultatif</policy>. Les membres peuvent utiliser l’authentification unique ou un mot de passe.",
+      "required": "Le SSO est <policy>obligatoire</policy>. Les membres doivent utiliser l’authentification unique pour se connecter.",
+      "off": "Le SSO est <policy>désactivé</policy>. Les membres doivent utiliser leur mot de passe."
+    },
+    "signup": {
+      "enabled": "L’inscription via SAML est <policy>activée</policy>. Les nouveaux utilisateurs de ce domaine peuvent rejoindre automatiquement.",
+      "disabled": "L’inscription via SAML est <policy>désactivée</policy>. Seuls les utilisateurs existants peuvent se connecter."
+    },
+    "fields": {
       "ssoUrl": "URL SSO"
     },
-    "status": {
-      "verified": "Vérifié",
-      "pendingVerification": "Vérification en attente",
-      "enabled": "Activé",
-      "disabled": "Désactivé"
+    "title": {
+      "pending": "Vérifiez ce domaine",
+      "active": "Le SSO est actif",
+      "off": "Le SSO est désactivé"
     },
     "actions": {
       "delete": "Supprimer",
-      "clickToCopy": "Cliquer pour copier",
-      "copied": "Copié !",
+      "cancel": "Annuler",
       "copyUrl": "Copier l’URL",
-      "edit": "Modifier",
-      "verifyDomain": "Vérifier le domaine"
-    }
-  },
-  "samlDomainVerifyDialog": {
-    "title": "Vérifier la propriété du domaine",
-    "description": "Ajoutez l’enregistrement TXT suivant à la configuration DNS de votre domaine pour vérifier la propriété :",
-    "fields": {
-      "hostName": "Hôte/Nom :",
-      "type": "Type :",
-      "value": "Valeur :"
-    },
-    "hostHint": "ou utilisez le nom de votre domaine",
-    "actions": {
-      "copy": "Copier",
-      "copied": "Copié !"
-    },
-    "note": {
-      "label": "Remarque :",
-      "description": "Les modifications DNS peuvent prendre jusqu’à 48 heures pour se propager, mais se terminent généralement en quelques minutes."
+      "open": "Ouvrir"
     }
   },
   "scimConfiguration": {
     "errors": {
-      "title": "Erreur",
-      "create": "La configuration SCIM manuelle a échoué"
+      "create": "La configuration SCIM manuelle a échoué",
+      "copy": "Impossible de copier dans le presse-papiers",
+      "regenerate": "Échec de la régénération du jeton porteur",
+      "delete": "Échec de la suppression de la configuration SCIM"
     },
     "messages": {
-      "configured": {
-        "title": "Configuration SCIM manuelle effectuée"
-      },
       "copyToken": "Copiez le jeton porteur maintenant. Il ne sera plus affiché ensuite.",
-      "deleted": {
-        "title": "Configuration SCIM manuelle supprimée",
-        "description": "Toutes les adhésions provisionnées par SCIM ont été changées vers une source manuelle."
-      },
-      "regenerated": {
-        "title": "Jeton porteur régénéré",
-        "description": "Copiez le nouveau jeton porteur maintenant. Il ne sera plus affiché ensuite."
-      },
+      "deleted": "Toutes les adhésions provisionnées par SCIM ont été changées vers une source manuelle.",
+      "regenerated": "Copiez le nouveau jeton porteur maintenant. Il ne sera plus affiché ensuite.",
       "copied": "Copié dans le presse-papiers"
     },
-    "empty": {
-      "title": "Le SCIM manuel n’est pas configuré",
-      "description": "Générez un point de terminaison SCIM et un jeton porteur pour configurer manuellement votre fournisseur d’identité."
-    },
-    "active": {
-      "title": "SCIM manuel actif",
-      "description": "Utilisez ces identifiants pour configurer SCIM dans votre fournisseur d’identité."
-    },
+    "configuredOn": "Configuré le {{date}}",
     "fields": {
       "endpointUrl": "URL du point de terminaison SCIM",
       "bearerToken": "Jeton porteur"
     },
     "tokenWarning": "Ce jeton ne sera affiché qu’une seule fois. Copiez-le maintenant.",
     "actions": {
-      "enable": "Activer SCIM",
-      "enabling": "Activation...",
       "regenerateToken": "Régénérer le jeton",
-      "regenerating": "Régénération...",
       "deleteConfiguration": "Supprimer la configuration",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "deleting": "Suppression..."
+      "copyEndpointUrl": "Copier l’URL du point de terminaison SCIM",
+      "copyBearerToken": "Copier le jeton porteur"
     },
     "delete": {
       "title": "Supprimer la configuration SCIM manuelle",
@@ -2720,13 +2729,19 @@
     }
   },
   "scimEventList": {
-    "columns": {
-      "time": "Heure",
-      "method": "Méthode",
-      "path": "Chemin",
-      "result": "Résultat"
+    "details": {
+      "user": "Utilisateur",
+      "ipAddress": "Adresse IP",
+      "statusCode": "Code de statut",
+      "error": "Erreur"
     },
-    "empty": "Aucun événement SCIM enregistré pour le moment."
+    "request": "Requête",
+    "response": "Réponse",
+    "empty": "Aucun événement SCIM enregistré pour le moment.",
+    "copiedToClipboard": "Copié dans le presse-papiers",
+    "copy": "Copier",
+    "copyFailed": "Impossible de copier dans le presse-papiers",
+    "actions": { "previous": "Précédent", "next": "Suivant" }
   },
   "accessReviewCampaignsPage": {
     "title": "Campagnes",
@@ -2806,7 +2821,7 @@
         "reconnectDescription": "Reconnectez cette source pour rétablir l’accès aux organisations.",
         "credentialsDescription": "Probo ne peut pas lire cette source avec les identifiants actuels. Vérifiez les identifiants et les permissions dont ils disposent sur {{provider}}.",
         "notAuthorizedTitle": "{{provider}} a refusé cette requête",
-        "notAuthorizedDescription": "{{provider}} a accepté les identifiants mais a refusé la requête envoyée par Probo. Vérifiez les permissions dont ils disposent sur {{provider}}, et si votre offre inclut l’API utilisée par Probo."
+        "notAuthorizedDescription": "{{provider}} a accepté les identifiants mais a refusé la requête envoyée par Probo. Vérifiez les paramètres saisis pour cette source, les permissions dont disposent ces identifiants sur {{provider}}, et si votre offre inclut l’API utilisée par Probo."
       }
     }
   },
@@ -3081,7 +3096,12 @@
     "errors": {
       "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres, puis réessayez.",
       "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
-      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}"
+      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}",
+      "rejected": {
+        "better_stack_team_not_found": "Better Stack n’a aucune équipe portant ce nom pour ce jeton API. Les noms d’équipe sont sensibles à la casse : copiez le nom exact depuis Settings > Teams dans Better Stack, ou utilisez un jeton API d’équipe.",
+        "supabase_organization_not_found": "Supabase n’a aucune organisation avec ce slug. Copiez-le depuis l’URL de l’organisation dans le tableau de bord Supabase (supabase.com/dashboard/org/<slug>).",
+        "supabase_organization_not_accessible": "Ce jeton d’accès ne peut pas lire les membres de cette organisation. Créez un jeton avec un accès aux ressources de type Organization incluant cette organisation, et Organization Members réglé sur Read."
+      }
     },
     "actions": {
       "connect": "Connecter",
@@ -5477,6 +5497,7 @@
   },
   "thirdPartiesPage": {
     "description": "Les tiers sont des services et fournisseurs externes utilisés par votre entreprise. Ajoutez-les pour suivre leur risque et leur statut de conformité.",
+    "searchPlaceholder": "Rechercher des tiers...",
     "actions": {
       "document": "Document",
       "publish": "Publier",
@@ -6193,9 +6214,10 @@
     "notes": "Notes"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Réactiver", "reactivating": "Réactivation..." },
+    "actions": { "reactivate": "Réactiver" },
     "dialog": { "title": "Réactiver le pont SCIM", "description": "La prochaine synchronisation est planifiée pour maintenant. Les erreurs consécutives sont remises à zéro, et un pont en échec, désactivé ou bloqué redevient actif." },
-    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." }
+    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." },
+    "errors": { "reactivate": "Échec de la réactivation du pont SCIM" }
   },
   "country": {
     "GLOBAL": "Mondial",

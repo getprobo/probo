@@ -222,7 +222,6 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
                   previousLabel={t("tcfPage.previous")}
                   nextLabel={t("tcfPage.next")}
                   showLabels
-                  variant="surface"
                   disabled={isPending}
                   onPrevious={goPrevious}
                   onNext={goNext}

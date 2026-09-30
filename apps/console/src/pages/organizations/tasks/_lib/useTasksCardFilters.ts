@@ -26,6 +26,7 @@ import { type TaskState, taskStates } from "./taskState";
 export interface TasksCardFilterInput {
   query: string | null;
   state: TaskState | null;
+  assignedToId: string | null;
 }
 
 function taskStateFromParam(value: string | null): TaskState | null {
@@ -35,10 +36,13 @@ function taskStateFromParam(value: string | null): TaskState | null {
 }
 
 export function taskMatchesFilter(
-  task: { name: string; state: TaskState },
+  task: { name: string; state: TaskState; assignedToId?: string | null },
   filter: TasksCardFilterInput,
 ): boolean {
   if (filter.state != null && task.state !== filter.state) {
+    return false;
+  }
+  if (filter.assignedToId != null && task.assignedToId !== filter.assignedToId) {
     return false;
   }
   if (filter.query == null) {
@@ -52,10 +56,13 @@ export function useTasksCardFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const state = taskStateFromParam(searchParams.get("status"));
+  const assignedToParam = searchParams.get("assignee");
+  const assignedToId = assignedToParam === "" ? null : assignedToParam;
   const graphqlFilter = useMemo<TasksCardFilterInput>(() => ({
     query: query === "" ? null : query,
     state,
-  }), [query, state]);
+    assignedToId,
+  }), [assignedToId, query, state]);
 
   const setQuery = useCallback((value: string) => {
     setSearchParams((previous) => {
@@ -81,11 +88,25 @@ export function useTasksCardFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const setAssignedToId = useCallback((value: string | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value == null || value === "") {
+        next.delete("assignee");
+      } else {
+        next.set("assignee", value);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   return {
     query,
     state,
+    assignedToId,
     graphqlFilter,
     setQuery,
     setState,
+    setAssignedToId,
   };
 }

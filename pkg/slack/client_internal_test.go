@@ -68,7 +68,6 @@ func TestClientMethodURLFollowsOverriddenAPIBase(t *testing.T) {
 		coredata.ConnectorProviderSlack: {
 			Auth:    "https://slack.sandbox.example.com/oauth/v2/authorize",
 			Token:   "https://slack.sandbox.example.com/api/oauth.v2.access",
-			Probe:   "https://slack.sandbox.example.com/api/users.list?limit=1",
 			APIBase: sandbox,
 		},
 	}))

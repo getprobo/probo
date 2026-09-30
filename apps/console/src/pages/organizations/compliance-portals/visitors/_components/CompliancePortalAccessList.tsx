@@ -162,7 +162,7 @@ function AccessListResults({
   const { t } = useTranslation("organizations/compliance-portals");
   const { order, query } = useAccessListFilters();
   const [isPending, startTransition] = useTransition();
-  const { more, results } = accessSection({ pending: isPending });
+  const { more, moreButton, results } = accessSection({ pending: isPending });
   const skipFirstRefetch = useRef(true);
   const {
     data,
@@ -210,8 +210,9 @@ function AccessListResults({
               {hasNext && (
                 <div className={more()}>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     color="neutral"
+                    className={moreButton()}
                     loading={isLoadingNext}
                     onClick={() => loadNext(50)}
                   >

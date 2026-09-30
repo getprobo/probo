@@ -24,6 +24,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -60,7 +61,7 @@ type slackMember struct {
 	IsUltraRestricted bool         `json:"is_ultra_restricted"`
 	IsBot             bool         `json:"is_bot"`
 	IsAppUser         bool         `json:"is_app_user"`
-	Has2FA            bool         `json:"has_2fa"`
+	Has2FA            *bool        `json:"has_2fa"`
 	Updated           int          `json:"updated"`
 	Profile           slackProfile `json:"profile"`
 }
@@ -72,6 +73,7 @@ type slackProfile struct {
 
 const (
 	slackUsersListPath = "/users.list"
+	slackUsersInfoPath = "/users.info"
 	slackAuthTestPath  = "/auth.test"
 )
 
@@ -89,13 +91,25 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 	)
 
 	for range maxPaginationPages {
-		resp, err := d.queryUsers(ctx, cursor)
-		if err != nil {
-			return nil, err
+		query := url.Values{"limit": {"200"}}
+		if cursor != "" {
+			query.Set("cursor", cursor)
+		}
+
+		var resp slackUsersListResponse
+		if err := slackGet(
+			ctx,
+			d.httpClient,
+			d.baseURL,
+			slackUsersListPath,
+			query,
+			&resp,
+		); err != nil {
+			return nil, fmt.Errorf("cannot list slack users: %w", err)
 		}
 
 		if !resp.OK {
-			return nil, fmt.Errorf("slack users.list request failed: %s", resp.Error)
+			return nil, &SlackAPIError{Method: slackUsersListPath, Code: resp.Error}
 		}
 
 		for _, m := range resp.Members {
@@ -139,47 +153,6 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 	return nil, fmt.Errorf("cannot list all slack accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *SlackDriver) queryUsers(ctx context.Context, cursor string) (*slackUsersListResponse, error) {
-	endpoint, err := url.JoinPath(d.baseURL, slackUsersListPath)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build slack users.list URL: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create slack users.list request: %w", err)
-	}
-
-	q := req.URL.Query()
-	q.Set("limit", "200")
-
-	if cursor != "" {
-		q.Set("cursor", cursor)
-	}
-
-	req.URL.RawQuery = q.Encode()
-
-	httpResp, err := d.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot execute slack users.list request: %w", err)
-	}
-
-	defer func() {
-		_ = httpResp.Body.Close()
-	}()
-
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot fetch slack users: unexpected status %d", httpResp.StatusCode)
-	}
-
-	var resp slackUsersListResponse
-	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return nil, fmt.Errorf("cannot decode slack users.list response: %w", err)
-	}
-
-	return &resp, nil
-}
-
 func slackRoles(m slackMember) []string {
 	switch {
 	case m.IsPrimaryOwner:
@@ -197,12 +170,172 @@ func slackRoles(m slackMember) []string {
 	}
 }
 
-func slackMFAStatus(has2FA bool) coredata.MFAStatus {
-	if has2FA {
+// slackMFAStatus maps has_2fa, which Slack only returns to an admin or owner
+// caller: a bot token or a non-admin user token never sees it.
+func slackMFAStatus(has2FA *bool) coredata.MFAStatus {
+	switch {
+	case has2FA == nil:
+		return coredata.MFAStatusUnknown
+	case *has2FA:
 		return coredata.MFAStatusEnabled
+	default:
+		return coredata.MFAStatusDisabled
+	}
+}
+
+type (
+	// SlackAPIError is a Slack Web API answer of ok=false. Slack reports a
+	// revoked or invalid token this way under HTTP 200.
+	SlackAPIError struct {
+		Method string
+		Code   string
 	}
 
-	return coredata.MFAStatusDisabled
+	// SlackStatusError is a non-2xx answer from the Slack Web API.
+	SlackStatusError struct {
+		Method     string
+		StatusCode int
+	}
+)
+
+func (e *SlackAPIError) Error() string {
+	return fmt.Sprintf("slack %s request failed: %s", e.Method, e.Code)
+}
+
+func (e *SlackStatusError) Error() string {
+	return fmt.Sprintf("slack %s request failed: unexpected status %d", e.Method, e.StatusCode)
+}
+
+// CheckSlackToken checks that Slack still accepts the token and lets it list
+// the workspace members.
+func CheckSlackToken(ctx context.Context, httpClient *http.Client, baseURL string) error {
+	var resp struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+	}
+	if err := slackGet(
+		ctx,
+		httpClient,
+		baseURL,
+		slackUsersListPath,
+		url.Values{"limit": {"1"}},
+		&resp,
+	); err != nil {
+		return fmt.Errorf("cannot check slack token: %w", err)
+	}
+
+	if !resp.OK {
+		return &SlackAPIError{Method: slackUsersListPath, Code: resp.Error}
+	}
+
+	return nil
+}
+
+// CheckSlackTokenAlive checks that Slack still accepts the token. It needs no
+// scope, so it suits a token that may never have been granted users:read.
+func CheckSlackTokenAlive(ctx context.Context, httpClient *http.Client, baseURL string) error {
+	if _, err := slackTokenUserID(ctx, httpClient, baseURL); err != nil {
+		return fmt.Errorf("cannot check slack token: %w", err)
+	}
+
+	return nil
+}
+
+// slackTokenUserID returns the user a token acts as.
+func slackTokenUserID(ctx context.Context, httpClient *http.Client, baseURL string) (string, error) {
+	var identity struct {
+		OK     bool   `json:"ok"`
+		Error  string `json:"error"`
+		UserID string `json:"user_id"`
+	}
+	if err := slackGet(ctx, httpClient, baseURL, slackAuthTestPath, nil, &identity); err != nil {
+		return "", fmt.Errorf("cannot identify slack token: %w", err)
+	}
+
+	if !identity.OK {
+		return "", &SlackAPIError{Method: slackAuthTestPath, Code: identity.Error}
+	}
+
+	return identity.UserID, nil
+}
+
+// CheckSlackInstallerIsAdmin rejects a token whose user is not a workspace
+// admin or owner: Slack hides has_2fa from anyone else, so such an install
+// could never report MFA.
+func CheckSlackInstallerIsAdmin(ctx context.Context, httpClient *http.Client, baseURL string) error {
+	userID, err := slackTokenUserID(ctx, httpClient, baseURL)
+	if err != nil {
+		return fmt.Errorf("cannot identify slack installer: %w", err)
+	}
+
+	var info struct {
+		OK    bool        `json:"ok"`
+		Error string      `json:"error"`
+		User  slackMember `json:"user"`
+	}
+	if err := slackGet(
+		ctx,
+		httpClient,
+		baseURL,
+		slackUsersInfoPath,
+		url.Values{"user": {userID}},
+		&info,
+	); err != nil {
+		return fmt.Errorf("cannot load slack installer: %w", err)
+	}
+
+	if !info.OK {
+		return &SlackAPIError{Method: slackUsersInfoPath, Code: info.Error}
+	}
+
+	if !info.User.IsAdmin && !info.User.IsOwner && !info.User.IsPrimaryOwner {
+		return &InstallRejectedError{
+			Message: "Slack must be connected by a workspace admin or owner, the only role Slack shares MFA status with.",
+		}
+	}
+
+	return nil
+}
+
+func slackGet(
+	ctx context.Context,
+	httpClient *http.Client,
+	baseURL string,
+	path string,
+	query url.Values,
+	out any,
+) error {
+	endpoint, err := url.JoinPath(baseURL, path)
+	if err != nil {
+		return fmt.Errorf("cannot build slack %s URL: %w", path, err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create slack %s request: %w", path, err)
+	}
+
+	req.URL.RawQuery = query.Encode()
+
+	httpResp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("cannot execute slack %s request: %w", path, err)
+	}
+
+	defer func() {
+		_, _ = io.Copy(io.Discard, httpResp.Body)
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return &SlackStatusError{Method: path, StatusCode: httpResp.StatusCode}
+	}
+
+	if err := json.NewDecoder(httpResp.Body).Decode(out); err != nil {
+		return fmt.Errorf("cannot decode slack %s response: %w", path, err)
+	}
+
+	return nil
 }
 
 // slackNameResolver resolves the Slack workspace name via auth.test.
@@ -216,33 +349,24 @@ func NewSlackNameResolver(httpClient *http.Client, baseURL string) NameResolver 
 }
 
 func (r *slackNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	endpoint, err := url.JoinPath(r.baseURL, slackAuthTestPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot build slack auth.test URL: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
-	if err != nil {
-		return "", fmt.Errorf("cannot create slack auth.test request: %w", err)
-	}
-
-	httpResp, err := r.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute slack auth.test request: %w", err)
-	}
-
-	defer func() { _ = httpResp.Body.Close() }()
-
 	var resp struct {
-		OK   bool   `json:"ok"`
-		Team string `json:"team"`
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+		Team  string `json:"team"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return "", fmt.Errorf("cannot decode slack auth.test response: %w", err)
+	if err := slackGet(
+		ctx,
+		r.httpClient,
+		r.baseURL,
+		slackAuthTestPath,
+		nil,
+		&resp,
+	); err != nil {
+		return "", fmt.Errorf("cannot resolve slack workspace name: %w", err)
 	}
 
 	if !resp.OK {
-		return "", fmt.Errorf("slack auth.test returned ok=false")
+		return "", &SlackAPIError{Method: slackAuthTestPath, Code: resp.Error}
 	}
 
 	return resp.Team, nil

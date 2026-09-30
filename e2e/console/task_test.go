@@ -332,6 +332,185 @@ func TestTask_Filter(t *testing.T) {
 	assert.Equal(t, 1, result.Node.Tasks.TotalCount)
 }
 
+func TestTask_FilterByAssignee(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).Create()
+	assigneeID := factory.CreateUser(owner)
+	otherAssigneeID := factory.CreateUser(owner)
+	assignedTaskID := factory.NewTask(owner, measureID).
+		WithName("Collect assigned evidence").
+		Create()
+	otherTaskID := factory.NewTask(owner, measureID).
+		WithName("Collect other evidence").
+		Create()
+	factory.NewTask(owner, measureID).
+		WithName("Collect unassigned evidence").
+		Create()
+
+	updateQuery := `
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
+				task {
+					id
+				}
+			}
+		}
+	`
+	for _, assignment := range []struct {
+		taskID    string
+		profileID string
+	}{
+		{taskID: assignedTaskID, profileID: assigneeID},
+		{taskID: otherTaskID, profileID: otherAssigneeID},
+	} {
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"taskId":       assignment.taskID,
+				"assignedToId": assignment.profileID,
+			},
+		}, &struct{}{})
+		require.NoError(t, err)
+	}
+
+	query := `
+		query FilterTasks($organizationId: ID!, $filter: TaskFilter) {
+			node(id: $organizationId) {
+				... on Organization {
+					tasks(first: 10, filter: $filter) {
+						edges {
+							node {
+								id
+								assignedTo {
+									id
+								}
+							}
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Tasks struct {
+				Edges []struct {
+					Node struct {
+						ID         string `json:"id"`
+						AssignedTo struct {
+							ID string `json:"id"`
+						} `json:"assignedTo"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, result.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, assigneeID, result.Node.Tasks.Edges[0].Node.AssignedTo.ID)
+	assert.Equal(t, 1, result.Node.Tasks.TotalCount)
+
+	err = owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"query":        "assigned",
+			"state":        "TODO",
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, result.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, 1, result.Node.Tasks.TotalCount)
+
+	err = owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"state":        "IN_PROGRESS",
+		},
+	}, &result)
+	require.NoError(t, err)
+	assert.Empty(t, result.Node.Tasks.Edges)
+	assert.Equal(t, 0, result.Node.Tasks.TotalCount)
+
+	measureQuery := `
+		query FilterMeasureTasks($measureId: ID!, $filter: TaskFilter) {
+			node(id: $measureId) {
+				... on Measure {
+					tasks(first: 10, filter: $filter) {
+						edges {
+							node {
+								id
+							}
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var measureResult struct {
+		Node struct {
+			Tasks struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(measureQuery, map[string]any{
+		"measureId": measureID,
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+		},
+	}, &measureResult)
+	require.NoError(t, err)
+	require.Len(t, measureResult.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, measureResult.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, 1, measureResult.Node.Tasks.TotalCount)
+
+	err = owner.Execute(measureQuery, map[string]any{
+		"measureId": measureID,
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"query":        "assigned",
+			"state":        "TODO",
+		},
+	}, &measureResult)
+	require.NoError(t, err)
+	require.Len(t, measureResult.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, measureResult.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, 1, measureResult.Node.Tasks.TotalCount)
+
+	err = owner.Execute(measureQuery, map[string]any{
+		"measureId": measureID,
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"state":        "IN_PROGRESS",
+		},
+	}, &measureResult)
+	require.NoError(t, err)
+	assert.Empty(t, measureResult.Node.Tasks.Edges)
+	assert.Equal(t, 0, measureResult.Node.Tasks.TotalCount)
+}
+
 func TestTask_Filter_LiteralWildcards(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

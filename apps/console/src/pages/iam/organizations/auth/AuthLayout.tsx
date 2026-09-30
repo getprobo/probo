@@ -18,32 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconKey, IconLock, PageHeader, TabLink, Tabs } from "@probo/ui";
-import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-
 export default function AuthLayout() {
-  const organizationId = useOrganizationId();
-  const { t } = useTranslation();
-
-  return (
-    <div className="space-y-6">
-      <PageHeader title={t("authLayout.title")} />
-
-      <Tabs>
-        <TabLink to={`/organizations/${organizationId}/settings/auth/saml-sso`}>
-          <IconLock size={20} />
-          {t("authLayout.tabs.samlSso")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/auth/scim`}>
-          <IconKey size={20} />
-          {t("authLayout.tabs.scim")}
-        </TabLink>
-      </Tabs>
-
-      <Outlet />
-    </div>
-  );
+  return <Outlet />;
 }

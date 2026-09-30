@@ -39,6 +39,7 @@ import { graphql, useRefetchableFragment } from "react-relay";
 
 import type { WebhookSubscriptionEventList_webhookSubscription$key } from "#/__generated__/core/WebhookSubscriptionEventList_webhookSubscription.graphql";
 import type { WebhookSubscriptionEventListRefetchQuery } from "#/__generated__/core/WebhookSubscriptionEventListRefetchQuery.graphql";
+import { formatJSON } from "#/lib/formatJSON";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
@@ -165,14 +166,6 @@ function EventStatusBadge({ status }: { status: string }) {
       {t("webhooksSettingsPage.status.failed")}
     </Badge>
   );
-}
-
-function formatJSON(value: string): string {
-  try {
-    return JSON.stringify(JSON.parse(value) as unknown, null, 2);
-  } catch {
-    return value;
-  }
 }
 
 function DeliveryJsonBlock({
@@ -423,7 +416,6 @@ export function WebhookSubscriptionEventList({
                   previousLabel={t("webhooksSettingsPage.actions.previous")}
                   nextLabel={t("webhooksSettingsPage.actions.next")}
                   showLabels
-                  variant="surface"
                   disabled={isPending}
                   onPrevious={goPrevious}
                   onNext={goNext}

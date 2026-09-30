@@ -20,7 +20,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { formatError, graphqlErrorField, toFieldErrors } from "./error";
+import { formatError, graphqlErrorField, toFieldErrors, toFieldRejections } from "./error";
 
 describe("graphqlErrorField", () => {
     it("reads the validation field from extensions", () => {
@@ -71,6 +71,37 @@ describe("toFieldErrors", () => {
                 ],
             },
         })).toEqual({ name: "too long" });
+    });
+});
+
+describe("toFieldRejections", () => {
+    it("keeps the cause next to the message", () => {
+        expect(toFieldRejections({
+            message: "No data returned",
+            source: {
+                errors: [
+                    {
+                        message: "Better Stack has no team with this name for this API token.",
+                        extensions: { code: "INVALID", field: "teamName", cause: "better_stack_team_not_found" },
+                    },
+                ],
+            },
+        })).toEqual({
+            teamName: {
+                message: "Better Stack has no team with this name for this API token.",
+                cause: "better_stack_team_not_found",
+            },
+        });
+    });
+
+    it("leaves the cause unset when the server sends none", () => {
+        expect(toFieldRejections({ message: "too long", extensions: { field: "name" } })).toEqual({
+            name: { message: "too long", cause: undefined },
+        });
+    });
+
+    it("ignores errors without a field", () => {
+        expect(toFieldRejections({ message: "boom", extensions: { code: "INTERNAL_SERVER_ERROR" } })).toBeUndefined();
     });
 });
 

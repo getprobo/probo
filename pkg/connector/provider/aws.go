@@ -44,7 +44,7 @@ import (
 //
 // Isolation is the per-organization issuer; a successful assume is the whole
 // check, so there is no grant readback beside Probe.
-func awsRegistration() *Registration {
+func awsRegistration(apiEndpoint string) *Registration {
 	return &Registration{
 		Provider:           coredata.ConnectorProviderAWS,
 		DisplayName:        "Amazon Web Services",
@@ -53,7 +53,7 @@ func awsRegistration() *Registration {
 		// See Registration.EndpointOverrideUnsupported: the AWS SDK resolves every host it dials from the session's region and partition, so there is no host in Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the AWS SDK resolves its own endpoints from the session region, not from values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession:       newAWSSession,
+			NewSession:       awsNewSession(apiEndpoint),
 			NewDriver:        newAWSDriver,
 			Probe:            probeAWS,
 			DiscoverAccounts: discoverAWSAccounts,
@@ -96,6 +96,22 @@ func newAWSNameResolver(
 	return drivers.NewAWSNameResolver(awsSession, logger)
 }
 
+func awsNewSession(apiEndpoint string) func(
+	context.Context,
+	*identityfederation.Issuer,
+	*coredata.Connector,
+	string,
+) (cloud.Session, error) {
+	return func(
+		ctx context.Context,
+		issuer *identityfederation.Issuer,
+		conn *coredata.Connector,
+		accountID string,
+	) (cloud.Session, error) {
+		return newAWSSession(ctx, issuer, conn, accountID, apiEndpoint)
+	}
+}
+
 // newAWSSession opens a session on the account the connector names, by
 // assuming the role the customer created for Probo there.
 //
@@ -107,6 +123,7 @@ func newAWSSession(
 	issuer *identityfederation.Issuer,
 	conn *coredata.Connector,
 	accountID string,
+	apiEndpoint string,
 ) (cloud.Session, error) {
 	settings, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](conn)
 	if err != nil {
@@ -121,7 +138,12 @@ func newAWSSession(
 		}
 	}
 
-	session, err := cloudaws.NewSession(issuer, conn.OrganizationID, roleARN)
+	session, err := cloudaws.NewSession(
+		issuer,
+		conn.OrganizationID,
+		roleARN,
+		cloudaws.WithAPIEndpoint(apiEndpoint),
+	)
 	if err != nil {
 		return nil, err
 	}
