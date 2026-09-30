@@ -3337,6 +3337,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	}
 
 	now := time.Now()
+
 	assessmentsByThirdParty := make(map[gid.GID]coredata.ThirdPartyRiskAssessments, len(thirdParties))
 	for _, ra := range allAssessments {
 		assessmentsByThirdParty[ra.ThirdPartyID] = append(assessmentsByThirdParty[ra.ThirdPartyID], ra)
