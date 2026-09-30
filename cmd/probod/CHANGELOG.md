@@ -4,6 +4,73 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.299.0] - 2026-09-30
+
+### Added
+
+- OVHcloud access review connector, on both the authorization-code and
+  client-credentials paths (EU regions). The roster merges local users,
+  the account owner, client-credentials service accounts, and the audit
+  log for last login, the MFA a session used, and federated identities.
+  Classic API credentials (consumer keys) are reported too, named by the
+  application they belong to, with support-created ones called out. An
+  identity whose group does not resolve to a role reports an unknown
+  admin state rather than "not an admin"
+- SAML SSO and SCIM are separate settings sections. SAML configurations
+  are created and edited on their own pages instead of dialogs, with
+  Optional or Required enforcement chosen up front, and cards show
+  verification status and the DNS TXT record directly. SCIM starts from
+  Google, Microsoft, or manual choice cards, and the configured page
+  shows one provider card with a paginated event history over Relay
+- Organization and measure tasks can be filtered by assignee in the
+  console, GraphQL, MCP, CLI, and n8n. Former members stay selectable so
+  tasks assigned to people whose contracts ended remain filterable
+- Third parties can be searched by name
+
+### Changed
+
+- The OpenAI gateway uses the Responses API so current models work for
+  both regular and streaming requests. Reasoning items replay on the
+  next turn, tagged by provider. Frequency and presence penalties,
+  caller-provided stop sequences, and invalid schemas are now rejected
+  explicitly rather than silently ignored
+- Third-party register documents export only the latest active risk
+  assessment instead of every past one. Ties on created time break by
+  the greater ID so the choice is stable
+- SCIM provider overlays, manual SCIM credentials, and their export
+  dialogs use the v2 UI kit. Export range and excluded emails are
+  validated in the form instead of at the API
+- The tasks page create action is a solid "Add Task" button and task
+  list state headers sit on a darker background
+
+### Fixed
+
+- Connecting Supabase or Better Stack now checks the connector's
+  settings before saving. A Better Stack global token whose team name
+  matches none of its teams, or a Supabase token that cannot reach the
+  organization, was saved, shown as connected, and then failed every
+  campaign fetch with a generic message. The refusal is now reported
+  under the setting's own field
+- Slack MFA is read with an admin user token, since Slack returns
+  `has_2fa` only to a workspace admin or owner. Members listed through a
+  bot token were all reported MFA Disabled; unknown is now reported
+  instead, and bot-token connections are flagged for reconnect. A
+  revoked token, which Slack answers with HTTP 200 and `ok=false`, is
+  reported as disconnected rather than connected
+- The compliance portal `/llms.txt` crashed after the framework list and
+  appended "internal server error" to a partial page
+- Applying a mark across a hard break, or pasting styled HTML with an
+  image inside a link, put marks on nodes that cannot carry them. The
+  server rejected the document and every later edit failed until the
+  page was reloaded, losing unsaved work
+- `reset-trackers` no longer fails on banners with more than 10,000
+  uncategorised globs, and no longer deadlocks against live detection
+  reporting. Globs are walked page by page, claimed with
+  `SKIP LOCKED`, committed one at a time, and deadlock retries are
+  capped
+- The brand form's dark-mode logo preview stayed white, hiding a light
+  logo
+
 ## [0.298.0] - 2026-09-25
 
 ### Added
