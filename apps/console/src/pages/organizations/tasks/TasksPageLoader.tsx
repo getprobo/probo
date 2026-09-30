@@ -61,7 +61,8 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
 
   const queryMatchesPendingFilter = queryRef != null
     && queryRef.variables.filter?.query === graphqlFilter.query
-    && queryRef.variables.filter?.state === graphqlFilter.state;
+    && queryRef.variables.filter?.state === graphqlFilter.state
+    && queryRef.variables.filter?.assignedToId === graphqlFilter.assignedToId;
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
     && (pageReady || queryMatchesPendingFilter)

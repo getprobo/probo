@@ -20,17 +20,22 @@
 
 package coredata
 
-import "github.com/jackc/pgx/v5"
+import (
+	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
+)
 
 type TaskFilter struct {
-	query *string
-	state *TaskState
+	query        *string
+	state        *TaskState
+	assignedToID *gid.GID
 }
 
-func NewTaskFilter(query *string, state *TaskState) *TaskFilter {
+func NewTaskFilter(query *string, state *TaskState, assignedToID *gid.GID) *TaskFilter {
 	return &TaskFilter{
-		query: query,
-		state: state,
+		query:        query,
+		state:        state,
+		assignedToID: assignedToID,
 	}
 }
 
@@ -47,13 +52,19 @@ func (f *TaskFilter) SQLFragment() string {
 			state = @filter_state::task_state
 		ELSE TRUE
 	END
+	AND CASE
+		WHEN @filter_assigned_to_id::text IS NOT NULL THEN
+			assigned_to_profile_id = @filter_assigned_to_id::text
+		ELSE TRUE
+	END
 )`
 }
 
 func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"filter_query": nil,
-		"filter_state": nil,
+		"filter_query":          nil,
+		"filter_state":          nil,
+		"filter_assigned_to_id": nil,
 	}
 
 	if f.query != nil && *f.query != "" {
@@ -62,6 +73,10 @@ func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.state != nil {
 		args["filter_state"] = string(*f.state)
+	}
+
+	if f.assignedToID != nil {
+		args["filter_assigned_to_id"] = *f.assignedToID
 	}
 
 	return args

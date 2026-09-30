@@ -1135,7 +1135,9 @@
     "searchPlaceholder": "Rechercher des tâches",
     "filters": {
       "status": "Statut",
-      "allStatuses": "Tous les statuts"
+      "allStatuses": "Tous les statuts",
+      "user": "Utilisateur",
+      "allUsers": "Tous les utilisateurs"
     },
     "error": {
       "title": "Erreur",

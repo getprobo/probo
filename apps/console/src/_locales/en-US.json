@@ -712,7 +712,7 @@
     "empty": "No tasks",
     "noResults": "No tasks match your filters",
     "searchPlaceholder": "Search tasks",
-    "filters": { "status": "Status", "allStatuses": "All statuses" },
+    "filters": { "status": "Status", "allStatuses": "All statuses", "user": "User", "allUsers": "All users" },
     "error": { "title": "Error", "reorder": "Failed to reorder task." },
     "dragInstructions": {
       "all": "Drag and drop to reorder tasks or move them between states",

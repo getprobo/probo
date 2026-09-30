@@ -154,6 +154,60 @@ func TestMCP_Task_Filter(t *testing.T) {
 	assert.Equal(t, matchingID, listResult.Tasks[0].ID)
 }
 
+func TestMCP_Task_FilterByAssignee(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	measureID := factory.NewMeasure(owner).Create()
+	assigneeID := factory.CreateUser(owner)
+	otherAssigneeID := factory.CreateUser(owner)
+	assignedID := factory.NewTask(owner, measureID).
+		WithName("Assigned evidence task").
+		Create()
+	otherID := factory.NewTask(owner, measureID).
+		WithName("Other assignee task").
+		Create()
+	factory.NewTask(owner, measureID).
+		WithName("Unassigned evidence task").
+		Create()
+
+	mc.CallToolInto("updateTask", map[string]any{
+		"id":             assignedID,
+		"assigned_to_id": assigneeID,
+	}, &struct{}{})
+	mc.CallToolInto("updateTask", map[string]any{
+		"id":             otherID,
+		"assigned_to_id": otherAssigneeID,
+	}, &struct{}{})
+
+	var listResult struct {
+		Tasks []struct {
+			ID           string `json:"id"`
+			AssignedToID string `json:"assigned_to_id"`
+		} `json:"tasks"`
+	}
+
+	mc.CallToolInto("listTasks", map[string]any{
+		"organization_id": orgID,
+		"filter": map[string]any{
+			"assigned_to_id": assigneeID,
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, assignedID, listResult.Tasks[0].ID)
+	assert.Equal(t, assigneeID, listResult.Tasks[0].AssignedToID)
+
+	mc.CallToolInto("listMeasureTasks", map[string]any{
+		"measure_id": measureID,
+		"filter": map[string]any{
+			"assigned_to_id": assigneeID,
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, assignedID, listResult.Tasks[0].ID)
+}
+
 func TestMCP_Task_Recurrence(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

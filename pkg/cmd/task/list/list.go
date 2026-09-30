@@ -65,13 +65,14 @@ type task struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
-		flagLimit    int
-		flagOrderBy  string
-		flagOrderDir string
-		flagQuery    string
-		flagState    string
-		flagOutput   *string
+		flagOrg        string
+		flagLimit      int
+		flagOrderBy    string
+		flagOrderDir   string
+		flagQuery      string
+		flagState      string
+		flagAssignedTo string
+		flagOutput     *string
 	)
 
 	cmd := &cobra.Command{
@@ -85,7 +86,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb task ls --query access --state IN_PROGRESS
 
   # List tasks sorted by priority
-  prb task ls --order-by PRIORITY_RANK --json`,
+  prb task ls --order-by PRIORITY_RANK --json
+
+  # List tasks assigned to a person
+  prb task ls --assigned-to <profile-id>`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -148,6 +152,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				filter["state"] = flagState
+			}
+
+			if flagAssignedTo != "" {
+				filter["assignedToId"] = flagAssignedTo
 			}
 
 			if len(filter) > 0 {
@@ -233,6 +241,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagQuery, "query", "q", "", "Search tasks by name")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by state (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED, DUPLICATE)")
+	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Filter by assigned profile ID")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

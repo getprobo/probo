@@ -44,6 +44,7 @@ input TaskOrder
 input TaskFilter {
     query: String
     state: TaskState
+    assignedToId: ID
 }
 
 type Task implements Node {

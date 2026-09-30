@@ -80,6 +80,13 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Assigned To ID',
+				name: 'assignedToId',
+				type: 'string',
+				default: '',
+				description: 'Filter by the profile ID the task is assigned to',
+			},
+			{
 				displayName: 'Query',
 				name: 'query',
 				type: 'string',
@@ -116,6 +123,7 @@ export async function execute(
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
 		query?: string;
 		state?: string;
+		assignedToId?: string;
 	};
 
 	const query = `
@@ -155,6 +163,10 @@ export async function execute(
 
 	if (filters.state) {
 		filter.state = filters.state;
+	}
+
+	if (filters.assignedToId) {
+		filter.assignedToId = filters.assignedToId;
 	}
 
 	if (Object.keys(filter).length > 0) {

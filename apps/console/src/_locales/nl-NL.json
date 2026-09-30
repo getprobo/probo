@@ -1135,7 +1135,9 @@
     "searchPlaceholder": "Taken zoeken",
     "filters": {
       "status": "Status",
-      "allStatuses": "Alle statussen"
+      "allStatuses": "Alle statussen",
+      "user": "Gebruiker",
+      "allUsers": "Alle gebruikers"
     },
     "error": {
       "title": "Fout",
