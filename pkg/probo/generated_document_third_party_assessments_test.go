@@ -64,6 +64,45 @@ func TestLatestActiveThirdPartyRiskAssessment(t *testing.T) {
 	)
 
 	t.Run(
+		"selects by created time independent of slice order",
+		func(t *testing.T) {
+			t.Parallel()
+
+			got := latestActiveThirdPartyRiskAssessment(
+				coredata.ThirdPartyRiskAssessments{expired, latestActive, olderActive},
+				now,
+			)
+			require.NotNil(t, got)
+			assert.Equal(t, latestActive.ID, got.ID)
+		},
+	)
+
+	t.Run(
+		"breaks equal created times by the greater id",
+		func(t *testing.T) {
+			t.Parallel()
+
+			createdAt := now.AddDate(0, 0, -2)
+			expiresAt := now.AddDate(1, 0, 0)
+			lowerID := newAssessment(createdAt, expiresAt)
+			higherID := newAssessment(createdAt, expiresAt)
+			lowerID.ID = gid.GID{}
+			higherID.ID = gid.GID{}
+			lowerID.ID[len(lowerID.ID)-1] = 1
+			higherID.ID[len(higherID.ID)-1] = 2
+
+			for _, assessments := range []coredata.ThirdPartyRiskAssessments{
+				{lowerID, higherID},
+				{higherID, lowerID},
+			} {
+				got := latestActiveThirdPartyRiskAssessment(assessments, now)
+				require.NotNil(t, got)
+				assert.Equal(t, higherID.ID, got.ID)
+			}
+		},
+	)
+
+	t.Run(
 		"omits expired assessments even when they are newest",
 		func(t *testing.T) {
 			t.Parallel()

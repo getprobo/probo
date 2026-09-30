@@ -3472,7 +3472,9 @@ func latestActiveThirdPartyRiskAssessment(
 			continue
 		}
 
-		if latest == nil || ra.CreatedAt.After(latest.CreatedAt) {
+		if latest == nil ||
+			ra.CreatedAt.After(latest.CreatedAt) ||
+			(ra.CreatedAt.Equal(latest.CreatedAt) && bytes.Compare(ra.ID[:], latest.ID[:]) > 0) {
 			latest = ra
 		}
 	}
