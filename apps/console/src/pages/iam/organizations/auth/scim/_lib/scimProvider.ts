@@ -18,7 +18,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { TonedCardTone } from "#/components/TonedCard/variants";
+
 export type ScimConnectorProvider = "GOOGLE_WORKSPACE" | "MICROSOFT_365";
+
+export type SCIMProviderCopy
+  = "googleWorkspaceConnector"
+    | "microsoft365Connector";
+
+export type BridgeStatus = "connected" | "syncing" | "error" | "disabled";
+
+export const bridgeStatusTone: Record<BridgeStatus, TonedCardTone> = {
+  connected: "green",
+  syncing: "amber",
+  error: "red",
+  disabled: "sand",
+};
+
+export const bridgeStatusBadgeColor: Record<
+  BridgeStatus,
+  "green" | "amber" | "red" | "neutral"
+> = {
+  connected: "green",
+  syncing: "amber",
+  error: "red",
+  disabled: "neutral",
+};
+
+export function scimProviderCopy(type: string): SCIMProviderCopy {
+  return type === "MICROSOFT_365"
+    ? "microsoft365Connector"
+    : "googleWorkspaceConnector";
+}
+
+export function bridgeStatus(state: string): BridgeStatus {
+  if (state === "DISABLED") {
+    return "disabled";
+  }
+  if (state === "FAILED") {
+    return "error";
+  }
+  if (state === "PENDING" || state === "SYNCING") {
+    return "syncing";
+  }
+  return "connected";
+}
+
+export function isExcludedUserEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 export function initiateScimConnectorUrl({
   organizationId,

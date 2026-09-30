@@ -38,6 +38,11 @@ import { graphql } from "relay-runtime";
 import type { ExportSCIMEventsDialog_exportMutation } from "#/__generated__/iam/ExportSCIMEventsDialog_exportMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import {
+  isExportRangeTooLarge,
+  maxExportToDate,
+  SCIM_EXPORT_DAY_MS,
+} from "../_lib/scimEvent";
 import { scimPage } from "../variants";
 
 const exportMutation = graphql`
@@ -49,8 +54,6 @@ const exportMutation = graphql`
     }
   }
 `;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface ExportSCIMEventsDialogProps {
   organizationId: string;
@@ -73,8 +76,10 @@ export function ExportSCIMEventsDialog({
       },
     );
 
+  const rangeTooLarge = isExportRangeTooLarge(fromDate, toDate);
+
   function handleExport() {
-    if (fromDate === "" || toDate === "" || fromDate > toDate) {
+    if (fromDate === "" || toDate === "" || fromDate > toDate || rangeTooLarge) {
       return;
     }
 
@@ -83,7 +88,7 @@ export function ExportSCIMEventsDialog({
         input: {
           organizationId,
           fromTime: new Date(`${fromDate}T00:00:00Z`).toISOString(),
-          toTime: new Date(Date.parse(`${toDate}T00:00:00Z`) + DAY_MS).toISOString(),
+          toTime: new Date(Date.parse(`${toDate}T00:00:00Z`) + SCIM_EXPORT_DAY_MS).toISOString(),
         },
       },
     }).then(() => {
@@ -123,16 +128,24 @@ export function ExportSCIMEventsDialog({
                 required
                 value={fromDate}
                 locale={i18n.language}
+                max={toDate === "" ? undefined : toDate}
                 onValueChange={setFromDate}
               />
             </Field>
-            <Field label={t("scimPage.export.fields.to")} required>
+            <Field
+              label={t("scimPage.export.fields.to")}
+              required
+              error={rangeTooLarge
+                ? t("scimPage.export.errors.range")
+                : undefined}
+            >
               <DateField
                 size={2}
                 required
                 value={toDate}
                 locale={i18n.language}
                 min={fromDate === "" ? undefined : fromDate}
+                max={fromDate === "" ? undefined : maxExportToDate(fromDate)}
                 onValueChange={setToDate}
               />
             </Field>
@@ -151,7 +164,12 @@ export function ExportSCIMEventsDialog({
             color="neutral"
             highContrast
             loading={isExporting}
-            disabled={fromDate === "" || toDate === "" || fromDate > toDate}
+            disabled={
+              fromDate === ""
+              || toDate === ""
+              || fromDate > toDate
+              || rangeTooLarge
+            }
             iconStart={<FileCsvIcon />}
             onClick={handleExport}
           >

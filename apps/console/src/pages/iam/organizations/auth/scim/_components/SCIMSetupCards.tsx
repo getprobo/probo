@@ -31,7 +31,7 @@ import type { SCIMSetupCards_createMutation } from "#/__generated__/iam/SCIMSetu
 import type { SCIMSetupCards_organization$key } from "#/__generated__/iam/SCIMSetupCards_organization.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { initiateScimConnectorUrl } from "../_lib/initiateScimConnector";
+import { initiateScimConnectorUrl } from "../_lib/scimProvider";
 import { scimPage, scimSetupCard } from "../variants";
 
 import { SCIMSetupCard } from "./SCIMSetupCard";
@@ -110,18 +110,22 @@ export function SCIMSetupCards({
   }
 
   async function handleManualCreate() {
-    const response = await createSCIMConfiguration({
-      variables: {
-        input: {
-          organizationId: organization.id,
+    try {
+      const response = await createSCIMConfiguration({
+        variables: {
+          input: {
+            organizationId: organization.id,
+          },
         },
-      },
-    });
-    const payload = response.createSCIMConfiguration;
-    if (payload == null || payload.token === "") {
-      return;
+      });
+      const payload = response.createSCIMConfiguration;
+      if (payload == null || payload.token === "") {
+        return;
+      }
+      onManualCreated(payload.token);
+    } catch {
+      // Error toast is already shown by useMutation.
     }
-    onManualCreated(payload.token);
   }
 
   return (

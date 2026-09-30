@@ -41,9 +41,12 @@ import type { SCIMEventListRefetchQuery } from "#/__generated__/iam/SCIMEventLis
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
+import {
+  formatJSON,
+  resultColor,
+  SCIM_EVENT_PAGE_SIZE,
+} from "../_lib/scimEvent";
 import { scimEventList } from "../variants";
-
-export const SCIM_EVENT_PAGE_SIZE = 20;
 
 const scimEventListFragment = graphql`
   fragment SCIMEventList_scimConfiguration on SCIMConfiguration
@@ -84,24 +87,6 @@ const scimEventListFragment = graphql`
     }
   }
 `;
-
-function formatJSON(value: string): string {
-  try {
-    return JSON.stringify(JSON.parse(value) as unknown, null, 2);
-  } catch {
-    return value;
-  }
-}
-
-function resultColor(statusCode: number): "green" | "red" | "amber" {
-  if (statusCode >= 200 && statusCode < 300) {
-    return "green";
-  }
-  if (statusCode >= 400) {
-    return "red";
-  }
-  return "amber";
-}
 
 function EventJsonBlock({
   label,

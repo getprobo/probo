@@ -1596,7 +1596,8 @@
         "success": "Export started. You will receive an email with a download link when it is ready."
       },
       "errors": {
-        "request": "Failed to request SCIM event export"
+        "request": "Failed to request SCIM event export",
+        "range": "Date range cannot exceed one year"
       }
     }
   },
@@ -1627,7 +1628,7 @@
     "actions": { "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect" },
     "excludedCount_one": "{{count}} excluded user",
     "excludedCount_other": "{{count}} excluded users",
-    "settings": { "title": "Google Workspace / Cloud Identity Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Google Workspace / Cloud Identity.", "noExcludedUserNames": "No excluded user names. All Google Workspace / Cloud Identity users will be synced." },
+    "settings": { "title": "Google Workspace / Cloud Identity Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Google Workspace / Cloud Identity.", "noExcludedUserNames": "No excluded user names. All Google Workspace / Cloud Identity users will be synced.", "invalidEmail": "Enter a valid email address" },
     "disconnect": { "title": "Disconnect Google Workspace / Cloud Identity", "description": "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.", "warning": "This action cannot be undone." }
   },
   "microsoft365Connector": {
@@ -1639,7 +1640,7 @@
     "actions": { "settings": "Settings", "add": "Add", "remove": "Remove", "disconnect": "Disconnect" },
     "excludedCount_one": "{{count}} excluded user",
     "excludedCount_other": "{{count}} excluded users",
-    "settings": { "title": "Microsoft 365 Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Microsoft 365.", "noExcludedUserNames": "No excluded user names. All Microsoft 365 users will be synced." },
+    "settings": { "title": "Microsoft 365 Settings", "excludedUserNames": "Excluded user names", "excludedUserNamesDescription": "Users with these user names will not be synced from Microsoft 365.", "noExcludedUserNames": "No excluded user names. All Microsoft 365 users will be synced.", "invalidEmail": "Enter a valid email address" },
     "disconnect": { "title": "Disconnect Microsoft 365", "description": "This will disconnect your Microsoft 365 integration. Users will no longer be automatically synced via SCIM.", "warning": "This action cannot be undone." }
   },
   "newSamlSsoPage": {

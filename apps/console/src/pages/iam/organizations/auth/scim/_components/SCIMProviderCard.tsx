@@ -30,9 +30,13 @@ import { graphql } from "relay-runtime";
 
 import type { SCIMProviderCard_scimConfiguration$key } from "#/__generated__/iam/SCIMProviderCard_scimConfiguration.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
-import type { TonedCardTone } from "#/components/TonedCard/variants";
 
-import { scimProviderCopy } from "../_lib/scimProviderCopy";
+import {
+  bridgeStatus,
+  bridgeStatusBadgeColor,
+  bridgeStatusTone,
+  scimProviderCopy,
+} from "../_lib/scimProvider";
 import { scimProviderCard } from "../variants";
 
 import { DisconnectSCIMProviderDialog } from "./DisconnectSCIMProviderDialog";
@@ -59,38 +63,6 @@ const scimProviderCardFragment = graphql`
   }
 `;
 
-type BridgeStatus = "connected" | "syncing" | "error" | "disabled";
-
-const statusTone: Record<BridgeStatus, TonedCardTone> = {
-  connected: "green",
-  syncing: "amber",
-  error: "red",
-  disabled: "sand",
-};
-
-const statusBadgeColor: Record<
-  BridgeStatus,
-  "green" | "amber" | "red" | "neutral"
-> = {
-  connected: "green",
-  syncing: "amber",
-  error: "red",
-  disabled: "neutral",
-};
-
-function bridgeStatus(state: string): BridgeStatus {
-  if (state === "DISABLED") {
-    return "disabled";
-  }
-  if (state === "FAILED") {
-    return "error";
-  }
-  if (state === "PENDING" || state === "SYNCING") {
-    return "syncing";
-  }
-  return "connected";
-}
-
 export interface SCIMProviderCardProps {
   scimConfigurationKey: SCIMProviderCard_scimConfiguration$key;
 }
@@ -107,7 +79,7 @@ export function SCIMProviderCard({ scimConfigurationKey }: SCIMProviderCardProps
 
   const copy = scimProviderCopy(bridge.type);
   const status = bridgeStatus(bridge.state);
-  const tone = statusTone[status];
+  const tone = bridgeStatusTone[status];
   const hasError = status === "error" || status === "disabled";
   const connectedAt = bridge.connector?.createdAt ?? bridge.createdAt;
 
@@ -123,7 +95,7 @@ export function SCIMProviderCard({ scimConfigurationKey }: SCIMProviderCardProps
         </Text>
       )}
       control={(
-        <Badge size={2} variant="soft" color={statusBadgeColor[status]}>
+        <Badge size={2} variant="soft" color={bridgeStatusBadgeColor[status]}>
           {t(`${copy}.status.${status}`)}
         </Badge>
       )}

@@ -39,7 +39,7 @@ import type { DisconnectSCIMProviderDialog_scimConfiguration$key } from "#/__gen
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import type { SCIMProviderCopy } from "../_lib/scimProviderCopy";
+import type { SCIMProviderCopy } from "../_lib/scimProvider";
 
 const fragment = graphql`
   fragment DisconnectSCIMProviderDialog_scimConfiguration on SCIMConfiguration {

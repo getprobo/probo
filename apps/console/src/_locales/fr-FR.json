@@ -2467,7 +2467,10 @@
       "messages": {
         "success": "Export démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
       },
-      "errors": { "request": "Échec de la demande d’export des événements SCIM" }
+      "errors": {
+        "request": "Échec de la demande d’export des événements SCIM",
+        "range": "La plage de dates ne peut pas dépasser un an"
+      }
     }
   },
   "authLayout": {
@@ -2533,7 +2536,8 @@
       "title": "Paramètres Google Workspace / Cloud Identity",
       "excludedUserNames": "Noms d’utilisateur exclus",
       "excludedUserNamesDescription": "Les utilisateurs portant ces noms ne seront pas synchronisés depuis Google Workspace / Cloud Identity.",
-      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Google Workspace / Cloud Identity seront synchronisés."
+      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Google Workspace / Cloud Identity seront synchronisés.",
+      "invalidEmail": "Saisissez une adresse e-mail valide"
     },
     "disconnect": {
       "title": "Déconnecter Google Workspace / Cloud Identity",
@@ -2573,7 +2577,8 @@
       "title": "Paramètres Microsoft 365",
       "excludedUserNames": "Noms d’utilisateur exclus",
       "excludedUserNamesDescription": "Les utilisateurs portant ces noms d’utilisateur ne seront pas synchronisés depuis Microsoft 365.",
-      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Microsoft 365 seront synchronisés."
+      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Microsoft 365 seront synchronisés.",
+      "invalidEmail": "Saisissez une adresse e-mail valide"
     },
     "disconnect": {
       "title": "Déconnecter Microsoft 365",

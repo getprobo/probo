@@ -2467,7 +2467,10 @@
       "messages": {
         "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
       },
-      "errors": { "request": "Aanvragen van SCIM-gebeurtenisexport mislukt" }
+      "errors": {
+        "request": "Aanvragen van SCIM-gebeurtenisexport mislukt",
+        "range": "Het datumbereik mag niet langer zijn dan één jaar"
+      }
     }
   },
   "authLayout": {
@@ -2533,7 +2536,8 @@
       "title": "Instellingen Google Workspace / Cloud Identity",
       "excludedUserNames": "Uitgesloten gebruikersnamen",
       "excludedUserNamesDescription": "Gebruikers met deze gebruikersnamen worden niet gesynchroniseerd vanuit Google Workspace / Cloud Identity.",
-      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Google Workspace / Cloud Identity-gebruikers worden gesynchroniseerd."
+      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Google Workspace / Cloud Identity-gebruikers worden gesynchroniseerd.",
+      "invalidEmail": "Voer een geldig e-mailadres in"
     },
     "disconnect": {
       "title": "Verbinding met Google Workspace / Cloud Identity verbreken",
@@ -2573,7 +2577,8 @@
       "title": "Instellingen Microsoft 365",
       "excludedUserNames": "Uitgesloten gebruikersnamen",
       "excludedUserNamesDescription": "Gebruikers met deze gebruikersnamen worden niet gesynchroniseerd vanuit Microsoft 365.",
-      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Microsoft 365-gebruikers worden gesynchroniseerd."
+      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Microsoft 365-gebruikers worden gesynchroniseerd.",
+      "invalidEmail": "Voer een geldig e-mailadres in"
     },
     "disconnect": {
       "title": "Verbinding met Microsoft 365 verbreken",

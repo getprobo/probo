@@ -42,7 +42,10 @@ import type { SCIMProviderSettingsDrawer_updateMutation } from "#/__generated__/
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import type { SCIMProviderCopy } from "../_lib/scimProviderCopy";
+import {
+  isExcludedUserEmail,
+  type SCIMProviderCopy,
+} from "../_lib/scimProvider";
 import { scimProviderCard } from "../variants";
 
 const fragment = graphql`
@@ -79,6 +82,7 @@ export function SCIMProviderSettingsDrawer({
   const bridge = useFragment(fragment, scimBridgeKey);
   const [open, setOpen] = useState(false);
   const [newUser, setNewUser] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const {
     settingsFields,
     addRow,
@@ -98,7 +102,7 @@ export function SCIMProviderSettingsDrawer({
     );
 
   function saveExcludedUserNames(next: string[]) {
-    void updateSCIMBridge({
+    return updateSCIMBridge({
       variables: {
         input: {
           organizationId,
@@ -106,8 +110,6 @@ export function SCIMProviderSettingsDrawer({
           excludedUserNames: next,
         },
       },
-    }).catch(() => {
-      // Error toast is already shown by useMutation.
     });
   }
 
@@ -116,8 +118,16 @@ export function SCIMProviderSettingsDrawer({
     if (user === "" || excludedUserNames.includes(user)) {
       return;
     }
-    saveExcludedUserNames([...excludedUserNames, user]);
-    setNewUser("");
+    if (!isExcludedUserEmail(user)) {
+      setEmailError(t(`${copy}.settings.invalidEmail`));
+      return;
+    }
+    void saveExcludedUserNames([...excludedUserNames, user]).then(() => {
+      setNewUser("");
+      setEmailError(null);
+    }).catch(() => {
+      // Error toast is already shown by useMutation.
+    });
   }
 
   return (
@@ -159,13 +169,17 @@ export function SCIMProviderSettingsDrawer({
               <Field
                 label={t(`${copy}.settings.excludedUserNames`)}
                 className={addField()}
+                error={emailError ?? undefined}
               >
                 <TextField
                   type="email"
                   size={2}
                   value={newUser}
                   placeholder="user@example.com"
-                  onValueChange={setNewUser}
+                  onValueChange={(value) => {
+                    setNewUser(value);
+                    setEmailError(null);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key !== "Enter") {
                       return;
@@ -208,9 +222,11 @@ export function SCIMProviderSettingsDrawer({
                           disabled={isUpdating}
                           aria-label={t(`${copy}.actions.remove`)}
                           onClick={() => {
-                            saveExcludedUserNames(
+                            void saveExcludedUserNames(
                               excludedUserNames.filter(name => name !== user),
-                            );
+                            ).catch(() => {
+                              // Error toast is already shown by useMutation.
+                            });
                           }}
                         >
                           <XIcon />
