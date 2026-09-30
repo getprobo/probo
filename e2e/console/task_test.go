@@ -421,6 +421,30 @@ func TestTask_FilterByAssignee(t *testing.T) {
 	assert.Equal(t, assigneeID, result.Node.Tasks.Edges[0].Node.AssignedTo.ID)
 	assert.Equal(t, 1, result.Node.Tasks.TotalCount)
 
+	err = owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"query":        "assigned",
+			"state":        "TODO",
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, result.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, 1, result.Node.Tasks.TotalCount)
+
+	err = owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"state":        "IN_PROGRESS",
+		},
+	}, &result)
+	require.NoError(t, err)
+	assert.Empty(t, result.Node.Tasks.Edges)
+	assert.Equal(t, 0, result.Node.Tasks.TotalCount)
+
 	measureQuery := `
 		query FilterMeasureTasks($measureId: ID!, $filter: TaskFilter) {
 			node(id: $measureId) {
@@ -461,6 +485,30 @@ func TestTask_FilterByAssignee(t *testing.T) {
 	require.Len(t, measureResult.Node.Tasks.Edges, 1)
 	assert.Equal(t, assignedTaskID, measureResult.Node.Tasks.Edges[0].Node.ID)
 	assert.Equal(t, 1, measureResult.Node.Tasks.TotalCount)
+
+	err = owner.Execute(measureQuery, map[string]any{
+		"measureId": measureID,
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"query":        "assigned",
+			"state":        "TODO",
+		},
+	}, &measureResult)
+	require.NoError(t, err)
+	require.Len(t, measureResult.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, measureResult.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, 1, measureResult.Node.Tasks.TotalCount)
+
+	err = owner.Execute(measureQuery, map[string]any{
+		"measureId": measureID,
+		"filter": map[string]any{
+			"assignedToId": assigneeID,
+			"state":        "IN_PROGRESS",
+		},
+	}, &measureResult)
+	require.NoError(t, err)
+	assert.Empty(t, measureResult.Node.Tasks.Edges)
+	assert.Equal(t, 0, measureResult.Node.Tasks.TotalCount)
 }
 
 func TestTask_Filter_LiteralWildcards(t *testing.T) {

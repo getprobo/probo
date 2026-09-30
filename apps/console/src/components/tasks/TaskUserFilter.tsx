@@ -53,7 +53,7 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
 
 function TaskUserFilterLoaded({ value, onValueChange }: TaskUserFilterProps) {
   const organizationId = useOrganizationId();
-  const people = usePeople(organizationId, { contractEnded: false });
+  const people = usePeople(organizationId);
 
   return (
     <TaskUserFilterSelect

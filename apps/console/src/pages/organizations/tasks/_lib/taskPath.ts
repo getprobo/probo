@@ -25,7 +25,7 @@ export const measureTasksConnectionKey = "Measure__tasks";
 
 const taskListConnectionFilters = {
   orderBy: { field: "PRIORITY_RANK" as const, direction: "ASC" as const },
-  filter: { query: null, state: null },
+  filter: { query: null, state: null, assignedToId: null },
 };
 
 export function taskListPath(organizationId: string) {
