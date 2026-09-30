@@ -2276,7 +2276,7 @@
     "messages": { "created": "Measure created successfully." },
     "errors": { "create": "Failed to create measure" },
     "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required" },
-    "fields": { "name": "Measure name", "namePlaceholder": "Measure title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state" },
+    "fields": { "name": "Measure name", "namePlaceholder": "Measure title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select or create a category", "createCategory": "Create \"{{name}}\"", "state": "State", "statePlaceholder": "Select state" },
     "properties": "Properties",
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "actions": { "create": "Create measure", "update": "Update measure" }

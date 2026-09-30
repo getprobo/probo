@@ -3913,7 +3913,8 @@
       "description": "Beschrijving",
       "descriptionPlaceholder": "Beschrijving toevoegen",
       "category": "Categorie",
-      "categoryPlaceholder": "Selecteer categorie",
+      "categoryPlaceholder": "Selecteer of maak een categorie",
+      "createCategory": "\"{{name}}\" aanmaken",
       "state": "Status",
       "statePlaceholder": "Selecteer status"
     },

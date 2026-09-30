@@ -26,7 +26,6 @@ import {
   DialogFooter,
   type DialogRef,
   Field,
-  Input,
   Label,
   Option,
   PropertyRow,
@@ -46,6 +45,8 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
+
+import { MeasureCategoryCombobox } from "../_components/MeasureCategoryCombobox";
 
 const measureFragment = graphql`
   fragment MeasureFormDialogMeasureFragment on Measure {
@@ -194,11 +195,7 @@ export default function MeasureFormDialog(props: Props) {
               label={t("measureFormDialog.fields.category")}
               error={formState.errors.category?.message}
             >
-              <Input
-                {...register("category")}
-                required
-                placeholder={t("measureFormDialog.fields.categoryPlaceholder")}
-              />
+              <MeasureCategoryCombobox control={control} name="category" />
             </PropertyRow>
             {measure && (
               <PropertyRow
