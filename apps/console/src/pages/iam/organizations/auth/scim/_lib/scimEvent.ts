@@ -23,14 +23,6 @@ export const SCIM_EXPORT_DAY_MS = 24 * 60 * 60 * 1000;
 
 const MAX_EXPORT_RANGE_YEARS = 1;
 
-export function formatJSON(value: string): string {
-  try {
-    return JSON.stringify(JSON.parse(value) as unknown, null, 2);
-  } catch {
-    return value;
-  }
-}
-
 export function resultColor(statusCode: number): "green" | "red" | "amber" {
   if (statusCode >= 200 && statusCode < 300) {
     return "green";

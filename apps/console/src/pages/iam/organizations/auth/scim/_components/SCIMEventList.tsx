@@ -38,14 +38,11 @@ import { graphql, useRefetchableFragment } from "react-relay";
 
 import type { SCIMEventList_scimConfiguration$key } from "#/__generated__/iam/SCIMEventList_scimConfiguration.graphql";
 import type { SCIMEventListRefetchQuery } from "#/__generated__/iam/SCIMEventListRefetchQuery.graphql";
+import { formatJSON } from "#/lib/formatJSON";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
-import {
-  formatJSON,
-  resultColor,
-  SCIM_EVENT_PAGE_SIZE,
-} from "../_lib/scimEvent";
+import { resultColor, SCIM_EVENT_PAGE_SIZE } from "../_lib/scimEvent";
 import { scimEventList } from "../variants";
 
 const scimEventListFragment = graphql`
