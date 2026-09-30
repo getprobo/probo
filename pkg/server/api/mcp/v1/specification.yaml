@@ -626,6 +626,30 @@ components:
       format: string
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
 
+    DocumentID:
+      type: string
+      format: string
+      description: Document id from listDocuments or getDocument. Pass it as id or document_id. Not a document version id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
+    DocumentVersionID:
+      type: string
+      format: string
+      description: Document version id from readDocument (document_version.id) or listDocumentVersions. Not a document id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
+    DocumentVersionSignatureID:
+      type: string
+      format: string
+      description: Signature request id from listDocumentVersionSignatures. Not a document id or a document version id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
+    ProfileID:
+      type: string
+      format: string
+      description: Profile id. Not a document id or a document version id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
     CursorKey:
       type: string
       format: string
@@ -7975,7 +7999,7 @@ components:
         - updated_at
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID. Pass this value as id or document_id. Never pass a document version ID here.
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -8035,13 +8059,13 @@ components:
         - updated_at
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         title:
           type: string
@@ -8099,7 +8123,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         status:
           $ref: "#/components/schemas/DocumentVersionApprovalQuorumStatus"
@@ -8172,13 +8196,13 @@ components:
         - updated_at
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Document version signature ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         state:
           $ref: "#/components/schemas/DocumentVersionSignatureState"
@@ -8237,7 +8261,7 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/DocumentType"
-              description: Document types
+              description: Document types, for example POLICY. This field is inside filter, not a top-level argument.
             classifications:
               type: array
               items:
@@ -8247,10 +8271,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/DocumentStatus"
-              description: Document statuses
+              description: Document statuses. Omit this field to return ACTIVE documents only. ["ARCHIVED"] returns archived documents only.
             published:
               type: boolean
-              description: Filter by whether a document has a published version
+              description: When true, only documents that already have a published version.
 
     ListDocumentsOutput:
       type: object
@@ -8271,7 +8295,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     GetDocumentOutput:
@@ -8284,7 +8308,7 @@ components:
 
     DocumentReadVersion:
       type: string
-      description: Which revision readDocument returns
+      description: LATEST is the tip revision that updateDocument edits. PUBLISHED is the current published revision and fails when nothing is published. DRAFT returns the tip only when its status is DRAFT.
       enum:
         - LATEST
         - PUBLISHED
@@ -8297,7 +8321,7 @@ components:
         - version
       properties:
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID from listDocuments or getDocument. Not a document version ID.
         version:
           $ref: "#/components/schemas/DocumentReadVersion"
@@ -8363,7 +8387,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         title:
           type: string
@@ -8399,7 +8423,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     DeleteDocumentDraftOutput:
@@ -8416,7 +8440,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     ArchiveDocumentOutput:
@@ -8433,7 +8457,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     UnarchiveDocumentOutput:
@@ -8450,7 +8474,7 @@ components:
         - document_id
       properties:
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         order_by:
           $ref: "#/components/schemas/DocumentVersionOrderBy"
@@ -8490,7 +8514,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
 
     GetDocumentVersionOutput:
@@ -8510,7 +8534,7 @@ components:
         - changelog
       properties:
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         minor:
           type: boolean
@@ -8540,7 +8564,7 @@ components:
         - document_id
       properties:
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     DeleteDocumentOutput:
@@ -8549,7 +8573,7 @@ components:
         - deleted_document_id
       properties:
         deleted_document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Deleted document ID
 
     ListDocumentVersionSignaturesInput:
@@ -8558,7 +8582,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         order_by:
           $ref: "#/components/schemas/DocumentVersionSignatureOrderBy"
@@ -8605,7 +8629,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Document version signature ID
 
     GetDocumentVersionSignatureOutput:
@@ -8623,10 +8647,10 @@ components:
         - signatory_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         signatory_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/ProfileID"
           description: Signatory ID (Profile ID)
 
     RequestDocumentVersionSignatureOutput:
@@ -8643,7 +8667,7 @@ components:
         - document_version_signature_id
       properties:
         document_version_signature_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Document version signature ID
 
     CancelSignatureRequestOutput:
@@ -8652,7 +8676,7 @@ components:
         - deleted_document_version_signature_id
       properties:
         deleted_document_version_signature_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Deleted document version signature ID
 
     VoidDocumentVersionApprovalInput:
@@ -8661,7 +8685,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
 
     VoidDocumentVersionApprovalOutput:
@@ -8678,7 +8702,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         comment:
           type: string
@@ -8698,7 +8722,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         comment:
           type: string
@@ -8718,7 +8742,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
 
     SignDocumentOutput:
@@ -8735,7 +8759,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         order_by:
           $ref: "#/components/schemas/DocumentVersionApprovalQuorumOrderBy"

@@ -72,6 +72,11 @@ nearby tool not to call. Document ids and document version ids are the
 sharp case: `getDocument` returns metadata (including the latest version's
 `title`), and `readDocument` returns the markdown body.
 
+A description written beside `$ref` does not reach the tool schema. Put it
+on the referenced schema. `DocumentID`, `DocumentVersionID`, and
+`DocumentVersionSignatureID` exist so those argument schemas say which id
+they take.
+
 The full server also returns that playbook as MCP `instructions`. Clients
 that only need documents can connect to the same URL with
 `?toolset=documents` (OAuth resource stays `/api/mcp/v1`) or to
