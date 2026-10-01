@@ -60,6 +60,8 @@ const trackerResourceFragment = graphql`
       id
       name
     }
+    canUpdate: permission(action: "core:tracker-resource:update")
+    canDelete: permission(action: "core:tracker-resource:delete")
   }
 `;
 
@@ -203,14 +205,24 @@ export function TrackerResourceListItem({
             {resource.path}
           </Text>
         </TableCell>
-        <TableCell interactive>
-          <MoveToCategorySelect
-            cookieBannerKey={cookieBannerKey}
-            currentCategoryId={resource.cookieCategory?.id}
-            currentCategoryName={resource.cookieCategory?.name}
-            onSelect={handleMove}
-          />
-        </TableCell>
+        {resource.canUpdate
+          ? (
+              <TableCell interactive>
+                <MoveToCategorySelect
+                  cookieBannerKey={cookieBannerKey}
+                  currentCategoryId={resource.cookieCategory?.id}
+                  currentCategoryName={resource.cookieCategory?.name}
+                  onSelect={handleMove}
+                />
+              </TableCell>
+            )
+          : (
+              <TableCell>
+                <Text size={2} color={resource.cookieCategory == null ? "faint" : undefined}>
+                  {resource.cookieCategory?.name ?? "-"}
+                </Text>
+              </TableCell>
+            )}
         <TableCell>
           {resource.lastDetectedAt == null
             ? <Text size={2} color="faint">-</Text>
@@ -222,49 +234,57 @@ export function TrackerResourceListItem({
                 </time>
               )}
         </TableCell>
-        <TableCell interactive justify="end">
-          <div className={actions()}>
-            <Dropdown>
-              <DropdownTrigger
-                render={(
-                  <IconButton
-                    variant="ghost"
-                    color="neutral"
-                    size={1}
-                    aria-label={t("trackerResourceRow.actions.more")}
-                  >
-                    <DotsThreeVerticalIcon />
-                  </IconButton>
-                )}
-              />
-              <DropdownPopup align="end">
-                <DropdownItem
-                  iconStart={resource.excluded ? <EyeIcon /> : <EyeSlashIcon />}
-                  onClick={handleToggleExcluded}
-                >
-                  {resource.excluded
-                    ? t("trackerResourceRow.actions.include")
-                    : t("trackerResourceRow.actions.exclude")}
-                </DropdownItem>
-                <DropdownItem
-                  color="error"
-                  iconStart={<TrashIcon />}
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  {t("trackerResourceRow.actions.delete")}
-                </DropdownItem>
-              </DropdownPopup>
-            </Dropdown>
-          </div>
+        <TableCell interactive={resource.canUpdate || resource.canDelete ? true : undefined} justify="end">
+          {(resource.canUpdate || resource.canDelete) && (
+            <div className={actions()}>
+              <Dropdown>
+                <DropdownTrigger
+                  render={(
+                    <IconButton
+                      variant="ghost"
+                      color="neutral"
+                      size={1}
+                      aria-label={t("trackerResourceRow.actions.more")}
+                    >
+                      <DotsThreeVerticalIcon />
+                    </IconButton>
+                  )}
+                />
+                <DropdownPopup align="end">
+                  {resource.canUpdate && (
+                    <DropdownItem
+                      iconStart={resource.excluded ? <EyeIcon /> : <EyeSlashIcon />}
+                      onClick={handleToggleExcluded}
+                    >
+                      {resource.excluded
+                        ? t("trackerResourceRow.actions.include")
+                        : t("trackerResourceRow.actions.exclude")}
+                    </DropdownItem>
+                  )}
+                  {resource.canDelete && (
+                    <DropdownItem
+                      color="error"
+                      iconStart={<TrashIcon />}
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      {t("trackerResourceRow.actions.delete")}
+                    </DropdownItem>
+                  )}
+                </DropdownPopup>
+              </Dropdown>
+            </div>
+          )}
         </TableCell>
       </TableRow>
-      <DeleteTrackerResourceDialog
-        trackerResourceId={resource.id}
-        displayName={resource.displayName}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onRemoved={onRemoved}
-      />
+      {resource.canDelete && (
+        <DeleteTrackerResourceDialog
+          trackerResourceId={resource.id}
+          displayName={resource.displayName}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onRemoved={onRemoved}
+        />
+      )}
     </>
   );
 }

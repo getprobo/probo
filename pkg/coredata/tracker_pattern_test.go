@@ -499,7 +499,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 // TestTrackerPatterns_LoadByCookieBannerID_SourceOrder pins SOURCE
 // sort: cookie_source is an enum, so ORDER BY COALESCE(source, ”)
 // fails with SQLSTATE 22P02. The column expression must cast to text
-// first so NULL sources sort as empty.
+// first so NULL sources sort as empty and come first in ASC.
 func TestTrackerPatterns_LoadByCookieBannerID_SourceOrder(t *testing.T) {
 	t.Parallel()
 
@@ -516,6 +516,25 @@ func TestTrackerPatterns_LoadByCookieBannerID_SourceOrder(t *testing.T) {
 		coredata.TrackerPatternMatchTypeGlob,
 		coredata.CookieSourceScript,
 	)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	maxAge := 3600
+	unsourced := &coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.cookieBannerID,
+		CookieCategoryID: fx.cookieCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "unsourced",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "unsourced",
+		MaxAgeSeconds:    &maxAge,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return unsourced.Insert(ctx, tx, fx.scope)
+	}))
 
 	cursor := page.NewCursor(
 		10,
@@ -540,5 +559,8 @@ func TestTrackerPatterns_LoadByCookieBannerID_SourceOrder(t *testing.T) {
 		)
 	}))
 
-	require.Len(t, patterns, 1)
+	require.Len(t, patterns, 2)
+	assert.Nil(t, patterns[0].Source)
+	require.NotNil(t, patterns[1].Source)
+	assert.Equal(t, coredata.CookieSourceScript, *patterns[1].Source)
 }

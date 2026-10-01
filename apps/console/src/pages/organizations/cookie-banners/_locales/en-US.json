@@ -61,8 +61,8 @@
     "undetermined": "Undetermined"
   },
   "trackerPatternRow": {
-    "messages": { "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved" },
-    "errors": { "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
+    "messages": { "trackerDeleted": "Tracker deleted", "cookieMoved": "Cookie moved" },
+    "errors": { "deleteTracker": "Failed to delete tracker", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
     "dialogs": { "deleteTitle": "Delete tracker" },
     "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions", "description": "Show description" },
@@ -79,7 +79,8 @@
       "firstParty": "This is a first-party tracker.",
       "visitorSoftware": "This tracker is set by visitor software.",
       "thirdParty": "This is a third-party tracker from {{name}}.",
-      "thirdPartyUnnamed": "This is a third-party tracker."
+      "thirdPartyUnnamed": "This is a third-party tracker.",
+      "undetermined": "This tracker's attribution is undetermined."
     },
     "manual": "Manual"
   },

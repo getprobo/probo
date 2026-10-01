@@ -33,7 +33,7 @@ export const table = tv({
     columnHeader: "font-medium text-sand-11",
     rowHeader: "font-normal",
     sortButton: [
-      "inline-flex max-w-full items-center gap-1 appearance-none border-0 bg-transparent p-0 font-inherit text-inherit cursor-pointer",
+      "inline-flex max-w-full items-center gap-1 appearance-none border-0 bg-transparent p-0 font-inherit text-sand-11 cursor-pointer",
       "outline-none focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     ],
     sortIcon: "shrink-0",

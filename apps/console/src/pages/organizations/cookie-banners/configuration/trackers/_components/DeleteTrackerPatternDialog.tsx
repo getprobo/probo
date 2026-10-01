@@ -70,8 +70,8 @@ export function DeleteTrackerPatternDialog({
   const [deletePattern, isDeleting] = useMutation<DeleteTrackerPatternDialogMutation>(
     deletePatternMutation,
     {
-      successMessage: t("trackerPatternRow.messages.cookieDeleted"),
-      errorToast: t("trackerPatternRow.errors.deleteCookie"),
+      successMessage: t("trackerPatternRow.messages.trackerDeleted"),
+      errorToast: t("trackerPatternRow.errors.deleteTracker"),
     },
   );
 

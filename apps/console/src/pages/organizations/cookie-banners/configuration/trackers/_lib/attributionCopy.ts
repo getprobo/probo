@@ -33,6 +33,8 @@ export function attributionCopy(
       return translate("trackerProperties.attribution.visitorSoftware");
     case "THIRD_PARTY":
       return translate("trackerProperties.attribution.thirdPartyUnnamed");
+    case "UNDETERMINED":
+      return translate("trackerProperties.attribution.undetermined");
     default:
       return null;
   }

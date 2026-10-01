@@ -190,7 +190,7 @@ export function useResourcesListFilters(): ResourcesListFilters {
     type,
     graphqlFilter,
     graphqlOrder,
-    hasActiveFilters: query !== "" || type != null,
+    hasActiveFilters: query.trim() !== "" || type != null,
     setQuery,
     setType,
     setOrder,

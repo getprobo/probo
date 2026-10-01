@@ -234,7 +234,7 @@ export function useTrackersListFilters(): TrackersListFilters {
     graphqlFilter,
     graphqlOrder,
     hasActiveFilters:
-      query !== ""
+      query.trim() !== ""
       || source != null
       || type != null
       || category != null

@@ -64,7 +64,7 @@ export const trackerPatternListItem = tv({
   slots: {
     name: "flex min-w-0 flex-col gap-0.5",
     heading: "flex min-w-0 items-center gap-2",
-    title: "min-w-0 truncate",
+    title: "min-w-0 truncate font-mono",
     info: "relative z-1 shrink-0 pointer-events-auto",
     detail: "flex flex-col gap-1",
     date: "whitespace-nowrap",

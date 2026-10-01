@@ -74,6 +74,7 @@ export function TableColumnHeaderCell(props: TableColumnHeaderCellProps) {
     <th
       scope="col"
       aria-sort={sortState}
+      aria-label={onSort == null ? ariaLabel : undefined}
       className={columnHeader({ className: cell({ className }) })}
       style={cellStyle(width, minWidth, maxWidth, style)}
       {...rest}

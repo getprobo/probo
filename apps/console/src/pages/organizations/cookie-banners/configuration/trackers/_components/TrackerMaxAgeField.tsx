@@ -24,7 +24,6 @@ import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
-import { type FocusEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { trackerMaxAgeField } from "../../../variants";
@@ -35,7 +34,7 @@ interface TrackerMaxAgeFieldProps {
   disabled?: boolean;
   onValueChange: (value: string) => void;
   onUnitChange: (unit: string) => void;
-  onBlur?: (event: FocusEvent<HTMLDivElement>) => void;
+  onBlur?: () => void;
 }
 
 export function TrackerMaxAgeField({
@@ -50,7 +49,7 @@ export function TrackerMaxAgeField({
   const { root, value: valueSlot, unit: unitSlot } = trackerMaxAgeField();
 
   return (
-    <div className={root()} onBlur={onBlur}>
+    <div className={root()}>
       <TextField
         size={2}
         type="number"
@@ -61,6 +60,7 @@ export function TrackerMaxAgeField({
         className={valueSlot()}
         aria-label={t("trackerProperties.properties.maxAge")}
         onValueChange={onValueChange}
+        onBlur={onBlur}
       />
       <div className={unitSlot()}>
         <Select

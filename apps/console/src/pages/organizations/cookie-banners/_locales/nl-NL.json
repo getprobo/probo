@@ -61,8 +61,8 @@
     "undetermined": "Onbepaald"
   },
   "trackerPatternRow": {
-    "messages": { "cookieDeleted": "Cookie verwijderd", "cookieMoved": "Cookie verplaatst" },
-    "errors": { "deleteCookie": "Cookie verwijderen mislukt", "moveCookie": "Cookie verplaatsen mislukt", "updateCookie": "Cookie bijwerken mislukt" },
+    "messages": { "trackerDeleted": "Tracker verwijderd", "cookieMoved": "Cookie verplaatst" },
+    "errors": { "deleteTracker": "Tracker verwijderen mislukt", "moveCookie": "Cookie verplaatsen mislukt", "updateCookie": "Cookie bijwerken mislukt" },
     "deleteConfirmation": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
     "dialogs": { "deleteTitle": "Tracker verwijderen" },
     "actions": { "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties", "description": "Beschrijving tonen" },
@@ -79,7 +79,8 @@
       "firstParty": "Dit is een first-party tracker.",
       "visitorSoftware": "Deze tracker wordt geplaatst door bezoekerssoftware.",
       "thirdParty": "Dit is een third-party tracker van {{name}}.",
-      "thirdPartyUnnamed": "Dit is een third-party tracker."
+      "thirdPartyUnnamed": "Dit is een third-party tracker.",
+      "undetermined": "De attributie van deze tracker is onbepaald."
     },
     "manual": "Handmatig"
   },
@@ -89,8 +90,8 @@
     "empty": "Nog geen detecties voor deze tracker.",
     "sort": { "initiatorUrl": "Sorteren op initiator-URL", "detectionTime": "Sorteren op detectietijd" },
     "actions": { "showMore": "Meer weergeven" },
-    "summary_one": "{{count}} detectie · Laatst overeengekomen {{date}}",
-    "summary_other": "{{count}} detecties · Laatst overeengekomen {{date}}",
+    "summary_one": "{{count}} detectie · Laatst overeengekomen op {{date}}",
+    "summary_other": "{{count}} detecties · Laatst overeengekomen op {{date}}",
     "summaryNever_one": "{{count}} detectie · Nog niet overeengekomen",
     "summaryNever_other": "{{count}} detecties · Nog niet overeengekomen"
   },

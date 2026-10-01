@@ -27,7 +27,7 @@ import { Field } from "@probo/ui/src/v2/form/Field";
 import { Textarea } from "@probo/ui/src/v2/form/Textarea";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type FocusEvent, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -222,13 +222,6 @@ export function TrackerPatternPropertiesSection({
     }).catch(() => undefined);
   }
 
-  function handleDurationBlur(event: FocusEvent<HTMLDivElement>) {
-    if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) {
-      return;
-    }
-    saveMaxAge();
-  }
-
   function copySourceId() {
     const commonTrackerPatternId = pattern.commonTrackerPatternId;
     if (commonTrackerPatternId == null) {
@@ -338,7 +331,7 @@ export function TrackerPatternPropertiesSection({
                         setDuration(next);
                         saveMaxAge(next);
                       }}
-                      onBlur={handleDurationBlur}
+                      onBlur={() => saveMaxAge()}
                     />
                   )
                 : <Text size={2}>{readOnlyDuration}</Text>}

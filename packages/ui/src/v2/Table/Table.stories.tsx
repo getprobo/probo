@@ -119,8 +119,6 @@ export const Skeleton: Story = {
   ),
 };
 
-// Title TableLink stretches across the row; the trailing ButtonLink sits
-// above the overlay via TableCell interactive.
 export const SortableHeaders: Story = {
   render: function SortableHeadersStory() {
     const [field, setField] = useState<"name" | "email">("name");
@@ -177,6 +175,8 @@ export const SortableHeaders: Story = {
   },
 };
 
+// Title TableLink stretches across the row; the trailing ButtonLink sits
+// above the overlay via TableCell interactive.
 export const InteractiveRows: Story = {
   render: () => (
     <div className="w-xl">

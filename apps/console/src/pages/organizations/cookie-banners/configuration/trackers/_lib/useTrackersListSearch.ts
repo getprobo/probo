@@ -37,8 +37,9 @@ export function useTrackersListSearch(): [string, (value: string) => void] {
     }
 
     const handle = setTimeout(() => {
-      lastCommittedRef.current = input;
-      setQuery(input);
+      const value = input.trim() === "" ? "" : input;
+      lastCommittedRef.current = value;
+      setQuery(value);
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(handle);

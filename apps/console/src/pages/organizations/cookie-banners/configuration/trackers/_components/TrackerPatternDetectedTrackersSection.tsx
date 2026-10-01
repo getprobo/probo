@@ -182,6 +182,7 @@ export function TrackerPatternDetectedTrackersSection({
                     variant="soft"
                     color="neutral"
                     loading={isLoadingNext}
+                    disabled={isSortPending}
                     iconStart={<CaretDownIcon />}
                     onClick={() => loadNext(DETECTED_TRACKERS_PAGE_SIZE)}
                   >

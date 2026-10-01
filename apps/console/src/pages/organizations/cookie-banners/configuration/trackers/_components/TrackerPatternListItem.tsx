@@ -75,6 +75,8 @@ const trackerPatternFragment = graphql`
       name
     }
     attribution
+    canUpdate: permission(action: "core:tracker-pattern:update")
+    canDelete: permission(action: "core:tracker-pattern:delete")
   }
 `;
 
@@ -275,14 +277,24 @@ export function TrackerPatternListItem({
                 </Badge>
               )}
         </TableCell>
-        <TableCell interactive>
-          <MoveToCategorySelect
-            cookieBannerKey={cookieBannerKey}
-            currentCategoryId={pattern.cookieCategory?.id}
-            currentCategoryName={pattern.cookieCategory?.name}
-            onSelect={handleMove}
-          />
-        </TableCell>
+        {pattern.canUpdate
+          ? (
+              <TableCell interactive>
+                <MoveToCategorySelect
+                  cookieBannerKey={cookieBannerKey}
+                  currentCategoryId={pattern.cookieCategory?.id}
+                  currentCategoryName={pattern.cookieCategory?.name}
+                  onSelect={handleMove}
+                />
+              </TableCell>
+            )
+          : (
+              <TableCell>
+                <Text size={2} color={pattern.cookieCategory == null ? "faint" : undefined}>
+                  {pattern.cookieCategory?.name ?? "-"}
+                </Text>
+              </TableCell>
+            )}
         <TableCell>
           <Text size={2} className={date()}>{duration}</Text>
         </TableCell>
@@ -297,49 +309,57 @@ export function TrackerPatternListItem({
                 </time>
               )}
         </TableCell>
-        <TableCell interactive justify="end">
-          <div className={actions()}>
-            <Dropdown>
-              <DropdownTrigger
-                render={(
-                  <IconButton
-                    variant="ghost"
-                    color="neutral"
-                    size={1}
-                    aria-label={t("trackerPatternRow.actions.more")}
-                  >
-                    <DotsThreeVerticalIcon />
-                  </IconButton>
-                )}
-              />
-              <DropdownPopup align="end">
-                <DropdownItem
-                  iconStart={pattern.excluded ? <EyeIcon /> : <EyeSlashIcon />}
-                  onClick={handleToggleExcluded}
-                >
-                  {pattern.excluded
-                    ? t("trackerPatternRow.actions.include")
-                    : t("trackerPatternRow.actions.exclude")}
-                </DropdownItem>
-                <DropdownItem
-                  color="error"
-                  iconStart={<TrashIcon />}
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  {t("trackerPatternRow.actions.delete")}
-                </DropdownItem>
-              </DropdownPopup>
-            </Dropdown>
-          </div>
+        <TableCell interactive={pattern.canUpdate || pattern.canDelete ? true : undefined} justify="end">
+          {(pattern.canUpdate || pattern.canDelete) && (
+            <div className={actions()}>
+              <Dropdown>
+                <DropdownTrigger
+                  render={(
+                    <IconButton
+                      variant="ghost"
+                      color="neutral"
+                      size={1}
+                      aria-label={t("trackerPatternRow.actions.more")}
+                    >
+                      <DotsThreeVerticalIcon />
+                    </IconButton>
+                  )}
+                />
+                <DropdownPopup align="end">
+                  {pattern.canUpdate && (
+                    <DropdownItem
+                      iconStart={pattern.excluded ? <EyeIcon /> : <EyeSlashIcon />}
+                      onClick={handleToggleExcluded}
+                    >
+                      {pattern.excluded
+                        ? t("trackerPatternRow.actions.include")
+                        : t("trackerPatternRow.actions.exclude")}
+                    </DropdownItem>
+                  )}
+                  {pattern.canDelete && (
+                    <DropdownItem
+                      color="error"
+                      iconStart={<TrashIcon />}
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      {t("trackerPatternRow.actions.delete")}
+                    </DropdownItem>
+                  )}
+                </DropdownPopup>
+              </Dropdown>
+            </div>
+          )}
         </TableCell>
       </TableRow>
-      <DeleteTrackerPatternDialog
-        trackerPatternId={pattern.id}
-        displayName={pattern.displayName}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onRemoved={onRemoved}
-      />
+      {pattern.canDelete && (
+        <DeleteTrackerPatternDialog
+          trackerPatternId={pattern.id}
+          displayName={pattern.displayName}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onRemoved={onRemoved}
+        />
+      )}
     </>
   );
 }
