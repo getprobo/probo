@@ -472,9 +472,9 @@ func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID
 
 	_, err = conn.Exec(ctx, `
 		INSERT INTO connectors (
-			id, tenant_id, organization_id, provider, protocol, settings, encrypted_connection, created_at, updated_at
+			id, tenant_id, organization_id, provider, protocol, name, settings, encrypted_connection, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, 'LINEAR_SYNC', 'OAUTH2', '{}', '\x', $4, $4
+			$1, $2, $3, 'LINEAR_SYNC', 'OAUTH2', 'Linear sync', '{}', '\x', $4, $4
 		)
 	`, connectorID, tenantID, orgID, now)
 	require.NoError(t, err)

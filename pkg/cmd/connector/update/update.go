@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package list
+package update
 
 import (
 	"encoding/json"
@@ -29,45 +29,45 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const listQuery = `
-query($id: ID!) {
-  node(id: $id) {
-    __typename
-    ... on Organization {
-      connectors {
-        id
-        name
-        provider
-        protocol
-        createdAt
-      }
+const updateMutation = `
+mutation($input: UpdateConnectorInput!) {
+  updateConnector(input: $input) {
+    connector {
+      id
+      name
+      provider
+      protocol
     }
   }
 }
 `
 
-type connector struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Provider  string `json:"provider"`
-	Protocol  string `json:"protocol"`
-	CreatedAt string `json:"createdAt"`
+const nameHelp = "Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name."
+
+type updatedConnector struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Provider string `json:"provider"`
+	Protocol string `json:"protocol"`
 }
 
-func NewCmdList(f *cmdutil.Factory) *cobra.Command {
+func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg    string
+		flagName   string
 		flagOutput *string
 	)
 
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List connectors in an organization",
-		Aliases: []string{"ls"},
-		Args:    cobra.NoArgs,
+		Use:   "update <connector-id>",
+		Short: "Rename a connector",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
+			}
+
+			if flagName == "" {
+				return fmt.Errorf("--name is required")
 			}
 
 			cfg, err := f.Config()
@@ -88,67 +88,37 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
-			data, err := client.Do(listQuery, map[string]any{"id": flagOrg})
+			data, err := client.Do(updateMutation, map[string]any{
+				"input": map[string]any{
+					"connectorId": args[0],
+					"name":        flagName,
+				},
+			})
 			if err != nil {
 				return err
 			}
 
 			var resp struct {
-				Node *struct {
-					Typename   string      `json:"__typename"`
-					Connectors []connector `json:"connectors"`
-				} `json:"node"`
+				UpdateConnector struct {
+					Connector updatedConnector `json:"connector"`
+				} `json:"updateConnector"`
 			}
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			if resp.Node == nil {
-				return fmt.Errorf("organization %s not found", flagOrg)
-			}
-
-			if resp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-			}
-
-			connectors := resp.Node.Connectors
-
+			connector := resp.UpdateConnector.Connector
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, connectors)
+				return cmdutil.PrintJSON(f.IOStreams.Out, connector)
 			}
 
-			if len(connectors) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No connectors found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(connectors))
-			for _, c := range connectors {
-				rows = append(rows, []string{
-					c.ID,
-					c.Name,
-					c.Provider,
-					c.Protocol,
-					cmdutil.FormatTime(c.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "PROVIDER", "PROTOCOL", "CREATED").Rows(rows...)
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Renamed connector %s to %s\n", connector.ID, connector.Name)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagName, "name", "", nameHelp)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

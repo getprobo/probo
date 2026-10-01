@@ -28,14 +28,16 @@ import { graphql } from "relay-runtime";
 
 import type { ClientCredentialsConnectFormCreateMutation } from "#/__generated__/core/ClientCredentialsConnectFormCreateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapClientCredentialsExtraSettingToField,
 } from "../_lib/connectorSettings";
-
 import { integrationListPath } from "../_lib/integrationPath";
+
 import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
+import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
 
 const createClientCredentialsConnectorMutation = graphql`
   mutation ClientCredentialsConnectFormCreateMutation(
@@ -59,6 +61,7 @@ export function ClientCredentialsConnectForm({
   const { t } = useTranslation("organizations/settings/integrations");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const connectorName = useConnectorName();
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [tokenUrl, setTokenUrl] = useState("");
@@ -73,7 +76,7 @@ export function ClientCredentialsConnectForm({
   const canSubmit = clientId.trim() !== "" && clientSecret.trim() !== "" && tokenReady && extrasValid;
 
   const onSubmit = async () => {
-    if (!canSubmit || isConnecting) {
+    if (connectorName.rejectIfEmpty() || !canSubmit || isConnecting) {
       return;
     }
     setIsConnecting(true);
@@ -82,6 +85,7 @@ export function ClientCredentialsConnectForm({
         variables: {
           input: {
             organizationId,
+            name: connectorName.trimmed,
             provider: driver.provider,
             clientId: clientId.trim(),
             clientSecret: clientSecret.trim(),
@@ -117,6 +121,12 @@ export function ClientCredentialsConnectForm({
         void onSubmit();
       }}
     >
+      <ConnectorNameField
+        name={connectorName.name}
+        error={connectorName.error}
+        onChange={connectorName.onChange}
+        onEmpty={connectorName.rejectIfEmpty}
+      />
       <Field label={t("marketplacePage.fields.clientId")} required>
         <TextField value={clientId} onChange={event => setClientId(event.target.value)} />
       </Field>

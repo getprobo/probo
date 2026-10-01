@@ -71,6 +71,7 @@ func TestMCP_AWSConnector(t *testing.T) {
 	// client on the failure path and has to stay free of AWS detail.
 	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
 		"organization_id": orgID,
+		"name":            "Test",
 		"provider":        "AWS",
 		"aws_role_arn":    awsFixtureRoleARN,
 	})
@@ -118,6 +119,7 @@ func TestMCP_AWSConnector_RBAC(t *testing.T) {
 	// keeps a viewer away from the status too.
 	msg = viewerMC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
 		"organization_id": orgID,
+		"name":            "Test",
 		"provider":        "AWS",
 		"aws_role_arn":    awsFixtureRoleARN,
 	})
@@ -139,6 +141,7 @@ func TestMCP_AWSConnector_TenantIsolation(t *testing.T) {
 
 	msg = org2MC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
 		"organization_id": org1ID,
+		"name":            "Test",
 		"provider":        "AWS",
 		"aws_role_arn":    awsFixtureRoleARN,
 	})

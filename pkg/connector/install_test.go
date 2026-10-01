@@ -52,6 +52,7 @@ func TestInstallState_RoundTrip(t *testing.T) {
 		"CRISP",
 		organizationID,
 		identityID,
+		"Crisp",
 	)
 	require.NoError(t, err)
 
@@ -61,6 +62,7 @@ func TestInstallState_RoundTrip(t *testing.T) {
 	assert.Equal(t, "CRISP", payload.Data.Provider)
 	assert.Equal(t, organizationID, payload.Data.OrganizationID)
 	assert.Equal(t, identityID, payload.Data.IdentityID)
+	assert.Equal(t, "Crisp", payload.Data.Name)
 	assert.NotEmpty(t, payload.Data.Nonce, "the claim ledger keys on the digest of this token")
 }
 
@@ -79,6 +81,7 @@ func TestInstallState_NonceMakesEachMintUnique(t *testing.T) {
 		"CRISP",
 		organizationID,
 		identityID,
+		"Crisp",
 	)
 	require.NoError(t, err)
 
@@ -87,6 +90,7 @@ func TestInstallState_NonceMakesEachMintUnique(t *testing.T) {
 		"CRISP",
 		organizationID,
 		identityID,
+		"Crisp",
 	)
 	require.NoError(t, err)
 
@@ -103,6 +107,7 @@ func TestInstallState_Rejects(t *testing.T) {
 		"CRISP",
 		organizationID,
 		identityID,
+		"Crisp",
 	)
 	require.NoError(t, err)
 

@@ -43,6 +43,7 @@ func TestCreateAPIKeyConnector_RBAC(t *testing.T) {
 		`, map[string]any{
 			"input": map[string]any{
 				"organizationId": viewer.GetOrganizationID().String(),
+				"name":           "Test",
 				"provider":       "BREX",
 				"apiKey":         "bxt_test-key",
 			},

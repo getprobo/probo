@@ -23,6 +23,8 @@ import { dateFormat } from "@probo/i18n";
 import { IconWarning, ThirdPartyLogo, useToast } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
@@ -30,24 +32,27 @@ import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
 import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 import type {
   ConnectorListItem_connector$data,
   ConnectorListItem_connector$key,
 } from "#/__generated__/core/ConnectorListItem_connector.graphql";
+import type { ConnectorListItemUpdateNameMutation } from "#/__generated__/core/ConnectorListItemUpdateNameMutation.graphql";
+import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
+import { useMutation } from "#/lib/relay/useMutation";
 
-import { ConnectorConnectMore } from "./ConnectorConnectMore";
-import { ConnectorMethodIcon } from "./ConnectorMethodIcon";
 import { connectMethodFromConnector } from "../_lib/connectMethods";
 import { buildConnectorInitiateURL } from "../_lib/connectorSettings";
 import { connectorDetailsPath } from "../_lib/integrationPath";
 import { connectorCard } from "../variants";
+
+import { ConnectorConnectMore } from "./ConnectorConnectMore";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
+import { ConnectorMethodIcon } from "./ConnectorMethodIcon";
 import { ConnectorOrganizationSelect } from "./ConnectorOrganizationSelect";
 
 // connectionStatus probes the vendor on every read, so this list pays one
@@ -60,6 +65,7 @@ export const connectorListItemFragment = graphql`
     includeOrganizationSelect: { type: "Boolean!", defaultValue: false }
   ) {
     id
+    name
     provider
     displayName
     connectionStatus
@@ -74,9 +80,21 @@ export const connectorListItemFragment = graphql`
     }
     createdAt
     canGet: permission(action: "core:connector:get")
+    canUpdate: permission(action: "core:connector:update")
     canDelete: permission(action: "core:connector:delete")
     ...ConnectorOrganizationSelect_connector @include(if: $includeOrganizationSelect)
     ...ConnectorDeleteDialog_connector
+  }
+`;
+
+const updateConnectorNameMutation = graphql`
+  mutation ConnectorListItemUpdateNameMutation($input: UpdateConnectorInput!) {
+    updateConnector(input: $input) {
+      connector {
+        id
+        name
+      }
+    }
   }
 `;
 
@@ -212,6 +230,119 @@ interface ConnectorListItemProps {
   onDeleted?: () => void;
 }
 
+function ConnectorNameHeading({
+  connectorId,
+  name,
+  canUpdate,
+}: {
+  connectorId: string;
+  name: string;
+  canUpdate: boolean;
+}) {
+  const { t } = useTranslation("organizations/settings/integrations");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(name);
+  const [error, setError] = useState<string | undefined>();
+  const canceling = useRef(false);
+  const saving = useRef(false);
+  const [updateName, isUpdating] = useMutation<ConnectorListItemUpdateNameMutation>(
+    updateConnectorNameMutation,
+  );
+
+  async function save(value: string) {
+    if (saving.current) {
+      return;
+    }
+    const trimmed = value.trim();
+    if (trimmed === "") {
+      setError(t("connectForm.name.required"));
+      return;
+    }
+    if (trimmed === name) {
+      setError(undefined);
+      setEditing(false);
+      return;
+    }
+    saving.current = true;
+    try {
+      await updateName({
+        variables: { input: { connectorId, name: trimmed } },
+      }, { errorToast: t("connectForm.name.saveFailed") });
+      setError(undefined);
+      setEditing(false);
+    } catch {
+      setDraft(trimmed);
+    } finally {
+      saving.current = false;
+    }
+  }
+
+  if (!canUpdate) {
+    return (
+      <Heading level={2} size={3} weight="medium" highContrast className="truncate">
+        {name}
+      </Heading>
+    );
+  }
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        className="pointer-events-auto relative z-10 min-w-0 cursor-text text-left"
+        onClick={(event) => {
+          event.stopPropagation();
+          setDraft(name);
+          setError(undefined);
+          setEditing(true);
+        }}
+      >
+        <Heading level={2} size={3} weight="medium" highContrast className="truncate">
+          {name}
+        </Heading>
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="pointer-events-auto relative z-10 min-w-0"
+      onClick={event => event.stopPropagation()}
+      onKeyDown={event => event.stopPropagation()}
+    >
+      <Field error={error}>
+        <TextField
+          value={draft}
+          autoFocus
+          disabled={isUpdating}
+          aria-label={t("connectForm.name.label")}
+          onChange={event => setDraft(event.target.value)}
+          onBlur={() => {
+            if (canceling.current) {
+              canceling.current = false;
+              return;
+            }
+            void save(draft);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void save(draft);
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              canceling.current = true;
+              setDraft(name);
+              setError(undefined);
+              setEditing(false);
+            }
+          }}
+        />
+      </Field>
+    </div>
+  );
+}
+
 export function ConnectorListItem({
   connectorKey,
   providerKey,
@@ -275,7 +406,7 @@ export function ConnectorListItem({
       {connector.canGet && onSelect != null && (
         <button
           type="button"
-          aria-label={connector.displayName}
+          aria-label={connector.name}
           className="absolute inset-0 z-0 cursor-pointer"
           onClick={() => onSelect(connector.id)}
         />
@@ -308,30 +439,47 @@ export function ConnectorListItem({
         lead={(
           <div className={identity()}>
             <div className={name()}>
-              {showName && (
-                <Heading level={2} size={3} weight="medium" highContrast className={title()}>
-                  {connector.displayName}
-                </Heading>
-              )}
-              {detailAccountCount != null && (
-                <Badge variant="soft" color="neutral" size={1} className="shrink-0">
-                  {t("detailsPage.accountCount", { count: detailAccountCount })}
-                </Badge>
-              )}
+              {onSelect != null
+                ? (
+                    <ConnectorNameHeading
+                      connectorId={connector.id}
+                      name={connector.name}
+                      canUpdate={connector.canUpdate}
+                    />
+                  )
+                : showName && (
+                  <div className="flex min-w-0 flex-col">
+                    <Heading level={2} size={3} weight="medium" highContrast className={title()}>
+                      {connector.displayName}
+                    </Heading>
+                    {!aggregated && (
+                      <Text size={1} color="faint" className="truncate">
+                        {connector.name}
+                      </Text>
+                    )}
+                  </div>
+                )}
             </div>
-            {isDetailsCard && (
-              <ConnectorConnectionBadge
-                aggregated={aggregated}
-                aggregatedTotal={aggregatedConnectorIds?.length ?? null}
-                connectedCount={connectedCount}
-                tone={tone}
-                solo={solo}
-              />
-            )}
           </div>
         )}
         control={menu}
       >
+        {isDetailsCard && (
+          <div className={tags()}>
+            <ConnectorConnectionBadge
+              aggregated={aggregated}
+              aggregatedTotal={aggregatedConnectorIds?.length ?? null}
+              connectedCount={connectedCount}
+              tone={tone}
+              solo={solo}
+            />
+            {detailAccountCount != null && (
+              <Badge variant="soft" color="neutral" size={1}>
+                {t("detailsPage.accountCount", { count: detailAccountCount })}
+              </Badge>
+            )}
+          </div>
+        )}
         {!isDetailsCard && (listAccountCount != null || aggregated || solo != null) && (
           <div className={tags()}>
             <ConnectorConnectionBadge

@@ -133,6 +133,7 @@ type (
 		Provider        string   `json:"provider"`
 		ContinueURL     string   `json:"continue,omitempty"`
 		ConnectorID     string   `json:"cid,omitempty"` // Set when reconnecting an existing connector
+		Name            string   `json:"name,omitempty"`
 		RequestedScopes []string `json:"scopes,omitempty"`
 		// Site carries the per-customer site/subdomain chosen at initiate
 		// (opts.Site) to the callback for multi-site providers whose token
@@ -258,6 +259,7 @@ func (c *OAuth2Connector) Initiate(
 		OrganizationID: organizationID.String(),
 		Provider:       provider,
 		ConnectorID:    opts.ConnectorID,
+		Name:           opts.Name,
 	}
 
 	if r != nil {

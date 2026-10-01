@@ -36,6 +36,7 @@ type CompletionState struct {
 	Connection       Connection
 	OrganizationID   string
 	ConnectorID      string
+	Name             string
 	ContinueURL      string
 	Site             string
 	ProviderMetadata map[string]string
@@ -129,6 +130,7 @@ func (r *Registry) completeGitHubAppFromState(
 		Connection:       connection,
 		OrganizationID:   state.OrganizationID,
 		ConnectorID:      state.ConnectorID,
+		Name:             state.Name,
 		ContinueURL:      state.ContinueURL,
 		ProviderMetadata: metadata,
 	}, nil
@@ -155,6 +157,7 @@ func (r *Registry) completeOAuth2FromState(
 		Connection:       connection,
 		OrganizationID:   state.OrganizationID,
 		ConnectorID:      state.ConnectorID,
+		Name:             state.Name,
 		ContinueURL:      state.ContinueURL,
 		Site:             state.Site,
 		ProviderMetadata: state.ProviderMetadata,

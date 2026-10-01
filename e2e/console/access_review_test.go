@@ -1579,6 +1579,7 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 		err := owner.Execute(createConnectorQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "BREX",
 				"apiKey":         apiKey,
 			},

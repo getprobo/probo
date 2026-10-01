@@ -49,6 +49,7 @@ export async function execute(
 			node(id: $connectorId) {
 				... on Connector {
 					id
+					name
 					provider
 					protocol
 					createdAt

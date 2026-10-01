@@ -115,6 +115,7 @@ func TestCreateGCPWorkloadIdentityConnector(t *testing.T) {
 	err := owner.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":              orgID,
+			"name":                        "Test",
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
 			"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
@@ -135,6 +136,7 @@ func TestCreateGCPWorkloadIdentityConnector(t *testing.T) {
 		err := owner.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":              orgID,
+				"name":                        "Test",
 				"provider":                    "GCP",
 				"gcpWorkloadIdentityProvider": gcpSecondProviderResource,
 				"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
@@ -156,6 +158,7 @@ func TestCreateGCPWorkloadIdentityConnector_InvalidProviderResource(t *testing.T
 	err := owner.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":              owner.GetOrganizationID().String(),
+			"name":                        "Test",
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": bogus,
 			"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
@@ -174,6 +177,7 @@ func TestCreateGCPWorkloadIdentityConnector_InvalidServiceAccountEmail(t *testin
 	err := owner.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":              owner.GetOrganizationID().String(),
+			"name":                        "Test",
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
 			"gcpServiceAccountEmail":      bogus,
@@ -192,6 +196,7 @@ func TestGCPConnectorConnectionStatus_ImpersonationFailure(t *testing.T) {
 	resp, err := owner.Do(createGCPWorkloadIdentityConnectorWithStatusMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":              orgID,
+			"name":                        "Test",
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
 			"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
@@ -234,6 +239,7 @@ func TestGCPConnector_RBAC(t *testing.T) {
 		err := viewer.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":              orgID,
+				"name":                        "Test",
 				"provider":                    "GCP",
 				"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
 				"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
@@ -250,6 +256,7 @@ func TestGCPConnector_RBAC(t *testing.T) {
 		err := owner.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":              orgID,
+				"name":                        "Test",
 				"provider":                    "GCP",
 				"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
 				"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
@@ -274,6 +281,7 @@ func TestGCPConnector_TenantIsolation(t *testing.T) {
 	err := org1.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":              org1ID,
+			"name":                        "Test",
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
 			"gcpServiceAccountEmail":      gcpFixtureServiceAccount,
@@ -296,6 +304,7 @@ func TestGCPConnector_TenantIsolation(t *testing.T) {
 		err := org2.Execute(createGCPWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":              org1ID,
+				"name":                        "Test",
 				"provider":                    "GCP",
 				"gcpWorkloadIdentityProvider": gcpFixtureProviderResource,
 				"gcpServiceAccountEmail":      gcpFixtureServiceAccount,

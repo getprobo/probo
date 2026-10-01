@@ -122,11 +122,18 @@ func handleConnectorInstallInitiate(
 
 		// The identity in the state is load-bearing, not audit metadata: the
 		// callback rejects a browser whose session belongs to anyone else.
+		name, err := probo.NormalizeConnectorName(r.URL.Query().Get("name"))
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid name parameter"))
+			return
+		}
+
 		state, err := connector.NewInstallState(
 			installStateKey,
 			string(p),
 			organizationID,
 			identity.ID,
+			name,
 		)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot mint connector install state", log.Error(err))
