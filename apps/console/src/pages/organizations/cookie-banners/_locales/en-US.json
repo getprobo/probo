@@ -143,16 +143,12 @@
     "languages": { "english": "English", "french": "French", "german": "German", "spanish": "Spanish", "dutch": "Dutch" },
     "actions": { "saving": "Saving...", "save": "Save" }
   },
-  "trackerResourceRowEdit": {
-    "fields": { "displayNamePlaceholder": "Display name", "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Save", "cancel": "Cancel" }
-  },
   "trackerResourceRow": {
-    "messages": { "successTitle": "Success", "deleted": "Resource deleted", "moved": "Resource moved", "updated": "Resource updated" },
+    "messages": { "successTitle": "Success", "deleted": "Resource deleted", "moved": "Resource moved" },
     "errors": { "title": "Error", "delete": "Failed to delete resource", "move": "Failed to move resource", "update": "Failed to update resource" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
     "dialogs": { "deleteTitle": "Delete resource" },
-    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete", "more": "More actions" },
+    "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions" },
     "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {

@@ -143,16 +143,12 @@
     "languages": { "english": "Anglais", "french": "Français", "german": "Allemand", "spanish": "Espagnol", "dutch": "Néerlandais" },
     "actions": { "saving": "Enregistrement...", "save": "Enregistrer" }
   },
-  "trackerResourceRowEdit": {
-    "fields": { "displayNamePlaceholder": "Nom d’affichage", "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Enregistrer", "cancel": "Annuler" }
-  },
   "trackerResourceRow": {
-    "messages": { "successTitle": "Succès", "deleted": "Ressource supprimée", "moved": "Ressource déplacée", "updated": "Ressource mise à jour" },
+    "messages": { "successTitle": "Succès", "deleted": "Ressource supprimée", "moved": "Ressource déplacée" },
     "errors": { "title": "Erreur", "delete": "Échec de la suppression de la ressource", "move": "Échec du déplacement de la ressource", "update": "Échec de la mise à jour de la ressource" },
     "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
     "dialogs": { "deleteTitle": "Supprimer la ressource" },
-    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "more": "Plus d’actions" },
+    "actions": { "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "cancel": "Annuler", "more": "Plus d’actions" },
     "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {

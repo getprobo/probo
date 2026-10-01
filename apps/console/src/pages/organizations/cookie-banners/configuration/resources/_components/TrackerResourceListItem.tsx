@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react";
+import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, TrashIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
@@ -44,7 +44,6 @@ import { trackerResourceListItem } from "../../../variants";
 import { MoveToCategorySelect } from "../../trackers/_components/MoveToCategorySelect";
 
 import { DeleteTrackerResourceDialog } from "./DeleteTrackerResourceDialog";
-import { TrackerResourceListItemEdit } from "./TrackerResourceListItemEdit";
 
 const trackerResourceFragment = graphql`
   fragment TrackerResourceListItem_trackerResource on TrackerResource {
@@ -135,7 +134,6 @@ export function TrackerResourceListItem({
 }: TrackerResourceListItemProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const resource = useFragment(trackerResourceFragment, resourceKey);
-  const [isEditing, setIsEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { origin, title, description, path, date, actions } = trackerResourceListItem({
     excluded: resource.excluded,
@@ -148,7 +146,7 @@ export function TrackerResourceListItem({
       errorToast: t("trackerResourceRow.errors.move"),
     },
   );
-  const [updateResource, isUpdating] = useMutation<TrackerResourceListItemUpdateMutation>(
+  const [updateResource] = useMutation<TrackerResourceListItemUpdateMutation>(
     updateResourceMutation,
     {
       errorToast: t("trackerResourceRow.errors.update"),
@@ -180,37 +178,6 @@ export function TrackerResourceListItem({
         },
       },
     }).catch(() => undefined);
-  }
-
-  function handleSaveEdit(data: { displayName: string; description: string }) {
-    void updateResource({
-      variables: {
-        input: {
-          trackerResourceId: resource.id,
-          displayName: data.displayName,
-          description: data.description,
-        },
-      },
-    }, {
-      successMessage: t("trackerResourceRow.messages.updated"),
-    }).then(
-      () => {
-        setIsEditing(false);
-      },
-      () => undefined,
-    );
-  }
-
-  if (isEditing) {
-    return (
-      <TrackerResourceListItemEdit
-        displayName={resource.displayName}
-        description={resource.description}
-        isUpdating={isUpdating}
-        onSave={handleSaveEdit}
-        onCancel={() => setIsEditing(false)}
-      />
-    );
   }
 
   const typeBadge = typeBadges[resource.type];
@@ -270,15 +237,6 @@ export function TrackerResourceListItem({
         </TableCell>
         <TableCell interactive justify="end">
           <div className={actions()}>
-            <IconButton
-              variant="ghost"
-              color="neutral"
-              size={1}
-              aria-label={t("trackerResourceRow.actions.edit")}
-              onClick={() => setIsEditing(true)}
-            >
-              <PencilSimpleIcon />
-            </IconButton>
             <Dropdown>
               <DropdownTrigger
                 render={(

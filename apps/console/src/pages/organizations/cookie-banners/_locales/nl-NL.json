@@ -143,16 +143,12 @@
     "languages": { "english": "Engels", "french": "Frans", "german": "Duits", "spanish": "Spaans", "dutch": "Nederlands" },
     "actions": { "saving": "Bezig met opslaan...", "save": "Opslaan" }
   },
-  "trackerResourceRowEdit": {
-    "fields": { "displayNamePlaceholder": "Weergavenaam", "descriptionPlaceholder": "Beschrijving" },
-    "actions": { "save": "Opslaan", "cancel": "Annuleren" }
-  },
   "trackerResourceRow": {
-    "messages": { "successTitle": "Gelukt", "deleted": "Resource verwijderd", "moved": "Resource verplaatst", "updated": "Resource bijgewerkt" },
+    "messages": { "successTitle": "Gelukt", "deleted": "Resource verwijderd", "moved": "Resource verplaatst" },
     "errors": { "title": "Fout", "delete": "Resource verwijderen mislukt", "move": "Resource verplaatsen mislukt", "update": "Resource bijwerken mislukt" },
     "deleteConfirmation": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
     "dialogs": { "deleteTitle": "Resource verwijderen" },
-    "actions": { "edit": "Bewerken", "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "more": "Meer acties" },
+    "actions": { "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties" },
     "types": { "script": "Script", "iframe": "Iframe", "image": "Afbeelding", "stylesheet": "Stylesheet", "font": "Lettertype", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {

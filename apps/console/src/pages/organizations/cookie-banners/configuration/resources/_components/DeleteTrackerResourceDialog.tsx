@@ -104,7 +104,7 @@ export function DeleteTrackerResourceDialog({
           <DialogClose
             render={(
               <Button variant="soft" color="neutral">
-                {t("trackerResourceRowEdit.actions.cancel")}
+                {t("trackerResourceRow.actions.cancel")}
               </Button>
             )}
           />

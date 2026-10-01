@@ -91,8 +91,6 @@ export const trackerResourceListItem = tv({
     path: "min-w-0 truncate font-mono",
     date: "whitespace-nowrap",
     actions: "flex items-center gap-1",
-    edit: "flex items-end gap-2",
-    editField: "min-w-0 flex-1",
   },
   variants: {
     excluded: {
