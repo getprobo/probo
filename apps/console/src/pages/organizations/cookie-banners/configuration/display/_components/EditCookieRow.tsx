@@ -27,7 +27,7 @@ import { graphql } from "relay-runtime";
 
 import type { EditCookieRowFragment$key } from "#/__generated__/core/EditCookieRowFragment.graphql";
 
-import type { CookieEntry } from "./CategorySection";
+import type { CookieEntry } from "../_lib/cookieEntry";
 
 export const editCookieRowFragment = graphql`
   fragment EditCookieRowFragment on TrackerPattern {

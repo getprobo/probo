@@ -26,8 +26,8 @@ import { graphql } from "relay-runtime";
 
 import type { CookieBannerTranslationsPageQuery } from "#/__generated__/core/CookieBannerTranslationsPageQuery.graphql";
 
-import { SUPPORTED_LANGUAGES } from "./_components/translationDefaults";
 import { TranslationEditor } from "./_components/TranslationEditor";
+import { SUPPORTED_LANGUAGES } from "./_lib/translationDefaults";
 
 export const cookieBannerTranslationsPageQuery = graphql`
   query CookieBannerTranslationsPageQuery($cookieBannerId: ID!) {

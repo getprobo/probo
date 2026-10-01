@@ -30,7 +30,6 @@ import { useTranslation } from "react-i18next";
 import { trackerMaxAgeField } from "../../../variants";
 
 interface TrackerMaxAgeFieldProps {
-  id?: string;
   value: string;
   unit: string;
   disabled?: boolean;
@@ -40,7 +39,6 @@ interface TrackerMaxAgeFieldProps {
 }
 
 export function TrackerMaxAgeField({
-  id,
   value,
   unit,
   disabled,
@@ -54,7 +52,6 @@ export function TrackerMaxAgeField({
   return (
     <div className={root()} onBlur={onBlur}>
       <TextField
-        id={id}
         size={2}
         type="number"
         min={0}

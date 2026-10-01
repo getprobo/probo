@@ -41,44 +41,14 @@ import type {
 } from "#/__generated__/core/TrackerPatternDetectedTrackersSectionRefetchQuery.graphql";
 
 import { trackerPatternDetectedTrackersSection } from "../../../variants";
+import {
+  defaultDetectedTrackersOrder,
+  detectedTrackersHeaderSort,
+  nextDetectedTrackersOrder,
+} from "../_lib/detectedTrackersOrder";
+import { DETECTED_TRACKERS_PAGE_SIZE } from "../_lib/pageSize";
 
 import { DetectedTrackerListItem } from "./DetectedTrackerListItem";
-
-const DETECTED_TRACKERS_PAGE_SIZE = 50;
-
-const defaultDetectedTrackersOrder: DetectedTrackerOrder = {
-  field: "LAST_DETECTED_AT",
-  direction: "DESC",
-};
-
-const firstDetectedTrackersDirection: Record<DetectedTrackerOrderField, DetectedTrackerOrder["direction"]> = {
-  INITIATOR_URL: "ASC",
-  LAST_DETECTED_AT: "DESC",
-};
-
-function detectedTrackersHeaderSort(
-  field: DetectedTrackerOrderField,
-  order: DetectedTrackerOrder,
-): "ascending" | "descending" | "none" {
-  if (order.field !== field) {
-    return "none";
-  }
-  return order.direction === "ASC" ? "ascending" : "descending";
-}
-
-function nextDetectedTrackersOrder(
-  field: DetectedTrackerOrderField,
-  order: DetectedTrackerOrder,
-): DetectedTrackerOrder {
-  const firstDirection = firstDetectedTrackersDirection[field];
-  if (order.field !== field) {
-    return { field, direction: firstDirection };
-  }
-  if (order.direction === firstDirection) {
-    return { field, direction: firstDirection === "ASC" ? "DESC" : "ASC" };
-  }
-  return defaultDetectedTrackersOrder;
-}
 
 export const trackerPatternDetectedTrackersSectionFragment = graphql`
   fragment TrackerPatternDetectedTrackersSection_trackerPattern on TrackerPattern

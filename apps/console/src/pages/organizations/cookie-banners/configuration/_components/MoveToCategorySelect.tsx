@@ -28,7 +28,7 @@ import { graphql } from "relay-runtime";
 
 import type { MoveToCategorySelect_cookieBanner$key } from "#/__generated__/core/MoveToCategorySelect_cookieBanner.graphql";
 
-import { moveToCategorySelect } from "../../../variants";
+import { moveToCategorySelect } from "../../variants";
 
 const moveToCategorySelectFragment = graphql`
   fragment MoveToCategorySelect_cookieBanner on CookieBanner {

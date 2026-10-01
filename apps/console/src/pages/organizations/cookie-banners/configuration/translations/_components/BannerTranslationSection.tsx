@@ -22,8 +22,9 @@ import { Card, Field, Input, Textarea } from "@probo/ui";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
+import type { TranslationFormValues } from "../_lib/translationDefaults";
+
 import { BannerPreview } from "./BannerPreview";
-import type { TranslationFormValues } from "./TranslationEditor";
 
 interface BannerTranslationSectionProps {
   showBranding: boolean;

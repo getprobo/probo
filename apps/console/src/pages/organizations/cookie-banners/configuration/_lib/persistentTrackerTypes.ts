@@ -18,51 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function getActionLabel(
-  action: string,
-  t: (key: string) => string,
-): string {
-  switch (action) {
-    case "ACCEPT_ALL":
-      return t("consentRecordsPage.actions.acceptAll");
-    case "REJECT_ALL":
-      return t("consentRecordsPage.actions.rejectAll");
-    case "CUSTOMIZE":
-      return t("consentRecordsPage.actions.customize");
-    case "GPC":
-      return t("consentRecordsPage.actions.gpc");
-    case "ACKNOWLEDGE":
-      return t("consentRecordsPage.actions.acknowledge");
-    default:
-      return action;
-  }
-}
-
-export function getActionVariant(
-  action: string,
-): "success" | "danger" | "warning" | "neutral" {
-  switch (action) {
-    case "ACCEPT_ALL":
-      return "success";
-    case "REJECT_ALL":
-      return "danger";
-    case "CUSTOMIZE":
-      return "warning";
-    case "GPC":
-      return "neutral";
-    case "ACKNOWLEDGE":
-      return "neutral";
-    default:
-      return "neutral";
-  }
-}
-
-export function formatAnonymizedIp(ip: string): string {
-  if (ip.includes(".")) {
-    return ip.replace(/\.0$/, ".*");
-  }
-  if (ip.endsWith("::")) {
-    return ip + "*";
-  }
-  return ip;
-}
+export const persistentTrackerTypes = new Set([
+  "LOCAL_STORAGE",
+  "INDEXED_DB",
+  "CACHE_STORAGE",
+]);

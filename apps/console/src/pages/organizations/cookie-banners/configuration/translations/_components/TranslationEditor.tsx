@@ -28,10 +28,16 @@ import { graphql } from "relay-runtime";
 
 import type { TranslationEditorMutation } from "#/__generated__/core/TranslationEditorMutation.graphql";
 
+import {
+  ALL_KEYS,
+  type CategoryInfo,
+  type CategoryTranslations,
+  type TranslationFormValues,
+} from "../_lib/translationDefaults";
+
 import { BannerTranslationSection } from "./BannerTranslationSection";
 import { PanelTranslationSection } from "./PanelTranslationSection";
 import { PlaceholderTranslationSection } from "./PlaceholderTranslationSection";
-import { ALL_KEYS, type TranslationKey } from "./translationDefaults";
 
 const upsertTranslationMutation = graphql`
   mutation TranslationEditorMutation(
@@ -54,23 +60,6 @@ const upsertTranslationMutation = graphql`
     }
   }
 `;
-
-export type TranslationFormValues = Record<TranslationKey, string> & {
-  categories: CategoryTranslations;
-};
-
-export interface CategoryInfo {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  kind: string;
-}
-
-export type CategoryTranslations = Record<
-  string,
-  { name: string; description: string }
->;
 
 interface TranslationEditorProps {
   cookieBannerId: string;

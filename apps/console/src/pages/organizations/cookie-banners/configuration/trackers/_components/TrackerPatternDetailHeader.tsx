@@ -35,6 +35,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternDetailHeader } from "../../../variants";
+import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
 
 const trackerPatternDetailHeaderFragment = graphql`
   fragment TrackerPatternDetailHeader_trackerPattern on TrackerPattern {
@@ -46,21 +47,6 @@ const trackerPatternDetailHeaderFragment = graphql`
     canUpdate: permission(action: "core:tracker-pattern:update")
   }
 `;
-
-const typeBadges = {
-  COOKIE: { color: "amber" as const, labelKey: "cookie", variant: "soft" as const },
-  LOCAL_STORAGE: { color: "sky" as const, labelKey: "localStorage", variant: "soft" as const },
-  SESSION_STORAGE: { color: "indigo" as const, labelKey: "sessionStorage", variant: "soft" as const },
-  INDEXED_DB: { color: "green" as const, labelKey: "indexedDb", variant: "soft" as const },
-  CACHE_STORAGE: { color: "neutral" as const, labelKey: "cacheStorage", variant: "outline" as const },
-};
-
-const sourceBadges = {
-  SCRIPT: { color: "sky" as const, labelKey: "script", variant: "soft" as const },
-  PRE_EXISTING: { color: "neutral" as const, labelKey: "preExisting", variant: "outline" as const },
-  HTTP: { color: "neutral" as const, labelKey: "http", variant: "soft" as const },
-  EXTENSION: { color: "amber" as const, labelKey: "extension", variant: "soft" as const },
-};
 
 const updatePatternMutation = graphql`
   mutation TrackerPatternDetailHeaderUpdateMutation(
@@ -96,8 +82,8 @@ export function TrackerPatternDetailHeader({
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternDetailHeaderFragment, trackerPatternKey);
   const { root, back, bar, titleRow, title, badges, actions } = trackerPatternDetailHeader();
-  const typeBadge = typeBadges[pattern.trackerType];
-  const sourceBadge = pattern.source == null ? null : sourceBadges[pattern.source];
+  const typeBadge = trackerTypeBadges[pattern.trackerType];
+  const sourceBadge = pattern.source == null ? null : cookieSourceBadges[pattern.source];
   const [updatePattern, isUpdating] = useMutation<TrackerPatternDetailHeaderUpdateMutation>(
     updatePatternMutation,
     {
@@ -143,12 +129,12 @@ export function TrackerPatternDetailHeader({
           <div className={badges()}>
             {typeBadge != null && (
               <Badge variant={typeBadge.variant} color={typeBadge.color}>
-                {t(`trackerProperties.trackerTypes.${typeBadge.labelKey}`)}
+                {t(`trackerPatternRow.types.${typeBadge.labelKey}`)}
               </Badge>
             )}
             {sourceBadge != null && (
               <Badge variant={sourceBadge.variant} color={sourceBadge.color}>
-                {t(`trackerProperties.sources.${sourceBadge.labelKey}`)}
+                {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
               </Badge>
             )}
           </div>

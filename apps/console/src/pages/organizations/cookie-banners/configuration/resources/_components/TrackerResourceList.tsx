@@ -37,6 +37,7 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import { cookieBannerList } from "../../../variants";
+import { RESOURCES_PAGE_SIZE } from "../_lib/pageSize";
 import {
   resourcesListHeaderSort,
   useResourcesListFilters,
@@ -44,8 +45,6 @@ import {
 
 import { ResourcesListFilters } from "./ResourcesListFilters";
 import { TrackerResourceListItem } from "./TrackerResourceListItem";
-
-export const RESOURCES_PAGE_SIZE = 15;
 
 export const trackerResourceListFragment = graphql`
   fragment TrackerResourceList_cookieBanner on CookieBanner

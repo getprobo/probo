@@ -37,6 +37,7 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import { cookieBannerList } from "../../../variants";
+import { TRACKERS_PAGE_SIZE } from "../_lib/pageSize";
 import {
   trackersListHeaderSort,
   useTrackersListFilters,
@@ -44,8 +45,6 @@ import {
 
 import { TrackerPatternListItem } from "./TrackerPatternListItem";
 import { TrackersListFilters } from "./TrackersListFilters";
-
-export const TRACKERS_PAGE_SIZE = 15;
 
 export const trackerPatternListFragment = graphql`
   fragment TrackerPatternList_cookieBanner on CookieBanner

@@ -24,7 +24,7 @@ import { useParams } from "react-router";
 
 import type { CookieBannerTrackersPageQuery } from "#/__generated__/core/CookieBannerTrackersPageQuery.graphql";
 
-import { TRACKERS_PAGE_SIZE } from "./_components/TrackerPatternList";
+import { TRACKERS_PAGE_SIZE } from "./_lib/pageSize";
 import { useTrackersListFilters } from "./_lib/useTrackersListFilters";
 import { CookieBannerTrackersPage, cookieBannerTrackersPageQuery } from "./CookieBannerTrackersPage";
 import { CookieBannerTrackersPageSkeleton } from "./CookieBannerTrackersPageSkeleton";

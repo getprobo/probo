@@ -49,9 +49,11 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternListItem } from "../../../variants";
+import { MoveToCategorySelect } from "../../_components/MoveToCategorySelect";
+import { persistentTrackerTypes } from "../../_lib/persistentTrackerTypes";
+import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
 
 import { DeleteTrackerPatternDialog } from "./DeleteTrackerPatternDialog";
-import { MoveToCategorySelect } from "./MoveToCategorySelect";
 import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
 
 const trackerPatternFragment = graphql`
@@ -108,9 +110,6 @@ const updatePatternMutation = graphql`
     updateTrackerPattern(input: $input) {
       trackerPattern {
         id
-        displayName
-        maxAgeSeconds
-        description
         excluded
         updatedAt
       }
@@ -125,23 +124,6 @@ const updatePatternMutation = graphql`
     }
   }
 `;
-
-const typeBadges = {
-  COOKIE: { color: "amber" as const, labelKey: "cookie", variant: "soft" as const },
-  LOCAL_STORAGE: { color: "sky" as const, labelKey: "localStorage", variant: "soft" as const },
-  SESSION_STORAGE: { color: "indigo" as const, labelKey: "sessionStorage", variant: "soft" as const },
-  INDEXED_DB: { color: "green" as const, labelKey: "indexedDb", variant: "soft" as const },
-  CACHE_STORAGE: { color: "neutral" as const, labelKey: "cacheStorage", variant: "outline" as const },
-};
-
-const sourceBadges = {
-  SCRIPT: { color: "sky" as const, labelKey: "script", variant: "soft" as const },
-  PRE_EXISTING: { color: "neutral" as const, labelKey: "preExisting", variant: "outline" as const },
-  HTTP: { color: "neutral" as const, labelKey: "http", variant: "soft" as const },
-  EXTENSION: { color: "amber" as const, labelKey: "extension", variant: "soft" as const },
-};
-
-const persistentTrackerTypes = new Set(["LOCAL_STORAGE", "INDEXED_DB", "CACHE_STORAGE"]);
 
 interface TrackerPatternListItemProps {
   patternKey: TrackerPatternListItem_trackerPattern$key;
@@ -207,8 +189,8 @@ export function TrackerPatternListItem({
     }).catch(() => undefined);
   }
 
-  const typeBadge = typeBadges[pattern.trackerType];
-  const sourceBadge = pattern.source == null ? null : sourceBadges[pattern.source];
+  const typeBadge = trackerTypeBadges[pattern.trackerType];
+  const sourceBadge = pattern.source == null ? null : cookieSourceBadges[pattern.source];
   const detailPath = `${cookieBannerPath(organizationId, cookieBannerId)}/trackers/${pattern.id}`;
   const durationSeconds = pattern.maxAgeSeconds == null || pattern.maxAgeSeconds <= 0
     ? null

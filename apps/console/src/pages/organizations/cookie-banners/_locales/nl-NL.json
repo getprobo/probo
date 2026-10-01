@@ -61,8 +61,8 @@
     "undetermined": "Onbepaald"
   },
   "trackerPatternRow": {
-    "messages": { "successTitle": "Gelukt", "cookieDeleted": "Cookie verwijderd", "cookieMoved": "Cookie verplaatst", "cookieUpdated": "Cookie bijgewerkt" },
-    "errors": { "title": "Fout", "deleteCookie": "Cookie verwijderen mislukt", "moveCookie": "Cookie verplaatsen mislukt", "updateCookie": "Cookie bijwerken mislukt" },
+    "messages": { "cookieDeleted": "Cookie verwijderd", "cookieMoved": "Cookie verplaatst" },
+    "errors": { "deleteCookie": "Cookie verwijderen mislukt", "moveCookie": "Cookie verplaatsen mislukt", "updateCookie": "Cookie bijwerken mislukt" },
     "deleteConfirmation": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
     "dialogs": { "deleteTitle": "Tracker verwijderen" },
     "actions": { "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties", "description": "Beschrijving tonen" },
@@ -71,10 +71,10 @@
     "duration": { "session": "Sessie", "persistent": "Permanent" }
   },
   "trackerProperties": {
-    "sections": { "details": "Details", "identity": "Identiteit" },
-    "messages": { "successTitle": "Gelukt", "moved": "Cookie verplaatst", "updated": "Tracker bijgewerkt", "copiedTitle": "Gekopieerd", "idCopied": "ID van gemeenschappelijke tracker gekopieerd naar klembord" },
+    "sections": { "details": "Details" },
+    "messages": { "moved": "Cookie verplaatst", "updated": "Tracker bijgewerkt", "copiedTitle": "Gekopieerd", "idCopied": "ID van gemeenschappelijke tracker gekopieerd naar klembord" },
     "errors": { "title": "Fout", "move": "Cookie verplaatsen mislukt", "update": "Tracker bijwerken mislukt", "copy": "ID van gemeenschappelijke tracker kopiëren mislukt" },
-    "properties": { "pattern": "Patroon", "matchType": "Overeenkomsttype", "type": "Type", "source": "Bron", "category": "Categorie", "thirdParty": "Derde partij", "attribution": "Attributie", "sourceId": "Bron", "maxAge": "Maximale leeftijd", "maxAgeUnit": "Eenheid", "description": "Beschrijving", "descriptionPlaceholder": "Beschrijving", "descriptionSource": "Bron van beschrijving", "excluded": "Uitgesloten", "detectedCount": "Gedetecteerde unieke trackers", "lastMatched": "Laatst overeengekomen" },
+    "properties": { "attribution": "Attributie", "sourceId": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "maxAgeUnit": "Eenheid", "description": "Beschrijving", "descriptionPlaceholder": "Beschrijving" },
     "actions": { "back": "Trackers", "copyId": "ID van gemeenschappelijke tracker kopiëren" },
     "attribution": {
       "firstParty": "Dit is een first-party tracker.",
@@ -82,10 +82,7 @@
       "thirdParty": "Dit is een third-party tracker van {{name}}.",
       "thirdPartyUnnamed": "Dit is een third-party tracker."
     },
-    "matchTypes": { "exact": "Exact", "glob": "Glob" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
-    "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
-    "manual": "Handmatig", "boolean": { "yes": "Ja", "no": "Nee" }
+    "manual": "Handmatig"
   },
   "detectedTrackersSection": {
     "title": "Detecties",
@@ -99,9 +96,7 @@
     "summaryNever_other": "{{count}} detecties · Nog niet overeengekomen"
   },
   "moveToCategorySelect": { "empty": "Geen categorieën" },
-  "moveToCategoryDropdown": { "empty": "Geen categorieën" },
   "detectedTrackerRow": {
-    "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} seconden" }
   },
   "trackersPage": {
@@ -113,7 +108,7 @@
     "columns": { "name": "Naam", "thirdParty": "Derde partij", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "lastMatched": "Laatst overeengekomen" },
     "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron", "lastMatched": "Sorteren op laatst overeengekomen" },
     "actions": { "previous": "Vorige", "next": "Volgende" },
-    "empty": { "title": "Geen trackerpatronen", "description": "Er zijn nog geen cookiepatronen gedetecteerd. Patronen verschijnen hier zodra ze worden gedetecteerd." },
+    "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd." },
     "emptyFiltered": "Geen overeenkomende trackers"
   },
   "codeSnippets": {
@@ -144,8 +139,8 @@
     "actions": { "saving": "Bezig met opslaan...", "save": "Opslaan" }
   },
   "trackerResourceRow": {
-    "messages": { "successTitle": "Gelukt", "deleted": "Resource verwijderd", "moved": "Resource verplaatst" },
-    "errors": { "title": "Fout", "delete": "Resource verwijderen mislukt", "move": "Resource verplaatsen mislukt", "update": "Resource bijwerken mislukt" },
+    "messages": { "deleted": "Resource verwijderd", "moved": "Resource verplaatst" },
+    "errors": { "delete": "Resource verwijderen mislukt", "move": "Resource verplaatsen mislukt", "update": "Resource bijwerken mislukt" },
     "deleteConfirmation": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
     "dialogs": { "deleteTitle": "Resource verwijderen" },
     "actions": { "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties" },

@@ -35,7 +35,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: "zh", label: "中文" },
 ] as const;
 
-export const BANNER_KEYS = [
+const BANNER_KEYS = [
   "banner_title",
   "banner_description",
   "button_accept_all",
@@ -45,7 +45,7 @@ export const BANNER_KEYS = [
   "privacy_policy_link_text",
 ] as const;
 
-export const PANEL_KEYS = [
+const PANEL_KEYS = [
   "panel_title",
   "panel_description",
   "button_save",
@@ -55,7 +55,7 @@ export const PANEL_KEYS = [
   "aria_cookie_settings",
 ] as const;
 
-export const PLACEHOLDER_KEYS = [
+const PLACEHOLDER_KEYS = [
   "placeholder_text",
   "placeholder_button",
 ] as const;
@@ -71,21 +71,19 @@ export const ALL_KEYS: readonly TranslationKey[] = [
   ...PLACEHOLDER_KEYS,
 ];
 
-export const TRANSLATION_LABELS: Record<string, string> = {
-  banner_title: "Banner title",
-  banner_description: "Banner description",
-  button_accept_all: "Accept all button",
-  button_reject_all: "Reject all button",
-  button_customize: "Customize button",
-  cookie_policy_link_text: "Cookie policy link text",
-  privacy_policy_link_text: "Privacy policy link text",
-  panel_title: "Panel title",
-  panel_description: "Panel description",
-  button_save: "Save button",
-  aria_close: "Close (ARIA)",
-  aria_show_details: "Show details (ARIA)",
-  aria_hide_details: "Hide details (ARIA)",
-  aria_cookie_settings: "Cookie settings (ARIA)",
-  placeholder_text: "Placeholder text",
-  placeholder_button: "Placeholder button",
+export type TranslationFormValues = Record<TranslationKey, string> & {
+  categories: CategoryTranslations;
 };
+
+export interface CategoryInfo {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  kind: string;
+}
+
+export type CategoryTranslations = Record<
+  string,
+  { name: string; description: string }
+>;

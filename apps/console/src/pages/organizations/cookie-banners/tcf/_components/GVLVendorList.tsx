@@ -34,13 +34,12 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { TCF_VENDORS_PAGE_SIZE } from "../_lib/pageSize";
 import { gvlVendorGraphqlFilter, useGVLVendorFilters } from "../_lib/useGVLVendorFilters";
 import { tcfSection } from "../variants";
 
 import { GVLVendorListEmpty } from "./GVLVendorListEmpty";
 import { GVLVendorListItem } from "./GVLVendorListItem";
-
-const PAGE_SIZE = 15;
 
 const cookieBannerFragment = graphql`
   fragment GVLVendorList_cookieBanner on CookieBanner {
@@ -141,7 +140,7 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
     startSearchTransition(() => {
       refetch(
         {
-          first: PAGE_SIZE,
+          first: TCF_VENDORS_PAGE_SIZE,
           after: null,
           last: null,
           before: null,
@@ -155,7 +154,7 @@ export function GVLVendorList({ queryKey, cookieBannerKey }: GVLVendorListProps)
   const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
     refetchCatalog,
     catalog.commonGVLVendors.pageInfo,
-    PAGE_SIZE,
+    TCF_VENDORS_PAGE_SIZE,
   );
 
   useEffect(() => {

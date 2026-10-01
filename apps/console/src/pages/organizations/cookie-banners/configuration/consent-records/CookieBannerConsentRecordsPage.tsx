@@ -51,6 +51,7 @@ import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader
 import { cookieBannerPage } from "../../variants";
 
 import { ConsentRecordRow } from "./_components/ConsentRecordRow";
+import { CONSENT_RECORDS_PAGE_SIZE } from "./_lib/pageSize";
 
 export const cookieBannerConsentRecordsPageQuery = graphql`
   query CookieBannerConsentRecordsPageQuery($cookieBannerId: ID!) {
@@ -225,7 +226,7 @@ export function CookieBannerConsentRecordsPage({
                 <SortableTable
                   {...pagination}
                   refetch={refetchWithFilters}
-                  pageSize={50}
+                  pageSize={CONSENT_RECORDS_PAGE_SIZE}
                 >
                   <Thead>
                     <Tr>

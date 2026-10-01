@@ -117,7 +117,7 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
               {(value: string | null) => (
                 value != null
                   ? cookieBanner.linkedThirdParties.find(item => item.id === value)?.name
-                    ?? allThirdPartiesLabel
+                  ?? allThirdPartiesLabel
                   : allThirdPartiesLabel
               )}
             </SelectTrigger>

@@ -22,8 +22,9 @@ import { Card, Field, Input } from "@probo/ui";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
+import type { TranslationFormValues } from "../_lib/translationDefaults";
+
 import { PlaceholderPreview } from "./PlaceholderPreview";
-import type { TranslationFormValues } from "./TranslationEditor";
 
 interface PlaceholderTranslationSectionProps {
   exampleCategoryName: string;

@@ -40,8 +40,10 @@ import type { TrackerPatternPropertiesSectionUpdateMutation } from "#/__generate
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { trackerPatternPropertiesSection } from "../../../variants";
+import { MoveToCategorySelect } from "../../_components/MoveToCategorySelect";
+import { persistentTrackerTypes } from "../../_lib/persistentTrackerTypes";
+import { attributionCopy } from "../_lib/attributionCopy";
 
-import { MoveToCategorySelect } from "./MoveToCategorySelect";
 import { TrackerMaxAgeField } from "./TrackerMaxAgeField";
 
 const cookieBannerFragment = graphql`
@@ -117,28 +119,6 @@ const updatePatternMutation = graphql`
     }
   }
 `;
-
-const persistentTrackerTypes = new Set(["LOCAL_STORAGE", "INDEXED_DB", "CACHE_STORAGE"]);
-
-function attributionCopy(
-  translate: (key: string, options?: { name?: string }) => string,
-  attribution: string | null | undefined,
-  thirdPartyName: string | null,
-): string | null {
-  if (thirdPartyName != null) {
-    return translate("trackerProperties.attribution.thirdParty", { name: thirdPartyName });
-  }
-  switch (attribution) {
-    case "FIRST_PARTY":
-      return translate("trackerProperties.attribution.firstParty");
-    case "NOT_ATTRIBUTABLE":
-      return translate("trackerProperties.attribution.visitorSoftware");
-    case "THIRD_PARTY":
-      return translate("trackerProperties.attribution.thirdPartyUnnamed");
-    default:
-      return null;
-  }
-}
 
 function maxAgeLabel(
   trackerType: string,

@@ -23,7 +23,7 @@ import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-import type { CookieEntry } from "./CategorySection";
+import type { CookieEntry } from "../_lib/cookieEntry";
 
 interface CookieFormValues {
   name: string;

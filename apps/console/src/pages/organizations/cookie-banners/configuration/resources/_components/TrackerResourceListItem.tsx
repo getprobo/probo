@@ -41,7 +41,8 @@ import type { TrackerResourceListItemUpdateMutation } from "#/__generated__/core
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { trackerResourceListItem } from "../../../variants";
-import { MoveToCategorySelect } from "../../trackers/_components/MoveToCategorySelect";
+import { MoveToCategorySelect } from "../../_components/MoveToCategorySelect";
+import { resourceTypeBadges } from "../_lib/resourceBadges";
 
 import { DeleteTrackerResourceDialog } from "./DeleteTrackerResourceDialog";
 
@@ -92,8 +93,6 @@ const updateResourceMutation = graphql`
     updateTrackerResource(input: $input) {
       trackerResource {
         id
-        displayName
-        description
         excluded
         updatedAt
       }
@@ -108,18 +107,6 @@ const updateResourceMutation = graphql`
     }
   }
 `;
-
-const typeBadges = {
-  SCRIPT: { color: "sky" as const, labelKey: "script", variant: "soft" as const },
-  IFRAME: { color: "amber" as const, labelKey: "iframe", variant: "soft" as const },
-  IMAGE: { color: "neutral" as const, labelKey: "image", variant: "soft" as const },
-  STYLESHEET: { color: "indigo" as const, labelKey: "stylesheet", variant: "soft" as const },
-  FONT: { color: "neutral" as const, labelKey: "font", variant: "outline" as const },
-  BEACON: { color: "red" as const, labelKey: "beacon", variant: "soft" as const },
-  FETCH: { color: "green" as const, labelKey: "fetch", variant: "soft" as const },
-  MEDIA: { color: "neutral" as const, labelKey: "media", variant: "soft" as const },
-  SERVICE_WORKER: { color: "amber" as const, labelKey: "serviceWorker", variant: "soft" as const },
-};
 
 interface TrackerResourceListItemProps {
   resourceKey: TrackerResourceListItem_trackerResource$key;
@@ -180,7 +167,7 @@ export function TrackerResourceListItem({
     }).catch(() => undefined);
   }
 
-  const typeBadge = typeBadges[resource.type];
+  const typeBadge = resourceTypeBadges[resource.type];
 
   return (
     <>

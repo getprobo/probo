@@ -22,11 +22,12 @@ import { Card, Field, Input, Textarea } from "@probo/ui";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-import { PanelPreview } from "./PanelPreview";
 import type {
   CategoryInfo,
   TranslationFormValues,
-} from "./TranslationEditor";
+} from "../_lib/translationDefaults";
+
+import { PanelPreview } from "./PanelPreview";
 
 interface PanelTranslationSectionProps {
   categories: CategoryInfo[];

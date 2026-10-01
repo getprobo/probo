@@ -30,6 +30,7 @@ import { graphql, useFragment } from "react-relay";
 import type { DetectedTrackerListItem_detectedTracker$key } from "#/__generated__/core/DetectedTrackerListItem_detectedTracker.graphql";
 
 import { detectedTrackerListItem } from "../../../variants";
+import { cookieSourceBadges } from "../_lib/trackerBadges";
 
 const detectedTrackerFragment = graphql`
   fragment DetectedTrackerListItem_detectedTracker on DetectedTracker {
@@ -41,13 +42,6 @@ const detectedTrackerFragment = graphql`
   }
 `;
 
-const sourceBadges = {
-  SCRIPT: { color: "sky" as const, labelKey: "script", variant: "soft" as const },
-  PRE_EXISTING: { color: "neutral" as const, labelKey: "preExisting", variant: "outline" as const },
-  HTTP: { color: "neutral" as const, labelKey: "http", variant: "soft" as const },
-  EXTENSION: { color: "amber" as const, labelKey: "extension", variant: "soft" as const },
-};
-
 interface DetectedTrackerListItemProps {
   detectedTrackerKey: DetectedTrackerListItem_detectedTracker$key;
 }
@@ -56,7 +50,7 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const tracker = useFragment(detectedTrackerFragment, detectedTrackerKey);
   const { identifier, url, date } = detectedTrackerListItem();
-  const sourceBadge = tracker.source == null ? null : sourceBadges[tracker.source];
+  const sourceBadge = tracker.source == null ? null : cookieSourceBadges[tracker.source];
 
   return (
     <TableRow align="center">
@@ -88,7 +82,7 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
           ? <Text size={2} color="faint">-</Text>
           : (
               <Badge variant={sourceBadge.variant} color={sourceBadge.color}>
-                {t(`detectedTrackerRow.sources.${sourceBadge.labelKey}`)}
+                {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
               </Badge>
             )}
       </TableCell>

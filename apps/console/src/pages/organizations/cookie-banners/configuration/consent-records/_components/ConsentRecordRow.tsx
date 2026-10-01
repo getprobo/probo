@@ -30,7 +30,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   formatAnonymizedIp,
   getActionVariant,
-} from "./consentRecordHelpers";
+} from "../_lib/consentRecordHelpers";
 
 const consentRecordFragment = graphql`
   fragment ConsentRecordRowFragment on CookieConsentRecord {

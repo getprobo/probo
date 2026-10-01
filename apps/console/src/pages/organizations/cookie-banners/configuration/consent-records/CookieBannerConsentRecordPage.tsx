@@ -27,21 +27,21 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CookieBannerConsentRecordPageQuery } from "#/__generated__/core/CookieBannerConsentRecordPageQuery.graphql";
 
+import { persistentTrackerTypes } from "../_lib/persistentTrackerTypes";
+
 import {
   formatAnonymizedIp,
   getActionVariant,
-} from "./_components/consentRecordHelpers";
+} from "./_lib/consentRecordHelpers";
 
 export const cookieBannerConsentRecordPageQuery = graphql`
   query CookieBannerConsentRecordPageQuery($consentRecordId: ID!) {
     node(id: $consentRecordId) @required(action: THROW) {
       __typename
       ... on CookieConsentRecord {
-        id
         visitorId
         action
         cookieBannerVersion @required(action: THROW) {
-          id
           version
           categories {
             name
@@ -75,12 +75,6 @@ interface CookieBannerConsentRecordPageProps {
   queryRef: PreloadedQuery<CookieBannerConsentRecordPageQuery>;
 }
 
-const PERSISTENT_TRACKER_TYPES = new Set([
-  "LOCAL_STORAGE",
-  "INDEXED_DB",
-  "CACHE_STORAGE",
-]);
-
 export default function CookieBannerConsentRecordPage({
   queryRef,
 }: CookieBannerConsentRecordPageProps) {
@@ -105,9 +99,9 @@ export default function CookieBannerConsentRecordPage({
   const categories = record.cookieBannerVersion.categories;
   const formatDuration = (seconds: number | null, trackerType?: string | null) => {
     if (seconds === null || seconds <= 0) {
-      return trackerType && PERSISTENT_TRACKER_TYPES.has(trackerType)
-        ? t("duration.persistent")
-        : t("duration.session");
+      return trackerType && persistentTrackerTypes.has(trackerType)
+        ? t("trackerPatternRow.duration.persistent")
+        : t("trackerPatternRow.duration.session");
     }
     return humanizeSeconds(seconds, t);
   };

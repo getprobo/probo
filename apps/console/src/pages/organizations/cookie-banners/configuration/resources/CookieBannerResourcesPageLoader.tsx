@@ -24,7 +24,7 @@ import { useParams } from "react-router";
 
 import type { CookieBannerResourcesPageQuery } from "#/__generated__/core/CookieBannerResourcesPageQuery.graphql";
 
-import { RESOURCES_PAGE_SIZE } from "./_components/TrackerResourceList";
+import { RESOURCES_PAGE_SIZE } from "./_lib/pageSize";
 import { useResourcesListFilters } from "./_lib/useResourcesListFilters";
 import { CookieBannerResourcesPage, cookieBannerResourcesPageQuery } from "./CookieBannerResourcesPage";
 import { CookieBannerResourcesPageSkeleton } from "./CookieBannerResourcesPageSkeleton";

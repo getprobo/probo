@@ -54,16 +54,12 @@ import type { CategorySectionReorderMutation } from "#/__generated__/core/Catego
 import type { CategorySectionUpdateMutation } from "#/__generated__/core/CategorySectionUpdateMutation.graphql";
 import type { CategorySectionUpdatePatternMutation } from "#/__generated__/core/CategorySectionUpdatePatternMutation.graphql";
 
+import { persistentTrackerTypes } from "../../_lib/persistentTrackerTypes";
+import type { CookieEntry } from "../_lib/cookieEntry";
+
 import { AddCookieRow } from "./AddCookieRow";
 import { EditCategoryForm } from "./EditCategoryForm";
 import { EditCookieRow } from "./EditCookieRow";
-
-export interface CookieEntry {
-  name: string;
-  maxAgeSeconds: number | null;
-  description: string;
-  excluded: boolean;
-}
 
 export const categorySectionFragment = graphql`
   fragment CategorySectionFragment on CookieCategory {
@@ -313,7 +309,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
   const isMutating = isUpdating || isCreating || isUpdatingPattern;
   const formatDuration = (seconds: number | null, trackerType: string) => {
     if (seconds === null || seconds <= 0) {
-      return ["LOCAL_STORAGE", "INDEXED_DB", "CACHE_STORAGE"].includes(trackerType)
+      return persistentTrackerTypes.has(trackerType)
         ? t("categorySection.duration.persistent")
         : t("categorySection.duration.session");
     }
