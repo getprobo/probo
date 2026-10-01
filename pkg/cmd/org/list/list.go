@@ -41,6 +41,7 @@ query($first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFi
           organization {
             id
             name
+            legalName
           }
           membership {
             role
@@ -58,8 +59,9 @@ query($first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFi
 
 type (
 	organization struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
+		ID        string  `json:"id"`
+		Name      string  `json:"name"`
+		LegalName *string `json:"legalName"`
 	}
 
 	membership struct {
@@ -154,10 +156,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			for _, p := range profiles {
 				orgID := ""
 				orgName := ""
+				legalName := ""
 
 				if p.Organization != nil {
 					orgID = p.Organization.ID
 					orgName = p.Organization.Name
+					if p.Organization.LegalName != nil {
+						legalName = *p.Organization.LegalName
+					}
 				}
 
 				role := ""
@@ -168,11 +174,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				rows = append(rows, []string{
 					orgID,
 					orgName,
+					legalName,
 					role,
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "ROLE").Rows(rows...)
+			t := cmdutil.NewTable("ID", "NAME", "LEGAL NAME", "ROLE").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

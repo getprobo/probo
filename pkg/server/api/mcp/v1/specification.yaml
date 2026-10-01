@@ -699,7 +699,12 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Organization name
+          description: Operating name
+        legal_name:
+          type:
+            - string
+            - "null"
+          description: Registered legal name. Use this in legal documents when it is set; name is the operating name.
         created_at:
           type: string
           format: date-time
