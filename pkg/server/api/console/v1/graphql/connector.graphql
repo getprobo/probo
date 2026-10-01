@@ -352,6 +352,12 @@ enum ConnectorConnectionStatus {
 
 type Connector implements Node {
     id: ID!
+    """
+    name keeps track of this connector and the credential attached to it, so
+    several connections to the same provider stay distinct. displayName stays
+    the provider name.
+    """
+    name: String!
     provider: ConnectorProvider!
     protocol: ConnectorProtocol!
     canReconnect: Boolean! @goField(forceResolver: true)
@@ -502,6 +508,7 @@ extend type Mutation {
         input: DisableConnectorAccountInput!
     ): DisableConnectorAccountPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
+    updateConnector(input: UpdateConnectorInput!): UpdateConnectorPayload!
     configureConnectorOrganization(
         input: ConfigureConnectorOrganizationInput!
     ): ConfigureConnectorOrganizationPayload!
@@ -512,6 +519,12 @@ extend type Mutation {
 
 input CreateAPIKeyConnectorInput {
     organizationId: ID!
+    """
+    name keeps track of this connector and the credential attached to it, so
+    several connections to the same provider stay distinct. displayName stays
+    the provider name.
+    """
+    name: String!
     provider: ConnectorProvider!
     """
     apiKey is the customer-supplied credential. It is null for
@@ -549,6 +562,12 @@ type CreateAPIKeyConnectorPayload {
 
 input CreateClientCredentialsConnectorInput {
     organizationId: ID!
+    """
+    name keeps track of this connector and the credential attached to it, so
+    several connections to the same provider stay distinct. displayName stays
+    the provider name.
+    """
+    name: String!
     provider: ConnectorProvider!
     clientId: String!
     clientSecret: String!
@@ -570,6 +589,12 @@ type CreateClientCredentialsConnectorPayload {
 
 input CreateWorkloadIdentityConnectorInput {
     organizationId: ID!
+    """
+    name keeps track of this connector and the credential attached to it, so
+    several connections to the same provider stay distinct. displayName stays
+    the provider name.
+    """
+    name: String!
     provider: ConnectorProvider!
     awsRoleArn: String
     gcpWorkloadIdentityProvider: String
@@ -586,6 +611,12 @@ type CreateWorkloadIdentityConnectorPayload {
 
 input CreateOrganizationConnectorInput {
     organizationId: ID!
+    """
+    name keeps track of this connector and the credential attached to it, so
+    several connections to the same provider stay distinct. displayName stays
+    the provider name.
+    """
+    name: String!
     provider: ConnectorProvider!
     awsRoleArn: String
     awsMemberRoleName: String
@@ -635,6 +666,20 @@ type ConfigureConnectorOrganizationPayload {
 
 input DeleteConnectorInput {
     connectorId: ID!
+}
+
+input UpdateConnectorInput {
+    connectorId: ID!
+    """
+    name keeps track of this connector and the credential attached to it, so
+    several connections to the same provider stay distinct. displayName stays
+    the provider name.
+    """
+    name: String!
+}
+
+type UpdateConnectorPayload {
+    connector: Connector!
 }
 
 type DeleteConnectorPayload {

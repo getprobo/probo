@@ -37,6 +37,7 @@ query($id: ID!, $first: Int, $after: CursorKey) {
     __typename
     ... on Connector {
       id
+      name
       provider
       protocol
       createdAt
@@ -73,6 +74,7 @@ type (
 	connectorView struct {
 		Typename  string `json:"__typename"`
 		ID        string `json:"id"`
+		Name      string `json:"name"`
 		Provider  string `json:"provider"`
 		Protocol  string `json:"protocol"`
 		CreatedAt string `json:"createdAt"`
@@ -126,6 +128,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 						Node *struct {
 							Typename  string                  `json:"__typename"`
 							ID        string                  `json:"id"`
+							Name      string                  `json:"name"`
 							Provider  string                  `json:"provider"`
 							Protocol  string                  `json:"protocol"`
 							CreatedAt string                  `json:"createdAt"`
@@ -148,6 +151,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 						viewed = &connectorView{
 							Typename:  resp.Node.Typename,
 							ID:        resp.Node.ID,
+							Name:      resp.Node.Name,
 							Provider:  resp.Node.Provider,
 							Protocol:  resp.Node.Protocol,
 							CreatedAt: resp.Node.CreatedAt,
@@ -180,6 +184,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render("Connector"))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), viewed.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Name:"), viewed.Name)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Provider:"), viewed.Provider)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Protocol:"), viewed.Protocol)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(viewed.CreatedAt))

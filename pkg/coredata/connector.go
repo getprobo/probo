@@ -70,6 +70,7 @@ type (
 		OrganizationID      gid.GID              `db:"organization_id"`
 		Provider            ConnectorProvider    `db:"provider"`
 		Protocol            ConnectorProtocol    `db:"protocol"`
+		Name                string               `db:"name"`
 		RawSettings         jsonRawMessageOrNull `db:"settings"`
 		Connection          connector.Connection `db:"-"`
 		EncryptedConnection []byte               `db:"encrypted_connection"`
@@ -151,6 +152,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
     created_at,
@@ -253,6 +255,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
     created_at,
@@ -330,6 +333,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
     created_at,
@@ -499,6 +503,7 @@ INSERT INTO connectors (
 	organization_id,
 	provider,
 	protocol,
+	name,
 	settings,
 	encrypted_connection,
 	created_at,
@@ -509,6 +514,7 @@ INSERT INTO connectors (
 	@organization_id,
 	@provider,
 	@protocol,
+	@name,
 	@settings,
 	@encrypted_connection,
 	@created_at,
@@ -552,6 +558,7 @@ INSERT INTO connectors (
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
+		"name":                 c.Name,
 		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"created_at":           c.CreatedAt,
@@ -582,6 +589,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
 	created_at,
@@ -634,6 +642,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
 	created_at,
@@ -678,6 +687,7 @@ func (c *Connector) Update(
 	q := `
 UPDATE connectors
 SET
+    name = @name,
     settings = @settings,
     encrypted_connection = @encrypted_connection,
     updated_at = @updated_at
@@ -720,6 +730,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
+		"name":                 c.Name,
 		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
@@ -736,6 +747,44 @@ WHERE
 	}
 
 	c.EncryptedConnection = encryptedConnection
+
+	return nil
+}
+
+// UpdateName writes only the user-facing name. Reconnect uses Update, which
+// writes the name already loaded on the row, so a token refresh cannot clear it.
+func (c *Connector) UpdateName(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE connectors
+SET
+    name = @name,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         c.ID,
+		"name":       c.Name,
+		"updated_at": c.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update connector name: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

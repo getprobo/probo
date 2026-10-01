@@ -24,6 +24,7 @@ import {
 } from "../_lib/connectorSettings";
 
 import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
+import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
 
 export function StartConnectForm({
   organizationId,
@@ -34,18 +35,31 @@ export function StartConnectForm({
   driver: ConnectVendorDriver;
   method: "GITHUB_APP" | "INSTALL";
 }) {
+  const connectorName = useConnectorName();
+
   return (
     <form
       className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, driver.provider);
+        if (connectorName.rejectIfEmpty()) {
           return;
         }
-        connectProviderProtocol(organizationId, driver.provider, method);
+        if (method === "INSTALL") {
+          connectProviderInstall(organizationId, driver.provider, connectorName.trimmed);
+          return;
+        }
+        connectProviderProtocol(organizationId, driver.provider, method, {
+          name: connectorName.trimmed,
+        });
       }}
     >
+      <ConnectorNameField
+        name={connectorName.name}
+        error={connectorName.error}
+        onChange={connectorName.onChange}
+        onEmpty={connectorName.rejectIfEmpty}
+      />
       <ConnectFormFooter documentationUrl={driver.documentationUrl} />
     </form>
   );

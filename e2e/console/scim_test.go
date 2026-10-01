@@ -417,6 +417,7 @@ func TestSCIMConfiguration_RefusesUnsupportedProvider(t *testing.T) {
 	`, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "BREX",
 			"apiKey":         "bxt_test-key-brex-scim-refusal",
 		},

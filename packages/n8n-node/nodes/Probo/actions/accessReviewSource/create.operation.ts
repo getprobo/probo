@@ -227,6 +227,7 @@ export async function execute(
 
 	const connectorInput: Record<string, string> = {
 		organizationId,
+		name,
 		provider,
 	};
 

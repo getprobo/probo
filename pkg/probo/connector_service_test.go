@@ -163,6 +163,7 @@ func newConnectorForDelete(
 
 	cnnctr, err := service.Create(t.Context(), scope, CreateConnectorRequest{
 		OrganizationID: organizationID,
+		Name:           "Test",
 		Provider:       coredata.ConnectorProviderBrex,
 		Protocol:       coredata.ConnectorProtocolOAuth2,
 		Connection: &connector.OAuth2Connection{
@@ -331,4 +332,67 @@ func TestConnectorService_Delete(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, loadConnectorAccountsForDelete(t, client, scope, cnnctr.ID), 1)
 	})
+}
+
+func TestConnectorName_RejectsEmptyAndUnsafeValues(t *testing.T) {
+	t.Parallel()
+
+	longName := strings.Repeat("a", NameMaxLength+1)
+
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{name: "empty", value: ""},
+		{name: "blank", value: "   "},
+		{name: "too long", value: longName},
+		{name: "html", value: "<b>Production</b>"},
+		{name: "newline", value: "Production\norg"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := NormalizeConnectorName(tt.value)
+			require.Error(t, err)
+
+			validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+			require.True(t, ok)
+			assert.Contains(t, validationErrors.Fields(), "name")
+		})
+	}
+}
+
+func TestCreateAndUpdate_StoreTrimmedConnectorName(t *testing.T) {
+	t.Parallel()
+
+	svc, scope, organizationID := newConnectorCreateEnv(t)
+
+	created, err := svc.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           "  Production  ",
+		Provider:       coredata.ConnectorProviderBrex,
+		Protocol:       coredata.ConnectorProtocolAPIKey,
+		Connection:     &connector.APIKeyConnection{APIKey: "bxt_test-key"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Production", created.Name)
+
+	updated, err := svc.Update(t.Context(), scope, UpdateConnectorRequest{
+		ConnectorID: created.ID,
+		Name:        "  QA  ",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "QA", updated.Name)
+
+	_, err = svc.Update(t.Context(), scope, UpdateConnectorRequest{
+		ConnectorID: created.ID,
+		Name:        "   ",
+	})
+	require.Error(t, err)
+
+	validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+	require.True(t, ok)
+	assert.Contains(t, validationErrors.Fields(), "name")
 }

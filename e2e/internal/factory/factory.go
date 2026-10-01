@@ -2245,6 +2245,7 @@ func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
 
 	input := map[string]any{
 		"organizationId": a.getString("organizationId", c.GetOrganizationID().String()),
+		"name":           "Test",
 		"provider":       a.getString("provider", "AWS"),
 		"awsRoleArn":     a.getString("awsRoleArn", "arn:aws:iam::123456789012:role/ProboAudit"),
 	}
@@ -2252,6 +2253,7 @@ func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
 	if provider := a.getString("provider", "AWS"); provider == "GCP" {
 		input = map[string]any{
 			"organizationId":              a.getString("organizationId", c.GetOrganizationID().String()),
+			"name":                        "Test",
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": a.getString("gcpWorkloadIdentityProvider", "projects/123456789012/locations/global/workloadIdentityPools/probo-pool/providers/probo"),
 			"gcpServiceAccountEmail":      a.getString("gcpServiceAccountEmail", "probo-audit@example-project.iam.gserviceaccount.com"),
@@ -2261,6 +2263,7 @@ func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
 	if provider := a.getString("provider", "AWS"); provider == "AZURE" {
 		input = map[string]any{
 			"organizationId":      a.getString("organizationId", c.GetOrganizationID().String()),
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       a.getString("azureTenantId", "a1111111-1111-4111-8111-111111111111"),
 			"azureClientId":       a.getString("azureClientId", "b2222222-2222-4222-8222-222222222222"),

@@ -24,6 +24,7 @@ import * as discoverOp from './discover.operation';
 import * as enableOp from './enable.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as updateOp from './update.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -67,6 +68,12 @@ export const description: INodeProperties[] = [
 				description: 'Get many connectors',
 				action: 'Get many connectors',
 			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Rename a connector',
+				action: 'Rename a connector',
+			},
 		],
 		default: 'getAll',
 	},
@@ -75,6 +82,7 @@ export const description: INodeProperties[] = [
 	...enableOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...updateOp.description,
 ];
 
 export {
@@ -83,4 +91,5 @@ export {
 	enableOp as enable,
 	getOp as get,
 	getAllOp as getAll,
+	updateOp as update,
 };

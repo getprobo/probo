@@ -9599,15 +9599,14 @@ func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req 
 
 	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 		Connection:     &connector.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create workload identity connector", log.Error(err))
-
-		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("internal server error")
+		return nil, types.CreateWorkloadIdentityConnectorOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot create workload identity connector", err)
 	}
 
 	return nil, types.CreateWorkloadIdentityConnectorOutput{
@@ -10375,15 +10374,14 @@ func (r *Resolver) CreateOrganizationConnectorTool(ctx context.Context, req *mcp
 
 	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 		Connection:     &connector.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create organization connector", log.Error(err))
-
-		return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("internal server error")
+		return nil, types.CreateOrganizationConnectorOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot create organization connector", err)
 	}
 
 	discovered := []*types.DiscoveredConnectorAccount{}
@@ -10627,7 +10625,6 @@ func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
 
 	return node, nil
 }
-
 func (r *Resolver) ListEmployeePortalsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListEmployeePortalsInput) (*mcp.CallToolResult, types.ListEmployeePortalsOutput, error) {
 	scope, err := r.Authorize(ctx, input.OrganizationID, employeeportalmgmt.ActionEmployeePortalList)
 	if err != nil {
@@ -10708,4 +10705,40 @@ func (r *Resolver) UpdateEmployeePortalTool(ctx context.Context, req *mcp.CallTo
 	return nil, types.UpdateEmployeePortalOutput{
 		EmployeePortal: types.NewEmployeePortal(portal),
 	}, nil
+}
+
+func (r *Resolver) UpdateConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateConnectorInput) (*mcp.CallToolResult, types.UpdateConnectorOutput, error) {
+	scope, err := r.Authorize(ctx, input.ConnectorID, probo.ActionConnectorUpdate)
+	if err != nil {
+		return nil, types.UpdateConnectorOutput{}, err
+	}
+
+	cnnctr, err := r.proboSvc.Connectors.Update(ctx, scope, probo.UpdateConnectorRequest{
+		ConnectorID: input.ConnectorID,
+		Name:        input.Name,
+	})
+	if err != nil {
+		return nil, types.UpdateConnectorOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot update connector", err)
+	}
+
+	return nil, types.UpdateConnectorOutput{
+		Connector: types.NewConnector(
+			cnnctr,
+			r.connectorConnectionStatus(ctx, scope, cnnctr.ID),
+		),
+	}, nil
+}
+
+func connectorMCPWriteError(ctx context.Context, logger *log.Logger, message string, err error) error {
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("connector not found")
+	}
+
+	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+		return validationErrors
+	}
+
+	logger.ErrorCtx(ctx, message, log.Error(err))
+
+	return fmt.Errorf("internal server error")
 }

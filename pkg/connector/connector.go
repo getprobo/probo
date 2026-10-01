@@ -52,6 +52,9 @@ type (
 		// existing connector: the callback updates the row in place
 		// instead of creating a new one.
 		ConnectorID string
+		// Name is the label stored on a newly created connector. A
+		// reconnect leaves it empty and keeps the name already on the row.
+		Name string
 		// Site selects a per-customer region/site for multi-site
 		// providers (e.g. Datadog). Consumed by the connector's
 		// Registration.BuildAuthURLForSite. Empty for single-site

@@ -179,6 +179,7 @@ func seedConnector(
 			OrganizationID: organizationID,
 			Provider:       provider,
 			Protocol:       coredata.ConnectorProtocolOAuth2,
+			Name:           "Test connector",
 			Connection: &connector.OAuth2Connection{
 				AccessToken: "test-token",
 				TokenType:   "Bearer",
