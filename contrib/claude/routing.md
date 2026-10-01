@@ -10,6 +10,7 @@ Probo frontends route with [React Router](https://reactrouter.com/) (`react-rout
 | Loaders, `queryRef`, preloading | [`contrib/claude/relay.md`](relay.md) |
 | Route error boundaries | [`contrib/claude/error-handling.md`](error-handling.md) |
 | Permission-gated UI within a route | [`contrib/claude/permissions.md`](permissions.md) |
+| `Link` vs `ButtonLink` | [`contrib/claude/ui.md`](ui.md#no-structure-changing-variants) |
 
 ## `AppRoute` and the route tree
 
@@ -72,6 +73,38 @@ navigate(`measures/${newId}`);
 ```
 
 Build paths from segments; never hand-concatenate query strings (see [`ts-style.md`](ts-style.md) — use `URL` / `URLSearchParams`).
+
+### Back to the list
+
+A detail page’s “back to the list” control is a **text `Link`**, not a `Button` or `ButtonLink`. `ButtonLink` is for button-looking navigation (Create, New, primary CTAs). See [`ui.md`](ui.md#no-structure-changing-variants).
+
+```tsx
+import { CaretLeftIcon } from "@phosphor-icons/react";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+
+<Link
+  to=".."
+  size={2}
+  color="neutral"
+  underline={false}
+  iconStart={<CaretLeftIcon />}
+  className={back()}
+>
+  {t("visitorPage.back")}
+</Link>
+```
+
+`to=".."` is correct only when the detail route is a **child** of the list route. When the detail is a **sibling** of the list (for example `trackers` and `trackers/:id` under the same parent), `..` climbs to that parent — not the list. Point `to` at the list path explicitly.
+
+```tsx
+// BAD — sibling detail; ".." leaves the feature
+<Link to=".." …>{t("trackerProperties.actions.back")}</Link>
+
+// GOOD — explicit list path
+<Link to={`${cookieBannerPath(organizationId, cookieBannerId)}/trackers`} …>
+  {t("trackerProperties.actions.back")}
+</Link>
+```
 
 ## Register every new console page in the nav
 

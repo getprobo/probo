@@ -71,7 +71,6 @@
     "duration": { "session": "Session", "persistent": "Persistant" }
   },
   "trackerProperties": {
-    "sections": { "details": "Détails" },
     "messages": { "moved": "Cookie déplacé", "updated": "Traceur mis à jour", "copiedTitle": "Copié", "idCopied": "ID du traceur commun copié dans le presse-papiers" },
     "errors": { "title": "Erreur", "move": "Échec du déplacement du cookie", "update": "Échec de la mise à jour du traceur", "copy": "Échec de la copie de l’ID du traceur commun" },
     "properties": { "attribution": "Attribution", "sourceId": "Source", "category": "Catégorie", "maxAge": "Âge maximal", "maxAgeUnit": "Unité", "description": "Description", "descriptionPlaceholder": "Description" },
@@ -105,7 +104,7 @@
     "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories", "source": "Source", "type": "Type", "category": "Catégorie", "thirdParty": "Tiers" },
     "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
-    "columns": { "name": "Nom", "thirdParty": "Tiers", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal", "lastMatched": "Dernière correspondance" },
+    "columns": { "name": "Nom", "attribution": "Attribution", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal", "lastMatched": "Dernière correspondance" },
     "sort": { "name": "Trier par nom", "source": "Trier par source", "lastMatched": "Trier par dernière correspondance" },
     "actions": { "previous": "Précédent", "next": "Suivant" },
     "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés." },

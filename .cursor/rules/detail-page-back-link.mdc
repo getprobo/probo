@@ -1,0 +1,37 @@
+---
+description: Detail pages go back to the list with a v2 Link, not a button
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# Detail page back link
+
+A detail page’s “back to the list” control is a **text `Link`**, not a
+`Button` or `ButtonLink`. `ButtonLink` is for button-looking navigation
+(Create, New, primary CTAs).
+
+```tsx
+// BAD — back control styled as a button
+<ButtonLink to=".." variant="ghost" color="neutral" iconStart={<CaretLeftIcon />}>
+  {t("trackerProperties.actions.back")}
+</ButtonLink>
+
+// GOOD — same control as CompliancePortalVisitorPage / UserPage
+<Link
+  to=".."
+  size={2}
+  color="neutral"
+  underline={false}
+  iconStart={<CaretLeftIcon />}
+  className={back()}
+>
+  {t("visitorPage.back")}
+</Link>
+```
+
+`to=".."` is correct only when the detail route is a **child** of the list
+route. When the detail is a **sibling** of the list (e.g. `trackers` and
+`trackers/:id`), `..` climbs to the parent — not the list. Point `to` at
+the list path explicitly.
+
+See [`contrib/claude/routing.md`](../../contrib/claude/routing.md#back-to-the-list).

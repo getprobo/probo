@@ -198,7 +198,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                         {t("trackersPage.columns.name")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell>
-                        {t("trackersPage.columns.thirdParty")}
+                        {t("trackersPage.columns.attribution")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
                         sort={trackersListHeaderSort("SOURCE", graphqlOrder)}

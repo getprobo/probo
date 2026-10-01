@@ -135,8 +135,6 @@ export const trackerMaxAgeField = tv({
 export const trackerPatternPropertiesSection = tv({
   slots: {
     root: "flex flex-col gap-6",
-    block: "flex flex-col gap-4",
-    intro: "flex flex-col gap-1",
     fields: "flex flex-col gap-4",
     pair: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 *:min-w-0",
     sourceId: "flex min-w-0 items-center gap-2",

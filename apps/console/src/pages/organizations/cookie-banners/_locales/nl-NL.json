@@ -71,7 +71,6 @@
     "duration": { "session": "Sessie", "persistent": "Permanent" }
   },
   "trackerProperties": {
-    "sections": { "details": "Details" },
     "messages": { "moved": "Cookie verplaatst", "updated": "Tracker bijgewerkt", "copiedTitle": "Gekopieerd", "idCopied": "ID van gemeenschappelijke tracker gekopieerd naar klembord" },
     "errors": { "title": "Fout", "move": "Cookie verplaatsen mislukt", "update": "Tracker bijwerken mislukt", "copy": "ID van gemeenschappelijke tracker kopiëren mislukt" },
     "properties": { "attribution": "Attributie", "sourceId": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "maxAgeUnit": "Eenheid", "description": "Beschrijving", "descriptionPlaceholder": "Beschrijving" },
@@ -105,7 +104,7 @@
     "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
-    "columns": { "name": "Naam", "thirdParty": "Derde partij", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "lastMatched": "Laatst overeengekomen" },
+    "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "lastMatched": "Laatst overeengekomen" },
     "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron", "lastMatched": "Sorteren op laatst overeengekomen" },
     "actions": { "previous": "Vorige", "next": "Volgende" },
     "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd." },

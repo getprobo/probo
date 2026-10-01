@@ -26,7 +26,6 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { Textarea } from "@probo/ui/src/v2/form/Textarea";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type FocusEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -150,7 +149,7 @@ export function TrackerPatternPropertiesSection({
     trackerPatternPropertiesSectionFragment,
     trackerPatternKey,
   );
-  const { root, block, intro, fields, pair, sourceId, sourceIdText } = trackerPatternPropertiesSection();
+  const { root, fields, pair, sourceId, sourceIdText } = trackerPatternPropertiesSection();
   const [description, setDescription] = useState(pattern.description);
   const [duration, setDuration] = useState(() => fromMaxAgeSeconds(pattern.maxAgeSeconds ?? null));
 
@@ -255,105 +254,98 @@ export function TrackerPatternPropertiesSection({
 
   return (
     <div className={root()}>
-      <section className={block()}>
-        <div className={intro()}>
-          <Heading level={2} size={4} weight="medium" highContrast>
-            {t("trackerProperties.sections.details")}
-          </Heading>
-        </div>
-        <Card variant="soft" size={2}>
-          <div className={fields()}>
-            <div className={pair()}>
-              <Field label={t("trackerProperties.properties.attribution")}>
-                <Text size={2} color={attribution == null ? "faint" : undefined}>
-                  {attribution ?? "-"}
-                </Text>
-              </Field>
-              <Field label={t("trackerProperties.properties.sourceId")}>
-                {pattern.commonTrackerPatternId == null
-                  ? (
-                      <Text size={2} color="faint">
-                        {t("trackerProperties.manual")}
+      <Card variant="soft" size={2}>
+        <div className={fields()}>
+          <div className={pair()}>
+            <Field label={t("trackerProperties.properties.attribution")}>
+              <Text size={2} color={attribution == null ? "faint" : undefined}>
+                {attribution ?? "-"}
+              </Text>
+            </Field>
+            <Field label={t("trackerProperties.properties.sourceId")}>
+              {pattern.commonTrackerPatternId == null
+                ? (
+                    <Text size={2} color="faint">
+                      {t("trackerProperties.manual")}
+                    </Text>
+                  )
+                : (
+                    <div className={sourceId()}>
+                      <Text size={2} className={sourceIdText()}>
+                        {pattern.commonTrackerPatternId}
                       </Text>
-                    )
-                  : (
-                      <div className={sourceId()}>
-                        <Text size={2} className={sourceIdText()}>
-                          {pattern.commonTrackerPatternId}
-                        </Text>
-                        <IconButton
-                          size={1}
-                          variant="soft"
-                          color="neutral"
-                          aria-label={t("trackerProperties.actions.copyId")}
-                          onClick={copySourceId}
-                        >
-                          <CopyIcon />
-                        </IconButton>
-                      </div>
-                    )}
-              </Field>
-            </div>
-            <Field label={t("trackerProperties.properties.description")}>
+                      <IconButton
+                        size={1}
+                        variant="soft"
+                        color="neutral"
+                        aria-label={t("trackerProperties.actions.copyId")}
+                        onClick={copySourceId}
+                      >
+                        <CopyIcon />
+                      </IconButton>
+                    </div>
+                  )}
+            </Field>
+          </div>
+          <Field label={t("trackerProperties.properties.description")}>
+            {canUpdate
+              ? (
+                  <Textarea
+                    rows={3}
+                    value={description}
+                    disabled={isUpdating}
+                    placeholder={t("trackerProperties.properties.descriptionPlaceholder")}
+                    onChange={event => setDescription(event.target.value)}
+                    onBlur={saveDescription}
+                  />
+                )
+              : (
+                  <Text size={2} color={pattern.description === "" ? "faint" : undefined}>
+                    {pattern.description === "" ? "-" : pattern.description}
+                  </Text>
+                )}
+          </Field>
+          <div className={pair()}>
+            <Field label={t("trackerProperties.properties.category")}>
               {canUpdate
                 ? (
-                    <Textarea
-                      rows={3}
-                      value={description}
-                      disabled={isUpdating}
-                      placeholder={t("trackerProperties.properties.descriptionPlaceholder")}
-                      onChange={event => setDescription(event.target.value)}
-                      onBlur={saveDescription}
+                    <MoveToCategorySelect
+                      cookieBannerKey={cookieBanner}
+                      currentCategoryId={pattern.cookieCategory?.id}
+                      currentCategoryName={pattern.cookieCategory?.name}
+                      size={2}
+                      onSelect={handleMove}
                     />
                   )
                 : (
-                    <Text size={2} color={pattern.description === "" ? "faint" : undefined}>
-                      {pattern.description === "" ? "-" : pattern.description}
+                    <Text size={2} color={pattern.cookieCategory == null ? "faint" : undefined}>
+                      {pattern.cookieCategory?.name ?? "-"}
                     </Text>
                   )}
             </Field>
-            <div className={pair()}>
-              <Field label={t("trackerProperties.properties.category")}>
-                {canUpdate
-                  ? (
-                      <MoveToCategorySelect
-                        cookieBannerKey={cookieBanner}
-                        currentCategoryId={pattern.cookieCategory?.id}
-                        currentCategoryName={pattern.cookieCategory?.name}
-                        size={2}
-                        onSelect={handleMove}
-                      />
-                    )
-                  : (
-                      <Text size={2} color={pattern.cookieCategory == null ? "faint" : undefined}>
-                        {pattern.cookieCategory?.name ?? "-"}
-                      </Text>
-                    )}
-              </Field>
-              <Field label={t("trackerProperties.properties.maxAge")}>
-                {canUpdate
-                  ? (
-                      <TrackerMaxAgeField
-                        value={duration.value}
-                        unit={duration.unit}
-                        disabled={isUpdating}
-                        onValueChange={(value) => {
-                          setDuration(current => ({ ...current, value }));
-                        }}
-                        onUnitChange={(unit) => {
-                          const next = { ...duration, unit };
-                          setDuration(next);
-                          saveMaxAge(next);
-                        }}
-                        onBlur={handleDurationBlur}
-                      />
-                    )
-                  : <Text size={2}>{readOnlyDuration}</Text>}
-              </Field>
-            </div>
+            <Field label={t("trackerProperties.properties.maxAge")}>
+              {canUpdate
+                ? (
+                    <TrackerMaxAgeField
+                      value={duration.value}
+                      unit={duration.unit}
+                      disabled={isUpdating}
+                      onValueChange={(value) => {
+                        setDuration(current => ({ ...current, value }));
+                      }}
+                      onUnitChange={(unit) => {
+                        const next = { ...duration, unit };
+                        setDuration(next);
+                        saveMaxAge(next);
+                      }}
+                      onBlur={handleDurationBlur}
+                    />
+                  )
+                : <Text size={2}>{readOnlyDuration}</Text>}
+            </Field>
           </div>
-        </Card>
-      </section>
+        </div>
+      </Card>
     </div>
   );
 }

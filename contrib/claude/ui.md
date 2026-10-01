@@ -162,6 +162,8 @@ The clearest case is navigation vs action: a clickable action, button-looking na
 | `Anchor` | `<a>` | underlined text |
 | `TableLink` | react-router | unstyled; `::after` stretches across an interactive `TableRow` |
 
+A detail page’s “back to the list” control uses `Link` (`size={2}`, `color="neutral"`, `underline={false}`, `CaretLeftIcon`) — never `Button` or `ButtonLink`. See [`routing.md`](routing.md#back-to-the-list).
+
 ### Do / don't: separate components over polymorphic props
 
 ```tsx

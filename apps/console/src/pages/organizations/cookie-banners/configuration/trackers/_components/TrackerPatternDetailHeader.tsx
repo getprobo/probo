@@ -21,7 +21,7 @@
 import { CaretLeftIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -111,16 +111,16 @@ export function TrackerPatternDetailHeader({
 
   return (
     <div className={root()}>
-      <ButtonLink
+      <Link
         to={trackersPath}
         size={2}
-        variant="ghost"
         color="neutral"
+        underline={false}
         iconStart={<CaretLeftIcon />}
         className={back()}
       >
         {t("trackerProperties.actions.back")}
-      </ButtonLink>
+      </Link>
       <div className={bar()}>
         <div className={titleRow()}>
           <Heading level={1} size={6} weight="medium" highContrast className={title()}>
