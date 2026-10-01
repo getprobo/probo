@@ -68,7 +68,8 @@
     "messages": { "successTitle": "Succès", "cookieDeleted": "Cookie supprimé", "cookieMoved": "Cookie déplacé", "cookieUpdated": "Cookie mis à jour" },
     "errors": { "title": "Erreur", "deleteCookie": "Échec de la suppression du cookie", "moveCookie": "Échec du déplacement du cookie", "updateCookie": "Échec de la mise à jour du cookie" },
     "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
-    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
+    "dialogs": { "deleteTitle": "Supprimer le traceur" },
+    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "more": "Plus d’actions" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistant" }
@@ -96,11 +97,13 @@
   "trackersPage": {
     "title": "Traceurs",
     "description": "Modèles détectés sur ce site et la catégorie à laquelle chacun appartient.",
-    "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories" },
+    "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories", "source": "Source", "type": "Type", "category": "Catégorie", "thirdParty": "Tiers" },
     "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "columns": { "name": "Nom", "thirdParty": "Tiers", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal", "lastMatched": "Dernière correspondance" },
-    "empty": { "title": "Aucun modèle de traceur", "description": "Aucun modèle de cookie n’a encore été détecté. Les modèles apparaîtront ici lorsqu’ils seront détectés." }
+    "actions": { "previous": "Précédent", "next": "Suivant" },
+    "empty": { "title": "Aucun modèle de traceur", "description": "Aucun modèle de cookie n’a encore été détecté. Les modèles apparaîtront ici lorsqu’ils seront détectés." },
+    "emptyFiltered": "Aucun traceur correspondant"
   },
   "codeSnippets": {
     "title": "Extrait JavaScript",
@@ -137,16 +140,19 @@
     "messages": { "successTitle": "Succès", "deleted": "Ressource supprimée", "moved": "Ressource déplacée", "updated": "Ressource mise à jour" },
     "errors": { "title": "Erreur", "delete": "Échec de la suppression de la ressource", "move": "Échec du déplacement de la ressource", "update": "Échec de la mise à jour de la ressource" },
     "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
-    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
+    "dialogs": { "deleteTitle": "Supprimer la ressource" },
+    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "more": "Plus d’actions" },
     "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {
     "title": "Ressources",
     "description": "Scripts, iframes et autres ressources pas encore classées dans une catégorie.",
-    "filters": { "search": "Rechercher par origine ou chemin..." },
+    "filters": { "search": "Rechercher par origine ou chemin...", "type": "Type" },
     "types": { "all": "Tous les types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origine", "path": "Chemin", "category": "Catégorie", "lastDetected": "Dernière détection" },
-    "empty": { "title": "Aucune ressource non catégorisée", "description": "Toutes les ressources détectées ont été catégorisées. Les nouvelles ressources apparaîtront ici lorsqu’elles seront détectées." }
+    "actions": { "previous": "Précédent", "next": "Suivant" },
+    "empty": { "title": "Aucune ressource non catégorisée", "description": "Toutes les ressources détectées ont été catégorisées. Les nouvelles ressources apparaîtront ici lorsqu’elles seront détectées." },
+    "emptyFiltered": "Aucune ressource correspondante"
   },
   "themePreview": {
     "title": "Thème", "defaultSnippet": "/* Thème par défaut utilisé — aucune surcharge nécessaire */",

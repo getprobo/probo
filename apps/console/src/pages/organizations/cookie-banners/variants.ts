@@ -29,3 +29,89 @@ export const cookieBannerPageHeader = tv({
     root: "flex flex-col gap-2",
   },
 });
+
+export const cookieBannerList = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    tools: "flex flex-wrap items-center justify-between gap-2",
+    search: "w-80 max-sm:min-w-0 max-sm:w-full",
+    filters: "flex flex-wrap items-center justify-end gap-2",
+    filter: "w-40 shrink-0",
+    results: "transition-opacity",
+    pager: "flex justify-center",
+    empty: "flex flex-col items-center gap-1 py-8 text-center",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
+  },
+});
+
+export const cookieBannerListSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    tools: "flex flex-wrap items-center justify-between gap-2",
+    search: "w-80 max-sm:min-w-0 max-sm:w-full",
+    filters: "flex flex-wrap items-center justify-end gap-2",
+    filter: "w-40 shrink-0",
+  },
+});
+
+export const trackerPatternListItem = tv({
+  slots: {
+    name: "flex min-w-0 flex-col gap-0.5",
+    heading: "flex min-w-0 items-center gap-2",
+    title: "min-w-0 truncate",
+    description: "min-w-0 line-clamp-1",
+    date: "whitespace-nowrap",
+    actions: "flex items-center gap-1",
+    edit: "flex flex-col gap-3",
+    editFields: "flex items-end gap-2",
+    editField: "flex min-w-0 flex-1 flex-col gap-1",
+  },
+  variants: {
+    excluded: {
+      true: {
+        name: "opacity-50",
+        title: "line-through",
+      },
+    },
+  },
+  defaultVariants: {
+    excluded: false,
+  },
+});
+
+export const trackerResourceListItem = tv({
+  slots: {
+    origin: "flex min-w-0 flex-col gap-0.5",
+    title: "min-w-0 truncate",
+    description: "min-w-0 line-clamp-1",
+    path: "min-w-0 truncate font-mono",
+    date: "whitespace-nowrap",
+    actions: "flex items-center gap-1",
+    edit: "flex items-end gap-2",
+    editField: "min-w-0 flex-1",
+  },
+  variants: {
+    excluded: {
+      true: {
+        origin: "opacity-50",
+        title: "line-through",
+        path: "opacity-50",
+      },
+    },
+  },
+  defaultVariants: {
+    excluded: false,
+  },
+});
+
+export const moveToCategorySelect = tv({
+  slots: {
+    root: "min-w-36",
+  },
+});

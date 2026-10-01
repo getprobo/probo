@@ -24,6 +24,7 @@ import { Badge, Card, IconSquareBehindSquare2, PropertyRow, useToast } from "@pr
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
+import type { MoveToCategorySelect_cookieBanner$key } from "#/__generated__/core/MoveToCategorySelect_cookieBanner.graphql";
 import type { TrackerPatternPropertiesSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternPropertiesSection_trackerPattern.graphql";
 import type { TrackerPatternPropertiesSectionMoveMutation } from "#/__generated__/core/TrackerPatternPropertiesSectionMoveMutation.graphql";
 
@@ -82,10 +83,12 @@ const movePatternMutation = graphql`
 
 interface TrackerPatternPropertiesSectionProps {
   trackerPatternKey: TrackerPatternPropertiesSection_trackerPattern$key;
+  cookieBannerKey: MoveToCategorySelect_cookieBanner$key;
 }
 
 export function TrackerPatternPropertiesSection({
   trackerPatternKey,
+  cookieBannerKey,
 }: TrackerPatternPropertiesSectionProps) {
   const { toast } = useToast();
   const { t, i18n } = useTranslation("organizations/cookie-banners");
@@ -161,6 +164,7 @@ export function TrackerPatternPropertiesSection({
       )}
       <PropertyRow label={t("trackerProperties.properties.category")}>
         <MoveToCategorySelect
+          cookieBannerKey={cookieBannerKey}
           currentCategoryId={pattern.cookieCategory?.id}
           currentCategoryName={pattern.cookieCategory?.name}
           highlight={!!pattern.cookieCategory && pattern.cookieCategory.kind !== "UNCATEGORISED"}

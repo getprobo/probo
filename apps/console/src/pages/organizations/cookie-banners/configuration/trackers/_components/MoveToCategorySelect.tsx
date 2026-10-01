@@ -18,17 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Option, Select } from "@probo/ui";
-import { Suspense, useCallback } from "react";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
+import type { MoveToCategorySelect_cookieBanner$key } from "#/__generated__/core/MoveToCategorySelect_cookieBanner.graphql";
 
-import { moveToCategoryDropdownQuery } from "./MoveToCategoryDropdown";
+import { moveToCategorySelect } from "../../../variants";
+
+const moveToCategorySelectFragment = graphql`
+  fragment MoveToCategorySelect_cookieBanner on CookieBanner {
+    categories(first: 50, orderBy: { field: RANK, direction: ASC })
+      @required(action: THROW) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
 
 interface MoveToCategorySelectProps {
+  cookieBannerKey: MoveToCategorySelect_cookieBanner$key;
   currentCategoryId?: string;
   currentCategoryName?: string;
   highlight?: boolean;
@@ -36,79 +53,54 @@ interface MoveToCategorySelectProps {
 }
 
 export function MoveToCategorySelect({
+  cookieBannerKey,
   currentCategoryId,
   currentCategoryName,
   highlight = false,
   onSelect,
 }: MoveToCategorySelectProps) {
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const [categoryQueryRef, loadCategoryQuery]
-    = useQueryLoader<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery);
-
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (open && cookieBannerId) {
-        loadCategoryQuery({ cookieBannerId });
-      }
-    },
-    [loadCategoryQuery, cookieBannerId],
-  );
-
-  const handleValueChange = useCallback(
-    (categoryId: string) => {
-      if (categoryId !== currentCategoryId) {
-        onSelect(categoryId);
-      }
-    },
-    [currentCategoryId, onSelect],
-  );
-
-  return (
-    <Select
-      variant={highlight ? "editor" : "ghost"}
-      className={highlight ? undefined : "px-0"}
-      placeholder={currentCategoryName ?? <span className="text-txt-tertiary">-</span>}
-      onValueChange={handleValueChange}
-      onOpenChange={handleOpenChange}
-    >
-      {categoryQueryRef && (
-        <Suspense>
-          <MoveToCategoryOptions queryRef={categoryQueryRef} />
-        </Suspense>
-      )}
-    </Select>
-  );
-}
-
-interface MoveToCategoryOptionsProps {
-  queryRef: PreloadedQuery<MoveToCategoryDropdownQuery>;
-}
-
-function MoveToCategoryOptions({ queryRef }: MoveToCategoryOptionsProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const data = usePreloadedQuery<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery, queryRef);
-
-  if (data.node.__typename !== "CookieBanner") {
-    return null;
-  }
-
-  const categories = data.node.categories.edges.map(e => e.node);
-
-  if (categories.length === 0) {
-    return (
-      <Option value="" disabled className="text-txt-tertiary">
-        {t("moveToCategorySelect.empty")}
-      </Option>
-    );
-  }
+  const cookieBanner = useFragment(moveToCategorySelectFragment, cookieBannerKey);
+  const categories = cookieBanner.categories.edges.map(edge => edge.node);
+  const { root } = moveToCategorySelect();
+  const placeholder = currentCategoryName ?? "-";
 
   return (
-    <>
-      {categories.map(cat => (
-        <Option key={cat.id} value={cat.id}>
-          {cat.name}
-        </Option>
-      ))}
-    </>
+    <div className={root()}>
+      <Select
+        value={currentCategoryId ?? null}
+        onValueChange={(value: string | null) => {
+          if (value != null && value !== currentCategoryId) {
+            onSelect(value);
+          }
+        }}
+      >
+        <SelectTrigger
+          size={1}
+          variant={highlight ? "surface" : "ghost"}
+          placeholder={placeholder}
+          aria-label={t("trackersPage.columns.category")}
+        >
+          {(value: string | null) => (
+            value != null
+              ? categories.find(category => category.id === value)?.name ?? placeholder
+              : placeholder
+          )}
+        </SelectTrigger>
+        <SelectPopup align="start">
+          {categories.length === 0
+            ? (
+                <SelectItem value={null} disabled>
+                  {t("moveToCategorySelect.empty")}
+                </SelectItem>
+              )
+            : categories.map(category => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+        </SelectPopup>
+      </Select>
+    </div>
   );
 }

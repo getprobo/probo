@@ -18,32 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
-import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
+import { useEffect, useRef, useState } from "react";
 
-import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
-import { cookieBannerListSkeleton, cookieBannerPage } from "../../variants";
+import { useTrackersListFilters } from "./useTrackersListFilters";
 
-export function CookieBannerResourcesPageSkeleton() {
-  const { root, tools, search, filters, filter } = cookieBannerListSkeleton();
+const SEARCH_DEBOUNCE_MS = 300;
 
-  return (
-    <div className={cookieBannerPage()}>
-      <CookieBannerPageHeaderSkeleton titleClassName="w-28" />
-      <div className={root()}>
-        <div className={tools()}>
-          <div className={search()}>
-            <TextFieldSkeleton />
-          </div>
-          <div className={filters()}>
-            <div className={filter()}>
-              <SelectSkeleton />
-            </div>
-          </div>
-        </div>
-        <TableSkeleton variant="surface" columns={6} count={8} />
-      </div>
-    </div>
-  );
+// Owns the debounced search input. Mount this in exactly one component (the
+// search field) — it is the single writer of the `q` URL param.
+export function useTrackersListSearch(): [string, (value: string) => void] {
+  const { query, setQuery } = useTrackersListFilters();
+  const [input, setInput] = useState(query);
+  const lastCommittedRef = useRef(query);
+
+  useEffect(() => {
+    if (input === query) {
+      return;
+    }
+
+    const handle = setTimeout(() => {
+      lastCommittedRef.current = input;
+      setQuery(input);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(handle);
+  }, [input, query, setQuery]);
+
+  useEffect(() => {
+    if (query !== lastCommittedRef.current) {
+      lastCommittedRef.current = query;
+      setInput(query);
+    }
+  }, [query]);
+
+  return [input, setInput];
 }

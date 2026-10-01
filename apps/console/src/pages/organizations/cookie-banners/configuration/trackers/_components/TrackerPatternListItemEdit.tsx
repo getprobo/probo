@@ -19,16 +19,18 @@
 // SOFTWARE.
 
 import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
-import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
-import { Controller, useForm } from "react-hook-form";
+import { DurationInput } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-interface FormValues {
-  duration: { value: string; unit: string };
-  description: string;
-}
+import { trackerPatternListItem } from "../../../variants";
 
-interface TrackerPatternRowEditProps {
+interface TrackerPatternListItemEditProps {
   pattern: string;
   description: string;
   maxAgeSeconds: number | null;
@@ -37,74 +39,74 @@ interface TrackerPatternRowEditProps {
   onCancel: () => void;
 }
 
-export function TrackerPatternRowEdit({
+export function TrackerPatternListItemEdit({
   pattern,
   description,
   maxAgeSeconds,
   isUpdating,
   onSave,
   onCancel,
-}: TrackerPatternRowEditProps) {
+}: TrackerPatternListItemEditProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const initial = fromMaxAgeSeconds(maxAgeSeconds);
+  const [descriptionValue, setDescriptionValue] = useState(description);
+  const [duration, setDuration] = useState(initial);
+  const { edit, editFields, editField } = trackerPatternListItem();
 
-  const { register, handleSubmit, control } = useForm<FormValues>({
-    defaultValues: {
-      duration: initial,
-      description,
-    },
-  });
-
-  const onSubmit = (data: FormValues) => {
+  function handleSave() {
     onSave({
-      description: data.description,
-      maxAgeSeconds: toMaxAgeSeconds(data.duration.value, data.duration.unit),
+      description: descriptionValue,
+      maxAgeSeconds: toMaxAgeSeconds(duration.value, duration.unit),
     });
-  };
+  }
 
   return (
-    <Tr>
-      <Td colSpan={7}>
-        <div className="flex flex-col gap-3">
-          <span className="font-medium wrap-break-word">{pattern}</span>
-          <div className="flex items-end gap-2">
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs text-txt-tertiary">{t("trackerPatternRowEdit.fields.description")}</label>
-              <Input
-                {...register("description")}
+    <TableRow>
+      <TableCell colSpan={7}>
+        <div className={edit()}>
+          <Text size={2} weight="medium" highContrast>
+            {pattern}
+          </Text>
+          <div className={editFields()}>
+            <div className={editField()}>
+              <Text size={1} color="faint">
+                {t("trackerPatternRowEdit.fields.description")}
+              </Text>
+              <TextField
+                value={descriptionValue}
+                onValueChange={setDescriptionValue}
                 placeholder={t("trackerPatternRowEdit.fields.descriptionPlaceholder")}
+                aria-label={t("trackerPatternRowEdit.fields.description")}
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-txt-tertiary">{t("trackerPatternRowEdit.fields.maxAge")}</label>
-              <Controller
-                name="duration"
-                control={control}
-                render={({ field }) => (
-                  <DurationInput
-                    value={field.value.value}
-                    unit={field.value.unit}
-                    onValueChange={v => field.onChange({ ...field.value, value: v })}
-                    onUnitChange={u => field.onChange({ ...field.value, unit: u })}
-                  />
-                )}
+            <div className={editField()}>
+              <Text size={1} color="faint">
+                {t("trackerPatternRowEdit.fields.maxAge")}
+              </Text>
+              <DurationInput
+                value={duration.value}
+                unit={duration.unit}
+                onValueChange={value => setDuration(current => ({ ...current, value }))}
+                onUnitChange={unit => setDuration(current => ({ ...current, unit }))}
               />
             </div>
             <Button
-              onClick={() => void handleSubmit(onSubmit)()}
-              disabled={isUpdating}
+              variant="solid"
+              loading={isUpdating}
+              onClick={handleSave}
             >
               {t("trackerPatternRowEdit.actions.save")}
             </Button>
             <Button
-              variant="secondary"
+              variant="soft"
+              color="neutral"
               onClick={onCancel}
             >
               {t("trackerPatternRowEdit.actions.cancel")}
             </Button>
           </div>
         </div>
-      </Td>
-    </Tr>
+      </TableCell>
+    </TableRow>
   );
 }

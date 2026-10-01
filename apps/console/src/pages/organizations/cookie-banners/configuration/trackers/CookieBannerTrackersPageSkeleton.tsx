@@ -18,24 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
+import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
+
 import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
-import { cookieBannerPage } from "../../variants";
+import { cookieBannerListSkeleton, cookieBannerPage } from "../../variants";
 
 export function CookieBannerTrackersPageSkeleton() {
+  const { root, tools, search, filters, filter } = cookieBannerListSkeleton();
+
   return (
     <div className={cookieBannerPage()}>
       <CookieBannerPageHeaderSkeleton titleClassName="w-24" />
-      <div className="space-y-4 animate-pulse">
-        <div className="flex items-center gap-4">
-          <div className="h-9 w-64 rounded bg-bg-subtle" />
-          <div className="h-9 w-36 rounded bg-bg-subtle" />
+      <div className={root()}>
+        <div className={tools()}>
+          <div className={search()}>
+            <TextFieldSkeleton />
+          </div>
+          <div className={filters()}>
+            <div className={filter()}>
+              <SelectSkeleton />
+            </div>
+            <div className={filter()}>
+              <SelectSkeleton />
+            </div>
+            <div className={filter()}>
+              <SelectSkeleton />
+            </div>
+            <div className={filter()}>
+              <SelectSkeleton />
+            </div>
+          </div>
         </div>
-        <div className="rounded-lg border border-border-low">
-          <div className="h-10 border-b border-border-low bg-bg-subtle" />
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-12 border-b border-border-low last:border-b-0" />
-          ))}
-        </div>
+        <TableSkeleton variant="surface" columns={7} count={8} />
       </div>
     </div>
   );

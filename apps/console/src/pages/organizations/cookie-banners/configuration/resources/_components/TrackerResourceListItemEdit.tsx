@@ -18,16 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Input, Td, Tr } from "@probo/ui";
-import { useForm } from "react-hook-form";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-interface FormValues {
-  displayName: string;
-  description: string;
-}
+import { trackerResourceListItem } from "../../../variants";
 
-interface TrackerResourceRowEditProps {
+interface TrackerResourceListItemEditProps {
   displayName: string;
   description: string;
   isUpdating: boolean;
@@ -35,59 +35,61 @@ interface TrackerResourceRowEditProps {
   onCancel: () => void;
 }
 
-export function TrackerResourceRowEdit({
+export function TrackerResourceListItemEdit({
   displayName,
   description,
   isUpdating,
   onSave,
   onCancel,
-}: TrackerResourceRowEditProps) {
+}: TrackerResourceListItemEditProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const [displayNameValue, setDisplayNameValue] = useState(displayName);
+  const [descriptionValue, setDescriptionValue] = useState(description);
+  const { edit, editField } = trackerResourceListItem();
 
-  const { register, handleSubmit } = useForm<FormValues>({
-    defaultValues: {
-      displayName,
-      description,
-    },
-  });
-
-  const onSubmit = (data: FormValues) => {
+  function handleSave() {
     onSave({
-      displayName: data.displayName,
-      description: data.description,
+      displayName: displayNameValue,
+      description: descriptionValue,
     });
-  };
+  }
 
   return (
-    <Tr>
-      <Td />
-      <Td className="pr-3">
-        <Input
-          {...register("displayName")}
-          placeholder={t("trackerResourceRowEdit.fields.displayNamePlaceholder")}
-        />
-      </Td>
-      <Td className="pr-3" colSpan={4}>
-        <div className="flex items-center gap-2">
-          <Input
-            {...register("description")}
-            placeholder={t("trackerResourceRowEdit.fields.descriptionPlaceholder")}
-            className="flex-1"
-          />
+    <TableRow>
+      <TableCell colSpan={6}>
+        <div className={edit()}>
+          <div className={editField()}>
+            <TextField
+              value={displayNameValue}
+              onValueChange={setDisplayNameValue}
+              placeholder={t("trackerResourceRowEdit.fields.displayNamePlaceholder")}
+              aria-label={t("trackerResourceRowEdit.fields.displayNamePlaceholder")}
+            />
+          </div>
+          <div className={editField()}>
+            <TextField
+              value={descriptionValue}
+              onValueChange={setDescriptionValue}
+              placeholder={t("trackerResourceRowEdit.fields.descriptionPlaceholder")}
+              aria-label={t("trackerResourceRowEdit.fields.descriptionPlaceholder")}
+            />
+          </div>
           <Button
-            onClick={() => void handleSubmit(onSubmit)()}
-            disabled={isUpdating}
+            variant="solid"
+            loading={isUpdating}
+            onClick={handleSave}
           >
             {t("trackerResourceRowEdit.actions.save")}
           </Button>
           <Button
-            variant="secondary"
+            variant="soft"
+            color="neutral"
             onClick={onCancel}
           >
             {t("trackerResourceRowEdit.actions.cancel")}
           </Button>
         </div>
-      </Td>
-    </Tr>
+      </TableCell>
+    </TableRow>
   );
 }

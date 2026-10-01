@@ -18,32 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
-import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { useTranslation } from "react-i18next";
 
-import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
-import { cookieBannerListSkeleton, cookieBannerPage } from "../../variants";
+import { cookieBannerList } from "../../../variants";
+import { useResourcesListSearch } from "../_lib/useResourcesListSearch";
 
-export function CookieBannerResourcesPageSkeleton() {
-  const { root, tools, search, filters, filter } = cookieBannerListSkeleton();
+export function ResourcesListSearch() {
+  const { t } = useTranslation("organizations/cookie-banners");
+  const [queryInput, setQueryInput] = useResourcesListSearch();
+  const { search } = cookieBannerList();
 
   return (
-    <div className={cookieBannerPage()}>
-      <CookieBannerPageHeaderSkeleton titleClassName="w-28" />
-      <div className={root()}>
-        <div className={tools()}>
-          <div className={search()}>
-            <TextFieldSkeleton />
-          </div>
-          <div className={filters()}>
-            <div className={filter()}>
-              <SelectSkeleton />
-            </div>
-          </div>
-        </div>
-        <TableSkeleton variant="surface" columns={6} count={8} />
-      </div>
+    <div className={search()}>
+      <TextField
+        icon={<MagnifyingGlassIcon />}
+        value={queryInput}
+        onValueChange={setQueryInput}
+        placeholder={t("resourcesPage.filters.search")}
+        aria-label={t("resourcesPage.filters.search")}
+      />
     </div>
   );
 }

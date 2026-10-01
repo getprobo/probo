@@ -18,14 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge } from "@probo/ui";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { CommonTrackerPatternAttribution } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
+export type TrackerPatternAttribution
+  = "FIRST_PARTY"
+    | "THIRD_PARTY"
+    | "NOT_ATTRIBUTABLE"
+    | "UNDETERMINED";
 
 interface TrackerAttributionLabelProps {
-  attribution: CommonTrackerPatternAttribution | null | undefined;
+  attribution: TrackerPatternAttribution | null | undefined;
 }
 
 // The explicit ReactElement return is what makes the switch below exhaustive:
@@ -39,21 +44,17 @@ export function TrackerAttributionLabel({
   // A null attribution is a pattern with no catalog link at all, which is the
   // only case with nothing to say.
   if (attribution == null) {
-    return <span className="text-txt-tertiary text-sm">-</span>;
+    return <Text size={2} color="faint">-</Text>;
   }
 
   switch (attribution) {
     case "FIRST_PARTY":
-      return <Badge variant="success">{t("trackerAttribution.firstParty")}</Badge>;
+      return <Badge variant="soft" color="green">{t("trackerAttribution.firstParty")}</Badge>;
     case "THIRD_PARTY":
-      return <Badge variant="info">{t("trackerAttribution.thirdParty")}</Badge>;
+      return <Badge variant="soft" color="sky">{t("trackerAttribution.thirdParty")}</Badge>;
     case "NOT_ATTRIBUTABLE":
-      return <Badge variant="warning">{t("trackerAttribution.visitorSoftware")}</Badge>;
+      return <Badge variant="soft" color="amber">{t("trackerAttribution.visitorSoftware")}</Badge>;
     case "UNDETERMINED":
-      return (
-        <span className="text-txt-tertiary text-sm">
-          {t("trackerAttribution.undetermined")}
-        </span>
-      );
+      return <Text size={2} color="faint">{t("trackerAttribution.undetermined")}</Text>;
   }
 }

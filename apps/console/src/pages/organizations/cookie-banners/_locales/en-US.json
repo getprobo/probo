@@ -68,7 +68,8 @@
     "messages": { "successTitle": "Success", "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved", "cookieUpdated": "Cookie updated" },
     "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
+    "dialogs": { "deleteTitle": "Delete tracker" },
+    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete", "more": "More actions" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistent" }
@@ -96,11 +97,13 @@
   "trackersPage": {
     "title": "Trackers",
     "description": "Patterns detected on this site and the category each one belongs to.",
-    "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories" },
+    "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories", "source": "Source", "type": "Type", "category": "Category", "thirdParty": "Third party" },
     "types": { "all": "All types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "all": "All sources", "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "columns": { "name": "Name", "thirdParty": "Third party", "source": "Source", "category": "Category", "maxAge": "Max age", "lastMatched": "Last matched" },
-    "empty": { "title": "No tracker patterns", "description": "No cookie patterns have been detected yet. Patterns will appear here when detected." }
+    "actions": { "previous": "Previous", "next": "Next" },
+    "empty": { "title": "No tracker patterns", "description": "No cookie patterns have been detected yet. Patterns will appear here when detected." },
+    "emptyFiltered": "No matching trackers"
   },
   "codeSnippets": {
     "title": "JavaScript snippet",
@@ -137,16 +140,19 @@
     "messages": { "successTitle": "Success", "deleted": "Resource deleted", "moved": "Resource moved", "updated": "Resource updated" },
     "errors": { "title": "Error", "delete": "Failed to delete resource", "move": "Failed to move resource", "update": "Failed to update resource" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
+    "dialogs": { "deleteTitle": "Delete resource" },
+    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete", "more": "More actions" },
     "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {
     "title": "Resources",
     "description": "Scripts, iframes, and other resources not in a category yet.",
-    "filters": { "search": "Search by origin or path..." },
+    "filters": { "search": "Search by origin or path...", "type": "Type" },
     "types": { "all": "All types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origin", "path": "Path", "category": "Category", "lastDetected": "Last detected" },
-    "empty": { "title": "No uncategorised resources", "description": "All detected resources have been categorised. New resources will appear here when detected." }
+    "actions": { "previous": "Previous", "next": "Next" },
+    "empty": { "title": "No uncategorised resources", "description": "All detected resources have been categorised. New resources will appear here when detected." },
+    "emptyFiltered": "No matching resources"
   },
   "themePreview": {
     "title": "Theme", "defaultSnippet": "/* Using default theme — no overrides needed */",

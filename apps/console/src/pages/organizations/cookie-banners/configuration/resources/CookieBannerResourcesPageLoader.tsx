@@ -18,12 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerResourcesPageQuery } from "#/__generated__/core/CookieBannerResourcesPageQuery.graphql";
 
+import { RESOURCES_PAGE_SIZE } from "./_components/TrackerResourceList";
+import { useResourcesListFilters } from "./_lib/useResourcesListFilters";
 import { CookieBannerResourcesPage, cookieBannerResourcesPageQuery } from "./CookieBannerResourcesPage";
 import { CookieBannerResourcesPageSkeleton } from "./CookieBannerResourcesPageSkeleton";
 
@@ -33,21 +35,36 @@ export default function CookieBannerResourcesPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
+  const { graphqlFilter } = useResourcesListFilters();
+  const filterRef = useRef(graphqlFilter);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerResourcesPageQuery>(
     cookieBannerResourcesPageQuery,
   );
 
   useEffect(() => {
-    loadQuery({ cookieBannerId });
+    filterRef.current = graphqlFilter;
+  }, [graphqlFilter]);
+
+  useEffect(() => {
+    loadQuery({
+      cookieBannerId,
+      first: RESOURCES_PAGE_SIZE,
+      filter: filterRef.current,
+    });
   }, [loadQuery, cookieBannerId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.cookieBannerId === cookieBannerId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <CookieBannerResourcesPageSkeleton />;
   }
 
   return (
     <Suspense fallback={<CookieBannerResourcesPageSkeleton />}>
-      <CookieBannerResourcesPage queryRef={queryRef} />
+      <CookieBannerResourcesPage key={cookieBannerId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

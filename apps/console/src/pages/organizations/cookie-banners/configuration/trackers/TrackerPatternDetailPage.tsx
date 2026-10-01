@@ -34,6 +34,9 @@ export const trackerPatternDetailPageQuery = graphql`
   ) {
     cookieBanner: node(id: $cookieBannerId) @required(action: THROW) {
       __typename
+      ... on CookieBanner {
+        ...MoveToCategorySelect_cookieBanner
+      }
     }
     node(id: $trackerPatternId) @required(action: THROW) {
       __typename
@@ -70,7 +73,10 @@ export default function TrackerPatternDetailPage({
     <div className="space-y-6">
       <PageHeader title={pattern.displayName} />
 
-      <TrackerPatternPropertiesSection trackerPatternKey={pattern} />
+      <TrackerPatternPropertiesSection
+        trackerPatternKey={pattern}
+        cookieBannerKey={data.cookieBanner}
+      />
 
       <TrackerPatternDetectedTrackersSection trackerPatternKey={pattern} />
     </div>
