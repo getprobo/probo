@@ -50,7 +50,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
   const { t } = useTranslation("organizations/tasks");
   const comment = useFragment(taskCommentEditorFragment, taskCommentKey);
   const [updateTaskComment] = useUpdateTaskComment();
-  const uploadPicture = useUploadTaskPicture();
+  const uploadAttachment = useUploadTaskPicture();
   const saved = comment.content;
   const [draft, setDraft] = useState(saved);
   const [savedContent, setSavedContent] = useState(saved);
@@ -121,7 +121,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
         key={editorGeneration}
         className={taskCommentEditor()}
         content={draft}
-        pictures={{ upload: uploadPicture }}
+        attachments={{ upload: uploadAttachment }}
         aria-label={t("detailsPage.comments.fields.comment")}
         onChangeContent={(next) => {
           setDirty(true);

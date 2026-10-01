@@ -58,9 +58,9 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "upload <file>",
-		Short: "Upload a picture to a task",
-		Example: `  # Upload a JPEG, PNG, or WebP picture
-  prb task picture upload ./screenshot.png --task <task-id>`,
+		Short: "Upload a file to a task",
+		Example: `  # Upload a picture or another supported file
+  prb task picture upload ./report.pdf --task <task-id>`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filePath := args[0]

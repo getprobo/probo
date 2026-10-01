@@ -99,11 +99,11 @@
       "update": "Bijwerken van taak mislukt",
       "content": "Deze beschrijving kon niet worden weergegeven"
     },
-    "pictures": {
+    "attachments": {
       "errors": {
-        "upload": "Uploaden van afbeelding mislukt",
-        "type": "Kies een JPEG-, PNG- of WebP-afbeelding",
-        "size": "Afbeelding mag maximaal 10 MB zijn"
+        "upload": "Uploaden van bijlage mislukt",
+        "type": "Dit bestandstype wordt niet ondersteund",
+        "size": "Bijlage mag maximaal 10 MB zijn"
       }
     },
     "comments": {

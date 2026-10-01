@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { RichEditor, type RichEditorPictures } from "@probo/ui";
+import { RichEditor, type RichEditorAttachments } from "@probo/ui";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { tv } from "tailwind-variants/lite";
@@ -44,7 +44,7 @@ export interface RichDescriptionEditorProps {
   canUpdate: boolean;
   ariaLabel: string;
   emptyLabel: string;
-  pictures?: RichEditorPictures;
+  attachments?: RichEditorAttachments;
   saveDelayMs?: number;
   save: (content: string | null) => Promise<void>;
 }
@@ -54,7 +54,7 @@ export function RichDescriptionEditor({
   canUpdate,
   ariaLabel,
   emptyLabel,
-  pictures,
+  attachments,
   saveDelayMs = defaultSaveDelayMs,
   save,
 }: RichDescriptionEditorProps) {
@@ -118,7 +118,7 @@ export function RichDescriptionEditor({
               key={editorGeneration}
               className={editor()}
               content={draft}
-              pictures={pictures}
+              attachments={attachments}
               aria-label={ariaLabel}
               onChangeContent={(next) => {
                 setDirty(true);
@@ -141,7 +141,7 @@ export function RichDescriptionEditor({
                 key={editorGeneration}
                 className={editor()}
                 content={saved}
-                pictures={pictures}
+                attachments={attachments}
                 disabled
                 aria-label={ariaLabel}
               />

@@ -127,7 +127,7 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Upload Picture',
 				value: 'uploadPicture',
-				description: 'Upload a JPEG, PNG, or WebP picture to a task. When the task is linked to a Linear issue, the picture is attached to that issue.',
+				description: 'Upload a supported file to a task. Pictures, documents, and other allowed types up to 10 MB are accepted. When the task is linked to a Linear issue, the file is attached to that issue.',
 				action: 'Upload a task picture',
 			},
 		],

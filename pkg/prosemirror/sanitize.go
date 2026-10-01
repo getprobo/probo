@@ -103,6 +103,10 @@ func sanitizeNode(n *Node) {
 		sanitizeImageNode(n)
 	}
 
+	if n.Type == NodeAttachment {
+		sanitizeAttachmentNode(n)
+	}
+
 	for i := range n.Marks {
 		sanitizeLinkMark(&n.Marks[i])
 	}
@@ -124,6 +128,24 @@ func sanitizeImageNode(n *Node) {
 	raw, err := json.Marshal(attrs)
 	if err != nil {
 		n.Attrs = []byte(`{"src":""}`)
+		return
+	}
+
+	n.Attrs = raw
+}
+
+func sanitizeAttachmentNode(n *Node) {
+	attrs, err := n.AttachmentAttrs()
+	if err != nil {
+		n.Attrs = []byte(`{"href":"#","fileName":"","mimeType":""}`)
+		return
+	}
+
+	attrs.Href = safeLinkHref(attrs.Href)
+
+	raw, err := json.Marshal(attrs)
+	if err != nil {
+		n.Attrs = []byte(`{"href":"#","fileName":"","mimeType":""}`)
 		return
 	}
 

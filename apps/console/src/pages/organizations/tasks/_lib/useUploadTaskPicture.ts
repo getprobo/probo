@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { isPictureFile, type RichEditorPicture, useToast } from "@probo/ui";
+import { isAttachmentFile, type RichEditorUploadedFile, useToast } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { useParams } from "react-router";
@@ -37,6 +37,7 @@ const uploadTaskPictureMutation = graphql`
           file {
             downloadUrl
             fileName
+            mimeType
           }
         }
       }
@@ -51,23 +52,23 @@ export function useUploadTaskPicture() {
   const [uploadTaskPicture] = useMutation<useUploadTaskPictureMutation>(
     uploadTaskPictureMutation,
     {
-      errorToast: t("detailsPage.pictures.errors.upload"),
+      errorToast: t("detailsPage.attachments.errors.upload"),
     },
   );
 
-  async function uploadPicture(file: File): Promise<RichEditorPicture> {
+  async function uploadAttachment(file: File): Promise<RichEditorUploadedFile> {
     if (taskId == null) {
       throw new Error(":taskId missing in route params");
     }
 
-    if (!isPictureFile(file)) {
-      const title = t("detailsPage.pictures.errors.type");
+    if (!isAttachmentFile(file)) {
+      const title = t("detailsPage.attachments.errors.type");
       toast({ title, description: "", variant: "error" });
       throw new Error(title);
     }
 
     if (file.size > maxPictureBytes) {
-      const title = t("detailsPage.pictures.errors.size");
+      const title = t("detailsPage.attachments.errors.size");
       toast({ title, description: "", variant: "error" });
       throw new Error(title);
     }
@@ -87,9 +88,10 @@ export function useUploadTaskPicture() {
 
     return {
       src: uploaded.downloadUrl,
-      alt: uploaded.fileName,
+      fileName: uploaded.fileName,
+      mimeType: uploaded.mimeType,
     };
   }
 
-  return uploadPicture;
+  return uploadAttachment;
 }

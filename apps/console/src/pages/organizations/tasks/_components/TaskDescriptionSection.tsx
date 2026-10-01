@@ -52,7 +52,7 @@ function TaskDescriptionSectionContent({
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskDescriptionSectionFragment, taskKey);
   const [updateTask] = useUpdateTask();
-  const uploadPicture = useUploadTaskPicture();
+  const uploadAttachment = useUploadTaskPicture();
   const save = useCallback(
     async (content: string | null) => {
       await updateTask({
@@ -73,7 +73,7 @@ function TaskDescriptionSectionContent({
       canUpdate={task.canUpdate}
       ariaLabel={t("detailsPage.fields.description")}
       emptyLabel={t("detailsPage.noDescription")}
-      pictures={task.canUpdate ? { upload: uploadPicture } : {}}
+      attachments={task.canUpdate ? { upload: uploadAttachment } : {}}
       save={save}
     />
   );

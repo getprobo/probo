@@ -63,6 +63,14 @@
         @apply my-2 block max-w-full rounded-lg;
     }
 
+    a.attachment {
+        @apply my-2 inline-flex max-w-full items-center rounded-lg border border-border-solid bg-level-2 px-3 py-2 text-sm font-normal text-txt-primary no-underline;
+    }
+
+    &.ProseMirror-focused a.attachment {
+        @apply cursor-pointer;
+    }
+
     pre { @apply my-4 px-6 py-4 bg-border-solid rounded-lg text-sm; }
 
     code { @apply text-inherit font-mono bg-border-solid rounded-md; }

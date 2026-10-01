@@ -121,5 +121,6 @@ export { EditableRow } from "./Molecules/Table/EditableRow";
 export { Toasts, useToast } from "./Atoms/Toasts/Toasts";
 
 // Rich editor
-export { isPictureFile, type RichEditorPicture } from "./RichEditor/ImageExtension";
-export { RichEditor, type RichEditorPictures } from "./RichEditor/RichEditor";
+export { isAttachmentFile, type RichEditorAttachment } from "./RichEditor/AttachmentExtension";
+export { type RichEditorUploadedFile } from "./RichEditor/AttachmentUploadExtension";
+export { RichEditor, type RichEditorAttachments } from "./RichEditor/RichEditor";

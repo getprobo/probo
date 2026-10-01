@@ -22,21 +22,28 @@ import { type Editor, Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
-import { insertPicture, isPictureFile, type RichEditorPicture } from "./ImageExtension";
+import { insertAttachment, isAttachmentFile, type RichEditorAttachment } from "./AttachmentExtension";
+import { insertPicture, isPictureMime } from "./ImageExtension";
 
-export type RichEditorPictureUpload = (file: File) => Promise<RichEditorPicture>;
-
-type PictureUploadStorage = {
-  upload?: RichEditorPictureUpload;
+export type RichEditorUploadedFile = {
+  src: string;
+  fileName: string;
+  mimeType: string;
 };
 
-const pictureUploadKey = new PluginKey("pictureUpload");
+export type RichEditorAttachmentUpload = (file: File) => Promise<RichEditorUploadedFile>;
 
-export function setPictureUpload(
+type AttachmentUploadStorage = {
+  upload?: RichEditorAttachmentUpload;
+};
+
+const attachmentUploadKey = new PluginKey("attachmentUpload");
+
+export function setAttachmentUpload(
   editor: Editor,
-  upload: RichEditorPictureUpload | undefined,
+  upload: RichEditorAttachmentUpload | undefined,
 ) {
-  const storage = (editor.storage as { pictureUpload?: PictureUploadStorage }).pictureUpload;
+  const storage = (editor.storage as { attachmentUpload?: AttachmentUploadStorage }).attachmentUpload;
   if (!storage) {
     return;
   }
@@ -44,19 +51,40 @@ export function setPictureUpload(
   storage.upload = upload;
 }
 
-function pictureFiles(list: FileList | null | undefined) {
+function attachmentFiles(list: FileList | null | undefined) {
   if (!list) {
     return [];
   }
 
-  return [...list].filter(isPictureFile);
+  return [...list].filter(isAttachmentFile);
 }
 
-async function uploadPictures(
+function insertUploadedFile(
+  view: EditorView,
+  pos: number,
+  uploaded: RichEditorUploadedFile,
+) {
+  if (isPictureMime(uploaded.mimeType)) {
+    insertPicture(view, pos, {
+      src: uploaded.src,
+      alt: uploaded.fileName,
+    });
+    return;
+  }
+
+  const attachment: RichEditorAttachment = {
+    href: uploaded.src,
+    fileName: uploaded.fileName,
+    mimeType: uploaded.mimeType,
+  };
+  insertAttachment(view, pos, attachment);
+}
+
+async function uploadAttachments(
   view: EditorView,
   files: File[],
   pos: number,
-  upload: RichEditorPictureUpload,
+  upload: RichEditorAttachmentUpload,
 ) {
   let at = pos;
 
@@ -65,21 +93,18 @@ async function uploadPictures(
       return;
     }
 
-    const picture = await upload(file);
+    const uploaded = await upload(file);
     if (view.isDestroyed) {
       return;
     }
 
-    insertPicture(view, at, {
-      src: picture.src,
-      alt: picture.alt ?? file.name,
-    });
+    insertUploadedFile(view, at, uploaded);
     at = view.state.selection.to;
   }
 }
 
-export const PictureUploadExtension = Extension.create<object, PictureUploadStorage>({
-  name: "pictureUpload",
+export const AttachmentUploadExtension = Extension.create<object, AttachmentUploadStorage>({
+  name: "attachmentUpload",
 
   addStorage() {
     return {};
@@ -90,17 +115,17 @@ export const PictureUploadExtension = Extension.create<object, PictureUploadStor
 
     return [
       new Plugin({
-        key: pictureUploadKey,
+        key: attachmentUploadKey,
         props: {
           handlePaste(view, event) {
             const upload = storage.upload;
-            const files = pictureFiles(event.clipboardData?.files);
+            const files = attachmentFiles(event.clipboardData?.files);
             if (!upload || files.length === 0) {
               return false;
             }
 
             event.preventDefault();
-            void uploadPictures(view, files, view.state.selection.from, upload).catch(() => {
+            void uploadAttachments(view, files, view.state.selection.from, upload).catch(() => {
               // The upload callback reports the failure.
             });
             return true;
@@ -108,7 +133,7 @@ export const PictureUploadExtension = Extension.create<object, PictureUploadStor
 
           handleDrop(view, event) {
             const upload = storage.upload;
-            const files = pictureFiles(event.dataTransfer?.files);
+            const files = attachmentFiles(event.dataTransfer?.files);
             if (!upload || files.length === 0) {
               return false;
             }
@@ -122,7 +147,7 @@ export const PictureUploadExtension = Extension.create<object, PictureUploadStor
             }
 
             event.preventDefault();
-            void uploadPictures(view, files, coords.pos, upload).catch(() => {
+            void uploadAttachments(view, files, coords.pos, upload).catch(() => {
               // The upload callback reports the failure.
             });
             return true;
@@ -132,3 +157,5 @@ export const PictureUploadExtension = Extension.create<object, PictureUploadStor
     ];
   },
 });
+
+export { insertUploadedFile };

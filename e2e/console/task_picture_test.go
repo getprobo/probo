@@ -153,7 +153,65 @@ func TestTaskPicture_UploadListAndDelete(t *testing.T) {
 	assert.Equal(t, picture.ID, deleted.DeleteTaskPicture.DeletedTaskPictureID)
 }
 
-func TestTaskPicture_RejectsNonImage(t *testing.T) {
+func TestTaskPicture_AcceptsTextFile(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+
+	query := `
+		mutation UploadTaskPicture($input: UploadTaskPictureInput!) {
+			uploadTaskPicture(input: $input) {
+				taskPictureEdge {
+					node {
+						id
+						file {
+							fileName
+							mimeType
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var uploaded struct {
+		UploadTaskPicture struct {
+			TaskPictureEdge struct {
+				Node struct {
+					ID   string `json:"id"`
+					File struct {
+						FileName string `json:"fileName"`
+						MimeType string `json:"mimeType"`
+					} `json:"file"`
+				} `json:"node"`
+			} `json:"taskPictureEdge"`
+		} `json:"uploadTaskPicture"`
+	}
+
+	err := owner.ExecuteWithFile(
+		query,
+		map[string]any{
+			"input": map[string]any{
+				"taskId": taskID,
+				"file":   nil,
+			},
+		},
+		"input.file",
+		testutil.UploadFile{
+			Filename:    "notes.txt",
+			ContentType: "text/plain",
+			Content:     []byte("not a picture"),
+		},
+		&uploaded,
+	)
+	require.NoError(t, err)
+
+	file := uploaded.UploadTaskPicture.TaskPictureEdge.Node.File
+	assert.Equal(t, "notes.txt", file.FileName)
+	assert.Equal(t, "text/plain", file.MimeType)
+}
+
+func TestTaskPicture_RejectsUnsupportedFile(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	taskID := factory.NewTaskWithoutMeasure(owner).Create()
@@ -178,13 +236,13 @@ func TestTaskPicture_RejectsNonImage(t *testing.T) {
 		},
 		"input.file",
 		testutil.UploadFile{
-			Filename:    "notes.txt",
-			ContentType: "text/plain",
-			Content:     []byte("not a picture"),
+			Filename:    "malware.exe",
+			ContentType: "application/octet-stream",
+			Content:     []byte("not a supported file"),
 		},
 		nil,
 	)
-	testutil.RequireErrorCode(t, err, "INVALID", "non-image uploads must be rejected")
+	testutil.RequireErrorCode(t, err, "INVALID", "unsupported file types must be rejected")
 }
 
 func TestTaskPicture_ViewerCannotUpload(t *testing.T) {

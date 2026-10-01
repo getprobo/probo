@@ -7803,16 +7803,16 @@ components:
       properties:
         task_id:
           $ref: "#/components/schemas/GID"
-          description: Task ID. When the task is linked to a Linear issue, the picture is attached to that issue.
+          description: Task ID. When the task is linked to a Linear issue, the file is attached to that issue.
         file_name:
           type: string
-          description: Picture file name, including a .jpg, .jpeg, .png, or .webp extension
+          description: File name, including an extension that matches the content type
         content_type:
           type: string
-          description: Picture MIME type (image/jpeg, image/png, or image/webp)
+          description: MIME type. Documents, spreadsheets, presentations, text, images, data files, and videos are accepted.
         content_base64:
           type: string
-          description: Base64-encoded picture bytes. JPEG, PNG, and WebP images up to 10 MB are accepted.
+          description: Base64-encoded file bytes. Supported files up to 10 MB are accepted.
 
     UploadTaskPictureOutput:
       type: object
@@ -18527,7 +18527,7 @@ tools:
       $ref: "#/components/schemas/GetTaskPictureOutput"
   - name: uploadTaskPicture
     title: Upload Task Picture
-    description: Upload a picture to a task. When the task is linked to a Linear issue, the picture is attached to that issue.
+    description: Upload a file to a task. Pictures and other supported files up to 10 MB are accepted. When the task is linked to a Linear issue, the file is attached to that issue.
     hints:
       readonly: false
       destructive: false

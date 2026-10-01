@@ -19,32 +19,17 @@
 // SOFTWARE.
 
 import { mergeAttributes, Node } from "@tiptap/core";
-import { Fragment, Slice } from "@tiptap/pm/model";
+import { Fragment, type Node as ProseMirrorNode, Slice } from "@tiptap/pm/model";
 import { NodeSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
-export type RichEditorPicture = {
-  src: string;
-  alt?: string;
-};
-
 export const pictureContentTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 
-export function isPictureFile(file: File) {
-  return pictureContentTypes.some(type => type === file.type);
+export function isPictureMime(mimeType: string) {
+  return pictureContentTypes.some(type => type === mimeType);
 }
 
-export function insertPicture(view: EditorView, pos: number, picture: RichEditorPicture) {
-  const type = view.state.schema.nodes.image;
-  if (!type) {
-    return;
-  }
-
-  const node = type.create({
-    src: picture.src,
-    alt: picture.alt ?? null,
-    title: null,
-  });
+export function insertBlockNode(view: EditorView, pos: number, node: ProseMirrorNode) {
   const doc = view.state.doc;
   const safePos = Math.max(0, Math.min(pos, doc.content.size));
   const $pos = doc.resolve(safePos);
@@ -70,10 +55,27 @@ export function insertPicture(view: EditorView, pos: number, picture: RichEditor
   try {
     tr = tr.setSelection(NodeSelection.create(tr.doc, insertedAt));
   } catch {
-    // The mapped position is not an image node.
+    // The mapped position is not a selectable node.
   }
 
   view.dispatch(tr.scrollIntoView());
+}
+
+export function insertPicture(
+  view: EditorView,
+  pos: number,
+  picture: { src: string; alt?: string },
+) {
+  const type = view.state.schema.nodes.image;
+  if (!type) {
+    return;
+  }
+
+  insertBlockNode(view, pos, type.create({
+    src: picture.src,
+    alt: picture.alt ?? null,
+    title: null,
+  }));
 }
 
 export const ImageExtension = Node.create({

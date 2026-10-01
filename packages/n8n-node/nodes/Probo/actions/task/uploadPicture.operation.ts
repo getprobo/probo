@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the task. When the task is linked to a Linear issue, the picture is attached to that issue.',
+		description: 'The ID of the task. When the task is linked to a Linear issue, the file is attached to that issue.',
 		required: true,
 	},
 	{
@@ -47,7 +47,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: 'data',
-		description: 'The name of the input field containing the JPEG, PNG, or WebP picture to upload',
+		description: 'The name of the input field containing the file to upload',
 		required: true,
 	},
 ];

@@ -37,14 +37,15 @@ import { type Content, Editor, EditorContent, type JSONContent, useEditor } from
 import { type ChangeEvent, type ComponentProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { tv } from "tailwind-variants";
 
+import { attachmentAccept, AttachmentExtension } from "./AttachmentExtension";
+import { AttachmentUploadExtension, insertUploadedFile, type RichEditorAttachmentUpload, setAttachmentUpload } from "./AttachmentUploadExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
-import { ImageExtension, insertPicture } from "./ImageExtension";
+import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
-import { PictureUploadExtension, type RichEditorPictureUpload, setPictureUpload } from "./PictureUploadExtension";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
@@ -94,12 +95,12 @@ const richEditorVariants = tv({
   },
 });
 
-const pictureInput = tv({
+const attachmentInput = tv({
   base: "sr-only",
 });
 
-export type RichEditorPictures = {
-  upload?: RichEditorPictureUpload;
+export type RichEditorAttachments = {
+  upload?: RichEditorAttachmentUpload;
 };
 
 function stripNonTextMarks(node: JSONContent) {
@@ -111,7 +112,7 @@ type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
   placeholder?: string;
-  pictures?: RichEditorPictures;
+  attachments?: RichEditorAttachments;
   onChangeContent?: (content: string) => void;
 };
 
@@ -133,29 +134,29 @@ export function RichEditor(props: RichEditorProps) {
     content,
     disabled = false,
     placeholder,
-    pictures,
+    attachments,
     onChangeContent,
     ...divProps
   } = props;
 
-  const uploadRef = useRef<RichEditorPictureUpload | undefined>(undefined);
+  const uploadRef = useRef<RichEditorAttachmentUpload | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const insertAtRef = useRef<number | null>(null);
-  const picturesEnabled = pictures != null;
-  const uploadEnabled = pictures?.upload != null && !disabled;
+  const attachmentsEnabled = attachments != null;
+  const uploadEnabled = attachments?.upload != null && !disabled;
 
   const editorExtensions = useMemo(() => {
-    if (!picturesEnabled) {
+    if (!attachmentsEnabled) {
       return extensions;
     }
 
-    const withPictures = [...extensions, ImageExtension];
+    const withAttachments = [...extensions, ImageExtension, AttachmentExtension];
     if (!uploadEnabled) {
-      return withPictures;
+      return withAttachments;
     }
 
-    return [...withPictures, PictureUploadExtension];
-  }, [picturesEnabled, uploadEnabled]);
+    return [...withAttachments, AttachmentUploadExtension];
+  }, [attachmentsEnabled, uploadEnabled]);
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
@@ -200,16 +201,16 @@ export function RichEditor(props: RichEditorProps) {
   }, [editor, disabled]);
 
   useEffect(() => {
-    const upload = disabled ? undefined : pictures?.upload;
+    const upload = disabled ? undefined : attachments?.upload;
     uploadRef.current = upload;
     if (!editor || editor.isDestroyed) {
       return;
     }
 
-    setPictureUpload(editor, upload);
-  }, [disabled, editor, pictures?.upload]);
+    setAttachmentUpload(editor, upload);
+  }, [disabled, editor, attachments?.upload]);
 
-  const openPicturePicker = useCallback(() => {
+  const openAttachmentPicker = useCallback(() => {
     if (!editor || editor.isDestroyed) {
       return;
     }
@@ -218,7 +219,7 @@ export function RichEditor(props: RichEditorProps) {
     fileInputRef.current?.click();
   }, [editor]);
 
-  const handlePictureFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+  const handleAttachmentFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     const upload = uploadRef.current;
@@ -228,15 +229,12 @@ export function RichEditor(props: RichEditorProps) {
 
     const pos = insertAtRef.current ?? editor.state.selection.from;
     void upload(file).then(
-      (picture) => {
+      (uploaded) => {
         if (editor.isDestroyed) {
           return;
         }
 
-        insertPicture(editor.view, pos, {
-          src: picture.src,
-          alt: picture.alt ?? file.name,
-        });
+        insertUploadedFile(editor.view, pos, uploaded);
       },
       () => {
         // The upload callback reports the failure.
@@ -251,12 +249,12 @@ export function RichEditor(props: RichEditorProps) {
       {uploadEnabled && (
         <input
           ref={fileInputRef}
-          className={pictureInput()}
+          className={attachmentInput()}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept={attachmentAccept}
           tabIndex={-1}
-          aria-label="Upload picture"
-          onChange={handlePictureFile}
+          aria-label="Upload attachment"
+          onChange={handleAttachmentFile}
         />
       )}
       {!disabled
@@ -265,7 +263,7 @@ export function RichEditor(props: RichEditorProps) {
             <BubbleMenu editor={editor} />
             <BlockMenu
               editor={editor}
-              onInsertPicture={uploadEnabled ? openPicturePicker : undefined}
+              onInsertAttachment={uploadEnabled ? openAttachmentPicker : undefined}
             />
             <OptionsMenu editor={editor} />
             <TableSelectionOverlay editor={editor} />

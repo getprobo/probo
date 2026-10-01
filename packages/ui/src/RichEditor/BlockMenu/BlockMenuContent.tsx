@@ -13,10 +13,10 @@ import type { Icon } from "@phosphor-icons/react";
 import {
   CodeBlockIcon,
   GridFourIcon,
-  ImageIcon,
   ListBulletsIcon,
   ListNumbersIcon,
   MinusIcon,
+  PaperclipIcon,
   QuotesIcon,
   TextHFourIcon,
   TextHOneIcon,
@@ -64,13 +64,13 @@ const BLOCK_ITEMS: BlockItem[] = [
 type BlockMenuContentProps = {
   editor: Editor;
   slashState: { active: boolean; query: string; from: number };
-  onInsertPicture?: () => void;
+  onInsertAttachment?: () => void;
 };
 
 export function BlockMenuContent({
   editor,
   slashState,
-  onInsertPicture,
+  onInsertAttachment,
 }: BlockMenuContentProps) {
   const [slashNav, setSlashNav] = useState({ index: 0, query: "" });
   const slashDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -80,26 +80,26 @@ export function BlockMenuContent({
     : 0;
 
   const items = useMemo(() => {
-    if (!onInsertPicture) {
+    if (!onInsertAttachment) {
       return BLOCK_ITEMS;
     }
 
-    const picture: BlockItem = {
-      label: "Picture",
-      icon: ImageIcon,
-      select: onInsertPicture,
+    const attachment: BlockItem = {
+      label: "Attachment",
+      icon: PaperclipIcon,
+      select: onInsertAttachment,
     };
     const tableIndex = BLOCK_ITEMS.findIndex(item => item.label === "Table");
     if (tableIndex < 0) {
-      return [...BLOCK_ITEMS, picture];
+      return [...BLOCK_ITEMS, attachment];
     }
 
     return [
       ...BLOCK_ITEMS.slice(0, tableIndex),
-      picture,
+      attachment,
       ...BLOCK_ITEMS.slice(tableIndex),
     ];
-  }, [onInsertPicture]);
+  }, [onInsertAttachment]);
 
   const filteredItems = useMemo(() => {
     if (!slashState.active) return items;

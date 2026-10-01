@@ -38,7 +38,7 @@ import { taskCommentEditor, taskCommentForm } from "../variants";
 export function TaskCommentForm() {
   const { t } = useTranslation("organizations/tasks");
   const [createTaskComment, isCreating] = useCreateTaskComment();
-  const uploadPicture = useUploadTaskPicture();
+  const uploadAttachment = useUploadTaskPicture();
   const [content, setContent] = useState("");
   const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,7 +81,7 @@ export function TaskCommentForm() {
           key={editorKey}
           className={taskCommentEditor()}
           content={content}
-          pictures={{ upload: uploadPicture }}
+          attachments={{ upload: uploadAttachment }}
           disabled={isCreating}
           aria-label={t("detailsPage.comments.fields.leaveAComment")}
           onChangeContent={(next) => {

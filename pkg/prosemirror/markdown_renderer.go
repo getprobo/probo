@@ -169,6 +169,23 @@ func (r *mdRenderer) renderNode(n Node) error {
 		}
 
 		r.buf.WriteByte(')')
+	case NodeAttachment:
+		attrs, err := n.AttachmentAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render attachment node: %w", err)
+		}
+
+		label := attrs.FileName
+		if label == "" {
+			label = "Attachment"
+		}
+
+		r.ensurePrefix()
+		r.buf.WriteByte('[')
+		r.buf.WriteString(escapeMarkdown(label))
+		r.buf.WriteString("](")
+		r.buf.WriteString(safeLinkHref(attrs.Href))
+		r.buf.WriteByte(')')
 	case NodeBulletList:
 		return r.renderBulletList(n)
 	case NodeOrderedList:

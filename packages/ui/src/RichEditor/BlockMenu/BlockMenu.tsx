@@ -12,10 +12,10 @@ import { BlockMenuTrigger } from "./BlockMenuTrigger";
 
 type BlockMenuProps = {
   editor: Editor;
-  onInsertPicture?: () => void;
+  onInsertAttachment?: () => void;
 };
 
-export function BlockMenu({ editor, onInsertPicture }: BlockMenuProps) {
+export function BlockMenu({ editor, onInsertAttachment }: BlockMenuProps) {
   const slashState = useEditorState({
     editor,
     selector: ({ editor: e }) => {
@@ -42,7 +42,7 @@ export function BlockMenu({ editor, onInsertPicture }: BlockMenuProps) {
         <BlockMenuContent
           editor={editor}
           slashState={slashState}
-          onInsertPicture={onInsertPicture}
+          onInsertAttachment={onInsertAttachment}
         />
       )}
     </>

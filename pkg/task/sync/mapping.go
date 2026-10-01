@@ -435,7 +435,7 @@ func linearNodeKept(n prosemirror.Node) bool {
 	case prosemirror.NodeListItem:
 		return len(n.Content) > 0 && n.Content[0].Type == prosemirror.NodeParagraph
 	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeCodeBlock,
-		prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeText, prosemirror.NodeHardBreak:
+		prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeAttachment, prosemirror.NodeText, prosemirror.NodeHardBreak:
 		return true
 	default:
 		return false
@@ -446,7 +446,7 @@ func linearBlock(t prosemirror.NodeType) bool {
 	switch t {
 	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeBlockquote, prosemirror.NodeCodeBlock,
 		prosemirror.NodeHorizontalRule, prosemirror.NodeBulletList, prosemirror.NodeOrderedList,
-		prosemirror.NodeTable, prosemirror.NodeImage:
+		prosemirror.NodeTable, prosemirror.NodeImage, prosemirror.NodeAttachment:
 		return true
 	default:
 		return false
@@ -459,7 +459,7 @@ func linearInline(t prosemirror.NodeType) bool {
 
 func linearLeaf(t prosemirror.NodeType) bool {
 	switch t {
-	case prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeHardBreak, prosemirror.NodeText:
+	case prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeAttachment, prosemirror.NodeHardBreak, prosemirror.NodeText:
 		return true
 	default:
 		return false

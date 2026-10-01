@@ -38,14 +38,24 @@ import (
 )
 
 const (
-	// MaxPictureBytes is the largest picture a client may upload onto a task.
+	// MaxPictureBytes is the largest attachment a client may upload onto a task.
+	// A picture is one kind of attachment; documents and other supported files
+	// share the same limit.
 	MaxPictureBytes = 10 << 20
 
 	pendingPictureLimit = 20
 )
 
 var pictureValidator = filevalidation.NewValidator(
-	filevalidation.WithMimeTypes("image/jpeg", "image/png", "image/webp"),
+	filevalidation.WithCategories(
+		filevalidation.CategoryDocument,
+		filevalidation.CategorySpreadsheet,
+		filevalidation.CategoryPresentation,
+		filevalidation.CategoryText,
+		filevalidation.CategoryImage,
+		filevalidation.CategoryData,
+		filevalidation.CategoryVideo,
+	),
 	filevalidation.WithMaxFileSize(MaxPictureBytes),
 )
 
@@ -475,7 +485,7 @@ func validatePicture(taskID gid.GID, filename, contentType string, body []byte) 
 				func(any) *validator.ValidationError {
 					return &validator.ValidationError{
 						Code:    validator.ErrorCodeInvalidFormat,
-						Message: "must be a JPEG, PNG, or WebP image",
+						Message: "must be a supported file type",
 					}
 				},
 			)

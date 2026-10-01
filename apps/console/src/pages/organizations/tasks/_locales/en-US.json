@@ -99,11 +99,11 @@
       "update": "Failed to update task",
       "content": "Could not display this description"
     },
-    "pictures": {
+    "attachments": {
       "errors": {
-        "upload": "Failed to upload picture",
-        "type": "Choose a JPEG, PNG, or WebP image",
-        "size": "Picture must be 10 MB or smaller"
+        "upload": "Failed to upload attachment",
+        "type": "This file type is not supported",
+        "size": "Attachment must be 10 MB or smaller"
       }
     },
     "comments": {

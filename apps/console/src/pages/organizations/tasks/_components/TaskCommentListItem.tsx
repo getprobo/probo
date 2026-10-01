@@ -126,7 +126,7 @@ export function TaskCommentListItem({ taskCommentKey }: TaskCommentListItemProps
                 <RichEditor
                   className={taskCommentEditor()}
                   content={comment.content}
-                  pictures={{}}
+                  attachments={{}}
                   disabled
                   aria-label={t("detailsPage.comments.fields.comment")}
                 />
