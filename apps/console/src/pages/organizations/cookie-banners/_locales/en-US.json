@@ -94,6 +94,8 @@
     "duration": { "second_one": "{{count}} second", "second_other": "{{count}} seconds" }
   },
   "trackersPage": {
+    "title": "Trackers",
+    "description": "Patterns detected on this site and the category each one belongs to.",
     "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories" },
     "types": { "all": "All types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "all": "All sources", "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
@@ -139,6 +141,8 @@
     "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {
+    "title": "Resources",
+    "description": "Scripts, iframes, and other resources not in a category yet.",
     "filters": { "search": "Search by origin or path..." },
     "types": { "all": "All types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origin", "path": "Path", "category": "Category", "lastDetected": "Last detected" },
@@ -192,6 +196,8 @@
     "empty": "No categories yet. Add a category to start managing cookies."
   },
   "consentRecordsPage": {
+    "title": "Trail",
+    "description": "Consent choices visitors made on this banner.",
     "filters": { "allActions": "All actions", "visitorId": "Visitor ID", "bannerVersion": "Banner version" },
     "actions": { "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
     "columns": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "sdkVersion": "SDK version", "regulation": "Regulation", "source": "Source", "country": "Country", "subdivision": "Subdivision", "date": "Date" },
@@ -215,7 +221,7 @@
     "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publishing": "Publishing...", "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete" },
-    "tabs": { "display": "Display", "settings": "Settings", "translations": "Translations", "trackers": "Trackers", "resources": "Resources" }
+    "tabs": { "display": "Display", "settings": "Settings", "translations": "Translations" }
   },
   "newCookieBannerPage": {
     "pageTitle": "New cookie banner",

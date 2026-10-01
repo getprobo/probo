@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import {
   Card,
   Input,
@@ -45,6 +46,9 @@ import type {
   CookieConsentRecordOrderField,
 } from "#/__generated__/core/CookieBannerConsentRecordsPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
+
+import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
+import { cookieBannerPage } from "../../variants";
 
 import { ConsentRecordRow } from "./_components/ConsentRecordRow";
 
@@ -102,10 +106,12 @@ interface CookieBannerConsentRecordsPageProps {
   queryRef: PreloadedQuery<CookieBannerConsentRecordsPageQuery>;
 }
 
-export default function CookieBannerConsentRecordsPage({
+export function CookieBannerConsentRecordsPage({
   queryRef,
 }: CookieBannerConsentRecordsPageProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const title = t("consentRecordsPage.title");
+  usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerConsentRecordsPageQuery>(cookieBannerConsentRecordsPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -173,82 +179,88 @@ export default function CookieBannerConsentRecordsPage({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Select
-          value={actionFilter ?? "ALL"}
-          onValueChange={handleActionFilterChange}
-        >
-          <Option value="ALL">{t("consentRecordsPage.filters.allActions")}</Option>
-          <Option value="ACCEPT_ALL">{t("consentRecordsPage.actions.acceptAll")}</Option>
-          <Option value="REJECT_ALL">{t("consentRecordsPage.actions.rejectAll")}</Option>
-          <Option value="CUSTOMIZE">{t("consentRecordsPage.actions.customize")}</Option>
-          <Option value="GPC">{t("consentRecordsPage.actions.gpc")}</Option>
-          <Option value="ACKNOWLEDGE">{t("consentRecordsPage.actions.acknowledge")}</Option>
-        </Select>
-        <Input
-          placeholder={t("consentRecordsPage.filters.visitorId")}
-          value={visitorIdFilter}
-          onChange={e => setVisitorIdFilter(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleVisitorIdSubmit()}
-          onBlur={handleVisitorIdSubmit}
-          className="w-48"
-        />
-        <Input
-          placeholder={t("consentRecordsPage.filters.bannerVersion")}
-          value={versionFilter}
-          invalid={versionError}
-          onChange={(e) => {
-            setVersionFilter(e.target.value);
-            setVersionError(false);
-          }}
-          onKeyDown={e => e.key === "Enter" && handleVersionSubmit()}
-          onBlur={handleVersionSubmit}
-          className="w-48"
-        />
-      </div>
+    <div className={cookieBannerPage()}>
+      <CookieBannerPageHeader
+        title={title}
+        description={t("consentRecordsPage.description")}
+      />
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Select
+            value={actionFilter ?? "ALL"}
+            onValueChange={handleActionFilterChange}
+          >
+            <Option value="ALL">{t("consentRecordsPage.filters.allActions")}</Option>
+            <Option value="ACCEPT_ALL">{t("consentRecordsPage.actions.acceptAll")}</Option>
+            <Option value="REJECT_ALL">{t("consentRecordsPage.actions.rejectAll")}</Option>
+            <Option value="CUSTOMIZE">{t("consentRecordsPage.actions.customize")}</Option>
+            <Option value="GPC">{t("consentRecordsPage.actions.gpc")}</Option>
+            <Option value="ACKNOWLEDGE">{t("consentRecordsPage.actions.acknowledge")}</Option>
+          </Select>
+          <Input
+            placeholder={t("consentRecordsPage.filters.visitorId")}
+            value={visitorIdFilter}
+            onChange={e => setVisitorIdFilter(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleVisitorIdSubmit()}
+            onBlur={handleVisitorIdSubmit}
+            className="w-48"
+          />
+          <Input
+            placeholder={t("consentRecordsPage.filters.bannerVersion")}
+            value={versionFilter}
+            invalid={versionError}
+            onChange={(e) => {
+              setVersionFilter(e.target.value);
+              setVersionError(false);
+            }}
+            onKeyDown={e => e.key === "Enter" && handleVersionSubmit()}
+            onBlur={handleVersionSubmit}
+            className="w-48"
+          />
+        </div>
 
-      <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
-        {records.length > 0
-          ? (
-              <SortableTable
-                {...pagination}
-                refetch={refetchWithFilters}
-                pageSize={50}
-              >
-                <Thead>
-                  <Tr>
-                    <Th>{t("consentRecordsPage.columns.visitorId")}</Th>
-                    <Th>{t("consentRecordsPage.columns.action")}</Th>
-                    <Th>{t("consentRecordsPage.columns.bannerVersion")}</Th>
-                    <Th>{t("consentRecordsPage.columns.ipAddress")}</Th>
-                    <Th>{t("consentRecordsPage.columns.sdkVersion")}</Th>
-                    <Th>{t("consentRecordsPage.columns.regulation")}</Th>
-                    <Th>{t("consentRecordsPage.columns.source")}</Th>
-                    <Th>{t("consentRecordsPage.columns.country")}</Th>
-                    <Th>{t("consentRecordsPage.columns.subdivision")}</Th>
-                    <SortableTh field="CREATED_AT">{t("consentRecordsPage.columns.date")}</SortableTh>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {records.map(record => (
-                    <ConsentRecordRow key={record.id} recordKey={record} />
-                  ))}
-                </Tbody>
-              </SortableTable>
-            )
-          : (
-              <Card padded>
-                <div className="text-center py-12">
-                  <h3 className="text-lg font-semibold mb-2">
-                    {t("consentRecordsPage.empty.title")}
-                  </h3>
-                  <p className="text-txt-tertiary">
-                    {t("consentRecordsPage.empty.description")}
-                  </p>
-                </div>
-              </Card>
-            )}
+        <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
+          {records.length > 0
+            ? (
+                <SortableTable
+                  {...pagination}
+                  refetch={refetchWithFilters}
+                  pageSize={50}
+                >
+                  <Thead>
+                    <Tr>
+                      <Th>{t("consentRecordsPage.columns.visitorId")}</Th>
+                      <Th>{t("consentRecordsPage.columns.action")}</Th>
+                      <Th>{t("consentRecordsPage.columns.bannerVersion")}</Th>
+                      <Th>{t("consentRecordsPage.columns.ipAddress")}</Th>
+                      <Th>{t("consentRecordsPage.columns.sdkVersion")}</Th>
+                      <Th>{t("consentRecordsPage.columns.regulation")}</Th>
+                      <Th>{t("consentRecordsPage.columns.source")}</Th>
+                      <Th>{t("consentRecordsPage.columns.country")}</Th>
+                      <Th>{t("consentRecordsPage.columns.subdivision")}</Th>
+                      <SortableTh field="CREATED_AT">{t("consentRecordsPage.columns.date")}</SortableTh>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {records.map(record => (
+                      <ConsentRecordRow key={record.id} recordKey={record} />
+                    ))}
+                  </Tbody>
+                </SortableTable>
+              )
+            : (
+                <Card padded>
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold mb-2">
+                      {t("consentRecordsPage.empty.title")}
+                    </h3>
+                    <p className="text-txt-tertiary">
+                      {t("consentRecordsPage.empty.description")}
+                    </p>
+                  </div>
+                </Card>
+              )}
+        </div>
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ import { useParams } from "react-router";
 
 import type { CookieBannerConsentRecordsPageQuery } from "#/__generated__/core/CookieBannerConsentRecordsPageQuery.graphql";
 
-import CookieBannerConsentRecordsPage, { cookieBannerConsentRecordsPageQuery } from "./CookieBannerConsentRecordsPage";
+import { CookieBannerConsentRecordsPage, cookieBannerConsentRecordsPageQuery } from "./CookieBannerConsentRecordsPage";
 import { CookieBannerConsentRecordsPageSkeleton } from "./CookieBannerConsentRecordsPageSkeleton";
 
 export default function CookieBannerConsentRecordsPageLoader() {

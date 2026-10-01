@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import {
   Card,
   Input,
@@ -45,6 +46,9 @@ import type {
   TrackerResourceType,
 } from "#/__generated__/core/CookieBannerResourcesPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
+
+import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
+import { cookieBannerPage } from "../../variants";
 
 import { TrackerResourceRow } from "./_components/TrackerResourceRow";
 
@@ -99,10 +103,12 @@ interface CookieBannerResourcesPageProps {
   queryRef: PreloadedQuery<CookieBannerResourcesPageQuery>;
 }
 
-export default function CookieBannerResourcesPage({
+export function CookieBannerResourcesPage({
   queryRef,
 }: CookieBannerResourcesPageProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const title = t("resourcesPage.title");
+  usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerResourcesPageQuery>(cookieBannerResourcesPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -153,74 +159,80 @@ export default function CookieBannerResourcesPage({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          placeholder={t("resourcesPage.filters.search")}
-          value={queryFilter}
-          onChange={e => setQueryFilter(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleQuerySubmit()}
-          onBlur={handleQuerySubmit}
-          className="w-72"
-        />
-        <Select
-          value={typeFilter ?? "ALL"}
-          onValueChange={handleTypeFilterChange}
-        >
-          <Option value="ALL">{t("resourcesPage.types.all")}</Option>
-          <Option value="SCRIPT">{t("resourcesPage.types.script")}</Option>
-          <Option value="IFRAME">{t("resourcesPage.types.iframe")}</Option>
-          <Option value="IMAGE">{t("resourcesPage.types.image")}</Option>
-          <Option value="STYLESHEET">{t("resourcesPage.types.stylesheet")}</Option>
-          <Option value="FONT">{t("resourcesPage.types.font")}</Option>
-          <Option value="BEACON">{t("resourcesPage.types.beacon")}</Option>
-          <Option value="FETCH">{t("resourcesPage.types.fetch")}</Option>
-          <Option value="MEDIA">{t("resourcesPage.types.media")}</Option>
-          <Option value="SERVICE_WORKER">{t("resourcesPage.types.serviceWorker")}</Option>
-        </Select>
-      </div>
+    <div className={cookieBannerPage()}>
+      <CookieBannerPageHeader
+        title={title}
+        description={t("resourcesPage.description")}
+      />
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Input
+            placeholder={t("resourcesPage.filters.search")}
+            value={queryFilter}
+            onChange={e => setQueryFilter(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleQuerySubmit()}
+            onBlur={handleQuerySubmit}
+            className="w-72"
+          />
+          <Select
+            value={typeFilter ?? "ALL"}
+            onValueChange={handleTypeFilterChange}
+          >
+            <Option value="ALL">{t("resourcesPage.types.all")}</Option>
+            <Option value="SCRIPT">{t("resourcesPage.types.script")}</Option>
+            <Option value="IFRAME">{t("resourcesPage.types.iframe")}</Option>
+            <Option value="IMAGE">{t("resourcesPage.types.image")}</Option>
+            <Option value="STYLESHEET">{t("resourcesPage.types.stylesheet")}</Option>
+            <Option value="FONT">{t("resourcesPage.types.font")}</Option>
+            <Option value="BEACON">{t("resourcesPage.types.beacon")}</Option>
+            <Option value="FETCH">{t("resourcesPage.types.fetch")}</Option>
+            <Option value="MEDIA">{t("resourcesPage.types.media")}</Option>
+            <Option value="SERVICE_WORKER">{t("resourcesPage.types.serviceWorker")}</Option>
+          </Select>
+        </div>
 
-      <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
-        {resources.length > 0
-          ? (
-              <SortableTable
-                {...pagination}
-                refetch={refetchWithFilters}
-                pageSize={50}
-              >
-                <Thead>
-                  <Tr>
-                    <Th>{t("resourcesPage.columns.type")}</Th>
-                    <SortableTh field="ORIGIN">{t("resourcesPage.columns.origin")}</SortableTh>
-                    <Th>{t("resourcesPage.columns.path")}</Th>
-                    <Th>{t("resourcesPage.columns.category")}</Th>
-                    <SortableTh field="LAST_DETECTED_AT">{t("resourcesPage.columns.lastDetected")}</SortableTh>
-                    <Th className="w-px" />
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {resources.map(resource => (
-                    <TrackerResourceRow
-                      key={resource.id}
-                      resourceKey={resource}
-                      connectionId={connectionId}
-                    />
-                  ))}
-                </Tbody>
-              </SortableTable>
-            )
-          : (
-              <Card padded>
-                <div className="text-center py-12">
-                  <h3 className="text-lg font-semibold mb-2">
-                    {t("resourcesPage.empty.title")}
-                  </h3>
-                  <p className="text-txt-tertiary">
-                    {t("resourcesPage.empty.description")}
-                  </p>
-                </div>
-              </Card>
-            )}
+        <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
+          {resources.length > 0
+            ? (
+                <SortableTable
+                  {...pagination}
+                  refetch={refetchWithFilters}
+                  pageSize={50}
+                >
+                  <Thead>
+                    <Tr>
+                      <Th>{t("resourcesPage.columns.type")}</Th>
+                      <SortableTh field="ORIGIN">{t("resourcesPage.columns.origin")}</SortableTh>
+                      <Th>{t("resourcesPage.columns.path")}</Th>
+                      <Th>{t("resourcesPage.columns.category")}</Th>
+                      <SortableTh field="LAST_DETECTED_AT">{t("resourcesPage.columns.lastDetected")}</SortableTh>
+                      <Th className="w-px" />
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {resources.map(resource => (
+                      <TrackerResourceRow
+                        key={resource.id}
+                        resourceKey={resource}
+                        connectionId={connectionId}
+                      />
+                    ))}
+                  </Tbody>
+                </SortableTable>
+              )
+            : (
+                <Card padded>
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold mb-2">
+                      {t("resourcesPage.empty.title")}
+                    </h3>
+                    <p className="text-txt-tertiary">
+                      {t("resourcesPage.empty.description")}
+                    </p>
+                  </div>
+                </Card>
+              )}
+        </div>
       </div>
     </div>
   );

@@ -38,11 +38,8 @@ export function CookieBannerNavItems({ cookieBannerId, tcf }: CookieBannerNavIte
   return (
     <>
       <NavPanelItem label={t("nav.cookieBannersConfigure")} to={`${prefix}/configure`} />
-      <NavPanelItem
-        label={t("nav.cookieBannersDiscovery")}
-        to={`${prefix}/discovery`}
-        alsoActiveFor={[`${prefix}/trackers`]}
-      />
+      <NavPanelItem label={t("nav.cookieBannersTrackers")} to={`${prefix}/trackers`} />
+      <NavPanelItem label={t("nav.cookieBannersResources")} to={`${prefix}/resources`} />
       <NavPanelItem
         label={t("nav.cookieBannersTrail")}
         to={`${prefix}/trail`}

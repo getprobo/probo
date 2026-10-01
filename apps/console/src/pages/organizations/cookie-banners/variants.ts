@@ -18,31 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CodeIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { TabLink, Tabs } from "@probo/ui";
-import { useTranslation } from "react-i18next";
-import { Outlet, useParams } from "react-router";
+import { tv } from "tailwind-variants/lite";
 
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+export const cookieBannerPage = tv({
+  base: "flex flex-col gap-6",
+});
 
-export default function CookieBannerDiscoveryLayout() {
-  const { t } = useTranslation("organizations/cookie-banners");
-  const organizationId = useOrganizationId();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-
-  return (
-    <>
-      <Tabs>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/discovery`} end>
-          <MagnifyingGlassIcon size={20} />
-          {t("configLayout.tabs.trackers")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/discovery/resources`}>
-          <CodeIcon size={20} />
-          {t("configLayout.tabs.resources")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </>
-  );
-}
+export const cookieBannerPageHeader = tv({
+  slots: {
+    root: "flex flex-col gap-2",
+  },
+});

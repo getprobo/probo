@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import {
   Card,
   Input,
@@ -46,6 +47,9 @@ import type {
   TrackerType,
 } from "#/__generated__/core/CookieBannerTrackersPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
+
+import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
+import { cookieBannerPage } from "../../variants";
 
 import { TrackerPatternRow } from "./_components/TrackerPatternRow";
 
@@ -116,10 +120,12 @@ interface CookieBannerTrackersPageProps {
   queryRef: PreloadedQuery<CookieBannerTrackersPageQuery>;
 }
 
-export default function CookieBannerTrackersPage({
+export function CookieBannerTrackersPage({
   queryRef,
 }: CookieBannerTrackersPageProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const title = t("trackersPage.title");
+  usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerTrackersPageQuery>(cookieBannerTrackersPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -202,99 +208,105 @@ export default function CookieBannerTrackersPage({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          placeholder={t("trackersPage.filters.search")}
-          value={queryFilter}
-          onChange={e => setQueryFilter(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleQuerySubmit()}
-          onBlur={handleQuerySubmit}
-          className="w-72"
-        />
-        <Select
-          value={thirdPartyFilter ?? "ALL"}
-          onValueChange={handleThirdPartyFilterChange}
-        >
-          <Option value="ALL">{t("trackersPage.filters.allThirdParties")}</Option>
-          {linkedThirdParties.map(party => (
-            <Option key={party.id} value={party.id}>{party.name}</Option>
-          ))}
-        </Select>
-        <Select
-          value={trackerTypeFilter ?? "ALL"}
-          onValueChange={handleTrackerTypeFilterChange}
-        >
-          <Option value="ALL">{t("trackersPage.types.all")}</Option>
-          <Option value="COOKIE">{t("trackersPage.types.cookie")}</Option>
-          <Option value="LOCAL_STORAGE">{t("trackersPage.types.localStorage")}</Option>
-          <Option value="SESSION_STORAGE">{t("trackersPage.types.sessionStorage")}</Option>
-          <Option value="INDEXED_DB">{t("trackersPage.types.indexedDb")}</Option>
-          <Option value="CACHE_STORAGE">{t("trackersPage.types.cacheStorage")}</Option>
-        </Select>
-        <Select
-          value={sourceFilter ?? "ALL"}
-          onValueChange={handleSourceFilterChange}
-        >
-          <Option value="ALL">{t("trackersPage.sources.all")}</Option>
-          <Option value="SCRIPT">{t("trackersPage.sources.script")}</Option>
-          <Option value="PRE_EXISTING">{t("trackersPage.sources.preExisting")}</Option>
-          <Option value="HTTP">{t("trackersPage.sources.http")}</Option>
-          <Option value="EXTENSION">{t("trackersPage.sources.extension")}</Option>
-        </Select>
-        <Select
-          value={categoryFilter ?? "ALL"}
-          onValueChange={handleCategoryFilterChange}
-        >
-          <Option value="ALL">{t("trackersPage.filters.allCategories")}</Option>
-          {categories.map(category => (
-            <Option key={category.id} value={category.id}>{category.name}</Option>
-          ))}
-        </Select>
-      </div>
+    <div className={cookieBannerPage()}>
+      <CookieBannerPageHeader
+        title={title}
+        description={t("trackersPage.description")}
+      />
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Input
+            placeholder={t("trackersPage.filters.search")}
+            value={queryFilter}
+            onChange={e => setQueryFilter(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleQuerySubmit()}
+            onBlur={handleQuerySubmit}
+            className="w-72"
+          />
+          <Select
+            value={thirdPartyFilter ?? "ALL"}
+            onValueChange={handleThirdPartyFilterChange}
+          >
+            <Option value="ALL">{t("trackersPage.filters.allThirdParties")}</Option>
+            {linkedThirdParties.map(party => (
+              <Option key={party.id} value={party.id}>{party.name}</Option>
+            ))}
+          </Select>
+          <Select
+            value={trackerTypeFilter ?? "ALL"}
+            onValueChange={handleTrackerTypeFilterChange}
+          >
+            <Option value="ALL">{t("trackersPage.types.all")}</Option>
+            <Option value="COOKIE">{t("trackersPage.types.cookie")}</Option>
+            <Option value="LOCAL_STORAGE">{t("trackersPage.types.localStorage")}</Option>
+            <Option value="SESSION_STORAGE">{t("trackersPage.types.sessionStorage")}</Option>
+            <Option value="INDEXED_DB">{t("trackersPage.types.indexedDb")}</Option>
+            <Option value="CACHE_STORAGE">{t("trackersPage.types.cacheStorage")}</Option>
+          </Select>
+          <Select
+            value={sourceFilter ?? "ALL"}
+            onValueChange={handleSourceFilterChange}
+          >
+            <Option value="ALL">{t("trackersPage.sources.all")}</Option>
+            <Option value="SCRIPT">{t("trackersPage.sources.script")}</Option>
+            <Option value="PRE_EXISTING">{t("trackersPage.sources.preExisting")}</Option>
+            <Option value="HTTP">{t("trackersPage.sources.http")}</Option>
+            <Option value="EXTENSION">{t("trackersPage.sources.extension")}</Option>
+          </Select>
+          <Select
+            value={categoryFilter ?? "ALL"}
+            onValueChange={handleCategoryFilterChange}
+          >
+            <Option value="ALL">{t("trackersPage.filters.allCategories")}</Option>
+            {categories.map(category => (
+              <Option key={category.id} value={category.id}>{category.name}</Option>
+            ))}
+          </Select>
+        </div>
 
-      <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
-        {patterns.length > 0
-          ? (
-              <SortableTable
-                {...pagination}
-                refetch={refetchWithFilters}
-                pageSize={50}
-              >
-                <Thead>
-                  <Tr>
-                    <SortableTh field="NAME">{t("trackersPage.columns.name")}</SortableTh>
-                    <Th>{t("trackersPage.columns.thirdParty")}</Th>
-                    <SortableTh field="SOURCE">{t("trackersPage.columns.source")}</SortableTh>
-                    <Th>{t("trackersPage.columns.category")}</Th>
-                    <Th>{t("trackersPage.columns.maxAge")}</Th>
-                    <SortableTh field="LAST_MATCHED_AT">{t("trackersPage.columns.lastMatched")}</SortableTh>
-                    <Th className="w-px" />
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {patterns.map(pattern => (
-                    <TrackerPatternRow
-                      key={pattern.id}
-                      patternKey={pattern}
-                      connectionId={connectionId}
-                    />
-                  ))}
-                </Tbody>
-              </SortableTable>
-            )
-          : (
-              <Card padded>
-                <div className="text-center py-12">
-                  <h3 className="text-lg font-semibold mb-2">
-                    {t("trackersPage.empty.title")}
-                  </h3>
-                  <p className="text-txt-tertiary">
-                    {t("trackersPage.empty.description")}
-                  </p>
-                </div>
-              </Card>
-            )}
+        <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
+          {patterns.length > 0
+            ? (
+                <SortableTable
+                  {...pagination}
+                  refetch={refetchWithFilters}
+                  pageSize={50}
+                >
+                  <Thead>
+                    <Tr>
+                      <SortableTh field="NAME">{t("trackersPage.columns.name")}</SortableTh>
+                      <Th>{t("trackersPage.columns.thirdParty")}</Th>
+                      <SortableTh field="SOURCE">{t("trackersPage.columns.source")}</SortableTh>
+                      <Th>{t("trackersPage.columns.category")}</Th>
+                      <Th>{t("trackersPage.columns.maxAge")}</Th>
+                      <SortableTh field="LAST_MATCHED_AT">{t("trackersPage.columns.lastMatched")}</SortableTh>
+                      <Th className="w-px" />
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {patterns.map(pattern => (
+                      <TrackerPatternRow
+                        key={pattern.id}
+                        patternKey={pattern}
+                        connectionId={connectionId}
+                      />
+                    ))}
+                  </Tbody>
+                </SortableTable>
+              )
+            : (
+                <Card padded>
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold mb-2">
+                      {t("trackersPage.empty.title")}
+                    </h3>
+                    <p className="text-txt-tertiary">
+                      {t("trackersPage.empty.description")}
+                    </p>
+                  </div>
+                </Card>
+              )}
+        </div>
       </div>
     </div>
   );

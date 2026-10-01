@@ -94,6 +94,8 @@
     "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
   },
   "trackersPage": {
+    "title": "Traceurs",
+    "description": "Modèles détectés sur ce site et la catégorie à laquelle chacun appartient.",
     "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories" },
     "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
@@ -139,6 +141,8 @@
     "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {
+    "title": "Ressources",
+    "description": "Scripts, iframes et autres ressources pas encore classées dans une catégorie.",
     "filters": { "search": "Rechercher par origine ou chemin..." },
     "types": { "all": "Tous les types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origine", "path": "Chemin", "category": "Catégorie", "lastDetected": "Dernière détection" },
@@ -192,6 +196,8 @@
     "empty": "Aucune catégorie pour le moment. Ajoutez une catégorie pour commencer à gérer les cookies."
   },
   "consentRecordsPage": {
+    "title": "Journal",
+    "description": "Choix de consentement effectués par les visiteurs sur cette bannière.",
     "filters": { "allActions": "Toutes les actions", "visitorId": "ID du visiteur", "bannerVersion": "Version de la bannière" },
     "actions": { "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },
     "columns": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "source": "Source", "country": "Pays", "subdivision": "Subdivision", "date": "Date" },
@@ -215,7 +221,7 @@
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publishing": "Publication...", "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer" },
-    "tabs": { "display": "Affichage", "settings": "Paramètres", "translations": "Traductions", "trackers": "Traceurs", "resources": "Ressources" }
+    "tabs": { "display": "Affichage", "settings": "Paramètres", "translations": "Traductions" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nouvelle bannière de cookies",

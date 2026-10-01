@@ -2255,7 +2255,8 @@
     "compliancePortalsRightRequests": "Rechtenverzoeken",
     "cookieBanners": "Cookiebanners",
     "cookieBannersConfigure": "Configureren",
-    "cookieBannersDiscovery": "Ontdekking",
+    "cookieBannersTrackers": "Trackers",
+    "cookieBannersResources": "Resources",
     "cookieBannersTrail": "Logboek",
     "cookieBannersTCF": "TCF",
     "cookieBannerSwitcher": {

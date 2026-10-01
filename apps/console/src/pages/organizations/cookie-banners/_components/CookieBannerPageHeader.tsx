@@ -18,36 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 
-import type { CookieBannerResourcesPageQuery } from "#/__generated__/core/CookieBannerResourcesPageQuery.graphql";
+import { cookieBannerPageHeader } from "../variants";
 
-import { CookieBannerResourcesPage, cookieBannerResourcesPageQuery } from "./CookieBannerResourcesPage";
-import { CookieBannerResourcesPageSkeleton } from "./CookieBannerResourcesPageSkeleton";
+interface CookieBannerPageHeaderProps {
+  title: string;
+  description: string;
+}
 
-export default function CookieBannerResourcesPageLoader() {
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  if (typeof cookieBannerId !== "string") {
-    throw new Error("Missing cookieBannerId parameter");
-  }
-
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerResourcesPageQuery>(
-    cookieBannerResourcesPageQuery,
-  );
-
-  useEffect(() => {
-    loadQuery({ cookieBannerId });
-  }, [loadQuery, cookieBannerId]);
-
-  if (!queryRef) {
-    return <CookieBannerResourcesPageSkeleton />;
-  }
+export function CookieBannerPageHeader({ title, description }: CookieBannerPageHeaderProps) {
+  const { root } = cookieBannerPageHeader();
 
   return (
-    <Suspense fallback={<CookieBannerResourcesPageSkeleton />}>
-      <CookieBannerResourcesPage queryRef={queryRef} />
-    </Suspense>
+    <div className={root()}>
+      <Heading level={1} size={6} weight="medium" highContrast>
+        {title}
+      </Heading>
+      <Text size={2} color="faint">
+        {description}
+      </Text>
+    </div>
   );
 }

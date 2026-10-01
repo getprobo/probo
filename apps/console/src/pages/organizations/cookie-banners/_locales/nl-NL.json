@@ -94,6 +94,8 @@
     "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} seconden" }
   },
   "trackersPage": {
+    "title": "Trackers",
+    "description": "Patronen die op deze site zijn gedetecteerd en de categorie van elk patroon.",
     "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
@@ -139,6 +141,8 @@
     "types": { "script": "Script", "iframe": "Iframe", "image": "Afbeelding", "stylesheet": "Stylesheet", "font": "Lettertype", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {
+    "title": "Resources",
+    "description": "Scripts, iframes en andere resources die nog niet in een categorie staan.",
     "filters": { "search": "Zoeken op origin of pad..." },
     "types": { "all": "Alle typen", "script": "Script", "iframe": "Iframe", "image": "Afbeelding", "stylesheet": "Stylesheet", "font": "Lettertype", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origin", "path": "Pad", "category": "Categorie", "lastDetected": "Laatst gedetecteerd" },
@@ -192,6 +196,8 @@
     "empty": "Nog geen categorieën. Voeg een categorie toe om cookies te gaan beheren."
   },
   "consentRecordsPage": {
+    "title": "Logboek",
+    "description": "Toestemmingskeuzes die bezoekers op deze banner hebben gemaakt.",
     "filters": { "allActions": "Alle acties", "visitorId": "Bezoekers-ID", "bannerVersion": "Bannerversie" },
     "actions": { "acceptAll": "Alles accepteren", "rejectAll": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },
     "columns": { "visitorId": "Bezoekers-ID", "action": "Actie", "bannerVersion": "Bannerversie", "ipAddress": "IP-adres", "sdkVersion": "SDK-versie", "regulation": "Regelgeving", "source": "Bron", "country": "Land", "subdivision": "Subdivisie", "date": "Datum" },
@@ -215,7 +221,7 @@
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "status": { "active": "Actief", "inactive": "Inactief" },
     "actions": { "publishing": "Bezig met publiceren...", "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen" },
-    "tabs": { "display": "Weergave", "settings": "Instellingen", "translations": "Vertalingen", "trackers": "Trackers", "resources": "Resources" }
+    "tabs": { "display": "Weergave", "settings": "Instellingen", "translations": "Vertalingen" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nieuwe cookiebanner",

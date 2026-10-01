@@ -18,18 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
+import { cookieBannerPage } from "../../variants";
+
 export function CookieBannerTrackersPageSkeleton() {
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="flex items-center gap-4">
-        <div className="h-9 w-64 rounded bg-bg-subtle" />
-        <div className="h-9 w-36 rounded bg-bg-subtle" />
-      </div>
-      <div className="rounded-lg border border-border-low">
-        <div className="h-10 border-b border-border-low bg-bg-subtle" />
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-12 border-b border-border-low last:border-b-0" />
-        ))}
+    <div className={cookieBannerPage()}>
+      <CookieBannerPageHeaderSkeleton titleClassName="w-24" />
+      <div className="space-y-4 animate-pulse">
+        <div className="flex items-center gap-4">
+          <div className="h-9 w-64 rounded bg-bg-subtle" />
+          <div className="h-9 w-36 rounded bg-bg-subtle" />
+        </div>
+        <div className="rounded-lg border border-border-low">
+          <div className="h-10 border-b border-border-low bg-bg-subtle" />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-12 border-b border-border-low last:border-b-0" />
+          ))}
+        </div>
       </div>
     </div>
   );
