@@ -176,6 +176,53 @@ func TestIsUUIDShape(t *testing.T) {
 	}
 }
 
+func TestCollapseHyphenUUIDRuns(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "full 8-4-4-4-12 run is rejoined",
+			input:    []string{"community", "form", "8f42bee0", "1096", "4458", "89e3", "f4495edd018b", "creation"},
+			expected: []string{"community", "form", "8f42bee0-1096-4458-89e3-f4495edd018b", "creation"},
+		},
+		{
+			name:     "8-4-4-4 without a 12-hex tail is left split",
+			input:    []string{"community", "form", "8f42bee0", "1096", "4458", "89e3", "creation"},
+			expected: []string{"community", "form", "8f42bee0", "1096", "4458", "89e3", "creation"},
+		},
+		{
+			name:     "4-4-4-12 without an 8-hex head is left split",
+			input:    []string{"community", "form", "1096", "4458", "89e3", "f4495edd018b", "creation"},
+			expected: []string{"community", "form", "1096", "4458", "89e3", "f4495edd018b", "creation"},
+		},
+		{
+			name: "adjacent UUIDs are each rejoined",
+			input: []string{
+				"8f42bee0", "1096", "4458", "89e3", "f4495edd018b",
+				"11111111", "2222", "3333", "4444", "555555555555",
+			},
+			expected: []string{
+				"8f42bee0-1096-4458-89e3-f4495edd018b",
+				"11111111-2222-3333-4444-555555555555",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.expected, collapseHyphenUUIDRuns(tt.input))
+			},
+		)
+	}
+}
+
 func TestHeuristicTemplate(t *testing.T) {
 	t.Parallel()
 
@@ -303,9 +350,10 @@ func TestHeuristicTemplate(t *testing.T) {
 			changed:  true,
 		},
 		{
-			name:    "incomplete hyphen hex run is not treated as a UUID",
-			input:   "community-form-40a2-48c8-abfa-creation",
-			changed: false,
+			name:     "partial 8-4-4-4 hyphen run still shreds the hex groups",
+			input:    "community-form-8f42bee0-1096-4458-89e3-creation",
+			template: "community-form-*-1096-4458-89e3-creation",
+			changed:  true,
 		},
 	}
 
