@@ -69,6 +69,85 @@ func TestOrganization_Update(t *testing.T) {
 		assert.Equal(t, owner.GetOrganizationID().String(), result.UpdateOrganization.Organization.ID)
 		assert.Equal(t, newName, result.UpdateOrganization.Organization.Name)
 	})
+
+	t.Run("update legal name", func(t *testing.T) {
+		const mutation = `
+			mutation UpdateOrganization($input: UpdateOrganizationInput!) {
+				updateOrganization(input: $input) {
+					organization {
+						id
+						name
+						legalName
+					}
+				}
+			}
+		`
+
+		var updated struct {
+			UpdateOrganization struct {
+				Organization struct {
+					ID        string  `json:"id"`
+					Name      string  `json:"name"`
+					LegalName *string `json:"legalName"`
+				} `json:"organization"`
+			} `json:"updateOrganization"`
+		}
+
+		legalName := fmt.Sprintf("Updated Org Legal %d Inc.", time.Now().UnixNano())
+		err := owner.ExecuteConnect(mutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"legalName":      legalName,
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Equal(t, owner.GetOrganizationID().String(), updated.UpdateOrganization.Organization.ID)
+		require.NotNil(t, updated.UpdateOrganization.Organization.LegalName)
+		assert.Equal(t, legalName, *updated.UpdateOrganization.Organization.LegalName)
+		operatingName := updated.UpdateOrganization.Organization.Name
+
+		err = owner.ExecuteConnect(mutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           operatingName + " Ops",
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Equal(t, operatingName+" Ops", updated.UpdateOrganization.Organization.Name)
+		require.NotNil(t, updated.UpdateOrganization.Organization.LegalName)
+		assert.Equal(t, legalName, *updated.UpdateOrganization.Organization.LegalName)
+
+		err = owner.ExecuteConnect(mutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"legalName":      nil,
+			},
+		}, &updated)
+		require.NoError(t, err)
+		assert.Nil(t, updated.UpdateOrganization.Organization.LegalName)
+
+		var fetched struct {
+			Node struct {
+				ID        string  `json:"id"`
+				LegalName *string `json:"legalName"`
+			} `json:"node"`
+		}
+		err = owner.Execute(`
+			query GetOrganization($id: ID!) {
+				node(id: $id) {
+					... on Organization {
+						id
+						legalName
+					}
+				}
+			}
+		`, map[string]any{
+			"id": owner.GetOrganizationID().String(),
+		}, &fetched)
+		require.NoError(t, err)
+		assert.Equal(t, owner.GetOrganizationID().String(), fetched.Node.ID)
+		assert.Nil(t, fetched.Node.LegalName)
+	})
 }
 
 func TestOrganization_UpdateContext(t *testing.T) {

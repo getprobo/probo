@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // CreateOrganization is the resolver for the createOrganization field.
@@ -98,6 +99,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		identity.ID,
 		&iam.CreateOrganizationRequest{
 			Name:               input.Name,
+			LegalName:          input.LegalName,
 			LogoFile:           logoFile,
 			HorizontalLogoFile: horizontalLogoFile,
 		},
@@ -105,6 +107,10 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create organization", log.Error(err))
@@ -125,7 +131,8 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 	}
 
 	req := &iam.UpdateOrganizationRequest{
-		Name: input.Name,
+		Name:      input.Name,
+		LegalName: gqlutils.UnwrapOmittable(input.LegalName),
 	}
 
 	if input.LogoFile != nil {
@@ -152,17 +159,17 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 		req,
 	)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot update organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateOrganizationPayload{
-		Organization: &types.Organization{
-			ID:        organization.ID,
-			Name:      organization.Name,
-			CreatedAt: organization.CreatedAt,
-			UpdatedAt: organization.UpdatedAt,
-		},
+		Organization: types.NewOrganization(organization),
 	}, nil
 }
 

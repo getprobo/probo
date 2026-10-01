@@ -113,6 +113,7 @@ type UpdateOrganizationContextPayload {
 type Organization implements Node {
     id: ID!
     name: String!
+    legalName: String
     logo: File @goField(forceResolver: true)
     horizontalLogo: File @goField(forceResolver: true)
 

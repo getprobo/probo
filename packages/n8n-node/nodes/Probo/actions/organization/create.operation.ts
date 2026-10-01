@@ -33,8 +33,21 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The name of the organization',
+		description: 'The operating name of the organization',
 		required: true,
+	},
+	{
+		displayName: 'Legal Name',
+		name: 'legalName',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['organization'],
+				operation: ['create'],
+			},
+		},
+		default: '',
+		description: 'Registered legal name. Leave empty when it matches the operating name.',
 	},
 ];
 
@@ -43,6 +56,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const name = this.getNodeParameter('name', itemIndex) as string;
+	const legalName = this.getNodeParameter('legalName', itemIndex, '') as string;
 
 	const query = `
 		mutation CreateOrganization($input: CreateOrganizationInput!) {
@@ -50,6 +64,7 @@ export async function execute(
 				organization {
 					id
 					name
+					legalName
 					logo {
 						id
 						fileName
@@ -67,10 +82,11 @@ export async function execute(
 		}
 	`;
 
+	const input: Record<string, string> = { name };
+	if (legalName) input.legalName = legalName;
+
 	const responseData = await proboConnectApiRequest.call(this, query, {
-		input: {
-			name,
-		},
+		input,
 	});
 
 	return {
