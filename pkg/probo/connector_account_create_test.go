@@ -47,6 +47,7 @@ func TestCreate_RecordsImplicitAccount(t *testing.T) {
 		scope,
 		CreateConnectorRequest{
 			OrganizationID: organizationID,
+			Name:           "Test",
 			Provider:       coredata.ConnectorProviderBrex,
 			Protocol:       coredata.ConnectorProtocolAPIKey,
 			Connection:     &connector.APIKeyConnection{APIKey: "bxt_test-key"},
@@ -69,6 +70,7 @@ func TestCreate_RecordsSettingsAccount(t *testing.T) {
 		scope,
 		CreateConnectorRequest{
 			OrganizationID: organizationID,
+			Name:           "Test",
 			Provider:       coredata.ConnectorProviderAWS,
 			Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 			Connection:     &connector.WorkloadIdentityConnection{},
@@ -106,6 +108,7 @@ func TestDisableAccount_RefusesInitialAccount(t *testing.T) {
 			scope,
 			CreateConnectorRequest{
 				OrganizationID: organizationID,
+				Name:           "Test",
 				Provider:       coredata.ConnectorProviderBrex,
 				Protocol:       coredata.ConnectorProtocolAPIKey,
 				Connection:     &connector.APIKeyConnection{APIKey: "bxt_test-key"},
@@ -144,6 +147,7 @@ func TestDisableAccount_RefusesInitialAccount(t *testing.T) {
 			scope,
 			CreateConnectorRequest{
 				OrganizationID: organizationID,
+				Name:           "Test",
 				Provider:       coredata.ConnectorProviderAWS,
 				Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 				Connection:     &connector.WorkloadIdentityConnection{},
@@ -169,6 +173,7 @@ func TestCreate_LeavesOrganizationInstallWithoutAccount(t *testing.T) {
 		scope,
 		CreateConnectorRequest{
 			OrganizationID: organizationID,
+			Name:           "Test",
 			Provider:       coredata.ConnectorProviderAWS,
 			Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 			Connection:     &connector.WorkloadIdentityConnection{},
@@ -191,6 +196,7 @@ func createAWSConnector(
 		scope,
 		CreateConnectorRequest{
 			OrganizationID: organizationID,
+			Name:           "Test",
 			Provider:       coredata.ConnectorProviderAWS,
 			Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 			Connection:     &connector.WorkloadIdentityConnection{},

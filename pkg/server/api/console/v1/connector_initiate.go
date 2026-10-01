@@ -120,7 +120,17 @@ func handleConnectorInitiate(
 		// exactly the registered scopes is a per-provider OAuth trait. No
 		// short-circuit either way — every reconnect runs the full OAuth
 		// flow so revoked or stale tokens are never silently reused.
-		opts := connector.InitiateOptions{Scopes: requestedScopes, Site: r.URL.Query().Get("site")}
+		name, err := initiateConnectorName(r, existing != nil)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, err)
+			return
+		}
+
+		opts := connector.InitiateOptions{
+			Scopes: requestedScopes,
+			Site:   r.URL.Query().Get("site"),
+			Name:   name,
+		}
 		if existing != nil {
 			opts.GrantedScopes = existing.Connection.Scopes()
 			opts.IncludeGrantedScopes = true
@@ -168,4 +178,19 @@ func loadExistingConnector(
 	}
 
 	return prb.Connectors.GetWithConnection(r.Context(), scope, parsedID)
+}
+
+// initiateConnectorName reads the label for a fresh connect. A reconnect
+// keeps the name already stored on the row, so the parameter is ignored.
+func initiateConnectorName(r *http.Request, reconnecting bool) (string, error) {
+	if reconnecting {
+		return "", nil
+	}
+
+	name, err := probo.NormalizeConnectorName(r.URL.Query().Get("name"))
+	if err != nil {
+		return "", fmt.Errorf("invalid name parameter")
+	}
+
+	return name, nil
 }

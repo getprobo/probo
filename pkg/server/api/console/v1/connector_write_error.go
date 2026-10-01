@@ -18,52 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+package console_v1
 
-export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['connector'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
-];
+import (
+	"context"
+	"errors"
 
-export async function execute(
-	this: IExecuteFunctions,
-	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
+)
 
-	const query = `
-		query GetConnectors($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					connectors {
-						id
-						name
-						provider
-						protocol
-						createdAt
-					}
-				}
-			}
-		}
-	`;
+// Kept out of connector_resolvers.go: gqlgen comments out helpers there.
+func connectorWriteError(ctx context.Context, logger *log.Logger, message string, err error) error {
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return gqlutils.NotFound(ctx, err)
+	}
 
-	const responseData = await proboApiRequest.call(this, query, { organizationId });
+	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+		return gqlutils.InvalidValidationErrors(ctx, validationErrors)
+	}
 
-	return {
-		json: responseData,
-		pairedItem: { item: itemIndex },
-	};
+	logger.ErrorCtx(ctx, message, log.Error(err))
+
+	return gqlutils.Internal(ctx)
 }

@@ -34,6 +34,7 @@ import {
 } from "../_lib/connectorSettings";
 
 import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
+import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
 
 export function OAuthConnectForm({
   organizationId,
@@ -43,6 +44,7 @@ export function OAuthConnectForm({
   driver: ConnectVendorDriver;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const connectorName = useConnectorName();
   const [datadogSite, setDatadogSite] = useState("US1");
   const [zendeskSubdomain, setZendeskSubdomain] = useState("");
   const zendeskReady = driver.provider !== "ZENDESK" || cleanZendeskSubdomain(zendeskSubdomain) !== "";
@@ -52,7 +54,7 @@ export function OAuthConnectForm({
       className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!zendeskReady) {
+        if (connectorName.rejectIfEmpty() || !zendeskReady) {
           return;
         }
         const extras: Record<string, string> | undefined = driver.provider === "DATADOG"
@@ -60,9 +62,15 @@ export function OAuthConnectForm({
           : driver.provider === "ZENDESK"
             ? { subdomain: cleanZendeskSubdomain(zendeskSubdomain) }
             : undefined;
-        connectOAuthProvider(organizationId, driver.provider, driver.oauth2Scopes, extras);
+        connectOAuthProvider(organizationId, driver.provider, driver.oauth2Scopes, extras, connectorName.trimmed);
       }}
     >
+      <ConnectorNameField
+        name={connectorName.name}
+        error={connectorName.error}
+        onChange={connectorName.onChange}
+        onEmpty={connectorName.rejectIfEmpty}
+      />
       {driver.provider === "DATADOG" && (
         <Field label={t("marketplacePage.fields.datadogSite")} required>
           <Select value={datadogSite} onValueChange={(value: string | null) => setDatadogSite(value ?? "US1")}>

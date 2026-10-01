@@ -36,6 +36,7 @@ import { graphql } from "relay-runtime";
 
 import type { ClientCredentialsConnectorDialog_provider$key } from "#/__generated__/core/ClientCredentialsConnectorDialog_provider.graphql";
 import type { ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation.graphql";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
@@ -92,6 +93,7 @@ export function ClientCredentialsConnectorDialog({
   );
   const dialogRef = useDialogRef();
 
+  const connectorName = useConnectorName();
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [tokenUrl, setTokenUrl] = useState("");
@@ -119,6 +121,9 @@ export function ClientCredentialsConnectorDialog({
   }, [dialogRef, provider]);
 
   const connectClientCredentialsProvider = () => {
+    if (connectorName.rejectIfEmpty()) {
+      return;
+    }
     if (!provider || !clientId.trim() || !clientSecret.trim()) {
       return;
     }
@@ -147,6 +152,7 @@ export function ClientCredentialsConnectorDialog({
       variables: {
         input: {
           organizationId,
+          name: connectorName.trimmed,
           provider: provider.provider,
           clientId: clientId.trim(),
           clientSecret: clientSecret.trim(),
@@ -224,6 +230,12 @@ export function ClientCredentialsConnectorDialog({
         }}
       >
         <DialogContent padded className="space-y-4">
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <p className="text-txt-secondary text-sm">
             {t("clientCredentialsConnectorDialog.description", {
               provider: provider?.displayName ?? "",

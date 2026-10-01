@@ -122,6 +122,7 @@ func TestCreateAzureWorkloadIdentityConnector(t *testing.T) {
 	err := owner.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      orgID,
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       azureFixtureTenantID,
 			"azureClientId":       azureFixtureClientID,
@@ -143,6 +144,7 @@ func TestCreateAzureWorkloadIdentityConnector(t *testing.T) {
 		err := owner.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":      orgID,
+				"name":                "Test",
 				"provider":            "AZURE",
 				"azureTenantId":       azureSecondTenantID,
 				"azureClientId":       azureSecondClientID,
@@ -165,6 +167,7 @@ func TestCreateAzureWorkloadIdentityConnector_InvalidTenantID(t *testing.T) {
 	err := owner.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      owner.GetOrganizationID().String(),
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       bogus,
 			"azureClientId":       azureFixtureClientID,
@@ -183,6 +186,7 @@ func TestCreateAzureWorkloadIdentityConnector_InvalidClientID(t *testing.T) {
 	err := owner.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      owner.GetOrganizationID().String(),
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       azureFixtureTenantID,
 			"azureClientId":       bogus,
@@ -201,6 +205,7 @@ func TestCreateAzureWorkloadIdentityConnector_InvalidSubscriptionID(t *testing.T
 	err := owner.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      owner.GetOrganizationID().String(),
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       azureFixtureTenantID,
 			"azureClientId":       azureFixtureClientID,
@@ -219,6 +224,7 @@ func TestCreateAzureWorkloadIdentityConnector_UnknownEnvironment(t *testing.T) {
 	err := owner.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      owner.GetOrganizationID().String(),
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       azureFixtureTenantID,
 			"azureClientId":       azureFixtureClientID,
@@ -240,6 +246,7 @@ func TestAzureConnectorConnectionStatus_ProbeFailure(t *testing.T) {
 	resp, err := owner.Do(createAzureWorkloadIdentityConnectorWithStatusMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      orgID,
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       azureFixtureTenantID,
 			"azureClientId":       azureFixtureClientID,
@@ -272,6 +279,7 @@ func TestAzureConnectorConnectionStatus_GovernmentProbeFailure(t *testing.T) {
 	resp, err := owner.Do(createAzureWorkloadIdentityConnectorWithStatusMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      orgID,
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       azureGovTenantID,
 			"azureClientId":       azureGovClientID,
@@ -318,6 +326,7 @@ func TestAzureConnector_RBAC(t *testing.T) {
 		err := viewer.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":      orgID,
+				"name":                "Test",
 				"provider":            "AZURE",
 				"azureTenantId":       azureFixtureTenantID,
 				"azureClientId":       azureFixtureClientID,
@@ -335,6 +344,7 @@ func TestAzureConnector_RBAC(t *testing.T) {
 		err := owner.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":      orgID,
+				"name":                "Test",
 				"provider":            "AZURE",
 				"azureTenantId":       azureFixtureTenantID,
 				"azureClientId":       azureFixtureClientID,
@@ -360,6 +370,7 @@ func TestAzureConnector_TenantIsolation(t *testing.T) {
 	err := org1.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId":      org1ID,
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       azureFixtureTenantID,
 			"azureClientId":       azureFixtureClientID,
@@ -383,6 +394,7 @@ func TestAzureConnector_TenantIsolation(t *testing.T) {
 		err := org2.Execute(createAzureWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId":      org1ID,
+				"name":                "Test",
 				"provider":            "AZURE",
 				"azureTenantId":       azureFixtureTenantID,
 				"azureClientId":       azureFixtureClientID,

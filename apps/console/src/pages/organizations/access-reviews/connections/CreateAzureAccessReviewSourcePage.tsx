@@ -45,6 +45,7 @@ import type { CreateAzureAccessReviewSourcePageQuery } from "#/__generated__/cor
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
 import { isAzureGUID } from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
 import { integrationListPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 
@@ -118,6 +119,7 @@ export function CreateAzureAccessReviewSourcePage({
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
+  const connectorName = useConnectorName();
   const [tenantId, setTenantId] = useState("");
   const [clientId, setClientId] = useState("");
   const [subscriptionId, setSubscriptionId] = useState("");
@@ -196,7 +198,7 @@ export function CreateAzureAccessReviewSourcePage({
   const formValid = tenantValid && clientValid && subscriptionValid;
 
   const onSubmit = async () => {
-    if (!formValid || isCreating) {
+    if (connectorName.rejectIfEmpty() || !formValid || isCreating) {
       return;
     }
 
@@ -208,6 +210,7 @@ export function CreateAzureAccessReviewSourcePage({
           variables: {
             input: {
               organizationId,
+              name: connectorName.trimmed,
               provider: "AZURE",
               azureTenantId: tenantId.trim(),
               azureClientId: clientId.trim(),
@@ -289,6 +292,12 @@ export function CreateAzureAccessReviewSourcePage({
           }}
           className="space-y-4"
         >
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <Field
             name="tenantId"
             label={t("createAzureAccessReviewSourcePage.fields.tenantId")}

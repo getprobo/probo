@@ -420,6 +420,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolAPIKey,
 		Connection:     conn,
@@ -449,9 +450,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create API key connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create API key connector", err)
 	}
 
 	r.accessReview.SelectSoleOrganization(ctx, scope, cnnctr.ID)
@@ -484,6 +483,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolOAuth2,
 		Connection:     oauth2Conn,
@@ -498,9 +498,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create client credentials connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create client credentials connector", err)
 	}
 
 	r.accessReview.SelectSoleOrganization(ctx, scope, cnnctr.ID)
@@ -528,15 +526,14 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 		Connection:     &connector.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create workload identity connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create workload identity connector", err)
 	}
 
 	return &types.CreateWorkloadIdentityConnectorPayload{
@@ -562,15 +559,14 @@ func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, inpu
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 		Connection:     &connector.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create organization connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create organization connector", err)
 	}
 
 	discovered := []*types.DiscoveredConnectorAccount{}
@@ -693,6 +689,26 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 
 	return &types.DeleteConnectorPayload{
 		DeletedConnectorID: input.ConnectorID,
+	}, nil
+}
+
+// UpdateConnector is the resolver for the updateConnector field.
+func (r *mutationResolver) UpdateConnector(ctx context.Context, input types.UpdateConnectorInput) (*types.UpdateConnectorPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	cnnctr, err := r.probo.Connectors.Update(ctx, scope, probo.UpdateConnectorRequest{
+		ConnectorID: input.ConnectorID,
+		Name:        input.Name,
+	})
+	if err != nil {
+		return nil, connectorWriteError(ctx, r.logger, "cannot update connector", err)
+	}
+
+	return &types.UpdateConnectorPayload{
+		Connector: types.NewConnector(cnnctr),
 	}, nil
 }
 

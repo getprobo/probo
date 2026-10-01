@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/connector/discover"
 	enableaccounts "go.probo.inc/probo/pkg/cmd/connector/enable-accounts"
 	"go.probo.inc/probo/pkg/cmd/connector/list"
+	"go.probo.inc/probo/pkg/cmd/connector/update"
 	"go.probo.inc/probo/pkg/cmd/connector/view"
 )
 
@@ -41,6 +42,7 @@ func NewCmdConnector(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(discover.NewCmdDiscover(f))
 	cmd.AddCommand(enableaccounts.NewCmdEnableAccounts(f))
 	cmd.AddCommand(connect.NewCmdConnect(f))
+	cmd.AddCommand(update.NewCmdUpdate(f))
 
 	return cmd
 }

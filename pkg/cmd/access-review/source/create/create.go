@@ -172,7 +172,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			var createdConnectorID string
 
 			if flagRoleARN != "" {
-				connectorID, status, err := createAWSConnector(client, flagOrg, flagRoleARN)
+				connectorID, status, err := createAWSConnector(client, flagOrg, flagName, flagRoleARN)
 				if err != nil {
 					return err
 				}
@@ -193,6 +193,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				connectorID, status, err := createGCPConnector(
 					client,
 					flagOrg,
+					flagName,
 					flagGCPWorkloadIdentityProvider,
 					flagGCPServiceAccountEmail,
 				)
@@ -216,6 +217,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				connectorID, status, err := createAzureConnector(
 					client,
 					flagOrg,
+					flagName,
 					flagAzureTenantID,
 					flagAzureClientID,
 					flagAzureSubscriptionID,
@@ -358,12 +360,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 func createAWSConnector(
 	client *api.Client,
 	orgID string,
+	name string,
 	roleARN string,
 ) (string, string, error) {
 	return createWorkloadIdentityConnector(
 		client,
 		map[string]any{
 			"organizationId": orgID,
+			"name":           name,
 			"provider":       "AWS",
 			"awsRoleArn":     roleARN,
 		},
@@ -373,6 +377,7 @@ func createAWSConnector(
 func createGCPConnector(
 	client *api.Client,
 	orgID string,
+	name string,
 	providerResource string,
 	serviceAccountEmail string,
 ) (string, string, error) {
@@ -380,6 +385,7 @@ func createGCPConnector(
 		client,
 		map[string]any{
 			"organizationId":              orgID,
+			"name":                        name,
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": providerResource,
 			"gcpServiceAccountEmail":      serviceAccountEmail,
@@ -390,6 +396,7 @@ func createGCPConnector(
 func createAzureConnector(
 	client *api.Client,
 	orgID string,
+	name string,
 	tenantID string,
 	clientID string,
 	subscriptionID string,
@@ -399,6 +406,7 @@ func createAzureConnector(
 		client,
 		map[string]any{
 			"organizationId":      orgID,
+			"name":                name,
 			"provider":            "AZURE",
 			"azureTenantId":       tenantID,
 			"azureClientId":       clientID,
