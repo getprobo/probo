@@ -41,6 +41,7 @@ func init() {
 	Register(KeyPasswordPolicy, linuxPasswordPolicy)
 	Register(KeyRemoteLogin, linuxRemoteLogin)
 	Register(KeyMalwareProtection, linuxMalwareProtection)
+	Register(KeyLoginPassword, linuxLoginPassword)
 }
 
 func linuxDiskEncryption(ctx context.Context) Result {
@@ -1077,4 +1078,34 @@ func kvLookup(body, key string) string {
 	}
 
 	return ""
+}
+
+// linuxLoginPassword reports whether a session can open without a password:
+// display manager or console auto-login, or an account with an empty password
+// field. Hashes are read to test emptiness only and never leave the host.
+func linuxLoginPassword(ctx context.Context) Result {
+	passwd, err := os.ReadFile("/etc/passwd")
+	if err != nil {
+		return unknown(map[string]any{"error": err.Error()})
+	}
+
+	shadow, err := os.ReadFile("/etc/shadow")
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return unknown(map[string]any{"error": err.Error()})
+	}
+
+	sources := displayManagerAutoLogin("/")
+
+	dropIns, _ := filepath.Glob("/etc/systemd/system/*getty@*.service.d/*.conf")
+	for _, name := range dropIns {
+		if data, err := os.ReadFile(name); err == nil && gettyAutoLogin(string(data)) {
+			sources = append(sources, autoLoginSourceGetty)
+			break
+		}
+	}
+
+	empty := countLinuxAccountsWithoutPassword(string(passwd), string(shadow))
+	ev := loginPasswordEvidence(sources, empty)
+
+	return loginPasswordResult(ev, sources, empty)
 }

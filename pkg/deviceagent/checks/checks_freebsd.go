@@ -36,6 +36,7 @@ func init() {
 	Register(KeyPasswordPolicy, freebsdPasswordPolicy)
 	Register(KeyRemoteLogin, freebsdRemoteLogin)
 	Register(KeyMalwareProtection, freebsdMalwareProtection)
+	Register(KeyLoginPassword, freebsdLoginPassword)
 }
 
 func freebsdDiskEncryption(ctx context.Context) Result {
@@ -187,4 +188,27 @@ func freebsdRemoteLogin(ctx context.Context) Result {
 	}
 
 	return pass(ev)
+}
+
+// freebsdLoginPassword reports console auto-login through gettytab al=,
+// display managers installed from ports, and master.passwd accounts with an
+// empty password field. Hashes never leave the host.
+func freebsdLoginPassword(ctx context.Context) Result {
+	master, err := os.ReadFile("/etc/master.passwd")
+	if err != nil {
+		return unknown(map[string]any{"error": err.Error()})
+	}
+
+	gettytab, _ := os.ReadFile("/etc/gettytab")
+	ttys, _ := os.ReadFile("/etc/ttys")
+
+	sources := displayManagerAutoLogin("/usr/local/")
+	if freebsdGettyAutoLogin(string(gettytab), string(ttys)) {
+		sources = append(sources, autoLoginSourceGetty)
+	}
+
+	empty := countFreeBSDAccountsWithoutPassword(string(master))
+	ev := loginPasswordEvidence(sources, empty)
+
+	return loginPasswordResult(ev, sources, empty)
 }

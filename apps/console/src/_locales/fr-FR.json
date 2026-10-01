@@ -6170,7 +6170,8 @@
         "autoUpdate": "Mise à jour automatique",
         "passwordPolicy": "Politique de mot de passe",
         "remoteLogin": "Connexion à distance",
-        "malwareProtection": "Protection contre les logiciels malveillants"
+        "malwareProtection": "Protection contre les logiciels malveillants",
+        "loginPasswordRequired": "Mot de passe requis à la connexion"
       }
     },
     "history": {

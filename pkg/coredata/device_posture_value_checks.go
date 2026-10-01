@@ -685,3 +685,23 @@ func boolKeyValue(ev map[string]any, key string) DevicePostureValue {
 
 	return onOffValue(v)
 }
+
+// parseLoginPasswordValue reports ON when no session opens without a password:
+// no auto-login source and no account with an empty password. Windows and
+// macOS cannot count empty passwords and leave that key out.
+func parseLoginPasswordValue(ev map[string]any) DevicePostureValue {
+	if stringEvidence(ev, "error") != "" {
+		return unknownValue()
+	}
+
+	autoLogin, ok := boolEvidence(ev, "auto_login")
+	if !ok {
+		return unknownValue()
+	}
+
+	if empty, ok := numberEvidence(ev, "accounts_without_password"); ok && empty > 0 {
+		return onOffValue(false)
+	}
+
+	return onOffValue(!autoLogin)
+}

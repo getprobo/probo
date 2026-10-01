@@ -295,3 +295,9 @@ func windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart string) (bool, bo
 		return false, false
 	}
 }
+
+// windowsAutoAdminLogonOn reads Winlogon AutoAdminLogon, a REG_SZ that is "1"
+// when Windows signs the default user in at boot.
+func windowsAutoAdminLogonOn(value string) bool {
+	return strings.TrimSpace(value) == "1"
+}

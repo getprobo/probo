@@ -5,6 +5,18 @@ documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `LOGIN_PASSWORD_REQUIRED` check: reports whether a session can open
+  without a password. It looks for automatic login (Windows Winlogon
+  `AutoAdminLogon`; macOS `autoLoginUser` with `/etc/kcpassword`; GDM,
+  LightDM, SDDM and getty `--autologin` on Linux; gettytab `al=` and
+  display managers on FreeBSD) and, on Linux and FreeBSD, counts login
+  accounts with an empty password field. Windows also reports enabled
+  local accounts flagged as not requiring a password, and macOS whether
+  the guest account is on; neither affects the result. Only yes/no
+  values and counts are sent: no account names and no password hashes.
+
 ### Changed
 
 - The password policy check now reports the minimum password length

@@ -36,6 +36,7 @@ func init() {
 	Register(KeyPasswordPolicy, windowsPasswordPolicy)
 	Register(KeyRemoteLogin, windowsRemoteLogin)
 	Register(KeyMalwareProtection, windowsMalwareProtection)
+	Register(KeyLoginPassword, windowsLoginPassword)
 }
 
 const (
@@ -495,4 +496,56 @@ func windowsRemoteLogin(ctx context.Context) Result {
 	}
 
 	return fail(ev)
+}
+
+// windowsLoginPasswordScript reads Winlogon auto-logon and counts enabled
+// local accounts flagged PASSWORD_NOT_REQUIRED. The stored DefaultPassword is
+// only tested for presence; its value never leaves the script. The flag lets
+// an account hold an empty password but does not prove it has one, and Windows
+// offers no way to tell without attempting a logon, so it is reported only.
+const windowsLoginPasswordScript = `$ErrorActionPreference = 'Stop'; ` +
+	`$w = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'; ` +
+	`$stored = $w.PSObject.Properties.Name -contains 'DefaultPassword'; ` +
+	`$u = @(Get-CimInstance -ClassName Win32_UserAccount -Filter "LocalAccount=True AND Disabled=False AND PasswordRequired=False"); ` +
+	`"AutoAdminLogon=$($w.AutoAdminLogon);DefaultPasswordStored=$stored;PasswordNotRequired=$($u.Count)"`
+
+func windowsLoginPassword(ctx context.Context) Result {
+	out := powershellWMI(ctx, windowsLoginPasswordScript)
+	if out.Err != nil {
+		ev := map[string]any{
+			"backend": autoLoginSourceWinlogon,
+			"error":   errString(out.Err),
+			"stderr":  out.Stderr,
+		}
+		if out.TimedOut {
+			ev["timed_out"] = true
+		}
+
+		return unknown(ev)
+	}
+
+	values := parseWindowsJoinedPairs(out.Stdout)
+
+	notRequired, ok := trimmedInt(values["PasswordNotRequired"])
+	if !ok {
+		return unknown(
+			map[string]any{
+				"backend": autoLoginSourceWinlogon,
+				"error":   "cannot read local accounts",
+				"raw":     truncate(out.Stdout, 200),
+			},
+		)
+	}
+
+	var sources []string
+	if windowsAutoAdminLogonOn(values["AutoAdminLogon"]) {
+		sources = append(sources, autoLoginSourceWinlogon)
+	}
+
+	ev := loginPasswordEvidence(sources, -1)
+	ev["backend"] = autoLoginSourceWinlogon
+	ev["default_password_stored"] = strings.EqualFold(values["DefaultPasswordStored"], "True")
+	ev["password_not_required_accounts"] = notRequired
+
+	return loginPasswordResult(ev, sources, 0)
 }

@@ -36,6 +36,7 @@ const (
 	KeyPasswordPolicy    = "PASSWORD_POLICY"
 	KeyRemoteLogin       = "REMOTE_LOGIN"
 	KeyMalwareProtection = "MALWARE_PROTECTION"
+	KeyLoginPassword     = "LOGIN_PASSWORD_REQUIRED"
 )
 
 type funcCheck struct {

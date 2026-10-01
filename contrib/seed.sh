@@ -1042,6 +1042,27 @@ posture_evidence() {
         *) jq -nc '{error:"no password length from secedit or DeviceLock"}' ;;
       esac
       ;;
+    DARWIN:LOGIN_PASSWORD_REQUIRED)
+      case "$status" in
+        PASS) jq -nc '{backend:"loginwindow",auto_login:false,auto_login_sources:[],auto_login_user_set:false,kcpassword_present:false,guest_account_enabled:false}' ;;
+        FAIL) jq -nc '{backend:"loginwindow",auto_login:true,auto_login_sources:["loginwindow"],auto_login_user_set:true,kcpassword_present:true,guest_account_enabled:false}' ;;
+        *) jq -nc '{backend:"loginwindow",error:"defaults export failed"}' ;;
+      esac
+      ;;
+    LINUX:LOGIN_PASSWORD_REQUIRED)
+      case "$status" in
+        PASS) jq -nc '{auto_login:false,auto_login_sources:[],accounts_without_password:0}' ;;
+        FAIL) jq -nc '{auto_login:true,auto_login_sources:["gdm"],accounts_without_password:0}' ;;
+        *) jq -nc '{error:"open /etc/shadow: permission denied"}' ;;
+      esac
+      ;;
+    WINDOWS:LOGIN_PASSWORD_REQUIRED)
+      case "$status" in
+        PASS) jq -nc '{backend:"winlogon",auto_login:false,auto_login_sources:[],default_password_stored:false,password_not_required_accounts:0}' ;;
+        FAIL) jq -nc '{backend:"winlogon",auto_login:true,auto_login_sources:["winlogon"],default_password_stored:true,password_not_required_accounts:1}' ;;
+        *) jq -nc '{backend:"winlogon",error:"cannot read local accounts"}' ;;
+      esac
+      ;;
     # REMOTE_LOGIN is inverted: PASS means remote access is Off / denied.
     DARWIN:REMOTE_LOGIN)
       case "$status" in
@@ -1182,32 +1203,32 @@ seed_device() {
 seed_device "${PROFILE_IDS[0]}" "jane-macbook-pro" "DARWIN" "14.5" "C02XY1Z2JGH7" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
   OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:PASS >/dev/null
+  MALWARE_PROTECTION:PASS LOGIN_PASSWORD_REQUIRED:PASS >/dev/null
 
 seed_device "${PROFILE_IDS[1]}" "marcus-thinkpad" "LINUX" "Ubuntu 24.04" "PF3ABCDE" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:FAIL TIME_SYNC:PASS \
   OS_VERSION:PASS AUTO_UPDATE:UNKNOWN PASSWORD_POLICY:PASS REMOTE_LOGIN:FAIL \
-  MALWARE_PROTECTION:NOT_APPLICABLE >/dev/null
+  MALWARE_PROTECTION:NOT_APPLICABLE LOGIN_PASSWORD_REQUIRED:PASS >/dev/null
 
 seed_device "${PROFILE_IDS[4]}" "emily-macbook-air" "DARWIN" "14.4" "C02AB3C4JGH8" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:FAIL FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
   OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:FAIL REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:PASS >/dev/null
+  MALWARE_PROTECTION:PASS LOGIN_PASSWORD_REQUIRED:FAIL >/dev/null
 
 seed_device "${PROFILE_IDS[7]}" "alex-devbox" "LINUX" "Debian 12" "PF9ZYXWV" \
   DISK_ENCRYPTION:FAIL SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
   OS_VERSION:UNKNOWN AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:NOT_APPLICABLE >/dev/null
+  MALWARE_PROTECTION:NOT_APPLICABLE LOGIN_PASSWORD_REQUIRED:PASS >/dev/null
 
 seed_device "${PROFILE_IDS[3]}" "david-surface" "WINDOWS" "Windows 11 23H2" "5CD1234ABC" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:FAIL \
   OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:PASS >/dev/null
+  MALWARE_PROTECTION:PASS LOGIN_PASSWORD_REQUIRED:PASS >/dev/null
 
 seed_device "${PROFILE_IDS[2]}" "sofia-latitude" "WINDOWS" "Windows 11 22H2" "5CD9876ZYX" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:FAIL TIME_SYNC:PASS \
   OS_VERSION:FAIL AUTO_UPDATE:FAIL PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:UNKNOWN >/dev/null
+  MALWARE_PROTECTION:UNKNOWN LOGIN_PASSWORD_REQUIRED:UNKNOWN >/dev/null
 
 # 1 pending device: created and assigned, but never enrolled/activated.
 create_device "${PROFILE_IDS[6]}" >/dev/null
@@ -1216,7 +1237,7 @@ create_device "${PROFILE_IDS[6]}" >/dev/null
 revoked_id=$(seed_device "${PROFILE_IDS[5]}" "james-old-macbook" "DARWIN" "12.7" "C02OLD1JGH9" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
   OS_VERSION:FAIL AUTO_UPDATE:FAIL PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:PASS)
+  MALWARE_PROTECTION:PASS LOGIN_PASSWORD_REQUIRED:PASS)
 revoke_device "$revoked_id"
 
 echo "    8 devices created (6 active, 1 pending, 1 revoked)"

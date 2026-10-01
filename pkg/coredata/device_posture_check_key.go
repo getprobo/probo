@@ -40,6 +40,7 @@ const (
 	DevicePostureCheckKeyPasswordPolicy    DevicePostureCheckKey = "PASSWORD_POLICY"
 	DevicePostureCheckKeyRemoteLogin       DevicePostureCheckKey = "REMOTE_LOGIN"
 	DevicePostureCheckKeyMalwareProtection DevicePostureCheckKey = "MALWARE_PROTECTION"
+	DevicePostureCheckKeyLoginPassword     DevicePostureCheckKey = "LOGIN_PASSWORD_REQUIRED"
 )
 
 var (
@@ -59,6 +60,7 @@ func DevicePostureCheckKeys() []DevicePostureCheckKey {
 		DevicePostureCheckKeyPasswordPolicy,
 		DevicePostureCheckKeyRemoteLogin,
 		DevicePostureCheckKeyMalwareProtection,
+		DevicePostureCheckKeyLoginPassword,
 	}
 }
 
@@ -73,7 +75,8 @@ func (v DevicePostureCheckKey) IsValid() bool {
 		DevicePostureCheckKeyAutoUpdate,
 		DevicePostureCheckKeyPasswordPolicy,
 		DevicePostureCheckKeyRemoteLogin,
-		DevicePostureCheckKeyMalwareProtection:
+		DevicePostureCheckKeyMalwareProtection,
+		DevicePostureCheckKeyLoginPassword:
 		return true
 	}
 

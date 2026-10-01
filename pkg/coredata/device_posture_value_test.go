@@ -833,12 +833,13 @@ type devicePostureAgreementCase struct {
 // SCREEN_LOCK is absent on purpose: a passing macOS host reports a delay rather
 // than ON, so its value has no single passing kind to compare against.
 var passingKindByCheckKey = map[string]coredata.DevicePostureValueKind{
-	"FIREWALL_ENABLED":   coredata.DevicePostureValueKindOn,
-	"DISK_ENCRYPTION":    coredata.DevicePostureValueKindOn,
-	"TIME_SYNC":          coredata.DevicePostureValueKindOn,
-	"MALWARE_PROTECTION": coredata.DevicePostureValueKindOn,
-	"AUTO_UPDATE":        coredata.DevicePostureValueKindOn,
-	"REMOTE_LOGIN":       coredata.DevicePostureValueKindOff,
+	"FIREWALL_ENABLED":        coredata.DevicePostureValueKindOn,
+	"DISK_ENCRYPTION":         coredata.DevicePostureValueKindOn,
+	"TIME_SYNC":               coredata.DevicePostureValueKindOn,
+	"MALWARE_PROTECTION":      coredata.DevicePostureValueKindOn,
+	"AUTO_UPDATE":             coredata.DevicePostureValueKindOn,
+	"REMOTE_LOGIN":            coredata.DevicePostureValueKindOff,
+	"LOGIN_PASSWORD_REQUIRED": coredata.DevicePostureValueKindOn,
 }
 
 // TestParseDevicePostureValue_AgreesWithAgentStatus is the regression guard for
@@ -851,6 +852,73 @@ func TestParseDevicePostureValue_AgreesWithAgentStatus(t *testing.T) {
 	t.Parallel()
 
 	cases := []devicePostureAgreementCase{
+		{
+			name:     "linux without auto-login or empty passwords",
+			checkKey: "LOGIN_PASSWORD_REQUIRED",
+			evidence: map[string]any{
+				"auto_login":                false,
+				"auto_login_sources":        []any{},
+				"accounts_without_password": float64(0),
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
+		},
+		{
+			name:     "linux gdm auto-login",
+			checkKey: "LOGIN_PASSWORD_REQUIRED",
+			evidence: map[string]any{
+				"auto_login":                true,
+				"auto_login_sources":        []any{"gdm"},
+				"accounts_without_password": float64(0),
+			},
+			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "freebsd account without a password",
+			checkKey: "LOGIN_PASSWORD_REQUIRED",
+			evidence: map[string]any{
+				"auto_login":                false,
+				"auto_login_sources":        []any{},
+				"accounts_without_password": float64(1),
+			},
+			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "windows auto admin logon",
+			checkKey: "LOGIN_PASSWORD_REQUIRED",
+			evidence: map[string]any{
+				"backend":                        "winlogon",
+				"auto_login":                     true,
+				"auto_login_sources":             []any{"winlogon"},
+				"default_password_stored":        true,
+				"password_not_required_accounts": float64(1),
+			},
+			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "windows password-not-required accounts are reported only",
+			checkKey: "LOGIN_PASSWORD_REQUIRED",
+			evidence: map[string]any{
+				"backend":                        "winlogon",
+				"auto_login":                     false,
+				"auto_login_sources":             []any{},
+				"default_password_stored":        false,
+				"password_not_required_accounts": float64(2),
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
+		},
+		{
+			name:     "darwin without auto-login",
+			checkKey: "LOGIN_PASSWORD_REQUIRED",
+			evidence: map[string]any{
+				"backend":               "loginwindow",
+				"auto_login":            false,
+				"auto_login_sources":    []any{},
+				"auto_login_user_set":   true,
+				"kcpassword_present":    false,
+				"guest_account_enabled": true,
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
+		},
 		{
 			name:     "darwin alf blocks incoming",
 			checkKey: "FIREWALL_ENABLED",
@@ -1376,4 +1444,41 @@ func runDevicePostureValueCases(t *testing.T, cases []devicePostureValueCase) {
 			assert.Equal(t, *tt.wantNumber, *value.Number)
 		})
 	}
+}
+
+func TestParseDevicePostureValue_LoginPassword(t *testing.T) {
+	t.Parallel()
+
+	runDevicePostureValueCases(
+		t,
+		[]devicePostureValueCase{
+			{
+				name:     "darwin auto-login",
+				checkKey: "LOGIN_PASSWORD_REQUIRED",
+				evidence: map[string]any{
+					"backend":            "loginwindow",
+					"auto_login":         true,
+					"auto_login_sources": []any{"loginwindow"},
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "probe failure is unknown",
+				checkKey: "LOGIN_PASSWORD_REQUIRED",
+				evidence: map[string]any{
+					"backend": "winlogon",
+					"error":   "command \"powershell.exe\" timed out after 1m0s: exit status 1",
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
+				name:     "unreadable shadow is unknown",
+				checkKey: "LOGIN_PASSWORD_REQUIRED",
+				evidence: map[string]any{
+					"error": "open /etc/shadow: permission denied",
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+		},
+	)
 }
