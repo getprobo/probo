@@ -108,7 +108,7 @@ export const table = tv({
     interactive: {
       true: {
         row: [
-          "relative isolate cursor-pointer",
+          "relative isolate cursor-pointer hover:bg-sand-a2",
           "[&_td]:pointer-events-none [&_th]:pointer-events-none",
         ],
         // Important: the row's `[&_td]:pointer-events-none` is a descendant

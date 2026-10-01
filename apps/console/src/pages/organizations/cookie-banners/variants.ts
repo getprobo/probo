@@ -69,9 +69,6 @@ export const trackerPatternListItem = tv({
     detail: "flex flex-col gap-1",
     date: "whitespace-nowrap",
     actions: "flex items-center gap-1",
-    edit: "flex flex-col gap-3",
-    editFields: "flex items-end gap-2",
-    editField: "flex min-w-0 flex-1 flex-col gap-1",
   },
   variants: {
     excluded: {
@@ -113,6 +110,63 @@ export const trackerResourceListItem = tv({
 
 export const moveToCategorySelect = tv({
   slots: {
-    root: "min-w-36",
+    root: "w-full min-w-36",
+  },
+});
+
+export const trackerPatternDetailHeader = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    back: "self-start",
+    bar: "flex items-start justify-between gap-4",
+    titleRow: "flex min-w-0 flex-1 flex-wrap items-center gap-2",
+    title: "min-w-0",
+    badges: "flex flex-wrap items-center gap-1.5",
+    actions: "flex shrink-0 items-center gap-2",
+  },
+});
+
+export const trackerMaxAgeField = tv({
+  slots: {
+    root: "flex w-full gap-2",
+    value: "min-w-0 flex-1",
+    unit: "w-36 shrink-0",
+  },
+});
+
+export const trackerPatternPropertiesSection = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    block: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    fields: "flex flex-col gap-4",
+    pair: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 *:min-w-0",
+    sourceId: "flex min-w-0 items-center gap-2",
+    sourceIdText: "min-w-0 break-all font-mono",
+  },
+});
+
+export const trackerPatternDetectedTrackersSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    results: "transition-opacity",
+    pager: "flex justify-center",
+    empty: "flex flex-col items-center gap-1 py-8 text-center",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
+  },
+});
+
+export const detectedTrackerListItem = tv({
+  slots: {
+    identifier: "min-w-0 max-w-xs break-all font-mono",
+    url: "min-w-0 max-w-xs break-all font-mono",
+    date: "whitespace-nowrap",
   },
 });

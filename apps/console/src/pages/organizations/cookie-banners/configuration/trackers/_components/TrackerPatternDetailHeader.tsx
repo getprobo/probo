@@ -1,0 +1,176 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { CaretLeftIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
+import { useParams } from "react-router";
+import { graphql } from "relay-runtime";
+
+import type { TrackerPatternDetailHeader_trackerPattern$key } from "#/__generated__/core/TrackerPatternDetailHeader_trackerPattern.graphql";
+import type { TrackerPatternDetailHeaderUpdateMutation } from "#/__generated__/core/TrackerPatternDetailHeaderUpdateMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
+
+import { cookieBannerPath } from "../../../_lib/cookieBannerPaths";
+import { trackerPatternDetailHeader } from "../../../variants";
+
+const trackerPatternDetailHeaderFragment = graphql`
+  fragment TrackerPatternDetailHeader_trackerPattern on TrackerPattern {
+    id
+    displayName
+    trackerType
+    source
+    excluded
+    canUpdate: permission(action: "core:tracker-pattern:update")
+  }
+`;
+
+const typeBadges = {
+  COOKIE: { color: "amber" as const, labelKey: "cookie", variant: "soft" as const },
+  LOCAL_STORAGE: { color: "sky" as const, labelKey: "localStorage", variant: "soft" as const },
+  SESSION_STORAGE: { color: "indigo" as const, labelKey: "sessionStorage", variant: "soft" as const },
+  INDEXED_DB: { color: "green" as const, labelKey: "indexedDb", variant: "soft" as const },
+  CACHE_STORAGE: { color: "neutral" as const, labelKey: "cacheStorage", variant: "outline" as const },
+};
+
+const sourceBadges = {
+  SCRIPT: { color: "sky" as const, labelKey: "script", variant: "soft" as const },
+  PRE_EXISTING: { color: "neutral" as const, labelKey: "preExisting", variant: "outline" as const },
+  HTTP: { color: "neutral" as const, labelKey: "http", variant: "soft" as const },
+  EXTENSION: { color: "amber" as const, labelKey: "extension", variant: "soft" as const },
+};
+
+const updatePatternMutation = graphql`
+  mutation TrackerPatternDetailHeaderUpdateMutation(
+    $input: UpdateTrackerPatternInput!
+  ) {
+    updateTrackerPattern(input: $input) {
+      trackerPattern {
+        id
+        excluded
+        updatedAt
+      }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
+interface TrackerPatternDetailHeaderProps {
+  trackerPatternKey: TrackerPatternDetailHeader_trackerPattern$key;
+}
+
+export function TrackerPatternDetailHeader({
+  trackerPatternKey,
+}: TrackerPatternDetailHeaderProps) {
+  const { t } = useTranslation("organizations/cookie-banners");
+  const organizationId = useOrganizationId();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
+  const pattern = useFragment(trackerPatternDetailHeaderFragment, trackerPatternKey);
+  const { root, back, bar, titleRow, title, badges, actions } = trackerPatternDetailHeader();
+  const typeBadge = typeBadges[pattern.trackerType];
+  const sourceBadge = pattern.source == null ? null : sourceBadges[pattern.source];
+  const [updatePattern, isUpdating] = useMutation<TrackerPatternDetailHeaderUpdateMutation>(
+    updatePatternMutation,
+    {
+      successMessage: t("trackerProperties.messages.updated"),
+      errorToast: t("trackerProperties.errors.update"),
+    },
+  );
+
+  if (cookieBannerId == null) {
+    throw new Error(":cookieBannerId missing in route params");
+  }
+
+  const trackersPath = `${cookieBannerPath(organizationId, cookieBannerId)}/trackers`;
+
+  function handleToggleExcluded() {
+    void updatePattern({
+      variables: {
+        input: {
+          trackerPatternId: pattern.id,
+          excluded: !pattern.excluded,
+        },
+      },
+    }).catch(() => undefined);
+  }
+
+  return (
+    <div className={root()}>
+      <ButtonLink
+        to={trackersPath}
+        size={2}
+        variant="ghost"
+        color="neutral"
+        iconStart={<CaretLeftIcon />}
+        className={back()}
+      >
+        {t("trackerProperties.actions.back")}
+      </ButtonLink>
+      <div className={bar()}>
+        <div className={titleRow()}>
+          <Heading level={1} size={6} weight="medium" highContrast className={title()}>
+            {pattern.displayName}
+          </Heading>
+          <div className={badges()}>
+            {typeBadge != null && (
+              <Badge variant={typeBadge.variant} color={typeBadge.color}>
+                {t(`trackerProperties.trackerTypes.${typeBadge.labelKey}`)}
+              </Badge>
+            )}
+            {sourceBadge != null && (
+              <Badge variant={sourceBadge.variant} color={sourceBadge.color}>
+                {t(`trackerProperties.sources.${sourceBadge.labelKey}`)}
+              </Badge>
+            )}
+          </div>
+        </div>
+        {pattern.canUpdate && (
+          <div className={actions()}>
+            <Button
+              type="button"
+              size={2}
+              variant="soft"
+              color="neutral"
+              loading={isUpdating}
+              iconStart={pattern.excluded ? <EyeIcon /> : <EyeSlashIcon />}
+              onClick={handleToggleExcluded}
+            >
+              {pattern.excluded
+                ? t("trackerPatternRow.actions.include")
+                : t("trackerPatternRow.actions.exclude")}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

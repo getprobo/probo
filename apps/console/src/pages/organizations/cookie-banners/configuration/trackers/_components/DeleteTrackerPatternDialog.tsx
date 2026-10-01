@@ -104,7 +104,7 @@ export function DeleteTrackerPatternDialog({
           <DialogClose
             render={(
               <Button variant="soft" color="neutral">
-                {t("trackerPatternRowEdit.actions.cancel")}
+                {t("trackerPatternRow.actions.cancel")}
               </Button>
             )}
           />

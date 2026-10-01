@@ -48,6 +48,7 @@ interface MoveToCategorySelectProps {
   cookieBannerKey: MoveToCategorySelect_cookieBanner$key;
   currentCategoryId?: string;
   currentCategoryName?: string;
+  size?: 1 | 2;
   onSelect: (categoryId: string) => void;
 }
 
@@ -55,6 +56,7 @@ export function MoveToCategorySelect({
   cookieBannerKey,
   currentCategoryId,
   currentCategoryName,
+  size = 1,
   onSelect,
 }: MoveToCategorySelectProps) {
   const { t } = useTranslation("organizations/cookie-banners");
@@ -74,7 +76,7 @@ export function MoveToCategorySelect({
         }}
       >
         <SelectTrigger
-          size={1}
+          size={size}
           variant="surface"
           placeholder={placeholder}
           aria-label={t("trackersPage.columns.category")}

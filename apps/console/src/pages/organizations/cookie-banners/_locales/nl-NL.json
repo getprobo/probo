@@ -60,33 +60,43 @@
     "visitorSoftware": "Bezoekerssoftware",
     "undetermined": "Onbepaald"
   },
-  "trackerPatternRowEdit": {
-    "fields": { "description": "Beschrijving", "descriptionPlaceholder": "Beschrijving", "maxAge": "Maximale leeftijd" },
-    "actions": { "save": "Opslaan", "cancel": "Annuleren" }
-  },
   "trackerPatternRow": {
     "messages": { "successTitle": "Gelukt", "cookieDeleted": "Cookie verwijderd", "cookieMoved": "Cookie verplaatst", "cookieUpdated": "Cookie bijgewerkt" },
     "errors": { "title": "Fout", "deleteCookie": "Cookie verwijderen mislukt", "moveCookie": "Cookie verplaatsen mislukt", "updateCookie": "Cookie bijwerken mislukt" },
     "deleteConfirmation": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
     "dialogs": { "deleteTitle": "Tracker verwijderen" },
-    "actions": { "edit": "Bewerken", "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "more": "Meer acties", "description": "Beschrijving tonen" },
+    "actions": { "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties", "description": "Beschrijving tonen" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "duration": { "session": "Sessie", "persistent": "Permanent" }
   },
   "trackerProperties": {
-    "messages": { "successTitle": "Gelukt", "moved": "Cookie verplaatst", "copiedTitle": "Gekopieerd", "idCopied": "ID van gemeenschappelijke tracker gekopieerd naar klembord" },
-    "errors": { "title": "Fout", "move": "Cookie verplaatsen mislukt", "copy": "ID van gemeenschappelijke tracker kopiëren mislukt" },
-    "properties": { "pattern": "Patroon", "matchType": "Overeenkomsttype", "type": "Type", "source": "Bron", "category": "Categorie", "thirdParty": "Derde partij", "maxAge": "Maximale leeftijd", "description": "Beschrijving", "descriptionSource": "Bron van beschrijving", "excluded": "Uitgesloten", "detectedCount": "Gedetecteerde unieke trackers", "lastMatched": "Laatst overeengekomen" },
+    "sections": { "details": "Details", "identity": "Identiteit" },
+    "messages": { "successTitle": "Gelukt", "moved": "Cookie verplaatst", "updated": "Tracker bijgewerkt", "copiedTitle": "Gekopieerd", "idCopied": "ID van gemeenschappelijke tracker gekopieerd naar klembord" },
+    "errors": { "title": "Fout", "move": "Cookie verplaatsen mislukt", "update": "Tracker bijwerken mislukt", "copy": "ID van gemeenschappelijke tracker kopiëren mislukt" },
+    "properties": { "pattern": "Patroon", "matchType": "Overeenkomsttype", "type": "Type", "source": "Bron", "category": "Categorie", "thirdParty": "Derde partij", "attribution": "Attributie", "sourceId": "Bron", "maxAge": "Maximale leeftijd", "maxAgeUnit": "Eenheid", "description": "Beschrijving", "descriptionPlaceholder": "Beschrijving", "descriptionSource": "Bron van beschrijving", "excluded": "Uitgesloten", "detectedCount": "Gedetecteerde unieke trackers", "lastMatched": "Laatst overeengekomen" },
+    "actions": { "back": "Trackers", "copyId": "ID van gemeenschappelijke tracker kopiëren" },
+    "attribution": {
+      "firstParty": "Dit is een first-party tracker.",
+      "visitorSoftware": "Deze tracker wordt geplaatst door bezoekerssoftware.",
+      "thirdParty": "Dit is een third-party tracker van {{name}}.",
+      "thirdPartyUnnamed": "Dit is een third-party tracker."
+    },
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "manual": "Handmatig", "boolean": { "yes": "Ja", "no": "Nee" }
   },
   "detectedTrackersSection": {
-    "title": "Gedetecteerde trackers",
+    "title": "Detecties",
     "columns": { "identifier": "Identificatie", "initiatorUrl": "Initiator-URL", "maxAge": "Maximale leeftijd (seconden)", "source": "Bron", "detectionTime": "Detectietijd" },
-    "empty": "Nog geen gedetecteerde trackers voor dit patroon."
+    "empty": "Nog geen detecties voor deze tracker.",
+    "sort": { "initiatorUrl": "Sorteren op initiator-URL", "detectionTime": "Sorteren op detectietijd" },
+    "actions": { "showMore": "Meer weergeven" },
+    "summary_one": "{{count}} detectie · Laatst overeengekomen {{date}}",
+    "summary_other": "{{count}} detecties · Laatst overeengekomen {{date}}",
+    "summaryNever_one": "{{count}} detectie · Nog niet overeengekomen",
+    "summaryNever_other": "{{count}} detecties · Nog niet overeengekomen"
   },
   "moveToCategorySelect": { "empty": "Geen categorieën" },
   "moveToCategoryDropdown": { "empty": "Geen categorieën" },

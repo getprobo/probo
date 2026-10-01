@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, InfoIcon, PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react";
+import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, InfoIcon, TrashIcon } from "@phosphor-icons/react";
 import { dateTimeFormat, humanizeSeconds } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
@@ -53,7 +53,6 @@ import { trackerPatternListItem } from "../../../variants";
 import { DeleteTrackerPatternDialog } from "./DeleteTrackerPatternDialog";
 import { MoveToCategorySelect } from "./MoveToCategorySelect";
 import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
-import { TrackerPatternListItemEdit } from "./TrackerPatternListItemEdit";
 
 const trackerPatternFragment = graphql`
   fragment TrackerPatternListItem_trackerPattern on TrackerPattern {
@@ -68,7 +67,6 @@ const trackerPatternFragment = graphql`
     cookieCategory {
       id
       name
-      kind
     }
     commonThirdParty {
       id
@@ -143,6 +141,8 @@ const sourceBadges = {
   EXTENSION: { color: "amber" as const, labelKey: "extension", variant: "soft" as const },
 };
 
+const persistentTrackerTypes = new Set(["LOCAL_STORAGE", "INDEXED_DB", "CACHE_STORAGE"]);
+
 interface TrackerPatternListItemProps {
   patternKey: TrackerPatternListItem_trackerPattern$key;
   cookieBannerKey: MoveToCategorySelect_cookieBanner$key;
@@ -158,7 +158,6 @@ export function TrackerPatternListItem({
   const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
-  const [isEditing, setIsEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { name, heading, title, info, detail, date, actions } = trackerPatternListItem({
     excluded: pattern.excluded,
@@ -172,7 +171,7 @@ export function TrackerPatternListItem({
       errorToast: t("trackerPatternRow.errors.moveCookie"),
     },
   );
-  const [updatePattern, isUpdating] = useMutation<TrackerPatternListItemUpdateMutation>(
+  const [updatePattern] = useMutation<TrackerPatternListItemUpdateMutation>(
     updatePatternMutation,
     {
       errorToast: t("trackerPatternRow.errors.updateCookie"),
@@ -208,46 +207,17 @@ export function TrackerPatternListItem({
     }).catch(() => undefined);
   }
 
-  function handleSaveEdit(data: { description: string; maxAgeSeconds: number | null }) {
-    void updatePattern({
-      variables: {
-        input: {
-          trackerPatternId: pattern.id,
-          description: data.description,
-          maxAgeSeconds: data.maxAgeSeconds,
-        },
-      },
-    }, {
-      successMessage: t("trackerPatternRow.messages.cookieUpdated"),
-    }).then(
-      () => {
-        setIsEditing(false);
-      },
-      () => undefined,
-    );
-  }
-
-  if (isEditing) {
-    return (
-      <TrackerPatternListItemEdit
-        pattern={pattern.displayName}
-        description={pattern.description}
-        maxAgeSeconds={pattern.maxAgeSeconds ?? null}
-        isUpdating={isUpdating}
-        onSave={handleSaveEdit}
-        onCancel={() => setIsEditing(false)}
-      />
-    );
-  }
-
   const typeBadge = typeBadges[pattern.trackerType];
   const sourceBadge = pattern.source == null ? null : sourceBadges[pattern.source];
   const detailPath = `${cookieBannerPath(organizationId, cookieBannerId)}/trackers/${pattern.id}`;
-  const durationSeconds = pattern.maxAgeSeconds ?? null;
-  const duration = durationSeconds == null || durationSeconds <= 0
-    ? ["LOCAL_STORAGE", "INDEXED_DB", "CACHE_STORAGE"].includes(pattern.trackerType)
-      ? t("trackerPatternRow.duration.persistent")
-      : t("trackerPatternRow.duration.session")
+  const durationSeconds = pattern.maxAgeSeconds == null || pattern.maxAgeSeconds <= 0
+    ? null
+    : pattern.maxAgeSeconds;
+  const sessionOrPersistent = persistentTrackerTypes.has(pattern.trackerType)
+    ? t("trackerPatternRow.duration.persistent")
+    : t("trackerPatternRow.duration.session");
+  const duration = durationSeconds == null
+    ? sessionOrPersistent
     : humanizeSeconds(durationSeconds, t);
 
   return (
@@ -347,15 +317,6 @@ export function TrackerPatternListItem({
         </TableCell>
         <TableCell interactive justify="end">
           <div className={actions()}>
-            <IconButton
-              variant="ghost"
-              color="neutral"
-              size={1}
-              aria-label={t("trackerPatternRow.actions.edit")}
-              onClick={() => setIsEditing(true)}
-            >
-              <PencilSimpleIcon />
-            </IconButton>
             <Dropdown>
               <DropdownTrigger
                 render={(

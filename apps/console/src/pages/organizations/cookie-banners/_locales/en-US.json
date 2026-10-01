@@ -60,33 +60,43 @@
     "visitorSoftware": "Visitor software",
     "undetermined": "Undetermined"
   },
-  "trackerPatternRowEdit": {
-    "fields": { "description": "Description", "descriptionPlaceholder": "Description", "maxAge": "Max age" },
-    "actions": { "save": "Save", "cancel": "Cancel" }
-  },
   "trackerPatternRow": {
     "messages": { "successTitle": "Success", "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved", "cookieUpdated": "Cookie updated" },
     "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
     "dialogs": { "deleteTitle": "Delete tracker" },
-    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete", "more": "More actions", "description": "Show description" },
+    "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions", "description": "Show description" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistent" }
   },
   "trackerProperties": {
-    "messages": { "successTitle": "Success", "moved": "Cookie moved", "copiedTitle": "Copied", "idCopied": "Common tracker ID copied to clipboard" },
-    "errors": { "title": "Error", "move": "Failed to move cookie", "copy": "Failed to copy common tracker ID" },
-    "properties": { "pattern": "Pattern", "matchType": "Match type", "type": "Type", "source": "Source", "category": "Category", "thirdParty": "Third party", "maxAge": "Max age", "description": "Description", "descriptionSource": "Description source", "excluded": "Excluded", "detectedCount": "Distinct trackers detected", "lastMatched": "Last matched" },
+    "sections": { "details": "Details", "identity": "Identity" },
+    "messages": { "successTitle": "Success", "moved": "Cookie moved", "updated": "Tracker updated", "copiedTitle": "Copied", "idCopied": "Common tracker ID copied to clipboard" },
+    "errors": { "title": "Error", "move": "Failed to move cookie", "update": "Failed to update tracker", "copy": "Failed to copy common tracker ID" },
+    "properties": { "pattern": "Pattern", "matchType": "Match type", "type": "Type", "source": "Source", "category": "Category", "thirdParty": "Third party", "attribution": "Attribution", "sourceId": "Source", "maxAge": "Max age", "maxAgeUnit": "Unit", "description": "Description", "descriptionPlaceholder": "Description", "descriptionSource": "Description source", "excluded": "Excluded", "detectedCount": "Distinct trackers detected", "lastMatched": "Last matched" },
+    "actions": { "back": "Trackers", "copyId": "Copy common tracker ID" },
+    "attribution": {
+      "firstParty": "This is a first-party tracker.",
+      "visitorSoftware": "This tracker is set by visitor software.",
+      "thirdParty": "This is a third-party tracker from {{name}}.",
+      "thirdPartyUnnamed": "This is a third-party tracker."
+    },
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "manual": "Manual", "boolean": { "yes": "Yes", "no": "No" }
   },
   "detectedTrackersSection": {
-    "title": "Detected trackers",
+    "title": "Detections",
     "columns": { "identifier": "Identifier", "initiatorUrl": "Initiator URL", "maxAge": "Max age (seconds)", "source": "Source", "detectionTime": "Detection time" },
-    "empty": "No detected trackers for this pattern yet."
+    "empty": "No detections for this tracker yet.",
+    "sort": { "initiatorUrl": "Sort by initiator URL", "detectionTime": "Sort by detection time" },
+    "actions": { "showMore": "Show more" },
+    "summary_one": "{{count}} detection · Last matched {{date}}",
+    "summary_other": "{{count}} detections · Last matched {{date}}",
+    "summaryNever_one": "{{count}} detection · Not matched yet",
+    "summaryNever_other": "{{count}} detections · Not matched yet"
   },
   "moveToCategorySelect": { "empty": "No categories" },
   "moveToCategoryDropdown": { "empty": "No categories" },

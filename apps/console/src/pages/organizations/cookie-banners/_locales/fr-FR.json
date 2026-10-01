@@ -60,33 +60,43 @@
     "visitorSoftware": "Logiciel du visiteur",
     "undetermined": "Indéterminé"
   },
-  "trackerPatternRowEdit": {
-    "fields": { "description": "Description", "descriptionPlaceholder": "Description", "maxAge": "Âge maximal" },
-    "actions": { "save": "Enregistrer", "cancel": "Annuler" }
-  },
   "trackerPatternRow": {
     "messages": { "successTitle": "Succès", "cookieDeleted": "Cookie supprimé", "cookieMoved": "Cookie déplacé", "cookieUpdated": "Cookie mis à jour" },
     "errors": { "title": "Erreur", "deleteCookie": "Échec de la suppression du cookie", "moveCookie": "Échec du déplacement du cookie", "updateCookie": "Échec de la mise à jour du cookie" },
     "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
     "dialogs": { "deleteTitle": "Supprimer le traceur" },
-    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "more": "Plus d’actions", "description": "Afficher la description" },
+    "actions": { "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "cancel": "Annuler", "more": "Plus d’actions", "description": "Afficher la description" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistant" }
   },
   "trackerProperties": {
-    "messages": { "successTitle": "Succès", "moved": "Cookie déplacé", "copiedTitle": "Copié", "idCopied": "ID du traceur commun copié dans le presse-papiers" },
-    "errors": { "title": "Erreur", "move": "Échec du déplacement du cookie", "copy": "Échec de la copie de l’ID du traceur commun" },
-    "properties": { "pattern": "Modèle", "matchType": "Type de correspondance", "type": "Type", "source": "Source", "category": "Catégorie", "thirdParty": "Tiers", "maxAge": "Âge maximal", "description": "Description", "descriptionSource": "Source de la description", "excluded": "Exclu", "detectedCount": "Traceurs distincts détectés", "lastMatched": "Dernière correspondance" },
+    "sections": { "details": "Détails", "identity": "Identité" },
+    "messages": { "successTitle": "Succès", "moved": "Cookie déplacé", "updated": "Traceur mis à jour", "copiedTitle": "Copié", "idCopied": "ID du traceur commun copié dans le presse-papiers" },
+    "errors": { "title": "Erreur", "move": "Échec du déplacement du cookie", "update": "Échec de la mise à jour du traceur", "copy": "Échec de la copie de l’ID du traceur commun" },
+    "properties": { "pattern": "Modèle", "matchType": "Type de correspondance", "type": "Type", "source": "Source", "category": "Catégorie", "thirdParty": "Tiers", "attribution": "Attribution", "sourceId": "Source", "maxAge": "Âge maximal", "maxAgeUnit": "Unité", "description": "Description", "descriptionPlaceholder": "Description", "descriptionSource": "Source de la description", "excluded": "Exclu", "detectedCount": "Traceurs distincts détectés", "lastMatched": "Dernière correspondance" },
+    "actions": { "back": "Traceurs", "copyId": "Copier l’ID du traceur commun" },
+    "attribution": {
+      "firstParty": "Il s’agit d’un traceur first-party.",
+      "visitorSoftware": "Ce traceur est défini par le logiciel du visiteur.",
+      "thirdParty": "Il s’agit d’un traceur tiers de {{name}}.",
+      "thirdPartyUnnamed": "Il s’agit d’un traceur tiers."
+    },
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "manual": "Manuel", "boolean": { "yes": "Oui", "no": "Non" }
   },
   "detectedTrackersSection": {
-    "title": "Traceurs détectés",
+    "title": "Détections",
     "columns": { "identifier": "Identifiant", "initiatorUrl": "URL initiatrice", "maxAge": "Âge maximal (secondes)", "source": "Source", "detectionTime": "Heure de détection" },
-    "empty": "Aucun traceur détecté pour ce modèle pour le moment."
+    "empty": "Aucune détection pour ce traceur pour le moment.",
+    "sort": { "initiatorUrl": "Trier par URL initiatrice", "detectionTime": "Trier par heure de détection" },
+    "actions": { "showMore": "Afficher plus" },
+    "summary_one": "{{count}} détection · Dernière correspondance {{date}}",
+    "summary_other": "{{count}} détections · Dernière correspondance {{date}}",
+    "summaryNever_one": "{{count}} détection · Pas encore de correspondance",
+    "summaryNever_other": "{{count}} détections · Pas encore de correspondance"
   },
   "moveToCategorySelect": { "empty": "Aucune catégorie" },
   "moveToCategoryDropdown": { "empty": "Aucune catégorie" },

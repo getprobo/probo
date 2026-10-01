@@ -43,6 +43,7 @@ export const cookieBannerRoutes = [
     Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigLayoutLoader")),
     children: [
       {
+        path: "configure",
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigureLayout")),
         children: [
           {
