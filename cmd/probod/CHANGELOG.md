@@ -4,6 +4,15 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.299.1] - 2026-10-01
+
+### Fixed
+
+- Cookie pattern analysis collapses a hyphen-delimited UUID embedded in a
+  cookie name into a single token, so keys like
+  `community-form-<uuid>-creation` merge under one pattern instead of
+  shredding into several fixed anchors
+
 ## [0.299.0] - 2026-09-30
 
 ### Added
