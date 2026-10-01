@@ -100,26 +100,8 @@
       "content": "Could not display this description"
     },
     "pictures": {
-      "title": "Pictures",
-      "empty": "No pictures yet",
-      "attached": "Attached to the Linear issue",
-      "actions": {
-        "upload": "Upload picture",
-        "delete": "Delete picture",
-        "showMore": "Show more"
-      },
-      "delete": {
-        "title": "Delete picture",
-        "description": "Are you sure you want to delete this picture?",
-        "confirm": "Delete"
-      },
-      "messages": {
-        "uploaded": "Picture uploaded successfully.",
-        "deleted": "Picture deleted successfully."
-      },
       "errors": {
         "upload": "Failed to upload picture",
-        "delete": "Failed to delete picture",
         "type": "Choose a JPEG, PNG, or WebP image",
         "size": "Picture must be 10 MB or smaller"
       }

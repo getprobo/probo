@@ -28,6 +28,7 @@ import type { TaskDescriptionSection_task$key } from "#/__generated__/core/TaskD
 import { RichDescriptionEditor } from "#/pages/organizations/_components/RichDescriptionEditor";
 
 import { useUpdateTask } from "../_lib/useUpdateTask";
+import { useUploadTaskPicture } from "../_lib/useUploadTaskPicture";
 
 const taskDescriptionSectionFragment = graphql`
   fragment TaskDescriptionSection_task on Task {
@@ -51,6 +52,7 @@ function TaskDescriptionSectionContent({
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskDescriptionSectionFragment, taskKey);
   const [updateTask] = useUpdateTask();
+  const uploadPicture = useUploadTaskPicture();
   const save = useCallback(
     async (content: string | null) => {
       await updateTask({
@@ -71,6 +73,7 @@ function TaskDescriptionSectionContent({
       canUpdate={task.canUpdate}
       ariaLabel={t("detailsPage.fields.description")}
       emptyLabel={t("detailsPage.noDescription")}
+      pictures={task.canUpdate ? { upload: uploadPicture } : {}}
       save={save}
     />
   );

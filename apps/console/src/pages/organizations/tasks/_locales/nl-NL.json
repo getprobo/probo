@@ -100,26 +100,8 @@
       "content": "Deze beschrijving kon niet worden weergegeven"
     },
     "pictures": {
-      "title": "Afbeeldingen",
-      "empty": "Nog geen afbeeldingen",
-      "attached": "Gekoppeld aan het Linear-issue",
-      "actions": {
-        "upload": "Afbeelding uploaden",
-        "delete": "Afbeelding verwijderen",
-        "showMore": "Meer tonen"
-      },
-      "delete": {
-        "title": "Afbeelding verwijderen",
-        "description": "Weet u zeker dat u deze afbeelding wilt verwijderen?",
-        "confirm": "Verwijderen"
-      },
-      "messages": {
-        "uploaded": "Afbeelding succesvol geüpload.",
-        "deleted": "Afbeelding succesvol verwijderd."
-      },
       "errors": {
         "upload": "Uploaden van afbeelding mislukt",
-        "delete": "Verwijderen van afbeelding mislukt",
         "type": "Kies een JPEG-, PNG- of WebP-afbeelding",
         "size": "Afbeelding mag maximaal 10 MB zijn"
       }

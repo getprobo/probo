@@ -30,6 +30,7 @@ import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useS
 
 import { taskCommentMaxLength } from "../_lib/taskCommentMaxLength";
 import { useUpdateTaskComment } from "../_lib/useUpdateTaskComment";
+import { useUploadTaskPicture } from "../_lib/useUploadTaskPicture";
 import { taskCommentEditor } from "../variants";
 
 const taskCommentSaveDelayMs = 1000;
@@ -49,6 +50,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
   const { t } = useTranslation("organizations/tasks");
   const comment = useFragment(taskCommentEditorFragment, taskCommentKey);
   const [updateTaskComment] = useUpdateTaskComment();
+  const uploadPicture = useUploadTaskPicture();
   const saved = comment.content;
   const [draft, setDraft] = useState(saved);
   const [savedContent, setSavedContent] = useState(saved);
@@ -119,6 +121,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
         key={editorGeneration}
         className={taskCommentEditor()}
         content={draft}
+        pictures={{ upload: uploadPicture }}
         aria-label={t("detailsPage.comments.fields.comment")}
         onChangeContent={(next) => {
           setDirty(true);

@@ -34,15 +34,17 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect, useLayoutEffect } from "react";
+import { type ChangeEvent, type ComponentProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
+import { ImageExtension, insertPicture } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
+import { PictureUploadExtension, type RichEditorPictureUpload, setPictureUpload } from "./PictureUploadExtension";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
@@ -92,6 +94,14 @@ const richEditorVariants = tv({
   },
 });
 
+const pictureInput = tv({
+  base: "sr-only",
+});
+
+export type RichEditorPictures = {
+  upload?: RichEditorPictureUpload;
+};
+
 function stripNonTextMarks(node: JSONContent) {
   if (node.type !== "text") delete node.marks;
   node.content?.forEach(stripNonTextMarks);
@@ -101,6 +111,7 @@ type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
   placeholder?: string;
+  pictures?: RichEditorPictures;
   onChangeContent?: (content: string) => void;
 };
 
@@ -122,9 +133,29 @@ export function RichEditor(props: RichEditorProps) {
     content,
     disabled = false,
     placeholder,
+    pictures,
     onChangeContent,
     ...divProps
   } = props;
+
+  const uploadRef = useRef<RichEditorPictureUpload | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const insertAtRef = useRef<number | null>(null);
+  const picturesEnabled = pictures != null;
+  const uploadEnabled = pictures?.upload != null && !disabled;
+
+  const editorExtensions = useMemo(() => {
+    if (!picturesEnabled) {
+      return extensions;
+    }
+
+    const withPictures = [...extensions, ImageExtension];
+    if (!uploadEnabled) {
+      return withPictures;
+    }
+
+    return [...withPictures, PictureUploadExtension];
+  }, [picturesEnabled, uploadEnabled]);
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
@@ -147,7 +178,7 @@ export function RichEditor(props: RichEditorProps) {
       },
     },
     editable: !disabled,
-    extensions,
+    extensions: editorExtensions,
     content: parseContent(content),
     onUpdate: handleUpdate,
   });
@@ -168,15 +199,74 @@ export function RichEditor(props: RichEditorProps) {
     editor.setEditable(!disabled, false);
   }, [editor, disabled]);
 
+  useEffect(() => {
+    const upload = disabled ? undefined : pictures?.upload;
+    uploadRef.current = upload;
+    if (!editor || editor.isDestroyed) {
+      return;
+    }
+
+    setPictureUpload(editor, upload);
+  }, [disabled, editor, pictures?.upload]);
+
+  const openPicturePicker = useCallback(() => {
+    if (!editor || editor.isDestroyed) {
+      return;
+    }
+
+    insertAtRef.current = editor.state.selection.from;
+    fileInputRef.current?.click();
+  }, [editor]);
+
+  const handlePictureFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    const upload = uploadRef.current;
+    if (!file || !upload || !editor || editor.isDestroyed) {
+      return;
+    }
+
+    const pos = insertAtRef.current ?? editor.state.selection.from;
+    void upload(file).then(
+      (picture) => {
+        if (editor.isDestroyed) {
+          return;
+        }
+
+        insertPicture(editor.view, pos, {
+          src: picture.src,
+          alt: picture.alt ?? file.name,
+        });
+      },
+      () => {
+        // The upload callback reports the failure.
+      },
+    );
+  }, [editor]);
+
   if (!editor) return null;
 
   return (
     <div className={richEditorVariants({ className, disabled })} {...divProps}>
+      {uploadEnabled && (
+        <input
+          ref={fileInputRef}
+          className={pictureInput()}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          tabIndex={-1}
+          aria-label="Upload picture"
+          onChange={handlePictureFile}
+        />
+      )}
       {!disabled
         && (
           <>
             <BubbleMenu editor={editor} />
-            <BlockMenu editor={editor} />
+            <BlockMenu
+              editor={editor}
+              onInsertPicture={uploadEnabled ? openPicturePicker : undefined}
+            />
             <OptionsMenu editor={editor} />
             <TableSelectionOverlay editor={editor} />
             <TableCellMenu editor={editor} />

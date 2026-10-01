@@ -85,21 +85,6 @@ export const taskDurationField = tv({
   },
 });
 
-export const taskPicturesSection = tv({
-  slots: {
-    root: "flex min-w-0 flex-col gap-3",
-    header: "flex flex-wrap items-center justify-between gap-3",
-    list: "grid grid-cols-1 gap-3 sm:grid-cols-2",
-    item: "flex min-w-0 items-center gap-3 rounded-2 border border-sand-6 p-2",
-    image: "size-16 shrink-0 rounded-1 bg-sand-3 object-cover",
-    meta: "flex min-w-0 flex-1 flex-col gap-1",
-    name: "truncate",
-    actions: "flex justify-end",
-    fileInput: "sr-only",
-    itemSkeleton: "h-20 animate-pulse rounded-2 bg-sand-3",
-  },
-});
-
 export const taskCommentsSection = tv({
   slots: {
     root: "flex min-w-0 flex-col gap-3",
