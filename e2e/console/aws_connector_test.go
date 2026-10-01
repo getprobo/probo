@@ -165,6 +165,7 @@ func TestCreateWorkloadIdentityConnector(t *testing.T) {
 	err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     awsFixtureRoleARN,
 		},
@@ -184,6 +185,7 @@ func TestCreateWorkloadIdentityConnector(t *testing.T) {
 		err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsSecondRoleARN,
 			},
@@ -203,6 +205,7 @@ func TestCreateWorkloadIdentityConnector_MissingRoleARN(t *testing.T) {
 	err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Test",
 			"provider":       "AWS",
 		},
 	}, &createWorkloadIdentityConnectorResult{})
@@ -217,6 +220,7 @@ func TestCreateWorkloadIdentityConnector_InvalidRoleARN(t *testing.T) {
 	err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     bogus,
 		},
@@ -238,6 +242,7 @@ func TestConnectorConnectionStatus_AssumeRoleFailure(t *testing.T) {
 	resp, err := owner.Do(createWorkloadIdentityConnectorWithStatusMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     awsFixtureRoleARN,
 		},
@@ -278,6 +283,7 @@ func TestAWSConnector_RBAC(t *testing.T) {
 		err := viewer.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsFixtureRoleARN,
 			},
@@ -295,6 +301,7 @@ func TestAWSConnector_RBAC(t *testing.T) {
 		err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsFixtureRoleARN,
 			},
@@ -318,6 +325,7 @@ func TestAWSConnector_TenantIsolation(t *testing.T) {
 	err := org1.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": org1ID,
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     awsFixtureRoleARN,
 		},
@@ -339,6 +347,7 @@ func TestAWSConnector_TenantIsolation(t *testing.T) {
 		err := org2.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": org1ID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsFixtureRoleARN,
 			},

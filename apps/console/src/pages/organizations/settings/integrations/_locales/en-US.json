@@ -1,4 +1,12 @@
 {
+  "connectForm": {
+    "name": {
+      "label": "Name",
+      "description": "Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.",
+      "required": "Enter a name.",
+      "saveFailed": "The name could not be saved."
+    }
+  },
   "marketplacePage": {
     "title": "Marketplace",
     "description": "Vendors Probo can connect to.",
@@ -157,8 +165,8 @@
   },
   "detailsPage": {
     "notFound": "Integration not found",
-    "accountCount_one": "{{count}} account connected",
-    "accountCount_other": "{{count}} accounts connected",
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
     "status": {
       "CONNECTED": "Connected",
       "DISCONNECTED": "Disconnected",

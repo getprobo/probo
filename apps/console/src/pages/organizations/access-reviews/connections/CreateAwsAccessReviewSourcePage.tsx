@@ -40,6 +40,7 @@ import type { CreateAwsAccessReviewSourcePageQuery } from "#/__generated__/core/
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
 import {
   AWS_IAM_ROLE_ARN_PATTERN,
   isAWSRoleARN,
@@ -110,6 +111,7 @@ export function CreateAwsAccessReviewSourcePage({
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
+  const connectorName = useConnectorName();
   const [roleArn, setRoleArn] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
@@ -180,7 +182,7 @@ export function CreateAwsAccessReviewSourcePage({
   const roleArnInvalid = roleArn.trim() !== "" && !roleArnValid;
 
   const onSubmit = async () => {
-    if (!roleArnValid || isCreating) {
+    if (connectorName.rejectIfEmpty() || !roleArnValid || isCreating) {
       return;
     }
 
@@ -192,6 +194,7 @@ export function CreateAwsAccessReviewSourcePage({
           variables: {
             input: {
               organizationId,
+              name: connectorName.trimmed,
               provider: "AWS",
               awsRoleArn: roleArn.trim(),
             },
@@ -279,6 +282,12 @@ export function CreateAwsAccessReviewSourcePage({
           }}
           className="space-y-4"
         >
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <Field
             name="roleArn"
             label={t("createAwsAccessReviewSourcePage.fields.roleArn")}

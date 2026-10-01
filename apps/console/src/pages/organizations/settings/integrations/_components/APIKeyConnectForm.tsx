@@ -33,14 +33,16 @@ import { graphql } from "relay-runtime";
 import type { APIKeyConnectFormCreateMutation } from "#/__generated__/core/APIKeyConnectFormCreateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
-import { isPostHogDeploymentSelected, PostHogDeploymentField } from "./PostHogDeploymentField";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapAPIKeyExtraSettingToField,
 } from "../_lib/connectorSettings";
 import { integrationListPath } from "../_lib/integrationPath";
+
+import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
+import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
+import { isPostHogDeploymentSelected, PostHogDeploymentField } from "./PostHogDeploymentField";
 
 const createAPIKeyConnectorMutation = graphql`
   mutation APIKeyConnectFormCreateMutation($input: CreateAPIKeyConnectorInput!) {
@@ -63,6 +65,7 @@ export function APIKeyConnectForm({
   const { toast } = useToast();
   const navigate = useNavigate();
   const [apiKey, setApiKey] = useState("");
+  const connectorName = useConnectorName();
   const [extras, setExtras] = useState<Record<string, string>>({});
   const [isConnecting, setIsConnecting] = useState(false);
   const [createAPIKeyConnector] = useMutation<APIKeyConnectFormCreateMutation>(
@@ -74,7 +77,7 @@ export function APIKeyConnectForm({
   const canSubmit = (driver.apiKeyManaged || apiKey.trim() !== "") && extrasValid && postHogValid;
 
   const onSubmit = async () => {
-    if (!canSubmit || isConnecting) {
+    if (connectorName.rejectIfEmpty() || !canSubmit || isConnecting) {
       return;
     }
     setIsConnecting(true);
@@ -83,6 +86,7 @@ export function APIKeyConnectForm({
         variables: {
           input: {
             organizationId,
+            name: connectorName.trimmed,
             provider: driver.provider,
             apiKey: driver.apiKeyManaged ? null : apiKey.trim(),
             ...buildExtraFields(
@@ -115,6 +119,12 @@ export function APIKeyConnectForm({
         void onSubmit();
       }}
     >
+      <ConnectorNameField
+        name={connectorName.name}
+        error={connectorName.error}
+        onChange={connectorName.onChange}
+        onEmpty={connectorName.rejectIfEmpty}
+      />
       {!driver.apiKeyManaged && (
         <Field label={t("marketplacePage.fields.apiKey")} required>
           <TextField

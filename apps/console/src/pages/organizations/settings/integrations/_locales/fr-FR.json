@@ -1,4 +1,12 @@
 {
+  "connectForm": {
+    "name": {
+      "label": "Nom",
+      "description": "Sert à suivre ce connecteur et l'identifiant qui lui est attaché, afin de distinguer plusieurs connexions au même fournisseur. displayName reste le nom du fournisseur.",
+      "required": "Saisissez un nom.",
+      "saveFailed": "Le nom n'a pas pu être enregistré."
+    }
+  },
   "marketplacePage": {
     "title": "Marketplace",
     "description": "Les fournisseurs auxquels Probo peut se connecter.",
@@ -157,8 +165,8 @@
   },
   "detailsPage": {
     "notFound": "Intégration introuvable",
-    "accountCount_one": "{{count}} compte connecté",
-    "accountCount_other": "{{count}} comptes connectés",
+    "accountCount_one": "{{count}} compte",
+    "accountCount_other": "{{count}} comptes",
     "status": {
       "CONNECTED": "Connecté",
       "DISCONNECTED": "Déconnecté",

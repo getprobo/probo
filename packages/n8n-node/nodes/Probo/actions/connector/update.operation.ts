@@ -18,22 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+
+const nameDescription =
+	'Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
+		displayName: 'Connector ID',
+		name: 'connectorId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['connector'],
-				operation: ['getAll'],
+				operation: ['update'],
 			},
 		},
 		default: '',
-		description: 'The ID of the organization',
+		description: 'The ID of the connector',
+		required: true,
+	},
+	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['connector'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: nameDescription,
 		required: true,
 	},
 ];
@@ -42,25 +59,25 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const connectorId = this.getNodeParameter('connectorId', itemIndex) as string;
+	const name = this.getNodeParameter('name', itemIndex) as string;
 
 	const query = `
-		query GetConnectors($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					connectors {
-						id
-						name
-						provider
-						protocol
-						createdAt
-					}
+		mutation UpdateConnector($input: UpdateConnectorInput!) {
+			updateConnector(input: $input) {
+				connector {
+					id
+					name
+					provider
+					protocol
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { organizationId });
+	const responseData = await proboApiRequest.call(this, query, {
+		input: { connectorId, name },
+	});
 
 	return {
 		json: responseData,

@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -172,6 +173,7 @@ type (
 
 	CreateConnectorRequest struct {
 		OrganizationID gid.GID
+		Name           string
 		Provider       coredata.ConnectorProvider
 		Protocol       coredata.ConnectorProtocol
 		Connection     connector.Connection
@@ -195,6 +197,11 @@ type (
 		RawSettings json.RawMessage
 	}
 
+	UpdateConnectorRequest struct {
+		ConnectorID gid.GID
+		Name        string
+	}
+
 	// CompleteConnectorInstallRequest carries the verified outcome of an
 	// app-install ceremony: the vendor tenant id the callback proved control
 	// of, and the single-use state claim that proof was spent against.
@@ -210,6 +217,10 @@ type (
 		// idempotency lookup, so it would bind twice.
 		ResourceID string
 		Connection connector.Connection
+		// Name is stored only when this completion inserts a row. A repeat
+		// install of the same tenant reuses the existing connector and keeps
+		// the name already on it.
+		Name string
 		// State and ProcessingToken identify the claim this completion burns,
 		// in the same transaction as the insert.
 		State           string
@@ -218,14 +229,43 @@ type (
 )
 
 func (car *CreateConnectorRequest) Validate() error {
+	car.Name = strings.TrimSpace(car.Name)
+
 	v := validator.New()
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(car.Name, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
 	v.Check(car.Connection, "connection", validator.Required())
 	v.Check(car.RawSettings, "raw_settings", validJSONRawMessage)
 
 	return v.Error()
+}
+
+func (r *UpdateConnectorRequest) Validate() error {
+	r.Name = strings.TrimSpace(r.Name)
+
+	v := validator.New()
+	v.Check(r.ConnectorID, "connector_id", validator.Required(), validator.GID(coredata.ConnectorEntityType))
+	v.Check(r.Name, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+
+	return v.Error()
+}
+
+// NormalizeConnectorName trims a connector name and applies the same rules as
+// create and update. Initiate handlers call it before a redirect so a blank
+// name never starts a ceremony that would fail when the row is inserted.
+func NormalizeConnectorName(name string) (string, error) {
+	trimmed := strings.TrimSpace(name)
+
+	v := validator.New()
+	v.Check(trimmed, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+
+	if err := v.Error(); err != nil {
+		return "", err
+	}
+
+	return trimmed, nil
 }
 
 // validJSONRawMessage rejects a non-empty RawSettings that does not
@@ -499,6 +539,7 @@ func (s *ConnectorService) Create(
 	newConnector := &coredata.Connector{
 		ID:             id,
 		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
 		Provider:       req.Provider,
 		Protocol:       req.Protocol,
 		Connection:     req.Connection,
@@ -525,6 +566,41 @@ func (s *ConnectorService) Create(
 	}
 
 	return newConnector, nil
+}
+
+func (s *ConnectorService) Update(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req UpdateConnectorRequest,
+) (*coredata.Connector, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	cnnctr := &coredata.Connector{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := cnnctr.LoadMetadataByID(ctx, tx, scope, req.ConnectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			cnnctr.Name = req.Name
+			cnnctr.UpdatedAt = time.Now()
+
+			if err := cnnctr.UpdateName(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update connector name: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return cnnctr, nil
 }
 
 // Reconnect updates an existing OAuth2 connector's connection (token)
@@ -733,9 +809,15 @@ func (s *ConnectorService) CompleteInstall(
 			case errors.Is(err, coredata.ErrResourceNotFound):
 				now := time.Now()
 
+				name, err := NormalizeConnectorName(req.Name)
+				if err != nil {
+					return fmt.Errorf("invalid connector name: %w", err)
+				}
+
 				*cnnctr = coredata.Connector{
 					ID:             gid.New(scope.GetTenantID(), coredata.ConnectorEntityType),
 					OrganizationID: req.OrganizationID,
+					Name:           name,
 					Provider:       req.Provider,
 					Protocol:       coredata.ConnectorProtocolAPIKey,
 					Connection:     req.Connection,

@@ -31,6 +31,7 @@ import (
 func NewConnector(c *coredata.Connector, status ConnectorConnectionStatus) *Connector {
 	return &Connector{
 		ID:               c.ID,
+		Name:             c.Name,
 		Provider:         string(c.Provider),
 		Protocol:         string(c.Protocol),
 		ConnectionStatus: new(status),

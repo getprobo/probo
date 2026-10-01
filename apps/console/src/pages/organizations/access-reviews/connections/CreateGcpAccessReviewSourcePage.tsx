@@ -40,6 +40,7 @@ import type { CreateGcpAccessReviewSourcePageQuery } from "#/__generated__/core/
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
 import {
   isGCPServiceAccountEmail,
   isGCPWorkloadIdentityProvider,
@@ -109,6 +110,7 @@ export function CreateGcpAccessReviewSourcePage({
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
+  const connectorName = useConnectorName();
   const [providerResource, setProviderResource] = useState("");
   const [serviceAccountEmail, setServiceAccountEmail] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -183,7 +185,7 @@ export function CreateGcpAccessReviewSourcePage({
   const formValid = providerValid && emailValid;
 
   const onSubmit = async () => {
-    if (!formValid || isCreating) {
+    if (connectorName.rejectIfEmpty() || !formValid || isCreating) {
       return;
     }
 
@@ -195,6 +197,7 @@ export function CreateGcpAccessReviewSourcePage({
           variables: {
             input: {
               organizationId,
+              name: connectorName.trimmed,
               provider: "GCP",
               gcpWorkloadIdentityProvider: providerResource.trim(),
               gcpServiceAccountEmail: serviceAccountEmail.trim(),
@@ -274,6 +277,12 @@ export function CreateGcpAccessReviewSourcePage({
           }}
           className="space-y-4"
         >
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <Field
             name="workloadIdentityProvider"
             label={t(

@@ -83,6 +83,8 @@ export function initiateScimConnectorUrl({
   );
   url.searchParams.set("organization_id", organizationId);
   url.searchParams.set("provider", provider);
+  // Setup has no name field.
+  url.searchParams.set("name", "SCIM");
   for (const scope of scopes) {
     url.searchParams.append("scope", scope);
   }

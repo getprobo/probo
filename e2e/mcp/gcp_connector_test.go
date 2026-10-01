@@ -64,6 +64,7 @@ func TestMCP_GCPConnector(t *testing.T) {
 
 	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":                orgID,
+		"name":                           "Test",
 		"provider":                       "GCP",
 		"gcp_workload_identity_provider": gcpFixtureProviderResource,
 		"gcp_service_account_email":      gcpFixtureServiceAccount,
@@ -110,6 +111,7 @@ func TestMCP_GCPConnector_RBAC(t *testing.T) {
 
 	msg = viewerMC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":                orgID,
+		"name":                           "Test",
 		"provider":                       "GCP",
 		"gcp_workload_identity_provider": gcpFixtureProviderResource,
 		"gcp_service_account_email":      gcpFixtureServiceAccount,
@@ -132,6 +134,7 @@ func TestMCP_GCPConnector_TenantIsolation(t *testing.T) {
 
 	msg = org2MC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":                org1ID,
+		"name":                           "Test",
 		"provider":                       "GCP",
 		"gcp_workload_identity_provider": gcpFixtureProviderResource,
 		"gcp_service_account_email":      gcpFixtureServiceAccount,

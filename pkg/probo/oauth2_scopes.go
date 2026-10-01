@@ -155,6 +155,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionConnectorList,
 		ActionConnectorGet,
 		ActionConnectorCreate,
+		ActionConnectorUpdate,
 		ActionConnectorDelete,
 		ActionConnectorInitiate,
 		ActionConnectorDiscover,

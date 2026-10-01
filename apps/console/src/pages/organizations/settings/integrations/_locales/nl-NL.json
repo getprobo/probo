@@ -1,4 +1,12 @@
 {
+  "connectForm": {
+    "name": {
+      "label": "Naam",
+      "description": "Houdt deze connector en de gekoppelde referentie bij, zodat meerdere verbindingen met dezelfde leverancier uit elkaar te houden zijn. displayName blijft de naam van de leverancier.",
+      "required": "Vul een naam in.",
+      "saveFailed": "De naam kon niet worden opgeslagen."
+    }
+  },
   "marketplacePage": {
     "title": "Marketplace",
     "description": "Leveranciers waarmee Probo verbinding kan maken.",
@@ -157,8 +165,8 @@
   },
   "detailsPage": {
     "notFound": "Integratie niet gevonden",
-    "accountCount_one": "{{count}} account verbonden",
-    "accountCount_other": "{{count}} accounts verbonden",
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
     "status": {
       "CONNECTED": "Verbonden",
       "DISCONNECTED": "Verbinding verbroken",

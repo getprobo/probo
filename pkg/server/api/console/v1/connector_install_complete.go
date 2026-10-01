@@ -391,6 +391,7 @@ func handleConnectorInstallComplete(
 				SettingsKey:     reg.Install.SettingsResourceKey,
 				ResourceID:      resourceID,
 				Connection:      providerRegistry.NewAPIKeyConnection(p, ""),
+				Name:            payload.Data.Name,
 				State:           state,
 				ProcessingToken: processingToken,
 			},
