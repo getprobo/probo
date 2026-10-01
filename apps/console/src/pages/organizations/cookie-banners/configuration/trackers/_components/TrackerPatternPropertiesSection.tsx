@@ -167,7 +167,6 @@ export function TrackerPatternPropertiesSection({
           cookieBannerKey={cookieBannerKey}
           currentCategoryId={pattern.cookieCategory?.id}
           currentCategoryName={pattern.cookieCategory?.name}
-          highlight={!!pattern.cookieCategory && pattern.cookieCategory.kind !== "UNCATEGORISED"}
           onSelect={handleMove}
         />
       </PropertyRow>

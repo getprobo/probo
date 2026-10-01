@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react";
+import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, InfoIcon, PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react";
 import { dateTimeFormat, humanizeSeconds } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
@@ -26,6 +26,9 @@ import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Popover } from "@probo/ui/src/v2/Popover/Popover";
+import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
+import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableLink } from "@probo/ui/src/v2/Table/TableLink";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
@@ -157,9 +160,10 @@ export function TrackerPatternListItem({
   const pattern = useFragment(trackerPatternFragment, patternKey);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { name, heading, title, description, date, actions } = trackerPatternListItem({
+  const { name, heading, title, info, detail, date, actions } = trackerPatternListItem({
     excluded: pattern.excluded,
   });
+  const description = pattern.description.trim();
 
   const [movePattern] = useMutation<TrackerPatternListItemMoveMutation>(
     movePatternMutation,
@@ -265,14 +269,37 @@ export function TrackerPatternListItem({
                   {pattern.displayName}
                 </Text>
               </TableLink>
+              {description !== ""
+                ? (
+                    <span className={info()}>
+                      <Popover>
+                        <PopoverTrigger
+                          render={(
+                            <IconButton
+                              size={1}
+                              variant="ghost"
+                              color="neutral"
+                              aria-label={t("trackerPatternRow.actions.description")}
+                            />
+                          )}
+                        >
+                          <InfoIcon />
+                        </PopoverTrigger>
+                        <PopoverPopup>
+                          <div className={detail()}>
+                            <Text size={2} weight="medium" highContrast>
+                              {pattern.displayName}
+                            </Text>
+                            <Text size={2} color="faint">
+                              {description}
+                            </Text>
+                          </div>
+                        </PopoverPopup>
+                      </Popover>
+                    </span>
+                  )
+                : null}
             </div>
-            {pattern.description
-              ? (
-                  <Text size={1} color="faint" className={description()}>
-                    {pattern.description}
-                  </Text>
-                )
-              : null}
           </div>
         </TableRowHeaderCell>
         <TableCell>
@@ -301,7 +328,6 @@ export function TrackerPatternListItem({
             cookieBannerKey={cookieBannerKey}
             currentCategoryId={pattern.cookieCategory?.id}
             currentCategoryName={pattern.cookieCategory?.name}
-            highlight={pattern.cookieCategory != null && pattern.cookieCategory.kind !== "UNCATEGORISED"}
             onSelect={handleMove}
           />
         </TableCell>

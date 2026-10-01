@@ -69,7 +69,7 @@
     "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
     "dialogs": { "deleteTitle": "Delete tracker" },
-    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete", "more": "More actions" },
+    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete", "more": "More actions", "description": "Show description" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistent" }
@@ -96,7 +96,7 @@
   },
   "trackersPage": {
     "title": "Trackers",
-    "description": "Patterns detected on this site and the category each one belongs to.",
+    "description": "Trackers detected by this banner and the category each one belongs to.",
     "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories", "source": "Source", "type": "Type", "category": "Category", "thirdParty": "Third party" },
     "types": { "all": "All types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "all": "All sources", "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
@@ -147,7 +147,7 @@
   },
   "resourcesPage": {
     "title": "Resources",
-    "description": "Scripts, iframes, and other resources not in a category yet.",
+    "description": "Scripts, iframes, and other resources detected by this banner.",
     "filters": { "search": "Search by origin or path...", "type": "Type" },
     "types": { "all": "All types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origin", "path": "Path", "category": "Category", "lastDetected": "Last detected" },
