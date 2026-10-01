@@ -210,6 +210,16 @@ func TestCollapseHyphenUUIDRuns(t *testing.T) {
 				"11111111-2222-3333-4444-555555555555",
 			},
 		},
+		{
+			name:     "right-length group with a non-hex rune stays split",
+			input:    []string{"8f42be0z", "1096", "4458", "89e3", "1234567890ab"},
+			expected: []string{"8f42be0z", "1096", "4458", "89e3", "1234567890ab"},
+		},
+		{
+			name:     "uppercase A-F full run is rejoined",
+			input:    []string{"8F42BEE0", "1096", "4458", "89E3", "F4495EDD018B"},
+			expected: []string{"8F42BEE0-1096-4458-89E3-F4495EDD018B"},
+		},
 	}
 
 	for _, tt := range tests {
