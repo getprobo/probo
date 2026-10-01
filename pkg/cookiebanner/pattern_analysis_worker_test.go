@@ -296,6 +296,17 @@ func TestHeuristicTemplate(t *testing.T) {
 			template: "clientSourceId/v1/*",
 			changed:  true,
 		},
+		{
+			name:     "hyphen-embedded UUID collapses to a single wildcard",
+			input:    "community-form-8f42bee0-1096-4458-89e3-f4495edd018b-creation",
+			template: "community-form-*-creation",
+			changed:  true,
+		},
+		{
+			name:    "incomplete hyphen hex run is not treated as a UUID",
+			input:   "community-form-40a2-48c8-abfa-creation",
+			changed: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -606,6 +617,17 @@ func TestSplitTokens(t *testing.T) {
 				"8f42bee0-1096-4458-89e3-f4495edd018b",
 			},
 			seps: []byte{'/', '/'},
+		},
+		{
+			name:  "hyphen-embedded UUID is rejoined as one token",
+			input: "community-form-8f42bee0-1096-4458-89e3-f4495edd018b-creation",
+			tokens: []string{
+				"community",
+				"form",
+				"8f42bee0-1096-4458-89e3-f4495edd018b",
+				"creation",
+			},
+			seps: []byte{'-', '-', '-'},
 		},
 	}
 
@@ -1056,6 +1078,26 @@ func TestFindMergeGroups(t *testing.T) {
 			require.Len(t, groups, 1)
 
 			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "clientSourceId/*", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, group, 3)
+		},
+	)
+
+	t.Run(
+		"hyphen-embedded UUID keys merge under surrounding labels",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("community-form-8f42bee0-1096-4458-89e3-f4495edd018b-creation", &oneYear),
+				makePattern("community-form-11111111-2222-3333-4444-555555555555-creation", &oneYear),
+				makePattern("community-form-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee-creation", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "community-form-*-creation", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},

@@ -594,7 +594,7 @@ func splitTokens(name string) ([]string, []byte) {
 		if isUUIDShape(part) || !strings.Contains(part, "-") {
 			tokens = append(tokens, part)
 		} else {
-			for j, sub := range strings.Split(part, "-") {
+			for j, sub := range collapseHyphenUUIDRuns(strings.Split(part, "-")) {
 				if j > 0 {
 					seps = append(seps, '-')
 				}
@@ -609,6 +609,53 @@ func splitTokens(name string) ([]string, []byte) {
 	}
 
 	return tokens, seps
+}
+
+// collapseHyphenUUIDRuns joins a consecutive 8-4-4-4-12 hex run back
+// into one token. Hyphen is both a name delimiter and the UUID
+// delimiter, so splitTokens cannot isolate an embedded UUID the way
+// "_" / ":" / "." / "/" can. Without this, community-form-<uuid>-creation
+// shreds into community-form-*-40a2-48c8-abfa-*-creation because the
+// 4-hex groups stay under looksVariable's length-8 bar.
+func collapseHyphenUUIDRuns(parts []string) []string {
+	if len(parts) < 5 {
+		return parts
+	}
+
+	out := make([]string, 0, len(parts))
+
+	for i := 0; i < len(parts); {
+		if i+4 < len(parts) &&
+			isHexLen(parts[i], 8) &&
+			isHexLen(parts[i+1], 4) &&
+			isHexLen(parts[i+2], 4) &&
+			isHexLen(parts[i+3], 4) &&
+			isHexLen(parts[i+4], 12) {
+			out = append(out, strings.Join(parts[i:i+5], "-"))
+			i += 5
+
+			continue
+		}
+
+		out = append(out, parts[i])
+		i++
+	}
+
+	return out
+}
+
+func isHexLen(s string, n int) bool {
+	if len(s) != n {
+		return false
+	}
+
+	for _, ch := range s {
+		if (ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F') {
+			return false
+		}
+	}
+
+	return true
 }
 
 // splitOnAny splits s on every byte found in separators, returning the
