@@ -64,8 +64,8 @@ func windowsAllValuesEqualFold(m map[string]string, want string) bool {
 	return true
 }
 
-// parseWindowsBitLockerVolumes parses "C:=On;D:=Off" from Get-BitLockerVolume
-// output, returning per-volume ProtectionStatus and whether every volume is
+// parseWindowsBitLockerVolumes parses "C:=On;D:=Off" from the BitLocker probe,
+// returning per-volume ProtectionStatus and whether every volume is
 // protected.
 func parseWindowsBitLockerVolumes(s string) (map[string]string, bool) {
 	volumes := parseWindowsJoinedPairs(s)

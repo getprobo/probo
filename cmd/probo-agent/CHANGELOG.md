@@ -5,6 +5,17 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Windows disk encryption, firewall, and malware protection checks no
+  longer report Unknown on busy hosts because PowerShell timed out
+  loading the BitLocker, NetSecurity, or Defender module. Disk
+  encryption now queries `Win32_EncryptableVolume` for the system drive
+  only, malware protection queries `MSFT_MpComputerStatus` directly,
+  and the firewall check reads `HNetCfg.FwPolicy2` first, falling back
+  to `Get-NetFirewallProfile`. These WMI-backed calls get 60 seconds
+  instead of 10, and each check now has 75 seconds instead of 25.
+
 ## [0.7.1] - 2026-09-14
 
 ### Fixed

@@ -23,6 +23,7 @@ package checks
 import (
 	"context"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -37,41 +38,75 @@ func init() {
 	Register(KeyMalwareProtection, windowsMalwareProtection)
 }
 
-const psNoProfile = "-NoProfile"
+const (
+	psNoProfile = "-NoProfile"
+
+	// windowsWMICommandTimeout covers WMI providers (BitLocker, Defender,
+	// NetSecurity) that answer slowly while the host is busy: during a scan, an
+	// update, or right after boot.
+	windowsWMICommandTimeout = 60 * time.Second
+)
 
 func powershell(ctx context.Context, script string) CmdResult {
 	return RunCommand(ctx, "powershell.exe", psNoProfile, "-Command", script)
 }
 
-func windowsDiskEncryption(ctx context.Context) Result {
-	out := powershell(
+func powershellWMI(ctx context.Context, script string) CmdResult {
+	return RunCommandTimeout(
 		ctx,
-		`(Get-BitLockerVolume | Where-Object { $_.VolumeType -eq 'OperatingSystem' } | `+
-			`Sort-Object MountPoint | `+
-			`ForEach-Object { "$($_.MountPoint)=$($_.ProtectionStatus)" }) -join ";"`,
+		windowsWMICommandTimeout,
+		"powershell.exe",
+		psNoProfile,
+		"-Command",
+		script,
 	)
+}
 
-	ev := map[string]any{"backend": "Get-BitLockerVolume"}
+// windowsBitLockerScript queries the BitLocker WMI provider directly.
+// Get-BitLockerVolume walks every volume and calls several provider methods on
+// each before any filter applies, and its module must be discovered first;
+// together they overrun the command timeout on busy hosts. ProtectionStatus is
+// mapped to the On/Off words the cmdlet printed. A missing namespace or class
+// (Home editions) prints a sentinel instead of a localized error.
+const windowsBitLockerScript = `$ErrorActionPreference = 'Stop'; ` +
+	`try { ` +
+	`  $v = Get-CimInstance -Namespace 'root\cimv2\Security\MicrosoftVolumeEncryption' ` +
+	`    -ClassName Win32_EncryptableVolume -Filter "DriveLetter='$env:SystemDrive'" ` +
+	`} catch [Microsoft.Management.Infrastructure.CimException] { ` +
+	`  if ($_.Exception.NativeErrorCode.ToString() -in 'InvalidNamespace', 'InvalidClass') { 'unavailable'; exit 0 }; ` +
+	`  throw ` +
+	`}; ` +
+	`($v | Sort-Object DriveLetter | ForEach-Object { ` +
+	`  $p = switch ($_.ProtectionStatus) { 0 { 'Off' } 1 { 'On' } default { 'Unknown' } }; ` +
+	`  "$($_.DriveLetter)=$p" ` +
+	`}) -join ";"`
+
+func windowsDiskEncryption(ctx context.Context) Result {
+	out := powershellWMI(ctx, windowsBitLockerScript)
+
+	ev := map[string]any{"backend": "Win32_EncryptableVolume"}
 	if out.Err != nil {
-		lower := strings.ToLower(out.Stderr + " " + errString(out.Err))
-		if strings.Contains(lower, "not recognized") ||
-			strings.Contains(lower, "not found") {
-			ev["note"] = "Get-BitLockerVolume not available"
-
-			return fail(ev)
-		}
-
 		ev["error"] = out.Err.Error()
 		ev["stderr"] = out.Stderr
 
+		if out.TimedOut {
+			ev["timed_out"] = true
+		}
+
 		return unknown(ev)
+	}
+
+	if strings.TrimSpace(out.Stdout) == "unavailable" {
+		ev["note"] = "BitLocker WMI provider not available"
+
+		return fail(ev)
 	}
 
 	volumes, allProtected := parseWindowsBitLockerVolumes(out.Stdout)
 
 	ev["volumes"] = volumes
 	if len(volumes) == 0 {
-		ev["note"] = "Get-BitLockerVolume not available"
+		ev["note"] = "no BitLocker volume for the system drive"
 
 		return fail(ev)
 	}
@@ -84,8 +119,8 @@ func windowsDiskEncryption(ctx context.Context) Result {
 }
 
 // windowsScreenLockMachineScript reads every machine-wide lock source in one
-// invocation. Three separate calls would cost up to 30s against a 25s
-// per-check budget. Each source applies to all users and needs no loaded user
+// invocation. Three separate calls would cost up to 30s of the per-check
+// budget. Each source applies to all users and needs no loaded user
 // hive.
 const windowsScreenLockMachineScript = `` +
 	`$s = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -ErrorAction SilentlyContinue; ` +
@@ -165,17 +200,19 @@ const windowsFirewallCOMScript = `$ErrorActionPreference = 'Stop'; ` +
 	`$fw = New-Object -ComObject HNetCfg.FwPolicy2; ` +
 	`"Domain=$($fw.FirewallEnabled(1));Private=$($fw.FirewallEnabled(2));Public=$($fw.FirewallEnabled(4))"`
 
+// windowsFirewallCmdletScript is the fallback for hosts where the COM object
+// cannot be created. Loading the NetSecurity module alone can exceed the
+// command timeout, so it never goes first.
+const windowsFirewallCmdletScript = `(Get-NetFirewallProfile -PolicyStore ActiveStore | ` +
+	`Sort-Object Name | ` +
+	`ForEach-Object { "$($_.Name)=$($_.Enabled)" }) -join ";"`
+
 func windowsFirewall(ctx context.Context) Result {
-	primary := powershell(
-		ctx,
-		`(Get-NetFirewallProfile -PolicyStore ActiveStore | `+
-			`Sort-Object Name | `+
-			`ForEach-Object { "$($_.Name)=$($_.Enabled)" }) -join ";"`,
-	)
+	primary := powershell(ctx, windowsFirewallCOMScript)
 	if primary.Err == nil && strings.TrimSpace(primary.Stdout) != "" {
 		return windowsFirewallResult(
 			map[string]any{
-				"backend": "Get-NetFirewallProfile",
+				"backend": "HNetCfg.FwPolicy2",
 				"raw":     primary.Stdout,
 			},
 			primary.Stdout,
@@ -183,16 +220,16 @@ func windowsFirewall(ctx context.Context) Result {
 	}
 
 	ev := map[string]any{
-		"backend":         "HNetCfg.FwPolicy2",
+		"backend":         "Get-NetFirewallProfile",
 		"degraded":        true,
-		"primary_backend": "Get-NetFirewallProfile",
+		"primary_backend": "HNetCfg.FwPolicy2",
 		"primary_error":   errString(primary.Err),
 	}
 	if primary.TimedOut {
 		ev["primary_timed_out"] = true
 	}
 
-	fallback := powershell(ctx, windowsFirewallCOMScript)
+	fallback := powershellWMI(ctx, windowsFirewallCmdletScript)
 	if fallback.Err != nil {
 		ev["error"] = errString(fallback.Err)
 		ev["stderr"] = fallback.Stderr
@@ -394,20 +431,26 @@ func windowsPasswordPolicy(ctx context.Context) Result {
 	return fail(ev)
 }
 
+// windowsMalwareProtectionScript reads the class behind Get-MpComputerStatus
+// without loading the Defender module, whose discovery can exceed the command
+// timeout on its own.
+const windowsMalwareProtectionScript = `$s = Get-CimInstance -Namespace 'root\Microsoft\Windows\Defender' ` +
+	`-ClassName MSFT_MpComputerStatus; ` +
+	`"$($s.AntivirusEnabled);$($s.RealTimeProtectionEnabled);` +
+	`$($s.AMServiceEnabled);$($s.AntivirusSignatureLastUpdated)"`
+
 func windowsMalwareProtection(ctx context.Context) Result {
-	out := powershell(
-		ctx,
-		`$s = Get-MpComputerStatus; `+
-			`"$($s.AntivirusEnabled);$($s.RealTimeProtectionEnabled);`+
-			`$($s.AMServiceEnabled);$($s.AntivirusSignatureLastUpdated)"`,
-	)
+	out := powershellWMI(ctx, windowsMalwareProtectionScript)
 	if out.Err != nil {
-		return unknown(
-			map[string]any{
-				"error":  out.Err.Error(),
-				"stderr": out.Stderr,
-			},
-		)
+		ev := map[string]any{
+			"error":  out.Err.Error(),
+			"stderr": out.Stderr,
+		}
+		if out.TimedOut {
+			ev["timed_out"] = true
+		}
+
+		return unknown(ev)
 	}
 
 	parts := strings.Split(out.Stdout, ";")

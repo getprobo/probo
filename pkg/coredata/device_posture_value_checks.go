@@ -48,7 +48,9 @@ func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {
 		return parseLinuxDiskEncryptionValue(ev, present)
 	}
 
-	if backendOf(ev) == "get-bitlockervolume" {
+	switch backendOf(ev) {
+	case "win32_encryptablevolume", "get-bitlockervolume":
+		// get-bitlockervolume is sent by agents that ran the BitLocker cmdlet.
 		return parseWindowsBitLockerValue(ev)
 	}
 
@@ -76,7 +78,7 @@ func parseWindowsBitLockerValue(ev map[string]any) DevicePostureValue {
 
 	allOn, any := allValuesMatch(stringMapEvidence(ev, "volumes"), "on")
 	if !any {
-		// No OS volumes, or the BitLocker cmdlet is missing (Home).
+		// No OS volume, or no BitLocker provider (Home).
 		return onOffValue(false)
 	}
 

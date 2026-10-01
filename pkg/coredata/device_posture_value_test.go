@@ -114,6 +114,34 @@ func TestParseDevicePostureValue_DiskEncryption(t *testing.T) {
 				wantKind: coredata.DevicePostureValueKindUnknown,
 			},
 			{
+				name:     "windows Win32_EncryptableVolume protection on",
+				checkKey: "DISK_ENCRYPTION",
+				evidence: map[string]any{
+					"backend": "Win32_EncryptableVolume",
+					"volumes": map[string]any{"C:": "On"},
+				},
+				wantKind: coredata.DevicePostureValueKindOn,
+			},
+			{
+				name:     "windows Win32_EncryptableVolume provider missing is off",
+				checkKey: "DISK_ENCRYPTION",
+				evidence: map[string]any{
+					"backend": "Win32_EncryptableVolume",
+					"note":    "BitLocker WMI provider not available",
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "windows Win32_EncryptableVolume timeout is unknown",
+				checkKey: "DISK_ENCRYPTION",
+				evidence: map[string]any{
+					"backend":   "Win32_EncryptableVolume",
+					"error":     "command \"powershell.exe\" timed out after 10s: exit status 1",
+					"timed_out": true,
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
 				name:     "windows Get-BitLockerVolume protection on",
 				checkKey: "DISK_ENCRYPTION",
 				evidence: map[string]any{
