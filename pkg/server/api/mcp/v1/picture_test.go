@@ -18,28 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+package mcp_v1
 
-const (
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
+import (
+	"encoding/base64"
+	"strings"
+	"testing"
 
-	ActionTaskCommentGet    = "core:task-comment:get"
-	ActionTaskCommentList   = "core:task-comment:list"
-	ActionTaskCommentCreate = "core:task-comment:create"
-	ActionTaskCommentUpdate = "core:task-comment:update"
-	ActionTaskCommentDelete = "core:task-comment:delete"
-
-	ActionTaskActivityGet  = "core:task-activity:get"
-	ActionTaskActivityList = "core:task-activity:list"
-
-	ActionTaskPictureGet    = "core:task-picture:get"
-	ActionTaskPictureList   = "core:task-picture:list"
-	ActionTaskPictureCreate = "core:task-picture:create"
-	ActionTaskPictureDelete = "core:task-picture:delete"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/task"
+	"go.probo.inc/probo/pkg/validator"
 )
+
+func TestDecodePictureContent(t *testing.T) {
+	t.Parallel()
+
+	const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+
+	body, err := decodePictureContent("  " + png + "\n")
+	require.NoError(t, err)
+	assert.Equal(t, []byte{0x89, 0x50, 0x4e, 0x47}, body[:4])
+
+	_, err = decodePictureContent("not base64!!!")
+	var validationErrors validator.ValidationErrors
+	require.ErrorAs(t, err, &validationErrors)
+	assert.Equal(t, "content_base64", validationErrors[0].Field)
+
+	oversized := strings.Repeat("A", base64.StdEncoding.EncodedLen(task.MaxPictureBytes+1)+4)
+	_, err = decodePictureContent(oversized)
+	require.ErrorAs(t, err, &validationErrors)
+	assert.Equal(t, "content_base64", validationErrors[0].Field)
+}

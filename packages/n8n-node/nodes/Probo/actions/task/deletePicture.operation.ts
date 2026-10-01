@@ -18,28 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
-const (
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Picture ID',
+		name: 'pictureId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['deletePicture'],
+			},
+		},
+		default: '',
+		description: 'The ID of the task picture to delete',
+		required: true,
+	},
+];
 
-	ActionTaskCommentGet    = "core:task-comment:get"
-	ActionTaskCommentList   = "core:task-comment:list"
-	ActionTaskCommentCreate = "core:task-comment:create"
-	ActionTaskCommentUpdate = "core:task-comment:update"
-	ActionTaskCommentDelete = "core:task-comment:delete"
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const pictureId = this.getNodeParameter('pictureId', itemIndex) as string;
 
-	ActionTaskActivityGet  = "core:task-activity:get"
-	ActionTaskActivityList = "core:task-activity:list"
+	const query = `
+		mutation DeleteTaskPicture($input: DeleteTaskPictureInput!) {
+			deleteTaskPicture(input: $input) {
+				deletedTaskPictureId
+			}
+		}
+	`;
 
-	ActionTaskPictureGet    = "core:task-picture:get"
-	ActionTaskPictureList   = "core:task-picture:list"
-	ActionTaskPictureCreate = "core:task-picture:create"
-	ActionTaskPictureDelete = "core:task-picture:delete"
-)
+	const responseData = await proboApiRequest.call(this, query, {
+		input: { taskPictureId: pictureId },
+	});
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
+}

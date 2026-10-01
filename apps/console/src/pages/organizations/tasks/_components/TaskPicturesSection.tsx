@@ -18,28 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+import { Suspense } from "react";
+import { graphql, useFragment } from "react-relay";
 
-const (
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
+import type { TaskPicturesSection_task$key } from "#/__generated__/core/TaskPicturesSection_task.graphql";
 
-	ActionTaskCommentGet    = "core:task-comment:get"
-	ActionTaskCommentList   = "core:task-comment:list"
-	ActionTaskCommentCreate = "core:task-comment:create"
-	ActionTaskCommentUpdate = "core:task-comment:update"
-	ActionTaskCommentDelete = "core:task-comment:delete"
+import { TaskPicturesList } from "./TaskPicturesList";
+import { TaskPicturesSectionSkeleton } from "./TaskPicturesSectionSkeleton";
 
-	ActionTaskActivityGet  = "core:task-activity:get"
-	ActionTaskActivityList = "core:task-activity:list"
+const taskPicturesSectionFragment = graphql`
+  fragment TaskPicturesSection_task on Task {
+    canListPictures: permission(action: "core:task-picture:list")
+  }
+`;
 
-	ActionTaskPictureGet    = "core:task-picture:get"
-	ActionTaskPictureList   = "core:task-picture:list"
-	ActionTaskPictureCreate = "core:task-picture:create"
-	ActionTaskPictureDelete = "core:task-picture:delete"
-)
+interface TaskPicturesSectionProps {
+  taskKey: TaskPicturesSection_task$key;
+}
+
+export function TaskPicturesSection({ taskKey }: TaskPicturesSectionProps) {
+  const task = useFragment(taskPicturesSectionFragment, taskKey);
+
+  if (!task.canListPictures) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={<TaskPicturesSectionSkeleton />}>
+      <TaskPicturesList />
+    </Suspense>
+  );
+}

@@ -20,15 +20,19 @@
 
 import type { INodeProperties } from 'n8n-workflow';
 import * as createOp from './create.operation';
-import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
+import * as deletePictureOp from './deletePicture.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as getPictureOp from './getPicture.operation';
 import * as linkToLinearOp from './linkToLinear.operation';
 import * as listLinearIssuesOp from './listLinearIssues.operation';
 import * as listLinearTeamsOp from './listLinearTeams.operation';
+import * as listPicturesOp from './listPictures.operation';
 import * as publishToLinearOp from './publishToLinear.operation';
 import * as unlinkExternalOp from './unlinkExternal.operation';
+import * as updateOp from './update.operation';
+import * as uploadPictureOp from './uploadPicture.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -55,6 +59,12 @@ export const description: INodeProperties[] = [
 				action: 'Delete a task',
 			},
 			{
+				name: 'Delete Picture',
+				value: 'deletePicture',
+				description: 'Delete a picture from a task and from the linked Linear issue when it was attached there',
+				action: 'Delete a task picture',
+			},
+			{
 				name: 'Get',
 				value: 'get',
 				description: 'Get a task',
@@ -65,6 +75,12 @@ export const description: INodeProperties[] = [
 				value: 'getAll',
 				description: 'Get many tasks',
 				action: 'Get many tasks',
+			},
+			{
+				name: 'Get Picture',
+				value: 'getPicture',
+				description: 'Get a picture uploaded to a task',
+				action: 'Get a task picture',
 			},
 			{
 				name: 'Link To Linear',
@@ -85,6 +101,12 @@ export const description: INodeProperties[] = [
 				action: 'List linear teams',
 			},
 			{
+				name: 'List Pictures',
+				value: 'listPictures',
+				description: 'List pictures uploaded to a task',
+				action: 'List task pictures',
+			},
+			{
 				name: 'Publish To Linear',
 				value: 'publishToLinear',
 				description: 'Publish a task as a new Linear issue',
@@ -102,30 +124,44 @@ export const description: INodeProperties[] = [
 				description: 'Update an existing task',
 				action: 'Update a task',
 			},
+			{
+				name: 'Upload Picture',
+				value: 'uploadPicture',
+				description: 'Upload a JPEG, PNG, or WebP picture to a task. When the task is linked to a Linear issue, the picture is attached to that issue.',
+				action: 'Upload a task picture',
+			},
 		],
 		default: 'create',
 	},
 	...createOp.description,
-	...updateOp.description,
 	...deleteOp.description,
+	...deletePictureOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...getPictureOp.description,
 	...linkToLinearOp.description,
 	...listLinearIssuesOp.description,
 	...listLinearTeamsOp.description,
+	...listPicturesOp.description,
 	...publishToLinearOp.description,
 	...unlinkExternalOp.description,
+	...updateOp.description,
+	...uploadPictureOp.description,
 ];
 
 export {
 	createOp as create,
-	updateOp as update,
 	deleteOp as delete,
+	deletePictureOp as deletePicture,
 	getOp as get,
 	getAllOp as getAll,
+	getPictureOp as getPicture,
 	linkToLinearOp as linkToLinear,
 	listLinearIssuesOp as listLinearIssues,
 	listLinearTeamsOp as listLinearTeams,
+	listPicturesOp as listPictures,
 	publishToLinearOp as publishToLinear,
 	unlinkExternalOp as unlinkExternal,
+	updateOp as update,
+	uploadPictureOp as uploadPicture,
 };

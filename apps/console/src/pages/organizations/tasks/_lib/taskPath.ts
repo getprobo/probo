@@ -50,6 +50,20 @@ const taskCommentsConnectionFilters = {
   orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
 };
 
+export const taskPicturesConnectionKey = "TaskPicturesSection_pictures";
+
+const taskPicturesConnectionFilters = {
+  orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
+};
+
+export function taskPicturesConnectionId(taskId: string) {
+  return ConnectionHandler.getConnectionID(
+    taskId,
+    taskPicturesConnectionKey,
+    taskPicturesConnectionFilters,
+  );
+}
+
 export function taskCommentsConnectionId(taskId: string) {
   return ConnectionHandler.getConnectionID(
     taskId,

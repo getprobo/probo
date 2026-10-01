@@ -18,28 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+package mcp_v1
 
-const (
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
+import (
+	"encoding/base64"
+	"strings"
 
-	ActionTaskCommentGet    = "core:task-comment:get"
-	ActionTaskCommentList   = "core:task-comment:list"
-	ActionTaskCommentCreate = "core:task-comment:create"
-	ActionTaskCommentUpdate = "core:task-comment:update"
-	ActionTaskCommentDelete = "core:task-comment:delete"
-
-	ActionTaskActivityGet  = "core:task-activity:get"
-	ActionTaskActivityList = "core:task-activity:list"
-
-	ActionTaskPictureGet    = "core:task-picture:get"
-	ActionTaskPictureList   = "core:task-picture:list"
-	ActionTaskPictureCreate = "core:task-picture:create"
-	ActionTaskPictureDelete = "core:task-picture:delete"
+	"go.probo.inc/probo/pkg/task"
+	"go.probo.inc/probo/pkg/validator"
 )
+
+// decodePictureContent rejects payloads larger than one byte past the picture
+// limit before decoding, so an oversized base64 string cannot allocate the
+// decoded image.
+func decodePictureContent(encoded string) ([]byte, error) {
+	encoded = strings.TrimSpace(encoded)
+	maxLen := base64.StdEncoding.EncodedLen(task.MaxPictureBytes + 1)
+
+	if len(encoded) > maxLen {
+		v := validator.New()
+		v.Check(len(encoded), "content_base64", validator.Max(maxLen))
+
+		return nil, v.Error()
+	}
+
+	body, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		v := validator.New()
+		v.Check(
+			encoded,
+			"content_base64",
+			func(any) *validator.ValidationError {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeInvalidFormat,
+					Message: "must be standard base64",
+				}
+			},
+		)
+
+		return nil, v.Error()
+	}
+
+	return body, nil
+}

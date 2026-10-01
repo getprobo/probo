@@ -18,45 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+package picture
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/task/activity"
-	"go.probo.inc/probo/pkg/cmd/task/comment"
-	"go.probo.inc/probo/pkg/cmd/task/create"
-	"go.probo.inc/probo/pkg/cmd/task/delete"
-	linklinear "go.probo.inc/probo/pkg/cmd/task/link-linear"
-	"go.probo.inc/probo/pkg/cmd/task/list"
-	listlinearissues "go.probo.inc/probo/pkg/cmd/task/list-linear-issues"
-	listlinearteams "go.probo.inc/probo/pkg/cmd/task/list-linear-teams"
-	"go.probo.inc/probo/pkg/cmd/task/picture"
-	publishlinear "go.probo.inc/probo/pkg/cmd/task/publish-linear"
-	unlinkexternal "go.probo.inc/probo/pkg/cmd/task/unlink-external"
-	"go.probo.inc/probo/pkg/cmd/task/update"
-	"go.probo.inc/probo/pkg/cmd/task/view"
+	"go.probo.inc/probo/pkg/cmd/task/picture/delete"
+	"go.probo.inc/probo/pkg/cmd/task/picture/list"
+	"go.probo.inc/probo/pkg/cmd/task/picture/upload"
+	"go.probo.inc/probo/pkg/cmd/task/picture/view"
 )
 
-func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
+func NewCmdPicture(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "task <command>",
-		Short: "Manage tasks",
+		Use:   "picture <command>",
+		Short: "Manage pictures on a task",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
+	cmd.AddCommand(upload.NewCmdUpload(f))
 	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(comment.NewCmdComment(f))
-	cmd.AddCommand(picture.NewCmdPicture(f))
-	cmd.AddCommand(activity.NewCmdActivity(f))
-	cmd.AddCommand(listlinearteams.NewCmdListLinearTeams(f))
-	cmd.AddCommand(listlinearissues.NewCmdListLinearIssues(f))
-	cmd.AddCommand(publishlinear.NewCmdPublishLinear(f))
-	cmd.AddCommand(linklinear.NewCmdLinkLinear(f))
-	cmd.AddCommand(unlinkexternal.NewCmdUnlinkExternal(f))
 
 	return cmd
 }

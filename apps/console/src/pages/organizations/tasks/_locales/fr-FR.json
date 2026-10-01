@@ -99,6 +99,31 @@
       "update": "Échec de la mise à jour de la tâche",
       "content": "Impossible d'afficher cette description"
     },
+    "pictures": {
+      "title": "Images",
+      "empty": "Aucune image pour le moment",
+      "attached": "Jointe au ticket Linear",
+      "actions": {
+        "upload": "Ajouter une image",
+        "delete": "Supprimer l'image",
+        "showMore": "Afficher plus"
+      },
+      "delete": {
+        "title": "Supprimer l'image",
+        "description": "Voulez-vous vraiment supprimer cette image ?",
+        "confirm": "Supprimer"
+      },
+      "messages": {
+        "uploaded": "Image ajoutée avec succès.",
+        "deleted": "Image supprimée avec succès."
+      },
+      "errors": {
+        "upload": "Échec de l'ajout de l'image",
+        "delete": "Échec de la suppression de l'image",
+        "type": "Choisissez une image JPEG, PNG ou WebP",
+        "size": "L'image doit faire 10 Mo ou moins"
+      }
+    },
     "comments": {
       "title": "Commentaires",
       "empty": "Aucun commentaire pour le moment",

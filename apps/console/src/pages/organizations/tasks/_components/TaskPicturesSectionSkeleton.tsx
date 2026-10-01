@@ -18,28 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package task
+import { taskPicturesSection } from "../variants";
 
-const (
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
+export function TaskPicturesSectionSkeleton() {
+  const { root, list, itemSkeleton } = taskPicturesSection();
 
-	ActionTaskCommentGet    = "core:task-comment:get"
-	ActionTaskCommentList   = "core:task-comment:list"
-	ActionTaskCommentCreate = "core:task-comment:create"
-	ActionTaskCommentUpdate = "core:task-comment:update"
-	ActionTaskCommentDelete = "core:task-comment:delete"
-
-	ActionTaskActivityGet  = "core:task-activity:get"
-	ActionTaskActivityList = "core:task-activity:list"
-
-	ActionTaskPictureGet    = "core:task-picture:get"
-	ActionTaskPictureList   = "core:task-picture:list"
-	ActionTaskPictureCreate = "core:task-picture:create"
-	ActionTaskPictureDelete = "core:task-picture:delete"
-)
+  return (
+    <div className={root()}>
+      <div className={list()}>
+        <div className={itemSkeleton()} />
+        <div className={itemSkeleton()} />
+      </div>
+    </div>
+  );
+}
