@@ -24,23 +24,31 @@ import { Outlet, useParams } from "react-router";
 
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { cookieBannerPath } from "../_lib/cookieBannerPaths";
+
 export default function CookieBannerConfigureLayout() {
   const { t } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
 
+  if (cookieBannerId == null) {
+    throw new Error(":cookieBannerId missing in route params");
+  }
+
+  const prefix = cookieBannerPath(organizationId, cookieBannerId);
+
   return (
     <>
       <Tabs>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/configure`} end>
-          <IconPageTextLine size={20} />
-          {t("configLayout.tabs.display")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/configure/settings`}>
+        <TabLink to={`${prefix}/configure`} end>
           <IconSettingsGear2 size={20} />
           {t("configLayout.tabs.settings")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/configure/translations`}>
+        <TabLink to={`${prefix}/configure/display`}>
+          <IconPageTextLine size={20} />
+          {t("configLayout.tabs.display")}
+        </TabLink>
+        <TabLink to={`${prefix}/configure/translations`}>
           <IconGlobe size={20} />
           {t("configLayout.tabs.translations")}
         </TabLink>
